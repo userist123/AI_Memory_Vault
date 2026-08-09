@@ -1,0 +1,65 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.crt
+*.cer
+*.kdbx
+secrets/
+credentials/
+
+# Temporary files and editor state
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Runtime, caches, and generated indexes
+.cache/
+cache/
+tmp/
+temp/
+logs/
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+node_modules/
+dist/
+build/
+
+# Generated retrieval and graph artifacts (not canonical vault content)
+.rag/
+.memory-runtime/
+.vectorstore/
+vectorstore/
+embeddings/
+indexes/
+generated/
+*.sqlite
+*.sqlite3
+*.db
+*.faiss
+*.index
+*.graphml
+
+# Obsidian workspace/session artifacts; retain shared vault settings
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+
+# RAW_IMPORTS are permanent evidence and must always be versioned.
+!/06_INBOX/RAW_IMPORTS/
+!/06_INBOX/RAW_IMPORTS/**

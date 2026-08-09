@@ -1,0 +1,170 @@
+---
+type: lesson
+category: <technical|personal|professional|relationship|life>
+tags:
+  - lesson
+  - learning
+  - <topic>
+created: {{date}}
+updated: {{date}}
+status: <active|applied|archived>
+source: <experience|error|decision|observation|study>
+confidence: <high|medium|low>
+---
+
+# {{title}}
+
+## Lesson Statement
+
+<!-- One-sentence summary of the lesson -->
+
+> **Lesson:** <!-- Clear, actionable statement -->
+
+---
+
+## Origin
+
+<!-- Where this lesson came from -->
+
+**Source Type:** <Experience|Error|Decision|Observation|Study>  
+**Source Note:** [[Related_Experience|Related_Error|Related_Decision]]  
+**When Learned:** <Date or period>
+
+---
+
+## Context
+
+<!-- Background and circumstances -->
+
+---
+
+## What I Learned
+
+### The Insight
+
+<!-- Detailed explanation of the realization -->
+
+---
+
+### Why It Matters
+
+<!-- Significance and implications -->
+
+---
+
+### Before vs After
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Belief | X | Y |
+| Behavior | X | Y |
+| Outcome | X | Y |
+
+---
+
+## Application
+
+### When to Apply
+
+<!-- Situations where this lesson is relevant -->
+
+- Situation 1
+- Situation 2
+
+---
+
+### How to Apply
+
+<!-- Practical steps to use this lesson -->
+
+1. Step 1
+2. Step 2
+3. Step 3
+
+---
+
+### Examples
+
+<!-- Concrete examples of applying this lesson -->
+
+**Example 1:**
+
+**Example 2:**
+
+---
+
+## Evidence
+
+### Supporting Observations
+
+- Observation 1
+- Observation 2
+
+---
+
+### Counter-Examples
+
+<!-- When this lesson doesn't apply or is wrong -->
+
+- Exception 1
+- Exception 2
+
+---
+
+## Related Lessons
+
+- [[Related_Lesson_1]]
+- [[Related_Lesson_2]]
+
+---
+
+## Related Knowledge
+
+- [[Related_Knowledge_1]]
+- [[Related_Knowledge_2]]
+
+---
+
+## Patterns
+
+<!-- Does this lesson connect to broader patterns? -->
+
+- Pattern 1
+- Pattern 2
+
+---
+
+## Confidence Assessment
+
+**Why High/Medium/Low:**
+
+<!-- Reasoning for confidence level -->
+
+---
+
+## Review
+
+**Next Review:** {{date:+90d}}
+
+**Is this lesson still valid?**
+- [ ] Yes
+- [ ] Partially
+- [ ] No (needs update)
+- [ ] No (should be archived)
+
+**Notes:**
+
+---
+
+## Application History
+
+| Date | Situation | Applied? | Outcome |
+|------|-----------|----------|---------|
+| {{date}} | Situation 1 | Yes | Positive |
+| {{date}} | Situation 2 | No | N/A |
+
+---
+
+**First Applied:** {{date}}  
+**Last Applied:** {{date}}  
+**Times Applied:** X

@@ -1,0 +1,34 @@
+---
+type: project
+category: sysadmin
+tags: [project, gpo, powershell, active]
+created: 2026-08-09
+updated: 2026-08-09
+status: active
+priority: medium
+related: ["[[Tech_Stack]]", "[[Security_Practices]]"]
+---
+
+# GPO Baseline Deployment
+
+## Descriere
+Aplicare backup-uri GPO pe workstation-uri Windows standalone folosind `LGPO.exe` + scripturi PowerShell de automatizare.
+
+## Status curent
+🟡 Funcțional parțial — problemă cunoscută cu rezolvarea `$PSScriptRoot` când scriptul rulează în afara contextului de execuție standalone.
+
+## Componente
+- `LGPO.exe` — aplicare backup GPO la nivel local
+- Scripturi PowerShell — orchestrare, validare, logging
+
+## Problemă activă
+`$PSScriptRoot` returnează gol/incorect când scriptul e invocat altfel decât execuție directă standalone (ex: dot-sourcing, ISE, alt working directory).
+
+### Fix candidat
+```powershell
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
+```
+
+## Next Steps
+- [ ] Validare fix `$PSScriptRoot` în toate contextele de execuție (standalone, ISE, dot-source, Task Scheduler)
+- [ ] Test end-to-end pe workstation curat
