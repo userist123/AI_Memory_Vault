@@ -1,3 +1,13 @@
+---
+id: "d1917d3d-21f9-4d07-83ce-2915ddb88a3c"
+document_kind: specification
+document_status: active
+category: ai-architecture
+provenance_status: incomplete
+implementation_status: documentation_only
+relations: []
+---
+
 # RAG Structure
 
 ## Overview

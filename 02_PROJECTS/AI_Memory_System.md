@@ -1,9 +1,19 @@
 ---
 type: project
 category: ai-infrastructure
-status: active
+status: review
 priority: high
 confidence: high
+id: "d0f3ac43-9b23-4152-999b-8dee06b43c71"
+lifecycle: REVIEW
+provenance_status: incomplete
+provenance:
+  source_type: unknown
+  source_ref: ""
+  redaction: not_applicable
+tags: []
+verification: unverified
+relations: []
 ---
 
 # AI Memory System

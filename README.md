@@ -3,6 +3,11 @@ type: system
 category: memory
 status: active
 version: 1.0.0
+id: "fa4f3c56-dc66-42a0-872c-19cdf302cb2a"
+document_kind: system_document
+document_status: active
+provenance_status: incomplete
+relations: []
 ---
 
 # AI Memory Vault
@@ -50,4 +55,4 @@ Nu trimite intregul Vault catre un LLM. Retrieval-ul trebuie sa selecteze numai 
 - [[99_SYSTEM/RAG_Structure]]
 - [[99_SYSTEM/Import_Pipeline]]
 - [[99_SYSTEM/Classification_Protocol]]
-- [[99_SYSTEM/Quality_Control]]`r`n- [[99_SYSTEM/Storage_Conventions]]`r`n- [[99_SYSTEM/Canonical_Frontmatter]]`r`n- [[99_SYSTEM/Memory_Lifecycle]]`r`n- [[99_SYSTEM/Integrity_Check]]
+- [[99_SYSTEM/Quality_Control]]`r`n- [[99_SYSTEM/Storage_Conventions]]`r`n- [[99_SYSTEM/Canonical_Frontmatter]]`r`n- [[99_SYSTEM/Memory_Lifecycle]]`r`n- [[99_SYSTEM/Integrity_Check]]`r`n- [[99_SYSTEM/Document_Object_Schemas]]

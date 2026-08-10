@@ -1,6 +1,12 @@
 ---
 type: index
 category: knowledge
+id: "16150384-f21b-437f-8e78-1a9627324dad"
+document_kind: index
+document_status: active
+provenance_status: incomplete
+relations: []
+index_scope: vault-navigation
 ---
 
 # 01_KNOWLEDGE

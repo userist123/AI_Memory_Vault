@@ -1,6 +1,12 @@
 ---
 type: index
 category: resources
+id: "64caaf47-b579-4949-9bb4-dec0ffbaf2d6"
+document_kind: index
+document_status: active
+provenance_status: incomplete
+relations: []
+index_scope: vault-navigation
 ---
 
 # 05_RESOURCES

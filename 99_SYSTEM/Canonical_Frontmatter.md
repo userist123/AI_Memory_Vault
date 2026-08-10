@@ -18,7 +18,7 @@ relations:
 
 # Canonical Frontmatter
 
-Every new or materially updated canonical note must use this schema. Existing notes may be migrated incrementally; their missing fields are validation findings, not permission to invent values.
+This schema applies only to memory objects. System documents, policies, specifications, templates, and indexes use [[Document Object Schemas]]. Existing memory notes may be migrated incrementally; missing fields are validation findings, not permission to invent values.
 
 ```yaml
 ---
@@ -30,14 +30,13 @@ tags: []
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 provenance:
-  source_type: user|official|execution|experience|ai|inference|import
+  source_type: user|official|execution|experience|ai|inference|import|unknown
   source_ref: "<source, conversation, URL, or identifier>"
   source_date: YYYY-MM-DD           # omit when unknown
   original_path: "<relative RAW_IMPORTS path>" # required for derivatives
   extraction_date: YYYY-MM-DD       # required for imported derivatives
   redaction: none|applied|not_applicable
-confidence: very_high|high|medium|low|unknown
-verification: verified|partially_verified|unverified|inferred
+provenance_status: complete|incomplete`nconfidence: very_high|high|medium|low|unknown`nverification: verified|partially_verified|unverified|inferred
 relations:
   - relation: related_to
     target: "[[Target Note]]"

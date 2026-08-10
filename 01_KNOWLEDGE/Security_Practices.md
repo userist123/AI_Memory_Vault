@@ -4,7 +4,17 @@ category: security
 tags: [knowledge, security, soc, dfir]
 created: 2026-08-09
 updated: 2026-08-09
-status: active
+status: review
+id: "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+lifecycle: REVIEW
+provenance_status: incomplete
+provenance:
+  source_type: unknown
+  source_ref: ""
+  redaction: not_applicable
+confidence: unknown
+verification: unverified
+relations: []
 ---
 
 # Security Practices — Referință

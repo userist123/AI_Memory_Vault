@@ -6,6 +6,12 @@ created: 2026-08-09
 updated: 2026-08-09
 status: active
 priority: high
+id: "813192e9-17d5-4e60-868d-c50f6d7bccf8"
+document_kind: specification
+document_status: active
+provenance_status: incomplete
+relations: []
+implementation_status: documentation_only
 ---
 
 # RAG + Knowledge Graph — Arhitectură

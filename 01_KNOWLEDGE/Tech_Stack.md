@@ -4,8 +4,18 @@ category: tech-stack
 tags: [knowledge, tech-stack, reference]
 created: 2026-08-09
 updated: 2026-08-09
-status: active
+status: review
 related: ["[[Identity]]"]
+id: "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+lifecycle: REVIEW
+provenance_status: incomplete
+provenance:
+  source_type: unknown
+  source_ref: ""
+  redaction: not_applicable
+confidence: unknown
+verification: unverified
+relations: []
 ---
 
 # Tech Stack — Referință

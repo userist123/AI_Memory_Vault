@@ -4,9 +4,19 @@ category: soc-tooling
 tags: [project, dotnet, wpf, dfir, active]
 created: 2026-08-09
 updated: 2026-08-09
-status: active
+status: review
 priority: high
 related: ["[[Tech_Stack]]", "[[Security_Practices]]"]
+id: "5d7b785f-221c-48ba-9e7e-557998c9fefa"
+lifecycle: REVIEW
+provenance_status: incomplete
+provenance:
+  source_type: unknown
+  source_ref: ""
+  redaction: not_applicable
+confidence: unknown
+verification: unverified
+relations: []
 ---
 
 # LogAnalyzer MVP

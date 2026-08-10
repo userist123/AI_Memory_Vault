@@ -1,11 +1,17 @@
 ---
-type: memory
+type: index
 category: lessons
 tags: [memory, lessons]
 created: 2026-08-09
 updated: 2026-08-09
 status: active
 priority: high
+id: "62b32d02-4bed-44ff-b94d-97741fbcec87"
+document_kind: index
+document_status: active
+provenance_status: incomplete
+relations: []
+index_scope: vault-navigation
 ---
 
 # Lessons

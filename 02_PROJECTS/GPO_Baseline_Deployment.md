@@ -4,9 +4,19 @@ category: sysadmin
 tags: [project, gpo, powershell, active]
 created: 2026-08-09
 updated: 2026-08-09
-status: active
+status: review
 priority: medium
 related: ["[[Tech_Stack]]", "[[Security_Practices]]"]
+id: "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d"
+lifecycle: REVIEW
+provenance_status: incomplete
+provenance:
+  source_type: unknown
+  source_ref: ""
+  redaction: not_applicable
+confidence: unknown
+verification: unverified
+relations: []
 ---
 
 # GPO Baseline Deployment

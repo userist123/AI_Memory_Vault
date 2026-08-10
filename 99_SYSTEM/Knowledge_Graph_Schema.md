@@ -1,3 +1,13 @@
+---
+id: "79096895-5338-4d52-9631-80b40eb85805"
+document_kind: specification
+document_status: active
+category: ai-architecture
+provenance_status: incomplete
+implementation_status: documentation_only
+relations: []
+---
+
 # Knowledge Graph Schema
 
 ## Overview

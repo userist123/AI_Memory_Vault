@@ -3,6 +3,12 @@ type: system
 category: classification
 status: active
 version: 1.0.0
+id: "eb05eda0-6632-4038-ba93-b45492b093cc"
+document_kind: policy
+document_status: active
+provenance_status: incomplete
+relations: []
+policy_scope: vault-governance
 ---
 
 # Classification Protocol

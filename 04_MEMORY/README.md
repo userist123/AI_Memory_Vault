@@ -1,6 +1,12 @@
 ---
 type: index
 category: memory
+id: "5d64a4da-6626-4383-b775-466821e9dea4"
+document_kind: index
+document_status: active
+provenance_status: incomplete
+relations: []
+index_scope: vault-navigation
 ---
 
 # 04_MEMORY

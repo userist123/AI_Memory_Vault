@@ -3,6 +3,12 @@ type: core
 category: goals
 status: active
 version: 1.0.0
+id: "ff8c8d71-06a7-4c60-8e2c-cd5601a7fe07"
+document_kind: policy
+document_status: active
+provenance_status: incomplete
+relations: []
+policy_scope: vault-governance
 ---
 
 # Goals

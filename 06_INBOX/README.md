@@ -1,6 +1,12 @@
 ---
 type: index
 category: inbox
+id: "0ff47253-758b-43ee-9e64-1bf2414e50a3"
+document_kind: index
+document_status: active
+provenance_status: incomplete
+relations: []
+index_scope: vault-navigation
 ---
 
 # 06_INBOX

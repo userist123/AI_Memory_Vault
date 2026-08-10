@@ -3,6 +3,12 @@ type: core
 category: confidence
 status: active
 version: 1.0.0
+id: "3452fafe-8b80-445e-a742-9ceb68662e69"
+document_kind: policy
+document_status: active
+provenance_status: incomplete
+relations: []
+policy_scope: vault-governance
 ---
 
 # Confidence Model

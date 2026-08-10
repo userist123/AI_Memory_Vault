@@ -3,6 +3,12 @@ type: system
 category: quality
 status: active
 version: 1.0.0
+id: "5333fa46-ee58-4800-920d-c91ec5037882"
+document_kind: policy
+document_status: active
+provenance_status: incomplete
+relations: []
+policy_scope: vault-governance
 ---
 
 # Quality Control
