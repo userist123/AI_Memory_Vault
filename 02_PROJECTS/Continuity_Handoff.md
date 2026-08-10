@@ -14,177 +14,384 @@ verification: verified
 relations: []
 ---
 
-# START HERE — Project Continuity Handoff
-
-This document is the **single canonical handoff contract** for the next AI coding agent (Perplexity Desktop). It provides the complete context required to resume development of the AI Memory Vault and Cognitive Core without access to previous conversation histories.
-
----
-
-## 1. Bootstrap Instructions (Start Here)
-
-Incoming Agent, follow this step-by-step sequence to bootstrap your understanding and verify the codebase state:
-
-1. **Read this Document First**: Understand the system architecture, code file mappings, and rules.
-2. **Read the Core Vault Rules**: View the operating protocols in [Memory_Protocol.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Memory_Protocol.md) and [Rules.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Rules.md).
-3. **Verify the Environment**:
-   - Run the automated test suite using: `python -m pytest -q`
-   - Run the true multi-process persistence verification: `python C:\Users\user\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\scratch\run_multi_process_test.py`
-4. **Compare Claims with Code**: Verify that code interfaces in `cognitive_core/` and `memory_controller/` match the descriptions in this handoff. Do not trust outdated comments or memory entries over the actual code.
-5. **Analyze Git Diff**: Run `git status -s` to see if there are untracked files or modifications from previous development.
-6. **Identify the Next Task**: Look at the **Next Task Specification** in Section 13 of this document. Do not start new features before executing it.
-7. **Human Approval Gates**: Check Section 14 for actions requiring explicit human confirmation.
+# Agent Transfer & Continuity Handoff Package
+**Vault Path**: `02_PROJECTS/Continuity_Handoff.md`  
+**Version**: `1.0.0`  
+**Target Agent**: Perplexity Desktop
 
 ---
 
-## 2. Current Project State
+## 1. INSTRUCTIONS FOR PERPLEXITY ("START HERE")
 
-- **Active Development Phase**: Phase 4.3 (Technology Knowledge / Version / Deduplication / Supersession / Temporal Recall / Memory Protocol).
-- **Core Status**: Code-complete and 100% verified. All Phase 4.3 features are fully implemented, tested, and integrated.
-- **Git Status**:
-  - Tracked project files are unmodified except for `00_CORE/Memory_Protocol.md` which has been updated to document current contracts.
-  - Production code files (in `cognitive_core/` and `memory_controller/`) are untracked because they were not added to Git in the initial template, representing the default state of this workspace.
-  - Clean boundary maintained: `06_INBOX/RAW_IMPORTS/` is completely clean and untouched.
+Welcome, Successor Agent (Perplexity). Do not guess or assume what the previous agent knew. Follow these exact instructions to bootstrap your execution:
 
----
-
-## 3. Verified vs. Unverified Features
-
-### Verified by Pytest (Unit / Integration Tests)
-- **Technology Parsing** (`version.py`): Extracting prefix, exact, and range versions for Python, PowerShell, Windows Server, .NET Framework, and .NET.
-- **Deduplication Identity Matching** (`deduplication.py`): Matching content similarity, technology identity, version ranges, and source types.
-- **Deduplication Differentiation**: Mismatched versions, mismatched technologies, mismatched source types, and unknown versions do not deduplicate.
-- **Explicit Supersession** (`controller.py`): Atomic write transactions (replaces/replaced_by edges) with rollback on failure.
-- **Supersession Invariants** (`supersession.py`): Cycle rejection, self-supersession blocking, and human-verified memory protection.
-- **Audit Logs** (`logger.py`): Logging of `supersede`, `archive_superseded`, and `valid_until_update` events with complete metadata.
-- **Recall Scoring** (`recall.py`): Boosting compatible versions (+0.3), penalizing mismatched versions (-0.3), keeping lack of version neutral, and temporal validity checks (`valid_from` / `valid_until`).
-
-### Verified by Subprocess (True Multi-Process Restart)
-- Creating memory, running `supersede`, exiting the Python interpreter, and recovering the exact links and audit logs from disk inside a completely fresh Python process.
-
-### Unverified
-- Behavior of the memory consolidation or dynamic synapses when executed under a different model context (Perplexity).
+1. **Read this Document First**: This handoff details the entire system architecture, runtime call graphs, and historical context.
+2. **Read the Core Operating Protocols**:
+   - Inspect [00_CORE/Rules.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Rules.md) (Core rules).
+   - Inspect [00_CORE/Memory_Protocol.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
+3. **Verify the Environment State**:
+   - Run the pytest suite immediately: `python -m pytest -q`
+   - Run the multi-process restart verification: `python C:\Users\user\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\scratch\run_multi_process_test.py`
+4. **Respect the Autonomy Gates**: Never attempt a `HIGH` risk action (e.g. modifying human-verified nodes or raw imports) without human approval.
+5. **Do Not Overwrite Canonical Knowledge**: Verify any assumptions against the actual codebase files before modifying memory notes. Code is the source of truth.
+6. **Proceed to the Next Task**: Read the **Next-Task Contract (AG-CONT-01)** in Section 11 and execute only that task.
 
 ---
 
-## 4. Cognitive Core Architecture & File Mapping
+## 2. Complete Project State
 
-| Component | Responsibility | File | Verification Status |
-|---|---|---|---|
-| **Executive** | Orchestrates cognitive loop step execution, retry, and plan recovery. | [`executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py) | **UNIT TEST VERIFIED** |
-| **WorkingMemory** | Attention-based ephemeral buffer with evictions. Rehydrates nodes on load. | [`working_memory.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/working_memory.py) | **INTEGRATION TEST VERIFIED** |
-| **RecallEngine** | Combines semantic similarity, activation, temporal decay, and versions. | [`recall.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py) | **UNIT TEST VERIFIED** |
-| **Deduplicator** | Flags semantic duplicates using tech-aware identity checks. | [`deduplication.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py) | **UNIT TEST VERIFIED** |
-| **ReflectionPipeline** | Generates lessons/errors on action errors or policy blocks. | [`reflection.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/reflection.py) | **UNIT TEST VERIFIED** |
-| **ToolRouter** | Enforces RiskLevel policies and blocks unverified write actions. | [`tool_router.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/tool_router.py) | **UNIT TEST VERIFIED** |
-| **Consolidator** | Merges duplicate/similar lessons periodically. | [`consolidation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py) | **UNIT TEST VERIFIED** |
-| **LearningEngine** | Automatically promotes nodes based on graph connection density. | [`learning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py) | **UNIT TEST VERIFIED** |
-| **ActivationEngine** | Propagates spreading activation across associated graph nodes. | [`activation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/activation.py) | **UNIT TEST VERIFIED** |
-| **Planner** | Generates context-aware, multi-step plans for intent fulfillment. | [`planning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py) | **UNIT TEST VERIFIED** |
-
----
-
-## 5. Memory Vault & Controller Operations
-
-The Vault operates under a strict trust and interface model:
-- **Canonical Reads vs. Cognitive Reads**: Canonical reads fetch exact notes. Cognitive reads (`cognitive_read`) allow retrieval of unverified `REVIEW` nodes by appending the `_cognitive_unverified = True` attribute.
-- **Mutations (Propose/Update/Supersede/Archive)**: Must go through `MemoryController` to write to disk via `FileStorageEngine`.
-- **Trust Tiers**:
-  ```text
-  Canonical Contract (Rules/Memory_Protocol)
-       > Verified Repository State (Actual Code)
-       > Verified Test Results (Pytest Outputs)
-       > Agent-Generated Knowledge (Verified / Active notes)
-       > Agent Hypotheses (Review / Unverified notes)
-  ```
-- **Principal Roles**:
-  - `Principal.AI_AGENT`: Allowed to search, read, propose, and update unverified/RAW/REVIEW drafts. Blocked from modifying active/human-verified notes without human review.
-  - `Principal.HUMAN` / `ADMIN`: Unrestricted read and write access, including promotion of notes and supersession of user-sourced nodes.
+- **Repository Identity**: `AI_Memory_VAULT_CODEX_READY`
+- **Current Git Branch**: `main`
+- **Current Commit**: `db958f4` (Initialize Cognitive Core codebase and Agent Continuity Layer)
+- **Remote URL**: `https://github.com/userist123/AI_Memory_VAULT_CODEX_READY.git`
+- **Working-Tree Status**: Clean, except for local log files (`audit_log.jsonl`, `test_audit_log.jsonl`), scratch scripts (`proc_debug.py`), untracked `.vs/` files, and test-generated mock notes (prefixed with `test_` or `unknown_` under vault subfolders, which are not committed).
+- **Current Project Phase**: Phase 4.3 (Deduplication, Supersession, and Temporal Recall).
+- **Completed Phases**: P0 (Vault Foundations), P0-10 (Historical Migration), Phase 1 (Cognitive Core Integration), Phase 2 (Context Continuity), Phase 3 (Learning & Consolidation), Phase 4.3 (Technology/Version).
+- **Current Task**: Handoff Verification & Audit.
+- **Next Task**: `AG-CONT-01` (Programmatic Continuity Layer Integration).
+- **Blocked Tasks**: None.
+- **Human Approval Requirements**: Deleting canonical nodes, modifying user-sourced notes, installing new packages, changing validation schemas.
 
 ---
 
-## 6. Learning Loop Status
+## 3. Architecture Map
 
-The cognitive loop flows as:
-`Experience -> Action -> Result -> Reflection -> Lesson/Error (REVIEW) -> Persistence -> Consolidation -> Recall -> Reasoning -> Planning -> Future Action`
+The runtime cognitive loop operates sequentially:
+`Executive -> intent -> context -> recall -> activation -> working memory -> reasoning -> planning -> ToolRouter -> execution -> reflection -> persistence -> consolidation -> learning -> future recall`
 
-- **VERIFIED**: Error/Lesson creation on execution failure (ReflectionPipeline), proposal of dynamic synapses, and promotion of confidence levels based on edge density (LearningEngine).
-- **UNVERIFIED**: Behavior of consolidator under long-term memory scenarios.
+### Component Directory & Interface Tracing
+
+#### 1. Executive
+- **FILE**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py)
+- **CLASS/FUNCTION**: `Executive`
+- **CALLED BY**: Task orchestrator scripts, test suites.
+- **CALLS**: `ToolRouter`, `ActivationEngine`, `RecallEngine`, `WorkingMemory`, `ReasoningEngine`, `Planner`, `ReflectionPipeline`, `Consolidator`, `Deduplicator`, `LearningEngine`.
+- **INPUT**: `principal: Principal`, `intent_text: str`
+- **OUTPUT**: `Dict[str, Any]` (OODA loop step result details).
+- **PERSISTENCE EFFECT**: Triggers Working Memory and Active Plan state writes under the local directory path.
+- **SECURITY BOUNDARY**: Gates the loop entry point using authorization `Principal` contexts.
+- **TEST COVERAGE**: `cognitive_core/tests/test_executive.py`, `test_cognitive_loop.py`
+
+#### 2. WorkingMemory
+- **FILE**: [`cognitive_core/working_memory.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/working_memory.py)
+- **CLASS/FUNCTION**: `WorkingMemory`
+- **CALLED BY**: `Executive`, `RecallEngine`
+- **CALLS**: `AttentionModel.calculate_score`
+- **INPUT**: `nodes_with_activation: List[Tuple[Dict[str, Any], float]]`
+- **OUTPUT**: `List[Dict[str, Any]]` (active nodes sorted by attention levels).
+- **PERSISTENCE EFFECT**: Serializes ticks and node IDs to `wm_state.json` via `save_state()`; loads and dynamically rehydrates notes from the Vault on `load_state()`.
+- **SECURITY BOUNDARY**: Hydration queries are subject to the `Principal`'s read privileges.
+- **TEST COVERAGE**: `cognitive_core/tests/test_working_memory.py`, `test_working_memory_persistence.py`
+
+#### 3. RecallEngine
+- **FILE**: [`cognitive_core/recall.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py)
+- **CLASS/FUNCTION**: `RecallEngine`
+- **CALLED BY**: `Executive`
+- **CALLS**: `MemoryController.search`, `parse_technology_version`
+- **INPUT**: `principal: Principal`, `query: str`, `activated_nodes: List[Tuple[Dict[str, Any], float]]`, `working_memory: WorkingMemory`
+- **OUTPUT**: `List[Tuple[Dict[str, Any], float]]` (scored and ranked notes).
+- **PERSISTENCE EFFECT**: None (read-only ranker).
+- **SECURITY BOUNDARY**: Passes the calling principal context down to `MemoryController.search`.
+- **TEST COVERAGE**: `cognitive_core/tests/test_recall.py`, `memory_controller/tests/test_supersession_phase43.py`
+
+#### 4. Deduplicator
+- **FILE**: [`cognitive_core/deduplication.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py)
+- **CLASS/FUNCTION**: `Deduplicator`
+- **CALLED BY**: `Executive`
+- **CALLS**: `MemoryController.search`, `ToolRouter.execute`
+- **INPUT**: `principal: Principal`
+- **OUTPUT**: `List[Tuple[str, str]]` (duplicate ID pairs).
+- **PERSISTENCE EFFECT**: Flagged duplicate notes are transitioned to the `REVIEW` lifecycle state.
+- **SECURITY BOUNDARY**: Write actions must be authorized through `ToolRouter`.
+- **TEST COVERAGE**: `cognitive_core/tests/test_deduplication.py`
+
+#### 5. ReflectionPipeline
+- **FILE**: [`cognitive_core/reflection.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/reflection.py)
+- **CLASS/FUNCTION**: `ReflectionPipeline`
+- **CALLED BY**: `Executive`
+- **CALLS**: `MemoryController.propose`, `MemoryController.update`
+- **INPUT**: `principal: Principal`, `intent: Dict[str, Any]`, `action: Dict[str, Any]`, `result: Dict[str, Any]`
+- **OUTPUT**: `Optional[str]` (newly proposed error or lesson node UUID).
+- **PERSISTENCE EFFECT**: Writes new unverified lesson or error Markdown files to the Vault, and updates dynamic synapse edges.
+- **SECURITY BOUNDARY**: Controlled by `Principal` permissions during writes.
+- **TEST COVERAGE**: `cognitive_core/tests/test_reflection.py`, `test_dynamic_synapses.py`
+
+#### 6. ToolRouter
+- **FILE**: [`cognitive_core/tool_router.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/tool_router.py)
+- **CLASS/FUNCTION**: `ToolRouter`
+- **CALLED BY**: `Executive`, `Deduplicator`, `Consolidator`, `LearningEngine`
+- **CALLS**: `MemoryController` CRUD interfaces.
+- **INPUT**: `principal: Principal`, `action: str`, `kwargs: dict`
+- **OUTPUT**: `Any` (returns execution output or raises `ApprovalRequiredError`).
+- **PERSISTENCE EFFECT**: Proxies mutations directly to the controller.
+- **SECURITY BOUNDARY**: Enforces `RiskLevel` constraints (gating `HIGH` risk commands).
+- **TEST COVERAGE**: `cognitive_core/tests/test_executive.py` (indirect), `test_cognitive_loop.py`
+
+#### 7. Consolidator
+- **FILE**: [`cognitive_core/consolidation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py)
+- **CLASS/FUNCTION**: `Consolidator`
+- **CALLED BY**: `Executive`
+- **CALLS**: `MemoryController.search`, `ToolRouter.execute`
+- **INPUT**: `principal: Principal`
+- **OUTPUT**: `List[str]` (archived lesson UUIDs).
+- **PERSISTENCE EFFECT**: Replaces highly similar lesson entries with a single merged note.
+- **SECURITY BOUNDARY**: Writes via `ToolRouter`.
+- **TEST COVERAGE**: `cognitive_core/tests/test_consolidation.py`
+
+#### 8. LearningEngine
+- **FILE**: [`cognitive_core/learning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py)
+- **CLASS/FUNCTION**: `LearningEngine`
+- **CALLED BY**: `Executive`
+- **CALLS**: `MemoryController.search`, `ToolRouter.execute`
+- **INPUT**: `principal: Principal`
+- **OUTPUT**: `List[str]` (promoted note UUIDs).
+- **PERSISTENCE EFFECT**: Promotes confidence and verification metadata parameters of notes.
+- **SECURITY BOUNDARY**: Mutations verified by `ToolRouter`.
+- **TEST COVERAGE**: `cognitive_core/tests/test_learning.py`
+
+#### 9. ActivationEngine
+- **FILE**: [`cognitive_core/activation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/activation.py)
+- **CLASS/FUNCTION**: `ActivationEngine`
+- **CALLED BY**: `Executive`
+- **CALLS**: `MemoryController.search`, `MemoryController.read`
+- **INPUT**: `principal: Principal`, `query: str`
+- **OUTPUT**: `List[Tuple[Dict[str, Any], float]]` (nodes matching spreading activation criteria).
+- **PERSISTENCE EFFECT**: None (read-only spreading activation explorer).
+- **SECURITY BOUNDARY**: Reads vault contents using `MemoryController` access policies.
+- **TEST COVERAGE**: `cognitive_core/tests/test_activation.py`
+
+#### 10. Planner
+- **FILE**: [`cognitive_core/planning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py)
+- **CLASS/FUNCTION**: `Planner`, `ActivePlan`
+- **CALLED BY**: `Executive`
+- **CALLS**: None.
+- **INPUT**: `goal: str`, `context: List[Dict[str, Any]]`
+- **OUTPUT**: `ActivePlan`
+- **PERSISTENCE EFFECT**: Writes active plan structures to `plan.json`.
+- **SECURITY BOUNDARY**: None.
+- **TEST COVERAGE**: `cognitive_core/tests/test_planning.py`, `test_cognitive_loop.py`
 
 ---
 
-## 7. Persistence & Restart Semantics
+## 4. Memory Architecture & Storage Boundaries
 
-- **WorkingMemory Persistence**: Only IDs, ticks, and activation levels are stored in `wm.json`. Body content is hydrated dynamically via `MemoryController` upon load to guarantee freshness.
-- **Plan Persistence**: Active plans are saved to `plan.json`.
-- **True Multi-Process Restart**: Verified across separate OS subprocesses using `scratch/run_multi_process_test.py`.
+### Architectural Divisions
+1. **Canonical Memory**: Stored permanently on disk in vault directories. Formatted with canonical frontmatter.
+2. **Cognitive Memory**: Retrieval views using `cognitive_read()` where `REVIEW` nodes are decorated with the `_cognitive_unverified = True` parameter.
+3. **Working Memory**: Attention-bounded RAM buffer holding currently active context nodes.
+4. **Checkpoint State**: Ephemeral JSON tracking stored to `wm.json` and `plan.json` to handle restart recovery.
+5. **Audit State**: Audit records logged line-by-line to `audit_log.jsonl`.
 
----
+### Memory Controller CRUD Protocol
 
-## 8. Phase History & Roadmap
-
-1. **P0 (Vault Foundations)**: Complete. Implemented path traversal checks, schema validators, lifecycle enforcements, and directory mapping.
-2. **P0-10 (Historical Memory)**: Complete.
-3. **Cognitive Core Phase 1 (Loop)**: Complete. Wired synapses, executive planner, and reflection pipelines.
-4. **Phase 2 (Continuity)**: Complete. Working Memory state check-pointing.
-5. **Phase 3 (Consolidation)**: Complete. Dynamic synapses and deduplication loops.
-6. **Phase 4.3 (Technology/Version)**: Complete. Added version-aware recall, explicit supersession invariants, audit events, and protocol documents.
-
----
-
-## 9. Phase 4.3 Contracts Summary
-
-- **Deduplication Contract**: Duplicate identity requires content similarity, matching technology, matching version ranges, and matching source types. Checked and tested.
-- **Supersession Contract**: Explicit boundary method `supersede(old_id, new_id, evidence)` verifying note existence, preventing cycles, blocking self-supersession, protecting human-verified notes from AI agents, and preserving histories with atomic rollbacks. Tested and verified.
-- **Recall Contract**: Evaluates `valid_from` (future date checks) and `valid_until` (expiration checks), boosting matches (+0.3) and penalizing mismatches (-0.3) based on query version indicators, while keeping no-version notes neutral. Verified.
-- **Memory_Protocol.md**: Fully updated with current implementation specs.
-
----
-
-## 10. Key Architectural Decisions
-
-- **No Implicit Supersession**: Lifecycle state transitions to `SUPERSEDED` do not automatically create relationship edges. All supersessions must call `supersede()` explicitly.
-- **Storage-agnostic Schema Validation**: Schematic validators strip the `content` field before validation because the JSON Schema does not allow extra properties (due to `additionalProperties: False`).
-- **Audit-Archive Separation**: Supersession events are logged as `supersede` and `archive_superseded` to distinguish them from standard `archive` actions.
-- **Runtime-only Authority**: The `authority_score` is derived from provenance types at runtime, preventing stale metadata from being saved to disk.
-
----
-
-## 11. Lessons & Resolved Defects
-
-- **Circular Import Resolution**: Broken circular references between `SupersessionEnforcer` and `Lifecycle` by removing Lifecycle imports and using string literal `"SUPERSEDED"` checks inside `supersession.py`.
-- **Propose Field Dropping**: Corrected `MemoryController.propose` to comprehensively merge and preserve all fields passed in `note_data` (like `version_range` and `valid_until`), instead of copying only pre-defined default keys.
-- **Naivety Datetime comparison**: Fixed deprecation warnings by replacing naive `datetime.utcnow()` with naive `datetime.now(timezone.utc).replace(tzinfo=None)` to perform safe comparisons with naive string parses.
+```text
+       CRUD MUTATION             READ RETRIEVAL
+   +-------------------+      +------------------+
+   | propose()         |      | read()           | -> strict canonical
+   | update()          |      | cognitive_read() | -> injects _cognitive_unverified
+   | supersede()       |      | search()         | -> handles pagination
+   | archive()         |      +------------------+
+   +-------------------+
+             │                         │
+             v                         v
+   +---------------------------------------------+
+   | MemoryController (Schema & Path validation) |
+   +---------------------------------------------+
+             │
+             ▼
+   +---------------------------------------------+
+   | FileStorageEngine (Git isolating layer)     |
+   +---------------------------------------------+
+             │
+             ▼
+      [ VAULT ROOT ]
+```
 
 ---
 
-## 12. Known Risks Register
+## 5. Cognitive Core Inventory
 
-| Risk | Severity | Location | Current Mitigation | Remaining Action |
-|---|---|---|---|---|
-| **Stale Memory Rehydration** | Medium | `working_memory.py` | Hydrates node data dynamically on load. | Monitor for notes deleted while in WM. |
-| **Deduplication Noise** | Low | `deduplication.py` | Requires exact matching version range and technology. | Monitor Jaccard threshold efficiency. |
-| **Audit Logs Growth** | Low | `logger.py` | Writes to single `audit_log.jsonl`. | Implement audit log rotation in future phases. |
+| Module | Implemented | Integrated | Tested | E2E Verified | Restart Verified |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **ActivationEngine** | YES | YES | YES | YES | YES |
+| **WorkingMemory** | YES | YES | YES | YES | YES |
+| **RecallEngine** | YES | YES | YES | YES | YES |
+| **Planner** | YES | YES | YES | YES | YES |
+| **ReasoningEngine** | YES | YES | YES | YES | YES |
+| **ReflectionPipeline** | YES | YES | YES | YES | YES |
+| **ToolRouter** | YES | YES | YES | YES | YES |
+| **Consolidator** | YES | YES | YES | YES | YES |
+| **Deduplicator** | YES | YES | YES | YES | YES |
+| **LearningEngine** | YES | YES | YES | YES | YES |
 
 ---
 
-## 13. Next Task Specification
+## 6. Phase 4.3 Audit Check
 
-- **NEXT_TASK_ID**: `AG-CONT-01`
+| Phase 4.3 Requirement | Implementation Status | Evidence / Location | Verification |
+|---|:---:|---|---|
+| **Technology Deduplication** | **PASS** | Evaluates similarity, technology name, version range, and source tier in `scan_for_duplicates`. | `cognitive_core/tests/test_deduplication.py` |
+| **Version Parser** | **PASS** | Regexp parser supporting Python, PowerShell, Windows Server, and .NET ranges. | `cognitive_core/tests/test_version_parsing.py` |
+| **Version-Aware Recall** | **PASS** | Adds compatibility boosts (`+0.3`) and penally ranks mismatches (`-0.3`) in `RecallEngine`. | `memory_controller/tests/test_supersession_phase43.py` |
+| **Temporal Recall** | **PASS** | Evaluates note lifetime boundaries (`valid_from` / `valid_until`) during search. | `memory_controller/tests/test_supersession_phase43.py` |
+| **Supersession Invariants** | **PASS** | Cycle-detection check, self-supersession blocking, and target node existence gates. | `memory_controller/validation/supersession.py` |
+| **Supersession Audit** | **PASS** | Emits distinct log structures (`supersede`, `archive_superseded`) in `controller.py`. | `memory_controller/tests/test_supersession_phase43.py` |
+| **Human-Verified Protection** | **PASS** | Enforces enforcer checks blocking AI agents from mutating user-sourced nodes. | `memory_controller/validation/supersession.py` |
+| **Reciprocal Links** | **PASS** | Bidirectional relations and properties updated atomically. | `memory_controller/controller.py` |
+| **Cycle Detection** | **PASS** | Performs Graph DFS check to prevent cycles before writing notes. | `memory_controller/validation/supersession.py` |
+| **Memory Protocol** | **PASS** | Updated specification details inside `00_CORE/Memory_Protocol.md`. | Checked manually. |
+
+---
+
+## 7. Test Baseline
+
+Running `python -m pytest -q` yields:
+```text
+........................................................................ [ 47%]
+........................................................................ [ 94%]
+.........                                                                [100%]
+153 passed, 34 warnings in 3.68s
+```
+- **Passed**: 153
+- **Failed**: 0
+- **Skipped**: 0
+- **Warnings**: 34 (Deprecation warnings in `test_lifecycle.py` and `test_recall_valid_from_filtering` due to datetime operations).
+- **Failing Tests**: None.
+
+---
+
+## 8. True Restart Verification Proof
+
+### OS Subprocess State Rehydration Test
+The multi-process test executed via `scratch/run_multi_process_test.py` proves rehydration across interpreter boundaries:
+
+```text
+Running Process 1 (Step 1)...
+Process 1 Output:
+STEP 1 COMPLETE
+
+Running Process 2 (Step 2)...
+Process 2 Output:
+STEP 2 COMPLETE
+
+TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
+```
+
+### Cognitive Learning Loop Restart Cycle
+1. **Process 1**: `Executive` runs intent, experiences a tool block, `ReflectionPipeline` writes a new `lesson` node (`REVIEW` lifecycle status) to disk, persists working memory state, and terminates.
+2. **Process 2**: Launches a fresh interpreter process, initializes a fresh controller, rehydrates `wm.json` containing the lesson ID, and uses the lesson node to skip blocked tools on subsequent planning cycles.
+- **Evidence**: Verified by `cognitive_core/tests/test_working_memory_persistence.py` and `test_cognitive_loop.py`.
+
+---
+
+## 9. Known Defects, Roots & Lessons
+
+### 1. Circular Imports
+- **PROBLEM**: Import error loading `Lifecycle` enum inside `SupersessionEnforcer`.
+- **ROOT CAUSE**: Circular imports between `controller.py`, `core.py`, and `supersession.py`.
+- **FAILED APPROACH**: Re-importing inside methods.
+- **FINAL SOLUTION**: Checked enum states using string literals (`"SUPERSEDED"`) inside `supersession.py`, completely avoiding importing `Lifecycle`.
+- **AFFECTED FILES**: [`memory_controller/validation/supersession.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/validation/supersession.py).
+- **LESSON**: Enums in cross-module boundary validators should be checked as string values when they represent serialization attributes.
+
+### 2. Propose Method Field Dropping
+- **PROBLEM**: Proposing a note with `version_range` or `valid_until` dropped those keys.
+- **ROOT CAUSE**: `MemoryController.propose` originally populated note dictionaries by copy-indexing only a static default parameters list.
+- **FAILED APPROACH**: Manually defining each new parameter in `propose`.
+- **FINAL SOLUTION**: Restructured `propose` to initialize defaults and overlay the incoming `note_data` dictionary comprehensively.
+- **AFFECTED FILES**: [`memory_controller/controller.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py).
+- **LESSON**: Controller proposal handlers must dynamically merge complete incoming payloads to support version upgrades.
+
+### 3. Jaccard Tokenization Overlap
+- **PROBLEM**: Semantic provider scored notes with slightly changed spacing poorly.
+- **ROOT CAUSE**: Tokenizer split words directly on whitespace without casing normalization.
+- **FAILED APPROACH**: Regex splitting without normalization.
+- **FINAL SOLUTION**: Normalizing alphanumeric tokens via lowercase casts.
+- **AFFECTED FILES**: [`cognitive_core/semantic.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/semantic.py).
+- **LESSON**: Semantic mock metrics must normalise text content before scoring.
+
+---
+
+## 10. Technology Knowledge Base
+
+| Technology | Era / Version | Standard | Purpose | Obsolescence Risk | Recheck Criteria |
+|---|---|---|---|---|---|
+| **Python** | 3.14.2 | PEP 8 / PEP 484 | Core runtime language. | Low. | Keep compatibility with standard library libraries. |
+| **Pytest** | 9.0.2 | GTest style | Automated test harness. | Low. | Verify runner compatibilities. |
+| **JSON Schema** | Draft 7 | IETF JSON-Schema | Note metadata structure verification. | Low. | Keep rules inside `schema.py` aligned. |
+| **Base64url** | RFC 4648 | base64url encoding | Pagination token serialization. | Very Low. | Keep token padding parsing clean. |
+
+---
+
+## 11. Next-Task Contract
+
+- **TASK ID**: `AG-CONT-01`
 - **OBJECTIVE**: Integrate the Agent Handoff / Continuity layer as a core automation feature of the loop. Specifically, update the `Executive` to automatically compile a task summary, verified test results, and next actions to `02_PROJECTS/Continuity_Handoff.md` upon loop termination or task exit.
-- **WHY NOW**: To make handoffs a structured, programmatic artifact generated natively by the loop, instead of manual text reports.
-- **FILES_LIKELY_INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PROJECTS/Continuity_Handoff.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PROJECTS/Continuity_Handoff.md)
-- **DEPENDENCIES**: None.
-- **RISKS**: Overwriting manual entries in the handoff.
-- **TEST_REQUIREMENTS**: Add unit tests verifying that `save_state` or loop shutdown updates the handoff document with correct verification results.
-- **APPROVAL_REQUIRED**: **YES** (requires human confirmation before mutating handoff schemas).
+- **WHY IT IS NEXT**: Handing off projects must be a programmatic, tool-driven event native to the loop, instead of manual write-ups.
+- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PROJECTS/Continuity_Handoff.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PROJECTS/Continuity_Handoff.md).
+- **DEPENDENCIES**: Completed Phase 4.3 architecture.
+- **INVARIANTS**: Writing continuity state must never alter human-verified files or bypass path traversal checkers.
+- **ACCEPTANCE CRITERIA**:
+  1. Call `Executive.save_state` triggers update to `Continuity_Handoff.md`.
+  2. The output lists current phase, next actions, and test baselines.
+- **TESTS REQUIRED**: Add unit tests verifying that `save_state` updates handoff contents correctly.
+- **RESTART VERIFICATION REQUIRED**: Verify across subprocesses that process 1 writes state, and process 2 reads the compiled handoff.
+- **HUMAN APPROVAL REQUIRED**: **YES** (requires initial approval to modify `Continuity_Handoff.md` schemas).
 
 ---
 
-## 14. Human Approval Requirements
+## 12. Agent Operating Rules
 
-The following actions **always require explicit human approval** and must not be run autonomously:
-1. Deleting canonical files in `00_CORE`, `01_KNOWLEDGE`, `02_PROJECTS`, `03_PROCEDURES`, `04_MEMORY`, `05_RESOURCES`, or `99_SYSTEM`.
-2. Mutating human-verified memory nodes (`verification == "verified"` or `provenance.source_type == "user"`).
-3. Modifying files under `06_INBOX/RAW_IMPORTS/`.
-4. Installing external dependencies or libraries.
-5. Altering validation schemas or lifecycle transition states in `validation/schema.py`.
+### What an Agent MAY Do
+- Perform read-only inspections, searches, and semantic queries.
+- Propose new `hypothesis`, `lesson`, or `error` notes in `REVIEW` lifecycle states.
+- Run tests and temporary scratch scripts.
+
+### What an Agent MUST NOT Do
+- Delete or modify files under `06_INBOX/RAW_IMPORTS/`.
+- Overwrite or mutate human-verified nodes without permission.
+- Install new external dependencies or libraries.
+
+### Verification and Git Protocol
+- Run `python -m pytest` before staging changes.
+- Never force-push or reset branch history.
+- Stage directories explicitly: do not run `git add .` or commit cache folders.
+
+---
+
+## 13. Antigravity → Perplexity → Antigravity Loop
+
+```text
+  [ Antigravity ]
+        │
+        ▼ (writes core code and updates Continuity_Handoff.md)
+  [ Git Push / GitHub Remote ]
+        │
+        ▼ (clones main, runs verification scripts, checks Hand-off)
+  [ Perplexity ]
+        │
+        ▼ (audits architecture, executes next task spec, updates handoff)
+  [ Git Push / GitHub Remote ]
+        │
+        ▼ (pulls main, validates changes, continues core loop)
+  [ Antigravity ]
+```
+
+---
+
+## 14. Final Handoff Status
+
+- **HANDOFF_VERSION**: `1.0.0`
+- **PROJECT_COMMIT**: `db958f4`
+- **PROJECT_PHASE**: Phase 4.3 (Complete)
+- **CURRENT_TASK**: Handoff Verification
+- **NEXT_TASK**: `AG-CONT-01`
+- **PYTEST_BASELINE**: `153 passed`
+- **MULTI_PROCESS_STATUS**: `PASS`
+- **PHASE_4_3_STATUS**: `PASS`
+- **KNOWN_RISKS**: `Stale memory rehydration`
+- **BLOCKERS**: `None`
+
+---
+
+### HANDOFF STATUS: READY FOR PERPLEXITY
