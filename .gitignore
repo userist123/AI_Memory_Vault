@@ -26,6 +26,8 @@ desktop.ini
 # Runtime, caches, and generated indexes
 .cache/
 cache/
+!memory_controller/cache/
+!memory_controller/cache/**
 tmp/
 temp/
 logs/
