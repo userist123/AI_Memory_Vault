@@ -22,9 +22,10 @@ Aplicație .NET 10 WPF pentru analiză forensics și colectare date audit (SOC-D
 ## Status curent
 🟢 **Functional & Build Clean**
 - Proiectul se compilează cu succes pe .NET 10.
-- Interfața grafică este modernizată în stil "Cyber Command Center" cu tematică space-blue neon, carduri translucide (Glassmorphism) și scrollbar-uri subțiri luminate în cyan.
-- Suport complet pentru analiză forenzică locală (EVTX, Registru offline).
-- Colectorul local de date (PowerShell) este configurat corect pentru PC, Server, NAS și rulează asamblat de WPF.
+- Interfața grafică este modernizată în stil "Cyber Command Center" aliniată complet cu regulile premium din *Premium Desktop Executable App Design Prompt* (tematică Deep Navy `#070812`, electric violet `#8b5cf6` accent primar, indigo `#4f46e5`, warning, danger, success).
+- Mapează tehnicile identificate într-o matrice MITRE structurată pe 5 coloane tactice.
+- Dispune de un sidebar de navigare pe categorii pentru Offline Registry.
+- Afișează telemetrie în timp real (DB size, Operator, License level, online status node).
 
 ## Caracteristici Implementate & Securizate
 1. **Elevare Drepturi UAC (`app.manifest`):**
