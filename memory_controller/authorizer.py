@@ -21,6 +21,7 @@ class Operation(Enum):
     ARCHIVE = "archive"
     UPDATE = "update"
     SUPERSEDE = "supersede"
+    ATTEST = "attest"
 
 class Authorizer(Protocol):
     """Authorizer protocol – objects must implement `is_allowed`.
@@ -40,6 +41,7 @@ class DefaultAuthorizer:
     * UPDATE – depends on lifecycle – handled in core, but permission
       is granted to Human and Admin for ACTIVE notes; AI can update
       non‑ACTIVE drafts.
+    * ATTEST – Human and Admin only
     """
 
     _policy = {
@@ -51,6 +53,7 @@ class DefaultAuthorizer:
         Operation.ARCHIVE: {Principal.HUMAN, Principal.ADMIN},
         Operation.UPDATE: {Principal.HUMAN, Principal.ADMIN, Principal.AI_AGENT},
         Operation.SUPERSEDE: {Principal.HUMAN, Principal.ADMIN, Principal.AI_AGENT},
+        Operation.ATTEST: {Principal.HUMAN, Principal.ADMIN},
     }
 
     def is_allowed(self, principal: Principal, operation: Operation) -> bool:

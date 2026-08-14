@@ -61,6 +61,19 @@ class Lifecycle(str, enum.Enum):
     SUPERSEDED = "SUPERSEDED"
     ARCHIVED = "ARCHIVED"
 
+_ALLOWED_PROVENANCE_SOURCE_TYPES = {
+    Principal.AI_AGENT: {"execution", "ai", "inference", "unknown"},
+    Principal.HUMAN: {"user", "official", "execution", "experience", "inference", "import", "unknown"},
+    Principal.ADMIN: {"user", "official", "execution", "experience", "ai", "inference", "import", "unknown"},
+}
+
+_PERMITTED_CREATION_LIFECYCLES = {
+    Lifecycle.RAW.value,
+    Lifecycle.CLASSIFIED.value,
+    Lifecycle.NORMALIZED.value,
+    Lifecycle.REVIEW.value,
+}
+
 class MemoryController:
     _global_review_counter = 2
     def __init__(self, storage: StorageEngine, authorizer: Authorizer = None):
@@ -321,6 +334,7 @@ class MemoryController:
         except Exception as e:
             audit_event('search', principal, target_id, success=False, details={'error': str(e)})
             raise
+
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
         note_id = note_data.get('id', 'unknown')
         try:
@@ -328,6 +342,10 @@ class MemoryController:
             if not note_data.get('id'):
                 raise ValueError('Note must include an id')
             check_path_traversal(note_id)
+
+            if note_data.get('verification') == 'verified':
+                raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
+
             # Build note using canonical defaults and overlay caller data
             now_date = datetime.now(timezone.utc).date().isoformat()
             defaults = {
@@ -337,7 +355,7 @@ class MemoryController:
                 'created': now_date,
                 'updated': now_date,
                 'provenance': {
-                    'source_type': 'user',
+                    'source_type': 'user' if principal in {Principal.HUMAN, Principal.ADMIN} else 'inference',
                     'source_ref': 'generated',
                 },
                 'confidence': 'high',
@@ -355,7 +373,28 @@ class MemoryController:
             note['provenance'] = prov
             # Ensure id remains note_id
             note['id'] = note_id
-            
+
+            if note.get('verification') == 'verified':
+                raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
+
+            # Validate provenance source_type against principal allowlist
+            source_type = note['provenance'].get('source_type', 'unknown')
+            allowed_sources = _ALLOWED_PROVENANCE_SOURCE_TYPES.get(principal, {"unknown"})
+            if source_type not in allowed_sources:
+                raise ValueError(f"Principal '{principal.value}' is not permitted to claim provenance source_type '{source_type}'")
+
+            # Validate lifecycle at creation (AI_AGENT cannot inject escalated lifecycles like ACTIVE)
+            lifecycle_val = note.get('lifecycle')
+            if isinstance(lifecycle_val, Lifecycle):
+                lifecycle_val = lifecycle_val.value
+                note['lifecycle'] = lifecycle_val
+            if principal == Principal.AI_AGENT and lifecycle_val not in _PERMITTED_CREATION_LIFECYCLES:
+                raise ValueError(f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW.")
+
+            # Force server timestamps
+            note['created'] = now_date
+            note['updated'] = now_date
+
             # Build a copy without extra fields for validation
             validation_note = {k: v for k, v in note.items() if k != "content"}
             self._validate_note(validation_note)
@@ -414,10 +453,14 @@ class MemoryController:
             audit_event('promote', principal, note_id, success=False, details={'error': str(e)})
             raise
 
-    def update(self, principal: Principal, note_id: str, updates: Dict[str, Any]) -> None:
+    def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         try:
             self._check_auth(principal, Operation.UPDATE)
             check_path_traversal(note_id)
+            if updates is None:
+                updates = {}
+            if kwargs:
+                updates = {**updates, **kwargs}
             note = self.storage.get(note_id)
             if not note:
                 raise ValueError('Note not found')
@@ -430,16 +473,32 @@ class MemoryController:
             for k in immutable:
                 if k in updates and updates[k] != note.get(k):
                     raise ValueError(f'Field {k} is immutable')
-            
+
+            # Reject verification='verified' via update for all principals
+            if updates.get('verification') == 'verified':
+                raise ValueError("Verification status 'verified' cannot be escalated via update. Use attest() instead.")
+
+            # Reject changes to provenance.source_type (immutable post-creation for all principals)
+            if 'provenance' in updates and isinstance(updates['provenance'], dict):
+                if 'source_type' in updates['provenance']:
+                    new_st = updates['provenance']['source_type']
+                    old_st = note.get('provenance', {}).get('source_type')
+                    if new_st != old_st:
+                        raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
+
             old_valid_until = note.get('valid_until')
             new_valid_until = updates.get('valid_until')
             has_valid_until_changed = 'valid_until' in updates and old_valid_until != new_valid_until
-            
+
             note.update(updates)
+            # Force server updated timestamp
+            now_date = datetime.now(timezone.utc).date().isoformat()
+            note['updated'] = now_date
+
             self._validate_note(note)
             self.storage.set(note_id, note)
             self.cache.invalidate_by_event('memory_updated')
-            
+
             if has_valid_until_changed:
                 audit_event('valid_until_update', principal, note_id, success=True, 
                             details={'old_valid_until': old_valid_until, 'new_valid_until': new_valid_until})
@@ -447,6 +506,50 @@ class MemoryController:
                 audit_event('update', principal, note_id, success=True)
         except Exception as e:
             audit_event('update', principal, note_id, success=False, details={'error': str(e)})
+            raise
+
+    def attest(self, principal: Principal, note_id: str, verification_reason: str, evidence_reference: str, verification_state: str = "verified") -> None:
+        try:
+            self._check_auth(principal, Operation.ATTEST)
+            check_path_traversal(note_id)
+            if not verification_reason or not verification_reason.strip():
+                raise ValueError("Attestation requires a non-empty verification_reason")
+            if not evidence_reference or not evidence_reference.strip():
+                raise ValueError("Attestation requires a non-empty evidence_reference")
+
+            note = self.storage.get(note_id)
+            if not note:
+                raise ValueError('Note not found')
+
+            previous_state = note.get('verification', 'unverified')
+            if previous_state == verification_state:
+                return
+
+            now_date = datetime.now(timezone.utc).date().isoformat()
+            note['verification'] = verification_state
+            note['verification_source'] = principal.value
+            note['last_verified'] = now_date
+            note['updated'] = now_date
+
+            validation_note = {k: v for k, v in note.items() if k != "content"}
+            self._validate_note(validation_note)
+            self.storage.set(note_id, note)
+            self.cache.invalidate_by_event('memory_updated')
+
+            audit_event('attest', principal, note_id, success=True, details={
+                'attested_by': principal.value,
+                'reason': verification_reason,
+                'evidence_reference': evidence_reference,
+                'previous_verification_state': previous_state,
+                'new_verification_state': verification_state
+            })
+        except Exception as e:
+            audit_event('attest', principal, note_id, success=False, details={
+                'attested_by': principal.value,
+                'reason': verification_reason if 'verification_reason' in locals() else '',
+                'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '',
+                'error': str(e)
+            })
             raise
 
     def archive(self, principal: Principal, note_id: str, reason: str) -> None:

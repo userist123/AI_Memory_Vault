@@ -168,7 +168,8 @@ def test_supersession_human_verified_protection(temp_vault):
     id_new = str(uuid.uuid4())
     
     # Provenance source_type user is human-verified
-    controller.propose(Principal.ADMIN, make_note(id_old_verified, verification="verified", provenance={"source_type": "user", "source_ref": "user manual"}))
+    controller.propose(Principal.ADMIN, make_note(id_old_verified, verification="unverified", provenance={"source_type": "user", "source_ref": "user manual"}))
+    controller.attest(Principal.ADMIN, id_old_verified, verification_reason="Initial manual verification", evidence_reference="user manual")
     controller.propose(Principal.ADMIN, make_note(id_new))
     
     # AI_AGENT tries to supersede human-verified note -> PermissionError
