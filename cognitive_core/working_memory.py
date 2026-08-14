@@ -109,9 +109,23 @@ class WorkingMemory:
                 "attention": data.get("attention", 0.0)
             }
             
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=2)
+        dir_path = os.path.dirname(os.path.abspath(filepath))
+        os.makedirs(dir_path, exist_ok=True)
+        import tempfile
+        fd, temp_path = tempfile.mkstemp(dir=dir_path, prefix=".tmp_wm_")
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(state, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(temp_path, filepath)
+        except Exception as e:
+            if os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
+            raise e
             
     def load_state(self, filepath: str, memory_controller, principal) -> None:
         """

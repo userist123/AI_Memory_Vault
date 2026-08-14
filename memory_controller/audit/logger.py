@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 
 class EnumEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -32,9 +32,70 @@ class AuditLogger:
         # Ensure file exists
         open(self.log_path, "a", encoding="utf-8").close()
 
+    def _get_last_entry_hash(self) -> str:
+        if not os.path.exists(self.log_path):
+            return "GENESIS"
+        last_hash = "GENESIS"
+        try:
+            with open(self.log_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        entry = json.loads(line)
+                        if "entry_hash" in entry:
+                            last_hash = entry["entry_hash"]
+        except Exception:
+            pass
+        return last_hash
+
     def _write_entry(self, entry: Dict[str, Any]):
+        import hashlib
+        prev_hash = self._get_last_entry_hash()
+        entry["prev_hash"] = prev_hash
+        
+        # Calculate entry hash over canonical JSON representation
+        canonical_bytes = json.dumps(entry, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
+        entry["entry_hash"] = hashlib.sha256(canonical_bytes).hexdigest()
+
         with open(self.log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False, cls=EnumEncoder) + "\n")
+
+    def verify_integrity(self) -> Tuple[bool, List[str]]:
+        """Verifies the SHA-256 tamper-evident hash chain across the audit log."""
+        import hashlib
+        if not os.path.exists(self.log_path):
+            return True, []
+        
+        violations = []
+        expected_prev_hash = "GENESIS"
+        line_num = 0
+
+        with open(self.log_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                line_num += 1
+                try:
+                    entry = json.loads(line)
+                    stored_entry_hash = entry.get("entry_hash")
+                    stored_prev_hash = entry.get("prev_hash")
+
+                    if stored_prev_hash != expected_prev_hash:
+                        violations.append(f"Line {line_num}: prev_hash mismatch (expected {expected_prev_hash}, got {stored_prev_hash})")
+
+                    entry_without_hash = {k: v for k, v in entry.items() if k != "entry_hash"}
+                    canonical_bytes = json.dumps(entry_without_hash, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
+                    computed_hash = hashlib.sha256(canonical_bytes).hexdigest()
+
+                    if stored_entry_hash != computed_hash:
+                        violations.append(f"Line {line_num}: entry_hash mismatch (expected {computed_hash}, got {stored_entry_hash})")
+
+                    expected_prev_hash = stored_entry_hash or "GENESIS"
+                except Exception as e:
+                    violations.append(f"Line {line_num}: JSON parse or validation error: {str(e)}")
+
+        return len(violations) == 0, violations
 
     def log(self,
             actor: str,

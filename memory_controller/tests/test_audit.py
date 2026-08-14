@@ -229,3 +229,31 @@ def test_audit_permission_error_explicit():
     assert "metadata" in logs[0]
     assert "error" in logs[0]["metadata"]
     assert "PermissionError" in logs[0]["metadata"]["error"] or "not allowed" in logs[0]["metadata"]["error"]
+
+def test_audit_hash_chaining_and_tamper_detection():
+    logger = logger_module._logger_instance
+    logger.log("agent", "read", "node-1")
+    logger.log("human", "attest", "node-1")
+    logger.log("admin", "promote", "node-1")
+
+    # Verify initial chain is valid
+    is_valid, violations = logger.verify_integrity()
+    assert is_valid is True
+    assert len(violations) == 0
+
+    # Tamper with the log file
+    lines = []
+    with open(TEST_AUDIT_LOG, "r", encoding="utf-8") as f:
+        for line in f:
+            lines.append(json.loads(line))
+
+    # Alter an actor in middle entry
+    lines[1]["actor"] = "malicious_actor"
+    with open(TEST_AUDIT_LOG, "w", encoding="utf-8") as f:
+        for entry in lines:
+            f.write(json.dumps(entry) + "\n")
+
+    # Verify tampering is detected
+    is_valid_tampered, violations_tampered = logger.verify_integrity()
+    assert is_valid_tampered is False
+    assert len(violations_tampered) > 0
