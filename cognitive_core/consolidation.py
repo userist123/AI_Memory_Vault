@@ -60,8 +60,13 @@ class Consolidator:
             "relations": relations
         }
         
+        from .reflection import SelfRefine
+        passed, refined_node = SelfRefine.refine_memory(consolidated_node)
+        if not passed:
+            return None
+
         # Propose through ToolRouter
-        self.router.execute(principal, "propose", {"note_data": consolidated_node})
+        self.router.execute(principal, "propose", {"note_data": refined_node})
         
         # Archive old lessons through ToolRouter
         for lesson in lessons_to_consolidate:
