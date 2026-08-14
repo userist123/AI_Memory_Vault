@@ -107,12 +107,16 @@ class Executive:
             }
             self.active_plan.complete_current_step()
             self._retry_count = 0  # Reset on success
-            
+
             # WIRE-5: Auto-checkpoint after successful step
             self._auto_checkpoint()
-            
+
             # WIRE-2: Fire dynamic synapses on success
             self._fire_synapses(principal, context)
+
+            # Trigger maintenance if plan completed
+            if self.active_plan.is_complete():
+                self._run_maintenance(principal)
             
         except ApprovalRequiredError as e:
             action_result = {
