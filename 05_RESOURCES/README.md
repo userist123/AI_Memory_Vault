@@ -1,29 +1,35 @@
 ---
+id: "616effd2-5172-46dc-b8c1-528c724a5de1"
 type: index
 category: resources
-id: "64caaf47-b579-4949-9bb4-dec0ffbaf2d6"
-document_kind: index
-document_status: active
-provenance_status: incomplete
+status: active
+version: 1.0.0
+confidence: high
+verification: not_applicable
+provenance_status: not_applicable
 relations: []
-index_scope: vault-navigation
 ---
 
 # 05_RESOURCES
 
-Surse externe si materiale de referinta.
+Surse externe si referinte reutilizabile: documentatie oficiala, repo-uri, linkuri, resurse de invatare.
 
-## Exemple
+## Intra aici
 
-- documentatie oficiala;
-- manuale;
-- standarde;
-- articole;
-- exporturi;
-- fisiere tehnice.
+- documentatie oficiala (ex. PaperCut, Xerox EIP);
+- repo-uri GitHub relevante pentru proiecte active;
+- articole/ghiduri de referinta verificate sau in curs de verificare.
 
-## Rule
+## Nu intra aici
 
-Resource != knowledge.
+- cunostinte sintetizate (acelea merg in `01_KNOWLEDGE`);
+- stare de proiect (merge in `02_PROJECTS`).
 
-O sursa este materialul. Knowledge este informatia extrasa si validata din sursa.
+## Continut curent
+
+- [[PaperCut_Xerox_EIP_Documentation]]
+- [[Registru_de_transferuri_Repo]]
+
+## Principiu
+
+O resursa = o sursa externa, cu relevanta explicita catre o nota de knowledge sau un proiect.
