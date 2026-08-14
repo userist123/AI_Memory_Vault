@@ -1,19 +1,20 @@
 import pytest
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from memory_controller.controller import MemoryController, StorageEngine, Lifecycle, Principal, Operation
 
 # Helper to build minimal frontmatter for a note
 def make_note(lifecycle: Lifecycle, note_id: str = None):
     note_id = note_id or str(uuid4())
+    today = datetime.now(timezone.utc).date().isoformat()
     return {
         "id": note_id,
         "type": "knowledge",
         "lifecycle": lifecycle.value,
         "category": "test",
         "tags": [],
-        "created": datetime.utcnow().date().isoformat(),
-        "updated": datetime.utcnow().date().isoformat(),
+        "created": today,
+        "updated": today,
         "provenance": {
             "source_type": "user",
             "source_ref": "unit_test",
