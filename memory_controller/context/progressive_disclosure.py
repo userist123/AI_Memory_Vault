@@ -31,6 +31,8 @@ class ProgressiveDisclosure:
                 "type": note.get("type"),
                 "lifecycle": note.get("lifecycle"),
                 "confidence": note.get("confidence"),
+                "verification": note.get("verification"),
+                "provenance": note.get("provenance", {}),
                 "relations": note.get("relations", [])
             }
             result.append(entry)
