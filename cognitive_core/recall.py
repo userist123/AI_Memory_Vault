@@ -159,24 +159,49 @@ class RecallEngine:
             elif lifecycle == "ARCHIVED":
                 lifecycle_factor = 0.6 if is_historical_query else 0.1
                 final_score *= lifecycle_factor
-            
+
             scored_nodes.append((node, final_score))
-            
+
+        # Lineage resolution: if a superseded note scored well, ensure active successor is present
+        from memory_controller.validation.supersession import resolve_active_lineage
+        active_candidates = {}
+        for node, score in list(scored_nodes):
+            if node.get("lifecycle") == "SUPERSEDED" and node.get("superseded_by"):
+                active_id = resolve_active_lineage(self.controller.storage, node.get("id"))
+                if active_id and active_id != node.get("id"):
+                    active_note = self.controller.storage.get(active_id)
+                    if active_note and active_note.get("lifecycle") == "ACTIVE":
+                        # Inherit score with a 10% freshness boost
+                        inherited_score = min(1.0, score * 1.1)
+                        if active_id not in active_candidates or inherited_score > active_candidates[active_id][1]:
+                            active_candidates[active_id] = (active_note, inherited_score)
+
+        for active_id, (active_note, inherited_score) in active_candidates.items():
+            existing_idx = next((i for i, (n, _) in enumerate(scored_nodes) if n.get("id") == active_id), None)
+            if existing_idx is not None:
+                if inherited_score > scored_nodes[existing_idx][1]:
+                    scored_nodes[existing_idx] = (active_note, inherited_score)
+            else:
+                scored_nodes.append((active_note, inherited_score))
+
         # Include REVIEW notes from storage to ensure they appear in WM with unverified flag
-        for note_id in self.controller.storage.id_to_path.keys():
-            note = self.controller.storage.get(note_id)
-            if note and note.get('lifecycle') == 'REVIEW':
-                # Check if note already in scored_nodes
-                found = False
-                for existing_node, _ in scored_nodes:
-                    if existing_node.get('id') == note.get('id'):
-                        existing_node['_cognitive_unverified'] = True
-                        found = True
-                        break
-                if not found:
-                    note_copy = note.copy()
-                    note_copy['_cognitive_unverified'] = True
-                    scored_nodes.append((note_copy, 0.0))
+        try:
+            review_notes = self.controller.storage.query(lifecycle=['REVIEW'])
+            for note in review_notes:
+                if note and note.get('lifecycle') == 'REVIEW':
+                    found = False
+                    for existing_node, _ in scored_nodes:
+                        if existing_node.get('id') == note.get('id'):
+                            existing_node['_cognitive_unverified'] = True
+                            found = True
+                            break
+                    if not found:
+                        note_copy = note.copy()
+                        note_copy['_cognitive_unverified'] = True
+                        scored_nodes.append((note_copy, 0.0))
+        except Exception:
+            pass
+
         # Sort descending by score, tie-break by ID
         scored_nodes.sort(key=lambda x: (x[1], x[0].get("id", "")), reverse=True)
         return scored_nodes

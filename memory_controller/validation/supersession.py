@@ -62,3 +62,27 @@ class SupersessionEnforcer:
             return False
 
         return has_path(old_id, new_id, set())
+
+def resolve_active_lineage(storage, note_id: str, max_depth: int = 50) -> str:
+    """Traverse the superseded_by chain until the active successor note is reached."""
+    # If storage engine natively implements resolve_active_lineage, use it
+    if hasattr(storage, "resolve_active_lineage") and callable(getattr(storage, "resolve_active_lineage")):
+        try:
+            return storage.resolve_active_lineage(note_id)
+        except Exception:
+            pass
+
+    current_id = str(note_id)
+    visited = set()
+    for _ in range(max_depth):
+        if current_id in visited:
+            break
+        visited.add(current_id)
+        note = storage.get(current_id)
+        if not note:
+            break
+        successor_id = note.get("superseded_by")
+        if not successor_id:
+            break
+        current_id = str(successor_id)
+    return current_id
