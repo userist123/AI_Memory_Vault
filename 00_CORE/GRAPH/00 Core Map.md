@@ -8,18 +8,19 @@ tags: [obsidian, graph, core]
 Core identity, goals, rules and architecture.
 
 - [[Knowledge Graph Home]]
-- [[Goals]]
-- [[Identity]]
-- [[Rules]]
-- [[System_Architecture]]
+- [[00_CORE/Goals]]
+- [[00_CORE/Identity]]
+- [[00_CORE/Rules]]
+- [[00_CORE/System_Architecture]]
 - [[PROJECT]]
 - [[AGENTS]]
-- [[Tag_Taxonomy]]
 
 ## Cross-group links
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
+- [[07 Knowledge Domains Map]]
+- [[13 Root and Control Map]]
 
 #group/core #obsidian #moc
