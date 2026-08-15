@@ -1,7 +1,7 @@
 ---
 category: index
 status: active
-version: 2.0.0
+version: 2.1.0
 confidence: high
 verification: not_applicable
 provenance_status: not_applicable
@@ -16,11 +16,12 @@ A persistent, trust-boundary-enforced memory and cognitive architecture for AI a
 
 ## What This Repository Actually Is
 
-This is **not** a plain note vault. It is a working Python system with three layers:
+This is **not** a plain note vault. It is a working Python system with four layers:
 
 1. **`memory_controller/`** -- the canonical, security-hardened memory store.
 2. **`cognitive_core/`** -- the reasoning/orchestration layer built on top of it.
 3. **`00_CORE/` .. `99_SYSTEM/`** -- the Obsidian-compatible Markdown vault itself (rules, knowledge, projects, procedures, memory, resources).
+4. **`00_CORE/GRAPH/`** -- an Obsidian graph-view navigation layer (Maps of Content) sitting on top of the vault content, for human visual navigation only.
 
 ## 1. Memory Layer -- `memory_controller/`
 
@@ -53,6 +54,7 @@ This trust boundary was the subject of a dedicated security hardening pass (see 
 
 ```
 00_CORE/        Identity, Rules, Memory Protocol, Confidence Model, System Architecture
+00_CORE/GRAPH/  Obsidian Maps of Content (graph-view navigation layer, see section 4)
 01_KNOWLEDGE/   Durable technical knowledge (imported + first-party)
 02_PROJECTS/    Active project state and continuity handoff documents
 03_PROCEDURES/  Repeatable procedures (import, classification, git backup/restore)
@@ -60,11 +62,18 @@ This trust boundary was the subject of a dedicated security hardening pass (see 
 05_RESOURCES/   Reference material
 06_INBOX/       Raw, unprocessed imports (never rewritten in place)
 90_TEMPLATES/   Canonical note templates
-99_SYSTEM/      Schemas, protocols, forensic/security documentation
+99_SYSTEM/      Schemas, protocols, forensic/security documentation, Graph Health Report
 .agents/        Repository-level agent rules and skills (Markdown, not executable orchestration)
+.obsidian/      Obsidian vault configuration, including graph.json folder-color groups
 ```
 
 Every canonical note carries the frontmatter schema defined in `99_SYSTEM/Canonical_Frontmatter.md`: `id`, `type`, `lifecycle`, `category`, `tags`, `created`, `updated`, `provenance`, `confidence`, `verification`, `relations`.
+
+## 4. Obsidian Graph Navigation Layer -- `00_CORE/GRAPH/`
+
+A set of `type: moc` (Map of Content) hub notes providing human-facing visual navigation across the vault's Obsidian graph view: `00 Core Map`, `01 Cognitive System Map`, `02 Memory Knowledge Map`, `06 Obsidian Graph Map`, `07 Knowledge Domains Map`, `08 Memory Subsystems Map`, `09 Agent Evidence Map`, `10 Imports and Sources Map`, `11 Templates and System Map`, `12 Projects and Procedures Map`, `13 Root and Control Map`, plus focused per-category maps for Lessons, Decisions, Errors, Experiences, and Preferences, all linked from a central `Knowledge Graph Home`. `.obsidian/graph.json` assigns folder-based color groups for visual clarity. `99_SYSTEM/Graph Health Report.md` documents what was added/corrected and validates link integrity.
+
+**This layer is purely for human visual navigation inside Obsidian.** It has no runtime role in `MemoryController` or `cognitive_core` -- it does not affect authorization, provenance, lifecycle, or retrieval scoring. Treat MOC notes as a separate, lightweight documentation layer, not as canonical memory content.
 
 ## What This Project Is Designed For, Right Now
 
