@@ -5,27 +5,35 @@ tags: [obsidian, graph, navigation]
 ---
 # 06 Obsidian Graph Map
 
-Obsidian-facing map. Use this as the visual entry point for the knowledge graph.
+Obsidian-facing map and graph navigation layer.
 
-## Groups
+## Primary entry
 - [[Knowledge Graph Home]]
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
+
+## Domain groups
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
+
+## Exhaustive indexes
+- [[07 Knowledge Domains Map]]
+- [[08 Memory Subsystems Map]]
+- [[09 Agent Evidence Map]]
+- [[10 Imports and Sources Map]]
+- [[11 Templates and System Map]]
+- [[12 Projects and Procedures Map]]
+- [[13 Root and Control Map]]
 
 ## Graph semantics
-- [[Knowledge_Graph_Schema]]
-- [[Knowledge_Graph_Relations]]
-- [[Tag_Taxonomy]]
-- [[Canonical_Frontmatter]]
+- [[99_SYSTEM/Knowledge_Graph_Schema]]
+- [[99_SYSTEM/Knowledge_Graph_Relations]]
+- [[99_SYSTEM/Tag_Taxonomy]]
+- [[99_SYSTEM/Canonical_Frontmatter]]
 
-## Operational entry points
-- [[AGENTS]]
-- [[PROJECT]]
-- [[Rules]]
-- [[02_PROJECTS/Continuity_Handoff]]
+## Health
+- [[99_SYSTEM/Graph Health Report]]
 
 #group/obsidian #graph #moc
