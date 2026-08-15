@@ -1,0 +1,29 @@
+{
+  "collapse-filter": false,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-display": false,
+  "colorGroups": [
+    {"query": "path:\"00_CORE\"", "color": {"a": 1, "rgb": 16776960}},
+    {"query": "path:\"01_KNOWLEDGE\"", "color": {"a": 1, "rgb": 65535}},
+    {"query": "path:\"02_PROJECTS\"", "color": {"a": 1, "rgb": 16711935}},
+    {"query": "path:\"03_PROCEDURES\"", "color": {"a": 1, "rgb": 16744192}},
+    {"query": "path:\"04_MEMORY\"", "color": {"a": 1, "rgb": 65280}},
+    {"query": "path:\"05_RESOURCES\"", "color": {"a": 1, "rgb": 8421631}},
+    {"query": "path:\"06_INBOX\"", "color": {"a": 1, "rgb": 10066329}},
+    {"query": "path:\"90_TEMPLATES\"", "color": {"a": 1, "rgb": 11184810}},
+    {"query": "path:\"99_SYSTEM\"", "color": {"a": 1, "rgb": 16744448}},
+    {"query": "path:\".agents\"", "color": {"a": 1, "rgb": 16753920}}
+  ],
+  "nodeSizeMultiplier": 1.0,
+  "lineSizeMultiplier": 1.0,
+  "centerStrength": 0.5,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 1.0,
+  "close": false
+}
