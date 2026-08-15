@@ -1,0 +1,68 @@
+---
+type: moc
+group: agents
+tags: [obsidian, graph, agents, evidence]
+---
+# 09 Agent Evidence Map
+
+Operational index for agent-generated briefings, dispatches, progress, reports, handoffs, audits and skills.
+
+- [[.agents/auditor_m1_1/report]]
+- [[.agents/auditor_m2_1/report]]
+- [[.agents/auditor_m3_1/report]]
+- [[.agents/auditor_m4_1/handoff]]
+- [[.agents/auditor_m4_2/handoff]]
+- [[.agents/auditor_m4_3/handoff]]
+- [[.agents/auditor_m5_1/BRIEFING]]
+- [[.agents/challenger_m1_1/handoff]]
+- [[.agents/challenger_m1_2/handoff]]
+- [[.agents/challenger_m2_1/handoff]]
+- [[.agents/challenger_m2_2/handoff]]
+- [[.agents/challenger_m3_1/handoff]]
+- [[.agents/challenger_m3_2/handoff]]
+- [[.agents/challenger_m4_1/handoff]]
+- [[.agents/challenger_m4_2/handoff]]
+- [[.agents/challenger_m4_3/handoff]]
+- [[.agents/challenger_m4_4/handoff]]
+- [[.agents/challenger_m4_5/handoff]]
+- [[.agents/challenger_m5_1/BRIEFING]]
+- [[.agents/challenger_m5_2/BRIEFING]]
+- [[.agents/explorer_m5_1/report]]
+- [[.agents/explorer_m5_2/report]]
+- [[.agents/explorer_m5_3/report]]
+- [[.agents/orchestrator_1/handoff]]
+- [[.agents/orchestrator_2/BRIEFING]]
+- [[.agents/orchestrator_gen2/handoff]]
+- [[.agents/orchestrator_gen3/BRIEFING]]
+- [[.agents/reviewer_m1_1/handoff]]
+- [[.agents/reviewer_m1_2/handoff]]
+- [[.agents/reviewer_m2_1/handoff]]
+- [[.agents/reviewer_m2_2/handoff]]
+- [[.agents/reviewer_m3_1/handoff]]
+- [[.agents/reviewer_m3_2/handoff]]
+- [[.agents/reviewer_m4_1/handoff]]
+- [[.agents/reviewer_m4_2/handoff]]
+- [[.agents/reviewer_m4_3/handoff]]
+- [[.agents/reviewer_m4_4/handoff]]
+- [[.agents/reviewer_m4_5/handoff]]
+- [[.agents/reviewer_m5_1/handoff]]
+- [[.agents/reviewer_m5_2/handoff]]
+- [[.agents/sentinel_1/BRIEFING]]
+- [[.agents/survey_codebase_explorer_1/report]]
+- [[.agents/survey_miner_1/report]]
+- [[.agents/survey_test_explorer_1/report]]
+- [[.agents/worker_m1_1/handoff]]
+- [[.agents/worker_m2_1/handoff]]
+- [[.agents/worker_m3_1/handoff]]
+- [[.agents/worker_m4_1/handoff]]
+- [[.agents/worker_m4_2/handoff]]
+- [[.agents/worker_m4_3/handoff]]
+- [[.agents/worker_m5_1/handoff]]
+
+## Graph hubs
+- [[Knowledge Graph Home]]
+- [[03 Agents Operations Map]]
+- [[04 Security Integrity Map]]
+- [[99_SYSTEM/Graph Health Report]]
+
+#group/agents #obsidian #moc
