@@ -8,21 +8,26 @@ tags: [obsidian, graph, cognitive, agents]
 Map of the executable cognitive architecture and its agent layer.
 
 - [[Knowledge Graph Home]]
-- [[System_Architecture]]
+- [[00_CORE/System_Architecture]]
 - [[PROJECT]]
-- [[AI_Memory_System]]
+- [[02_PROJECTS/AI_Memory_System]]
 
-## Cognitive components
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
+## Cognitive and memory groups
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
+- [[08 Memory Subsystems Map]]
 
 ## Operational concepts
-- [[Continuity_Handoff]]
-- [[Knowledge_Graph_Schema]]
-- [[Knowledge_Graph_Relations]]
+- [[02_PROJECTS/Continuity_Handoff]]
+- [[99_SYSTEM/Knowledge_Graph_Schema]]
+- [[99_SYSTEM/Knowledge_Graph_Relations]]
 
 ## Security boundary
-- [[04_Security_Integrity_Map]]
+- [[04 Security Integrity Map]]
+- [[99_SYSTEM/Integrity_Check]]
+
+## Evidence
+- [[09 Agent Evidence Map]]
+- [[99_SYSTEM/Graph Health Report]]
 
 #group/cognitive #obsidian #moc
