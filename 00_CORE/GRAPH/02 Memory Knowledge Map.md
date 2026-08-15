@@ -8,19 +8,27 @@ tags: [obsidian, graph, memory, knowledge]
 Navigation layer for memory, knowledge, graph semantics and retrieval-related material.
 
 - [[Knowledge Graph Home]]
-- [[Knowledge_Graph_Schema]]
-- [[Knowledge_Graph_Relations]]
-- [[RAG_KnowledgeGraph_Architecture]]
-- [[Import_Pipeline]]
-- [[Canonical_Frontmatter]]
-- [[Tag_Taxonomy]]
-- [[02_PROJECTS/AI_Memory_System]]
+- [[08 Memory Subsystems Map]]
+- [[Memory - Lessons Map]]
+- [[Memory - Decisions Map]]
+- [[Memory - Errors Map]]
+- [[Memory - Experiences Map]]
+- [[Memory - Preferences Map]]
+
+## System semantics
+- [[99_SYSTEM/Knowledge_Graph_Schema]]
+- [[99_SYSTEM/Knowledge_Graph_Relations]]
+- [[99_SYSTEM/RAG_KnowledgeGraph_Architecture]]
+- [[99_SYSTEM/RAG_Structure]]
+- [[99_SYSTEM/Import_Pipeline]]
+- [[99_SYSTEM/Canonical_Frontmatter]]
+- [[99_SYSTEM/Tag_Taxonomy]]
 
 ## Related groups
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
-- [[06_Obsidian_Graph_Map]]
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
+- [[07 Knowledge Domains Map]]
 
 #group/memory #obsidian #moc
