@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Any, Optional, Set, Tuple
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
 from memory_controller.core import Lifecycle
@@ -34,9 +34,10 @@ class ContinualLearningGuard:
                 violations.append(f"Anchor memory {anchor_id} was removed from active storage")
                 continue
             curr = current_map[anchor_id]
-            if curr.get("verification") == "verified" and anchor.get("verification") == "verified":
-                # Verified anchor must remain verified
-                pass
+            if anchor.get("verification") == "verified" and curr.get("verification") != "verified":
+                violations.append(f"Anchor memory {anchor_id} verification status was downgraded from verified to {curr.get('verification')}")
+            if anchor.get("content") and curr.get("content") != anchor.get("content"):
+                violations.append(f"Anchor memory {anchor_id} content drift/corruption detected")
 
         has_regression = len(violations) > 0
         return not has_regression, violations

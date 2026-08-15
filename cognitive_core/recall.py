@@ -88,6 +88,7 @@ class RecallEngine:
         is_historical_query = any(w in lowered_query for w in ["legacy", "deprecated", "historical", "old", "superseded"])
         
         scored_nodes = []
+        pre_lifecycle_scores = {}
         
         for node, activation in activated_nodes:
             content = node.get("content", "")
@@ -150,6 +151,11 @@ class RecallEngine:
                 (temporal_factor * self.weights["authority"])
             )
             
+            pre_lifecycle_score = final_score
+            node_id = node.get("id")
+            if node_id:
+                pre_lifecycle_scores[node_id] = pre_lifecycle_score
+
             # 7. Lifecycle down-ranking for historical/superseded notes
             lifecycle = node.get("lifecycle")
             if lifecycle == "SUPERSEDED":
@@ -171,8 +177,9 @@ class RecallEngine:
                 if active_id and active_id != node.get("id"):
                     active_note = self.controller.storage.get(active_id)
                     if active_note and active_note.get("lifecycle") == "ACTIVE":
-                        # Inherit score with a 10% freshness boost
-                        inherited_score = min(1.0, score * 1.1)
+                        # Inherit unpenalized score with a 10% freshness boost
+                        pre_score = pre_lifecycle_scores.get(node.get("id"), score)
+                        inherited_score = min(1.0, pre_score * 1.1)
                         if active_id not in active_candidates or inherited_score > active_candidates[active_id][1]:
                             active_candidates[active_id] = (active_note, inherited_score)
 

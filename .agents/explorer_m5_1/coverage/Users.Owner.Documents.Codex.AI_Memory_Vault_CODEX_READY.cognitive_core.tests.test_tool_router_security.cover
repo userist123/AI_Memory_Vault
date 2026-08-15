@@ -1,0 +1,77 @@
+>>>>>> import pytest
+>>>>>> import uuid
+>>>>>> from memory_controller.controller import MemoryController, StorageEngine, Lifecycle
+>>>>>> from memory_controller.authorizer import Principal
+>>>>>> from cognitive_core.tool_router import ToolRouter, ApprovalRequiredError
+>>>>>> from cognitive_core.learning import LearningEngine
+       
+>>>>>> def make_test_note(id_val, lifecycle="RAW", verification="unverified", provenance=None, content="test content"):
+    1:     if provenance is None:
+    1:         provenance = {"source_type": "inference", "source_ref": "tool-router-test"}
+    1:     return {
+    1:         "id": id_val,
+    1:         "type": "knowledge",
+    1:         "lifecycle": lifecycle,
+    1:         "category": "security-test",
+    1:         "tags": ["test"],
+    1:         "created": "2026-08-10",
+    1:         "updated": "2026-08-10",
+    1:         "provenance": provenance,
+    1:         "confidence": "high",
+    1:         "verification": verification,
+    1:         "relations": [],
+    1:         "content": content
+           }
+       
+       # P0-009: ToolRouter propagates security rejection when AI_AGENT proposes verified memory
+>>>>>> def test_p0_009_tool_router_blocks_ai_verified_propose():
+>>>>>>     storage = StorageEngine()
+>>>>>>     controller = MemoryController(storage)
+>>>>>>     router = ToolRouter(controller)
+           
+>>>>>>     note_id = str(uuid.uuid4())
+>>>>>>     payload = make_test_note(note_id, verification="verified")
+           
+>>>>>>     with pytest.raises(ValueError, match="verified"):
+>>>>>>         router.execute(Principal.AI_AGENT, "propose", {"note_data": payload})
+               
+>>>>>>     assert storage.get(note_id) is None
+       
+       # P0-009b: ToolRouter propagates security rejection when AI_AGENT claims user provenance
+>>>>>> def test_p0_009_tool_router_blocks_ai_user_provenance_propose():
+>>>>>>     storage = StorageEngine()
+>>>>>>     controller = MemoryController(storage)
+>>>>>>     router = ToolRouter(controller)
+           
+>>>>>>     note_id = str(uuid.uuid4())
+>>>>>>     payload = make_test_note(note_id, provenance={"source_type": "user", "source_ref": "injected"})
+           
+>>>>>>     with pytest.raises(ValueError, match="not permitted to claim provenance source_type 'user'"):
+>>>>>>         router.execute(Principal.AI_AGENT, "propose", {"note_data": payload})
+               
+>>>>>>     assert storage.get(note_id) is None
+       
+       # P0-012: LearningEngine promotes to partially_verified legitimately without breakage
+>>>>>> def test_p0_012_learning_engine_partially_verified_promotion():
+    1:     storage = StorageEngine()
+    1:     controller = MemoryController(storage)
+    1:     router = ToolRouter(controller)
+           
+    1:     note_id = str(uuid.uuid4())
+           # Create active note with medium confidence and 6 relations (>= threshold*2)
+    7:     relations = [{"relation": "related_to", "target": "knowledge", "target_id": str(uuid.uuid4())} for _ in range(6)]
+    1:     note = make_test_note(note_id, lifecycle="ACTIVE", verification="unverified")
+    1:     note["confidence"] = "medium"
+    1:     note["relations"] = relations
+    1:     note["provenance"] = {"source_type": "user", "source_ref": "user-base"}
+           
+           # Store note directly in storage as test fixture
+    1:     storage.set(note_id, note)
+           
+    1:     engine = LearningEngine(controller, router)
+    1:     promoted = engine.promote_memories(Principal.AI_AGENT)
+           
+    1:     assert note_id in promoted
+    1:     updated_note = storage.get(note_id)
+    1:     assert updated_note["confidence"] == "high"
+    1:     assert updated_note["verification"] == "partially_verified"

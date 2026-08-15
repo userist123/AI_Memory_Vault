@@ -1,0 +1,1914 @@
+[
+  {
+    "file": "cognitive_core/tests/test_activation.py",
+    "is_conftest": false,
+    "num_lines": 161,
+    "imports": [
+      "cognitive_core.activation",
+      "cognitive_core.synapse",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "memory_controller.core",
+      "pytest",
+      "typing",
+      "uuid"
+    ],
+    "fixtures": [
+      "clean_memory"
+    ],
+    "classes": [],
+    "test_count": 7,
+    "test_functions": [
+      {
+        "name": "test_synaptic_graph_extraction",
+        "line": 40,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_activation_direct_traversal",
+        "line": 61,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": "Test 1 hop traversal from node A to node B"
+      },
+      {
+        "name": "test_activation_cycle_detection",
+        "line": 79,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": "Test A -> B -> A cycle"
+      },
+      {
+        "name": "test_activation_depth_limit",
+        "line": 90,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": "Test A -> B -> C -> D, depth limit 2"
+      },
+      {
+        "name": "test_activation_node_limit",
+        "line": 107,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": "Test context economy node limit"
+      },
+      {
+        "name": "test_activation_lifecycle_isolation",
+        "line": 120,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": "Test that cognitive_read returns REVIEW nodes (tagged as unverified)\nbut still blocks RAW/ARCHIVED/etc."
+      },
+      {
+        "name": "test_activation_missing_target",
+        "line": 152,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": "Test resilience to missing targets in relations"
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_cognitive_loop.py",
+    "is_conftest": false,
+    "num_lines": 66,
+    "imports": [
+      "cognitive_core.executive",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "memory_controller.core",
+      "os",
+      "pytest"
+    ],
+    "fixtures": [
+      "clean_memory"
+    ],
+    "classes": [],
+    "test_count": 1,
+    "test_functions": [
+      {
+        "name": "test_full_cognitive_loop",
+        "line": 35,
+        "args": [
+          "clean_memory"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_consolidation.py",
+    "is_conftest": false,
+    "num_lines": 48,
+    "imports": [
+      "cognitive_core.consolidation",
+      "memory_controller.authorizer",
+      "memory_controller.core",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_consolidation_success",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_consolidation_insufficient_lessons",
+        "line": 35,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_continual_learning.py",
+    "is_conftest": false,
+    "num_lines": 56,
+    "imports": [
+      "cognitive_core.learning",
+      "cognitive_core.tool_router",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest",
+      "uuid"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_continual_learning_guard_anchor_verification",
+        "line": 8,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_learning_engine_promotes_to_very_high_with_execution_evidence",
+        "line": 27,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_continuity.py",
+    "is_conftest": false,
+    "num_lines": 57,
+    "imports": [
+      "cognitive_core.executive",
+      "cognitive_core.planning",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "os",
+      "pytest",
+      "tempfile",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 1,
+    "test_functions": [
+      {
+        "name": "test_executive_continuity",
+        "line": 11,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_deduplication.py",
+    "is_conftest": false,
+    "num_lines": 161,
+    "imports": [
+      "cognitive_core.deduplication",
+      "cognitive_core.semantic",
+      "memory_controller.authorizer",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 5,
+    "test_functions": [
+      {
+        "name": "test_deduplicator_scans_and_flags",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_deduplicator_different_versions_remain_separate",
+        "line": 46,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_deduplicator_different_sources_remain_separate",
+        "line": 75,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_deduplicator_unknown_versions_never_overlap",
+        "line": 104,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_deduplicator_different_technologies_remain_separate",
+        "line": 133,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_dynamic_synapses.py",
+    "is_conftest": false,
+    "num_lines": 54,
+    "imports": [
+      "cognitive_core.reflection",
+      "memory_controller.authorizer",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_propose_synapse_success",
+        "line": 6,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_propose_synapse_duplicate",
+        "line": 33,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_end_to_end_workflow.py",
+    "is_conftest": false,
+    "num_lines": 86,
+    "imports": [
+      "cognitive_core.executive",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "memory_controller.core",
+      "os",
+      "pytest",
+      "tempfile"
+    ],
+    "fixtures": [
+      "setup_notes"
+    ],
+    "classes": [],
+    "test_count": 1,
+    "test_functions": [
+      {
+        "name": "test_end_to_end_workflow",
+        "line": 39,
+        "args": [
+          "setup_notes"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_evaluation_and_recall_lineage.py",
+    "is_conftest": false,
+    "num_lines": 106,
+    "imports": [
+      "cognitive_core.evaluation",
+      "cognitive_core.recall",
+      "cognitive_core.semantic",
+      "cognitive_core.working_memory",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest",
+      "uuid"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 3,
+    "test_functions": [
+      {
+        "name": "test_trace_metrics_computation",
+        "line": 10,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_ir_metrics_precision_recall_mrr_ndcg",
+        "line": 38,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_recall_inherits_score_from_superseded_node",
+        "line": 70,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_executive.py",
+    "is_conftest": false,
+    "num_lines": 15,
+    "imports": [
+      "cognitive_core.executive",
+      "memory_controller.authorizer",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 1,
+    "test_functions": [
+      {
+        "name": "test_executive_process_intent",
+        "line": 6,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_learning.py",
+    "is_conftest": false,
+    "num_lines": 56,
+    "imports": [
+      "cognitive_core.learning",
+      "memory_controller.authorizer",
+      "memory_controller.core",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_learning_engine_promotes_confidence",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_learning_engine_skips_verified",
+        "line": 36,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_multiagent_orchestration.py",
+    "is_conftest": false,
+    "num_lines": 91,
+    "imports": [
+      "cognitive_core.executive",
+      "cognitive_core.orchestrator",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 5,
+    "test_functions": [
+      {
+        "name": "test_orchestrator_initialization",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_orchestrator_least_privilege_enforcement",
+        "line": 18,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_orchestrator_route_and_dispatch",
+        "line": 27,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_orchestrator_maintenance_pipeline",
+        "line": 43,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_executive_wires_maintenance_on_plan_completion",
+        "line": 52,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_planning.py",
+    "is_conftest": false,
+    "num_lines": 21,
+    "imports": [
+      "cognitive_core.planning",
+      "pytest"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_planner_create_plan",
+        "line": 4,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_planner_evaluate_plan",
+        "line": 15,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_reasoning.py",
+    "is_conftest": false,
+    "num_lines": 24,
+    "imports": [
+      "cognitive_core.reasoning",
+      "memory_controller.authorizer",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 1,
+    "test_functions": [
+      {
+        "name": "test_reasoning_synthesize",
+        "line": 6,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_recall.py",
+    "is_conftest": false,
+    "num_lines": 41,
+    "imports": [
+      "cognitive_core.recall",
+      "cognitive_core.semantic",
+      "cognitive_core.working_memory",
+      "memory_controller.authorizer",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_deterministic_semantic_provider",
+        "line": 8,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_recall_engine_scoring",
+        "line": 20,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_reconciliation_boundary.py",
+    "is_conftest": false,
+    "num_lines": 33,
+    "imports": [
+      "cognitive_core.tool_router",
+      "memory_controller.authorizer",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_reconciliation_boundary_blocks_verified",
+        "line": 6,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_reconciliation_boundary_allows_unverified",
+        "line": 21,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_reflection.py",
+    "is_conftest": false,
+    "num_lines": 57,
+    "imports": [
+      "cognitive_core.reflection",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 3,
+    "test_functions": [
+      {
+        "name": "test_reflection_evaluates_success",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_reflection_evaluates_error",
+        "line": 20,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_reflection_evaluates_blocked",
+        "line": 41,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_specialized_agents.py",
+    "is_conftest": false,
+    "num_lines": 84,
+    "imports": [
+      "cognitive_core.agents",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 5,
+    "test_functions": [
+      {
+        "name": "test_router_agent",
+        "line": 12,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_retrieval_agent",
+        "line": 27,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_verifier_agent",
+        "line": 45,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_consolidator_agent",
+        "line": 62,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_critic_agent",
+        "line": 73,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_tool_router_security.py",
+    "is_conftest": false,
+    "num_lines": 77,
+    "imports": [
+      "cognitive_core.learning",
+      "cognitive_core.tool_router",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest",
+      "uuid"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 3,
+    "test_functions": [
+      {
+        "name": "test_p0_009_tool_router_blocks_ai_verified_propose",
+        "line": 27,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_009_tool_router_blocks_ai_user_provenance_propose",
+        "line": 41,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_012_learning_engine_partially_verified_promotion",
+        "line": 55,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_tot_and_formal_reflexion.py",
+    "is_conftest": false,
+    "num_lines": 93,
+    "imports": [
+      "cognitive_core.reasoning",
+      "cognitive_core.reflection",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "pytest"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 5,
+    "test_functions": [
+      {
+        "name": "test_thought_validator",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_tree_of_thought_reasoner",
+        "line": 23,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_reasoning_engine_selective_tot",
+        "line": 36,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_formal_reflexion_structure",
+        "line": 54,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_self_refine_pre_consolidation",
+        "line": 83,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_version_parsing.py",
+    "is_conftest": false,
+    "num_lines": 49,
+    "imports": [
+      "cognitive_core.version",
+      "pytest"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_parse_technology_version",
+        "line": 23,
+        "args": [
+          "input_str",
+          "expected_tech",
+          "expected_range"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_version_compatibility",
+        "line": 29,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_working_memory.py",
+    "is_conftest": false,
+    "num_lines": 108,
+    "imports": [
+      "cognitive_core.attention",
+      "cognitive_core.working_memory",
+      "pytest",
+      "typing"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 5,
+    "test_functions": [
+      {
+        "name": "test_attention_model",
+        "line": 7,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_working_memory_admit",
+        "line": 25,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_working_memory_eviction",
+        "line": 44,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_working_memory_recency_eviction",
+        "line": 67,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_working_memory_refresh",
+        "line": 90,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "cognitive_core/tests/test_working_memory_persistence.py",
+    "is_conftest": false,
+    "num_lines": 70,
+    "imports": [
+      "cognitive_core.working_memory",
+      "memory_controller.authorizer",
+      "os",
+      "pytest",
+      "tempfile",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_working_memory_save_load",
+        "line": 8,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_working_memory_load_missing_node",
+        "line": 52,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/conftest.py",
+    "is_conftest": true,
+    "num_lines": 15,
+    "imports": [
+      "memory_controller.controller",
+      "os",
+      "pytest"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 0,
+    "test_functions": []
+  },
+  {
+    "file": "memory_controller/tests/test_audit.py",
+    "is_conftest": false,
+    "num_lines": 259,
+    "imports": [
+      "hashlib",
+      "json",
+      "memory_controller.audit.logger",
+      "memory_controller.controller",
+      "os",
+      "pytest",
+      "typing",
+      "unittest.mock"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 9,
+    "test_functions": [
+      {
+        "name": "test_audit_read_success_and_fail",
+        "line": 74,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_search_success_and_fail",
+        "line": 99,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_propose_success_and_fail",
+        "line": 127,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_update_success_and_fail",
+        "line": 149,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_review_success_and_fail",
+        "line": 166,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_promote_success_and_fail",
+        "line": 183,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_archive_success_and_fail",
+        "line": 203,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_permission_error_explicit",
+        "line": 220,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_hash_chaining_and_tamper_detection",
+        "line": 233,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_authorization.py",
+    "is_conftest": false,
+    "num_lines": 98,
+    "imports": [
+      "memory_controller.controller",
+      "pytest"
+    ],
+    "fixtures": [
+      "controller"
+    ],
+    "classes": [],
+    "test_count": 12,
+    "test_functions": [
+      {
+        "name": "test_ai_read_allowed",
+        "line": 28,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_human_read_allowed",
+        "line": 34,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_admin_read_allowed",
+        "line": 40,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_ai_propose_allowed",
+        "line": 47,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_human_propose_allowed",
+        "line": 52,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_admin_propose_allowed",
+        "line": 57,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_ai_cannot_review",
+        "line": 63,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_human_review_allowed",
+        "line": 69,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_admin_review_allowed",
+        "line": 75,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_ai_cannot_promote",
+        "line": 82,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_human_promote_allowed",
+        "line": 88,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_admin_promote_allowed",
+        "line": 94,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_cache.py",
+    "is_conftest": false,
+    "num_lines": 217,
+    "imports": [
+      "memory_controller.authorizer",
+      "memory_controller.cache.lru_cache",
+      "memory_controller.context.budget",
+      "memory_controller.controller",
+      "pytest",
+      "time",
+      "uuid"
+    ],
+    "fixtures": [
+      "controller"
+    ],
+    "classes": [],
+    "test_count": 11,
+    "test_functions": [
+      {
+        "name": "test_hit_miss_accounting",
+        "line": 30,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_ttl_expiration",
+        "line": 48,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_principal_isolation",
+        "line": 65,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_canonical_query_fingerprint_isolation",
+        "line": 83,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_filter_isolation",
+        "line": 98,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_cache_poisoning",
+        "line": 120,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_budget_mismatch",
+        "line": 133,
+        "args": [
+          "monkeypatch",
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_mutation_invalidation_propose",
+        "line": 165,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_mutation_invalidation_update",
+        "line": 177,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_mutation_invalidation_archive",
+        "line": 188,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_mutation_invalidation_review_promote",
+        "line": 199,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_context_economy.py",
+    "is_conftest": false,
+    "num_lines": 45,
+    "imports": [
+      "json",
+      "memory_controller.context.budget",
+      "pytest",
+      "zlib"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 3,
+    "test_functions": [
+      {
+        "name": "test_zlib_roundtrip",
+        "line": 8,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_soft_budget_degradation",
+        "line": 21,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_hard_limit_enforcement",
+        "line": 40,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_core.py",
+    "is_conftest": false,
+    "num_lines": 103,
+    "imports": [
+      "json",
+      "memory_controller.audit.logger",
+      "memory_controller.cache.lru_cache",
+      "memory_controller.context.budget",
+      "memory_controller.context.progressive_disclosure",
+      "memory_controller.context.query_classifier",
+      "memory_controller.context.retrieval",
+      "memory_controller.security",
+      "os",
+      "pytest",
+      "time"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 7,
+    "test_functions": [
+      {
+        "name": "test_context_budget_hard_limit",
+        "line": 22,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_query_classifier_defaults",
+        "line": 29,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_lru_cache_basic_eviction_and_ttl",
+        "line": 37,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_retrieval_engine_respects_max_notes",
+        "line": 56,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_progressive_disclosure_limits",
+        "line": 66,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_audit_logger_writes_and_reads",
+        "line": 80,
+        "args": [
+          "tmp_path"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_security_sanitize_and_path",
+        "line": 93,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_git_isolation.py",
+    "is_conftest": false,
+    "num_lines": 109,
+    "imports": [
+      "importlib.util",
+      "memory_controller.authorizer",
+      "os",
+      "pathlib",
+      "pytest",
+      "shutil",
+      "subprocess",
+      "sys"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 1,
+    "test_functions": [
+      {
+        "name": "test_git_isolation",
+        "line": 48,
+        "args": [
+          "tmp_path"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_lifecycle.py",
+    "is_conftest": false,
+    "num_lines": 106,
+    "imports": [
+      "datetime",
+      "memory_controller.controller",
+      "pytest",
+      "uuid"
+    ],
+    "fixtures": [
+      "controller"
+    ],
+    "classes": [],
+    "test_count": 5,
+    "test_functions": [
+      {
+        "name": "test_valid_transition",
+        "line": 46,
+        "args": [
+          "controller",
+          "src",
+          "dst"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_invalid_transition",
+        "line": 71,
+        "args": [
+          "controller",
+          "src",
+          "dst"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_raw_not_in_read_search",
+        "line": 78,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_verified_not_active_unless_promoted",
+        "line": 89,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_ai_cannot_bypass_lifecycle",
+        "line": 96,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_pagination.py",
+    "is_conftest": false,
+    "num_lines": 156,
+    "imports": [
+      "base64",
+      "datetime",
+      "hashlib",
+      "json",
+      "memory_controller.controller",
+      "memory_controller.security.pagination_token",
+      "os",
+      "pytest",
+      "time",
+      "uuid"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 6,
+    "test_functions": [
+      {
+        "name": "test_token_encode_decode_basic",
+        "line": 27,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_token_tamper_detection",
+        "line": 40,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_token_expiration_detection",
+        "line": 57,
+        "args": [
+          "monkeypatch"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_missing_secret_raises",
+        "line": 71,
+        "args": [
+          "monkeypatch"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_token_size_limit",
+        "line": 85,
+        "args": [
+          "monkeypatch"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_search_pagination_success_and_validation",
+        "line": 98,
+        "args": [
+          "monkeypatch"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_raw_imports.py",
+    "is_conftest": false,
+    "num_lines": 52,
+    "imports": [
+      "memory_controller.controller",
+      "pytest",
+      "uuid"
+    ],
+    "fixtures": [
+      "controller"
+    ],
+    "classes": [],
+    "test_count": 2,
+    "test_functions": [
+      {
+        "name": "test_raw_note_excluded_from_search",
+        "line": 11,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_raw_note_cannot_be_read",
+        "line": 34,
+        "args": [
+          "controller"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_security.py",
+    "is_conftest": false,
+    "num_lines": 137,
+    "imports": [
+      "hashlib",
+      "memory_controller.controller",
+      "memory_controller.security.utils",
+      "pytest",
+      "typing"
+    ],
+    "fixtures": [],
+    "classes": [],
+    "test_count": 8,
+    "test_functions": [
+      {
+        "name": "test_prompt_injection_sanitization",
+        "line": 29,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_query_size_boundary",
+        "line": 40,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_path_traversal_controller_operations",
+        "line": 51,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_cache_poisoning_malformed_key",
+        "line": 76,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_cache_poisoning_oversized_payload",
+        "line": 80,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_poisoned_cache_entry_invalidation",
+        "line": 90,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_valid_cache_entry_remains_usable",
+        "line": 114,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_no_cross_principal_leakage",
+        "line": 125,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_security_hardening.py",
+    "is_conftest": false,
+    "num_lines": 306,
+    "imports": [
+      "cognitive_core.learning",
+      "cognitive_core.tool_router",
+      "datetime",
+      "json",
+      "memory_controller.audit.logger",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "memory_controller.storage.file_engine",
+      "os",
+      "pytest",
+      "shutil",
+      "tempfile",
+      "uuid"
+    ],
+    "fixtures": [
+      "temp_vault",
+      "test_audit_log"
+    ],
+    "classes": [],
+    "test_count": 14,
+    "test_functions": [
+      {
+        "name": "test_p0_001_ai_cannot_propose_verified",
+        "line": 61,
+        "args": [
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_002_ai_cannot_claim_official_provenance",
+        "line": 78,
+        "args": [
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_003_ai_cannot_claim_user_provenance",
+        "line": 91,
+        "args": [
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_004_ai_cannot_inject_active_lifecycle_at_creation",
+        "line": 104,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_005_ai_cannot_update_verification_to_verified",
+        "line": 117,
+        "args": [
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_006_provenance_source_type_immutable",
+        "line": 132,
+        "args": [
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_007_lifecycle_immutable_on_update",
+        "line": 146,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_008_direct_controller_attack_blocked",
+        "line": 160,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_010_human_attestation",
+        "line": 177,
+        "args": [
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_011_admin_attestation_and_ai_agent_denied",
+        "line": 211,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_013_atomic_non_persistence",
+        "line": 233,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_014_restart_preserves_attestation",
+        "line": 248,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_p0_015_supersession_does_not_transfer_trust",
+        "line": 267,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_ai_cannot_self_verify",
+        "line": 290,
+        "args": [],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_sqlite_storage.py",
+    "is_conftest": false,
+    "num_lines": 207,
+    "imports": [
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "memory_controller.storage.sqlite_engine",
+      "os",
+      "pytest",
+      "sqlite3",
+      "tempfile",
+      "threading",
+      "time",
+      "uuid"
+    ],
+    "fixtures": [
+      "temp_db_path"
+    ],
+    "classes": [],
+    "test_count": 6,
+    "test_functions": [
+      {
+        "name": "test_sqlite_storage_basic_crud",
+        "line": 45,
+        "args": [
+          "temp_db_path"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_sqlite_wal_pragmas_and_checkpoint",
+        "line": 78,
+        "args": [
+          "temp_db_path"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_sqlite_schema_check_constraints",
+        "line": 95,
+        "args": [
+          "temp_db_path"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_sqlite_concurrent_readers_and_writers",
+        "line": 117,
+        "args": [
+          "temp_db_path"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_sqlite_recursive_lineage_resolution",
+        "line": 158,
+        "args": [
+          "temp_db_path"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_sqlite_memory_controller_full_integration",
+        "line": 186,
+        "args": [
+          "temp_db_path"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_storage.py",
+    "is_conftest": false,
+    "num_lines": 192,
+    "imports": [
+      "memory_controller.storage.file_engine",
+      "memory_controller.storage.path_resolver",
+      "memory_controller.storage.serializer",
+      "os",
+      "pathlib",
+      "pytest",
+      "shutil",
+      "tempfile",
+      "uuid",
+      "yaml"
+    ],
+    "fixtures": [
+      "temp_vault"
+    ],
+    "classes": [],
+    "test_count": 15,
+    "test_functions": [
+      {
+        "name": "test_frontmatter_roundtrip",
+        "line": 38,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_path_resolution",
+        "line": 54,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_filename_safety",
+        "line": 59,
+        "args": [],
+        "docstring": null
+      },
+      {
+        "name": "test_path_traversal_storage",
+        "line": 66,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_id_invariant",
+        "line": 85,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_filesystem_write_persists",
+        "line": 92,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_restart_persistence",
+        "line": 101,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_uuid_survives_filename_change",
+        "line": 109,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_update_persists",
+        "line": 123,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_lifecycle_persists",
+        "line": 132,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_raw_imports_untouched",
+        "line": 141,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_duplicate_uuid_detection",
+        "line": 157,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_malformed_frontmatter",
+        "line": 167,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_90_templates_exclusion",
+        "line": 176,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_atomic_write",
+        "line": 184,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      }
+    ]
+  },
+  {
+    "file": "memory_controller/tests/test_supersession_phase43.py",
+    "is_conftest": false,
+    "num_lines": 355,
+    "imports": [
+      "cognitive_core.recall",
+      "cognitive_core.semantic",
+      "cognitive_core.working_memory",
+      "datetime",
+      "json",
+      "memory_controller.audit.logger",
+      "memory_controller.authorizer",
+      "memory_controller.controller",
+      "memory_controller.storage.file_engine",
+      "os",
+      "pytest",
+      "shutil",
+      "tempfile",
+      "uuid"
+    ],
+    "fixtures": [
+      "temp_vault",
+      "test_audit_log"
+    ],
+    "classes": [],
+    "test_count": 9,
+    "test_functions": [
+      {
+        "name": "test_supersession_happy_path",
+        "line": 75,
+        "args": [
+          "temp_vault",
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_supersession_self_and_cycles_rejected",
+        "line": 124,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_supersession_human_verified_protection",
+        "line": 163,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_supersession_atomicity_and_persistence",
+        "line": 185,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_recall_version_aware_boosting",
+        "line": 229,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_recall_historical_queries",
+        "line": 260,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_valid_until_update_logs_audit_event",
+        "line": 289,
+        "args": [
+          "temp_vault",
+          "test_audit_log"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_recall_valid_from_filtering",
+        "line": 308,
+        "args": [
+          "temp_vault"
+        ],
+        "docstring": null
+      },
+      {
+        "name": "test_supersession_audit_failure",
+        "line": 339,
+        "args": [
+          "temp_vault",
+          "test_audit_log"
+        ],
+        "docstring": null
+      }
+    ]
+  }
+]

@@ -25,8 +25,8 @@ def test_consolidation_success():
     assert len(propose_calls) == 1
     proposed_node = propose_calls[0][0][2]["note_data"]
     assert proposed_node["type"] == "knowledge"
-    assert "lesson-1" in proposed_node["provenance"]["source_refs"]
-    assert "lesson-2" in proposed_node["provenance"]["source_refs"]
+    assert "lesson-1" in proposed_node["provenance"]["source_ref"]
+    assert "lesson-2" in proposed_node["provenance"]["source_ref"]
     
     # Verify archive was called through ToolRouter
     archive_calls = [c for c in calls if c[0][1] == "archive"]

@@ -1,0 +1,56 @@
+>>>>>> import pytest
+>>>>>> from unittest.mock import MagicMock
+>>>>>> from memory_controller.authorizer import Principal
+>>>>>> from memory_controller.core import Lifecycle
+>>>>>> from cognitive_core.learning import LearningEngine
+       
+>>>>>> def test_learning_engine_promotes_confidence():
+    1:     mock_controller = MagicMock()
+    1:     mock_router = MagicMock()
+    1:     mock_controller.search.return_value = {
+    2:         "results": [
+    1:             {
+    1:                 "id": "node-1",
+    1:                 "type": "knowledge",
+    1:                 "lifecycle": Lifecycle.ACTIVE.value,
+    1:                 "confidence": "low",
+    1:                 "verification": "unverified",
+    1:                 "relations": [{"target_id": "a"}, {"target_id": "b"}, {"target_id": "c"}]
+                   }
+               ]
+           }
+           
+    1:     engine = LearningEngine(mock_controller, mock_router)
+    1:     promoted = engine.promote_memories(Principal.AI_AGENT)
+           
+    1:     assert len(promoted) == 1
+    1:     assert promoted[0] == "node-1"
+           
+           # Verify update was called through ToolRouter
+    1:     mock_router.execute.assert_called_once()
+    1:     args = mock_router.execute.call_args[0]
+    1:     assert args[1] == "update"
+    1:     assert args[2]["note_id"] == "node-1"
+    1:     assert args[2]["confidence"] == "medium"
+       
+>>>>>> def test_learning_engine_skips_verified():
+    1:     mock_controller = MagicMock()
+    1:     mock_router = MagicMock()
+    1:     mock_controller.search.return_value = {
+    2:         "results": [
+    1:             {
+    1:                 "id": "node-1",
+    1:                 "type": "knowledge",
+    1:                 "lifecycle": Lifecycle.ACTIVE.value,
+    1:                 "confidence": "low",
+    1:                 "verification": "verified",
+    1:                 "relations": [{"target_id": "a"}, {"target_id": "b"}, {"target_id": "c"}]
+                   }
+               ]
+           }
+           
+    1:     engine = LearningEngine(mock_controller, mock_router)
+    1:     promoted = engine.promote_memories(Principal.AI_AGENT)
+           
+    1:     assert len(promoted) == 0
+    1:     mock_router.execute.assert_not_called()

@@ -1,0 +1,10 @@
+       # provenance.py
+>>>>>> """Validation of provenance fields in a note.
+       Ensures required provenance keys exist and minimal redaction rules.
+       """
+       
+>>>>>> def validate_provenance(prov: dict) -> None:
+    2:     required = {"source_type", "source_ref"}
+    2:     missing = required - set(prov.keys())
+    2:     if missing:
+>>>>>>         raise ValueError(f"Provenance missing required fields: {missing}")

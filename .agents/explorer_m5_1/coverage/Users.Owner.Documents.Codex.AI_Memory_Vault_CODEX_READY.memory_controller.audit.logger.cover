@@ -1,0 +1,140 @@
+>>>>>> import json
+>>>>>> import os
+>>>>>> import time
+>>>>>> from typing import Dict, Any, List, Tuple
+       
+>>>>>> class EnumEncoder(json.JSONEncoder):
+>>>>>>     def default(self, obj):
+>>>>>>         if hasattr(obj, "value"):
+>>>>>>             return obj.value
+>>>>>>         return super().default(obj)
+       
+>>>>>> class AuditLogger:
+           """Writes audit entries as JSON lines to a log file.
+       
+           Each entry contains:
+               - actor (e.g., 'agent', 'human')
+               - operation (e.g., 'READ', 'PROPOSE')
+               - target_id (note id)
+               - timestamp (ISO 8601)
+               - outcome ('success' or 'error')
+               - error_details (optional)
+               - metadata (optional dict for additional info)
+           """
+       
+>>>>>>     def __init__(self, log_path: str = None):
+>>>>>>         if log_path is None:
+                   # Default to a per‑conversation log inside the artifact directory
+>>>>>>             log_dir = os.getenv("ANTIGRAVITY_ARTIFACT_DIR", ".")
+>>>>>>             os.makedirs(log_dir, exist_ok=True)
+>>>>>>             log_path = os.path.join(log_dir, "audit_log.jsonl")
+>>>>>>         self.log_path = log_path
+               # Ensure file exists
+>>>>>>         open(self.log_path, "a", encoding="utf-8").close()
+       
+>>>>>>     def _get_last_entry_hash(self) -> str:
+    6:         if not os.path.exists(self.log_path):
+>>>>>>             return "GENESIS"
+    6:         last_hash = "GENESIS"
+    6:         try:
+   12:             with open(self.log_path, "r", encoding="utf-8") as f:
+38058:                 for line in f:
+38058:                     line = line.strip()
+38058:                     if line:
+38058:                         entry = json.loads(line)
+38052:                         if "entry_hash" in entry:
+ 9888:                             last_hash = entry["entry_hash"]
+    6:         except Exception:
+    6:             pass
+    6:         return last_hash
+       
+>>>>>>     def _write_entry(self, entry: Dict[str, Any]):
+    6:         import hashlib
+    6:         prev_hash = self._get_last_entry_hash()
+    6:         entry["prev_hash"] = prev_hash
+               
+               # Calculate entry hash over canonical JSON representation
+    6:         canonical_bytes = json.dumps(entry, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
+    6:         entry["entry_hash"] = hashlib.sha256(canonical_bytes).hexdigest()
+       
+   12:         with open(self.log_path, "a", encoding="utf-8") as f:
+    6:             f.write(json.dumps(entry, ensure_ascii=False, cls=EnumEncoder) + "\n")
+       
+>>>>>>     def verify_integrity(self) -> Tuple[bool, List[str]]:
+               """Verifies the SHA-256 tamper-evident hash chain across the audit log."""
+>>>>>>         import hashlib
+>>>>>>         if not os.path.exists(self.log_path):
+>>>>>>             return True, []
+               
+>>>>>>         violations = []
+>>>>>>         expected_prev_hash = "GENESIS"
+>>>>>>         line_num = 0
+       
+>>>>>>         with open(self.log_path, "r", encoding="utf-8") as f:
+>>>>>>             for line in f:
+>>>>>>                 line = line.strip()
+>>>>>>                 if not line:
+>>>>>>                     continue
+>>>>>>                 line_num += 1
+>>>>>>                 try:
+>>>>>>                     entry = json.loads(line)
+>>>>>>                     stored_entry_hash = entry.get("entry_hash")
+>>>>>>                     stored_prev_hash = entry.get("prev_hash")
+       
+>>>>>>                     if stored_prev_hash != expected_prev_hash:
+>>>>>>                         violations.append(f"Line {line_num}: prev_hash mismatch (expected {expected_prev_hash}, got {stored_prev_hash})")
+       
+>>>>>>                     entry_without_hash = {k: v for k, v in entry.items() if k != "entry_hash"}
+>>>>>>                     canonical_bytes = json.dumps(entry_without_hash, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
+>>>>>>                     computed_hash = hashlib.sha256(canonical_bytes).hexdigest()
+       
+>>>>>>                     if stored_entry_hash != computed_hash:
+>>>>>>                         violations.append(f"Line {line_num}: entry_hash mismatch (expected {computed_hash}, got {stored_entry_hash})")
+       
+>>>>>>                     expected_prev_hash = stored_entry_hash or "GENESIS"
+>>>>>>                 except Exception as e:
+>>>>>>                     violations.append(f"Line {line_num}: JSON parse or validation error: {str(e)}")
+       
+>>>>>>         return len(violations) == 0, violations
+       
+>>>>>>     def log(self,
+>>>>>>             actor: str,
+>>>>>>             operation: str,
+>>>>>>             target_id: str,
+>>>>>>             outcome: str = "success",
+>>>>>>             error_details: str = None,
+>>>>>>             metadata: Dict[str, Any] = None):
+    6:         entry = {
+    6:             "actor": actor,
+    6:             "operation": operation,
+    6:             "target_id": target_id,
+    6:             "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+    6:             "outcome": outcome,
+               }
+    6:         if error_details:
+>>>>>>             entry["error_details"] = error_details
+    6:         if metadata:
+    2:             entry["metadata"] = metadata
+    6:         self._write_entry(entry)
+       
+       # Helper singleton for easy import
+>>>>>> _logger_instance = None
+       
+>>>>>> def get_logger() -> AuditLogger:
+           global _logger_instance
+    6:     if _logger_instance is None:
+>>>>>>         _logger_instance = AuditLogger()
+    6:     return _logger_instance
+       
+>>>>>> def audit_event(operation: str, principal, target_id: str, success: bool = True, details: dict = None):
+           """Convenient wrapper used by the controller.
+           principal is a Principal enum; we store the .value as actor.
+           """
+    6:     logger = get_logger()
+   12:     logger.log(
+    6:         actor=principal.value if hasattr(principal, "value") else str(principal),
+    6:         operation=operation,
+    6:         target_id=target_id,
+    6:         outcome="success" if success else "error",
+    6:         metadata=details,
+           )

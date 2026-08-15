@@ -75,6 +75,8 @@ class RetrievalEvaluator:
         """Calculate Recall@K."""
         if not relevant_ids:
             return 1.0
+        if k <= 0:
+            return 0.0
         top_k = retrieved_ids[:k]
         relevant_count = sum(1 for doc_id in top_k if doc_id in relevant_ids)
         return relevant_count / len(relevant_ids)
@@ -98,6 +100,8 @@ class RetrievalEvaluator:
     @staticmethod
     def ndcg_at_k(retrieved_ids: List[str], relevance_scores: Dict[str, float], k: int = 5) -> float:
         """Calculate Normalized Discounted Cumulative Gain (NDCG@K)."""
+        if k <= 0:
+            return 0.0
         top_k = retrieved_ids[:k]
         if not top_k:
             return 0.0

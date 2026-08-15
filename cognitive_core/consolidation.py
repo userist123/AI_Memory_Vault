@@ -38,11 +38,18 @@ class Consolidator:
         for lesson in lessons_to_consolidate:
             combined_content += f"- {lesson.get('content', '')[:100]}...\n"
             source_refs.append(lesson.get("id"))
-            relations.append({
-                "target_id": lesson.get("id"),
-                "type": "derived_from",
-                "confidence": "high"
-            })
+            rel = {
+                "relation": "derived_from",
+                "target": lesson.get("type", "lesson")
+            }
+            lesson_id = lesson.get("id")
+            if lesson_id:
+                try:
+                    uuid.UUID(str(lesson_id))
+                    rel["target_id"] = str(lesson_id)
+                except (ValueError, TypeError, AttributeError):
+                    pass
+            relations.append(rel)
             
         new_id = str(uuid.uuid4())
         
@@ -50,11 +57,13 @@ class Consolidator:
             "id": new_id,
             "type": "knowledge",
             "lifecycle": Lifecycle.REVIEW.value,
+            "category": "consolidated-knowledge",
+            "tags": ["consolidated", "lessons"],
             "confidence": "medium",
             "verification": "unverified",
             "provenance": {
                 "source_type": "inference",
-                "source_refs": source_refs
+                "source_ref": ", ".join(source_refs) if source_refs else "consolidated-lessons"
             },
             "content": combined_content,
             "relations": relations

@@ -1,0 +1,56 @@
+>>>>>> import pytest
+>>>>>> import uuid
+>>>>>> from cognitive_core.learning import LearningEngine, ContinualLearningGuard
+>>>>>> from cognitive_core.tool_router import ToolRouter
+>>>>>> from memory_controller.controller import MemoryController, StorageEngine
+>>>>>> from memory_controller.authorizer import Principal
+       
+>>>>>> def test_continual_learning_guard_anchor_verification():
+    1:     guard = ContinualLearningGuard()
+    1:     anchor1 = {"id": "core-rule-1", "content": "Source of Truth Hierarchy", "verification": "verified"}
+    1:     anchor2 = {"id": "core-rule-2", "content": "Memory Protocol", "verification": "verified"}
+       
+    1:     guard.register_anchor_node(anchor1)
+    1:     guard.register_anchor_node(anchor2)
+       
+           # Clean state
+    1:     ok, violations = guard.verify_no_catastrophic_regression([anchor1, anchor2])
+    1:     assert ok is True
+    1:     assert len(violations) == 0
+       
+           # Missing anchor state (simulating forgetting/corruption)
+    1:     ok_bad, violations_bad = guard.verify_no_catastrophic_regression([anchor1])
+    1:     assert ok_bad is False
+    1:     assert len(violations_bad) == 1
+    1:     assert "core-rule-2" in violations_bad[0]
+       
+>>>>>> def test_learning_engine_promotes_to_very_high_with_execution_evidence():
+    1:     storage = StorageEngine()
+    1:     controller = MemoryController(storage)
+    1:     router = ToolRouter(controller)
+    1:     engine = LearningEngine(controller, router)
+       
+    1:     note_id = str(uuid.uuid4())
+   10:     relations = [{"relation": "related_to", "target": "knowledge", "target_id": str(uuid.uuid4())} for _ in range(9)]
+    1:     node = {
+    1:         "id": note_id,
+    1:         "type": "knowledge",
+    1:         "lifecycle": "ACTIVE",
+    1:         "category": "testing",
+    1:         "tags": ["execution"],
+    1:         "created": "2026-08-14",
+    1:         "updated": "2026-08-14",
+    1:         "provenance": {"source_type": "execution", "source_ref": "pytest-suite"},
+    1:         "confidence": "high",
+    1:         "verification": "partially_verified",
+    1:         "relations": relations,
+    1:         "content": "Execution verified automated testing procedure"
+           }
+       
+    1:     storage.set(note_id, node)
+    1:     promoted = engine.promote_memories(Principal.AI_AGENT)
+       
+    1:     assert note_id in promoted
+    1:     updated = storage.get(note_id)
+    1:     assert updated["confidence"] == "very_high"
+    1:     assert updated["verification"] == "partially_verified"

@@ -257,3 +257,66 @@ def test_audit_hash_chaining_and_tamper_detection():
     is_valid_tampered, violations_tampered = logger.verify_integrity()
     assert is_valid_tampered is False
     assert len(violations_tampered) > 0
+
+def test_audit_empty_and_nonexistent_log():
+    # Non-existent file
+    non_existent_logger = logger_module.AuditLogger("non_existent_log_path.jsonl")
+    if os.path.exists("non_existent_log_path.jsonl"):
+        os.remove("non_existent_log_path.jsonl")
+    is_valid, violations = non_existent_logger.verify_integrity()
+    assert is_valid is True
+    assert len(violations) == 0
+
+    # Empty file
+    empty_path = "empty_audit_log.jsonl"
+    open(empty_path, "w", encoding="utf-8").close()
+    empty_logger = logger_module.AuditLogger(empty_path)
+    is_valid, violations = empty_logger.verify_integrity()
+    assert is_valid is True
+    assert len(violations) == 0
+    if os.path.exists(empty_path):
+        os.remove(empty_path)
+
+def test_audit_tamper_prev_hash_and_deletion():
+    logger = logger_module._logger_instance
+    logger.log("agent", "read", "node-1")
+    logger.log("human", "attest", "node-1")
+    logger.log("admin", "promote", "node-1")
+    logger.log("agent", "search", "query-hash-1")
+
+    # Read entries
+    with open(TEST_AUDIT_LOG, "r", encoding="utf-8") as f:
+        entries = [json.loads(line) for line in f if line.strip()]
+
+    # Case 1: Corrupted prev_hash
+    tampered_prev = [dict(e) for e in entries]
+    tampered_prev[2]["prev_hash"] = "0000000000000000000000000000000000000000000000000000000000000000"
+    with open(TEST_AUDIT_LOG, "w", encoding="utf-8") as f:
+        for e in tampered_prev:
+            f.write(json.dumps(e) + "\n")
+
+    is_valid, violations = logger.verify_integrity()
+    assert is_valid is False
+    assert any("prev_hash mismatch" in v for v in violations)
+
+    # Case 2: Deleted entry (delete entry index 1)
+    deleted_entries = [entries[0], entries[2], entries[3]]
+    with open(TEST_AUDIT_LOG, "w", encoding="utf-8") as f:
+        for e in deleted_entries:
+            f.write(json.dumps(e) + "\n")
+
+    is_valid, violations = logger.verify_integrity()
+    assert is_valid is False
+    assert any("prev_hash mismatch" in v for v in violations)
+
+def test_audit_corrupted_json_entry():
+    logger = logger_module._logger_instance
+    logger.log("agent", "read", "node-1")
+    
+    with open(TEST_AUDIT_LOG, "a", encoding="utf-8") as f:
+        f.write("CORRUPTED_NON_JSON_LINE\n")
+
+    is_valid, violations = logger.verify_integrity()
+    assert is_valid is False
+    assert any("JSON parse or validation error" in v for v in violations)
+

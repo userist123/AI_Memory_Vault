@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
 from memory_controller.core import Lifecycle
@@ -36,7 +36,15 @@ class SelfRefine:
         """Validates whether a candidate memory is coherent, specific, and non-redundant.
         Returns: (passed_filter, refined_candidate)
         """
-        content = candidate.get("content", "").strip()
+        if not isinstance(candidate, dict):
+            return False, candidate
+
+        raw_content = candidate.get("content")
+        if not isinstance(raw_content, str):
+            content = ""
+        else:
+            content = raw_content.strip()
+
         if not content or len(content) < 15:
             return False, candidate
 
@@ -124,28 +132,39 @@ class ReflectionPipeline:
     def propose_synapse(self, principal: Principal, source_id: str, target_id: str, relation_type: str = "related_to") -> Optional[str]:
         try:
             pack = self.controller.read(principal, source_id)
-            results = pack.get("results", [])
+            results = pack.get("results", []) if isinstance(pack, dict) else []
             if not results:
                 return None
 
             source_node = results[0]
             relations = source_node.get("relations", [])
-            if not relations:
+            if not isinstance(relations, list):
                 relations = []
+            else:
+                relations = list(relations)
 
             for rel in relations:
-                if rel.get("target_id") == target_id and rel.get("type") == relation_type:
-                    return None
+                if isinstance(rel, dict) and rel.get("target_id") == target_id:
+                    if rel.get("relation") == relation_type or rel.get("type") == relation_type:
+                        return None
 
-            relations.append({
-                "target_id": target_id,
-                "type": relation_type,
-                "confidence": "unverified"
-            })
-            source_node["relations"] = relations
+            # Retrieve target node type if available to comply with canonical schema
+            target_pack = self.controller.read(principal, target_id)
+            target_results = target_pack.get("results", []) if isinstance(target_pack, dict) else []
+            target_node = target_results[0] if target_results else {}
+            target_type = target_node.get("type", "knowledge") if isinstance(target_node, dict) else "knowledge"
+            if not isinstance(target_type, str):
+                target_type = "knowledge"
+
+            canonical_relation = {
+                "relation": relation_type,
+                "target": target_type,
+                "target_id": target_id
+            }
+            relations.append(canonical_relation)
 
             if hasattr(self.controller, "update"):
-                self.controller.update(principal, source_id, source_node)
+                self.controller.update(principal, source_id, {"relations": relations})
                 return source_id
             return None
         except Exception:

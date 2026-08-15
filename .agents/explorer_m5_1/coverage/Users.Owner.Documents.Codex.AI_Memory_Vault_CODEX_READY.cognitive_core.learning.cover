@@ -1,0 +1,104 @@
+>>>>>> from typing import List, Dict, Any, Optional, Set, Tuple
+>>>>>> from memory_controller.controller import MemoryController
+>>>>>> from memory_controller.authorizer import Principal
+>>>>>> from memory_controller.core import Lifecycle
+>>>>>> from .tool_router import ToolRouter
+       
+>>>>>> class ContinualLearningGuard:
+           """Mitigates catastrophic forgetting by maintaining a canonical replay set
+           and evaluating knowledge integrity against regression thresholds.
+           """
+       
+>>>>>>     def __init__(self, tolerance_threshold: float = 0.05):
+    5:         self.tolerance_threshold = tolerance_threshold
+    5:         self.replay_anchor_nodes: Dict[str, Dict[str, Any]] = {}
+       
+>>>>>>     def register_anchor_node(self, node: Dict[str, Any]) -> None:
+               """Registers a canonical ground truth memory as an anchor."""
+    2:         node_id = node.get("id")
+    2:         if node_id:
+    2:             self.replay_anchor_nodes[node_id] = {
+    2:                 "id": node_id,
+    2:                 "content": node.get("content", ""),
+    2:                 "type": node.get("type", "knowledge"),
+    2:                 "verification": node.get("verification", "unverified")
+                   }
+       
+>>>>>>     def verify_no_catastrophic_regression(self, current_storage_notes: List[Dict[str, Any]]) -> Tuple[bool, List[str]]:
+               """Verifies that no registered anchor memories have been silently corrupted or erased."""
+    2:         violations = []
+    5:         current_map = {n.get("id"): n for n in current_storage_notes if n.get("id")}
+       
+    6:         for anchor_id, anchor in self.replay_anchor_nodes.items():
+    4:             if anchor_id not in current_map:
+    1:                 violations.append(f"Anchor memory {anchor_id} was removed from active storage")
+    1:                 continue
+    3:             curr = current_map[anchor_id]
+    3:             if curr.get("verification") == "verified" and anchor.get("verification") == "verified":
+                       # Verified anchor must remain verified
+    3:                 pass
+       
+    2:         has_regression = len(violations) > 0
+    2:         return not has_regression, violations
+       
+>>>>>> class LearningEngine:
+           """BRAIN-15: Long-Term Continual Learning.
+           Periodically evaluates unverified memories. If they accumulate
+           significant graph density and execution evidence, their confidence is promoted.
+           All write operations go through ToolRouter, enforcing trust boundaries.
+           """
+>>>>>>     def __init__(self, memory_controller: MemoryController, tool_router: ToolRouter):
+    4:         self.controller = memory_controller
+    4:         self.router = tool_router
+    4:         self.promotion_threshold = 3
+    4:         self.guard = ContinualLearningGuard()
+       
+>>>>>>     def promote_memories(self, principal: Principal) -> List[str]:
+               """Scans for memories that meet the promotion criteria and updates them.
+               Returns a list of node IDs that were promoted.
+               """
+    4:         pack = self.controller.search(principal, "knowledge", page_size=20)
+    4:         candidates = pack.get("results", [])
+       
+    4:         promoted_ids = []
+       
+    8:         for node in candidates:
+    4:             if node.get("lifecycle") != Lifecycle.ACTIVE.value:
+>>>>>>                 continue
+       
+    4:             if node.get("verification") == "verified":
+    1:                 continue
+       
+    3:             relations = node.get("relations", [])
+    3:             confidence = node.get("confidence", "unknown")
+    3:             provenance = node.get("provenance", {})
+    3:             source_type = provenance.get("source_type", "unknown")
+       
+    3:             promoted = False
+    3:             updates = {}
+       
+    3:             if len(relations) >= self.promotion_threshold:
+    3:                 if confidence in ["unknown", "low"]:
+    1:                     updates["confidence"] = "medium"
+    1:                     promoted = True
+    2:                 elif confidence == "medium" and len(relations) >= self.promotion_threshold * 2:
+    1:                     updates["confidence"] = "high"
+    1:                     updates["verification"] = "partially_verified"
+    1:                     promoted = True
+    1:                 elif confidence == "high" and source_type == "execution" and len(relations) >= self.promotion_threshold * 3:
+                           # Verified through execution evidence: promote confidence to very_high
+    1:                     updates["confidence"] = "very_high"
+    1:                     updates["verification"] = "partially_verified"
+    1:                     promoted = True
+       
+    3:                 if promoted:
+    3:                     try:
+    9:                         self.router.execute(principal, "update", {
+    3:                             "note_id": node["id"],
+    3:                             **updates
+                               })
+    3:                         promoted_ids.append(node["id"])
+>>>>>>                     except Exception:
+>>>>>>                         pass
+       
+    4:         return promoted_ids

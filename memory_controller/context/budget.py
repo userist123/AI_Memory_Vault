@@ -132,47 +132,6 @@ class ContextBudget:
         # Step 6: enforce hard limit
         self.check_hard_limit(total_usage(ordered))
         return ordered
-        """Apply deterministic degradation to fit within soft and hard limits.
-
-        Steps:
-        1. Sort notes by relevance descending.
-        2. Enforce max_full_documents: keep full content for top N, clear others.
-        3. If still over soft limit, drop lowest‑relevant notes until within soft or only max_full_documents remain.
-        4. If still over soft, clear content of remaining notes (starting from lowest relevance) until within soft.
-        5. Compress large contents (>1 KiB) internally with zlib.
-        6. Enforce hard limit; raise BudgetExceededError if exceeded.
-        """
-        # Step 1: sort notes by relevance descending
-        ordered = sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)
-
-        # Step 2: enforce max_full_documents
-        for i, note in enumerate(ordered):
-            if i >= self.max_full_documents:
-                note["content"] = ""
-
-        def total_usage(ns: List[Dict[str, Any]]) -> int:
-            return sum(self._size_of(n) for n in ns)
-
-        # Step 3: drop notes if over soft limit
-        while total_usage(ordered) > self.soft_limit_bytes and len(ordered) > self.max_full_documents:
-            ordered.pop()  # remove least relevant note
-
-        # Step 4: clear content of remaining notes if still over soft limit
-        for note in ordered[:self.max_full_documents]:
-            if total_usage(ordered) <= self.soft_limit_bytes:
-                break
-            note["content"] = ""
-
-        # Step 5: compress large contents internally
-        for note in ordered:
-            content = note.get("content", "")
-            if isinstance(content, str) and len(content.encode("utf-8")) > 1024:
-                note["content"] = zlib.compress(content.encode("utf-8"))
-
-        # Step 6: enforce hard limit
-        self.check_hard_limit(total_usage(ordered))
-        return ordered
-    
 
     # ---------------------------------------------------------------------
     # Utility for max_full_documents enforcement (called by callers as needed).

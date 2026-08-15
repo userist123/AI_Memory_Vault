@@ -304,3 +304,72 @@ def test_ai_cannot_self_verify():
     # 3. via update
     with pytest.raises(ValueError):
         controller.update(Principal.AI_AGENT, note_id, {"verification": "verified"})
+
+def test_p0_additional_ai_prohibited_provenance_types():
+    storage = StorageEngine()
+    controller = MemoryController(storage)
+    
+    # Prohibited: experience
+    id1 = str(uuid.uuid4())
+    with pytest.raises(ValueError, match="not permitted to claim provenance source_type 'experience'"):
+        controller.propose(Principal.AI_AGENT, make_test_note(id1, provenance={"source_type": "experience", "source_ref": "exp"}))
+    assert storage.get(id1) is None
+    
+    # Prohibited: import
+    id2 = str(uuid.uuid4())
+    with pytest.raises(ValueError, match="not permitted to claim provenance source_type 'import'"):
+        controller.propose(Principal.AI_AGENT, make_test_note(id2, provenance={"source_type": "import", "source_ref": "imp"}))
+    assert storage.get(id2) is None
+
+def test_p0_ai_permitted_provenance_types():
+    storage = StorageEngine()
+    controller = MemoryController(storage)
+    
+    for st in ["execution", "ai", "inference", "unknown"]:
+        nid = str(uuid.uuid4())
+        controller.propose(Principal.AI_AGENT, make_test_note(nid, lifecycle="REVIEW", provenance={"source_type": st, "source_ref": f"ref-{st}"}))
+        assert storage.get(nid) is not None
+        assert storage.get(nid)["provenance"]["source_type"] == st
+
+def test_p0_ai_prohibited_creation_lifecycles():
+    storage = StorageEngine()
+    controller = MemoryController(storage)
+    
+    for prohibited_lc in ["VERIFIED", "SUPERSEDED", "ARCHIVED"]:
+        nid = str(uuid.uuid4())
+        with pytest.raises(ValueError, match=f"cannot set lifecycle to '{prohibited_lc}' at creation"):
+            controller.propose(Principal.AI_AGENT, make_test_note(nid, lifecycle=prohibited_lc))
+        assert storage.get(nid) is None
+
+def test_p0_sqlite_storage_security_hardening(temp_vault):
+    from memory_controller.storage.sqlite_engine import SQLiteStorageEngine
+    db_path = os.path.join(temp_vault, "test_sec.sqlite3")
+    storage = SQLiteStorageEngine(db_path, wal_mode=True)
+    controller = MemoryController(storage)
+    
+    # 1. AI cannot propose verified
+    id1 = str(uuid.uuid4())
+    with pytest.raises(ValueError, match="verified"):
+        controller.propose(Principal.AI_AGENT, make_test_note(id1, verification="verified"))
+    assert storage.get(id1) is None
+    
+    # 2. AI cannot claim user provenance
+    id2 = str(uuid.uuid4())
+    with pytest.raises(ValueError, match="not permitted to claim provenance source_type 'user'"):
+        controller.propose(Principal.AI_AGENT, make_test_note(id2, provenance={"source_type": "user", "source_ref": "u"}))
+    assert storage.get(id2) is None
+    
+    # 3. Legitimate propose in REVIEW -> Human attest -> Promote to ACTIVE
+    id3 = str(uuid.uuid4())
+    controller.propose(Principal.AI_AGENT, make_test_note(id3, lifecycle="REVIEW", provenance={"source_type": "inference", "source_ref": "inf"}))
+    assert storage.get(id3)["verification"] == "unverified"
+    
+    controller.attest(Principal.HUMAN, id3, "Human verified against facts", "evidence-ref-1")
+    assert storage.get(id3)["verification"] == "verified"
+    assert storage.get(id3)["verification_source"] == "human"
+    
+    controller.promote(Principal.HUMAN, id3)
+    assert storage.get(id3)["lifecycle"] == "ACTIVE"
+    
+    storage.close()
+

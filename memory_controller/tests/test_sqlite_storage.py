@@ -205,3 +205,82 @@ def test_sqlite_memory_controller_full_integration(temp_db_path):
     assert len(pack["results"]) == 1
 
     engine.close()
+
+def test_sqlite_pragmas_explicit(temp_db_path):
+    engine = SQLiteStorageEngine(temp_db_path, wal_mode=True)
+    conn = engine._get_connection()
+    
+    # Check journal_mode = WAL
+    cur = conn.execute("PRAGMA journal_mode;")
+    assert cur.fetchone()[0].lower() == "wal"
+    
+    # Check busy_timeout = 5000
+    cur = conn.execute("PRAGMA busy_timeout;")
+    assert cur.fetchone()[0] == 5000
+    
+    # Check foreign_keys = ON (1)
+    cur = conn.execute("PRAGMA foreign_keys;")
+    assert cur.fetchone()[0] == 1
+    
+    engine.close()
+
+def test_sqlite_recursive_lineage_cycle_and_depth_limit(temp_db_path):
+    engine = SQLiteStorageEngine(temp_db_path)
+    
+    # Test cycle: A -> B -> C -> A
+    id_a = str(uuid.uuid4())
+    id_b = str(uuid.uuid4())
+    id_c = str(uuid.uuid4())
+    
+    note_a = make_note(id_a, lifecycle="SUPERSEDED")
+    note_a["superseded_by"] = id_b
+    note_b = make_note(id_b, lifecycle="SUPERSEDED")
+    note_b["superseded_by"] = id_c
+    note_c = make_note(id_c, lifecycle="SUPERSEDED")
+    note_c["superseded_by"] = id_a
+    
+    engine.set(id_a, note_a)
+    engine.set(id_b, note_b)
+    engine.set(id_c, note_c)
+    
+    # Must terminate without infinite loop due to depth < 50
+    resolved = engine.resolve_active_lineage(id_a)
+    assert resolved in (id_a, id_b, id_c)
+    
+    # Test deep chain of 60 notes: n0 -> n1 -> ... -> n59
+    chain_ids = [str(uuid.uuid4()) for _ in range(60)]
+    for idx in range(59):
+        n = make_note(chain_ids[idx], lifecycle="SUPERSEDED")
+        n["superseded_by"] = chain_ids[idx + 1]
+        engine.set(chain_ids[idx], n)
+    engine.set(chain_ids[59], make_note(chain_ids[59], lifecycle="ACTIVE"))
+    
+    # Resolving from chain_ids[0] should halt at depth 50
+    resolved_deep = engine.resolve_active_lineage(chain_ids[0])
+    assert resolved_deep == chain_ids[50]
+    
+    # Non-existent ID returns itself
+    non_existent = str(uuid.uuid4())
+    assert engine.resolve_active_lineage(non_existent) == non_existent
+    
+    engine.close()
+
+def test_sqlite_atomic_rollback_on_failure(temp_db_path):
+    engine = SQLiteStorageEngine(temp_db_path)
+    valid_id = str(uuid.uuid4())
+    engine.set(valid_id, make_note(valid_id, content="valid record"))
+    
+    # Attempt to insert an invalid record that violates CHECK constraint
+    invalid_id = str(uuid.uuid4())
+    invalid_note = make_note(invalid_id)
+    invalid_note["confidence"] = "INVALID_CONFIDENCE_LEVEL"
+    
+    with pytest.raises(sqlite3.IntegrityError):
+        engine.set(invalid_id, invalid_note)
+        
+    # Verify valid note is intact and invalid note was rolled back completely
+    assert engine.get(valid_id)["content"] == "valid record"
+    assert engine.get(invalid_id) is None
+    
+    engine.close()
+

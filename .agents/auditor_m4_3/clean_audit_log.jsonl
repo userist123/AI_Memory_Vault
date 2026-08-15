@@ -1,0 +1,2 @@
+{"actor": "ai_agent", "operation": "read", "target_id": "doc1", "timestamp": "2026-08-14T23:22:17Z", "outcome": "success", "prev_hash": "GENESIS", "entry_hash": "d5e4e0d8a1658aa8e8bb4547d93dd33fcb3515a989080e2783f2ebc3b3188a5d"}
+{"actor": "human", "operation": "attest", "target_id": "doc1", "timestamp": "2026-08-14T23:22:17Z", "outcome": "success", "prev_hash": "d5e4e0d8a1658aa8e8bb4547d93dd33fcb3515a989080e2783f2ebc3b3188a5d", "entry_hash": "a599034d0a8a9acb0ee7383f4185bd6ee1f0455b44840dc5f9bad763233bb061"}

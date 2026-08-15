@@ -65,3 +65,5 @@ generated/
 # RAW_IMPORTS are permanent evidence and must always be versioned.
 !/06_INBOX/RAW_IMPORTS/
 !/06_INBOX/RAW_IMPORTS/**
+
+.vs/

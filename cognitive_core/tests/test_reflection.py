@@ -55,3 +55,29 @@ def test_reflection_evaluates_blocked():
     
     assert proposed_note["type"] == "lesson"
     assert "Autonomy Policy" in proposed_note["content"]
+
+def test_self_refine_none_and_non_string_content_safety():
+    """Verify that SelfRefine safely handles None, integers, dicts, lists, and non-dicts."""
+    from cognitive_core.reflection import SelfRefine
+
+    # None content
+    passed, refined = SelfRefine.refine_memory({"content": None})
+    assert passed is False
+    assert refined == {"content": None}
+
+    # Non-string contents (int, list, dict, bool)
+    assert SelfRefine.refine_memory({"content": 12345})[0] is False
+    assert SelfRefine.refine_memory({"content": ["item1", "item2"]})[0] is False
+    assert SelfRefine.refine_memory({"content": {"key": "val"}})[0] is False
+    assert SelfRefine.refine_memory({"content": True})[0] is False
+
+    # Non-dict candidate
+    assert SelfRefine.refine_memory(None)[0] is False  # type: ignore
+    assert SelfRefine.refine_memory("just a string")[0] is False  # type: ignore
+
+    # Valid string with default confidence
+    valid_cand = {"content": "This is a valid structured memory note content."}
+    passed_valid, refined_valid = SelfRefine.refine_memory(valid_cand)
+    assert passed_valid is True
+    assert refined_valid["confidence"] == "medium"
+    assert refined_valid["content"] == valid_cand["content"]

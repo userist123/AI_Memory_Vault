@@ -1,0 +1,23 @@
+---
+type: lesson
+category: policy-lesson
+tags: []
+created: '2026-08-15'
+updated: '2026-08-15'
+provenance:
+  source_type: inference
+  source_ref: autonomy-policy
+confidence: high
+verification: unverified
+relations: []
+lifecycle: REVIEW
+id: af1e8956-1060-4995-b119-90a21ab21d08
+---
+## Formal Reflexion Analysis
+
+- **Error**: Action blocked by Autonomy Policy.
+- **Root Cause**: High-risk operation attempted without required authorization: Action 'delete_canonical' is HIGH RISK and requires explicit user approval.
+- **Fix Applied**: Requested human operator confirmation
+- **Verification**: Policy gate checked successfully
+- **Prevention Rule**: Enforce proactive approval requests for high-risk operations
+- **Core Lesson**: High-risk actions require explicit user approval before execution.

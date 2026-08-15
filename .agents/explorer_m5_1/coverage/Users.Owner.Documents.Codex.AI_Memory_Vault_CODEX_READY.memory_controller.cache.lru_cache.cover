@@ -1,0 +1,94 @@
+>>>>>> import hashlib
+>>>>>> import time
+>>>>>> from typing import Any, Dict, Tuple, List
+>>>>>> from memory_controller.security.utils import detect_cache_poisoning
+       
+>>>>>> class LRUCacheEntry:
+>>>>>>     def __init__(self, value: Any, ttl_seconds: int):
+    2:         self.value = value
+    2:         self.expiry = time.time() + ttl_seconds
+    2:         self.last_used = time.time()
+       
+>>>>>>     def is_expired(self) -> bool:
+>>>>>>         return time.time() > self.expiry
+       
+>>>>>> class LRUCache:
+           """Deterministic LRU cache with TTL fallback.
+       
+           - max_items: hard limit for number of cache entries.
+           - default_ttl: seconds after which an entry is considered stale.
+           - event_map: maps event names to sets of cache keys for invalidation.
+           """
+       
+>>>>>>     def __init__(self, max_items: int = 256, default_ttl: int = 300):
+    2:         self.max_items = max_items
+    2:         self.default_ttl = default_ttl
+    2:         self.store: Dict[str, LRUCacheEntry] = {}
+    2:         self.event_map: Dict[str, set] = {}
+    2:         self.hit_count: int = 0
+    2:         self.miss_count: int = 0
+       
+>>>>>>     def _make_key(self, *parts: Any) -> str:
+               """Create a deterministic hash key from arbitrary serializable parts."""
+   12:         raw = "|".join(str(p) for p in parts)
+    4:         return hashlib.sha256(raw.encode()).hexdigest()
+       
+>>>>>>     def get(self, *key_parts: Any) -> Any:
+    2:         key = self._make_key(*key_parts)
+    2:         entry = self.store.get(key)
+    2:         if entry is None:
+    2:             self.miss_count += 1
+    2:             return None
+>>>>>>         if entry.is_expired():
+                   # Remove stale entry
+>>>>>>             del self.store[key]
+>>>>>>             self.miss_count += 1
+>>>>>>             return None
+                   
+>>>>>>         try:
+>>>>>>             detect_cache_poisoning(key, entry.value)
+>>>>>>         except ValueError:
+                   # Poisoned cache entry, invalidate and treat as miss
+>>>>>>             self.invalidate(*key_parts) # using invalidate handles event_map cleanup
+>>>>>>             self.miss_count += 1
+>>>>>>             return None
+               # Update LRU order
+>>>>>>         entry.last_used = time.time()
+>>>>>>         self.hit_count += 1
+>>>>>>         return entry.value
+       
+>>>>>>     def set(self, value: Any, *key_parts: Any, ttl: int = None, events: list = None) -> None:
+    2:         key = self._make_key(*key_parts)
+    2:         ttl_seconds = ttl if ttl is not None else self.default_ttl
+    2:         entry = LRUCacheEntry(value, ttl_seconds)
+    2:         self.store[key] = entry
+    2:         self._enforce_limits()
+    2:         if events:
+    4:             for ev in events:
+    2:                 self.event_map.setdefault(ev, set()).add(key)
+       
+>>>>>>     def invalidate_by_event(self, event_name: str) -> None:
+    2:         keys = self.event_map.pop(event_name, set())
+    4:         for k in keys:
+    2:             self.store.pop(k, None)
+>>>>>>     def invalidate(self, *key_parts: Any) -> None:
+               """Invalidate cache entry for the given key parts.
+       
+               Removes the entry from the store and cleans up any event mappings.
+               """
+>>>>>>         key = self._make_key(*key_parts)
+>>>>>>         self.store.pop(key, None)
+               # Remove key from all event sets to avoid stale references
+>>>>>>         for ev_keys in self.event_map.values():
+>>>>>>             ev_keys.discard(key)
+       
+>>>>>>     def _enforce_limits(self) -> None:
+               # Enforce max_items using LRU eviction
+    2:         if len(self.store) <= self.max_items:
+    2:             return
+               # Sort by last_used ascending (oldest first)
+>>>>>>         sorted_items: List[Tuple[str, LRUCacheEntry]] = sorted(
+>>>>>>             self.store.items(), key=lambda item: item[1].last_used
+               )
+>>>>>>         for key, _ in sorted_items[: len(self.store) - self.max_items]:
+>>>>>>             del self.store[key]

@@ -20,10 +20,18 @@ class VerifierAgent(BaseWorkerAgent):
         violations = []
 
         for node in nodes_to_verify:
+            if not isinstance(node, dict):
+                violations.append(f"Invalid node: {node!r}")
+                unverified_nodes.append(node)
+                continue
             node_id = node.get("id", "unknown")
             verification = node.get("verification", "unverified")
             prov = node.get("provenance", {})
-            source_type = prov.get("source_type", "unknown")
+            if not isinstance(prov, dict):
+                violations.append(f"Node {node_id} has invalid provenance: {prov!r}")
+                source_type = "unknown"
+            else:
+                source_type = prov.get("source_type", "unknown")
 
             # Check if AI claims human or official provenance illegitimately
             if source_type in ["user", "official"] and verification != "verified":

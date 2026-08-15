@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict, Any, Optional, Tuple
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
@@ -95,7 +96,7 @@ class ReasoningEngine:
     def _is_high_complexity(self, query: str) -> bool:
         lowered = query.lower()
         triggers = ["why", "how", "root cause", "compare", "plan", "troubleshoot", "evaluate", "complex", "architecture"]
-        return any(t in lowered for t in triggers) or len(query.split()) > 10
+        return any(re.search(rf"\b{re.escape(t)}\b", lowered) for t in triggers) or len(query.split()) > 10
 
     def synthesize(self, principal: Principal, context: List[Dict[str, Any]], query: str) -> Dict[str, Any]:
         """Synthesizes an answer or decision based on active context, with selective ToT."""

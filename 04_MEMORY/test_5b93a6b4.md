@@ -1,0 +1,19 @@
+---
+type: lesson
+category: test
+tags: []
+created: '2026-08-14'
+updated: '2026-08-14'
+provenance:
+  source_type: inference
+  source_ref: generated
+confidence: high
+verification: unverified
+relations: []
+lifecycle: REVIEW
+id: 5b93a6b4-350e-4b5e-a15e-c1ef8ab2c320
+---
+Action blocked by Autonomy Policy.
+Action: delete_canonical
+Reason: Action 'delete_canonical' is HIGH RISK and requires explicit user approval.
+Lesson: High-risk actions require explicit user approval before execution.
