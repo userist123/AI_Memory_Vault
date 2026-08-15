@@ -5,22 +5,27 @@ tags: [obsidian, graph, agents, operations]
 ---
 # 03 Agents Operations Map
 
-Navigation for agent rules, orchestration, handoffs and operational knowledge.
+Navigation for agent rules, orchestration, handoffs and operational evidence.
 
 - [[Knowledge Graph Home]]
 - [[AGENTS]]
 - [[PROJECT]]
-- [[Continuity_Handoff]]
+- [[09 Agent Evidence Map]]
 
 ## Connected architecture
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
 
 ## Governance
-- [[Rules]]
-- [[Quality_Control]]
-- [[Integrity_Check]]
+- [[00_CORE/Rules]]
+- [[99_SYSTEM/Quality_Control]]
+- [[99_SYSTEM/Integrity_Check]]
+- [[02_PROJECTS/Continuity_Handoff]]
+
+## Agent evidence
+- [[.agents/ORIGINAL_REQUEST]]
+- [[99_SYSTEM/Graph Health Report]]
 
 #group/agents #obsidian #moc
