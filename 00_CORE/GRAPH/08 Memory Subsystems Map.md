@@ -5,16 +5,15 @@ tags: [obsidian, graph, memory]
 ---
 # 08 Memory Subsystems Map
 
-Complete index for the memory layer. It gives the large memory corpus stable graph entry points.
+Exhaustive index of the memory corpus. This map creates an incoming graph edge for every memory note without altering the note content.
 
 - [[04_MEMORY/README]]
-- [[Memory - Lessons Map]]
-- [[Memory - Decisions Map]]
-- [[Memory - Errors Map]]
-- [[Memory - Experiences Map]]
-- [[Memory - Preferences Map]]
+- [[04_MEMORY/Decisions/README]]
+- [[04_MEMORY/Errors/README]]
+- [[04_MEMORY/Experiences/README]]
+- [[04_MEMORY/Lessons/README]]
+- [[04_MEMORY/Preferences/README]]
 
-## Representative memory nodes
 - [[04_MEMORY/Lessons/Modularize_Prompts_For_Token_Limited_Models]]
 - [[04_MEMORY/Experiences/AI_Trading_Journal_Zero_Dollar_Stack]]
 - [[04_MEMORY/Decisions]]
