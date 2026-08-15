@@ -6,33 +6,52 @@ tags: [obsidian, graph, moc, core]
 ---
 # Knowledge Graph Home
 
-Central navigation for the AI Memory Vault. This note intentionally creates high-value Obsidian links between the main knowledge groups.
+Central navigation for the AI Memory Vault. This is the stable entry point for Obsidian Graph.
 
-## Core
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
-- [[06_Obsidian_Graph_Map]]
+## Core groups
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
+- [[06 Obsidian Graph Map]]
+
+## Complete graph indexes
+- [[07 Knowledge Domains Map]]
+- [[08 Memory Subsystems Map]]
+- [[09 Agent Evidence Map]]
+- [[10 Imports and Sources Map]]
+- [[11 Templates and System Map]]
+- [[12 Projects and Procedures Map]]
+- [[13 Root and Control Map]]
+
+## Memory subgroups
+- [[Memory - Lessons Map]]
+- [[Memory - Decisions Map]]
+- [[Memory - Errors Map]]
+- [[Memory - Experiences Map]]
+- [[Memory - Preferences Map]]
 
 ## Canonical architecture
 - [[PROJECT]]
 - [[AGENTS]]
-- [[System_Architecture]]
-- [[Knowledge_Graph_Schema]]
-- [[Knowledge_Graph_Relations]]
+- [[00_CORE/System_Architecture]]
+- [[99_SYSTEM/Knowledge_Graph_Schema]]
+- [[99_SYSTEM/Knowledge_Graph_Relations]]
 
 ## Continuity
 - [[02_PROJECTS/Continuity_Handoff]]
 - [[02_PROJECTS/AI_Memory_System]]
 
-## System governance
-- [[Rules]]
-- [[Tag_Taxonomy]]
-- [[Canonical_Frontmatter]]
-- [[Quality_Control]]
-- [[Integrity_Check]]
+## Governance
+- [[00_CORE/Rules]]
+- [[99_SYSTEM/Tag_Taxonomy]]
+- [[99_SYSTEM/Canonical_Frontmatter]]
+- [[99_SYSTEM/Quality_Control]]
+- [[99_SYSTEM/Integrity_Check]]
+
+## Graph health
+- [[99_SYSTEM/Graph Health Report]]
 
 #graph #moc #obsidian
