@@ -94,3 +94,8 @@ Eight external GitHub repositories submitted by the user for reference. Descript
 | business-website-template | Active | React/Tailwind/Vite | Medium (landing page reference) |
 | penpot-mcp | Active | Python/MCP | High (agent-design-tool bridge pattern) |
 | gh-web-ui | Active (prototype) | JS/C# | Low (niche domain) |
+
+## Related
+- [[00_CORE/GRAPH/14 External and UI Resources Map]]
+- [[01_KNOWLEDGE/TypeUI_Prompt_Categories_Reference]]
+- [[01_KNOWLEDGE/UI_UX_Resources_Directory_Reference]]
