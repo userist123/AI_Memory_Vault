@@ -11,13 +11,18 @@ Project state, continuity and handoff navigation.
 - [[02_PROJECTS/AI_Memory_System]]
 - [[02_PROJECTS/Continuity_Handoff]]
 - [[PROJECT]]
+- [[12 Projects and Procedures Map]]
 
 ## Connected groups
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
-- [[04_Security_Integrity_Map]]
-- [[06_Obsidian_Graph_Map]]
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
+- [[04 Security Integrity Map]]
+- [[10 Imports and Sources Map]]
+
+## Project evidence
+- [[09 Agent Evidence Map]]
+- [[99_SYSTEM/Graph Health Report]]
 
 #group/projects #obsidian #moc
