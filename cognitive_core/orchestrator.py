@@ -34,11 +34,13 @@ class SubagentSpec:
 class WorkerExecutionError(RuntimeError):
     """Raised when a specialized worker agent fails during pipeline execution.
 
-    Carries the responsible AgentRole so failures remain attributable and
-    auditable (Phase 7/8 failure-safety requirement). A worker failure must
-    never silently become trusted memory: callers of route_and_dispatch see
-    the failure recorded in orchestration_history with executed=False,
-    never as a synthesized/consolidated result.
+    Reserved for future strict-mode callers that need a raised exception
+    instead of an observability record. Not currently raised by
+    _invoke_worker_agent (which intentionally degrades failures into
+    non-fatal history entries -- see Phase 7/8 failure-safety rationale).
+    Kept as part of the public contract; not dead code to be removed
+    without a deliberate follow-up decision, since removing it would be
+    a breaking change for any external caller that already imports it.
     """
     def __init__(self, role: AgentRole, original_exception: Exception):
         self.role = role
@@ -70,16 +72,16 @@ class MultiAgentOrchestrator:
             AgentRole.SYNTHESIZER: SubagentSpec(AgentRole.SYNTHESIZER, ["read"], model_tier="heavy", max_steps=2),
         }
 
-        # P0/Phase-1 integration: the actual specialized worker agents from
-        # cognitive_core/agents/*, instantiated against the SAME controller
-        # and ToolRouter as the orchestrator itself, so every memory access
-        # they perform continues to go through the canonical MemoryController
-        # authorization boundary. This does NOT replace self.workers/
-        # SubagentSpec (kept for backward compatibility with existing
-        # callers/tests that inspect orchestrator.workers), and does NOT
-        # remove any existing inline pipeline logic in route_and_dispatch
-        # (that migration is explicitly deferred to a later, test-gated
-        # phase per the approved integration plan).
+        # Specialized worker agents from cognitive_core/agents/*, instantiated
+        # against the SAME controller and ToolRouter as the orchestrator, so
+        # every memory access they perform continues to go through the
+        # canonical MemoryController authorization boundary. self.workers/
+        # SubagentSpec is kept for backward compatibility with existing
+        # callers/tests that inspect orchestrator.workers and for
+        # _execute_worker_action's generic ToolRouter-action gating, which
+        # remains useful for actions that have no dedicated specialized
+        # worker (e.g. plain archive/propose calls outside a worker's own
+        # process_task contract).
         self.worker_agents: Dict[AgentRole, Any] = {
             AgentRole.ROUTER: RouterAgent(self.controller, self.router),
             AgentRole.RETRIEVAL: RetrievalAgent(self.controller, self.router),
@@ -132,24 +134,29 @@ class MultiAgentOrchestrator:
         )
         history.append(router_contribution)
 
-        # 2. Retrieval Worker
+        # 2. Retrieval Worker -- CANONICAL PATH.
+        # Previously this step called BOTH _execute_worker_action(RETRIEVAL,
+        # "search", ...) (generic ToolRouter.search) AND
+        # RetrievalAgent.process_task() (hybrid activation+recall scoring),
+        # performing the retrieval operation twice per dispatch. RetrievalAgent
+        # is strictly more capable (spreading activation + RecallEngine
+        # lineage-aware scoring vs a flat ToolRouter.search call) and is now
+        # the SOLE retrieval path. _execute_worker_action itself is preserved
+        # (not deleted): it remains the generic SubagentSpec-gated mechanism
+        # for any future worker action that has no dedicated specialized
+        # agent method.
         retrieved_nodes = []
         if needs_deep_retrieval:
-            search_pack = self._execute_worker_action(
-                AgentRole.RETRIEVAL, principal, "search", {"query": query, "page_size": 5}
+            retrieval_contribution = self._invoke_worker_agent(
+                AgentRole.RETRIEVAL, principal, {"query": query, "context": context}
             )
-            retrieved_nodes = search_pack.get("results", [])
-            history.append({"agent": AgentRole.RETRIEVAL.value, "retrieved_count": len(retrieved_nodes)})
+            history.append(retrieval_contribution)
+            if retrieval_contribution.get("executed"):
+                retrieved_nodes = retrieval_contribution.get("result", {}).get("results", [])
+        else:
+            retrieval_contribution = None
 
         combined_context = list(context) + retrieved_nodes
-
-        # 2b. Real RetrievalAgent invocation (additive; surfaces the
-        # specialized hybrid/semantic retrieval agent's own contribution
-        # alongside the existing ToolRouter-based retrieval above).
-        retrieval_contribution = self._invoke_worker_agent(
-            AgentRole.RETRIEVAL, principal, {"query": query, "context": combined_context}
-        )
-        history.append(retrieval_contribution)
 
         # 3. Verifier Worker (checks verification status and flags unverified claims)
         verified_count = 0
@@ -190,14 +197,24 @@ class MultiAgentOrchestrator:
         return synthesis_result
 
     def run_maintenance_pipeline(self, principal: Principal) -> Dict[str, Any]:
-        """Runs the background maintenance pipeline via specialized worker agents."""
-        results = {}
-        # Deduplication worker
-        flagged = self.deduplicator.scan_for_duplicates(principal)
-        results["duplicates_flagged"] = len(flagged)
-
-        # Consolidation worker
-        consolidated_id = self.consolidator.consolidate_lessons(principal)
-        results["consolidated_id"] = consolidated_id
-
-        return results
+        """Runs the background maintenance pipeline via the ConsolidatorAgent
+        worker, which internally wraps the same legacy Deduplicator/
+        Consolidator domain services (scan_for_duplicates + consolidate_lessons)
+        this method called directly before. The result shape
+        ({"duplicates_flagged": int, "consolidated_id": Optional[str]}) is
+        byte-identical to the previous implementation, verified against
+        ConsolidatorAgent.process_task()'s confirmed source:
+            if task_type in ["dedup", "all"]: ... duplicates_flagged
+            if task_type in ["consolidate", "all"]: ... consolidated_id
+        This migration does not change authorization, provenance, lifecycle,
+        verification, audit, or atomicity semantics: both the legacy direct
+        calls and the ConsolidatorAgent-mediated calls invoke the exact same
+        Deduplicator.scan_for_duplicates / Consolidator.consolidate_lessons
+        methods against the same MemoryController/ToolRouter.
+        """
+        consolidator_agent = self.worker_agents[AgentRole.CONSOLIDATOR]
+        outcome = consolidator_agent.process_task(principal, {"type": "all"})
+        return {
+            "duplicates_flagged": outcome.get("duplicates_flagged", 0),
+            "consolidated_id": outcome.get("consolidated_id"),
+        }
