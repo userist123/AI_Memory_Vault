@@ -57,3 +57,51 @@ def search_memory(query: str):
         return {"status": "success", "results": results}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+class DispatchRequest(BaseModel):
+    role: str = "coder"
+    node: str = "auto"
+    prompt: str
+    system_prompt: str = ""
+
+@app.post("/agent/dispatch")
+def dispatch_task(req: DispatchRequest):
+    """Deleaga sarcini catre GPU-urile externe (Colab/Kaggle) sau local prin MultiAgentDispatcher."""
+    from cognitive_core.orchestrator import MultiAgentDispatcher
+    dispatcher = MultiAgentDispatcher()
+    
+    # Suprascriere nod daca este specificat
+    if req.node != "auto":
+        nodes = dispatcher.config.get("nodes", {})
+        if req.node in nodes:
+            for k in nodes:
+                nodes[k]["enabled"] = (k == req.node)
+
+    system = req.system_prompt or f"You are an expert {req.role} specialized in high-performance quantitative systems engineering."
+    active_url, model_name = dispatcher._get_active_node_and_model(req.role)
+    
+    try:
+        response = dispatcher.dispatch(
+            agent_role=req.role,
+            system_prompt=system,
+            user_input=req.prompt
+        )
+        return {
+            "status": "success",
+            "node_url": active_url,
+            "model": model_name,
+            "response": response
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Eroare la dispatch distribuit: {str(e)}")
+
+@app.get("/compute/status")
+def get_compute_status():
+    """Returneaza statusul si configuratia curenta a nodurilor GPU (Local, Colab, Kaggle)."""
+    from cognitive_core.orchestrator import MultiAgentDispatcher
+    dispatcher = MultiAgentDispatcher()
+    return {
+        "status": "success",
+        "nodes": dispatcher.config.get("nodes", {}),
+        "default_models": dispatcher.config.get("default_models", {})
+    }
