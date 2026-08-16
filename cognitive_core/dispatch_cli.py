@@ -14,6 +14,7 @@ def main():
     parser.add_argument("--node", choices=["auto", "kaggle", "colab", "local"], default="auto", help="Nodul de calcul tinta")
     parser.add_argument("--prompt", required=True, help="Promptul de sarcina pentru LLM")
     parser.add_argument("--system", default="", help="System prompt optional")
+    parser.add_argument("--output", default="", help="Calea catre fisierul tinta unde sa salveze rezultatul direct")
 
     args = parser.parse_args()
 
@@ -51,7 +52,34 @@ def main():
             system_prompt=system_prompt,
             user_input=args.prompt
         )
-        print(response)
+        
+        # Daca este specificat un fisier de iesire, curatam markdown si salvam
+        if args.output:
+            out_content = response
+            # Curatare blocuri ```typescript ... ```
+            if "```" in out_content:
+                lines = out_content.split("\n")
+                filtered = []
+                in_code = False
+                for line in lines:
+                    if line.strip().startswith("```"):
+                        in_code = not in_code
+                        continue
+                    if in_code:
+                        filtered.append(line)
+                if filtered:
+                    out_content = "\n".join(filtered)
+
+            out_dir = os.path.dirname(os.path.abspath(args.output))
+            if out_dir and not os.path.exists(out_dir):
+                os.makedirs(out_dir, exist_ok=True)
+
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(out_content)
+            print(f"[SUCCESS] Codul generat de GPU ({model_name}) a fost salvat direct in: {args.output}")
+        else:
+            print(response)
+
     except Exception as e:
         print(f"[ERROR] Failed to execute task on remote node: {e}", file=sys.stderr)
         sys.exit(1)
