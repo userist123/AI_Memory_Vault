@@ -6,7 +6,7 @@
       "roles": ["router"]
     },
     "kaggle": {
-      "base_url": "https://oriented-walks-minds-required.trycloudflare.com",
+      "base_url": "https://roll-finds-believed-transition.trycloudflare.com",
       "priority": 1,
       "roles": ["coder", "critic", "memory"],
       "models": {
@@ -17,7 +17,7 @@
       "enabled": true
     },
     "colab": {
-      "base_url": "https://extends-representing-humanity-arlington.trycloudflare.com",
+      "base_url": "https://ira-modeling-stuart-summer.trycloudflare.com",
       "priority": 2,
       "roles": ["coder", "critic", "memory"],
       "models": {
