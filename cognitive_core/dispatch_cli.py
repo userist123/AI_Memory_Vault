@@ -42,9 +42,8 @@ def main():
     base_system = args.system or f"You are an expert {args.role} specialized in quantitative engineering, systems programming, and high-performance algorithms."
     system_prompt = f"{base_system}{memory_context}"
     
-    active_url, model_name = dispatcher._get_active_node_and_model(args.role)
     print(f"[*] Memory injected: {len(memories)} vault notes found.", file=sys.stderr)
-    print(f"[*] Dispatching task to [{args.node.upper()}] Node: {active_url} (Model: {model_name})", file=sys.stderr)
+    print(f"[*] Dispecerizeaza sarcina cu failover automat (Kaggle -> Colab -> Local)...", file=sys.stderr)
 
     try:
         response = dispatcher.dispatch(

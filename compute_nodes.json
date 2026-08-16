@@ -5,25 +5,25 @@
       "priority": 3,
       "roles": ["router"]
     },
-    "colab": {
-      "base_url": "https://extends-representing-humanity-arlington.trycloudflare.com",
-      "priority": 1,
-      "roles": ["coder", "critic", "memory"],
-      "models": {
-        "coder": "qwen2.5-coder:14b",
-        "critic": "qwen2.5-coder:14b",
-        "memory": "qwen2.5-coder:14b"
-      },
-      "enabled": true
-    },
     "kaggle": {
       "base_url": "https://oriented-walks-minds-required.trycloudflare.com",
-      "priority": 2,
+      "priority": 1,
       "roles": ["coder", "critic", "memory"],
       "models": {
         "coder": "qwen2.5-coder:32b",
         "critic": "qwen2.5-coder:32b",
         "memory": "qwen2.5-coder:32b"
+      },
+      "enabled": true
+    },
+    "colab": {
+      "base_url": "https://extends-representing-humanity-arlington.trycloudflare.com",
+      "priority": 2,
+      "roles": ["coder", "critic", "memory"],
+      "models": {
+        "coder": "qwen2.5-coder:7b",
+        "critic": "qwen2.5-coder:7b",
+        "memory": "qwen2.5-coder:7b"
       },
       "enabled": true
     }

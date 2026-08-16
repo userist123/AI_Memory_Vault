@@ -169,53 +169,45 @@ class MultiAgentDispatcher:
                 pass
         return {}
 
-    def _get_active_node_and_model(self, role: str) -> tuple[str, str]:
-        """Determines best active compute endpoint and model (Colab -> Kaggle -> Local)."""
+    def _is_endpoint_alive(self, url: str) -> bool:
+        """Verifica rapid daca un endpoint Ollama/Cloudflare este activ si functional."""
+        if not url or "placeholder" in url:
+            return False
+        import urllib.request
+        try:
+            req = urllib.request.Request(f"{url.rstrip('/')}/", headers={"User-Agent": "VaultDispatcher/1.0"})
+            with urllib.request.urlopen(req, timeout=3.0) as res:
+                return res.status == 200
+        except Exception:
+            return False
+
+    def _get_ordered_nodes(self, role: str) -> list[dict]:
+        """Returneaza lista de noduri ordonate dupa prioritate pentru rolul specificat."""
         nodes = self.config.get("nodes", {})
         default_model = self.models.get(role, "qwen2.5-coder:14b")
-        
-        # Priority 1: Check Colab
-        colab = nodes.get("colab", {})
-        if colab.get("enabled") and colab.get("base_url") and not "placeholder" in colab.get("base_url"):
-            if role in colab.get("roles", []):
-                model = colab.get("models", {}).get(role, default_model)
-                return colab.get("base_url"), model
+        candidates = []
 
-        # Priority 2: Check Kaggle
-        kaggle = nodes.get("kaggle", {})
-        if kaggle.get("enabled") and kaggle.get("base_url") and not "placeholder" in kaggle.get("base_url"):
-            if role in kaggle.get("roles", []):
-                model = kaggle.get("models", {}).get(role, default_model)
-                return kaggle.get("base_url"), model
+        for name, cfg in nodes.items():
+            if not cfg.get("enabled", True):
+                continue
+            if role in cfg.get("roles", []):
+                model = cfg.get("models", {}).get(role, default_model)
+                candidates.append({
+                    "name": name,
+                    "url": cfg.get("base_url"),
+                    "model": model,
+                    "priority": cfg.get("priority", 99)
+                })
 
-        # Priority 3: Fallback to Local
-        local = nodes.get("local", {})
-        return local.get("base_url", "http://localhost:11434"), default_model
-
-    def _get_active_node_url(self, role: str) -> str:
-        url, _ = self._get_active_node_and_model(role)
-        return url
-
-    def _get_llm(self, role: str):
-        try:
-            from langchain_ollama import ChatOllama
-            base_url, model_name = self._get_active_node_and_model(role)
-            return ChatOllama(
-                model=model_name,
-                temperature=0.0,
-                base_url=base_url,
-                keep_alive="0s"
-            )
-        except Exception:
-            return None
+        candidates.sort(key=lambda x: x["priority"])
+        return candidates
 
     def dispatch(self, agent_role: str, system_prompt: str, user_input: str) -> str:
-        """Dispatches step to the optimal compute node and unloads model memory."""
-        llm = self._get_llm(agent_role)
-        if llm is None:
-            return f"[Offline Simulation for {agent_role}]: Response generated without active Ollama endpoint."
-
+        """Dispatches step to the best available compute node with automatic failover."""
         from langchain_core.messages import SystemMessage, HumanMessage
+        from langchain_ollama import ChatOllama
+        import sys
+
         security_guardrails = """
         MANDATORY SECURITY INVARIANTS (P0-P15):
         - You are Principal.AI_AGENT.
@@ -228,5 +220,46 @@ class MultiAgentDispatcher:
             SystemMessage(content=full_system_prompt),
             HumanMessage(content=user_input)
         ]
-        response = llm.invoke(messages)
-        return response.content
+
+        candidates = self._get_ordered_nodes(agent_role)
+        
+        # Daca nu exista noduri configurate, folosim local
+        if not candidates:
+            candidates = [{"name": "local", "url": "http://localhost:11434", "model": self.models.get(agent_role, "qwen2.5-coder:3b"), "priority": 99}]
+
+        last_error = None
+        for node in candidates:
+            name = node["name"]
+            url = node["url"]
+            model = node["model"]
+
+            # Verificam daca nodul este online
+            print(f"[*] Verificare starii nodului [{name.upper()}] ({url})...", file=sys.stderr)
+            if not self._is_endpoint_alive(url):
+                print(f"[!] Nodul [{name.upper()}] este offline sau inaccesibil. Trecem la urmatorul nod din cluster...", file=sys.stderr)
+                continue
+
+            print(f"[+] Conectat cu succes la [{name.upper()}] GPU! Model: {model}", file=sys.stderr)
+            try:
+                llm = ChatOllama(
+                    model=model,
+                    temperature=0.0,
+                    base_url=url,
+                    keep_alive="5m"
+                )
+                full_text = []
+                for chunk in llm.stream(messages):
+                    if hasattr(chunk, "content") and chunk.content:
+                        full_text.append(chunk.content)
+                
+                result = "".join(full_text)
+                if result.strip():
+                    return result
+            except Exception as e:
+                print(f"[!] Eroare in timpul executiei pe [{name.upper()}]: {e}. Incercam failover...", file=sys.stderr)
+                last_error = e
+
+        if last_error:
+            raise RuntimeError(f"Toate nodurile GPU din cluster au esuat. Ultimul mesaj de eroare: {last_error}")
+        
+        return f"[Simulation]: Niciun nod GPU activ gasit."
