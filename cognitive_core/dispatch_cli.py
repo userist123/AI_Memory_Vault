@@ -27,9 +27,22 @@ def main():
             for k in nodes:
                 nodes[k]["enabled"] = (k == args.node)
 
-    system_prompt = args.system or f"You are an expert {args.role} specialized in quantitative engineering, systems programming, and high-performance algorithms."
+    from cognitive_core.recall_cli import search_markdown_vault
+    
+    # Cautare automata in memorie dupa cuvintele cheie din prompt
+    memories = search_markdown_vault(args.prompt, max_results=3)
+    memory_context = ""
+    if memories:
+        memory_context = "\n\n=== RELEVANT CONTEXT FROM AI MEMORY VAULT ===\n"
+        for m in memories:
+            memory_context += f"\n--- Note: {m['file']} ---\n{m['content']}\n"
+        memory_context += "\n============================================\n"
+
+    base_system = args.system or f"You are an expert {args.role} specialized in quantitative engineering, systems programming, and high-performance algorithms."
+    system_prompt = f"{base_system}{memory_context}"
     
     active_url, model_name = dispatcher._get_active_node_and_model(args.role)
+    print(f"[*] Memory injected: {len(memories)} vault notes found.", file=sys.stderr)
     print(f"[*] Dispatching task to [{args.node.upper()}] Node: {active_url} (Model: {model_name})", file=sys.stderr)
 
     try:

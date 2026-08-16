@@ -27,6 +27,7 @@ Then integrate the GPU-generated solution directly into the target files and ver
 | **`critic`** | Formal code critique, security & bug audit | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role critic --prompt "..."` |
 | **`memory`** | Note synthesis, knowledge graph linking | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role memory --prompt "..."` |
 | **`router`** | Fast triage & classification | `local` (Flash) | `python cognitive_core/dispatch_cli.py --role router --prompt "..."` |
+| **`recall`** | Căutare directă în notițele și procedurile din Vault | Local Vault Index | `python cognitive_core/recall_cli.py --query "<ce cauți>"` |
 
 ---
 
