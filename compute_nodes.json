@@ -12,16 +12,16 @@
       "enabled": false
     },
     "kaggle": {
-      "base_url": "https://kaggle-tunnel-placeholder.trycloudflare.com",
-      "priority": 2,
+      "base_url": "https://oriented-walks-minds-required.trycloudflare.com",
+      "priority": 1,
       "roles": ["coder", "critic", "memory"],
-      "enabled": false
+      "enabled": true
     }
   },
   "default_models": {
     "router": "glm-4.7-flash:latest",
-    "coder": "qwen3-coder:30b",
-    "memory": "gemma4:26b-64k",
-    "critic": "qwen3-coder:30b"
+    "coder": "qwen2.5-coder:32b",
+    "memory": "gemma2:27b",
+    "critic": "qwen2.5-coder:32b"
   }
 }
