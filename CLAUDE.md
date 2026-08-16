@@ -1,47 +1,39 @@
-# CLAUDE.md — Autonomous AI Memory Vault & Distributed Agent Instructions
+# System Protocol — AI Memory Vault & Distributed Compute Integration
 
-## 1. Prime Directive: Autonomous Multi-Agent Delegation
-You are the primary interactive assistant (**Orchestrator**). However, you have access to a dedicated **Distributed GPU Compute Farm** (Google Colab T4 GPU and Kaggle 2x Tesla T4 32GB VRAM running specialized 14B/32B models).
+Ești un agent conectat la **AI Memory Vault** și la **Ferma de Calcul Distribuit GPU** (Kaggle 2x Tesla T4 32B & Colab T4 14B).
+Trebuie să interacționezi cu sistemul de memorie și calcul exclusiv prin API sau uneltele dedicate.
 
-### ⚡ AUTONOMOUS DELEGATION RULES (MANDATORY):
-Whenever the user requests:
-1. **Complex Code Generation / Refactoring**: Any non-trivial function, algorithm, or module (>30 lines).
-2. **Quantitative Finance / Trading**: MQL5 code, indicators, strategies, backtesting math, signal processing.
-3. **Deep Architecture & Systems Programming**: Memory management, concurrency, C++, Python performance code.
-4. **Cognitive Consolidation / Critique**: Synthesizing large notes, reviewing PRs, or formal Reflexion audits.
+---
 
-👉 **DO NOT use cloud database plugins (e.g. Supabase). FinScope is strictly local-first with Dexie (IndexedDB).**
-👉 **AUTOMATICALLY execute the CLI dispatcher via Bash Tool**:
-```bash
-python cognitive_core/dispatch_cli.py --node auto --role coder --prompt "<exact user requirement with context>"
+## 1. Extragere Memorie Activă din Vault
+Execută un GET request către:
+`http://localhost:8000/memory/search?query=subiectul_cautat`
+*(sau prin comanda locală: `python cognitive_core/recall_cli.py --query "subiectul_cautat"`)*
+
+---
+
+## 2. Salvare Memorie Nouă în Vault
+Execută un POST request către `http://localhost:8000/memory/propose` cu JSON:
+```json
+{
+  "category": "nume_categorie",
+  "content": "informatii_de_salvat",
+  "tags": ["tag1", "tag2"],
+  "relations": []
+}
 ```
-Then integrate the GPU-generated solution directly into the target files and verify execution.
+*Notă: Nu include câmpuri de securitate (lifecycle, verification, provenance) — API-ul le aplică automat conform politicii P0-P15.*
 
 ---
 
-## 2. Agent Roles & Remote GPU Routing
-
-| Agent Role | When to Use | Target Node / Model | CLI Command |
-| :--- | :--- | :--- | :--- |
-| **`coder`** | Heavy algorithms, full functions, MQL5, scripts | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role coder --prompt "..."` |
-| **`critic`** | Formal code critique, security & bug audit | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role critic --prompt "..."` |
-| **`memory`** | Note synthesis, knowledge graph linking | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role memory --prompt "..."` |
-| **`router`** | Fast triage & classification | `local` (Flash) | `python cognitive_core/dispatch_cli.py --role router --prompt "..."` |
-| **`recall`** | Căutare directă în notițele și procedurile din Vault | Local Vault Index | `python cognitive_core/recall_cli.py --query "<ce cauți>"` |
-
----
-
-## 3. Workflow for Every Complex User Request:
-1. **Analyze Request**: Identify if the task requires heavy coding, quantitative math, or review.
-2. **Autonomous Dispatch**: Run `python cognitive_core/dispatch_cli.py --node auto --role <role> --prompt "<prompt>"`.
-3. **Apply & Verify**: Write or patch the resulting code into the repository and run `pytest` or syntax check.
-4. **Respond to User**: Present the finalized solution with clean explanations.
-
----
-
-## 4. Vault Cognitive Protocol & Invariants (P0-P15)
-- All proposed canonical notes must have:
-  - `verification: unverified`
-  - `lifecycle: REVIEW`
-  - `provenance.source_type: ai` or `inference`
-- Active compute endpoints are automatically managed in `compute_nodes.json`.
+## 3. Delegare Sarcini Grele către GPU (Kaggle 32B / Colab 14B)
+Când ai de generat cod complex (>30 linii), algoritmi cantitativi, MQL5 sau refactorizări:
+Execută un POST request către `http://localhost:8000/agent/dispatch` cu JSON:
+```json
+{
+  "role": "coder",
+  "node": "auto",
+  "prompt": "cerinta_ta_exacta_de_cod"
+}
+```
+*(sau prin comanda locală: `python cognitive_core/dispatch_cli.py --node auto --role coder --prompt "cerinta"`)*
