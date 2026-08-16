@@ -145,34 +145,69 @@ class MultiAgentOrchestrator:
 
 
 class MultiAgentDispatcher:
-    """Local LLM dispatcher integrating Ollama models for high-capacity reasoning."""
+    """Local & Distributed LLM dispatcher integrating Ollama models across
+    local daemons, Google Colab, and Kaggle GPU nodes.
+    """
 
-    def __init__(self):
-        self.models = {
+    def __init__(self, config_path: str = "compute_nodes.json"):
+        self.config_path = config_path
+        self.config = self._load_config()
+        self.models = self.config.get("default_models", {
             "router": "glm-4.7-flash:latest",
             "coder": "qwen3-coder:30b",
             "memory": "gemma4:26b-64k",
             "critic": "qwen3-coder:30b"
-        }
+        })
+
+    def _load_config(self) -> Dict[str, Any]:
+        import json, os
+        if os.path.exists(self.config_path):
+            try:
+                with open(self.config_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def _get_active_node_url(self, role: str) -> str:
+        """Determines best active compute endpoint (Colab -> Kaggle -> Local)."""
+        nodes = self.config.get("nodes", {})
+        
+        # Priority 1: Check Colab
+        colab = nodes.get("colab", {})
+        if colab.get("enabled") and colab.get("base_url") and not "placeholder" in colab.get("base_url"):
+            if role in colab.get("roles", []):
+                return colab.get("base_url")
+
+        # Priority 2: Check Kaggle
+        kaggle = nodes.get("kaggle", {})
+        if kaggle.get("enabled") and kaggle.get("base_url") and not "placeholder" in kaggle.get("base_url"):
+            if role in kaggle.get("roles", []):
+                return kaggle.get("base_url")
+
+        # Priority 3: Fallback to Local
+        local = nodes.get("local", {})
+        return local.get("base_url", "http://localhost:11434")
 
     def _get_llm(self, role: str):
         try:
             from langchain_ollama import ChatOllama
             model_name = self.models.get(role, "gemma4:26b")
+            base_url = self._get_active_node_url(role)
             return ChatOllama(
                 model=model_name,
                 temperature=0.0,
-                base_url="http://localhost:11434",
+                base_url=base_url,
                 keep_alive="0s"
             )
         except Exception:
             return None
 
     def dispatch(self, agent_role: str, system_prompt: str, user_input: str) -> str:
-        """Loads model from Ollama, executes step, and unloads memory."""
+        """Dispatches step to the optimal compute node and unloads model memory."""
         llm = self._get_llm(agent_role)
         if llm is None:
-            return f"[Offline Simulation for {agent_role}]: Response generated without local Ollama daemon."
+            return f"[Offline Simulation for {agent_role}]: Response generated without active Ollama endpoint."
 
         from langchain_core.messages import SystemMessage, HumanMessage
         security_guardrails = """

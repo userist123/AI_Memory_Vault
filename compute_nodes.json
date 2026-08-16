@@ -1,0 +1,27 @@
+{
+  "nodes": {
+    "local": {
+      "base_url": "http://localhost:11434",
+      "priority": 3,
+      "roles": ["router"]
+    },
+    "colab": {
+      "base_url": "https://colab-tunnel-placeholder.trycloudflare.com",
+      "priority": 1,
+      "roles": ["coder", "critic", "memory"],
+      "enabled": false
+    },
+    "kaggle": {
+      "base_url": "https://kaggle-tunnel-placeholder.trycloudflare.com",
+      "priority": 2,
+      "roles": ["coder", "critic", "memory"],
+      "enabled": false
+    }
+  },
+  "default_models": {
+    "router": "glm-4.7-flash:latest",
+    "coder": "qwen3-coder:30b",
+    "memory": "gemma4:26b-64k",
+    "critic": "qwen3-coder:30b"
+  }
+}
