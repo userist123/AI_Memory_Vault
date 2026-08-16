@@ -10,8 +10,8 @@ Whenever the user requests:
 3. **Deep Architecture & Systems Programming**: Memory management, concurrency, C++, Python performance code.
 4. **Cognitive Consolidation / Critique**: Synthesizing large notes, reviewing PRs, or formal Reflexion audits.
 
-👉 **DO NOT write complex code solely with lightweight local reasoning.**
-👉 **AUTOMATICALLY execute the CLI dispatcher via Bash**:
+👉 **DO NOT use cloud database plugins (e.g. Supabase). FinScope is strictly local-first with Dexie (IndexedDB).**
+👉 **AUTOMATICALLY execute the CLI dispatcher via Bash Tool**:
 ```bash
 python cognitive_core/dispatch_cli.py --node auto --role coder --prompt "<exact user requirement with context>"
 ```
