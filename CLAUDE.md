@@ -1,40 +1,46 @@
-# CLAUDE.md — Operating Instructions for Claude Code
+# CLAUDE.md — Autonomous AI Memory Vault & Distributed Agent Instructions
 
-## 1. Persistent Memory & Vault Operating Contract
-This repository is the persistent cognitive vault and memory system. Always respect the rules defined in `AGENTS.md` and `.agents/rules/vault_cognitive_rules.md`.
+## 1. Prime Directive: Autonomous Multi-Agent Delegation
+You are the primary interactive assistant (**Orchestrator**). However, you have access to a dedicated **Distributed GPU Compute Farm** (Google Colab T4 GPU and Kaggle 2x Tesla T4 32GB VRAM running specialized 14B/32B models).
 
-- **Security Invariants (P0-P15)**: AI agents only write memories with `verification: unverified`, `lifecycle: REVIEW`, and `provenance: ai` or `inference`.
-- **Knowledge Hierarchy**: Official project docs > Test execution > AI inference. Never overwrite verified facts.
+### ⚡ AUTONOMOUS DELEGATION RULES (MANDATORY):
+Whenever the user requests:
+1. **Complex Code Generation / Refactoring**: Any non-trivial function, algorithm, or module (>30 lines).
+2. **Quantitative Finance / Trading**: MQL5 code, indicators, strategies, backtesting math, signal processing.
+3. **Deep Architecture & Systems Programming**: Memory management, concurrency, C++, Python performance code.
+4. **Cognitive Consolidation / Critique**: Synthesizing large notes, reviewing PRs, or formal Reflexion audits.
 
----
-
-## 2. Distributed GPU Compute Delegation (Ollama on Colab / Kaggle / Local)
-
-When you receive a heavy programming, quantitative math, memory synthesis, or refactoring task, you can offload it directly to the remote GPU nodes (Google Colab, Kaggle, or Local Ollama) using the built-in CLI dispatcher:
-
-### Running Tasks on Remote GPUs:
-
+👉 **DO NOT write complex code solely with lightweight local reasoning.**
+👉 **AUTOMATICALLY execute the CLI dispatcher via Bash**:
 ```bash
-# 1. Delegare automata catre cel mai rapid nod activ (Colab -> Kaggle -> Local):
-python cognitive_core/dispatch_cli.py --node auto --role coder --prompt "<descrierea sarcinii de cod>"
-
-# 2. Delegare explicita pe Nodul Kaggle (GPU 2x Tesla T4 - 32B Coder):
-python cognitive_core/dispatch_cli.py --node kaggle --role coder --prompt "<sarcina grea de arhitectura / cod>"
-
-# 3. Delegare explicita pe Nodul Google Colab (GPU Tesla T4 - 14B Coder):
-python cognitive_core/dispatch_cli.py --node colab --role coder --prompt "<sarcina rapida de optimizare>"
-
-# 4. Evaluare & Critica Reflexion (Critic Agent):
-python cognitive_core/dispatch_cli.py --node auto --role critic --prompt "<codul sau ipoteza de verificat>"
+python cognitive_core/dispatch_cli.py --node auto --role coder --prompt "<exact user requirement with context>"
 ```
+Then integrate the GPU-generated solution directly into the target files and verify execution.
 
 ---
 
-## 3. Configuration & Node Status
-All endpoints and models are managed dynamically in `compute_nodes.json`.
+## 2. Agent Roles & Remote GPU Routing
 
-- `colab`: `https://extends-representing-humanity-arlington.trycloudflare.com` (14B Coder / GPU T4)
-- `kaggle`: `https://oriented-walks-minds-required.trycloudflare.com` (32B Coder / 2x T4)
-- `local`: `http://localhost:11434` (glm-4.7-flash)
+| Agent Role | When to Use | Target Node / Model | CLI Command |
+| :--- | :--- | :--- | :--- |
+| **`coder`** | Heavy algorithms, full functions, MQL5, scripts | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role coder --prompt "..."` |
+| **`critic`** | Formal code critique, security & bug audit | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role critic --prompt "..."` |
+| **`memory`** | Note synthesis, knowledge graph linking | `kaggle` (32B) / `colab` (14B) | `python cognitive_core/dispatch_cli.py --role memory --prompt "..."` |
+| **`router`** | Fast triage & classification | `local` (Flash) | `python cognitive_core/dispatch_cli.py --role router --prompt "..."` |
 
-When running tasks locally in Claude Code, invoke `python cognitive_core/dispatch_cli.py` via bash execution to delegate computation to the GPU servers.
+---
+
+## 3. Workflow for Every Complex User Request:
+1. **Analyze Request**: Identify if the task requires heavy coding, quantitative math, or review.
+2. **Autonomous Dispatch**: Run `python cognitive_core/dispatch_cli.py --node auto --role <role> --prompt "<prompt>"`.
+3. **Apply & Verify**: Write or patch the resulting code into the repository and run `pytest` or syntax check.
+4. **Respond to User**: Present the finalized solution with clean explanations.
+
+---
+
+## 4. Vault Cognitive Protocol & Invariants (P0-P15)
+- All proposed canonical notes must have:
+  - `verification: unverified`
+  - `lifecycle: REVIEW`
+  - `provenance.source_type: ai` or `inference`
+- Active compute endpoints are automatically managed in `compute_nodes.json`.
