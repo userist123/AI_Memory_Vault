@@ -169,31 +169,37 @@ class MultiAgentDispatcher:
                 pass
         return {}
 
-    def _get_active_node_url(self, role: str) -> str:
-        """Determines best active compute endpoint (Colab -> Kaggle -> Local)."""
+    def _get_active_node_and_model(self, role: str) -> tuple[str, str]:
+        """Determines best active compute endpoint and model (Colab -> Kaggle -> Local)."""
         nodes = self.config.get("nodes", {})
+        default_model = self.models.get(role, "qwen2.5-coder:14b")
         
         # Priority 1: Check Colab
         colab = nodes.get("colab", {})
         if colab.get("enabled") and colab.get("base_url") and not "placeholder" in colab.get("base_url"):
             if role in colab.get("roles", []):
-                return colab.get("base_url")
+                model = colab.get("models", {}).get(role, default_model)
+                return colab.get("base_url"), model
 
         # Priority 2: Check Kaggle
         kaggle = nodes.get("kaggle", {})
         if kaggle.get("enabled") and kaggle.get("base_url") and not "placeholder" in kaggle.get("base_url"):
             if role in kaggle.get("roles", []):
-                return kaggle.get("base_url")
+                model = kaggle.get("models", {}).get(role, default_model)
+                return kaggle.get("base_url"), model
 
         # Priority 3: Fallback to Local
         local = nodes.get("local", {})
-        return local.get("base_url", "http://localhost:11434")
+        return local.get("base_url", "http://localhost:11434"), default_model
+
+    def _get_active_node_url(self, role: str) -> str:
+        url, _ = self._get_active_node_and_model(role)
+        return url
 
     def _get_llm(self, role: str):
         try:
             from langchain_ollama import ChatOllama
-            model_name = self.models.get(role, "gemma4:26b")
-            base_url = self._get_active_node_url(role)
+            base_url, model_name = self._get_active_node_and_model(role)
             return ChatOllama(
                 model=model_name,
                 temperature=0.0,
