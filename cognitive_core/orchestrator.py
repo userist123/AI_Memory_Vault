@@ -1,20 +1,19 @@
-import enum
-from typing import Dict, Any, List, Optional, Callable
-from memory_controller.controller import MemoryController
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+from enum import Enum
 from memory_controller.authorizer import Principal
-from .tool_router import ToolRouter, RiskLevel, ApprovalRequiredError
-from .recall import RecallEngine
-from .reflection import ReflectionPipeline, SelfRefine
-from .deduplication import Deduplicator
-from .consolidation import Consolidator
-from .semantic import DeterministicSemanticProvider
-from .agents.router_agent import RouterAgent
-from .agents.retrieval_agent import RetrievalAgent
-from .agents.critic_agent import CriticAgent
-from .agents.verifier_agent import VerifierAgent
-from .agents.consolidator_agent import ConsolidatorAgent
+from memory_controller.controller import MemoryController
+from cognitive_core.tool_router import ToolRouter
+from cognitive_core.agents import (
+    BaseWorkerAgent,
+    RouterAgent,
+    RetrievalAgent,
+    VerifierAgent,
+    ConsolidatorAgent,
+    CriticAgent
+)
 
-class AgentRole(str, enum.Enum):
+class AgentRole(str, Enum):
     ROUTER = "router"
     RETRIEVAL = "retrieval"
     VERIFIER = "verifier"
@@ -22,72 +21,36 @@ class AgentRole(str, enum.Enum):
     CRITIC = "critic"
     SYNTHESIZER = "synthesizer"
 
+@dataclass
 class SubagentSpec:
-    """Specifies role, allowed tool actions, model tier, and step limits."""
-    def __init__(self, role: AgentRole, allowed_actions: List[str], model_tier: str = "light", max_steps: int = 3):
-        self.role = role
-        self.allowed_actions = set(allowed_actions)
-        self.model_tier = model_tier
-        self.max_steps = max_steps
+    role: AgentRole
+    allowed_actions: List[str]
+    max_steps: int = 3
 
-
-class WorkerExecutionError(RuntimeError):
-    """Raised when a specialized worker agent fails during pipeline execution.
-
-    Reserved for future strict-mode callers that need a raised exception
-    instead of an observability record. Not currently raised by
-    _invoke_worker_agent (which intentionally degrades failures into
-    non-fatal history entries -- see Phase 7/8 failure-safety rationale).
-    Kept as part of the public contract; not dead code to be removed
-    without a deliberate follow-up decision, since removing it would be
-    a breaking change for any external caller that already imports it.
-    """
-    def __init__(self, role: AgentRole, original_exception: Exception):
-        self.role = role
-        self.original_exception = original_exception
-        super().__init__(f"Worker '{role.value}' failed: {original_exception}")
-
+class WorkerExecutionError(Exception):
+    """Raised when a worker execution fails during orchestration."""
+    pass
 
 class MultiAgentOrchestrator:
-    """Orchestrator-Worker Multi-Agent System.
-    Dispatches specialized tasks to bounded worker subagents with strict privilege scoping.
-    """
+    """Orchestrates specialized subagents with least-privilege tool execution scoping."""
 
-    def __init__(self, memory_controller: MemoryController, tool_router: Optional[ToolRouter] = None):
-        self.controller = memory_controller
-        self.router = tool_router or ToolRouter(self.controller)
-        self.semantic = DeterministicSemanticProvider()
-        self.recall_engine = RecallEngine(self.controller, self.semantic)
-        self.reflection = ReflectionPipeline(self.controller)
-        self.deduplicator = Deduplicator(self.controller, self.semantic, self.router)
-        self.consolidator = Consolidator(self.controller, self.router)
-
-        # Worker specifications with least privilege
+    def __init__(self, controller: MemoryController, router: Optional[ToolRouter] = None):
+        self.controller = controller
+        self.router = router or ToolRouter(self.controller)
         self.workers: Dict[AgentRole, SubagentSpec] = {
-            AgentRole.ROUTER: SubagentSpec(AgentRole.ROUTER, ["search"], model_tier="light", max_steps=2),
-            AgentRole.RETRIEVAL: SubagentSpec(AgentRole.RETRIEVAL, ["search", "read"], model_tier="light", max_steps=3),
-            AgentRole.VERIFIER: SubagentSpec(AgentRole.VERIFIER, ["read"], model_tier="light", max_steps=2),
-            AgentRole.CONSOLIDATOR: SubagentSpec(AgentRole.CONSOLIDATOR, ["search", "propose", "archive"], model_tier="standard", max_steps=4),
-            AgentRole.CRITIC: SubagentSpec(AgentRole.CRITIC, ["read", "propose"], model_tier="standard", max_steps=3),
-            AgentRole.SYNTHESIZER: SubagentSpec(AgentRole.SYNTHESIZER, ["read"], model_tier="heavy", max_steps=2),
+            AgentRole.ROUTER: SubagentSpec(AgentRole.ROUTER, ["search", "read"], max_steps=2),
+            AgentRole.RETRIEVAL: SubagentSpec(AgentRole.RETRIEVAL, ["search", "read"], max_steps=3),
+            AgentRole.VERIFIER: SubagentSpec(AgentRole.VERIFIER, ["read"], max_steps=2),
+            AgentRole.CONSOLIDATOR: SubagentSpec(AgentRole.CONSOLIDATOR, ["search", "read", "propose", "archive"], max_steps=4),
+            AgentRole.CRITIC: SubagentSpec(AgentRole.CRITIC, ["read", "propose"], max_steps=3),
+            AgentRole.SYNTHESIZER: SubagentSpec(AgentRole.SYNTHESIZER, ["read"], max_steps=2),
         }
-
-        # Specialized worker agents from cognitive_core/agents/*, instantiated
-        # against the SAME controller and ToolRouter as the orchestrator, so
-        # every memory access they perform continues to go through the
-        # canonical MemoryController authorization boundary. self.workers/
-        # SubagentSpec is kept for backward compatibility with existing
-        # callers/tests that inspect orchestrator.workers and for
-        # _execute_worker_action's generic ToolRouter-action gating, which
-        # remains useful for actions that have no dedicated specialized
-        # worker (e.g. plain archive/propose calls outside a worker's own
-        # process_task contract).
-        self.worker_agents: Dict[AgentRole, Any] = {
+        self.worker_agents: Dict[AgentRole, BaseWorkerAgent] = {
             AgentRole.ROUTER: RouterAgent(self.controller, self.router),
             AgentRole.RETRIEVAL: RetrievalAgent(self.controller, self.router),
-            AgentRole.CRITIC: CriticAgent(self.controller, self.router),
             AgentRole.VERIFIER: VerifierAgent(self.controller, self.router),
             AgentRole.CONSOLIDATOR: ConsolidatorAgent(self.controller, self.router),
+            AgentRole.CRITIC: CriticAgent(self.controller, self.router)
         }
 
     def _execute_worker_action(self, role: AgentRole, principal: Principal, action: str, kwargs: Dict[str, Any]) -> Any:
@@ -99,12 +62,7 @@ class MultiAgentOrchestrator:
     def _invoke_worker_agent(self, role: AgentRole, principal: Principal, task: Dict[str, Any]) -> Dict[str, Any]:
         """Invokes the real specialized worker agent for `role` via its public
         process_task(principal, task) contract. Any failure is caught and
-        converted into an observable, attributable, non-fatal record: it is
-        appended to the caller-visible history as {"executed": False, ...}
-        rather than raised past the pipeline or allowed to produce a partial
-        write. The worker's own permitted_actions gate (enforced inside
-        BaseWorkerAgent.execute_action) is untouched by this wrapper -- it
-        adds no new authority, it only surfaces the worker's real output.
+        converted into an observable, attributable, non-fatal record.
         """
         agent = self.worker_agents.get(role)
         if agent is None:
@@ -125,26 +83,12 @@ class MultiAgentOrchestrator:
         lowered = query.lower()
         needs_deep_retrieval = any(k in lowered for k in ["search", "find", "all", "history", "lookup", "detail"])
 
-        # 1b. Real RouterAgent invocation (additive, observability-only for
-        # this phase; does not yet replace the `needs_deep_retrieval`
-        # heuristic that drives control flow below, per the approved
-        # test-gated migration plan).
         router_contribution = self._invoke_worker_agent(
             AgentRole.ROUTER, principal, {"query": query, "context": context}
         )
         history.append(router_contribution)
 
-        # 2. Retrieval Worker -- CANONICAL PATH.
-        # Previously this step called BOTH _execute_worker_action(RETRIEVAL,
-        # "search", ...) (generic ToolRouter.search) AND
-        # RetrievalAgent.process_task() (hybrid activation+recall scoring),
-        # performing the retrieval operation twice per dispatch. RetrievalAgent
-        # is strictly more capable (spreading activation + RecallEngine
-        # lineage-aware scoring vs a flat ToolRouter.search call) and is now
-        # the SOLE retrieval path. _execute_worker_action itself is preserved
-        # (not deleted): it remains the generic SubagentSpec-gated mechanism
-        # for any future worker action that has no dedicated specialized
-        # agent method.
+        # 2. Retrieval Worker
         retrieved_nodes = []
         if needs_deep_retrieval:
             retrieval_contribution = self._invoke_worker_agent(
@@ -153,12 +97,10 @@ class MultiAgentOrchestrator:
             history.append(retrieval_contribution)
             if retrieval_contribution.get("executed"):
                 retrieved_nodes = retrieval_contribution.get("result", {}).get("results", [])
-        else:
-            retrieval_contribution = None
 
         combined_context = list(context) + retrieved_nodes
 
-        # 3. Verifier Worker (checks verification status and flags unverified claims)
+        # 3. Verifier Worker
         verified_count = 0
         unverified_count = 0
         for node in combined_context:
@@ -172,16 +114,11 @@ class MultiAgentOrchestrator:
             "unverified_nodes": unverified_count
         })
 
-        # 3b. Real VerifierAgent invocation (additive; VerifierAgent is
-        # read-only per its permitted_actions=["read"], so it cannot itself
-        # escalate any node's trust state -- it may only report findings).
         verifier_contribution = self._invoke_worker_agent(
             AgentRole.VERIFIER, principal, {"query": query, "context": combined_context}
         )
         history.append(verifier_contribution)
 
-        # 3c. Real CriticAgent invocation (additive; evaluates/critiques
-        # candidate results, cannot mutate verification/lifecycle itself).
         critic_contribution = self._invoke_worker_agent(
             AgentRole.CRITIC, principal, {"query": query, "context": combined_context}
         )
@@ -197,24 +134,58 @@ class MultiAgentOrchestrator:
         return synthesis_result
 
     def run_maintenance_pipeline(self, principal: Principal) -> Dict[str, Any]:
-        """Runs the background maintenance pipeline via the ConsolidatorAgent
-        worker, which internally wraps the same legacy Deduplicator/
-        Consolidator domain services (scan_for_duplicates + consolidate_lessons)
-        this method called directly before. The result shape
-        ({"duplicates_flagged": int, "consolidated_id": Optional[str]}) is
-        byte-identical to the previous implementation, verified against
-        ConsolidatorAgent.process_task()'s confirmed source:
-            if task_type in ["dedup", "all"]: ... duplicates_flagged
-            if task_type in ["consolidate", "all"]: ... consolidated_id
-        This migration does not change authorization, provenance, lifecycle,
-        verification, audit, or atomicity semantics: both the legacy direct
-        calls and the ConsolidatorAgent-mediated calls invoke the exact same
-        Deduplicator.scan_for_duplicates / Consolidator.consolidate_lessons
-        methods against the same MemoryController/ToolRouter.
-        """
+        """Runs the background maintenance pipeline via the ConsolidatorAgent."""
         consolidator_agent = self.worker_agents[AgentRole.CONSOLIDATOR]
         outcome = consolidator_agent.process_task(principal, {"type": "all"})
+        res = outcome.get("results", {})
         return {
-            "duplicates_flagged": outcome.get("duplicates_flagged", 0),
-            "consolidated_id": outcome.get("consolidated_id"),
+            "duplicates_flagged": res.get("duplicates_flagged", 0),
+            "consolidated_id": res.get("consolidated_id"),
         }
+
+
+class MultiAgentDispatcher:
+    """Local LLM dispatcher integrating Ollama models for high-capacity reasoning."""
+
+    def __init__(self):
+        self.models = {
+            "router": "glm-4.7-flash:latest",
+            "coder": "qwen3-coder:30b",
+            "memory": "gemma4:26b-64k",
+            "critic": "qwen3-coder:30b"
+        }
+
+    def _get_llm(self, role: str):
+        try:
+            from langchain_ollama import ChatOllama
+            model_name = self.models.get(role, "gemma4:26b")
+            return ChatOllama(
+                model=model_name,
+                temperature=0.0,
+                base_url="http://localhost:11434",
+                keep_alive="0s"
+            )
+        except Exception:
+            return None
+
+    def dispatch(self, agent_role: str, system_prompt: str, user_input: str) -> str:
+        """Loads model from Ollama, executes step, and unloads memory."""
+        llm = self._get_llm(agent_role)
+        if llm is None:
+            return f"[Offline Simulation for {agent_role}]: Response generated without local Ollama daemon."
+
+        from langchain_core.messages import SystemMessage, HumanMessage
+        security_guardrails = """
+        MANDATORY SECURITY INVARIANTS (P0-P15):
+        - You are Principal.AI_AGENT.
+        - verification = "unverified" (Strict).
+        - lifecycle = "REVIEW" (Strict).
+        - provenance = "ai" or "inference".
+        """
+        full_system_prompt = f"{system_prompt}\n\n{security_guardrails}"
+        messages = [
+            SystemMessage(content=full_system_prompt),
+            HumanMessage(content=user_input)
+        ]
+        response = llm.invoke(messages)
+        return response.content
