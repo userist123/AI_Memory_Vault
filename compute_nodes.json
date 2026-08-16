@@ -29,7 +29,7 @@
     }
   },
   "default_models": {
-    "router": "glm-4.7-flash:latest",
+    "router": "qwen2.5-coder:3b",
     "coder": "qwen2.5-coder:32b",
     "memory": "gemma2:27b",
     "critic": "qwen2.5-coder:32b"
