@@ -1,0 +1,137 @@
+---
+id: "d228f148-108c-4446-b799-1208c8585684"
+type: template
+lifecycle: ARCHIVED
+category: imported-legacy
+tags: [legacy-import, template]
+created: 2026-08-17T20:24:39Z
+updated: 2026-08-17T20:24:39Z
+provenance:
+  source_type: import
+  source_ref: "06_INBOX/RAW_IMPORTS/perplexity_original/Template_Procedure.md"
+confidence: medium
+verification: inferred
+enriched_by: ai
+---
+
+# {{title}}
+
+## Purpose
+
+<!-- Why this procedure exists and what problem it solves -->
+
+---
+
+## Scope
+
+<!-- What this procedure covers and what it doesn't -->
+
+**In Scope:**
+- Item 1
+- Item 2
+
+**Out of Scope:**
+- Item 1
+- Item 2
+
+---
+
+## Prerequisites
+
+### Requirements
+
+- [ ] Requirement 1
+- [ ] Requirement 2
+
+### Dependencies
+
+- [[Related_Note_1]]
+- [[Related_Note_2]]
+
+### Tools Needed
+
+- Tool 1
+- Tool 2
+
+---
+
+## Procedure
+
+### Step 1: <Step Name>
+
+1. Sub-step 1
+2. Sub-step 2
+3. Sub-step 3
+
+**Expected Outcome:** <!-- What should happen -->
+
+**Troubleshooting:** <!-- What to do if it doesn't work -->
+
+---
+
+### Step 2: <Step Name>
+
+1. Sub-step 1
+2. Sub-step 2
+
+**Expected Outcome:** <!-- What should happen -->
+
+---
+
+### Step 3: <Step Name>
+
+1. Sub-step 1
+2. Sub-step 2
+
+**Expected Outcome:** <!-- What should happen -->
+
+---
+
+## Verification
+
+### Success Criteria
+
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Criterion 3
+
+### Validation Steps
+
+1. How to verify step 1
+2. How to verify step 2
+
+---
+
+## Rollback
+
+<!-- What to do if this procedure fails or needs to be undone -->
+
+1. Rollback step 1
+2. Rollback step 2
+
+---
+
+## Related Procedures
+
+- [[Related_Procedure_1]]
+- [[Related_Procedure_2]]
+
+---
+
+## References
+
+- [External Documentation](URL)
+- [[Related_Knowledge_1]]
+
+---
+
+## Change Log
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | {{date}} | Initial version | <Author> |
+| | | | |
+
+---
+
+**Next Review Date:** {{date:+30d}}
