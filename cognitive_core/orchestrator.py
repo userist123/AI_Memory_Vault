@@ -161,12 +161,21 @@ class MultiAgentDispatcher:
 
     def _load_config(self) -> Dict[str, Any]:
         import json, os
-        if os.path.exists(self.config_path):
-            try:
-                with open(self.config_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except Exception:
-                pass
+        candidate_paths = [
+            self.config_path,
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "compute_nodes.json"),
+            r"C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\compute_nodes.json",
+            os.path.join(os.getcwd(), "compute_nodes.json")
+        ]
+        for p in candidate_paths:
+            if p and os.path.exists(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                        if data and "nodes" in data:
+                            return data
+                except Exception:
+                    pass
         return {}
 
     def _is_endpoint_alive(self, url: str) -> bool:
@@ -241,20 +250,43 @@ class MultiAgentDispatcher:
 
             print(f"[+] Conectat cu succes la [{name.upper()}] GPU! Model: {model}", file=sys.stderr)
             try:
-                llm = ChatOllama(
-                    model=model,
-                    temperature=0.0,
-                    base_url=url,
-                    keep_alive="5m"
-                )
-                full_text = []
-                for chunk in llm.stream(messages):
-                    if hasattr(chunk, "content") and chunk.content:
-                        full_text.append(chunk.content)
+                import urllib.request
+                import json
                 
+                payload = {
+                    "model": model,
+                    "prompt": f"{full_system_prompt}\n\nUser Request:\n{user_input}",
+                    "stream": True,
+                    "options": {
+                        "temperature": 0.0
+                    },
+                    "keep_alive": "10m"
+                }
+
+                req = urllib.request.Request(
+                    f"{url.rstrip('/')}/api/generate",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"}
+                )
+
+                full_text = []
+                with urllib.request.urlopen(req, timeout=300) as response:
+                    for line in response:
+                        if line:
+                            try:
+                                chunk = json.loads(line.decode("utf-8"))
+                                token = chunk.get("response", "")
+                                if token:
+                                    full_text.append(token)
+                                if chunk.get("done"):
+                                    break
+                            except Exception:
+                                pass
+
                 result = "".join(full_text)
                 if result.strip():
                     return result
+
             except Exception as e:
                 print(f"[!] Eroare in timpul executiei pe [{name.upper()}]: {e}. Incercam failover...", file=sys.stderr)
                 last_error = e

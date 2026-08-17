@@ -75,7 +75,7 @@ def main():
 
             with open(args.output, "w", encoding="utf-8") as f:
                 f.write(out_content)
-            print(f"[SUCCESS] Codul generat de GPU ({model_name}) a fost salvat direct in: {args.output}")
+            print(f"[SUCCESS] Codul generat de GPU a fost salvat direct in: {args.output}")
         else:
             print(response)
 

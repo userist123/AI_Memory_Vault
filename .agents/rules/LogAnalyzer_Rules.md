@@ -20,8 +20,12 @@ These guidelines are automatically applied to the development of the **LogAnalyz
 
 ## 4. Air-Gapped / Offline Forensics Policy
 - **No External Network Calls:** The command center operates in air-gapped/offline environments. Block all direct web HTTP calls, online DNS queries, or live threat-intelligence APIs (e.g., online VirusTotal, external IP lookup services) from the application logic.
-- **Local Databases:** All threat signatures (such as MITRE ATT&CK timelines, IOCs, IP reputations, or GPO compliance indicators) must be queried from localized, local resources (like SQLite or embedded JSON database files).
+- **Local Databases:** All threat signatures (such as MITRE ATT&CK timelines, IOCs, IP reputations, YARA rules, Sigma signatures, and APT attribution matrices) must be queried from localized, local resources (like SQLite or embedded JSON database files).
 
 ## 5. Chain of Custody & Cryptographic Auditing
-- **Hash Computation:** Forensic integrity is crucial. Ingestion of EVTX or Registry files must compute a SHA-256 hash of the source file.
+- **Hash Computation:** Forensic integrity is crucial. Ingestion of EVTX, Registry, or CSV files must compute a SHA-256 hash of the source file.
 - **Audit Logging:** The SHA-256 hash, file path, file size, and timestamp of ingestion must be written to the local audit log database or secure local text stream (`AuditLogService`) to guarantee evidence preservation and chain of custody.
+
+## 6. Threat Sharing Standards & Localization
+- **Standardized Export:** Incident data, indicators, and attack patterns must be exportable in standard **OASIS STIX 2.1 JSON** and **MISP Event JSON**.
+- **Romanian Technical Localization:** All user-facing explanations, threat descriptions, and playbooks must be formulated in precise, professional Romanian technical cybersecurity terminology.
