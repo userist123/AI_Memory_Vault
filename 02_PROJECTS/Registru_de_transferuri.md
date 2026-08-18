@@ -39,7 +39,7 @@ Aplicație desktop WPF .NET 10 pentru evidența transferurilor pe medii de stoca
 - [x] Wizard înregistrare în 4 etape cu inspecție DLP Magic Bytes împotriva executabilelor deghizate.
 - [x] Generare nativă de documente oficiale PDF cu QuestPDF (Proces-Verbal Predare-Primire HG 585 și Certificat Sanitizare NIST).
 - [x] Motor euristic DFIR / YARA offline pentru detecția amenințărilor din pachete de date (`YaraDfirScanner.cs`).
-- [x] Suită Endpoint Protection & Device Control (`DevicePolicyEnforcer.cs`) cu politici de porturi (BlockAll, ReadOnly, WhitelistOnly) și ejectare forțată.
+- [x] Suită Endpoint Protection & Device Control (`DevicePolicyEnforcer.cs`) cu politici de porturi (BlockAll, ReadOnly, WhitelistOnly), acțiune de eliminare/resetare completă a politicilor și ejectare forțată.
 - [x] Autocompletare euristică a numărului de înregistrare și clasificării din denumirea fișierului (`FileNameRegistryParser.cs`).
 - [x] Validare HARD a plafonului de clasificare al suportului fizic și semnare Four-Eyes HMAC-SHA256.
 - [ ] Semnatura electronica PAdES-LTA cu token PKCS#11 real (QSCD) — în integrare.
