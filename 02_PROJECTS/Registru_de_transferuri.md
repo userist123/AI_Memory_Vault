@@ -37,6 +37,8 @@ Aplicație desktop WPF .NET 10 pentru evidența transferurilor pe medii de stoca
 - [x] Invariantele P0–P18 validate și auditate (Imutabilitate S/N hardware, izolare logică nume).
 - [x] Jurnal audit SHA-256 chained (`AuditChainVerifier.cs`) cu ancoră pe Blocul Genesis.
 - [x] Wizard înregistrare în 4 etape cu inspecție DLP Magic Bytes împotriva executabilelor deghizate.
+- [x] Generare nativă de documente oficiale PDF cu QuestPDF (Proces-Verbal Predare-Primire HG 585 și Certificat Sanitizare NIST).
+- [x] Motor euristic DFIR / YARA offline pentru detecția amenințărilor din pachete de date (`YaraDfirScanner.cs`).
 - [ ] Semnatura electronica PAdES-LTA cu token PKCS#11 real (QSCD) — în integrare.
 - [ ] Sanitizare directă hardware Cryptographic Erase pe SED prin `DeviceIoControl` (IOCTL_ATA_PASS_THROUGH).
 
