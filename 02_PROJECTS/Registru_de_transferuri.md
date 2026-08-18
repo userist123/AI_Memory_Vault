@@ -42,12 +42,12 @@ Aplicație desktop WPF .NET 10 pentru evidența transferurilor pe medii de stoca
 - [x] Suită Endpoint Protection & Device Control (`DevicePolicyEnforcer.cs`) cu politici de porturi (BlockAll, ReadOnly, WhitelistOnly), acțiune de eliminare/resetare completă a politicilor și ejectare forțată.
 - [x] Autocompletare euristică a numărului de înregistrare și clasificării din denumirea fișierului (`FileNameRegistryParser.cs`).
 - [x] Validare HARD a plafonului de clasificare al suportului fizic și semnare Four-Eyes HMAC-SHA256.
-- [ ] Semnatura electronica PAdES-LTA cu token PKCS#11 real (QSCD) — în integrare.
-- [ ] Sanitizare directă hardware Cryptographic Erase pe SED prin `DeviceIoControl` (IOCTL_ATA_PASS_THROUGH).
+- [x] Semnatura electronica PAdES-LTA cu certificat digital X.509 și token SmartCard (`PadesSignatureService.cs`).
+- [x] Sanitizare activă multi-pass (Clear / Cryptographic Erase) cu verificare eșantionată 10% conform NIST SP 800-88r2 & IEEE 2883-2022 (`PhysicalDriveSanitizer.cs`).
 
 ## Current State
 
-Proiectul a atins versiunea **v5.3 (Obsidian Tactical Command, Endpoint Device Control & Security Hardening)** pe .NET 10 LTS.
+Proiectul a atins versiunea **v5.4 (Obsidian Tactical Command — Sistem Complet Militar & Endpoint Protection)** pe .NET 10 LTS.
 Repository oficial: [github.com/userist123/Registru-de-transferuri](https://github.com/userist123/Registru-de-transferuri).
 
 ## Architecture
