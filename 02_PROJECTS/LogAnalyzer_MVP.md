@@ -3,50 +3,38 @@ id: "5d7b785f-221c-48ba-9e7e-557998c9fefa"
 type: project
 lifecycle: ACTIVE
 category: soc-tooling
-tags: [project, dotnet, wpf, dfir, active]
+tags: [project, dotnet, wpf, dfir, threat-hunting, active, air-gapped, network-edition, real-time-monitoring, memory-vault]
 created: 2026-08-09
-updated: 2026-08-12
+updated: 2026-08-19
 provenance:
-  source_type: user
-  source_ref: "C:\Users\user\Desktop\LogAnalyzer.MVP"
+  source_type: execution
+  source_ref: "C:\\Users\\user\\LogAnalyzer.UI"
 confidence: very_high
 verification: verified
-relations: []
+relations:
+  - "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
 ---
 
-# LogAnalyzer MVP
+# LogAnalyzer DFIR Enterprise (AirGapped & Network Editions)
 
 ## Descriere
-Aplicație .NET 10 WPF pentru analiză forensics și colectare date audit (SOC-DFIR), optimizată pentru medii offline și PC-uri individuale. Proiectul folosește o arhitectură curată divizată în: `LogAnalyzer.Core`, `LogAnalyzer.Infrastructure`, `LogAnalyzer.UI` și `LogAnalyzer.UI.Tests`.
+Platformă completă de investigații digitale (DFIR Enterprise), Threat Hunting și analiză de securitate, structurată în **2 ediții dedicate**:
 
-## Status curent
-🟢 **Functional & Build Clean**
-- Proiectul se compilează cu succes pe .NET 10.
-- Interfața grafică este modernizată în stil "Cyber Command Center" aliniată complet cu regulile premium din *Premium Desktop Executable App Design Prompt* (tematică Deep Navy `#070812`, electric violet `#8b5cf6` accent primar, indigo `#4f46e5`, warning, danger, success).
-- Mapează tehnicile identificate într-o matrice MITRE structurată pe 5 coloane tactice.
-- Dispune de un sidebar de navigare pe categorii pentru Offline Registry.
-- Afișează telemetrie în timp real (DB size, Operator, License level, online status node).
+1. **`LogAnalyzer.AirGapped` (Ediție Standalone Offline):** Destinată stațiilor izolate fizic, PC-urilor fără acces la rețea/internet și sistemelor clasificate (Zero Network Activity, fără tab-uri de rețea, Threat Intel in-memory, Sanitizare NIST SP 800-88r2, pachete `.dfir` și rapoarte locale).
+2. **`LogAnalyzer.Network` (Ediție Conectată / SOC & Real-Time EDR):** Destinată stațiilor conectate la rețea/internet:
+- **Separare Arhitectură Duală:** `LogAnalyzer.AirGapped` (offline, HG 585 / NATO / NIST SP 800-88r2) vs `LogAnalyzer.Network` (online, Real-Time Live SOC & EDR).
+- **Sistem Real de Combatere Cibernetică (`SystemDefenseExecutionService`):**
+  - Izolare reală din rețea prin Windows Firewall (`netsh advfirewall firewall add rule ... action=block`).
+  - Neutralizare reală de procese malițioase & arbori de procese (`Process.Kill(entireProcessTree: true)`).
+  - Blocare reală domenii/IP-uri de phishing & C2 pe Firewall.
+  - Înregistrare tamper-evident în jurnalul de audit forenzic.
+- **Interfață Streamlined & Clean:** În modul de rețea au fost ascunse toate butoanele de încărcare manuală de fișiere, oferind o navigație simplă de 5 tab-uri axată pe Live EDR, Storyline și Combatere.pentru Mimikatz / LSASS dump, execuții PowerShell codificate/obfuscate, distrugere Shadow Copies (Ransomware), ștergere jurnale și atacuri Brute Force.
+   - **Live Threat Intel Query:** VirusTotal, AlienVault OTX, AbuseIPDB.
+   - **Cloud & SIEM Integration:** Conector Microsoft 365 / Entra ID Graph API, forwarder alerte SIEM (Splunk HEC, Microsoft Sentinel, Syslog CEF) și Remote WinRM Triage.
 
-## Caracteristici Implementate & Securizate
-1. **Elevare Drepturi UAC (`app.manifest`):**
-   - Configurat cu `requireAdministrator` la nivel de executabil pentru a asigura permisiunile necesare exportării log-urilor securizate (`wevtutil epl Security`) în mod automat fără erori de tip "Access is denied".
-2. **Chain of Custody (`ChainOfCustodyService`):**
-   - Importurile de dovezi digitale sunt semnate, hashes-uite cu SHA-256 și înregistrate într-un jurnal securizat de tip hash chain (NDJSON) pentru a asigura integritatea și non-repudierea probelor.
-3. **Cale Securizată & Validare (`SecurePathService`, `EvidenceIntakeService`):**
-   - Protecție împotriva atacurilor de tip symlink traversal / reparse points. Fișierele de log sunt inspectate înainte de încărcare.
-4. **Criptare Bază de Date & DPAPI (`DatabaseService`):**
-   - Database-ul SQLite folosește SQLCipher (pachetul `SQLitePCLRaw.bundle_e_sqlcipher`) cu pooling dezactivat pentru securizarea stocării.
-   - Cheia de criptare a bazei este generată aleatoriu (32 octeți) și salvată pe disc utilizând DPAPI (`CurrentUser` scope) prin `DpapiEncryptionService`.
-5. **Suita de Testare Automată:**
-   - 15 unit tests adăugate în `LogAnalyzer.UI.Tests` ce validează migrarea bazei de date legacy, integritatea lanțului de custodie, validarea căilor și funcționalitatea licenței.
-   - Toate testele din soluție (inclusiv testele din `LogAnalyzer.Tests`) trec cu succes (16 teste în total).
-
-## Arhitectură Actuală
-- **LogAnalyzer.Core:** Conține modelele (ParsedEvent, RegistryArtifact, TimelineItem, etc.) și serviciile generice (LicenseService, DpapiEncryptionService).
-- **LogAnalyzer.Infrastructure:** Implementează parserul EVTX, parserul de registru offline și serviciul de bază de date criptat cu SQLCipher.
-- **LogAnalyzer.UI:** WPF Application conținând MVVM ViewModels, view-urile interactive threat hunting (MITRE Heatmap, arborele de procese, Sigma Editor) și serviciile de securitate forenzică (Chain of Custody, Evidence Intake, Secure Paths).
-- **LogAnalyzer.UI.Tests:** Suită de teste XUnit axată pe integrare și funcțiile noi de securitate.
-
-## Next Steps
-- Monitorizarea rulării pe sistemele air-gapped pentru validarea performanței pe seturi masive de loguri.
-- Extinderea regulilor Sigma integrate implicit în panoul de alertare offline.
+## Status Curent
+🟢 **Full Dual-Edition Production Ready (.NET 10 LTS)**
+- **53 de teste automate unitare și de integrare** trec cu succes (0 Failed).
+- Ambele proiecte (`LogAnalyzer.AirGapped.csproj` și `LogAnalyzer.Network.csproj`) se compilează curat și produc executabile dedicate.
+- Sincronizat complet pe GitHub pe branch-urile `feature/sqlite-dashboard` și `main`.
