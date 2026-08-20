@@ -28,9 +28,15 @@ Platformă completă de investigații digitale (DFIR Enterprise), Threat Hunting
   - `SystemDefenseExecutionService.cs`: Izolare gazdă via Windows Firewall (`netsh`), neutralizare forțată procese (`Process.Kill(entireProcessTree: true)`), blocare IoC/IP.
   - `CyberAttackCountermeasureEngine.cs`: Extragere dinamică CTI din comenzi (IP/URL, grupări APT asociate, unelte detectate, amprentă criptografică SHA-256).
   - **Scut Automat EDR Sub-10ms**: Declanșare instantanee la atacuri critice înainte de intervenția manuală a operatorului.
-  - **Detecție Avansată Kernel & Memorie**:
+  - **Detecție Avansată Kernel & Memorie & Nivel Fizic**:
     - **BYOVD (Bring Your Own Vulnerable Driver / Ring 0)**: Interceptare încărcare drivere kernel vulnerabile (LOLDrivers, CVE-2018-19320) prin Event ID 7045 și oprire serviciu driver.
     - **Process Hollowing & Injecție RAM (T1055.012)**: Detecție anomalii de memorie (VirtualAllocEx PAGE_EXECUTE_READWRITE, cross-process thread injection, conexiuni anormale din notepad/svchost către Cobalt Strike C2).
+    - **Atacuri Fizice & Dispozitive (BadUSB / Rubber Ducky T1052.001)**: Interceptare injectare automată de taste și izolare port USB.
+    - **Infostealere & Bypass MFA (AiTM / Token Theft T1539/T1556)**: Blocare acces la cookie-uri de sesiune Chrome/Edge și revocare token-uri M365.
+    - **Otrăvire Rețea LAN (LLMNR / Responder T1557.001)**: Blocare porturi UDP 5355 / 137 pe firewall.
+    - **Abuz de Token-uri Privilegiate (Potato Exploits T1134.001)**: Neutralizare PrintSpoofer / GodPotato pe SeImpersonatePrivilege.
+    - **Microarhitectură pe Siliciu CPU & Rowhammer (T1499)**: Detecție atacuri side-channel (Spectre / DRAM bit-flipping) și activare mitigări microcod / KVA Shadow.
+    - **Exfiltrare Acustică Air-Gap / Ventilatoare (Fansmitter T1048)**: Detecție modulație PWM pe ventilatoare pentru emisie acustică pe calculatoare izolate conform HG 585 / NATO TEMPEST.
   - **Dosar Forenzic Permanent (EventId 9999)**: La fiecare incident critic se generează și se stochează automat un eveniment detaliat în SQLite, Timeline și Jurnalul de Audit cu fișa completă a atacatorului.
 - **Interfață Streamlined & Clean:** În modul de rețea au fost ascunse toate butoanele de încărcare manuală de fișiere, oferind o navigație simplă de 5 tab-uri axată pe Live EDR, Storyline și Combatere.pentru Mimikatz / LSASS dump, execuții PowerShell codificate/obfuscate, distrugere Shadow Copies (Ransomware), ștergere jurnale și atacuri Brute Force.
    - **Live Threat Intel Query:** VirusTotal, AlienVault OTX, AbuseIPDB.
