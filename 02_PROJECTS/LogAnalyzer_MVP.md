@@ -28,6 +28,9 @@ Platformă completă de investigații digitale (DFIR Enterprise), Threat Hunting
   - `SystemDefenseExecutionService.cs`: Izolare gazdă via Windows Firewall (`netsh`), neutralizare forțată procese (`Process.Kill(entireProcessTree: true)`), blocare IoC/IP.
   - `CyberAttackCountermeasureEngine.cs`: Extragere dinamică CTI din comenzi (IP/URL, grupări APT asociate, unelte detectate, amprentă criptografică SHA-256).
   - **Scut Automat EDR Sub-10ms**: Declanșare instantanee la atacuri critice înainte de intervenția manuală a operatorului.
+  - **Detecție Avansată Kernel & Memorie**:
+    - **BYOVD (Bring Your Own Vulnerable Driver / Ring 0)**: Interceptare încărcare drivere kernel vulnerabile (LOLDrivers, CVE-2018-19320) prin Event ID 7045 și oprire serviciu driver.
+    - **Process Hollowing & Injecție RAM (T1055.012)**: Detecție anomalii de memorie (VirtualAllocEx PAGE_EXECUTE_READWRITE, cross-process thread injection, conexiuni anormale din notepad/svchost către Cobalt Strike C2).
   - **Dosar Forenzic Permanent (EventId 9999)**: La fiecare incident critic se generează și se stochează automat un eveniment detaliat în SQLite, Timeline și Jurnalul de Audit cu fișa completă a atacatorului.
 - **Interfață Streamlined & Clean:** În modul de rețea au fost ascunse toate butoanele de încărcare manuală de fișiere, oferind o navigație simplă de 5 tab-uri axată pe Live EDR, Storyline și Combatere.pentru Mimikatz / LSASS dump, execuții PowerShell codificate/obfuscate, distrugere Shadow Copies (Ransomware), ștergere jurnale și atacuri Brute Force.
    - **Live Threat Intel Query:** VirusTotal, AlienVault OTX, AbuseIPDB.
