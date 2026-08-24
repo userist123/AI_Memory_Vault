@@ -3,20 +3,89 @@
   "search": "",
   "showTags": true,
   "showAttachments": false,
-  "hideUnresolved": true,
-  "showOrphans": false,
-  "collapse-color-groups": true,
-  "colorGroups": [],
+  "hideUnresolved": false,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "path:00_CORE",
+      "color": {
+        "a": 1,
+        "rgb": 16711680
+      }
+    },
+    {
+      "query": "path:01_KNOWLEDGE",
+      "color": {
+        "a": 1,
+        "rgb": 65280
+      }
+    },
+    {
+      "query": "path:02_PROJECTS",
+      "color": {
+        "a": 1,
+        "rgb": 255
+      }
+    },
+    {
+      "query": "path:03_PROCEDURES",
+      "color": {
+        "a": 1,
+        "rgb": 16776960
+      }
+    },
+    {
+      "query": "path:04_MEMORY",
+      "color": {
+        "a": 1,
+        "rgb": 16711935
+      }
+    },
+    {
+      "query": "path:05_RESOURCES",
+      "color": {
+        "a": 1,
+        "rgb": 65535
+      }
+    },
+    {
+      "query": "path:06_INBOX",
+      "color": {
+        "a": 1,
+        "rgb": 16744192
+      }
+    },
+    {
+      "query": "path:90_TEMPLATES",
+      "color": {
+        "a": 1,
+        "rgb": 8421504
+      }
+    },
+    {
+      "query": "path:99_SYSTEM",
+      "color": {
+        "a": 1,
+        "rgb": 12800255
+      }
+    },
+    {
+      "query": "path:.agents",
+      "color": {
+        "a": 1,
+        "rgb": 5025616
+      }
+    }
+  ],
   "collapse-display": false,
-  "showArrow": false,
-  "textFadeMultiplier": 3,
-  "nodeSizeMultiplier": 1.17560975609756,
-  "lineSizeMultiplier": 0.533112195121951,
-  "collapse-forces": false,
-  "centerStrength": 0,
-  "repelStrength": 10,
-  "linkStrength": 0.306926829268293,
+  "showArrow": true,
+  "textScale": 1,
+  "showTitleHeader": true,
+  "lineSize": 1.5,
+  "nodeSize": 3.5,
   "linkDistance": 250,
-  "scale": 0.030182895067323603,
-  "close": false
+  "linkForce": 1,
+  "repelForce": 10,
+  "centerForce": 0.5
 }

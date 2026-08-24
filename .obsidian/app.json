@@ -1,6 +1,9 @@
 {
-  "userIgnoreFilters": [
-    "/test_[0-9a-f]{8}\\.md$/",
-    "/unknown_.*\\.md$/"
-  ]
+  "useMarkdownLinks": true,
+  "showFrontmatter": true,
+  "attachmentFolderPath": "05_RESOURCES/ATTACHMENTS",
+  "alwaysUpdateLinks": true,
+  "autoPairBrackets": true,
+  "autoPairMarkdown": true,
+  "livePreview": true
 }
