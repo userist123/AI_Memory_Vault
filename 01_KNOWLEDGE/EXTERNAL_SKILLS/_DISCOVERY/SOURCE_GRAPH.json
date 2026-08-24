@@ -1,0 +1,229 @@
+{
+  "generated_at": "2026-08-24T15:39:50.211315Z",
+  "total_seeds": 11,
+  "total_repositories": 19,
+  "seeds": [
+    "https://github.com/github/awesome-copilot/",
+    "https://github.com/topics/backend-app",
+    "https://github.com/collections/programming-languages",
+    "https://github.com/topics/backend?o=asc&s=forks",
+    "https://github.com/addyosmani/web-quality-skills/tree/main/skills",
+    "https://github.com/gbrasil720/ui-sensei",
+    "https://github.com/ConardLi/garden-skills/tree/main/skills/web-design-engineer",
+    "https://github.com/topics/backend-webdevelopment",
+    "https://github.com/xiaopu-ai/web-design/blob/main/SKILL.md",
+    "https://github.com/ConardLi/garden-skills",
+    "https://github.com/bergside/awesome-design-skills"
+  ],
+  "nodes": [
+    {
+      "id": "node-0001",
+      "url": "https://github.com/github/awesome-copilot",
+      "repository": "github/awesome-copilot",
+      "path": "_RAW/awesome-copilot",
+      "source_type": "seed_repository",
+      "parent_source": "https://github.com/github/awesome-copilot/",
+      "discovered_from": "https://github.com/github/awesome-copilot/",
+      "depth": 0,
+      "status": "processed"
+    },
+    {
+      "id": "node-0002",
+      "url": "https://github.com/addyosmani/web-quality-skills",
+      "repository": "addyosmani/web-quality-skills",
+      "path": "_RAW/web-quality-skills",
+      "source_type": "seed_repository",
+      "parent_source": "https://github.com/addyosmani/web-quality-skills/tree/main/skills",
+      "discovered_from": "https://github.com/addyosmani/web-quality-skills/tree/main/skills",
+      "depth": 0,
+      "status": "processed"
+    },
+    {
+      "id": "node-0003",
+      "url": "https://github.com/gbrasil720/ui-sensei",
+      "repository": "gbrasil720/ui-sensei",
+      "path": "_RAW/ui-sensei",
+      "source_type": "seed_repository",
+      "parent_source": "https://github.com/gbrasil720/ui-sensei",
+      "discovered_from": "https://github.com/gbrasil720/ui-sensei",
+      "depth": 0,
+      "status": "processed"
+    },
+    {
+      "id": "node-0004",
+      "url": "https://github.com/ConardLi/garden-skills",
+      "repository": "ConardLi/garden-skills",
+      "path": "_RAW/garden-skills",
+      "source_type": "seed_repository",
+      "parent_source": "https://github.com/ConardLi/garden-skills/tree/main/skills/web-design-engineer",
+      "discovered_from": "https://github.com/ConardLi/garden-skills/tree/main/skills/web-design-engineer",
+      "depth": 0,
+      "status": "processed"
+    },
+    {
+      "id": "node-0005",
+      "url": "https://github.com/xiaopu-ai/web-design",
+      "repository": "xiaopu-ai/web-design",
+      "path": "_RAW/web-design",
+      "source_type": "seed_repository",
+      "parent_source": "https://github.com/xiaopu-ai/web-design/blob/main/SKILL.md",
+      "discovered_from": "https://github.com/xiaopu-ai/web-design/blob/main/SKILL.md",
+      "depth": 0,
+      "status": "processed"
+    },
+    {
+      "id": "node-0006",
+      "url": "https://github.com/bergside/awesome-design-skills",
+      "repository": "bergside/awesome-design-skills",
+      "path": "_RAW/awesome-design-skills",
+      "source_type": "seed_repository",
+      "parent_source": "https://github.com/bergside/awesome-design-skills",
+      "discovered_from": "https://github.com/bergside/awesome-design-skills",
+      "depth": 0,
+      "status": "processed"
+    },
+    {
+      "id": "node-0007",
+      "url": "https://github.com/VoltAgent/awesome-agent-skills",
+      "repository": "VoltAgent/awesome-agent-skills",
+      "path": "_RAW/awesome-agent-skills",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/github/awesome-copilot/",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0008",
+      "url": "https://github.com/sickn33/agentic-awesome-skills",
+      "repository": "sickn33/agentic-awesome-skills",
+      "path": "_RAW/agentic-awesome-skills",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/github/awesome-copilot/",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0009",
+      "url": "https://github.com/ComposioHQ/awesome-claude-skills",
+      "repository": "ComposioHQ/awesome-claude-skills",
+      "path": "_RAW/awesome-claude-skills",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/github/awesome-copilot/",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0010",
+      "url": "https://github.com/donnemartin/system-design-primer",
+      "repository": "donnemartin/system-design-primer",
+      "path": "_RAW/system-design-primer",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-app",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0011",
+      "url": "https://github.com/ByteByteGoHq/system-design-101",
+      "repository": "ByteByteGoHq/system-design-101",
+      "path": "_RAW/system-design-101",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-app",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0012",
+      "url": "https://github.com/Sairyss/domain-driven-hexagon",
+      "repository": "Sairyss/domain-driven-hexagon",
+      "path": "_RAW/domain-driven-hexagon",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0013",
+      "url": "https://github.com/khalidbelk/awesome-backend",
+      "repository": "khalidbelk/awesome-backend",
+      "path": "_RAW/awesome-backend",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend?o=asc&s=forks",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0014",
+      "url": "https://github.com/zhashkevych/awesome-backend",
+      "repository": "zhashkevych/awesome-backend-zhashkevych",
+      "path": "_RAW/awesome-backend-zhashkevych",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend?o=asc&s=forks",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0015",
+      "url": "https://github.com/ToastShaman/awesome-backend",
+      "repository": "ToastShaman/awesome-backend-toastshaman",
+      "path": "_RAW/awesome-backend-toastshaman",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend?o=asc&s=forks",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0016",
+      "url": "https://github.com/Eldar1205/awesome-python-backend",
+      "repository": "Eldar1205/awesome-python-backend",
+      "path": "_RAW/awesome-python-backend",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 1,
+      "status": "processed"
+    },
+    {
+      "id": "node-0017",
+      "url": "https://github.com/dotnet/aspire-samples",
+      "repository": "dotnet/aspire-samples",
+      "path": "_RAW/aspire-samples",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-app",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 2,
+      "status": "processed"
+    },
+    {
+      "id": "node-0018",
+      "url": "https://github.com/gothinkster/realworld",
+      "repository": "gothinkster/realworld",
+      "path": "_RAW/realworld",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-app",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 2,
+      "status": "processed"
+    },
+    {
+      "id": "node-0019",
+      "url": "https://github.com/mehdihadeli/awesome-software-architecture",
+      "repository": "mehdihadeli/awesome-software-architecture",
+      "path": "_RAW/awesome-software-architecture",
+      "source_type": "linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "recursive_link_analysis",
+      "depth": 2,
+      "status": "processed"
+    }
+  ]
+}

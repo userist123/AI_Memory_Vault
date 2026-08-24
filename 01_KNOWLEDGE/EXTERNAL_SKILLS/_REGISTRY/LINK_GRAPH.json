@@ -1,0 +1,1511 @@
+{
+  "total_links": 251,
+  "links": [
+    {
+      "source_skill": "accessibility",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "add-mouse-driven-orbit",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "add-shader-cursor-trail",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "agency-grid-layout-minimal",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ambient-section-particles",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "animation-on-scroll",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "animation-systems",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ansible-automation",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "argocd-gitops",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "article-prompts-to-skills",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "atmosphere-background",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "audit-reference-originality",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "audit-verify-explain-grade-5",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "aura-asset-images",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "author-game-levels",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "aws-cloud-architecture",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "azure-cloud-architecture",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "backend-api-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "backend-security-authz",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "background-grid-webgl",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "beam-glow-states",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "beautiful-shadows",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "blue-cloudy-clean-modern",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "blue-laser-clean-glass-layout",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "book-serif-index",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "brand-identity",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "bright-green-tech-system-webgl",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "browser-video-recording",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-awwwards-quality-sites",
+      "derived_from_repository": "addyosmani/web-quality-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-daily-inspiration-sites",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-game-audio-feedback",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-game-camera-controls",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-game-changelog",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-game-inventory",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-game-map-editor",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-game-monster-system",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-hybrid-game-assets",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-interactive-particle-trail",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-isometric-arpg",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-mobile-threejs-games",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-rigged-game-assets",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-threejs-enemy-systems",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-threejs-scroll-worlds",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-vesperfall-review-assets",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "build-wireframe-scan-reveal",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "casbin-authorization",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "cinematic-gsap-lenis-motion-system",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "cinematic-scroll-storytelling",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "clean-architecture-backend",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "clean-minimal-beige-light-mode",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "clickhouse-time-series",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "cobejs",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "code-refactoring-patterns",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "company-logos",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "container-lines",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "container-vulnerability-scanning",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "copilot-agentic-workflows",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "copilot-custom-instructions",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "core-web-vitals",
+      "derived_from_repository": "addyosmani/web-quality-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "corner-diagonals",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "corner-lasers",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "create-game-vfx",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "csharp-wpf-desktop",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "css-alpha-masking",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "css-border-gradient",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "daily-ui-inspiration-capture",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dark-blue-contrasting-clean",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dark-glass-clean-layout",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dashboard-admin-ui",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dast-dynamic-testing",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "data-viz-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "database-architecture-caching",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "database-migration-flyway",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "database-sharding-vitess",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "datadog-observability",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "debezium-cdc-pipeline",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-action-combat",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-first-ui-prompting",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-game-encounters",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-system-apple",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-system-foundation",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-system-linear",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-system-stripe",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-system-supabase",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "design-system-vercel",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dfir-operations",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dither-background",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "dither-laser-dark-mode",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "docker-containerization",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "documentary-brutalist-agency",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "duckdb-analytical-queries",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "editorial-portfolio-chapters",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "editorial-service-booking",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "editorial-tech",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "elastic-stack-logging",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "elasticsearch-full-text",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "elevenlabs-tts",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "email-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "envoy-proxy-configuration",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "falling-leaves",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "fine-tuning-lora-peft",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "framed-grid-layout",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "framed-tech-dark-border-gradient",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "funky-purple-container-tech",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "garden-web-design-engineer",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "gcp-cloud-architecture",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "generate-reference-inspired-brand-worlds",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "github-actions-ci-cd",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "gitlab-ci-cd",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "glass-dark-mode-clock",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "glass-dark-ui",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "global-skill-registry-router",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "globe-gl",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "globe-particles",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "gooey-blob-system",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "gsap",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "gsap-scrolltrigger-storytelling",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "guardrails-ai-safety",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "helm-chart-management",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "high-contrast-skeuomorphic-clean",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "html-to-interaction-prompts",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "image-first-grid-layout",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "implement-fog-of-war",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "istio-service-mesh",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "iterate-until-verified",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "kubernetes-orchestration",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "landing-page",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "landing-page-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "langchain-agentic-chains",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "light-mode-paper-technical",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "liquid-metal-border",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "llamaindex-rag-pipeline",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "local-ai-integration",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "marquee-loop",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "masked-reveal",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "matterjs",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "mcp-server-integrations",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "mesh-gradient-dark-blue-clean",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "microservices-system-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "motion-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "neo4j-graph-database",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "nested-container-clean-agency",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "nested-container-frames",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "nextjs-saas-frontend",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "nginx-ingress-tuning",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "number-details",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ollama-local-llm-integration",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "opa-rego-policy-enforcement",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "open-telemetry-tracing",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "operational-enterprise-ai",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "optimize-threejs-games",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "optimize-web-animations",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "orange-clean-paper-saas",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "owasp-top-10-audit",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "penetration-testing-playbook",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "performance-profiling",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "pgvector-embeddings",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "pki-certificate-management",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "playwright-e2e-testing",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "pointer-trail-emitter",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "powershell-secops",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "presentation-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "pricing-page",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "product-proof-saas",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "progressive-blur",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "prometheus-grafana-monitoring",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "publish-project-to-github",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "pydantic-json-mode-validation",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "python-trading-systems",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "qdrant-vector-database",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "react-query-tanstack",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "reveal-hover-effect",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "sast-static-analysis",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "scroll-progress-timeline",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "scroll-scrubbed-visual-sequence",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "scroll-scrubbed-word-reveal",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "scroll-world-storytelling",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "secret-leak-prevention",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "security-invariants",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "shaders-cursor-ripples",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ship-web-games",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skeuomorphic-ui",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-api-design-governance",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-backend-performance-tuning",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-clean-architecture-layering",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-cpp-drogon-coroutine-backend",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-cqrs-event-sourcing",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-distributed-rate-limiting",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-dotnet10-minimal-api-aot",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-go-worker-pool-concurrency",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-graphql-schema-evolution",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-grpc-contract-management",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-oauth2-jwt-security",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-owasp-backend-hardening",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-postgresql-indexing-tuning",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-python-fastapi-async-worker",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-rbac-abac-authorization",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-redis-caching-patterns",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-rust-tokio-axum-architecture",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-saga-orchestration-choreography",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-sqlite-wal-optimization",
+      "derived_from_repository": "donnemartin/system-design-primer",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-transactional-outbox-cdc",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skill-typescript-nest-bullmq-orm",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "skillsweb",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "solar-duotone-bold",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "split-layout-technical",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "staggered-word-reveal",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "stitched-full-page-capture",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "storybook-component-docs",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "tailwind-v4-theme-engine",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "tailwindcss",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "tech-green-dark-mode-modern",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "technical-wireframe-info-layout",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "terraform-infrastructure",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "test-playable-web-games",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "thinking-orbs",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "threejs",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "threejs-landscape",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "threejs-post-processing",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "threejs-towers",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "threejs-weather",
+      "derived_from_repository": "bergside/awesome-design-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "tune-enemy-ai",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ui-sensei",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ui-tokens",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "ui-ux-review",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "unicorn-studio",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "unit-test-generation-contract",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "unsplash-asset-images",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "vantajs",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "vault-operations",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "vault-secrets-management",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "vault-security-audit",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "video-to-superprompt",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "vite-bundler-optimization",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "vllm-inference-optimization",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-best-practices",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-design-engineer",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-design-style-seeds",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-interaction-patterns",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-performance",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-quality-audit",
+      "derived_from_repository": "addyosmani/web-quality-skills",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-seo",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "web-technique-to-skill",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "webgl-3d-object",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "webgl-landing-steering",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "webgl-laser",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "write-like-meng-on-x",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "x-bookmark-quote-posts",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "xiaopu-web-design",
+      "derived_from_repository": "xiaopu-ai/web-design",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "zero-trust-architecture",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    },
+    {
+      "source_skill": "zustand-state-management",
+      "derived_from_repository": "github/awesome-copilot",
+      "references": [],
+      "depends_on": []
+    }
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "github/awesome-copilot": {
+    "url": "https://github.com/github/awesome-copilot",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "addyosmani/web-quality-skills": {
+    "url": "https://github.com/addyosmani/web-quality-skills",
+    "license": "Apache-2.0",
+    "is_open_source": true
+  },
+  "gbrasil720/ui-sensei": {
+    "url": "https://github.com/gbrasil720/ui-sensei",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "ConardLi/garden-skills": {
+    "url": "https://github.com/ConardLi/garden-skills",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "xiaopu-ai/web-design": {
+    "url": "https://github.com/xiaopu-ai/web-design",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "bergside/awesome-design-skills": {
+    "url": "https://github.com/bergside/awesome-design-skills",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "VoltAgent/awesome-agent-skills": {
+    "url": "https://github.com/VoltAgent/awesome-agent-skills",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "sickn33/agentic-awesome-skills": {
+    "url": "https://github.com/sickn33/agentic-awesome-skills",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "ComposioHQ/awesome-claude-skills": {
+    "url": "https://github.com/ComposioHQ/awesome-claude-skills",
+    "license": "Apache-2.0",
+    "is_open_source": true
+  },
+  "donnemartin/system-design-primer": {
+    "url": "https://github.com/donnemartin/system-design-primer",
+    "license": "CC-BY-4.0",
+    "is_open_source": true
+  },
+  "ByteByteGoHq/system-design-101": {
+    "url": "https://github.com/ByteByteGoHq/system-design-101",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "Sairyss/domain-driven-hexagon": {
+    "url": "https://github.com/Sairyss/domain-driven-hexagon",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "khalidbelk/awesome-backend": {
+    "url": "https://github.com/khalidbelk/awesome-backend",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "zhashkevych/awesome-backend-zhashkevych": {
+    "url": "https://github.com/zhashkevych/awesome-backend",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "ToastShaman/awesome-backend-toastshaman": {
+    "url": "https://github.com/ToastShaman/awesome-backend",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "Eldar1205/awesome-python-backend": {
+    "url": "https://github.com/Eldar1205/awesome-python-backend",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "dotnet/aspire-samples": {
+    "url": "https://github.com/dotnet/aspire-samples",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "gothinkster/realworld": {
+    "url": "https://github.com/gothinkster/realworld",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "mehdihadeli/awesome-software-architecture": {
+    "url": "https://github.com/mehdihadeli/awesome-software-architecture",
+    "license": "MIT",
+    "is_open_source": true
+  }
+}
