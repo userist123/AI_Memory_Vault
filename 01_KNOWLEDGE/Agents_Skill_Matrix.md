@@ -8,73 +8,80 @@ tags:
   - vault-core
   - orchestration
 created: 2026-08-24T18:00:00Z
-updated: 2026-08-24T18:02:00Z
+updated: 2026-08-24T18:03:00Z
 provenance:
   source_type: ai
-  source_ref: "agent-skill-matrix-generation"
+  source_ref: "agent-skill-matrix-full-136-skills"
 confidence: high
 verification: inferred
 ---
 
-# Matricea Extinsă de Skill-uri a Consiliului de Agenți (48 Skill-uri)
+# Matricea Totală de Skill-uri a Consiliului de Agenți (136 Skill-uri Operaționale)
 
-Pentru a facilita execuția autonomă la scară largă, a fost analizat întregul set de **48 de skill-uri operaționale** din `.agents/skills/`. Agenții vor apela automat aceste skill-uri atunci când sunt invocați. S-au adăugat și agenții speciali pentru Game Dev și Content Strategy.
+Toate cele **136 de skill-uri** din directorul canonic `.agents/skills/` au fost scanate, sincronizate și atribuite celor **9 Agenți Specializați** ai Consiliului Cognitiv.
 
-## 1. Game Engineer (`game_engineer`) 🎮 [NOU]
-*Domeniu:* WebGL, Three.js, Isometric ARPG, Game Systems, Performanță 3D.
-**Skill-uri Antigravity alocate (21):**
-- **Core & Arhitectură:** `build-isometric-arpg`, `build-mobile-threejs-games`, `ship-web-games`, `test-playable-web-games`
-- **Combat & AI:** `design-action-combat`, `tune-enemy-ai`, `build-threejs-enemy-systems`, `design-game-encounters`, `build-game-monster-system`
-- **Lumi & Sisteme:** `author-game-levels`, `build-game-map-editor`, `implement-fog-of-war`, `build-game-inventory`, `build-game-camera-controls`
-- **Artă & Feedback:** `create-game-vfx`, `build-game-audio-feedback`, `build-rigged-game-assets`, `build-hybrid-game-assets`, `build-vesperfall-review-assets`
-- **Optimizare & QA:** `optimize-threejs-games`, `build-game-changelog`
+---
 
-## 2. UI/UX Designer (`ui_ux_designer`) 🎨
+## 1. Creative Web Developer (`web_creative_developer`) 🌟 [NOU | 88 Skill-uri Web Design]
+*Domeniu:* Creative Coding, Site-uri Awwwards, Animații GSAP & Lenis, WebGL, Shader-e, Canvas 3D.
+**Exemple de Skill-uri Cheie alocate:**
+- **Lumi & Efecte 3D/WebGL:** `build-awwwards-quality-sites`, `build-threejs-scroll-worlds`, `cobejs`, `globe-gl`, `globe-particles`, `gooey-blob-system`, `matterjs`, `shaders-cursor-ripples`, `threejs-landscape`, `threejs-towers`, `threejs-weather`, `unicorn-studio`, `vantajs`, `webgl-3d-object`, `webgl-laser`, `bright-green-tech-system-webgl`.
+- **Animații & Scroll Storytelling:** `cinematic-gsap-lenis-motion-system`, `cinematic-scroll-storytelling`, `gsap-scrolltrigger-storytelling`, `scroll-world-storytelling`, `scroll-scrubbed-visual-sequence`, `scroll-scrubbed-word-reveal`, `staggered-word-reveal`, `marquee-loop`, `masked-reveal`.
+- **Styling & Layout-uri Avansate:** `agency-grid-layout-minimal`, `blue-laser-clean-glass-layout`, `dark-glass-clean-layout`, `dither-laser-dark-mode`, `documentary-brutalist-agency`, `editorial-portfolio-chapters`, `high-contrast-skeuomorphic-clean`, `liquid-metal-border`, `mesh-gradient-dark-blue-clean`, `skeuomorphic-ui`, `solar-duotone-bold`.
+- *(Total: 88 de skill-uri specifice de Web Design și Creative Coding)*
+
+---
+
+## 2. Game Engineer (`game_engineer`) 🎮 [21 Skill-uri Game Dev]
+*Domeniu:* WebGL, Three.js, Isometric ARPG, Engine Systems, AI & VFX.
+**Skill-uri alocate:**
+- `author-game-levels`, `build-game-audio-feedback`, `build-game-camera-controls`, `build-game-changelog`, `build-game-inventory`, `build-game-map-editor`, `build-game-monster-system`, `build-hybrid-game-assets`, `build-isometric-arpg`, `build-mobile-threejs-games`, `build-rigged-game-assets`, `build-threejs-enemy-systems`, `build-vesperfall-review-assets`, `create-game-vfx`, `design-action-combat`, `design-game-encounters`, `implement-fog-of-war`, `optimize-threejs-games`, `ship-web-games`, `test-playable-web-games`, `tune-enemy-ai`.
+
+---
+
+## 3. UI/UX Designer (`ui_ux_designer`) 🎨 [11 Skill-uri UI/UX]
 *Domeniu:* Interfețe Dashboard, Identitate Vizuală, Motion Design, Analiză UI.
-**Skill-uri Antigravity alocate (11):**
-- **Sinteză & Generare:** `design-first-ui-prompting`, `generate-reference-inspired-brand-worlds`, `daily-ui-inspiration-capture`, `build-daily-inspiration-sites`
-- **Referințe & Resurse:** `aura-asset-images`, `unsplash-asset-images`
-- **Conversie UI (Video/HTML):** `video-to-superprompt`, `html-to-interaction-prompts`, `browser-video-recording`
-- **Integritate:** `audit-reference-originality`, `ui-tokens`
+**Skill-uri alocate:**
+- `design-first-ui-prompting`, `generate-reference-inspired-brand-worlds`, `daily-ui-inspiration-capture`, `build-daily-inspiration-sites`, `aura-asset-images`, `unsplash-asset-images`, `video-to-superprompt`, `html-to-interaction-prompts`, `browser-video-recording`, `audit-reference-originality`, `ui-tokens`.
 
-## 3. Frontend SaaS Engineer (`frontend_saas_engineer`) 🌐
-*Domeniu:* Next.js, Framer Motion, Performanță Web.
-**Skill-uri Antigravity alocate (4):**
-- `optimize-web-animations`: Profilare și auditare CSS/Framer Motion.
-- `stitched-full-page-capture`: Audit vizual de înaltă fidelitate.
-- `publish-project-to-github`: Pregătire deployment și open-source release.
-- `web-technique-to-skill`: Izolează mecanici complexe web și le convertește în skill-uri reutilizabile.
+---
 
-## 4. Content Strategist (`content_strategist`) ✍️ [NOU]
-*Domeniu:* X/Twitter, Copywriting, Sinteză de knowledge.
-**Skill-uri Antigravity alocate (4):**
-- `write-like-meng-on-x`: Emulează profilul de comunicare "Meng To".
-- `x-bookmark-quote-posts`: Transformă bookmark-urile de pe X în postări argumentate.
-- `article-prompts-to-skills`: Transformă pack-uri de prompturi din articole în skill-uri Antigravity.
-- `elevenlabs-tts`: Generare Voiceover / Text-To-Speech folosind profiluri audio locale.
+## 4. Frontend SaaS Engineer (`frontend_saas_engineer`) 🌐 [4 Skill-uri]
+*Domeniu:* Next.js App Router, Zero-Dollar Stack, Optimizare Web.
+**Skill-uri alocate:**
+- `optimize-web-animations`, `stitched-full-page-capture`, `publish-project-to-github`, `web-technique-to-skill`.
 
-## 5. SecOps & Forensic Auditor (`secops_auditor`) 🛡️
-*Domeniu:* Securitate, PowerShell, Conformitate HG 585, NIST.
-**Skill-uri Antigravity alocate (4):**
-- `dfir-operations`: Investigare criminalistică (LogAnalyzer DFIR).
-- `vault-security-audit`: Testarea limitelor de încredere (P0-P15).
-- `security-invariants`: Invariante P0-P18, air-gapped environment.
-- `audit-verify-explain-grade-5`: Auditarea acțiunilor și generare rapoarte simple.
+---
 
-## 6. WPF Engineer (`wpf_engineer`) 🖥️
+## 5. Content Strategist (`content_strategist`) ✍️ [4 Skill-uri]
+*Domeniu:* X/Twitter, Copywriting, Generare Voiceover.
+**Skill-uri alocate:**
+- `write-like-meng-on-x`, `x-bookmark-quote-posts`, `article-prompts-to-skills`, `elevenlabs-tts`.
+
+---
+
+## 6. SecOps & Forensic Auditor (`secops_auditor`) 🛡️ [4 Skill-uri]
+*Domeniu:* Securitate, Forensic PowerShell, HG 585, NIST.
+**Skill-uri alocate:**
+- `dfir-operations`, `vault-security-audit`, `security-invariants`, `audit-verify-explain-grade-5`.
+
+---
+
+## 7. WPF Engineer (`wpf_engineer`) 🖥️ [2 Skill-uri]
 *Domeniu:* C# WPF, .NET 10, MVVM, Desktop Enterprise.
-**Skill-uri Antigravity alocate (2):**
-- `ui-tokens` (Theme ObsidianTactical)
-- `security-invariants` (Constrângeri Air-gapped)
+**Skill-uri alocate:**
+- `ui-tokens`, `security-invariants`.
 
-## 7. Quant Developer (`quant_developer`) 📈
-*Domeniu:* Trading algoritmic, arhitecturi de risc (Python).
-**Skill-uri Antigravity alocate (2):**
-- `performance-profiling`: Diagnosticarea latențelor.
-- `iterate-until-verified`: Verificare automată pentru lipsa de look-ahead bias.
+---
 
-## 8. Local AI Integration Engineer (`local_ai_engineer`) 🧠
-*Domeniu:* Modele LLM locale (Ollama), Vault Cognitiv.
-**Skill-uri Antigravity alocate (2):**
-- `vault-operations`: Operare sistem cognitiv.
-- `iterate-until-verified`: Forțare output structurat JSON.
+## 8. Quant Developer (`quant_developer`) 📈 [2 Skill-uri]
+*Domeniu:* Algorithmic Trading Python, MetaTrader 5.
+**Skill-uri alocate:**
+- `performance-profiling`, `iterate-until-verified`.
+
+---
+
+## 9. Local AI Integration Engineer (`local_ai_engineer`) 🧠 [2 Skill-uri]
+*Domeniu:* Ollama, Structured JSON, Privacy locală.
+**Skill-uri alocate:**
+- `vault-operations`, `iterate-until-verified`.
