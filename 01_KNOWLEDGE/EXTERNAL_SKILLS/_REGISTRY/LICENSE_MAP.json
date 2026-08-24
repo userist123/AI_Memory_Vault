@@ -93,5 +93,55 @@
     "url": "https://github.com/mehdihadeli/awesome-software-architecture",
     "license": "MIT",
     "is_open_source": true
+  },
+  "vinta/awesome-python": {
+    "url": "https://github.com/vinta/awesome-python",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "avelino/awesome-go": {
+    "url": "https://github.com/avelino/awesome-go",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "rust-unofficial/awesome-rust": {
+    "url": "https://github.com/rust-unofficial/awesome-rust",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "quozd/awesome-dotnet": {
+    "url": "https://github.com/quozd/awesome-dotnet",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "enaqx/awesome-react": {
+    "url": "https://github.com/enaqx/awesome-react",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "wowners/awesome-devops": {
+    "url": "https://github.com/wowners/awesome-devops",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "sbilly/awesome-security": {
+    "url": "https://github.com/sbilly/awesome-security",
+    "license": "MIT",
+    "is_open_source": true
+  },
+  "ramitsurana/awesome-kubernetes": {
+    "url": "https://github.com/ramitsurana/awesome-kubernetes",
+    "license": "CC0-1.0",
+    "is_open_source": true
+  },
+  "veggiemonk/awesome-docker": {
+    "url": "https://github.com/veggiemonk/awesome-docker",
+    "license": "Apache-2.0",
+    "is_open_source": true
+  },
+  "awesome-selfhosted/awesome-sysadmin": {
+    "url": "https://github.com/awesome-selfhosted/awesome-sysadmin",
+    "license": "CC-BY-SA-4.0",
+    "is_open_source": true
   }
 }

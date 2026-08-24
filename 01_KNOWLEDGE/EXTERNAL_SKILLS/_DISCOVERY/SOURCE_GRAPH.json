@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-08-24T15:39:50.211315Z",
+  "generated_at": "2026-08-24T17:24:21.055399+00:00",
   "total_seeds": 11,
-  "total_repositories": 19,
+  "total_repositories": 29,
   "seeds": [
     "https://github.com/github/awesome-copilot/",
     "https://github.com/topics/backend-app",
@@ -223,6 +223,116 @@
       "parent_source": "https://github.com/topics/backend-webdevelopment",
       "discovered_from": "recursive_link_analysis",
       "depth": 2,
+      "status": "processed"
+    },
+    {
+      "id": "node-0020",
+      "url": "https://github.com/vinta/awesome-python",
+      "repository": "vinta/awesome-python",
+      "path": "_RAW/awesome-python",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0021",
+      "url": "https://github.com/avelino/awesome-go",
+      "repository": "avelino/awesome-go",
+      "path": "_RAW/awesome-go",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0022",
+      "url": "https://github.com/rust-unofficial/awesome-rust",
+      "repository": "rust-unofficial/awesome-rust",
+      "path": "_RAW/awesome-rust",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0023",
+      "url": "https://github.com/quozd/awesome-dotnet",
+      "repository": "quozd/awesome-dotnet",
+      "path": "_RAW/awesome-dotnet",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0024",
+      "url": "https://github.com/enaqx/awesome-react",
+      "repository": "enaqx/awesome-react",
+      "path": "_RAW/awesome-react",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0025",
+      "url": "https://github.com/wowners/awesome-devops",
+      "repository": "wowners/awesome-devops",
+      "path": "_RAW/awesome-devops",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0026",
+      "url": "https://github.com/sbilly/awesome-security",
+      "repository": "sbilly/awesome-security",
+      "path": "_RAW/awesome-security",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0027",
+      "url": "https://github.com/ramitsurana/awesome-kubernetes",
+      "repository": "ramitsurana/awesome-kubernetes",
+      "path": "_RAW/awesome-kubernetes",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0028",
+      "url": "https://github.com/veggiemonk/awesome-docker",
+      "repository": "veggiemonk/awesome-docker",
+      "path": "_RAW/awesome-docker",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 3,
+      "status": "processed"
+    },
+    {
+      "id": "node-0029",
+      "url": "https://github.com/awesome-selfhosted/awesome-sysadmin",
+      "repository": "awesome-selfhosted/awesome-sysadmin",
+      "path": "_RAW/awesome-sysadmin",
+      "source_type": "deep_linked_repository",
+      "parent_source": "https://github.com/topics/backend-webdevelopment",
+      "discovered_from": "depth2_outgoing_links",
+      "depth": 4,
       "status": "processed"
     }
   ]
