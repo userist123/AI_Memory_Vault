@@ -1,0 +1,17 @@
+{
+  "name": "ai-memory-vault",
+  "owner": {
+    "name": "userist123"
+  },
+  "metadata": {
+    "description": "AI Memory Vault integration for Claude Code: skills, agents, knowledge, procedures, provenance and Obsidian-aware memory retrieval."
+  },
+  "plugins": [
+    {
+      "name": "ai-memory-vault",
+      "source": "./",
+      "description": "Use AI_Memory_Vault_CODEX_READY as Claude Code's external canonical memory layer.",
+      "version": "1.0.0"
+    }
+  ]
+}

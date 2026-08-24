@@ -1,5 +1,5 @@
 ---
-id: "<RFC 4122 UUID>"
+id: "c0b8fa88-000a-4823-8872-be0a8dd3df8e"
 type: hypothesis
 lifecycle: REVIEW
 category:

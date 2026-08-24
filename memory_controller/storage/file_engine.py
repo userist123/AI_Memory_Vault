@@ -27,8 +27,8 @@ class FileStorageEngine:
                 continue
             
             for filepath in glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True):
-                # Double check to prevent RAW_IMPORTS leakage
-                if "RAW_IMPORTS" in filepath:
+                # Double check to prevent RAW_IMPORTS or Obsidian MOC leakage
+                if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
                     continue
                 try:
                     with open(filepath, 'r', encoding='utf-8') as f:

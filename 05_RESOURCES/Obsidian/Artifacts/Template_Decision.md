@@ -1,5 +1,5 @@
 ---
-id: "<RFC 4122 UUID>"
+id: "54c969a5-c8eb-493a-bca4-7f90915dd439"
 type: decision
 lifecycle: REVIEW
 category:

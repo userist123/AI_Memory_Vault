@@ -1,5 +1,5 @@
 ---
-id: "<RFC 4122 UUID>"
+id: "21d31998-f351-429c-afdb-f2342dee7eb7"
 type: preference
 lifecycle: REVIEW
 category:

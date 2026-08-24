@@ -3,7 +3,7 @@ type: core
 category: protocol
 status: active
 version: 1.0.0
-id: "657bc77b-6305-4343-af51-b1e82a062a21"
+id: "375ce533-e929-49a8-9ee1-4c81efabc632"
 document_kind: policy
 document_status: active
 provenance_status: incomplete

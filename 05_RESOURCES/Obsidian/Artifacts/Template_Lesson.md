@@ -1,5 +1,5 @@
 ---
-id: "<RFC 4122 UUID>"
+id: "00393d90-be5b-4a2e-8539-c37a92dceb93"
 type: lesson
 lifecycle: REVIEW
 category:

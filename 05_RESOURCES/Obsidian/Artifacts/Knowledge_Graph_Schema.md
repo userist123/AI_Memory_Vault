@@ -1,5 +1,5 @@
 ---
-id: "79096895-5338-4d52-9631-80b40eb85805"
+id: "976d88c1-8f9b-4f8b-a15d-15a7f59266af"
 document_kind: specification
 document_status: active
 category: ai-architecture

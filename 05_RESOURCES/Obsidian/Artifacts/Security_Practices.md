@@ -5,7 +5,7 @@ tags: [knowledge, security, soc, dfir]
 created: 2026-08-09
 updated: 2026-08-09
 status: review
-id: "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+id: "05506a84-5b5f-498f-b897-e0ea5e0737c0"
 lifecycle: REVIEW
 provenance_status: incomplete
 provenance:
