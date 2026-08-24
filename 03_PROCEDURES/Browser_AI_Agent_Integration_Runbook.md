@@ -53,10 +53,17 @@ Markdown Injection       (http://127.0.0.1:8000)   Tampermonkey Userscript
 
 ## ⚡ Metoda B: REST API Gateway Local (Serviciu Python Standalone)
 
-Porniți serverul REST de API local pentru agenți din browser:
+Porniți serverul REST API local navigând mai întâi în dosarul proiectului:
 
-```bash
-python -m memory_controller.api_server --port 8000
+```powershell
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
+python -m memory_controller.api_server 8000
+```
+
+Sau rulați direct fișierul din orice locație terminală:
+
+```powershell
+python C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\memory_controller\api_server.py 8000
 ```
 
 ### Endpoint-uri OpenAPI Expuse:
