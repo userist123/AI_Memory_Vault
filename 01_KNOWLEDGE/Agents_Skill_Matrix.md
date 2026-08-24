@@ -8,28 +8,28 @@ tags:
   - vault-core
   - orchestration
 created: 2026-08-24T18:00:00Z
-updated: 2026-08-24T18:18:00Z
+updated: 2026-08-24T18:19:00Z
 provenance:
   source_type: execution
-  source_ref: "github-backend-webdevelopment-subagent-research"
+  source_ref: "github-design-systems-deep-crawl"
 confidence: high
 verification: verified
 ---
 
-# Matricea Totală a Consiliului extins la 18 Agenți Specializați (168 Skill-uri Active)
+# Matricea Totală a Consiliului extins la 18 Agenți Specializați (173 Skill-uri Active)
 
-În urma cercetării extinse efectuate de subagentul de research pe tema `backend-webdevelopment` de pe GitHub, s-au sintetizat și instalat încă **15 skill-uri tehnice de nivel Senior/Principal Architect**.
+În urma căutării profunde pe repository-urile de design vizual (Addy Osmani, UI Sensei, Xiaopu AI, ConardLi Garden, Bergside, Linear, Apple, Stripe, Vercel, Supabase), s-au extras și instalat în `.agents/skills/` **173 de skill-uri operaționale**.
 
 ---
 
-## Tabloul Central al Consiliului (18 Agenți Specializați & 168 Skill-uri):
+## Tabloul Central al Consiliului (18 Agenți Specializați & 173 Skill-uri):
 
 | # | Nume Agent | Rol / Specializare | Sursă & Skill-uri Cheie |
 |---|---|---|---|
-| 1 | `backend_systems_engineer` ⚡ | Backend Microservices, API-uri REST/gRPC & Redis | 20 Skill-uri Backend (Saga, Outbox CDC, CQRS, OAuth2 PKCE, OPA Rego, SQLite WAL, Rate Limiting, OWASP) |
-| 2 | `web_design_engineer_agent` 🎨 | Engine 2-Faze Web Design (Xiaopu AI / ConardLi) | Intrare PRD/URL -> Generează `DESIGN.md` -> Cod de producție |
-| 3 | `web_quality_engineer` ⚡ | Optimizare Performanță & Calitate (Addy Osmani) | `web-quality-audit`, Core Web Vitals (LCP/CLS/INP), WCAG AAA, SEO |
-| 4 | `ui_sensei_architect` ⛩️ | Claritate Vizuală & UI Philosophy (UI Sensei) | `ui-sensei`, De-cluttering, Micro-spacing (grid 8px), 3-level typography |
+| 1 | `web_design_engineer_agent` 🎨 | Engine 2-Faze Web Design (Xiaopu AI / ConardLi) | Intrare PRD/URL -> Generează `DESIGN.md` -> Cod de producție. Inclusiv `design-system-linear`, `design-system-apple`, `design-system-stripe`, `design-system-vercel`, `design-system-supabase` |
+| 2 | `web_quality_engineer` ⚡ | Optimizare Performanță & Calitate (Addy Osmani) | `web-quality-audit`, Core Web Vitals (LCP/CLS/INP), WCAG AAA, SEO |
+| 3 | `ui_sensei_architect` ⛩️ | Claritate Vizuală & UI Philosophy (UI Sensei) | `ui-sensei`, De-cluttering, Micro-spacing (grid 8px), 3-level typography |
+| 4 | `backend_systems_engineer` ⚡ | Backend Microservices, API-uri REST/gRPC & Redis | 20 Skill-uri Backend (Saga, Outbox CDC, CQRS, OAuth2 PKCE, OPA Rego, SQLite WAL, Rate Limiting, OWASP) |
 | 5 | `system_architecture_agent` 🏛️ | Arhitectură Enterprise .NET 10 & Air-Gapped | Arhitectură 7 Module, Dependency Injection, 127.0.0.1 Loopback |
 | 6 | `memory_controller_architect` 🧠 | Arhitectura Memoriei & Sinapse Cognitivă | PRAGMA WAL, RAG, Supersession lineage, Invariante P0-P15 |
 | 7 | `database_and_persistence_engineer` 💾 | Persistență, SQLite WAL & Criptare | EF Core 10, Criptare MEK, SHA-256 Audit Chain, P16-P18 Hardware |
