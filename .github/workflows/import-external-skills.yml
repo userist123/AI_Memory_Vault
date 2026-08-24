@@ -1,0 +1,68 @@
+name: Import external skills
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout vault
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Import skill sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources
+          git clone --depth 1 https://github.com/github/awesome-copilot.git /tmp/awesome-copilot
+          git clone --depth 1 https://github.com/addyosmani/web-quality-skills.git /tmp/web-quality-skills
+          git clone --depth 1 https://github.com/gbrasil720/ui-sensei.git /tmp/ui-sensei
+          git clone --depth 1 https://github.com/ConardLi/garden-skills.git /tmp/garden-skills
+          git clone --depth 1 https://github.com/xiaopu-ai/web-design.git /tmp/xiaopu-web-design
+          git clone --depth 1 https://github.com/bergside/awesome-design-skills.git /tmp/awesome-design-skills
+
+          rm -rf 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/*
+
+          cp -a /tmp/awesome-copilot/skills 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/github-awesome-copilot
+          cp -a /tmp/web-quality-skills/skills 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/web-quality-skills
+          cp -a /tmp/ui-sensei 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/ui-sensei
+          mkdir -p 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/garden-web-design-engineer
+          cp -a /tmp/garden-skills/skills/web-design-engineer/. 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/garden-web-design-engineer/
+          cp /tmp/xiaopu-web-design/SKILL.md 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/xiaopu-web-design-SKILL.md
+          if [ -d /tmp/xiaopu-web-design/references ]; then cp -a /tmp/xiaopu-web-design/references 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/xiaopu-web-design-references; fi
+          cp -a /tmp/awesome-design-skills/skills 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/awesome-design-skills
+
+          python - <<'PY'
+          import hashlib, json, os, re
+          from datetime import datetime, timezone
+          root='01_KNOWLEDGE/EXTERNAL_SKILLS/_sources'
+          skills=[]
+          for dirpath, _, files in os.walk(root):
+              if 'SKILL.md' not in files: continue
+              path=os.path.join(dirpath,'SKILL.md')
+              text=open(path,encoding='utf-8',errors='replace').read()
+              name=os.path.basename(dirpath)
+              desc=''
+              m=re.search(r'^description:\s*["\']?(.*?)["\']?\s*$',text,re.I|re.M)
+              if m: desc=m.group(1).strip()
+              sha=hashlib.sha256(open(path,'rb').read()).hexdigest()
+              skills.append({'id':re.sub(r'[^a-z0-9._-]+','-',name.lower()),'name':name,'description':desc,'source_path':path,'content_sha256':sha,'status':'raw'})
+          out={'schema_version':'1.0','generated_at':datetime.now(timezone.utc).isoformat(),'skills':skills}
+          os.makedirs('01_KNOWLEDGE/EXTERNAL_SKILLS',exist_ok=True)
+          json.dump(out,open('01_KNOWLEDGE/EXTERNAL_SKILLS/SKILL_REGISTRY.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
+          PY
+
+      - name: Commit imported skills
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 01_KNOWLEDGE/EXTERNAL_SKILLS
+          git diff --cached --quiet || git commit -m 'feat(skills): import external skill libraries'
+          git push
