@@ -8,25 +8,25 @@ tags:
   - vault-core
   - orchestration
 created: 2026-08-24T18:00:00Z
-updated: 2026-08-24T18:17:00Z
+updated: 2026-08-24T18:18:00Z
 provenance:
-  source_type: ai
-  source_ref: "github-backend-webdevelopment-ingestion"
+  source_type: execution
+  source_ref: "github-backend-webdevelopment-subagent-research"
 confidence: high
 verification: verified
 ---
 
-# Matricea Totală a Consiliului extins la 18 Agenți Specializați (153 Skill-uri Active)
+# Matricea Totală a Consiliului extins la 18 Agenți Specializați (168 Skill-uri Active)
 
-Consiliul de Agenți a fost completat prin integrarea tematică a tuturor resurselor de **Backend Web Development** (API-uri REST/gRPC, Microservicii, Event-Driven Architecture, Redis Caching, Clean Architecture & OWASP Backend Security).
+În urma cercetării extinse efectuate de subagentul de research pe tema `backend-webdevelopment` de pe GitHub, s-au sintetizat și instalat încă **15 skill-uri tehnice de nivel Senior/Principal Architect**.
 
 ---
 
-## Tabloul Central al Consiliului (18 Agenți Specializați):
+## Tabloul Central al Consiliului (18 Agenți Specializați & 168 Skill-uri):
 
 | # | Nume Agent | Rol / Specializare | Sursă & Skill-uri Cheie |
 |---|---|---|---|
-| 1 | `backend_systems_engineer` ⚡ **[NOU]** | Backend Microservices, API-uri REST/gRPC & Redis | `backend-api-design`, `database-architecture-caching`, `microservices-system-design`, `backend-security-authz`, `clean-architecture-backend` |
+| 1 | `backend_systems_engineer` ⚡ | Backend Microservices, API-uri REST/gRPC & Redis | 20 Skill-uri Backend (Saga, Outbox CDC, CQRS, OAuth2 PKCE, OPA Rego, SQLite WAL, Rate Limiting, OWASP) |
 | 2 | `web_design_engineer_agent` 🎨 | Engine 2-Faze Web Design (Xiaopu AI / ConardLi) | Intrare PRD/URL -> Generează `DESIGN.md` -> Cod de producție |
 | 3 | `web_quality_engineer` ⚡ | Optimizare Performanță & Calitate (Addy Osmani) | `web-quality-audit`, Core Web Vitals (LCP/CLS/INP), WCAG AAA, SEO |
 | 4 | `ui_sensei_architect` ⛩️ | Claritate Vizuală & UI Philosophy (UI Sensei) | `ui-sensei`, De-cluttering, Micro-spacing (grid 8px), 3-level typography |
