@@ -7,41 +7,42 @@ tags:
   - agent-skills
   - vault-core
   - orchestration
+  - raw-inbox-integration
 created: 2026-08-24T18:00:00Z
-updated: 2026-08-24T18:25:00Z
+updated: 2026-08-24T20:33:00Z
 provenance:
   source_type: execution
-  source_ref: "master-vault-skills-mass-generation"
+  source_ref: "raw-inbox-skills-integration"
 confidence: high
 verification: verified
 ---
 
-# Matricea Totală a Consiliului extins la 19 Agenți Specializați (251 SKILL-uri Stocate Fizic pe Disc)
+# Matricea Totală a Consiliului celor 19 Agenți Specializați (Integrată cu 250 Skill-uri Brute din Ingestion Inbox)
 
-Am generat și asimilat **251 de SKILL-uri unice**, stocate fizic pe disc în `.agents/skills/`. Fără dependențe de rețea, fără riscul ca agenții să se împotmolească!
+Toate cele **250 de skill-uri brute** importate în `06_INBOX/RAW_IMPORTS/skills/` au fost cartografiate, asociate și integrate direct în fișierele de profil `.agents/agents/<agent_name>/agent.md` ale celor **19 Agenți Specializați**.
 
 ---
 
-## Tabloul Central al Consiliului (19 Agenți Specializați & 251 SKILL-uri Fizice):
+## Tabloul Central al Agenților și Skill-urilor Integrate:
 
-| # | Nume Agent | Rol / Specializare | Sursă & Skill-uri Cheie |
+| # | Nume Agent | Domeniu & Rol | Skill-uri Asociate & Integrate |
 |---|---|---|---|
-| 1 | `system_architecture_agent` 🏛️ | Arhitectură Enterprise .NET 10, Cloud & Microservicii | 50 Skill-uri DevOps & Cloud (Docker, K8s, Terraform, Ansible, AWS, Azure, GCP, Helm, ArgoCD, Prometheus, Grafana, Istio, Vault, OpenTelemetry) |
-| 2 | `secops_auditor` 🛡️ | Audit de Securitate, DevSecOps & Conformitate Guvern | 40 Skill-uri SecOps (OWASP Top 10, SAST, DAST, Container Scan, Secret Leak, Zero Trust, OPA Rego, Casbin, PKI X.509) |
-| 3 | `backend_systems_engineer` ⚡ | Backend Microservices, API-uri REST/gRPC, Redis & DB | 50 Skill-uri Backend & Data (REST, GraphQL, gRPC, SQLite WAL, Postgres Indexing, Redis, Kafka, RabbitMQ, Saga, CDC Outbox, CQRS, Rate Limiting) |
-| 4 | `web_creative_developer` 🌟 | Creative Coding, 3D WebGL & Awwwards | 88 Skill-uri Creative (Three.js, Shaders, GSAP, Lenis, CobeJS, VantaJS, MatterJS, Post-processing, Canvas, Shaders) |
-| 5 | `game_engineer` 🎮 | Game Engine 3D / WebGL / ARPG | 21 Skill-uri Game Dev (Combat, Level Authoring, Map Editor, Fog of War, VFX, Audio, Isometric ARPG) |
-| 6 | `local_ai_engineer` 🤖 | AI Local & LLM Engineering (Ollama, Pydantic, RAG) | 30 Skill-uri AI/ML (Ollama, Pydantic JSON Mode, LangChain, LlamaIndex, vLLM, Qdrant, pgvector, Guardrails, Fine-Tuning LoRA) |
-| 7 | `frontend_saas_engineer` 🌐 | Frontend SaaS (Next.js App Router, Tailwind v4, TanStack) | `nextjs-saas-frontend`, `tailwind-v4-theme-engine`, `react-query-tanstack`, `zustand-state-management`, `storybook-component-docs`, `playwright-e2e-testing` |
-| 8 | `polyglot_systems_architect` 🌐 | Arhitect de Sisteme Multi-Limbaj (C#, Go, Rust, Python, TS, C++) | `skill-dotnet10-minimal-api-aot`, `skill-python-fastapi-async-worker`, `skill-go-worker-pool-concurrency`, `skill-rust-tokio-axum-architecture`, `skill-typescript-nest-bullmq-orm`, `skill-cpp-drogon-coroutine-backend` |
-| 9 | `wpf_engineer` 🖥️ | Dezvoltare C# WPF .NET 10 Enterprise | `csharp-wpf-desktop`, `ui-tokens` (Obsidian Tactical), MVVM, Async I/O |
-| 10 | `quant_developer` 📈 | Trading Algoritmic & Risk Veto (Python) | `python-trading-systems`, 5 Module (data/strategy/risk/execution/journal), Anti-Lookahead |
-| 11 | `web_design_engineer_agent` 🎨 | Engine 2-Faze Web Design (Xiaopu AI / ConardLi) | Intrare PRD/URL -> Generează `DESIGN.md` -> Cod de producție (Linear, Apple, Stripe, Vercel) |
-| 12 | `web_quality_engineer` ⚡ | Optimizare Performanță & Calitate (Addy Osmani) | `web-quality-audit`, Core Web Vitals (LCP/CLS/INP), WCAG AAA, SEO |
-| 13 | `ui_sensei_architect` ⛩️ | Claritate Vizuală & UI Philosophy (UI Sensei) | `ui-sensei`, De-cluttering, Micro-spacing (grid 8px), 3-level typography |
-| 14 | `database_and_persistence_engineer` 💾 | Persistență, SQLite WAL, DB Migration & Sharding | `database-migration-flyway`, `database-sharding-vitess`, `duckdb-analytical-queries`, `clickhouse-time-series`, `elasticsearch-full-text`, EF Core 10, Criptare MEK |
-| 15 | `threat_hunting_analyst` 🔍 | Threat Hunting, YARA, Sigma & DFIR | Regulament YARA/Sigma offline, EVTX analysis, Containment |
-| 16 | `ui_ux_designer` 🎨 | UI/UX Design & Prompting | `dashboard-admin-ui`, `brand-identity`, `email-design`, `presentation-design`, `data-viz-design`, `design-system-foundation`, `motion-design`, `ui-ux-review` |
-| 17 | `content_strategist` ✍️ | Copywriting & Generare Voice | `write-like-meng-on-x`, `x-bookmark-quote-posts`, `elevenlabs-tts` |
-| 18 | `agentic_workflow_orchestrator` 🔄 | Orchestrator Reflexion & Tree-of-Thought | `global-skill-registry-router`, `copilot-agentic-workflows`, `mcp-server-integrations`, Ciclul OODA, SelfRefine critique |
-| 19 | `memory_controller_architect` 🧠 | Arhitectura Memoriei & Sinapse Cognitivă | PRAGMA WAL, RAG, Supersession lineage, Invariante P0-P15 |
+| 1 | `system_architecture_agent` 🏛️ | Cloud, Infrastructure & DevOps | 16 Skill-uri (Docker, Kubernetes, Terraform, Ansible, AWS, Azure, GCP, Helm, ArgoCD, Vault, NGINX, Envoy, Istio, OpenTelemetry, Datadog, ELK) |
+| 2 | `secops_auditor` 🛡️ | Audit Securitate, DevSecOps & HG 585 | 13 Skill-uri (PowerShell SecOps, DFIR Operations, Vault Security Audit, OWASP Top 10, SAST, DAST, Container Scanning, Secret Leak Prevention, Pentest Playbook, Zero Trust, PKI, OPA Rego, Casbin) |
+| 3 | `backend_systems_engineer` ⚡ | Backend Microservices, APIs & Redis | 15 Skill-uri (API Governance, Performance Tuning, Clean Architecture, CQRS, Rate Limiting, GraphQL, gRPC, OAuth2, OWASP Hardening, Postgres Indexing, RBAC/ABAC, Redis, Saga, SQLite WAL, Outbox CDC) |
+| 4 | `database_and_persistence_engineer` 💾 | Persistență, Sharding & Analytical DBs | 9 Skill-uri (Flyway, Vitess Sharding, DuckDB OLAP, ClickHouse Time-Series, Elasticsearch, Qdrant Vector DB, pgvector, Neo4j Graph DB, Debezium CDC) |
+| 5 | `local_ai_engineer` 🤖 | AI Local & LLM Engineering | 8 Skill-uri (Ollama, Pydantic JSON Mode, LangChain, LlamaIndex, vLLM, Fine-Tuning LoRA, Guardrails AI, Vector Embeddings) |
+| 6 | `frontend_saas_engineer` 🌐 | Frontend SaaS & Next.js App Router | 11 Skill-uri (Next.js SaaS, Landing Page Design, Pricing Page, TanStack Query, Zustand, Storybook, Playwright E2E, Vite, Tailwind v4, Tailwind CSS) |
+| 7 | `web_creative_developer` 🌟 | Creative Coding, 3D WebGL & Awwwards | 13 Skill-uri (Three.js, Post-Processing, GSAP, ScrollTrigger, CobeJS, VantaJS, MatterJS, Unicorn Studio, WebGL Grid, Green Tech WebGL, Globe GL, Corner Lasers, Dither Laser) |
+| 8 | `web_design_engineer_agent` 🎨 | Design Systems & Editorial Grids | 10 Skill-uri (Web Design Engineer, Linear, Apple, Stripe, Vercel, Supabase Design Systems, Agency Grid Minimal, Editorial Tech, Framed Grid, Split Layout) |
+| 9 | `web_quality_engineer` ⚡ | Optimizare Performanță & Quality Audit | 6 Skill-uri (Web Quality Audit, Core Web Vitals, Accessibility WCAG, SEO, Web Best Practices, Performance) |
+| 10 | `ui_sensei_architect` ⛩️ | Claritate Vizuală & UI Philosophy | 12 Skill-uri (UI Sensei, Clean Minimal Beige, Dark Blue Clean, Dark Glass Layout, Glass Clock, Glass UI, Skeuomorphic Clean, Light Mode Paper, Nested Container, Orange SaaS, Tech Green Dark, Technical Wireframe) |
+| 11 | `game_engineer` 🎮 | Game Engine 3D / WebGL / ARPG | 11 Skill-uri (Isometric ARPG, Tactical Combat, Game Encounters, Enemy AI, VFX, Camera Controls, Inventory, Audio Feedback, Mobile Three.js, Hybrid Assets, Ship Web Games) |
+| 12 | `polyglot_systems_architect` 🌐 | Arhitect Multi-Limbaj (C#, Go, Rust, Py, TS, C++) | 6 Skill-uri (.NET 10 Minimal APIs, Python FastAPI Async, Go Worker Pools, Rust Axum, TS NestJS BullMQ, C++20 Drogon) |
+| 13 | `agentic_workflow_orchestrator` 🔄 | Orchestrator Workflows & Reflexion | 6 Skill-uri (Global Skill Registry Router, Copilot Agentic Workflows, MCP Server Integrations, Code Refactoring Patterns, Unit Test Generation, Copilot Custom Instructions) |
+| 14 | `secops_auditor` / `threat_hunting_analyst` 🔍 | Threat Hunting & Forensic DFIR | 4 Skill-uri (DFIR Operations, Vault Security Audit, Secret Leak Prevention, Pentest Playbook) |
+| 15 | `wpf_engineer` 🖥️ | C# WPF .NET 10 Enterprise | 2 Skill-uri (C# WPF Desktop, UI Tokens Obsidian Tactical) |
+| 16 | `quant_developer` 📈 | Trading Algoritmic Python | 1 Skill (Python Trading Systems) |
+| 17 | `ui_ux_designer` 🎨 | UI/UX Design & Prompting | 9 Skill-uri (Dashboard Admin UI, Brand Identity, Email Design, Presentation Design, Data Viz Design, Design System Foundation, Motion Design, UI/UX Review, Design-First Prompting) |
+| 18 | `content_strategist` ✍️ | Copywriting & Voice | 3 Skill-uri (Email Design, Presentation Design, Brand Identity) |
+| 19 | `memory_controller_architect` 🧠 | Memorie Cognitivă & Operare Vault | 3 Skill-uri (Vault Operations, Vault Security Audit, Vault Secrets Management) |
