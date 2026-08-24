@@ -1,91 +1,22 @@
 {
   "collapse-filter": false,
   "search": "",
-  "showTags": false,
+  "showTags": true,
   "showAttachments": false,
   "hideUnresolved": false,
-  "showOrphans": false,
-  "collapse-color-groups": false,
-  "colorGroups": [
-    {
-      "query": "path:00_CORE/GRAPH",
-      "color": {
-        "a": 1,
-        "rgb": 16711748
-      }
-    },
-    {
-      "query": "path:00_CORE",
-      "color": {
-        "a": 1,
-        "rgb": 16711680
-      }
-    },
-    {
-      "query": "path:01_KNOWLEDGE",
-      "color": {
-        "a": 1,
-        "rgb": 65416
-      }
-    },
-    {
-      "query": "path:02_PROJECTS",
-      "color": {
-        "a": 1,
-        "rgb": 65535
-      }
-    },
-    {
-      "query": "path:03_PROCEDURES",
-      "color": {
-        "a": 1,
-        "rgb": 34943
-      }
-    },
-    {
-      "query": "path:04_MEMORY",
-      "color": {
-        "a": 1,
-        "rgb": 11141375
-      }
-    },
-    {
-      "query": "path:05_RESOURCES",
-      "color": {
-        "a": 1,
-        "rgb": 16776960
-      }
-    },
-    {
-      "query": "path:06_INBOX/RAW_IMPORTS",
-      "color": {
-        "a": 1,
-        "rgb": 16744192
-      }
-    },
-    {
-      "query": "path:.agents/skills",
-      "color": {
-        "a": 1,
-        "rgb": 16776960
-      }
-    },
-    {
-      "query": "path:.agents/agents",
-      "color": {
-        "a": 1,
-        "rgb": 12800255
-      }
-    }
-  ],
+  "showOrphans": true,
+  "collapse-color-groups": true,
+  "colorGroups": [],
   "collapse-display": false,
-  "showArrow": true,
-  "textScale": 1.0,
-  "showTitleHeader": true,
-  "lineSize": 2.0,
-  "nodeSize": 4.5,
-  "linkDistance": 120,
-  "linkForce": 1.5,
-  "repelForce": 12,
-  "centerForce": 0.9
+  "showArrow": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": false,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.021528718442429894,
+  "close": false
 }
