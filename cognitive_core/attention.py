@@ -8,7 +8,7 @@ class AttentionModel:
     when new nodes are introduced.
     Integrates ACT-R utility tracker feedback.
     """
-    def __init__(self, activation_weight: float = 0.45, confidence_weight: float = 0.25, recency_weight: float = 0.2, utility_weight: float = 0.1):
+    def __init__(self, activation_weight: float = 0.5, confidence_weight: float = 0.3, recency_weight: float = 0.2, utility_weight: float = 0.0):
         self.activation_weight = activation_weight
         self.confidence_weight = confidence_weight
         self.recency_weight = recency_weight

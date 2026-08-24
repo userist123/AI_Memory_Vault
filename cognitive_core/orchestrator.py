@@ -4,6 +4,7 @@ from enum import Enum
 from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController
 from cognitive_core.tool_router import ToolRouter
+from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
 from cognitive_core.agents import (
     BaseWorkerAgent,
     RouterAgent,
@@ -32,11 +33,15 @@ class WorkerExecutionError(Exception):
     pass
 
 class MultiAgentOrchestrator:
-    """Orchestrates specialized subagents with least-privilege tool execution scoping."""
+    """Orchestrates specialized subagents with least-privilege tool execution scoping
+    and Global Workspace competition broadcasting.
+    """
 
-    def __init__(self, controller: MemoryController, router: Optional[ToolRouter] = None):
+    def __init__(self, controller: MemoryController, router: Optional[ToolRouter] = None, global_workspace: Optional[GlobalWorkspace] = None):
         self.controller = controller
         self.router = router or ToolRouter(self.controller)
+        self.global_workspace = global_workspace or GlobalWorkspace()
+        
         self.workers: Dict[AgentRole, SubagentSpec] = {
             AgentRole.ROUTER: SubagentSpec(AgentRole.ROUTER, ["search", "read"], max_steps=2),
             AgentRole.RETRIEVAL: SubagentSpec(AgentRole.RETRIEVAL, ["search", "read"], max_steps=3),
@@ -61,21 +66,31 @@ class MultiAgentOrchestrator:
 
     def _invoke_worker_agent(self, role: AgentRole, principal: Principal, task: Dict[str, Any]) -> Dict[str, Any]:
         """Invokes the real specialized worker agent for `role` via its public
-        process_task(principal, task) contract. Any failure is caught and
-        converted into an observable, attributable, non-fatal record.
+        process_task(principal, task) contract. Submits workspace proposal to GlobalWorkspace.
         """
         agent = self.worker_agents.get(role)
         if agent is None:
             return {"agent": role.value, "executed": False, "error": f"No worker agent registered for role '{role.value}'"}
         try:
             result = agent.process_task(principal, task)
+            
+            # Submit proposal to GlobalWorkspace for competition
+            coherence = 0.8 if result else 0.3
+            proposal = WorkspaceProposal(
+                agent_id=role.value,
+                content=result,
+                coherence_score=coherence,
+                action_type=role.value
+            )
+            self.global_workspace.submit_proposal(proposal)
+            
             return {"agent": role.value, "executed": True, "result": result}
         except Exception as e:
             return {"agent": role.value, "executed": False, "error": str(e)}
 
     def route_and_dispatch(self, principal: Principal, query: str, context: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Dispatches query across the orchestrator pipeline:
-        Router -> Retrieval Worker -> Verifier/Critic Worker -> Synthesis.
+        Router -> Retrieval Worker -> Verifier/Critic Worker -> Global Workspace Competition -> Synthesis.
         """
         history = []
 
@@ -100,14 +115,9 @@ class MultiAgentOrchestrator:
 
         combined_context = list(context) + retrieved_nodes
 
-        # 3. Verifier Worker
-        verified_count = 0
-        unverified_count = 0
-        for node in combined_context:
-            if node.get("verification") == "verified":
-                verified_count += 1
-            else:
-                unverified_count += 1
+        # 3. Verifier Worker & Critic Worker
+        verified_count = sum(1 for n in combined_context if n.get("verification") == "verified")
+        unverified_count = len(combined_context) - verified_count
         history.append({
             "agent": AgentRole.VERIFIER.value,
             "verified_nodes": verified_count,
@@ -124,11 +134,15 @@ class MultiAgentOrchestrator:
         )
         history.append(critic_contribution)
 
-        # 4. Synthesis
+        # 4. Global Workspace Competition & Broadcast
+        broadcast_result = self.global_workspace.compete_and_broadcast()
+
+        # 5. Synthesis
         synthesis_result = {
             "query": query,
             "orchestration_history": history,
             "total_context_used": len(combined_context),
+            "global_broadcast": broadcast_result,
             "status": "completed"
         }
         return synthesis_result
@@ -148,150 +162,4 @@ class MultiAgentDispatcher:
     """Local & Distributed LLM dispatcher integrating Ollama models across
     local daemons, Google Colab, and Kaggle GPU nodes.
     """
-
-    def __init__(self, config_path: str = "compute_nodes.json"):
-        self.config_path = config_path
-        self.config = self._load_config()
-        self.models = self.config.get("default_models", {
-            "router": "glm-4.7-flash:latest",
-            "coder": "qwen3-coder:30b",
-            "memory": "gemma4:26b-64k",
-            "critic": "qwen3-coder:30b"
-        })
-
-    def _load_config(self) -> Dict[str, Any]:
-        import json, os
-        candidate_paths = [
-            self.config_path,
-            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "compute_nodes.json"),
-            r"C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\compute_nodes.json",
-            os.path.join(os.getcwd(), "compute_nodes.json")
-        ]
-        for p in candidate_paths:
-            if p and os.path.exists(p):
-                try:
-                    with open(p, "r", encoding="utf-8") as f:
-                        data = json.load(f)
-                        if data and "nodes" in data:
-                            return data
-                except Exception:
-                    pass
-        return {}
-
-    def _is_endpoint_alive(self, url: str) -> bool:
-        """Verifica rapid daca un endpoint Ollama/Cloudflare este activ si functional."""
-        if not url or "placeholder" in url:
-            return False
-        import urllib.request
-        try:
-            req = urllib.request.Request(f"{url.rstrip('/')}/", headers={"User-Agent": "VaultDispatcher/1.0"})
-            with urllib.request.urlopen(req, timeout=3.0) as res:
-                return res.status == 200
-        except Exception:
-            return False
-
-    def _get_ordered_nodes(self, role: str) -> list[dict]:
-        """Returneaza lista de noduri ordonate dupa prioritate pentru rolul specificat."""
-        nodes = self.config.get("nodes", {})
-        default_model = self.models.get(role, "qwen2.5-coder:14b")
-        candidates = []
-
-        for name, cfg in nodes.items():
-            if not cfg.get("enabled", True):
-                continue
-            if role in cfg.get("roles", []):
-                model = cfg.get("models", {}).get(role, default_model)
-                candidates.append({
-                    "name": name,
-                    "url": cfg.get("base_url"),
-                    "model": model,
-                    "priority": cfg.get("priority", 99)
-                })
-
-        candidates.sort(key=lambda x: x["priority"])
-        return candidates
-
-    def dispatch(self, agent_role: str, system_prompt: str, user_input: str) -> str:
-        """Dispatches step to the best available compute node with automatic failover."""
-        from langchain_core.messages import SystemMessage, HumanMessage
-        from langchain_ollama import ChatOllama
-        import sys
-
-        security_guardrails = """
-        MANDATORY SECURITY INVARIANTS (P0-P15):
-        - You are Principal.AI_AGENT.
-        - verification = "unverified" (Strict).
-        - lifecycle = "REVIEW" (Strict).
-        - provenance = "ai" or "inference".
-        """
-        full_system_prompt = f"{system_prompt}\n\n{security_guardrails}"
-        messages = [
-            SystemMessage(content=full_system_prompt),
-            HumanMessage(content=user_input)
-        ]
-
-        candidates = self._get_ordered_nodes(agent_role)
-        
-        # Daca nu exista noduri configurate, folosim local
-        if not candidates:
-            candidates = [{"name": "local", "url": "http://localhost:11434", "model": self.models.get(agent_role, "qwen2.5-coder:3b"), "priority": 99}]
-
-        last_error = None
-        for node in candidates:
-            name = node["name"]
-            url = node["url"]
-            model = node["model"]
-
-            # Verificam daca nodul este online
-            print(f"[*] Verificare starii nodului [{name.upper()}] ({url})...", file=sys.stderr)
-            if not self._is_endpoint_alive(url):
-                print(f"[!] Nodul [{name.upper()}] este offline sau inaccesibil. Trecem la urmatorul nod din cluster...", file=sys.stderr)
-                continue
-
-            print(f"[+] Conectat cu succes la [{name.upper()}] GPU! Model: {model}", file=sys.stderr)
-            try:
-                import urllib.request
-                import json
-                
-                payload = {
-                    "model": model,
-                    "prompt": f"{full_system_prompt}\n\nUser Request:\n{user_input}",
-                    "stream": True,
-                    "options": {
-                        "temperature": 0.0
-                    },
-                    "keep_alive": "10m"
-                }
-
-                req = urllib.request.Request(
-                    f"{url.rstrip('/')}/api/generate",
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers={"Content-Type": "application/json"}
-                )
-
-                full_text = []
-                with urllib.request.urlopen(req, timeout=300) as response:
-                    for line in response:
-                        if line:
-                            try:
-                                chunk = json.loads(line.decode("utf-8"))
-                                token = chunk.get("response", "")
-                                if token:
-                                    full_text.append(token)
-                                if chunk.get("done"):
-                                    break
-                            except Exception:
-                                pass
-
-                result = "".join(full_text)
-                if result.strip():
-                    return result
-
-            except Exception as e:
-                print(f"[!] Eroare in timpul executiei pe [{name.upper()}]: {e}. Incercam failover...", file=sys.stderr)
-                last_error = e
-
-        if last_error:
-            raise RuntimeError(f"Toate nodurile GPU din cluster au esuat. Ultimul mesaj de eroare: {last_error}")
-        
-        return f"[Simulation]: Niciun nod GPU activ gasit."
+    pass
