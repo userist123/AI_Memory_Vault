@@ -466,12 +466,6 @@ git fetch origin
 git pull origin main
 ```
 
-Pentru utilizare locala, Vault-ul poate fi disponibil la:
-
-```text
-C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
-```
-
 Verifica sincronizarea:
 
 ```powershell
