@@ -1,35 +1,23 @@
 ---
+id: "moc-projects-0012"
 type: moc
-group: execution
-tags: [obsidian, graph, projects, procedures]
+lifecycle: ACTIVE
+category: navigation
+tags: [moc, projects, procedures]
+created: 2026-08-24T21:11:00Z
+updated: 2026-08-24T20:26:58.595752+00:00
+provenance:
+  source_type: official
+  source_ref: "master-edge-rebuilder"
+confidence: very_high
+verification: verified
+relations: []
 ---
-# 12 Projects and Procedures Map
 
-Execution map connecting active projects to repeatable procedures and continuity artifacts.
+# 🚀 Mapă MOC: Proiecte Active & Proceduri (`02_PROJECTS/` & `03_PROCEDURES/`)
 
-## Projects
-- [[02_PROJECTS/AI_Memory_System]]
-- [[02_PROJECTS/Continuity_Handoff]]
-- [[02_PROJECTS/Elite_Quant_Bot]]
-- [[02_PROJECTS/GPO_Baseline_Deployment]]
-- [[02_PROJECTS/LogAnalyzer_MVP]]
-- [[02_PROJECTS/Registru_de_transferuri]]
-- [[02_PROJECTS/_Projects_Index]]
+## Proiecte Active (`02_PROJECTS/`)
+- [[AI_Memory_System]]\n- [[Continuity_Handoff]]\n- [[Elite_Quant_Bot]]\n- [[Elite_Quant_Bot_Claude_Legacy]]\n- [[FinScope]]\n- [[GPO_Baseline_Deployment]]\n- [[GPO_Baseline_Deployment_Claude_Legacy]]\n- [[index_17e7ea30]]\n- [[LogAnalyzer_MVP]]\n- [[LogAnalyzer_MVP_Claude_Legacy]]\n- [[Registru_de_transferuri]]\n- [[test_c756201a]]\n- [[_Projects_Index]]\n- [[_Projects_Index_Claude_Legacy]]\n
 
-## Procedures
-- [[03_PROCEDURES/Git_Backup_Restore_Rollback]]
-- [[03_PROCEDURES/Import_Sanitization]]
-- [[03_PROCEDURES/README]]
-- [[03_PROCEDURES/vault-maintenance_eb0af74c]]
-
-## Related knowledge
-- [[01_KNOWLEDGE/Security_Practices]]
-- [[01_KNOWLEDGE/Tech_Stack]]
-- [[01_KNOWLEDGE/HG585_MS111_Compliance_Requirements]]
-
-## Graph hubs
-- [[Knowledge Graph Home]]
-- [[05 Projects Continuity Map]]
-- [[03 Agents Operations Map]]
-
-#group/execution #obsidian #moc
+## Proceduri Repetabile (`03_PROCEDURES/`)
+- [[Autonomous_Program_Construction_Protocol]]\n- [[Closed_Loop_Reflexion_Pipeline]]\n- [[Cognitive_Brain_Architecture_Specification]]\n- [[Git_Backup_Restore_Rollback]]\n- [[Import_Sanitization]]\n- [[Import_Sanitization_Claude_Legacy]]\n- [[Perplexity_Space_Setup_Registru]]\n- [[PowerShell_SecOps_Forensic_Standard]]\n- [[README]]\n- [[README_Claude_Legacy]]\n- [[Registru_UI_Remodel_Workflow]]\n- [[test_04e86b85]]\n- [[UI_UX_Heuristic_Review]]\n- [[vault-maintenance_eb0af74c]]\n
