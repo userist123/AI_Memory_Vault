@@ -1,19 +1,98 @@
 import uuid
+import datetime
 from typing import List, Dict, Any, Optional
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
 from memory_controller.core import Lifecycle
+from memory_controller.audit.logger import audit_event
 from .tool_router import ToolRouter
 
 class Consolidator:
     """
-    BRAIN-10: Memory Consolidation Routine.
+    BRAIN-10: Memory Consolidation & Reconsolidation Routine.
     Periodically scans ephemeral REVIEW lessons and synthesizes them into concrete knowledge.
-    All write operations go through ToolRouter to enforce autonomy/reconciliation boundaries.
+    Implements Memory Reconsolidation: allows canonical memories to become volatile (RECONSOLIDATING)
+    when challenged by conflicting evidence, preserving lineage history while permitting plastic updates.
     """
     def __init__(self, memory_controller: MemoryController, tool_router: ToolRouter):
         self.controller = memory_controller
         self.router = tool_router
+
+    def challenge(self, note_id: str, conflicting_evidence: Dict[str, Any], principal: Optional[Principal] = None) -> Optional[Dict[str, Any]]:
+        """
+        Invoked when VerifierAgent or CriticAgent detects conflicting evidence against a canonical memory.
+        Transitions the note from CANONICAL/ACTIVE to RECONSOLIDATING, preserving version history.
+        """
+        caller_principal = principal or Principal.AI_AGENT
+        note = self.controller.storage.get(note_id)
+        if not note:
+            return None
+            
+        current_lifecycle = note.get("lifecycle")
+        if current_lifecycle not in [Lifecycle.ACTIVE.value, Lifecycle.VERIFIED.value, "CANONICAL"]:
+            return None
+            
+        previous_version = {
+            "content": note.get("content"),
+            "timestamp": note.get("updated", datetime.datetime.now(datetime.timezone.utc).isoformat()),
+            "lifecycle": current_lifecycle
+        }
+        
+        note["previous_version"] = previous_version
+        note["lifecycle"] = Lifecycle.RECONSOLIDATING.value
+        note["conflicting_evidence"] = conflicting_evidence
+        note["updated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        
+        self.controller.storage.set(note_id, note)
+        
+        audit_event(
+            operation="reconsolidation_challenge",
+            principal=caller_principal,
+            target_id=note_id,
+            success=True,
+            details={
+                "previous_lifecycle": current_lifecycle,
+                "new_lifecycle": Lifecycle.RECONSOLIDATING.value,
+                "conflicting_evidence": conflicting_evidence
+            }
+        )
+        return note
+
+    def resolve_challenge(self, note_id: str, resolved_node: Optional[Dict[str, Any]] = None, principal: Optional[Principal] = None) -> Dict[str, Any]:
+        """
+        Resolves a reconsolidation challenge after FormalReflexion or SelfRefine critique.
+        Returns the node to ACTIVE/CANONICAL if resolved, or REVIEW/VOLATILE if unresolved.
+        """
+        caller_principal = principal or Principal.AI_AGENT
+        note = self.controller.storage.get(note_id)
+        if not note:
+            raise ValueError(f"Note with ID {note_id} not found")
+            
+        if note.get("lifecycle") != Lifecycle.RECONSOLIDATING.value:
+            return note
+            
+        if resolved_node:
+            note["content"] = resolved_node.get("content", note.get("content"))
+            note["relations"] = resolved_node.get("relations", note.get("relations", []))
+            note["lifecycle"] = Lifecycle.ACTIVE.value
+            note["conflicting_evidence"] = None
+        else:
+            note["lifecycle"] = Lifecycle.REVIEW.value
+            
+        note["updated"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        self.controller.storage.set(note_id, note)
+        
+        audit_event(
+            operation="reconsolidation_resolved",
+            principal=caller_principal,
+            target_id=note_id,
+            success=True,
+            details={
+                "resolved": bool(resolved_node),
+                "final_lifecycle": note.get("lifecycle")
+            }
+        )
+        return note
 
     def consolidate_lessons(self, principal: Principal) -> Optional[str]:
         """
