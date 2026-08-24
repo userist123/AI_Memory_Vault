@@ -8,25 +8,25 @@ tags:
   - vault-core
   - orchestration
 created: 2026-08-24T18:00:00Z
-updated: 2026-08-24T18:20:00Z
+updated: 2026-08-24T18:21:00Z
 provenance:
   source_type: execution
-  source_ref: "github-backend-app-languages-collection"
+  source_ref: "github-backend-app-subagent-research"
 confidence: high
 verification: verified
 ---
 
-# Matricea Totală a Consiliului extins la 19 Agenți Specializați (173 Skill-uri Active)
+# Matricea Totală a Consiliului extins la 19 Agenți Specializați (179 Skill-uri Active)
 
-Consiliul de Agenți a fost completat prin integrarea ecosistemelor backend multi-limbaj (C#/.NET 10, Go, Rust, Python, TypeScript) și crearea agentului **`polyglot_systems_architect`**.
+În urma cercetării extinse pe `topics/backend-app` și `collections/programming-languages`, s-au sintetizat și adăugat **6 noi skill-uri de backend per limbaj** (C#, Python, Go, Rust, TypeScript, C++).
 
 ---
 
-## Tabloul Central al Consiliului (19 Agenți Specializați):
+## Tabloul Central al Consiliului (19 Agenți Specializați & 179 Skill-uri):
 
 | # | Nume Agent | Rol / Specializare | Sursă & Skill-uri Cheie |
 |---|---|---|---|
-| 1 | `polyglot_systems_architect` 🌐 **[NOU]** | Arhitect de Sisteme Multi-Limbaj (C#, Go, Rust, Python, TS) | High-throughput, worker pools, FFI interop, concurență asincronă |
+| 1 | `polyglot_systems_architect` 🌐 | Arhitect de Sisteme Multi-Limbaj (C#, Go, Rust, Python, TS, C++) | `skill-dotnet10-minimal-api-aot`, `skill-python-fastapi-async-worker`, `skill-go-worker-pool-concurrency`, `skill-rust-tokio-axum-architecture`, `skill-typescript-nest-bullmq-orm`, `skill-cpp-drogon-coroutine-backend` |
 | 2 | `backend_systems_engineer` ⚡ | Backend Microservices, API-uri REST/gRPC & Redis | 20 Skill-uri Backend (Saga, Outbox CDC, CQRS, OAuth2 PKCE, OPA Rego, SQLite WAL) |
 | 3 | `web_design_engineer_agent` 🎨 | Engine 2-Faze Web Design (Xiaopu AI / ConardLi) | Intrare PRD/URL -> Generează `DESIGN.md` -> Cod de producție (Linear, Apple, Stripe, Vercel) |
 | 4 | `web_quality_engineer` ⚡ | Optimizare Performanță & Calitate (Addy Osmani) | `web-quality-audit`, Core Web Vitals (LCP/CLS/INP), WCAG AAA, SEO |
