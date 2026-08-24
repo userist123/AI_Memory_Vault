@@ -1,7 +1,7 @@
 ---
 category: index
 status: active
-version: 4.0.0
+version: 5.0.0
 confidence: very_high
 verification: verified
 provenance_status: official
@@ -13,200 +13,507 @@ relations:
   - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
   - "99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md"
   - "05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md"
+  - ".claude-plugin/plugin.json"
+  - ".claude-plugin/marketplace.json"
+  - "skills/ai-memory-vault/SKILL.md"
 ---
 
-# 🧠 AI Memory Vault (`userist123/AI_Memory_VAULT_CODEX_READY`)
+# 🧠 AI Memory Vault — Canonical Multi-Agent Memory & Claude Plugin
 
-[![Architecture Version](https://img.shields.io/badge/Version-4.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
-[![Python Environment](https://img.shields.io/badge/Python-3.11%2B-green.svg)](https://python.org)
-[![Storage Engine](https://img.shields.io/badge/Storage-SQLite%20WAL%20%7C%20PRAGMA-orange.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller)
-[![Security Invariants](https://img.shields.io/badge/Security-P0--P18%20Hardened-red.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md)
-[![Subagent Council](https://img.shields.io/badge/Council-21%20Specialized%20Agents-purple.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Agents_Skill_Matrix.md)
-[![Local Skills](https://img.shields.io/badge/Local%20Skills-251%20Physical%20Skills-brightgreen.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills)
-[![Global Skills Index](https://img.shields.io/badge/Global%20Skills-50%2C000%2B%20Indexed-blueviolet.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_50K_Skill_Registries_Index.md)
+[![Architecture](https://img.shields.io/badge/Architecture-v5.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
+[![Claude Plugin](https://img.shields.io/badge/Claude-Code%20Plugin-purple.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin)
+[![Agents](https://img.shields.io/badge/Agents-21-orange.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents)
+[![Skills](https://img.shields.io/badge/Local%20Skills-251-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills)
+[![Raw%20Skills](https://img.shields.io/badge/RAW%20Skills-External-red.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/06_INBOX/RAW_IMPORTS/skills)
+[![Obsidian](https://img.shields.io/badge/Obsidian-Synchronized-7c3aed.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.obsidian)
 
-> **Codex Operating Contract**: [`AGENTS.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/AGENTS.md) | **Invariante de Securitate**: [`vault_cognitive_rules.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md)
-
-**AI Memory Vault v4.0.0** este sistemul cognitiv de memorie persistentă, autorizare pe nivele de securitate și orchestrare multi-agent conceput pentru agenți AI locali și cloud. Proiectul asigură memorie canonică partajată între multiple sesiuni de codare fără re-transmiterea istoricului și fără consum de compute local nedorit pe stația utilizatorului (execuție complet izolată via `127.0.0.1`).
+> **AI Memory Vault** este stratul canonic de memorie, knowledge, skills, agents, procedures, provenance si audit pentru ecosistemul AI. Acelasi Vault poate fi folosit de **Codex, Claude Code, agentii locali si Obsidian**, fara memorii canonice paralele.
 
 ---
 
-## 🧭 Obsidian — sincronizarea Skill / Agent / Memory
+## 🎯 Ce este
 
-Suprafața canonică de navigare Obsidian pentru relația dintre skill-uri, agenți, referințe și memorie este:
+AI Memory Vault este o infrastructura persistenta pentru agenti AI care trebuie sa poata:
 
-- [[99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync]] — contractul de sincronizare
-- [[05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC]] — MOC pentru navigare
-- [[01_KNOWLEDGE/Agents_Skill_Matrix]] — matricea agenți ↔ skill-uri
-- [[01_KNOWLEDGE/Master_Skills_Catalog_251]] — catalogul skill-urilor locale
-- `06_INBOX/RAW_IMPORTS/skills/` — granița RAW_EXTERNAL pentru skill-uri externe
+- recupera doar cunostintele relevante pentru o sarcina;
+- folosi skills si agenti specializati;
+- pastra provenance si nivelul de incredere;
+- separa continutul extern RAW de memoria canonica;
+- sincroniza knowledge, skills, agents, procedures si Obsidian;
+- mentine continuitatea intre sesiuni si clienti AI;
+- pastra auditabilitatea operatiunilor de memorie;
+- evolua prin ingestie controlata de surse externe.
 
-Regula de sincronizare este:
+Principiul fundamental:
+
+```text
+ONE VAULT
+ONE CANONICAL MEMORY
+MULTIPLE AI CLIENTS
+MULTIPLE SPECIALIZED AGENTS
+CONTROLLED RETRIEVAL
+CONTROLLED WRITE
+FULL PROVENANCE
+```
+
+---
+
+# 🧩 Arhitectura
+
+```text
+                     HUMAN / USER
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+        Codex          Claude Code      Local Agents
+          │                │                │
+          └────────────────┼────────────────┘
+                           ▼
+                  ┌─────────────────┐
+                  │ AI MEMORY VAULT │
+                  │ CANONICAL LAYER │
+                  └────────┬────────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+     Memory          Skills / Agents     Knowledge / Procedures
+        │                  │                  │
+        └──────────────────┼──────────────────┘
+                           ▼
+                  Retrieval / Orchestration
+                           │
+                    MemoryController
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+        Provenance / Audit       Verification / Lifecycle
+              │                         │
+              └────────────┬────────────┘
+                           ▼
+                  Markdown + SQLite/WAL
+                           │
+                           ▼
+                        Obsidian
+```
+
+Obsidian este interfata de navigare si audit uman a aceluiasi Vault. Nu este un al doilea Cognitive Core.
+
+---
+
+# 🤖 Claude Code Plugin
+
+Repository-ul contine deja stratul Claude Code:
+
+```text
+.claude-plugin/
+├── plugin.json
+└── marketplace.json
+```
+
+si componentele:
+
+```text
+skills/ai-memory-vault/SKILL.md
+agents/memory-librarian.md
+commands/memory.md
+commands/memory-sync.md
+commands/memory-status.md
+```
+
+Pluginul foloseste Vault-ul existent ca **memorie externa canonica**. Nu incearca sa incarce tot repository-ul in context.
+
+Fluxul este:
+
+```text
+Claude request
+      ↓
+AI Memory Vault Skill
+      ↓
+Determine relevant domain
+      ↓
+Retrieve relevant memory / skills / agents / procedures
+      ↓
+Reason / Plan / Act
+      ↓
+Verify
+      ↓
+Controlled memory write / proposal
+      ↓
+Provenance + Audit
+```
+
+---
+
+# 🧠 Memory Controller & Cognitive Core
+
+`memory_controller/` este granita pentru citirea si scrierea memoriei canonice.
+
+Principii:
+
+- autorizare pe operatiuni si roluri;
+- provenance obligatorie;
+- lifecycle controlat;
+- verificare separata de creare;
+- audit criptografic;
+- persistenta Markdown + SQLite/WAL;
+- separarea continutului RAW de continutul canonical.
+
+Lifecycle-ul conceptual este:
+
+```text
+RAW → CLASSIFIED → NORMALIZED → REVIEW → VERIFIED → ACTIVE
+                                             ↓
+                                  SUPERSEDED / ARCHIVED
+```
+
+Un agent nu transforma automat continut extern in adevar verificat.
+
+---
+
+# 🏛️ Agent Council
+
+Vault-ul contine o retea de agenti specializati, coordonata prin capability/skill matching. Domeniile includ:
+
+- system architecture;
+- backend engineering;
+- frontend / SaaS;
+- web creative development;
+- web design engineering;
+- web quality / performance;
+- UI/UX;
+- WPF / .NET;
+- compilers and tooling;
+- polyglot systems;
+- DevOps / SRE;
+- security / SecOps;
+- threat hunting;
+- database / persistence;
+- local AI / LLM;
+- quantitative development;
+- game engineering;
+- content strategy;
+- agentic workflows;
+- memory architecture.
+
+Matricea agent ↔ skill este mentinuta in:
+
+`01_KNOWLEDGE/Agents_Skill_Matrix.md`
+
+Agentii trebuie sa respecte **least privilege** si sa foloseasca doar capabilities relevante.
+
+---
+
+# 📦 Skills Architecture
+
+Exista doua niveluri principale.
+
+## Operational Skills
+
+```text
+.agents/skills/
+```
+
+Aici se afla skill-urile operationale locale. Catalogul este:
+
+`01_KNOWLEDGE/Master_Skills_Catalog_251.md`
+
+## RAW External Skills
+
+```text
+06_INBOX/RAW_IMPORTS/skills/
+```
+
+Aceasta este granita `RAW_EXTERNAL` pentru skills si developer knowledge importate din GitHub si alte surse.
+
+Fluxul este:
 
 ```text
 External Source
       ↓
-Raw Skill / Reference
+Recursive Discovery
       ↓
-Provenance + Validation
+Deduplication
       ↓
-Skill Registry
+Classification
       ↓
-Agent Capability
+Provenance
       ↓
-Verified Knowledge / Memory Candidate
+Validation
       ↓
-Canonical Memory
+RAW_EXTERNAL
       ↓
-Obsidian Navigation
+Review / Promotion
+      ↓
+Canonical Skill / Knowledge
 ```
 
-Obsidian nu devine un al doilea MemoryController sau Cognitive Core. El reprezintă suprafața de navigare și audit uman a aceleiași arhitecturi canonice.
+Nu orice repository este skill. Backend projects, compilers, runtimes si programming-language repositories sunt reference sources daca nu contin explicit skill definitions.
 
 ---
 
-## 🏛️ Arhitectura Sistemului pe 5 Niveluri
+# 🔎 Recursive Discovery
 
-```mermaid
-graph TD
-    Client[AI Agent / Human Client] -->|OODA Loop Request| Router[MultiAgentOrchestrator]
-    
-    subgraph Council["🏛️ Consiliul celor 21 de Agenți Specializați"]
-        Router --> Agent1[polyglot_systems_architect]
-        Router --> Agent2[compiler_and_tooling_engineer]
-        Router --> Agent3[site_reliability_and_devops_architect]
-        Router --> Agent4[secops_auditor]
-        Router --> Agent5[web_creative_developer]
-        Router --> AgentOther[+16 Specialized Agents]
-    end
+Sursele externe sunt seed-uri, nu lista finala. Discovery-ul poate urmari recursiv:
 
-    subgraph SkillsLayer["📦 Nivelul de Skill-uri & Ingestie"]
-        Agent1 & Agent2 & Agent3 & Agent4 & Agent5 --> LocalSkills[251 Physical Skills .agents/skills/]
-        Router --> GlobalRouter[Global 50k Skills Index]
-        Router --> RawInbox[06_INBOX/RAW_IMPORTS/skills/ RAW_EXTERNAL]
-    end
+- `SKILL.md`;
+- `skills/`;
+- `agents/`;
+- `instructions/`;
+- `prompts/`;
+- skill collections;
+- documentatie tehnica;
+- link-uri catre alte skill repositories;
+- framework/backend/language resources relevante pentru agentic development.
 
-    subgraph CognitiveCore["🧠 Cognitive Core Layer"]
-        LocalSkills --> Executive[Executive Cognitive Loop]
-        Executive --> WorkingMemory[Working Memory]
-        Executive --> RecallEngine[Activation & Recall Engine]
-        Executive --> ReflexionPipeline[Reflexion & Learning Engine]
-    end
+Discovery-ul trebuie sa previna ciclurile, duplicatele, mirrors/forks si importarea aplicatiilor intregi drept skills.
 
-    subgraph MemoryControllerLayer["🛡️ Memory Controller & Security Boundary"]
-        Executive --> ToolRouter[ToolRouter]
-        ToolRouter --> MemController[MemoryController]
-        MemController --> SecurityGuard[P0-P18 Security & Provenance Gating]
-        SecurityGuard --> AuditChain[SHA-256 Audit Logger]
-        SecurityGuard --> SQLiteEngine[(SQLite WAL Storage Engine)]
-        SecurityGuard --> MarkdownVault[(Obsidian Markdown Vault)]
-    end
+Continutul extern este tratat ca **untrusted input** si nu este executat automat in timpul ingestiei.
+
+---
+
+# 🌐 Backend & Programming Knowledge
+
+Vault-ul poate indexa surse pentru:
+
+```text
+Backend
+├── REST / GraphQL / gRPC
+├── .NET / ASP.NET
+├── Node / Express / NestJS
+├── Django / Flask
+├── Rails / Spring
+├── Laravel / Symfony / PHP
+├── Vapor / Swift
+├── databases / ORM
+├── auth / security
+├── testing / observability
+└── deployment
+
+Programming
+├── C / C++ / C# / F#
+├── Rust / Go / Python
+├── TypeScript / JavaScript
+├── Java / Kotlin / Scala
+├── Swift / Dart / Julia
+├── Ruby / PHP
+├── Elixir / Erlang
+├── OCaml / Haskell / PureScript
+├── Nim / Crystal / Zig / Odin / V
+└── compilers / runtimes / tooling
+```
+
+Acestea imbogatesc knowledge graph-ul, dar sunt promovate in skills operationale doar dupa clasificare si validare.
+
+---
+
+# 🔐 Provenance & Trust
+
+Pentru continut extern trebuie sa putem determina:
+
+```text
+source_repository
+source_url
+source_path
+source_commit
+source_branch
+license
+author
+discovered_from
+discovery_depth
+sha256
+status
+```
+
+`SOURCE.json` este standardul de provenance pentru pachetele RAW unde este disponibil.
+
+---
+
+# 🗺️ Obsidian Synchronization
+
+Obsidian este sincronizat semantic cu:
+
+- Skills;
+- Agents;
+- Knowledge;
+- Procedures;
+- Projects;
+- Memory;
+- Provenance;
+- Validation;
+- References.
+
+Documentele centrale sunt:
+
+- `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md`
+- `05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md`
+- `01_KNOWLEDGE/Agents_Skill_Matrix.md`
+- `01_KNOWLEDGE/Master_Skills_Catalog_251.md`
+
+Relatia principala:
+
+```text
+Skill ↔ Agent ↔ Capability ↔ Procedure ↔ Knowledge ↔ Memory ↔ Obsidian
 ```
 
 ---
 
-## 1. Controller-ul de Memorie -- `memory_controller/`
-
-`MemoryController` este punctul unic și obligatoriu de intrare pentru orice citire sau scriere în memorie. Acesta impune:
-
-- **Autorizare Scopată**: Politici per operațiune (`propose`, `read`, `search`, `review`, `promote`, `archive`, `update`, `supersede`, `attest`) alocate principalilor `HUMAN`, `AI_AGENT` și `ADMIN`.
-- **Gating de Proveniență**: Fiecare notă înregistrează `source_type` (`user`, `official`, `ai`, `inference`, `execution`, `import`). Un agent AI nu poate revendica autonom proveniență umană sau oficială.
-- **Ciclu de Viață Controlat**: `RAW -> CLASSIFIED -> NORMALIZED -> REVIEW -> VERIFIED -> ACTIVE -> {SUPERSEDED, ARCHIVED}`. Injectarea de stări privilegiate la creare este blocată.
-- **Atestare Umană**: Starea `verification = "verified"` poate fi acordată exclusiv prin metoda `attest()`, rezervată rolurilor `HUMAN`/`ADMIN`.
-- **Jurnal de Audit Criptografic SHA-256**: Fiecare acțiune este înregistrată cu actor, țintă, rezultat și amprentă SHA-256 în lanț imutabil.
-- **Persistență WAL & Tranzacții Atomice**: Motor de stocare dual: `FileStorageEngine` (Markdown + YAML) și `SQLiteStorageEngine` (WAL mode, `PRAGMA busy_timeout=5000`, `BEGIN IMMEDIATE`).
-- **Telemetrie Hardware Imutabilă (P16-P18)**: Identificatorii fizici (VID, PID, Serial Number, Capacitate, Host ID) sunt strict Read-Only; utilizatorul poate modifica exclusiv eticheta logică a volumului.
-
----
-
-## 2. Motorul Cognitiv -- `cognitive_core/`
-
-`Executive` rulează ciclul cognitiv complet (**Observe -> Retrieve -> Attend -> Reason -> Plan -> Act -> Reflect -> Learn**), coordonând:
-
-- `ActivationEngine` / `RecallEngine`: Retragere cu activare difuză pe bază de scoruri de autoritate, temporalitate și versiuni.
-- `WorkingMemory`: Context activ delimitat și ponderat prin atenție.
-- `ReasoningEngine` / `Planner`: Planificare multi-etapă și sinteză (*Tree-of-Thought*).
-- `ReflectionPipeline` / `LearningEngine`: Captură automată a lecțiilor, promovarea încrederii și consolidare ghidată prin `ToolRouter`.
-
----
-
-## 🏛️ 3. Consiliul celor 21 de Agenți Specializați (`.agents/agents/`)
-
-`MultiAgentOrchestrator` coordonează o rețea de **21 de Agenți Specializați**, fiecare având permisiuni minime izolate (*Multi-Agent Least Privilege*):
-
-| # | Agent ID | Rol / Specializare | Competențe Cheie & Skill-uri Integrate |
-|---|---|---|---|
-| 1 | `compiler_and_tooling_engineer` ⚙️ | Compiler & Tooling Engineer | Compilatoare, AST Parsers, TinyCC, CPython, Roslyn, LLVM, JIT Tuning, Refactoring |
-| 2 | `site_reliability_and_devops_architect` 🚀 | SRE & Cloud Automation | Kubernetes, Helm, ArgoCD GitOps, Terraform IaC, Ansible, AWS, Azure, GCP, Istio, Prometheus |
-| 3 | `polyglot_systems_architect` 🌐 | Polyglot Systems Architect | Architecture Multi-Limbaj (C#, Go, Rust, Python, TypeScript, C++20 Drogon) |
-| 4 | `system_architecture_agent` 🏛️ | Enterprise Architecture Agent | Arhitectură Enterprise .NET 10, Isolation Loopback (`127.0.0.1`), Vault Secrets |
-| 5 | `backend_systems_engineer` ⚡ | Backend Microservices Engineer | REST, gRPC, GraphQL, Redis Caching, CQRS, Outbox CDC, Saga Pattern, SQLite WAL |
-| 6 | `secops_auditor` 🛡️ | SecOps & DevSecOps Auditor | Audit OWASP Top 10, SAST, DAST, Container Scan, Secret Leak, Zero Trust, OPA Rego, HG 585 |
-| 7 | `threat_hunting_analyst` 🔍 | Threat Hunting Analyst | DFIR Operations, YARA/Sigma Offline Engine, Forensic Analysis, Containment Runbooks |
-| 8 | `wpf_engineer` 🖥️ | WPF .NET 10 Engineer | C# WPF Enterprise, MVVM, Obsidian Tactical UI Tokens, Async Thread Safety |
-| 9 | `web_creative_developer` 🌟 | Creative Web & 3D Developer | Three.js, Shaders, GSAP ScrollTrigger, Lenis, CobeJS, VantaJS, MatterJS, Globe GL |
-| 10 | `web_design_engineer_agent` 🎨 | Web Design Engineer | Design Systems (Linear, Apple, Stripe, Vercel, Supabase), Agency Grids, Editorial Tech |
-| 11 | `web_quality_engineer` ⚡ | Web Quality & Vitals Engineer | Core Web Vitals (LCP/CLS/INP), WCAG 2.2 AAA Accessibility, Web Performance, SEO |
-| 12 | `ui_sensei_architect` ⛩️ | UI Sensei Visual Architect | Filosofia UI Sensei, Grid 8px, Micro-Spacing, Dark Glass, Skeuomorphic Clean |
-| 13 | `frontend_saas_engineer` 🌐 | Frontend SaaS Engineer | Next.js App Router, Tailwind CSS v4, TanStack Query, Zustand, Storybook, Playwright |
-| 14 | `game_engineer` 🎮 | ARPG & Web Game Engineer | Isometric ARPG Engine, Tactical Combat, Enemy AI, VFX Shaders, Audio Feedback |
-| 15 | `quant_developer` 📈 | Quant Trading Developer | Python Algorithmic Trading (5 Module: data/strategy/risk/execution/journal) |
-| 16 | `local_ai_engineer` 🤖 | Local AI & LLM Engineer | Ollama (`127.0.0.1:11434`), Pydantic JSON Mode, LangChain, LlamaIndex, vLLM, LoRA |
-| 17 | `content_strategist` ✍️ | Content & Voice Strategist | Copywriting, Technical Briefings, Presentation Design, Voice Generation |
-| 18 | `agentic_workflow_orchestrator` 🔄 | Agentic Workflow Orchestrator | Router Global 50k Skill-uri, Copilot Workflows, MCP Integrations, Ciclul OODA, Reflexion |
-| 19 | `ui_ux_designer` 🎨 | UI/UX Designer & Prompting | Dashboard Admin UI, Brand Identity, Data Visualization, Motion Design, UI Prompting |
-| 20 | `database_and_persistence_engineer` 💾 | DB & Persistence Engineer | Flyway, Vitess Sharding, DuckDB OLAP, ClickHouse Time-Series, pgvector, Neo4j |
-| 21 | `memory_controller_architect` 🧠 | Memory Controller Architect | Arhitectura Memoriei, PRAGMA WAL, SHA-256 Audit, Invariante P0-P18 |
-
----
-
-## 📦 4. Biblioteca de 251 SKILL-uri Locale & Ingestia Brută pe 12 Faze
-
-### A. Skill-uri Stocate Fizic pe Disc (`.agents/skills/`)
-- **251 de SKILL-uri operaționale** stocate direct pe disc în `.agents/skills/<skill_name>/SKILL.md`.
-- Catalogul canonic: **[`Master_Skills_Catalog_251.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Master_Skills_Catalog_251.md)**.
-- Matricea completă: **[`Agents_Skill_Matrix.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Agents_Skill_Matrix.md)**.
-
-### B. Ingestia Brută nealterată pe 12 Faze (`06_INBOX/RAW_IMPORTS/skills/`)
-Toate skill-urile brute externe de pe GitHub intră strict pe granița de securitate **`RAW_EXTERNAL`**:
-- **`SOURCE.json`**: Proveniență per pachet (`sha256`, `source_url`, `license`, `discovery_depth`).
-- **`_SOURCE_REGISTRY.json`**: Registrul master pentru 141 de surse unice procesate.
-- **`_PROGRAMMING_SOURCES.json`**: Referința pentru 70 de limbaje și compilatoare (CPython, Rust, Go, Roslyn, TinyCC, etc.).
-- **`_BACKEND_SOURCES.json`**: Referința pentru 51 de arhitecturi backend (Express, .NET, Rails, Spring, Vapor, NestJS).
-- **`_VALIDATION_REPORT.md`**: Certificatele de validare a integrității SHA-256 (10/10 checks PASSED).
-
----
-
-## 📐 5. Structura Directorului Repository-ului
+# 📁 Structura repository-ului
 
 ```text
 AI_Memory_Vault_CODEX_READY/
+│
+├── .claude-plugin/             # Claude Code plugin / marketplace metadata
 ├── .agents/
-│   ├── agents/               # Profilurile celor 21 de Agenți Specializați
-│   ├── rules/                # Regulile cognitive canonice (vault_cognitive_rules.md)
-│   └── skills/               # Biblioteca de 251 SKILL-uri stocate fizic pe disc
-├── 00_CORE/                  # Identitate, Regulament, Protocol Memorie, Model Încredere
-├── 00_CORE/GRAPH/            # Obsidian Maps of Content (MOC navigation layer)
-├── 01_KNOWLEDGE/             # Cunoștințe tehnice durabile & Matricea Agenților
-├── 02_PROJECTS/              # Starea proiectelor active & fișiere de continuitate
-├── 03_PROCEDURES/            # Proceduri repetabile & protocoale de construcție autonomă
-├── 04_MEMORY/                # Decizii, Erori, Experiențe, Lecții, Preferințe
-├── 05_RESOURCES/             # Materiale de referință
-├── 06_INBOX/RAW_IMPORTS/     # Granița de ingestie brută nealterată (RAW_EXTERNAL)
-├── 90_TEMPLATES/             # Șabloane canonice de note
-├── 99_SYSTEM/                # Scheme, protocoale & rapoarte de securitate
-├── cognitive_core/           # Motorul cognitiv Python (Executive, Recall, Planning, Reflexion)
-└── memory_controller/        # Controller-ul canonic de memorie & persistență SQLite WAL
+│   ├── agents/                 # Agent profiles
+│   ├── rules/                  # Cognitive/security rules
+│   └── skills/                 # Operational local skills
+│
+├── 00_CORE/                    # Identity, rules, memory protocol
+├── 01_KNOWLEDGE/               # Durable knowledge and registries
+├── 02_PROJECTS/                # Project continuity
+├── 03_PROCEDURES/              # Repeatable procedures
+├── 04_MEMORY/                  # Decisions, lessons, experiences
+├── 05_RESOURCES/               # Resources / Obsidian navigation
+├── 06_INBOX/                   # Incoming / RAW material
+│   └── RAW_IMPORTS/skills/     # RAW_EXTERNAL boundary
+├── 99_SYSTEM/                  # System contracts / synchronization
+│
+├── skills/                     # Plugin-level Claude skills
+├── agents/                     # Plugin-level Claude agents
+├── commands/                   # Claude commands
+├── hooks/                      # Plugin hooks
+├── scripts/                    # Supporting automation
+├── memory_controller/          # Canonical memory boundary
+└── cognitive_core/             # Retrieval / reasoning / reflection
 ```
 
 ---
 
-## 🧪 6. Rularea Testelor Automate
+# 🔄 Synchronization Contract
 
-Pentru a valida integritatea suitei cognitive și a controller-ului de memorie:
+Toate AI clients folosesc aceeasi memorie canonica:
 
-```bash
-python -m pytest -q
+```text
+                 CANONICAL VAULT
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+        Codex        Claude       Obsidian
+          │            │            │
+          └────────────┼────────────┘
+                       ▼
+                 Shared Memory
 ```
 
-Toate cele 197+ de teste unitare, de integrare și de securitate adversară rulează cu 0 erori.
+Reguli:
+
+1. Nu crea memorii canonice paralele.
+2. Nu transforma automat RAW in VERIFIED.
+3. Foloseste retrieval relevant, nu dump integral de context.
+4. Pastreaza provenance.
+5. Respecta lifecycle-ul memoriei.
+6. Nu suprascrie knowledge mai autoritativ cu surse mai slabe.
+7. Detecteaza si marcheaza conflictele.
+8. Actualizeaza registry-urile cand skill/agent relations se schimba.
+9. Nu executa continut extern doar pentru ca a fost importat.
+10. Pastreaza separarea dintre ingestion, validation, promotion si execution.
+
+---
+
+# 🛡️ Security
+
+Continutul extern este untrusted input.
+
+Nu se executa automat:
+
+- executabile;
+- installers;
+- npm scripts;
+- Python scripts;
+- build scripts;
+- binaries;
+- dependency installers.
+
+Ingestion-ul este read/analyze/hash/classify-first.
+
+---
+
+# 📊 Registries & Audit
+
+Cand exista, acestea sunt fisierele centrale pentru inventarul skill corpus:
+
+```text
+06_INBOX/RAW_IMPORTS/skills/_SOURCE_REGISTRY.json
+06_INBOX/RAW_IMPORTS/skills/_REGISTRY.json
+06_INBOX/RAW_IMPORTS/skills/_DISCOVERY_GRAPH.json
+06_INBOX/RAW_IMPORTS/skills/_DEDUPLICATION.json
+06_INBOX/RAW_IMPORTS/skills/_LICENSES.json
+06_INBOX/RAW_IMPORTS/skills/_VALIDATION_REPORT.md
+06_INBOX/RAW_IMPORTS/skills/_PROGRAMMING_SOURCES.json
+06_INBOX/RAW_IMPORTS/skills/_BACKEND_SOURCES.json
+```
+
+Registries trebuie sa ramana coerente cu filesystem-ul real.
+
+---
+
+# 🚀 Quick Start
+
+```powershell
+git clone https://github.com/userist123/AI_Memory_Vault_CODEX_READY.git
+cd AI_Memory_Vault_CODEX_READY
+git fetch origin
+git pull origin main
+```
+
+Verifica sincronizarea:
+
+```powershell
+git status
+git branch --show-current
+git log -1 --oneline
+```
+
+---
+
+# 🧪 Definition of Done
+
+O schimbare majora este completa cand:
+
+- filesystem-ul si registry-urile sunt coerente;
+- provenance este disponibila;
+- duplicatele sunt detectate;
+- skill-urile sunt clasificate corect;
+- agent ↔ skill relations sunt actualizate;
+- Obsidian navigation este actualizata;
+- Claude plugin metadata este valida;
+- nu exista memorii canonice concurente;
+- RAW_EXTERNAL security boundary este pastrata;
+- testele relevante trec;
+- repository-ul este sincronizat cu `main`.
+
+---
+
+# 📜 Principiul final
+
+> **AI Memory Vault nu este doar un folder de fisiere. Este memoria canonica partajata a ecosistemului AI.**
+>
+> Skills adauga capabilities. Agents adauga specializare. Knowledge adauga context durabil. Procedures adauga moduri de lucru. Memory pastreaza experienta si deciziile. Provenance si verification stabilesc increderea. Obsidian ofera navigare si audit. Claude si Codex sunt clienti ai aceleiasi memorii, nu proprietari ai unor memorii separate.
+
+---
+
+## 🔗 Links
+
+**Repository:** https://github.com/userist123/AI_Memory_Vault_CODEX_READY
+
+**Claude Plugin:** `.claude-plugin/`
+
+**Canonical Memory:** `memory_controller/` + `04_MEMORY/`
+
+**Operational Skills:** `.agents/skills/`
+
+**RAW External Skills:** `06_INBOX/RAW_IMPORTS/skills/`
+
+**Agent Matrix:** `01_KNOWLEDGE/Agents_Skill_Matrix.md`
+
+**Obsidian Sync:** `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md`
