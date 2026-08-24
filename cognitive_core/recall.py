@@ -211,4 +211,13 @@ class RecallEngine:
 
         # Sort descending by score, tie-break by ID
         scored_nodes.sort(key=lambda x: (x[1], x[0].get("id", "")), reverse=True)
+        
+        # ACT-R Activation Decay hook: Record successful access for top recalled nodes
+        from .activation import ActivationTracker
+        tracker = ActivationTracker.get_instance()
+        for node, score in scored_nodes:
+            node_id = node.get("id")
+            if node_id and score > 0.1:
+                tracker.record_access(node_id)
+
         return scored_nodes
