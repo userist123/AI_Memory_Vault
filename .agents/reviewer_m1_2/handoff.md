@@ -100,3 +100,10 @@ To independently reproduce and verify this review:
    git status -s
    ```
    *Expected*: Only the expected modified files and review artifacts.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

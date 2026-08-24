@@ -13,3 +13,10 @@ description: Proiectare Microservicii, Event-Driven Architecture, Cozi de Mesaje
 ## 2. Resiliență & Izolare
 - **Circuit Breaker**: Întrerupe apelurile către servicii terțe după $N$ eșecuri consecutive (Polly / Resilience4j).
 - **Graceful Degradation**: Fallback pe cache local dacă microserviciul secundar este indisponibil.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

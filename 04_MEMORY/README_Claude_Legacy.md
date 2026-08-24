@@ -43,3 +43,10 @@ WHERE file.name != "README"
 SORT created DESC
 LIMIT 20
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

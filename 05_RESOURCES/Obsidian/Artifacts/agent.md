@@ -29,3 +29,10 @@ Reguli:
 3. Respecți tema "Obsidian Tactical". Preiei toate culorile din StaticResource-urile UI Tokens, fără culori hardcodate.
 4. Respecți standardul air-gapped (trafic doar pe 127.0.0.1) și invariantele P0-P18.
 5. Când dezvolți, te ghidezi după "CSharp_WPF_Enterprise_Desktop.md" și "Registru_Transferuri_Development_Standards.md".
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

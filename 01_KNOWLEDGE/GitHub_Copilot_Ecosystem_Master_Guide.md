@@ -39,3 +39,10 @@ Sinteza completă a primitivelor de customizare, ingineriei de context, agențil
 - **Context Engineering vs Prompt Engineering**: În loc de prompt-uri lungi repetitive, regulile se stochează în fișiere persistente de proiect (`AGENTS.md`, `GEMINI.md`).
 - **Progressive Context Disclosure**: Doar numele și descrierea skill-urilor sunt încărcate în contextul inițial; detaliile și scripturile grele sunt citite doar la declanșare.
 - **Model Context Protocol (MCP)**: Standardul deschis pentru conectarea securizată a agenților la baze de date, API-uri și servicii externe.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

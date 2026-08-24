@@ -25,3 +25,10 @@ Tasks:
 4. Run full pytest across the entire repository (`python -m pytest -v` or `python -m pytest`). Verify that 100% of all tests pass with 0 failures.
 5. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1\handoff.md`.
 6. Send a completion message back to the orchestrator.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

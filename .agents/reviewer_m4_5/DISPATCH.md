@@ -22,3 +22,10 @@ Conduct the definitive verification review of Milestone 4: Cognitive Loop & Mult
 1. Run pytest suite (`python -m pytest`) and record results.
 2. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
 3. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_5\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -53,3 +53,10 @@ External source
 - [[Storage Conventions]]
 - [[Provenance and Redaction]]
 - [[Canonical Frontmatter]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

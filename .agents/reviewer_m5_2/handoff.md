@@ -199,3 +199,10 @@ python -m pytest cognitive_core/tests/test_evaluation_and_recall_lineage.py -v
 # 3. Run full test suite
 python -m pytest
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -11,3 +11,10 @@
 - [MDN: aria-selected](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-selected)
 - [MDN: aria-current](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-current)
 - [MDN: aria-pressed](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Attributes/aria-pressed)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

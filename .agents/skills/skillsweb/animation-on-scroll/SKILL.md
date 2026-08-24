@@ -108,3 +108,10 @@ description: Create an on-scroll animation trigger using IntersectionObserver wi
 - Should animations run once or every time the element re-enters?
 - How far before entering the viewport should they start?
 - What motion style (fade, slide, blur, scale) do you want?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

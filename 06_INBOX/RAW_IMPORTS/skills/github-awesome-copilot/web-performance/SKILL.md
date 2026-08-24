@@ -398,3 +398,10 @@ onCLS(console.log);
 ## References
 
 For Core Web Vitals specific optimizations, see [Core Web Vitals](../core-web-vitals/SKILL.md).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

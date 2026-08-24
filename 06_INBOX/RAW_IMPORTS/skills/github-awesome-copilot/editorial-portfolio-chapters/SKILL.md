@@ -80,3 +80,10 @@ Use [Mara Voss Interaction Prompt Pack](ARTICLE.md) as a worked example for turn
 - Fast card choreography, large parallax, or decorative motion loops.
 - Hiding project titles or actions until hover.
 - Copying source imagery, brand language, project names, or client claims.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

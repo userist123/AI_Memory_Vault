@@ -11,3 +11,10 @@
 - [x] Write handoff report and notify parent
 
 Last visited: 2026-08-15T02:10:40Z
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

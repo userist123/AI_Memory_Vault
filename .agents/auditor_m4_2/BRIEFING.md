@@ -64,3 +64,10 @@ Conduct an independent forensic integrity audit of Milestone 4 post-remediation 
 - `.agents/auditor_m4_2/progress.md` — Heartbeat log
 - `.agents/auditor_m4_2/BRIEFING.md` — Persistent briefing memory
 - `.agents/auditor_m4_2/handoff.md` — Final forensic audit report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

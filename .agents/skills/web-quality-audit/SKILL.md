@@ -170,3 +170,10 @@ For detailed guidelines on specific areas:
 - [Accessibility](../accessibility/SKILL.md)
 - [SEO](../seo/SKILL.md)
 - [Best Practices](../best-practices/SKILL.md)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

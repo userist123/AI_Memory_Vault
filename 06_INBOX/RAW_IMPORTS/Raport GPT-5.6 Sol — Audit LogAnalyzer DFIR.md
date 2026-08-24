@@ -328,3 +328,10 @@ P1.7–P1.8, P1.13 și P2. Gate: 60 FPS la pan/zoom pe view agregat, time-to-fir
 ## Concluzie
 
 Versiunea următoare trebuie definită ca **platformă de examinare bazată pe probe**, nu ca un dashboard mai bogat. Cel mai mare salt de valoare vine din NTFS + execution/user/browser/SRUM, un model canonic cu provenance, corelarea stateful cross-host și raportarea NIS2 verificabilă. Abia după acestea, heatmap-urile, UEBA și narativa de atac devin state-of-the-art în sens real: nu doar spectaculoase, ci reproductibile, explicabile și apte să susțină decizii SOC, audit și proceduri judiciare.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -78,3 +78,10 @@ Decizie luata; dezvoltarea a continuat pe stack Python + MT5 + Tkinter.
 ## Related
 
 - [[Elite_Quant_Bot]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

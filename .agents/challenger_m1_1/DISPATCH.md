@@ -10,3 +10,10 @@ Task:
 2. Run the full pytest test suite.
 3. Write your verification findings and verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_1\handoff.md.
 4. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

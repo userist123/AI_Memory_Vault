@@ -19,3 +19,10 @@ description: "Apply seamless infinite marquee loops using duplicated items."
 ## Guardrails
 - Do not animate unique content that users must read carefully.
 - Do not use large CPU-heavy shadows or filters on every moving item.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

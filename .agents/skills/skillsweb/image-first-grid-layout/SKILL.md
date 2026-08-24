@@ -52,3 +52,10 @@ description: "Create an image-led grid design system with full-bleed photography
 - Bright multi-color accents that break the calm, cinematic tone of the stage.
 - Heavy solid containers that sever the relationship between the overlays and the underlying image.
 - Treating the grid as invisible; the structure should quietly organize the composition.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

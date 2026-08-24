@@ -17,3 +17,10 @@ Carry the workflow into focused feature modules, audience views, an honest prici
 ## Remix prompt
 
 Use $product-proof-saas and the included demo as the quality bar for a different product category. Replace the brand, workflow, copy, palette details, sample data, and feature set. Preserve the product-as-proof hierarchy, explicit state model, honest sample labeling, restrained motion, accessible controls, responsive composition, and reduced-motion fallback.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

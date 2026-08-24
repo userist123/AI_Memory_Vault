@@ -10,3 +10,10 @@ Rulare modele locale (Llama3, Qwen2.5-Coder, Mistral, Gemma), API HTTP `127.0.0.
 ## Ghid de Execuție & Reguli
 - Standarde idiomatice de producție.
 - Validare automată și integrare cu bunele practici ale Vault-ului.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

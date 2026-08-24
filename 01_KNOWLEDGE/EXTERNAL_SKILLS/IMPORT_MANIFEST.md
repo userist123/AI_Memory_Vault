@@ -15,3 +15,10 @@ This branch stages external skill libraries for review and normalization.
 External skills are imported as non-canonical knowledge. They must not replace MemoryController, Cognitive Core, ToolRouter, authorization, provenance, lifecycle, verification, or audit boundaries. Each imported skill must retain source attribution and license information where available.
 
 GitHub topic/collection URLs are discovery sources, not skill payloads.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

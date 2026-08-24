@@ -73,3 +73,10 @@ Sistemul acoperă deja: atenție, raționament tip Tree-of-Thought, reflecție f
 2. Lipește promptul de mai sus ca instrucțiune inițială.
 3. Lasă agentul să lucreze pas cu pas (Pasul 1 → 4), revizuind fiecare commit înainte de a trece mai departe.
 4. Verifică manual PR-ul final înainte de merge.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

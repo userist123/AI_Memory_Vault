@@ -52,3 +52,10 @@ Cereri repetate pentru "arhiva completa a aplicatiei" cu fisiere separate (confi
 ## Related
 
 - [[Elite_Quant_Bot]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

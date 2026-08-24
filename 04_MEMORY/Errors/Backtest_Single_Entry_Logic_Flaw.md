@@ -71,3 +71,10 @@ Defineste explicit cerintele de multi-entry si risk management inainte de a scri
 ## Sources
 
 - Conversatie AI din 2026-06-10
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

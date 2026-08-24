@@ -15,3 +15,10 @@ index_scope: vault-navigation
 - [[LogAnalyzer_MVP]]
 - [[Elite_Quant_Bot]]
 - [[AI_Memory_System]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

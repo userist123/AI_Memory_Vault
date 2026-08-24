@@ -248,3 +248,10 @@ Report:
 - commit and deployment proof when the project requires them.
 
 Do not claim visual success from unit tests alone. Do not claim live success from a local build.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

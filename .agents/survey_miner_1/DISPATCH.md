@@ -23,3 +23,10 @@ Your task:
 3. Write a detailed specification document at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md.
 4. Write handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md.
 5. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

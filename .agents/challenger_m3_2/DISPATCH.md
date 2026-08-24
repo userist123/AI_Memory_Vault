@@ -18,3 +18,10 @@ Adversarial Objectives:
 3. Verify audit log SHA-256 chain integrity under failed security attempts (failed attempts should be logged or safely rejected without corrupting chain).
 4. Run full pytest suite and adversarial stress harness.
 5. Report detailed results and verdict (APPROVE or REQUEST_CHANGES) in handoff.md and send a message back to caller.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -14,3 +14,10 @@ provenance:
   source_ref: generated
   original_path: 06_INBOX/RAW_IMPORTS/perplexity_original/Rules.md
 ---
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

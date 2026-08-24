@@ -10,3 +10,10 @@
 - [x] Run pytest test suite and check type safety (typing introspection + 197 tests pass)
 - [x] Adversarial stress-testing & integrity checks
 - [x] Draft handoff.md and submit verdict via send_message to parent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

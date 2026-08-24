@@ -21,3 +21,10 @@ id: bfa7647b-9aac-470f-87f5-fd7d4102ace5
 - **Verification**: Policy gate checked successfully
 - **Prevention Rule**: Enforce proactive approval requests for high-risk operations
 - **Core Lesson**: High-risk actions require explicit user approval before execution.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

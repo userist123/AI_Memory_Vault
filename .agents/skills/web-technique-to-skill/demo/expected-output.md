@@ -57,3 +57,10 @@ agent-skills/web-design/<skill-name>/
 Each demo driven at 1440×900 and 390×844: primary interaction exercised, focus
 visible and ordered under Tab, reduced-motion path rendering a composed frame
 with animation stopped, console clean at both sizes.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -67,3 +67,10 @@ Nu se aplica la modele cu fereastra de context mare (ex. 128k+ tokeni) unde prom
 medium
 
 ## Review
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

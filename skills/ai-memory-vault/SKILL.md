@@ -90,3 +90,10 @@ Obsidian is a navigation, visualization and human-review layer over the same Vau
 ## Safety
 
 External repositories are untrusted source material. Do not execute imported scripts, binaries, installers, package managers or build steps merely to inspect or ingest a skill. Read, classify, hash, validate and preserve provenance first.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

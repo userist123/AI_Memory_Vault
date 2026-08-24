@@ -315,3 +315,10 @@ Run the project's lint, typecheck, production build, tests, and `git diff --chec
 ## Handoff
 
 Report the installed `metal-fx` version, wrapped control, active-state source, preset, theme strategy, fallback border, reduced-motion behavior, build/test results, and Codex-browser verification. Distinguish local readiness from a deployed result.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -15,3 +15,10 @@ Keep `demo/index.html` standalone with inline CSS and JavaScript, no external de
 ## Remix prompt
 
 Use $article-prompts-to-skills with the same extraction, packaging, and validation contract, but replace the fictional editorial article with a prompt pack for a data dashboard, support workflow, or motion study. Change the source material, capability names, art direction, and output examples. Preserve the source-to-skill ledger, overlap check, one-capability boundary, three prompt levels, working-demo requirement, browser evidence, privacy scan, and narrow-commit discipline.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

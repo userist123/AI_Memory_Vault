@@ -84,3 +84,10 @@ To independently reproduce and verify all findings:
 4. **Inspect Files**:
    - `cognitive_core/learning.py`
    - `.agents/explorer_m5_1/report.md`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

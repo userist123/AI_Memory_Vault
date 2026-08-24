@@ -19,3 +19,10 @@ Your task:
 4. Write your full analysis report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\report.md.
 5. Write your handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\handoff.md.
 6. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

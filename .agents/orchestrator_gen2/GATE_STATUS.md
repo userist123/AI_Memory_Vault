@@ -51,3 +51,10 @@ Gate Result: **PASS**
 | auditor_m4_3 | teamwork_preview_auditor | CLEAN (static & dynamic integrity verification, 399 tests) | handoff.md |
 
 Gate Result: **PASS**
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

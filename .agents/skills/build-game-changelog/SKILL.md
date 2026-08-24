@@ -153,3 +153,10 @@ Finish with production proof when the task includes a release. Test the live bui
 - Do not hide the only close control inside a long scrolling list.
 - Do not expose source hashes or deployment IDs in player-facing notes.
 - Do not rewrite historical entries without evidence.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

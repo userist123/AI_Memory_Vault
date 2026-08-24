@@ -11,3 +11,10 @@ Last visited: 2026-08-14T20:12:20Z
 - [x] Step 6: Run full pytest suite to ensure no regressions (218/218 tests passing).
 - [x] Step 7: Document changes in `changes.md` and complete `handoff.md`.
 - [ ] Step 8: Send completion message to parent.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

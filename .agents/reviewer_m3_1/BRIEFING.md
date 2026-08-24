@@ -65,3 +65,10 @@ Independent review and adversarial verification of Milestone 3: Security Invaria
 - `.agents/reviewer_m3_1/BRIEFING.md` — persistent working memory
 - `.agents/reviewer_m3_1/progress.md` — liveness heartbeat
 - `.agents/reviewer_m3_1/handoff.md` — 5-component review report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -40,3 +40,10 @@ Poziționare + atribute → paletă cu hex și roluri → fonturi cu weights →
 - Gradient „AI purple-blue" generic din 2023.
 - 6 culori „ca să fie flexibil" — flexibilitatea e inamicul recunoașterii.
 - Voce definită prin adjective fără exemple concrete de propoziții.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

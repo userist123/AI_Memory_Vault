@@ -34,3 +34,10 @@ An agent may prepare, normalize, link, and flag a candidate. It must not silentl
 
 - [[Integrity Check]]
 - [[Provenance and Redaction]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

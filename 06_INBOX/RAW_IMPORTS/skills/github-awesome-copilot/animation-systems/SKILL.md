@@ -185,3 +185,10 @@ Return:
 3) A choreography plan (timeline beats)
 4) Implementation notes (perf + reduced motion)
 5) A small code recipe (CSS or GSAP/Framer depending on stack)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

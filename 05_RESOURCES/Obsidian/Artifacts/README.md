@@ -20,3 +20,10 @@ Urmatoarele surse pot fi adaugate ulterior:
 - ChatGPT
 - Gemini
 - alte modele / aplicatii
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

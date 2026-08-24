@@ -18,3 +18,10 @@ Status Summary:
 
 Follow all Vault Cognitive Operating Rules, AGENTS.md contracts, and P0-P15 security invariants.
 Coordinate workers/reviewers/challengers, verify all acceptance criteria, run the full test suite (all tests passing with 0 failures), and report completion to the Sentinel when finished.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -80,3 +80,10 @@ window.addEventListener("resize", () => {
 - Globe size and placement (hero, section, card)?
 - Marker locations + colors (brand-aligned)?
 - Interaction needs (drag to rotate vs. ambient spin)?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

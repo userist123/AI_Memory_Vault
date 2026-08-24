@@ -51,3 +51,10 @@ description: Use when implementing globe.gl (Globe.GL) for 3D globe data visuali
 - What should the globe size be on desktop vs mobile?
 - Do you want drag/rotate interactions or a static globe?
 - Is this plain HTML, React (`react-globe.gl`), or another framework?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -351,3 +351,10 @@ The security enforcement layer (`memory_controller/controller.py`, `authorizer.p
 ## 6. Conclusion
 
 The Cognitive Brain architecture in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY` is structurally complete, strictly governed by security invariant policies P0-P15, and verified with 197 passing tests. All core requirements (R1-R4) and acceptance criteria are implemented. Addressing the minor typing imports, cleaning dead code in `budget.py`, and organizing legacy audit records will bring the codebase to full production maturity.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

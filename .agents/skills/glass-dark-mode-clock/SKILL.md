@@ -50,3 +50,10 @@ description: "Create a dark glass design system with frosted shells, soft beam g
 - Overloading the dial with too many labels or motion until it becomes noisy.
 - Using strong accent colors that break the monochrome calibration aesthetic.
 - Flattening everything into plain black boxes with no glass depth, beam structure, or radial hierarchy.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

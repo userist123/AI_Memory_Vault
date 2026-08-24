@@ -50,3 +50,10 @@ Build all three as switchable, labeled art directions around the same scene and 
 ## Remix prompt
 
 Use $scroll-world-storytelling in Three.js mode for my supplied story. Read the complete source, audit the newest local daily inspirations, and return a beat ledger plus three materially different art-direction studies before coding. Then build one procedural real-time world whose camera and object states are deterministically controlled by native scroll. Use local pinned dependencies, a static fallback, responsive composition, reduced motion, and a real Codex-browser verification pass.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

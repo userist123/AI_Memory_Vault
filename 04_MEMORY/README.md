@@ -24,3 +24,10 @@ Memoria episodica si operationala.
 ## Golden Rule
 
 Nu importa conversatia ca memorie permanenta. Extrage ceea ce ramane util dupa ce conversatia dispare.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

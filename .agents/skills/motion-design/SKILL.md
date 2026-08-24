@@ -43,3 +43,10 @@ Tot restul e zgomot: fără parallax gratuit, fără elemente care pulsează per
 - Card hover: translateY(-2px) + umbră ușor mărită, 150ms.
 - Toast/notificare: slide + fade in 250ms, auto-dismiss cu bară de progres.
 - Skeleton loading în loc de spinner pentru conținut > 300ms așteptare.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

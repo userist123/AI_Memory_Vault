@@ -15,3 +15,10 @@ description: Supabase Dark Emerald Tech Design System (Matte black surfaces, eme
 ## Principles
 - Developer-first dashboard UI.
 - Emerald status indicators for databases & edge functions.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

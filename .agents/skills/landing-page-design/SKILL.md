@@ -38,3 +38,10 @@ O pagină de landing are UN job: să conducă la O acțiune. Tot ce nu împinge 
 - „Lorem ipsum energy": copy generic care s-ar potrivi oricărui produs.
 - Carusel de testimoniale (nimeni nu dă click pe săgeți).
 - Pop-up de newsletter înainte ca userul să citească ceva.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

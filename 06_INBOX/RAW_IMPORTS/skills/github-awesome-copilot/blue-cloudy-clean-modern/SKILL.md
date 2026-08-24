@@ -50,3 +50,10 @@ description: "Create a clean modern design system with a luminous blue sky atmos
 - Overly literal cloud illustrations or childish weather motifs.
 - Too many accent colors that break the blue-and-white calm.
 - Harsh gradients, noisy animation, or overbearing glass effects that reduce clarity.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -68,3 +68,10 @@ Acest document reprezintă **Registrul Indexat al celor 50.000+ de Skill-uri și
 
 - Agenții utilizează skill-ul `global-skill-registry-router` pentru a căuta în acest index de 50.000+ skill-uri atunci când o sarcină necesită o unealtă ultra-specializată neprezentă în cele 198 de skill-uri locale.
 - Fereastra de context LLM este protejată: skill-urile externe sunt descărcate doar la momentul executării sarcinii relevante.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

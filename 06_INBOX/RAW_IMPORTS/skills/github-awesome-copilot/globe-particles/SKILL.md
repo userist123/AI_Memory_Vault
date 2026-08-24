@@ -299,3 +299,10 @@ const cleanupGlobe = initGlobeParticles(document.querySelector("[data-globe-part
 - Tilt reveals the ring and globe depth.
 - Reduced motion renders a still or near-still object.
 - Geometry, material, renderer, listeners, and RAF are cleaned up.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

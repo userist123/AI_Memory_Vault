@@ -69,3 +69,10 @@ medium
 ## Review
 
 De revizuit cand aplicatia live ajunge in faza de paper trading.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

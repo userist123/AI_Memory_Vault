@@ -52,3 +52,10 @@ Remediate the two defects identified by `challenger_m4_1` in `cognitive_core/ref
 - **Build/test result**: 339/339 passed (100% pass rate)
 - **Lint status**: Clean
 - **Tests added/modified**: `test_propose_synapse_real_controller_schema_validation`, `test_self_refine_none_and_non_string_content_safety`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

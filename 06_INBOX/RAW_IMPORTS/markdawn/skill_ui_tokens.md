@@ -32,3 +32,10 @@ Paletă de referință (nu se modifică fără cerere explicită):
 1. Grep pentru culori hex hardcodate în fișierele modificate — dacă găsești, înlocuiește cu resursa corespunzătoare.
 2. Verifică contrast text/fundal ≥ 4.5:1 (WCAG AA) pe orice pereche nouă.
 3. Confirmă că niciun control nu afișează text alb pe fundal alb implicit de sistem (ex: ComboBox/DataGrid nestilizate).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -109,3 +109,10 @@ python vault_api.py
 - `depends_on`: [[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]] — Baza MVVM, async și audit trail.
 - `related_to`: [[03_PROCEDURES/PowerShell_SecOps_Forensic_Standard]] — Procedurile de colectare forensic compatibile.
 - `supports`: [[01_KNOWLEDGE/Local_AI_Integration_Architecture]] — Protocolul de comunicare cu Ollama pe 127.0.0.1.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

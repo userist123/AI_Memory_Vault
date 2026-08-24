@@ -78,3 +78,10 @@ Replace source brands, customers, numbers, security badges, screenshots, and cla
 - Glowing AI orbs, particle clouds, and cyberpunk decoration.
 - A generic sales leap from feature list to contact form.
 - Hiding risk, audit, failure, or rollback details behind vague copy.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

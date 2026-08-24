@@ -65,3 +65,10 @@ Partile care depind de hardware real (token QSCD, SED) nu au fost testate/verifi
 ## Changelog
 
 - 2026-08-14: nota creata din memoria conversatiilor.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

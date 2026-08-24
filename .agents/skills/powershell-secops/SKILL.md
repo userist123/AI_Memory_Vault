@@ -35,3 +35,10 @@ Scripturile rulează pe sisteme de producție într-un mediu reglementat (INFOSE
 
 - Orice script de audit produce DOUĂ ieșiri: CSV/JSON pentru mașini + sumar lizibil pentru raport (contorizări, excepții, sisteme neaccesibile).
 - Exit codes corecte (0 succes, non-zero cu semnificație documentată) — scripturile intră în automatizări mai mari.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

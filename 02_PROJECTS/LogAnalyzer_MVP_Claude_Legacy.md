@@ -43,3 +43,10 @@ Aplicație .NET 8/10 WPF pentru analiză forensics/SOC-DFIR a log-urilor, gândi
 
 ## Lecții legate (vezi 04_MEMORY/Lessons)
 - 🔲 De completat pe măsură ce apar corecții
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

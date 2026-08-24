@@ -171,3 +171,10 @@ Close with:
 - Put the best current suggestion in the first row. The `Suggested tweet` cell should contain the actual tweet draft, not a summary. Use `<br><br>` inside the cell when preserving two or three paragraphs.
 - Keep the table useful for revision: `Why this angle` should explain the editorial bet in one sentence, and `Hone next` should name the most likely improvement, objection, or specificity gap.
 - If browser access is blocked or no usable bookmarks are found, do not fabricate a suggested-tweet table. Report the blocker and say there are no source-backed suggestions for this run.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

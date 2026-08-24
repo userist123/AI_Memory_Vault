@@ -9,3 +9,10 @@
   - Validated P0-P15 trust boundary invariants and integrity
   - Identified 2 implementation findings and 1 test harness finding
   - Formulated REQUEST_CHANGES verdict and completed handoff.md
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

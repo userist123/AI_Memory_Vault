@@ -129,3 +129,10 @@ To independently verify these findings:
    python -m pytest cognitive_core/tests/test_specialized_agents.py cognitive_core/tests/test_multiagent_orchestration.py cognitive_core/tests/test_tot_and_formal_reflexion.py cognitive_core/tests/test_recall.py cognitive_core/tests/test_tool_router_security.py memory_controller/tests/test_security_hardening.py -v
    ```
    *Expected Result*: All 66 tests pass with 0 failures.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -108,3 +108,10 @@ In the repository-approved browser:
 - verify no broken media or console warning/error.
 
 Commit only the narrow asset lane. Report the manifest, main/runtime models, gear files, rig and sockets, actions, catalog route, status, verification results, known boundaries, and exact commit SHA. Report full-suite baseline failures separately.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

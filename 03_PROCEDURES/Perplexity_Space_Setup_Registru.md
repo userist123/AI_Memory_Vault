@@ -50,3 +50,10 @@ Perplexity nu are fișier auto-încărcat per repo (ca AGENTS.md/CLAUDE.md/GEMIN
 - Research înainte de a scrie o sarcină nouă în AGENTS.md/CLAUDE.md/GEMINI.md.
 - Verificarea conformității unei decizii de design față de HG 585 / NIST 800-88r2 înainte de a o transforma în cod.
 - Sinteză periodică a noutăților despre Antigravity / Codex CLI / Claude Code.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

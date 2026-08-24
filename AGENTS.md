@@ -561,3 +561,10 @@ The purpose is to make the AI:
 - remain aligned with the user's actual objective.
 
 **Better memory beats more memory.**
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -11,3 +11,10 @@
 - [ ] Send handoff message to parent
 
 Last visited: 2026-08-14T23:19:00Z
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

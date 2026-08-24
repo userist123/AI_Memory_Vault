@@ -19,3 +19,10 @@ Punct unic de intrare pentru orice notă nouă, neclasificată. Nimic nu rămân
 ## Reguli
 - Nimic nu se lasă aici > 7 zile fără procesare
 - Import-uri externe brute → subfolder `_raw_imports/`, procesate conform `03_PROCEDURES/Import_Sanitization.md`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

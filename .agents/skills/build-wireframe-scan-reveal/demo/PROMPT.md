@@ -25,3 +25,10 @@ Use `$build-wireframe-scan-reveal` to recreate **Sylva — Survey Pulse** as a s
 ```text
 Use $build-wireframe-scan-reveal for a warm ivory archaeological exhibit: reveal a terracotta vessel from a low-right survey origin, with charcoal topology and rust solid material. Change the subject, palette, type, and composition, but keep the paired world-space representations, 3.4-second conductor, solid lag, irregular front, temporary cage disposal, reduced-motion still, and lifecycle budgets.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

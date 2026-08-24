@@ -45,3 +45,10 @@ journal/    → fiecare tranzacție logată cu context complet ÎNAINTE de execu
 - Type hints peste tot; `Decimal`/int (puncte) pentru bani, NU float pentru comparații de preț.
 - Config în fișier (YAML/JSON), zero valori magice în cod.
 - Logging structurat cu context: strategie, simbol, semnal, motiv — nu `print`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

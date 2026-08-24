@@ -135,3 +135,10 @@ To independently verify the test suite findings:
 
 5. **Inspect Artifacts**:
    - Detailed Survey Report: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\report.md`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

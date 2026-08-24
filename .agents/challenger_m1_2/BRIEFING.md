@@ -56,3 +56,10 @@ Empirically verify `memory_controller/context/budget.py` across degradation tier
 - `.agents/challenger_m1_2/BRIEFING.md` — Agent state & identity
 - `.agents/challenger_m1_2/progress.md` — Progress heartbeat
 - `.agents/challenger_m1_2/handoff.md` — Final verification report & verdict
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

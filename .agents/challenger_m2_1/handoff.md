@@ -154,3 +154,10 @@ python -m pytest memory_controller/tests/test_audit.py -v
 # 4. Run 50-thread high-contention WAL benchmark
 python -c "import tempfile, threading, time, uuid; from memory_controller.storage.sqlite_engine import SQLiteStorageEngine; fd, p = tempfile.mkstemp(suffix='.sqlite3'); engine = SQLiteStorageEngine(p, wal_mode=True, timeout=15.0); threads = [threading.Thread(target=lambda t: [engine.set(f't{t}-n{i}', {'id': f't{t}-n{i}', 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'db', 'tags': [], 'created': '', 'updated': '', 'provenance': {'source_type': 'user', 'source_ref': ''}, 'confidence': 'high', 'verification': 'unverified', 'relations': [], 'content': ''}) for i in range(20)], args=(t,)) for t in range(50)]; [t.start() for t in threads]; [t.join() for t in threads]; assert len(engine.query()) == 1000; engine.close(); print('50 threads / 1000 txns benchmark: SUCCESS')"
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

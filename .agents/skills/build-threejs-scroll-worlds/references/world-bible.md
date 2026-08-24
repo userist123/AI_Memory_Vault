@@ -303,3 +303,10 @@ Stop for review at these points when the project is substantial:
 7. complete journey before final texture/particle polish.
 
 Do not spend the full asset-production budget before a graybox proves the route.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

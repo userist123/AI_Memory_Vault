@@ -13,3 +13,10 @@ description: Clean Architecture, Domain-Driven Design (DDD), Dependency Injectio
 
 ## 2. Regulă de Aur
 Dependențele indică doar spre interior (Infrastructure depinde de Application/Domain, niciodată invers).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

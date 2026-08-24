@@ -11,3 +11,10 @@
 | auditor_m5_1 | teamwork_preview_auditor | PENDING | - |
 
 Gate Result: **IN_PROGRESS**
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

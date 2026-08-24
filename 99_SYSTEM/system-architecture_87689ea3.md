@@ -18,3 +18,10 @@ provenance:
   source_ref: generated
   original_path: 06_INBOX/RAW_IMPORTS/claude_original/99_SYSTEM__RAG_KnowledgeGraph_Architecture.md
 ---
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -47,3 +47,10 @@ SDL include faze precum analiza de design de securitate, verificări de calitate
 ## Changelog
 
 - 2026-08-14: Nota creată din documentația WPF Security Strategy.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

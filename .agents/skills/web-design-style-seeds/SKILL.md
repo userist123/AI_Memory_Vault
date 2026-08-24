@@ -209,3 +209,10 @@
 - "瑞士但现代" → 瑞士设计的网格和黑白 + 更大圆角 + L2 动效
 
 混搭时以**色板和字体**从一个种子取，**动效和装饰规则**从另一个取。不要混搭两套色板。
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

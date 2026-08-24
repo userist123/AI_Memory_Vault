@@ -29,3 +29,10 @@ These guidelines are automatically applied to the development of the **LogAnalyz
 ## 6. Threat Sharing Standards & Localization
 - **Standardized Export:** Incident data, indicators, and attack patterns must be exportable in standard **OASIS STIX 2.1 JSON** and **MISP Event JSON**.
 - **Romanian Technical Localization:** All user-facing explanations, threat descriptions, and playbooks must be formulated in precise, professional Romanian technical cybersecurity terminology.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

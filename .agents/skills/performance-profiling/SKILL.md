@@ -147,3 +147,10 @@ Energy:
 - `references/memory-profiling.md`: Allocations, Leaks, Memory Graph debugger.
 - `references/launch-optimization.md`: Launch phases and cold/warm start optimization.
 - `references/energy-diagnostics.md`: Battery, thermal state, and network efficiency.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -104,3 +104,10 @@ The temporary second representation and its line coverage are the real cost. Top
 - Confirm a clean console and disposed cage resources after completion.
 
 Use [demo/index.html](demo/index.html) as the working proof and [demo/PROMPT.md](demo/PROMPT.md) to recreate or remix it.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

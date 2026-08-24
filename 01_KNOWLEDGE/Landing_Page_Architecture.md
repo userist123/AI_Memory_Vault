@@ -56,3 +56,10 @@ O pagină de landing are un singur obiectiv fundamental: să ghideze utilizatoru
 ## 2. Relații și Sinapse Cognitive
 - `related_to`: [[01_KNOWLEDGE/Design_System_Foundation]] — Aplică scara de spațiere, contrastul și culoarea de accent pentru butoanele CTA.
 - `related_to`: [[03_PROCEDURES/UI_UX_Heuristic_Review]] — Validează respectarea principiilor de claritate și control cognitiv.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

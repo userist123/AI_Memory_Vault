@@ -18,3 +18,10 @@ Obsidian is the visualization, navigation, and human-audit layer over the Vault.
 ## Linking
 
 Use stable relative links and existing MOCs where possible. Prefer linking to canonical records rather than raw external imports.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

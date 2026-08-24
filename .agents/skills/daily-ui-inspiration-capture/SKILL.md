@@ -151,3 +151,10 @@ Verify:
 If `articles/ARTICLES_INDEX.md` is clean, add a single discoverability row only when that matches the current repo convention. If it is already dirty or conflicted, leave it untouched and mention that in the closeout.
 
 Because `articles/` is often ignored, use `git add -f` for the intended dated folder. Stage and commit only the files created or intentionally changed for this run.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

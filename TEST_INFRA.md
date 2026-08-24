@@ -47,3 +47,10 @@
 - All 197+ collected test cases must execute with 100% pass rate.
 - 0 tampering anomalies in SHA-256 audit log verification.
 - 0 regressions across P0-P15 security invariants.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

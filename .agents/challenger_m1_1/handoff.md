@@ -82,3 +82,10 @@ To independently verify:
 3. **Invalidation Conditions**:
    - Any `NameError` when resolving type hints via `typing.get_type_hints`.
    - Any test failure in the pytest test suite.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

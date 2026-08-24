@@ -18,3 +18,10 @@ Design for representative portrait and landscape viewports. Keep vital status, t
 ## Performance and QA
 
 Use device-appropriate quality defaults and adaptive decorative effects. Test touch targets, multi-touch, long sessions, audio unlock, pause/background return, reduced motion, low-end quality, and actual mobile-size viewports in the repository-approved browser.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

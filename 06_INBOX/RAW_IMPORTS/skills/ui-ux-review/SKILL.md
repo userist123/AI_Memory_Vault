@@ -45,3 +45,10 @@ Audit sistematic de utilizabilitate. Nu opinii vagi — fiecare problemă are se
 
 Severitate: 0=cosmetic, 1=minor, 2=mediu, 3=major, 4=blocant/catastrofal.
 Ordonează raportul descrescător după severitate. Max 3 recomandări „quick wins" la final.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

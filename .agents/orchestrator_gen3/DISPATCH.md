@@ -11,3 +11,10 @@ Status Summary:
 - Coordinate worker/reviewers/challengers/auditor for Milestone 5 Gate.
 - Verify 100% full pytest pass with 0 failures.
 - When finished, report final completion to Sentinel (72226d68-bdea-4026-bf4c-dfb6ed565e6b).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

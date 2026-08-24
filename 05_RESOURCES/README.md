@@ -33,3 +33,10 @@ Surse externe si referinte reutilizabile: documentatie oficiala, repo-uri, linku
 ## Principiu
 
 O resursa = o sursa externa, cu relevanta explicita catre o nota de knowledge sau un proiect.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

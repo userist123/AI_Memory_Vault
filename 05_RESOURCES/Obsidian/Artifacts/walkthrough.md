@@ -45,3 +45,9 @@ Acestea se află acum în folderele adecvate (`00_CORE`, `90_TEMPLATES`, `99_SYS
 ## Concluzii
 Baza ta de date, AI Memory Vault, tocmai și-a extins capacitatea prin integrarea arhivelor trecute (Claude/Perplexity) și activarea agenților globali, toate acestea menținându-se într-o ordine strictă dictată de reglementările interne.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

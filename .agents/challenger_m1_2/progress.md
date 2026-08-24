@@ -17,3 +17,10 @@
 4. Created `memory_controller/tests/test_context_budget.py` covering all 13 degradation tier and edge-case tests.
 5. Ran full pytest suite: 210/210 passed in 7.80s (38 test modules, 0 failures).
 6. Prepared 5-component handoff report with verdict: APPROVE.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

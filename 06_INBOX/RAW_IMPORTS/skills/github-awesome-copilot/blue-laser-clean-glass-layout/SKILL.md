@@ -53,3 +53,10 @@ description: "Create a clean dark glass layout system with a thin blue laser atm
 - Pastel glassmorphism, bright blobs, or translucent white cards that break the dark premium feel.
 - Overdecorating every component with glow, blur, or border effects.
 - Letting the laser or fog reduce readability of foreground content.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

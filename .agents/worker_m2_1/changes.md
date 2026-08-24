@@ -22,3 +22,10 @@ Verified and hardened SQLite storage engine with WAL mode, thread-safe connectio
 ## Verification Results
 - `pytest memory_controller/tests/test_sqlite_storage.py memory_controller/tests/test_audit.py cognitive_core/tests/test_planning.py`: 25 passed in 0.63s.
 - Full test suite `pytest`: 218 passed in 7.74s across 38 test suites with 0 failures.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

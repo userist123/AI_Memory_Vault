@@ -41,3 +41,10 @@ When an incident is confirmed:
 3. **Neutralize:** Generate `Kill-ProcessTree.ps1` for malicious process trees.
 4. **Remediate:** Clean registry persistence keys (`Run`, `RunOnce`, `Winlogon`, `Services`).
 5. **Export:** Generate standardized **STIX 2.1 Bundles** and **MISP Event JSON** for threat sharing.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

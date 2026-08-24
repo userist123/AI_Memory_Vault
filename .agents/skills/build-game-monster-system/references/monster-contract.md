@@ -215,3 +215,10 @@ Override only with an explicit boss/hero budget.
 - Near/mid/far LOD switches preserve gameplay transforms.
 - Reset returns every joint/material state to rest.
 - Browser test covers camera distance, animation, collision debug, LOD, and performance.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

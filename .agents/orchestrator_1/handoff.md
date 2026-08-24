@@ -41,3 +41,10 @@
 5. Dispatch Worker and verification team for Milestone 5 (Continual Learning, TRACe, and Final E2E Hardening).
 6. Verify full pytest suite (269+ tests passing with 0 failures).
 7. Report final completion to the Sentinel (`72226d68-bdea-4026-bf4c-dfb6ed565e6b`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

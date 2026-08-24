@@ -86,3 +86,10 @@ Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive 
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md — Gate Status
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\handoff.md — Orchestrator 1 Soft Handoff
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

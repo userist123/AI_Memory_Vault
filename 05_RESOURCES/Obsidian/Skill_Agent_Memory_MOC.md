@@ -84,3 +84,10 @@ Use this MOC as the starting point for manual inspection of:
 - web/design skills;
 - verification and provenance;
 - memory promotion.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

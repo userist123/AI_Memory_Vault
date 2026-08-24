@@ -50,3 +50,10 @@ description: "Create a light-mode technical design system with warm paper surfac
 - Cold enterprise blue-gray systems that lose the soft paper character.
 - Overusing rounded blobs or generic consumer-app softness that fights the technical structure.
 - Excessive accent usage that turns the paper system into a loud marketing palette.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

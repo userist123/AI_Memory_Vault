@@ -23,3 +23,10 @@ Execută, în ordine, cele 7 sarcini de remodelare UI/UX "Obsidian Tactical Comm
 - Grep pentru culori hardcodate — trebuie zero rezultate în fișierele noi.
 - Confirmă că orice apel de rețea nou e limitat la `127.0.0.1`.
 - Generează `walkthrough.md` cu lista fișierelor modificate per sarcină.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

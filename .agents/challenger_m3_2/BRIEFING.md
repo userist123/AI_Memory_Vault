@@ -54,3 +54,10 @@ Empirical adversarial challenge and stress testing of Milestone 3 Security Invar
 - handoff.md — Verification report and final challenge verdict (APPROVE)
 - progress.md — Heartbeat and step tracking
 - test_milestone3_empirical_challenge.py — Dedicated challenge test suite
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

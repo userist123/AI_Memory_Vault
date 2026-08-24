@@ -29,3 +29,10 @@ Cover early/late timing, wrong direction, out-of-range contact, multiple targets
 ## Verify in play
 
 Test at realistic frame rate and camera distance. Confirm that player intent, contact feedback, health/posture changes, sound/VFX, and target state agree. Check reduced motion and input alternatives before release.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

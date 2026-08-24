@@ -59,3 +59,10 @@ Recomandarea finală a consiliului, ponderând convergența: definiți v.Next ca
 ---
 
 Rapoartele individuale complete: `model-council-claude_fable_5.md`, `model-council-claude_opus_5_0.md`, `model-council-gpt_5_6_sol.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

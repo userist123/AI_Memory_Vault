@@ -12,3 +12,10 @@
 - [x] Run full pytest test suite (197/197 passed)
 - [x] Produce handoff report with verdict (APPROVE)
 - [x] Notify parent agent via send_message
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -15,3 +15,10 @@ description: Filosofie de Design Sistem & UX/UI Clarity bazată pe UI-Sensei. Cl
 - Fundaluri întunecate mat / Obsidian cu straturi elevation discrete (`BgDeep` -> `BgBase` -> `BgCard` -> `BgElevated`).
 - Stări de interacțiune clare: Default, Hover (+10% luminozitate sau border subtle), Focus (Inel vizibil FocusViolet/FocusCyan), Pressed, Disabled.
 - Feedback vizual instantaneu la acțiuni (< 100ms).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

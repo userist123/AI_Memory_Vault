@@ -48,3 +48,10 @@ description: "Build cinematic sticky product storytelling with GSAP ScrollTrigge
 - Animating width, height, top, left, or layout-heavy properties during scrubbed scenes when transforms can do the job.
 - Letting cinematic effects reduce text contrast, cover CTAs, or obscure the product UI the section is meant to explain.
 - Leaving ScrollTriggers alive after component unmounts or route changes.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

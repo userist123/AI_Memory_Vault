@@ -272,3 +272,10 @@ Deliver:
 - a list of unverified devices or remaining visual gaps.
 
 Do not convert missing evidence into a pass.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

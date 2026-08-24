@@ -69,3 +69,10 @@ enriched_by: ai
 
 ---
 *Ultima actualizare: 2026-08-09 · Următorul fișier din secvență: `00_CORE/Rules.md`*
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

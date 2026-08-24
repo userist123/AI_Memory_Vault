@@ -12,3 +12,10 @@ Notable repository correction:
 
 Raw import destination:
 `06_INBOX/RAW_IMPORTS/skills`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

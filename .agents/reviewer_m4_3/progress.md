@@ -10,3 +10,10 @@ Last visited: 2026-08-15T02:14:00Z
 - [x] Adversarially test edge cases and invariants
 - [x] Draft and finalize `handoff.md` with verdict
 - [ ] Send completion message to parent orchestrator
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

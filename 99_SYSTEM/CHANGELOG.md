@@ -20,3 +20,10 @@ relations: []
 - Added quality control.
 - Added raw source preservation.
 - Added AI Memory System project.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

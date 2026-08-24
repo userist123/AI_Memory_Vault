@@ -79,3 +79,10 @@ Replace source brands, outputs, customers, metrics, prices, screenshots, and cla
 - Feature grids with no relation to the central workflow.
 - Hidden pricing limits or disconnected FAQ answers.
 - Generic AI particles, floating glass cards, and continuous motion.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

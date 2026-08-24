@@ -525,3 +525,10 @@ body {
 - [Schema.org](https://schema.org/)
 - [Core Web Vitals](../core-web-vitals/SKILL.md)
 - [Web Quality Audit](../web-quality-audit/SKILL.md)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

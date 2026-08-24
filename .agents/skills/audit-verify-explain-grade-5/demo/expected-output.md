@@ -6,3 +6,10 @@ The button now locks after the first click, so a second order is not created.
 The focused test passed and the browser recording shows one network request.
 
 Remaining risk: retry behavior after a failed payment was not exercised.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

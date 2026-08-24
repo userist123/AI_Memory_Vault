@@ -85,3 +85,10 @@ Utilizator: "Construiește Modulul X conform AI Memory Vault"
 - **Zero Halucinații de Schemă:** Codul generat este verificat împotriva definițiilor reale din repo (`.cs`, `.py`, `.xaml`).
 - **Air-Gapped Inviolabil:** Orice apel de rețea este forțat pe `127.0.0.1`.
 - **Tamper-Evident Audit:** Fiecare operațiune critică este logată cu SHA-256 în `audit_log.jsonl`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

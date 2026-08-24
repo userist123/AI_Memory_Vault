@@ -57,3 +57,10 @@ Independent quality review and adversarial challenge of Milestone 4: Cognitive L
 - `.agents/reviewer_m4_1/BRIEFING.md` — Working state and memory
 - `.agents/reviewer_m4_1/progress.md` — Progress tracker and liveness heartbeat
 - `.agents/reviewer_m4_1/handoff.md` — Final review and challenge report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

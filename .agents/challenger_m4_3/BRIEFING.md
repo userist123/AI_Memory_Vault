@@ -49,3 +49,10 @@ Adversarially challenge and stress-test the remediated synapse link proposing an
 - `handoff.md` — Final adversarial challenge and verification report with APPROVE verdict.
 - `progress.md` — Liveness heartbeat and activity tracking.
 - `cognitive_core/tests/test_milestone4_adversarial_challenger_m4_3.py` — Adversarial stress test suite.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

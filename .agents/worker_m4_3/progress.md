@@ -11,3 +11,10 @@ Last visited: 2026-08-15T02:18:40Z
 - [x] Run target test suites (33 passed in 6.75s)
 - [x] Run full pytest suite across repository (388 passed in 39.79s)
 - [x] Write handoff.md and send message
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

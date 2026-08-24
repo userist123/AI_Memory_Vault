@@ -9,3 +9,10 @@
 - [ ] Run boundary parameter sweeps, math cross-validation, and fuzz testing
 - [ ] Run full repository pytest suite (`python -m pytest -v`)
 - [ ] Synthesize findings into `handoff.md` and report verdict to parent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

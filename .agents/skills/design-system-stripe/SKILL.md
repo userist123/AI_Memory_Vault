@@ -15,3 +15,10 @@ description: Stripe Luminous Mesh & Financial Tech Design System (Multi-color me
 ## Features
 - Dynamic gradient canvas backgrounds.
 - High-converting pricing tables & checkout flows.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

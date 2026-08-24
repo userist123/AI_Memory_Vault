@@ -42,3 +42,10 @@ mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transp
 - Which direction should the fade go?
 - How wide should the fade edges be?
 - Is this for images, text, or a container background?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -238,3 +238,10 @@ Interpretation:
 - Small element-count changes can be normal when async content, auth state, or embeds settle; investigate monotonic growth.
 - If `memory` is `null`, say the Browser runtime did not expose heap counters. Do not claim a heap leak was ruled out.
 - If the Browser sandbox blocks listener/timer monkey-patching, use source audit plus observable counts instead.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

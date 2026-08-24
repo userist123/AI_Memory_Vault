@@ -53,3 +53,10 @@ Independently review and stress-test Milestone 1 changes (cognitive_core/learnin
 - `.agents/reviewer_m1_2/BRIEFING.md` — Agent state and working memory
 - `.agents/reviewer_m1_2/progress.md` — Liveness and execution progress
 - `.agents/reviewer_m1_2/handoff.md` — Final review handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -59,3 +59,10 @@ Adversarial challenge and empirical verification of Milestone 4 (Cognitive Loop 
 - `.agents/challenger_m4_5/progress.md` — liveness heartbeat and step tracking
 - `.agents/challenger_m4_5/handoff.md` — final assessment and verdict
 - `cognitive_core/tests/test_milestone4_adversarial_challenger_m4_5.py` — comprehensive challenge test harness
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

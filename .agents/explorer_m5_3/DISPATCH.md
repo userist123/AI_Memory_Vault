@@ -23,3 +23,10 @@ Task:
    - `ContinualLearningGuard` anchor memory protection
 5. Write your detailed findings to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_3\report.md` and `handoff.md`, and send a completion message back.
 Do NOT modify source code files. You are a read-only exploration agent.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -661,3 +661,10 @@ gsap.ticker.lagSmoothing(0);
   animation: typing 3s steps(30) 1s both, blink 0.7s step-end infinite;
 }
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

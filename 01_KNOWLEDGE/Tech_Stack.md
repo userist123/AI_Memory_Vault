@@ -39,3 +39,10 @@ relations: []
 - **MQL5:** const string globals, static vs dynamic arrays, `TimeCurrent`/`TimeToStruct`, auto-detecție filling mode broker
 - **PowerShell standalone scripts:** `$PSScriptRoot` nu se rezolvă corect când scriptul rulează în afara contextului standalone de execuție → necesită fallback explicit de path resolution
 - **.NET multi-project solutions:** separare Core/Infrastructure/UI → risc de tipuri concrete lipsă la compilare dacă interfețele sunt definite înainte de implementări (vezi `02_PROJECTS/LogAnalyzer_MVP.md`)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

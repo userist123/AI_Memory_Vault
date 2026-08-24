@@ -31,3 +31,10 @@
 - **Memory Vault Safety**: Zero overwrites of `MemoryController`, `Cognitive Core`, `ToolRouter`, or P0-P18 Authorization invariants.
 - **Source Preservation**: All raw source structures preserved in `01_KNOWLEDGE/EXTERNAL_SKILLS/_RAW/`.
 - **License Integrity**: All 29 repositories cataloged in `LICENSE_MAP.json`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

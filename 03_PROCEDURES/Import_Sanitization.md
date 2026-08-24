@@ -50,3 +50,10 @@ Prepare an external-memory derivative without changing the original evidence.
 - [[Storage Conventions]]
 - [[Memory Lifecycle]]
 - [[Provenance and Redaction]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

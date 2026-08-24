@@ -60,3 +60,10 @@ Generate two images at 1586 x 992 with exactly the same composition, crop, camer
 ## Remix prompt
 
 Use $reveal-hover-effect to keep this exact interaction and delivery contract, but replace the shell with another subject and generate a new aligned default/reveal pair. Change the editorial copy and palette while preserving the mask stops, accessibility fallbacks, cleanup, and idle-loop behavior.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

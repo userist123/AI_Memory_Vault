@@ -9,3 +9,10 @@ description: Rust Axum framework, Tokio async runtime, Tower middleware layer, R
 - **Framework**: Axum pe stiva Tower middleware.
 - **Parallel Computing**: Rayon thread pool pentru procesare CPU-bound.
 - **SQLx**: Interogări SQL verificate la compilare fără ORM penalty.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

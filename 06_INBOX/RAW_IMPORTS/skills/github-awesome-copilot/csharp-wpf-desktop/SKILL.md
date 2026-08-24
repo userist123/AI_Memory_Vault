@@ -38,3 +38,10 @@ Aplicațiile tale WPF sunt unelte serioase (log analysis, registre oficiale) —
 
 - `nullable enable` pe tot proiectul. Warnings as errors la release.
 - Un `.editorconfig` comun; naming: `_camelCase` pentru câmpuri private, `PascalCase` rest.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

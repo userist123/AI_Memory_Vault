@@ -66,3 +66,10 @@ Adversarially challenge and stress-test Milestone 4 (Cognitive Loop & Multi-Agen
 - `cognitive_core/tests/test_milestone4_adversarial_challenger_m4_2.py` — Challenger 2 adversarial test suite (14 tests)
 - `cognitive_core/tests/test_milestone4_adversarial_challenger.py` — Challenger 1 adversarial test suite (16 tests)
 - `cognitive_core/tests/test_milestone4_empirical_challenge.py` — Worker M4 empirical challenge suite (15 tests)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

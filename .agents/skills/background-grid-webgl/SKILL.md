@@ -40,3 +40,10 @@ description: "Create a perspective WebGL background grid with fading lines, subt
 - Thick linework or high-contrast grids that compete with foreground content.
 - Dense particles or fog that obscure the grid structure.
 - Aggressive mouse tracking or fast grid motion that makes the background feel unstable.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

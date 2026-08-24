@@ -64,3 +64,10 @@ UI Graphics, Fonts, Colors, Icons, Favicons, Icon Fonts, Stock Photos, Stock Vid
 - [[00_CORE/GRAPH/14 External and UI Resources Map]]
 - [[01_KNOWLEDGE/TypeUI_Prompt_Categories_Reference]]
 - [[01_KNOWLEDGE/External_Repository_References_Aug2026]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -88,3 +88,10 @@ Milestone 3 (Security Invariants & Attestation Gates) is thoroughly verified, ro
    - Any execution path allowing `Principal.AI_AGENT` to propose or update `verification="verified"` without raising an exception.
    - Any execution path allowing `Principal.AI_AGENT` to claim `source_type="user"` or `source_type="official"` at creation or via update.
    - Any mutation of human-verified notes via `ToolRouter` without human approval.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

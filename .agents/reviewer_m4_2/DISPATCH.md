@@ -34,3 +34,9 @@ Reviewer m4_2 assigned to independently review Milestone 4 (Cognitive Loop & Mul
 - Formal Reflexion & Consolidation lifecycle
 - Full repository test pass & empirical challenge suite
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

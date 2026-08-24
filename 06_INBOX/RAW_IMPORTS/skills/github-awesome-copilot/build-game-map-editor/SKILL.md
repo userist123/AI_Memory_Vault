@@ -163,3 +163,10 @@ Add deterministic tests for:
 Then run targeted tests, full tests, build, lint, and diff checks. In the approved browser, verify unauthorized and authorized states, outliner and layer behavior, selection and focusing, drag and snap, inspector edits, overlays, undo and redo, local restore, import and export rejection paths, reset confirmation, logout, desktop layout, mobile or narrow layout if supported, console health, and renderer cleanup.
 
 Read [references/vesperfall-implementation.md](references/vesperfall-implementation.md) when working in Vesperfall or when a concrete production implementation map is useful.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -29,3 +29,10 @@ Expose slot compatibility, equipped state, quantity, tooltip facts, and failure 
 ## Test loss boundaries
 
 Cover invalid destinations, full inventory, duplicate pickup, equip swap, mid-action swap, save/load, schema migration, reset/new game, tooltip updates, and repeated dispatch. Validate that total owned item identity is conserved except for explicit consumption or reward rules.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

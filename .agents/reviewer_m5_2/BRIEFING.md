@@ -55,3 +55,10 @@ Adversarial and quality review of Milestone 5 (TRACe Metrics & IR Ranking Benchm
   - Missing semantic provider in Adherence and Relevance -> Handled safely with documented fallback behavior (1.0 for adherence, 0.0 for relevance).
 - **Vulnerabilities found**: None.
 - **Untested angles**: None.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

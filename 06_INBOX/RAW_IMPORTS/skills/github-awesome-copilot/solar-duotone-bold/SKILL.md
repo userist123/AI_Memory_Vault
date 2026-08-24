@@ -18,3 +18,10 @@ description: "Use Iconify Solar Duotone Bold icon style."
 ## Guardrails
 - Do not mix Solar Duotone Bold with unrelated outline icon families in the same control set.
 - Do not rely on icons alone for unfamiliar actions.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

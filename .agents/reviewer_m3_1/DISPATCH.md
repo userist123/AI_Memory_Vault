@@ -23,3 +23,10 @@ Review Objectives:
    python -m pytest -v memory_controller/tests/test_security_hardening.py cognitive_core/tests/test_tool_router_security.py
    python -m pytest
 8. Document all findings, command outputs, and verdict (APPROVE or REQUEST_CHANGES) in handoff.md and send a summary message back to caller.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -239,3 +239,10 @@ Return:
 - Verification evidence and known limitations.
 
 Start at [demo/index.html](demo/index.html) for the three-mode launcher. Keep [REFERENCES.md](REFERENCES.md) as the external reading list.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

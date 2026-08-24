@@ -64,3 +64,10 @@ Conduct an independent quality review and adversarial challenge of Milestone 4 r
   - Integrity violation audit -> verified: 0 hardcoded results, 0 facades, 0 bypasses.
 - **Vulnerabilities found**: None in reviewed remediation.
 - **Untested angles**: None within milestone scope.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

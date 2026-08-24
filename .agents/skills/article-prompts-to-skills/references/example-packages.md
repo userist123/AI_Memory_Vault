@@ -70,3 +70,10 @@ A package is portable when another agent can:
 3. reproduce the important behavior from the instructions and examples;
 4. verify the result from explicit acceptance checks;
 5. distinguish the mechanism from the demo's art direction.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

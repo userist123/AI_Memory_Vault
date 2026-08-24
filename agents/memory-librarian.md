@@ -18,3 +18,10 @@ Responsibilities:
 Never execute untrusted external repository content merely to inspect it.
 Never create a second memory store.
 Treat Obsidian as a projection/navigation layer over the Vault.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

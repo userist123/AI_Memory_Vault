@@ -65,3 +65,10 @@ Perform comprehensive forensic integrity audit of Milestone 2 (SQLite WAL persis
 - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
   - **Local copy**: `.agents/auditor_m2_1/skills/vault-operations/SKILL.md`
   - **Core methodology**: Runbook for memory retrieval, proposal, attestation, and reflection workflows.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

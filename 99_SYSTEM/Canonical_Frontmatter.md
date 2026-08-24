@@ -58,3 +58,10 @@ relations:
 - [[Confidence Model]]
 - [[Memory Lifecycle]]
 - [[Knowledge Graph Relations]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -14,3 +14,10 @@ provenance:
   source_ref: generated
 ---
 New note referencing lesson efdc25a2-dca9-4336-8bd4-88880233f42e
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -73,3 +73,10 @@ Conduct an independent code inspection, robustness assessment, and adversarial r
 - `.agents/reviewer_m4_2/BRIEFING.md` — Persistent working memory and state
 - `.agents/reviewer_m4_2/progress.md` — Liveness heartbeat and progress tracker
 - `.agents/reviewer_m4_2/handoff.md` — Final 5-component handoff report with verdict
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

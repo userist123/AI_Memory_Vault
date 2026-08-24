@@ -24,3 +24,10 @@ Imported/curated sources requested on 2026-08-24.
 - Duplicate URLs in the original request are represented once.
 - Discovery/topic pages are treated as source-discovery inputs, not as skill payloads themselves.
 - Skill payloads should retain original attribution and repository-relative path where practical.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

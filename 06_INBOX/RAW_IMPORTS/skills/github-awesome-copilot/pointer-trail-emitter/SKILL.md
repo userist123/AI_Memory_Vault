@@ -155,3 +155,10 @@ Measure before reporting a regression. A frame-time comparison on this trail onc
 - [ ] Operable from the keyboard; touch path does not plume
 - [ ] Reduced motion renders a designed still, not a hidden layer
 - [ ] Cost claims came from a profile, and any regression was re-run before it was reported
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

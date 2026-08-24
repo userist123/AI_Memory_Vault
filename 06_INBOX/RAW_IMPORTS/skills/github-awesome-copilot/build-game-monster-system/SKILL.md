@@ -61,3 +61,10 @@ Drive contacts from authoritative action IDs and collision events. Animation may
 - Fail the asset if it has floating attachments, missing mandatory states, pose-derived damage, LOD socket drift, or unbounded resource cost.
 
 Report whether the monster fully conforms, conforms with documented exceptions, or needs a new archetype capability added to the shared contract.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -50,3 +50,10 @@ description: "Create a clean minimal beige light-mode design system with warm ne
 - Heavy shadows, high-saturation accents, or thick cards that break the quiet minimal tone.
 - Filling every module with too much content until the process grid feels noisy.
 - Turning the design into a dashboard-heavy system instead of a calm structured product presentation.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

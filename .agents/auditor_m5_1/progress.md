@@ -17,3 +17,10 @@
    - [ ] Run adversarial stress checks / dynamic verification
 5. [ ] Full Repository Pytest Execution (`python -m pytest`)
 6. [ ] Verdict formulation and reporting (`report.md`, `handoff.md`)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

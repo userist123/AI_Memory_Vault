@@ -103,3 +103,10 @@ Critical memory updates and transitions emit structured log entries to `audit_lo
 - `archive_superseded`: Emitted when the predecessor memory lifecycle is transitioned to `SUPERSEDED`.
 - `valid_until_update`: Emitted when the expiration date (`valid_until`) of an active memory is updated.
 - `conflict`: Emitted when overlapping, incompatible, or cyclic relations are proposed.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

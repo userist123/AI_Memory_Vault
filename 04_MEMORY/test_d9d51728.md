@@ -13,3 +13,10 @@ provenance:
   source_type: inference
   source_ref: generated
 ---
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

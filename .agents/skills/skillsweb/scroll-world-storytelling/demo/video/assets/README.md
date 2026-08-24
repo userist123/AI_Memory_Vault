@@ -11,3 +11,10 @@
 - Poster: `contract-flight.webp`
 
 The source SVG was rasterized at 2400×1350, moved through a continuous `zoompan`, then encoded with a small GOP and `faststart` for responsive scroll seeking. Replace the MP4 with an approved generated or filmed master while keeping the same filename to test another source clip against the demo.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

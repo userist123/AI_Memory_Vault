@@ -151,3 +151,10 @@ useLayoutEffect(() => {
 - Spaces between words are preserved.
 - Reduced-motion users see static text.
 - ScrollTrigger is cleaned up in SPA routes.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

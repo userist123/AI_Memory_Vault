@@ -18,3 +18,10 @@ Task:
 5. Identify any bugs, edge cases, or gaps in implementation or test coverage. Recommend concrete fixes/improvements if needed.
 6. Write your detailed findings to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1\report.md` and `handoff.md`, and send a completion message back.
 Do NOT modify source code files. You are a read-only exploration agent.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

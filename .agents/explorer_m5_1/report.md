@@ -211,3 +211,10 @@ Currently `self.controller.search(principal, "knowledge", page_size=20)` searche
 
 ## 6. Conclusion & Recommendation
 Milestone 5 Continual Learning and Confidence Gating implementations in `cognitive_core/learning.py` meet all authoritative requirements in `ORIGINAL_REQUEST.md` and `PROJECT.md`. The confidence gating strictly isolates `very_high` confidence promotions to verified execution evidence, and the continual learning guard successfully tracks and validates canonical anchor replay nodes.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

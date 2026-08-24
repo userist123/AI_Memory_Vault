@@ -36,3 +36,10 @@ Nu portezi logica cognitivă (attention/consolidation/reasoning) în C#.
 ## Subdirector specific (opțional)
 
 Poți crea `src/Theme/GEMINI.md` sau `src/Modules/Module4_Oracol/GEMINI.md` pentru instrucțiuni specifice acelei zone — Gemini CLI le încarcă automat, cel mai specific fișier are prioritate peste cel din rădăcină.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

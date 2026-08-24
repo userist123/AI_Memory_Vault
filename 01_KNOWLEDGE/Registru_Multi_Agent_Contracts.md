@@ -90,3 +90,10 @@ Proiectul Registru de Transferuri folosește trei agenți AI de cod în paralel 
 - `depends_on`: [[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]] — Standardele de bază ale proiectului.
 - `implements`: [[02_PROJECTS/Registru_de_transferuri]] — Proiectul activ care consumă aceste contracte.
 - `related_to`: [[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]] — Fundamentele MVVM și async.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

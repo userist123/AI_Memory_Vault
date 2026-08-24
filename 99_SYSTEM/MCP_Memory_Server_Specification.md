@@ -55,3 +55,10 @@ Adaptorul MCP este învelit peste `MemoryController` și impune strict:
 1. Blocarea oricărei încercări a agenților AI de a auto-atesta memoriile (`attest_memory` permisă exclusiv principalilor `HUMAN` / `ADMIN`).
 2. Protecția provenienței privilegiate (`user`, `official` pot fi atribuite doar de oameni).
 3. Înregistrarea tuturor apelurilor de unelte în jurnalul criptografic imutabil SHA-256 (`audit_log.jsonl`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

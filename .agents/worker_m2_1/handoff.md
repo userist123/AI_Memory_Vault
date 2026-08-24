@@ -60,3 +60,10 @@ python -m pytest
 - If any test in `test_sqlite_storage.py` or `test_audit.py` fails.
 - If `verify_integrity()` returns `False` on an untampered audit log or fails to flag tampering.
 - If `BEGIN IMMEDIATE` is omitted from write queries leading to partial state on constraint errors.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -54,3 +54,10 @@ Acest document specifică arhitectura cognitivă bio-inspirată integrată în `
 ## 📊 2. Integritatea Suitei de Teste
 - **Total Teste Automate**: **463 PASSED**
 - **Execuție**: `python -m pytest -q`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

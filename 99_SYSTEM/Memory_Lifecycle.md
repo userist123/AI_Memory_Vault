@@ -39,3 +39,10 @@ Only a derivative moves through the lifecycle. The raw original stays `RAW` perm
 
 - [[Promotion and Human Review]]
 - [[Import Pipeline]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

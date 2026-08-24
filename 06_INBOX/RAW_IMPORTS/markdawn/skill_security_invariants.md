@@ -19,3 +19,10 @@ Reguli stricte:
 ## Când modifici o invariantă existentă
 
 Marchezi explicit în commit message și în comentariul de cod: `⚠️ IMPACT INVARIANTĂ P{n}: <descriere impact>`. Nu faci acest tip de modificare fără să semnalezi.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -40,3 +40,10 @@ description: "Create a dark atmospheric background with drifting vertical light 
 - Loud rainbow color transitions or bright full-frame glow that competes with foreground content.
 - Hardcoded cyan if the design clearly uses another primary color.
 - Fast turbulence, noisy particle motion, or obvious repeating patterns that break the calm atmospheric look.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -27,3 +27,10 @@ Use $ambient-section-particles to recreate **Seedfall — A Quiet Weather System
 ## Remix prompt
 
 Use $ambient-section-particles and the included demo as the quality bar, but replace the particle shape, palette, mood, copy, forces, and section composition. Preserve the bounded layer, quiet content zone, visibility pausing, one-loop architecture, responsive density, pointer restraint, and reduced-motion fallback.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

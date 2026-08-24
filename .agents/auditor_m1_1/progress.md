@@ -17,3 +17,10 @@
 
 ## Verdict
 **CLEAN** — All forensic integrity checks passed with zero integrity violations.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

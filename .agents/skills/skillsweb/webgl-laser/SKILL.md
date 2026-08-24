@@ -313,3 +313,10 @@ const cleanupLaser = initWebGLLaser(document.querySelector("[data-webgl-laser]")
 - Turning the effect into a Three.js scene, particle explosion, or multicolor neon background.
 - Letting the canvas intercept pointer events.
 - Dense fog or extreme bloom that washes out foreground UI.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

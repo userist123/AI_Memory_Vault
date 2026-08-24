@@ -96,3 +96,10 @@ Specificatii pentru clasificare, RAG, graph si control.
 ## Principle
 
 Modelul AI nu este sursa unica de adevar. Vault-ul furnizeaza context, iar validatorul decide daca rezultatul este suficient de sigur.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

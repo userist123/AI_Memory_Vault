@@ -27,3 +27,10 @@ Use $scroll-progress-timeline to recreate **Fieldwork — From Question to Proof
 ## Remix prompt
 
 Use $scroll-progress-timeline and the included demo as the quality bar, but replace the process, content, palette, media grammar, step count, and layout emphasis. Preserve the data-ready ordered structure, first-to-last point measurement, reversible progress, mobile reading order, keyboard access, and reduced-motion contract.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

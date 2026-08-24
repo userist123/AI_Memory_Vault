@@ -24,3 +24,10 @@ provenance:
   original_path: 06_INBOX/RAW_IMPORTS/claude_original/01_KNOWLEDGE__Tech_Stack.md
   extraction_date: '2026-08-09'
 ---
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

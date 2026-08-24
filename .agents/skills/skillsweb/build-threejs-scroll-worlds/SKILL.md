@@ -307,3 +307,10 @@ Return:
 - remaining visual, interaction, or device gaps stated plainly.
 
 Keep the bundled Kage demo unchanged unless the user explicitly asks to revise the reference itself.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

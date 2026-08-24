@@ -35,3 +35,10 @@ FROM "01_KNOWLEDGE"
 WHERE file.name != "README"
 SORT updated DESC
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

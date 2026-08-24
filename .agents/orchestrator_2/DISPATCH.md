@@ -21,3 +21,10 @@ Current State & Tasks:
   3. Dispatch Milestone 5 (Continual Learning, TRACe & IR Benchmarks, and Final E2E Hardening) Worker + verification team -> Pass Gate M5.
   4. Ensure 100% pass across all 269+ test suites in pytest with 0 failures and clean Forensic Audit.
   5. When all requirements and acceptance criteria are fully met and verified, report final completion to Sentinel (parent 72226d68-bdea-4026-bf4c-dfb6ed565e6b).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

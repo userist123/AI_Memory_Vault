@@ -52,3 +52,10 @@ description: "Create a dark-blue clean design system with strong contrast, cobal
 - Flat dark layouts with blue text but no meaningful framed structure or contrast block.
 - Overdecorating every card with glow, gradients, or glass effects.
 - Heavy enterprise dashboard clutter that fights the clean architectural tone.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

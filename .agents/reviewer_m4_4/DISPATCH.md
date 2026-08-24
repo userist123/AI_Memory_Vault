@@ -31,3 +31,9 @@ Review overall cognitive core stability, P0-P15 trust boundaries, and test suite
 Run full pytest suite (python -m pytest).
 Write your complete handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_4\handoff.md and notify the orchestrator.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

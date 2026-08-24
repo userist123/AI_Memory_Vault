@@ -21,3 +21,10 @@ Ești agentul implicit pentru toate proiectele mele. Reguli permanente:
 ## Prioritate față de skill-urile/workflow-urile per-proiect
 
 Skill-urile și workflow-urile definite local (`.agents/skills/`, `.agents/workflows/`) într-un proiect anume au prioritate peste acest agent global dacă există conflict.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

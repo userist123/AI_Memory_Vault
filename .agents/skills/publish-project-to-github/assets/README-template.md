@@ -41,3 +41,10 @@ PROJECT_STRUCTURE
 ## Design and attribution
 
 Credit dependencies, references, and assets accurately. If the project studies a recognizable product or publisher, explain that the implementation is original and independent rather than implying affiliation.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

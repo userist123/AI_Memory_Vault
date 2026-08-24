@@ -172,3 +172,10 @@ To independently reproduce and verify this audit:
    python -c "import uuid, os, tempfile; from cognitive_core.reflection import ReflectionPipeline; from memory_controller.controller import MemoryController; from memory_controller.storage.sqlite_engine import SQLiteStorageEngine; from memory_controller.authorizer import Principal; from memory_controller.validation.schema import validate_frontmatter; fd, path = tempfile.mkstemp(suffix='.sqlite3'); os.close(fd); os.remove(path); storage = SQLiteStorageEngine(db_path=path); controller = MemoryController(storage); pipeline = ReflectionPipeline(controller); u1 = str(uuid.uuid4()); u2 = str(uuid.uuid4()); note1 = {'id': u1, 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'cat', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'ref'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'hello'}; note2 = {'id': u2, 'type': 'procedure', 'lifecycle': 'ACTIVE', 'category': 'cat', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'ref'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'procedure content'}; storage.set(u1, note1); storage.set(u2, note2); res = pipeline.propose_synapse(Principal.AI_AGENT, u1, u2, 'implements'); assert res == u1; updated = storage.get(u1); assert len(updated['relations']) == 1; assert updated['relations'][0]['relation'] == 'implements'; assert updated['relations'][0]['target'] == 'procedure'; assert updated['relations'][0]['target_id'] == u2; assert validate_frontmatter({k:v for k,v in updated.items() if k!='content'}) is True; print('SQLITE PROPOSE SYNAPSE PASSED'); storage.close() if hasattr(storage, 'close') else None"
    ```
    *Expected Output*: `SQLITE PROPOSE SYNAPSE PASSED`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

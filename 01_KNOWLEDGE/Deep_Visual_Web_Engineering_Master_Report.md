@@ -76,3 +76,10 @@ Raport de analiză în adâncime a celor 6 repository-uri de elită de pe GitHub
   - **L1**: Micro-interacțiuni rafinate (scale 1.02x, active depth, focus rings, magnetic cursor <150ms).
   - **L2**: Scroll Reveal & Parallax (fadeInUp, scaleIn, sticky navigation, multi-layer parallax).
   - **L3**: Immersive Storytelling & WebGL (pin-and-scrub, radial wireframe scan, WebGL canvas, particle emitters).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -39,3 +39,10 @@ Modelele locale sunt gratuite și private (critic în mediul tău), dar mici și
 ## Date sensibile
 
 - Localul există ca datele să NU plece: nu amesteca fallback pe API-uri cloud pentru date de serviciu/clasificate. Fallback-ul cloud e permis doar pentru date personale neclasificate, explicit.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

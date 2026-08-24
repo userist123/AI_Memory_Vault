@@ -24,3 +24,10 @@
 ## 3. Guaranție de Integritate Vizuală în Obsidian
 
 Toate fișierele MOC sunt conectate bidirecțional prin wikilinks `[[...]]`. Modificările sunt salvate pe ramura principală `main` și urcate pe GitHub.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

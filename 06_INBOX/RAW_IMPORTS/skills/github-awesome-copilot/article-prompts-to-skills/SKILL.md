@@ -151,3 +151,10 @@ Report:
 - **Prompt-only package:** omitting a functioning demo and preview.
 - **Fake proof:** claiming interaction verification without exercising it.
 - **Dirty-tree spillover:** staging unrelated modifications or generated files.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

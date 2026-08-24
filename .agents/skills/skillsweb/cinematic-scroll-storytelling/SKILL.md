@@ -417,3 +417,10 @@ Create a cinematic scroll-driven landing page with smooth Lenis scrolling, GSAP 
 - Preloader exits reliably even if images load slowly.
 - `ScrollTrigger.refresh()` runs after images/fonts/layout shifts.
 - Mobile has simplified pinning or no pinning if performance drops.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

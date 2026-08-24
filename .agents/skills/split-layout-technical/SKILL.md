@@ -50,3 +50,10 @@ description: "Create a technical split-screen design system with dual panels, fi
 - Bright multi-color treatments that break the calm, technical tone.
 - Rounded playful UI patterns that fight the precise architectural layout.
 - Treating the split only as decoration instead of giving each half a distinct functional role.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

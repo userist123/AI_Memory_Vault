@@ -67,3 +67,10 @@ Notes:
 - `rxshabN/Password-Manager` and `rxshabN/Password-Manager---mongodb` are distinct repositories and should not be removed as duplicates solely by name.
 - `Alquimistas-AluraLatam/api_literalura` was already present in an earlier backend seed list; do not add it twice.
 - Deduplication must use canonical repository identity (owner/name/ID), then perform content/skill deduplication separately.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

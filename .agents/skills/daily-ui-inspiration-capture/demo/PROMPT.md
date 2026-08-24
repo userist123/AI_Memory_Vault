@@ -41,3 +41,10 @@ Use an art-directed composition with one clear focal point, restrained supportin
 ## Remix prompt
 
 Use $daily-ui-inspiration-capture and keep the same implementation contract, but change the subject, copy, palette, and content hierarchy. Preserve the core technique, accessibility behavior, responsive rules, and performance constraints demonstrated by the reference.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

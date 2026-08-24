@@ -55,3 +55,10 @@ Perform empirical adversarial testing and stress testing of Milestone 4: OODA Lo
 - handoff.md — Final adversarial verification and challenge report
 - progress.md — Liveness heartbeat and step tracking
 - cognitive_core/tests/test_milestone4_adversarial_challenger.py — Dedicated empirical stress test suite (16 passed)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

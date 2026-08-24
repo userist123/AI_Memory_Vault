@@ -15,3 +15,10 @@ related: []
 ## Context de utilizare
 
 ## Referințe
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

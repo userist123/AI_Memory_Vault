@@ -168,3 +168,10 @@ enriched_by: ai
 
 **Documented:** {{date}}  
 **Last Reviewed:** {{date}}
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

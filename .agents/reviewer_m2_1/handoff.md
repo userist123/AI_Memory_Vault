@@ -136,3 +136,10 @@ To independently reproduce and verify this review:
    - `cognitive_core/working_memory.py` (lines 90–128)
    - `cognitive_core/planning.py` (lines 28–50)
    - `memory_controller/audit/logger.py` (lines 51–98)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -131,3 +131,10 @@ When this skill is used for a daily UI inspiration workflow:
 - Use Three.js/WebGL only for real 3D, shader, particle, or canvas scenes. Cap pixel ratio, pause offscreen, reduce density on mobile, and provide static fallbacks.
 - Use CSS `position: sticky` for simple sticky panels. Use GSAP pinning only when the section needs timeline control, scrubbed values, or multi-element handoff.
 - Every animation plan must include `prefers-reduced-motion`, touch-device behavior, keyboard/focus behavior, and performance constraints.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

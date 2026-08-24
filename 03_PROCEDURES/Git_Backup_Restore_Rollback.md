@@ -39,3 +39,10 @@ If Git is unavailable, record that limitation and create a timestamped filesyste
 
 - [[Storage Conventions]]
 - [[Integrity Check]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

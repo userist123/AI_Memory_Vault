@@ -47,3 +47,10 @@ Scriptul automatizează configurări de firewall avansat, ASR, BitLocker, lockdo
 ## Changelog
 
 - 2026-08-14: Nota creată din README-ul Windows-Device-Hardener.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

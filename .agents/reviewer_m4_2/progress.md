@@ -13,3 +13,10 @@
 - [x] Update BRIEFING.md with findings
 - [x] Generate comprehensive handoff.md with explicit verdict (`APPROVE`)
 - [ ] Send completion message to parent orchestrator
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

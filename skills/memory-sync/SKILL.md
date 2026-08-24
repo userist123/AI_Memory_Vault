@@ -21,3 +21,10 @@ Use the Vault as the source of truth for durable memory.
 `RAW -> validation -> classification -> canonical knowledge -> agents/skills -> Obsidian navigation`
 
 When synchronization cannot be performed safely, report the missing information instead of fabricating state.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

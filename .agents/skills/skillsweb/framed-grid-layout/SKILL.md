@@ -143,3 +143,10 @@ Prefer explicit grid spans over ad hoc widths.
 - Gaps between frames are consistent on desktop and mobile.
 - The diagonal texture is visible only on close inspection.
 - The layout still reads clearly if the texture layer is removed.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

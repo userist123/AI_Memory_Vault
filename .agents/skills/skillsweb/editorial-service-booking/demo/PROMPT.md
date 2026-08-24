@@ -17,3 +17,10 @@ Carry the same visual confidence into booking. Account for location, professiona
 ## Remix prompt
 
 Use $editorial-service-booking and the included demo as the quality bar for a different service business such as a spa, clinic, wellness studio, or hospitality concept. Replace the brand, treatments, prices, photography, location, and copy. Preserve the warm editorial hierarchy, documentary evidence, quiet selector, keyboard behavior, operational booking states, responsive layout, and reduced-motion support.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

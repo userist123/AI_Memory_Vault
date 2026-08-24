@@ -22,3 +22,10 @@ Perform an independent forensic integrity audit of Milestone 4: Cognitive Loop &
 ## Output Requirements
 1. Formulate your explicit verdict (**CLEAN** or **INTEGRITY VIOLATION**).
 2. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

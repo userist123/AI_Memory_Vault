@@ -65,3 +65,10 @@ Conduct an independent review and adversarial verification of Milestone 4 post-r
 - `.agents/reviewer_m4_4/BRIEFING.md` — persistent working memory
 - `.agents/reviewer_m4_4/progress.md` — liveness heartbeat
 - `.agents/reviewer_m4_4/handoff.md` — final 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -57,3 +57,10 @@ When a production model is unavailable, use a deliberate placeholder that preser
 - Test content uniqueness and references, active-window boundaries, cooldown/recovery, per-target hit deduplication, lifecycle cleanup, and pause/frame-step behavior.
 - Play a representative encounter in the repository-approved browser. Confirm telegraphs, contact, state, animation, VFX/audio, targetability, and rewards agree.
 - Verify desktop and mobile camera distance, touch controls, reduced motion, console health, frame time, draw calls, memory stability, and crowded-scene LOD behavior. Report baseline failures separately.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

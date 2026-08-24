@@ -351,3 +351,9 @@ WIRE-7  (multi-step planning)
 > [!IMPORTANT]
 > After WIRE-2, all 12 integration tests from Section 6 must pass before any further work.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

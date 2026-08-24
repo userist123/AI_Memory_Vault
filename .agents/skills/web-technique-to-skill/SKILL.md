@@ -203,3 +203,10 @@ Stage only the new folder and the gallery rows it needs. Review `git diff --cach
 - [ ] Cost claims were measured, not assumed
 - [ ] The demo was driven in a browser at both breakpoints with a clean console
 - [ ] Only the new skill folder is staged
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

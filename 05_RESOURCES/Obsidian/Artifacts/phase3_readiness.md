@@ -106,3 +106,9 @@ Phase 3 introduces memory mutation and generation at scale (Consolidation, Recon
 > 2. How should we handle dependencies for **BRAIN-12** (Associative Recall)? Should we authorize installing a lightweight local embedding library, or mock it for now?
 > 3. Do you approve the proposed Phase 3 Implementation Plan (BRAIN-10, 11, 13)?
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

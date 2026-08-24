@@ -42,3 +42,10 @@ Use `$falling-leaves` to build **Late Autumn — The Maple Fall** as a single st
 ```text
 Use $falling-leaves to rebuild this as a spring sakura drift for a daylight editorial page: warm white sky, pale grey-pink petals on a narrow tint ramp, a slower fall, and a single near layer crossing in front of a serif headline. Keep the tumble, the slip coupling, the two baked faces, the per-leaf variance, the area-scaled density, the reduced-motion still frame, and the DPR and visibility budgets exactly as they are. Change only the subject, palette, type, and composition.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -85,3 +85,10 @@ To independently reproduce verification:
 3. **Invalidation Conditions**:
    - Any `NameError` on `typing.get_type_hints()` invocation.
    - Any failed tests in `pytest`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

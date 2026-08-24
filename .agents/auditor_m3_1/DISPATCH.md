@@ -17,3 +17,10 @@ Forensic Audit Checks:
 4. Verify tamper-evident audit logging integrity.
 5. Confirm whether Milestone 3 implementation is CLEAN or has INTEGRITY VIOLATIONS.
 6. Write full forensic evidence in report.md and handoff.md, and send verdict message back to caller.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

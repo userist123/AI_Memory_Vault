@@ -60,3 +60,10 @@ Verify, harden, and ensure 100% integrity for Milestone 2: Storage, WAL, Atomic 
 - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
   - **Local copy**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_1\skills\vault-security-audit\SKILL.md`
   - **Core methodology**: Security verification and forensic validation runbook for P0-P15 invariants, concurrency, and audit integrity.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

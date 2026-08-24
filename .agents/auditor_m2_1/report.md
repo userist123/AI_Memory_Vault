@@ -129,3 +129,10 @@ memory_controller\tests\test_supersession_phase43.py ............ PASSED [100%]
 **VERDICT: CLEAN**
 
 All integrity forensic checks for Milestone 2 passed with 0 violations. The storage layer, cryptographic audit logging, atomic checkpointing, and recursive lineage traversal are genuine, authentic, and empirically verified.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -29,3 +29,10 @@ To retrieve relevant knowledge while preserving active lineage across superseded
 1. Extract error details, root cause, fix applied, verification check, prevention rule, and lesson.
 2. Structure reflection using `FormalReflexion.format_reflection(...)`.
 3. Submit as `error` or `lesson` memory in `REVIEW` lifecycle.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

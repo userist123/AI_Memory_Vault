@@ -52,3 +52,10 @@ Empirically stress-test and challenge Milestone 2 (Storage, WAL & Audit Integrit
 ## Artifact Index
 - `.agents/challenger_m2_1/handoff.md` — Final handoff report and verdict
 - `.agents/challenger_m2_1/progress.md` — Liveness & step progress tracking
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

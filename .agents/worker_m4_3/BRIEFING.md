@@ -58,3 +58,10 @@ Remediate the two defects and test signature fix identified by reviewer_m4_4 for
 - **Core methodology**: Cognitive vault operations runbook
 - **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 - **Core methodology**: Security verification and P0-P15 invariants audit
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

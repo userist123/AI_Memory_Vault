@@ -36,3 +36,9 @@ Proceed with P0-10 as requested.
 ## Verification Plan
 *(To be determined pending requirements)*
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

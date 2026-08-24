@@ -82,3 +82,10 @@ Use the current ElevenLabs endpoints:
 - Speech generation: `POST https://api.elevenlabs.io/v1/text-to-speech/:voice_id?output_format=...`
 
 Send the API key as `xi-api-key`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

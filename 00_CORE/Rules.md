@@ -108,3 +108,10 @@ Nu stoca:
 ## 10. Completion
 
 Nu declara un task "Done" doar pentru ca ai generat un raspuns. "Done" inseamna ca rezultatul a fost verificat la nivelul potrivit de risc.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

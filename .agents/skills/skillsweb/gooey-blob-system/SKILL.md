@@ -19,3 +19,10 @@ description: "Create a gooey blob system using SVG filters where multiple shapes
 - Do not fake gooey behavior with plain blurred circles that never merge.
 - Do not add fast jittery motion; keep it smooth and cohesive.
 - Provide a static or simplified fallback for low-motion contexts.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

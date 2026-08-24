@@ -23,3 +23,10 @@ Adversarial Objectives:
 2. Verify that in all failure cases, 0 partial writes occur in SQLite storage (database state unchanged).
 3. Run test suites and your adversarial harnesses.
 4. Report detailed results and verdict (APPROVE or REQUEST_CHANGES) in handoff.md and send a message back to caller.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -94,3 +94,10 @@ Pentru fiecare modul nou, adaugă teste în `cognitive_core/tests/` care verific
 - Reconsolidare: o notă `CANONICAL` contrazisă trece prin `RECONSOLIDATING` și păstrează istoricul, nu se suprascrie silențios.
 - Motivație: un tip de acțiune cu 10 succese consecutive are utilitate calculabilă mai mare decât unul cu 10 eșecuri.
 - Global Workspace: cu 2 propuneri concurente, doar cea cu scor combinat (atenție + activare + utilitate) mai mare e difuzată agenților.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

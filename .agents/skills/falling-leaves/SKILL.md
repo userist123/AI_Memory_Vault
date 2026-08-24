@@ -135,3 +135,10 @@ Under `prefers-reduced-motion: reduce`, render one still, well-composed frame an
 - [ ] Paused when hidden or off-screen; `dt` clamped; DPR capped at 2
 - [ ] A designed still frame under reduced motion
 - [ ] Console clean at 390px and 1440px
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

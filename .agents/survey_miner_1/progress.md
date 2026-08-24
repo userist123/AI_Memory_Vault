@@ -14,3 +14,10 @@ Phase: Specification mining complete and handoff generated
 - [x] Generate comprehensive report.md (.agents/survey_miner_1/report.md)
 - [x] Generate handoff.md (.agents/survey_miner_1/handoff.md)
 - [ ] Notify parent orchestrator
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

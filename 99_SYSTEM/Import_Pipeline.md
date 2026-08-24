@@ -53,3 +53,10 @@ External source
 - [[Storage Conventions]]
 - [[Provenance and Redaction]]
 - [[Canonical Frontmatter]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

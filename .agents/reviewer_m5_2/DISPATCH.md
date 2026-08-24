@@ -18,3 +18,10 @@ Task:
    - `python -m pytest`
 6. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
 7. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_2\handoff.md` and send a message back with your verdict.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

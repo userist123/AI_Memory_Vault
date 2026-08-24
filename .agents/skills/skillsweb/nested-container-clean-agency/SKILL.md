@@ -50,3 +50,10 @@ description: "Create a clean agency design system built from nested containers, 
 - Overdecorated gradients, glows, or excessive accent color that break the clean tone.
 - Equal visual weight on every nested block, which weakens hierarchy.
 - Cramped containers with insufficient spacing between shell levels.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

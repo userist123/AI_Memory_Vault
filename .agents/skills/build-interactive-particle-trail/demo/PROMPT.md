@@ -26,3 +26,10 @@ Use `$build-interactive-particle-trail` to recreate **Sylva — Pollen Trace** a
 ```text
 Use $build-interactive-particle-trail for a dark indigo astronomy chart where the pointer sheds small amber star grains. Change the subject, palette, type, and composition, but keep distance-based segment emission, the fixed 620-point pool, 1.6-second shader flight, stale-point reset, keyboard burst, reduced-motion still, and lifecycle budgets.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

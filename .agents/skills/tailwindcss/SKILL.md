@@ -76,3 +76,10 @@ const toneClass = {
 - Framework/build tool (Next/Vite/Remix/Webflow export)?
 - Do we need a design system (tokens, component library) or a one-off page?
 - Dark mode? RTL? accessibility constraints?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

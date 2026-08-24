@@ -17,3 +17,10 @@ Task:
 3. Run full pytest suite (`python -m pytest`) to ensure 0 regressions.
 4. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
 5. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_1\handoff.md` and send a message back with your verdict.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

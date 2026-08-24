@@ -8,3 +8,10 @@
 - [Frame painter contract](https://github.com/Jakubantalik/thinking-orbs/blob/main/src/engine/types.ts)
 - [Package metadata](https://github.com/Jakubantalik/thinking-orbs/blob/main/package.json)
 - [MIT license](https://github.com/Jakubantalik/thinking-orbs/blob/main/LICENSE)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

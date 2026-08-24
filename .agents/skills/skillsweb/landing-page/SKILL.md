@@ -206,3 +206,10 @@ Return:
 - Any proof (numbers/testimonials/logos)?
 - What’s the offer and risk reversal?
 - Where is traffic coming from?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

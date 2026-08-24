@@ -13,3 +13,10 @@
 - [x] Run full repository pytest suite (`python -m pytest`: 399 passed in 44.11s across all 39 test modules)
 - [x] Document observations, logic chain, caveats, conclusion, verification method, and verdict in `handoff.md`
 - [x] Notify parent orchestrator
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

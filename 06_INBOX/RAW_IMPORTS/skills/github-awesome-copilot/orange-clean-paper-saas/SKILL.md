@@ -50,3 +50,10 @@ description: "Create a clean paper-toned SaaS design system with warm neutrals, 
 - Oversaturating the whole page with orange instead of using it as a signal color.
 - Heavy vintage paper distressing that makes the SaaS product feel old-fashioned.
 - Overcomplicated illustrations or noisy 3D objects that distract from the clean onboarding experience.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

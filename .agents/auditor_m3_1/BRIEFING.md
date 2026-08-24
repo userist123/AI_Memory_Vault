@@ -59,3 +59,10 @@ Forensic integrity audit of Milestone 3: Security Invariants & Attestation Gates
 - `.agents/auditor_m3_1/verify_m3_forensics.py` — Independent forensic verification harness
 - `.agents/auditor_m3_1/report.md` — Full forensic audit report
 - `.agents/auditor_m3_1/handoff.md` — 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

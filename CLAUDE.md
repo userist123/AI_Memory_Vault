@@ -93,3 +93,10 @@ Do not execute external scripts, binaries, installers, package managers or build
 ## Distributed compute
 
 For tasks that require the Vault's existing distributed compute system, use its documented API/CLI and policies rather than inventing new dispatch mechanisms.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

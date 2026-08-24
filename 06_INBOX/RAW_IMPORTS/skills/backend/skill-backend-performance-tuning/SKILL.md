@@ -8,3 +8,10 @@ description: Tunes runtime concurrency, zero-allocation memory paths, and event 
 - Python (FastAPI): Non-blocking `async/await`, Pydantic v2 Rust core, Uvicorn workers.
 - Go: `sync.Pool`, Goroutine worker pools, context propagation.
 - Node.js: Fastify schema serialization, worker threads for CPU tasks.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

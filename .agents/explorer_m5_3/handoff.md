@@ -108,3 +108,10 @@ Get-Content .agents/explorer_m5_3/report.md
 **Invalidation Conditions**:
 - Any pytest run returning non-zero exit code or failing tests.
 - Any attempt by `Principal.AI_AGENT` to bypass attestation or forge provenance without being rejected.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

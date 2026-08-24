@@ -174,3 +174,10 @@ python -m pytest
 # 3. Verify numerical edge cases
 python -c "from cognitive_core.evaluation import RetrievalEvaluator; e = RetrievalEvaluator(); assert e.precision_at_k([], set(), k=5) == 0.0; assert e.recall_at_k(['a'], set(), k=5) == 1.0; assert e.ndcg_at_k(['a'], {'a': 0.0}, k=5) == 0.0; print('All edge case assertions passed!')"
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

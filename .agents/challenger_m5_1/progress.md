@@ -14,3 +14,10 @@
 - [ ] 4. Run full pytest suite across entire repository
 - [ ] 5. Write comprehensive handoff report with verdict
 - [ ] 6. Send message to parent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

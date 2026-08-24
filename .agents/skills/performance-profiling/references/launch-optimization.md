@@ -353,3 +353,10 @@ func didReceive(_ payloads: [MXMetricPayload]) {
 - [ ] Cold launch < 400ms on target device
 - [ ] No regressions after changes (compare Instruments traces)
 - [ ] MetricKit showing stable or improving launch times in production
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

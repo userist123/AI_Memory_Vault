@@ -226,3 +226,10 @@ Distinguish “pushed,” “Pages configured,” “Pages built,” and “live
 - Run `scripts/audit_public_project.sh` before packaging or publishing.
 - Read `references/github-pages.md` before configuring or debugging Pages.
 - Copy `assets/README-template.md` and rewrite every placeholder from project evidence.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

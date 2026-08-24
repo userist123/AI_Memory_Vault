@@ -45,3 +45,9 @@ The Phase 2 continuity architecture is officially stable.
 
 Please provide the next objective.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -23,3 +23,10 @@ Tasks:
 4. Record your changes in `.agents/worker_m1_1/changes.md` and write your handoff in `.agents/worker_m1_1/handoff.md`.
 5. Send message to parent.
 </USER_REQUEST>
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

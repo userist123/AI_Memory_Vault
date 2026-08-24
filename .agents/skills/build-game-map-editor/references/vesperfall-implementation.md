@@ -164,3 +164,10 @@ Use only the Codex in-app browser for Vesperfall browser proof. Verify:
 - console health and cleanup after leaving the route.
 
 For a Vesperfall runtime change, follow the repository's current narrow-commit, exact-source release, Sites deployment, succeeded-status polling, and production-route verification process. Do not deploy a global skill-only update because it does not change the Vesperfall runtime.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

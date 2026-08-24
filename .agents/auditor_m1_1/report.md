@@ -90,3 +90,10 @@ All modules imported successfully.
 learning annotations: {'current_storage_notes': typing.List[typing.Dict[str, typing.Any]], 'return': typing.Tuple[bool, typing.List[str]]}
 reflection annotations: {'candidate': typing.Dict[str, typing.Any], 'return': typing.Tuple[bool, typing.Dict[str, typing.Any]]}
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

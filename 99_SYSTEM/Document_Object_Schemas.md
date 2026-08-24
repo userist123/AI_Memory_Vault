@@ -61,3 +61,10 @@ Templates are not canonical notes. The frontmatter in a template is the schema o
 - [[Canonical Frontmatter]]
 - [[Integrity Check]]
 - [[Storage Conventions]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

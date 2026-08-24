@@ -24,3 +24,10 @@
 ## Boundary Protection Affirmation:
 - **MemoryController & Cognitive Core**: 100% Untouched and canonical.
 - **Ingestion Mode**: RAW_EXTERNAL (Preserved for human attestation and Cognitive Core access).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

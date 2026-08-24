@@ -9,3 +9,10 @@ description: Configures WAL mode, pragmas, mmap size, and handles busy timeouts 
 - `PRAGMA synchronous=NORMAL;`
 - `PRAGMA mmap_size=268435456;`
 - Concurrent readers with atomic `BEGIN IMMEDIATE` transactions.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

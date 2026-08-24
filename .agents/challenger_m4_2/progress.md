@@ -17,3 +17,10 @@
 - [x] Analyzed findings and empirical evidence
 - [x] Authored 5-component `handoff.md` with explicit verdict (`APPROVE`)
 - [x] Notified orchestrator via `send_message`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

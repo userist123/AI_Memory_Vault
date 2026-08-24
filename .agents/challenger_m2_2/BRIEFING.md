@@ -54,3 +54,10 @@ Empirically stress-test SHA-256 audit logger tampering detection (payload modifi
 - `.agents/challenger_m2_2/BRIEFING.md` — Situational awareness
 - `.agents/challenger_m2_2/progress.md` — Liveness & progress tracking
 - `.agents/challenger_m2_2/handoff.md` — Final 5-component report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

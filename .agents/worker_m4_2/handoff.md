@@ -100,3 +100,10 @@ To independently verify this remediation:
    python -c "import uuid; from cognitive_core.reflection import ReflectionPipeline; from memory_controller.controller import MemoryController, StorageEngine; from memory_controller.authorizer import Principal; s = StorageEngine(); c = MemoryController(s); r = ReflectionPipeline(c); u1 = str(uuid.uuid4()); u2 = str(uuid.uuid4()); note = {'id': u1, 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'cat', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'ref'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'hello'}; s.set(u1, note); s.set(u2, {'id': u2, 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'cat', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'ref'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'target'}); res = r.propose_synapse(Principal.AI_AGENT, u1, u2); print('RESULT:', res); print('RELATIONS:', s.get(u1).get('relations'))"
    ```
    *Expected Output*: `RESULT: <uuid>`, `RELATIONS: [{'relation': 'related_to', 'target': 'knowledge', 'target_id': '<uuid>'}]`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

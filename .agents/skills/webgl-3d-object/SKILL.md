@@ -195,3 +195,10 @@ const cleanupObject = initWebGL3DObject(
 - The camera is perspective, not orthographic by accident.
 - Resize does not stretch the object.
 - Geometry, material, event listeners, RAF, and renderer are cleaned up.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

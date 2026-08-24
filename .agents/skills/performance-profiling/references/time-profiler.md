@@ -208,3 +208,10 @@ Issues appear as purple runtime warnings in Xcode's Issue Navigator.
 - [ ] Batch database writes instead of single-row inserts
 - [ ] Cache expensive computations (JSON parsing, date formatting)
 - [ ] Use `DateFormatter` / `NumberFormatter` as shared instances (creation is expensive)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -48,3 +48,10 @@ Botul separă configurarea contului MT5, fișiere de config pentru simboluri și
 ## Changelog
 
 - 2026-08-14: Nota creată din README-ul Monn.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

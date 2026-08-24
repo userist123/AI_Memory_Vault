@@ -69,3 +69,10 @@ description: Use when embedding and customizing Unicorn Studio interactive anima
 - Is the scene above-the-fold? (affects script placement and lazyload)
 - Mobile support requirement + acceptable quality/FPS
 - Number of scenes on the page and whether JSON export is available
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

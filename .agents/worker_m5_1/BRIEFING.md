@@ -62,3 +62,10 @@ Execute Milestone 5: Continual Learning, TRACe/IR Benchmarks & Full Pytest Pass.
 - `BRIEFING.md` — Working memory and status
 - `progress.md` — Execution progress and heartbeat
 - `handoff.md` — Final handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

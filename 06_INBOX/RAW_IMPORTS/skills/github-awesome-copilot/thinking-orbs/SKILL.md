@@ -240,3 +240,10 @@ Run the project's typecheck, tests, production build, and `git diff --check`. Th
 ## Handoff
 
 Report the mapped product phases, chosen size, theme mode, accessible label strategy, reduced-motion behavior, and build/browser verification. Distinguish local implementation from a deployed release.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

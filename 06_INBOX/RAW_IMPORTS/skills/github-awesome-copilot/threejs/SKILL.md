@@ -95,3 +95,10 @@ requestAnimationFrame(animate);
 - Target devices: mobile? older iPhones?
 - Asset format availability (glTF, HDRI, textures) and file size constraints
 - Accessibility/reduced motion requirements
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

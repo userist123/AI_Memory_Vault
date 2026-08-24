@@ -4185,3 +4185,9 @@ def test_deduplicator_different_technologies_remain_separate():
 END OF TAKEOVER PACKAGE
 ============================================================
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

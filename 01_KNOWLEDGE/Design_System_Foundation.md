@@ -59,3 +59,10 @@ Un sistem de design robust impune definirea strictă a tokenilor vizuali (culori
 ## 2. Relații și Sinapse Cognitive
 - `supports`: [[03_PROCEDURES/UI_UX_Heuristic_Review]] — Furnizează standardele de bază evaluate în timpul auditului de utilizabilitate.
 - `related_to`: [[01_KNOWLEDGE/Data_Visualization_Standards]] — Determină paleta de culori și spațierea folosite în tablourile de bord și grafice.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

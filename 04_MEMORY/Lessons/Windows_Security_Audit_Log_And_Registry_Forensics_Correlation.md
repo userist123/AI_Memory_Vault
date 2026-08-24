@@ -39,3 +39,10 @@ This note documents the core rules used to correlate offline security artifacts 
 | `..\Policies\Microsoft\Windows Defender` | `DisableAntiSpyware` | `1` | Windows Defender Antivirus Disabled | Critical | T1562.001 | NIST SP 800-53 - SI-3 |
 | `..\Policies\System` | `EnableLUA` | `0` | User Account Control (UAC) Disabled | High | T1548.002 | CIS Benchmark |
 | `..\Terminal Server\WinStations\RDP-Tcp` | `UserAuthentication` | `0` | RDP Network Level Authentication (NLA) Disabled | Medium | T1133 | ISO 27001 - A.13.1.1 |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

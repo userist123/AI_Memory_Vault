@@ -50,3 +50,10 @@ description: "Create a dark premium design system that combines near-black surfa
 - Heavy dither everywhere, which makes the interface dirty, retro, or low-resolution instead of premium.
 - Flat black layouts with no texture, depth, or material separation.
 - Generic SaaS cards and gradients that ignore the laser-plus-dither visual system.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

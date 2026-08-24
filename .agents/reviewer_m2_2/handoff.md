@@ -147,3 +147,10 @@ To independently verify this evaluation:
    ```
    *Expected outcome*: 59 passed with 0 failures.
 3. Invalidation condition: Any failure to detect forged hashes or tampered log lines during `verify_integrity()`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

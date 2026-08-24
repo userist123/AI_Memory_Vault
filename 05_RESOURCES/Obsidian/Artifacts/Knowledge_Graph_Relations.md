@@ -39,3 +39,10 @@ Relations are directional except `related_to`. Do not add links merely to increa
 
 - [[Canonical Frontmatter]]
 - [[Knowledge Graph Schema]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -100,3 +100,10 @@ python -m pytest cognitive_core/tests/test_continual_learning.py cognitive_core/
 # 3. Run the complete repository test suite
 python -m pytest
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -44,3 +44,10 @@ Analiză structurală a ecosistemelor de dezvoltare backend pe cele mai populare
 ## 5. TypeScript / Node.js & Fastify
 - **Stivă**: Node.js 22+, Fastify (3x mai rapid decât Express), Prisma / Drizzle ORM, Zod.
 - **Caracteristici**: Event-loop neblocant, serializare JSON ultra-rapidă bazată pe scheme, suport native pentru ESM și Worker Threads.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

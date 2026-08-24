@@ -18,3 +18,10 @@ Only skill/agent/reference material relevant to agent capabilities is imported. 
 Each imported skill should preserve source attribution and, where practical, the original relative path.
 
 Generated/normalized indexes may be added later without replacing the original source material.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

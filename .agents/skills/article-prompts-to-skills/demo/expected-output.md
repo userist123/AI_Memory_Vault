@@ -42,3 +42,10 @@ Use $pointer-lens-reveal to adapt the mechanism to an architectural before-and-a
 ## Boundary decision
 
 Create three skills. The behaviors have separate state models, inputs, and acceptance checks. Do not create one generic “editorial interactions” skill and do not copy the source page.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -18,3 +18,10 @@ Last visited: 2026-08-15T02:23:05Z
 
 ## Iteration Status
 Current iteration: 1 / 32
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -12,3 +12,10 @@ Last visited: 2026-08-15T02:21:20Z
 - [x] Conduct adversarial stress-testing (malformed data, boundary conditions, integrity checks)
 - [x] Formulate verdict (APPROVE), update BRIEFING.md, and write handoff.md
 - [ ] Send completion message to orchestrator
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

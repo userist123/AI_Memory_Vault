@@ -39,3 +39,10 @@ Documentatia PaperCut este publica, disponibila pe site-ul oficial PaperCut; nu 
 ## Related
 
 - [[PaperCut_Xerox_Secure_Print_Setup]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

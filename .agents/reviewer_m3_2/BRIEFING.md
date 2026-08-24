@@ -64,3 +64,10 @@ Independent review and adversarial verification of Milestone 3: Security Invaria
 - `.agents/reviewer_m3_2/BRIEFING.md` — Agent briefing & state
 - `.agents/reviewer_m3_2/progress.md` — Execution heartbeat
 - `.agents/reviewer_m3_2/handoff.md` — Final review report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -15,3 +15,10 @@ Status: Completed
 
 ## Final Summary
 All Milestone 5 evaluation requirements are implemented, mathematically verified, and fully tested with 100% test pass rate.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

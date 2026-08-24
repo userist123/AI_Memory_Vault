@@ -112,3 +112,10 @@ Use normal gameplay for visual verification when review modes intentionally disa
 - Keep dynamic gates synchronized with sight.
 - Keep enemy behavior fair even when enemy vision exceeds player reveal.
 - Keep one authoritative visibility model and one bounded overlay.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

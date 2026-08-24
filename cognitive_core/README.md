@@ -26,3 +26,10 @@ Run tests via repository root:
 ```bash
 python -m pytest cognitive_core/tests/
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

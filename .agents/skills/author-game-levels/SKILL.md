@@ -60,3 +60,10 @@ Run deterministic route, collision, navigation, encounter, reset, and lighting f
 - Exercise moving and disabled emitter cases and confirm no light remains detached or unexplained.
 - Inspect dense views for occlusion, console health, frame time, draw calls, memory stability, and long-session lighting cost.
 - Report new failures separately from existing baseline issues.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

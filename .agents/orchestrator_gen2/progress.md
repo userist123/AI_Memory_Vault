@@ -20,3 +20,10 @@ Current iteration: 6 / 32
 - Spawn count 16 / 16 reached.
 - Soft handoff created at `.agents/orchestrator_gen2/handoff.md`.
 - Spawning Successor Orchestrator Gen 3 to execute Milestone 5.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

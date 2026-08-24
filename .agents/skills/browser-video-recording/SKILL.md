@@ -129,3 +129,10 @@ Confirm:
 - Cursor is visible, natural, and on-target.
 - The video is cropped to browser content, not the desktop.
 - The browser viewport override has been reset.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

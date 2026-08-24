@@ -26,3 +26,10 @@ Use `$add-mouse-driven-orbit` to recreate **Sylva — Living Orbit** as a standa
 ```text
 Use $add-mouse-driven-orbit for a pale museum plinth holding a cobalt ceramic form. Change the subject, palette, type, and composition, but keep the centered base pose, one damped normalized target, split camera/object motion, pointer-leave return, touch-safe center state, keyboard pose controls, reduced-motion still, and lifecycle budgets.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

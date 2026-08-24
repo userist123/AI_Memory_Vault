@@ -238,3 +238,10 @@ This minimal set was already specified in detail in a prior session's design doc
 ---
 
 *This document independently validates, but does not supersede, `99_SYSTEM/Formal_System_Design_Review_PhaseOmega.md`. Both remain `lifecycle: REVIEW`, `verification: unverified` pending human or cross-agent review.*
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

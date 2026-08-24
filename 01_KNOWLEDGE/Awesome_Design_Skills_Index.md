@@ -551,3 +551,10 @@ A huge thank you to the companies supporting our open-source work.
 </table>
 
 Want to see your logo here? [Become a sponsor](https://www.typeui.sh/sponsor).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

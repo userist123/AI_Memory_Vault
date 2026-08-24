@@ -63,3 +63,10 @@ Build a cohesive, memorable site whose visual idea, media, typography, and motio
 - Check that only one smooth-scroll engine is installed and initialized, ScrollTrigger integration is correct, and all animation and WebGL resources clean up.
 - Search rendered content and source for placeholders, copied reference identity, unsupported claims, misleading logos, uncredited media, and inaccessible split text.
 - Report the chosen web-design skill, asset sources, motion stack, Three.js decision, validation performed, and any remaining limitation.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

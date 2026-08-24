@@ -59,3 +59,10 @@ When two notes conflict:
 6. create a Decision or Conflict note if unresolved.
 
 Never silently overwrite a high-confidence note with a low-confidence import.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

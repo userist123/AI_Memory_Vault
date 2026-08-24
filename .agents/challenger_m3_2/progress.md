@@ -18,3 +18,10 @@ Last visited: 2026-08-14T20:25:00Z
 - [x] Executed focused security suites: 46/46 passed in 10.21s
 - [x] Executed full pytest suite: 292/292 passed in 23.03s
 - [x] Formulated verdict (APPROVE) and wrote handoff.md
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

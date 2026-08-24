@@ -21,3 +21,10 @@ Acest skill activează capacitatea agenților din Vault de a interoga și descă
 Pentru a nu depăși fereastra de context LLM:
 - **Local Active Vault**: 198 de SKILL-uri fundamentale stocate direct în `.agents/skills/`.
 - **Global Dynamic Index**: Peste 50.000+ de skill-uri accesibile prin interogări pe indexul `Global_50K_Skill_Registries_Index.md` și descărcare la cerere în timpul execuției sarcinilor.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -35,3 +35,10 @@ Curățare conversații exportate din ChatGPT/Gemini/alte instanțe Claude înai
 
 ## Anti-pattern
 ❌ Import direct, în masă, fără trecere prin pașii 2-4 → duce la vault poluat, retrieval degradat pentru AI.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

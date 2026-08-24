@@ -41,3 +41,10 @@ Investigate Milestone 5: Continual Learning & Confidence Gating (`cognitive_core
 - `.agents/explorer_m5_1/progress.md` — Heartbeat & progress tracker
 - `.agents/explorer_m5_1/report.md` — Comprehensive analysis report
 - `.agents/explorer_m5_1/handoff.md` — Self-contained 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

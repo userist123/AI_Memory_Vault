@@ -42,3 +42,10 @@ Use $scroll-world-storytelling in **Video scrub** mode to recreate `demo/video/i
 ## Remix prompt
 
 Use $scroll-world-storytelling in Video scrub mode for my supplied story. First return the 5–7 beat ledger, style bible, and exact continuous-shot generation prompt. After approval, generate or prepare the clip, encode it for seeking, build the page, and verify reversible scroll, mobile composition, reduced motion, local asset loading, and factual integrity.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

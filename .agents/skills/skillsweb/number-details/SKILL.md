@@ -18,3 +18,10 @@ description: "Add decorative 01, 02, 03 numeric detail markers."
 ## Guardrails
 - Do not let decorative numbers compete with headings or CTAs.
 - Do not mix numbering styles in the same section.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

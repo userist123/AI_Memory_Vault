@@ -380,3 +380,10 @@ L3 页面（用户说"像 doubao / apple / stripe 那样"、"要有 3D"、"普�
 | `scripts/crawl_website.py` | Playwright 爬虫（截图 + Token + 结构） | Phase A 首选 |
 | `scripts/extract_design_tokens.py` | 轻量 Token 提取（静态站备选） | Phase A 备选 |
 | `scripts/fetch_unsplash_images.py` | 占位图候选 URL | Phase C |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -30,3 +30,10 @@ Read ORIGINAL_REQUEST.md, PROJECT.md, and .agents/worker_m4_3/handoff.md.
 Empirically verify VerifierAgent fuzzing resilience against non-dict provenance, RecallEngine pre-penalty score inheritance with 10% freshness boost across multi-hop/branching lineages, and full repository test execution.
 Run full pytest suite (python -m pytest).
 Write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_5\handoff.md and notify the orchestrator.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

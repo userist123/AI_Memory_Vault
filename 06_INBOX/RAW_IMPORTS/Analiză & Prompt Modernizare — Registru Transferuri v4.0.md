@@ -287,3 +287,10 @@ Livrează pe etape, în această ordine: (1) restructurare proiecte + .NET 10 + 
 2. **Fluent + tokens custom** e compromisul corect pentru air-gapped: temă de sistem întreținută de Microsoft ([disponibilă din .NET 9, extinsă în .NET 10](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/whats-new/net100)), zero librării UI terțe de auditat, iar identitatea „Tactical" vine din tokens, nu din dependențe.
 3. **Cea mai valoroasă îmbunătățire de securitate din tot documentul** este ancora anti-rollback + Four-Eyes criptografic — fără ele, lanțul SHA-256 e o demonstrație, nu o probă. Cu ele, poți susține integritatea registrului în fața unui control INFOSEC.
 4. Referințe normative verificate la zi: [NIST SP 800-88 Rev. 2 — final, 26 sept. 2025](https://csrc.nist.gov/pubs/sp/800/88/r2/final), [IEEE 2883-2022 — standard activ](https://standards.ieee.org/ieee/2883/10277/), [.NET 10 LTS — suport până în nov. 2028](https://devblogs.microsoft.com/dotnet/announcing-dotnet-10/).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

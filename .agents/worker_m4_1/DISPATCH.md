@@ -26,3 +26,10 @@ DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results,
 1. Run `python -m pytest` and target test suites in `cognitive_core/tests/`.
 2. Ensure 0 failures and 100% test pass.
 3. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

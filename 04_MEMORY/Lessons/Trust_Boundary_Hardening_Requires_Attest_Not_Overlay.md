@@ -47,3 +47,10 @@ Any time a new write path is added to `MemoryController` (or an equivalent trust
 ## Related
 - [[00_CORE/GRAPH/Memory - Lessons Map]]
 - [[00_CORE/Rules.md]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -26,3 +26,10 @@ Conduct an independent, objective review and verification of Milestone 4: Cognit
 2. Run targeted test suites and full pytest suite (`python -m pytest`).
 3. Formulate your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
 4. Write your 5-component handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_1\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

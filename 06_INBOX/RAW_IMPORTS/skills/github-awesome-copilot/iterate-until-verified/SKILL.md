@@ -154,3 +154,10 @@ Adapt the process to the task. Do not copy domain-specific tools, benchmarks, or
 - Benchmarks were real, comparable, and honestly labeled.
 - Failed gates drove revisions.
 - The final claims match the collected evidence.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -202,3 +202,10 @@ Fiecare skill este disponibil în mod direct pentru execuție de către Antigrav
 | Skill Name | Description | Active Path |
 | :--- | :--- | :--- |
 | `design-first-ui-prompting` | Use when you need design-first, spec-driven, skimmable prompts for UI generation. Covers prompt structure, constraint... | `.agents/skills/design-first-ui-prompting/SKILL.md` |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

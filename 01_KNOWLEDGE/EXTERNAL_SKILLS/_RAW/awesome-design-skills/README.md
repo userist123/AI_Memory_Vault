@@ -3,3 +3,10 @@ Source URL: https://github.com/bergside/awesome-design-skills
 Discovered from: https://github.com/bergside/awesome-design-skills
 Depth: 0
 License: MIT
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -45,3 +45,10 @@ Thoroughly explore the existing Cognitive Brain system codebase, evaluate subsys
 - progress.md — Heartbeat progress log
 - report.md — Comprehensive architecture analysis report
 - handoff.md — Formal 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

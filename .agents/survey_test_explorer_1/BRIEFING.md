@@ -43,3 +43,10 @@ Investigate and assess the Cognitive Brain test suite, run pytest, document coun
 - progress.md — Liveness heartbeat
 - report.md — Comprehensive test survey report (197 tests cataloged)
 - handoff.md — Final 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

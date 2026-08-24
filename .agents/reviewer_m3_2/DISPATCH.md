@@ -23,3 +23,10 @@ Review Objectives:
    python -m pytest
 5. Document all findings, command outputs, and verdict (APPROVE or REQUEST_CHANGES) in handoff.md and send a summary message back to caller.
 </USER_REQUEST>
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

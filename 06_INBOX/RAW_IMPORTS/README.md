@@ -37,3 +37,10 @@ RAW -> CLASSIFIED -> NORMALIZED -> REVIEW -> VERIFIED -> ACTIVE -> SUPERSEDED/AR
 - `04_MEMORY/Lessons/Modularize_Prompts_For_Token_Limited_Models.md` — derivat din experienta de mai sus
 
 Aceste note au fost extrase manual din memoria conversatiilor si marcate `verification: unverified` pana la confirmare explicita de catre utilizator.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

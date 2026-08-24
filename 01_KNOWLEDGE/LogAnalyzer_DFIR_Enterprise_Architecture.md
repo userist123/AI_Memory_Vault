@@ -48,3 +48,10 @@ Platforma LogAnalyzer DFIR Enterprise este o suită completă, air-gapped și of
 * `ExecutionPossible`: Shimcache (AppCompatCache) pe Windows 10/11.
 * `FileExistenceOnly`: NTFS $MFT (oferă detecție timestomping $SI vs $FN).
 * `ConfigurationOnly`: Chei de registru pasive.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

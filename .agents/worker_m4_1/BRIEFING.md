@@ -64,3 +64,10 @@ Verify, complete, and harden all Milestone 4 capabilities (Cognitive Loop & Mult
 - `.agents/worker_m4_1/progress.md` — Progress tracker and liveness heartbeat
 - `.agents/worker_m4_1/handoff.md` — Final 5-component handoff report
 - `cognitive_core/tests/test_milestone4_empirical_challenge.py` — Empirical challenge test suite
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -30,3 +30,10 @@ relations:
 ## 3. Location & Environment
 - **Path**: `C:\Users\user\finscope`
 - **Orchestration**: Claude Code with distributed GPU compute delegation (`cognitive_core/dispatch_cli.py`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

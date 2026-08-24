@@ -580,3 +580,9 @@ The purpose is to make the AI:
 
 **Better memory beats more memory.**
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

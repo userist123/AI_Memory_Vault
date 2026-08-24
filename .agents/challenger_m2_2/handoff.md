@@ -146,3 +146,10 @@ python -c "from memory_controller.audit.logger import AuditLogger; import tempfi
 **Invalidation Conditions**:
 - If any untampered valid chain returns `is_valid == False`.
 - If any single-field payload modification or `prev_hash` modification goes undetected (`is_valid == True`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

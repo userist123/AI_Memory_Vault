@@ -80,3 +80,9 @@ graph TD
 ## 5. Colecții & Cataloage Agent Skills
 - [[01_KNOWLEDGE/MengTo_Agent_Skills_Catalog]] — 130 de skill-uri specializate pentru Web Design, WebGL/Three.js, animații GSAP/Lenis, proceduri Codex și Game Dev.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

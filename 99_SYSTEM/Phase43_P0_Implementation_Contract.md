@@ -401,3 +401,10 @@ This document itself will be created at `99_SYSTEM/Phase43_P0_Implementation_Con
 ---
 
 *This contract does not implement, execute, or verify anything. It specifies. Implementation and verification are explicitly deferred to an execution-capable agent, per Part 18.*
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

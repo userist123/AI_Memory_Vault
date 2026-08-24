@@ -41,3 +41,10 @@ Email-ul HTML trăiește în 1999: fără flexbox garantat, fără fonturi custo
 
 ## Anti-pattern-uri
 - GIF-uri hero de 2MB. Butoane-imagine. 6 CTA-uri egale. Fonturi custom fără fallback testat.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

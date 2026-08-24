@@ -13,3 +13,10 @@
 - [x] Run full pytest test suite (422 passed in 45.88s across 49 test modules)
 - [ ] Write handoff.md with 5 components
 - [ ] Send message to parent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

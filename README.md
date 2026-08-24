@@ -530,3 +530,10 @@ O schimbare majora este completa cand:
 **Agent Matrix:** `01_KNOWLEDGE/Agents_Skill_Matrix.md`
 
 **Obsidian Sync:** `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

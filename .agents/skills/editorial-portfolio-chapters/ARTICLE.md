@@ -189,3 +189,10 @@ Use the interaction logic with original identity, copy, colors, imagery, data, a
 - Refresh measurements after fonts and critical media settle, on breakpoint changes, and after dynamic content changes.
 - Kill timelines, tickers, observers, and pointer listeners when components unmount or routes change.
 - Treat every screenshot here as motion evidence, not a style specification. Replace the reference's name, wording, images, numerical claims, and contact details.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

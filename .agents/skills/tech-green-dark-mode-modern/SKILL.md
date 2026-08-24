@@ -50,3 +50,10 @@ description: "Create a modern dark-mode technical design system with matte-black
 - Generic SaaS cards that ignore the technical bracketed system.
 - Mixing many unrelated accent colors that dilute the green signal language.
 - Overdecorating every component with bright borders, motion, or glow.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

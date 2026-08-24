@@ -128,3 +128,10 @@ Use micro texture at low opacity. It should be felt, not noticed.
 - Rounded corners stay smooth at the actual rendered size.
 - The gradient border is 1px and does not overpower the content.
 - Text and icons remain readable after shadow effects.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

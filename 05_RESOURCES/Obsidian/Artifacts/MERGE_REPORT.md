@@ -33,3 +33,10 @@ Historical import is intentionally deferred. When it begins, process derivatives
 - [[Storage Conventions]]
 - [[Memory Lifecycle]]
 - [[Provenance and Redaction]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

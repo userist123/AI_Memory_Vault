@@ -13,3 +13,10 @@ description: Securitate Backend (OAuth2, JWT, RBAC, Rate Limiting, OWASP Backend
 - **SQL Injection Prevention**: Parametrizare obligatorie în toate Interogările / ORM (EF Core, Dapper, SQLAlchemy).
 - **Rate Limiting**: Limitare cereri per IP/Token (ex. 100 req/minut) via Redis token bucket.
 - **Header-e de Securitate**: `Content-Security-Policy`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

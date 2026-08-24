@@ -59,3 +59,10 @@ Conduct the definitive verification and adversarial review of Milestone 4 (Cogni
 - `.agents/reviewer_m4_5/probe_reflection.py` — reflection and synapse schema probe
 - `.agents/reviewer_m4_5/probe_security.py` — P0-P15 security invariant probe
 - `.agents/reviewer_m4_5/handoff.md` — final 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

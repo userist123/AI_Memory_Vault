@@ -27,3 +27,10 @@ Use $scroll-world-storytelling to create a portable three-mode reference called 
 ## Remix prompt
 
 Use $scroll-world-storytelling with my supplied article. Read it in full, then recommend video, Three.js, or HTML/data as the primary renderer. Explain the choice in one sentence, produce the beat ledger and style bible, write the exact asset and implementation prompts, build the approved mode, and verify the finished page in a real browser.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

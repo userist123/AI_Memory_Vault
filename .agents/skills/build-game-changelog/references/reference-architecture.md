@@ -288,3 +288,10 @@ Test all paths independently:
 9. Repeat the critical checks against the successful production deployment.
 
 If a deterministic review route exists, add a changelog state so browser tests can open the exact screen without modifying saves.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -63,3 +63,10 @@ The Cognitive Brain architecture is fully implemented, strictly adheres to the s
    python -m pytest cognitive_core/tests/test_continual_learning.py cognitive_core/tests/test_evaluation_and_recall_lineage.py
    ```
    *Expected result*: 5 passed.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

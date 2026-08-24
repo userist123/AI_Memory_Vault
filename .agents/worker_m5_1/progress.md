@@ -11,3 +11,10 @@
 6. [x] Execute pytest across focused suites and full test suite (422 passed, 0 failed).
 7. [x] Verify 0 failures, 100% pass rate, no regressions.
 8. [ ] Generate final `handoff.md` and report to orchestrator via `send_message`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

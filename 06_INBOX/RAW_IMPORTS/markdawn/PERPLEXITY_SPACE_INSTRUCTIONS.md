@@ -18,3 +18,10 @@ Nu-l pui în lanțul de execuție (Antigravity/Codex/Claude Code fac codul). Îl
 - Research înainte de a scrie o sarcină nouă în AGENTS.md/CLAUDE.md/GEMINI.md (ex: "ce e nou în .NET 10 pentru DataGrid virtualization").
 - Verificarea conformității unei decizii de design față de HG 585/NIST 800-88r2 înainte de a o transforma în cod.
 - Sinteza periodică a noutăților despre Antigravity/Codex CLI/Claude Code, ca cele trei fișiere de context să rămână actualizate cu convențiile curente ale platformelor.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

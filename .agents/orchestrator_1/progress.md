@@ -15,3 +15,10 @@ Current iteration: 2 / 32
 - [ ] Milestone 4: Cognitive Loop & Multi-Agent Coordination (Worker, Reviewers x2, Challengers x2, Auditor)
 - [ ] Milestone 5: Continual Learning, TRACe & Final E2E Hardening
 - [ ] Report Completion to Sentinel
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

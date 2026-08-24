@@ -21,3 +21,10 @@ Prefer an existing specialized agent when one is documented in the Vault. Attach
 ## Boundaries
 
 Do not treat every folder under `06_INBOX/RAW_IMPORTS` as an approved agent. Validate provenance and classification first.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

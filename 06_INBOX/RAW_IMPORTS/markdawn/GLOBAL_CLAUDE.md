@@ -21,3 +21,10 @@ Full-stack developer, activ în IT (inclusiv mediu militar/guvernamental — des
 ## Suprascriere
 
 Orice `CLAUDE.md` local dintr-un proiect are prioritate peste acest fișier global dacă există conflict — acesta e doar setul implicit de preferințe.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

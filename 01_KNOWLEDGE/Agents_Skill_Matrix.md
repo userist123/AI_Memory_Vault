@@ -48,3 +48,10 @@ Consiliul de Memorie AI a fost extins oficial de la 19 la **21 de Agenți Specia
 | 19 | `ui_ux_designer` 🎨 | UI/UX Design & Prompting | Dashboard Admin UI, Brand Identity, Email Design, Presentation Design, Data Viz, Motion Design |
 | 20 | `database_and_persistence_engineer` 💾 | Persistență, Sharding & Analytical DBs | Flyway, Vitess Sharding, DuckDB OLAP, ClickHouse Time-Series, Elasticsearch, Qdrant Vector DB, pgvector, Neo4j Graph DB, Debezium CDC |
 | 21 | `memory_controller_architect` 🧠 | Memorie Cognitivă & Operare Vault | Vault Operations, Vault Security Audit, Vault Secrets Management |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

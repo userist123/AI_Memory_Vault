@@ -8,3 +8,10 @@ description: Model Context Protocol (MCP) Server Integration, Tool Calling Patte
 - **Protocol**: Standardul deschis pentru conectarea LLM-urilor la unelte externe (Baze de date, APIs, Terminale, Sistem de fișiere).
 - **Format Schema**: Definitii de unelte în format JSON Schema validat.
 - **Securitate**: Izolarea sandbox-ului și autorizare explicită a utilizatorului pentru acțiuni cu impact.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

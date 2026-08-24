@@ -30,3 +30,10 @@ python scripts/skill_ingestion.py promote --skill <skill-id> --verified
 ## Safety invariant
 
 Never execute source repository code as part of ingestion. Ingestion is read/analyze/hash/classify/promote, not install/build/run.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

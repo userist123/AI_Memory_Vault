@@ -65,3 +65,10 @@ Orice animație trebuie să servească unui scop legitim (feedback, orientare sp
 ## 2. Relații și Sinapse Cognitive
 - `related_to`: [[01_KNOWLEDGE/Design_System_Foundation]] — Integrează curbele de timing și constantele de durată în tokenii globali.
 - `supports`: [[03_PROCEDURES/UI_UX_Heuristic_Review]] — Criteriu esențial de audit pentru Nielsen Heuristic 1 (Vizibilitatea stării sistemului).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -179,3 +179,9 @@ relations: []
 - Cannot map type for: C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\06_INBOX\RAW_IMPORTS\perplexity_original\Folder_Structure_Overview.md
 - Cannot map type for: C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\06_INBOX\RAW_IMPORTS\perplexity_original\Knowledge_Graph_Schema.md
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

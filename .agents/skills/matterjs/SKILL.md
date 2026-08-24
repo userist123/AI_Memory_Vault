@@ -64,3 +64,10 @@ render.mouse = mouse;
 - Are we using Matter.Render or a custom renderer?
 - Do you want mouse/touch drag interaction?
 - Should the simulation loop be paused when offscreen?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

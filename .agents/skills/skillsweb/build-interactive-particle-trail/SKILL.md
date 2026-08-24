@@ -116,3 +116,10 @@ The per-particle flight math is not the main cost; additive point overdraw and a
 - Confirm a clean console at both sizes.
 
 Use [demo/index.html](demo/index.html) as the working proof and [demo/PROMPT.md](demo/PROMPT.md) to recreate or remix it.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

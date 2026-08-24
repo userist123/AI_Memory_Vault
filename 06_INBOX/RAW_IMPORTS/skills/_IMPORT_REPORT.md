@@ -26,3 +26,10 @@
 - **Programming References**: 70
 - **Duplicate Skills**: 0
 - **Unknown Licenses**: 0
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

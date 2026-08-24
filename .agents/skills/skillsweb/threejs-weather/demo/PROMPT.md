@@ -36,3 +36,10 @@ Use $threejs-weather but make it fog and drizzle only — no lightning — and h
 ```text
 Use $threejs-weather and add hail: heavier than rain, bouncing once off the ground, with a shorter and harder sound.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

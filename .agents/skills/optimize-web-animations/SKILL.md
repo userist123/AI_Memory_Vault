@@ -125,3 +125,10 @@ git restore --staged <files> 2>/dev/null || true
 - Running unbounded stress loops in the Browser; use bounded cycles and record crashes without overstating causality.
 - Using screenshots alone as performance proof.
 - Letting unrelated local hunks ride along in the commit.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

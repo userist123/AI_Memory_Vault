@@ -142,3 +142,10 @@ Recent combinations that are already spent unless there is a concrete update:
 - Sol as a design model + video-to-HTML + a walkthrough + the open-source Skills repo
 - open-ended prompting + an agent-written plan + isolated threads + per-change commits
 - UI vocabulary + interactive examples + the Name That UI, Collect UI, and Mobbin resource bundle
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

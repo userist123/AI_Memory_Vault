@@ -117,3 +117,10 @@ Use the same container width as the line positions.
 - Lines remain subtle on light and dark backgrounds.
 - Mobile still has enough padding between the line and content.
 - Guides do not intercept clicks, hovers, or text selection.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

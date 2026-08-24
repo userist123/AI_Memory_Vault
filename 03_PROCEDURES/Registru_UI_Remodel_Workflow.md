@@ -83,3 +83,10 @@ Workflow secvențial de 7 sarcini pentru remodelarea completă a interfeței WPF
 3. Grep pentru culori hardcodate în fișierele noi — trebuie **zero** rezultate.
 4. Confirmă că orice apel de rețea nou este limitat la `127.0.0.1`.
 5. Generează `walkthrough.md` cu lista fișierelor modificate per sarcină.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

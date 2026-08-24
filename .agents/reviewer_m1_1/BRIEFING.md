@@ -52,3 +52,10 @@ Perform rigorous quality and adversarial review of Milestone 1 (Codebase Hygiene
 - `.agents/reviewer_m1_1/DISPATCH.md` — Initial dispatch
 - `.agents/reviewer_m1_1/progress.md` — Liveness & progress tracking
 - `.agents/reviewer_m1_1/handoff.md` — Final review handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

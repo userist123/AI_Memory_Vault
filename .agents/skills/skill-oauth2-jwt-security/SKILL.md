@@ -7,3 +7,10 @@ description: Configures PKCE flows, JWT validation filters, refresh token rotati
 - Authorization Code Grant with PKCE for single-page and mobile apps.
 - Short-lived Access Tokens (5-15 min) + Refresh Token Rotation.
 - Store tokens in `HttpOnly`, `Secure`, `SameSite=Strict` cookies.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

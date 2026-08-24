@@ -94,3 +94,10 @@ To independently verify the specification findings and architectural guarantees:
 
 5. **Inspect Generated Specification Artifact**:
    - Inspect `.agents/survey_miner_1/report.md` for complete feature enumeration and mathematical formulations.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

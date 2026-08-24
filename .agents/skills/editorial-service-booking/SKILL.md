@@ -80,3 +80,10 @@ Use original or licensed people and place photography. Replace every source serv
 - Fake availability, reviews, results, or practitioner credentials.
 - Auto-advancing carousels, frantic motion, and decorative beauty gradients.
 - Losing booking selections after errors or navigation.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

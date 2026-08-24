@@ -23,3 +23,10 @@ Acest fișier e citit și de agentul Gemini din Google Antigravity la nivel glob
 ## Prioritate
 
 `GEMINI.md` local al unui proiect anume suprascrie orice conflict cu acest fișier global.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

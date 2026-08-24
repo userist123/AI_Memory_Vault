@@ -171,3 +171,10 @@ A comprehensive verification matrix was executed against boundary conditions:
    - *Current*: Concatenates all retrieved notes into `combined_sources`.
    - *Observation*: With Jaccard semantic similarity, large combined source strings penalize responses due to large set union.
    - *Recommendation*: Support per-note maximum alignment or sentence-level citation verification.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

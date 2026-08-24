@@ -29,3 +29,9 @@ description: Cognitive Core and Memory Controller operating rules and trust boun
 - **P17 - Friendly Name Isolation**: Utilizatorul poate modifica exclusiv denumirea prietenoasă / eticheta logică a volumului și metadatele administrative (gestionar, plafon clasificare, politică acces), fără a altera identificatorii fizici unici.
 - **P18 - Forensics & Chain of Custody Integrity**: Orice transfer leagă automat amprenta hardware imutabilă a mediului detectat fizic în jurnalul de audit tamper-evident.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

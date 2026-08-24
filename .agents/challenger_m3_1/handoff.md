@@ -82,3 +82,10 @@ To independently reproduce all adversarial and stress test results:
    python -m pytest
    ```
 4. Invalidation condition: Any test failure or any condition where `Principal.AI_AGENT` creates/mutates a `verified` note, forges privileged provenance, or bypasses attestation gates without an exception.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

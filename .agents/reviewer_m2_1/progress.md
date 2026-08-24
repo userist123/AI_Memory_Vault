@@ -12,3 +12,10 @@
 5. [x] Inspect tests and run pytest suite (all 218 tests passed)
 6. [x] Adversarial stress test analysis & integrity verification
 7. [x] Complete handoff report and notify parent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

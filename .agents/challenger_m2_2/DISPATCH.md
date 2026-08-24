@@ -14,3 +14,10 @@ Task:
 3. Run the full pytest test suite.
 4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\handoff.md`.
 5. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

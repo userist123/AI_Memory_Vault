@@ -21,3 +21,10 @@ Scope & Tasks:
 3. Run security tests: `memory_controller/tests/test_security_hardening.py`, `cognitive_core/tests/test_tool_router_security.py`, and the full test suite.
 4. Record your findings in `.agents/worker_m3_1/changes.md` and write handoff in `.agents/worker_m3_1/handoff.md`.
 5. Send message to parent.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

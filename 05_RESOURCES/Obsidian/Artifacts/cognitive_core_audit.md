@@ -83,3 +83,9 @@ To achieve true autonomy, the Cognitive Core must survive restarts and handle mu
 > **User Review Required**
 > Do you approve this read-only audit? Should I proceed with the implementation plan for Phase 2 (BRAIN-7 to BRAIN-9), or would you like adjustments to the persistent vs ephemeral boundaries?
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

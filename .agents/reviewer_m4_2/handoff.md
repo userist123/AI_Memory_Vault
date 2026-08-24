@@ -119,3 +119,10 @@ To independently verify this review:
    - `cognitive_core/reflection.py` (6-stage FormalReflexion, error/blocked reflection pipelines)
    - `cognitive_core/consolidation.py` (SelfRefine filtering, lesson grouping, archival)
    - `cognitive_core/agents/` (Least-privilege worker subagents)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

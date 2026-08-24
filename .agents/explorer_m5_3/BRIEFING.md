@@ -38,3 +38,10 @@ Execute full pytest verification, catalog all test modules and counts, and verif
 - `.agents/explorer_m5_3/analyze_results.py` — Test results aggregation script
 - `.agents/explorer_m5_3/report.md` — Detailed test execution & acceptance criteria verification report
 - `.agents/explorer_m5_3/handoff.md` — 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

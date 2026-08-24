@@ -30,3 +30,10 @@ Toate valorile de culoare din UI trebuie să vină din `Theme/ObsidianTactical.x
 1. Grep pentru culori hex hardcodate în fișierele modificate — dacă găsești, înlocuiește cu resursa corespunzătoare.
 2. Verifică contrast text/fundal ≥ 4.5:1 (WCAG AA) pe orice pereche nouă.
 3. Confirmă că niciun control nu afișează text alb pe fundal alb implicit de sistem (ex: ComboBox/DataGrid nestilizate).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

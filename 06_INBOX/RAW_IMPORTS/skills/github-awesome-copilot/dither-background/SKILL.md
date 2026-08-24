@@ -221,3 +221,10 @@ const cleanupDither = initDitherBackground(
 - The palette stays monochrome and restrained.
 - Edges recede into near-black.
 - Foreground UI remains readable without heavy overlays.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

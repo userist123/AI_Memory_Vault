@@ -58,3 +58,10 @@ Review Milestone 2: Storage, WAL & Audit Integrity. Perform objective quality re
 - `.agents/reviewer_m2_1/DISPATCH.md` — Message dispatch log
 - `.agents/reviewer_m2_1/progress.md` — Liveness and step progress
 - `.agents/reviewer_m2_1/handoff.md` — Final 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

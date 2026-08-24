@@ -54,3 +54,10 @@ Perform independent forensic integrity audit for Milestone 1 work products and c
 ## Loaded Skills
 - **vault-security-audit**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md` (Local reference: Security verification and forensic validation runbook)
 - **vault-operations**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md` (Local reference: Runbook and multi-step procedure for interacting with AI Memory Vault)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

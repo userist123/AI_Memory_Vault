@@ -360,3 +360,10 @@ The Cognitive Brain and Memory Vault test suite is in an **exceptionally healthy
 4. **Cognitive Loop & Continual Learning Verification**: OODA loop execution, Tree-of-Thought reasoning, 6-stage Formal Reflexion, TRACe metrics, and catastrophic forgetting prevention guards are fully verified.
 
 The system is ready for subsequent autonomous cognitive workflows and multi-agent coordination.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

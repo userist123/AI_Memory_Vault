@@ -113,3 +113,10 @@ Return:
 4. Fallback behavior
 5. Performance + accessibility checklist
 6. Build order (MVP first, enhancement second)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

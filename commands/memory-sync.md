@@ -14,3 +14,10 @@ Review the current work for durable information that belongs in the Vault.
 - Do not create a competing memory database.
 
 Finish by checking for duplicate or conflicting entries.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

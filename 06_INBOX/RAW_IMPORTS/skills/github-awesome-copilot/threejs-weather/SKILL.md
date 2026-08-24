@@ -168,3 +168,10 @@ Give weather its own gain bus, separate from music, and run the blizzard as a **
 - Enter snow from clear five times. It must start calm every time.
 - Stand in a storm for a minute. Strikes should come from different sides, and thunder should never land on the flash.
 - Profile with the storm running. Particles are cheap; the relight you forgot to gate is not.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

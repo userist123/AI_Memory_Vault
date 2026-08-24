@@ -395,3 +395,10 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 ---
 
 ### HANDOFF STATUS: READY FOR PERPLEXITY
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

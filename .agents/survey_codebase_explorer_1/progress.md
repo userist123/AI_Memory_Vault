@@ -17,3 +17,10 @@ Last visited: 2026-08-14T23:02:40+03:00
 - [ ] Compile comprehensive `report.md`
 - [ ] Compile 5-component `handoff.md`
 - [ ] Notify parent agent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

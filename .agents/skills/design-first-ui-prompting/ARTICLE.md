@@ -152,3 +152,10 @@ Use:
 **Screenshot → Gemini 3 → Remix → Polish**
 Your taste curates.
 AI executes.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

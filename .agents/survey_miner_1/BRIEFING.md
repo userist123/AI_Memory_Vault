@@ -45,3 +45,10 @@ Extract and comprehensively enumerate all functional, architectural, and securit
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md — Full specification mining report
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md — 5-component handoff report
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\progress.md — Liveness & progress tracking
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

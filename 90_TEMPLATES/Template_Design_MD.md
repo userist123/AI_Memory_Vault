@@ -219,3 +219,10 @@ Phase B 输出 DESIGN.md 时按此模板生成。9 个标准章节，每个都�
 8. **字体必须有 Google Fonts @import URL + fallback**
 9. **响应式至少覆盖 Desktop + Mobile**
 10. **文件保存为 DESIGN.md 到项目根目录**
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

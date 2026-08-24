@@ -89,3 +89,10 @@ Use these as defaults and tune per brand.
 - "Convert this bright UI to dark glassmorphism without losing contrast."
 - "Add border gradient glow to a frosted navbar/card/modal."
 - "Make my dark dashboard feel premium with glass panels and subtle depth."
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

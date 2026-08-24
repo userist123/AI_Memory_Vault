@@ -396,3 +396,10 @@ Fix: hide it before branches and gate it explicitly by state.
 Cause: per-ray meshes, per-frame allocations, a second renderer, or post-processing.
 
 Fix: retain one fixed array, one byte texture, one full-screen shader, and a movement/time-throttled CPU fill.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

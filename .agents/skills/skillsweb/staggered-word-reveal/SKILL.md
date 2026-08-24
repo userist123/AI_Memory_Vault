@@ -160,3 +160,10 @@ document.addEventListener("DOMContentLoaded", () => {
 - Each word reveals once with a `0.06s` to `0.08s` delay.
 - Repeated scrolling does not replay the animation.
 - Reduced-motion users see static readable text.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

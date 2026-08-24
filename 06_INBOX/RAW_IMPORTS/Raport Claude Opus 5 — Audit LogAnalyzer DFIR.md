@@ -571,3 +571,10 @@ Reguli nenegociabile: (a) parserele nu scriu niciodată în sursă (aserțiune t
 Direcția strategică pe care o recomand nu este „mai multe detecții", ci **mutarea produsului de la detecție la probatoriu**. Concurenții din segmentul de detecție sunt EDR‑urile, cu telemetrie live pe care o aplicație air‑gapped nu o poate egala. În schimb, pe terenul probatoriului offline — artefacte de disc, triangularea execuției, detecția anti‑forensics, lanț de custodie exprimat în CASE/UCO, validare tip CFTT, notificări NIS2 generate automat către DNSC — LogAnalyzer poate deveni cea mai bună unealtă disponibilă în limba română, într‑o nișă în care KAPE și EZ Tools oferă capabilități excelente, dar fragmentate, fără interfață unificată și fără strat de conformitate.
 
 Cele trei livrabile care schimbă cel mai mult poziționarea, în ordine: **(1)** pachetul NTFS + evidența execuției + anti‑forensics (P0‑1, P0‑2, P0‑8) — paritate forenzică reală; **(2)** Sigma Correlations native pe SQLite (P0‑6) plus transpilerul către SPL/KQL (P1‑8) — expresivitate de detecție pe care puține unelte offline o au; **(3)** stratul de defensibilitate (P0‑11, P0‑12, P1‑9) — argumentul care câștigă licitații și care protejează clientul în fața DNSC și a instanțelor.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

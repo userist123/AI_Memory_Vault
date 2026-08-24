@@ -43,3 +43,10 @@ Un tablou de bord sau panou de administrare trebuie să răspundă în 5 secunde
   - Înălțime rânduri 40–48px cu header fix (sticky); acțiuni agregate în meniu contextual (`⋯`).
   - Starea filtrelor reflectată în parametrii URL (persistente la refresh).
   - Acțiunile distructive (ștergere) impun confirmare explicită (introducerea numelui sau timer).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

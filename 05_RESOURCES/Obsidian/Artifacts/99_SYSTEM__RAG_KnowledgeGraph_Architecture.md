@@ -52,3 +52,10 @@ Fiecare notă trebuie să aibă frontmatter complet (vezi `System_Architecture.m
 
 ---
 *Acesta e ultimul fișier din structura inițială. Vault-ul e gata pentru primul import real din `06_INBOX/_raw_imports/`.*
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

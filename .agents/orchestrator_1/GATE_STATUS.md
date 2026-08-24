@@ -23,3 +23,10 @@ Gate Result: **PASS**
 | auditor_m2_1 | teamwork_preview_auditor | CLEAN | handoff.md |
 
 Gate Result: **PASS**
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

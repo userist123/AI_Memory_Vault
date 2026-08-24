@@ -74,3 +74,10 @@ All 15 security invariants (P0-001 through P0-015), along with authorizer gating
 
 **VERDICT**: **CLEAN**
 Milestone 3 implementation genuinely fulfills all requirements (R2, R3, P0-P15) with zero integrity violations.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

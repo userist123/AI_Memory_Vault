@@ -60,3 +60,10 @@ No agent in this pipeline can escalate trust on its own:
 - [[00_CORE/GRAPH/09 Agent Evidence Map]]
 - [[00_CORE/GRAPH/01 Cognitive System Map]]
 - [[04_MEMORY/Lessons/Trust_Boundary_Hardening_Requires_Attest_Not_Overlay]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

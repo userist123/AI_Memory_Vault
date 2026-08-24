@@ -81,3 +81,10 @@ Example:
 `Error -> Lesson -> Procedure`
 
 can create three linked notes when each is independently reusable.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

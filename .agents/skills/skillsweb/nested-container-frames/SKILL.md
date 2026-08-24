@@ -18,3 +18,10 @@ description: "Create a container-in-container layout system using nested frames.
 ## Guardrails
 - Do not nest cards inside cards until the layout feels boxed in.
 - Do not let frame lines overpower content readability.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -73,3 +73,10 @@ for f in articles/YYYY-MM-DD-ui-inspiration-capture/videos/*.mp4; do ffprobe -v 
 - The scroll video is evidence that the page can render during real scrolling, but it is not a substitute for full-page still evidence.
 - Native `fullPage` screenshots can still be saved as comparison candidates, but do not use them as source of truth unless they visually match the stitched capture.
 - For daily UI articles, update the manifest and commit only the repaired article assets and metadata.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -4,3 +4,10 @@
 - **Status**: Completed Milestone 3 Review & Verification
 - **Current Step**: Writing final handoff report and notifying caller
 - **Verdict**: APPROVE
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

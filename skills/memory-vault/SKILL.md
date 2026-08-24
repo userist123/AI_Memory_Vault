@@ -34,3 +34,10 @@ Never execute arbitrary scripts from raw imported repositories merely because th
 ## Memory writes
 
 When the task produces durable project knowledge, decisions, procedures, or validated reusable knowledge, place it in the appropriate canonical Vault area rather than duplicating it in the plugin directory.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

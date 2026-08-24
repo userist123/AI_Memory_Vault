@@ -18,3 +18,10 @@ description: Linear.app Design System Tokens & Aesthetics (Dark restrained, subt
 - Fast micro-transitions (150ms ease-out).
 - Subtle 1px gradient borders on hover.
 - High keyboard shortcut density (KBD tags, Command Menu).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

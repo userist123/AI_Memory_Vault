@@ -52,3 +52,10 @@ description: "Create a framed dark technical design system with border-gradient 
 - Thick borders, chunky shadows, or bloated cards that make the system feel clumsy instead of precise.
 - Soft consumer-app styling that removes the engineered shell and utility-label character.
 - Treating gradient borders as decoration only; they should actively define hierarchy and premium structure.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -138,3 +138,10 @@ The synchronization is considered valid when:
 - memory candidates have a verification path;
 - Obsidian provides navigation without becoming a competing source of truth;
 - raw external sources remain traceable to their original repository and commit.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

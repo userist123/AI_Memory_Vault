@@ -11,3 +11,10 @@
 - [x] Perform adversarial analysis & stress tests on ContinualLearningGuard, LearningEngine, RetrievalEvaluator
 - [x] Audit integrity invariants (no facade, no hardcoded results, no task bypasses, no unauthorized self-verification)
 - [x] Complete handoff.md and send verdict message (APPROVE)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

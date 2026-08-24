@@ -6,3 +6,10 @@ description: Structures multi-layer codebases preserving strict domain boundarie
 # Clean Architecture Layering Skill
 - Domain -> Application -> Infrastructure -> Presentation layers.
 - Dependency Inversion Principle (DIP): Infrastructures implement application interfaces.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

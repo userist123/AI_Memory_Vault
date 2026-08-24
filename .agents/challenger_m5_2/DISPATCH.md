@@ -13,3 +13,10 @@ Task:
 2. Run full pytest across all test modules (`python -m pytest -v`) and verify 100% pass rate.
 3. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
 4. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2\handoff.md` and send a message back with your verdict.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

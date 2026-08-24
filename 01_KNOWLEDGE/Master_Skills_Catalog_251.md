@@ -273,3 +273,10 @@ Fiecare dintre cele **251 de SKILL-uri operaționale** este stocat fizic în fol
 249. `xiaopu-web-design`
 250. `zero-trust-architecture`
 251. `zustand-state-management`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

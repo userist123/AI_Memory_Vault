@@ -17,3 +17,10 @@ Your task:
 5. Write your detailed test survey report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\report.md.
 6. Write your handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\handoff.md.
 7. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

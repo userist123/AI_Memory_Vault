@@ -44,3 +44,10 @@ Hallucination is mathematically inevitable for general-purpose LLMs (Xu et al. 2
 
 ## Relevance to this vault's Cognitive Core
 Directly grounds design choices already implemented: `ReflectionPipeline` mirrors CoVe's factored verification; `RecallEngine`'s multi-signal scoring mirrors the self-consistency principle; `Lifecycle.REVIEW` gating mirrors explicit-uncertainty-permission at the system level.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

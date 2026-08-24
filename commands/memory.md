@@ -12,3 +12,10 @@ Use the AI Memory Vault retrieval workflow.
 6. Preserve provenance for external material.
 
 The Vault is the canonical memory layer; do not create a parallel memory store.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

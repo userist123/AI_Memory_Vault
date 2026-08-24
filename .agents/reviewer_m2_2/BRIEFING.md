@@ -44,3 +44,10 @@ Review Milestone 2: Storage, WAL & Audit Integrity focusing on SHA-256 audit log
 - handoff.md — Final review report and verdict
 - progress.md — Liveness heartbeat
 - BRIEFING.md — Persistent context and situational awareness
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

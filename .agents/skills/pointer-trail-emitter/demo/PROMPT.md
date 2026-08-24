@@ -47,3 +47,10 @@ Use `$pointer-trail-emitter` to build **Wisps** as a focused local demo. Treat `
 ```text
 Use $pointer-trail-emitter to rebuild this as warm forge sparks over a light paper page: an off-white ground, dark serif type, and orange-to-ash embers that fall rather than rise. Shorten the life so the trail reads as sparks instead of drift, and invert the buoyancy. Keep the distance-based emission, the sub-segment placement, the ring-buffer ordering, the extent-relative scatter, the coast damping, the idle breath, the keyboard path, the reduced-motion still frame, and the dt and DPR budgets exactly as they are. Change only the subject, palette, type, and direction of travel.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

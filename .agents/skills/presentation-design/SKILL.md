@@ -50,3 +50,10 @@ Slide-ul susține vorbitorul, nu îl înlocuiește. Documentul detaliat e alt li
 
 - Randează fiecare slide și inspectează: text tăiat, wrap urât, suprapuneri, contrast slab.
 - Test „ultimul rând al sălii": lizibil de la 3 metri?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

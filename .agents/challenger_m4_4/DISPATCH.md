@@ -20,3 +20,10 @@ Adversarially challenge and stress-test the full Cognitive Loop (OODA) and Multi
 2. Run full pytest suite.
 3. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

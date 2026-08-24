@@ -50,3 +50,10 @@ Foundation + historical memory import.
 - [ ] Classify
 - [ ] Build retrieval layer
 - [ ] Build validation layer
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

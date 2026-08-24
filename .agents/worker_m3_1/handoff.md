@@ -66,3 +66,10 @@ Milestone 3 requirements are fully satisfied:
 2. Run full test suite:
    `python -m pytest`
 3. Invalidation conditions: Any test failure or any bypass allowing `Principal.AI_AGENT` to propose/update `verification="verified"` or privileged provenance without raising an exception.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

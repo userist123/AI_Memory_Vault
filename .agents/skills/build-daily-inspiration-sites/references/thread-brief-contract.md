@@ -64,3 +64,10 @@ Keep the reference's cinematic editorial pacing, oversized typography, image-led
 ```
 
 Do not include source code from the reference, copied copy, or downloaded source media in the brief.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

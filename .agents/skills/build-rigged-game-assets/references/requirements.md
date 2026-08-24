@@ -168,3 +168,10 @@ Reject or block release when:
 - controls do not exercise the real runtime action/equipment API;
 - the page cannot scroll or drag rotation blocks vertical touch scrolling;
 - browser, build, lint, focused tests, or required manifest validation fails.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

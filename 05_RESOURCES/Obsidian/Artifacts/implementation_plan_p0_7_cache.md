@@ -107,3 +107,9 @@ Build a secure, deterministic cache layer that satisfies the P0‑7 contract whi
 ---
 *All actions will be performed after your explicit approval of this implementation plan.*
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

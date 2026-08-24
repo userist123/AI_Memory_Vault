@@ -17,3 +17,10 @@ Keep motion slow and editorial: 160–220ms control feedback, 500–760ms reveal
 ## Remix prompt
 
 Use $editorial-portfolio-chapters and the included demo as the quality bar, but replace the studio, words, project subjects, palette, imagery, and contact story. Preserve the work-first narrative, full-bleed hero restraint, color-coded project chapters, oversized service handoff, equivalent hover and focus cues, responsive behavior, and reduced-motion support. Do not copy the Morrow identity or any source brand.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

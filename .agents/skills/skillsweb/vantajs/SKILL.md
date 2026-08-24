@@ -53,3 +53,10 @@ description: Use when adding animated WebGL background effects with Vanta.js (se
 - Which effect (waves, birds, fog, net, etc.) and brand colors?
 - Must it run on mobile? If yes, what’s acceptable FPS/quality?
 - Is it behind text (needs contrast/readability)?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

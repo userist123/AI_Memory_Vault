@@ -30,3 +30,10 @@ Read ORIGINAL_REQUEST.md, PROJECT.md, and .agents/worker_m4_2/handoff.md.
 Empirically stress-test propose_synapse against real MemoryController storage backends and test SelfRefine with hostile/None/malformed inputs.
 Run full pytest suite.
 Write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_3\handoff.md and notify the orchestrator.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

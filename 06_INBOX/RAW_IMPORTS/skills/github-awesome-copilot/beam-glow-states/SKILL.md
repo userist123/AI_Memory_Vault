@@ -339,3 +339,10 @@ Test:
 - Long labels, 200% zoom, many list items, offscreen pausing, route cleanup, and console errors.
 
 Keep [REFERENCES.md](REFERENCES.md) as the links-only source list.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

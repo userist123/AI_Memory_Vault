@@ -27,3 +27,10 @@ Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_R
 Read ORIGINAL_REQUEST.md, PROJECT.md, and .agents/worker_m4_2/handoff.md.
 Conduct an independent forensic integrity audit of Milestone 4 post-remediation: verify genuine logic, zero facades, zero security invariant violations, and full test pass.
 Write your complete handoff report with explicit verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_2\handoff.md and notify the orchestrator.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

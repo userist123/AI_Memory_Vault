@@ -24,3 +24,10 @@ Fixed missing typing imports (`Tuple`) in `cognitive_core/learning.py` and `cogn
 - Ran full test suite via `python -m pytest -v`.
 - Result: **197 passed in 6.90s** (100% passing across all 37 test modules).
 - Ran runtime typing introspection across all three modified files with zero errors.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

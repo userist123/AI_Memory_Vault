@@ -162,3 +162,10 @@ Run the project's lint, production build, rendered tests, and `git diff --check`
 ## Handoff
 
 Report the affected media, Shaders package version, fallback behavior, reduced-motion behavior, build/test results, and live interaction verification. Distinguish a locally ready effect from a published deployment.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

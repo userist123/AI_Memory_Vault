@@ -109,3 +109,10 @@ To independently verify this milestone:
    - `cognitive_core/consolidation.py` (canonical schema alignment)
    - `cognitive_core/tests/test_consolidation.py` (source_ref validation)
    - `cognitive_core/tests/test_milestone4_empirical_challenge.py` (comprehensive challenge suite)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

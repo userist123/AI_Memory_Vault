@@ -480,3 +480,10 @@ Ship a development-only overlay that can show:
 - toggles for fog, post, shadows, textures, wireframe, and fallback.
 
 The debug overlay prevents subjective guessing. Remove or gate it in production, but keep the instrumentation callable.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

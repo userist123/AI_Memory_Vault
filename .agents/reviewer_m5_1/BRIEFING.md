@@ -53,3 +53,10 @@ Conduct independent quality and adversarial review of Milestone 5 (Continual Lea
 - `.agents/reviewer_m5_1/BRIEFING.md` — Agent briefing & memory
 - `.agents/reviewer_m5_1/progress.md` — Heartbeat and progress tracking
 - `.agents/reviewer_m5_1/handoff.md` — Final review handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

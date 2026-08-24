@@ -70,3 +70,10 @@ Convert any usable reference video into a builder-ready prompt that captures wha
 ## References
 
 - Read `references/superprompt-template.md` when writing the final prompt from scratch or when the user asks for the “full detailed prompt.”
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

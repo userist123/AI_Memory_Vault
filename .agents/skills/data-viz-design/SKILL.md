@@ -43,3 +43,10 @@ Fiecare pixel prezintă date. Tot ce nu prezintă date se șterge.
 - Valoarea: mare, bold — elementul dominant.
 - Eticheta: mică, muted. Delta: săgeată colorată + % (teal/verde sus, roșu jos, gri neutru).
 - Sparkline opțional: linie mică de trend, fără axe.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

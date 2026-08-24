@@ -20,3 +20,10 @@ SORT status ASC, updated DESC
 - [[LogAnalyzer_MVP]]
 - [[GPO_Baseline_Deployment]]
 - [[Elite_Quant_Bot]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

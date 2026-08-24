@@ -50,3 +50,10 @@ description: "Blend editorial magazine composition with precision product-tech d
 - Bright multi-color palettes that break the restrained editorial tone.
 - Treating it as plain magazine design without any technical precision cues.
 - Using the accent color everywhere instead of letting it punctuate the composition.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

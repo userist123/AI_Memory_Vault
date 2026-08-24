@@ -76,3 +76,10 @@ si sa poata separa:
 - ce este decizie;
 - ce este ipoteza;
 - ce este depasit.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -12,3 +12,10 @@
 5. [x] Verify Acceptance Criteria coverage in test suite (all 9 criteria satisfied)
 6. [x] Generate detailed report.md and handoff.md
 7. [x] Send completion message to parent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

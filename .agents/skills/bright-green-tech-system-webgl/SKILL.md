@@ -50,3 +50,10 @@ description: "Create a bright-green technical design system with structured spli
 - Treating WebGL as a random hero decoration disconnected from the design system.
 - Soft rounded consumer-app styling that fights the sharp framed technical shell.
 - Excessively noisy particles, fast motion, or too many glowing layers that reduce legibility.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

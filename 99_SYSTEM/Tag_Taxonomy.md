@@ -42,3 +42,10 @@ Tags support retrieval and cross-cutting classification; they do not replace `ty
 
 - [[Canonical Frontmatter]]
 - [[Knowledge Graph Relations]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

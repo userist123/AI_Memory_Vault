@@ -8,3 +8,10 @@ description: Generare deterministă de teste unitare, acoperire cazuri limită (
 - **Arrange-Act-Assert (AAA)**: Structură clară în 3 etape pentru fiecare test.
 - **Edge Cases**: Testare valori nule, limite numerice, excepții de rețea, erori de timeout.
 - **Isolation**: Mocking strict al dependențelor de persistență și rețea.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

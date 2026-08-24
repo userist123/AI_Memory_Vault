@@ -298,3 +298,10 @@ func logMemoryFootprint() {
 - [ ] Check `NSCache` usage instead of plain dictionaries for caches
 - [ ] Verify images are downsampled to display size
 - [ ] Use `autoreleasepool` in tight loops with ObjC-bridged objects
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -46,3 +46,10 @@ Adversarial stress testing and mathematical validation against `RetrievalEvaluat
 - `.agents/challenger_m5_2/DISPATCH.md` — Initial task dispatch log
 - `.agents/challenger_m5_2/progress.md` — Liveness & progress tracking
 - `.agents/challenger_m5_2/handoff.md` — Final 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

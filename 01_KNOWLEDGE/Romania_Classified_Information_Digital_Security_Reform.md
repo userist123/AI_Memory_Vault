@@ -63,3 +63,10 @@ The document's strongest reusable lessons are architectural rather than Romanian
 - Current status of Romanian legislative proposal B110/2026.
 - Current NATO and EU directives cited by identifier.
 - Any claims regarding named courts, cases, institutional obligations, or technical product approvals.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

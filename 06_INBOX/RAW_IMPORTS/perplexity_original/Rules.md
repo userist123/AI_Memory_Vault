@@ -159,3 +159,10 @@ updated: 2026-08-09
 status: active
 ---
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

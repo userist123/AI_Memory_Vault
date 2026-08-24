@@ -15,3 +15,10 @@ Last visited: 2026-08-15T02:01:52+03:00
 
 ### Current Task
 - Messaging orchestrator parent agent with final summary and handoff path
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

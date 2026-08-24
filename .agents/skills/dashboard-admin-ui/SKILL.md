@@ -42,3 +42,10 @@ Un dashboard răspunde în 5 secunde la: „E totul OK? Dacă nu, unde e problem
 - Gauge-uri și pie 3D „executive".
 - Grafice decorative fără întrebare de business în spate.
 - Scroll orizontal pe tabele fără coloane înghețate.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

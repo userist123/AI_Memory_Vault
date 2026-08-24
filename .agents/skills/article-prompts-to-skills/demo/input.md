@@ -21,3 +21,10 @@ Create animated topic filters for the story grid. Filtering should preserve docu
 - Do not copy the article's page layout, title, typography, or color palette.
 - Preserve each behavior's input methods and accessibility contract.
 - Produce one complete skill package per independent behavior.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

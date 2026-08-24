@@ -72,3 +72,10 @@ Operatorul Uman (`Principal.HUMAN` / `Principal.ADMIN`) poate aproba (`Operation
 | - | [`90_TEMPLATES/Template_Preference_Perplexity_Legacy.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/90_TEMPLATES/Template_Preference_Perplexity_Legacy.md) | legacy | `perplexity_original/Template_Preference.md` | Import legacy file | Minim | `ARCHIVE/REVIEW` |
 | - | [`90_TEMPLATES/Template_Procedure_Perplexity_Legacy.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/90_TEMPLATES/Template_Procedure_Perplexity_Legacy.md) | legacy | `perplexity_original/Template_Procedure.md` | Import legacy file | Minim | `ARCHIVE/REVIEW` |
 | - | [`90_TEMPLATES/Template_Project_Perplexity_Legacy.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/90_TEMPLATES/Template_Project_Perplexity_Legacy.md) | legacy | `perplexity_original/Template_Project.md` | Import legacy file | Minim | `ARCHIVE/REVIEW` |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

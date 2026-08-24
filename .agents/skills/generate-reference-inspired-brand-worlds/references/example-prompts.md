@@ -110,3 +110,10 @@ Constraints: render the brand name exactly once; no extra text; no watermark; sa
 ```
 
 Before accepting the result, confirm that at least four signature elements differ from the source and that the five brands still differ from one another in meaning, ritual, environment, and motif.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

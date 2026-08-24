@@ -155,3 +155,10 @@ enriched_by: ai
 
 **Reversed:** {{date or null}}  
 **Reversal Reason:** <!-- If applicable -->
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -46,3 +46,10 @@ Ecosistemul de scripturi PowerShell oferă soluții pentru debloating (înlătur
 ## Changelog
 
 - 2026-08-14: Nota creată din GitHub topics și articole despre Win11Debloat și scripturi asociate.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

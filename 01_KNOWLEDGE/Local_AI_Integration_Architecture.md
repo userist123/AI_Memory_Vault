@@ -48,3 +48,10 @@ Modelele locale (Ollama: Qwen, DeepSeek, LLaMA, Gemma) garantează confidențial
 - Verificarea stării serviciului la pornire (`/api/tags`) cu gestionarea explicită a latenței de cold-start (încărcarea modelului în VRAM).
 - Configurare `keep_alive`: extinsă (`10m`–permanent) pentru fluxuri active, eliberare rapidă de VRAM după finalizarea loturilor.
 - Jurnalizare completă a fiecărui apel: model, hash prompt, durată, latență și număr de tokeni generați.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -29,3 +29,9 @@ relations: []
 - [x] Git commit and push the results
 - [x] Create walkthrough artifact
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

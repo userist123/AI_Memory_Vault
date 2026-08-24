@@ -132,3 +132,10 @@ If you light windows at night with an emissive material, that glow escapes throu
 - Look at the roof from directly above once. Overshooting tiles and NaN panels only show from there.
 - Switch styles ten times. If memory climbs, you are not disposing the previous group's geometries.
 - Count draw calls per style. If one style is triple the others, a material is not shared.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -99,3 +99,10 @@ Eight external GitHub repositories submitted by the user for reference. Descript
 - [[00_CORE/GRAPH/14 External and UI Resources Map]]
 - [[01_KNOWLEDGE/TypeUI_Prompt_Categories_Reference]]
 - [[01_KNOWLEDGE/UI_UX_Resources_Directory_Reference]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

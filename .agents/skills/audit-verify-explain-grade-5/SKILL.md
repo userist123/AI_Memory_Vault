@@ -102,3 +102,10 @@ Separate facts from judgment:
 - Judgment: "That gives confidence in the timeline planner, but not the full editor UI."
 
 End with the most useful next test only when another test would materially improve confidence.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

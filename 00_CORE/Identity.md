@@ -79,3 +79,10 @@ Ordinea implicita de incredere:
 - [[Memory_Protocol]]
 - [[Confidence_Model]]
 - [[System_Architecture]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

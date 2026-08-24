@@ -57,3 +57,10 @@ Conduct the Milestone 4 Forensic Audit: Verify genuine implementation across cog
 - `.agents/auditor_m4_3/progress.md` — Liveness heartbeat
 - `.agents/auditor_m4_3/run_probes.py` — Standalone empirical probe script
 - `.agents/auditor_m4_3/handoff.md` — Final forensic audit handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

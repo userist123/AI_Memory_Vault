@@ -67,3 +67,10 @@ Empirically challenge and stress-test the full Cognitive Loop (OODA) and Multi-A
 - `.agents/challenger_m4_4/BRIEFING.md` — Situational awareness
 - `.agents/challenger_m4_4/handoff.md` — Final handoff report with verdict
 - `cognitive_core/tests/test_milestone4_adversarial_challenger_m4_4.py` — Adversarial test suite
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

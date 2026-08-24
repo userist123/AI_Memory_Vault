@@ -44,3 +44,10 @@ lib/                         → db, auth, validări, utils
 - Stările de UI complete la fiecare fetch: loading / error / empty / success — toate patru proiectate.
 - Lighthouse pe landing înainte de deploy: LCP < 2.5s, fără font blocking.
 - Env vars prin `.env.local` + validare la boot (aplicația refuză să pornească cu config lipsă).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

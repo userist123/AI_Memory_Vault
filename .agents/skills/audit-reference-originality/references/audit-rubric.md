@@ -108,3 +108,10 @@ After the table include:
 - **Assets:** replace the file and document its source or generation prompt.
 - **Video:** use new footage and a new edit structure; changing playback speed is insufficient.
 - **Motion/layout:** retain only abstract principles and rebuild the visible sequence around the new content.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

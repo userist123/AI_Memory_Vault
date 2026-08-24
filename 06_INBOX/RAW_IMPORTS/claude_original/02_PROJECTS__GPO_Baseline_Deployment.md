@@ -32,3 +32,10 @@ $ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $My
 ## Next Steps
 - [ ] Validare fix `$PSScriptRoot` în toate contextele de execuție (standalone, ISE, dot-source, Task Scheduler)
 - [ ] Test end-to-end pe workstation curat
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

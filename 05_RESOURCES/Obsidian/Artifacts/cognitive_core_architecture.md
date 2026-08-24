@@ -203,3 +203,9 @@ Based on the existing repository state, I propose the following phased implement
 1. **Graph Backend**: Will the volume of relationships eventually necessitate migrating `relations` into a dedicated graph index, rather than parsing YAML arrays per file? (For now, FileStorageEngine suffices, but scale is a concern).
 2. **Attention Weights**: How should the baseline weights for Attention (recency vs confidence vs task relevance) be calibrated without machine learning models?
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

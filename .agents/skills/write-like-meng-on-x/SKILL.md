@@ -131,3 +131,10 @@ git diff --check -- <skill-dir>
 Stage only the source-controlled `write-like-meng-on-x/` skill folder and commit the narrow change. Leave unrelated modified and untracked files alone.
 
 Report the sampled and added counts, date range, profile changes, duplicate checks, browser status, validation result, and commit hash. If no new post or durable voice insight was found, report a no-op instead of creating churn.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

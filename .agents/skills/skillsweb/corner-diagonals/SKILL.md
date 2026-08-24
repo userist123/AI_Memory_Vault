@@ -195,3 +195,10 @@ Use a darker shell with diagonal outline treatment.
 - Buttons keep at least `44px` height for touch targets.
 - Repeated components use the same `--cut` scale.
 - Focus states remain visible around the clipped shape.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

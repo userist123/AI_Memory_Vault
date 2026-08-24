@@ -47,3 +47,10 @@ Platformă completă de investigații digitale (DFIR Enterprise), Threat Hunting
 - **53 de teste automate unitare și de integrare** trec cu succes (0 Failed).
 - Ambele proiecte (`LogAnalyzer.AirGapped.csproj` și `LogAnalyzer.Network.csproj`) se compilează curat și produc executabile dedicate.
 - Sincronizat complet pe GitHub pe branch-urile `feature/sqlite-dashboard` și `main`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

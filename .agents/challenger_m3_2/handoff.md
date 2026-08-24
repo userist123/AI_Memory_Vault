@@ -55,3 +55,10 @@ Milestone 3 Security Invariants and Attestation Gates have passed all empirical 
 3. Inspect challenge test implementation:
    `memory_controller/tests/test_milestone3_empirical_challenge.py`
 4. Invalidation conditions: Any test failure, SQLite concurrency lock failure, or audit log hash mismatch (`is_valid == False`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

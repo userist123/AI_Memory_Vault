@@ -49,3 +49,10 @@ Do not reconstruct or simplify the demo. Start from the current approved `kage.h
 ```text
 Use $build-threejs-scroll-worlds to create an interactive museum journey through a continuous desert observatory at dusk. Keep the proven Kage architecture: one persistent scene, six semantic chapters, authored camera position/target/FOV waypoints, exact and damped progress values, native reversible scrolling, responsive camera overrides, local Three.js, reduced-motion snapping, and a poster fallback. Build a coherent material and texture system for sandstone, oxidized brass, glass, dust, paper charts, and emissive instruments. Add keyboard-accessible local interactions for a telescope, star map, and mechanical orrery without letting them take control of the scroll camera. Change the world, palette, typography, copy, landmarks, DOM layout, foreground treatment, and interaction design while preserving the real-time scroll-world mechanism and measurable performance budgets.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -52,3 +52,10 @@ description: "Create a high-contrast clean skeuomorphic design system with molde
 - Flat monochrome dark UI that ignores the tactile layered-surface character.
 - Too many accent colors or bright glows that break the clean industrial mood.
 - Overcrowding every module with depth effects until the hierarchy becomes noisy.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

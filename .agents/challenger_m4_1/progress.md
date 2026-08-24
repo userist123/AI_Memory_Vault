@@ -15,3 +15,10 @@
   1. `ReflectionPipeline.propose_synapse` (`cognitive_core/reflection.py:124-153`): creates non-canonical relations schema (`type` instead of `relation`, missing `target`, invalid `confidence` property) and submits `verification="verified"` in update, causing silent rejection on real controller.
   2. `SelfRefine.refine_memory`: raises `AttributeError` when `candidate={"content": None}`.
 - [x] Wrote handoff report with explicit verdict `REQUEST_CHANGES` to `.agents/challenger_m4_1/handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

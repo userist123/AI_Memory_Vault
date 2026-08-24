@@ -11,3 +11,10 @@ Follow all Vault Cognitive Operating Rules, AGENTS.md operating contracts, and P
 Decompose the work, dispatch specialists/workers, monitor progress, run the full test suite (197+ tests), and deliver the verified cognitive system.
 Maintain your progress.md and BRIEFING.md continuously.
 When you have fully completed and verified all requirements and acceptance criteria, report your completion to the Sentinel.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

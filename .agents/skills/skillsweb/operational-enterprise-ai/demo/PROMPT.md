@@ -17,3 +17,10 @@ Add loading, unavailable integration, insufficient permission, stale data, denie
 ## Remix prompt
 
 Use $operational-enterprise-ai and the included demo as the quality bar for a different controlled automation product. Replace the brand, workflow, claims, metrics, labels, and conversion context. Preserve the visible system boundary, approval gate, audit and rollback model, dark operational hierarchy, semantic disclosures, responsive layout, and reduced-motion support.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

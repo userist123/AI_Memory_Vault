@@ -12,3 +12,10 @@ Task:
 3. Record findings and verdict (APPROVE or REQUEST_CHANGES) in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2\handoff.md.
 4. Notify parent via send_message.
 </USER_REQUEST>
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

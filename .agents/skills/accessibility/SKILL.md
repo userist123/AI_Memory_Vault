@@ -448,3 +448,10 @@ See the [screen reader commands reference](references/A11Y-PATTERNS.md#screen-re
 - [Web Quality Audit](../web-quality-audit/SKILL.md)
 - [WCAG criteria reference](references/WCAG.md)
 - [Accessibility code patterns](references/A11Y-PATTERNS.md)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

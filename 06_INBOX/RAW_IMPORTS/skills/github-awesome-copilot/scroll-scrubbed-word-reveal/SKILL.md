@@ -75,3 +75,10 @@ Kill ScrollTriggers, remove scroll and resize listeners, cancel animation frames
 Test inline links and emphasis, punctuation, repeated spaces, long words, 200% zoom, 390/768/1440 widths, content changes, forward and reverse scrolling, reduced motion, keyboard focus, screen-reader reading order, and teardown. The final DOM must still communicate the complete sentence with JavaScript disabled.
 
 Use [demo/index.html](demo/index.html) as the working reference and [demo/PROMPT.md](demo/PROMPT.md) to recreate or remix it. Keep [REFERENCES.md](REFERENCES.md) as the links-only implementation source list.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

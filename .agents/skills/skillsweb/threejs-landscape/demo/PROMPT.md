@@ -35,3 +35,10 @@ Use $threejs-landscape but make it a coastal version: wet sand, tide line, and m
 ```text
 Use $threejs-landscape and add a slow camera dolly that follows the terrain height, keeping the horizon steady.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

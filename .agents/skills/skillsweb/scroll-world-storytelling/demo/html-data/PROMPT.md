@@ -33,3 +33,10 @@ Evidence-led editorial report: warm limestone paper, near-black type, vermilion 
 ## Remix prompt
 
 Use $scroll-world-storytelling in HTML/data/type mode for my supplied story and dataset. First define the 5–7 beat ledger and choose one truthful chart grammar. Then build a semantic landing page with native scroll, selectable labels, accessible values, deterministic reverse states, responsive typography, reduced motion, one CTA, and a real-browser verification pass.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

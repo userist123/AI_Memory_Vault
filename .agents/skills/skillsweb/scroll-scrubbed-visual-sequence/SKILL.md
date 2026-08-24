@@ -90,3 +90,10 @@ Expose scroll distance, renderer, frame count, poster frame, media fit, focal po
 Check forward and reverse scrolling, fast flicks, resize while active, 390/768/1024/1440 widths, unloaded frames, blocked video, reduced motion, keyboard order, route cleanup, and console errors. The same scroll position must always reproduce the same state.
 
 Use [demo/index.html](demo/index.html) as the working reference and [demo/PROMPT.md](demo/PROMPT.md) to recreate or remix it. Keep [REFERENCES.md](REFERENCES.md) as the links-only implementation source list.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

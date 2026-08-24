@@ -40,3 +40,10 @@ description: "Create a corner-anchored laser composition with thin beams, a brig
 - Full-screen fog with no localized relationship to the corner emitter.
 - Hardcoding a cold blue palette when the design clearly uses another primary color.
 - Symmetrical centered compositions when the goal is an off-axis corner beam effect.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

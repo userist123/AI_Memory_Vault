@@ -39,3 +39,10 @@ capped at 2. The whole scene pauses when the tab is hidden.
 composite as pink. Driving green and blue toward zero fixed it; adjusting the
 orange in the editor never did, because the value is decoded before the material
 multiplies it.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

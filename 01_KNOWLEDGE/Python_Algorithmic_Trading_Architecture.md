@@ -40,3 +40,10 @@ Un bug în codul de trading generează pierderi financiare directe. Arhitectura 
   - Calculul include obligatoriu spread-ul real, comisioanele și slippage-ul estimat.
   - Metricile raportate obligatoriu: *Profit Factor*, *Max Drawdown*, *Win Rate*, număr total tranzacții.
 - **Controlul Riscului**: Stop de urgență (*Kill Switch*) accesibil instant; limită de pierdere zilnică (*Daily Loss Limit*) cu oprire automată a tranzacționării.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

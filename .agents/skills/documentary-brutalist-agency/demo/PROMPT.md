@@ -17,3 +17,10 @@ Implement a full-screen menu with semantic controls, `aria-expanded`, Escape clo
 ## Remix prompt
 
 Use $documentary-brutalist-agency and the included demo as the quality bar for a different studio, cultural institution, architecture office, or production company. Replace the identity, headline, projects, images, proof, and pale accent colors. Preserve the billboard hierarchy, hard chapter cuts, narrative collage order, menu behavior, responsive line breaks, and reduced-motion support.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -41,3 +41,10 @@ Coordinate, monitor, and verify the autonomous transformation of the AI Memory V
 - .agents/orchestrator_gen2/GATE_STATUS.md — Milestones 1-4 gate tracking (All PASS)
 - .agents/orchestrator_gen3/GATE_STATUS.md — Milestone 5 gate tracking
 - .agents/worker_m5_1/handoff.md — Milestone 5 Worker handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -34,3 +34,10 @@ Repo-ul separat `AI_Memory_Vault_CODEX_READY` conține deja orchestrator, workin
 - Nu scoți aplicația din regim air-gapped (fără cereri HTTP către altceva decât `127.0.0.1`).
 - Nu introduci text alb pe fundal alb sau combinații sub 4.5:1 contrast.
 - Nu ștergi invariantele P0-P18 fără să marchezi explicit impactul.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -76,3 +76,10 @@ Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive 
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md — Test Infrastructure
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
 - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2\GATE_STATUS.md — Gate Status
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

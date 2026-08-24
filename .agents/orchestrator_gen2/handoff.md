@@ -39,3 +39,10 @@
 4. Dispatch verification team for Milestone 5 Gate (Reviewers x2, Challengers x2, Forensic Auditor).
 5. Verify 100% test pass across all modules.
 6. Report final project completion to the Sentinel parent (`72226d68-bdea-4026-bf4c-dfb6ed565e6b`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

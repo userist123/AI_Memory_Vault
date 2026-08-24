@@ -51,3 +51,10 @@ Verifica:
 ## Learning Loop
 
 `Experience -> Observation -> Lesson -> Procedure/Rule -> Validation -> Memory`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

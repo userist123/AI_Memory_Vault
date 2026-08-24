@@ -132,3 +132,10 @@ The right chapter rail, nav highlight, and section ownership read `activeChapter
 5. Resize while between chapters at 1440×900, 768×1024, and 390×844.
 6. Enable reduced motion and force the WebGL fallback.
 7. Inspect failed requests, console errors, DPR, hidden-tab pause, and teardown.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

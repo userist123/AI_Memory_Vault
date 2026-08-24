@@ -14,3 +14,10 @@ Last visited: 2026-08-15T02:03:10+03:00
 4. [x] Phase 3: Dynamic Test Execution (307/307 passed across 38 suites)
 5. [x] Phase 4: Adversarial Stress-Testing & Independent Forensic Probes (8/8 passed)
 6. [x] Phase 5: Handoff Report & Verdict Formulation (handoff.md created)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

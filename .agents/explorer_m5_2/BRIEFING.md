@@ -38,3 +38,10 @@ Investigate Milestone 5 implementation: `cognitive_core/evaluation.py`, TRACe me
 - progress.md — Liveness heartbeat
 - report.md — Detailed evaluation findings
 - handoff.md — 5-component handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

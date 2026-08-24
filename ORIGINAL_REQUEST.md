@@ -36,3 +36,10 @@ Execute memory workflows using least-privilege worker subagents (Router, Retriev
 - [ ] Ephemeral REVIEW lessons are synthesized into consolidated canonical knowledge through SelfRefine critique filters.
 - [ ] Confidence promotion to `very_high` strictly requires verifiable execution evidence (`source_type="execution"`).
 - [ ] `ContinualLearningGuard` detects and prevents catastrophic forgetting across registered anchor memories.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

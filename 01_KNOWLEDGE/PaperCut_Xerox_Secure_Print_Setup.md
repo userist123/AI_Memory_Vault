@@ -63,3 +63,10 @@ Configurarea exacta a porturilor de firewall nu a fost confirmata cu numere de p
 ## Changelog
 
 - 2026-08-14: nota creata din memoria conversatiilor.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

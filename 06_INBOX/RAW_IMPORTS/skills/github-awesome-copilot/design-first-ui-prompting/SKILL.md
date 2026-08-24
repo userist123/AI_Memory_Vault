@@ -107,3 +107,10 @@ Don’t ask the model to “remember” taste.
 - What’s the hierarchy (H1 / sub / CTA)?
 - Which style lane: minimal editorial vs playful 3D vs glass UI?
 - Any must-keep constraints (font vibe, color, spacing, grid)?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

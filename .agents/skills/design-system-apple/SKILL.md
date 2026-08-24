@@ -15,3 +15,10 @@ description: Apple Premium Minimal Design System Tokens (Serene typography, fros
 - Generous padding (80px+ section spacing).
 - Smooth scroll scrubbed video sequences.
 - Fluid spring physics (Apple Ease).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -47,3 +47,10 @@ Use descriptive Markdown filenames. A filename may change when a title changes; 
 - [[Canonical Frontmatter]]
 - [[Provenance and Redaction]]
 - [[Integrity Check]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

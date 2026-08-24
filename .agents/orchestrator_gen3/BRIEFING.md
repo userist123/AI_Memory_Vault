@@ -72,3 +72,10 @@ Transform the AI Memory Vault into an autonomous, self-improving Cognitive Brain
 - .agents/orchestrator_gen2/handoff.md — Soft handoff from Gen 2
 - .agents/orchestrator_gen3/progress.md — Current status and liveness
 - .agents/orchestrator_gen3/GATE_STATUS.md — Milestone 5 gate verdicts
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

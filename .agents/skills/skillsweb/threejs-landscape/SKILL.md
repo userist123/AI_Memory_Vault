@@ -149,3 +149,10 @@ Keep weather as a multiplier layered on top of this, never as more presets. Four
 - Switch time of day mid-transition twice in a row. It should never jump.
 - Check on a retina display. Stars and thin geometry are where DPR bugs show first.
 - Watch the draw call count, not the triangle count. 1.3M triangles in 18 calls runs at 120fps; 200k triangles in 900 calls does not.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

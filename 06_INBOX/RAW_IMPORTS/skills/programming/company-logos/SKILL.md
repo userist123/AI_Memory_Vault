@@ -20,3 +20,10 @@ description: "Use Iconify Simple Icons logos (64x64) instead of text logos."
 - Do not use typed company names as a replacement for logos unless no icon exists.
 - Do not mix filled, outline, emoji, bitmap, and wordmark styles in one row.
 - Do not hotlink random logo assets from search results.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

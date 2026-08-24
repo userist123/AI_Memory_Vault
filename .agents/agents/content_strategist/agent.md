@@ -14,3 +14,10 @@ description: Specialised Agent persona for Content Strategist with integrated sk
 ## Execution Standards
 - Strict adherence to P0-P18 Invariants (`AGENTS.md`).
 - Fast-path execution using local skills and raw inbox references.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Agents_Skill_Matrix]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

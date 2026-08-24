@@ -18,3 +18,10 @@ Task:
 3. Run full pytest across the repository (`python -m pytest`).
 4. Issue an unambiguous binary audit verdict: CLEAN or INTEGRITY VIOLATION.
 5. Write your detailed audit report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1\handoff.md` and `report.md`, and send a completion message back.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

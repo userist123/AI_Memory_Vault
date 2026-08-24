@@ -175,3 +175,10 @@ Early personal project, not yet built out for external contribution workflows �
 
 - Commit hashes not yet pinned for several sources — run `scripts/sync_check.sh --update` to record baselines. See [`PROVENANCE.md`](PROVENANCE.md).
 - See [Validation](#validation) above for what hasn't been tested yet.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

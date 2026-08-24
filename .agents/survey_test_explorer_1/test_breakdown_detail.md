@@ -465,3 +465,10 @@
 - **Fixtures Used / Defined**: ['setup_notes']
 - **Test Cases**:
   - `test_end_to_end_workflow` (0.772s) — **PASSED**
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

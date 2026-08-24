@@ -83,3 +83,10 @@ v5.1 (.NET 10 WPF / C#):
 
 - **Obsidian Tactical Design**: Trecere la o paletă dark sobru militar (`#080C14` / `#0D1322` / `#121A2D`) cu accente semantice Cyber Blue (`#00E5FF`), Tactical Violet (`#7C3AED`) și Emerald (`#10B981`), respectând WCAG AA.
 - **Air-Gapped Loopback Bridge**: Comunicarea cu asistentul de memorie AI se face exclusiv pe loopback local `127.0.0.1:8765`, fără nicio transmisie externă.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

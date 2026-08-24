@@ -26,3 +26,10 @@ Sistem de trading algoritmic — Python (config, backtesting, orchestrare) + MQL
 
 ## Next Steps
 🔲 *De completat — status curent al dezvoltării*
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

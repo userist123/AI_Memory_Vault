@@ -35,3 +35,10 @@ După confirmarea `DESIGN.md`:
 - Generează codul complet, 100% funcțional (HTML/Tailwind/Next.js/WPF).
 - Nu folosește culori hardcodate. Totul trece prin resursele din `DESIGN.md`.
 - Asigură 60fps pe animații, 100 A11y score și responsive impecabil.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

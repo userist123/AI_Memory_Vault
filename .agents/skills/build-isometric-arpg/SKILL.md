@@ -36,3 +36,10 @@ Avoid adding a second system until the preceding slice has gameplay proof, autom
 ## Validate before release
 
 Run focused unit tests, type/lint checks, production build, and a real playthrough in the repository-approved browser. Verify a fresh start, saved continuation, loss/retry, one complete objective, keyboard/mouse controls, and the intended mobile baseline. Report known baseline failures separately from new failures.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

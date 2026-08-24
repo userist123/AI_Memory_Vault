@@ -12,3 +12,10 @@ Last visited: 2026-08-14T20:15:35Z
 - [x] Run full pytest test suite (264+ passing tests)
 - [x] Compile empirical findings into `handoff.md` with explicit verdict (APPROVE)
 - [ ] Notify parent agent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -71,3 +71,10 @@ Level 1 (100% info): full structured answer. Level 2 (~70%): answer + explicit "
 | Immutable audit logging | `AuditLogger` (JSON lines) |
 
 This confirms the vault's cognitive design already follows current best practice; the antibody taxonomy above can be used directly as a checklist when extending `ReflectionPipeline` with new verification rules.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

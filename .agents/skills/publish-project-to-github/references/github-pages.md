@@ -114,3 +114,10 @@ For Next.js, Astro, Vite, or another framework, use its supported static export 
 ### Custom domain problems
 
 Do not add or change a custom domain without explicit authorization. Read current GitHub documentation, verify DNS ownership, and keep HTTPS enforcement enabled after the domain is verified.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -17,3 +17,10 @@ FROM "04_MEMORY/Experiences"
 WHERE file.name != "README"
 SORT created DESC
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

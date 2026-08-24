@@ -25,3 +25,10 @@ When implementing a custom `SplashWindow` at application startup in `App.xaml.cs
 When reading offline EVTX files using `System.Diagnostics.Eventing.Reader.EventLogReader`:
 - **The Issue:** Querying `record.LevelDisplayName` on an `EventRecord` from a file that was generated on another machine can throw a fatal `EventLogException` or `EventLogNotFoundException` if the specific event provider metadata is not registered on the system running the parser.
 - **The Fix:** Always wrap access to provider-dependent properties (like `LevelDisplayName` and `FormatDescription()`) in a `try-catch` block, falling back to a default value (e.g., `"Info"`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[08 Memory Subsystems Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

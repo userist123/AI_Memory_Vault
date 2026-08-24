@@ -47,3 +47,10 @@ Milestone 3 (Security Invariants & Attestation Gates) passes forensic audit with
 2. Run full pytest test suite:
    `python -m pytest`
 3. Invalidation conditions: Any test failure or any code path allowing `Principal.AI_AGENT` to propose/update `verification="verified"` or privileged provenance without an exception.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

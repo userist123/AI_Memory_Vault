@@ -18,3 +18,10 @@ Pool short-lived objects, reuse materials/geometry, cap particles, and avoid per
 ## Verify
 
 Test overlaps, multiple targets, rapid repetition, pause/resume, lowest quality, reduced motion, and touch viewports. Sample the live encounter for warnings, draw calls, frame time, and visual readability.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

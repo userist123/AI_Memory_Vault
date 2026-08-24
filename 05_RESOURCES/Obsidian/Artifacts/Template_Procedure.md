@@ -73,3 +73,10 @@ relations: []
 | Version | Date | Change |
 |---|---|---|
 | 1.0 | {{date}} | Initial |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

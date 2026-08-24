@@ -31,3 +31,10 @@ relations: []
 - Mediu air-gapped → toate tool-urile trebuie să funcționeze offline, fără dependențe cloud
 - GPO baseline → aplicat prin `LGPO.exe` + PowerShell, nu manual, pentru reproductibilitate
 - Log analysis → prioritizare EVTX (Windows Event Log) ca sursă primară de triage
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -63,3 +63,10 @@ Conduct an independent forensic integrity audit of Milestone 4 (Cognitive Loop &
 - `.agents/auditor_m4_1/BRIEFING.md` — persistent working memory
 - `.agents/auditor_m4_1/progress.md` — heartbeat and progress tracking
 - `.agents/auditor_m4_1/handoff.md` — final handoff and forensic audit verdict
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

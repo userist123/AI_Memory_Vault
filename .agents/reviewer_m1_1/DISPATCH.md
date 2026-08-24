@@ -16,3 +16,10 @@ Task:
 4. Verify code correctness, interface conformance, and that no regressions were introduced.
 5. Provide a clear verdict (APPROVE or REQUEST_CHANGES) in your handoff report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1\handoff.md.
 6. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

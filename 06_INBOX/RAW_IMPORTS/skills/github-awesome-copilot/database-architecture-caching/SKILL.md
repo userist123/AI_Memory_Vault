@@ -13,3 +13,10 @@ description: Arhitectura Bazelor de Date & Caching (PostgreSQL, SQLite WAL, Redi
 ## 2. Strategii de Caching cu Redis
 - **Cache-Aside Pattern**: Aplicația citește din Redis; la miss, citește din DB și scrie în Redis cu TTL (Time-To-Live).
 - **Invalidation Policy**: Invalidare pe evenimente de scriere (`PUT`/`DELETE`), fără stocare de stări expirate.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

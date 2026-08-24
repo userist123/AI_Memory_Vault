@@ -48,3 +48,10 @@ Pentru instrumentele enterprise și guvernamentale (LogAnalyzer, Registru Transf
    - Prelucrarea evenimentelor se face în flux continuu pe `Task.Run`, transmițând către UI pachete (batch-uri) pentru a evita supraîncărcarea mecanismului de notificare.
 3. **Calitate & Standarde de Cod**:
    - `Nullable enable` activat pe tot proiectul; avertismentele tratate ca erori la compilare (`WarningsAsErrors`).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

@@ -27,3 +27,10 @@ Use $scroll-scrubbed-visual-sequence to recreate **Aperture 04 — Matter to Mem
 ## Remix prompt
 
 Use $scroll-scrubbed-visual-sequence and the included demo as the quality bar, but replace the subject, copy, palette, object language, and transformation. Preserve the sticky-stage architecture, normalized reversible progress, semantic content, responsive behavior, cleanup, and reduced-motion contract.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

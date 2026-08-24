@@ -35,3 +35,10 @@ Check the real camera distance, lighting, readability, collision/contact, animat
 ## Record provenance
 
 Track whether each runtime asset is imported, procedural, generated 2D, or reference-only, together with source/license and generation input where applicable. Do not claim an image-to-model pipeline unless source and runtime code actually demonstrate one.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

@@ -114,3 +114,10 @@ To independently verify this review:
    python -c "from cognitive_core.reflection import SelfRefine, ReflectionPipeline; from memory_controller.controller import MemoryController, StorageEngine; from memory_controller.authorizer import Principal; import uuid; assert SelfRefine.refine_memory(None) == (False, None); assert SelfRefine.refine_memory({'content': None}) == (False, {'content': None}); assert SelfRefine.refine_memory({'content': 12345}) == (False, {'content': 12345}); s = StorageEngine(); c = MemoryController(s); r = ReflectionPipeline(c); u1, u2 = str(uuid.uuid4()), str(uuid.uuid4()); s.set(u1, {'id': u1, 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'c', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'r'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'source'}); s.set(u2, {'id': u2, 'type': 'procedure', 'lifecycle': 'ACTIVE', 'category': 'c', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'r'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'target'}); res = r.propose_synapse(Principal.AI_AGENT, u1, u2, 'depends_on'); assert res == u1; updated = s.get(u1); assert updated['verification'] == 'verified'; assert updated['relations'] == [{'relation': 'depends_on', 'target': 'procedure', 'target_id': u2}]; print('ALL CHECKS PASSED')"
    ```
    *Expected Result*: `ALL CHECKS PASSED`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

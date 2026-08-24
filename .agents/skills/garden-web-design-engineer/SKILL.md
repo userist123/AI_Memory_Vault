@@ -490,3 +490,10 @@ Read on demand based on task type — don't preload everything:
 | User named an anchor ("Linear-style" / "Aesop feeling") → load **only that one file** | `references/style-recipes/<anchor>.md` (e.g., `linear.md`, `aesop.md`) |
 | Browse the recipe catalog / compare options after Direction Advisor picks a school | `references/style-recipes/INDEX.md` (3 indexes + cross-cutting anti-patterns; then read 1–3 specific recipe files) |
 | Critique mode — detailed scoring rubrics, per-output-type weighting, common-issue catalog (top 10) | `references/critique-guide.md` |
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

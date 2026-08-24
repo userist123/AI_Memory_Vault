@@ -116,3 +116,10 @@ Suggested exports:
 Suggested exports:
 - 4:5: 800×1000, 1200×1500
 - 1:1 variant: 512×512 (for avatar fallback)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

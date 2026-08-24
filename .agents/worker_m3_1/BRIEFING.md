@@ -55,3 +55,10 @@ Verify and enforce all P0-P15 security invariants, attestation gates, and tool r
 - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
   - **Local copy**: `.agents/worker_m3_1/vault-operations.md`
   - **Core methodology**: Operating procedures for recall, proposal, human attestation, and error reflexion.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

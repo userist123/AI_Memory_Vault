@@ -79,3 +79,10 @@ Replace source names, projects, people, photography, quotes, claims, and links. 
 - Rounded SaaS cards, glass, glow, or many gradients.
 - Continuous parallax that competes with the work.
 - Modal focus traps on non-modal navigation.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

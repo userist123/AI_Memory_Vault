@@ -57,3 +57,10 @@ This specification defines checks only. It does not implement a controller, RAG 
 - [[Canonical Frontmatter]]
 - [[Storage Conventions]]
 - [[Promotion and Human Review]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[11 Templates and System Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

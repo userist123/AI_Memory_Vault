@@ -50,3 +50,10 @@ Foundation + historical memory import.
 - [ ] Classify
 - [ ] Build retrieval layer
 - [ ] Build validation layer
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

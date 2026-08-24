@@ -130,3 +130,10 @@ Include a row even when a high-risk category could not be checked. Never turn mi
 - Exact matches are distinguished from stylistic similarity.
 - Proposed fixes replace the copied element rather than disguising it.
 - The report states what remains unverified.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

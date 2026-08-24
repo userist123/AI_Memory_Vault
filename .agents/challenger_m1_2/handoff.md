@@ -89,3 +89,10 @@ python -m pytest
 - Any failure in `memory_controller/tests/test_context_budget.py` or the full 210-test suite.
 - Total byte size of degraded notes exceeding `hard_limit_bytes` without raising `BudgetExceededError`.
 - More than `max_full_documents` notes retaining full content.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

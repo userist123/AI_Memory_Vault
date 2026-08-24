@@ -42,3 +42,10 @@ Empirically verify typing annotations and run pytest test suite for Milestone 1 
 - `.agents/challenger_m1_1/DISPATCH.md` — Original dispatch
 - `.agents/challenger_m1_1/progress.md` — Liveness and execution tracking
 - `.agents/challenger_m1_1/handoff.md` — Final verification report (APPROVE)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

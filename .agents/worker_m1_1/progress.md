@@ -11,3 +11,10 @@ Last visited: 2026-08-14T20:06:50Z
 - [x] Verify runtime typing introspection (`typing.get_type_hints`)
 - [x] Write changes.md and handoff.md
 - [x] Notify parent agent
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

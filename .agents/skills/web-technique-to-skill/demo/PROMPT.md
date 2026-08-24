@@ -39,3 +39,10 @@ Use `$web-technique-to-skill` to build **The Triage Bench** as a single standalo
 ```text
 Use $web-technique-to-skill to rebuild the triage bench for a design-system audit instead of a skill extraction: the input is a component library, the piles become Token, Component, and One-off, and the right-hand panel builds a spec outline rather than a skill outline. Use a light paper palette and a serif heading. Keep the synchronous state, the survives-a-rename test, the failure-named counter, the keyboard operability, the live region, the 390-to-1440 range, and the reduced-motion behavior exactly as they are.
 ```
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

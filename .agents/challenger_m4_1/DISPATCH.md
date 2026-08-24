@@ -30,3 +30,9 @@ Read ORIGINAL_REQUEST.md, PROJECT.md, .agents/rules/vault_cognitive_rules.md, an
 Empirically challenge OODA loop execution, Tree-of-Thought reasoning under adversarial/complex inputs, and 10% freshness boost across complex supersession lineages.
 Run tests and write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\handoff.md and notify the orchestrator.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -305,3 +305,10 @@ function initDarkBlueMesh(canvas) {
 - Typography remains bright, sharp, and readable over the field.
 - Nodes, rails, markers, and scan lines are sparse and aligned.
 - CTAs have clear contrast: solid primary, glass secondary.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

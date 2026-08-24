@@ -36,3 +36,10 @@ Brandul reprezintă decizia luată o singură dată și aplicată uniform în î
 - **Identitate Verbală & Ton**: Reguli concrete de scriere (persoana a II-a singular, fără semne de exclamare multiple, cifre exacte și transparente).
 - **Paletă Cromatică Coerentă**: 1 culoare primară derivată din personalitate + neutre consistente (Dark mode nativ pentru unelte tehnice).
 - **Tipografie**: Maximum 2 familii (Display cu personalitate + Body cu lizibilitate extremă).
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

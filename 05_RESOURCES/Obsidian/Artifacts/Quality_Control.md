@@ -82,3 +82,10 @@ Weak or incorrect information became canonical.
 - add verification;
 - archive obsolete notes;
 - adjust retrieval weights.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

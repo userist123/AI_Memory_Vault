@@ -32,3 +32,10 @@ node /path/to/add-shader-cursor-trail/scripts/verify-cursor-trail.mjs \
 Verify the static section with JavaScript unavailable, keyboard access to content above the layer, touch behavior, reduced motion, unsupported WebGPU, focus/visibility cleanup, and absence of runtime requests to `previews.shaders.com` or `data.shaders.com`.
 
 Report the chosen blend mode, fallback, capability gates, production-build result, and any browser limitation. Do not claim WebGPU visual verification unless it was actually performed in a compatible browser.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

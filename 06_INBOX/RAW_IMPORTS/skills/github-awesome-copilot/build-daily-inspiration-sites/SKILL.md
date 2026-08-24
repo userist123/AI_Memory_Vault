@@ -127,3 +127,10 @@ Do not claim a site is complete until its task reports successful build and depl
 - Every brief replaces all source identity, language, numbers, and imagery.
 - Every task requires Sites build, validation, commit, and private deployment.
 - The user can open each created task independently.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

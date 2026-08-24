@@ -109,3 +109,10 @@ If the user asks for “best image”:
 - prefer clean negative space
 - avoid busy backgrounds
 - ensure face is not cropped awkwardly (use `crop=faces` on production URLs)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

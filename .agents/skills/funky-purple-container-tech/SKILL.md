@@ -50,3 +50,10 @@ description: "Create a dark container-led technical design system with fuchsia-p
 - Generic SaaS card grids that ignore the central framed shell.
 - Overdoing the weirdness until the interface stops feeling premium and usable.
 - Mixing too many unrelated accent colors that weaken the purple-led identity.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

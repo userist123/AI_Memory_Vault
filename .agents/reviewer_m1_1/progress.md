@@ -13,3 +13,10 @@ Status: Completed
 - [x] Check for integrity violations (0 detected)
 - [x] Write handoff.md report
 - [x] Notify parent via send_message
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

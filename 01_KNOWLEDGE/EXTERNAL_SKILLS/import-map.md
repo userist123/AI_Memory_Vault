@@ -39,3 +39,10 @@ GitHub topic/collection URLs are used to discover additional backend/programming
 ## Safe import rule
 
 Preserve source attribution. Do not import repository licenses, CI configuration, unrelated application code, generated artifacts, or duplicate copies merely because they exist in a source repository.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

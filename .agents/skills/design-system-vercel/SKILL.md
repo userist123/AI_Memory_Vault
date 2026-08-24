@@ -16,3 +16,10 @@ description: Vercel High-Contrast Monochrome Design System (Geographic triangles
 - Hairline 1px grid borders.
 - Triangle glyphs & minimal status badges.
 - Geist Sans & Geist Mono font stacks.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

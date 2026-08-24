@@ -80,3 +80,10 @@ gsap.timeline({
 - Is this a static site or SPA (React/Next/Vue)? Any page transitions?
 - Do we need scroll-driven sections (pin/scrub/snap)?
 - Performance constraints (mobile support, reduced motion)?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

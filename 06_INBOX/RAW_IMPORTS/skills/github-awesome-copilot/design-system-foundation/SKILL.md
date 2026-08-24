@@ -33,3 +33,10 @@ Stabilește fundația vizuală ÎNAINTE de implementare. Nicio culoare sau font 
 - Culori hardcodate în componente în loc de tokens.
 - Mai mult de 3-4 stiluri de text pe pagină.
 - Gradient + umbre + border + culoare simultan pe același element.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

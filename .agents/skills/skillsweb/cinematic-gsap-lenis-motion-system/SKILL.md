@@ -615,3 +615,10 @@ ScrollTrigger.refresh();
 - Hover and cursor interactions are disabled on touch.
 - No layout properties are animated during scroll.
 - The page still feels readable if all decorative motion is removed.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

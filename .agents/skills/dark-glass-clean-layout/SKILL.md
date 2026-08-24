@@ -53,3 +53,10 @@ description: "Create a dark glass layout system with frosted premium shells, cle
 - Overcrowding the center with too many floating cards until the clean workspace structure collapses.
 - Heavy neon glows or saturated effects that overpower the monochrome dark-glass system.
 - Treating glass as a card style only instead of a full layout language spanning nav, sidebars, and supporting modules.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

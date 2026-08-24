@@ -67,3 +67,10 @@ Adversarial challenge, stress testing, and regression verification for Milestone
 - `.agents/challenger_m5_1/BRIEFING.md` — Persistent working memory
 - `.agents/challenger_m5_1/progress.md` — Heartbeat and progress tracking
 - `.agents/challenger_m5_1/handoff.md` — Final handoff report
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

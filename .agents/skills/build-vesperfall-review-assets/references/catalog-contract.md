@@ -38,3 +38,10 @@ Use the Codex in-app browser. Confirm:
 - preview button lands on the expected route
 - action buttons change the selected/playing motion
 - no horizontal overflow or console warning/error
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

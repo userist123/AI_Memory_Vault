@@ -75,3 +75,9 @@ verification: inferred
 ### Manual Verification
 - Verificarea listei generate în `REVIEW_QUEUE.md` pentru a confirma că niciun fișier critic din `00_CORE/` (cum ar fi regulile de operare curente) nu a fost suprascris accidental de versiunile importate.
 
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

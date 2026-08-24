@@ -26,3 +26,10 @@ Use $scroll-scrubbed-word-reveal to recreate **A Field Note on Attention** as a 
 ## Remix prompt
 
 Use $scroll-scrubbed-word-reveal and the included demo as the quality bar, but replace the passage, typography, palette, accent markup, and pacing. Preserve semantic inline markup, responsive wrapping, normalized reversible progress, reduced-motion readability, and teardown safety.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

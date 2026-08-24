@@ -50,3 +50,10 @@ description: "Create an archival book-reader design system with serif-led pages,
 - Bright modern SaaS color systems that break the archival tone.
 - Excessive distressed effects that make the interface dirty or hard to read.
 - Overly ornate fantasy styling without the disciplined catalog and editorial framework.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[10 Imports and Sources Map]]
+- [[Master_Skills_Catalog_251]]
+- [[Knowledge Graph Home]]

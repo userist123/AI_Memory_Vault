@@ -26,3 +26,10 @@ DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results,
 2. Run `python -m pytest cognitive_core/tests/test_milestone4_adversarial_challenger.py cognitive_core/tests/test_milestone4_adversarial_challenger_m4_2.py cognitive_core/tests/test_reflection.py cognitive_core/tests/test_dynamic_synapses.py -v`.
 3. Run the full test suite: `python -m pytest`. Ensure 100% pass across all test modules.
 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -64,3 +64,10 @@ Principiul călăuzitor este maximizarea raportului data-to-ink: orice pixel car
 ## 2. Relații și Sinapse Cognitive
 - `related_to`: [[01_KNOWLEDGE/Design_System_Foundation]] — Preia tokenii de culoare și tipografie din fundația generală.
 - `implements`: [[02_PROJECTS/FinScope]] — Furnizează regulile de randare pentru componentele Recharts din FinScope.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

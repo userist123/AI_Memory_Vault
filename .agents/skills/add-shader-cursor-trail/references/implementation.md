@@ -90,3 +90,10 @@ Plain JavaScript: follow the current Shaders plain-JS guide if available. Preser
 - SSR or hydration failure: isolate Shaders imports in a client-only dynamically loaded module.
 - Large initial bundle: move capability checks into a lightweight gate before importing the shader module.
 - GPU continues offscreen: use `IntersectionObserver` to unmount, and clean up visibility/focus listeners.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

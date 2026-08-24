@@ -34,3 +34,10 @@ RAW
 ## Important
 
 RAG-ul nu trebuie sa trateze RAW_IMPORTS ca memorie verificata.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

@@ -20,3 +20,10 @@ Perform empirical adversarial testing and stress testing of Milestone 4:
 2. Run pytest suite (`python -m pytest`).
 3. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_2\handoff.md`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

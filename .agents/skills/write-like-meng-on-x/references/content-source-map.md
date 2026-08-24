@@ -27,3 +27,10 @@ rg -n -i "<topic|product|resource|claim>" articles docs data/x-growth skills
 ```
 
 For facts that may have changed, inspect the current product repo or live source before publishing. If verification is unavailable, write the draft without the unstable claim or label the uncertainty for Meng.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

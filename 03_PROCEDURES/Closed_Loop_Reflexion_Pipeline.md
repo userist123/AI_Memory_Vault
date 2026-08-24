@@ -48,3 +48,10 @@ graph TD
 
 ### Etapa D: Consolidarea în Procedură (`03_PROCEDURES/`)
 - Când două sau mai multe lecții descriu un pattern similar, `Consolidator` le sintetizează automat într-o procedură canonică reutilizabilă în `03_PROCEDURES/`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

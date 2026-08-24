@@ -50,3 +50,10 @@ description: "Create a monochrome technical wireframe design system with explode
 - Dense dashboard cards or marketing sections that compete with the annotated object.
 - Overloading the page with too many labels, lines, or widgets until the diagram becomes noisy.
 - Treating the wireframe centerpiece as unrelated background art instead of the core information structure.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

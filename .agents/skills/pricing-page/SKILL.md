@@ -210,3 +210,10 @@ Return:
 - Value metric?
 - Recommended plan (which one and why)?
 - Top 3 objections?
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

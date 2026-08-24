@@ -39,3 +39,10 @@ To independently reproduce the audit findings:
    python -c "import cognitive_core.learning, cognitive_core.reflection, memory_controller.context.budget; import typing; print(typing.get_type_hints(cognitive_core.learning.ContinualLearningGuard.verify_no_catastrophic_regression)); print(typing.get_type_hints(cognitive_core.reflection.SelfRefine.refine_memory))"
    ```
    *Expected*: Dictionaries containing resolved `Tuple` annotations without `NameError`.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

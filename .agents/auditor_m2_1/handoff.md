@@ -47,3 +47,10 @@ Milestone 2 implementation is authentic, robust, and free of prohibited patterns
    - `memory_controller/audit/logger.py` (lines 35-98)
    - `cognitive_core/working_memory.py` (lines 90-129)
    - `cognitive_core/planning.py` (lines 28-51)
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

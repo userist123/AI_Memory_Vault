@@ -48,3 +48,10 @@ Scriptul configurează setări de sistem pentru a aborda vulnerabilități cunos
 ## Changelog
 
 - 2026-08-14: Nota creată din README-ul Windows11-Hardener.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

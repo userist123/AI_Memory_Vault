@@ -25,3 +25,10 @@ Preferință generală: teme dark, aspect modern-tehnic ("tactical/cyber"), nu B
 ## Prioritate
 
 Instrucțiunile din `AGENTS.md` local (per-proiect) suprascriu orice conflict cu acest fișier global. Acesta e doar baza implicită.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

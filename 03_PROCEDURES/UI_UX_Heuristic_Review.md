@@ -85,3 +85,10 @@ Generează matricea structurată:
 ## 2. Relații și Sinapse Cognitive
 - `depends_on`: [[01_KNOWLEDGE/Design_System_Foundation]] — Standardele de tokeni, contrast și ierarhie.
 - `depends_on`: [[01_KNOWLEDGE/Motion_Design_Principles]] — Criteriile de timing și accesibilitate a mișcării.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[12 Projects and Procedures Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

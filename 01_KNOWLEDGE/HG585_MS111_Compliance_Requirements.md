@@ -65,3 +65,10 @@ Textul exact al articolelor din HG 585/2002 si ordinele MS nu a fost verificat i
 ## Changelog
 
 - 2026-08-14: nota creata din memoria conversatiilor.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]

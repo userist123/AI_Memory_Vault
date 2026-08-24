@@ -9,3 +9,10 @@
   - Errors: 0
   - Skipped: 0
   - Reports generated: `report.md` and `handoff.md`
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

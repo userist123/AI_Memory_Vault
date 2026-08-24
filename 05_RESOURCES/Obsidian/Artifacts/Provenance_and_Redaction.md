@@ -38,3 +38,10 @@ Never copy credentials, tokens, private keys, passwords, or unnecessary personal
 - [[Storage Conventions]]
 - [[Import Pipeline]]
 - [[Promotion and Human Review]]
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

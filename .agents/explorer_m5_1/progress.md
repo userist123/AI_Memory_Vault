@@ -15,3 +15,10 @@
 8. [x] Deep-dive into edge cases, bugs, or missing test coverage in learning & confidence gating.
 9. [x] Generate detailed `report.md` and `handoff.md`.
 10. [x] Notify parent orchestrator.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]

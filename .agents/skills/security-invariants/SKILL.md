@@ -17,3 +17,10 @@ Proiectul respectă HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 80
 ## Când modifici o invariantă existentă
 
 Marchezi explicit în commit message și în comentariul de cod: `⚠️ IMPACT INVARIANTĂ P{n}: <descriere impact>`. Nu faci acest tip de modificare fără să semnalezi.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Master_Skills_Catalog_251]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

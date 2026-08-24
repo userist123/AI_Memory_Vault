@@ -15,3 +15,10 @@ Task:
    - Run tests and inspect code execution traces.
 2. Produce your formal audit verdict (CLEAN or INTEGRITY VIOLATION) in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\handoff.md and report.md.
 3. Notify parent via send_message.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[Knowledge Graph Home]]
+- [[00 Core Map]]
+- [[Knowledge Graph Home]]
