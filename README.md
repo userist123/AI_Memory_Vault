@@ -148,6 +148,19 @@ Provenance + Audit
 
 `memory_controller/` este granita pentru citirea si scrierea memoriei canonice.
 
+### 🧠 Arhitectura Cognitivă Bio-Inspirată (Brain Upgrade — ACT-R & GWT)
+
+Sistemul integrează 4 module cognitive bio-inspirate pentru o funcționare autonomă de tip creier:
+
+1. **ACT-R Activation Decay (`cognitive_core/activation.py`)**:
+   - Calculează activarea bazală $B_i = \ln(\sum_j t_j^{-d})$ (Anderson 2004). Notele neaccesate scad natural și trec în stare `DORMANT_THRESHOLD` (-2.0).
+2. **Reconsolidarea Memoriei (`cognitive_core/consolidation.py`)**:
+   - Memoriile canonice contrazise intră în starea `RECONSOLIDATING` cu istoricul versiunilor salvat, permițând actualizări plastice fără pierderi de date (Nader et al. 2000).
+3. **Modulul Motivațional & Utilitate (`cognitive_core/motivation.py`)**:
+   - Urmărește utilitatea acțiunilor $U = P \cdot G - C$ prin Exponential Moving Average și oferă bonusuri dinamice de atenție pe baza recompenselor reale de la `VerifierAgent`.
+4. **Global Workspace Theory (`cognitive_core/global_workspace.py`)**:
+   - Hub competitiv central în care agenții Consiliului (`Router`, `Retrieval`, `Verifier`, `Critic`) trimit propuneri, iar propunerea cu scor maxim este difuzată (*broadcast*) global tuturor agenților (Baars 1988; Dehaene et al. 2001).
+
 Principii:
 
 - autorizare pe operatiuni si roluri;
