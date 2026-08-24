@@ -1,14 +1,14 @@
 {
-    "source_repository": "https://github.com/programming-seed/skill-typescript-nest-bullmq-orm",
-    "source_url": "https://github.com/programming-seed/skill-typescript-nest-bullmq-orm/tree/main/SKILL.md",
+    "source_repository": "https://github.com/seed-sources/programming",
+    "source_url": "https://github.com/seed-sources/programming/tree/main/skill-typescript-nest-bullmq-orm",
     "source_path": "programming/skill-typescript-nest-bullmq-orm/SKILL.md",
     "source_commit": "main-latest",
     "source_branch": "main",
     "license": "MIT",
-    "author": "Programming Skill Ecosystem",
-    "discovered_from": "Programming Seeds Discovery",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: programming",
     "discovery_depth": 1,
-    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
     "sha256": "81f5808774dfd354422b9775df9e89421f0bee01c1aaddaf30b7dcedcfbc732f",
     "status": "RAW_EXTERNAL"
 }

@@ -1,14 +1,14 @@
 {
-    "source_repository": "https://github.com/programming-seed/opa-rego-policy-enforcement",
-    "source_url": "https://github.com/programming-seed/opa-rego-policy-enforcement/tree/main/SKILL.md",
+    "source_repository": "https://github.com/seed-sources/programming",
+    "source_url": "https://github.com/seed-sources/programming/tree/main/opa-rego-policy-enforcement",
     "source_path": "programming/opa-rego-policy-enforcement/SKILL.md",
     "source_commit": "main-latest",
     "source_branch": "main",
     "license": "MIT",
-    "author": "Programming Skill Ecosystem",
-    "discovered_from": "Programming Seeds Discovery",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: programming",
     "discovery_depth": 1,
-    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
     "sha256": "8cdb572e42257971fbc83c8d19e78f42d9397440f0eb0bc0883c302951b966fc",
     "status": "RAW_EXTERNAL"
 }

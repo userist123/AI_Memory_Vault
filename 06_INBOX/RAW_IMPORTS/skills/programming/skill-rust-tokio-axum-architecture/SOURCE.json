@@ -1,14 +1,14 @@
 {
-    "source_repository": "https://github.com/programming-seed/skill-rust-tokio-axum-architecture",
-    "source_url": "https://github.com/programming-seed/skill-rust-tokio-axum-architecture/tree/main/SKILL.md",
+    "source_repository": "https://github.com/seed-sources/programming",
+    "source_url": "https://github.com/seed-sources/programming/tree/main/skill-rust-tokio-axum-architecture",
     "source_path": "programming/skill-rust-tokio-axum-architecture/SKILL.md",
     "source_commit": "main-latest",
     "source_branch": "main",
     "license": "MIT",
-    "author": "Programming Skill Ecosystem",
-    "discovered_from": "Programming Seeds Discovery",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: programming",
     "discovery_depth": 1,
-    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
     "sha256": "70ebbdcf5e2490633b661b11e5591564af23c63ab4707f1b3403d3c6ebb71ab6",
     "status": "RAW_EXTERNAL"
 }

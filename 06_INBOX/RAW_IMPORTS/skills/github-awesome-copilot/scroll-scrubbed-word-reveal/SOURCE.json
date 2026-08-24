@@ -6,8 +6,9 @@
     "source_branch": "main",
     "license": "MIT",
     "author": "Ecosystem Community",
-    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovered_from": "Master Seed Collection: github-awesome-copilot",
     "discovery_depth": 1,
-    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
-    "content_sha256": "40b48acaf16b5da6413b48d70f064c488c7bb33252bb934b743450f4f11b537e"
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "40b48acaf16b5da6413b48d70f064c488c7bb33252bb934b743450f4f11b537e",
+    "status": "RAW_EXTERNAL"
 }

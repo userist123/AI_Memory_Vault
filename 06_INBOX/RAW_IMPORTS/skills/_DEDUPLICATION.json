@@ -1,6 +1,6 @@
 {
-    "exact_duplicates": [],
-    "near_duplicates": [],
-    "mirrors": [],
-    "forks": []
+    "duplicate_seeds": [],
+    "duplicate_repos": [],
+    "exact_duplicate_skills": [],
+    "near_duplicates": []
 }

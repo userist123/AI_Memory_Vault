@@ -1,14 +1,14 @@
 {
-    "source_repository": "https://github.com/programming-seed/zero-trust-architecture",
-    "source_url": "https://github.com/programming-seed/zero-trust-architecture/tree/main/SKILL.md",
+    "source_repository": "https://github.com/seed-sources/programming",
+    "source_url": "https://github.com/seed-sources/programming/tree/main/zero-trust-architecture",
     "source_path": "programming/zero-trust-architecture/SKILL.md",
     "source_commit": "main-latest",
     "source_branch": "main",
     "license": "MIT",
-    "author": "Programming Skill Ecosystem",
-    "discovered_from": "Programming Seeds Discovery",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: programming",
     "discovery_depth": 1,
-    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
     "sha256": "3d0e1ab2cec66453cf8ee46f178b1d0bf89a36ea3c3b7b5fe9340414f76dca14",
     "status": "RAW_EXTERNAL"
 }

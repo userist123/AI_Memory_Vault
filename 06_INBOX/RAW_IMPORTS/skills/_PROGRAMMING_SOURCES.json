@@ -1,18 +1,17 @@
 {
-    "total_sources": 70,
+    "total_programming_sources": 70,
     "sources": [
         {
             "repository": "SalamLang/Salam",
             "language": "Salam",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/SalamLang/Salam",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -20,14 +19,13 @@
             "repository": "kvthweatt/Flux",
             "language": "Flux",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/kvthweatt/Flux",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -35,14 +33,13 @@
             "repository": "julelang/jule",
             "language": "Jule",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/julelang/jule",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -50,14 +47,13 @@
             "repository": "factor/factor",
             "language": "Factor",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/factor/factor",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -65,14 +61,13 @@
             "repository": "ValeLang/Vale",
             "language": "Vale",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/ValeLang/Vale",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -83,11 +78,10 @@
             "framework_or_runtime": "runtime",
             "source_url": "https://github.com/apache/groovy",
             "latest_commit": "main-latest",
-            "license": "Apache-2.0",
+            "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -95,14 +89,13 @@
             "repository": "odin-lang/Odin",
             "language": "Odin",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/odin-lang/Odin",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -110,29 +103,27 @@
             "repository": "modular/modular",
             "language": "Modular",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/modular/modular",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "cython/cython",
             "language": "Cython",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/cython/cython",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -140,14 +131,13 @@
             "repository": "tarpit-collective/cane",
             "language": "Cane",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/tarpit-collective/cane",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -155,29 +145,27 @@
             "repository": "imba/imba",
             "language": "Imba",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/imba/imba",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "carbon-language/carbon-lang",
-            "language": "Carbon",
+            "language": "Carbon-lang",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/carbon-language/carbon-lang",
             "latest_commit": "main-latest",
-            "license": "Apache-2.0",
+            "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -185,29 +173,27 @@
             "repository": "Gwion/Gwion",
             "language": "Gwion",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/Gwion/Gwion",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "gleam-lang/gleam",
             "language": "Gleam",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/gleam-lang/gleam",
             "latest_commit": "main-latest",
-            "license": "MIT",
+            "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -215,14 +201,13 @@
             "repository": "QB64Team/qb64",
             "language": "Qb64",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/QB64Team/qb64",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -230,59 +215,55 @@
             "repository": "robhagemans/pcbasic",
             "language": "Pcbasic",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/robhagemans/pcbasic",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "TinyCC/tinycc",
-            "language": "C",
+            "language": "Tinycc",
             "category": "compiler",
-            "framework_or_runtime": "developer_tool",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/TinyCC/tinycc",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "openjdk/jdk",
-            "language": "Java",
-            "category": "runtime",
-            "framework_or_runtime": "standard_library",
+            "language": "Jdk",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/openjdk/jdk",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "cue-lang/cue",
-            "language": "CUE",
+            "language": "Cue",
             "category": "language",
-            "framework_or_runtime": "config",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/cue-lang/cue",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -290,14 +271,13 @@
             "repository": "beefytech/Beef",
             "language": "Beef",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/beefytech/Beef",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -305,14 +285,13 @@
             "repository": "DennisMitchell/jellylanguage",
             "language": "Jellylanguage",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/DennisMitchell/jellylanguage",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -320,14 +299,13 @@
             "repository": "ChavaScript/chavascript",
             "language": "Chavascript",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/ChavaScript/chavascript",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -335,14 +313,13 @@
             "repository": "objectionary/eo",
             "language": "Eo",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/objectionary/eo",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -350,14 +327,13 @@
             "repository": "SenegalLang/Senegal",
             "language": "Senegal",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/SenegalLang/Senegal",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -365,14 +341,13 @@
             "repository": "ring-lang/ring",
             "language": "Ring",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/ring-lang/ring",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -380,14 +355,13 @@
             "repository": "pharo-project/pharo",
             "language": "Pharo",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/pharo-project/pharo",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -395,29 +369,27 @@
             "repository": "dart-lang/sdk",
             "language": "Sdk",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/dart-lang/sdk",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "vlang/v",
             "language": "V",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/vlang/v",
             "latest_commit": "main-latest",
-            "license": "MIT",
+            "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -425,44 +397,41 @@
             "repository": "rocq-prover/rocq",
             "language": "Rocq",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/rocq-prover/rocq",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "HaxeFoundation/haxe",
             "language": "Haxe",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/HaxeFoundation/haxe",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "ziglang/zig",
             "language": "Zig",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/ziglang/zig",
             "latest_commit": "main-latest",
             "license": "MIT",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -470,14 +439,13 @@
             "repository": "gosu-lang/gosu-lang",
             "language": "Gosu-lang",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/gosu-lang/gosu-lang",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -485,14 +453,13 @@
             "repository": "lucee/Lucee",
             "language": "Lucee",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/lucee/Lucee",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -500,14 +467,13 @@
             "repository": "chapel-lang/chapel",
             "language": "Chapel",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/chapel-lang/chapel",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -515,14 +481,13 @@
             "repository": "rakudo/rakudo",
             "language": "Rakudo",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/rakudo/rakudo",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -530,29 +495,27 @@
             "repository": "skiplang/skip",
             "language": "Skip",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/skiplang/skip",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "dotnet/fsharp",
-            "language": "F#",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "language": "Fsharp",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/dotnet/fsharp",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -560,29 +523,27 @@
             "repository": "terralang/terra",
             "language": "Terra",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/terralang/terra",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "dlang/dmd",
             "language": "Dmd",
-            "category": "language",
-            "framework_or_runtime": "compiler",
+            "category": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/dlang/dmd",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -590,14 +551,13 @@
             "repository": "IoLanguage/io",
             "language": "Io",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/IoLanguage/io",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -605,14 +565,13 @@
             "repository": "gkz/LiveScript",
             "language": "Livescript",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/gkz/LiveScript",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -620,14 +579,13 @@
             "repository": "programming-nu/nu",
             "language": "Nu",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/programming-nu/nu",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -635,44 +593,41 @@
             "repository": "typelead/eta",
             "language": "Eta",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/typelead/eta",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "ocaml/ocaml",
-            "language": "OCaml",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "language": "Ocaml",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/ocaml/ocaml",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "racket/racket",
             "language": "Racket",
-            "category": "runtime",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/racket/racket",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -680,14 +635,13 @@
             "repository": "Frege/frege",
             "language": "Frege",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/Frege/frege",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -695,14 +649,13 @@
             "repository": "ponylang/ponyc",
             "language": "Ponyc",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/ponylang/ponyc",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -710,74 +663,69 @@
             "repository": "red/red",
             "language": "Red",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/red/red",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "dotnet/csharplang",
-            "language": "C#",
-            "category": "language_specification",
-            "framework_or_runtime": "reference",
+            "language": "Csharplang",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/dotnet/csharplang",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "elm/compiler",
             "language": "Compiler",
-            "category": "language",
-            "framework_or_runtime": "compiler",
+            "category": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/elm/compiler",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "purescript/purescript",
-            "language": "PureScript",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "language": "Purescript",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/purescript/purescript",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "AssemblyScript/assemblyscript",
-            "language": "AssemblyScript",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "language": "Assemblyscript",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/AssemblyScript/assemblyscript",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -785,14 +733,13 @@
             "repository": "nim-lang/Nim",
             "language": "Nim",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/nim-lang/Nim",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -800,104 +747,97 @@
             "repository": "erlang/otp",
             "language": "Otp",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/erlang/otp",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "clojure/clojure",
             "language": "Clojure",
-            "category": "runtime",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/clojure/clojure",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "dotnet/roslyn",
-            "language": "C# / VB",
-            "category": "compiler_platform",
-            "framework_or_runtime": "developer_tool",
+            "language": "Roslyn",
+            "category": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/dotnet/roslyn",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "scala/scala",
             "language": "Scala",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/scala/scala",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "PowerShell/PowerShell",
-            "language": "PowerShell",
-            "category": "shell",
-            "framework_or_runtime": "language",
+            "language": "Powershell",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/PowerShell/PowerShell",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "crystal-lang/crystal",
             "language": "Crystal",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/crystal-lang/crystal",
             "latest_commit": "main-latest",
-            "license": "MIT",
+            "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "elixir-lang/elixir",
             "language": "Elixir",
-            "category": "runtime",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/elixir-lang/elixir",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -905,14 +845,13 @@
             "repository": "jashkenas/coffeescript",
             "language": "Coffeescript",
             "category": "language",
-            "framework_or_runtime": "compiler",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/jashkenas/coffeescript",
             "latest_commit": "main-latest",
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -926,8 +865,7 @@
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
@@ -941,14 +879,13 @@
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "php/php-src",
-            "language": "PHP",
+            "language": "Php-src",
             "category": "interpreter",
             "framework_or_runtime": "runtime",
             "source_url": "https://github.com/php/php-src",
@@ -956,14 +893,13 @@
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "python/cpython",
-            "language": "Python",
+            "language": "Cpython",
             "category": "interpreter",
             "framework_or_runtime": "runtime",
             "source_url": "https://github.com/python/cpython",
@@ -971,83 +907,77 @@
             "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "JetBrains/kotlin",
             "language": "Kotlin",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/JetBrains/kotlin",
             "latest_commit": "main-latest",
             "license": "Apache-2.0",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "rust-lang/rust",
             "language": "Rust",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/rust-lang/rust",
             "latest_commit": "main-latest",
-            "license": "MIT",
+            "license": "GPL-2.0/Custom",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "microsoft/TypeScript",
-            "language": "TypeScript",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "language": "Typescript",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/microsoft/TypeScript",
             "latest_commit": "main-latest",
             "license": "MIT",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "swiftlang/swift",
             "language": "Swift",
-            "category": "compiler",
-            "framework_or_runtime": "language",
+            "category": "language",
+            "framework_or_runtime": "runtime",
             "source_url": "https://github.com/swiftlang/swift",
             "latest_commit": "main-latest",
             "license": "Apache-2.0",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         },
         {
             "repository": "golang/go",
             "language": "Go",
-            "category": "compiler",
+            "category": "language",
             "framework_or_runtime": "runtime",
             "source_url": "https://github.com/golang/go",
             "latest_commit": "main-latest",
             "license": "Apache-2.0",
             "contains_skills": false,
             "linked_skill_sources": [
-                "https://github.com/github/awesome-copilot",
-                "https://github.com/VoltAgent/awesome-agent-skills"
+                "https://github.com/github/awesome-copilot"
             ],
             "status": "REFERENCE_ONLY"
         }

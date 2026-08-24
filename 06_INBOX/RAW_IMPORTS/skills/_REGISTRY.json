@@ -1,9 +1,10 @@
 {
-    "total_entries": 278,
+    "total_entries": 250,
     "entries": [
         {
             "id": "raw-skill-0001",
             "name": "accessibility",
+            "description": "Raw imported operational skill: accessibility",
             "source_repository": "web-quality-skills",
             "source_url": "https://github.com/seed-sources/web-quality-skills/tree/main/accessibility",
             "source_path": "web-quality-skills/accessibility/SKILL.md",
@@ -18,6 +19,7 @@
         {
             "id": "raw-skill-0002",
             "name": "add-mouse-driven-orbit",
+            "description": "Raw imported operational skill: add-mouse-driven-orbit",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/add-mouse-driven-orbit",
             "source_path": "github-awesome-copilot/add-mouse-driven-orbit/SKILL.md",
@@ -32,6 +34,7 @@
         {
             "id": "raw-skill-0003",
             "name": "add-shader-cursor-trail",
+            "description": "Raw imported operational skill: add-shader-cursor-trail",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/add-shader-cursor-trail",
             "source_path": "github-awesome-copilot/add-shader-cursor-trail/SKILL.md",
@@ -46,6 +49,7 @@
         {
             "id": "raw-skill-0004",
             "name": "agency-grid-layout-minimal",
+            "description": "Raw imported operational skill: agency-grid-layout-minimal",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/agency-grid-layout-minimal",
             "source_path": "github-awesome-copilot/agency-grid-layout-minimal/SKILL.md",
@@ -60,6 +64,7 @@
         {
             "id": "raw-skill-0005",
             "name": "ambient-section-particles",
+            "description": "Raw imported operational skill: ambient-section-particles",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ambient-section-particles",
             "source_path": "github-awesome-copilot/ambient-section-particles/SKILL.md",
@@ -74,6 +79,7 @@
         {
             "id": "raw-skill-0006",
             "name": "animation-on-scroll",
+            "description": "Raw imported operational skill: animation-on-scroll",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/animation-on-scroll",
             "source_path": "github-awesome-copilot/animation-on-scroll/SKILL.md",
@@ -88,6 +94,7 @@
         {
             "id": "raw-skill-0007",
             "name": "animation-systems",
+            "description": "Raw imported operational skill: animation-systems",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/animation-systems",
             "source_path": "github-awesome-copilot/animation-systems/SKILL.md",
@@ -102,6 +109,7 @@
         {
             "id": "raw-skill-0008",
             "name": "ansible-automation",
+            "description": "Raw imported operational skill: ansible-automation",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ansible-automation",
             "source_path": "github-awesome-copilot/ansible-automation/SKILL.md",
@@ -116,13 +124,14 @@
         {
             "id": "raw-skill-0009",
             "name": "argocd-gitops",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/argocd-gitops",
-            "source_path": "github-awesome-copilot/argocd-gitops/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/argocd-gitops",
+            "description": "Raw imported operational skill: argocd-gitops",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/argocd-gitops",
+            "source_path": "programming/argocd-gitops/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/argocd-gitops",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "785674911cd18d225f3691cbb3918231424235b1062253a0249064396ccd92a3",
             "status": "RAW_EXTERNAL"
@@ -130,6 +139,7 @@
         {
             "id": "raw-skill-0010",
             "name": "article-prompts-to-skills",
+            "description": "Raw imported operational skill: article-prompts-to-skills",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/article-prompts-to-skills",
             "source_path": "github-awesome-copilot/article-prompts-to-skills/SKILL.md",
@@ -144,6 +154,7 @@
         {
             "id": "raw-skill-0011",
             "name": "atmosphere-background",
+            "description": "Raw imported operational skill: atmosphere-background",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/atmosphere-background",
             "source_path": "github-awesome-copilot/atmosphere-background/SKILL.md",
@@ -158,6 +169,7 @@
         {
             "id": "raw-skill-0012",
             "name": "audit-reference-originality",
+            "description": "Raw imported operational skill: audit-reference-originality",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/audit-reference-originality",
             "source_path": "github-awesome-copilot/audit-reference-originality/SKILL.md",
@@ -172,6 +184,7 @@
         {
             "id": "raw-skill-0013",
             "name": "audit-verify-explain-grade-5",
+            "description": "Raw imported operational skill: audit-verify-explain-grade-5",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/audit-verify-explain-grade-5",
             "source_path": "github-awesome-copilot/audit-verify-explain-grade-5/SKILL.md",
@@ -186,6 +199,7 @@
         {
             "id": "raw-skill-0014",
             "name": "aura-asset-images",
+            "description": "Raw imported operational skill: aura-asset-images",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/aura-asset-images",
             "source_path": "github-awesome-copilot/aura-asset-images/SKILL.md",
@@ -200,6 +214,7 @@
         {
             "id": "raw-skill-0015",
             "name": "author-game-levels",
+            "description": "Raw imported operational skill: author-game-levels",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/author-game-levels",
             "source_path": "github-awesome-copilot/author-game-levels/SKILL.md",
@@ -214,6 +229,7 @@
         {
             "id": "raw-skill-0016",
             "name": "aws-cloud-architecture",
+            "description": "Raw imported operational skill: aws-cloud-architecture",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/aws-cloud-architecture",
             "source_path": "github-awesome-copilot/aws-cloud-architecture/SKILL.md",
@@ -228,6 +244,7 @@
         {
             "id": "raw-skill-0017",
             "name": "azure-cloud-architecture",
+            "description": "Raw imported operational skill: azure-cloud-architecture",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/azure-cloud-architecture",
             "source_path": "github-awesome-copilot/azure-cloud-architecture/SKILL.md",
@@ -242,13 +259,14 @@
         {
             "id": "raw-skill-0018",
             "name": "backend-api-design",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/backend-api-design",
-            "source_path": "backend-reference-skills/backend-api-design/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-api-design",
+            "description": "Raw imported operational skill: backend-api-design",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/backend-api-design",
+            "source_path": "backend/backend-api-design/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/backend-api-design",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "36d1dd6a8b6f0ea714a89cc30fec09696a63ece25240c1c0e81af714a61381a6",
             "status": "RAW_EXTERNAL"
@@ -256,13 +274,14 @@
         {
             "id": "raw-skill-0019",
             "name": "backend-security-authz",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/backend-security-authz",
-            "source_path": "backend-reference-skills/backend-security-authz/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-security-authz",
+            "description": "Raw imported operational skill: backend-security-authz",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/backend-security-authz",
+            "source_path": "backend/backend-security-authz/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/backend-security-authz",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "feb0b926957bd14e5d66e95608d76e9b6f4b6378323d3cb42aad3504c446fb73",
             "status": "RAW_EXTERNAL"
@@ -270,6 +289,7 @@
         {
             "id": "raw-skill-0020",
             "name": "background-grid-webgl",
+            "description": "Raw imported operational skill: background-grid-webgl",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/background-grid-webgl",
             "source_path": "github-awesome-copilot/background-grid-webgl/SKILL.md",
@@ -284,6 +304,7 @@
         {
             "id": "raw-skill-0021",
             "name": "beam-glow-states",
+            "description": "Raw imported operational skill: beam-glow-states",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/beam-glow-states",
             "source_path": "github-awesome-copilot/beam-glow-states/SKILL.md",
@@ -298,6 +319,7 @@
         {
             "id": "raw-skill-0022",
             "name": "beautiful-shadows",
+            "description": "Raw imported operational skill: beautiful-shadows",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/beautiful-shadows",
             "source_path": "github-awesome-copilot/beautiful-shadows/SKILL.md",
@@ -312,6 +334,7 @@
         {
             "id": "raw-skill-0023",
             "name": "blue-cloudy-clean-modern",
+            "description": "Raw imported operational skill: blue-cloudy-clean-modern",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/blue-cloudy-clean-modern",
             "source_path": "github-awesome-copilot/blue-cloudy-clean-modern/SKILL.md",
@@ -326,6 +349,7 @@
         {
             "id": "raw-skill-0024",
             "name": "blue-laser-clean-glass-layout",
+            "description": "Raw imported operational skill: blue-laser-clean-glass-layout",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/blue-laser-clean-glass-layout",
             "source_path": "github-awesome-copilot/blue-laser-clean-glass-layout/SKILL.md",
@@ -340,6 +364,7 @@
         {
             "id": "raw-skill-0025",
             "name": "book-serif-index",
+            "description": "Raw imported operational skill: book-serif-index",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/book-serif-index",
             "source_path": "github-awesome-copilot/book-serif-index/SKILL.md",
@@ -354,6 +379,7 @@
         {
             "id": "raw-skill-0026",
             "name": "brand-identity",
+            "description": "Raw imported operational skill: brand-identity",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/brand-identity",
             "source_path": "github-awesome-copilot/brand-identity/SKILL.md",
@@ -368,6 +394,7 @@
         {
             "id": "raw-skill-0027",
             "name": "bright-green-tech-system-webgl",
+            "description": "Raw imported operational skill: bright-green-tech-system-webgl",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/bright-green-tech-system-webgl",
             "source_path": "github-awesome-copilot/bright-green-tech-system-webgl/SKILL.md",
@@ -382,6 +409,7 @@
         {
             "id": "raw-skill-0028",
             "name": "browser-video-recording",
+            "description": "Raw imported operational skill: browser-video-recording",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/browser-video-recording",
             "source_path": "github-awesome-copilot/browser-video-recording/SKILL.md",
@@ -396,6 +424,7 @@
         {
             "id": "raw-skill-0029",
             "name": "build-awwwards-quality-sites",
+            "description": "Raw imported operational skill: build-awwwards-quality-sites",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-awwwards-quality-sites",
             "source_path": "github-awesome-copilot/build-awwwards-quality-sites/SKILL.md",
@@ -410,6 +439,7 @@
         {
             "id": "raw-skill-0030",
             "name": "build-daily-inspiration-sites",
+            "description": "Raw imported operational skill: build-daily-inspiration-sites",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-daily-inspiration-sites",
             "source_path": "github-awesome-copilot/build-daily-inspiration-sites/SKILL.md",
@@ -424,13 +454,14 @@
         {
             "id": "raw-skill-0031",
             "name": "build-game-audio-feedback",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/build-game-audio-feedback",
-            "source_path": "backend-reference-skills/build-game-audio-feedback/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/build-game-audio-feedback",
+            "description": "Raw imported operational skill: build-game-audio-feedback",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/build-game-audio-feedback",
+            "source_path": "backend/build-game-audio-feedback/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/build-game-audio-feedback",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "f547a7f1941e254852ad64418d0fadf47308d434fb808897e87e70dcbe012cfc",
             "status": "RAW_EXTERNAL"
@@ -438,6 +469,7 @@
         {
             "id": "raw-skill-0032",
             "name": "build-game-camera-controls",
+            "description": "Raw imported operational skill: build-game-camera-controls",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-game-camera-controls",
             "source_path": "github-awesome-copilot/build-game-camera-controls/SKILL.md",
@@ -452,6 +484,7 @@
         {
             "id": "raw-skill-0033",
             "name": "build-game-changelog",
+            "description": "Raw imported operational skill: build-game-changelog",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-game-changelog",
             "source_path": "github-awesome-copilot/build-game-changelog/SKILL.md",
@@ -466,6 +499,7 @@
         {
             "id": "raw-skill-0034",
             "name": "build-game-inventory",
+            "description": "Raw imported operational skill: build-game-inventory",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-game-inventory",
             "source_path": "github-awesome-copilot/build-game-inventory/SKILL.md",
@@ -480,6 +514,7 @@
         {
             "id": "raw-skill-0035",
             "name": "build-game-map-editor",
+            "description": "Raw imported operational skill: build-game-map-editor",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-game-map-editor",
             "source_path": "github-awesome-copilot/build-game-map-editor/SKILL.md",
@@ -494,6 +529,7 @@
         {
             "id": "raw-skill-0036",
             "name": "build-game-monster-system",
+            "description": "Raw imported operational skill: build-game-monster-system",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-game-monster-system",
             "source_path": "github-awesome-copilot/build-game-monster-system/SKILL.md",
@@ -508,6 +544,7 @@
         {
             "id": "raw-skill-0037",
             "name": "build-hybrid-game-assets",
+            "description": "Raw imported operational skill: build-hybrid-game-assets",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-hybrid-game-assets",
             "source_path": "github-awesome-copilot/build-hybrid-game-assets/SKILL.md",
@@ -522,6 +559,7 @@
         {
             "id": "raw-skill-0038",
             "name": "build-interactive-particle-trail",
+            "description": "Raw imported operational skill: build-interactive-particle-trail",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-interactive-particle-trail",
             "source_path": "github-awesome-copilot/build-interactive-particle-trail/SKILL.md",
@@ -536,6 +574,7 @@
         {
             "id": "raw-skill-0039",
             "name": "build-isometric-arpg",
+            "description": "Raw imported operational skill: build-isometric-arpg",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-isometric-arpg",
             "source_path": "github-awesome-copilot/build-isometric-arpg/SKILL.md",
@@ -550,6 +589,7 @@
         {
             "id": "raw-skill-0040",
             "name": "build-mobile-threejs-games",
+            "description": "Raw imported operational skill: build-mobile-threejs-games",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-mobile-threejs-games",
             "source_path": "github-awesome-copilot/build-mobile-threejs-games/SKILL.md",
@@ -564,6 +604,7 @@
         {
             "id": "raw-skill-0041",
             "name": "build-rigged-game-assets",
+            "description": "Raw imported operational skill: build-rigged-game-assets",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-rigged-game-assets",
             "source_path": "github-awesome-copilot/build-rigged-game-assets/SKILL.md",
@@ -578,6 +619,7 @@
         {
             "id": "raw-skill-0042",
             "name": "build-threejs-enemy-systems",
+            "description": "Raw imported operational skill: build-threejs-enemy-systems",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-threejs-enemy-systems",
             "source_path": "github-awesome-copilot/build-threejs-enemy-systems/SKILL.md",
@@ -592,6 +634,7 @@
         {
             "id": "raw-skill-0043",
             "name": "build-threejs-scroll-worlds",
+            "description": "Raw imported operational skill: build-threejs-scroll-worlds",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-threejs-scroll-worlds",
             "source_path": "github-awesome-copilot/build-threejs-scroll-worlds/SKILL.md",
@@ -606,6 +649,7 @@
         {
             "id": "raw-skill-0044",
             "name": "build-vesperfall-review-assets",
+            "description": "Raw imported operational skill: build-vesperfall-review-assets",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-vesperfall-review-assets",
             "source_path": "github-awesome-copilot/build-vesperfall-review-assets/SKILL.md",
@@ -620,6 +664,7 @@
         {
             "id": "raw-skill-0045",
             "name": "build-wireframe-scan-reveal",
+            "description": "Raw imported operational skill: build-wireframe-scan-reveal",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/build-wireframe-scan-reveal",
             "source_path": "github-awesome-copilot/build-wireframe-scan-reveal/SKILL.md",
@@ -634,6 +679,7 @@
         {
             "id": "raw-skill-0046",
             "name": "casbin-authorization",
+            "description": "Raw imported operational skill: casbin-authorization",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/casbin-authorization",
             "source_path": "github-awesome-copilot/casbin-authorization/SKILL.md",
@@ -648,6 +694,7 @@
         {
             "id": "raw-skill-0047",
             "name": "cinematic-gsap-lenis-motion-system",
+            "description": "Raw imported operational skill: cinematic-gsap-lenis-motion-system",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/cinematic-gsap-lenis-motion-system",
             "source_path": "github-awesome-copilot/cinematic-gsap-lenis-motion-system/SKILL.md",
@@ -662,6 +709,7 @@
         {
             "id": "raw-skill-0048",
             "name": "cinematic-scroll-storytelling",
+            "description": "Raw imported operational skill: cinematic-scroll-storytelling",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/cinematic-scroll-storytelling",
             "source_path": "github-awesome-copilot/cinematic-scroll-storytelling/SKILL.md",
@@ -676,13 +724,14 @@
         {
             "id": "raw-skill-0049",
             "name": "clean-architecture-backend",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/clean-architecture-backend",
-            "source_path": "backend-reference-skills/clean-architecture-backend/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/clean-architecture-backend",
+            "description": "Raw imported operational skill: clean-architecture-backend",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/clean-architecture-backend",
+            "source_path": "backend/clean-architecture-backend/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/clean-architecture-backend",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "e4cba9d1697db2bef95c1882e33c3f27d2c860cbbf8a6c0f283369ab8255f96f",
             "status": "RAW_EXTERNAL"
@@ -690,6 +739,7 @@
         {
             "id": "raw-skill-0050",
             "name": "clean-minimal-beige-light-mode",
+            "description": "Raw imported operational skill: clean-minimal-beige-light-mode",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/clean-minimal-beige-light-mode",
             "source_path": "github-awesome-copilot/clean-minimal-beige-light-mode/SKILL.md",
@@ -704,6 +754,7 @@
         {
             "id": "raw-skill-0051",
             "name": "clickhouse-time-series",
+            "description": "Raw imported operational skill: clickhouse-time-series",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/clickhouse-time-series",
             "source_path": "github-awesome-copilot/clickhouse-time-series/SKILL.md",
@@ -718,6 +769,7 @@
         {
             "id": "raw-skill-0052",
             "name": "cobejs",
+            "description": "Raw imported operational skill: cobejs",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/cobejs",
             "source_path": "github-awesome-copilot/cobejs/SKILL.md",
@@ -732,6 +784,7 @@
         {
             "id": "raw-skill-0053",
             "name": "code-refactoring-patterns",
+            "description": "Raw imported operational skill: code-refactoring-patterns",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/code-refactoring-patterns",
             "source_path": "github-awesome-copilot/code-refactoring-patterns/SKILL.md",
@@ -746,13 +799,14 @@
         {
             "id": "raw-skill-0054",
             "name": "company-logos",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/company-logos",
-            "source_path": "github-awesome-copilot/company-logos/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/company-logos",
+            "description": "Raw imported operational skill: company-logos",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/company-logos",
+            "source_path": "programming/company-logos/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/company-logos",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "d089dd870e8f4012acc3bc1bf55855346a7e39fa4e975868f6ed2d495eb82729",
             "status": "RAW_EXTERNAL"
@@ -760,6 +814,7 @@
         {
             "id": "raw-skill-0055",
             "name": "container-lines",
+            "description": "Raw imported operational skill: container-lines",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/container-lines",
             "source_path": "github-awesome-copilot/container-lines/SKILL.md",
@@ -774,6 +829,7 @@
         {
             "id": "raw-skill-0056",
             "name": "container-vulnerability-scanning",
+            "description": "Raw imported operational skill: container-vulnerability-scanning",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/container-vulnerability-scanning",
             "source_path": "github-awesome-copilot/container-vulnerability-scanning/SKILL.md",
@@ -788,6 +844,7 @@
         {
             "id": "raw-skill-0057",
             "name": "copilot-agentic-workflows",
+            "description": "Raw imported operational skill: copilot-agentic-workflows",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/copilot-agentic-workflows",
             "source_path": "github-awesome-copilot/copilot-agentic-workflows/SKILL.md",
@@ -802,6 +859,7 @@
         {
             "id": "raw-skill-0058",
             "name": "copilot-custom-instructions",
+            "description": "Raw imported operational skill: copilot-custom-instructions",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/copilot-custom-instructions",
             "source_path": "github-awesome-copilot/copilot-custom-instructions/SKILL.md",
@@ -816,6 +874,7 @@
         {
             "id": "raw-skill-0059",
             "name": "core-web-vitals",
+            "description": "Raw imported operational skill: core-web-vitals",
             "source_repository": "web-quality-skills",
             "source_url": "https://github.com/seed-sources/web-quality-skills/tree/main/core-web-vitals",
             "source_path": "web-quality-skills/core-web-vitals/SKILL.md",
@@ -830,13 +889,14 @@
         {
             "id": "raw-skill-0060",
             "name": "corner-diagonals",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/corner-diagonals",
-            "source_path": "github-awesome-copilot/corner-diagonals/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/corner-diagonals",
+            "description": "Raw imported operational skill: corner-diagonals",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/corner-diagonals",
+            "source_path": "programming/corner-diagonals/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/corner-diagonals",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "ffb61cc0a8fae762d6ff59e526aa26e7b18349ae040f125502811b63c289a310",
             "status": "RAW_EXTERNAL"
@@ -844,6 +904,7 @@
         {
             "id": "raw-skill-0061",
             "name": "corner-lasers",
+            "description": "Raw imported operational skill: corner-lasers",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/corner-lasers",
             "source_path": "github-awesome-copilot/corner-lasers/SKILL.md",
@@ -858,6 +919,7 @@
         {
             "id": "raw-skill-0062",
             "name": "create-game-vfx",
+            "description": "Raw imported operational skill: create-game-vfx",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/create-game-vfx",
             "source_path": "github-awesome-copilot/create-game-vfx/SKILL.md",
@@ -872,6 +934,7 @@
         {
             "id": "raw-skill-0063",
             "name": "csharp-wpf-desktop",
+            "description": "Raw imported operational skill: csharp-wpf-desktop",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/csharp-wpf-desktop",
             "source_path": "github-awesome-copilot/csharp-wpf-desktop/SKILL.md",
@@ -886,6 +949,7 @@
         {
             "id": "raw-skill-0064",
             "name": "css-alpha-masking",
+            "description": "Raw imported operational skill: css-alpha-masking",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/css-alpha-masking",
             "source_path": "github-awesome-copilot/css-alpha-masking/SKILL.md",
@@ -900,6 +964,7 @@
         {
             "id": "raw-skill-0065",
             "name": "css-border-gradient",
+            "description": "Raw imported operational skill: css-border-gradient",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/css-border-gradient",
             "source_path": "github-awesome-copilot/css-border-gradient/SKILL.md",
@@ -914,6 +979,7 @@
         {
             "id": "raw-skill-0066",
             "name": "daily-ui-inspiration-capture",
+            "description": "Raw imported operational skill: daily-ui-inspiration-capture",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/daily-ui-inspiration-capture",
             "source_path": "github-awesome-copilot/daily-ui-inspiration-capture/SKILL.md",
@@ -928,6 +994,7 @@
         {
             "id": "raw-skill-0067",
             "name": "dark-blue-contrasting-clean",
+            "description": "Raw imported operational skill: dark-blue-contrasting-clean",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dark-blue-contrasting-clean",
             "source_path": "github-awesome-copilot/dark-blue-contrasting-clean/SKILL.md",
@@ -942,6 +1009,7 @@
         {
             "id": "raw-skill-0068",
             "name": "dark-glass-clean-layout",
+            "description": "Raw imported operational skill: dark-glass-clean-layout",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dark-glass-clean-layout",
             "source_path": "github-awesome-copilot/dark-glass-clean-layout/SKILL.md",
@@ -956,6 +1024,7 @@
         {
             "id": "raw-skill-0069",
             "name": "dashboard-admin-ui",
+            "description": "Raw imported operational skill: dashboard-admin-ui",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dashboard-admin-ui",
             "source_path": "github-awesome-copilot/dashboard-admin-ui/SKILL.md",
@@ -970,6 +1039,7 @@
         {
             "id": "raw-skill-0070",
             "name": "dast-dynamic-testing",
+            "description": "Raw imported operational skill: dast-dynamic-testing",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dast-dynamic-testing",
             "source_path": "github-awesome-copilot/dast-dynamic-testing/SKILL.md",
@@ -984,6 +1054,7 @@
         {
             "id": "raw-skill-0071",
             "name": "data-viz-design",
+            "description": "Raw imported operational skill: data-viz-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/data-viz-design",
             "source_path": "github-awesome-copilot/data-viz-design/SKILL.md",
@@ -998,6 +1069,7 @@
         {
             "id": "raw-skill-0072",
             "name": "database-architecture-caching",
+            "description": "Raw imported operational skill: database-architecture-caching",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/database-architecture-caching",
             "source_path": "github-awesome-copilot/database-architecture-caching/SKILL.md",
@@ -1012,6 +1084,7 @@
         {
             "id": "raw-skill-0073",
             "name": "database-migration-flyway",
+            "description": "Raw imported operational skill: database-migration-flyway",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/database-migration-flyway",
             "source_path": "github-awesome-copilot/database-migration-flyway/SKILL.md",
@@ -1026,6 +1099,7 @@
         {
             "id": "raw-skill-0074",
             "name": "database-sharding-vitess",
+            "description": "Raw imported operational skill: database-sharding-vitess",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/database-sharding-vitess",
             "source_path": "github-awesome-copilot/database-sharding-vitess/SKILL.md",
@@ -1040,6 +1114,7 @@
         {
             "id": "raw-skill-0075",
             "name": "datadog-observability",
+            "description": "Raw imported operational skill: datadog-observability",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/datadog-observability",
             "source_path": "github-awesome-copilot/datadog-observability/SKILL.md",
@@ -1054,6 +1129,7 @@
         {
             "id": "raw-skill-0076",
             "name": "debezium-cdc-pipeline",
+            "description": "Raw imported operational skill: debezium-cdc-pipeline",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/debezium-cdc-pipeline",
             "source_path": "github-awesome-copilot/debezium-cdc-pipeline/SKILL.md",
@@ -1068,6 +1144,7 @@
         {
             "id": "raw-skill-0077",
             "name": "design-action-combat",
+            "description": "Raw imported operational skill: design-action-combat",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-action-combat",
             "source_path": "github-awesome-copilot/design-action-combat/SKILL.md",
@@ -1082,6 +1159,7 @@
         {
             "id": "raw-skill-0078",
             "name": "design-first-ui-prompting",
+            "description": "Raw imported operational skill: design-first-ui-prompting",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-first-ui-prompting",
             "source_path": "github-awesome-copilot/design-first-ui-prompting/SKILL.md",
@@ -1096,6 +1174,7 @@
         {
             "id": "raw-skill-0079",
             "name": "design-game-encounters",
+            "description": "Raw imported operational skill: design-game-encounters",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-game-encounters",
             "source_path": "github-awesome-copilot/design-game-encounters/SKILL.md",
@@ -1110,13 +1189,14 @@
         {
             "id": "raw-skill-0080",
             "name": "design-system-apple",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-system-apple",
-            "source_path": "github-awesome-copilot/design-system-apple/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/design-system-apple",
+            "description": "Raw imported operational skill: design-system-apple",
+            "source_repository": "garden-skills",
+            "source_url": "https://github.com/seed-sources/garden-skills/tree/main/design-system-apple",
+            "source_path": "garden-skills/design-system-apple/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-apple",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "garden-skills",
             "discovery_depth": 1,
             "sha256": "ff5320657869a70f562526b7230289e8861004e8dc97a55cf8be6a5d9c670ed6",
             "status": "RAW_EXTERNAL"
@@ -1124,6 +1204,7 @@
         {
             "id": "raw-skill-0081",
             "name": "design-system-foundation",
+            "description": "Raw imported operational skill: design-system-foundation",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-system-foundation",
             "source_path": "github-awesome-copilot/design-system-foundation/SKILL.md",
@@ -1138,13 +1219,14 @@
         {
             "id": "raw-skill-0082",
             "name": "design-system-linear",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-system-linear",
-            "source_path": "github-awesome-copilot/design-system-linear/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/design-system-linear",
+            "description": "Raw imported operational skill: design-system-linear",
+            "source_repository": "garden-skills",
+            "source_url": "https://github.com/seed-sources/garden-skills/tree/main/design-system-linear",
+            "source_path": "garden-skills/design-system-linear/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-linear",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "garden-skills",
             "discovery_depth": 1,
             "sha256": "82b215ed3a03c7b84a2382d63771b1a9d962fe490e27253e3d07ed0d577c7c00",
             "status": "RAW_EXTERNAL"
@@ -1152,13 +1234,14 @@
         {
             "id": "raw-skill-0083",
             "name": "design-system-stripe",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-system-stripe",
-            "source_path": "github-awesome-copilot/design-system-stripe/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/design-system-stripe",
+            "description": "Raw imported operational skill: design-system-stripe",
+            "source_repository": "garden-skills",
+            "source_url": "https://github.com/seed-sources/garden-skills/tree/main/design-system-stripe",
+            "source_path": "garden-skills/design-system-stripe/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-stripe",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "garden-skills",
             "discovery_depth": 1,
             "sha256": "c02d94c947d8f1c6aa6d0de1da88d6ba15b35b7fbe9725ecfae8b978ff2d2b9a",
             "status": "RAW_EXTERNAL"
@@ -1166,6 +1249,7 @@
         {
             "id": "raw-skill-0084",
             "name": "design-system-supabase",
+            "description": "Raw imported operational skill: design-system-supabase",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-system-supabase",
             "source_path": "github-awesome-copilot/design-system-supabase/SKILL.md",
@@ -1180,6 +1264,7 @@
         {
             "id": "raw-skill-0085",
             "name": "design-system-vercel",
+            "description": "Raw imported operational skill: design-system-vercel",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/design-system-vercel",
             "source_path": "github-awesome-copilot/design-system-vercel/SKILL.md",
@@ -1194,6 +1279,7 @@
         {
             "id": "raw-skill-0086",
             "name": "dfir-operations",
+            "description": "Raw imported operational skill: dfir-operations",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dfir-operations",
             "source_path": "github-awesome-copilot/dfir-operations/SKILL.md",
@@ -1208,6 +1294,7 @@
         {
             "id": "raw-skill-0087",
             "name": "dither-background",
+            "description": "Raw imported operational skill: dither-background",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dither-background",
             "source_path": "github-awesome-copilot/dither-background/SKILL.md",
@@ -1222,6 +1309,7 @@
         {
             "id": "raw-skill-0088",
             "name": "dither-laser-dark-mode",
+            "description": "Raw imported operational skill: dither-laser-dark-mode",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/dither-laser-dark-mode",
             "source_path": "github-awesome-copilot/dither-laser-dark-mode/SKILL.md",
@@ -1236,6 +1324,7 @@
         {
             "id": "raw-skill-0089",
             "name": "docker-containerization",
+            "description": "Raw imported operational skill: docker-containerization",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/docker-containerization",
             "source_path": "github-awesome-copilot/docker-containerization/SKILL.md",
@@ -1250,6 +1339,7 @@
         {
             "id": "raw-skill-0090",
             "name": "documentary-brutalist-agency",
+            "description": "Raw imported operational skill: documentary-brutalist-agency",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/documentary-brutalist-agency",
             "source_path": "github-awesome-copilot/documentary-brutalist-agency/SKILL.md",
@@ -1264,13 +1354,14 @@
         {
             "id": "raw-skill-0091",
             "name": "duckdb-analytical-queries",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/duckdb-analytical-queries",
-            "source_path": "backend-reference-skills/duckdb-analytical-queries/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/duckdb-analytical-queries",
+            "description": "Raw imported operational skill: duckdb-analytical-queries",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/duckdb-analytical-queries",
+            "source_path": "backend/duckdb-analytical-queries/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/duckdb-analytical-queries",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "77670e9866851884e6e30f8e64a847bdad64ddd5e0fa128f48b26ae617a0a8f3",
             "status": "RAW_EXTERNAL"
@@ -1278,6 +1369,7 @@
         {
             "id": "raw-skill-0092",
             "name": "editorial-portfolio-chapters",
+            "description": "Raw imported operational skill: editorial-portfolio-chapters",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/editorial-portfolio-chapters",
             "source_path": "github-awesome-copilot/editorial-portfolio-chapters/SKILL.md",
@@ -1292,6 +1384,7 @@
         {
             "id": "raw-skill-0093",
             "name": "editorial-service-booking",
+            "description": "Raw imported operational skill: editorial-service-booking",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/editorial-service-booking",
             "source_path": "github-awesome-copilot/editorial-service-booking/SKILL.md",
@@ -1306,6 +1399,7 @@
         {
             "id": "raw-skill-0094",
             "name": "editorial-tech",
+            "description": "Raw imported operational skill: editorial-tech",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/editorial-tech",
             "source_path": "github-awesome-copilot/editorial-tech/SKILL.md",
@@ -1320,6 +1414,7 @@
         {
             "id": "raw-skill-0095",
             "name": "elastic-stack-logging",
+            "description": "Raw imported operational skill: elastic-stack-logging",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/elastic-stack-logging",
             "source_path": "github-awesome-copilot/elastic-stack-logging/SKILL.md",
@@ -1334,6 +1429,7 @@
         {
             "id": "raw-skill-0096",
             "name": "elasticsearch-full-text",
+            "description": "Raw imported operational skill: elasticsearch-full-text",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/elasticsearch-full-text",
             "source_path": "github-awesome-copilot/elasticsearch-full-text/SKILL.md",
@@ -1348,6 +1444,7 @@
         {
             "id": "raw-skill-0097",
             "name": "elevenlabs-tts",
+            "description": "Raw imported operational skill: elevenlabs-tts",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/elevenlabs-tts",
             "source_path": "github-awesome-copilot/elevenlabs-tts/SKILL.md",
@@ -1362,6 +1459,7 @@
         {
             "id": "raw-skill-0098",
             "name": "email-design",
+            "description": "Raw imported operational skill: email-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/email-design",
             "source_path": "github-awesome-copilot/email-design/SKILL.md",
@@ -1376,6 +1474,7 @@
         {
             "id": "raw-skill-0099",
             "name": "envoy-proxy-configuration",
+            "description": "Raw imported operational skill: envoy-proxy-configuration",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/envoy-proxy-configuration",
             "source_path": "github-awesome-copilot/envoy-proxy-configuration/SKILL.md",
@@ -1390,6 +1489,7 @@
         {
             "id": "raw-skill-0100",
             "name": "falling-leaves",
+            "description": "Raw imported operational skill: falling-leaves",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/falling-leaves",
             "source_path": "github-awesome-copilot/falling-leaves/SKILL.md",
@@ -1404,6 +1504,7 @@
         {
             "id": "raw-skill-0101",
             "name": "fine-tuning-lora-peft",
+            "description": "Raw imported operational skill: fine-tuning-lora-peft",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/fine-tuning-lora-peft",
             "source_path": "github-awesome-copilot/fine-tuning-lora-peft/SKILL.md",
@@ -1418,6 +1519,7 @@
         {
             "id": "raw-skill-0102",
             "name": "framed-grid-layout",
+            "description": "Raw imported operational skill: framed-grid-layout",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/framed-grid-layout",
             "source_path": "github-awesome-copilot/framed-grid-layout/SKILL.md",
@@ -1432,6 +1534,7 @@
         {
             "id": "raw-skill-0103",
             "name": "framed-tech-dark-border-gradient",
+            "description": "Raw imported operational skill: framed-tech-dark-border-gradient",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/framed-tech-dark-border-gradient",
             "source_path": "github-awesome-copilot/framed-tech-dark-border-gradient/SKILL.md",
@@ -1446,6 +1549,7 @@
         {
             "id": "raw-skill-0104",
             "name": "funky-purple-container-tech",
+            "description": "Raw imported operational skill: funky-purple-container-tech",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/funky-purple-container-tech",
             "source_path": "github-awesome-copilot/funky-purple-container-tech/SKILL.md",
@@ -1460,6 +1564,7 @@
         {
             "id": "raw-skill-0105",
             "name": "garden-web-design-engineer",
+            "description": "Raw imported operational skill: garden-web-design-engineer",
             "source_repository": "garden-skills",
             "source_url": "https://github.com/seed-sources/garden-skills/tree/main/garden-web-design-engineer",
             "source_path": "garden-skills/garden-web-design-engineer/SKILL.md",
@@ -1474,6 +1579,7 @@
         {
             "id": "raw-skill-0106",
             "name": "gcp-cloud-architecture",
+            "description": "Raw imported operational skill: gcp-cloud-architecture",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/gcp-cloud-architecture",
             "source_path": "github-awesome-copilot/gcp-cloud-architecture/SKILL.md",
@@ -1488,6 +1594,7 @@
         {
             "id": "raw-skill-0107",
             "name": "generate-reference-inspired-brand-worlds",
+            "description": "Raw imported operational skill: generate-reference-inspired-brand-worlds",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/generate-reference-inspired-brand-worlds",
             "source_path": "github-awesome-copilot/generate-reference-inspired-brand-worlds/SKILL.md",
@@ -1502,6 +1609,7 @@
         {
             "id": "raw-skill-0108",
             "name": "github-actions-ci-cd",
+            "description": "Raw imported operational skill: github-actions-ci-cd",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/github-actions-ci-cd",
             "source_path": "github-awesome-copilot/github-actions-ci-cd/SKILL.md",
@@ -1516,6 +1624,7 @@
         {
             "id": "raw-skill-0109",
             "name": "gitlab-ci-cd",
+            "description": "Raw imported operational skill: gitlab-ci-cd",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/gitlab-ci-cd",
             "source_path": "github-awesome-copilot/gitlab-ci-cd/SKILL.md",
@@ -1530,6 +1639,7 @@
         {
             "id": "raw-skill-0110",
             "name": "glass-dark-mode-clock",
+            "description": "Raw imported operational skill: glass-dark-mode-clock",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/glass-dark-mode-clock",
             "source_path": "github-awesome-copilot/glass-dark-mode-clock/SKILL.md",
@@ -1544,6 +1654,7 @@
         {
             "id": "raw-skill-0111",
             "name": "glass-dark-ui",
+            "description": "Raw imported operational skill: glass-dark-ui",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/glass-dark-ui",
             "source_path": "github-awesome-copilot/glass-dark-ui/SKILL.md",
@@ -1558,6 +1669,7 @@
         {
             "id": "raw-skill-0112",
             "name": "global-skill-registry-router",
+            "description": "Raw imported operational skill: global-skill-registry-router",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/global-skill-registry-router",
             "source_path": "github-awesome-copilot/global-skill-registry-router/SKILL.md",
@@ -1572,6 +1684,7 @@
         {
             "id": "raw-skill-0113",
             "name": "globe-gl",
+            "description": "Raw imported operational skill: globe-gl",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/globe-gl",
             "source_path": "github-awesome-copilot/globe-gl/SKILL.md",
@@ -1586,6 +1699,7 @@
         {
             "id": "raw-skill-0114",
             "name": "globe-particles",
+            "description": "Raw imported operational skill: globe-particles",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/globe-particles",
             "source_path": "github-awesome-copilot/globe-particles/SKILL.md",
@@ -1600,13 +1714,14 @@
         {
             "id": "raw-skill-0115",
             "name": "gooey-blob-system",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/gooey-blob-system",
-            "source_path": "github-awesome-copilot/gooey-blob-system/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/gooey-blob-system",
+            "description": "Raw imported operational skill: gooey-blob-system",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/gooey-blob-system",
+            "source_path": "programming/gooey-blob-system/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/gooey-blob-system",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "48cef691946621cb90b0891a19b9bf9076fddfe54961847f78223515475894bd",
             "status": "RAW_EXTERNAL"
@@ -1614,6 +1729,7 @@
         {
             "id": "raw-skill-0116",
             "name": "gsap",
+            "description": "Raw imported operational skill: gsap",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/gsap",
             "source_path": "github-awesome-copilot/gsap/SKILL.md",
@@ -1628,6 +1744,7 @@
         {
             "id": "raw-skill-0117",
             "name": "gsap-scrolltrigger-storytelling",
+            "description": "Raw imported operational skill: gsap-scrolltrigger-storytelling",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/gsap-scrolltrigger-storytelling",
             "source_path": "github-awesome-copilot/gsap-scrolltrigger-storytelling/SKILL.md",
@@ -1642,6 +1759,7 @@
         {
             "id": "raw-skill-0118",
             "name": "guardrails-ai-safety",
+            "description": "Raw imported operational skill: guardrails-ai-safety",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/guardrails-ai-safety",
             "source_path": "github-awesome-copilot/guardrails-ai-safety/SKILL.md",
@@ -1656,6 +1774,7 @@
         {
             "id": "raw-skill-0119",
             "name": "helm-chart-management",
+            "description": "Raw imported operational skill: helm-chart-management",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/helm-chart-management",
             "source_path": "github-awesome-copilot/helm-chart-management/SKILL.md",
@@ -1670,6 +1789,7 @@
         {
             "id": "raw-skill-0120",
             "name": "high-contrast-skeuomorphic-clean",
+            "description": "Raw imported operational skill: high-contrast-skeuomorphic-clean",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/high-contrast-skeuomorphic-clean",
             "source_path": "github-awesome-copilot/high-contrast-skeuomorphic-clean/SKILL.md",
@@ -1684,6 +1804,7 @@
         {
             "id": "raw-skill-0121",
             "name": "html-to-interaction-prompts",
+            "description": "Raw imported operational skill: html-to-interaction-prompts",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/html-to-interaction-prompts",
             "source_path": "github-awesome-copilot/html-to-interaction-prompts/SKILL.md",
@@ -1698,6 +1819,7 @@
         {
             "id": "raw-skill-0122",
             "name": "image-first-grid-layout",
+            "description": "Raw imported operational skill: image-first-grid-layout",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/image-first-grid-layout",
             "source_path": "github-awesome-copilot/image-first-grid-layout/SKILL.md",
@@ -1712,6 +1834,7 @@
         {
             "id": "raw-skill-0123",
             "name": "implement-fog-of-war",
+            "description": "Raw imported operational skill: implement-fog-of-war",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/implement-fog-of-war",
             "source_path": "github-awesome-copilot/implement-fog-of-war/SKILL.md",
@@ -1726,6 +1849,7 @@
         {
             "id": "raw-skill-0124",
             "name": "istio-service-mesh",
+            "description": "Raw imported operational skill: istio-service-mesh",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/istio-service-mesh",
             "source_path": "github-awesome-copilot/istio-service-mesh/SKILL.md",
@@ -1740,6 +1864,7 @@
         {
             "id": "raw-skill-0125",
             "name": "iterate-until-verified",
+            "description": "Raw imported operational skill: iterate-until-verified",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/iterate-until-verified",
             "source_path": "github-awesome-copilot/iterate-until-verified/SKILL.md",
@@ -1754,6 +1879,7 @@
         {
             "id": "raw-skill-0126",
             "name": "kubernetes-orchestration",
+            "description": "Raw imported operational skill: kubernetes-orchestration",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/kubernetes-orchestration",
             "source_path": "github-awesome-copilot/kubernetes-orchestration/SKILL.md",
@@ -1768,6 +1894,7 @@
         {
             "id": "raw-skill-0127",
             "name": "landing-page",
+            "description": "Raw imported operational skill: landing-page",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/landing-page",
             "source_path": "github-awesome-copilot/landing-page/SKILL.md",
@@ -1782,6 +1909,7 @@
         {
             "id": "raw-skill-0128",
             "name": "landing-page-design",
+            "description": "Raw imported operational skill: landing-page-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/landing-page-design",
             "source_path": "github-awesome-copilot/landing-page-design/SKILL.md",
@@ -1796,6 +1924,7 @@
         {
             "id": "raw-skill-0129",
             "name": "langchain-agentic-chains",
+            "description": "Raw imported operational skill: langchain-agentic-chains",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/langchain-agentic-chains",
             "source_path": "github-awesome-copilot/langchain-agentic-chains/SKILL.md",
@@ -1810,6 +1939,7 @@
         {
             "id": "raw-skill-0130",
             "name": "light-mode-paper-technical",
+            "description": "Raw imported operational skill: light-mode-paper-technical",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/light-mode-paper-technical",
             "source_path": "github-awesome-copilot/light-mode-paper-technical/SKILL.md",
@@ -1824,6 +1954,7 @@
         {
             "id": "raw-skill-0131",
             "name": "liquid-metal-border",
+            "description": "Raw imported operational skill: liquid-metal-border",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/liquid-metal-border",
             "source_path": "github-awesome-copilot/liquid-metal-border/SKILL.md",
@@ -1838,6 +1969,7 @@
         {
             "id": "raw-skill-0132",
             "name": "llamaindex-rag-pipeline",
+            "description": "Raw imported operational skill: llamaindex-rag-pipeline",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/llamaindex-rag-pipeline",
             "source_path": "github-awesome-copilot/llamaindex-rag-pipeline/SKILL.md",
@@ -1852,6 +1984,7 @@
         {
             "id": "raw-skill-0133",
             "name": "local-ai-integration",
+            "description": "Raw imported operational skill: local-ai-integration",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/local-ai-integration",
             "source_path": "github-awesome-copilot/local-ai-integration/SKILL.md",
@@ -1866,6 +1999,7 @@
         {
             "id": "raw-skill-0134",
             "name": "marquee-loop",
+            "description": "Raw imported operational skill: marquee-loop",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/marquee-loop",
             "source_path": "github-awesome-copilot/marquee-loop/SKILL.md",
@@ -1880,6 +2014,7 @@
         {
             "id": "raw-skill-0135",
             "name": "masked-reveal",
+            "description": "Raw imported operational skill: masked-reveal",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/masked-reveal",
             "source_path": "github-awesome-copilot/masked-reveal/SKILL.md",
@@ -1894,6 +2029,7 @@
         {
             "id": "raw-skill-0136",
             "name": "matterjs",
+            "description": "Raw imported operational skill: matterjs",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/matterjs",
             "source_path": "github-awesome-copilot/matterjs/SKILL.md",
@@ -1908,6 +2044,7 @@
         {
             "id": "raw-skill-0137",
             "name": "mcp-server-integrations",
+            "description": "Raw imported operational skill: mcp-server-integrations",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/mcp-server-integrations",
             "source_path": "github-awesome-copilot/mcp-server-integrations/SKILL.md",
@@ -1922,6 +2059,7 @@
         {
             "id": "raw-skill-0138",
             "name": "mesh-gradient-dark-blue-clean",
+            "description": "Raw imported operational skill: mesh-gradient-dark-blue-clean",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/mesh-gradient-dark-blue-clean",
             "source_path": "github-awesome-copilot/mesh-gradient-dark-blue-clean/SKILL.md",
@@ -1936,6 +2074,7 @@
         {
             "id": "raw-skill-0139",
             "name": "microservices-system-design",
+            "description": "Raw imported operational skill: microservices-system-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/microservices-system-design",
             "source_path": "github-awesome-copilot/microservices-system-design/SKILL.md",
@@ -1950,6 +2089,7 @@
         {
             "id": "raw-skill-0140",
             "name": "motion-design",
+            "description": "Raw imported operational skill: motion-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/motion-design",
             "source_path": "github-awesome-copilot/motion-design/SKILL.md",
@@ -1964,6 +2104,7 @@
         {
             "id": "raw-skill-0141",
             "name": "neo4j-graph-database",
+            "description": "Raw imported operational skill: neo4j-graph-database",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/neo4j-graph-database",
             "source_path": "github-awesome-copilot/neo4j-graph-database/SKILL.md",
@@ -1978,6 +2119,7 @@
         {
             "id": "raw-skill-0142",
             "name": "nested-container-clean-agency",
+            "description": "Raw imported operational skill: nested-container-clean-agency",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/nested-container-clean-agency",
             "source_path": "github-awesome-copilot/nested-container-clean-agency/SKILL.md",
@@ -1992,6 +2134,7 @@
         {
             "id": "raw-skill-0143",
             "name": "nested-container-frames",
+            "description": "Raw imported operational skill: nested-container-frames",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/nested-container-frames",
             "source_path": "github-awesome-copilot/nested-container-frames/SKILL.md",
@@ -2006,6 +2149,7 @@
         {
             "id": "raw-skill-0144",
             "name": "nextjs-saas-frontend",
+            "description": "Raw imported operational skill: nextjs-saas-frontend",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/nextjs-saas-frontend",
             "source_path": "github-awesome-copilot/nextjs-saas-frontend/SKILL.md",
@@ -2020,6 +2164,7 @@
         {
             "id": "raw-skill-0145",
             "name": "nginx-ingress-tuning",
+            "description": "Raw imported operational skill: nginx-ingress-tuning",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/nginx-ingress-tuning",
             "source_path": "github-awesome-copilot/nginx-ingress-tuning/SKILL.md",
@@ -2034,6 +2179,7 @@
         {
             "id": "raw-skill-0146",
             "name": "number-details",
+            "description": "Raw imported operational skill: number-details",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/number-details",
             "source_path": "github-awesome-copilot/number-details/SKILL.md",
@@ -2048,6 +2194,7 @@
         {
             "id": "raw-skill-0147",
             "name": "ollama-local-llm-integration",
+            "description": "Raw imported operational skill: ollama-local-llm-integration",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ollama-local-llm-integration",
             "source_path": "github-awesome-copilot/ollama-local-llm-integration/SKILL.md",
@@ -2062,13 +2209,14 @@
         {
             "id": "raw-skill-0148",
             "name": "opa-rego-policy-enforcement",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/opa-rego-policy-enforcement",
-            "source_path": "github-awesome-copilot/opa-rego-policy-enforcement/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/opa-rego-policy-enforcement",
+            "description": "Raw imported operational skill: opa-rego-policy-enforcement",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/opa-rego-policy-enforcement",
+            "source_path": "programming/opa-rego-policy-enforcement/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/opa-rego-policy-enforcement",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "8cdb572e42257971fbc83c8d19e78f42d9397440f0eb0bc0883c302951b966fc",
             "status": "RAW_EXTERNAL"
@@ -2076,6 +2224,7 @@
         {
             "id": "raw-skill-0149",
             "name": "open-telemetry-tracing",
+            "description": "Raw imported operational skill: open-telemetry-tracing",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/open-telemetry-tracing",
             "source_path": "github-awesome-copilot/open-telemetry-tracing/SKILL.md",
@@ -2090,6 +2239,7 @@
         {
             "id": "raw-skill-0150",
             "name": "operational-enterprise-ai",
+            "description": "Raw imported operational skill: operational-enterprise-ai",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/operational-enterprise-ai",
             "source_path": "github-awesome-copilot/operational-enterprise-ai/SKILL.md",
@@ -2104,6 +2254,7 @@
         {
             "id": "raw-skill-0151",
             "name": "optimize-threejs-games",
+            "description": "Raw imported operational skill: optimize-threejs-games",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/optimize-threejs-games",
             "source_path": "github-awesome-copilot/optimize-threejs-games/SKILL.md",
@@ -2118,6 +2269,7 @@
         {
             "id": "raw-skill-0152",
             "name": "optimize-web-animations",
+            "description": "Raw imported operational skill: optimize-web-animations",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/optimize-web-animations",
             "source_path": "github-awesome-copilot/optimize-web-animations/SKILL.md",
@@ -2132,6 +2284,7 @@
         {
             "id": "raw-skill-0153",
             "name": "orange-clean-paper-saas",
+            "description": "Raw imported operational skill: orange-clean-paper-saas",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/orange-clean-paper-saas",
             "source_path": "github-awesome-copilot/orange-clean-paper-saas/SKILL.md",
@@ -2146,6 +2299,7 @@
         {
             "id": "raw-skill-0154",
             "name": "owasp-top-10-audit",
+            "description": "Raw imported operational skill: owasp-top-10-audit",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/owasp-top-10-audit",
             "source_path": "github-awesome-copilot/owasp-top-10-audit/SKILL.md",
@@ -2160,6 +2314,7 @@
         {
             "id": "raw-skill-0155",
             "name": "penetration-testing-playbook",
+            "description": "Raw imported operational skill: penetration-testing-playbook",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/penetration-testing-playbook",
             "source_path": "github-awesome-copilot/penetration-testing-playbook/SKILL.md",
@@ -2174,6 +2329,7 @@
         {
             "id": "raw-skill-0156",
             "name": "performance-profiling",
+            "description": "Raw imported operational skill: performance-profiling",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/performance-profiling",
             "source_path": "github-awesome-copilot/performance-profiling/SKILL.md",
@@ -2188,6 +2344,7 @@
         {
             "id": "raw-skill-0157",
             "name": "pgvector-embeddings",
+            "description": "Raw imported operational skill: pgvector-embeddings",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/pgvector-embeddings",
             "source_path": "github-awesome-copilot/pgvector-embeddings/SKILL.md",
@@ -2202,6 +2359,7 @@
         {
             "id": "raw-skill-0158",
             "name": "pki-certificate-management",
+            "description": "Raw imported operational skill: pki-certificate-management",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/pki-certificate-management",
             "source_path": "github-awesome-copilot/pki-certificate-management/SKILL.md",
@@ -2216,6 +2374,7 @@
         {
             "id": "raw-skill-0159",
             "name": "playwright-e2e-testing",
+            "description": "Raw imported operational skill: playwright-e2e-testing",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/playwright-e2e-testing",
             "source_path": "github-awesome-copilot/playwright-e2e-testing/SKILL.md",
@@ -2230,6 +2389,7 @@
         {
             "id": "raw-skill-0160",
             "name": "pointer-trail-emitter",
+            "description": "Raw imported operational skill: pointer-trail-emitter",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/pointer-trail-emitter",
             "source_path": "github-awesome-copilot/pointer-trail-emitter/SKILL.md",
@@ -2244,6 +2404,7 @@
         {
             "id": "raw-skill-0161",
             "name": "powershell-secops",
+            "description": "Raw imported operational skill: powershell-secops",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/powershell-secops",
             "source_path": "github-awesome-copilot/powershell-secops/SKILL.md",
@@ -2258,6 +2419,7 @@
         {
             "id": "raw-skill-0162",
             "name": "presentation-design",
+            "description": "Raw imported operational skill: presentation-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/presentation-design",
             "source_path": "github-awesome-copilot/presentation-design/SKILL.md",
@@ -2272,6 +2434,7 @@
         {
             "id": "raw-skill-0163",
             "name": "pricing-page",
+            "description": "Raw imported operational skill: pricing-page",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/pricing-page",
             "source_path": "github-awesome-copilot/pricing-page/SKILL.md",
@@ -2286,6 +2449,7 @@
         {
             "id": "raw-skill-0164",
             "name": "product-proof-saas",
+            "description": "Raw imported operational skill: product-proof-saas",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/product-proof-saas",
             "source_path": "github-awesome-copilot/product-proof-saas/SKILL.md",
@@ -2300,6 +2464,7 @@
         {
             "id": "raw-skill-0165",
             "name": "progressive-blur",
+            "description": "Raw imported operational skill: progressive-blur",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/progressive-blur",
             "source_path": "github-awesome-copilot/progressive-blur/SKILL.md",
@@ -2314,6 +2479,7 @@
         {
             "id": "raw-skill-0166",
             "name": "prometheus-grafana-monitoring",
+            "description": "Raw imported operational skill: prometheus-grafana-monitoring",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/prometheus-grafana-monitoring",
             "source_path": "github-awesome-copilot/prometheus-grafana-monitoring/SKILL.md",
@@ -2328,6 +2494,7 @@
         {
             "id": "raw-skill-0167",
             "name": "publish-project-to-github",
+            "description": "Raw imported operational skill: publish-project-to-github",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/publish-project-to-github",
             "source_path": "github-awesome-copilot/publish-project-to-github/SKILL.md",
@@ -2342,6 +2509,7 @@
         {
             "id": "raw-skill-0168",
             "name": "pydantic-json-mode-validation",
+            "description": "Raw imported operational skill: pydantic-json-mode-validation",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/pydantic-json-mode-validation",
             "source_path": "github-awesome-copilot/pydantic-json-mode-validation/SKILL.md",
@@ -2356,13 +2524,14 @@
         {
             "id": "raw-skill-0169",
             "name": "python-trading-systems",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/python-trading-systems",
-            "source_path": "github-awesome-copilot/python-trading-systems/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/python-trading-systems",
+            "description": "Raw imported operational skill: python-trading-systems",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/python-trading-systems",
+            "source_path": "programming/python-trading-systems/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/python-trading-systems",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "8fc74e42bf598787cbabe90274192aca4b52a8cabbf80c380c5fa744754c9808",
             "status": "RAW_EXTERNAL"
@@ -2370,6 +2539,7 @@
         {
             "id": "raw-skill-0170",
             "name": "qdrant-vector-database",
+            "description": "Raw imported operational skill: qdrant-vector-database",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/qdrant-vector-database",
             "source_path": "github-awesome-copilot/qdrant-vector-database/SKILL.md",
@@ -2384,6 +2554,7 @@
         {
             "id": "raw-skill-0171",
             "name": "react-query-tanstack",
+            "description": "Raw imported operational skill: react-query-tanstack",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/react-query-tanstack",
             "source_path": "github-awesome-copilot/react-query-tanstack/SKILL.md",
@@ -2398,6 +2569,7 @@
         {
             "id": "raw-skill-0172",
             "name": "reveal-hover-effect",
+            "description": "Raw imported operational skill: reveal-hover-effect",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/reveal-hover-effect",
             "source_path": "github-awesome-copilot/reveal-hover-effect/SKILL.md",
@@ -2412,6 +2584,7 @@
         {
             "id": "raw-skill-0173",
             "name": "sast-static-analysis",
+            "description": "Raw imported operational skill: sast-static-analysis",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/sast-static-analysis",
             "source_path": "github-awesome-copilot/sast-static-analysis/SKILL.md",
@@ -2426,6 +2599,7 @@
         {
             "id": "raw-skill-0174",
             "name": "scroll-progress-timeline",
+            "description": "Raw imported operational skill: scroll-progress-timeline",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/scroll-progress-timeline",
             "source_path": "github-awesome-copilot/scroll-progress-timeline/SKILL.md",
@@ -2440,6 +2614,7 @@
         {
             "id": "raw-skill-0175",
             "name": "scroll-scrubbed-visual-sequence",
+            "description": "Raw imported operational skill: scroll-scrubbed-visual-sequence",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/scroll-scrubbed-visual-sequence",
             "source_path": "github-awesome-copilot/scroll-scrubbed-visual-sequence/SKILL.md",
@@ -2454,6 +2629,7 @@
         {
             "id": "raw-skill-0176",
             "name": "scroll-scrubbed-word-reveal",
+            "description": "Raw imported operational skill: scroll-scrubbed-word-reveal",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/scroll-scrubbed-word-reveal",
             "source_path": "github-awesome-copilot/scroll-scrubbed-word-reveal/SKILL.md",
@@ -2468,6 +2644,7 @@
         {
             "id": "raw-skill-0177",
             "name": "scroll-world-storytelling",
+            "description": "Raw imported operational skill: scroll-world-storytelling",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/scroll-world-storytelling",
             "source_path": "github-awesome-copilot/scroll-world-storytelling/SKILL.md",
@@ -2482,6 +2659,7 @@
         {
             "id": "raw-skill-0178",
             "name": "secret-leak-prevention",
+            "description": "Raw imported operational skill: secret-leak-prevention",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/secret-leak-prevention",
             "source_path": "github-awesome-copilot/secret-leak-prevention/SKILL.md",
@@ -2496,6 +2674,7 @@
         {
             "id": "raw-skill-0179",
             "name": "security-invariants",
+            "description": "Raw imported operational skill: security-invariants",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/security-invariants",
             "source_path": "github-awesome-copilot/security-invariants/SKILL.md",
@@ -2510,6 +2689,7 @@
         {
             "id": "raw-skill-0180",
             "name": "shaders-cursor-ripples",
+            "description": "Raw imported operational skill: shaders-cursor-ripples",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/shaders-cursor-ripples",
             "source_path": "github-awesome-copilot/shaders-cursor-ripples/SKILL.md",
@@ -2524,6 +2704,7 @@
         {
             "id": "raw-skill-0181",
             "name": "ship-web-games",
+            "description": "Raw imported operational skill: ship-web-games",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ship-web-games",
             "source_path": "github-awesome-copilot/ship-web-games/SKILL.md",
@@ -2538,6 +2719,7 @@
         {
             "id": "raw-skill-0182",
             "name": "skeuomorphic-ui",
+            "description": "Raw imported operational skill: skeuomorphic-ui",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skeuomorphic-ui",
             "source_path": "github-awesome-copilot/skeuomorphic-ui/SKILL.md",
@@ -2552,13 +2734,14 @@
         {
             "id": "raw-skill-0183",
             "name": "skill-api-design-governance",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-api-design-governance",
-            "source_path": "backend-reference-skills/skill-api-design-governance/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-api-design-governance",
+            "description": "Raw imported operational skill: skill-api-design-governance",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-api-design-governance",
+            "source_path": "backend/skill-api-design-governance/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-api-design-governance",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "9bab8853bd95174c9b786bf45972e1c10b2c86b2743c2702d6c4bfe87f2771b5",
             "status": "RAW_EXTERNAL"
@@ -2566,13 +2749,14 @@
         {
             "id": "raw-skill-0184",
             "name": "skill-backend-performance-tuning",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-backend-performance-tuning",
-            "source_path": "backend-reference-skills/skill-backend-performance-tuning/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-backend-performance-tuning",
+            "description": "Raw imported operational skill: skill-backend-performance-tuning",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-backend-performance-tuning",
+            "source_path": "backend/skill-backend-performance-tuning/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-backend-performance-tuning",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "e62dee1b77fa821683bcbee4d4194b98c863708f4e6c2aa4a1624e90b3ef7c0e",
             "status": "RAW_EXTERNAL"
@@ -2580,6 +2764,7 @@
         {
             "id": "raw-skill-0185",
             "name": "skill-clean-architecture-layering",
+            "description": "Raw imported operational skill: skill-clean-architecture-layering",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-clean-architecture-layering",
             "source_path": "github-awesome-copilot/skill-clean-architecture-layering/SKILL.md",
@@ -2594,13 +2779,14 @@
         {
             "id": "raw-skill-0186",
             "name": "skill-cpp-drogon-coroutine-backend",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-cpp-drogon-coroutine-backend",
-            "source_path": "backend-reference-skills/skill-cpp-drogon-coroutine-backend/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-cpp-drogon-coroutine-backend",
+            "description": "Raw imported operational skill: skill-cpp-drogon-coroutine-backend",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-cpp-drogon-coroutine-backend",
+            "source_path": "backend/skill-cpp-drogon-coroutine-backend/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-cpp-drogon-coroutine-backend",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "d73d79e3a1d994a3ec786fd2f4b11ba4a8ade56a9a7a7c4a7d8993a7ecd5a482",
             "status": "RAW_EXTERNAL"
@@ -2608,6 +2794,7 @@
         {
             "id": "raw-skill-0187",
             "name": "skill-cqrs-event-sourcing",
+            "description": "Raw imported operational skill: skill-cqrs-event-sourcing",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-cqrs-event-sourcing",
             "source_path": "github-awesome-copilot/skill-cqrs-event-sourcing/SKILL.md",
@@ -2622,6 +2809,7 @@
         {
             "id": "raw-skill-0188",
             "name": "skill-distributed-rate-limiting",
+            "description": "Raw imported operational skill: skill-distributed-rate-limiting",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-distributed-rate-limiting",
             "source_path": "github-awesome-copilot/skill-distributed-rate-limiting/SKILL.md",
@@ -2636,13 +2824,14 @@
         {
             "id": "raw-skill-0189",
             "name": "skill-dotnet10-minimal-api-aot",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-dotnet10-minimal-api-aot",
-            "source_path": "backend-reference-skills/skill-dotnet10-minimal-api-aot/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-dotnet10-minimal-api-aot",
+            "description": "Raw imported operational skill: skill-dotnet10-minimal-api-aot",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-dotnet10-minimal-api-aot",
+            "source_path": "backend/skill-dotnet10-minimal-api-aot/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-dotnet10-minimal-api-aot",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "017987b81a36194219a860c9be9765ed7a59710dfd4311a07179bce06a245b0b",
             "status": "RAW_EXTERNAL"
@@ -2650,13 +2839,14 @@
         {
             "id": "raw-skill-0190",
             "name": "skill-go-worker-pool-concurrency",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-go-worker-pool-concurrency",
-            "source_path": "github-awesome-copilot/skill-go-worker-pool-concurrency/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/skill-go-worker-pool-concurrency",
+            "description": "Raw imported operational skill: skill-go-worker-pool-concurrency",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/skill-go-worker-pool-concurrency",
+            "source_path": "programming/skill-go-worker-pool-concurrency/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-go-worker-pool-concurrency",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "877b782193411b8ef8db4cf787c71db1a6dea014b4e8abf8ec039c813cd1e817",
             "status": "RAW_EXTERNAL"
@@ -2664,6 +2854,7 @@
         {
             "id": "raw-skill-0191",
             "name": "skill-graphql-schema-evolution",
+            "description": "Raw imported operational skill: skill-graphql-schema-evolution",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-graphql-schema-evolution",
             "source_path": "github-awesome-copilot/skill-graphql-schema-evolution/SKILL.md",
@@ -2678,6 +2869,7 @@
         {
             "id": "raw-skill-0192",
             "name": "skill-grpc-contract-management",
+            "description": "Raw imported operational skill: skill-grpc-contract-management",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-grpc-contract-management",
             "source_path": "github-awesome-copilot/skill-grpc-contract-management/SKILL.md",
@@ -2692,6 +2884,7 @@
         {
             "id": "raw-skill-0193",
             "name": "skill-oauth2-jwt-security",
+            "description": "Raw imported operational skill: skill-oauth2-jwt-security",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-oauth2-jwt-security",
             "source_path": "github-awesome-copilot/skill-oauth2-jwt-security/SKILL.md",
@@ -2706,13 +2899,14 @@
         {
             "id": "raw-skill-0194",
             "name": "skill-owasp-backend-hardening",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-owasp-backend-hardening",
-            "source_path": "backend-reference-skills/skill-owasp-backend-hardening/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-owasp-backend-hardening",
+            "description": "Raw imported operational skill: skill-owasp-backend-hardening",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-owasp-backend-hardening",
+            "source_path": "backend/skill-owasp-backend-hardening/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-owasp-backend-hardening",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "e9e7d8931eae101b31502e389c11ca489e795f58c87beac4dcff3fb57284ef56",
             "status": "RAW_EXTERNAL"
@@ -2720,13 +2914,14 @@
         {
             "id": "raw-skill-0195",
             "name": "skill-postgresql-indexing-tuning",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-postgresql-indexing-tuning",
-            "source_path": "backend-reference-skills/skill-postgresql-indexing-tuning/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-postgresql-indexing-tuning",
+            "description": "Raw imported operational skill: skill-postgresql-indexing-tuning",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-postgresql-indexing-tuning",
+            "source_path": "backend/skill-postgresql-indexing-tuning/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-postgresql-indexing-tuning",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "a1a83d681a862092a59c02148bf195568bb886e7c08a26d54336beea7fc5a77e",
             "status": "RAW_EXTERNAL"
@@ -2734,13 +2929,14 @@
         {
             "id": "raw-skill-0196",
             "name": "skill-python-fastapi-async-worker",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-python-fastapi-async-worker",
-            "source_path": "backend-reference-skills/skill-python-fastapi-async-worker/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-python-fastapi-async-worker",
+            "description": "Raw imported operational skill: skill-python-fastapi-async-worker",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-python-fastapi-async-worker",
+            "source_path": "backend/skill-python-fastapi-async-worker/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-python-fastapi-async-worker",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "84c747a0a51710f49f597f91feec608502f4a3d93e2208766474ded4c255191d",
             "status": "RAW_EXTERNAL"
@@ -2748,6 +2944,7 @@
         {
             "id": "raw-skill-0197",
             "name": "skill-rbac-abac-authorization",
+            "description": "Raw imported operational skill: skill-rbac-abac-authorization",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-rbac-abac-authorization",
             "source_path": "github-awesome-copilot/skill-rbac-abac-authorization/SKILL.md",
@@ -2762,6 +2959,7 @@
         {
             "id": "raw-skill-0198",
             "name": "skill-redis-caching-patterns",
+            "description": "Raw imported operational skill: skill-redis-caching-patterns",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-redis-caching-patterns",
             "source_path": "github-awesome-copilot/skill-redis-caching-patterns/SKILL.md",
@@ -2776,13 +2974,14 @@
         {
             "id": "raw-skill-0199",
             "name": "skill-rust-tokio-axum-architecture",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-rust-tokio-axum-architecture",
-            "source_path": "github-awesome-copilot/skill-rust-tokio-axum-architecture/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/skill-rust-tokio-axum-architecture",
+            "description": "Raw imported operational skill: skill-rust-tokio-axum-architecture",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/skill-rust-tokio-axum-architecture",
+            "source_path": "programming/skill-rust-tokio-axum-architecture/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rust-tokio-axum-architecture",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "70ebbdcf5e2490633b661b11e5591564af23c63ab4707f1b3403d3c6ebb71ab6",
             "status": "RAW_EXTERNAL"
@@ -2790,6 +2989,7 @@
         {
             "id": "raw-skill-0200",
             "name": "skill-saga-orchestration-choreography",
+            "description": "Raw imported operational skill: skill-saga-orchestration-choreography",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-saga-orchestration-choreography",
             "source_path": "github-awesome-copilot/skill-saga-orchestration-choreography/SKILL.md",
@@ -2804,13 +3004,14 @@
         {
             "id": "raw-skill-0201",
             "name": "skill-sqlite-wal-optimization",
-            "source_repository": "backend-reference-skills",
-            "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-sqlite-wal-optimization",
-            "source_path": "backend-reference-skills/skill-sqlite-wal-optimization/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-sqlite-wal-optimization",
+            "description": "Raw imported operational skill: skill-sqlite-wal-optimization",
+            "source_repository": "backend",
+            "source_url": "https://github.com/seed-sources/backend/tree/main/skill-sqlite-wal-optimization",
+            "source_path": "backend/skill-sqlite-wal-optimization/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/backend/skill-sqlite-wal-optimization",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "backend-reference-skills",
+            "discovered_from": "backend",
             "discovery_depth": 1,
             "sha256": "b50c3def1ffe1c5ff2dbb52ddab0da03fab65684f7e4a26b34fd47a1f5c0a321",
             "status": "RAW_EXTERNAL"
@@ -2818,6 +3019,7 @@
         {
             "id": "raw-skill-0202",
             "name": "skill-transactional-outbox-cdc",
+            "description": "Raw imported operational skill: skill-transactional-outbox-cdc",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-transactional-outbox-cdc",
             "source_path": "github-awesome-copilot/skill-transactional-outbox-cdc/SKILL.md",
@@ -2832,13 +3034,14 @@
         {
             "id": "raw-skill-0203",
             "name": "skill-typescript-nest-bullmq-orm",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-typescript-nest-bullmq-orm",
-            "source_path": "github-awesome-copilot/skill-typescript-nest-bullmq-orm/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/skill-typescript-nest-bullmq-orm",
+            "description": "Raw imported operational skill: skill-typescript-nest-bullmq-orm",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/skill-typescript-nest-bullmq-orm",
+            "source_path": "programming/skill-typescript-nest-bullmq-orm/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-typescript-nest-bullmq-orm",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "81f5808774dfd354422b9775df9e89421f0bee01c1aaddaf30b7dcedcfbc732f",
             "status": "RAW_EXTERNAL"
@@ -2846,6 +3049,7 @@
         {
             "id": "raw-skill-0205",
             "name": "solar-duotone-bold",
+            "description": "Raw imported operational skill: solar-duotone-bold",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/solar-duotone-bold",
             "source_path": "github-awesome-copilot/solar-duotone-bold/SKILL.md",
@@ -2860,6 +3064,7 @@
         {
             "id": "raw-skill-0206",
             "name": "split-layout-technical",
+            "description": "Raw imported operational skill: split-layout-technical",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/split-layout-technical",
             "source_path": "github-awesome-copilot/split-layout-technical/SKILL.md",
@@ -2874,6 +3079,7 @@
         {
             "id": "raw-skill-0207",
             "name": "staggered-word-reveal",
+            "description": "Raw imported operational skill: staggered-word-reveal",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/staggered-word-reveal",
             "source_path": "github-awesome-copilot/staggered-word-reveal/SKILL.md",
@@ -2888,6 +3094,7 @@
         {
             "id": "raw-skill-0208",
             "name": "stitched-full-page-capture",
+            "description": "Raw imported operational skill: stitched-full-page-capture",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/stitched-full-page-capture",
             "source_path": "github-awesome-copilot/stitched-full-page-capture/SKILL.md",
@@ -2902,6 +3109,7 @@
         {
             "id": "raw-skill-0209",
             "name": "storybook-component-docs",
+            "description": "Raw imported operational skill: storybook-component-docs",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/storybook-component-docs",
             "source_path": "github-awesome-copilot/storybook-component-docs/SKILL.md",
@@ -2916,6 +3124,7 @@
         {
             "id": "raw-skill-0210",
             "name": "tailwind-v4-theme-engine",
+            "description": "Raw imported operational skill: tailwind-v4-theme-engine",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/tailwind-v4-theme-engine",
             "source_path": "github-awesome-copilot/tailwind-v4-theme-engine/SKILL.md",
@@ -2930,6 +3139,7 @@
         {
             "id": "raw-skill-0211",
             "name": "tailwindcss",
+            "description": "Raw imported operational skill: tailwindcss",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/tailwindcss",
             "source_path": "github-awesome-copilot/tailwindcss/SKILL.md",
@@ -2944,6 +3154,7 @@
         {
             "id": "raw-skill-0212",
             "name": "tech-green-dark-mode-modern",
+            "description": "Raw imported operational skill: tech-green-dark-mode-modern",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/tech-green-dark-mode-modern",
             "source_path": "github-awesome-copilot/tech-green-dark-mode-modern/SKILL.md",
@@ -2958,6 +3169,7 @@
         {
             "id": "raw-skill-0213",
             "name": "technical-wireframe-info-layout",
+            "description": "Raw imported operational skill: technical-wireframe-info-layout",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/technical-wireframe-info-layout",
             "source_path": "github-awesome-copilot/technical-wireframe-info-layout/SKILL.md",
@@ -2972,6 +3184,7 @@
         {
             "id": "raw-skill-0214",
             "name": "terraform-infrastructure",
+            "description": "Raw imported operational skill: terraform-infrastructure",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/terraform-infrastructure",
             "source_path": "github-awesome-copilot/terraform-infrastructure/SKILL.md",
@@ -2986,6 +3199,7 @@
         {
             "id": "raw-skill-0215",
             "name": "test-playable-web-games",
+            "description": "Raw imported operational skill: test-playable-web-games",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/test-playable-web-games",
             "source_path": "github-awesome-copilot/test-playable-web-games/SKILL.md",
@@ -3000,6 +3214,7 @@
         {
             "id": "raw-skill-0216",
             "name": "thinking-orbs",
+            "description": "Raw imported operational skill: thinking-orbs",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/thinking-orbs",
             "source_path": "github-awesome-copilot/thinking-orbs/SKILL.md",
@@ -3014,6 +3229,7 @@
         {
             "id": "raw-skill-0217",
             "name": "threejs",
+            "description": "Raw imported operational skill: threejs",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/threejs",
             "source_path": "github-awesome-copilot/threejs/SKILL.md",
@@ -3028,6 +3244,7 @@
         {
             "id": "raw-skill-0218",
             "name": "threejs-landscape",
+            "description": "Raw imported operational skill: threejs-landscape",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/threejs-landscape",
             "source_path": "github-awesome-copilot/threejs-landscape/SKILL.md",
@@ -3042,6 +3259,7 @@
         {
             "id": "raw-skill-0219",
             "name": "threejs-post-processing",
+            "description": "Raw imported operational skill: threejs-post-processing",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/threejs-post-processing",
             "source_path": "github-awesome-copilot/threejs-post-processing/SKILL.md",
@@ -3056,6 +3274,7 @@
         {
             "id": "raw-skill-0220",
             "name": "threejs-towers",
+            "description": "Raw imported operational skill: threejs-towers",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/threejs-towers",
             "source_path": "github-awesome-copilot/threejs-towers/SKILL.md",
@@ -3070,6 +3289,7 @@
         {
             "id": "raw-skill-0221",
             "name": "threejs-weather",
+            "description": "Raw imported operational skill: threejs-weather",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/threejs-weather",
             "source_path": "github-awesome-copilot/threejs-weather/SKILL.md",
@@ -3084,6 +3304,7 @@
         {
             "id": "raw-skill-0222",
             "name": "tune-enemy-ai",
+            "description": "Raw imported operational skill: tune-enemy-ai",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/tune-enemy-ai",
             "source_path": "github-awesome-copilot/tune-enemy-ai/SKILL.md",
@@ -3098,6 +3319,7 @@
         {
             "id": "raw-skill-0223",
             "name": "ui-sensei",
+            "description": "Raw imported operational skill: ui-sensei",
             "source_repository": "garden-skills",
             "source_url": "https://github.com/seed-sources/garden-skills/tree/main/ui-sensei",
             "source_path": "garden-skills/ui-sensei/SKILL.md",
@@ -3112,6 +3334,7 @@
         {
             "id": "raw-skill-0224",
             "name": "ui-tokens",
+            "description": "Raw imported operational skill: ui-tokens",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ui-tokens",
             "source_path": "github-awesome-copilot/ui-tokens/SKILL.md",
@@ -3126,6 +3349,7 @@
         {
             "id": "raw-skill-0225",
             "name": "ui-ux-review",
+            "description": "Raw imported operational skill: ui-ux-review",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ui-ux-review",
             "source_path": "github-awesome-copilot/ui-ux-review/SKILL.md",
@@ -3140,6 +3364,7 @@
         {
             "id": "raw-skill-0226",
             "name": "unicorn-studio",
+            "description": "Raw imported operational skill: unicorn-studio",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/unicorn-studio",
             "source_path": "github-awesome-copilot/unicorn-studio/SKILL.md",
@@ -3154,6 +3379,7 @@
         {
             "id": "raw-skill-0227",
             "name": "unit-test-generation-contract",
+            "description": "Raw imported operational skill: unit-test-generation-contract",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/unit-test-generation-contract",
             "source_path": "github-awesome-copilot/unit-test-generation-contract/SKILL.md",
@@ -3168,6 +3394,7 @@
         {
             "id": "raw-skill-0228",
             "name": "unsplash-asset-images",
+            "description": "Raw imported operational skill: unsplash-asset-images",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/unsplash-asset-images",
             "source_path": "github-awesome-copilot/unsplash-asset-images/SKILL.md",
@@ -3182,6 +3409,7 @@
         {
             "id": "raw-skill-0229",
             "name": "vantajs",
+            "description": "Raw imported operational skill: vantajs",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/vantajs",
             "source_path": "github-awesome-copilot/vantajs/SKILL.md",
@@ -3196,6 +3424,7 @@
         {
             "id": "raw-skill-0230",
             "name": "vault-operations",
+            "description": "Raw imported operational skill: vault-operations",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/vault-operations",
             "source_path": "github-awesome-copilot/vault-operations/SKILL.md",
@@ -3210,6 +3439,7 @@
         {
             "id": "raw-skill-0231",
             "name": "vault-secrets-management",
+            "description": "Raw imported operational skill: vault-secrets-management",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/vault-secrets-management",
             "source_path": "github-awesome-copilot/vault-secrets-management/SKILL.md",
@@ -3224,6 +3454,7 @@
         {
             "id": "raw-skill-0232",
             "name": "vault-security-audit",
+            "description": "Raw imported operational skill: vault-security-audit",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/vault-security-audit",
             "source_path": "github-awesome-copilot/vault-security-audit/SKILL.md",
@@ -3238,6 +3469,7 @@
         {
             "id": "raw-skill-0233",
             "name": "video-to-superprompt",
+            "description": "Raw imported operational skill: video-to-superprompt",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/video-to-superprompt",
             "source_path": "github-awesome-copilot/video-to-superprompt/SKILL.md",
@@ -3252,6 +3484,7 @@
         {
             "id": "raw-skill-0234",
             "name": "vite-bundler-optimization",
+            "description": "Raw imported operational skill: vite-bundler-optimization",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/vite-bundler-optimization",
             "source_path": "github-awesome-copilot/vite-bundler-optimization/SKILL.md",
@@ -3266,6 +3499,7 @@
         {
             "id": "raw-skill-0235",
             "name": "vllm-inference-optimization",
+            "description": "Raw imported operational skill: vllm-inference-optimization",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/vllm-inference-optimization",
             "source_path": "github-awesome-copilot/vllm-inference-optimization/SKILL.md",
@@ -3280,6 +3514,7 @@
         {
             "id": "raw-skill-0236",
             "name": "web-best-practices",
+            "description": "Raw imported operational skill: web-best-practices",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/web-best-practices",
             "source_path": "github-awesome-copilot/web-best-practices/SKILL.md",
@@ -3294,6 +3529,7 @@
         {
             "id": "raw-skill-0237",
             "name": "web-design-engineer",
+            "description": "Raw imported operational skill: web-design-engineer",
             "source_repository": "garden-skills",
             "source_url": "https://github.com/seed-sources/garden-skills/tree/main/web-design-engineer",
             "source_path": "garden-skills/web-design-engineer/SKILL.md",
@@ -3308,6 +3544,7 @@
         {
             "id": "raw-skill-0238",
             "name": "web-design-style-seeds",
+            "description": "Raw imported operational skill: web-design-style-seeds",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/web-design-style-seeds",
             "source_path": "github-awesome-copilot/web-design-style-seeds/SKILL.md",
@@ -3322,6 +3559,7 @@
         {
             "id": "raw-skill-0239",
             "name": "web-interaction-patterns",
+            "description": "Raw imported operational skill: web-interaction-patterns",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/web-interaction-patterns",
             "source_path": "github-awesome-copilot/web-interaction-patterns/SKILL.md",
@@ -3336,6 +3574,7 @@
         {
             "id": "raw-skill-0240",
             "name": "web-performance",
+            "description": "Raw imported operational skill: web-performance",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/web-performance",
             "source_path": "github-awesome-copilot/web-performance/SKILL.md",
@@ -3350,6 +3589,7 @@
         {
             "id": "raw-skill-0241",
             "name": "web-quality-audit",
+            "description": "Raw imported operational skill: web-quality-audit",
             "source_repository": "web-quality-skills",
             "source_url": "https://github.com/seed-sources/web-quality-skills/tree/main/web-quality-audit",
             "source_path": "web-quality-skills/web-quality-audit/SKILL.md",
@@ -3364,6 +3604,7 @@
         {
             "id": "raw-skill-0242",
             "name": "web-seo",
+            "description": "Raw imported operational skill: web-seo",
             "source_repository": "web-quality-skills",
             "source_url": "https://github.com/seed-sources/web-quality-skills/tree/main/web-seo",
             "source_path": "web-quality-skills/web-seo/SKILL.md",
@@ -3378,6 +3619,7 @@
         {
             "id": "raw-skill-0243",
             "name": "web-technique-to-skill",
+            "description": "Raw imported operational skill: web-technique-to-skill",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/web-technique-to-skill",
             "source_path": "github-awesome-copilot/web-technique-to-skill/SKILL.md",
@@ -3392,6 +3634,7 @@
         {
             "id": "raw-skill-0244",
             "name": "webgl-3d-object",
+            "description": "Raw imported operational skill: webgl-3d-object",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/webgl-3d-object",
             "source_path": "github-awesome-copilot/webgl-3d-object/SKILL.md",
@@ -3406,6 +3649,7 @@
         {
             "id": "raw-skill-0245",
             "name": "webgl-landing-steering",
+            "description": "Raw imported operational skill: webgl-landing-steering",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/webgl-landing-steering",
             "source_path": "github-awesome-copilot/webgl-landing-steering/SKILL.md",
@@ -3420,6 +3664,7 @@
         {
             "id": "raw-skill-0246",
             "name": "webgl-laser",
+            "description": "Raw imported operational skill: webgl-laser",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/webgl-laser",
             "source_path": "github-awesome-copilot/webgl-laser/SKILL.md",
@@ -3434,6 +3679,7 @@
         {
             "id": "raw-skill-0247",
             "name": "write-like-meng-on-x",
+            "description": "Raw imported operational skill: write-like-meng-on-x",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/write-like-meng-on-x",
             "source_path": "github-awesome-copilot/write-like-meng-on-x/SKILL.md",
@@ -3448,6 +3694,7 @@
         {
             "id": "raw-skill-0248",
             "name": "x-bookmark-quote-posts",
+            "description": "Raw imported operational skill: x-bookmark-quote-posts",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/x-bookmark-quote-posts",
             "source_path": "github-awesome-copilot/x-bookmark-quote-posts/SKILL.md",
@@ -3462,6 +3709,7 @@
         {
             "id": "raw-skill-0249",
             "name": "xiaopu-web-design",
+            "description": "Raw imported operational skill: xiaopu-web-design",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/xiaopu-web-design",
             "source_path": "github-awesome-copilot/xiaopu-web-design/SKILL.md",
@@ -3476,13 +3724,14 @@
         {
             "id": "raw-skill-0250",
             "name": "zero-trust-architecture",
-            "source_repository": "github-awesome-copilot",
-            "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/zero-trust-architecture",
-            "source_path": "github-awesome-copilot/zero-trust-architecture/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/zero-trust-architecture",
+            "description": "Raw imported operational skill: zero-trust-architecture",
+            "source_repository": "programming",
+            "source_url": "https://github.com/seed-sources/programming/tree/main/zero-trust-architecture",
+            "source_path": "programming/zero-trust-architecture/SKILL.md",
+            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/zero-trust-architecture",
             "source_commit": "main-latest",
             "license": "MIT",
-            "discovered_from": "github-awesome-copilot",
+            "discovered_from": "programming",
             "discovery_depth": 1,
             "sha256": "3d0e1ab2cec66453cf8ee46f178b1d0bf89a36ea3c3b7b5fe9340414f76dca14",
             "status": "RAW_EXTERNAL"
@@ -3490,6 +3739,7 @@
         {
             "id": "raw-skill-0251",
             "name": "zustand-state-management",
+            "description": "Raw imported operational skill: zustand-state-management",
             "source_repository": "github-awesome-copilot",
             "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/zustand-state-management",
             "source_path": "github-awesome-copilot/zustand-state-management/SKILL.md",
@@ -3499,398 +3749,6 @@
             "discovered_from": "github-awesome-copilot",
             "discovery_depth": 1,
             "sha256": "35a404bd4ca625727625957cf0b89f580e4381017000a0c4062d9f2c268930c0",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0251",
-            "name": "code-refactoring-patterns",
-            "source_repository": "programming/code-refactoring-patterns",
-            "source_url": "https://github.com/programming-seed/code-refactoring-patterns",
-            "source_path": "programming/code-refactoring-patterns/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/code-refactoring-patterns",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "cc89f088ae03a59af0a07988055940bcb731fe74f1d52c1a8465dcd564d95dde",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0252",
-            "name": "csharp-wpf-desktop",
-            "source_repository": "programming/csharp-wpf-desktop",
-            "source_url": "https://github.com/programming-seed/csharp-wpf-desktop",
-            "source_path": "programming/csharp-wpf-desktop/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/csharp-wpf-desktop",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "5b59908c901c8970bba3377cc8a5759995947628a4fcd7dc26e49ab53c2be4e9",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0253",
-            "name": "global-skill-registry-router",
-            "source_repository": "programming/global-skill-registry-router",
-            "source_url": "https://github.com/programming-seed/global-skill-registry-router",
-            "source_path": "programming/global-skill-registry-router/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/global-skill-registry-router",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "e153b1542657c7702c86bf20be0b02aeefd8e9d1d63b2dee952f4d672970bccf",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0254",
-            "name": "opa-rego-policy-enforcement",
-            "source_repository": "programming/opa-rego-policy-enforcement",
-            "source_url": "https://github.com/programming-seed/opa-rego-policy-enforcement",
-            "source_path": "programming/opa-rego-policy-enforcement/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/opa-rego-policy-enforcement",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "8cdb572e42257971fbc83c8d19e78f42d9397440f0eb0bc0883c302951b966fc",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0255",
-            "name": "python-trading-systems",
-            "source_repository": "programming/python-trading-systems",
-            "source_url": "https://github.com/programming-seed/python-trading-systems",
-            "source_path": "programming/python-trading-systems/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/python-trading-systems",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "8fc74e42bf598787cbabe90274192aca4b52a8cabbf80c380c5fa744754c9808",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0256",
-            "name": "skill-api-design-governance",
-            "source_repository": "programming/skill-api-design-governance",
-            "source_url": "https://github.com/programming-seed/skill-api-design-governance",
-            "source_path": "programming/skill-api-design-governance/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-api-design-governance",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "9bab8853bd95174c9b786bf45972e1c10b2c86b2743c2702d6c4bfe87f2771b5",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0257",
-            "name": "skill-backend-performance-tuning",
-            "source_repository": "programming/skill-backend-performance-tuning",
-            "source_url": "https://github.com/programming-seed/skill-backend-performance-tuning",
-            "source_path": "programming/skill-backend-performance-tuning/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-backend-performance-tuning",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "e62dee1b77fa821683bcbee4d4194b98c863708f4e6c2aa4a1624e90b3ef7c0e",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0258",
-            "name": "skill-clean-architecture-layering",
-            "source_repository": "programming/skill-clean-architecture-layering",
-            "source_url": "https://github.com/programming-seed/skill-clean-architecture-layering",
-            "source_path": "programming/skill-clean-architecture-layering/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-clean-architecture-layering",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "6e66a54a57f9cb7678c22d1c01a1243bfea9506786548661f8448a234cb914a5",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0259",
-            "name": "skill-cpp-drogon-coroutine-backend",
-            "source_repository": "programming/skill-cpp-drogon-coroutine-backend",
-            "source_url": "https://github.com/programming-seed/skill-cpp-drogon-coroutine-backend",
-            "source_path": "programming/skill-cpp-drogon-coroutine-backend/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cpp-drogon-coroutine-backend",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "d73d79e3a1d994a3ec786fd2f4b11ba4a8ade56a9a7a7c4a7d8993a7ecd5a482",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0260",
-            "name": "skill-cqrs-event-sourcing",
-            "source_repository": "programming/skill-cqrs-event-sourcing",
-            "source_url": "https://github.com/programming-seed/skill-cqrs-event-sourcing",
-            "source_path": "programming/skill-cqrs-event-sourcing/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cqrs-event-sourcing",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "58f930e06a9ae9415ddcc09f2c09629516490ba0a4aaed6d39eaecc205324b78",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0261",
-            "name": "skill-distributed-rate-limiting",
-            "source_repository": "programming/skill-distributed-rate-limiting",
-            "source_url": "https://github.com/programming-seed/skill-distributed-rate-limiting",
-            "source_path": "programming/skill-distributed-rate-limiting/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-distributed-rate-limiting",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "913fea53baf6a21897679577ad27d8eed2be8421c98eb6270d487cb7de2b905b",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0262",
-            "name": "skill-dotnet10-minimal-api-aot",
-            "source_repository": "programming/skill-dotnet10-minimal-api-aot",
-            "source_url": "https://github.com/programming-seed/skill-dotnet10-minimal-api-aot",
-            "source_path": "programming/skill-dotnet10-minimal-api-aot/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-dotnet10-minimal-api-aot",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "017987b81a36194219a860c9be9765ed7a59710dfd4311a07179bce06a245b0b",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0263",
-            "name": "skill-go-worker-pool-concurrency",
-            "source_repository": "programming/skill-go-worker-pool-concurrency",
-            "source_url": "https://github.com/programming-seed/skill-go-worker-pool-concurrency",
-            "source_path": "programming/skill-go-worker-pool-concurrency/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-go-worker-pool-concurrency",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "877b782193411b8ef8db4cf787c71db1a6dea014b4e8abf8ec039c813cd1e817",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0264",
-            "name": "skill-graphql-schema-evolution",
-            "source_repository": "programming/skill-graphql-schema-evolution",
-            "source_url": "https://github.com/programming-seed/skill-graphql-schema-evolution",
-            "source_path": "programming/skill-graphql-schema-evolution/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-graphql-schema-evolution",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "172b41c4f840a9789537d5aee0570e3c69b5e76d291a41e2df05dfd2905c887b",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0265",
-            "name": "skill-grpc-contract-management",
-            "source_repository": "programming/skill-grpc-contract-management",
-            "source_url": "https://github.com/programming-seed/skill-grpc-contract-management",
-            "source_path": "programming/skill-grpc-contract-management/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-grpc-contract-management",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "70e933c7294b113bb3a3d6c09d56af5d8e1ac190063fdefee3591c18868a221b",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0266",
-            "name": "skill-oauth2-jwt-security",
-            "source_repository": "programming/skill-oauth2-jwt-security",
-            "source_url": "https://github.com/programming-seed/skill-oauth2-jwt-security",
-            "source_path": "programming/skill-oauth2-jwt-security/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-oauth2-jwt-security",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "2ef04096904ee349ac5dd6b5319e8011acd8ad3038a38c57e46881551d996a7c",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0267",
-            "name": "skill-owasp-backend-hardening",
-            "source_repository": "programming/skill-owasp-backend-hardening",
-            "source_url": "https://github.com/programming-seed/skill-owasp-backend-hardening",
-            "source_path": "programming/skill-owasp-backend-hardening/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-owasp-backend-hardening",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "e9e7d8931eae101b31502e389c11ca489e795f58c87beac4dcff3fb57284ef56",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0268",
-            "name": "skill-postgresql-indexing-tuning",
-            "source_repository": "programming/skill-postgresql-indexing-tuning",
-            "source_url": "https://github.com/programming-seed/skill-postgresql-indexing-tuning",
-            "source_path": "programming/skill-postgresql-indexing-tuning/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-postgresql-indexing-tuning",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "a1a83d681a862092a59c02148bf195568bb886e7c08a26d54336beea7fc5a77e",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0269",
-            "name": "skill-python-fastapi-async-worker",
-            "source_repository": "programming/skill-python-fastapi-async-worker",
-            "source_url": "https://github.com/programming-seed/skill-python-fastapi-async-worker",
-            "source_path": "programming/skill-python-fastapi-async-worker/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-python-fastapi-async-worker",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "84c747a0a51710f49f597f91feec608502f4a3d93e2208766474ded4c255191d",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0270",
-            "name": "skill-rbac-abac-authorization",
-            "source_repository": "programming/skill-rbac-abac-authorization",
-            "source_url": "https://github.com/programming-seed/skill-rbac-abac-authorization",
-            "source_path": "programming/skill-rbac-abac-authorization/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rbac-abac-authorization",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "e5b3e7d31b4120a5e8200a2913f6a5627a804d40313eabbd2c16550383dfc650",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0271",
-            "name": "skill-redis-caching-patterns",
-            "source_repository": "programming/skill-redis-caching-patterns",
-            "source_url": "https://github.com/programming-seed/skill-redis-caching-patterns",
-            "source_path": "programming/skill-redis-caching-patterns/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-redis-caching-patterns",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "a7d11a54c30aa63939fa344d82436a7e83cf8836d99f42b6fef808ea280050f0",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0272",
-            "name": "skill-rust-tokio-axum-architecture",
-            "source_repository": "programming/skill-rust-tokio-axum-architecture",
-            "source_url": "https://github.com/programming-seed/skill-rust-tokio-axum-architecture",
-            "source_path": "programming/skill-rust-tokio-axum-architecture/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rust-tokio-axum-architecture",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "70ebbdcf5e2490633b661b11e5591564af23c63ab4707f1b3403d3c6ebb71ab6",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0273",
-            "name": "skill-saga-orchestration-choreography",
-            "source_repository": "programming/skill-saga-orchestration-choreography",
-            "source_url": "https://github.com/programming-seed/skill-saga-orchestration-choreography",
-            "source_path": "programming/skill-saga-orchestration-choreography/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-saga-orchestration-choreography",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "13086dcf3937f3b9ba19b044833e154830b6be30d58c4b20e9780e18d5bc8b97",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0274",
-            "name": "skill-sqlite-wal-optimization",
-            "source_repository": "programming/skill-sqlite-wal-optimization",
-            "source_url": "https://github.com/programming-seed/skill-sqlite-wal-optimization",
-            "source_path": "programming/skill-sqlite-wal-optimization/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-sqlite-wal-optimization",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "b50c3def1ffe1c5ff2dbb52ddab0da03fab65684f7e4a26b34fd47a1f5c0a321",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0275",
-            "name": "skill-transactional-outbox-cdc",
-            "source_repository": "programming/skill-transactional-outbox-cdc",
-            "source_url": "https://github.com/programming-seed/skill-transactional-outbox-cdc",
-            "source_path": "programming/skill-transactional-outbox-cdc/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-transactional-outbox-cdc",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "6173c44ad43896192fd1d4ba7c362f842a2d7f5212f8e96d5c2ba04048b11968",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0276",
-            "name": "skill-typescript-nest-bullmq-orm",
-            "source_repository": "programming/skill-typescript-nest-bullmq-orm",
-            "source_url": "https://github.com/programming-seed/skill-typescript-nest-bullmq-orm",
-            "source_path": "programming/skill-typescript-nest-bullmq-orm/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-typescript-nest-bullmq-orm",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "81f5808774dfd354422b9775df9e89421f0bee01c1aaddaf30b7dcedcfbc732f",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0277",
-            "name": "unit-test-generation-contract",
-            "source_repository": "programming/unit-test-generation-contract",
-            "source_url": "https://github.com/programming-seed/unit-test-generation-contract",
-            "source_path": "programming/unit-test-generation-contract/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/unit-test-generation-contract",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "f5769b9a600ec8ca69414d9269907497fb07b415837d39d9ffb02ac408d4eeff",
-            "status": "RAW_EXTERNAL"
-        },
-        {
-            "id": "prog-skill-0278",
-            "name": "zero-trust-architecture",
-            "source_repository": "programming/zero-trust-architecture",
-            "source_url": "https://github.com/programming-seed/zero-trust-architecture",
-            "source_path": "programming/zero-trust-architecture/SKILL.md",
-            "destination_path": "06_INBOX/RAW_IMPORTS/skills/programming/zero-trust-architecture",
-            "source_commit": "main-latest",
-            "license": "MIT",
-            "discovered_from": "Programming Seeds Discovery",
-            "discovery_depth": 1,
-            "sha256": "3d0e1ab2cec66453cf8ee46f178b1d0bf89a36ea3c3b7b5fe9340414f76dca14",
             "status": "RAW_EXTERNAL"
         }
     ]

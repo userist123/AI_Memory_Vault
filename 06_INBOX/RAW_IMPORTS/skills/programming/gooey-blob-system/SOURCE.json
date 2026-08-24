@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/seed-sources/programming",
+    "source_url": "https://github.com/seed-sources/programming/tree/main/gooey-blob-system",
+    "source_path": "programming/gooey-blob-system/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: programming",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "48cef691946621cb90b0891a19b9bf9076fddfe54961847f78223515475894bd",
+    "status": "RAW_EXTERNAL"
+}

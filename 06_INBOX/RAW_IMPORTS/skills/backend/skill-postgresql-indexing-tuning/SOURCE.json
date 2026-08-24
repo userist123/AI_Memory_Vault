@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/seed-sources/backend",
+    "source_url": "https://github.com/seed-sources/backend/tree/main/skill-postgresql-indexing-tuning",
+    "source_path": "backend/skill-postgresql-indexing-tuning/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: backend",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "a1a83d681a862092a59c02148bf195568bb886e7c08a26d54336beea7fc5a77e",
+    "status": "RAW_EXTERNAL"
+}

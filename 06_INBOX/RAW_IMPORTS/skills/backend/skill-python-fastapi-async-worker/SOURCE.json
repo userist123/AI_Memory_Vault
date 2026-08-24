@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/seed-sources/backend",
+    "source_url": "https://github.com/seed-sources/backend/tree/main/skill-python-fastapi-async-worker",
+    "source_path": "backend/skill-python-fastapi-async-worker/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: backend",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "84c747a0a51710f49f597f91feec608502f4a3d93e2208766474ded4c255191d",
+    "status": "RAW_EXTERNAL"
+}
