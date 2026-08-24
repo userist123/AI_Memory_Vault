@@ -1,9 +1,9 @@
 ---
 name: database_and_persistence_engineer
-description: Specialised Agent persona for Database And Persistence Engineer with integrated skills.
+description: Specialised Agent persona for Database & Persistence Engineer with integrated skills.
 ---
 
-# Agent Profile: Database And Persistence Engineer
+# Agent Profile: Database & Persistence Engineer
 
 ## Assigned Operational Skills (9 Skills)
 

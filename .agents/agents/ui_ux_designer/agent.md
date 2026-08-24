@@ -1,9 +1,9 @@
 ---
 name: ui_ux_designer
-description: Specialised Agent persona for Ui Ux Designer with integrated skills.
+description: Specialised Agent persona for UI/UX Designer with integrated skills.
 ---
 
-# Agent Profile: Ui Ux Designer
+# Agent Profile: UI/UX Designer
 
 ## Assigned Operational Skills (9 Skills)
 

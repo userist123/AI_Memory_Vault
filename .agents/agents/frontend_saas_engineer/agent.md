@@ -1,9 +1,9 @@
 ---
 name: frontend_saas_engineer
-description: Specialised Agent persona for Frontend Saas Engineer with integrated skills.
+description: Specialised Agent persona for Frontend SaaS Engineer with integrated skills.
 ---
 
-# Agent Profile: Frontend Saas Engineer
+# Agent Profile: Frontend SaaS Engineer
 
 ## Assigned Operational Skills (11 Skills)
 

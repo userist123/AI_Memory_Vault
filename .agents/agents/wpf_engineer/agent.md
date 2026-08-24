@@ -1,9 +1,9 @@
 ---
 name: wpf_engineer
-description: Specialised Agent persona for Wpf Engineer with integrated skills.
+description: Specialised Agent persona for WPF Engineer with integrated skills.
 ---
 
-# Agent Profile: Wpf Engineer
+# Agent Profile: WPF Engineer
 
 ## Assigned Operational Skills (2 Skills)
 

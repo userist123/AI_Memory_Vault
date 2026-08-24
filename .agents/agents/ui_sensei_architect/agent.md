@@ -1,9 +1,9 @@
 ---
 name: ui_sensei_architect
-description: Specialised Agent persona for Ui Sensei Architect with integrated skills.
+description: Specialised Agent persona for UI Sensei Architect with integrated skills.
 ---
 
-# Agent Profile: Ui Sensei Architect
+# Agent Profile: UI Sensei Architect
 
 ## Assigned Operational Skills (12 Skills)
 

@@ -1,9 +1,9 @@
 ---
 name: secops_auditor
-description: Specialised Agent persona for Secops Auditor with integrated skills.
+description: Specialised Agent persona for SecOps Auditor with integrated skills.
 ---
 
-# Agent Profile: Secops Auditor
+# Agent Profile: SecOps Auditor
 
 ## Assigned Operational Skills (13 Skills)
 

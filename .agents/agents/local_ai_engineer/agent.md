@@ -1,9 +1,9 @@
 ---
 name: local_ai_engineer
-description: Specialised Agent persona for Local Ai Engineer with integrated skills.
+description: Specialised Agent persona for Local AI Engineer with integrated skills.
 ---
 
-# Agent Profile: Local Ai Engineer
+# Agent Profile: Local AI Engineer
 
 ## Assigned Operational Skills (8 Skills)
 
