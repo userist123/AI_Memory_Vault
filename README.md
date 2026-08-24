@@ -11,6 +11,8 @@ relations:
   - "00_CORE/Memory_Protocol.md"
   - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
   - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
+  - "99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md"
+  - "05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md"
 ---
 
 # 🧠 AI Memory Vault (`userist123/AI_Memory_VAULT_CODEX_READY`)
@@ -26,6 +28,40 @@ relations:
 > **Codex Operating Contract**: [`AGENTS.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/AGENTS.md) | **Invariante de Securitate**: [`vault_cognitive_rules.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md)
 
 **AI Memory Vault v4.0.0** este sistemul cognitiv de memorie persistentă, autorizare pe nivele de securitate și orchestrare multi-agent conceput pentru agenți AI locali și cloud. Proiectul asigură memorie canonică partajată între multiple sesiuni de codare fără re-transmiterea istoricului și fără consum de compute local nedorit pe stația utilizatorului (execuție complet izolată via `127.0.0.1`).
+
+---
+
+## 🧭 Obsidian — sincronizarea Skill / Agent / Memory
+
+Suprafața canonică de navigare Obsidian pentru relația dintre skill-uri, agenți, referințe și memorie este:
+
+- [[99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync]] — contractul de sincronizare
+- [[05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC]] — MOC pentru navigare
+- [[01_KNOWLEDGE/Agents_Skill_Matrix]] — matricea agenți ↔ skill-uri
+- [[01_KNOWLEDGE/Master_Skills_Catalog_251]] — catalogul skill-urilor locale
+- `06_INBOX/RAW_IMPORTS/skills/` — granița RAW_EXTERNAL pentru skill-uri externe
+
+Regula de sincronizare este:
+
+```text
+External Source
+      ↓
+Raw Skill / Reference
+      ↓
+Provenance + Validation
+      ↓
+Skill Registry
+      ↓
+Agent Capability
+      ↓
+Verified Knowledge / Memory Candidate
+      ↓
+Canonical Memory
+      ↓
+Obsidian Navigation
+```
+
+Obsidian nu devine un al doilea MemoryController sau Cognitive Core. El reprezintă suprafața de navigare și audit uman a aceleiași arhitecturi canonice.
 
 ---
 
