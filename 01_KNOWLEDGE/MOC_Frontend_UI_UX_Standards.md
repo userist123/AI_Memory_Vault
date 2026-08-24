@@ -27,6 +27,8 @@ relations:
     type: supports
   - target: "[[01_KNOWLEDGE/Landing_Page_Architecture]]"
     type: supports
+  - target: "[[01_KNOWLEDGE/MengTo_Agent_Skills_Catalog]]"
+    type: supports
   - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
     type: implements
 ---
@@ -74,3 +76,7 @@ graph TD
 
 ## 4. Proiecte Active Conectate
 - [[02_PROJECTS/FinScope]] — Implementează direct standardele de Data Viz (Recharts) și sistemul de design tipizat.
+
+## 5. Colecții & Cataloage Agent Skills
+- [[01_KNOWLEDGE/MengTo_Agent_Skills_Catalog]] — 130 de skill-uri specializate pentru Web Design, WebGL/Three.js, animații GSAP/Lenis, proceduri Codex și Game Dev.
+
