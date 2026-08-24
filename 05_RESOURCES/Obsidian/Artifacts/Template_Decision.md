@@ -1,0 +1,63 @@
+---
+id: "<RFC 4122 UUID>"
+type: decision
+lifecycle: REVIEW
+category:
+tags: []
+created: {{date}}
+updated: {{date}}
+provenance:
+  source_type:
+  source_ref:
+  source_date:
+  original_path:
+  extraction_date:
+  redaction: not_applicable
+confidence: medium
+verification: unverified
+relations: []
+---
+
+# {{title}}
+
+## Decision
+
+## Context
+
+## Problem
+
+## Options
+
+### Option A
+
+**Pros:**
+- 
+
+**Cons:**
+- 
+
+### Option B
+
+**Pros:**
+- 
+
+**Cons:**
+- 
+
+## Rationale
+
+## Expected Outcome
+
+## Risks
+
+## Implementation
+
+- [ ]
+
+## Review Trigger
+
+## Result
+
+## Related
+
+-
