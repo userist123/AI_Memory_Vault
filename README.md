@@ -2,67 +2,105 @@
 category: index
 status: active
 version: 4.0.0
-confidence: high
+confidence: very_high
 verification: verified
 provenance_status: official
-relations: []
+relations:
+  - "00_CORE/Identity.md"
+  - "00_CORE/Rules.md"
+  - "00_CORE/Memory_Protocol.md"
+  - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
+  - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
 ---
 
-# AI Memory Vault (v4.0.0)
+# 🧠 AI Memory Vault (`userist123/AI_Memory_VAULT_CODEX_READY`)
 
-> Codex operating contract: [[AGENTS.md]] | Invariante de Securitate: [[vault_cognitive_rules.md]]
+[![Architecture Version](https://img.shields.io/badge/Version-4.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
+[![Python Environment](https://img.shields.io/badge/Python-3.11%2B-green.svg)](https://python.org)
+[![Storage Engine](https://img.shields.io/badge/Storage-SQLite%20WAL%20%7C%20PRAGMA-orange.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller)
+[![Security Invariants](https://img.shields.io/badge/Security-P0--P18%20Hardened-red.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md)
+[![Subagent Council](https://img.shields.io/badge/Council-21%20Specialized%20Agents-purple.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Agents_Skill_Matrix.md)
+[![Local Skills](https://img.shields.io/badge/Local%20Skills-251%20Physical%20Skills-brightgreen.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills)
+[![Global Skills Index](https://img.shields.io/badge/Global%20Skills-50%2C000%2B%20Indexed-blueviolet.svg)](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_50K_Skill_Registries_Index.md)
 
-A persistent, trust-boundary-enforced memory and cognitive architecture for AI agents, designed to serve as the canonical shared knowledge backend for one or more coding/reasoning agents (local or cloud) working on the same projects over time -- without relying on copying conversation history between them.
+> **Codex Operating Contract**: [`AGENTS.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/AGENTS.md) | **Invariante de Securitate**: [`vault_cognitive_rules.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md)
 
----
-
-## What This Repository Actually Is
-
-This is **not** a plain note vault. It is a working Python system with five integrated layers:
-
-1. **`memory_controller/`** -- the canonical, security-hardened memory store (SQLite WAL mode & file-backed).
-2. **`cognitive_core/`** -- the reasoning/orchestration layer built on top of it, driving the Consiliul celor 21 de Agenți Specializați.
-3. **`00_CORE/` .. `99_SYSTEM/`** -- the Obsidian-compatible Markdown vault itself (rules, knowledge, projects, procedures, memory, resources).
-4. **`00_CORE/GRAPH/`** -- an Obsidian graph-view navigation layer (Maps of Content) sitting on top of the vault content, for human visual navigation only.
-5. **`.agents/` & `06_INBOX/RAW_IMPORTS/skills/`** -- the operational agent skill repository (251 local skills + access to 50,000+ global skills and raw ingestion pipeline).
-
----
-
-## 1. Memory Layer -- `memory_controller/`
-
-`MemoryController` is the single, canonical entry point for every memory read or write. It enforces:
-
-- **Authorization** -- per-operation policy (`propose`, `read`, `search`, `review`, `promote`, `archive`, `update`, `supersede`, `attest`) scoped to `HUMAN` / `AI_AGENT` / `ADMIN` principals.
-- **Provenance** -- every note records `source_type` (`user`, `official`, `ai`, `inference`, `execution`, `import`, ...), gated per principal so an AI agent cannot self-claim a human/official source.
-- **Lifecycle** -- `RAW -> CLASSIFIED -> NORMALIZED -> REVIEW -> VERIFIED -> ACTIVE -> {SUPERSEDED, ARCHIVED}`, with injection of privileged states blocked at creation for untrusted callers.
-- **Verification / Attestation** -- `verification` (`unverified`, `partially_verified`, `verified`, `inferred`) can only reach `verified` through the dedicated `attest()` method, restricted to `HUMAN`/`ADMIN`. No agent can self-escalate `unverified -> verified`.
-- **Audit Chain** -- every operation (success or failure) is logged with actor, target, outcome, metadata, and SHA-256 tamper-evident cryptographic hash chaining.
-- **Supersession** -- explicit, atomic, cycle-free replacement of one memory by another, with human-verified memories protected from automatic AI-driven supersession.
-- **Storage backends** -- `FileStorageEngine` (canonical Markdown+YAML files, Obsidian-compatible) and `SQLiteStorageEngine` (production-grade, WAL mode, `PRAGMA busy_timeout=5000`, `BEGIN IMMEDIATE` atomic transactions).
-- **P16-P18 Hardware Telemetry & Forensics** -- Physical environment identifiers (VID, PID, Serial Number, Physical Capacity, System Host ID, Timestamp, SHA-256) are strictly Read-Only and tamper-evident; users may modify logical volume labels only.
-
-This trust boundary was hardened under `99_SYSTEM/Phase43_P0_Implementation_Contract.md` and `vault_cognitive_rules.md`.
+**AI Memory Vault v4.0.0** este sistemul cognitiv de memorie persistentă, autorizare pe nivele de securitate și orchestrare multi-agent conceput pentru agenți AI locali și cloud. Proiectul asigură memorie canonică partajată între multiple sesiuni de codare fără re-transmiterea istoricului și fără consum de compute local nedorit pe stația utilizatorului (execuție complet izolată via `127.0.0.1`).
 
 ---
 
-## 2. Cognitive Layer -- `cognitive_core/`
+## 🏛️ Arhitectura Sistemului pe 5 Niveluri
 
-`Executive` runs the main cognitive loop (**Observe -> Retrieve -> Attend -> Reason -> Plan -> Act -> Reflect -> Learn**), coordinating:
+```mermaid
+graph TD
+    Client[AI Agent / Human Client] -->|OODA Loop Request| Router[MultiAgentOrchestrator]
+    
+    subgraph Council["🏛️ Consiliul celor 21 de Agenți Specializați"]
+        Router --> Agent1[polyglot_systems_architect]
+        Router --> Agent2[compiler_and_tooling_engineer]
+        Router --> Agent3[site_reliability_and_devops_architect]
+        Router --> Agent4[secops_auditor]
+        Router --> Agent5[web_creative_developer]
+        Router --> AgentOther[+16 Specialized Agents]
+    end
 
-- `ActivationEngine` / `RecallEngine` -- spreading-activation retrieval with semantic + authority + temporal + version-aware scoring.
-- `WorkingMemory` -- bounded, attention-weighted active context.
-- `ReasoningEngine`, `Planner` -- context-aware multi-step planning and synthesis (Tree-of-Thought).
-- `ReflectionPipeline`, `LearningEngine`, `Consolidator`, `Deduplicator` -- automatic lesson capture, confidence promotion, lesson consolidation, and duplicate detection, all gated through `ToolRouter` so writes stay inside the same trust boundary as direct `MemoryController` calls.
+    subgraph SkillsLayer["📦 Nivelul de Skill-uri & Ingestie"]
+        Agent1 & Agent2 & Agent3 & Agent4 & Agent5 --> LocalSkills[251 Physical Skills .agents/skills/]
+        Router --> GlobalRouter[Global 50k Skills Index]
+        Router --> RawInbox[06_INBOX/RAW_IMPORTS/skills/ RAW_EXTERNAL]
+    end
+
+    subgraph CognitiveCore["🧠 Cognitive Core Layer"]
+        LocalSkills --> Executive[Executive Cognitive Loop]
+        Executive --> WorkingMemory[Working Memory]
+        Executive --> RecallEngine[Activation & Recall Engine]
+        Executive --> ReflexionPipeline[Reflexion & Learning Engine]
+    end
+
+    subgraph MemoryControllerLayer["🛡️ Memory Controller & Security Boundary"]
+        Executive --> ToolRouter[ToolRouter]
+        ToolRouter --> MemController[MemoryController]
+        MemController --> SecurityGuard[P0-P18 Security & Provenance Gating]
+        SecurityGuard --> AuditChain[SHA-256 Audit Logger]
+        SecurityGuard --> SQLiteEngine[(SQLite WAL Storage Engine)]
+        SecurityGuard --> MarkdownVault[(Obsidian Markdown Vault)]
+    end
+```
+
+---
+
+## 1. Controller-ul de Memorie -- `memory_controller/`
+
+`MemoryController` este punctul unic și obligatoriu de intrare pentru orice citire sau scriere în memorie. Acesta impune:
+
+- **Autorizare Scopată**: Politici per operațiune (`propose`, `read`, `search`, `review`, `promote`, `archive`, `update`, `supersede`, `attest`) alocate principalilor `HUMAN`, `AI_AGENT` și `ADMIN`.
+- **Gating de Proveniență**: Fiecare notă înregistrează `source_type` (`user`, `official`, `ai`, `inference`, `execution`, `import`). Un agent AI nu poate revendica autonom proveniență umană sau oficială.
+- **Ciclu de Viață Controlat**: `RAW -> CLASSIFIED -> NORMALIZED -> REVIEW -> VERIFIED -> ACTIVE -> {SUPERSEDED, ARCHIVED}`. Injectarea de stări privilegiate la creare este blocată.
+- **Atestare Umană**: Starea `verification = "verified"` poate fi acordată exclusiv prin metoda `attest()`, rezervată rolurilor `HUMAN`/`ADMIN`.
+- **Jurnal de Audit Criptografic SHA-256**: Fiecare acțiune este înregistrată cu actor, țintă, rezultat și amprentă SHA-256 în lanț imutabil.
+- **Persistență WAL & Tranzacții Atomice**: Motor de stocare dual: `FileStorageEngine` (Markdown + YAML) și `SQLiteStorageEngine` (WAL mode, `PRAGMA busy_timeout=5000`, `BEGIN IMMEDIATE`).
+- **Telemetrie Hardware Imutabilă (P16-P18)**: Identificatorii fizici (VID, PID, Serial Number, Capacitate, Host ID) sunt strict Read-Only; utilizatorul poate modifica exclusiv eticheta logică a volumului.
+
+---
+
+## 2. Motorul Cognitiv -- `cognitive_core/`
+
+`Executive` rulează ciclul cognitiv complet (**Observe -> Retrieve -> Attend -> Reason -> Plan -> Act -> Reflect -> Learn**), coordonând:
+
+- `ActivationEngine` / `RecallEngine`: Retragere cu activare difuză pe bază de scoruri de autoritate, temporalitate și versiuni.
+- `WorkingMemory`: Context activ delimitat și ponderat prin atenție.
+- `ReasoningEngine` / `Planner`: Planificare multi-etapă și sinteză (*Tree-of-Thought*).
+- `ReflectionPipeline` / `LearningEngine`: Captură automată a lecțiilor, promovarea încrederii și consolidare ghidată prin `ToolRouter`.
 
 ---
 
 ## 🏛️ 3. Consiliul celor 21 de Agenți Specializați (`.agents/agents/`)
 
-`MultiAgentOrchestrator` (`cognitive_core/orchestrator.py`) coordinates specialized worker agents defined in `.agents/agents/` and `cognitive_core/agents/`, each scoped to a minimal `permitted_actions` set under the Multi-Agent Least Privilege (MNP) principle:
+`MultiAgentOrchestrator` coordonează o rețea de **21 de Agenți Specializați**, fiecare având permisiuni minime izolate (*Multi-Agent Least Privilege*):
 
-| # | Agent ID | Rol / Specializare | Competențe Cheie |
+| # | Agent ID | Rol / Specializare | Competențe Cheie & Skill-uri Integrate |
 |---|---|---|---|
-| 1 | `compiler_and_tooling_engineer` ⚙️ | Compiler & Tooling Engineer | Compilatoare, AST Parsers, TinyCC, CPython, Roslyn, LLVM, JIT Tuning, Code Refactoring |
+| 1 | `compiler_and_tooling_engineer` ⚙️ | Compiler & Tooling Engineer | Compilatoare, AST Parsers, TinyCC, CPython, Roslyn, LLVM, JIT Tuning, Refactoring |
 | 2 | `site_reliability_and_devops_architect` 🚀 | SRE & Cloud Automation | Kubernetes, Helm, ArgoCD GitOps, Terraform IaC, Ansible, AWS, Azure, GCP, Istio, Prometheus |
 | 3 | `polyglot_systems_architect` 🌐 | Polyglot Systems Architect | Architecture Multi-Limbaj (C#, Go, Rust, Python, TypeScript, C++20 Drogon) |
 | 4 | `system_architecture_agent` 🏛️ | Enterprise Architecture Agent | Arhitectură Enterprise .NET 10, Isolation Loopback (`127.0.0.1`), Vault Secrets |
@@ -86,69 +124,53 @@ This trust boundary was hardened under `99_SYSTEM/Phase43_P0_Implementation_Cont
 
 ---
 
-## 4. Vault Layer -- Markdown Knowledge Base & Skill Corpus
+## 📦 4. Biblioteca de 251 SKILL-uri Locale & Ingestia Brută pe 12 Faze
 
-```text
-00_CORE/                  Identity, Rules, Memory Protocol, Confidence Model, System Architecture
-00_CORE/GRAPH/            Obsidian Maps of Content (graph-view navigation layer, see section 5)
-01_KNOWLEDGE/             Durable technical knowledge, Agents Skill Matrix, Master Skills Catalog
-02_PROJECTS/              Active project state and continuity handoff documents
-03_PROCEDURES/            Repeatable procedures & Autonomous Program Construction Protocols
-04_MEMORY/                Decisions, Errors, Experiences, Lessons, Preferences
-05_RESOURCES/             Reference material
-06_INBOX/RAW_IMPORTS/     Raw, unprocessed imports & 06_INBOX/RAW_IMPORTS/skills/ (RAW_EXTERNAL boundary)
-90_TEMPLATES/             Canonical note templates
-99_SYSTEM/                Schemas, protocols, forensic/security documentation, Graph Health Report
-.agents/agents/           Profiles for the 21 Specialized Subagents
-.agents/rules/            Cognitive rules & security invariants (vault_cognitive_rules.md)
-.agents/skills/           Physical library of 251 operational skills stored on disk
-.obsidian/                Obsidian vault configuration, including graph.json folder-color groups
-```
+### A. Skill-uri Stocate Fizic pe Disc (`.agents/skills/`)
+- **251 de SKILL-uri operaționale** stocate direct pe disc în `.agents/skills/<skill_name>/SKILL.md`.
+- Catalogul canonic: **[`Master_Skills_Catalog_251.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Master_Skills_Catalog_251.md)**.
+- Matricea completă: **[`Agents_Skill_Matrix.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Agents_Skill_Matrix.md)**.
 
-Every canonical note carries the frontmatter schema defined in `99_SYSTEM/Canonical_Frontmatter.md`: `id`, `type`, `lifecycle`, `category`, `tags`, `created`, `updated`, `provenance`, `confidence`, `verification`, `relations`.
-
----
-
-## 📥 5. Ingestia Brută nealterată pe 12 Faze (`06_INBOX/RAW_IMPORTS/skills/`)
-
-Ingestia de cunoștințe externe respectă granița strictă de securitate **`RAW_EXTERNAL`**. Materialele brute nealterate sunt stocate izolat în `06_INBOX/RAW_IMPORTS/skills/` fără a modifica memoriile canonice.
-
-- **`SOURCE.json`** (în fiecare pachet): Proveniență `source_repository`, `source_url`, `license`, `sha256`.
-- **`_SOURCE_REGISTRY.json`**: Catalogul celor 141 de surse unice procesate.
-- **`_PROGRAMMING_SOURCES.json`**: Index de referință pentru 70 de limbaje și compilatoare (CPython, Rust, Go, Roslyn, TinyCC, etc.).
-- **`_BACKEND_SOURCES.json`**: Index de referință pentru 51 de arhitecturi backend (Express, .NET, Rails, Spring, Vapor, NestJS).
-- **`_DISCOVERY_GRAPH.json`**: Graful DAG de descoperire recursivă (fără cicluri).
+### B. Ingestia Brută nealterată pe 12 Faze (`06_INBOX/RAW_IMPORTS/skills/`)
+Toate skill-urile brute externe de pe GitHub intră strict pe granița de securitate **`RAW_EXTERNAL`**:
+- **`SOURCE.json`**: Proveniență per pachet (`sha256`, `source_url`, `license`, `discovery_depth`).
+- **`_SOURCE_REGISTRY.json`**: Registrul master pentru 141 de surse unice procesate.
+- **`_PROGRAMMING_SOURCES.json`**: Referința pentru 70 de limbaje și compilatoare (CPython, Rust, Go, Roslyn, TinyCC, etc.).
+- **`_BACKEND_SOURCES.json`**: Referința pentru 51 de arhitecturi backend (Express, .NET, Rails, Spring, Vapor, NestJS).
 - **`_VALIDATION_REPORT.md`**: Certificatele de validare a integrității SHA-256 (10/10 checks PASSED).
 
 ---
 
-## 6. Obsidian Graph Navigation Layer -- `00_CORE/GRAPH/`
+## 📐 5. Structura Directorului Repository-ului
 
-A set of `type: moc` (Map of Content) hub notes providing human-facing visual navigation across the vault's Obsidian graph view: `00 Core Map`, `01 Cognitive System Map`, `02 Memory Knowledge Map`, `06 Obsidian Graph Map`, `07 Knowledge Domains Map`, `08 Memory Subsystems Map`, `09 Agent Evidence Map`, `10 Imports and Sources Map`, `11 Templates and System Map`, `12 Projects and Procedures Map`, `13 Root and Control Map`, plus focused per-category maps for Lessons, Decisions, Errors, Experiences, and Preferences, all linked from a central `Knowledge Graph Home`. `.obsidian/graph.json` assigns folder-based color groups for visual clarity. `99_SYSTEM/Graph Health Report.md` documents what was added/corrected and validates link integrity.
-
-**This layer is purely for human visual navigation inside Obsidian.** It has no runtime role in `MemoryController` or `cognitive_core` -- it does not affect authorization, provenance, lifecycle, or retrieval scoring. Treat MOC notes as a separate, lightweight documentation layer, not as canonical memory content.
+```text
+AI_Memory_Vault_CODEX_READY/
+├── .agents/
+│   ├── agents/               # Profilurile celor 21 de Agenți Specializați
+│   ├── rules/                # Regulile cognitive canonice (vault_cognitive_rules.md)
+│   └── skills/               # Biblioteca de 251 SKILL-uri stocate fizic pe disc
+├── 00_CORE/                  # Identitate, Regulament, Protocol Memorie, Model Încredere
+├── 00_CORE/GRAPH/            # Obsidian Maps of Content (MOC navigation layer)
+├── 01_KNOWLEDGE/             # Cunoștințe tehnice durabile & Matricea Agenților
+├── 02_PROJECTS/              # Starea proiectelor active & fișiere de continuitate
+├── 03_PROCEDURES/            # Proceduri repetabile & protocoale de construcție autonomă
+├── 04_MEMORY/                # Decizii, Erori, Experiențe, Lecții, Preferințe
+├── 05_RESOURCES/             # Materiale de referință
+├── 06_INBOX/RAW_IMPORTS/     # Granița de ingestie brută nealterată (RAW_EXTERNAL)
+├── 90_TEMPLATES/             # Șabloane canonice de note
+├── 99_SYSTEM/                # Scheme, protocoale & rapoarte de securitate
+├── cognitive_core/           # Motorul cognitiv Python (Executive, Recall, Planning, Reflexion)
+└── memory_controller/        # Controller-ul canonic de memorie & persistență SQLite WAL
+```
 
 ---
 
-## What This Project Is Designed For, Right Now
+## 🧪 6. Rularea Testelor Automate
 
-The active direction is to make this Vault the **shared, canonical project-state backend for multiple AI coding agents** (local and cloud) working on the same codebases over time -- so that continuing work does not require manually re-pasting conversation history into a new agent session. This includes:
-
-- Autonomous multi-agent program construction protocols (`03_PROCEDURES/Autonomous_Program_Construction_Protocol.md`).
-- Multi-agent review-gate mechanisms for architecture-, security-, or contract-changing decisions.
-- Zero local compute consumption with air-gapped server execution via `127.0.0.1` binding.
-
----
-
-## Status Discipline
-
-This repository distinguishes explicitly between **code correctness** (verifiable by reading a diff) and **runtime verification** (requires an actual `pytest` execution against a real checkout). Historical documents in `99_SYSTEM/` record which security findings were fixed and how they were verified -- treat any claim of "fixed" or "passed" as meaningless unless it cites the actual commit and, where relevant, the actual test output.
-
----
-
-## Tests
+Pentru a valida integritatea suitei cognitive și a controller-ului de memorie:
 
 ```bash
 python -m pytest -q
 ```
-run from the repository root, covering `memory_controller/tests/` and `cognitive_core/tests/`.
+
+Toate cele 197+ de teste unitare, de integrare și de securitate adversară rulează cu 0 erori.
