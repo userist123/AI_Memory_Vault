@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/github-awesome-copilot",
+    "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/ui-ux-review",
+    "source_path": "github-awesome-copilot/ui-ux-review/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "05cad8aaa8822c53a685bbac9281033605543b7f47c0bd6ddfba1812850da1fa"
+}

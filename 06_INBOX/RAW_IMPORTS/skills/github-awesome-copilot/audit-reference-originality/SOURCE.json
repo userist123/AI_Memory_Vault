@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/github-awesome-copilot",
+    "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/audit-reference-originality",
+    "source_path": "github-awesome-copilot/audit-reference-originality/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "8b8b5e6c6174ff790f08541e444fe64b48f8d078b1f5783b36c3204a690616b6"
+}

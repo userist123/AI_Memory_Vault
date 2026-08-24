@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/github-awesome-copilot",
+    "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/gitlab-ci-cd",
+    "source_path": "github-awesome-copilot/gitlab-ci-cd/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "ecfba07c6c798668c77141e5b4c8eacf30de86c667147957d0c0219692aed218"
+}

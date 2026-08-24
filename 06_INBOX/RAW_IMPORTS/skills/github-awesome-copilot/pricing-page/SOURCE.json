@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/github-awesome-copilot",
+    "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/pricing-page",
+    "source_path": "github-awesome-copilot/pricing-page/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "9b3af6174e379042ea1579f5d62b6fb0030fe6298d35b417488ac1e5ef8159db"
+}

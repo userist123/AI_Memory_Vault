@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/github-awesome-copilot",
+    "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/high-contrast-skeuomorphic-clean",
+    "source_path": "github-awesome-copilot/high-contrast-skeuomorphic-clean/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "6381a8257a1a42df490a12ce0902fb7b70acd50c8d231e86aaaed29d33fdee81"
+}

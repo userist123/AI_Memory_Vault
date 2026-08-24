@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/github-awesome-copilot",
+    "source_url": "https://github.com/seed-sources/github-awesome-copilot/tree/main/skill-rust-tokio-axum-architecture",
+    "source_path": "github-awesome-copilot/skill-rust-tokio-axum-architecture/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: github-awesome-copilot",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "70ebbdcf5e2490633b661b11e5591564af23c63ab4707f1b3403d3c6ebb71ab6"
+}

@@ -1,0 +1,13 @@
+{
+    "source_repository": "https://github.com/seed-sources/backend-reference-skills",
+    "source_url": "https://github.com/seed-sources/backend-reference-skills/tree/main/skill-api-design-governance",
+    "source_path": "backend-reference-skills/skill-api-design-governance/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Seed Collection: backend-reference-skills",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:32:20.196494+00:00",
+    "content_sha256": "9bab8853bd95174c9b786bf45972e1c10b2c86b2743c2702d6c4bfe87f2771b5"
+}
