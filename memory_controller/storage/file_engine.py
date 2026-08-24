@@ -2,7 +2,7 @@ import os
 import glob
 import tempfile
 import sys
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 # Lazy import of Lifecycle moved inside query method to avoid circular import
 from memory_controller.audit.logger import audit_event
 from .serializer import serialize, deserialize
@@ -12,6 +12,7 @@ class FileStorageEngine:
     def __init__(self, vault_root: str):
         self.vault_root = vault_root
         self.id_to_path: Dict[str, str] = {}
+        self._cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
         self._initialize_index()
 
     def _initialize_index(self):
@@ -40,6 +41,8 @@ class FileStorageEngine:
                             # DUPLICATE UUID => FATAL INTEGRITY ERROR
                             raise ValueError(f"Duplicate UUID found: {note_id} in {filepath} and {self.id_to_path[note_id]}")
                         self.id_to_path[note_id] = filepath
+                        mtime = os.path.getmtime(filepath)
+                        self._cache[note_id] = (mtime, data)
                 except Exception as e:
                     if "Duplicate UUID" in str(e):
                         raise e
@@ -54,10 +57,22 @@ class FileStorageEngine:
     def get(self, note_id: str) -> Optional[Dict[str, Any]]:
         filepath = self.id_to_path.get(note_id)
         if not filepath or not os.path.exists(filepath):
+            self._cache.pop(note_id, None)
             return None
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return deserialize(content)
+            
+        try:
+            mtime = os.path.getmtime(filepath)
+            cached = self._cache.get(note_id)
+            if cached and cached[0] == mtime:
+                return dict(cached[1])
+                
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            data = deserialize(content)
+            self._cache[note_id] = (mtime, dict(data))
+            return dict(data)
+        except Exception:
+            return None
 
     def set(self, note_id: str, data: Dict[str, Any]) -> None:
         # INVARIANT: storage key == data["id"]
@@ -93,6 +108,8 @@ class FileStorageEngine:
                 os.remove(existing_path)
                 
         self.id_to_path[note_id] = target_path
+        mtime = os.path.getmtime(target_path)
+        self._cache[note_id] = (mtime, data)
 
     def delete(self, note_id: str) -> None:
         filepath = self.id_to_path.get(note_id)
@@ -103,6 +120,7 @@ class FileStorageEngine:
             if os.path.exists(filepath):
                 os.remove(filepath)
             del self.id_to_path[note_id]
+            self._cache.pop(note_id, None)
 
     def query(self, intent: str, lifecycle: List[str] = None, types: List[str] = None) -> List[Dict[str, Any]]:
         """Query notes, excluding RAW notes."""
@@ -110,7 +128,7 @@ class FileStorageEngine:
         from memory_controller.controller import Lifecycle
 
         results = []
-        for note_id, filepath in self.id_to_path.items():
+        for note_id in list(self.id_to_path.keys()):
             try:
                 note = self.get(note_id)
                 if not note:
@@ -126,4 +144,3 @@ class FileStorageEngine:
             except Exception:
                 continue
         return results
-
