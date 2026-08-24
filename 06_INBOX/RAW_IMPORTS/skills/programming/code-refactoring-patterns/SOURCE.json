@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/programming-seed/code-refactoring-patterns",
+    "source_url": "https://github.com/programming-seed/code-refactoring-patterns/tree/main/SKILL.md",
+    "source_path": "programming/code-refactoring-patterns/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Programming Skill Ecosystem",
+    "discovered_from": "Programming Seeds Discovery",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "sha256": "cc89f088ae03a59af0a07988055940bcb731fe74f1d52c1a8465dcd564d95dde",
+    "status": "RAW_EXTERNAL"
+}

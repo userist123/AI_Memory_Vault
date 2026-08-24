@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/programming-seed/skill-dotnet10-minimal-api-aot",
+    "source_url": "https://github.com/programming-seed/skill-dotnet10-minimal-api-aot/tree/main/SKILL.md",
+    "source_path": "programming/skill-dotnet10-minimal-api-aot/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Programming Skill Ecosystem",
+    "discovered_from": "Programming Seeds Discovery",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "sha256": "017987b81a36194219a860c9be9765ed7a59710dfd4311a07179bce06a245b0b",
+    "status": "RAW_EXTERNAL"
+}

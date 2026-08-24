@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/programming-seed/skill-transactional-outbox-cdc",
+    "source_url": "https://github.com/programming-seed/skill-transactional-outbox-cdc/tree/main/SKILL.md",
+    "source_path": "programming/skill-transactional-outbox-cdc/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Programming Skill Ecosystem",
+    "discovered_from": "Programming Seeds Discovery",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "sha256": "6173c44ad43896192fd1d4ba7c362f842a2d7f5212f8e96d5c2ba04048b11968",
+    "status": "RAW_EXTERNAL"
+}

@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/programming-seed/unit-test-generation-contract",
+    "source_url": "https://github.com/programming-seed/unit-test-generation-contract/tree/main/SKILL.md",
+    "source_path": "programming/unit-test-generation-contract/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Programming Skill Ecosystem",
+    "discovered_from": "Programming Seeds Discovery",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "sha256": "f5769b9a600ec8ca69414d9269907497fb07b415837d39d9ffb02ac408d4eeff",
+    "status": "RAW_EXTERNAL"
+}

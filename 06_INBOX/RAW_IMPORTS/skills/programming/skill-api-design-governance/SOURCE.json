@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/programming-seed/skill-api-design-governance",
+    "source_url": "https://github.com/programming-seed/skill-api-design-governance/tree/main/SKILL.md",
+    "source_path": "programming/skill-api-design-governance/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Programming Skill Ecosystem",
+    "discovered_from": "Programming Seeds Discovery",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:45:18.245169+00:00",
+    "sha256": "9bab8853bd95174c9b786bf45972e1c10b2c86b2743c2702d6c4bfe87f2771b5",
+    "status": "RAW_EXTERNAL"
+}
