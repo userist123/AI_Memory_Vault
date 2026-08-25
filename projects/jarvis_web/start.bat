@@ -21,35 +21,37 @@ if not exist "%VAULT_ROOT%\memory_controller\api_server.py" (
 
 echo.
 echo  ==================================================
-echo   JARVIS AI MEMORY VAULT COMMAND CENTER
+echo   JARVIS AI MEMORY VAULT COMMAND CENTER V2
 echo  ==================================================
 echo   Vault: %VAULT_ROOT%
 echo.
 
-echo  [1/4] Starting Memory Vault API on port 8000...
+echo  [1/5] Starting Memory Vault API on port 8000...
 start "JARVIS Memory Vault API" /D "%VAULT_ROOT%" cmd /k "python -m memory_controller.api_server 8000"
-
 timeout /t 2 /nobreak >nul
 
-echo  [2/4] Starting neural Romanian voice on port 8002...
+echo  [2/5] Starting neural Romanian voice on port 8002...
 start "JARVIS Romanian Neural Voice" /D "%JARVIS_DIR%" cmd /k "python voice_server.py"
-
 timeout /t 2 /nobreak >nul
 
-echo  [3/4] Starting JARVIS Command Center on port 3000...
+echo  [3/5] Starting JARVIS V2 Supervisor on port 8003...
+start "JARVIS V2 Supervisor" /D "%VAULT_ROOT%" cmd /k "python -m projects.jarvis_web.jarvis_v2.server"
+timeout /t 2 /nobreak >nul
+
+echo  [4/5] Starting JARVIS Command Center on port 3000...
 start "JARVIS Command Center" /D "%JARVIS_DIR%" cmd /k "node server.cjs"
-
 timeout /t 2 /nobreak >nul
 
-echo  [4/4] Opening JARVIS...
+echo  [5/5] Opening JARVIS...
 start "" "http://127.0.0.1:3000"
 
 echo.
 echo  ==================================================
-echo   JARVIS:       http://127.0.0.1:3000
-echo   Memory API:   http://127.0.0.1:8000
-echo   Voice API:    http://127.0.0.1:8002
-echo   Voice model:  %JARVIS_TTS_MODEL%
+echo   JARVIS:        http://127.0.0.1:3000
+echo   Memory API:    http://127.0.0.1:8000
+echo   Voice API:     http://127.0.0.1:8002
+echo   Supervisor V2: http://127.0.0.1:8003
+echo   Voice model:   %JARVIS_TTS_MODEL%
 echo  ==================================================
 echo.
 echo  For first-time neural voice setup run:
