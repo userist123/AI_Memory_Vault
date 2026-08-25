@@ -3,78 +3,35 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>JARVIS — AI Memory Vault</title>
-  <meta name="description" content="JARVIS control plane for AI Memory Vault">
+  <title>JARVIS — AI Memory Vault Command Center</title>
+  <meta name="description" content="JARVIS command center for AI Memory Vault V6">
   <link rel="stylesheet" href="/css/jarvis.css">
 </head>
 <body>
-  <div id="app-container" class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">J</div>
-        <div>
-          <div class="eyebrow">AI MEMORY VAULT</div>
-          <h1>JARVIS</h1>
-        </div>
-      </div>
-      <div class="topbar-actions">
-        <span id="vault-state" class="status-pill offline"><span class="dot"></span> OFFLINE</span>
-        <button id="refresh-btn" class="ghost-btn" type="button">Refresh</button>
-      </div>
-    </header>
-
-    <main>
-      <section class="hero">
-        <div>
-          <div class="eyebrow">COGNITIVE CONTROL PLANE</div>
-          <h2>Memory, agents and skills in one cockpit.</h2>
-          <p>JARVIS is a presentation and control layer over the canonical Memory Vault. Retrieval stays selective; the Vault remains the source of truth.</p>
-        </div>
-        <div id="hologram-container" class="hologram" aria-label="JARVIS system status">
-          <div class="ring ring-a"></div><div class="ring ring-b"></div><div class="ring ring-c"></div>
-          <div class="core-orb"><span id="orb-label">LINK</span></div>
-        </div>
-      </section>
-
-      <section class="metrics" aria-label="Vault metrics">
-        <article class="metric-card"><span>Indexed notes</span><strong id="metric-notes">—</strong><small id="metric-service">Memory API</small></article>
-        <article class="metric-card"><span>Agents</span><strong id="metric-agents">21</strong><small>Agent Council</small></article>
-        <article class="metric-card"><span>Operational skills</span><strong id="metric-skills">251</strong><small>Local skill corpus</small></article>
-        <article class="metric-card"><span>Memory engine</span><strong>V6</strong><small>ACT-R + GWT + graphs</small></article>
-      </section>
-
-      <section class="workspace">
-        <div class="panel search-panel">
-          <div class="panel-head"><h3>Memory Retrieval</h3><span class="panel-kicker">LIVE</span></div>
-          <form id="search-form" class="search-row">
-            <input id="search-input" autocomplete="off" placeholder="Search the Memory Vault…" aria-label="Search Memory Vault">
-            <button type="submit" class="primary-btn">Search</button>
-          </form>
-          <div id="search-results" class="results empty">Type a query to retrieve relevant notes.</div>
-        </div>
-
-        <div class="panel status-panel">
-          <div class="panel-head"><h3>System Status</h3><span class="panel-kicker">LOCAL</span></div>
-          <div class="status-grid">
-            <div><span>JARVIS web</span><strong id="jarvis-status">ONLINE</strong></div>
-            <div><span>Memory API</span><strong id="memory-status">CHECKING…</strong></div>
-            <div><span>Vault</span><strong id="vault-path">AI_Memory_Vault</strong></div>
-            <div><span>Refresh</span><strong id="last-refresh">—</strong></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel activity-panel">
-        <div class="panel-head"><h3>Operating Model</h3><span class="panel-kicker">CANONICAL</span></div>
-        <div class="pipeline">
-          <span>REQUEST</span><i>→</i><span>RETRIEVE</span><i>→</i><span>AGENT</span><i>→</i><span>SKILL</span><i>→</i><span>VERIFY</span><i>→</i><span>MEMORY</span>
-        </div>
-        <p class="fineprint">JARVIS does not replace MemoryController, Cognitive Core or the Agent Council. It provides an operational cockpit over them.</p>
-      </section>
-    </main>
-
-    <footer><span>JARVIS Web Ecosystem</span><span>AI Memory Vault V6</span></footer>
-  </div>
-  <script type="module" src="/js/app.js"></script>
+<div id="app-container" class="app-shell">
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">J</div><div><div class="eyebrow">AI MEMORY VAULT V6</div><h1>JARVIS</h1></div></div>
+    <div class="topbar-actions"><span id="vault-state" class="status-pill offline"><span class="dot"></span> OFFLINE</span><span id="clock" class="clock">--:--:--</span><button id="refresh-btn" class="ghost-btn" type="button">Refresh</button></div>
+  </header>
+  <main>
+    <section class="hero command-hero">
+      <div><div class="eyebrow">COGNITIVE COMMAND CENTER</div><h2>Orchestrate memory, agents and skills from one cockpit.</h2><p>JARVIS is the operational control plane over the canonical Vault: retrieval remains selective, promotion remains governed, and MemoryController stays authoritative.</p><div class="hero-actions"><button id="quick-search" class="primary-btn" type="button">Search Memory</button><button id="quick-council" class="ghost-btn" type="button">Agent Council</button></div></div>
+      <div id="hologram-container" class="hologram" aria-label="JARVIS system status"><div class="ring ring-a"></div><div class="ring ring-b"></div><div class="ring ring-c"></div><div class="core-orb"><span id="orb-label">LINK</span></div></div>
+    </section>
+    <section class="metrics"><article class="metric-card"><span>Indexed notes</span><strong id="metric-notes">—</strong><small>Memory API</small></article><article class="metric-card"><span>Agents</span><strong id="metric-agents">21</strong><small>Agent Council</small></article><article class="metric-card"><span>Operational skills</span><strong id="metric-skills">251</strong><small>Local skill corpus</small></article><article class="metric-card"><span>Engine</span><strong>V6</strong><small>ACT-R · GWT · Graphs</small></article></section>
+    <section id="search-panel" class="grid-2">
+      <div class="panel search-panel"><div class="panel-head"><h3>Memory Retrieval</h3><span class="panel-kicker">LIVE</span></div><form id="search-form" class="search-row"><input id="search-input" autocomplete="off" placeholder="Search canonical memory…" aria-label="Search Memory Vault"><button type="submit" class="primary-btn">Search</button></form><div id="search-results" class="results empty">Ready for a selective retrieval query.</div></div>
+      <div class="panel proposal-panel"><div class="panel-head"><h3>Memory Proposal</h3><span class="panel-kicker">CONTROLLED WRITE</span></div><textarea id="proposal-input" rows="5" placeholder="Describe a fact, decision, procedure or lesson to propose to Memory V6…"></textarea><div class="panel-actions"><button id="proposal-btn" class="primary-btn" type="button">Propose Memory</button><span id="proposal-state" class="muted">No proposal sent.</span></div></div>
+    </section>
+    <section id="council-panel" class="panel council-panel"><div class="panel-head"><h3>Agent Council</h3><span id="council-count" class="panel-kicker">21 AGENTS</span></div><div id="agent-grid" class="agent-grid"></div></section>
+    <section class="grid-2">
+      <div class="panel status-panel"><div class="panel-head"><h3>System Status</h3><span class="panel-kicker">LOCAL</span></div><div class="status-grid"><div><span>JARVIS web</span><strong id="jarvis-status">ONLINE</strong></div><div><span>Memory API</span><strong id="memory-status">CHECKING…</strong></div><div><span>Vault</span><strong id="vault-path">AI_Memory_Vault</strong></div><div><span>Last refresh</span><strong id="last-refresh">—</strong></div></div></div>
+      <div class="panel task-panel"><div class="panel-head"><h3>Execution Timeline</h3><span class="panel-kicker">SESSION</span></div><div id="timeline" class="timeline"></div></div>
+    </section>
+    <section class="panel activity-panel"><div class="panel-head"><h3>Canonical Operating Model</h3><span class="panel-kicker">MEMORY V6</span></div><div class="pipeline"><span>REQUEST</span><i>→</i><span>RETRIEVE</span><i>→</i><span>ROUTE</span><i>→</i><span>AGENT</span><i>→</i><span>SKILL</span><i>→</i><span>VERIFY</span><i>→</i><span>MEMORY</span></div><p class="fineprint">JARVIS is a command surface, not a second memory engine. Canonical memory, provenance, authorization and lifecycle remain inside the Vault.</p></section>
+  </main>
+  <footer><span>JARVIS Command Center</span><span>AI Memory Vault V6</span><span>Local-first</span></footer>
+</div>
+<script type="module" src="/js/app.js"></script>
 </body>
 </html>
