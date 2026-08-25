@@ -1,12 +1,7 @@
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-function pickRomanianVoice() {
-  if (!('speechSynthesis' in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  return voices.find(v => /^ro(-|_)?RO$/i.test(v.lang))
-    || voices.find(v => /^ro/i.test(v.lang))
-    || voices.find(v => /romania|romanian|romana/i.test(v.name));
-}
+const TTS_API = 'http://127.0.0.1:8002';
+let currentAudio = null;
+let speechSession = 0;
 
 export function createVoiceEngine({ onText, onState } = {}) {
   if (!SpeechRecognition) return null;
@@ -29,39 +24,53 @@ export function createVoiceEngine({ onText, onState } = {}) {
   };
 }
 
-export function speak(text, {
-  lang = 'ro-RO',
-  rate = 0.98,
-  pitch = 0.9,
-  volume = 1,
-  onStart,
-  onEnd,
-  onError
-} = {}) {
-  if (!('speechSynthesis' in window)) return false;
+export async function speak(text, { onStart, onEnd, onError } = {}) {
   const clean = String(text ?? '').trim();
   if (!clean) return false;
-
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(clean.slice(0, 6000));
-  const voice = pickRomanianVoice();
-  utterance.lang = voice?.lang || lang;
-  if (voice) utterance.voice = voice;
-  utterance.rate = rate;
-  utterance.pitch = pitch;
-  utterance.volume = volume;
-  utterance.onstart = () => onStart?.();
-  utterance.onend = () => onEnd?.();
-  utterance.onerror = (event) => onError?.(event);
-  window.speechSynthesis.speak(utterance);
-  return true;
+  const session = ++speechSession;
+  stopSpeaking();
+  try {
+    const response = await fetch(`${TTS_API}/tts`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text: clean})
+    });
+    if (!response.ok) {
+      let message = `TTS HTTP ${response.status}`;
+      try { const data = await response.json(); if (data.error) message = data.error; } catch {}
+      throw new Error(message);
+    }
+    const blob = await response.blob();
+    if (session !== speechSession) return false;
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    currentAudio = audio;
+    audio.preload = 'auto';
+    audio.onplay = () => onStart?.();
+    audio.onended = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null; onEnd?.(); };
+    audio.onerror = () => { URL.revokeObjectURL(url); if (currentAudio === audio) currentAudio = null; onError?.(new Error('JARVIS voice playback failed')); };
+    await audio.play();
+    return true;
+  } catch (error) {
+    onError?.(error);
+    return false;
+  }
 }
 
 export function stopSpeaking() {
-  if (!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
+  speechSession += 1;
+  if (currentAudio) {
+    currentAudio.pause();
+    try { currentAudio.currentTime = 0; } catch {}
+    currentAudio = null;
+  }
 }
 
-export function hasSpeechSynthesis() {
-  return 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+export async function hasSpeechSynthesis() {
+  try {
+    const response = await fetch(`${TTS_API}/health`, {cache: 'no-store'});
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
