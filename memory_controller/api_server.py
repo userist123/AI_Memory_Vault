@@ -57,6 +57,36 @@ def _ollama_models():
     try: return [m.get('name') for m in _ollama_get('/api/tags').get('models',[]) if m.get('name')]
     except Exception: return []
 
+def _looks_romanian(text: str) -> bool:
+    words=set(text.lower().split())
+    markers={'si','și','sunt','este','vreau','ce','cum','care','pentru','salut','buna','bună','mulțumesc','multumesc','poți','poti','am','ai','din','cu','nu'}
+    return len(words & markers) >= 1 or any(ch in text.lower() for ch in 'ăâîșț')
+
+JARVIS_STYLE_RO = """
+You are JARVIS, the Romanian-speaking AI assistant and command center of the AI Memory Vault.
+
+CONVERSATION STYLE:
+- When the user speaks Romanian, answer in natural Romanian. Keep Romanian grammar, word order and idioms correct and native-sounding.
+- Sound like a competent human assistant: calm, intelligent, warm, concise when the task is simple, detailed when the task needs detail.
+- Use normal conversational Romanian, not translated English patterns.
+- Do not sound like a machine or a military robot. Never use canned phrases such as 'Afirmativ', 'Negativ', 'Procesare solicitare', 'Comandă primită', 'Confirmare finalizată', 'Inițiez secvența' or similar robotic status language unless the user explicitly asks for role-play in that style.
+- Prefer natural responses such as 'Sigur.', 'Da, am înțeles.', 'Hai să verificăm.', 'Am găsit problema.', 'Nu pot confirma asta încă.'
+- Do not repeat the user's sentence unnecessarily.
+- Avoid excessive bullet lists in casual conversation.
+- Use Romanian diacritics correctly in generated text.
+- Preserve technical names, code identifiers, URLs, model names and file paths exactly when needed.
+- If the user writes in another language, answer in that language unless they clearly request Romanian.
+- If the user only says hello or greets you, answer naturally and briefly; do not dump system telemetry.
+
+JARVIS BEHAVIOR:
+- You are the conversational face of the AI Memory Vault, not a generic chatbot.
+- Use canonical Vault memory when relevant, but clearly distinguish remembered facts from inference.
+- Never claim an action was executed unless the system response confirms it.
+- Route specialized work to the Agent Council when appropriate, but do not mention routing mechanics unless useful to the user.
+- Be proactive about clarification only when genuinely necessary.
+- For technical work, give the user the practical answer first, then the relevant detail.
+""".strip()
+
 class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     vault_root=Path(os.getenv('AI_MEMORY_VAULT_ROOT',str(project_root))).resolve()
     storage=FileStorageEngine(str(vault_root)); controller=MemoryController(storage); queue=MemoryProposalQueue(vault_root/'06_INBOX'/'memory_proposals.jsonl')
@@ -118,10 +148,11 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             if not chosen: self._json(503,{'error':'No Ollama model available','ollama':'offline'}); return
             ranked=_route_agents(self.vault_root,message); selected=ranked[0] if ranked else None; memory=self.storage.query(intent=message)[:8]
             context='\n\n'.join([f"[{n.get('id','memory')}] {n.get('content','')}" for n in memory])[:12000]; agent_name=selected.get('name') if selected else 'Agent Council'
-            system=("You are JARVIS, a local AI command-center assistant for the AI Memory Vault. Speak naturally and technically. Never claim an action was executed unless confirmed. Distinguish Vault memory from inference. Route specialized work to the Agent Council. Current routed specialist: " + agent_name + ".\n\nCANONICAL VAULT CONTEXT:\n" + (context or '(no matching memory)'))
+            language_instruction='Răspunde în limba română.' if _looks_romanian(message) else 'Răspunde în aceeași limbă în care ți se adresează utilizatorul.'
+            system=JARVIS_STYLE_RO+'\n\n'+language_instruction+'\n\nCURRENT ROUTED SPECIALIST: '+agent_name+'\n\nCANONICAL VAULT CONTEXT:\n'+(context or '(nu există memorie relevantă pentru această întrebare)')
             messages=[{'role':'system','content':system}]+[m for m in history[-8:] if isinstance(m,dict) and m.get('role') in {'user','assistant'}]+[{'role':'user','content':message}]
             try:
-                result=_ollama_post('/api/chat',{'model':chosen,'messages':messages,'stream':False},180); reply=((result.get('message') or {}).get('content') or '').strip(); self._json(200,{'reply':reply,'model':chosen,'agent':agent_name,'memory_hits':len(memory)})
+                result=_ollama_post('/api/chat',{'model':chosen,'messages':messages,'stream':False,'options':{'temperature':0.65,'top_p':0.9,'repeat_penalty':1.08}},180); reply=((result.get('message') or {}).get('content') or '').strip(); self._json(200,{'reply':reply,'model':chosen,'agent':agent_name,'memory_hits':len(memory),'language':'ro' if _looks_romanian(message) else 'auto'})
             except urllib.error.URLError as exc: self._json(503,{'error':f'Ollama unavailable: {exc}','ollama':'offline'})
             except Exception as exc: self._json(500,{'error':str(exc)})
             return
