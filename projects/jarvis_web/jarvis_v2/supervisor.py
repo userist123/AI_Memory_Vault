@@ -5,6 +5,7 @@ import json
 import os
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from dataclasses import asdict, dataclass, field
@@ -57,10 +58,10 @@ def _request_json(path: str, method: str = "GET", payload: dict[str, Any] | None
 
 
 class JarvisSupervisor:
-    """Small dependency-free Supervisor/Worker engine for JARVIS V2.
+    """Dependency-free Supervisor/Worker engine for the first JARVIS V2 slice.
 
-    It deliberately keeps the orchestration contract explicit so a LangGraph backend
-    can replace this implementation later without changing the UI/API contract.
+    The contract is intentionally explicit so a LangGraph implementation can replace
+    the engine later without changing the public session/event model.
     """
 
     def run(self, message: str, history: list[dict[str, Any]] | None = None, model: str = "") -> SessionState:
@@ -96,11 +97,7 @@ class JarvisSupervisor:
             result = _request_json(
                 "/chat",
                 "POST",
-                {
-                    "message": clean,
-                    "model": model,
-                    "history": history or [],
-                },
+                {"message": clean, "model": model, "history": history or []},
                 180,
             )
             session.reply = str(result.get("reply") or "Nu am primit un răspuns de la modelul local.")
