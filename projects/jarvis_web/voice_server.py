@@ -1,11 +1,11 @@
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
 import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json
 
 HOST = "127.0.0.1"
 PORT = int(os.getenv("JARVIS_TTS_PORT", "8002"))
@@ -36,20 +36,11 @@ def synthesize(text: str) -> bytes:
             "--noise_scale", os.getenv("JARVIS_TTS_NOISE_SCALE", "0.55"),
             "--noise_w", os.getenv("JARVIS_TTS_NOISE_W", "0.80"),
         ]
-        subprocess.run(
-            command,
-            input=clean,
-            text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=120,
-            check=True,
-        )
+        subprocess.run(command, input=clean, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120, check=True)
         with open(output_path, "rb") as audio:
             return audio.read()
     except subprocess.CalledProcessError as exc:
-        detail = (exc.stderr or "Piper synthesis failed").strip()
-        raise RuntimeError(detail) from exc
+        raise RuntimeError((exc.stderr or "Piper synthesis failed").strip()) from exc
     finally:
         try:
             os.remove(output_path)
@@ -61,49 +52,58 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         return
 
-    def _headers(self, status=200, content_type="application/json; charset=utf-8"):
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
+    def do_OPTIONS(self):
+        self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Cache-Control", "no-store")
         self.end_headers()
 
-    def do_OPTIONS(self):
-        self._headers(204)
-
     def do_GET(self):
-        if self.path == "/health":
-            self._headers(200)
-            payload = {
-                "status": "online" if PIPER_BIN else "offline",
-                "engine": "Piper neural TTS",
-                "model": MODEL,
-                "romanian": MODEL.startswith("ro_RO"),
-                "piper": bool(PIPER_BIN),
-            }
-            self.wfile.write(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+        if self.path != "/health":
+            self.send_response(404)
+            self.end_headers()
             return
-        self._headers(404)
-        self.wfile.write(b'{"error":"Not found"}')
+        payload = {
+            "status": "online" if PIPER_BIN else "offline",
+            "engine": "Piper neural TTS",
+            "model": MODEL,
+            "romanian": MODEL.startswith("ro_RO"),
+            "piper": bool(PIPER_BIN),
+        }
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_POST(self):
         if self.path != "/tts":
-            self._headers(404)
-            self.wfile.write(b'{"error":"Not found"}')
+            self.send_response(404)
+            self.end_headers()
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             audio = synthesize(body.get("text", ""))
-            self._headers(200, "audio/wav")
-            self.send_header("Content-Length", str(len(audio)))
-            # headers must be sent before body; Content-Length is intentionally sent again below
         except Exception as exc:
-            self._headers(500)
-            self.wfile.write(json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8"))
+            body = json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8")
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(body)
             return
+        self.send_response(200)
+        self.send_header("Content-Type", "audio/wav")
+        self.send_header("Content-Length", str(len(audio)))
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
         self.wfile.write(audio)
 
 
