@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -14,12 +15,23 @@ DATA_DIR = os.getenv("PIPER_DATA_DIR", os.path.join(os.path.dirname(__file__), "
 PIPER_BIN = os.getenv("PIPER_BIN") or shutil.which("piper") or shutil.which("piper.exe")
 
 
+def speech_text(text: str) -> str:
+    value = str(text or "")
+    value = re.sub(r"```.*?```", " ", value, flags=re.S)
+    value = re.sub(r"`([^`]*)`", r"\1", value)
+    value = re.sub(r"https?://\S+", "", value)
+    value = re.sub(r"^\s{0,3}#{1,6}\s*", "", value, flags=re.M)
+    value = re.sub(r"^\s*[-*+]\s+", "", value, flags=re.M)
+    value = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", value)
+    value = re.sub(r"[*_~]+", "", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    return value[:6000]
+
+
 def synthesize(text: str) -> bytes:
-    clean = " ".join(str(text).strip().split())
+    clean = speech_text(text)
     if not clean:
         raise ValueError("text is required")
-    if len(clean) > 6000:
-        clean = clean[:6000]
     if not PIPER_BIN:
         raise RuntimeError("Piper nu este instalat. Ruleaza setup_jarvis_voice.ps1 si reporneste JARVIS.")
 
