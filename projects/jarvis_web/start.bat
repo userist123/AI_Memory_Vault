@@ -1,37 +1,48 @@
 @echo off
-title JARVIS Web Ecosystem — Launcher
+title JARVIS AI Memory Vault Command Center
 color 0B
+setlocal
+
+set "JARVIS_DIR=%~dp0"
+for %%I in ("%JARVIS_DIR%..\..") do set "VAULT_ROOT=%%~fI"
 
 echo.
-echo  ==========================================
-echo   JARVIS Web Ecosystem — Starting Systems
-echo  ==========================================
+echo  ==================================================
+echo   JARVIS AI MEMORY VAULT COMMAND CENTER
+necho  ==================================================
+echo   Vault: %VAULT_ROOT%
 echo.
 
-:: Step 1: Start Memory Vault REST API (port 8000) in background
-echo  [1/3] Starting AI Memory Vault REST API on port 8000...
-start "JARVIS Memory Vault API" cmd /k "cd /d C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY && python -m memory_controller.api_server 8000"
+if not exist "%VAULT_ROOT%\memory_controller\api_server.py" (
+  echo  ERROR: AI Memory Vault root not found.
+  echo  Expected: %VAULT_ROOT%
+  pause
+  exit /b 1
+)
 
-:: Wait for vault to come up
-timeout /t 2 /nobreak > nul
+where python >nul 2>&1 || (echo  ERROR: Python is not installed/in PATH.& pause & exit /b 1)
+where node >nul 2>&1 || (echo  ERROR: Node.js is not installed/in PATH.& pause & exit /b 1)
 
-:: Step 2: Start JARVIS HTTP server (port 3000) in background
-echo  [2/3] Starting JARVIS HTTP Server on port 3000...
-start "JARVIS HTTP Server" cmd /k "cd /d C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web && node server.cjs"
+echo  [1/3] Starting Memory Vault API on port 8000...
+start "JARVIS Memory Vault API" cmd /k "cd /d "%VAULT_ROOT%" && set AI_MEMORY_VAULT_ROOT=%VAULT_ROOT% && python -m memory_controller.api_server 8000"
 
-:: Wait for HTTP server to come up
-timeout /t 2 /nobreak > nul
+timeout /t 2 /nobreak >nul
 
-:: Step 3: Open browser
-echo  [3/3] Opening JARVIS in your browser...
-start "" "http://localhost:3000"
+echo  [2/3] Starting JARVIS Command Center on port 3000...
+start "JARVIS Command Center" cmd /k "cd /d "%JARVIS_DIR%" && node server.cjs"
+
+timeout /t 2 /nobreak >nul
+
+echo  [3/3] Opening JARVIS...
+start "" "http://127.0.0.1:3000"
 
 echo.
-echo  ==========================================
-echo   JARVIS is ONLINE at http://localhost:3000
-echo   Memory Vault API at http://localhost:8000
-echo  ==========================================
+echo  ==================================================
+echo   JARVIS: http://127.0.0.1:3000
+echo   Memory API: http://127.0.0.1:8000
+ echo  ==================================================
 echo.
 echo  Close the two server windows to stop JARVIS.
 echo.
 pause
+endlocal
