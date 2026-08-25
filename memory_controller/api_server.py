@@ -8,6 +8,7 @@ import datetime
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
@@ -75,7 +76,6 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     controller = MemoryController(storage)
 
     def log_message(self, format, *args):
-        # Keep JARVIS console output readable.
         return
 
     def _set_headers(self, status=200):
@@ -186,6 +186,11 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
 
         if path == "/api/v1/propose":
             try:
+                data = dict(data)
+                data.setdefault("id", f"jarvis-{uuid.uuid4()}")
+                data.setdefault("provenance", {"source_type": "inference", "source_ref": "jarvis-command-center"})
+                data.setdefault("category", "jarvis-command-center")
+                data.setdefault("tags", ["jarvis", "memory-v6"])
                 result = self.controller.propose(Principal.AI_AGENT, data)
                 self._json(201, {"status": "proposed", "result": result})
             except Exception as exc:
