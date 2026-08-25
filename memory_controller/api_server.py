@@ -1,6 +1,6 @@
 """Local REST API Gateway for AI Memory Vault and JARVIS Command Center."""
 from __future__ import annotations
-import datetime, json, os, sys, urllib.request, urllib.error, uuid
+import datetime, json, os, sys, urllib.request, urllib.error
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
@@ -43,13 +43,18 @@ def _route_agents(root:Path,task:str):
         matched=sorted(t for t in tokens if t in hay); scored.append({**agent,'route_score':len(matched),'matched_terms':matched})
     scored.sort(key=lambda x:(-x['route_score'],x.get('name',''))); return scored[:5]
 
-def _ollama_request(path,payload,timeout=120):
+def _ollama_get(path,timeout=20):
     host=os.getenv('OLLAMA_HOST','http://127.0.0.1:11434').rstrip('/')
-    req=urllib.request.Request(host+path,data=json.dumps(payload).encode('utf-8'),headers={'Content-Type':'application/json'})
+    req=urllib.request.Request(host+path,method='GET')
+    with urllib.request.urlopen(req,timeout=timeout) as r: return json.loads(r.read().decode('utf-8'))
+
+def _ollama_post(path,payload,timeout=120):
+    host=os.getenv('OLLAMA_HOST','http://127.0.0.1:11434').rstrip('/')
+    req=urllib.request.Request(host+path,data=json.dumps(payload).encode('utf-8'),headers={'Content-Type':'application/json'},method='POST')
     with urllib.request.urlopen(req,timeout=timeout) as r: return json.loads(r.read().decode('utf-8'))
 
 def _ollama_models():
-    try: return [m.get('name') for m in _ollama_request('/api/tags',{},20).get('models',[]) if m.get('name')]
+    try: return [m.get('name') for m in _ollama_get('/api/tags').get('models',[]) if m.get('name')]
     except Exception: return []
 
 class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
@@ -66,8 +71,7 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         p=urlparse(self.path); path=p.path; q=parse_qs(p.query)
         if path in {'/','/api/v1/status'}:
-            agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); models=_ollama_models()
-            self._json(200,{'status':'online','service':'AI Memory Vault Browser Gateway','vault_root':str(self.vault_root),'indexed_notes':len(self.storage.id_to_path),'agents':len(agents),'skills':len(skills),'ollama':bool(models),'models':models[:20],'default_model':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
+            agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); models=_ollama_models(); self._json(200,{'status':'online','service':'AI Memory Vault Browser Gateway','vault_root':str(self.vault_root),'indexed_notes':len(self.storage.id_to_path),'agents':len(agents),'skills':len(skills),'ollama':bool(models),'models':models[:20],'default_model':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
         if path=='/api/v1/metrics':
             agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); counts=self.queue.status(); self._json(200,{'memory_items':len(self.storage.id_to_path),'agents_online':sum(1 for a in agents if a.get('status')=='ONLINE'),'agents_total':len(agents),'skills_operational':len(skills),'proposals_pending':counts.get('PENDING_REVIEW',0),'engine':'V6','retrieval':'MemoryController'}); return
         if path=='/api/v1/models':
@@ -111,19 +115,13 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             message=str(data.get('message','')).strip(); model=str(data.get('model','')).strip(); history=data.get('history') or []
             if not message: self._json(400,{'error':'message is required'}); return
             models=_ollama_models(); chosen=model or os.getenv('JARVIS_MODEL') or (models[0] if models else '')
-            if not chosen:
-                self._json(503,{'error':'No Ollama model available','ollama':'offline'}); return
-            selected=_route_agents(self.vault_root,message)[0] if _route_agents(self.vault_root,message) else None
-            memory=self.storage.query(intent=message)[:8]
-            context='\n\n'.join([f"[{n.get('id','memory')}] {n.get('content','')}" for n in memory])[:12000]
-            agent_name=selected.get('name') if selected else 'Agent Council'
-            system=("You are JARVIS, a local AI command-center assistant for the AI Memory Vault. "
-                    "Speak naturally, concise but technically useful. Never claim an action was executed unless the system confirms it. "
-                    "Distinguish Vault memory from inference. Route specialized work to the Agent Council. "
-                    f"Current routed specialist: {agent_name}.\n\nCANONICAL VAULT CONTEXT:\n{context or '(no matching memory)'}")
+            if not chosen: self._json(503,{'error':'No Ollama model available','ollama':'offline'}); return
+            ranked=_route_agents(self.vault_root,message); selected=ranked[0] if ranked else None; memory=self.storage.query(intent=message)[:8]
+            context='\n\n'.join([f"[{n.get('id','memory')}] {n.get('content','')}" for n in memory])[:12000]; agent_name=selected.get('name') if selected else 'Agent Council'
+            system=("You are JARVIS, a local AI command-center assistant for the AI Memory Vault. Speak naturally and technically. Never claim an action was executed unless confirmed. Distinguish Vault memory from inference. Route specialized work to the Agent Council. Current routed specialist: " + agent_name + ".\n\nCANONICAL VAULT CONTEXT:\n" + (context or '(no matching memory)'))
             messages=[{'role':'system','content':system}]+[m for m in history[-8:] if isinstance(m,dict) and m.get('role') in {'user','assistant'}]+[{'role':'user','content':message}]
             try:
-                result=_ollama_request('/api/chat',{'model':chosen,'messages':messages,'stream':False},180); reply=((result.get('message') or {}).get('content') or '').strip(); self._json(200,{'reply':reply,'model':chosen,'agent':agent_name,'memory_hits':len(memory)})
+                result=_ollama_post('/api/chat',{'model':chosen,'messages':messages,'stream':False},180); reply=((result.get('message') or {}).get('content') or '').strip(); self._json(200,{'reply':reply,'model':chosen,'agent':agent_name,'memory_hits':len(memory)})
             except urllib.error.URLError as exc: self._json(503,{'error':f'Ollama unavailable: {exc}','ollama':'offline'})
             except Exception as exc: self._json(500,{'error':str(exc)})
             return
@@ -133,5 +131,4 @@ def run_server(port=8000):
     httpd=HTTPServer(('127.0.0.1',port),BrowserMemoryAPIHandler); print(f'[BROWSER GATEWAY] Running REST API server at http://127.0.0.1:{port}...')
     try: httpd.serve_forever()
     except KeyboardInterrupt: httpd.server_close()
-if __name__=='__main__':
-    port=int(sys.argv[1]) if len(sys.argv)>1 else 8000; run_server(port)
+if __name__=='__main__': run_server(int(sys.argv[1]) if len(sys.argv)>1 else 8000)
