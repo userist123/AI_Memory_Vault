@@ -1,67 +1,72 @@
 /**
  * JARVIS Web Ecosystem — Local HTTP Dev Server
  * Zero external dependencies — Node.js stdlib only.
- * Serves ES6 modules with correct MIME types.
- *
- * Usage: node server.js
- * Serves: http://localhost:3000
+ * Serves the JARVIS dashboard and ES modules.
  */
 
 const http = require('http');
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 
-const PORT = parseInt(process.env.JARVIS_TEST_PORT || '3000', 10);
-const HOST = process.env.JARVIS_TEST_PORT ? '127.0.0.1' : '127.0.0.1';
-const ROOT = __dirname;
+const PORT = Number.parseInt(process.env.JARVIS_TEST_PORT || '3000', 10);
+const HOST = '127.0.0.1';
+const ROOT = path.resolve(__dirname);
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
-  '.css':  'text/css; charset=utf-8',
-  '.js':   'application/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
-  '.png':  'image/png',
-  '.jpg':  'image/jpeg',
-  '.svg':  'image/svg+xml',
-  '.ico':  'image/x-icon',
-  '.woff2':'font/woff2',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
   '.woff': 'font/woff',
-  '.ttf':  'font/ttf',
+  '.ttf': 'font/ttf'
 };
 
+function safeFilePath(urlPath) {
+  const decoded = decodeURIComponent(urlPath);
+  const candidate = path.resolve(ROOT, `.${decoded}`);
+  const relative = path.relative(ROOT, candidate);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) return null;
+  return candidate;
+}
+
 const server = http.createServer((req, res) => {
-  // Normalize URL — strip query string
-  let urlPath = req.url.split('?')[0];
-  if (urlPath === '/' || urlPath === '') urlPath = '/index.html';
+  const rawPath = (req.url || '/').split('?')[0] || '/';
+  const urlPath = rawPath === '/' ? '/index.html' : rawPath;
+  let filePath;
 
-  const filePath = path.join(ROOT, urlPath);
+  try {
+    filePath = safeFilePath(urlPath);
+  } catch {
+    res.writeHead(400, {'Content-Type': 'text/plain; charset=utf-8'});
+    res.end('Bad Request');
+    return;
+  }
 
-  // Security: prevent path traversal outside ROOT
-  if (!filePath.startsWith(ROOT)) {
-    res.writeHead(403);
+  if (!filePath) {
+    res.writeHead(403, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end('Forbidden');
     return;
   }
 
   fs.readFile(filePath, (err, data) => {
     if (err) {
-      if (err.code === 'ENOENT') {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end(`404 Not Found: ${urlPath}`);
-      } else {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('500 Internal Server Error');
-      }
+      const status = err.code === 'ENOENT' ? 404 : 500;
+      res.writeHead(status, {'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store'});
+      res.end(status === 404 ? `404 Not Found: ${urlPath}` : '500 Internal Server Error');
       return;
     }
 
-    const ext  = path.extname(filePath).toLowerCase();
-    const mime = MIME[ext] || 'application/octet-stream';
-
+    const ext = path.extname(filePath).toLowerCase();
     res.writeHead(200, {
-      'Content-Type': mime,
+      'Content-Type': MIME[ext] || 'application/octet-stream',
       'Cache-Control': 'no-cache',
       'Access-Control-Allow-Origin': '*',
+      'X-Content-Type-Options': 'nosniff'
     });
     res.end(data);
   });
@@ -70,15 +75,14 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, HOST, () => {
   console.log(`\n  🤖 JARVIS Web Ecosystem`);
   console.log(`  ─────────────────────────────────────`);
-  console.log(`  ✅ HTTP Server running at:`);
-  console.log(`     http://localhost:${PORT}`);
+  console.log(`  ✅ HTTP Server: http://${HOST}:${PORT}`);
+  console.log(`  ✅ Vault API expected: http://127.0.0.1:8000`);
   console.log(`  ─────────────────────────────────────`);
-  console.log(`  Press Ctrl+C to stop.\n`);
 });
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`\n  ❌ Port ${PORT} already in use. Kill the existing process and retry.\n`);
+    console.error(`\n  ❌ Port ${PORT} already in use.\n`);
   } else {
     console.error('\n  ❌ Server error:', err.message);
   }
