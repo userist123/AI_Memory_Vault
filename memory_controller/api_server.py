@@ -1,10 +1,10 @@
-"""
-Local REST API Gateway for AI Memory Vault and JARVIS Command Center.
+"""Local REST API Gateway for AI Memory Vault and JARVIS Command Center.
 Zero external dependencies; binds to 127.0.0.1 by default.
 """
 from __future__ import annotations
 
 import datetime
+import hashlib
 import json
 import os
 import sys
@@ -20,6 +20,9 @@ if str(project_root) not in sys.path:
 from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController
 from memory_controller.storage.file_engine import FileStorageEngine
+from cognitive_core.extraction import AtomicMemoryExtractor
+from cognitive_core.proposal_queue import MemoryProposalQueue
+from cognitive_core.queue_promoter import QueuePromoter
 
 
 class APIJSONEncoder(json.JSONEncoder):
@@ -55,25 +58,11 @@ def _skill_catalog(root: Path):
     return skills
 
 
-def _proposal_queue(root: Path):
-    queue = root / "06_INBOX" / "memory_proposals.jsonl"
-    records = []
-    if not queue.exists():
-        return records
-    for line in queue.read_text(encoding="utf-8", errors="ignore").splitlines():
-        if not line.strip():
-            continue
-        try:
-            records.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return records
-
-
 class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     vault_root = Path(os.getenv("AI_MEMORY_VAULT_ROOT", str(project_root))).resolve()
     storage = FileStorageEngine(str(vault_root))
     controller = MemoryController(storage)
+    queue = MemoryProposalQueue(vault_root / "06_INBOX" / "memory_proposals.jsonl")
 
     def log_message(self, format, *args):
         return
@@ -106,14 +95,13 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         params = parse_qs(parsed.query)
 
         if path in {"/", "/api/v1/status"}:
-            notes = len(self.storage.id_to_path)
             agents = _read_json(self.vault_root / "projects" / "jarvis_web" / "data" / "agents.json", {"agents": []}).get("agents", [])
             skills = _skill_catalog(self.vault_root)
             self._json(200, {
                 "status": "online",
                 "service": "AI Memory Vault Browser Gateway",
                 "vault_root": str(self.vault_root),
-                "indexed_notes": notes,
+                "indexed_notes": len(self.storage.id_to_path),
                 "agents": len(agents),
                 "skills": len(skills),
             })
@@ -122,8 +110,8 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         if path == "/api/v1/metrics":
             agents = _read_json(self.vault_root / "projects" / "jarvis_web" / "data" / "agents.json", {"agents": []}).get("agents", [])
             skills = _skill_catalog(self.vault_root)
-            proposals = _proposal_queue(self.vault_root)
-            pending = sum(1 for p in proposals if p.get("queue_status") == "PENDING_REVIEW")
+            counts = self.queue.status()
+            pending = counts.get("PENDING_REVIEW", 0)
             self._json(200, {
                 "memory_items": len(self.storage.id_to_path),
                 "agents_online": sum(1 for a in agents if a.get("status") == "ONLINE"),
@@ -136,8 +124,7 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/v1/agents":
-            data = _read_json(self.vault_root / "projects" / "jarvis_web" / "data" / "agents.json", {"agents": []})
-            self._json(200, data)
+            self._json(200, _read_json(self.vault_root / "projects" / "jarvis_web" / "data" / "agents.json", {"agents": []}))
             return
 
         if path == "/api/v1/skills":
@@ -149,29 +136,31 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/v1/proposals":
-            proposals = _proposal_queue(self.vault_root)
-            pending = [p for p in proposals if p.get("queue_status") == "PENDING_REVIEW"]
-            self._json(200, {"total": len(proposals), "pending": pending[:50], "status": {
-                "PENDING_REVIEW": len(pending),
-                "APPROVED": sum(1 for p in proposals if p.get("queue_status") == "APPROVED"),
-                "REJECTED": sum(1 for p in proposals if p.get("queue_status") == "REJECTED"),
-                "PROMOTED": sum(1 for p in proposals if p.get("queue_status") == "PROMOTED"),
-            }})
+            records = self.queue._load()
+            pending = [p for p in records if p.get("queue_status") == "PENDING_REVIEW"]
+            self._json(200, {
+                "total": len(records),
+                "pending": pending[:100],
+                "status": {
+                    "PENDING_REVIEW": len(pending),
+                    "APPROVED": sum(1 for p in records if p.get("queue_status") == "APPROVED"),
+                    "REJECTED": sum(1 for p in records if p.get("queue_status") == "REJECTED"),
+                    "PROMOTED": sum(1 for p in records if p.get("queue_status") == "PROMOTED"),
+                },
+            })
             return
 
         if path == "/api/v1/search":
             q = params.get("q", [""])[0].strip()
             notes = self.storage.query(intent=q)
+            notes.sort(key=lambda n: str(n.get("updated", n.get("created", ""))), reverse=True)
             self._json(200, {"query": q, "total_results": len(notes), "results": notes[:20]})
             return
 
         if path.startswith("/api/v1/note/"):
             note_id = path.replace("/api/v1/note/", "", 1)
             note = self.storage.get(note_id)
-            if note:
-                self._json(200, note)
-            else:
-                self._json(404, {"error": "Note not found", "id": note_id})
+            self._json(200 if note else 404, note if note else {"error": "Note not found", "id": note_id})
             return
 
         self._json(404, {"error": "Endpoint not found"})
@@ -185,16 +174,41 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/v1/propose":
+            content = str(data.get("content", "")).strip()
+            kind = str(data.get("type", "fact")).lower()
+            if not content:
+                self._json(400, {"error": "content is required"})
+                return
+            if kind not in {"fact", "decision", "preference", "task", "lesson", "procedure"}:
+                kind = "fact"
+            extractor = AtomicMemoryExtractor()
+            candidates = extractor._candidate(kind, content, "jarvis:web:proposal")
+            added = self.queue.enqueue([candidates])
+            self._json(201, {
+                "status": "queued",
+                "candidate_id": candidates.candidate_id,
+                "added": added,
+                "queue_status": "PENDING_REVIEW",
+            })
+            return
+
+        if path.startswith("/api/v1/proposals/") and path.endswith("/decision"):
+            candidate_id = path.split("/api/v1/proposals/", 1)[1].rsplit("/decision", 1)[0]
+            decision = str(data.get("decision", "")).upper()
+            if decision not in {"APPROVED", "REJECTED"}:
+                self._json(400, {"error": "decision must be APPROVED or REJECTED"})
+                return
             try:
-                data = dict(data)
-                data.setdefault("id", f"jarvis-{uuid.uuid4()}")
-                data.setdefault("provenance", {"source_type": "inference", "source_ref": "jarvis-command-center"})
-                data.setdefault("category", "jarvis-command-center")
-                data.setdefault("tags", ["jarvis", "memory-v6"])
-                result = self.controller.propose(Principal.AI_AGENT, data)
-                self._json(201, {"status": "proposed", "result": result})
-            except Exception as exc:
-                self._json(400, {"error": str(exc)})
+                self.queue.mark(candidate_id, decision, reviewer="jarvis-human")
+                self._json(200, {"status": decision, "candidate_id": candidate_id})
+            except KeyError as exc:
+                self._json(404, {"error": str(exc)})
+            return
+
+        if path == "/api/v1/proposals/promote-approved":
+            promoter = QueuePromoter(self.queue, self.controller, Principal.ADMIN)
+            promoted = promoter.promote_approved()
+            self._json(200, {"status": "promoted", "ids": promoted})
             return
 
         if path == "/api/v1/route":
@@ -203,15 +217,15 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             if not task:
                 self._json(400, {"error": "task is required"})
                 return
+            tokens = {t for t in task.replace("/", " ").replace("-", " ").split() if len(t) > 2}
             scored = []
             for agent in agents:
                 haystack = " ".join([
                     str(agent.get("id", "")), str(agent.get("name", "")), str(agent.get("domain", "")),
                     " ".join(agent.get("skills", [])),
                 ]).lower()
-                tokens = {t for t in task.replace("/", " ").replace("-", " ").split() if len(t) > 2}
-                score = sum(1 for token in tokens if token in haystack)
-                scored.append({**agent, "route_score": score})
+                matched = sorted(token for token in tokens if token in haystack)
+                scored.append({**agent, "route_score": len(matched), "matched_terms": matched})
             scored.sort(key=lambda item: (-item["route_score"], item.get("name", "")))
             self._json(200, {"task": task, "selected": scored[:5], "routing": "domain-and-skill-match"})
             return
