@@ -1,82 +1,134 @@
 ---
 name: jarvis-command-center
-description: Design and engineer a production-grade JARVIS AI Command Center over AI Memory Vault. Combines UI Sensei clarity with immersive sci-fi HUD, dense operational information architecture, Agent Council, Memory V6, skill registry, execution telemetry, controlled proposals, and responsive full-screen layouts.
+description: Design and engineer a production-grade JARVIS AI Command Center over AI Memory Vault, combining an immersive Tony-Stark-inspired cinematic cockpit with real Memory V6, Agent Council, operational skills, local LLM chat, voice interaction, procedural WebGL avatar, routing and controlled memory workflows.
 ---
 
 # JARVIS Command Center
 
-## Purpose
+## Core identity
 
-Build a single-screen operational control plane for the AI Memory Vault. The UI must be functional, not a decorative mockup.
+This is an operational AI cockpit, not a landing page. The visual hierarchy must feel like a private Stark-lab command surface: one dominant holographic AI presence, restrained cyan/blue energy, technical overlays and information arranged around the avatar.
 
-## Visual direction
+Do not imitate a copied movie screenshot. Build an original futuristic assistant experience with:
+- holographic humanoid avatar / AI presence;
+- reactive status state (STANDBY, LISTENING, THINKING, RESPONDING, ERROR);
+- conversational command interface;
+- memory-aware responses;
+- Agent Council routing;
+- live operational skill registry;
+- Memory V6 proposal and review lifecycle.
 
-- Dark Obsidian base with layered elevation; cyan/blue operational accents.
-- HUD-inspired geometry: thin technical borders, orbital rings, grids, compact labels, live status lights.
-- One strong visual focal point: the JARVIS cognitive core.
-- High information density without visual clutter.
-- Use 4/8/16/24/32px rhythm.
-- Three-level typography hierarchy: primary focal, section guide, data stream.
-- Prefer functional decoration: every line, glow, grid, animation or badge must communicate state or hierarchy.
-- Use asymmetry deliberately; keep the central core visually dominant.
+## Visual system
+
+- Dark Obsidian / near-black base with layered depth.
+- Cyan primary signal, blue secondary signal, green healthy state, amber review, red fault.
+- Thin HUD borders, restrained bloom, scanlines, radial grids, orbital paths and technical micro-labels.
+- One visual focal point: the JARVIS holographic avatar.
+- Information density should be high but never become a generic card dashboard.
+- Use 4/8/16/24/32px rhythm and a three-level typography hierarchy.
+- Prefer meaningful motion: avatar breathing, orbit rotation, signal pulses, listening waveform, response activity.
+
+## 3D avatar contract
+
+The center stage MUST support a real 3D surface:
+- WebGL canvas preferred;
+- procedural or imported 3D model allowed;
+- holographic point/line/mesh rendering;
+- rotating orbital geometry around the avatar;
+- central reactor / cognitive core signal;
+- responsive resize and device-pixel-ratio handling;
+- reduced-motion fallback;
+- graceful fallback when WebGL is unavailable.
+
+The avatar is part of the application state, not decoration. State mapping:
+- STANDBY = low-energy idle;
+- LISTENING = cyan pulse / microphone state;
+- THINKING = faster orbital activity;
+- RESPONDING = stronger scan and signal emission;
+- ERROR = red fault pulse.
+
+## Conversational AI contract
+
+JARVIS Chat must:
+- use the configured local model through Ollama when available;
+- expose available local models to the UI;
+- allow model selection or AUTO mode;
+- keep bounded conversation history;
+- retrieve relevant Vault memory before generating the response;
+- identify the best Agent Council specialist for the task;
+- explicitly distinguish canonical memory from inference;
+- never claim a backend action happened unless an API confirms it;
+- gracefully report when Ollama is offline.
+
+Recommended environment variables:
+- `OLLAMA_HOST` — default `http://127.0.0.1:11434`;
+- `JARVIS_MODEL` — preferred local model name;
+- `AI_MEMORY_VAULT_ROOT` — optional Vault root override.
+
+## Voice interaction
+
+Provide browser-native speech input/output where supported:
+- Romanian recognition by default;
+- one-click LISTENING state;
+- speech synthesis for assistant responses;
+- no external speech service dependency;
+- graceful unsupported-browser fallback.
 
 ## One-screen information architecture
 
-Desktop viewport should present these modules together without requiring page scrolling for core operations:
+Desktop should feel like a single cockpit:
+1. global header and live system status;
+2. left operational rail;
+3. center holographic avatar + live metrics + conversation surface;
+4. memory search and Agent Router below the avatar but within the same control plane;
+5. right intelligence rail with memory, queue and health signals;
+6. persistent bottom status strip.
 
-1. Global header/status/navigation.
-2. Left operational rail: system state, Memory V6 pipeline, quick actions.
-3. Central stage: JARVIS core, live metrics, memory retrieval, Agent Council, skill registry, execution timeline.
-4. Right intelligence rail: memory search, recent memory, system metrics, pending proposals.
-5. Bottom status bar with Vault version, agent count, skill count and live refresh time.
-
-Secondary views may scroll inside panels or focus the relevant module; never turn the product into a generic long dashboard.
+Secondary modules can use internal scrolling, modal surfaces or focus transitions. Avoid turning the product into a generic long-form dashboard.
 
 ## Functional contract
 
-- Memory search must call the canonical Memory API.
-- Proposals must call `/api/v1/propose` and show lifecycle feedback.
-- Agent Council must load from registry data, not hardcoded UI cards.
-- Agent selection must expose domain and skills and create a visible routing event.
-- Routing should call `/api/v1/route` when available and return ranked agents/capabilities.
-- Metrics should call `/api/v1/metrics` when available, with graceful fallback.
-- Diagnostics must verify Memory API, agent registry and skill registry.
-- Execution timeline must record real UI/API actions; do not fabricate completed backend executions.
+- Memory search calls canonical Memory API.
+- Chat calls canonical JARVIS `/api/v1/chat`.
+- Model discovery calls `/api/v1/models`.
+- Agent routing calls `/api/v1/route`.
+- Agent Council loads from registry data.
+- Skill Registry loads recursively from `.agents/skills/**/SKILL.md` through API.
+- Proposals enter Memory V6 `PENDING_REVIEW` state; they do not bypass review.
+- Proposal approval/rejection is visible in the UI and recorded by the queue.
+- Promotion must go through the canonical promoter/controller path.
+- Metrics come from `/api/v1/metrics`.
+- Diagnostics test actual API availability.
+- Execution timeline records actual UI/API events and never fabricates successful backend work.
 
-## Motion rules
+## Motion and quality
 
-- Use short transitions and requestAnimationFrame for pointer-driven effects.
-- No perpetual heavy WebGL scene is required; CSS/SVG motion is preferred for the HUD.
-- Respect reduced-motion preferences.
-- Avoid expensive blur/filter effects on animated elements.
+- Use requestAnimationFrame for WebGL and pointer effects.
+- Avoid expensive continuous blur/filter animations.
+- Support `prefers-reduced-motion`.
+- Keep WebGL scene lightweight enough for normal laptops.
+- Preserve keyboard navigation and visible focus.
+- Target WCAG 2.2 AA contrast.
+- Avoid large external dependencies unless justified.
 
-## Accessibility and quality
+## Anti-patterns
 
-- WCAG 2.2 AA contrast target.
-- Full keyboard navigation and visible focus.
-- Semantic landmarks and aria labels.
-- No keyboard traps.
-- Keep initial UI lightweight and avoid unnecessary dependencies.
-- Preserve responsive operation down to tablet/mobile; use internal panel scrolling rather than horizontal overflow.
+- Generic SaaS card-grid appearance.
+- Static fake numbers when APIs provide real state.
+- A single flat landscape illustration replacing actual interaction.
+- A giant hero area that hides operational functions.
+- Neon decoration with no semantic purpose.
+- Separate, competing memory systems.
 
-## Design anti-patterns
-
-- Generic SaaS card grids.
-- Fake telemetry presented as real telemetry.
-- Decorative neon everywhere.
-- Giant hero sections that push operational modules below the fold.
-- Unbounded blur/glow effects.
-- Hardcoded agent/skill counts when registry/API data is available.
-
-## Agent routing
-
-Primary agents for this skill:
+## Primary routing agents
 
 - `ui_sensei_architect`
 - `web_design_engineer_agent`
 - `web_creative_developer`
 - `web_quality_engineer`
 - `frontend_saas_engineer`
+- `local_ai_engineer`
 - `agentic_workflow_orchestrator`
+- `memory_controller_architect`
 
-The design must stay subordinate to the canonical Memory Vault and must not create a second memory system.
+The JARVIS layer remains a control plane over the canonical Memory Vault; it must never fork memory authority or invent a parallel source of truth.
