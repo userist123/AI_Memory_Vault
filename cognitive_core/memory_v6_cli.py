@@ -1,6 +1,6 @@
-"""CLI for Memory V6 extraction, queue inspection, spatial indexing, promotion,
-sleep-phase consolidation, retrieval benchmarking, optional git/graph hooks,
-and Obsidian report rendering."""
+"""CLI for Memory V6: extraction, queue, spatial indexing, promotion, sleep-phase
+consolidation, retrieval benchmarking, git/graph hooks, Obsidian rendering,
+semantic (Qdrant) search, security audits, skill routing, and trading decisions."""
 from __future__ import annotations
 
 import argparse
@@ -17,6 +17,9 @@ from .benchmarks.retrieval_benchmark import RetrievalBenchmark
 from .git_hooks import PromotionGitHook
 from .ranked_search import ranked_search
 from .report_view import render_report_file
+from .qdrant_retrieval import SemanticRetrieval
+from .security_audit import SecurityAuditor
+from .skill_router import SkillRouter
 
 
 def root() -> Path:
@@ -60,8 +63,7 @@ def main() -> None:
     extract.add_argument("--text", required=True)
     extract.add_argument("--source-ref", default="cli:manual")
     extract.add_argument("--enqueue", action="store_true")
-    extract.add_argument("--use-ollama", action="store_true",
-                          help="Augment deterministic extraction with a local Ollama model")
+    extract.add_argument("--use-ollama", action="store_true")
     extract.add_argument("--ollama-model", default="llama3.1")
     extract.add_argument("--ollama-host", default="http://localhost:11434")
 
@@ -91,7 +93,7 @@ def main() -> None:
     consolidate.add_argument("--output", default="04_MEMORY/sleep_consolidation_report.json")
     consolidate.add_argument("--dormant-days", type=int, default=60)
     consolidate.add_argument("--stale-review-days", type=int, default=14)
-    consolidate.add_argument("--render", action="store_true", help="Also render an Obsidian Markdown view")
+    consolidate.add_argument("--render", action="store_true")
     consolidate.add_argument("--render-output", default="05_RESOURCES/Obsidian/Sleep_Consolidation_Report.md")
 
     render = sub.add_parser("render-report")
@@ -101,7 +103,21 @@ def main() -> None:
     benchmark = sub.add_parser("benchmark")
     benchmark.add_argument("--cases", default=str(Path("cognitive_core") / "benchmarks" / "sample_cases.jsonl"))
     benchmark.add_argument("--k", type=int, default=5)
-    benchmark.add_argument("--retrieval", default="substring", choices=["substring", "graph"])
+    benchmark.add_argument("--retrieval", default="substring", choices=["substring", "graph", "semantic"])
+
+    reindex = sub.add_parser("reindex-semantic")
+
+    search_semantic = sub.add_parser("search-semantic")
+    search_semantic.add_argument("query")
+    search_semantic.add_argument("--top-k", type=int, default=10)
+
+    audit = sub.add_parser("security-audit")
+    audit.add_argument("--target", required=True)
+    audit.add_argument("--output", default="04_MEMORY/security_audit_report.json")
+
+    route = sub.add_parser("route-skill")
+    route.add_argument("task")
+    route.add_argument("--top-k", type=int, default=5)
 
     args = parser.parse_args()
     queue = MemoryProposalQueue(root() / "06_INBOX" / "memory_proposals.jsonl")
@@ -180,9 +196,36 @@ def main() -> None:
         if not cases_path.is_absolute():
             cases_path = root() / cases_path
         benchmark_suite = RetrievalBenchmark.load_jsonl(cases_path)
-        retrieval_fn = _graph_retrieval(controller, Principal.HUMAN) if args.retrieval == "graph" else _naive_retrieval(controller)
+        if args.retrieval == "graph":
+            retrieval_fn = _graph_retrieval(controller, Principal.HUMAN)
+        elif args.retrieval == "semantic":
+            semantic = SemanticRetrieval(controller)
+            retrieval_fn = lambda q: semantic.query(q, top_k=args.k)
+        else:
+            retrieval_fn = _naive_retrieval(controller)
         result = benchmark_suite.run(retrieval_fn, k=args.k)
         print(result["summary"])
+    elif args.command == "reindex-semantic":
+        controller, _ = _load_controller()
+        count = SemanticRetrieval(controller).reindex()
+        print(f"indexed={count}")
+    elif args.command == "search-semantic":
+        controller, _ = _load_controller()
+        results = SemanticRetrieval(controller).query(args.query, top_k=args.top_k)
+        for note_id in results:
+            print(note_id)
+    elif args.command == "security-audit":
+        auditor = SecurityAuditor(args.target)
+        report = auditor.run()
+        output_path = root() / args.output
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        import json
+        output_path.write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"files_scanned={report.files_scanned} findings={len(report.findings)} report={output_path}")
+    elif args.command == "route-skill":
+        router = SkillRouter(root() / ".agents" / "skills")
+        for match in router.route(args.task, top_k=args.top_k):
+            print(f"{match.score:.4f}  {match.skill}")
 
 
 if __name__ == "__main__":
