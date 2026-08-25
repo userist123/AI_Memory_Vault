@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "source": "01_KNOWLEDGE/Agents_Skill_Matrix.md",
+  "updated": "2026-08-25",
+  "agents": [
+    {"id":"compiler_and_tooling_engineer","domain":"Compilers & Tooling","icon":"⚙️","skills":["Code Refactoring Patterns","Unit Test Contracts","Clean Architecture","Rust Tokio"]},
+    {"id":"site_reliability_and_devops_architect","domain":"SRE / DevOps / Cloud","icon":"🚀","skills":["Docker","Kubernetes","Terraform","Ansible","Prometheus","Grafana","OpenTelemetry"]},
+    {"id":"polyglot_systems_architect","domain":"Multi-language Architecture","icon":"🌐","skills":[".NET","FastAPI","Go Worker Pools","Rust Axum","NestJS BullMQ","C++20"]},
+    {"id":"system_architecture_agent","domain":"Enterprise Architecture","icon":"🏛️","skills":["Docker","Kubernetes","Terraform","Cloud Architecture","Vault Secrets"]},
+    {"id":"backend_systems_engineer","domain":"Backend / APIs","icon":"⚡","skills":["API Governance","CQRS","GraphQL","gRPC","OAuth2","OWASP Hardening","Redis","SQLite WAL"]},
+    {"id":"secops_auditor","domain":"Security / DevSecOps","icon":"🛡️","skills":["PowerShell SecOps","DFIR","OWASP Top 10","SAST","DAST","Zero Trust","PKI"]},
+    {"id":"threat_hunting_analyst","domain":"Threat Hunting / DFIR","icon":"🔍","skills":["DFIR Operations","Vault Security Audit","Secret Leak Prevention","Pentest Playbook"]},
+    {"id":"wpf_engineer","domain":"WPF / .NET Desktop","icon":"🖥️","skills":["C# WPF Desktop","UI Tokens",".NET Enterprise"]},
+    {"id":"web_creative_developer","domain":"Creative Web / WebGL","icon":"🌟","skills":["Three.js","GSAP","WebGL","MatterJS","CobeJS","VantaJS"]},
+    {"id":"web_design_engineer_agent","domain":"Design Systems","icon":"🎨","skills":["Web Design Engineer","Linear","Apple","Stripe","Vercel","Editorial Grid"]},
+    {"id":"web_quality_engineer","domain":"Web Quality / Performance","icon":"⚡","skills":["Core Web Vitals","WCAG","SEO","Performance","Web Best Practices"]},
+    {"id":"ui_sensei_architect","domain":"UI Philosophy","icon":"⛩️","skills":["UI Sensei","Glass UI","Clean Minimal","Dark Glass","Technical Wireframe"]},
+    {"id":"frontend_saas_engineer","domain":"Frontend / SaaS","icon":"🌐","skills":["Next.js","TanStack Query","Zustand","Storybook","Playwright","Tailwind CSS"]},
+    {"id":"game_engineer","domain":"Game / 3D","icon":"🎮","skills":["Three.js","Tactical Combat","Enemy AI","VFX","Camera Controls","Audio Feedback"]},
+    {"id":"quant_developer","domain":"Quant / Trading","icon":"📈","skills":["Python Trading Systems","Risk Veto","Strategy Architecture"]},
+    {"id":"local_ai_engineer","domain":"Local AI / LLM","icon":"🤖","skills":["Ollama","Pydantic JSON","LangChain","LlamaIndex","vLLM","LoRA","Guardrails"]},
+    {"id":"content_strategist","domain":"Content / Voice","icon":"✍️","skills":["Email Design","Presentation Design","Brand Identity"]},
+    {"id":"agentic_workflow_orchestrator","domain":"Agent Orchestration","icon":"🔄","skills":["Global Skill Registry Router","Copilot Agentic Workflows","MCP","Reflexion","Unit Test Generation"]},
+    {"id":"ui_ux_designer","domain":"UI / UX","icon":"🎨","skills":["Dashboard UI","Brand Identity","Data Viz","Motion Design"]},
+    {"id":"database_and_persistence_engineer","domain":"Database / Persistence","icon":"💾","skills":["Flyway","Vitess","DuckDB","ClickHouse","Elasticsearch","Qdrant","Neo4j","Debezium"]},
+    {"id":"memory_controller_architect","domain":"Memory / Vault","icon":"🧠","skills":["Vault Operations","Vault Security Audit","Vault Secrets Management","Memory V6"]}
+  ]
+}
