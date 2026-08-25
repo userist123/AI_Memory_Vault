@@ -10,8 +10,8 @@ const PORT = 3001;
 const BASE = `http://127.0.0.1:${PORT}`;
 const TIMEOUT = 5000;
 const LANDMARKS = [
-  'id="hologram-container"','id="app-container"','AI MEMORY VAULT V6','JARVIS',
-  'Memory Retrieval','Memory Proposal','Agent Council','Execution Timeline'
+  'class="shell"','AI MEMORY VAULT','JARVIS','Memory Retrieval','AGENT ROUTER',
+  'AGENT COUNCIL','SKILL REGISTRY','EXECUTION TIMELINE','New memory proposal'
 ];
 const JS_ENDPOINTS = ['/js/app.js','/js/hologram.js','/js/voice_engine.js','/js/vault_client.js'];
 let passed = 0;
@@ -26,7 +26,7 @@ async function runSmoke(serverProcess){
     root.status===200?pass('GET / → HTTP 200'):fail(`GET / → HTTP ${root.status}`);
     for(const landmark of LANDMARKS) root.body.includes(landmark)?pass(`HTML landmark: ${landmark}`):fail(`Missing HTML landmark: ${landmark}`);
     for(const endpoint of JS_ENDPOINTS){const res=await get(`${BASE}${endpoint}`);if(res.status!==200){fail(`GET ${endpoint} → HTTP ${res.status}`);continue}pass(`GET ${endpoint} → HTTP 200`);const ct=String(res.headers['content-type']||'').toLowerCase();ct.includes('application/javascript')?pass(`${endpoint} MIME is JavaScript`):fail(`${endpoint} wrong MIME: ${ct}`)}
-    const manifest=await get(`${BASE}/data/agent-council.json`);manifest.status===200?pass('Agent Council manifest available'):fail(`Agent Council manifest returned ${manifest.status}`);
+    const manifest=await get(`${BASE}/data/agents.json`);manifest.status===200?pass('Agent Council registry available'):fail(`Agent Council registry returned ${manifest.status}`);
     const missing=await get(`${BASE}/nonexistent_file_xyz.js`);missing.status===404?pass('404 handling'):fail(`404 handling returned ${missing.status}`);
     const traversal=await get(`${BASE}/%2e%2e/%2e%2e/README.md`);traversal.status===403?pass('Path traversal blocked'):fail(`Path traversal returned ${traversal.status}`);
   }catch(error){fail(`Unexpected error: ${error.message}`)}
@@ -36,7 +36,7 @@ async function runSmoke(serverProcess){
 const serverScript=path.join(__dirname,'..','server.cjs');
 const serverProcess=spawn(process.execPath,[serverScript],{env:{...process.env,JARVIS_TEST_PORT:String(PORT)},stdio:'pipe'});
 let ready=false;
-serverProcess.stdout.on('data',data=>{const output=data.toString();process.stdout.write(output);if(!ready&&output.includes('HTTP Server running at')){ready=true;runSmoke(serverProcess)}});
+serverProcess.stdout.on('data',data=>{const output=data.toString();process.stdout.write(output);if(!ready&&output.includes('HTTP Server:')){ready=true;runSmoke(serverProcess)}});
 serverProcess.stderr.on('data',data=>process.stderr.write(data));
 serverProcess.on('error',err=>{console.error(`❌ Failed to start server: ${err.message}`);process.exit(1)});
 setTimeout(()=>{if(!ready){console.error('❌ Server did not start within 5 seconds');serverProcess.kill();process.exit(1)}},TIMEOUT);
