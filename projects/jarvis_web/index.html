@@ -48,16 +48,16 @@
 
       <section class="center-stage">
         <section class="welcome-line">
-          <div><span class="label">COGNITIVE CONTROL PLANE</span><h2>Command the Vault. Route the right agent.</h2><p>Selective retrieval, agent routing, skill intelligence and verified memory — from one screen.</p></div>
-          <div class="time-meta"><strong id="uptime">LOCAL COMMAND CENTER</strong><span>ONE VAULT · ONE CANONICAL MEMORY</span></div>
+          <div><span class="label">COGNITIVE CONTROL PLANE</span><h2>Command the Vault. Route the right agent.</h2><p>Selective retrieval, real agent routing, operational skills, Memory V6 proposals and verification — from one screen.</p></div>
+          <div class="time-meta"><strong id="latency">API LATENCY —</strong><span>ONE VAULT · ONE CANONICAL MEMORY</span></div>
         </section>
 
         <section class="core-grid">
           <div class="metric-strip">
             <article><span>MEMORY ITEMS</span><strong id="metric-notes">—</strong><small>indexed notes</small></article>
-            <article><span>AGENTS</span><strong>21</strong><small>council online</small></article>
-            <article><span>SKILLS</span><strong>251</strong><small>operational</small></article>
-            <article><span>ENGINE</span><strong>V6</strong><small>ACT-R · GWT · graphs</small></article>
+            <article><span>AGENTS</span><strong id="metric-agents">—</strong><small>registered / online</small></article>
+            <article><span>SKILLS</span><strong id="metric-skills">—</strong><small>operational registry</small></article>
+            <article><span>PENDING</span><strong id="metric-proposals">—</strong><small>Memory V6 review</small></article>
           </div>
           <div class="core-wrap">
             <div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
@@ -65,26 +65,32 @@
             <div class="core-caption"><span id="core-state">WAITING FOR VAULT LINK</span><small>MemoryController · Cognitive Core · Agent Council</small></div>
           </div>
           <div class="side-stack">
-            <article class="signal"><span>PROPOSALS QUEUE</span><strong>12</strong><small>review required</small><div class="spark"></div></article>
-            <article class="signal"><span>EXECUTIONS TODAY</span><strong>47</strong><small>+8 vs yesterday</small><div class="spark green"></div></article>
-            <article class="signal"><span>SUCCESS RATE</span><strong>98.7%</strong><small>verified operations</small><div class="gauge"><i></i></div></article>
+            <article class="signal"><span>MEMORY ENGINE</span><strong>V6</strong><small>ACT-R · GWT · Graphs</small><div class="spark"></div></article>
+            <article class="signal"><span>ROUTER</span><strong id="router-state">READY</strong><small>Domain + skill matching</small><div class="spark green"></div></article>
+            <article class="signal"><span>PROPOSALS</span><strong id="proposal-state-count">—</strong><small>Canonical queue</small><div class="gauge"><i id="proposal-gauge"></i></div></article>
           </div>
         </section>
 
         <section class="panel wide" id="memory-panel">
           <header><div><span class="label">MEMORY RETRIEVAL</span><h3>Search the canonical memory</h3></div><span class="tiny">LIVE · SELECTIVE</span></header>
-          <form id="search-form" class="searchbar"><input id="search-input" placeholder="Search concepts, decisions, projects, procedures, agents…" autocomplete="off"><select id="search-mode"><option>Semantic</option><option>Keyword</option></select><button>SEARCH</button></form>
+          <form id="search-form" class="searchbar"><input id="search-input" placeholder="Search concepts, decisions, projects, procedures, agents…" autocomplete="off"><select id="search-mode"><option value="semantic">Semantic</option><option value="keyword">Keyword</option></select><button>SEARCH</button></form>
           <div id="search-results" class="results empty">Awaiting query.</div>
         </section>
 
+        <section class="panel wide" id="routing-panel">
+          <header><div><span class="label">AGENT ROUTER</span><h3>Route a task through the 21-agent council</h3></div><span class="tiny">LIVE MATCHING</span></header>
+          <form id="route-form" class="searchbar"><input id="route-input" placeholder="Describe the task: e.g. redesign JARVIS UI with performance constraints…" autocomplete="off"><button>ROUTE</button></form>
+          <div id="route-results" class="route-results empty">Enter a task to rank compatible agents and skills.</div>
+        </section>
+
         <section class="panel wide" id="agents-panel">
-          <header><div><span class="label">AGENT COUNCIL</span><h3>21 specialized agents · dynamic routing</h3></div><span class="tiny">ONLINE</span></header>
+          <header><div><span class="label">AGENT COUNCIL</span><h3><span id="council-count">21 AGENTS</span> · operational profiles</h3></div><span class="tiny">REGISTRY</span></header>
           <div id="agent-grid" class="agent-grid"><div class="loading">Loading Agent Council…</div></div>
         </section>
 
         <section class="split-row">
-          <section class="panel" id="skills-panel"><header><div><span class="label">SKILL REGISTRY</span><h3>Operational capabilities</h3></div><span class="tiny">251</span></header><div class="skill-cloud"><span>Web Design</span><span>UI Sensei</span><span>Web Quality</span><span>Backend</span><span>Security</span><span>WPF</span><span>Local AI</span><span>DevOps</span><span>Database</span><span>Agentic Workflows</span></div></section>
-          <section class="panel" id="execution-panel"><header><div><span class="label">EXECUTION TIMELINE</span><h3>Live agent activity</h3></div><span class="tiny">STREAM</span></header><div class="timeline"><div><b>20:47:12</b><span>Memory retrieval</span><em class="ok">COMPLETED</em></div><div><b>20:46:38</b><span>Agent routing → Web Quality</span><em class="ok">COMPLETED</em></div><div><b>20:46:01</b><span>Skill match → web-best-practices</span><em class="ok">COMPLETED</em></div><div><b>20:45:22</b><span>Verification / provenance</span><em class="ok">COMPLETED</em></div></div></section>
+          <section class="panel" id="skills-panel"><header><div><span class="label">SKILL REGISTRY</span><h3>Operational capabilities</h3></div><span class="tiny" id="skill-total">—</span></header><div id="skill-cloud" class="skill-cloud"><span>Loading skills…</span></div><div class="searchbar compact"><input id="skill-filter" placeholder="Filter operational skills…"><button id="skill-filter-btn">FILTER</button></div></section>
+          <section class="panel" id="execution-panel"><header><div><span class="label">EXECUTION TIMELINE</span><h3>Real Command Center activity</h3></div><button id="clear-timeline" class="tiny-btn">CLEAR</button></header><div id="timeline" class="timeline"><div class="muted">No activity yet.</div></div></section>
         </section>
       </section>
 
@@ -92,26 +98,36 @@
         <section class="rail-section">
           <div class="label">MEMORY SEARCH</div>
           <div class="quick-search"><input id="quick-search" placeholder="Jump to memory…"><button id="quick-go">↗</button></div>
-          <div class="chips"><button>All</button><button>Concept</button><button>Decision</button><button>Project</button><button>Agent</button></div>
+          <div class="chips"><button data-query="">All</button><button data-query="concept">Concept</button><button data-query="decision">Decision</button><button data-query="project">Project</button><button data-query="agent">Agent</button></div>
         </section>
         <section class="rail-section">
           <div class="label">RECENT MEMORY</div>
-          <div class="recent"><article><i>01</i><div><b>Multi-Agent Collaboration Pattern</b><span>Knowledge · 2 min ago</span></div></article><article><i>02</i><div><b>Memory Consolidation</b><span>Procedure · 15 min ago</span></div></article><article><i>03</i><div><b>Skill Auto-Promotion Criteria</b><span>Rule · 1 h ago</span></div></article></div>
+          <div id="recent-memory" class="recent"><div class="muted">Loading canonical memory…</div></div>
         </section>
         <section class="rail-section metrics-side">
-          <div class="label">SYSTEM METRICS</div>
-          <div class="mini-metrics"><div><b>23%</b><span>CPU</span></div><div><b>41%</b><span>MEM</span></div><div><b>62%</b><span>DISK</span></div><div><b>18%</b><span>NET</span></div></div>
+          <div class="label">VAULT METRICS</div>
+          <div class="mini-metrics"><div><b id="side-notes">—</b><span>NOTES</span></div><div><b id="side-agents">—</b><span>AGENTS</span></div><div><b id="side-skills">—</b><span>SKILLS</span></div><div><b id="side-pending">—</b><span>PENDING</span></div></div>
           <div class="wave"></div>
         </section>
         <section class="rail-section">
           <div class="label">PENDING PROPOSALS</div>
-          <div class="proposal"><b>Vector DB Optimization</b><span>HIGH</span></div><div class="proposal"><b>Advanced RAG Patterns</b><span>MEDIUM</span></div><div class="proposal"><b>Multi-Agent Orchestration</b><span>HIGH</span></div>
+          <div id="pending-proposals"><div class="muted">Loading Memory V6 queue…</div></div>
         </section>
       </aside>
     </main>
 
-    <footer><span>JARVIS AI COMMAND CENTER</span><span>AI MEMORY VAULT V6.0 · 21 AGENTS · 251 SKILLS</span><span id="last-refresh">—</span></footer>
+    <footer><span>JARVIS AI COMMAND CENTER</span><span>AI MEMORY VAULT V6.0 · <span id="footer-agents">—</span> AGENTS · <span id="footer-skills">—</span> SKILLS</span><span id="last-refresh">—</span></footer>
   </div>
+
+  <dialog id="proposal-dialog" class="proposal-dialog">
+    <form method="dialog" class="proposal-card" id="proposal-form">
+      <div class="proposal-head"><div><span class="label">MEMORY V6</span><h3>New memory proposal</h3></div><button class="close-btn" value="cancel" type="submit">×</button></div>
+      <label>Type<select id="proposal-type"><option value="fact">Fact</option><option value="decision">Decision</option><option value="procedure">Procedure</option><option value="lesson">Lesson</option></select></label>
+      <label>Content<textarea id="proposal-input" rows="7" placeholder="Enter the memory candidate…"></textarea></label>
+      <div class="proposal-actions"><span id="proposal-feedback" class="muted">Proposal goes through the canonical MemoryController.</span><button class="primary-action" id="submit-proposal" type="submit">SUBMIT TO QUEUE</button></div>
+    </form>
+  </dialog>
+
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>
