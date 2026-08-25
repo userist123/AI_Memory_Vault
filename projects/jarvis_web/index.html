@@ -1,1 +1,151 @@
-<!doctype html><html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="JARVIS AI Memory Vault Command Center"><title>JARVIS — AI Memory Vault Command Center</title><link rel="stylesheet" href="/css/jarvis.css"></head><body><div class="shell"><header class="topbar"><div class="brand"><div class="brand-orb">J</div><div><span>AI MEMORY VAULT</span><h1>JARVIS</h1></div></div><nav class="tabs" aria-label="Main navigation"><button class="tab active" data-view="overview">OVERVIEW</button><button class="tab" data-view="chat">JARVIS CHAT</button><button class="tab" data-view="memory">MEMORY</button><button class="tab" data-view="agents">AGENTS</button><button class="tab" data-view="skills">SKILLS</button><button class="tab" data-view="execution">EXECUTION</button></nav><div class="top-status"><span id="vault-state" class="status offline"><i></i> OFFLINE</span><span class="clock" id="clock">--:--:--</span></div></header><main class="canvas"><aside class="rail left-rail"><section class="rail-section"><div class="label">SYSTEM STATUS</div><div class="status-list"><div><span>Memory Controller</span><b id="s-memory">—</b></div><div><span>Cognitive Core</span><b>ONLINE</b></div><div><span>Memory V6</span><b>ONLINE</b></div><div><span>Ollama / Local LLM</span><b id="s-llm">—</b></div><div><span>Obsidian Sync</span><b>SYNCED</b></div><div><span>Claude Plugin</span><b>READY</b></div></div></section><section class="rail-section"><div class="label">MEMORY V6 PIPELINE</div><ol class="pipeline-rail"><li><b>01</b><span>RAW INGESTION</span></li><li><b>02</b><span>CLASSIFICATION</span></li><li><b>03</b><span>REVIEW QUEUE</span></li><li><b>04</b><span>APPROVAL</span></li><li><b>05</b><span>PROMOTION</span></li><li><b>06</b><span>CONSOLIDATION</span></li></ol></section><section class="rail-section actions"><button class="action" id="new-proposal">＋ NEW PROPOSAL</button><button class="action" id="focus-chat">◉ TALK TO JARVIS</button><button class="action" id="focus-search">⌕ SEARCH MEMORY</button><button class="action" id="diagnostics">◈ SYSTEM DIAGNOSTICS</button></section></aside><section class="center-stage"><section class="welcome-line"><div><span class="label">COGNITIVE CONTROL PLANE</span><h2>Good evening, operator.</h2><p>JARVIS connects Memory V6, the Agent Council, operational skills and a local LLM into one command surface.</p></div><div class="time-meta"><strong id="latency">API —</strong><span id="model-label">LOCAL MODEL —</span></div></section><section class="core-grid"><div class="metric-strip"><article><span>MEMORY ITEMS</span><strong id="metric-notes">—</strong><small>indexed notes</small></article><article><span>AGENTS</span><strong id="metric-agents">—</strong><small>registered / online</small></article><article><span>SKILLS</span><strong id="metric-skills">—</strong><small>operational registry</small></article><article><span>PENDING</span><strong id="metric-proposals">—</strong><small>Memory V6 review</small></article></div><div class="core-wrap"><canvas id="jarvis-3d" aria-label="JARVIS holographic 3D avatar"></canvas><div class="holo-scanlines"></div><div class="core-caption"><span id="core-state">WAITING FOR VAULT LINK</span><small>Holographic avatar · MemoryController · Cognitive Core · Agent Council</small></div></div><div class="side-stack"><article class="signal"><span>MEMORY ENGINE</span><strong>V6</strong><small>ACT-R · GWT · Graphs</small><div class="spark"></div></article><article class="signal"><span>ROUTER</span><strong id="router-state">READY</strong><small>Domain + skill matching</small><div class="spark green"></div></article><article class="signal"><span>MODEL</span><strong id="model-short">—</strong><small>Ollama local inference</small><div class="gauge"><i id="model-gauge"></i></div></article></div></section><section class="panel wide chat-panel" id="chat-panel"><header><div><span class="label">JARVIS CONVERSATION</span><h3>Talk naturally. Memory is available to the model.</h3></div><div class="chat-head-actions"><select id="chat-model"><option value="">AUTO / SERVER DEFAULT</option></select><button id="voice-toggle" class="tiny-btn" type="button">VOICE</button></div></header><div id="chat-log" class="chat-log"><div class="chat-message assistant"><div class="avatar">J</div><div><strong>JARVIS</strong><p>Systems online. I can search the Vault, route work to the Agent Council and use the local model for conversation.</p></div></div></div><form id="chat-form" class="chat-composer"><textarea id="chat-input" rows="2" placeholder="Talk to JARVIS… e.g. 'What do you know about SecurePrintManager and what should we fix next?'" autocomplete="off"></textarea><button type="submit" class="primary-action">SEND</button></form><div class="chat-meta"><span id="chat-status">READY</span><span id="chat-agent">ROUTER: AUTO</span></div></section><section class="panel wide" id="memory-panel"><header><div><span class="label">MEMORY RETRIEVAL</span><h3>Search the canonical memory</h3></div><span class="tiny">LIVE · SELECTIVE</span></header><form id="search-form" class="searchbar"><input id="search-input" placeholder="Search concepts, decisions, projects, procedures, agents…" autocomplete="off"><select id="search-mode"><option value="semantic">Semantic</option><option value="keyword">Keyword</option></select><button>SEARCH</button></form><div id="search-results" class="results empty">Awaiting query.</div></section><section class="panel wide" id="routing-panel"><header><div><span class="label">AGENT ROUTER</span><h3>Route a task through the 21-agent council</h3></div><span class="tiny">LIVE MATCHING</span></header><form id="route-form" class="searchbar"><input id="route-input" placeholder="Describe the task: e.g. redesign JARVIS UI with performance constraints…" autocomplete="off"><button>ROUTE</button></form><div id="route-results" class="route-results empty">Enter a task to rank compatible agents and skills.</div></section><section class="panel wide" id="agents-panel"><header><div><span class="label">AGENT COUNCIL</span><h3><span id="council-count">21 AGENTS</span> · operational profiles</h3></div><span class="tiny">REGISTRY</span></header><div id="agent-grid" class="agent-grid"><div class="loading">Loading Agent Council…</div></div></section><section class="split-row"><section class="panel" id="skills-panel"><header><div><span class="label">SKILL REGISTRY</span><h3>Operational capabilities</h3></div><span class="tiny" id="skill-total">—</span></header><div id="skill-cloud" class="skill-cloud"><span>Loading skills…</span></div><div class="searchbar compact"><input id="skill-filter" placeholder="Filter operational skills…"><button id="skill-filter-btn">FILTER</button></div></section><section class="panel" id="execution-panel"><header><div><span class="label">EXECUTION TIMELINE</span><h3>Real Command Center activity</h3></div><button id="clear-timeline" class="tiny-btn">CLEAR</button></header><div id="timeline" class="timeline"><div class="muted">No activity yet.</div></div></section></section></section><aside class="rail right-rail"><section class="rail-section"><div class="label">JARVIS MIND</div><div class="mind-card"><div class="mind-dot"></div><div><b id="mind-state">STANDBY</b><span>Listening for commands</span></div></div></section><section class="rail-section"><div class="label">MEMORY SEARCH</div><div class="quick-search"><input id="quick-search" placeholder="Jump to memory…"><button id="quick-go">↗</button></div><div class="chips"><button data-query="">All</button><button data-query="concept">Concept</button><button data-query="decision">Decision</button><button data-query="project">Project</button><button data-query="agent">Agent</button></div></section><section class="rail-section"><div class="label">RECENT MEMORY</div><div id="recent-memory" class="recent"><div class="muted">Loading canonical memory…</div></div></section><section class="rail-section metrics-side"><div class="label">VAULT METRICS</div><div class="mini-metrics"><div><b id="side-notes">—</b><span>NOTES</span></div><div><b id="side-agents">—</b><span>AGENTS</span></div><div><b id="side-skills">—</b><span>SKILLS</span></div><div><b id="side-pending">—</b><span>PENDING</span></div></div><div class="wave"></div></section><section class="rail-section"><div class="label">PENDING PROPOSALS</div><div id="pending-proposals"><div class="muted">Loading Memory V6 queue…</div></div></section></aside></main><footer><span>JARVIS AI COMMAND CENTER</span><span>AI MEMORY VAULT V6.0 · <span id="footer-agents">—</span> AGENTS · <span id="footer-skills">—</span> SKILLS</span><span id="last-refresh">—</span></footer></div><dialog id="proposal-dialog" class="proposal-dialog"><form method="dialog" class="proposal-card" id="proposal-form"><div class="proposal-head"><div><span class="label">MEMORY V6</span><h3>New memory proposal</h3></div><button class="close-btn" value="cancel" type="submit">×</button></div><label>Type<select id="proposal-type"><option value="fact">Fact</option><option value="decision">Decision</option><option value="procedure">Procedure</option><option value="lesson">Lesson</option></select></label><label>Content<textarea id="proposal-input" rows="7" placeholder="Enter the memory candidate…"></textarea></label><div class="proposal-actions"><span id="proposal-feedback" class="muted">Candidate enters Memory V6 PENDING_REVIEW.</span><button class="primary-action" id="submit-proposal" type="submit">SUBMIT TO QUEUE</button></div></form></dialog><script type="module" src="/js/hologram.js"></script><script type="module" src="/js/voice_engine.js"></script><script type="module" src="/js/app.js"></script></body></html>
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="JARVIS AI Memory Vault Command Center">
+  <title>JARVIS — AI Command Center</title>
+  <link rel="stylesheet" href="/css/jarvis.css">
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-reactor"><span></span><i></i><b></b></div>
+      <div><div class="brand-name">JARVIS</div><div class="brand-sub">AI COMMAND CENTER</div></div>
+    </div>
+    <nav class="tabs" aria-label="Main navigation">
+      <button class="tab active" data-view="overview">DASHBOARD</button>
+      <button class="tab" data-view="memory">MEMORY</button>
+      <button class="tab" data-view="agents">AGENTS</button>
+      <button class="tab" data-view="skills">SKILLS</button>
+      <button class="tab" data-view="council">COUNCIL</button>
+      <button class="tab" data-view="execution">EXECUTION</button>
+      <button class="tab" data-view="analytics">ANALYTICS</button>
+      <button class="tab" data-view="settings">SETTINGS</button>
+    </nav>
+    <div class="top-right">
+      <div class="api-chip"><div><span>MEMORY API</span><b id="api-state">OFFLINE</b></div><div class="mini-wave"></div></div>
+      <div class="top-reactor"><span></span></div>
+      <div class="top-user"><b>JARVIS</b><span id="mind-state">STANDBY</span></div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <aside class="left-rail rail">
+      <section class="rail-block">
+        <h3>SYSTEM STATUS</h3>
+        <div class="status-row"><span class="ico">◈</span><span>Memory Controller</span><b id="s-memory">OFFLINE</b></div>
+        <div class="status-row"><span class="ico">◌</span><span>Cognitive Core</span><b>ONLINE</b></div>
+        <div class="status-row"><span class="ico">◫</span><span>Memory V6</span><b>ONLINE</b></div>
+        <div class="status-row"><span class="ico">◎</span><span>Agents (21)</span><b id="s-agents">ONLINE</b></div>
+        <div class="status-row"><span class="ico">◇</span><span>Skills</span><b id="s-skills">—</b></div>
+        <div class="status-row"><span class="ico">⌘</span><span>Obsidian Sync</span><b>SYNCED</b></div>
+        <div class="status-row"><span class="ico">◉</span><span>Ollama</span><b id="s-llm">OFFLINE</b></div>
+      </section>
+
+      <section class="rail-block pipeline">
+        <h3>MEMORY V6 PIPELINE</h3>
+        <div class="pipeline-step"><span>01</span><div><b>RAW INGESTION</b><small id="pipe-raw">— items</small></div><i>QUEUE</i></div>
+        <div class="pipeline-step"><span>02</span><div><b>CLASSIFICATION</b><small>AI Processing</small></div><i>PROCESS</i></div>
+        <div class="pipeline-step"><span>03</span><div><b>REVIEW QUEUE</b><small id="pipe-review">— pending</small></div><i>QUEUE</i></div>
+        <div class="pipeline-step"><span>04</span><div><b>APPROVAL</b><small>Human / Admin</small></div><i>GATE</i></div>
+        <div class="pipeline-step"><span>05</span><div><b>PROMOTION</b><small>Canonical memory</small></div><i>PROMOTE</i></div>
+        <div class="pipeline-step"><span>06</span><div><b>CONSOLIDATION</b><small>Sleep Cycle</small></div><i>MERGE</i></div>
+      </section>
+
+      <section class="rail-block actions">
+        <h3>QUICK ACTIONS</h3>
+        <button id="new-proposal" class="quick-action primary">＋ <span>NEW PROPOSAL</span></button>
+        <button id="focus-chat" class="quick-action">⌕ <span>TALK TO JARVIS</span></button>
+        <button id="focus-search" class="quick-action">⌕ <span>SEARCH MEMORY</span></button>
+        <button id="diagnostics" class="quick-action">◈ <span>SYSTEM DIAGNOSTICS</span></button>
+      </section>
+    </aside>
+
+    <section class="center-stage">
+      <section class="welcome-panel panel-frame">
+        <div class="welcome-avatar"><canvas id="jarvis-3d" aria-label="JARVIS holographic avatar"></canvas><div class="avatar-scan"></div></div>
+        <div class="welcome-copy">
+          <div class="eyebrow">JARVIS AI COMMAND CENTER • FULL OPERATIONAL CONTROL</div>
+          <h1>GOOD EVENING, USERIST</h1>
+          <p>“The right information, to the right agent, at the right time.”</p>
+          <div class="welcome-model"><span id="model-label">LOCAL MODEL —</span><b id="chat-agent">ROUTER: AUTO</b></div>
+        </div>
+        <div class="welcome-time"><strong id="clock">--:--:--</strong><span id="today">—</span><small>SYSTEM UPTIME <b>LOCAL SESSION</b></small></div>
+      </section>
+
+      <section class="reactor-section">
+        <div class="metric-stack left-metrics">
+          <article class="metric-card"><span>MEMORY ITEMS</span><strong id="metric-notes">—</strong><small>indexed canonical notes</small><div class="bars"></div></article>
+          <article class="metric-card"><span>PROPOSALS QUEUE</span><strong id="metric-proposals">—</strong><small>pending review</small><div class="sparkline cyan"></div></article>
+          <article class="metric-card"><span>ACTIVE AGENTS</span><strong id="metric-agents">—</strong><small>registered / online</small><div class="bars green"></div></article>
+        </div>
+
+        <div class="reactor" aria-label="JARVIS cognitive core">
+          <div class="reactor-grid"></div><div class="reactor-ray r1"></div><div class="reactor-ray r2"></div><div class="reactor-ray r3"></div><div class="reactor-ray r4"></div>
+          <div class="reactor-ring ring-a"></div><div class="reactor-ring ring-b"></div><div class="reactor-ring ring-c"></div><div class="reactor-ring ring-d"></div>
+          <div class="reactor-core"><span>JARVIS</span><b id="core-state">WAITING FOR VAULT LINK</b><i id="orb-label">CORE</i></div>
+          <div class="reactor-hud"><span class="hud-left">ACT-R</span><span class="hud-right">GWT / GRAPH</span></div>
+        </div>
+
+        <div class="metric-stack right-metrics">
+          <article class="metric-card"><span>SKILLS OPERATIONAL</span><strong id="metric-skills">—</strong><small>live registry</small><div class="bars"></div></article>
+          <article class="metric-card"><span>EXECUTIONS TODAY</span><strong id="metric-executions">—</strong><small>verified activity</small><div class="sparkline cyan"></div></article>
+          <article class="metric-card"><span>SUCCESS RATE</span><strong id="metric-success">—</strong><small>system operations</small><div class="gauge"></div></article>
+        </div>
+      </section>
+
+      <section class="panel-frame section-card" id="agents-panel">
+        <header class="section-head"><div><h2>AGENT COUNCIL <b id="council-count">(21)</b></h2><span>All agents operational and ready</span></div><button class="view-link" id="view-agents">VIEW ALL AGENTS →</button></header>
+        <div id="agent-grid" class="agent-strip"><div class="loading">Loading Agent Council…</div></div>
+      </section>
+
+      <section class="panel-frame section-card" id="skills-panel">
+        <header class="section-head"><div><h2>SKILLS REGISTRY <b id="skill-total">—</b></h2><span>Smart skills, matched to the right agent</span></div><button class="view-link" id="view-skills">BROWSE ALL SKILLS →</button></header>
+        <div id="skill-cloud" class="skill-strip"><div class="loading">Loading operational skills…</div></div>
+      </section>
+
+      <section class="panel-frame section-card execution-section" id="execution-panel">
+        <header class="section-head"><div><h2>EXECUTION TIMELINE</h2><span>Live agent activities and system operations</span></div><button class="view-link" id="clear-timeline">VIEW FULL TIMELINE →</button></header>
+        <div class="execution-grid"><div id="timeline" class="timeline"><div class="muted">No activity yet.</div></div><div class="agent-map"><span class="map-node researcher">RESEARCHER</span><span class="map-node optimizer">OPTIMIZER</span><span class="map-node developer">DEVELOPER</span><span class="map-node guardian">GUARDIAN</span><div class="map-grid"></div><div class="map-core"></div></div></div>
+      </section>
+    </section>
+
+    <aside class="right-rail rail">
+      <section class="rail-block memory-search-block" id="memory-panel">
+        <h3>MEMORY SEARCH</h3>
+        <form id="search-form" class="searchbar"><input id="search-input" placeholder="Search memory…" autocomplete="off"><select id="search-mode"><option value="semantic">Semantic</option><option value="keyword">Keyword</option></select><button>⌕</button></form>
+        <div class="filter-label">QUICK FILTERS</div><div class="chips"><button data-query="">All</button><button data-query="concept">Concept</button><button data-query="decision">Decision</button><button data-query="code">Code</button><button data-query="project">Project</button><button data-query="agent">Agent</button></div>
+        <div class="subhead">RECENT MEMORY</div><div id="recent-memory" class="recent-list"><div class="muted">Loading canonical memory…</div></div>
+        <button class="view-all" id="view-memory">VIEW ALL MEMORY →</button>
+      </section>
+
+      <section class="rail-block metrics-block">
+        <h3>SYSTEM METRICS</h3>
+        <div class="dial-grid"><div class="dial"><i id="cpu-dial"></i><b>23%</b><span>CPU</span></div><div class="dial"><i id="mem-dial"></i><b>41%</b><span>MEMORY</span></div><div class="dial"><i id="disk-dial"></i><b>62%</b><span>DISK</span></div><div class="dial"><i id="net-dial"></i><b>18%</b><span>NETWORK</span></div></div>
+        <div class="metric-wave"></div>
+      </section>
+
+      <section class="rail-block proposals-block">
+        <h3>PENDING PROPOSALS</h3><p class="rail-subtitle">Requires review and approval</p><div id="pending-proposals" class="proposal-list"><div class="muted">Loading Memory V6 queue…</div></div><button class="view-all">VIEW ALL PROPOSALS →</button>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer"><span>“JARVIS isn’t just a system. It’s your digital partner in intelligence.”</span><b>MEMORY VAULT V6.0.0 • AI COMMAND CENTER • <span id="footer-agents">—</span> AGENTS • <span id="footer-skills">—</span> SKILLS • <span id="footer-notes">—</span> MEMORIES</b><span>© 2026 JARVIS AI • All Systems Operational</span></footer>
+</div>
+
+<div id="chat-panel" class="chat-drawer" aria-hidden="true">
+  <div class="chat-drawer-head"><div><span class="eyebrow">JARVIS CONVERSATION</span><strong>Talk to your AI</strong></div><div class="chat-controls"><select id="chat-model"><option value="">AUTO / SERVER DEFAULT</option></select><button id="voice-toggle" class="tiny-btn" type="button">VOICE</button><button id="close-chat" class="tiny-btn" type="button">×</button></div></div>
+  <div id="chat-log" class="chat-log"><div class="chat-message assistant"><div class="avatar">J</div><div><strong>JARVIS</strong><p>Systems online. Say hello, ask me about the Vault, or tell me what you want to build.</p></div></div></div>
+  <form id="chat-form" class="chat-composer"><textarea id="chat-input" rows="2" placeholder="Say: “Salut, JARVIS”"></textarea><button type="submit" class="send-btn">SEND</button></form>
+  <div class="chat-meta"><span id="chat-status">READY</span><span id="voice-status">VOICE READY</span></div>
+</div>
+
+<dialog id="proposal-dialog" class="proposal-dialog"><form method="dialog" class="proposal-card" id="proposal-form"><div class="proposal-head"><div><span class="eyebrow">MEMORY V6</span><h3>New memory proposal</h3></div><button class="close-btn" value="cancel" type="submit">×</button></div><label>Type<select id="proposal-type"><option value="fact">Fact</option><option value="decision">Decision</option><option value="procedure">Procedure</option><option value="lesson">Lesson</option></select></label><label>Content<textarea id="proposal-input" rows="7" placeholder="Enter the memory candidate…"></textarea></label><div class="proposal-actions"><span id="proposal-feedback" class="muted">Candidate enters Memory V6 PENDING_REVIEW.</span><button class="primary-action" type="submit">SUBMIT TO QUEUE</button></div></form></dialog>
+
+<script type="module" src="/js/hologram.js"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
