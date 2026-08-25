@@ -1,8 +1,9 @@
 """CLI for Memory V6 extraction, queue inspection, spatial indexing, promotion,
-sleep-phase consolidation, and retrieval benchmarking."""
+sleep-phase consolidation, retrieval benchmarking, and optional git/graph hooks."""
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 
 from .extraction import AtomicMemoryExtractor
@@ -12,6 +13,8 @@ from .conflict_detector import ConflictDetector
 from .queue_promoter import QueuePromoter
 from .sleep_consolidation import SleepConsolidator
 from .benchmarks.retrieval_benchmark import RetrievalBenchmark
+from .git_hooks import PromotionGitHook
+from .ranked_search import ranked_search
 
 
 def root() -> Path:
@@ -35,6 +38,16 @@ def _naive_retrieval(controller):
             or needle in str(note.get("id", "")).lower()
         ]
         return matches
+    return _retrieve
+
+
+def _graph_retrieval(controller, principal):
+    def _retrieve(query: str):
+        try:
+            results = ranked_search(controller, principal, query, top_k=10)
+            return [r.get("id") for r in results if r.get("id")]
+        except Exception:
+            return []
     return _retrieve
 
 
@@ -77,6 +90,7 @@ def main() -> None:
     benchmark = sub.add_parser("benchmark")
     benchmark.add_argument("--cases", default=str(Path("cognitive_core") / "benchmarks" / "sample_cases.jsonl"))
     benchmark.add_argument("--k", type=int, default=5)
+    benchmark.add_argument("--retrieval", default="substring", choices=["substring", "graph"])
 
     args = parser.parse_args()
     queue = MemoryProposalQueue(root() / "06_INBOX" / "memory_proposals.jsonl")
@@ -121,6 +135,17 @@ def main() -> None:
         promoter = QueuePromoter(queue, controller, principal_map[args.principal])
         ids = promoter.promote_approved()
         print(f"promoted={ids}")
+        if ids and os.getenv("VAULT_GIT_AUTO_COMMIT", "0") == "1":
+            hook = PromotionGitHook(repo_path=str(root()))
+            note_paths = []
+            path_fn = getattr(controller.storage, "note_path", None)
+            if callable(path_fn):
+                for note_id in ids:
+                    resolved = path_fn(note_id)
+                    if resolved:
+                        note_paths.append(resolved)
+            result = hook.commit_promotion(ids, note_paths)
+            print(f"git_commit={result}")
     elif args.command == "consolidate":
         controller, _ = _load_controller()
         consolidator = SleepConsolidator(
@@ -129,12 +154,16 @@ def main() -> None:
         path = consolidator.save_report(root() / args.output)
         print(f"report={path}")
     elif args.command == "benchmark":
-        controller, _ = _load_controller()
+        controller, Principal = _load_controller()
         cases_path = Path(args.cases)
         if not cases_path.is_absolute():
             cases_path = root() / cases_path
         benchmark_suite = RetrievalBenchmark.load_jsonl(cases_path)
-        result = benchmark_suite.run(_naive_retrieval(controller), k=args.k)
+        if args.retrieval == "graph":
+            retrieval_fn = _graph_retrieval(controller, Principal.HUMAN)
+        else:
+            retrieval_fn = _naive_retrieval(controller)
+        result = benchmark_suite.run(retrieval_fn, k=args.k)
         print(result["summary"])
 
 

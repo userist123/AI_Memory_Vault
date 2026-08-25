@@ -1,0 +1,29 @@
+name: Scheduled Memory Consolidation
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  consolidate:
+    name: Run Sleep-Phase Consolidation Report (advisory, read-only)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run consolidation
+        run: python -m cognitive_core.memory_v6_cli consolidate --output 04_MEMORY/sleep_consolidation_report.json
+
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sleep-consolidation-report
+          path: 04_MEMORY/sleep_consolidation_report.json
+          retention-days: 30
