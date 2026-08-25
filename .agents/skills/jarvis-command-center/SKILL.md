@@ -1,22 +1,23 @@
 ---
 name: jarvis-command-center
-description: Design and engineer a production-grade JARVIS AI Command Center over AI Memory Vault, combining an immersive Tony-Stark-inspired cinematic cockpit with real Memory V6, Agent Council, operational skills, local LLM chat, voice interaction, procedural WebGL avatar, routing and controlled memory workflows.
+description: Design and engineer a production-grade JARVIS AI Command Center over AI Memory Vault, combining an immersive cinematic cockpit with real Memory V6, Agent Council, operational skills, local LLM chat, bidirectional Romanian voice, procedural WebGL avatar, routing and controlled memory workflows.
 ---
 
 # JARVIS Command Center
 
 ## Core identity
 
-This is an operational AI cockpit, not a landing page. The visual hierarchy must feel like a private Stark-lab command surface: one dominant holographic AI presence, restrained cyan/blue energy, technical overlays and information arranged around the avatar.
+This is an operational AI cockpit, not a landing page. The visual hierarchy should feel like a private advanced-lab command surface: one dominant holographic AI presence, restrained cyan/blue energy, technical overlays and information arranged around the avatar.
 
-Do not imitate a copied movie screenshot. Build an original futuristic assistant experience with:
+Build an original futuristic assistant experience with:
 - holographic humanoid avatar / AI presence;
-- reactive status state (STANDBY, LISTENING, THINKING, RESPONDING, ERROR);
+- reactive status state (STANDBY, LISTENING, THINKING, SPEAKING, ERROR);
 - conversational command interface;
 - memory-aware responses;
 - Agent Council routing;
 - live operational skill registry;
-- Memory V6 proposal and review lifecycle.
+- Memory V6 proposal and review lifecycle;
+- bidirectional local Romanian voice interaction.
 
 ## Visual system
 
@@ -26,7 +27,7 @@ Do not imitate a copied movie screenshot. Build an original futuristic assistant
 - One visual focal point: the JARVIS holographic avatar.
 - Information density should be high but never become a generic card dashboard.
 - Use 4/8/16/24/32px rhythm and a three-level typography hierarchy.
-- Prefer meaningful motion: avatar breathing, orbit rotation, signal pulses, listening waveform, response activity.
+- Prefer meaningful motion: avatar breathing, orbit rotation, signal pulses, listening waveform, thinking activity and speaking state.
 
 ## 3D avatar contract
 
@@ -42,9 +43,9 @@ The center stage MUST support a real 3D surface:
 
 The avatar is part of the application state, not decoration. State mapping:
 - STANDBY = low-energy idle;
-- LISTENING = cyan pulse / microphone state;
+- LISTENING = microphone pulse / waveform;
 - THINKING = faster orbital activity;
-- RESPONDING = stronger scan and signal emission;
+- SPEAKING = stronger pulse / mouth or signal animation;
 - ERROR = red fault pulse.
 
 ## Conversational AI contract
@@ -60,19 +61,38 @@ JARVIS Chat must:
 - never claim a backend action happened unless an API confirms it;
 - gracefully report when Ollama is offline.
 
+Romanian conversational style is canonical:
+- When the user speaks Romanian, respond in native Romanian with correct grammar and diacritics.
+- Sound like a competent human assistant, not a status terminal or screen reader.
+- Avoid canned robotic phrases such as "Afirmativ", "Procesare solicitare", "Comanda primita" or similar wording.
+- Preserve technical names, code, URLs and file paths when necessary.
+
 Recommended environment variables:
 - `OLLAMA_HOST` — default `http://127.0.0.1:11434`;
 - `JARVIS_MODEL` — preferred local model name;
 - `AI_MEMORY_VAULT_ROOT` — optional Vault root override.
 
-## Voice interaction
+## Bidirectional voice contract
 
-Provide browser-native speech input/output where supported:
-- Romanian recognition by default;
+JARVIS voice is a local neural voice layer, not browser text-to-speech.
+
+Input:
+- browser microphone speech recognition with `ro-RO` as the default language;
 - one-click LISTENING state;
-- speech synthesis for assistant responses;
-- no external speech service dependency;
+- recognized speech is sent to the same `/api/v1/chat` path as typed messages;
 - graceful unsupported-browser fallback.
+
+Output:
+- use a local neural TTS service, preferably Piper;
+- default Romanian voice: `ro_RO-mihai-medium`;
+- TTS runs locally on `127.0.0.1:8002`;
+- JARVIS returns generated WAV audio to the browser for playback;
+- do not use browser `speechSynthesis` as the primary voice path;
+- strip markdown, code blocks, URLs and UI telemetry before synthesis;
+- expose SPEAKING state while audio is playing;
+- stop the current utterance when a new response begins.
+
+Voice setup is provided by `setup_jarvis_voice.ps1`; dependency definition lives in `requirements-voice.txt` and the server in `voice_server.py`.
 
 ## One-screen information architecture
 
@@ -80,7 +100,7 @@ Desktop should feel like a single cockpit:
 1. global header and live system status;
 2. left operational rail;
 3. center holographic avatar + live metrics + conversation surface;
-4. memory search and Agent Router below the avatar but within the same control plane;
+4. memory search and Agent Router around/below the avatar in the same control plane;
 5. right intelligence rail with memory, queue and health signals;
 6. persistent bottom status strip.
 
@@ -100,6 +120,7 @@ Secondary modules can use internal scrolling, modal surfaces or focus transition
 - Metrics come from `/api/v1/metrics`.
 - Diagnostics test actual API availability.
 - Execution timeline records actual UI/API events and never fabricates successful backend work.
+- Voice health can be verified through the JARVIS TTS `/health` endpoint.
 
 ## Motion and quality
 
@@ -116,6 +137,7 @@ Secondary modules can use internal scrolling, modal surfaces or focus transition
 - Generic SaaS card-grid appearance.
 - Static fake numbers when APIs provide real state.
 - A single flat landscape illustration replacing actual interaction.
+- Browser `speechSynthesis` pretending to be a neural assistant voice.
 - A giant hero area that hides operational functions.
 - Neon decoration with no semantic purpose.
 - Separate, competing memory systems.
