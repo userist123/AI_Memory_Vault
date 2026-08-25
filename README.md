@@ -1,7 +1,7 @@
 ---
 category: index
 status: active
-version: 5.0.0
+version: 6.0.0
 confidence: very_high
 verification: verified
 provenance_status: official
@@ -11,6 +11,7 @@ relations:
   - "00_CORE/Memory_Protocol.md"
   - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
   - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
+  - "99_SYSTEM/Memory_V6_Architecture.md"
   - "99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md"
   - "05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md"
   - ".claude-plugin/plugin.json"
@@ -18,13 +19,13 @@ relations:
   - "skills/ai-memory-vault/SKILL.md"
 ---
 
-# 🧠 AI Memory Vault — Canonical Multi-Agent Memory & Claude Plugin
+# 🧠 AI Memory Vault — Canonical Multi-Agent Memory & Memory V6 Engine
 
-[![Architecture](https://img.shields.io/badge/Architecture-v5.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
+[![Architecture](https://img.shields.io/badge/Architecture-v6.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
+[![Tests](https://img.shields.io/badge/Pytest-496%20Passed-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions)
 [![Claude Plugin](https://img.shields.io/badge/Claude-Code%20Plugin-purple.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin)
 [![Agents](https://img.shields.io/badge/Agents-21-orange.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents)
 [![Skills](https://img.shields.io/badge/Local%20Skills-251-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills)
-[![Raw%20Skills](https://img.shields.io/badge/RAW%20Skills-External-red.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/06_INBOX/RAW_IMPORTS/skills)
 [![Obsidian](https://img.shields.io/badge/Obsidian-Synchronized-7c3aed.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.obsidian)
 
 > **AI Memory Vault** este stratul canonic de memorie, knowledge, skills, agents, procedures, provenance si audit pentru ecosistemul AI. Acelasi Vault poate fi folosit de **Codex, Claude Code, agentii locali si Obsidian**, fara memorii canonice paralele.
@@ -160,6 +161,37 @@ Sistemul integrează 4 module cognitive bio-inspirate pentru o funcționare auto
    - Urmărește utilitatea acțiunilor $U = P \cdot G - C$ prin Exponential Moving Average și oferă bonusuri dinamice de atenție pe baza recompenselor reale de la `VerifierAgent`.
 4. **Global Workspace Theory (`cognitive_core/global_workspace.py`)**:
    - Hub competitiv central în care agenții Consiliului (`Router`, `Retrieval`, `Verifier`, `Critic`) trimit propuneri, iar propunerea cu scor maxim este difuzată (*broadcast*) global tuturor agenților (Baars 1988; Dehaene et al. 2001).
+
+### 🚀 Extensia de Arhitectură Memory V6 (v6.0.0 Engine)
+
+Vault-ul integrează extensia aditivă **Memory V6** care adaugă 17 componente modulare:
+
+1. **Buffer Ephemeral de Senzori (`cognitive_core/sensor_buffer.py`)**: Păstrează evenimentele brute de sesiune în memorie fără a polua stocarea canonică.
+2. **Extractor Atomic de Memorie + Adapter Local Ollama (`cognitive_core/extraction.py` & `ollama_extractor.py`)**: Extragere deterministă de fapte, decizii, proceduri și lecții, augmentată opțional cu modele locale Ollama (`--use-ollama`).
+3. **Coadă de Propuneri & Detector de Conflicte (`cognitive_core/proposal_queue.py` & `conflict_detector.py`)**: Coadă de triaj în `06_INBOX/` cu detector euristic de conflicte și negații.
+4. **Queue Promoter Controlat (`cognitive_core/queue_promoter.py`)**: Promovează doar candidații marcați `APPROVED` de oameni direct în `MemoryController.propose()`.
+5. **Memorie Multi-Graf & Spreading Activation (`cognitive_core/multi_graph.py` & `spreading_activation.py`)**: 4 grafuri derivate (semantic, temporal, cauzal, entități) cu re-clasare prin activare difuză ACT-R (`cognitive_core/ranked_search.py`).
+6. **Sleep-Phase Consolidation & Obsidian Renderer (`cognitive_core/sleep_consolidation.py` & `report_view.py`)**: Raportare mentenanță read-only randată ca notă Markdown cu legături `[[wikilinks]]` în Obsidian.
+7. **Harnasament Benchmark LoCoMo (`cognitive_core/benchmarks/`)**: Măsurare automată Precision@K, Recall@K și MRR.
+8. **Fluxuri CI/CD Automatizate (`.github/workflows/`)**: `memory-v6-tests.yml` (teste pytest automate pe fiecare commit) și `memory-consolidation.yml` (consolidare programată).
+
+```bash
+# 1. Extragere fapte & adăugare în coadă (opțional cu Ollama local)
+python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
+
+# 2. Revizuire coadă cu detectare conflicte
+python -m cognitive_core.memory_v6_cli review --show-conflicts
+
+# 3. Aprobare umană & Promovare controlată
+python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
+python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
+
+# 4. Maintenance & Randare Raport Obsidian
+python -m cognitive_core.memory_v6_cli consolidate --render
+
+# 5. Rulare Benchmark de Recuperare LoCoMo
+python -m cognitive_core.memory_v6_cli benchmark --retrieval graph
+```
 
 Principii:
 
