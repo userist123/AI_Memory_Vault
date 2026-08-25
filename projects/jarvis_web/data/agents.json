@@ -1,0 +1,25 @@
+{
+  "agents": [
+    {"id":"compiler_and_tooling_engineer","name":"Compiler","domain":"Compilers & Tooling","status":"ONLINE"},
+    {"id":"site_reliability_and_devops_architect","name":"SRE / DevOps","domain":"Reliability & Cloud","status":"ONLINE"},
+    {"id":"polyglot_systems_architect","name":"Polyglot Architect","domain":"C# / Go / Rust / Python / TS / C++","status":"ONLINE"},
+    {"id":"system_architecture_agent","name":"System Architect","domain":"Enterprise Architecture","status":"ONLINE"},
+    {"id":"backend_systems_engineer","name":"Backend Engineer","domain":"APIs / Microservices","status":"ONLINE"},
+    {"id":"secops_auditor","name":"SecOps Auditor","domain":"Security / Compliance","status":"ONLINE"},
+    {"id":"threat_hunting_analyst","name":"Threat Hunter","domain":"DFIR / Threat Hunting","status":"ONLINE"},
+    {"id":"wpf_engineer","name":"WPF Engineer","domain":"Desktop / .NET","status":"ONLINE"},
+    {"id":"web_creative_developer","name":"Web Creative","domain":"WebGL / Motion / 3D","status":"ONLINE"},
+    {"id":"web_design_engineer_agent","name":"Web Design Engineer","domain":"Design Systems","status":"ONLINE"},
+    {"id":"web_quality_engineer","name":"Web Quality","domain":"Performance / WCAG / SEO","status":"ONLINE"},
+    {"id":"ui_sensei_architect","name":"UI Sensei","domain":"UI Systems / Hierarchy","status":"ONLINE"},
+    {"id":"frontend_saas_engineer","name":"Frontend SaaS","domain":"Next.js / SaaS","status":"ONLINE"},
+    {"id":"game_engineer","name":"Game Engineer","domain":"3D / Gameplay / WebGL","status":"ONLINE"},
+    {"id":"quant_developer","name":"Quant Developer","domain":"Trading Systems","status":"ONLINE"},
+    {"id":"local_ai_engineer","name":"Local AI Engineer","domain":"LLM / Ollama / RAG","status":"ONLINE"},
+    {"id":"content_strategist","name":"Content Strategist","domain":"Copy / Brand / Voice","status":"ONLINE"},
+    {"id":"agentic_workflow_orchestrator","name":"Agent Orchestrator","domain":"Routing / MCP / Workflows","status":"ONLINE"},
+    {"id":"ui_ux_designer","name":"UI/UX Designer","domain":"Interaction / Visual Design","status":"ONLINE"},
+    {"id":"database_and_persistence_engineer","name":"Database Engineer","domain":"Persistence / Vector / Graph","status":"ONLINE"},
+    {"id":"memory_controller_architect","name":"Memory Architect","domain":"Memory V6 / Vault Operations","status":"ONLINE"}
+  ]
+}
