@@ -1,4 +1,5 @@
-"""CLI for Memory V6 extraction, queue inspection, spatial indexing, and controlled promotion."""
+"""CLI for Memory V6 extraction, queue inspection, spatial indexing, promotion,
+sleep-phase consolidation, and retrieval benchmarking."""
 from __future__ import annotations
 
 import argparse
@@ -9,6 +10,8 @@ from .proposal_queue import MemoryProposalQueue
 from .spatial_index import SpatialIndex
 from .conflict_detector import ConflictDetector
 from .queue_promoter import QueuePromoter
+from .sleep_consolidation import SleepConsolidator
+from .benchmarks.retrieval_benchmark import RetrievalBenchmark
 
 
 def root() -> Path:
@@ -21,6 +24,18 @@ def _load_controller():
     from memory_controller.storage.file_engine import FileStorageEngine
     storage = FileStorageEngine(str(root()))
     return MemoryController(storage), Principal
+
+
+def _naive_retrieval(controller):
+    def _retrieve(query: str):
+        needle = query.lower()
+        matches = [
+            note.get("id") for note in controller.storage.store.values()
+            if needle in str(note.get("content", "")).lower()
+            or needle in str(note.get("id", "")).lower()
+        ]
+        return matches
+    return _retrieve
 
 
 def main() -> None:
@@ -53,6 +68,15 @@ def main() -> None:
 
     promote = sub.add_parser("promote-approved")
     promote.add_argument("--principal", default="ai_agent", choices=["human", "admin", "ai_agent"])
+
+    consolidate = sub.add_parser("consolidate")
+    consolidate.add_argument("--output", default="04_MEMORY/sleep_consolidation_report.json")
+    consolidate.add_argument("--dormant-days", type=int, default=60)
+    consolidate.add_argument("--stale-review-days", type=int, default=14)
+
+    benchmark = sub.add_parser("benchmark")
+    benchmark.add_argument("--cases", default=str(Path("cognitive_core") / "benchmarks" / "sample_cases.jsonl"))
+    benchmark.add_argument("--k", type=int, default=5)
 
     args = parser.parse_args()
     queue = MemoryProposalQueue(root() / "06_INBOX" / "memory_proposals.jsonl")
@@ -97,6 +121,21 @@ def main() -> None:
         promoter = QueuePromoter(queue, controller, principal_map[args.principal])
         ids = promoter.promote_approved()
         print(f"promoted={ids}")
+    elif args.command == "consolidate":
+        controller, _ = _load_controller()
+        consolidator = SleepConsolidator(
+            controller, dormant_days=args.dormant_days, stale_review_days=args.stale_review_days,
+        )
+        path = consolidator.save_report(root() / args.output)
+        print(f"report={path}")
+    elif args.command == "benchmark":
+        controller, _ = _load_controller()
+        cases_path = Path(args.cases)
+        if not cases_path.is_absolute():
+            cases_path = root() / cases_path
+        benchmark_suite = RetrievalBenchmark.load_jsonl(cases_path)
+        result = benchmark_suite.run(_naive_retrieval(controller), k=args.k)
+        print(result["summary"])
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ relations:
 
 ## Purpose
 
-Memory V6 augments the canonical vault with an ephemeral sensor buffer, extraction of atomic memory candidates, a reviewable durable proposal queue, a rebuildable spatial repository index, advisory conflict detection, a controlled promotion bridge into `MemoryController.propose()`, a multi-graph memory layer (semantic, temporal, causal, entity), and spreading-activation retrieval. It does not replace `memory_controller/`, Markdown notes, SQLite/WAL, provenance, lifecycle control, or the audit boundary.
+Memory V6 augments the canonical vault with an ephemeral sensor buffer, extraction of atomic memory candidates, a reviewable durable proposal queue, a rebuildable spatial repository index, advisory conflict detection, a controlled promotion bridge into `MemoryController.propose()`, a multi-graph memory layer (semantic, temporal, causal, entity), spreading-activation retrieval, read-only sleep-phase consolidation reporting, and a LoCoMo-style retrieval benchmark harness. It does not replace `memory_controller/`, Markdown notes, SQLite/WAL, provenance, lifecycle control, or the audit boundary.
 
 ## Trust Boundary
 
@@ -27,10 +27,12 @@ Memory V6 augments the canonical vault with an ephemeral sensor buffer, extracti
 4. Only a candidate explicitly marked `APPROVED` by a human/admin reviewer via the CLI may be promoted.
 5. `QueuePromoter.promote_approved()` calls the existing, unmodified `MemoryController.propose()` — authorization, provenance validation, and audit logging all apply exactly as before.
 6. No candidate may become `ACTIVE` automatically; `propose()` still creates notes in `RAW` lifecycle, subject to the existing `review()`/`promote()`/`attest()` pipeline.
-7. `ConflictDetector` is advisory-only heuristic overlap/negation detection. It never blocks, deletes, or auto-resolves; it only annotates the `review` CLI output.
+7. `ConflictDetector` is advisory-only heuristic overlap/negation detection. It never blocks, deletes, or auto-resolves; it only annotates the `review` CLI output and the sleep-consolidation report.
 8. `SpatialIndex` is derived metadata. It is fully rebuildable and is not an authority source.
 9. `MultiGraphMemory` (semantic/temporal/causal/entity) is derived metadata, rebuilt from canonical notes on demand. It is never itself canonical and holds no provenance authority.
 10. `SpreadingActivationEngine` only re-ranks retrieval candidates; it never creates, modifies, or deletes notes, and never changes lifecycle or verification state.
+11. `SleepConsolidator` is strictly read-only against canonical storage. It never calls `update()`, `promote()`, `archive()`, or `attest()`; it only writes an advisory JSON report for a human/admin to act on manually through the existing controlled API.
+12. `RetrievalBenchmark` never touches canonical memory; it only scores a caller-supplied retrieval function against fixed test cases.
 
 ## Components
 
@@ -44,36 +46,37 @@ Memory V6 augments the canonical vault with an ephemeral sensor buffer, extracti
 | Spatial Index | `cognitive_core/spatial_index.py` | Rebuildable map of paths, imports and Markdown links |
 | Multi-Graph Memory | `cognitive_core/multi_graph.py` | Semantic, temporal, causal, and entity graphs derived from notes |
 | Spreading Activation | `cognitive_core/spreading_activation.py` | ACT-R-style propagation across the four graphs, fused with base relevance |
+| Sleep Consolidator | `cognitive_core/sleep_consolidation.py` | Read-only maintenance report: dormant notes, stale REVIEW notes, conflict pairs |
+| Retrieval Benchmark | `cognitive_core/benchmarks/` | LoCoMo-style precision@k / recall@k / MRR harness |
 | CLI | `cognitive_core/memory_v6_cli.py` | Operational entry point |
 
-## Multi-Graph Memory
+## Sleep-Phase Consolidation
 
-Four orthogonal graphs are rebuilt on demand from the same note corpus, mirroring the MAGMA architecture (multi-graph retrieval over semantic/temporal/causal/entity relations) instead of a single monolithic similarity index:
+Inspired by biologically-grounded consolidation research, `SleepConsolidator` runs a periodic (cron-triggered or manually invoked) advisory pass:
 
-- **Semantic graph** — edges from shared tags or shared category.
-- **Temporal graph** — chronological chain of notes within the same category, ordered by `created`/`updated`.
-- **Causal graph** — built strictly from explicit `relations` entries on notes (`replaces`, `replaced_by`, `causes`, `leads_to`, `depends_on`, `blocks`), never inferred.
-- **Entity graph** — edges between notes sharing extracted capitalized-token entities (heuristic, advisory).
+- **Dormant candidates** — `ACTIVE`/`VERIFIED` notes not updated in `dormant_days` (default 60), scored with a simplified ACT-R-style decay heuristic `B ≈ -decay * ln(age_days + 1)`. Independent from, and not calling into, `cognitive_core/activation.py`.
+- **Stale REVIEW candidates** — notes stuck in `REVIEW` beyond `stale_review_days` (default 14), flagged for a human `promote()`/reject decision.
+- **Conflict pairs** — pairwise `ConflictDetector` scan across all `ACTIVE`/`VERIFIED` notes, surfacing potential contradictions for human reconciliation via `supersede()`.
 
-```python
-from cognitive_core.multi_graph import MultiGraphMemory
+The report is saved as JSON; no note is ever mutated by this pass.
 
-graph_memory = MultiGraphMemory().build_from_notes(all_notes)
-graph_memory.semantic.neighbors("note-id")
+```bash
+python -m cognitive_core.memory_v6_cli consolidate --output 04_MEMORY/sleep_consolidation_report.json
 ```
 
-## Spreading Activation Retrieval
+## Retrieval Benchmark Harness
 
-`SpreadingActivationEngine` propagates a seed activation score across all four graphs with exponential hop decay (`decay ** hop`), then fuses per-graph results using configurable graph weights before combining with base relevance scores from the existing `RelevanceScorer`.
+`cognitive_core/benchmarks/` provides a small, dependency-free LoCoMo-style harness:
 
-```python
-from cognitive_core.spreading_activation import SpreadingActivationEngine
+- `metrics.py` — `precision_at_k`, `recall_at_k`, `mean_reciprocal_rank`.
+- `retrieval_benchmark.py` — `RetrievalBenchmark` loads `(query, relevant_ids)` cases from JSONL and scores any `retrieval_fn(query) -> List[note_id]` you provide.
+- `sample_cases.jsonl` — a small starter fixture; extend it with real vault query/answer pairs as they accumulate.
 
-engine = SpreadingActivationEngine(graph_memory, decay=0.6, max_hops=2)
-ranked = engine.rank(base_scores={"seed-note-id": 1.0}, top_k=10)
+The CLI ships with a naive substring-match baseline retrieval function for smoke-testing; swap in `MemoryController.search()` or the `SpreadingActivationEngine`-ranked retrieval for a real evaluation.
+
+```bash
+python -m cognitive_core.memory_v6_cli benchmark --cases cognitive_core/benchmarks/sample_cases.jsonl --k 5
 ```
-
-This module is read-only with respect to canonical memory: it only re-ranks candidate note IDs and never mutates lifecycle, verification, or content.
 
 ## Review Workflow
 
@@ -91,13 +94,17 @@ python -m cognitive_core.memory_v6_cli reject <candidate_id> --reviewer human
 # 4. Promote all APPROVED candidates through the existing controller.propose() path
 python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 
-# 5. Continue through the existing lifecycle as usual
+# 5. Periodic maintenance (advisory only)
+python -m cognitive_core.memory_v6_cli consolidate
+python -m cognitive_core.memory_v6_cli benchmark
+
+# 6. Continue through the existing lifecycle as usual
 # review() -> promote() -> attest() using memory_controller.controller.controller directly or vault_cli.py
 ```
 
 ## Next Stages
 
-1. Add scheduled sleep-phase consolidation as a background/cron job.
-2. Add a LoCoMo-style internal benchmark harness to evaluate retrieval quality over time.
-3. Wire git auto-commit (`memory_controller/git_auto_commit.py`, if present) to fire on `promote_approved()`.
-4. Feed `MultiGraphMemory` + `SpreadingActivationEngine` output into `MemoryController.search()` as an optional re-ranking stage, behind a feature flag.
+1. Wire git auto-commit (`memory_controller/git_auto_commit.py`, if present) to fire on `promote_approved()`.
+2. Feed `MultiGraphMemory` + `SpreadingActivationEngine` output into `MemoryController.search()` as an optional re-ranking stage, behind a feature flag.
+3. Replace the naive substring baseline in the `benchmark` CLI command with a `SpreadingActivationEngine`-backed retrieval function once real vault query/answer pairs are collected.
+4. Schedule `consolidate` as a recurring GitHub Action or local cron job, publishing the report to `04_MEMORY/` for human review.
