@@ -9,7 +9,7 @@ for %%I in ("%JARVIS_DIR%..\..") do set "VAULT_ROOT=%%~fI"
 echo.
 echo  ==================================================
 echo   JARVIS AI MEMORY VAULT COMMAND CENTER
-necho  ==================================================
+echo  ==================================================
 echo   Vault: %VAULT_ROOT%
 echo.
 
@@ -24,12 +24,12 @@ where python >nul 2>&1 || (echo  ERROR: Python is not installed/in PATH.& pause 
 where node >nul 2>&1 || (echo  ERROR: Node.js is not installed/in PATH.& pause & exit /b 1)
 
 echo  [1/3] Starting Memory Vault API on port 8000...
-start "JARVIS Memory Vault API" cmd /k "cd /d "%VAULT_ROOT%" && set AI_MEMORY_VAULT_ROOT=%VAULT_ROOT% && python -m memory_controller.api_server 8000"
+start "JARVIS Memory Vault API" /D "%VAULT_ROOT%" cmd /k "python -m memory_controller.api_server 8000"
 
 timeout /t 2 /nobreak >nul
 
 echo  [2/3] Starting JARVIS Command Center on port 3000...
-start "JARVIS Command Center" cmd /k "cd /d "%JARVIS_DIR%" && node server.cjs"
+start "JARVIS Command Center" /D "%JARVIS_DIR%" cmd /k "node server.cjs"
 
 timeout /t 2 /nobreak >nul
 
@@ -40,7 +40,7 @@ echo.
 echo  ==================================================
 echo   JARVIS: http://127.0.0.1:3000
 echo   Memory API: http://127.0.0.1:8000
- echo  ==================================================
+echo  ==================================================
 echo.
 echo  Close the two server windows to stop JARVIS.
 echo.
