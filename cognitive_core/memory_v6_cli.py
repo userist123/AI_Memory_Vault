@@ -1,5 +1,6 @@
 """CLI for Memory V6 extraction, queue inspection, spatial indexing, promotion,
-sleep-phase consolidation, retrieval benchmarking, and optional git/graph hooks."""
+sleep-phase consolidation, retrieval benchmarking, optional git/graph hooks,
+and Obsidian report rendering."""
 from __future__ import annotations
 
 import argparse
@@ -15,6 +16,7 @@ from .sleep_consolidation import SleepConsolidator
 from .benchmarks.retrieval_benchmark import RetrievalBenchmark
 from .git_hooks import PromotionGitHook
 from .ranked_search import ranked_search
+from .report_view import render_report_file
 
 
 def root() -> Path:
@@ -32,12 +34,11 @@ def _load_controller():
 def _naive_retrieval(controller):
     def _retrieve(query: str):
         needle = query.lower()
-        matches = [
+        return [
             note.get("id") for note in controller.storage.store.values()
             if needle in str(note.get("content", "")).lower()
             or needle in str(note.get("id", "")).lower()
         ]
-        return matches
     return _retrieve
 
 
@@ -59,6 +60,10 @@ def main() -> None:
     extract.add_argument("--text", required=True)
     extract.add_argument("--source-ref", default="cli:manual")
     extract.add_argument("--enqueue", action="store_true")
+    extract.add_argument("--use-ollama", action="store_true",
+                          help="Augment deterministic extraction with a local Ollama model")
+    extract.add_argument("--ollama-model", default="llama3.1")
+    extract.add_argument("--ollama-host", default="http://localhost:11434")
 
     index = sub.add_parser("index-repo")
     index.add_argument("--output", default="99_SYSTEM/spatial_index.json")
@@ -86,6 +91,12 @@ def main() -> None:
     consolidate.add_argument("--output", default="04_MEMORY/sleep_consolidation_report.json")
     consolidate.add_argument("--dormant-days", type=int, default=60)
     consolidate.add_argument("--stale-review-days", type=int, default=14)
+    consolidate.add_argument("--render", action="store_true", help="Also render an Obsidian Markdown view")
+    consolidate.add_argument("--render-output", default="05_RESOURCES/Obsidian/Sleep_Consolidation_Report.md")
+
+    render = sub.add_parser("render-report")
+    render.add_argument("--input", default="04_MEMORY/sleep_consolidation_report.json")
+    render.add_argument("--output", default="05_RESOURCES/Obsidian/Sleep_Consolidation_Report.md")
 
     benchmark = sub.add_parser("benchmark")
     benchmark.add_argument("--cases", default=str(Path("cognitive_core") / "benchmarks" / "sample_cases.jsonl"))
@@ -96,7 +107,11 @@ def main() -> None:
     queue = MemoryProposalQueue(root() / "06_INBOX" / "memory_proposals.jsonl")
 
     if args.command == "extract":
-        candidates = AtomicMemoryExtractor().extract(args.text, args.source_ref)
+        local_llm = None
+        if args.use_ollama:
+            from .ollama_extractor import OllamaExtractionAdapter
+            local_llm = OllamaExtractionAdapter(model=args.ollama_model, host=args.ollama_host)
+        candidates = AtomicMemoryExtractor(local_llm=local_llm).extract(args.text, args.source_ref)
         for item in candidates:
             print(f"{item.type}: {item.content}")
         if args.enqueue:
@@ -153,16 +168,19 @@ def main() -> None:
         )
         path = consolidator.save_report(root() / args.output)
         print(f"report={path}")
+        if args.render:
+            rendered = render_report_file(path, root() / args.render_output)
+            print(f"rendered={rendered}")
+    elif args.command == "render-report":
+        rendered = render_report_file(root() / args.input, root() / args.output)
+        print(f"rendered={rendered}")
     elif args.command == "benchmark":
         controller, Principal = _load_controller()
         cases_path = Path(args.cases)
         if not cases_path.is_absolute():
             cases_path = root() / cases_path
         benchmark_suite = RetrievalBenchmark.load_jsonl(cases_path)
-        if args.retrieval == "graph":
-            retrieval_fn = _graph_retrieval(controller, Principal.HUMAN)
-        else:
-            retrieval_fn = _naive_retrieval(controller)
+        retrieval_fn = _graph_retrieval(controller, Principal.HUMAN) if args.retrieval == "graph" else _naive_retrieval(controller)
         result = benchmark_suite.run(retrieval_fn, k=args.k)
         print(result["summary"])
 
