@@ -145,7 +145,7 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             query = params.get("q", [""])[0].lower().strip()
             if query:
                 skills = [s for s in skills if query in s["id"].lower() or query in s["name"].lower()]
-            self._json(200, {"total": len(skills), "skills": skills[:250]})
+            self._json(200, {"total": len(skills), "skills": skills[:1000]})
             return
 
         if path == "/api/v1/proposals":
