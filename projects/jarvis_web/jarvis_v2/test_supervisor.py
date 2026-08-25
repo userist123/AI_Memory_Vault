@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
-from supervisor import JarvisSupervisor
 
 
 class FakeHandler(BaseHTTPRequestHandler):
@@ -13,7 +12,7 @@ class FakeHandler(BaseHTTPRequestHandler):
         return
 
     def _send(self, payload):
-        body = json.dumps(payload).encode()
+        body = json.dumps(payload).encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -40,15 +39,27 @@ def main() -> int:
     port = server.server_port
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
+
     try:
         os.environ["JARVIS_MEMORY_API"] = f"http://127.0.0.1:{port}"
-        # Reload module constant after setting environment.
         import supervisor
+        supervisor = importlib.reload(supervisor)
         supervisor.MEMORY_API = os.environ["JARVIS_MEMORY_API"]
-        state = JarvisSupervisor().run("Salut, JARVIS")
-        assert state.reply.startswith("Salut")
-        assert state.memory_hits == 2
-        assert state.selected_agent["id"] == "local_ai_engineer"
+
+        state = supervisor.JarvisSupervisor().run("Salut, JARVIS")
+
+        if not state.reply.startswith("Salut"):
+            print("FAIL: synthesis response mismatch")
+            print(f"  supervisor: {supervisor.__file__}")
+            print(f"  memory_api: {supervisor.MEMORY_API}")
+            print(f"  reply: {state.reply!r}")
+            print(f"  selected_agent: {state.selected_agent!r}")
+            print(f"  memory_hits: {state.memory_hits}")
+            print(f"  events: {[event.name for event in state.events]}")
+            return 1
+
+        assert state.memory_hits == 2, f"Expected 2 memory hits, got {state.memory_hits}"
+        assert state.selected_agent and state.selected_agent["id"] == "local_ai_engineer"
         assert [event.name for event in state.events] == [
             "TASK_CREATED",
             "MEMORY_RETRIEVED",
