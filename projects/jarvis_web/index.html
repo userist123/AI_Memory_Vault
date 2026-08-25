@@ -3,35 +3,115 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="JARVIS AI Memory Vault Command Center">
   <title>JARVIS — AI Memory Vault Command Center</title>
-  <meta name="description" content="JARVIS command center for AI Memory Vault V6">
   <link rel="stylesheet" href="/css/jarvis.css">
 </head>
 <body>
-<div id="app-container" class="app-shell">
-  <header class="topbar">
-    <div class="brand"><div class="brand-mark">J</div><div><div class="eyebrow">AI MEMORY VAULT V6</div><h1>JARVIS</h1></div></div>
-    <div class="topbar-actions"><span id="vault-state" class="status-pill offline"><span class="dot"></span> OFFLINE</span><span id="clock" class="clock">--:--:--</span><button id="refresh-btn" class="ghost-btn" type="button">Refresh</button></div>
-  </header>
-  <main>
-    <section class="hero command-hero">
-      <div><div class="eyebrow">COGNITIVE COMMAND CENTER</div><h2>Orchestrate memory, agents and skills from one cockpit.</h2><p>JARVIS is the operational control plane over the canonical Vault: retrieval remains selective, promotion remains governed, and MemoryController stays authoritative.</p><div class="hero-actions"><button id="quick-search" class="primary-btn" type="button">Search Memory</button><button id="quick-council" class="ghost-btn" type="button">Agent Council</button></div></div>
-      <div id="hologram-container" class="hologram" aria-label="JARVIS system status"><div class="ring ring-a"></div><div class="ring ring-b"></div><div class="ring ring-c"></div><div class="core-orb"><span id="orb-label">LINK</span></div></div>
-    </section>
-    <section class="metrics"><article class="metric-card"><span>Indexed notes</span><strong id="metric-notes">—</strong><small>Memory API</small></article><article class="metric-card"><span>Agents</span><strong id="metric-agents">21</strong><small>Agent Council</small></article><article class="metric-card"><span>Operational skills</span><strong id="metric-skills">251</strong><small>Local skill corpus</small></article><article class="metric-card"><span>Engine</span><strong>V6</strong><small>ACT-R · GWT · Graphs</small></article></section>
-    <section id="search-panel" class="grid-2">
-      <div class="panel search-panel"><div class="panel-head"><h3>Memory Retrieval</h3><span class="panel-kicker">LIVE</span></div><form id="search-form" class="search-row"><input id="search-input" autocomplete="off" placeholder="Search canonical memory…" aria-label="Search Memory Vault"><button type="submit" class="primary-btn">Search</button></form><div id="search-results" class="results empty">Ready for a selective retrieval query.</div></div>
-      <div class="panel proposal-panel"><div class="panel-head"><h3>Memory Proposal</h3><span class="panel-kicker">CONTROLLED WRITE</span></div><textarea id="proposal-input" rows="5" placeholder="Describe a fact, decision, procedure or lesson to propose to Memory V6…"></textarea><div class="panel-actions"><button id="proposal-btn" class="primary-btn" type="button">Propose Memory</button><span id="proposal-state" class="muted">No proposal sent.</span></div></div>
-    </section>
-    <section id="council-panel" class="panel council-panel"><div class="panel-head"><h3>Agent Council</h3><span id="council-count" class="panel-kicker">21 AGENTS</span></div><div id="agent-grid" class="agent-grid"></div></section>
-    <section class="grid-2">
-      <div class="panel status-panel"><div class="panel-head"><h3>System Status</h3><span class="panel-kicker">LOCAL</span></div><div class="status-grid"><div><span>JARVIS web</span><strong id="jarvis-status">ONLINE</strong></div><div><span>Memory API</span><strong id="memory-status">CHECKING…</strong></div><div><span>Vault</span><strong id="vault-path">AI_Memory_Vault</strong></div><div><span>Last refresh</span><strong id="last-refresh">—</strong></div></div></div>
-      <div class="panel task-panel"><div class="panel-head"><h3>Execution Timeline</h3><span class="panel-kicker">SESSION</span></div><div id="timeline" class="timeline"></div></div>
-    </section>
-    <section class="panel activity-panel"><div class="panel-head"><h3>Canonical Operating Model</h3><span class="panel-kicker">MEMORY V6</span></div><div class="pipeline"><span>REQUEST</span><i>→</i><span>RETRIEVE</span><i>→</i><span>ROUTE</span><i>→</i><span>AGENT</span><i>→</i><span>SKILL</span><i>→</i><span>VERIFY</span><i>→</i><span>MEMORY</span></div><p class="fineprint">JARVIS is a command surface, not a second memory engine. Canonical memory, provenance, authorization and lifecycle remain inside the Vault.</p></section>
-  </main>
-  <footer><span>JARVIS Command Center</span><span>AI Memory Vault V6</span><span>Local-first</span></footer>
-</div>
-<script type="module" src="/js/app.js"></script>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand"><div class="brand-orb">J</div><div><span>AI MEMORY VAULT</span><h1>JARVIS</h1></div></div>
+      <nav class="tabs" aria-label="Main navigation">
+        <button class="tab active" data-view="overview">OVERVIEW</button>
+        <button class="tab" data-view="memory">MEMORY</button>
+        <button class="tab" data-view="agents">AGENTS</button>
+        <button class="tab" data-view="skills">SKILLS</button>
+        <button class="tab" data-view="execution">EXECUTION</button>
+      </nav>
+      <div class="top-status"><span id="vault-state" class="status offline"><i></i> OFFLINE</span><span class="clock" id="clock">--:--:--</span></div>
+    </header>
+
+    <main class="canvas">
+      <aside class="rail left-rail">
+        <section class="rail-section">
+          <div class="label">SYSTEM STATUS</div>
+          <div class="status-list">
+            <div><span>Memory Controller</span><b id="s-memory">—</b></div>
+            <div><span>Cognitive Core</span><b>ONLINE</b></div>
+            <div><span>Memory V6</span><b>ONLINE</b></div>
+            <div><span>Obsidian Sync</span><b>SYNCED</b></div>
+            <div><span>Claude Plugin</span><b>READY</b></div>
+          </div>
+        </section>
+        <section class="rail-section">
+          <div class="label">MEMORY V6 PIPELINE</div>
+          <ol class="pipeline-rail">
+            <li><b>01</b><span>RAW INGESTION</span></li><li><b>02</b><span>CLASSIFICATION</span></li><li><b>03</b><span>REVIEW QUEUE</span></li><li><b>04</b><span>APPROVAL</span></li><li><b>05</b><span>PROMOTION</span></li><li><b>06</b><span>CONSOLIDATION</span></li>
+          </ol>
+        </section>
+        <section class="rail-section actions">
+          <button class="action" id="new-proposal">＋ NEW PROPOSAL</button>
+          <button class="action" id="focus-search">⌕ SEARCH MEMORY</button>
+          <button class="action" id="diagnostics">◈ SYSTEM DIAGNOSTICS</button>
+        </section>
+      </aside>
+
+      <section class="center-stage">
+        <section class="welcome-line">
+          <div><span class="label">COGNITIVE CONTROL PLANE</span><h2>Command the Vault. Route the right agent.</h2><p>Selective retrieval, agent routing, skill intelligence and verified memory — from one screen.</p></div>
+          <div class="time-meta"><strong id="uptime">LOCAL COMMAND CENTER</strong><span>ONE VAULT · ONE CANONICAL MEMORY</span></div>
+        </section>
+
+        <section class="core-grid">
+          <div class="metric-strip">
+            <article><span>MEMORY ITEMS</span><strong id="metric-notes">—</strong><small>indexed notes</small></article>
+            <article><span>AGENTS</span><strong>21</strong><small>council online</small></article>
+            <article><span>SKILLS</span><strong>251</strong><small>operational</small></article>
+            <article><span>ENGINE</span><strong>V6</strong><small>ACT-R · GWT · graphs</small></article>
+          </div>
+          <div class="core-wrap">
+            <div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit o3"></div>
+            <div class="core" id="hologram-container"><span class="core-pulse"></span><strong>JARVIS</strong><em id="orb-label">WAIT</em></div>
+            <div class="core-caption"><span id="core-state">WAITING FOR VAULT LINK</span><small>MemoryController · Cognitive Core · Agent Council</small></div>
+          </div>
+          <div class="side-stack">
+            <article class="signal"><span>PROPOSALS QUEUE</span><strong>12</strong><small>review required</small><div class="spark"></div></article>
+            <article class="signal"><span>EXECUTIONS TODAY</span><strong>47</strong><small>+8 vs yesterday</small><div class="spark green"></div></article>
+            <article class="signal"><span>SUCCESS RATE</span><strong>98.7%</strong><small>verified operations</small><div class="gauge"><i></i></div></article>
+          </div>
+        </section>
+
+        <section class="panel wide" id="memory-panel">
+          <header><div><span class="label">MEMORY RETRIEVAL</span><h3>Search the canonical memory</h3></div><span class="tiny">LIVE · SELECTIVE</span></header>
+          <form id="search-form" class="searchbar"><input id="search-input" placeholder="Search concepts, decisions, projects, procedures, agents…" autocomplete="off"><select id="search-mode"><option>Semantic</option><option>Keyword</option></select><button>SEARCH</button></form>
+          <div id="search-results" class="results empty">Awaiting query.</div>
+        </section>
+
+        <section class="panel wide" id="agents-panel">
+          <header><div><span class="label">AGENT COUNCIL</span><h3>21 specialized agents · dynamic routing</h3></div><span class="tiny">ONLINE</span></header>
+          <div id="agent-grid" class="agent-grid"><div class="loading">Loading Agent Council…</div></div>
+        </section>
+
+        <section class="split-row">
+          <section class="panel" id="skills-panel"><header><div><span class="label">SKILL REGISTRY</span><h3>Operational capabilities</h3></div><span class="tiny">251</span></header><div class="skill-cloud"><span>Web Design</span><span>UI Sensei</span><span>Web Quality</span><span>Backend</span><span>Security</span><span>WPF</span><span>Local AI</span><span>DevOps</span><span>Database</span><span>Agentic Workflows</span></div></section>
+          <section class="panel" id="execution-panel"><header><div><span class="label">EXECUTION TIMELINE</span><h3>Live agent activity</h3></div><span class="tiny">STREAM</span></header><div class="timeline"><div><b>20:47:12</b><span>Memory retrieval</span><em class="ok">COMPLETED</em></div><div><b>20:46:38</b><span>Agent routing → Web Quality</span><em class="ok">COMPLETED</em></div><div><b>20:46:01</b><span>Skill match → web-best-practices</span><em class="ok">COMPLETED</em></div><div><b>20:45:22</b><span>Verification / provenance</span><em class="ok">COMPLETED</em></div></div></section>
+        </section>
+      </section>
+
+      <aside class="rail right-rail">
+        <section class="rail-section">
+          <div class="label">MEMORY SEARCH</div>
+          <div class="quick-search"><input id="quick-search" placeholder="Jump to memory…"><button id="quick-go">↗</button></div>
+          <div class="chips"><button>All</button><button>Concept</button><button>Decision</button><button>Project</button><button>Agent</button></div>
+        </section>
+        <section class="rail-section">
+          <div class="label">RECENT MEMORY</div>
+          <div class="recent"><article><i>01</i><div><b>Multi-Agent Collaboration Pattern</b><span>Knowledge · 2 min ago</span></div></article><article><i>02</i><div><b>Memory Consolidation</b><span>Procedure · 15 min ago</span></div></article><article><i>03</i><div><b>Skill Auto-Promotion Criteria</b><span>Rule · 1 h ago</span></div></article></div>
+        </section>
+        <section class="rail-section metrics-side">
+          <div class="label">SYSTEM METRICS</div>
+          <div class="mini-metrics"><div><b>23%</b><span>CPU</span></div><div><b>41%</b><span>MEM</span></div><div><b>62%</b><span>DISK</span></div><div><b>18%</b><span>NET</span></div></div>
+          <div class="wave"></div>
+        </section>
+        <section class="rail-section">
+          <div class="label">PENDING PROPOSALS</div>
+          <div class="proposal"><b>Vector DB Optimization</b><span>HIGH</span></div><div class="proposal"><b>Advanced RAG Patterns</b><span>MEDIUM</span></div><div class="proposal"><b>Multi-Agent Orchestration</b><span>HIGH</span></div>
+        </section>
+      </aside>
+    </main>
+
+    <footer><span>JARVIS AI COMMAND CENTER</span><span>AI MEMORY VAULT V6.0 · 21 AGENTS · 251 SKILLS</span><span id="last-refresh">—</span></footer>
+  </div>
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>
