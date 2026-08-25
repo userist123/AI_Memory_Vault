@@ -4,20 +4,25 @@ import importlib
 import json
 import os
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
 class FakeHandler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def log_message(self, *_args):
         return
 
     def _send(self, payload):
-        body = json.dumps(payload).encode("utf-8")
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
         self.end_headers()
         self.wfile.write(body)
+        self.wfile.flush()
+        self.close_connection = True
 
     def do_GET(self):
         if self.path.startswith("/search"):
@@ -35,7 +40,7 @@ class FakeHandler(BaseHTTPRequestHandler):
 
 
 def main() -> int:
-    server = HTTPServer(("127.0.0.1", 0), FakeHandler)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), FakeHandler)
     port = server.server_port
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -70,6 +75,7 @@ def main() -> int:
         return 0
     finally:
         server.shutdown()
+        server.server_close()
 
 
 if __name__ == "__main__":
