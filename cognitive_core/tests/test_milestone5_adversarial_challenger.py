@@ -120,7 +120,7 @@ class TestConcurrentLearningEngineAndRaceConditions:
     def test_multithreaded_concurrent_promotions_in_memory(self):
         storage = StorageEngine(); controller = MemoryController(storage); router = ToolRouter(controller); engine = LearningEngine(controller, router); note_ids = []
         for i in range(20):
-            nid = str(uuid.uuid4()); storage.set(nid, {"id": nid, "type": "knowledge", "lifecycle": "ACTIVE", "confidence": "low", "verification": "unverified", "provenance": {"source_type": "execution", "source_ref": "concurrency_test"}, "relations": [{"relation": "rel", "target": "k", "target_id": str(uuid.uuid4())} for _ in range(10)], "content": f"Concurrent test node {i}"}); note_ids.append(nid)
+            nid = str(uuid.uuid4()); storage.set(nid, {"id": nid, "type": "knowledge", "lifecycle": "ACTIVE", "confidence": "low", "verification": "unverified", "provenance": {"source_type": "execution", "source_ref": "concurrency_test"}, "relations": [{"relation": "rel", "target": "k", "target_id": str(uuid.uuid4())} for _ in range(10)], "content": f"Concurrent test knowledge node {i}"}); note_ids.append(nid)
         def worker(): return engine.promote_memories(Principal.AI_AGENT)
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             results = [f.result() for f in concurrent.futures.as_completed([executor.submit(worker) for _ in range(16)])]
