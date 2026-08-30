@@ -14,6 +14,7 @@ from .evidence_bundle import _hash_note
 @dataclass(frozen=True)
 class EvidenceVerification:
     bundle_id: str
+    bundle_hash: str
     valid: bool
     stale_memory_ids: tuple[str, ...]
     missing_memory_ids: tuple[str, ...]
@@ -23,6 +24,7 @@ class EvidenceVerification:
     def as_dict(self) -> dict[str, Any]:
         return {
             "bundle_id": self.bundle_id,
+            "bundle_hash": self.bundle_hash,
             "valid": self.valid,
             "stale_memory_ids": list(self.stale_memory_ids),
             "missing_memory_ids": list(self.missing_memory_ids),
@@ -56,9 +58,12 @@ def verify_evidence_bundle(bundle: Mapping[str, Any], current_notes: Iterable[Ma
         if _hash_note(note) != item.get("content_hash"):
             stale.append(memory_id)
 
-    bundle_hash_matches = _bundle_hash(bundle) == bundle.get("bundle_hash")
+    expected_bundle_hash = str(bundle.get("bundle_hash") or "")
+    computed_bundle_hash = _bundle_hash(bundle)
+    bundle_hash_matches = computed_bundle_hash == expected_bundle_hash
     return EvidenceVerification(
         bundle_id=str(bundle.get("bundle_id") or ""),
+        bundle_hash=expected_bundle_hash,
         valid=bundle_hash_matches and not stale and not missing,
         stale_memory_ids=tuple(sorted(stale)),
         missing_memory_ids=tuple(sorted(missing)),
