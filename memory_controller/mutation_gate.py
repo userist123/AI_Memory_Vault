@@ -12,6 +12,7 @@ from typing import Any, Mapping
 
 from .authorizer import Operation, Principal
 from .authorized_verdict import AuthorizedVerdict, Verdict
+from .audit.logger import audit_event
 
 
 @dataclass(frozen=True)
@@ -48,11 +49,13 @@ class MutationGate:
             raise ValueError("Evidence bundle is not valid for mutation")
         if not verification.get("bundle_hash_matches"):
             raise ValueError("Evidence bundle hash does not match")
+        if verification.get("bundle_hash") != verdict.evidence_bundle_hash:
+            raise ValueError("Verified evidence hash does not match verdict")
         if tuple(verification.get("stale_memory_ids", [])):
             raise ValueError("Evidence contains stale memories")
         if tuple(verification.get("missing_memory_ids", [])):
             raise ValueError("Evidence contains missing memories")
-        if verification.get("bundle_id") and not str(verification["bundle_id"]).strip():
+        if not verification.get("bundle_id") or not str(verification["bundle_id"]).strip():
             raise ValueError("Evidence bundle ID is invalid")
 
     @staticmethod
@@ -81,14 +84,33 @@ class MutationGate:
         if not reason.strip():
             raise ValueError("Mutation reason is required")
 
-        verified_hash = str(evidence_verification.get("bundle_hash") or verdict.evidence_bundle_hash)
-        if verified_hash != verdict.evidence_bundle_hash:
-            raise ValueError("Verified evidence hash does not match verdict")
-
         if verdict.verdict == Verdict.DEFER:
             if action != "none":
                 raise ValueError("DEFER verdict cannot mutate memory")
+            audit_event(
+                "mutation_deferred",
+                principal,
+                verdict.verdict_id,
+                success=True,
+                details={"verdict": verdict.verdict.value, "evidence_bundle_hash": verdict.evidence_bundle_hash},
+            )
             return MutationResult(verdict.verdict_id, "none", verdict.memory_ids, False, "deferred")
+
+        audit_event(
+            "mutation_gate",
+            principal,
+            verdict.verdict_id,
+            success=True,
+            details={
+                "verdict": verdict.verdict.value,
+                "reviewer": verdict.reviewer,
+                "reviewer_principal": verdict.reviewer_principal,
+                "memory_ids": list(verdict.memory_ids),
+                "evidence_bundle_hash": verdict.evidence_bundle_hash,
+                "action": action,
+                "reason": reason.strip(),
+            },
+        )
 
         if verdict.verdict in {Verdict.ACCEPT_A, Verdict.ACCEPT_B}:
             winner, loser = self._winner_loser(verdict)
