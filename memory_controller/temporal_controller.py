@@ -1,8 +1,8 @@
 """Temporal adapter for the canonical MemoryController.
 
 This module preserves the existing controller API and adds explicit bitemporal
-filtering for callers that need an ``as_of`` or ``known_as_of`` view. It does
-not alter lifecycle, authorization, or mutation semantics of MemoryController.
+filtering, deterministic temporal ranking, and lineage-aware resolution for
+callers that need an ``as_of`` or ``known_as_of`` view.
 """
 
 from __future__ import annotations
@@ -45,14 +45,38 @@ def matches_temporal(note: Dict[str, Any], *, as_of: Optional[date], known_as_of
 class TemporalMemoryController:
     """Compatibility wrapper around the canonical MemoryController.
 
-    Temporal queries currently run as a bounded second-stage filter over a
-    canonical controller search. Until temporal constraints are pushed into the
-    canonical retrieval pipeline, pagination tokens are rejected for temporal
-    queries instead of being silently ignored.
+    Temporal queries currently start from a bounded canonical search, then apply
+    deterministic bitemporal filtering/ranking and authorized lineage reads.
+    Pagination remains disabled until these predicates are native to
+    MemoryController.search().
     """
 
     def __init__(self, controller: MemoryController):
         self.controller = controller
+
+    def _resolve_lineage(self, principal: Principal, results: List[Dict[str, Any]], *, as_of: Optional[date], known_as_of: Optional[date]) -> List[Dict[str, Any]]:
+        resolved = list(results)
+        seen = {str(item.get("id")) for item in resolved if item.get("id")}
+        for item in list(results):
+            if item.get("lifecycle") != Lifecycle.SUPERSEDED.value:
+                continue
+            successor_id = item.get("superseded_by")
+            if not successor_id or successor_id in seen:
+                continue
+            try:
+                pack = self.controller.cognitive_read(principal, successor_id)
+                successor_items = list(pack.get("results", pack.get("items", [])))
+            except Exception:
+                continue
+            successor = successor_items[0] if successor_items else None
+            if successor and successor.get("lifecycle") == Lifecycle.ACTIVE.value and matches_temporal(
+                successor, as_of=as_of, known_as_of=known_as_of
+            ):
+                successor = dict(successor)
+                successor["_temporal_lineage_from"] = item.get("id")
+                resolved.append(successor)
+                seen.add(str(successor.get("id")))
+        return resolved
 
     def search(
         self,
@@ -96,9 +120,28 @@ class TemporalMemoryController:
             types=types,
         )
         results = [
-            item for item in pack.get("results", [])
+            dict(item)
+            for item in pack.get("results", [])
             if matches_temporal(
                 item,
+                as_of=temporal_as_of,
+                known_as_of=temporal_known_as_of,
+            )
+        ]
+
+        results = self._resolve_lineage(
+            principal,
+            results,
+            as_of=temporal_as_of,
+            known_as_of=temporal_known_as_of,
+        )
+
+        from .temporal_ranking import rank_temporal_notes
+
+        results = [
+            dict(item)
+            for item in rank_temporal_notes(
+                results,
                 as_of=temporal_as_of,
                 known_as_of=temporal_known_as_of,
             )
@@ -110,7 +153,9 @@ class TemporalMemoryController:
         pack["temporal"] = {
             "as_of": temporal_as_of.isoformat() if temporal_as_of else None,
             "known_as_of": temporal_known_as_of.isoformat() if temporal_known_as_of else None,
-            "filter_stage": "post-controller-search",
+            "filter_stage": "temporal-adapter",
+            "ranking": "valid_from_then_extraction_date",
+            "lineage": "authorized_cognitive_read",
             "pagination": "disabled",
         }
         return pack
