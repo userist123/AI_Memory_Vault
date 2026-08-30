@@ -21,7 +21,13 @@ def test_large_context_is_complexity_2_even_with_short_query():
     assert e._estimate_complexity("ok", context) == 2
 
 
-def test_process_intent_uses_estimated_complexity_not_hardcoded_one():
+def test_process_intent_uses_real_planner_shape_not_query_length_proxy():
+    """The production decision is derived from the real ActivePlan.
+
+    A repeated 12-word query can still produce a single-step read-only plan.
+    In that case Council must remain skipped despite the old word-count
+    heuristic returning complexity=2.
+    """
     storage = StorageEngine()
     controller = MemoryController(storage)
     executive = Executive(controller)
@@ -29,7 +35,7 @@ def test_process_intent_uses_estimated_complexity_not_hardcoded_one():
     long_query = " ".join(["summarize"] * 12)
     result = executive.process_intent(Principal.AI_AGENT, long_query)
 
-    # A 12-word query crosses COMPLEXITY_QUERY_WORD_THRESHOLD, so the
-    # dispatch should reflect LIGHT tier (complexity-driven), not be skipped
-    # as it would be under the old hardcoded complexity=1 default.
-    assert result["dispatch_report"]["council_tier"] in ("light", "standard", "high_risk")
+    assert executive.active_plan is not None
+    assert len(executive.active_plan.steps) == 1
+    assert result["status"] == "success"
+    assert "dispatch_report" not in result
