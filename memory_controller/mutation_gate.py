@@ -1,8 +1,8 @@
 """Authorized mutation gate for applying verified conflict verdicts.
 
 The gate is the only bridge from an authorized conflict verdict to canonical
-memory mutation. It requires a verified evidence bundle and delegates the
-actual mutation to MemoryController, which remains the policy/audit authority.
+memory mutation. It requires a verified evidence bundle and an APPROVED review
+state before delegating mutation to MemoryController.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from typing import Any, Mapping
 from .authorizer import Operation, Principal
 from .authorized_verdict import AuthorizedVerdict, Verdict
 from .audit.logger import audit_event
+from .review_state import ReviewState
 
 
 @dataclass(frozen=True)
@@ -42,6 +43,14 @@ class MutationGate:
     def _check_principal(self, principal: Principal) -> None:
         if not self.controller.authorizer.is_allowed(principal, Operation.REVIEW):
             raise PermissionError(f"{principal.value} cannot apply conflict verdicts")
+
+    @staticmethod
+    def _require_review_approved(review_state: Mapping[str, Any]) -> None:
+        state = str(review_state.get("state") or "")
+        if state != ReviewState.APPROVED.value:
+            raise ValueError("Review case must be APPROVED before mutation")
+        if review_state.get("can_apply_mutation") is not True:
+            raise ValueError("Review state does not permit mutation")
 
     @staticmethod
     def _require_verified_evidence(verdict: AuthorizedVerdict, verification: Mapping[str, Any]) -> None:
@@ -74,10 +83,12 @@ class MutationGate:
         principal: Principal,
         verdict: AuthorizedVerdict,
         evidence_verification: Mapping[str, Any],
+        review_state: Mapping[str, Any],
         action: str,
         reason: str,
     ) -> MutationResult:
         self._check_principal(principal)
+        self._require_review_approved(review_state)
         if verdict.reviewer_principal not in {Principal.HUMAN.value, Principal.ADMIN.value}:
             raise PermissionError("Verdict reviewer is not an authorized human/admin principal")
         self._require_verified_evidence(verdict, evidence_verification)
@@ -107,6 +118,7 @@ class MutationGate:
                 "reviewer_principal": verdict.reviewer_principal,
                 "memory_ids": list(verdict.memory_ids),
                 "evidence_bundle_hash": verdict.evidence_bundle_hash,
+                "review_state": review_state.get("state"),
                 "action": action,
                 "reason": reason.strip(),
             },
