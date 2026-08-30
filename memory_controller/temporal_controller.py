@@ -1,7 +1,7 @@
 """Temporal adapter for the canonical MemoryController.
 
 Adds explicit bitemporal filtering, deterministic ranking, lineage-aware
-resolution and signed pagination for temporal queries.
+resolution, signed pagination, and conservative conflict reporting.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from .authorizer import Principal
 from .controller import Lifecycle, MemoryController
 from .security.pagination_token import PaginationToken, InvalidPaginationTokenError, MissingHMACSecretError
+from .temporal_conflict import detect_temporal_conflicts
 
 
 def _as_date(value: Any) -> Optional[date]:
@@ -58,12 +59,7 @@ def _query_fingerprint(query: str, *, as_of: Optional[date], known_as_of: Option
 
 
 class TemporalMemoryController:
-    """Compatibility wrapper around the canonical MemoryController.
-
-    Temporal queries begin from the canonical controller search, then apply
-    deterministic bitemporal filtering/ranking and authorized lineage reads.
-    Pagination uses an HMAC-signed cursor bound to the full temporal query.
-    """
+    """Compatibility wrapper around the canonical MemoryController."""
 
     def __init__(self, controller: MemoryController):
         self.controller = controller
@@ -131,6 +127,12 @@ class TemporalMemoryController:
         results = [dict(item) for item in rank_temporal_notes(results, as_of=temporal_as_of,
                                                                known_as_of=temporal_known_as_of)]
 
+        conflicts = [item.as_dict() for item in detect_temporal_conflicts(
+            results,
+            as_of=temporal_as_of,
+            known_as_of=temporal_known_as_of,
+        )]
+
         total = len(results)
         end = min(offset + bounded_page_size, total)
         page_results = results[offset:end]
@@ -159,5 +161,6 @@ class TemporalMemoryController:
             "ranking": "valid_from_then_extraction_date",
             "lineage": "authorized_cognitive_read",
             "pagination": "signed_temporal_cursor",
+            "conflicts": conflicts,
         }
         return pack
