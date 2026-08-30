@@ -29,6 +29,11 @@ class Executive:
     WIRE-MAO: MultiAgentOrchestrator dispatch report attached to process_intent results.
     WIRE-CBC: CouncilBudgetController gates Council dispatch by complexity/risk.
     """
+
+    # Confirmed real value from 99_SYSTEM/Council_Context_Budget.md
+    # (`max_memory_results: 5`). Do not change without updating that
+    # policy document, or the two will silently drift apart again.
+    MAX_COUNCIL_MEMORY_RESULTS = 5
     def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None,
                  orchestrator: Optional[MultiAgentOrchestrator] = None,
                  council_budget: Optional[CouncilBudgetController] = None):
@@ -239,10 +244,20 @@ class Executive:
             # route_and_dispatch's OWN Retrieval worker runs on top of that
             # -- for LIGHT tier it stays off; skip_retrieval already blocks
             # the keyword-triggered path regardless of tier.
+            #
+            # max_context_items=MAX_COUNCIL_MEMORY_RESULTS: confirmed real
+            # value from 99_SYSTEM/Council_Context_Budget.md
+            # (`max_memory_results: 5`), not a guess. This fixes the
+            # WorkingMemory(capacity=10) vs Council budget mismatch:
+            # WorkingMemory may legitimately hold up to 10 items for the
+            # Executive's own reasoning/planning, but the Council pipeline
+            # must never see more than the policy's memory-result budget,
+            # regardless of how large WorkingMemory's context happens to be.
             report = self.orchestrator.route_and_dispatch(
                 principal, query, context,
                 skip_retrieval=not decision.run_retrieval,
                 run_verifier=decision.run_verifier,
+                max_context_items=self.MAX_COUNCIL_MEMORY_RESULTS,
             )
             report["council_tier"] = decision.tier.value
             report["council_reason"] = decision.reason
