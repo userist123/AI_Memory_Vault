@@ -34,6 +34,13 @@ class Executive:
     # (`max_memory_results: 5`). Do not change without updating that
     # policy document, or the two will silently drift apart again.
     MAX_COUNCIL_MEMORY_RESULTS = 5
+
+    # Heuristic thresholds for _estimate_complexity(). Chosen as round,
+    # documented defaults (not tuned against real data yet) -- flagged
+    # here as class attributes precisely so they are easy to find and
+    # override/tune later instead of being buried as magic numbers.
+    COMPLEXITY_QUERY_WORD_THRESHOLD = 12
+    COMPLEXITY_CONTEXT_SIZE_THRESHOLD = 3
     def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None,
                  orchestrator: Optional[MultiAgentOrchestrator] = None,
                  council_budget: Optional[CouncilBudgetController] = None):
@@ -210,6 +217,27 @@ class Executive:
         except Exception:
             pass
 
+    def _estimate_complexity(self, query: str, context: List[Dict[str, Any]]) -> int:
+        """Real-signal complexity proxy for CouncilBudgetController.
+
+        Not a fabricated number: derives from two signals already computed
+        earlier in process_intent -- query length (word count) and the size
+        of the context this Executive's own Activation+Recall pass already
+        assembled. Longer queries and larger retrieved context correlate
+        with tasks that involve more moving parts, which is exactly the
+        signal CouncilBudgetController.complexity_threshold is meant to
+        gate on.
+
+        This is a heuristic PROXY, not the Planner's real step count --
+        planning happens AFTER this dispatch call in process_intent, so the
+        actual plan length is not available yet at this point. Documented
+        as a proxy on purpose, not presented as an authoritative measurement.
+        """
+        word_count = len(str(query).split())
+        if word_count >= self.COMPLEXITY_QUERY_WORD_THRESHOLD or len(context) >= self.COMPLEXITY_CONTEXT_SIZE_THRESHOLD:
+            return 2
+        return 1
+
     def _dispatch_via_orchestrator(self, principal: Principal, query: str,
                                     context: List[Dict[str, Any]], *,
                                     complexity: int = 1,
@@ -298,7 +326,10 @@ class Executive:
         # Uses the same `query` and `context` already assembled above; does not
         # duplicate the activation/recall work, only adds Router-triage,
         # (conditional) deep-retrieval, Verifier tally, and Synthesis summary.
-        dispatch_report = self._dispatch_via_orchestrator(principal, query, context)  # WIRE-CBC: gated
+        dispatch_report = self._dispatch_via_orchestrator(
+            principal, query, context,
+            complexity=self._estimate_complexity(query, context),
+        )  # WIRE-CBC: gated, complexity from real signals
 
         # 4. Reason (READ-ONLY, aware of unverified status)
         reasoning = self.reasoning_engine.synthesize(principal, context, query)
