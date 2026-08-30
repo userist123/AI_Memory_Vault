@@ -36,11 +36,7 @@ def _text(note: Mapping[str, Any]) -> str:
 
 
 def _subject_key(note: Mapping[str, Any]) -> str:
-    """Build a semantic subject key without binding it to the source.
-
-    ``source_ref`` identifies provenance, not subject identity. Two different
-    sources about the same technology/category must remain comparable.
-    """
+    """Build a semantic subject key without binding it to the source."""
     tech = str(note.get("technology") or note.get("tech") or "")
     category = str(note.get("category") or "")
     explicit_subject = str(note.get("conflict_subject") or "")
@@ -66,16 +62,41 @@ def _temporal_overlap(a: Mapping[str, Any], b: Mapping[str, Any], as_of: Optiona
 
 
 def _polarity(text: str) -> int:
-    positive = {"supported", "allows", "allowed", "enabled", "true", "yes", "valid", "recommended"}
-    negative = {"unsupported", "disallowed", "disabled", "false", "no", "invalid", "deprecated", "removed", "not supported"}
-    score = 0
-    for word in positive:
-        if re.search(rf"\b{re.escape(word)}\b", text):
-            score += 1
-    for word in negative:
-        if re.search(rf"\b{re.escape(word)}\b", text):
-            score -= 1
-    return score
+    """Return a coarse assertion polarity while handling negated phrases first."""
+    # Phrase-level matches are removed before single-token checks, preventing
+    # "not supported" from being counted as both negative and positive.
+    negative_phrases = (
+        "not supported", "not allowed", "not enabled", "not valid",
+        "not recommended", "no longer supported", "no longer valid",
+    )
+    positive_phrases = (
+        "is supported", "are supported", "is allowed", "are allowed",
+        "is enabled", "are enabled", "is valid", "are valid",
+    )
+    negative = 0
+    positive = 0
+    remaining = text
+
+    for phrase in negative_phrases:
+        count = len(re.findall(rf"\b{re.escape(phrase)}\b", remaining))
+        negative += count
+        remaining = re.sub(rf"\b{re.escape(phrase)}\b", " ", remaining)
+
+    for phrase in positive_phrases:
+        count = len(re.findall(rf"\b{re.escape(phrase)}\b", remaining))
+        positive += count
+        remaining = re.sub(rf"\b{re.escape(phrase)}\b", " ", remaining)
+
+    positive_words = {"supported", "allows", "allowed", "enabled", "true", "yes", "valid", "recommended"}
+    negative_words = {"unsupported", "disallowed", "disabled", "false", "no", "invalid", "deprecated", "removed"}
+    for word in positive_words:
+        if re.search(rf"\b{re.escape(word)}\b", remaining):
+            positive += 1
+    for word in negative_words:
+        if re.search(rf"\b{re.escape(word)}\b", remaining):
+            negative += 1
+
+    return positive - negative
 
 
 def detect_pair(left: Mapping[str, Any], right: Mapping[str, Any], *, as_of: Optional[date] = None) -> Optional[SemanticConflict]:
