@@ -36,11 +36,16 @@ def _text(note: Mapping[str, Any]) -> str:
 
 
 def _subject_key(note: Mapping[str, Any]) -> str:
-    provenance = note.get("provenance") or {}
-    source = str(provenance.get("source_ref") or "")
+    """Build a semantic subject key without binding it to the source.
+
+    ``source_ref`` identifies provenance, not subject identity. Two different
+    sources about the same technology/category must remain comparable.
+    """
     tech = str(note.get("technology") or note.get("tech") or "")
     category = str(note.get("category") or "")
-    return "|".join(x.strip().lower() for x in (tech, category, source) if x.strip())
+    explicit_subject = str(note.get("conflict_subject") or "")
+    parts = [explicit_subject or tech, category]
+    return "|".join(x.strip().lower() for x in parts if x.strip())
 
 
 def _temporal_overlap(a: Mapping[str, Any], b: Mapping[str, Any], as_of: Optional[date]) -> bool:
