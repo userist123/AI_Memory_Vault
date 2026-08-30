@@ -6,8 +6,7 @@ or resolves the conflicting memories automatically.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date
+from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Optional
 import hashlib
 import json
@@ -24,6 +23,7 @@ class ConflictReviewCase:
     recommendation: str = "VERIFY_WITH_EVIDENCE"
     as_of: Optional[str] = None
     known_as_of: Optional[str] = None
+    evidence_bundle_id: Optional[str] = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -36,6 +36,7 @@ class ConflictReviewCase:
             "recommendation": self.recommendation,
             "as_of": self.as_of,
             "known_as_of": self.known_as_of,
+            "evidence_bundle_id": self.evidence_bundle_id,
         }
 
 
@@ -81,4 +82,23 @@ class ConflictReviewWorkflow:
             evidence_ids=evidence_tuple,
             as_of=str(as_of) if as_of is not None else None,
             known_as_of=str(known_as_of) if known_as_of is not None else None,
+        )
+
+    def attach_evidence_bundle(self, case: ConflictReviewCase, bundle: Mapping[str, Any]) -> ConflictReviewCase:
+        """Return a new case bound to an immutable evidence bundle; do not mutate the case."""
+        bundle_id = str(bundle.get("bundle_id") or "")
+        if not bundle_id:
+            raise ValueError("Evidence bundle must contain bundle_id")
+        bundle_case = bundle.get("conflict_case_id")
+        if bundle_case not in {None, case.case_id}:
+            raise ValueError("Evidence bundle does not belong to this conflict case")
+        bundle_memory_ids = {
+            str(item.get("memory_id"))
+            for item in bundle.get("items", [])
+            if item.get("memory_id")
+        }
+        if not set(case.memory_ids).issubset(bundle_memory_ids):
+            raise ValueError("Evidence bundle does not cover all memories in the review case")
+        return ConflictReviewCase(
+            **{**case.__dict__, "evidence_bundle_id": bundle_id}
         )
