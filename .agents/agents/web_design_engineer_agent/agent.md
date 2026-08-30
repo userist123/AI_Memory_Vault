@@ -1,30 +1,13 @@
 ---
 name: web_design_engineer_agent
-description: Specialised Agent persona for Web Design Engineer Agent with integrated skills.
+description: Web design engineering specialist. Capabilities are resolved on demand by the Council router.
 ---
 
 # Agent Profile: Web Design Engineer Agent
 
-## Assigned Operational Skills (10 Skills)
-
-- `web-design-engineer`
-- `design-system-linear`
-- `design-system-apple`
-- `design-system-stripe`
-- `design-system-vercel`
-- `design-system-supabase`
-- `agency-grid-layout-minimal`
-- `editorial-tech`
-- `framed-grid-layout`
-- `split-layout-technical`
-
-## Execution Standards
-- Strict adherence to P0-P18 Invariants (`AGENTS.md`).
-- Fast-path execution using local skills and raw inbox references.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Agents_Skill_Matrix]]
-- [[14 Subagents Council Map]]
-- [[Knowledge Graph Home]]
+## Runtime Contract
+- Capability source: `99_SYSTEM/Agent_Capability_Registry.md`
+- Capabilities are metadata only; never load the complete capability set.
+- Load only router-selected skills, maximum 2 by default.
+- Follow `99_SYSTEM/Council_Context_Budget.md` and `AGENTS.md`.
+- Return compact evidence without repeating shared context.
