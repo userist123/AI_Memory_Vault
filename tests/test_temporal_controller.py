@@ -3,12 +3,10 @@ import os
 from datetime import date
 
 from memory_controller.authorizer import Principal
-from memory_controller.controller import MemoryController
 from memory_controller.temporal_controller import TemporalMemoryController, matches_temporal
-from memory_controller.security.pagination_token import PaginationToken
 
 
-def _note(note_id, *, lifecycle="ACTIVE", valid_from=None, valid_until=None, extraction=None, superseded_by=None):
+def _note(note_id, *, lifecycle="ACTIVE", valid_from=None, valid_until=None, extraction=None, superseded_by=None, conflicts_with=None):
     note = {
         "id": note_id,
         "type": "knowledge",
@@ -17,11 +15,7 @@ def _note(note_id, *, lifecycle="ACTIVE", valid_from=None, valid_until=None, ext
         "tags": [],
         "created": "2020-01-01",
         "updated": "2020-01-01",
-        "provenance": {
-            "source_type": "official",
-            "source_ref": "test",
-            **({"extraction_date": extraction} if extraction else {}),
-        },
+        "provenance": {"source_type": "official", "source_ref": "test", **({"extraction_date": extraction} if extraction else {})},
         "confidence": "high",
         "verification": "verified",
         "relations": [],
@@ -33,6 +27,8 @@ def _note(note_id, *, lifecycle="ACTIVE", valid_from=None, valid_until=None, ext
         note["valid_until"] = valid_until
     if superseded_by:
         note["superseded_by"] = superseded_by
+    if conflicts_with:
+        note["conflicts_with"] = conflicts_with
     return note
 
 
@@ -93,16 +89,23 @@ def test_temporal_pagination_signs_and_binds_query(monkeypatch):
     monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", "test-secret")
     notes = [_note("a", valid_from="2020-01-01"), _note("b", valid_from="2021-01-01")]
     temporal = TemporalMemoryController(FakeController(notes))
-
     first = temporal.search(Principal.AI_AGENT, "hello", page_size=1, as_of="2022-01-01")
     token = first["next_page_token"]
     assert token
     second = temporal.search(Principal.AI_AGENT, "hello", page_size=1, page_token=token, as_of="2022-01-01")
     assert second["results"][0]["id"] != first["results"][0]["id"]
-
     try:
         temporal.search(Principal.AI_AGENT, "hello", page_size=1, page_token=token, as_of="2023-01-01")
     except Exception as exc:
         assert "temporal query does not match" in str(exc)
     else:
         raise AssertionError("expected temporal cursor binding failure")
+
+
+def test_temporal_conflict_is_reported_without_dropping_either_fact():
+    left = _note("left", valid_from="2020-01-01", conflicts_with="right")
+    right = _note("right", valid_from="2020-01-01", conflicts_with="left")
+    temporal = TemporalMemoryController(FakeController([left, right]))
+    result = temporal.search(Principal.AI_AGENT, "hello", page_size=10, as_of="2022-01-01")
+    assert {item["id"] for item in result["results"]} == {"left", "right"}
+    assert result["temporal"]["conflicts"] == [{"left_id": "left", "right_id": "right", "reason": "explicit conflicts_with"}]
