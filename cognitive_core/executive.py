@@ -16,6 +16,7 @@ from .deduplication import Deduplicator
 from .learning import LearningEngine
 from .semantic import DeterministicSemanticProvider
 from .orchestrator import MultiAgentOrchestrator
+from .council_budget_controller import CouncilBudgetController
 
 class Executive:
     """
@@ -26,9 +27,11 @@ class Executive:
     WIRE-5: Automatic checkpointing after each step.
     WIRE-6: Error recovery and replanning.
     WIRE-MAO: MultiAgentOrchestrator dispatch report attached to process_intent results.
+    WIRE-CBC: CouncilBudgetController gates Council dispatch by complexity/risk.
     """
     def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None,
-                 orchestrator: Optional[MultiAgentOrchestrator] = None):
+                 orchestrator: Optional[MultiAgentOrchestrator] = None,
+                 council_budget: Optional[CouncilBudgetController] = None):
         self.controller = memory_controller
         self.router = ToolRouter(self.controller)
         self.activation_engine = ActivationEngine(self.controller)
@@ -54,6 +57,16 @@ class Executive:
         # authorization/audit path as every other action in this loop, rather
         # than a second independent router instance with separate state.
         self.orchestrator = orchestrator or MultiAgentOrchestrator(self.controller, self.router)
+
+        # WIRE-CBC: Council Budget Controller decides IF/HOW MUCH Council
+        # dispatch a task needs, BEFORE the orchestrator is ever called.
+        # Without this, every single task -- trivial or complex -- ran the
+        # full Router+Retrieval+Verifier+Synthesis pipeline unconditionally,
+        # on top of Activation+Recall+Reasoning+Planning+Reflection already
+        # running for every task. This is the actual token-multiplication
+        # risk: not that any one component is expensive, but that ALL of
+        # them ran for EVERY task regardless of whether the task warranted it.
+        self.council_budget = council_budget or CouncilBudgetController()
 
         # WIRE-6: retry tracking
         self._retry_count = 0
@@ -193,27 +206,47 @@ class Executive:
             pass
 
     def _dispatch_via_orchestrator(self, principal: Principal, query: str,
-                                    context: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-        """WIRE-MAO: Run the Router/Retrieval/Verifier/Synthesis worker pipeline.
+                                    context: List[Dict[str, Any]], *,
+                                    complexity: int = 1,
+                                    require_review: bool = False) -> Optional[Dict[str, Any]]:
+        """WIRE-CBC + WIRE-MAO: Gate, then (conditionally) run the Council pipeline.
 
-        This is additive telemetry, not a security gate: MultiAgentOrchestrator
+        WIRE-CBC gate (runs first, no exception handling needed -- it makes
+        no calls of its own): CouncilBudgetController.decide() looks at the
+        query/complexity/risk signals and returns a tier. NONE means the
+        orchestrator is never even called -- this is the actual fix for
+        "Executive + full Council + Reasoning + Planner + Reflection running
+        unconditionally for every task": trivial tasks now skip Council
+        entirely, at zero additional cost beyond the decision itself.
+
+        WIRE-MAO dispatch (only reached for LIGHT/STANDARD/HIGH_RISK tiers):
+        this is additive telemetry, not a security gate -- MultiAgentOrchestrator
         already enforces least-privilege internally (a worker attempting an
         action outside its allowed_actions raises PermissionError), so a
         failure here is a bug or unexpected internal state, not an intentional
         authorization block. Consistent with _fire_synapses/_run_maintenance
-        above, a failure must not kill the primary cognitive loop -- it is
-        caught and the loop proceeds without a dispatch_report rather than
-        aborting process_intent entirely.
+        above, a failure must not kill the primary cognitive loop.
         """
+        decision = self.council_budget.decide(query, complexity=complexity, require_review=require_review)
+        if not decision.should_dispatch:
+            return None
+
         try:
             # skip_retrieval=True: `context` here already comes from this
             # Executive's own ActivationEngine + RecallEngine pass over this
             # exact `query` (see process_intent steps 2-3, just above the
-            # call site). Without this flag, any query containing a
-            # deep-retrieval keyword would make route_and_dispatch fire a
-            # second, redundant live "search" through the same ToolRouter for
-            # the same query -- doubling retrieval cost with no new signal.
-            return self.orchestrator.route_and_dispatch(principal, query, context, skip_retrieval=True)
+            # call site). decision.run_retrieval instead controls whether
+            # route_and_dispatch's OWN Retrieval worker runs on top of that
+            # -- for LIGHT tier it stays off; skip_retrieval already blocks
+            # the keyword-triggered path regardless of tier.
+            report = self.orchestrator.route_and_dispatch(
+                principal, query, context,
+                skip_retrieval=not decision.run_retrieval,
+                run_verifier=decision.run_verifier,
+            )
+            report["council_tier"] = decision.tier.value
+            report["council_reason"] = decision.reason
+            return report
         except Exception:
             return None
 
@@ -250,7 +283,7 @@ class Executive:
         # Uses the same `query` and `context` already assembled above; does not
         # duplicate the activation/recall work, only adds Router-triage,
         # (conditional) deep-retrieval, Verifier tally, and Synthesis summary.
-        dispatch_report = self._dispatch_via_orchestrator(principal, query, context)
+        dispatch_report = self._dispatch_via_orchestrator(principal, query, context)  # WIRE-CBC: gated
 
         # 4. Reason (READ-ONLY, aware of unverified status)
         reasoning = self.reasoning_engine.synthesize(principal, context, query)

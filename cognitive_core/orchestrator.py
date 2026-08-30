@@ -61,9 +61,11 @@ class MultiAgentOrchestrator:
         query: str,
         context: List[Dict[str, Any]],
         skip_retrieval: bool = False,
+        run_verifier: bool = True,
+        max_context_items: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Dispatches query across the orchestrator pipeline:
-        Router -> Retrieval Worker -> Verifier/Critic Worker -> Synthesis.
+        Router -> Retrieval Worker -> Verifier Worker (optional) -> Synthesis.
 
         skip_retrieval: set True when `context` was already produced by a
         prior retrieval pass over this exact `query` (e.g. Executive's own
@@ -75,6 +77,19 @@ class MultiAgentOrchestrator:
         direct callers (e.g. cognitive_core/tests/test_multiagent_orchestration.py)
         that pass hand-built context and rely on this method to do its own
         retrieval.
+
+        run_verifier: set False (via CouncilBudgetController LIGHT/NONE
+        tiers is handled by the caller skipping this method entirely; this
+        flag exists for callers that want Retrieval without the Verifier
+        tally). Defaults to True to preserve the original contract.
+
+        max_context_items: caps the size of `combined_context` BEFORE the
+        Verifier tally and the returned `total_context_used`. This is the
+        actual enforcement point for a Council-wide memory-result budget
+        (e.g. Council_Context_Validator.MAX_MEMORY_RESULTS) on the context
+        this orchestrator consumes, independent of how large the caller's
+        own WorkingMemory happens to be. None (default) means no cap is
+        applied here, preserving the original contract for direct callers.
         """
         history = []
 
@@ -94,20 +109,23 @@ class MultiAgentOrchestrator:
             history.append({"agent": AgentRole.RETRIEVAL.value, "retrieved_count": len(retrieved_nodes)})
 
         combined_context = list(context) + retrieved_nodes
+        if max_context_items is not None:
+            combined_context = combined_context[:max_context_items]
 
         # 3. Verifier Worker (checks verification status and flags unverified claims)
-        verified_count = 0
-        unverified_count = 0
-        for node in combined_context:
-            if node.get("verification") == "verified":
-                verified_count += 1
-            else:
-                unverified_count += 1
-        history.append({
-            "agent": AgentRole.VERIFIER.value,
-            "verified_nodes": verified_count,
-            "unverified_nodes": unverified_count
-        })
+        if run_verifier:
+            verified_count = 0
+            unverified_count = 0
+            for node in combined_context:
+                if node.get("verification") == "verified":
+                    verified_count += 1
+                else:
+                    unverified_count += 1
+            history.append({
+                "agent": AgentRole.VERIFIER.value,
+                "verified_nodes": verified_count,
+                "unverified_nodes": unverified_count
+            })
 
         # 4. Synthesis
         synthesis_result = {
