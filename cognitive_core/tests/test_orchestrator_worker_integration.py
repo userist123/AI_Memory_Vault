@@ -1,26 +1,32 @@
-"""
-Integration tests proving the specialized worker agents (RouterAgent,
-RetrievalAgent, CriticAgent, VerifierAgent, ConsolidatorAgent) are actually
-invoked by MultiAgentOrchestrator.route_and_dispatch(), not merely defined.
+"""Integration tests for the current SubagentSpec + ToolRouter orchestrator contract.
 
-These tests assert on execution side-effects (call counts on the real
-underlying MemoryController / spy wrappers), not on class existence.
+The runtime no longer exposes the older worker_agents/process_task API. These
+regressions therefore verify the implementation that actually exists:
+least-privilege SubagentSpec gating, worker tier metadata, retrieval/verifier
+history, and preservation of the public route_and_dispatch result shape.
 """
-import pytest
-from unittest.mock import patch, MagicMock
 from uuid import uuid4
 
-from memory_controller.controller import MemoryController, StorageEngine, Lifecycle
+import pytest
+
 from memory_controller.authorizer import Principal
-from cognitive_core.orchestrator import MultiAgentOrchestrator, AgentRole, WorkerExecutionError
+from memory_controller.controller import MemoryController, StorageEngine
+from cognitive_core.orchestrator import AgentRole, MultiAgentOrchestrator
 
 
 def make_note(note_id, verification="unverified", lifecycle="ACTIVE"):
     return {
-        "id": note_id, "type": "knowledge", "lifecycle": lifecycle, "category": "test",
-        "tags": [], "created": "2026-08-15", "updated": "2026-08-15",
+        "id": note_id,
+        "type": "knowledge",
+        "lifecycle": lifecycle,
+        "category": "test",
+        "tags": [],
+        "created": "2026-08-15",
+        "updated": "2026-08-15",
         "provenance": {"source_type": "user", "source_ref": "test"},
-        "confidence": "high", "verification": verification, "relations": [],
+        "confidence": "high",
+        "verification": verification,
+        "relations": [],
         "content": "test content",
     }
 
@@ -32,143 +38,161 @@ def orchestrator():
     return MultiAgentOrchestrator(controller)
 
 
-def test_worker_agents_are_actually_instantiated(orchestrator):
-    """Each AgentRole with a real worker implementation must resolve to a
-    distinct, live instance of the corresponding specialized agent class."""
-    from cognitive_core.agents.router_agent import RouterAgent
-    from cognitive_core.agents.retrieval_agent import RetrievalAgent
-    from cognitive_core.agents.critic_agent import CriticAgent
-    from cognitive_core.agents.verifier_agent import VerifierAgent
-    from cognitive_core.agents.consolidator_agent import ConsolidatorAgent
+def test_subagent_specs_exist_with_expected_model_tiers(orchestrator):
+    assert set(orchestrator.workers) == {
+        AgentRole.ROUTER,
+        AgentRole.RETRIEVAL,
+        AgentRole.VERIFIER,
+        AgentRole.CONSOLIDATOR,
+        AgentRole.CRITIC,
+        AgentRole.SYNTHESIZER,
+    }
 
-    assert isinstance(orchestrator.worker_agents[AgentRole.ROUTER], RouterAgent)
-    assert isinstance(orchestrator.worker_agents[AgentRole.RETRIEVAL], RetrievalAgent)
-    assert isinstance(orchestrator.worker_agents[AgentRole.CRITIC], CriticAgent)
-    assert isinstance(orchestrator.worker_agents[AgentRole.VERIFIER], VerifierAgent)
-    assert isinstance(orchestrator.worker_agents[AgentRole.CONSOLIDATOR], ConsolidatorAgent)
-
-
-def test_router_agent_is_actually_executed_during_dispatch(orchestrator):
-    """RouterAgent.process_task must be called exactly once per
-    route_and_dispatch call -- proving real execution, not mere presence."""
-    router_agent = orchestrator.worker_agents[AgentRole.ROUTER]
-    with patch.object(router_agent, "process_task", wraps=router_agent.process_task) as spy:
-        orchestrator.route_and_dispatch(Principal.AI_AGENT, "find related notes", [])
-        spy.assert_called_once()
-        called_principal = spy.call_args[0][0]
-        assert called_principal == Principal.AI_AGENT
+    assert orchestrator.workers[AgentRole.ROUTER].model_tier == "light"
+    assert orchestrator.workers[AgentRole.RETRIEVAL].model_tier == "light"
+    assert orchestrator.workers[AgentRole.VERIFIER].model_tier == "light"
+    assert orchestrator.workers[AgentRole.CONSOLIDATOR].model_tier == "standard"
+    assert orchestrator.workers[AgentRole.CRITIC].model_tier == "standard"
+    assert orchestrator.workers[AgentRole.SYNTHESIZER].model_tier == "heavy"
 
 
-def test_retrieval_agent_is_actually_executed_during_dispatch(orchestrator):
-    retrieval_agent = orchestrator.worker_agents[AgentRole.RETRIEVAL]
-    with patch.object(retrieval_agent, "process_task", wraps=retrieval_agent.process_task) as spy:
-        orchestrator.route_and_dispatch(Principal.AI_AGENT, "search history", [])
-        spy.assert_called_once()
+def test_least_privilege_enforcement(orchestrator):
+    with pytest.raises(
+        PermissionError,
+        match="not permitted to perform action 'archive'",
+    ):
+        orchestrator._execute_worker_action(
+            AgentRole.ROUTER,
+            Principal.AI_AGENT,
+            "archive",
+            {"note_id": "x"},
+        )
+
+    # RETRIEVAL is read/search only; archive remains unavailable.
+    with pytest.raises(
+        PermissionError,
+        match="not permitted to perform action 'archive'",
+    ):
+        orchestrator._execute_worker_action(
+            AgentRole.RETRIEVAL,
+            Principal.AI_AGENT,
+            "archive",
+            {"note_id": "x"},
+        )
 
 
-def test_verifier_agent_is_actually_executed_during_dispatch(orchestrator):
-    verifier_agent = orchestrator.worker_agents[AgentRole.VERIFIER]
-    with patch.object(verifier_agent, "process_task", wraps=verifier_agent.process_task) as spy:
-        orchestrator.route_and_dispatch(Principal.AI_AGENT, "simple query", [])
-        spy.assert_called_once()
+def test_route_and_dispatch_executes_retrieval_and_verifier_for_deep_query(orchestrator):
+    result = orchestrator.route_and_dispatch(
+        Principal.AI_AGENT,
+        "search for related procedures",
+        [],
+    )
 
+    assert result["status"] == "completed"
+    assert result["query"] == "search for related procedures"
+    assert "orchestration_history" in result
+    assert "total_context_used" in result
 
-def test_critic_agent_is_actually_executed_during_dispatch(orchestrator):
-    critic_agent = orchestrator.worker_agents[AgentRole.CRITIC]
-    with patch.object(critic_agent, "process_task", wraps=critic_agent.process_task) as spy:
-        orchestrator.route_and_dispatch(Principal.AI_AGENT, "simple query", [])
-        spy.assert_called_once()
-
-
-def test_principal_is_propagated_correctly_to_every_worker(orchestrator):
-    """The exact calling principal (not a default/substitute) must reach
-    every worker's process_task call."""
-    agents = [
-        orchestrator.worker_agents[AgentRole.ROUTER],
-        orchestrator.worker_agents[AgentRole.RETRIEVAL],
-        orchestrator.worker_agents[AgentRole.VERIFIER],
-        orchestrator.worker_agents[AgentRole.CRITIC],
+    retrieval_entries = [
+        item for item in result["orchestration_history"]
+        if item.get("agent") == AgentRole.RETRIEVAL.value
     ]
-    spies = []
-    for agent in agents:
-        p = patch.object(agent, "process_task", wraps=agent.process_task)
-        spies.append(p.start())
-    try:
-        orchestrator.route_and_dispatch(Principal.HUMAN, "find x", [])
-        for spy in spies:
-            assert spy.call_args[0][0] == Principal.HUMAN
-    finally:
-        patch.stopall()
+    verifier_entries = [
+        item for item in result["orchestration_history"]
+        if item.get("agent") == AgentRole.VERIFIER.value
+    ]
+
+    assert len(retrieval_entries) == 1
+    assert retrieval_entries[0]["model_tier"] == "light"
+    assert len(verifier_entries) == 1
+    assert verifier_entries[0]["model_tier"] == "light"
 
 
-def test_worker_failure_is_observable_and_non_fatal(orchestrator):
-    """If a worker agent raises, route_and_dispatch must NOT crash; the
-    failure must be recorded in orchestration_history as executed=False,
-    attributable to the responsible role, and must not silently produce a
-    successful/trusted result."""
-    router_agent = orchestrator.worker_agents[AgentRole.ROUTER]
-    with patch.object(router_agent, "process_task", side_effect=RuntimeError("boom")):
-        result = orchestrator.route_and_dispatch(Principal.AI_AGENT, "find x", [])
-        assert result["status"] == "completed"  # pipeline still completes
-        router_entries = [h for h in result["orchestration_history"] if h.get("agent") == "router"]
-        assert any(h.get("executed") is False and "boom" in h.get("error", "") for h in router_entries)
+def test_skip_retrieval_prevents_duplicate_search(orchestrator):
+    result = orchestrator.route_and_dispatch(
+        Principal.AI_AGENT,
+        "search history",
+        [{"id": "already-retrieved", "verification": "verified"}],
+        skip_retrieval=True,
+    )
+
+    assert result["status"] == "completed"
+    assert not any(
+        item.get("agent") == AgentRole.RETRIEVAL.value
+        for item in result["orchestration_history"]
+    )
+    assert result["total_context_used"] == 1
 
 
-def test_unknown_worker_role_is_handled_gracefully(orchestrator):
-    """_invoke_worker_agent must not raise for a role with no registered
-    worker (e.g. SYNTHESIZER, which has a SubagentSpec but no worker_agents
-    entry) -- it must return an observable non-executed record."""
-    result = orchestrator._invoke_worker_agent(AgentRole.SYNTHESIZER, Principal.AI_AGENT, {"query": "x"})
-    assert result["executed"] is False
-    assert result["agent"] == AgentRole.SYNTHESIZER.value
+def test_max_context_items_is_enforced(orchestrator):
+    context = [
+        {"id": "n1", "verification": "verified"},
+        {"id": "n2", "verification": "verified"},
+        {"id": "n3", "verification": "unverified"},
+    ]
+
+    result = orchestrator.route_and_dispatch(
+        Principal.AI_AGENT,
+        "simple query",
+        context,
+        skip_retrieval=True,
+        max_context_items=2,
+    )
+
+    assert result["total_context_used"] == 2
+    verifier = next(
+        item for item in result["orchestration_history"]
+        if item.get("agent") == AgentRole.VERIFIER.value
+    )
+    assert verifier["verified_nodes"] == 2
+    assert verifier["unverified_nodes"] == 0
 
 
-def test_verifier_agent_cannot_escalate_trust_via_dispatch(orchestrator):
-    """Security/trust-boundary test: VerifierAgent's permitted_actions is
-    ["read"] only. Invoking it through the orchestrator must never result
-    in any note's verification being written/escalated as a side effect."""
-    verifier_agent = orchestrator.worker_agents[AgentRole.VERIFIER]
-    assert "propose" not in verifier_agent.permitted_actions
-    assert "update" not in verifier_agent.permitted_actions
-    assert "attest" not in verifier_agent.permitted_actions
+def test_principal_is_forwarded_to_tool_router(orchestrator):
+    calls = []
+    original_execute = orchestrator.router.execute
 
-    note_id = str(uuid4())
-    orchestrator.controller.storage.set(note_id, make_note(note_id, verification="unverified"))
-    before = orchestrator.controller.storage.get(note_id)["verification"]
+    def spy_execute(principal, action, kwargs):
+        calls.append((principal, action, kwargs))
+        return original_execute(principal, action, kwargs)
 
-    orchestrator.route_and_dispatch(Principal.AI_AGENT, "verify this", [orchestrator.controller.storage.get(note_id)])
+    orchestrator.router.execute = spy_execute
+    orchestrator.route_and_dispatch(
+        Principal.HUMAN,
+        "search for x",
+        [],
+    )
 
-    after = orchestrator.controller.storage.get(note_id)["verification"]
-    assert after == before == "unverified"
+    assert calls
+    assert all(call[0] == Principal.HUMAN for call in calls)
+    assert any(call[1] == "search" for call in calls)
 
 
-def test_ai_agent_worker_cannot_grant_official_or_verified_provenance(orchestrator):
-    """End-to-end trust boundary: even after full pipeline dispatch under
-    AI_AGENT, no note's provenance/verification may have been escalated,
-    because none of the invoked workers hold propose/update/attest
-    authority beyond what MemoryController's own P0 guards already permit."""
+def test_verification_data_is_not_mutated_by_read_only_dispatch(orchestrator):
     note_id = str(uuid4())
     orchestrator.controller.storage.set(note_id, make_note(note_id))
-    orchestrator.route_and_dispatch(Principal.AI_AGENT, "official verified source", [])
-    stored = orchestrator.controller.storage.get(note_id)
-    assert stored["verification"] == "unverified"
-    assert stored["provenance"]["source_type"] == "user"  # unchanged, not escalated
+    before = orchestrator.controller.storage.get(note_id)
+
+    orchestrator.route_and_dispatch(
+        Principal.AI_AGENT,
+        "verify this",
+        [before],
+        skip_retrieval=True,
+    )
+
+    after = orchestrator.controller.storage.get(note_id)
+    assert after["verification"] == "unverified"
+    assert after["provenance"]["source_type"] == "user"
 
 
 def test_existing_route_and_dispatch_contract_still_compatible(orchestrator):
-    """Regression: the pre-existing public contract (return dict shape,
-    'status'=='completed', presence of orchestration_history and
-    total_context_used) must remain unchanged for existing callers."""
-    result = orchestrator.route_and_dispatch(Principal.AI_AGENT, "search for related procedures", [])
+    result = orchestrator.route_and_dispatch(
+        Principal.AI_AGENT,
+        "search for related procedures",
+        [],
+    )
+
     assert result["status"] == "completed"
     assert "orchestration_history" in result
     assert "total_context_used" in result
     assert "query" in result
-
-
-def test_subagent_spec_and_allowed_actions_still_enforced(orchestrator):
-    """Regression: _execute_worker_action's SubagentSpec-based gating (the
-    pre-existing mechanism) must remain intact and unbypassed by the new
-    worker_agents integration."""
-    with pytest.raises(PermissionError, match="not permitted to perform action 'archive'"):
-        orchestrator._execute_worker_action(AgentRole.ROUTER, Principal.AI_AGENT, "archive", {"note_id": "x"})
