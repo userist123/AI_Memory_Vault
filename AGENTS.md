@@ -6,7 +6,7 @@ This repository is the persistent memory and knowledge base for the user's AI sy
 
 The goal is not to store every conversation. The goal is to preserve useful, reusable, verifiable knowledge and the history needed to understand how that knowledge was obtained.
 
-The AI must protect the integrity of this memory.
+The AI must protect the integrity of this memory and must minimize runtime context.
 
 ---
 
@@ -30,7 +30,7 @@ When a conflict cannot be resolved, preserve both claims and create a conflict r
 
 # 2. Core Files
 
-Before changing memory behavior, read:
+Before changing memory behavior, read only the core files required for that operation:
 
 - `00_CORE/Identity.md`
 - `00_CORE/Rules.md`
@@ -38,17 +38,60 @@ Before changing memory behavior, read:
 - `00_CORE/Confidence_Model.md`
 - `00_CORE/System_Architecture.md`
 
-For retrieval/import tasks also read:
+For retrieval/import tasks also read only the specific applicable files from:
 
 - `99_SYSTEM/Classification_Protocol.md`
 - `99_SYSTEM/Import_Pipeline.md`
 - `99_SYSTEM/Quality_Control.md`
 
-These files define the operating contract.
+Do not load all core files into every agent context.
 
 ---
 
-# 3. Memory Is Not Conversation History
+# 3. Runtime Context Contract
+
+The runtime MUST use sparse context.
+
+## Hard defaults
+
+```text
+MAX_COUNCIL_AGENTS = 3
+MAX_PRIMARY_AGENTS = 1
+MAX_SKILLS_PER_AGENT = 2
+MAX_MEMORY_RESULTS = 5
+MAX_GRAPH_EXPANSION = 1 hop
+MAX_SPECIALIST_OUTPUT = 600 tokens
+MAX_SYNTHESIS_INPUT = 2500 tokens
+```
+
+These are defaults, not targets. Use fewer items whenever sufficient.
+
+## Mandatory rules
+
+1. Select agents before loading their skills.
+2. Select skills before loading their full contents.
+3. Never load every skill assigned to an agent merely because it is assigned.
+4. An assigned skill is a capability index, not automatic runtime context.
+5. Load a full `SKILL.md` only after the router has selected that skill for the current task.
+6. Retrieve memory after intent classification and filter it before injection.
+7. Do not inject the same memory, skill, instruction, or evidence into multiple council messages when a shared reference can be used.
+8. Specialists must return compact evidence, not a second copy of the full task context.
+9. The lead agent performs synthesis. Specialists do not recursively convene another council unless explicitly required.
+10. Do not include Obsidian navigation links in runtime prompts unless the link itself is required to solve the task.
+
+## Council escalation
+
+Use one agent by default.
+
+Use two agents when the task crosses one meaningful domain boundary.
+
+Use three agents only when independent expertise materially reduces risk or uncertainty.
+
+Do not use a larger council by default. If more than three specialists appear necessary, perform staged execution rather than parallel full-context deliberation.
+
+---
+
+# 4. Memory Is Not Conversation History
 
 Do NOT automatically convert conversations into permanent memory.
 
@@ -79,7 +122,7 @@ Use the following memory types:
 
 ---
 
-# 4. Before Creating a Note
+# 5. Before Creating a Note
 
 Always:
 
@@ -96,7 +139,7 @@ If an existing note is substantially the same, update it instead of creating a d
 
 ---
 
-# 5. Atomic Notes
+# 6. Atomic Notes
 
 Prefer one main concept per note.
 
@@ -112,7 +155,7 @@ A note may contain related information, but its purpose must be obvious from the
 
 ---
 
-# 6. Frontmatter
+# 7. Frontmatter
 
 Permanent notes should normally contain:
 
@@ -147,7 +190,7 @@ for verification state.
 
 ---
 
-# 7. Provenance
+# 8. Provenance
 
 Whenever possible preserve:
 
@@ -162,7 +205,7 @@ Imported AI content must not be presented as independently verified merely becau
 
 ---
 
-# 8. Import Rules
+# 9. Import Rules
 
 All new external AI memories enter:
 
@@ -176,9 +219,11 @@ RAW -> CLASSIFIED -> NORMALIZED -> REVIEW -> VERIFIED -> ACTIVE -> SUPERSEDED/AR
 
 `RAW` remains permanently in `06_INBOX/RAW_IMPORTS/`; it is never canonical memory and is never indexed as canonical knowledge. See `[[Memory Lifecycle]]` and `[[Canonical Frontmatter]]`.
 
+Raw imports, audit reports, progress logs, handoffs, and generated briefings are evidence/artifacts and MUST NOT be injected into ordinary runtime context unless the current task explicitly concerns that artifact.
+
 ---
 
-# 9. Deduplication
+# 10. Deduplication
 
 Before creating a new memory note, compare:
 
@@ -197,7 +242,7 @@ Two similar notes may describe different environments, versions, projects, or ou
 
 ---
 
-# 10. Contradictions
+# 11. Contradictions
 
 If two memories disagree:
 
@@ -214,7 +259,7 @@ Never hide a contradiction.
 
 ---
 
-# 11. Confidence
+# 12. Confidence
 
 Use:
 
@@ -232,7 +277,7 @@ AI inference normally starts at `low` or `medium` unless independently verified.
 
 ---
 
-# 12. Retrieval Strategy
+# 13. Retrieval Strategy
 
 When searching memory, use a layered approach:
 
@@ -249,9 +294,11 @@ Prefer a small set of highly relevant notes over a large amount of weak context.
 
 Do not load the entire Vault into the model context.
 
+Memory retrieval MUST stop once the context budget is satisfied. More retrieved notes are not automatically better.
+
 ---
 
-# 13. Knowledge Graph / Synapses
+# 14. Knowledge Graph / Synapses
 
 Use `[[wikilinks]]` to represent relationships.
 
@@ -272,9 +319,11 @@ Do not create links merely to increase graph density.
 
 A link should have semantic meaning.
 
+Graph traversal is runtime-limited to one hop by default. Expand further only when the first-hop evidence is insufficient.
+
 ---
 
-# 14. Projects
+# 15. Projects
 
 Project notes represent current state.
 
@@ -295,7 +344,7 @@ When a project decision becomes generally reusable, extract it into permanent kn
 
 ---
 
-# 15. Procedures
+# 16. Procedures
 
 A procedure must describe:
 
@@ -313,7 +362,7 @@ Never label an untested procedure as verified.
 
 ---
 
-# 16. Errors and Learning
+# 17. Errors and Learning
 
 When an error is resolved, preserve:
 
@@ -332,7 +381,7 @@ Repeated errors should increase the priority of the corresponding lesson/procedu
 
 ---
 
-# 17. Decisions
+# 18. Decisions
 
 A decision should preserve:
 
@@ -352,7 +401,7 @@ Archive superseded decisions and explain why they were replaced.
 
 ---
 
-# 18. User Preferences
+# 19. User Preferences
 
 Only store preferences that are:
 
@@ -366,7 +415,7 @@ Do not turn temporary instructions into permanent preferences unless clearly req
 
 ---
 
-# 19. Security
+# 20. Security
 
 NEVER store:
 
@@ -386,7 +435,7 @@ If such material appears during import:
 
 ---
 
-# 20. Destructive Changes
+# 21. Destructive Changes
 
 Before deleting or mass-modifying memory:
 
@@ -400,7 +449,7 @@ Do not perform destructive cleanup merely because files appear unused.
 
 ---
 
-# 21. AI Goal Discipline
+# 22. AI Goal Discipline
 
 For every substantial task:
 
@@ -425,7 +474,7 @@ Do not optimize for producing more text. Optimize for solving the actual task.
 
 ---
 
-# 22. Tool Use
+# 23. Tool Use
 
 Before executing commands or changing infrastructure:
 
@@ -440,7 +489,7 @@ Never claim an operation succeeded without observing evidence of success.
 
 ---
 
-# 23. Memory Write Decision
+# 24. Memory Write Decision
 
 After completing meaningful work, ask:
 
@@ -462,7 +511,7 @@ Store the smallest reusable representation.
 
 ---
 
-# 24. Git
+# 25. Git
 
 The Vault should be treated as a versioned knowledge repository.
 
@@ -479,7 +528,7 @@ Never commit secrets.
 
 ---
 
-# 25. Canonical Memory vs Raw Memory
+# 26. Canonical Memory vs Raw Memory
 
 Canonical memory:
 
@@ -502,11 +551,23 @@ Templates:
 
 - `90_TEMPLATES`
 
+Runtime-excluded operational artifacts:
+
+- `.agents/auditor_*`
+- `.agents/challenger_*`
+- `.agents/*/BRIEFING.md`
+- `.agents/*/DISPATCH.md`
+- `.agents/*/handoff.md`
+- `.agents/*/progress.md`
+- `.agents/*/report.md`
+
+These artifacts may be consulted explicitly for audit/review tasks but must not become default council context.
+
 Raw imports are evidence, not automatically trusted knowledge.
 
 ---
 
-# 26. Final Validation
+# 27. Final Validation
 
 Before finishing a memory operation, verify:
 
@@ -519,13 +580,14 @@ Before finishing a memory operation, verify:
 - secrets excluded;
 - contradictions handled;
 - source preserved;
-- Markdown remains valid.
+- Markdown remains valid;
+- runtime context remains within budget.
 
 The system should prefer a smaller, cleaner, trustworthy memory over a larger polluted one.
 
 ---
 
-# 27. Future Memory Controller
+# 28. Future Memory Controller
 
 When the Memory Controller is implemented, it should expose operations conceptually equivalent to:
 
@@ -545,7 +607,17 @@ The controller must apply this document and the files in `00_CORE/` before writi
 
 ---
 
-# 28. Prime Directive
+# 29. Council Runtime Contract
+
+The authoritative runtime policy is:
+
+`99_SYSTEM/Council_Context_Budget.md`
+
+If another document suggests loading more agents, skills, memory, graph context, or audit artifacts by default, the sparse-context policy wins unless the user explicitly requests exhaustive analysis.
+
+---
+
+# 30. Prime Directive
 
 The purpose of the memory is not to make the AI remember everything.
 
@@ -558,9 +630,10 @@ The purpose is to make the AI:
 - learn from mistakes;
 - preserve decisions;
 - avoid repeating failures;
-- remain aligned with the user's actual objective.
+- remain aligned with the user's actual objective;
+- solve tasks with the minimum sufficient context.
 
-**Better memory beats more memory.**
+**Better memory beats more memory. Better routing beats more agents.**
 
 ---
 
