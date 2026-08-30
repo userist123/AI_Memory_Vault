@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """Hard runtime gate for sparse skill loading.
 
-This module deliberately does not load or index the whole skill registry.
-The caller supplies already-selected skill IDs; this gate enforces the runtime
-limit and loads only those SKILL.md files.
+The per-agent loader enforces MAX_SKILLS_PER_AGENT. Council-wide selection is
+validated separately with validate_council_selection(), which enforces
+MAX_TOTAL_SKILLS across all agents without making the per-agent limit appear to
+be a Council-wide limit.
 """
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Iterable
 
 MAX_SKILLS_PER_AGENT = 2
 MAX_TOTAL_SKILLS = 4
@@ -28,19 +29,38 @@ def _normalise_ids(skill_ids: Iterable[str]) -> list[str]:
         raise SkillBudgetError(
             f"too many skills for agent: {len(ids)} > {MAX_SKILLS_PER_AGENT}"
         )
-    if len(ids) > MAX_TOTAL_SKILLS:
-        raise SkillBudgetError(
-            f"too many selected skills: {len(ids)} > {MAX_TOTAL_SKILLS}"
-        )
     return ids
 
 
-def load_selected_skills(skill_root: str | Path, skill_ids: Iterable[str]) -> dict[str, str]:
-    """Load only explicitly selected SKILL.md files.
+def validate_council_selection(agent_skills: Mapping[str, Iterable[str]]) -> dict[str, list[str]]:
+    """Validate skill selection per agent and across the whole Council.
 
-    No registry-wide scan is performed. Path traversal and missing skills fail
-    closed rather than falling back to loading additional skills.
+    Each agent may select at most MAX_SKILLS_PER_AGENT skills. The Council may
+    select at most MAX_TOTAL_SKILLS unique skills in total. A skill selected by
+    two agents counts once toward the Council-wide unique-skill limit, while
+    each agent is still subject to its own per-agent limit.
     """
+    normalised: dict[str, list[str]] = {}
+    all_skills: set[str] = set()
+
+    for agent, skills in agent_skills.items():
+        agent_id = str(agent).strip()
+        if not agent_id:
+            raise SkillBudgetError("agent id must not be empty")
+        selected = _normalise_ids(skills)
+        normalised[agent_id] = selected
+        all_skills.update(selected)
+
+    if len(all_skills) > MAX_TOTAL_SKILLS:
+        raise SkillBudgetError(
+            f"too many unique Council skills: {len(all_skills)} > {MAX_TOTAL_SKILLS}"
+        )
+
+    return normalised
+
+
+def load_selected_skills(skill_root: str | Path, skill_ids: Iterable[str]) -> dict[str, str]:
+    """Load only explicitly selected SKILL.md files for one agent."""
     ids = _normalise_ids(skill_ids)
     root = Path(skill_root).resolve()
     loaded: dict[str, str] = {}
@@ -59,11 +79,11 @@ def load_selected_skills(skill_root: str | Path, skill_ids: Iterable[str]) -> di
 
 
 def build_selection_manifest(skill_ids: Iterable[str]) -> dict:
-    """Return a compact machine-readable selection manifest."""
+    """Return a compact per-agent selection manifest."""
     ids = _normalise_ids(skill_ids)
     return {
         "selected_skills": ids,
         "count": len(ids),
         "max_per_agent": MAX_SKILLS_PER_AGENT,
-        "max_total": MAX_TOTAL_SKILLS,
+        "council_max_unique": MAX_TOTAL_SKILLS,
     }
