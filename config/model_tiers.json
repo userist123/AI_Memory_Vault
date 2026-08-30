@@ -1,0 +1,14 @@
+{
+  "light": {
+    "provider": "fake",
+    "model": "fake-light"
+  },
+  "standard": {
+    "provider": "fake",
+    "model": "fake-standard"
+  },
+  "heavy": {
+    "provider": "fake",
+    "model": "fake-heavy"
+  }
+}
