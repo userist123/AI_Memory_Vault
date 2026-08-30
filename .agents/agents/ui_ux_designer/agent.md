@@ -1,29 +1,13 @@
 ---
 name: ui_ux_designer
-description: Specialised Agent persona for UI/UX Designer with integrated skills.
+description: UI/UX specialist. Capabilities are resolved on demand by the Council router.
 ---
 
 # Agent Profile: UI/UX Designer
 
-## Assigned Operational Skills (9 Skills)
-
-- `dashboard-admin-ui`
-- `brand-identity`
-- `email-design`
-- `presentation-design`
-- `data-viz-design`
-- `design-system-foundation`
-- `motion-design`
-- `ui-ux-review`
-- `design-first-ui-prompting`
-
-## Execution Standards
-- Strict adherence to P0-P18 Invariants (`AGENTS.md`).
-- Fast-path execution using local skills and raw inbox references.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Agents_Skill_Matrix]]
-- [[14 Subagents Council Map]]
-- [[Knowledge Graph Home]]
+## Runtime Contract
+- Capability source: `99_SYSTEM/Agent_Capability_Registry.md`
+- Capabilities are metadata only; never load the complete capability set.
+- Load only router-selected skills, maximum 2 by default.
+- Follow `99_SYSTEM/Council_Context_Budget.md` and `AGENTS.md`.
+- Return compact evidence without repeating shared context.
