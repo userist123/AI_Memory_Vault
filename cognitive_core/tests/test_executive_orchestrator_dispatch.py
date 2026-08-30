@@ -22,12 +22,28 @@ def _make_verified_note(note_id, verification="verified"):
     }
 
 
+# Regression note (WIRE-CBC audit): the three tests below originally used
+# "search for related procedures" as the query. That query contains no
+# CouncilBudgetController risky keyword, so once CBC gating was added, these
+# tests started depending on an UNVERIFIED assumption -- whether
+# ActivationEngine/RecallEngine actually populate `context` with enough
+# items (or unverified/related items) to cross COMPLEXITY_PLAN_STEP_THRESHOLD
+# and get a non-NONE tier. That source was never available to confirm, so
+# this was a latent, unverified dependency, not a deterministic test.
+#
+# Fixed by using a query containing a real risky keyword ("verify"), which
+# CouncilBudgetController.decide() unconditionally escalates to at least
+# STANDARD tier regardless of complexity/context -- restoring a
+# deterministic guarantee that dispatch_report is present.
+RISKY_QUERY = "verify related procedures"
+
+
 def test_process_intent_attaches_dispatch_report():
     storage = StorageEngine()
     controller = MemoryController(storage)
     executive = Executive(controller)
 
-    result = executive.process_intent(Principal.AI_AGENT, "search for related procedures")
+    result = executive.process_intent(Principal.AI_AGENT, RISKY_QUERY)
 
     assert "dispatch_report" in result
     report = result["dispatch_report"]
@@ -43,7 +59,7 @@ def test_dispatch_report_reflects_verification_counts():
     controller = MemoryController(storage)
     executive = Executive(controller)
 
-    result = executive.process_intent(Principal.AI_AGENT, "search for related procedures")
+    result = executive.process_intent(Principal.AI_AGENT, RISKY_QUERY)
 
     verifier_entries = [
         h for h in result["dispatch_report"]["orchestration_history"]
@@ -57,7 +73,7 @@ def test_orchestrator_failure_does_not_break_process_intent():
     # primary cognitive loop must still complete and return a status, just
     # without a dispatch_report key.
     class ExplodingOrchestrator(MultiAgentOrchestrator):
-        def route_and_dispatch(self, principal, query, context):
+        def route_and_dispatch(self, principal, query, context, **kwargs):
             raise RuntimeError("boom")
 
     storage = StorageEngine()
@@ -65,7 +81,7 @@ def test_orchestrator_failure_does_not_break_process_intent():
     exploding = ExplodingOrchestrator(controller)
     executive = Executive(controller, orchestrator=exploding)
 
-    result = executive.process_intent(Principal.AI_AGENT, "search for related procedures")
+    result = executive.process_intent(Principal.AI_AGENT, RISKY_QUERY)
 
     assert "dispatch_report" not in result
     assert "status" in result
@@ -99,12 +115,14 @@ def test_dispatch_via_orchestrator_skips_redundant_retrieval():
     # fire a second live "search" through the ToolRouter, duplicating the
     # ActivationEngine + RecallEngine retrieval Executive already did for the
     # same query. This confirms the RETRIEVAL worker step is now skipped when
-    # called from Executive.
+    # called from Executive. Uses RISKY_QUERY (guarantees dispatch) rather
+    # than a query containing "search" itself, so the retrieval-skip check
+    # is isolated from the deep-retrieval-keyword trigger.
     storage = StorageEngine()
     controller = MemoryController(storage)
     executive = Executive(controller)
 
-    result = executive.process_intent(Principal.AI_AGENT, "search for related procedures")
+    result = executive.process_intent(Principal.AI_AGENT, RISKY_QUERY)
 
     retrieval_entries = [
         h for h in result["dispatch_report"]["orchestration_history"]
