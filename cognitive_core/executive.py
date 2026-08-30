@@ -28,6 +28,8 @@ class Executive:
     WIRE-6: Error recovery and replanning.
     WIRE-MAO: MultiAgentOrchestrator dispatch report attached to process_intent results.
     WIRE-CBC: CouncilBudgetController gates Council dispatch by complexity/risk.
+    WIRE-CBC-REAL: Complexity now derives from the Planner's real step count,
+    not a pre-planning proxy (dispatch moved to after planning).
     """
 
     # Confirmed real value from 99_SYSTEM/Council_Context_Budget.md
@@ -35,12 +37,20 @@ class Executive:
     # policy document, or the two will silently drift apart again.
     MAX_COUNCIL_MEMORY_RESULTS = 5
 
-    # Heuristic thresholds for _estimate_complexity(). Chosen as round,
-    # documented defaults (not tuned against real data yet) -- flagged
+    # Fallback heuristic thresholds for _estimate_complexity() when no plan
+    # is available yet. Chosen as round, documented defaults -- flagged
     # here as class attributes precisely so they are easy to find and
     # override/tune later instead of being buried as magic numbers.
     COMPLEXITY_QUERY_WORD_THRESHOLD = 12
     COMPLEXITY_CONTEXT_SIZE_THRESHOLD = 3
+
+    # Confirmed real signal: Planner.create_plan() (cognitive_core/planning.py)
+    # always emits a base 1-step search plan, and adds a step for unverified
+    # context and/or a step for related context -- verified directly from
+    # source, not assumed. 2+ steps means the Planner itself judged this
+    # task to need more than a single lookup.
+    COMPLEXITY_PLAN_STEP_THRESHOLD = 2
+
     def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None,
                  orchestrator: Optional[MultiAgentOrchestrator] = None,
                  council_budget: Optional[CouncilBudgetController] = None):
@@ -217,22 +227,23 @@ class Executive:
         except Exception:
             pass
 
-    def _estimate_complexity(self, query: str, context: List[Dict[str, Any]]) -> int:
-        """Real-signal complexity proxy for CouncilBudgetController.
+    def _estimate_complexity(self, query: str, context: List[Dict[str, Any]],
+                              plan: Optional[ActivePlan] = None) -> int:
+        """Complexity signal for CouncilBudgetController.
 
-        Not a fabricated number: derives from two signals already computed
-        earlier in process_intent -- query length (word count) and the size
-        of the context this Executive's own Activation+Recall pass already
-        assembled. Longer queries and larger retrieved context correlate
-        with tasks that involve more moving parts, which is exactly the
-        signal CouncilBudgetController.complexity_threshold is meant to
-        gate on.
+        Prefers the REAL signal when available: len(plan.steps) from
+        Planner.create_plan() (cognitive_core/planning.py), which is a
+        deterministic reflection of the Planner's own decomposition (base
+        "search" step, +1 if context has unverified items, +1 if context
+        has relations -- confirmed by reading planning.py directly, not
+        assumed). This is no longer a proxy once `plan` is supplied.
 
-        This is a heuristic PROXY, not the Planner's real step count --
-        planning happens AFTER this dispatch call in process_intent, so the
-        actual plan length is not available yet at this point. Documented
-        as a proxy on purpose, not presented as an authoritative measurement.
+        Falls back to the word-count/context-size heuristic ONLY when no
+        plan is available yet (kept for any caller that might invoke
+        dispatch before planning exists).
         """
+        if plan is not None:
+            return 2 if len(plan.steps) >= self.COMPLEXITY_PLAN_STEP_THRESHOLD else 1
         word_count = len(str(query).split())
         if word_count >= self.COMPLEXITY_QUERY_WORD_THRESHOLD or len(context) >= self.COMPLEXITY_CONTEXT_SIZE_THRESHOLD:
             return 2
@@ -267,8 +278,7 @@ class Executive:
         try:
             # skip_retrieval=True: `context` here already comes from this
             # Executive's own ActivationEngine + RecallEngine pass over this
-            # exact `query` (see process_intent steps 2-3, just above the
-            # call site). decision.run_retrieval instead controls whether
+            # exact `query`. decision.run_retrieval instead controls whether
             # route_and_dispatch's OWN Retrieval worker runs on top of that
             # -- for LIGHT tier it stays off; skip_retrieval already blocks
             # the keyword-triggered path regardless of tier.
@@ -295,13 +305,16 @@ class Executive:
 
     def process_intent(self, principal: Principal, intent_text: str) -> Dict[str, Any]:
         """
-        Full cognitive loop:
+        Full cognitive loop (WIRE-CBC-REAL: dispatch reordered after planning
+        so the Council budget decision uses the Planner's REAL step count,
+        not a pre-planning proxy):
         1. Observe (Parse Intent)
         2. Retrieve & Activate (with RecallEngine scoring)
         3. Attend & Hold in WM
-        3b. Dispatch via MultiAgentOrchestrator (Router/Retrieval/Verifier/Synthesis)
         4. Reason (marks unverified context)
-        5. Plan (multi-step, context-aware)
+        5. Plan (multi-step, context-aware) -- real step count now exists
+        5b. Dispatch via MultiAgentOrchestrator, gated by CouncilBudgetController
+            using the real plan step count as the complexity signal
         6. Execute first step
         """
         # 1. Observe
@@ -322,22 +335,23 @@ class Executive:
         self.working_memory.admit(nodes_for_wm)
         context = self.working_memory.get_active_context()
 
-        # 3b. WIRE-MAO: Multi-Agent Orchestrator dispatch (previously unwired).
-        # Uses the same `query` and `context` already assembled above; does not
-        # duplicate the activation/recall work, only adds Router-triage,
-        # (conditional) deep-retrieval, Verifier tally, and Synthesis summary.
-        dispatch_report = self._dispatch_via_orchestrator(
-            principal, query, context,
-            complexity=self._estimate_complexity(query, context),
-        )  # WIRE-CBC: gated, complexity from real signals
-
         # 4. Reason (READ-ONLY, aware of unverified status)
         reasoning = self.reasoning_engine.synthesize(principal, context, query)
-        
-        # 5. Plan (multi-step, context-aware)
+
+        # 5. Plan (multi-step, context-aware) -- produces the REAL step
+        # count that _estimate_complexity() now uses instead of a proxy.
         self.active_plan = self.planner.create_plan(query, context)
         self._retry_count = 0
-        
+
+        # 5b. WIRE-CBC-REAL: Multi-Agent Orchestrator dispatch, gated by
+        # CouncilBudgetController using the actual Planner step count as
+        # the complexity signal -- moved here (after planning) specifically
+        # so this signal is real instead of a pre-planning heuristic proxy.
+        dispatch_report = self._dispatch_via_orchestrator(
+            principal, query, context,
+            complexity=self._estimate_complexity(query, context, self.active_plan),
+        )
+
         if not self.planner.evaluate_plan(self.active_plan, context):
             error_result = {"status": "error", "error": "Could not generate a valid plan."}
             if dispatch_report is not None:
