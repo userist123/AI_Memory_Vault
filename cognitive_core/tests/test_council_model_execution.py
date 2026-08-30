@@ -1,103 +1,97 @@
-"""A7 model-execution composition tests."""
+"""A7 model execution contract tests.
+
+Uses a duck-typed CouncilRun stub and FakeModelProvider so the suite is fully
+local, deterministic, and independent of the frozen Council_Orchestrator.
+"""
 import ast
 import inspect
 
+import pytest
+
 from cognitive_core.actual_usage_telemetry import ActualUsageTelemetry
-from cognitive_core.council_model_execution import (
-    run_council_with_model_execution,
-)
+from cognitive_core.council_model_execution import CouncilRunWithExecution, run_council_with_model_execution
 from cognitive_core.fake_model_provider import FakeModelProvider
-from cognitive_core.model_provider import ModelRequest
-from cognitive_core.model_tier_router import ModelTierRouter
-
-
-class _StubTelemetry:
-    raw_context_tokens = 0
-
-    def record_context(self, raw_count, dedup_count, selected, rejected):
-        self.raw_context_tokens += raw_count
+from cognitive_core.model_tier_router import ModelTierRouter, TierConfig
 
 
 class _StubCouncilRun:
-    __slots__ = ("agent_packs", "telemetry")
-
-    def __init__(self, agent_packs):
+    def __init__(self, agent_packs, telemetry=None):
         self.agent_packs = agent_packs
-        self.telemetry = _StubTelemetry()
+        self.telemetry = telemetry
+
+
+FAKE_FACTORIES = {
+    "fake": lambda model_name: FakeModelProvider(provider_name="fake", model_name=model_name),
+}
 
 
 def _router():
-    providers = {
-        "fake": lambda entry: FakeModelProvider(
-            provider_name="fake", model_name=entry["model"]
-        )
+    tier_config = {
+        "light": TierConfig(provider="fake", model="fake-light"),
+        "standard": TierConfig(provider="fake", model="fake-standard"),
+        "heavy": TierConfig(provider="fake", model="fake-heavy"),
     }
-    return ModelTierRouter(
-        {
-            "light": {"provider": "fake", "model": "fake-light"},
-            "standard": {"provider": "fake", "model": "fake-standard"},
-            "heavy": {"provider": "fake", "model": "fake-heavy"},
-        },
-        provider_factories=providers,
-    )
+    return ModelTierRouter(tier_config, FAKE_FACTORIES)
 
 
 def test_disabled_by_default_is_true_no_op():
-    council_run = _StubCouncilRun({"agent_a": {"marker": "A"}})
+    council_run = _StubCouncilRun({"agent_a": {"note": "x"}})
     result = run_council_with_model_execution(
         council_run=council_run,
         model_tier_router=_router(),
-        task="t",
+        task="do something",
         agent_model_tiers={"agent_a": "light"},
         synthesis_model_tier="heavy",
     )
     assert result.model_execution_enabled is False
     assert result.specialist_results == {}
     assert result.synthesis_result is None
-    assert result.actual_usage.events == []
+    assert result.actual_usage.actual_total_tokens == 0
+    assert result.council_run is council_run
 
 
 def test_enabled_executes_one_specialist_call_per_agent():
-    council_run = _StubCouncilRun({"agent_a": {"marker": "A"}, "agent_b": {"marker": "B"}})
+    council_run = _StubCouncilRun({"agent_a": {"note": "pack A"}, "agent_b": {"note": "pack B"}})
     result = run_council_with_model_execution(
         council_run=council_run,
         model_tier_router=_router(),
-        task="t",
+        task="analyze",
         agent_model_tiers={"agent_a": "light", "agent_b": "standard"},
         synthesis_model_tier="heavy",
         model_execution_enabled=True,
     )
     assert set(result.specialist_results) == {"agent_a", "agent_b"}
+    assert result.specialist_results["agent_a"].model_tier == "light"
+    assert result.specialist_results["agent_b"].model_tier == "standard"
     assert result.synthesis_result is not None
-    assert len(result.actual_usage.events) == 3
+    assert result.synthesis_result.model_tier == "heavy"
 
 
 def test_regula_1_specialist_receives_only_its_own_pack():
     router = _router()
-    council_run = _StubCouncilRun({"agent_a": {"marker": "ONLY_A"}, "agent_b": {"marker": "ONLY_B"}})
-
-    for provider in (router.resolve("light"), router.resolve("standard")):
-        provider.calls.clear() if hasattr(provider, "calls") else None
-
+    council_run = _StubCouncilRun({
+        "agent_a": {"secret_marker": "ONLY_FOR_AGENT_A"},
+        "agent_b": {"secret_marker": "ONLY_FOR_AGENT_B"},
+    })
     run_council_with_model_execution(
         council_run=council_run,
         model_tier_router=router,
         task="t",
-        agent_model_tiers={"agent_a": "light", "agent_b": "standard"},
+        agent_model_tiers={"agent_a": "light", "agent_b": "light"},
         synthesis_model_tier="heavy",
         model_execution_enabled=True,
     )
-    light_calls = router.resolve("light").calls
-    standard_calls = router.resolve("standard").calls
-    assert "ONLY_A" in light_calls[0].prompt
-    assert "ONLY_B" not in light_calls[0].prompt
-    assert "ONLY_B" in standard_calls[0].prompt
-    assert "ONLY_A" not in standard_calls[0].prompt
+    specialist_provider = router.resolve("light")
+    prompts = [call.prompt for call in specialist_provider.calls]
+    a_prompt = [prompt for prompt in prompts if "ONLY_FOR_AGENT_A" in prompt][0]
+    b_prompt = [prompt for prompt in prompts if "ONLY_FOR_AGENT_B" in prompt][0]
+    assert "ONLY_FOR_AGENT_B" not in a_prompt
+    assert "ONLY_FOR_AGENT_A" not in b_prompt
 
 
 def test_regula_2_synthesis_excludes_raw_agent_packs():
     router = _router()
-    council_run = _StubCouncilRun({"agent_a": {"raw": "RAW_PACK_CONTENT_XYZ"}})
+    council_run = _StubCouncilRun({"agent_a": {"secret_marker": "RAW_PACK_CONTENT_XYZ"}})
     result = run_council_with_model_execution(
         council_run=council_run,
         model_tier_router=router,
@@ -107,8 +101,8 @@ def test_regula_2_synthesis_excludes_raw_agent_packs():
         model_execution_enabled=True,
     )
     assert result.synthesis_result is not None
-    synthesis_call = router.resolve("heavy").calls[-1]
-    assert "RAW_PACK_CONTENT_XYZ" not in synthesis_call.prompt
+    synthesis_prompt = router.resolve("heavy").calls[0].prompt
+    assert "RAW_PACK_CONTENT_XYZ" not in synthesis_prompt
 
 
 def test_regula_3_actual_usage_records_every_call():
@@ -117,17 +111,20 @@ def test_regula_3_actual_usage_records_every_call():
         council_run=council_run,
         model_tier_router=_router(),
         task="t",
-        agent_model_tiers={"agent_a": "light", "agent_b": "standard"},
+        agent_model_tiers={"agent_a": "light", "agent_b": "light"},
         synthesis_model_tier="heavy",
         model_execution_enabled=True,
     )
     assert len(result.actual_usage.events) == 3
+    kinds = [event.kind for event in result.actual_usage.events]
+    assert kinds.count("specialist") == 2
+    assert kinds.count("synthesis") == 1
     assert result.actual_usage.has_real_provider_usage is True
 
 
 def test_missing_agent_tier_raises():
     council_run = _StubCouncilRun({"agent_a": {"n": "a"}})
-    try:
+    with pytest.raises(ValueError):
         run_council_with_model_execution(
             council_run=council_run,
             model_tier_router=_router(),
@@ -136,14 +133,14 @@ def test_missing_agent_tier_raises():
             synthesis_model_tier="heavy",
             model_execution_enabled=True,
         )
-        assert False, "expected ValueError"
-    except ValueError:
-        pass
 
 
 def test_estimated_telemetry_passthrough_untouched():
-    council_run = _StubCouncilRun({"agent_a": {"n": "a"}})
-    original = council_run.telemetry
+    class _FakeEstimatedTelemetry:
+        agents_selected = 2
+
+    telemetry = _FakeEstimatedTelemetry()
+    council_run = _StubCouncilRun({"agent_a": {"n": "a"}}, telemetry=telemetry)
     result = run_council_with_model_execution(
         council_run=council_run,
         model_tier_router=_router(),
@@ -151,7 +148,8 @@ def test_estimated_telemetry_passthrough_untouched():
         agent_model_tiers={"agent_a": "light"},
         synthesis_model_tier="heavy",
     )
-    assert result.estimated_telemetry is original
+    assert result.estimated_telemetry is telemetry
+    assert result.estimated_telemetry.agents_selected == 2
 
 
 def test_agent_packs_property_passthrough():
@@ -191,6 +189,6 @@ def test_synthesis_system_prompt_is_forwarded():
         agent_model_tiers={"agent_a": "light"},
         synthesis_model_tier="heavy",
         model_execution_enabled=True,
-        synthesis_system_prompt="SYSTEM_MARKER",
+        synthesis_system_prompt="synthesize concisely",
     )
-    assert router.resolve("heavy").calls[-1].system_prompt == "SYSTEM_MARKER"
+    assert router.resolve("heavy").calls[0].system_prompt == "synthesize concisely"
