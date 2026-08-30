@@ -1,19 +1,20 @@
 """Provider-neutral token accounting for Council runs.
 
-This module measures context composition without requiring a model SDK.  It is
-an accounting/guard layer, not a tokenizer; exact provider usage should be
-attached by the model adapter when available.
+This module measures context composition without requiring a model SDK. Exact
+provider usage should be attached by the model adapter when available.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from math import ceil
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 import json
 
 
 def estimate_tokens(value: Any) -> int:
-    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, default=str, separators=(",", ":"))
+    text = value if isinstance(value, str) else json.dumps(
+        value, ensure_ascii=False, default=str, separators=(",", ":")
+    )
     return ceil(len(text) / 3)
 
 
@@ -39,13 +40,21 @@ class CouncilTokenTelemetry:
         seen = set()
         unique = []
         for item in values:
-            key = json.dumps(item, ensure_ascii=False, default=str, sort_keys=True, separators=(",", ":"))
+            key = json.dumps(
+                item, ensure_ascii=False, default=str, sort_keys=True, separators=(",", ":")
+            )
             if key not in seen:
                 seen.add(key)
                 unique.append(item)
         self.deduplicated_context_tokens = sum(estimate_tokens(x) for x in unique)
-        self.saved_by_deduplication = max(0, self.raw_context_tokens - self.deduplicated_context_tokens)
-        self.events.append({"type": "context", "raw_tokens": self.raw_context_tokens, "deduplicated_tokens": self.deduplicated_context_tokens})
+        self.saved_by_deduplication = max(
+            0, self.raw_context_tokens - self.deduplicated_context_tokens
+        )
+        self.events.append({
+            "type": "context",
+            "raw_tokens": self.raw_context_tokens,
+            "deduplicated_tokens": self.deduplicated_context_tokens,
+        })
         return self.deduplicated_context_tokens
 
     def record_specialist(self, input_value: Any, output_value: Any) -> None:
@@ -58,7 +67,22 @@ class CouncilTokenTelemetry:
 
     @property
     def estimated_total_tokens(self) -> int:
-        return self.deduplicated_context_tokens + self.specialist_output_tokens + self.synthesis_output_tokens
+        """Estimated model-token volume across specialist and synthesis calls.
+
+        The deduplicated context is an assembly metric, not an additional
+        model call, so it is intentionally not added a second time here.
+        """
+        return (
+            self.specialist_input_tokens
+            + self.specialist_output_tokens
+            + self.synthesis_input_tokens
+            + self.synthesis_output_tokens
+        )
+
+    @property
+    def estimated_context_savings(self) -> int:
+        """Tokens removed by context deduplication before model invocation."""
+        return self.saved_by_deduplication
 
     def as_dict(self) -> Dict[str, Any]:
         return {
@@ -73,6 +97,7 @@ class CouncilTokenTelemetry:
             "synthesis_input_tokens": self.synthesis_input_tokens,
             "synthesis_output_tokens": self.synthesis_output_tokens,
             "saved_by_deduplication": self.saved_by_deduplication,
+            "estimated_context_savings": self.estimated_context_savings,
             "rejected_items": self.rejected_items,
             "estimated_total_tokens": self.estimated_total_tokens,
         }
