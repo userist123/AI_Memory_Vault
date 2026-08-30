@@ -33,23 +33,9 @@ class Executive:
     not a pre-planning proxy (dispatch moved to after planning).
     """
 
-    # Confirmed real value from 99_SYSTEM/Council_Context_Budget.md
-    # (`max_memory_results: 5`). Do not change without updating that
-    # policy document, or the two will silently drift apart again.
     MAX_COUNCIL_MEMORY_RESULTS = 5
-
-    # Fallback heuristic thresholds for _estimate_complexity() when no plan
-    # is available yet. Chosen as round, documented defaults -- flagged
-    # here as class attributes precisely so they are easy to find and
-    # override/tune later instead of being buried as magic numbers.
     COMPLEXITY_QUERY_WORD_THRESHOLD = 12
     COMPLEXITY_CONTEXT_SIZE_THRESHOLD = 3
-
-    # Confirmed real signal: Planner.create_plan() (cognitive_core/planning.py)
-    # always emits a base 1-step search plan, and adds a step for unverified
-    # context and/or a step for related context -- verified directly from
-    # source, not assumed. 2+ steps means the Planner itself judged this
-    # task to need more than a single lookup.
     COMPLEXITY_PLAN_STEP_THRESHOLD = 2
 
     def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None,
@@ -65,7 +51,6 @@ class Executive:
         self.active_plan: Optional[ActivePlan] = None
         self.checkpoint_dir = checkpoint_dir
 
-        # Phase 3 modules (WIRE-2)
         self.semantic_provider = DeterministicSemanticProvider()
         self.recall_engine = RecallEngine(self.controller, self.semantic_provider)
         self.consolidator = Consolidator(self.controller, self.router)
@@ -75,12 +60,6 @@ class Executive:
         self.orchestrator = orchestrator or MultiAgentOrchestrator(self.controller, self.router)
         self.council_budget = council_budget or CouncilBudgetController()
 
-        # WIRE-C1.5: single source of truth for plan-derived complexity.
-        # Prevents Planner and CouncilBudgetController from silently
-        # becoming two independent opinions about task complexity --
-        # every complexity/require_review value passed to
-        # council_budget.decide() below is now derived from THIS
-        # analyzer's read of the real ActivePlan, not computed ad hoc.
         self.complexity_analyzer = PlanComplexityAnalyzer()
 
         self._retry_count = 0
@@ -143,6 +122,27 @@ class Executive:
                 self.active_plan = new_plan
                 action_result["replanned"] = True
                 self._auto_checkpoint()
+
+                # WIRE-C1.5b: a replan can change step_count/destructive_steps
+                # (e.g. escalate into a destructive recovery path), so the
+                # Council tier decided against the PRE-failure plan is stale
+                # and must be re-derived from the NEW plan, not carried
+                # forward silently. This closes the "same tier after replan"
+                # gap: a task that becomes riskier after a failure must not
+                # keep the tier that was fine for the original, simpler plan.
+                post_replan_complexity = self.complexity_analyzer.analyze(self.active_plan)
+                post_replan_report = self._dispatch_via_orchestrator(
+                    principal, self.active_plan.goal, context,
+                    complexity=post_replan_complexity.council_complexity,
+                    require_review=post_replan_complexity.require_review,
+                )
+                if post_replan_report is not None:
+                    post_replan_report["plan_complexity"] = {
+                        "step_count": post_replan_complexity.step_count,
+                        "execution_mode": post_replan_complexity.execution_mode.value,
+                        "destructive_steps": post_replan_complexity.destructive_steps,
+                    }
+                    action_result["post_replan_dispatch_report"] = post_replan_report
         intent_mock = {"query": self.active_plan.goal if self.active_plan else "unknown"}
         try:
             new_memory_id = self.reflection.evaluate_outcome(principal, intent_mock, decision, action_result)
@@ -218,11 +218,6 @@ class Executive:
         self.active_plan = self.planner.create_plan(query, context)
         self._retry_count = 0
 
-        # WIRE-C1.5: PlanComplexityAnalyzer is now the single source of
-        # truth feeding CouncilBudgetController -- complexity AND
-        # require_review both come from the same real ActivePlan read,
-        # instead of complexity being derived here while risk is inferred
-        # separately from query keywords inside CouncilBudgetController.
         plan_complexity = self.complexity_analyzer.analyze(self.active_plan)
         dispatch_report = self._dispatch_via_orchestrator(
             principal, query, context,
