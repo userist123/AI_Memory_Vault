@@ -16,6 +16,42 @@ def test_rejects_more_than_two_skills_for_one_agent():
         gate.build_selection_manifest(["a", "b", "c"])
 
 
+def test_allows_two_skills_per_agent():
+    manifest = gate.build_selection_manifest(["a", "b"])
+    assert manifest["count"] == 2
+    assert manifest["max_per_agent"] == 2
+    assert manifest["council_max_unique"] == 4
+
+
+def test_allows_four_unique_skills_across_two_agents():
+    selection = gate.validate_council_selection({
+        "agent_a": ["a", "b"],
+        "agent_b": ["c", "d"],
+    })
+    assert selection == {
+        "agent_a": ["a", "b"],
+        "agent_b": ["c", "d"],
+    }
+
+
+def test_shared_skill_counts_once_for_council_total():
+    selection = gate.validate_council_selection({
+        "agent_a": ["a", "b"],
+        "agent_b": ["b", "c"],
+    })
+    assert selection["agent_a"] == ["a", "b"]
+    assert selection["agent_b"] == ["b", "c"]
+
+
+def test_rejects_more_than_four_unique_council_skills():
+    with pytest.raises(gate.SkillBudgetError, match="unique Council skills"):
+        gate.validate_council_selection({
+            "agent_a": ["a", "b"],
+            "agent_b": ["c", "d"],
+            "agent_c": ["e"],
+        })
+
+
 def test_rejects_duplicate_skills():
     with pytest.raises(gate.SkillBudgetError):
         gate.build_selection_manifest(["a", "a"])
