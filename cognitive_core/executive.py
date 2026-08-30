@@ -15,6 +15,7 @@ from .consolidation import Consolidator
 from .deduplication import Deduplicator
 from .learning import LearningEngine
 from .semantic import DeterministicSemanticProvider
+from .orchestrator import MultiAgentOrchestrator
 
 class Executive:
     """
@@ -24,8 +25,10 @@ class Executive:
     WIRE-2: All Phase 3 modules are wired in.
     WIRE-5: Automatic checkpointing after each step.
     WIRE-6: Error recovery and replanning.
+    WIRE-MAO: MultiAgentOrchestrator dispatch report attached to process_intent results.
     """
-    def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None):
+    def __init__(self, memory_controller: MemoryController, checkpoint_dir: str = None,
+                 orchestrator: Optional[MultiAgentOrchestrator] = None):
         self.controller = memory_controller
         self.router = ToolRouter(self.controller)
         self.activation_engine = ActivationEngine(self.controller)
@@ -42,6 +45,15 @@ class Executive:
         self.consolidator = Consolidator(self.controller, self.router)
         self.deduplicator = Deduplicator(self.controller, self.semantic_provider, self.router)
         self.learning_engine = LearningEngine(self.controller, self.router)
+
+        # WIRE-MAO: MultiAgentOrchestrator was implemented (Phase 4) with real
+        # worker roles and least-privilege enforcement, but process_intent()
+        # never called it -- route_and_dispatch() only had unit-test callers.
+        # It is wired in here, sharing this Executive's own ToolRouter so its
+        # RETRIEVAL worker's "search" call goes through the exact same
+        # authorization/audit path as every other action in this loop, rather
+        # than a second independent router instance with separate state.
+        self.orchestrator = orchestrator or MultiAgentOrchestrator(self.controller, self.router)
 
         # WIRE-6: retry tracking
         self._retry_count = 0
@@ -180,12 +192,31 @@ class Executive:
         except Exception:
             pass
 
+    def _dispatch_via_orchestrator(self, principal: Principal, query: str,
+                                    context: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """WIRE-MAO: Run the Router/Retrieval/Verifier/Synthesis worker pipeline.
+
+        This is additive telemetry, not a security gate: MultiAgentOrchestrator
+        already enforces least-privilege internally (a worker attempting an
+        action outside its allowed_actions raises PermissionError), so a
+        failure here is a bug or unexpected internal state, not an intentional
+        authorization block. Consistent with _fire_synapses/_run_maintenance
+        above, a failure must not kill the primary cognitive loop -- it is
+        caught and the loop proceeds without a dispatch_report rather than
+        aborting process_intent entirely.
+        """
+        try:
+            return self.orchestrator.route_and_dispatch(principal, query, context)
+        except Exception:
+            return None
+
     def process_intent(self, principal: Principal, intent_text: str) -> Dict[str, Any]:
         """
         Full cognitive loop:
         1. Observe (Parse Intent)
         2. Retrieve & Activate (with RecallEngine scoring)
         3. Attend & Hold in WM
+        3b. Dispatch via MultiAgentOrchestrator (Router/Retrieval/Verifier/Synthesis)
         4. Reason (marks unverified context)
         5. Plan (multi-step, context-aware)
         6. Execute first step
@@ -207,7 +238,13 @@ class Executive:
         # 3. Attend & Hold in WM
         self.working_memory.admit(nodes_for_wm)
         context = self.working_memory.get_active_context()
-        
+
+        # 3b. WIRE-MAO: Multi-Agent Orchestrator dispatch (previously unwired).
+        # Uses the same `query` and `context` already assembled above; does not
+        # duplicate the activation/recall work, only adds Router-triage,
+        # (conditional) deep-retrieval, Verifier tally, and Synthesis summary.
+        dispatch_report = self._dispatch_via_orchestrator(principal, query, context)
+
         # 4. Reason (READ-ONLY, aware of unverified status)
         reasoning = self.reasoning_engine.synthesize(principal, context, query)
         
@@ -216,10 +253,16 @@ class Executive:
         self._retry_count = 0
         
         if not self.planner.evaluate_plan(self.active_plan, context):
-            return {"status": "error", "error": "Could not generate a valid plan."}
+            error_result = {"status": "error", "error": "Could not generate a valid plan."}
+            if dispatch_report is not None:
+                error_result["dispatch_report"] = dispatch_report
+            return error_result
 
         # WIRE-5: Checkpoint the initial plan
         self._auto_checkpoint()
             
         # 6. Execute first step
-        return self.step_loop(principal)
+        step_result = self.step_loop(principal)
+        if dispatch_report is not None:
+            step_result["dispatch_report"] = dispatch_report
+        return step_result
