@@ -45,8 +45,14 @@ class MutationGate:
             raise PermissionError(f"{principal.value} cannot apply conflict verdicts")
 
     @staticmethod
-    def _require_review_approved(review_state: Mapping[str, Any]) -> None:
+    def _require_review_state(review_state: Mapping[str, Any], *, action: str) -> None:
         state = str(review_state.get("state") or "")
+        if action == "none":
+            if state != ReviewState.DEFERRED.value:
+                raise ValueError("DEFER requires review state DEFERRED")
+            if review_state.get("can_apply_mutation") is True:
+                raise ValueError("Deferred review state must not permit mutation")
+            return
         if state != ReviewState.APPROVED.value:
             raise ValueError("Review case must be APPROVED before mutation")
         if review_state.get("can_apply_mutation") is not True:
@@ -88,7 +94,7 @@ class MutationGate:
         reason: str,
     ) -> MutationResult:
         self._check_principal(principal)
-        self._require_review_approved(review_state)
+        self._require_review_state(review_state, action=action)
         if verdict.reviewer_principal not in {Principal.HUMAN.value, Principal.ADMIN.value}:
             raise PermissionError("Verdict reviewer is not an authorized human/admin principal")
         self._require_verified_evidence(verdict, evidence_verification)
@@ -103,7 +109,7 @@ class MutationGate:
                 principal,
                 verdict.verdict_id,
                 success=True,
-                details={"verdict": verdict.verdict.value, "evidence_bundle_hash": verdict.evidence_bundle_hash},
+                details={"verdict": verdict.verdict.value, "evidence_bundle_hash": verdict.evidence_bundle_hash, "review_state": review_state.get("state")},
             )
             return MutationResult(verdict.verdict_id, "none", verdict.memory_ids, False, "deferred")
 
