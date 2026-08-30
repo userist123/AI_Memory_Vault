@@ -8,12 +8,13 @@ When information conflicts, prefer: user-confirmed facts, direct execution/test 
 
 ## Runtime Context Contract
 
-The runtime MUST use sparse context. The machine-readable defaults are in `99_SYSTEM/Council_Runtime_Profile.yaml`. The detailed policy is `99_SYSTEM/Council_Context_Budget.md`; the mandatory execution protocol is `99_SYSTEM/Council_Context_Protocol.md`.
+The runtime MUST use sparse context. The machine-readable defaults are in `99_SYSTEM/Council_Runtime_Profile.yaml`. The detailed policy is `99_SYSTEM/Council_Context_Budget.md`; the mandatory execution protocol is `99_SYSTEM/Council_Context_Protocol.md`; skill loading rules are in `99_SYSTEM/Skill_Runtime_Manifest.md`.
 
 ```text
 MAX_COUNCIL_AGENTS = 3
 MAX_PRIMARY_AGENTS = 1
 MAX_SKILLS_PER_AGENT = 2
+MAX_TOTAL_SELECTED_SKILLS = 4
 MAX_MEMORY_RESULTS = 5
 MAX_GRAPH_EXPANSION = 1 hop
 MAX_SPECIALIST_OUTPUT = 600 tokens
@@ -39,12 +40,14 @@ CLASSIFY
 3. Capability mappings are authoritative in `99_SYSTEM/Agent_Capability_Registry.md`.
 4. Assigned capabilities MUST NOT be loaded wholesale.
 5. Load full `SKILL.md` only after selecting the skill for the current task.
-6. Retrieve memory only after intent classification and stop at the configured budget.
-7. Deduplicate shared context; do not repeat the same task, memory, skill or evidence in every specialist prompt.
-8. Obsidian navigation links are not runtime context unless directly required.
-9. Raw imports, audit reports, progress, handoff, briefing, dispatch and generated artifacts are excluded by default.
-10. Specialists return compact evidence; the lead performs one synthesis.
-11. No recursive council unless explicitly required; use staged execution for exceptional cases.
+6. Select at most two skills per agent and four skills across the council unless the task is explicitly staged.
+7. Retrieve memory only after intent classification and stop at the configured budget.
+8. Deduplicate shared context; do not repeat the same task, memory, skill or evidence in every specialist prompt.
+9. Obsidian navigation links are not runtime context unless directly required.
+10. Raw imports, audit reports, progress, handoff, briefing, dispatch and generated artifacts are excluded by default.
+11. Specialists return compact evidence; the lead performs one synthesis.
+12. No recursive council unless explicitly required; use staged execution for exceptional cases.
+13. A proposed council context SHOULD be validated against `99_SYSTEM/Council_Context_Validator.py` before execution when a runtime can execute local validation.
 
 ## Memory Rules
 
