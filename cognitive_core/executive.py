@@ -17,6 +17,7 @@ from .learning import LearningEngine
 from .semantic import DeterministicSemanticProvider
 from .orchestrator import MultiAgentOrchestrator
 from .council_budget_controller import CouncilBudgetController
+from .plan_complexity_analyzer import PlanComplexityAnalyzer
 
 class Executive:
     """
@@ -71,31 +72,21 @@ class Executive:
         self.deduplicator = Deduplicator(self.controller, self.semantic_provider, self.router)
         self.learning_engine = LearningEngine(self.controller, self.router)
 
-        # WIRE-MAO: MultiAgentOrchestrator was implemented (Phase 4) with real
-        # worker roles and least-privilege enforcement, but process_intent()
-        # never called it -- route_and_dispatch() only had unit-test callers.
-        # It is wired in here, sharing this Executive's own ToolRouter so its
-        # RETRIEVAL worker's "search" call goes through the exact same
-        # authorization/audit path as every other action in this loop, rather
-        # than a second independent router instance with separate state.
         self.orchestrator = orchestrator or MultiAgentOrchestrator(self.controller, self.router)
-
-        # WIRE-CBC: Council Budget Controller decides IF/HOW MUCH Council
-        # dispatch a task needs, BEFORE the orchestrator is ever called.
-        # Without this, every single task -- trivial or complex -- ran the
-        # full Router+Retrieval+Verifier+Synthesis pipeline unconditionally,
-        # on top of Activation+Recall+Reasoning+Planning+Reflection already
-        # running for every task. This is the actual token-multiplication
-        # risk: not that any one component is expensive, but that ALL of
-        # them ran for EVERY task regardless of whether the task warranted it.
         self.council_budget = council_budget or CouncilBudgetController()
 
-        # WIRE-6: retry tracking
+        # WIRE-C1.5: single source of truth for plan-derived complexity.
+        # Prevents Planner and CouncilBudgetController from silently
+        # becoming two independent opinions about task complexity --
+        # every complexity/require_review value passed to
+        # council_budget.decide() below is now derived from THIS
+        # analyzer's read of the real ActivePlan, not computed ad hoc.
+        self.complexity_analyzer = PlanComplexityAnalyzer()
+
         self._retry_count = 0
         self._max_retries = 2
 
     def save_state(self, base_dir: str = None):
-        """Saves WM and ActivePlan."""
         base_dir = base_dir or self.checkpoint_dir
         if not base_dir:
             return
@@ -105,18 +96,15 @@ class Executive:
             self.active_plan.save_state(os.path.join(base_dir, "plan.json"))
 
     def load_state(self, base_dir: str, principal: Principal):
-        """Loads WM and ActivePlan."""
         self.checkpoint_dir = base_dir
         wm_path = os.path.join(base_dir, "wm.json")
         if os.path.exists(wm_path):
             self.working_memory.load_state(wm_path, self.controller, principal)
-            
         plan_path = os.path.join(base_dir, "plan.json")
         if os.path.exists(plan_path):
             self.active_plan = ActivePlan.load_state(plan_path)
 
     def _auto_checkpoint(self):
-        """WIRE-5: Automatically checkpoint after each step completion."""
         if self.checkpoint_dir:
             self.save_state()
 
@@ -124,86 +112,49 @@ class Executive:
         return {"query": intent, "type": "task"}
         
     def step_loop(self, principal: Principal) -> Dict[str, Any]:
-        """
-        Executes the next step of the active plan.
-        WIRE-5: Auto-checkpoints after each successful step.
-        WIRE-6: Replans on failure up to max_retries.
-        """
         if not self.active_plan or self.active_plan.is_complete():
             return {"status": "idle", "message": "No active plan."}
-            
         context = self.working_memory.get_active_context()
         if not self.planner.evaluate_plan(self.active_plan, context):
             return {"status": "error", "error": "Active plan is no longer valid for the current context."}
-            
         step = self.active_plan.get_next_step()
         decision = {
             "action": step.get("action", "search"),
             "kwargs": {"query": step.get("query", ""), "page_size": 5},
             "context_used": context
         }
-        
-        # Act
         action_result = {}
         try:
             result = self.router.execute(principal, decision["action"], decision["kwargs"])
-            action_result = {
-                "status": "success",
-                "result": result,
-                "context": context
-            }
+            action_result = {"status": "success", "result": result, "context": context}
             self.active_plan.complete_current_step()
-            self._retry_count = 0  # Reset on success
-
-            # WIRE-5: Auto-checkpoint after successful step
+            self._retry_count = 0
             self._auto_checkpoint()
-
-            # WIRE-2: Fire dynamic synapses on success
             self._fire_synapses(principal, context)
-
-            # Trigger maintenance if plan completed
             if self.active_plan.is_complete():
                 self._run_maintenance(principal)
-            
         except ApprovalRequiredError as e:
-            action_result = {
-                "status": "blocked",
-                "reason": str(e),
-                "context": context
-            }
+            action_result = {"status": "blocked", "reason": str(e), "context": context}
         except Exception as e:
-            action_result = {
-                "status": "error",
-                "error": str(e)
-            }
-            
-            # WIRE-6: Attempt replanning on error
+            action_result = {"status": "error", "error": str(e)}
             if self._retry_count < self._max_retries:
                 self._retry_count += 1
-                new_plan = self.planner.replan(
-                    self.active_plan.goal, context, decision, str(e)
-                )
+                new_plan = self.planner.replan(self.active_plan.goal, context, decision, str(e))
                 self.active_plan = new_plan
                 action_result["replanned"] = True
                 self._auto_checkpoint()
-            
-        # Reflect & Learn
         intent_mock = {"query": self.active_plan.goal if self.active_plan else "unknown"}
         try:
             new_memory_id = self.reflection.evaluate_outcome(principal, intent_mock, decision, action_result)
             if new_memory_id:
                 action_result["reflection_memory_generated"] = new_memory_id
         except Exception:
-            # WIRE-6: Reflection failure must not kill the loop
             pass
-            
         return action_result
 
     def _fire_synapses(self, principal: Principal, context: List[Dict[str, Any]]):
-        """WIRE-2: Create dynamic synapses between co-activated nodes."""
         if len(context) < 2:
             return
-        # Link the first node to the second (minimal synapse creation)
         try:
             first_id = context[0].get("id")
             second_id = context[1].get("id")
@@ -213,7 +164,6 @@ class Executive:
             pass
 
     def _run_maintenance(self, principal: Principal):
-        """WIRE-2: Run post-task maintenance (consolidation, dedup, learning)."""
         try:
             self.consolidator.consolidate_lessons(principal)
         except Exception:
@@ -229,19 +179,6 @@ class Executive:
 
     def _estimate_complexity(self, query: str, context: List[Dict[str, Any]],
                               plan: Optional[ActivePlan] = None) -> int:
-        """Complexity signal for CouncilBudgetController.
-
-        Prefers the REAL signal when available: len(plan.steps) from
-        Planner.create_plan() (cognitive_core/planning.py), which is a
-        deterministic reflection of the Planner's own decomposition (base
-        "search" step, +1 if context has unverified items, +1 if context
-        has relations -- confirmed by reading planning.py directly, not
-        assumed). This is no longer a proxy once `plan` is supplied.
-
-        Falls back to the word-count/context-size heuristic ONLY when no
-        plan is available yet (kept for any caller that might invoke
-        dispatch before planning exists).
-        """
         if plan is not None:
             return 2 if len(plan.steps) >= self.COMPLEXITY_PLAN_STEP_THRESHOLD else 1
         word_count = len(str(query).split())
@@ -253,44 +190,10 @@ class Executive:
                                     context: List[Dict[str, Any]], *,
                                     complexity: int = 1,
                                     require_review: bool = False) -> Optional[Dict[str, Any]]:
-        """WIRE-CBC + WIRE-MAO: Gate, then (conditionally) run the Council pipeline.
-
-        WIRE-CBC gate (runs first, no exception handling needed -- it makes
-        no calls of its own): CouncilBudgetController.decide() looks at the
-        query/complexity/risk signals and returns a tier. NONE means the
-        orchestrator is never even called -- this is the actual fix for
-        "Executive + full Council + Reasoning + Planner + Reflection running
-        unconditionally for every task": trivial tasks now skip Council
-        entirely, at zero additional cost beyond the decision itself.
-
-        WIRE-MAO dispatch (only reached for LIGHT/STANDARD/HIGH_RISK tiers):
-        this is additive telemetry, not a security gate -- MultiAgentOrchestrator
-        already enforces least-privilege internally (a worker attempting an
-        action outside its allowed_actions raises PermissionError), so a
-        failure here is a bug or unexpected internal state, not an intentional
-        authorization block. Consistent with _fire_synapses/_run_maintenance
-        above, a failure must not kill the primary cognitive loop.
-        """
         decision = self.council_budget.decide(query, complexity=complexity, require_review=require_review)
         if not decision.should_dispatch:
             return None
-
         try:
-            # skip_retrieval=True: `context` here already comes from this
-            # Executive's own ActivationEngine + RecallEngine pass over this
-            # exact `query`. decision.run_retrieval instead controls whether
-            # route_and_dispatch's OWN Retrieval worker runs on top of that
-            # -- for LIGHT tier it stays off; skip_retrieval already blocks
-            # the keyword-triggered path regardless of tier.
-            #
-            # max_context_items=MAX_COUNCIL_MEMORY_RESULTS: confirmed real
-            # value from 99_SYSTEM/Council_Context_Budget.md
-            # (`max_memory_results: 5`), not a guess. This fixes the
-            # WorkingMemory(capacity=10) vs Council budget mismatch:
-            # WorkingMemory may legitimately hold up to 10 items for the
-            # Executive's own reasoning/planning, but the Council pipeline
-            # must never see more than the policy's memory-result budget,
-            # regardless of how large WorkingMemory's context happens to be.
             report = self.orchestrator.route_and_dispatch(
                 principal, query, context,
                 skip_retrieval=not decision.run_retrieval,
@@ -304,64 +207,41 @@ class Executive:
             return None
 
     def process_intent(self, principal: Principal, intent_text: str) -> Dict[str, Any]:
-        """
-        Full cognitive loop (WIRE-CBC-REAL: dispatch reordered after planning
-        so the Council budget decision uses the Planner's REAL step count,
-        not a pre-planning proxy):
-        1. Observe (Parse Intent)
-        2. Retrieve & Activate (with RecallEngine scoring)
-        3. Attend & Hold in WM
-        4. Reason (marks unverified context)
-        5. Plan (multi-step, context-aware) -- real step count now exists
-        5b. Dispatch via MultiAgentOrchestrator, gated by CouncilBudgetController
-            using the real plan step count as the complexity signal
-        6. Execute first step
-        """
-        # 1. Observe
         intent = self._parse_intent(intent_text)
         query = intent.get("query", "")
-        
-        # 2. Retrieve & Activate
         activated_nodes = self.activation_engine.activate_from_query(principal, query)
-        
-        # WIRE-9/WIRE-2: Apply RecallEngine scoring on top of activation
-        recalled = self.recall_engine.recall(
-            principal, query, activated_nodes, self.working_memory
-        )
-        # Use recalled ordering for WM admission
+        recalled = self.recall_engine.recall(principal, query, activated_nodes, self.working_memory)
         nodes_for_wm = [(node, score) for node, score in recalled] if recalled else activated_nodes
-        
-        # 3. Attend & Hold in WM
         self.working_memory.admit(nodes_for_wm)
         context = self.working_memory.get_active_context()
-
-        # 4. Reason (READ-ONLY, aware of unverified status)
         reasoning = self.reasoning_engine.synthesize(principal, context, query)
-
-        # 5. Plan (multi-step, context-aware) -- produces the REAL step
-        # count that _estimate_complexity() now uses instead of a proxy.
         self.active_plan = self.planner.create_plan(query, context)
         self._retry_count = 0
 
-        # 5b. WIRE-CBC-REAL: Multi-Agent Orchestrator dispatch, gated by
-        # CouncilBudgetController using the actual Planner step count as
-        # the complexity signal -- moved here (after planning) specifically
-        # so this signal is real instead of a pre-planning heuristic proxy.
+        # WIRE-C1.5: PlanComplexityAnalyzer is now the single source of
+        # truth feeding CouncilBudgetController -- complexity AND
+        # require_review both come from the same real ActivePlan read,
+        # instead of complexity being derived here while risk is inferred
+        # separately from query keywords inside CouncilBudgetController.
+        plan_complexity = self.complexity_analyzer.analyze(self.active_plan)
         dispatch_report = self._dispatch_via_orchestrator(
             principal, query, context,
-            complexity=self._estimate_complexity(query, context, self.active_plan),
+            complexity=plan_complexity.council_complexity,
+            require_review=plan_complexity.require_review,
         )
+        if dispatch_report is not None:
+            dispatch_report["plan_complexity"] = {
+                "step_count": plan_complexity.step_count,
+                "execution_mode": plan_complexity.execution_mode.value,
+                "destructive_steps": plan_complexity.destructive_steps,
+            }
 
         if not self.planner.evaluate_plan(self.active_plan, context):
             error_result = {"status": "error", "error": "Could not generate a valid plan."}
             if dispatch_report is not None:
                 error_result["dispatch_report"] = dispatch_report
             return error_result
-
-        # WIRE-5: Checkpoint the initial plan
         self._auto_checkpoint()
-            
-        # 6. Execute first step
         step_result = self.step_loop(principal)
         if dispatch_report is not None:
             step_result["dispatch_report"] = dispatch_report
