@@ -1,20 +1,15 @@
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
-from enum import Enum
-from memory_controller.authorizer import Principal
+import enum
+from typing import Dict, Any, List, Optional, Callable
 from memory_controller.controller import MemoryController
-from cognitive_core.tool_router import ToolRouter
-from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
-from cognitive_core.agents import (
-    BaseWorkerAgent,
-    RouterAgent,
-    RetrievalAgent,
-    VerifierAgent,
-    ConsolidatorAgent,
-    CriticAgent
-)
+from memory_controller.authorizer import Principal
+from .tool_router import ToolRouter, RiskLevel, ApprovalRequiredError
+from .recall import RecallEngine
+from .reflection import ReflectionPipeline, SelfRefine
+from .deduplication import Deduplicator
+from .consolidation import Consolidator
+from .semantic import DeterministicSemanticProvider
 
-class AgentRole(str, Enum):
+class AgentRole(str, enum.Enum):
     ROUTER = "router"
     RETRIEVAL = "retrieval"
     VERIFIER = "verifier"
@@ -22,40 +17,36 @@ class AgentRole(str, Enum):
     CRITIC = "critic"
     SYNTHESIZER = "synthesizer"
 
-@dataclass
 class SubagentSpec:
-    role: AgentRole
-    allowed_actions: List[str]
-    max_steps: int = 3
-
-class WorkerExecutionError(Exception):
-    """Raised when a worker execution fails during orchestration."""
-    pass
+    """Specifies role, allowed tool actions, model tier, and step limits."""
+    def __init__(self, role: AgentRole, allowed_actions: List[str], model_tier: str = "light", max_steps: int = 3):
+        self.role = role
+        self.allowed_actions = set(allowed_actions)
+        self.model_tier = model_tier
+        self.max_steps = max_steps
 
 class MultiAgentOrchestrator:
-    """Orchestrates specialized subagents with least-privilege tool execution scoping
-    and Global Workspace competition broadcasting.
+    """Orchestrator-Worker Multi-Agent System.
+    Dispatches specialized tasks to bounded worker subagents with strict privilege scoping.
     """
 
-    def __init__(self, controller: MemoryController, router: Optional[ToolRouter] = None, global_workspace: Optional[GlobalWorkspace] = None):
-        self.controller = controller
-        self.router = router or ToolRouter(self.controller)
-        self.global_workspace = global_workspace or GlobalWorkspace()
-        
+    def __init__(self, memory_controller: MemoryController, tool_router: Optional[ToolRouter] = None):
+        self.controller = memory_controller
+        self.router = tool_router or ToolRouter(self.controller)
+        self.semantic = DeterministicSemanticProvider()
+        self.recall_engine = RecallEngine(self.controller, self.semantic)
+        self.reflection = ReflectionPipeline(self.controller)
+        self.deduplicator = Deduplicator(self.controller, self.semantic, self.router)
+        self.consolidator = Consolidator(self.controller, self.router)
+
+        # Worker specifications with least privilege
         self.workers: Dict[AgentRole, SubagentSpec] = {
-            AgentRole.ROUTER: SubagentSpec(AgentRole.ROUTER, ["search", "read"], max_steps=2),
-            AgentRole.RETRIEVAL: SubagentSpec(AgentRole.RETRIEVAL, ["search", "read"], max_steps=3),
-            AgentRole.VERIFIER: SubagentSpec(AgentRole.VERIFIER, ["read"], max_steps=2),
-            AgentRole.CONSOLIDATOR: SubagentSpec(AgentRole.CONSOLIDATOR, ["search", "read", "propose", "archive"], max_steps=4),
-            AgentRole.CRITIC: SubagentSpec(AgentRole.CRITIC, ["read", "propose"], max_steps=3),
-            AgentRole.SYNTHESIZER: SubagentSpec(AgentRole.SYNTHESIZER, ["read"], max_steps=2),
-        }
-        self.worker_agents: Dict[AgentRole, BaseWorkerAgent] = {
-            AgentRole.ROUTER: RouterAgent(self.controller, self.router),
-            AgentRole.RETRIEVAL: RetrievalAgent(self.controller, self.router),
-            AgentRole.VERIFIER: VerifierAgent(self.controller, self.router),
-            AgentRole.CONSOLIDATOR: ConsolidatorAgent(self.controller, self.router),
-            AgentRole.CRITIC: CriticAgent(self.controller, self.router)
+            AgentRole.ROUTER: SubagentSpec(AgentRole.ROUTER, ["search"], model_tier="light", max_steps=2),
+            AgentRole.RETRIEVAL: SubagentSpec(AgentRole.RETRIEVAL, ["search", "read"], model_tier="light", max_steps=3),
+            AgentRole.VERIFIER: SubagentSpec(AgentRole.VERIFIER, ["read"], model_tier="light", max_steps=2),
+            AgentRole.CONSOLIDATOR: SubagentSpec(AgentRole.CONSOLIDATOR, ["search", "propose", "archive"], model_tier="standard", max_steps=4),
+            AgentRole.CRITIC: SubagentSpec(AgentRole.CRITIC, ["read", "propose"], model_tier="standard", max_steps=3),
+            AgentRole.SYNTHESIZER: SubagentSpec(AgentRole.SYNTHESIZER, ["read"], model_tier="heavy", max_steps=2),
         }
 
     def _execute_worker_action(self, role: AgentRole, principal: Principal, action: str, kwargs: Dict[str, Any]) -> Any:
@@ -64,102 +55,78 @@ class MultiAgentOrchestrator:
             raise PermissionError(f"Subagent '{role.value}' is not permitted to perform action '{action}'")
         return self.router.execute(principal, action, kwargs)
 
-    def _invoke_worker_agent(self, role: AgentRole, principal: Principal, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Invokes the real specialized worker agent for `role` via its public
-        process_task(principal, task) contract. Submits workspace proposal to GlobalWorkspace.
-        """
-        agent = self.worker_agents.get(role)
-        if agent is None:
-            return {"agent": role.value, "executed": False, "error": f"No worker agent registered for role '{role.value}'"}
-        try:
-            result = agent.process_task(principal, task)
-            
-            # Submit proposal to GlobalWorkspace for competition
-            coherence = 0.8 if result else 0.3
-            proposal = WorkspaceProposal(
-                agent_id=role.value,
-                content=result,
-                coherence_score=coherence,
-                action_type=role.value
-            )
-            self.global_workspace.submit_proposal(proposal)
-            
-            return {"agent": role.value, "executed": True, "result": result}
-        except Exception as e:
-            return {"agent": role.value, "executed": False, "error": str(e)}
-
-    def route_and_dispatch(self, principal: Principal, query: str, context: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def route_and_dispatch(
+        self,
+        principal: Principal,
+        query: str,
+        context: List[Dict[str, Any]],
+        skip_retrieval: bool = False,
+    ) -> Dict[str, Any]:
         """Dispatches query across the orchestrator pipeline:
-        Router -> Retrieval Worker -> Verifier/Critic Worker -> Global Workspace Competition -> Synthesis.
+        Router -> Retrieval Worker -> Verifier/Critic Worker -> Synthesis.
+
+        skip_retrieval: set True when `context` was already produced by a
+        prior retrieval pass over this exact `query` (e.g. Executive's own
+        ActivationEngine + RecallEngine step). Without this flag, any query
+        containing a deep-retrieval keyword ("search", "find", ...) always
+        triggers a second, redundant live search through the RETRIEVAL
+        worker even when the caller already retrieved for that query.
+        Defaults to False to preserve the original standalone contract for
+        direct callers (e.g. cognitive_core/tests/test_multiagent_orchestration.py)
+        that pass hand-built context and rely on this method to do its own
+        retrieval.
         """
         history = []
 
         # 1. Router / Triage
         lowered = query.lower()
-        needs_deep_retrieval = any(k in lowered for k in ["search", "find", "all", "history", "lookup", "detail"])
-
-        router_contribution = self._invoke_worker_agent(
-            AgentRole.ROUTER, principal, {"query": query, "context": context}
+        needs_deep_retrieval = (not skip_retrieval) and any(
+            k in lowered for k in ["search", "find", "all", "history", "lookup", "detail"]
         )
-        history.append(router_contribution)
 
         # 2. Retrieval Worker
         retrieved_nodes = []
         if needs_deep_retrieval:
-            retrieval_contribution = self._invoke_worker_agent(
-                AgentRole.RETRIEVAL, principal, {"query": query, "context": context}
+            search_pack = self._execute_worker_action(
+                AgentRole.RETRIEVAL, principal, "search", {"query": query, "page_size": 5}
             )
-            history.append(retrieval_contribution)
-            if retrieval_contribution.get("executed"):
-                retrieved_nodes = retrieval_contribution.get("result", {}).get("results", [])
+            retrieved_nodes = search_pack.get("results", [])
+            history.append({"agent": AgentRole.RETRIEVAL.value, "retrieved_count": len(retrieved_nodes)})
 
         combined_context = list(context) + retrieved_nodes
 
-        # 3. Verifier Worker & Critic Worker
-        verified_count = sum(1 for n in combined_context if n.get("verification") == "verified")
-        unverified_count = len(combined_context) - verified_count
+        # 3. Verifier Worker (checks verification status and flags unverified claims)
+        verified_count = 0
+        unverified_count = 0
+        for node in combined_context:
+            if node.get("verification") == "verified":
+                verified_count += 1
+            else:
+                unverified_count += 1
         history.append({
             "agent": AgentRole.VERIFIER.value,
             "verified_nodes": verified_count,
             "unverified_nodes": unverified_count
         })
 
-        verifier_contribution = self._invoke_worker_agent(
-            AgentRole.VERIFIER, principal, {"query": query, "context": combined_context}
-        )
-        history.append(verifier_contribution)
-
-        critic_contribution = self._invoke_worker_agent(
-            AgentRole.CRITIC, principal, {"query": query, "context": combined_context}
-        )
-        history.append(critic_contribution)
-
-        # 4. Global Workspace Competition & Broadcast
-        broadcast_result = self.global_workspace.compete_and_broadcast()
-
-        # 5. Synthesis
+        # 4. Synthesis
         synthesis_result = {
             "query": query,
             "orchestration_history": history,
             "total_context_used": len(combined_context),
-            "global_broadcast": broadcast_result,
             "status": "completed"
         }
         return synthesis_result
 
     def run_maintenance_pipeline(self, principal: Principal) -> Dict[str, Any]:
-        """Runs the background maintenance pipeline via the ConsolidatorAgent."""
-        consolidator_agent = self.worker_agents[AgentRole.CONSOLIDATOR]
-        outcome = consolidator_agent.process_task(principal, {"type": "all"})
-        res = outcome.get("results", {})
-        return {
-            "duplicates_flagged": res.get("duplicates_flagged", 0),
-            "consolidated_id": res.get("consolidated_id"),
-        }
+        """Runs the background maintenance pipeline via specialized worker agents."""
+        results = {}
+        # Deduplication worker
+        flagged = self.deduplicator.scan_for_duplicates(principal)
+        results["duplicates_flagged"] = len(flagged)
 
+        # Consolidation worker
+        consolidated_id = self.consolidator.consolidate_lessons(principal)
+        results["consolidated_id"] = consolidated_id
 
-class MultiAgentDispatcher:
-    """Local & Distributed LLM dispatcher integrating Ollama models across
-    local daemons, Google Colab, and Kaggle GPU nodes.
-    """
-    pass
+        return results

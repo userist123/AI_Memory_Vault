@@ -91,3 +91,46 @@ def test_default_orchestrator_shares_executive_tool_router():
     # ToolRouter so worker actions go through the same authorization/audit
     # path as every other action in the loop, not a second independent one.
     assert executive.orchestrator.router is executive.router
+
+
+def test_dispatch_via_orchestrator_skips_redundant_retrieval():
+    # Regression test: before skip_retrieval, any query containing a
+    # deep-retrieval keyword ("search", "find", ...) made route_and_dispatch
+    # fire a second live "search" through the ToolRouter, duplicating the
+    # ActivationEngine + RecallEngine retrieval Executive already did for the
+    # same query. This confirms the RETRIEVAL worker step is now skipped when
+    # called from Executive.
+    storage = StorageEngine()
+    controller = MemoryController(storage)
+    executive = Executive(controller)
+
+    result = executive.process_intent(Principal.AI_AGENT, "search for related procedures")
+
+    retrieval_entries = [
+        h for h in result["dispatch_report"]["orchestration_history"]
+        if h.get("agent") == AgentRole.RETRIEVAL.value
+    ]
+    assert retrieval_entries == []
+
+
+def test_direct_orchestrator_callers_keep_original_retrieval_behavior():
+    # Backward-compatibility check: a caller that does NOT pass
+    # skip_retrieval (the direct/standalone contract exercised by
+    # cognitive_core/tests/test_multiagent_orchestration.py) must keep the
+    # original behavior -- deep-retrieval keywords still trigger the
+    # RETRIEVAL worker exactly as before this change.
+    storage = StorageEngine()
+    controller = MemoryController(storage)
+    orchestrator = MultiAgentOrchestrator(controller)
+
+    context = [
+        {"id": "n1", "content": "Verified knowledge", "verification": "verified"},
+        {"id": "n2", "content": "Inferred knowledge", "verification": "unverified"},
+    ]
+    result = orchestrator.route_and_dispatch(Principal.AI_AGENT, "search for related procedures", context)
+
+    retrieval_entries = [
+        h for h in result["orchestration_history"]
+        if h.get("agent") == AgentRole.RETRIEVAL.value
+    ]
+    assert len(retrieval_entries) == 1

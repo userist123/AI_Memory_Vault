@@ -206,7 +206,14 @@ class Executive:
         aborting process_intent entirely.
         """
         try:
-            return self.orchestrator.route_and_dispatch(principal, query, context)
+            # skip_retrieval=True: `context` here already comes from this
+            # Executive's own ActivationEngine + RecallEngine pass over this
+            # exact `query` (see process_intent steps 2-3, just above the
+            # call site). Without this flag, any query containing a
+            # deep-retrieval keyword would make route_and_dispatch fire a
+            # second, redundant live "search" through the same ToolRouter for
+            # the same query -- doubling retrieval cost with no new signal.
+            return self.orchestrator.route_and_dispatch(principal, query, context, skip_retrieval=True)
         except Exception:
             return None
 
