@@ -30,6 +30,10 @@ def verified():
     }
 
 
+def confidence(promotable=True, score=0.9):
+    return {"promotable": promotable, "score": score}
+
+
 def test_human_can_promote_verified_learning_candidate():
     controller = RecordingController()
     result = LearningPromotionGate(controller).apply(
@@ -38,8 +42,10 @@ def test_human_can_promote_verified_learning_candidate():
         memory_id="learn-1",
         evidence_verification=verified(),
         evidence_bundle_hash="a" * 64,
+        confidence=confidence(),
     )
     assert result.changed is True
+    assert result.confidence_score == 0.9
     assert controller.calls == [("human", "learn-1")]
 
 
@@ -52,6 +58,7 @@ def test_ai_agent_cannot_promote():
             memory_id="learn-1",
             evidence_verification=verified(),
             evidence_bundle_hash="a" * 64,
+            confidence=confidence(),
         )
     assert controller.calls == []
 
@@ -67,5 +74,20 @@ def test_hash_mismatch_blocks_promotion():
             memory_id="learn-1",
             evidence_verification=evidence,
             evidence_bundle_hash="a" * 64,
+            confidence=confidence(),
+        )
+    assert controller.calls == []
+
+
+def test_non_promotable_confidence_blocks_promotion():
+    controller = RecordingController()
+    with pytest.raises(ValueError):
+        LearningPromotionGate(controller).apply(
+            principal=Principal.HUMAN,
+            reviewer="reviewer-1",
+            memory_id="learn-1",
+            evidence_verification=verified(),
+            evidence_bundle_hash="a" * 64,
+            confidence=confidence(promotable=False, score=0.99),
         )
     assert controller.calls == []
