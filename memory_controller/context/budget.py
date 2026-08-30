@@ -1,10 +1,9 @@
 import json
-import zlib
 from typing import Dict, Any, List
 
 
 class BudgetExceededError(RuntimeError):
-    """Raised when the context cannot be fitted within the hard byte limit."""
+    """Raised when the final context cannot fit within the hard byte limit."""
 
 
 class ContextBudgetError(BudgetExceededError):
@@ -12,17 +11,13 @@ class ContextBudgetError(BudgetExceededError):
 
 
 class ContextBudget:
-    """Per-request context budget with hard limits and deterministic degradation."""
+    """Per-request context budget with deterministic degradation."""
 
     def __init__(self, config: Dict[str, Any]):
-        self.max_notes = int(config.get("max_notes", 5))
-        self.max_full_documents = int(config.get("max_full_documents", 3))
-        self.soft_limit_bytes = int(config.get("soft_limit_bytes", config.get("soft_context_budget", 16 * 1024)))
-        self.hard_limit_bytes = int(config.get("hard_limit_bytes", config.get("hard_context_budget", 32 * 1024)))
-        if self.max_notes < 1 or self.max_full_documents < 0:
-            raise ValueError("Invalid context note limits")
-        if self.hard_limit_bytes <= 0 or self.soft_limit_bytes <= 0 or self.soft_limit_bytes > self.hard_limit_bytes:
-            raise ValueError("Invalid context byte limits")
+        self.max_notes = max(1, int(config.get("max_notes", 5)))
+        self.max_full_documents = max(0, int(config.get("max_full_documents", 2)))
+        self.soft_limit_bytes = max(1, int(config.get("soft_limit_bytes", 12 * 1024)))
+        self.hard_limit_bytes = max(self.soft_limit_bytes, int(config.get("hard_limit_bytes", 24 * 1024)))
 
     @property
     def soft_context_budget(self) -> int:
@@ -32,11 +27,9 @@ class ContextBudget:
     def hard_context_budget(self) -> int:
         return self.hard_limit_bytes
 
-    def _size_of(self, note: Dict[str, Any]) -> int:
-        content = note.get("content", "")
-        if isinstance(content, bytes):
-            return len(content)
-        return len(str(content).encode("utf-8"))
+    @staticmethod
+    def _size_of(note: Dict[str, Any]) -> int:
+        return len(json.dumps(note, ensure_ascii=False, default=str, separators=(",", ":")).encode("utf-8"))
 
     def usage(self, notes: List[Dict[str, Any]]) -> int:
         return sum(self._size_of(n) for n in notes)
@@ -49,18 +42,15 @@ class ContextBudget:
         self.check_hard_limit(usage)
 
     def apply_degradation(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Keep the highest-value notes and deterministically fit the soft/hard budget."""
-        ordered = sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]
-
+        ordered = [dict(n) for n in sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]]
         for index, note in enumerate(ordered):
             if index >= self.max_full_documents:
                 note["content"] = ""
 
-        while self.usage(ordered) > self.soft_limit_bytes and len(ordered) > 1:
+        while len(ordered) > 1 and self.usage(ordered) > self.soft_limit_bytes:
             ordered.pop()
 
-        # Degrade remaining content without destroying metadata/provenance.
-        if self.usage(ordered) > self.soft_limit_bytes:
+        if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in ordered:
                 content = note.get("content", "")
                 if isinstance(content, str) and len(content) > 256:
@@ -68,7 +58,7 @@ class ContextBudget:
                     if self.usage(ordered) <= self.soft_limit_bytes:
                         break
 
-        if self.usage(ordered) > self.soft_limit_bytes:
+        if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in reversed(ordered):
                 if self.usage(ordered) <= self.soft_limit_bytes:
                     break
@@ -78,19 +68,17 @@ class ContextBudget:
         return ordered
 
     def enforce_max_full(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        ordered = sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)
+        ordered = sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]
         for index, note in enumerate(ordered):
             if index >= self.max_full_documents:
                 note["content"] = ""
-        return ordered[:self.max_notes]
+        return ordered
 
 
 def load_agent_budget(agent_id: str, config_path: str = "config/agent_budgets.json") -> ContextBudget:
-    """Load an agent-specific budget; absent config safely uses sparse defaults."""
     try:
         with open(config_path, "r", encoding="utf-8") as handle:
             data = json.load(handle)
-        agent_cfg = data.get(agent_id, {})
-    except (FileNotFoundError, json.JSONDecodeError):
-        agent_cfg = {}
-    return ContextBudget(agent_cfg)
+        return ContextBudget(data.get(agent_id, data.get("default", {})))
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        return ContextBudget({})
