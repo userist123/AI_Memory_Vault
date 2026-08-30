@@ -64,7 +64,16 @@ class MultiAgentOrchestrator:
         run_verifier: bool = True,
         max_context_items: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Dispatches query across the orchestrator pipeline:
+        """WIRE-C3: each orchestration_history entry now includes a real
+        model_tier (light/standard/heavy), sourced from that worker's own
+        SubagentSpec.model_tier (defined once in __init__, not invented at
+        report time). This is preparation for Option A (LLM provider/model
+        integration): when a real model call is eventually wired into a
+        worker, the per-worker tier used to pick a provider/model is already
+        available in this telemetry, rather than needing to be decided from
+        scratch at that point.
+
+        Dispatches query across the orchestrator pipeline:
         Router -> Retrieval Worker -> Verifier Worker (optional) -> Synthesis.
 
         skip_retrieval: set True when `context` was already produced by a
@@ -106,7 +115,16 @@ class MultiAgentOrchestrator:
                 AgentRole.RETRIEVAL, principal, "search", {"query": query, "page_size": 5}
             )
             retrieved_nodes = search_pack.get("results", [])
-            history.append({"agent": AgentRole.RETRIEVAL.value, "retrieved_count": len(retrieved_nodes)})
+            history.append({
+                "agent": AgentRole.RETRIEVAL.value,
+                "retrieved_count": len(retrieved_nodes),
+                # WIRE-C3: real model_tier from this worker's own SubagentSpec
+                # (defined in __init__, not invented here) -- so a future LLM
+                # integration (Option A) has a real per-worker tier signal to
+                # select a provider/model with, instead of guessing one at
+                # that later point.
+                "model_tier": self.workers[AgentRole.RETRIEVAL].model_tier,
+            })
 
         combined_context = list(context) + retrieved_nodes
         if max_context_items is not None:
@@ -124,7 +142,9 @@ class MultiAgentOrchestrator:
             history.append({
                 "agent": AgentRole.VERIFIER.value,
                 "verified_nodes": verified_count,
-                "unverified_nodes": unverified_count
+                "unverified_nodes": unverified_count,
+                # WIRE-C3: same real model_tier signal as the Retrieval entry.
+                "model_tier": self.workers[AgentRole.VERIFIER].model_tier,
             })
 
         # 4. Synthesis
