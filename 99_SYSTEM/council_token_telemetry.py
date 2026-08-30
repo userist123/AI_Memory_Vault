@@ -1,9 +1,7 @@
 """Provider-neutral token accounting for Council runs.
 
-This module keeps selection/context accounting backward-compatible while
-adding optional provider-reported usage fields. Concrete providers populate
-actual usage through the model usage adapter; estimated counters remain useful
-for local models or providers that do not report token usage.
+This module measures context composition without requiring a model SDK. Exact
+provider usage should be attached by the model adapter when available.
 """
 from __future__ import annotations
 
@@ -32,11 +30,6 @@ class CouncilTokenTelemetry:
     specialist_output_tokens: int = 0
     synthesis_input_tokens: int = 0
     synthesis_output_tokens: int = 0
-    actual_input_tokens: int = 0
-    actual_output_tokens: int = 0
-    cached_input_tokens: int = 0
-    reasoning_tokens: int = 0
-    actual_total_tokens: int = 0
     saved_by_deduplication: int = 0
     rejected_items: int = 0
     events: List[Dict[str, Any]] = field(default_factory=list)
@@ -72,45 +65,13 @@ class CouncilTokenTelemetry:
         self.synthesis_input_tokens += estimate_tokens(input_value)
         self.synthesis_output_tokens += estimate_tokens(output_value)
 
-    def record_actual_usage(
-        self,
-        *,
-        kind: str,
-        provider: str,
-        model: str,
-        model_tier: str,
-        actual_input: int | None,
-        actual_output: int | None,
-        cached_input: int | None,
-        reasoning_tokens: int | None,
-        total: int | None,
-    ) -> None:
-        """Append provider-reported usage without disturbing estimate counters."""
-        self.actual_input_tokens += int(actual_input or 0)
-        self.actual_output_tokens += int(actual_output or 0)
-        self.cached_input_tokens += int(cached_input or 0)
-        self.reasoning_tokens += int(reasoning_tokens or 0)
-        if total is not None:
-            self.actual_total_tokens += int(total)
-        elif actual_input is not None or actual_output is not None:
-            self.actual_total_tokens += int(actual_input or 0) + int(actual_output or 0)
-
-        self.events.append({
-            "type": "model_usage",
-            "kind": kind,
-            "provider": provider,
-            "model": model,
-            "model_tier": model_tier,
-            "actual_input": actual_input,
-            "actual_output": actual_output,
-            "cached_input": cached_input,
-            "reasoning_tokens": reasoning_tokens,
-            "total": total,
-        })
-
     @property
     def estimated_total_tokens(self) -> int:
-        """Estimated model-token volume across specialist and synthesis calls."""
+        """Estimated model-token volume across specialist and synthesis calls.
+
+        The deduplicated context is an assembly metric, not an additional
+        model call, so it is intentionally not added a second time here.
+        """
         return (
             self.specialist_input_tokens
             + self.specialist_output_tokens
@@ -120,6 +81,7 @@ class CouncilTokenTelemetry:
 
     @property
     def estimated_context_savings(self) -> int:
+        """Tokens removed by context deduplication before model invocation."""
         return self.saved_by_deduplication
 
     def as_dict(self) -> Dict[str, Any]:
@@ -134,11 +96,6 @@ class CouncilTokenTelemetry:
             "specialist_output_tokens": self.specialist_output_tokens,
             "synthesis_input_tokens": self.synthesis_input_tokens,
             "synthesis_output_tokens": self.synthesis_output_tokens,
-            "actual_input_tokens": self.actual_input_tokens,
-            "actual_output_tokens": self.actual_output_tokens,
-            "cached_input_tokens": self.cached_input_tokens,
-            "reasoning_tokens": self.reasoning_tokens,
-            "actual_total_tokens": self.actual_total_tokens,
             "saved_by_deduplication": self.saved_by_deduplication,
             "estimated_context_savings": self.estimated_context_savings,
             "rejected_items": self.rejected_items,
