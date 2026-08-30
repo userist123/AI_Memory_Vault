@@ -1,0 +1,21 @@
+{
+  "agents": [
+    {
+      "id": "backend_systems_engineer",
+      "role": "primary",
+      "skills": ["skill-backend-performance-tuning"]
+    },
+    {
+      "id": "database_and_persistence_engineer",
+      "role": "specialist",
+      "skills": ["skill-postgresql-indexing-tuning"]
+    }
+  ],
+  "memory_results": ["memory-1", "memory-2"],
+  "graph_hops": 1,
+  "specialist_output_tokens": 420,
+  "synthesis_input_tokens": 1800,
+  "recursive_council": false,
+  "whole_vault": false,
+  "load_all_assigned_skills": false
+}
