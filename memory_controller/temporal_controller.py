@@ -43,7 +43,13 @@ def matches_temporal(note: Dict[str, Any], *, as_of: Optional[date], known_as_of
 
 
 class TemporalMemoryController:
-    """Compatibility wrapper around the canonical MemoryController."""
+    """Compatibility wrapper around the canonical MemoryController.
+
+    Temporal queries currently run as a bounded second-stage filter over a
+    canonical controller search. Until temporal constraints are pushed into the
+    canonical retrieval pipeline, pagination tokens are rejected for temporal
+    queries instead of being silently ignored.
+    """
 
     def __init__(self, controller: MemoryController):
         self.controller = controller
@@ -62,8 +68,9 @@ class TemporalMemoryController:
     ) -> Dict[str, Any]:
         temporal_as_of = _as_date(as_of)
         temporal_known_as_of = _as_date(known_as_of)
+        temporal_query = temporal_as_of is not None or temporal_known_as_of is not None
 
-        if temporal_as_of is None and temporal_known_as_of is None:
+        if not temporal_query:
             return self.controller.search(
                 principal,
                 query,
@@ -73,10 +80,17 @@ class TemporalMemoryController:
                 types=types,
             )
 
+        if page_token is not None:
+            raise ValueError(
+                "Pagination tokens are not supported for temporal queries until "
+                "temporal predicates are applied inside the canonical retrieval pipeline."
+            )
+
+        bounded_page_size = max(1, min(page_size, 100))
         pack = self.controller.search(
             principal,
             query,
-            page_size=max(page_size, 100),
+            page_size=100,
             page_token=None,
             lifecycles=lifecycles,
             types=types,
@@ -91,11 +105,12 @@ class TemporalMemoryController:
         ]
 
         pack = dict(pack)
-        pack["results"] = results[:page_size]
+        pack["results"] = results[:bounded_page_size]
         pack["next_page_token"] = None
         pack["temporal"] = {
             "as_of": temporal_as_of.isoformat() if temporal_as_of else None,
             "known_as_of": temporal_known_as_of.isoformat() if temporal_known_as_of else None,
             "filter_stage": "post-controller-search",
+            "pagination": "disabled",
         }
         return pack
