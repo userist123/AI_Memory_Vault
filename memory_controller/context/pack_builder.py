@@ -1,23 +1,13 @@
-import json
 from typing import List, Dict, Any, Optional
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
 
 
 class ContextPackBuilder:
-    """Build the final context payload and enforce the hard runtime budget.
-
-    This is the last memory/context boundary before an agent receives the pack.
-    The budget applies to the complete serialized pack, not only to note bodies.
-    """
+    """Build the final context payload and enforce byte + token budgets."""
 
     @staticmethod
-    def _serialized_size(value: Any) -> int:
-        return len(json.dumps(value, ensure_ascii=False, default=str, separators=(",", ":")).encode("utf-8"))
-
-    def _resolve_budget(self, agent_id: str, budget: Dict[str, Any]) -> ContextBudget:
-        # An explicit runtime budget is authoritative, but preserve the agent's
-        # configured result limits when only soft/hard byte limits are supplied.
+    def _resolve_budget(agent_id: str, budget: Dict[str, Any]) -> ContextBudget:
         configured = load_agent_budget(agent_id)
         if not budget:
             return configured
@@ -26,6 +16,9 @@ class ContextPackBuilder:
             "max_full_documents": int(budget.get("max_full_documents", configured.max_full_documents)),
             "soft_limit_bytes": int(budget.get("soft", configured.soft_context_budget)),
             "hard_limit_bytes": int(budget.get("hard", configured.hard_context_budget)),
+            "soft_limit_tokens": int(budget.get("soft_tokens", configured.soft_token_budget)),
+            "hard_limit_tokens": int(budget.get("hard_tokens", configured.hard_token_budget)),
+            "chars_per_token": float(budget.get("chars_per_token", configured.chars_per_token)),
         })
 
     @staticmethod
@@ -36,6 +29,8 @@ class ContextPackBuilder:
             "budget": {
                 "soft": resolved.soft_context_budget,
                 "hard": resolved.hard_context_budget,
+                "soft_tokens": resolved.soft_token_budget,
+                "hard_tokens": resolved.hard_token_budget,
                 "max_notes": resolved.max_notes,
                 "max_full_documents": resolved.max_full_documents,
             },
@@ -56,7 +51,6 @@ class ContextPackBuilder:
     ) -> Dict[str, Any]:
         pack = self._base_pack(request_id, agent_id, resolved, disclosure_level)
         pack["results"] = results
-
         if minimal_provenance:
             for res, prov in zip(pack["results"], minimal_provenance):
                 res.setdefault("provenance", {})
@@ -83,25 +77,32 @@ class ContextPackBuilder:
         safe_results = [dict(item) for item in (results or [])]
         safe_results = resolved.apply_degradation(safe_results)
 
-        pack = self._build_pack(
-            request_id, agent_id, resolved, safe_results, disclosure_level,
-            minimal_provenance, next_page_token, audit_ref
-        )
-
-        # The previous budget check measured only the notes. This check measures
-        # the actual wire payload. If metadata/provenance/token overhead pushes
-        # it over the limit, progressively remove lowest-value results first.
-        while self._serialized_size(pack) > resolved.hard_context_budget and len(safe_results) > 1:
-            safe_results = safe_results[:-1]
+        # Keep the highest-value results until BOTH transport and token budgets fit.
+        while safe_results:
             pack = self._build_pack(
                 request_id, agent_id, resolved, safe_results, disclosure_level,
                 minimal_provenance, next_page_token, audit_ref
             )
+            serialized_size = resolved.serialized_size(pack)
+            estimated_tokens = resolved.estimate_tokens(pack)
+            if serialized_size <= resolved.hard_context_budget and estimated_tokens <= resolved.hard_token_budget:
+                return pack
+            safe_results = safe_results[:-1]
 
-        if self._serialized_size(pack) > resolved.hard_context_budget:
+        # Empty result pack is always the last safe representation. If even the
+        # envelope exceeds the configured hard budget, fail closed.
+        pack = self._build_pack(
+            request_id, agent_id, resolved, [], disclosure_level,
+            None, next_page_token, audit_ref
+        )
+        serialized_size = resolved.serialized_size(pack)
+        estimated_tokens = resolved.estimate_tokens(pack)
+        if serialized_size > resolved.hard_context_budget:
             raise BudgetExceededError(
-                "Final context pack exceeds hard budget: "
-                f"{self._serialized_size(pack)} > {resolved.hard_context_budget} bytes"
+                f"Final context pack exceeds hard byte budget: {serialized_size} > {resolved.hard_context_budget} bytes"
             )
-
+        if estimated_tokens > resolved.hard_token_budget:
+            raise BudgetExceededError(
+                f"Final context pack exceeds hard token budget: {estimated_tokens} > {resolved.hard_token_budget} tokens"
+            )
         return pack
