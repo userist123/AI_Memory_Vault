@@ -4,13 +4,16 @@ status: active
 version: 6.0.0
 confidence: very_high
 verification: verified
-provenance_status: official
+provenance_status: maintained
 relations:
   - "00_CORE/Identity.md"
   - "00_CORE/Rules.md"
   - "00_CORE/Memory_Protocol.md"
   - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
   - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
+  - "01_KNOWLEDGE/MOC_Frontend_UI_UX_Standards.md"
+  - "01_KNOWLEDGE/UI_Sensei_Design_Philosophy.md"
+  - "01_KNOWLEDGE/Deep_Visual_Web_Engineering_Master_Report.md"
   - "99_SYSTEM/Memory_V6_Architecture.md"
   - "99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md"
   - "05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md"
@@ -19,341 +22,433 @@ relations:
   - "skills/ai-memory-vault/SKILL.md"
 ---
 
-# 🧠 AI Memory Vault — Canonical Multi-Agent Memory & Memory V6 Engine
+# 🧠 AI Memory Vault — Cognitive Memory, Skills & Agent Knowledge System
 
-[![Architecture](https://img.shields.io/badge/Architecture-v6.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
-[![Tests](https://img.shields.io/badge/Pytest-496%20Passed-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions)
-[![Claude Plugin](https://img.shields.io/badge/Claude-Code%20Plugin-purple.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin)
-[![Agents](https://img.shields.io/badge/Agents-21-orange.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents)
-[![Skills](https://img.shields.io/badge/Local%20Skills-251-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills)
-[![Obsidian](https://img.shields.io/badge/Obsidian-Synchronized-7c3aed.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.obsidian)
+<p align="center">
+  <strong>A persistent, provenance-aware cognitive workspace for AI agents.</strong><br>
+  Memory, knowledge, skills, agents, procedures, retrieval, verification, orchestration and Obsidian — one canonical Vault.
+</p>
 
-> **AI Memory Vault** este stratul canonic de memorie, knowledge, skills, agents, procedures, provenance si audit pentru ecosistemul AI. Acelasi Vault poate fi folosit de **Codex, Claude Code, agentii locali si Obsidian**, fara memorii canonice paralele.
+<p align="center">
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions"><img alt="CI" src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents"><img alt="Agents" src="https://img.shields.io/badge/Agents-21-FF8A00"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills"><img alt="Skills" src="https://img.shields.io/badge/Operational%20Skills-250%2B-22C55E"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-Plugin-7C3AED"></a>
+  <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Synced-7C3AED"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY"><img alt="Repository" src="https://img.shields.io/badge/Repository-Git--based-111827"></a>
+</p>
+
+> **AI Memory Vault** is the canonical persistence and knowledge layer for a multi-agent AI ecosystem. It lets different AI clients and local agents share the same durable memory, skill library, procedures, provenance, retrieval infrastructure and human-auditable state without creating parallel memories.
 
 ---
 
-## 🎯 Ce este
+## 🌌 The Goal
 
-AI Memory Vault este o infrastructura persistenta pentru agenti AI care trebuie sa poata:
+The project is not just a folder of prompts and not just a vector database.
 
-- recupera doar cunostintele relevante pentru o sarcina;
-- folosi skills si agenti specializati;
-- pastra provenance si nivelul de incredere;
-- separa continutul extern RAW de memoria canonica;
-- sincroniza knowledge, skills, agents, procedures si Obsidian;
-- mentine continuitatea intre sesiuni si clienti AI;
-- pastra auditabilitatea operatiunilor de memorie;
-- evolua prin ingestie controlata de surse externe.
+The long-term goal is a **cognitive operating layer** in which persistent knowledge can be selectively activated, used, verified, measured and eventually improved through evidence.
 
-Principiul fundamental:
+```text
+                    ┌──────────────────────┐
+                    │       HUMAN / USER   │
+                    └──────────┬───────────┘
+                               │
+                               ▼
+                    ┌──────────────────────┐
+                    │ EXECUTIVE / CONTROL  │
+                    └──────────┬───────────┘
+                               │
+             ┌─────────────────┼─────────────────┐
+             ▼                 ▼                 ▼
+         MEMORY            SKILLS             AGENTS
+             │                 │                 │
+             └─────────────────┼─────────────────┘
+                               ▼
+                    ┌──────────────────────┐
+                    │ SELECTIVE RETRIEVAL  │
+                    │ + WORKING CONTEXT    │
+                    └──────────┬───────────┘
+                               ▼
+                         PLAN / ROUTE
+                               │
+                  ┌────────────┼────────────┐
+                  ▼            ▼            ▼
+                DIRECT      SPECIALIST    COUNCIL
+                  │            │            │
+                  └────────────┼────────────┘
+                               ▼
+                             TOOLS
+                               │
+                               ▼
+                         VERIFICATION
+                               │
+                               ▼
+                            OUTCOME
+                               │
+                               ▼
+                            EVIDENCE
+                               │
+                               ▼
+                         CONSOLIDATION
+                               │
+                               ▼
+                    BETTER FUTURE RETRIEVAL
+```
+
+The design principle is:
 
 ```text
 ONE VAULT
 ONE CANONICAL MEMORY
 MULTIPLE AI CLIENTS
-MULTIPLE SPECIALIZED AGENTS
+SPECIALIZED CAPABILITIES
 CONTROLLED RETRIEVAL
 CONTROLLED WRITE
-FULL PROVENANCE
+TRACEABLE PROVENANCE
+MEASURABLE EXECUTION
 ```
 
 ---
 
-# 🧩 Arhitectura
+# 🧠 Cognitive Architecture
+
+AI Memory Vault combines several layers rather than forcing every problem into one mechanism.
+
+## Persistent memory
 
 ```text
-                     HUMAN / USER
-                           │
-          ┌────────────────┼────────────────┐
-          ▼                ▼                ▼
-        Codex          Claude Code      Local Agents
-          │                │                │
-          └────────────────┼────────────────┘
-                           ▼
-                  ┌─────────────────┐
-                  │ AI MEMORY VAULT │
-                  │ CANONICAL LAYER │
-                  └────────┬────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-     Memory          Skills / Agents     Knowledge / Procedures
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           ▼
-                  Retrieval / Orchestration
-                           │
-                    MemoryController
-                           │
-              ┌────────────┴────────────┐
-              ▼                         ▼
-        Provenance / Audit       Verification / Lifecycle
-              │                         │
-              └────────────┬────────────┘
-                           ▼
-                  Markdown + SQLite/WAL
-                           │
-                           ▼
-                        Obsidian
+00_CORE        identity, rules, protocols
+01_KNOWLEDGE   durable knowledge, registries, maps
+02_PROJECTS    project continuity
+03_PROCEDURES  repeatable procedures and workflows
+04_MEMORY      canonical memory
+05_RESOURCES   references and Obsidian navigation
+06_INBOX       incoming and review-stage material
+99_SYSTEM      system contracts and synchronization rules
 ```
 
-Obsidian este interfata de navigare si audit uman a aceluiasi Vault. Nu este un al doilea Cognitive Core.
+The architecture separates **storage**, **retrieval**, **reasoning**, **verification** and **promotion**.
+
+## Cognitive core
+
+`cognitive_core/` contains active cognitive and orchestration primitives including:
+
+- activation and decay;
+- consolidation and reconsolidation;
+- motivation and utility signals;
+- Global Workspace-style competition/broadcast;
+- Memory V6 retrieval and maintenance components;
+- model/provider abstraction;
+- deterministic model-tier routing;
+- Council execution composition;
+- actual usage telemetry;
+- efficiency reporting;
+- outcome-labeling and evidence tooling.
 
 ---
 
-# 🤖 Claude Code Plugin
+# 🚀 Memory V6
 
-Repository-ul contine deja stratul Claude Code:
+Memory V6 is the additive cognitive-memory layer extending the base Vault with retrieval, lifecycle, maintenance and evaluation mechanisms.
+
+### Cognitive primitives
+
+- **ACT-R-inspired activation / decay** — `cognitive_core/activation.py`
+- **Reconsolidation** — `cognitive_core/consolidation.py`
+- **Motivation / utility** — `cognitive_core/motivation.py`
+- **Global Workspace** — `cognitive_core/global_workspace.py`
+
+### Memory V6 capabilities
+
+- **Ephemeral sensor buffering** — temporary session material without automatically polluting canonical storage.
+- **Atomic memory extraction** — facts, decisions, procedures and lessons.
+- **Local Ollama extraction** — optional local-model augmentation.
+- **Proposal queue** — review-stage candidates before canonical promotion.
+- **Conflict detection** — explicit conflict and negation analysis.
+- **Human-gated promotion** — approval before new material becomes canonical memory.
+- **Multi-graph memory** — semantic, temporal, causal and entity-oriented derived views.
+- **Spreading activation** — graph-aware activation and ranking.
+- **Sleep-phase consolidation** — maintenance-oriented processing and reporting.
+- **Retrieval benchmarking** — LoCoMo-oriented Precision@K, Recall@K and MRR tooling.
+- **Context-budget enforcement** — hard byte/token bounds with fail-closed behavior.
+- **Execution telemetry** — estimated vs actual model usage.
+- **Efficiency reporting** — per-run, per-agent, per-tier and historical analysis.
+
+The design target is:
 
 ```text
-.claude-plugin/
-├── plugin.json
-└── marketplace.json
-```
-
-si componentele:
-
-```text
-skills/ai-memory-vault/SKILL.md
-agents/memory-librarian.md
-commands/memory.md
-commands/memory-sync.md
-commands/memory-status.md
-```
-
-Pluginul foloseste Vault-ul existent ca **memorie externa canonica**. Nu incearca sa incarce tot repository-ul in context.
-
-Fluxul este:
-
-```text
-Claude request
-      ↓
-AI Memory Vault Skill
-      ↓
-Determine relevant domain
-      ↓
-Retrieve relevant memory / skills / agents / procedures
-      ↓
-Reason / Plan / Act
-      ↓
-Verify
-      ↓
-Controlled memory write / proposal
-      ↓
-Provenance + Audit
+large persistent knowledge
+            ↓
+      selective retrieval
+            ↓
+      bounded context pack
+            ↓
+        active reasoning
 ```
 
 ---
 
-# 🧠 Memory Controller & Cognitive Core
+# 🤖 Agents & Council
 
-`memory_controller/` este granita pentru citirea si scrierea memoriei canonice.
+The repository contains a specialized agent ecosystem coordinated through capability and skill matching.
 
-### 🧠 Arhitectura Cognitivă Bio-Inspirată (Brain Upgrade — ACT-R & GWT)
-
-Sistemul integrează 4 module cognitive bio-inspirate pentru o funcționare autonomă de tip creier:
-
-1. **ACT-R Activation Decay (`cognitive_core/activation.py`)**:
-   - Calculează activarea bazală $B_i = \ln(\sum_j t_j^{-d})$ (Anderson 2004). Notele neaccesate scad natural și trec în stare `DORMANT_THRESHOLD` (-2.0).
-2. **Reconsolidarea Memoriei (`cognitive_core/consolidation.py`)**:
-   - Memoriile canonice contrazise intră în starea `RECONSOLIDATING` cu istoricul versiunilor salvat, permițând actualizări plastice fără pierderi de date (Nader et al. 2000).
-3. **Modulul Motivațional & Utilitate (`cognitive_core/motivation.py`)**:
-   - Urmărește utilitatea acțiunilor $U = P \cdot G - C$ prin Exponential Moving Average și oferă bonusuri dinamice de atenție pe baza recompenselor reale de la `VerifierAgent`.
-4. **Global Workspace Theory (`cognitive_core/global_workspace.py`)**:
-   - Hub competitiv central în care agenții Consiliului (`Router`, `Retrieval`, `Verifier`, `Critic`) trimit propuneri, iar propunerea cu scor maxim este difuzată (*broadcast*) global tuturor agenților (Baars 1988; Dehaene et al. 2001).
-
-### 🚀 Extensia de Arhitectură Memory V6 (v6.0.0 Engine)
-
-Vault-ul integrează extensia aditivă **Memory V6** care adaugă 17 componente modulare:
-
-1. **Buffer Ephemeral de Senzori (`cognitive_core/sensor_buffer.py`)**: Păstrează evenimentele brute de sesiune în memorie fără a polua stocarea canonică.
-2. **Extractor Atomic de Memorie + Adapter Local Ollama (`cognitive_core/extraction.py` & `ollama_extractor.py`)**: Extragere deterministă de fapte, decizii, proceduri și lecții, augmentată opțional cu modele locale Ollama (`--use-ollama`).
-3. **Coadă de Propuneri & Detector de Conflicte (`cognitive_core/proposal_queue.py` & `conflict_detector.py`)**: Coadă de triaj în `06_INBOX/` cu detector euristic de conflicte și negații.
-4. **Queue Promoter Controlat (`cognitive_core/queue_promoter.py`)**: Promovează doar candidații marcați `APPROVED` de oameni direct în `MemoryController.propose()`.
-5. **Memorie Multi-Graf & Spreading Activation (`cognitive_core/multi_graph.py` & `spreading_activation.py`)**: 4 grafuri derivate (semantic, temporal, cauzal, entități) cu re-clasare prin activare difuză ACT-R (`cognitive_core/ranked_search.py`).
-6. **Sleep-Phase Consolidation & Obsidian Renderer (`cognitive_core/sleep_consolidation.py` & `report_view.py`)**: Raportare mentenanță read-only randată ca notă Markdown cu legături `[[wikilinks]]` în Obsidian.
-7. **Harnasament Benchmark LoCoMo (`cognitive_core/benchmarks/`)**: Măsurare automată Precision@K, Recall@K și MRR.
-8. **Fluxuri CI/CD Automatizate (`.github/workflows/`)**: `memory-v6-tests.yml` (teste pytest automate pe fiecare commit) și `memory-consolidation.yml` (consolidare programată).
-
-```bash
-# 1. Extragere fapte & adăugare în coadă (opțional cu Ollama local)
-python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
-
-# 2. Revizuire coadă cu detectare conflicte
-python -m cognitive_core.memory_v6_cli review --show-conflicts
-
-# 3. Aprobare umană & Promovare controlată
-python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
-python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
-
-# 4. Maintenance & Randare Raport Obsidian
-python -m cognitive_core.memory_v6_cli consolidate --render
-
-# 5. Rulare Benchmark de Recuperare LoCoMo
-python -m cognitive_core.memory_v6_cli benchmark --retrieval graph
-```
-
-Principii:
-
-- autorizare pe operatiuni si roluri;
-- provenance obligatorie;
-- lifecycle controlat;
-- verificare separata de creare;
-- audit criptografic;
-- persistenta Markdown + SQLite/WAL;
-- separarea continutului RAW de continutul canonical.
-
-Lifecycle-ul conceptual este:
+Representative domains include:
 
 ```text
-RAW → CLASSIFIED → NORMALIZED → REVIEW → VERIFIED → ACTIVE
-                                             ↓
-                                  SUPERSEDED / ARCHIVED
+Architecture        Backend / APIs       Frontend / SaaS
+Web Creative        Web Design           Web Quality / Performance
+UI / UX             WPF / .NET           Compilers / Tooling
+Polyglot Systems    DevOps / SRE         Security / SecOps
+Threat Hunting      Databases            Local AI / LLM
+Quant Development   Game Engineering    Content Strategy
+Agentic Workflows   Memory Architecture
 ```
 
-Un agent nu transforma automat continut extern in adevar verificat.
+Canonical relationship:
+
+```text
+Agent
+  ↕
+Capability
+  ↕
+Skill
+  ↕
+Procedure
+  ↕
+Knowledge / Memory
+```
+
+Agent profiles live under `.agents/agents/`; routing and coverage are maintained through the project knowledge maps.
 
 ---
 
-# 🏛️ Agent Council
+# 📦 Skills System
 
-Vault-ul contine o retea de agenti specializati, coordonata prin capability/skill matching. Domeniile includ:
+Skills are treated as reusable **capabilities**, not just prompt snippets.
 
-- system architecture;
-- backend engineering;
-- frontend / SaaS;
-- web creative development;
-- web design engineering;
-- web quality / performance;
-- UI/UX;
-- WPF / .NET;
-- compilers and tooling;
-- polyglot systems;
-- DevOps / SRE;
-- security / SecOps;
-- threat hunting;
-- database / persistence;
-- local AI / LLM;
-- quantitative development;
-- game engineering;
-- content strategy;
-- agentic workflows;
-- memory architecture.
-
-Matricea agent ↔ skill este mentinuta in:
-
-`01_KNOWLEDGE/Agents_Skill_Matrix.md`
-
-Agentii trebuie sa respecte **least privilege** si sa foloseasca doar capabilities relevante.
-
----
-
-# 📦 Skills Architecture
-
-Exista doua niveluri principale.
-
-## Operational Skills
+## Operational skill library
 
 ```text
 .agents/skills/
 ```
 
-Aici se afla skill-urile operationale locale. Catalogul este:
-
-`01_KNOWLEDGE/Master_Skills_Catalog_251.md`
-
-## RAW External Skills
+The repository currently contains a broad operational skill library covering engineering, web, UI/UX, animation, visualization, AI/LLM, infrastructure, security and domain-specific work. The canonical project catalog is:
 
 ```text
-06_INBOX/RAW_IMPORTS/skills/
+01_KNOWLEDGE/Master_Skills_Catalog_251.md
 ```
 
-Aceasta este granita `RAW_EXTERNAL` pentru skills si developer knowledge importate din GitHub si alte surse.
+## UI/UX Pro Max
 
-Fluxul este:
+A new broad UI/UX capability has been integrated:
 
 ```text
-External Source
+.agents/skills/ui-ux-pro-max/SKILL.md
+```
+
+It is intentionally **complementary** to narrower skills already present:
+
+```text
+ui-ux-pro-max
+├── broad design intelligence
+├── design-system reasoning
+├── accessibility
+├── interaction
+├── responsive layout
+├── typography / color
+├── charts / visualization
+└── stack-aware UI guidance
+
+ui-ux-review
+├── structured heuristic audit
+└── accessibility / usability review
+
+web-performance
+└── web performance specialization
+
+web-best-practices
+└── web implementation / platform specialization
+
+data-viz-design
+└── visualization specialization
+```
+
+This avoids duplicate ownership while allowing the broad skill to establish the design direction and specialized skills to handle their narrow procedures.
+
+### Progressive disclosure
+
+The intended loading model is:
+
+```text
+capability metadata
       ↓
-Recursive Discovery
+relevant rules
       ↓
-Deduplication
+detailed references
       ↓
-Classification
+stack-specific guidance
+```
+
+A large skill library should not mean that every skill is loaded into every prompt.
+
+---
+
+# 🧰 Model Providers & Execution
+
+The model execution layer is provider-neutral:
+
+```text
+                  ModelTierRouter
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+        Fake           Local          OpenAI
+       provider        Ollama        Responses
+          │              │              │
+          └──────────────┼──────────────┘
+                         ▼
+               ModelResponse + Usage
+                         │
+                         ▼
+               ActualUsageTelemetry
+```
+
+Implemented abstractions include:
+
+- `ModelProvider` contract;
+- deterministic `ModelTierRouter`;
+- `FakeModelProvider` for deterministic tests;
+- `LocalProvider` for Ollama;
+- `OpenAIProvider` using the Responses API;
+- per-call usage capture;
+- efficiency reporting.
+
+The deterministic fake-provider path remains the baseline for development and CI. OpenAI support exists without requiring OpenAI for routine testing.
+
+---
+
+# 🏛️ Deterministic Council Budgeting
+
+Council decisions are intentionally derived from the actual execution plan rather than from wording alone.
+
+```text
+ActivePlan.steps
       ↓
-Provenance
+PlanComplexityAnalyzer
       ↓
-Validation
+ExecutionMode
+      ↓
+CouncilBudgetController
+      ↓
+CouncilTier
+      ↓
+SubagentSpec.model_tier
+```
+
+Important invariants include:
+
+- simple work avoids unnecessary Council activation;
+- moderate work can remain on a light tier;
+- destructive work escalates to high-risk handling;
+- the same plan produces the same classification;
+- wording changes do not alter classification when the resulting plan is identical;
+- a replan re-derives Council routing from the replacement plan.
+
+Routing and risk allocation remain deterministic and observable at the application boundary.
+
+---
+
+# 📊 Execution Economics
+
+Model usage is treated as first-class telemetry rather than an afterthought.
+
+The B4/B5 reporting layer can capture:
+
+```text
+run_id
+provider / model / model_tier
+specialist_calls
+synthesis_calls
+total_model_calls
+estimated_input / actual_input
+estimated_output / actual_output
+cached_input
+reasoning_tokens
+estimated_total / actual_total
+per_agent_usage
+per_tier_usage
+context_bytes
+context_estimated_tokens
+wall_time_seconds
+tokens_per_specialist
+tokens_per_council_run
+tokens_per_synthesis
+```
+
+The objective is not minimum tokens at any cost. The useful metric is:
+
+```text
+quality gained
+───────────────
+resource spent
+```
+
+---
+
+# 🧪 Outcome, Evidence & Future Learning
+
+The project distinguishes execution evidence from canonical memory.
+
+```text
+REAL EXECUTION
+      ↓
+OUTCOME
+      ↓
+EVIDENCE
+      ↓
+EVALUATION
+      ↓
+CAPABILITY CANDIDATE
+      ↓
+SKILL EVOLUTION
+      ↓
+HUMAN GATE WHEN REQUIRED
+      ↓
+FUTURE USE
+```
+
+Current outcome tooling is deliberately isolated:
+
+```text
+scripts/label_council_outcome.py
+cognitive_core/tests/test_label_council_outcome.py
+```
+
+An execution outcome is evidence about what happened. It is **not automatically a canonical memory record**.
+
+This separation is essential for future skill evaluation because the system must first know whether an action worked before treating the experience as useful learning signal.
+
+---
+
+# 🔐 Trust, Provenance & Security
+
+External material is untrusted until classified and validated.
+
+```text
+EXTERNAL SOURCE
       ↓
 RAW_EXTERNAL
       ↓
-Review / Promotion
+PROVENANCE
       ↓
-Canonical Skill / Knowledge
+DEDUP / VALIDATION
+      ↓
+HUMAN-GATED PROMOTION
+      ↓
+OPERATIONAL CAPABILITY
 ```
 
-Nu orice repository este skill. Backend projects, compilers, runtimes si programming-language repositories sunt reference sources daca nu contin explicit skill definitions.
-
----
-
-# 🔎 Recursive Discovery
-
-Sursele externe sunt seed-uri, nu lista finala. Discovery-ul poate urmari recursiv:
-
-- `SKILL.md`;
-- `skills/`;
-- `agents/`;
-- `instructions/`;
-- `prompts/`;
-- skill collections;
-- documentatie tehnica;
-- link-uri catre alte skill repositories;
-- framework/backend/language resources relevante pentru agentic development.
-
-Discovery-ul trebuie sa previna ciclurile, duplicatele, mirrors/forks si importarea aplicatiilor intregi drept skills.
-
-Continutul extern este tratat ca **untrusted input** si nu este executat automat in timpul ingestiei.
-
----
-
-# 🌐 Backend & Programming Knowledge
-
-Vault-ul poate indexa surse pentru:
-
-```text
-Backend
-├── REST / GraphQL / gRPC
-├── .NET / ASP.NET
-├── Node / Express / NestJS
-├── Django / Flask
-├── Rails / Spring
-├── Laravel / Symfony / PHP
-├── Vapor / Swift
-├── databases / ORM
-├── auth / security
-├── testing / observability
-└── deployment
-
-Programming
-├── C / C++ / C# / F#
-├── Rust / Go / Python
-├── TypeScript / JavaScript
-├── Java / Kotlin / Scala
-├── Swift / Dart / Julia
-├── Ruby / PHP
-├── Elixir / Erlang
-├── OCaml / Haskell / PureScript
-├── Nim / Crystal / Zig / Odin / V
-└── compilers / runtimes / tooling
-```
-
-Acestea imbogatesc knowledge graph-ul, dar sunt promovate in skills operationale doar dupa clasificare si validare.
-
----
-
-# 🔐 Provenance & Trust
-
-Pentru continut extern trebuie sa putem determina:
+Imported material should retain, where available:
 
 ```text
 source_repository
@@ -363,209 +458,335 @@ source_commit
 source_branch
 license
 author
-discovered_from
-discovery_depth
+discovery path
+discovery depth
 sha256
 status
 ```
 
-`SOURCE.json` este standardul de provenance pentru pachetele RAW unde este disponibil.
+The external ingestion pipeline computes hashes, classifies imported `SKILL.md` material and keeps it within the RAW boundary until explicit promotion. fileciteturn581file0L2-L6
+
+The dedicated external-skill workflow is manual and avoids executing arbitrary imported dependencies during ingestion. fileciteturn590file0L2-L6
 
 ---
 
-# 🗺️ Obsidian Synchronization
+# 🔎 Skill Ingestion & Deduplication
 
-Obsidian este sincronizat semantic cu:
+External repositories are **sources**, not automatically trusted skills.
 
-- Skills;
-- Agents;
-- Knowledge;
-- Procedures;
-- Projects;
-- Memory;
-- Provenance;
-- Validation;
-- References.
-
-Documentele centrale sunt:
-
-- `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md`
-- `05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md`
-- `01_KNOWLEDGE/Agents_Skill_Matrix.md`
-- `01_KNOWLEDGE/Master_Skills_Catalog_251.md`
-
-Relatia principala:
+The intended lifecycle is:
 
 ```text
-Skill ↔ Agent ↔ Capability ↔ Procedure ↔ Knowledge ↔ Memory ↔ Obsidian
+Source
+  ↓
+Discovery
+  ↓
+Candidate skill
+  ↓
+Duplicate / similarity check
+  ↓
+Classification
+  ↓
+License + provenance
+  ↓
+RAW_EXTERNAL
+  ↓
+Validation
+  ↓
+Explicit promotion
+  ↓
+Operational skill
 ```
+
+A repository can contain code, documentation, examples or full applications that should remain reference material rather than being copied wholesale into the skill library.
+
+The project also maintains a validation report for the imported raw skill corpus and its safety invariants. fileciteturn586file0L2-L6
 
 ---
 
-# 📁 Structura repository-ului
+# 🗺️ Obsidian as Cognitive Interface
+
+Obsidian is the human navigation, visualization and inspection surface for the same Vault.
+
+It exposes relationships between:
+
+```text
+Skill ↔ Agent ↔ Capability ↔ Procedure ↔ Knowledge ↔ Memory
+```
+
+Important navigation documents include:
+
+```text
+01_KNOWLEDGE/Agents_Skill_Matrix.md
+01_KNOWLEDGE/Master_Skills_Catalog_251.md
+05_RESOURCES/Obsidian/Skill_Agent_Memory_MOC.md
+99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md
+```
+
+The goal is one underlying data layer shared by AI clients and the human operator.
+
+---
+
+# 📚 Knowledge & Graph Architecture
+
+The Vault is deliberately multi-representational:
+
+```text
+Markdown knowledge
+      +
+structured registries
+      +
+procedures
+      +
+skills
+      +
+agent definitions
+      +
+memory records
+      +
+retrieval indexes
+      +
+graphs
+      +
+execution telemetry
+```
+
+Graph-oriented components provide derived views for semantic, temporal, causal and entity relationships while retrieval remains responsible for selecting the active working context.
+
+This makes it possible to experiment with graph-based reasoning without turning the graph into an unverified second source of truth.
+
+---
+
+# 🧪 Testing & Continuous Verification
+
+Testing is layered across:
+
+```text
+cognitive_core/tests/
+memory_controller/tests/
+tests/
+```
+
+and the primary Memory V6 workflow is:
+
+```text
+.github/workflows/memory-v6-tests.yml
+```
+
+The project favors:
+
+- deterministic fake-provider tests;
+- mocked external-provider tests in standard CI;
+- explicit opt-in live Ollama tests;
+- AST-based structural boundary tests;
+- fail-closed context-budget tests;
+- regression tests for real incidents;
+- repository-level regression coverage in addition to cognitive-core tests.
+
+CI is the authority for commit-level pass/fail claims; local test output is supporting evidence.
+
+---
+
+# 🏗️ Repository Structure
 
 ```text
 AI_Memory_Vault_CODEX_READY/
 │
-├── .claude-plugin/             # Claude Code plugin / marketplace metadata
 ├── .agents/
 │   ├── agents/                 # Agent profiles
-│   ├── rules/                  # Cognitive/security rules
-│   └── skills/                 # Operational local skills
+│   ├── rules/                  # Rules / system behavior
+│   └── skills/                 # Operational skills
+│
+├── .claude-plugin/             # Claude Code plugin metadata
 │
 ├── 00_CORE/                    # Identity, rules, memory protocol
-├── 01_KNOWLEDGE/               # Durable knowledge and registries
+├── 01_KNOWLEDGE/               # Knowledge, registries, maps
 ├── 02_PROJECTS/                # Project continuity
 ├── 03_PROCEDURES/              # Repeatable procedures
-├── 04_MEMORY/                  # Decisions, lessons, experiences
+├── 04_MEMORY/                  # Canonical memory
 ├── 05_RESOURCES/               # Resources / Obsidian navigation
-├── 06_INBOX/                   # Incoming / RAW material
-│   └── RAW_IMPORTS/skills/     # RAW_EXTERNAL boundary
-├── 99_SYSTEM/                  # System contracts / synchronization
+├── 06_INBOX/                   # Incoming / RAW_EXTERNAL material
+├── 99_SYSTEM/                  # System contracts and synchronization
 │
-├── skills/                     # Plugin-level Claude skills
-├── agents/                     # Plugin-level Claude agents
-├── commands/                   # Claude commands
-├── hooks/                      # Plugin hooks
-├── scripts/                    # Supporting automation
-├── memory_controller/          # Canonical memory boundary
-└── cognitive_core/             # Retrieval / reasoning / reflection
+├── cognitive_core/             # Cognitive runtime and orchestration
+├── memory_controller/          # Memory access and context control
+├── scripts/                    # CLI and operational utilities
+├── tasks/                      # Plans, lessons and engineering notes
+├── tests/                      # Repository-wide tests
+├── .github/workflows/          # CI, maintenance and ingestion
+└── README.md                   # System overview
 ```
 
 ---
 
-# 🔄 Synchronization Contract
+# 🛠️ Important Entry Points
 
-Toate AI clients folosesc aceeasi memorie canonica:
+| Area | Entry point |
+|---|---|
+| Core identity & rules | `00_CORE/` |
+| Knowledge | `01_KNOWLEDGE/` |
+| Procedures | `03_PROCEDURES/` |
+| Canonical memory | `04_MEMORY/` |
+| Incoming/raw data | `06_INBOX/` |
+| System architecture | `99_SYSTEM/Memory_V6_Architecture.md` |
+| Agent/skill mapping | `01_KNOWLEDGE/Agents_Skill_Matrix.md` |
+| Skill catalog | `01_KNOWLEDGE/Master_Skills_Catalog_251.md` |
+| UI/UX Pro Max | `.agents/skills/ui-ux-pro-max/SKILL.md` |
+| Skill ingestion | `scripts/skill_ingestion.py` |
+| Outcome labeling | `scripts/label_council_outcome.py` |
+| Obsidian synchronization | `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md` |
+
+---
+
+# 🧭 Design Principles
+
+### 1. One canonical source of truth
+
+Do not create competing authoritative copies of the same decision.
+
+### 2. Evidence over confidence theater
+
+Confidence is metadata; evidence is support.
+
+### 3. Retrieval before context inflation
+
+More context is not automatically better context.
+
+### 4. Deterministic resource allocation
+
+Risk, complexity and budget decisions should remain reproducible wherever possible.
+
+### 5. Human-gated durable promotion
+
+New or untrusted information does not silently become canonical memory.
+
+### 6. Provenance survives ingestion
+
+External material should remain attributable to its origin and version.
+
+### 7. Skills compose instead of colliding
+
+Broad capabilities provide general guidance; specialized skills retain ownership of specialized procedures.
+
+### 8. Failure is data
+
+Failures, corrections and partial outcomes are useful learning evidence.
+
+### 9. Measure before automating
+
+A mechanism should be observable and testable before it becomes autonomous.
+
+### 10. Capability gain beats component count
+
+A larger architecture is not automatically a smarter one.
+
+---
+
+# 🔬 Cognitive Evolution Direction
+
+The longer-term research direction is controlled improvement through evidence, not uncontrolled self-modification.
 
 ```text
-                 CANONICAL VAULT
-                       │
-          ┌────────────┼────────────┐
-          ▼            ▼            ▼
-        Codex        Claude       Obsidian
-          │            │            │
-          └────────────┼────────────┘
-                       ▼
-                 Shared Memory
+REAL TASK
+   ↓
+EXECUTION TRACE
+   ↓
+OUTCOME + EVIDENCE
+   ↓
+EVALUATION
+   ↓
+PATTERN / FAILURE / PROCEDURE DISCOVERY
+   ↓
+CAPABILITY CANDIDATE
+   ↓
+SANDBOX / SHADOW
+   ↓
+REGRESSION + HOLDOUT
+   ↓
+HUMAN-GATED PROMOTION
 ```
 
-Reguli:
+Potential future capabilities include:
 
-1. Nu crea memorii canonice paralele.
-2. Nu transforma automat RAW in VERIFIED.
-3. Foloseste retrieval relevant, nu dump integral de context.
-4. Pastreaza provenance.
-5. Respecta lifecycle-ul memoriei.
-6. Nu suprascrie knowledge mai autoritativ cu surse mai slabe.
-7. Detecteaza si marcheaza conflictele.
-8. Actualizeaza registry-urile cand skill/agent relations se schimba.
-9. Nu executa continut extern doar pentru ca a fost importat.
-10. Pastreaza separarea dintre ingestion, validation, promotion si execution.
+- capability discovery from repeated experience;
+- failure and correction mining;
+- skill refinement and versioning;
+- retrieval-policy optimization;
+- cognitive-state and uncertainty tracking;
+- adaptive model routing;
+- memory and skill consolidation;
+- controlled skill retirement and rollback.
 
----
-
-# 🛡️ Security
-
-Continutul extern este untrusted input.
-
-Nu se executa automat:
-
-- executabile;
-- installers;
-- npm scripts;
-- Python scripts;
-- build scripts;
-- binaries;
-- dependency installers.
-
-Ingestion-ul este read/analyze/hash/classify-first.
+These are development directions, not claims that every stage already exists.
 
 ---
 
-# 📊 Registries & Audit
+# 📐 Operating Philosophy
 
-Cand exista, acestea sunt fisierele centrale pentru inventarul skill corpus:
+The repository is designed around a simple loop:
 
 ```text
-06_INBOX/RAW_IMPORTS/skills/_SOURCE_REGISTRY.json
-06_INBOX/RAW_IMPORTS/skills/_REGISTRY.json
-06_INBOX/RAW_IMPORTS/skills/_DISCOVERY_GRAPH.json
-06_INBOX/RAW_IMPORTS/skills/_DEDUPLICATION.json
-06_INBOX/RAW_IMPORTS/skills/_LICENSES.json
-06_INBOX/RAW_IMPORTS/skills/_VALIDATION_REPORT.md
-06_INBOX/RAW_IMPORTS/skills/_PROGRAMMING_SOURCES.json
-06_INBOX/RAW_IMPORTS/skills/_BACKEND_SOURCES.json
+KNOWLEDGE
+    ↓
+EVIDENCE
+    ↓
+COGNITIVE STATE
+    ↓
+ATTENTION
+    ↓
+WORKING CONTEXT
+    ↓
+PLAN
+    ↓
+ACTION
+    ↓
+VERIFICATION
+    ↓
+OUTCOME
+    ↓
+CONSOLIDATION
+    ↓
+BETTER FUTURE ACTION
 ```
 
-Registries trebuie sa ramana coerente cu filesystem-ul real.
+The desired end state is not simply a larger database. It is a system that can **select what matters, use it efficiently, verify what it did, retain what is justified, and gradually improve future problem-solving without sacrificing traceability or control**.
 
 ---
 
-# 🚀 Quick Start
+# 📌 Current Status
 
-```powershell
-git clone https://github.com/userist123/AI_Memory_Vault_CODEX_READY.git
-cd AI_Memory_Vault_CODEX_READY
-git fetch origin
-git pull origin main
-```
-
-Verifica sincronizarea:
-
-```powershell
-git status
-git branch --show-current
-git log -1 --oneline
-```
-
----
-
-# 🧪 Definition of Done
-
-O schimbare majora este completa cand:
-
-- filesystem-ul si registry-urile sunt coerente;
-- provenance este disponibila;
-- duplicatele sunt detectate;
-- skill-urile sunt clasificate corect;
-- agent ↔ skill relations sunt actualizate;
-- Obsidian navigation este actualizata;
-- Claude plugin metadata este valida;
-- nu exista memorii canonice concurente;
-- RAW_EXTERNAL security boundary este pastrata;
-- testele relevante trec;
-- repository-ul este sincronizat cu `main`.
+| Capability | Status |
+|---|---|
+| Canonical Vault | Active |
+| Memory V6 | Active |
+| Multi-agent / Council architecture | Active |
+| Deterministic complexity & budget routing | Active |
+| Fake / Local / OpenAI model providers | Implemented |
+| Actual usage telemetry | Implemented |
+| B4/B5 efficiency reporting | Implemented |
+| External skill ingestion | Active |
+| UI/UX Pro Max skill | Integrated |
+| Human-gated memory promotion | Active |
+| Outcome labeling | Available |
+| Automated skill evolution | Research / next-stage |
 
 ---
 
-# 📜 Principiul final
+# 🔗 Navigation
 
-> **AI Memory Vault nu este doar un folder de fisiere. Este memoria canonica partajata a ecosistemului AI.**
->
-> Skills adauga capabilities. Agents adauga specializare. Knowledge adauga context durabil. Procedures adauga moduri de lucru. Memory pastreaza experienta si deciziile. Provenance si verification stabilesc increderea. Obsidian ofera navigare si audit. Claude si Codex sunt clienti ai aceleiasi memorii, nu proprietari ai unor memorii separate.
-
----
-
-## 🔗 Links
-
-**Repository:** https://github.com/userist123/AI_Memory_Vault_CODEX_READY
-
-**Claude Plugin:** `.claude-plugin/`
-
-**Canonical Memory:** `memory_controller/` + `04_MEMORY/`
-
-**Operational Skills:** `.agents/skills/`
-
-**RAW External Skills:** `06_INBOX/RAW_IMPORTS/skills/`
-
-**Agent Matrix:** `01_KNOWLEDGE/Agents_Skill_Matrix.md`
-
-**Obsidian Sync:** `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md`
+- [Memory V6 Architecture](99_SYSTEM/Memory_V6_Architecture.md)
+- [Agent ↔ Skill Matrix](01_KNOWLEDGE/Agents_Skill_Matrix.md)
+- [Master Skill Catalog](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
+- [Frontend UI/UX Standards](01_KNOWLEDGE/MOC_Frontend_UI_UX_Standards.md)
+- [UI Sensei Design Philosophy](01_KNOWLEDGE/UI_Sensei_Design_Philosophy.md)
+- [UI/UX Pro Max](.agents/skills/ui-ux-pro-max/SKILL.md)
+- [Skill Ingestion](scripts/skill_ingestion.py)
+- [Obsidian Skill/Agent/Memory Sync](99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md)
+- [External Skill Imports](06_INBOX/RAW_IMPORTS/skills/)
+- [GitHub Actions](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions)
 
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+<p align="center">
+  <sub>AI_Memory_Vault_CODEX_READY — persistent memory, selective cognition, controlled capabilities.</sub>
+</p>
