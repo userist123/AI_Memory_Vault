@@ -21,38 +21,21 @@ relations:
 # AI Memory Vault (CODEX-Ready)
 
 # 🧠 AI Memory Vault — Canonical Multi-Agent Memory & Memory V6 Engine
-Vault Obsidian de memorie persistentă pentru agenți AI, cuplat cu un motor cognitiv Python (`cognitive_core/`) care implementează un pipeline multi-agent (Council) cu memorie episodică/semantică, planificare, reflecție și audit de consum de tokeni.
 
-![Architecture](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
-![Tests](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions)
-![Claude Plugin](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin)
-![Agents](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents)
-![Skills](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills)
-![Obsidian](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.obsidian)
-## Structura vault-ului (Obsidian)
+[![Architecture](https://img.shields.io/badge/Architecture-v6.0.0--ACTIVE-blue.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
+[![Tests](https://img.shields.io/badge/Pytest-496%20Passed-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions)
+[![Claude Plugin](https://img.shields.io/badge/Claude-Code%20Plugin-purple.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin)
+[![Agents](https://img.shields.io/badge/Agents-21-orange.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents)
+[![Skills](https://img.shields.io/badge/Local%20Skills-251-brightgreen.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills)
+[![Obsidian](https://img.shields.io/badge/Obsidian-Synchronized-7c3aed.svg)](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.obsidian)
 
 > **AI Memory Vault** este stratul canonic de memorie, knowledge, skills, agents, procedures, provenance si audit pentru ecosistemul AI. Acelasi Vault poate fi folosit de **Codex, Claude Code, agentii locali si Obsidian**, fara memorii canonice paralele.
-| Folder | Conținut |
-|---|---|
-| `00_CORE` | Identitate, reguli, protocol operațional AI, model de confidence, arhitectură sistem (+ variante legacy Claude/Perplexity, `GRAPH/`) |
-| `01_KNOWLEDGE` | ~60 note atomice: stack tehnic, securitate, design/UI, arhitecturi (WPF, trading algoritmic, multi-agent), skill catalogs, referințe externe (`EXTERNAL_SKILLS/`) |
-| `02_PROJECTS` | Proiecte active |
-| `03_PROCEDURES` | Proceduri operaționale |
-| `04_MEMORY` | Memorie episodică: `Decisions/`, `Errors/`, `Experiences/`, `Lessons/`, `Preferences/` + sute de fișiere `policy-lesson_*.md` generate automat |
-| `05_RESOURCES` | Resurse |
-| `06_INBOX` | `RAW_IMPORTS` — inbox pentru conținut neprocesat |
-| `90_TEMPLATES` | Șabloane frontmatter |
-| `99_SYSTEM` | Fișiere de sistem ale vault-ului |
-| `.obsidian` | Config Obsidian |
 
 ---
-Fișiere root: `AGENTS.md`, `CLAUDE.md`, `PROJECT.md`, `ORIGINAL_REQUEST.md`, `REVIEW_QUEUE.md`, `TEST_INFRA.md`, `TEST_READY.md`.
 
 ## 🎯 Ce este
-> Notă: multe fișiere din `01_KNOWLEDGE` și `04_MEMORY` au denumiri `test_*`, `unknown_*` — sunt artefacte de test/import automat, nerevizuite încă (lifecycle `unverified`).
 
 AI Memory Vault este o infrastructura persistenta pentru agenti AI care trebuie sa poata:
-## `cognitive_core/` — motorul cognitiv
 
 - recupera doar cunostintele relevante pentru o sarcina;
 - folosi skills si agenti specializati;
@@ -62,15 +45,8 @@ AI Memory Vault este o infrastructura persistenta pentru agenti AI care trebuie 
 - mentine continuitatea intre sesiuni si clienti AI;
 - pastra auditabilitatea operatiunilor de memorie;
 - evolua prin ingestie controlata de surse externe.
-Peste 60 de module Python organizate pe funcții cognitive:
 
 Principiul fundamental:
-**Pipeline Council (B1–B5)** — orchestrare multi-model cu audit de consum:
-- `council_model_execution.py` (B1) — execută modelele Council prin provideri (`model_provider.py`, `fake_model_provider.py`, `local_provider.py`, `openai_provider.py`)
-- `model_tier_router.py` — routare pe tier-uri de model (light/standard/heavy)
-- `council_usage_audit.py` (B2/B4) — telemetrie per-call (`actual_usage_telemetry.py`)
-- `council_efficiency_report.py` (B5) — agregare istorică, verdict de eficiență, export CSV/Markdown/JSON
-- `council_budget_controller.py` — control buget tokeni
 
 ```text
 ONE VAULT
@@ -81,21 +57,10 @@ CONTROLLED RETRIEVAL
 CONTROLLED WRITE
 FULL PROVENANCE
 ```
-**Memorie și cogniție:**
-- `working_memory.py`, `global_workspace.py`, `spreading_activation.py`, `activation.py`, `attention.py`
-- `consolidation.py`, `sleep_consolidation.py`, `deduplication.py`, `conflict_detector.py`
-- `recall.py`, `ranked_search.py`, `qdrant_retrieval.py`, `spatial_index.py`, `semantic.py`
-- `reflection.py`, `reasoning.py`, `planning.py`, `plan_complexity_analyzer.py`, `learning.py`, `motivation.py`
 
 ---
-**Orchestrare și execuție:**
-- `orchestrator.py`, `executive.py`, `executive_model_execution_bridge.py`, `multi_graph.py`, `synapse.py`
-- `dispatch_cli.py`, `recall_cli.py`, `memory_v6_cli.py`, `skill_router.py`, `tool_router.py`
 
 # 🧩 Arhitectura
-**Securitate și infrastructură:**
-- `security_audit.py`, `git_hooks.py`, `sensor_buffer.py`, `evaluation.py`, `report_view.py`, `proposal_queue.py`, `queue_promoter.py`, `version.py`, `trading_decisions.py`
-- `agents/`, `benchmarks/`, `neuromorphic/`
 
 ```text
                      HUMAN / USER
@@ -132,34 +97,20 @@ FULL PROVENANCE
                            ▼
                         Obsidian
 ```
-**Teste:** `cognitive_core/tests/` — peste 70 de fișiere de test (pytest), acoperind fiecare modul de mai sus, plus teste end-to-end (`test_end_to_end_workflow.py`), adversariale (`test_milestone4_adversarial_challenger*.py`, `test_milestone5_*`), și de regresie (`test_council_efficiency_report_fix.py`).
 
 Obsidian este interfata de navigare si audit uman a aceluiasi Vault. Nu este un al doilea Cognitive Core.
-## `scripts/`
-- `generate_b4_baseline.py` — generator baseline B4: rulează N execuții Council prin `FakeModelProvider`, produce rapoarte per-run în `reports/b4/`, agregă cu B5 (`b5_report.json`, CSV-uri, `B5_TOKEN_EFFICIENCY_REPORT.md`)
-- `skill_ingestion.py` — ingestie skill-uri externe
 
 ---
-## Alte componente root
-- `vault_api.py` — API pentru interacțiune cu vault-ul
-- `memory_controller/`, `config/`, `agents/`, `commands/`, `skills/` — module suport
-- `xau_kinetic/`, `XAU_Kinetic.Desktop/`, `XAU_Kinetic_Standalone/`, `projects/` — proiecte satelit (trading/desktop)
-- `compute_nodes.json`, `pytest.ini`, `requirements-memory-v6.txt`
-- `audit_log.jsonl` (~34.6 MB) și `test_audit_log.jsonl` (~3.1 MB) — loguri de audit brute, generate automat
 
 # 🤖 Claude Code Plugin
-## Istoric recent (schimbări majore)
 
 Repository-ul contine deja stratul Claude Code:
-- **`6e256a9`** — `feat(B4)`: adăugat generator baseline B4 (`generate_b4_baseline.py`) + test de regresie, validat prin CLI și programatic (3 rapoarte JSON, `b5_report.json` cu `run_count == 3`, Markdown cu secțiune "Council efficiency verdict").
-- **`0f4e0f3`** — `fix(B5)`: corectat bug în `council_efficiency_report.py` unde `top_optimization_candidate` combina independent agentul cu cel mai mare consum individual și tier-ul cu cel mai mare consum agregat, producând perechi ireale (ex. `"CRITIC / light"` când CRITIC rula mereu pe `standard`). Fix-ul grupează consumul pe perechea reală `(agent_id, model_tier)` observată în date. Adăugate 10 teste de regresie (`test_council_efficiency_report_fix.py`).
 
 ```text
 .claude-plugin/
 ├── plugin.json
 └── marketplace.json
 ```
-## Note de mentenanță
 
 si componentele:
 
@@ -589,6 +540,25 @@ O schimbare majora este completa cand:
 
 ---
 
+# 🧬 Council Efficiency Pipeline (B1–B5) — Istoric Recent
+
+Pe langa nucleul cognitiv de mai sus, `cognitive_core/` implementeaza un pipeline dedicat de audit si eficienta a consumului de tokeni pentru Council (B1–B5):
+
+- **B1** `council_model_execution.py` — executa modelele Council prin provideri (`model_provider.py`, `fake_model_provider.py`, `local_provider.py`, `openai_provider.py`), cu routare pe tier (`model_tier_router.py`).
+- **B2/B4** `council_usage_audit.py` + `actual_usage_telemetry.py` — telemetrie per-call (tokeni estimati vs. reali).
+- **B5** `council_efficiency_report.py` — agregare istorica pe mai multe run-uri, verdict de eficienta, export CSV/Markdown/JSON.
+- `council_budget_controller.py` — control buget de tokeni la nivel de Council.
+- `scripts/generate_b4_baseline.py` — genereaza N run-uri baseline prin `FakeModelProvider`, produce rapoarte B4 (`reports/b4/run_XXXX.json`) si le agrega cu B5 (`b5_report.json`, cele 4 CSV-uri, `B5_TOKEN_EFFICIENCY_REPORT.md`).
+
+**Commit-uri recente:**
+
+- **`6e256a9`** — `feat(B4)`: adaugat `scripts/generate_b4_baseline.py` + `cognitive_core/tests/test_generate_b4_baseline.py`, validat prin CLI si programatic (3 rapoarte JSON, `b5_report.json` cu `run_count == 3`, Markdown cu sectiunea "Council efficiency verdict").
+- **`0f4e0f3`** — `fix(B5)`: corectat un bug in `council_efficiency_report.py` unde `top_optimization_candidate` combina independent agentul cu cel mai mare consum individual si tier-ul cu cel mai mare consum agregat, producand perechi ireale (ex. `"CRITIC / light"` cand CRITIC rula mereu pe tier-ul `standard`). Fix-ul grupeaza consumul pe perechea reala `(agent_id, model_tier)` observata direct in date. Adaugate 10 teste de regresie in `cognitive_core/tests/test_council_efficiency_report_fix.py`.
+
+**Nota de mentenanta:** `council_efficiency_report.py` si restul pipeline-ului B1–B5 erau marcate FROZEN in instructiunile de proiect anterioare; fix-ul de mai sus a fost aplicat cu autorizare explicita a utilizatorului — statutul FROZEN merita reconfirmat cu `AGENTS.md` / echipa inainte de urmatoarele modificari pe acest fisier.
+
+---
+
 # 📜 Principiul final
 
 > **AI Memory Vault nu este doar un folder de fisiere. Este memoria canonica partajata a ecosistemului AI.**
@@ -599,7 +569,7 @@ O schimbare majora este completa cand:
 
 ## 🔗 Links
 
-**Repository:** https://github.com/userist123/AI_Memory_Vault_CODEX_READY
+**Repository:** [https://github.com/userist123/AI_Memory_Vault_CODEX_READY](https://github.com/userist123/AI_Memory_Vault_CODEX_READY)
 
 **Claude Plugin:** `.claude-plugin/`
 
@@ -619,6 +589,3 @@ O schimbare majora este completa cand:
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
 - [[Knowledge Graph Home]]
-- Fișierele `council_efficiency_report.py` și restul pipeline-ului B1–B5 erau marcate FROZEN în instrucțiunile de proiect anterioare; fix-ul de mai sus a fost aplicat cu autorizare explicită — merită confirmat statutul FROZEN cu echipa/`AGENTS.md`.
-- `01_KNOWLEDGE` și `04_MEMORY` conțin numeroase fișiere placeholder (`test_*.md`, `unknown_*.md`, `policy-lesson_*.md`) rezultate din import/generare automată — candidate pentru curățare sau revizuire lifecycle (`unverified` → `verified`).
-- Fișierele `*_Claude_Legacy.md` și `*_Perplexity_Legacy.md` din `00_CORE`/`01_KNOWLEDGE` sunt versiuni istorice păstrate pentru compatibilitate — de evaluat dacă mai sunt necesare. 
