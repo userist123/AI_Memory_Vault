@@ -1,18 +1,33 @@
-# External Skill Sources
+# External Skills Sources
 
-| Source | Type | Import treatment |
-|---|---|---|
-| github/awesome-copilot | Skill/agent library | Preserve individual skills; do not import unrelated repo infrastructure |
-| addyosmani/web-quality-skills | Web quality skills | Preserve SKILL.md and supporting references |
-| gbrasil720/ui-sensei | UI/design skill | Preserve skill plus references/scripts where needed |
-| ConardLi/garden-skills | Skill collection | Import web-design-engineer skill only from requested path |
-| xiaopu-ai/web-design | Web design skill | Import SKILL.md and referenced materials |
-| bergside/awesome-design-skills | Design skill collection | Preserve individual skills and source attribution |
+Imported/curated sources requested on 2026-08-24.
 
-## Discovery-only URLs
+## Primary skill sources
 
-The GitHub topic/collection URLs supplied by the user are discovery indexes. They are not copied into the skill corpus as if they were skills.
+1. https://github.com/github/awesome-copilot/
+2. https://github.com/addyosmani/web-quality-skills/tree/main/skills
+3. https://github.com/gbrasil720/ui-sensei
+4. https://github.com/ConardLi/garden-skills/tree/main/skills/web-design-engineer
+5. https://github.com/xiaopu-ai/web-design/blob/main/SKILL.md
+6. https://github.com/ConardLi/garden-skills
+7. https://github.com/bergside/awesome-design-skills
 
-## Canonical-memory boundary
+## Discovery sources
 
-These files are external knowledge. They are not canonical memory and must not introduce a second memory store, RAG system, orchestrator, authorization layer, or ToolRouter. Integration must extend the existing vault abstractions.
+- https://github.com/topics/backend-app
+- https://github.com/collections/programming-languages
+- https://github.com/topics/backend?o=asc&s=forks
+- https://github.com/topics/backend-webdevelopment
+
+## Notes
+
+- Duplicate URLs in the original request are represented once.
+- Discovery/topic pages are treated as source-discovery inputs, not as skill payloads themselves.
+- Skill payloads should retain original attribution and repository-relative path where practical.
+
+---
+
+## 🔗 Legături de Memorie & Graf Obsidian
+- [[02 Memory Knowledge Map]]
+- [[Knowledge Graph Home]]
+- [[Knowledge Graph Home]]
