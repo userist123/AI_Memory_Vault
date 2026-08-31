@@ -9,6 +9,7 @@ on:
   pull_request:
     paths:
       - 'cognitive_core/**'
+  workflow_dispatch:
 
 jobs:
   test:
