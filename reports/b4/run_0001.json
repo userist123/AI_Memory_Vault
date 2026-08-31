@@ -1,0 +1,99 @@
+{
+  "run_id": "run_0001",
+  "specialist_calls": 2,
+  "synthesis_calls": 1,
+  "total_model_calls": 3,
+  "estimated_input": 337,
+  "actual_input": 337,
+  "estimated_output": 23,
+  "actual_output": 23,
+  "cached_input": 0,
+  "reasoning_tokens": 0,
+  "actual_total": 360,
+  "estimated_total": 360,
+  "per_agent_usage": {
+    "CRITIC": {
+      "estimated_total": 82,
+      "actual_total": 82,
+      "calls": 1
+    },
+    "CONSOLIDATOR": {
+      "estimated_total": 211,
+      "actual_total": 211,
+      "calls": 1
+    },
+    "SYNTHESIS": {
+      "estimated_total": 67,
+      "actual_total": 67,
+      "calls": 1
+    }
+  },
+  "per_tier_usage": {
+    "standard": {
+      "estimated_total": 293,
+      "actual_total": 293,
+      "calls": 2
+    },
+    "heavy": {
+      "estimated_total": 67,
+      "actual_total": 67,
+      "calls": 1
+    }
+  },
+  "context_bytes": 828,
+  "context_estimated_tokens": 277,
+  "wall_time_seconds": 0.00015360000543296337,
+  "tokens_per_specialist": 146.5,
+  "tokens_per_council_run": 360.0,
+  "tokens_per_synthesis": 67.0,
+  "calls": [
+    {
+      "agent_id": "CRITIC",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 74,
+      "estimated_output": 8,
+      "actual_input": 74,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 82,
+      "estimated_total": 82,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CONSOLIDATOR",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 203,
+      "estimated_output": 8,
+      "actual_input": 203,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 211,
+      "estimated_total": 211,
+      "source": "provider"
+    },
+    {
+      "agent_id": "SYNTHESIS",
+      "kind": "synthesis",
+      "provider": "fake",
+      "model": "fake-heavy",
+      "model_tier": "heavy",
+      "estimated_input": 60,
+      "estimated_output": 7,
+      "actual_input": 60,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 67,
+      "estimated_total": 67,
+      "source": "provider"
+    }
+  ]
+}

@@ -107,6 +107,7 @@ class SQLiteStorageEngine:
         provenance_json = json.dumps(provenance)
         raw_json = json.dumps(data)
         content = data.get("content", "")
+        content_str = json.dumps(content) if isinstance(content, (dict, list)) else (str(content) if content is not None else "")
 
         insert_sql = """
         INSERT INTO notes (
@@ -173,7 +174,7 @@ class SQLiteStorageEngine:
             data.get("verification_source"),
             relations_json,
             provenance_json,
-            content,
+            content_str,
             raw_json
         )
 

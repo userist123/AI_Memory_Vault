@@ -27,16 +27,24 @@ class LocalProvider:
         *,
         base_url: str = "http://localhost:11434",
         timeout_seconds: float = 120.0,
+        num_ctx: int = 4096,
     ) -> None:
         model_name = str(model_name).strip()
         if not model_name:
             raise ValueError("model_name must not be empty")
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
+        if num_ctx <= 0:
+            raise ValueError("num_ctx must be positive")
 
         self.model_name = model_name
         self.base_url = base_url.rstrip("/")
         self.timeout_seconds = float(timeout_seconds)
+        self.num_ctx = int(num_ctx)
+
+    @staticmethod
+    def _estimate_tokens(text: str) -> int:
+        return max(1, (len(text) + 2) // 3)
 
     def _post_json(self, path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         url = f"{self.base_url}{path}"
@@ -101,6 +109,12 @@ class LocalProvider:
                 "tool contract yet; refusing to silently ignore request.tools."
             )
 
+        # Pre-flight token estimation to prevent silent truncation by Ollama
+        prompt_text = request.prompt or ""
+        system_text = request.system_prompt or ""
+        full_input_text = f"{system_text}\n{prompt_text}" if system_text else prompt_text
+        estimated_input = self._estimate_tokens(full_input_text)
+
         payload: Dict[str, Any] = {
             "model": self.model_name,
             "prompt": request.prompt,
@@ -111,11 +125,27 @@ class LocalProvider:
 
         # Allow provider-specific generation options without coupling the
         # provider-neutral ModelRequest schema to Ollama-specific fields.
-        options = request.metadata.get("local_options")
-        if options is not None:
-            if not isinstance(options, dict):
+        raw_options = request.metadata.get("local_options")
+        if raw_options is not None:
+            if not isinstance(raw_options, dict):
                 raise LocalProviderError("request.metadata['local_options'] must be an object")
-            payload["options"] = dict(options)
+            options = dict(raw_options)
+        else:
+            options = {}
+
+        # Explicitly enforce num_ctx to prevent Ollama from silently truncating context
+        effective_num_ctx = int(options.get("num_ctx", self.num_ctx))
+        if effective_num_ctx <= 0:
+            raise LocalProviderError("num_ctx must be positive")
+        options["num_ctx"] = effective_num_ctx
+
+        if estimated_input > effective_num_ctx:
+            raise LocalProviderError(
+                f"Estimated request token count {estimated_input} exceeds num_ctx limit {effective_num_ctx}. "
+                "Failing closed to prevent silent context truncation by Ollama."
+            )
+
+        payload["options"] = options
 
         if "think" in request.metadata:
             payload["think"] = request.metadata["think"]

@@ -1,11 +1,11 @@
 ---
 id: B
 type: knowledge
-lifecycle: REVIEW
+lifecycle: ACTIVE
 confidence: high
-verification: unverified
+verification: verified
 provenance:
   source_type: user
 relations: []
 ---
-Content B
+Content for B

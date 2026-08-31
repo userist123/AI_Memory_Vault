@@ -1,0 +1,104 @@
+{
+  "run_id": "run_0022",
+  "specialist_calls": 2,
+  "synthesis_calls": 1,
+  "total_model_calls": 3,
+  "estimated_input": 350,
+  "actual_input": 350,
+  "estimated_output": 22,
+  "actual_output": 22,
+  "cached_input": 0,
+  "reasoning_tokens": 0,
+  "actual_total": 372,
+  "estimated_total": 372,
+  "per_agent_usage": {
+    "RETRIEVAL": {
+      "estimated_total": 61,
+      "actual_total": 61,
+      "calls": 1
+    },
+    "CONSOLIDATOR": {
+      "estimated_total": 243,
+      "actual_total": 243,
+      "calls": 1
+    },
+    "SYNTHESIS": {
+      "estimated_total": 68,
+      "actual_total": 68,
+      "calls": 1
+    }
+  },
+  "per_tier_usage": {
+    "light": {
+      "estimated_total": 61,
+      "actual_total": 61,
+      "calls": 1
+    },
+    "standard": {
+      "estimated_total": 243,
+      "actual_total": 243,
+      "calls": 1
+    },
+    "heavy": {
+      "estimated_total": 68,
+      "actual_total": 68,
+      "calls": 1
+    }
+  },
+  "context_bytes": 865,
+  "context_estimated_tokens": 289,
+  "wall_time_seconds": 0.00018430000636726618,
+  "tokens_per_specialist": 152.0,
+  "tokens_per_council_run": 372.0,
+  "tokens_per_synthesis": 68.0,
+  "calls": [
+    {
+      "agent_id": "RETRIEVAL",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 54,
+      "estimated_output": 7,
+      "actual_input": 54,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 61,
+      "estimated_total": 61,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CONSOLIDATOR",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 235,
+      "estimated_output": 8,
+      "actual_input": 235,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 243,
+      "estimated_total": 243,
+      "source": "provider"
+    },
+    {
+      "agent_id": "SYNTHESIS",
+      "kind": "synthesis",
+      "provider": "fake",
+      "model": "fake-heavy",
+      "model_tier": "heavy",
+      "estimated_input": 61,
+      "estimated_output": 7,
+      "actual_input": 61,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 68,
+      "estimated_total": 68,
+      "source": "provider"
+    }
+  ]
+}

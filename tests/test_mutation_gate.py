@@ -44,6 +44,7 @@ def test_ai_agent_cannot_apply_mutation():
             principal=Principal.AI_AGENT,
             verdict=verdict,
             evidence_verification=verification,
+            review_state={"state": "APPROVED", "can_apply_mutation": True},
             action="supersede",
             reason="not allowed",
         )
@@ -64,6 +65,7 @@ def test_invalid_evidence_blocks_mutation():
             principal=Principal.HUMAN,
             verdict=verdict,
             evidence_verification=verification,
+            review_state={"state": "APPROVED", "can_apply_mutation": True},
             action="supersede",
             reason="should fail",
         )
@@ -78,11 +80,12 @@ def test_defer_is_non_mutating():
     controller = RecordingController()
     gate = MutationGate(controller)
     verdict = _verdict(verdict=Verdict.DEFER)
-    verification = {"valid": True, "bundle_hash_matches": True, "stale_memory_ids": [], "missing_memory_ids": [], "bundle_hash": "a" * 64}
+    verification = {"bundle_id": "bundle-1", "valid": True, "bundle_hash_matches": True, "stale_memory_ids": [], "missing_memory_ids": [], "bundle_hash": "a" * 64}
     result = gate.apply(
         principal=Principal.HUMAN,
         verdict=verdict,
         evidence_verification=verification,
+        review_state={"state": "DEFERRED", "can_apply_mutation": False},
         action="none",
         reason="insufficient evidence",
     )
@@ -94,11 +97,12 @@ def test_accept_a_can_supersede_b_with_verified_evidence():
     controller = RecordingController()
     gate = MutationGate(controller)
     verdict = _verdict(verdict=Verdict.ACCEPT_A)
-    verification = {"valid": True, "bundle_hash_matches": True, "stale_memory_ids": [], "missing_memory_ids": [], "bundle_hash": "a" * 64}
+    verification = {"bundle_id": "bundle-1", "valid": True, "bundle_hash_matches": True, "stale_memory_ids": [], "missing_memory_ids": [], "bundle_hash": "a" * 64}
     result = gate.apply(
         principal=Principal.HUMAN,
         verdict=verdict,
         evidence_verification=verification,
+        review_state={"state": "APPROVED", "can_apply_mutation": True},
         action="supersede",
         reason="A accepted from verified evidence",
     )
@@ -110,11 +114,12 @@ def test_accept_b_can_attest_b():
     controller = RecordingController()
     gate = MutationGate(controller)
     verdict = _verdict(verdict=Verdict.ACCEPT_B)
-    verification = {"valid": True, "bundle_hash_matches": True, "stale_memory_ids": [], "missing_memory_ids": [], "bundle_hash": "a" * 64}
+    verification = {"bundle_id": "bundle-1", "valid": True, "bundle_hash_matches": True, "stale_memory_ids": [], "missing_memory_ids": [], "bundle_hash": "a" * 64}
     result = gate.apply(
         principal=Principal.HUMAN,
         verdict=verdict,
         evidence_verification=verification,
+        review_state={"state": "APPROVED", "can_apply_mutation": True},
         action="attest",
         reason="B accepted from verified evidence",
     )

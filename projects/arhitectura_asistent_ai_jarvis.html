@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="ro" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arhitectura & Implementare Asistent AI „Jarvis” - Google Antigravity</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased leading-relaxed">
+
+<!-- Chosen Palette: Slate & Amber Neutral (Background: #f8fafc, Primary Text: #0f172a, Cards: #ffffff, Accents: #2563eb, #d97706, #10b981) -->
+<!-- Application Structure Plan: SPA-ul este organizat logic pe 6 secțiuni interactive, trecând de la concepte generale la detaliile acustice, de memorie și execuție: 1. Overview & Panou de Comandă, 2. Ecosistemul Antigravity & SDK 3-Tier, 3. Cogniție & Memorie Segmentată, 4. Pipeline Vocal (Cascadă vs S2S & Benchmarks VRAM), 5. Full-Duplex & Mecanismul Barge-In (cu simulator live), 6. FastMCP, IoT & Blueprint Operativ. Această structură este aleasă pentru a ghida utilizatorul progresiv prin complexitatea ingineriei unui asistent autonom. -->
+<!-- Visualization & Content Choices: 1. Comparația S2S vs Cascadă -> Grafic Radar Chart.js -> Analiză multi-axială (Latență, Izolare Erori, Tool Calling) -> Justificare: evidențiază clar de ce Cascada domină în producție. 2. Benchmark VRAM Whisper -> Grafic Orizontal de Bare Chart.js -> Prezentare VRAM & Viteză -> Justificare: alegere rapidă a modelului optim. 3. Simulatoare Interactive HTML/JS (Silero VAD Slider, Barge-In Event Flow, Home Assistant REST Tester) -> Permit testarea directă a parametrilor acustici și IoT fără SVG/Mermaid. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="sticky top-0 z-50 bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-amber-500 text-2xl font-black tracking-wider">⚡ JARVIS</span>
+                <span class="text-xs bg-slate-800 text-amber-400 px-2.5 py-1 rounded-full border border-amber-500/30 font-semibold">Google Antigravity Engine</span>
+            </div>
+            <nav class="flex flex-wrap gap-1 sm:gap-2 text-xs sm:text-sm font-medium">
+                <button onclick="scrollToSection('sec-overview')" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 transition text-slate-300 hover:text-white">Overview</button>
+                <button onclick="scrollToSection('sec-antigravity')" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 transition text-slate-300 hover:text-white">SDK & Stratificare</button>
+                <button onclick="scrollToSection('sec-memory')" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 transition text-slate-300 hover:text-white">Memorie & Cogniție</button>
+                <button onclick="scrollToSection('sec-audio')" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 transition text-slate-300 hover:text-white">Pipeline Vocal</button>
+                <button onclick="scrollToSection('sec-duplex')" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 transition text-slate-300 hover:text-white">Full-Duplex & Barge-In</button>
+                <button onclick="scrollToSection('sec-mcp-blueprint')" class="px-3 py-1.5 rounded-lg hover:bg-slate-800 transition text-slate-300 hover:text-white">FastMCP & Blueprint</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
+
+        <section id="sec-overview" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200">
+            <div class="max-w-3xl mb-6">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Arhitectura și Implementarea unei Entități Inteligente Tip „Jarvis”
+                </h1>
+                <p class="mt-3 text-slate-600 text-base sm:text-lg">
+                    Acest tablou de comandă interactiv transformă raportul de cercetare într-un instrument exploratoriu. Descoperă componentele de raționament Antigravity, sistemele acustice full-duplex, optimizarea memoriei și integrarea IoT prin FastMCP.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Model Bază</span>
+                    <div class="text-lg font-bold text-slate-900 mt-1">Gemini 3.7 Flash</div>
+                    <span class="text-xs text-blue-600 font-medium">Agent Harness Antigravity</span>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Latență Vocală TTFB</span>
+                    <div class="text-lg font-bold text-emerald-600 mt-1">100 - 250 ms</div>
+                    <span class="text-xs text-slate-500">Sinteză kokoro-82M ONNX</span>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Consum VRAM STT</span>
+                    <div class="text-lg font-bold text-amber-600 mt-1">~3.0 GB</div>
+                    <span class="text-xs text-slate-500">faster-whisper INT8</span>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Control Interactiv</span>
+                    <div class="text-lg font-bold text-indigo-600 mt-1">Full-Duplex AEC</div>
+                    <span class="text-xs text-slate-500">Barge-in VAD Hibrid</span>
+                </div>
+            </div>
+
+            <div class="bg-amber-50/60 border border-amber-200 rounded-xl p-4 sm:p-5 text-sm text-amber-900 flex items-start space-x-3">
+                <span class="text-xl">💡</span>
+                <div>
+                    <strong class="font-semibold">Sintetizatorul Raportului:</strong> Trecerea de la un simplu asistent pasiv la un agent autonom "Jarvis" reclamă rezolvarea a trei mari provocări: amnezia contextului lung, latența conversațională și gestionarea interferențelor audio (ecoul propriilor boxe). Explorează secțiunile inferioare pentru a vedea soluțiile tehnice.
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-antigravity" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+            <div>
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest">Capitolul 1</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">1. Fundamentele Ecosistemului Google Antigravity</h2>
+                <p class="mt-2 text-slate-600 text-sm sm:text-base">
+                    Google Antigravity este o platformă orientată către agenți (agent-first) concepută pentru a susține cicluri autonome de planificare, execuție, observare și validare. SDK-ul oferă abstracția necesară pentru a rula agenți persistenți pe infrastructură locală sau cloud.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="border border-slate-200 rounded-xl p-5 hover:border-blue-300 transition bg-slate-50/50">
+                    <div class="text-blue-600 font-bold text-lg mb-2">🖥️ Antigravity IDE / 2.0</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Centru vizual pentru monitorizare asincronă, inspectarea artefactelor generate (planuri de implementare, structuri de fișiere, capturi) și administrarea sarcinilor programate de tip cron.
+                    </p>
+                </div>
+                <div class="border border-slate-200 rounded-xl p-5 hover:border-blue-300 transition bg-slate-50/50">
+                    <div class="text-blue-600 font-bold text-lg mb-2">⌨️ Antigravity CLI</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Interfață TUI de consolă focalizată pe execuție rapidă, comenzi prin SSH pe servere la distanță și orchestrarea fluidă a sub-agenților paraleli direct din terminal.
+                    </p>
+                </div>
+                <div class="border border-slate-200 rounded-xl p-5 hover:border-blue-300 transition bg-blue-50/30 border-blue-200">
+                    <div class="text-blue-700 font-bold text-lg mb-2">📦 Antigravity SDK</div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Pilonul central pentru dezvoltarea aplicațiilor autonome. Oferă control complet în Python asupra ciclului de viață, hook-urilor de securitate și decuplării logicii.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 border-t border-slate-100 pt-6">
+                <h3 class="text-lg font-bold text-slate-900 mb-3">Arhitectura SDK-ului pe Trei Niveluri</h3>
+                <p class="text-xs sm:text-sm text-slate-600 mb-4">
+                    Faceți clic pe fiecare nivel pentru a explora rolul său în cadrul aplicației Jarvis:
+                </p>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <button onclick="showSDKDetails('tier1')" id="btn-tier1" class="text-left p-4 rounded-xl border-2 border-blue-600 bg-blue-50/50 transition">
+                        <div class="text-xs font-bold text-blue-600 uppercase">Stratul 1</div>
+                        <div class="text-base font-bold text-slate-900">Agent (High-Level)</div>
+                        <div class="text-xs text-slate-500 mt-1">Manager de context simplu</div>
+                    </button>
+                    <button onclick="showSDKDetails('tier2')" id="btn-tier2" class="text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 transition">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Stratul 2</div>
+                        <div class="text-base font-bold text-slate-900">Conversație & Hook-uri</div>
+                        <div class="text-xs text-slate-500 mt-1">Stateful, Inspect/Decide/Transform</div>
+                    </button>
+                    <button onclick="showSDKDetails('tier3')" id="btn-tier3" class="text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 transition">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Stratul 3</div>
+                        <div class="text-base font-bold text-slate-900">Conexiune & Adaptor</div>
+                        <div class="text-xs text-slate-500 mt-1">LocalConnection vs Remote</div>
+                    </button>
+                </div>
+
+                <div id="sdk-details-box" class="mt-4 p-4 rounded-xl bg-slate-900 text-slate-100 text-xs sm:text-sm font-mono leading-relaxed">
+                    <span class="text-amber-400 font-bold">Stratul 1 (Agent):</span> Punctul de intrare automatizat. Folosit prin `async with Agent(config) as agent:`. Gestionat automat: descoperirea binarelor, inițializarea instrumentelor locale și menținerea conexiunii. Ideal pentru serviciul vocal daemon.
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-memory" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+            <div>
+                <span class="text-xs font-bold text-amber-600 uppercase tracking-widest">Capitolul 2</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">2. Cogniția și Memoria: Persistența Temporală</h2>
+                <p class="mt-2 text-slate-600 text-sm sm:text-base">
+                    Includerea întregului istoric în fereastra de context provoacă încetiniri severe și halucinații. Sistemul Jarvis utilizează o arhitectură de memorie segmentată, combinând fișiere locale reduse (&lt; 3 KB) cu jurnale RECAP și un server vectorial SurrealDB MCP.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-6 items-start">
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-bold text-slate-900 text-sm flex items-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block mr-2"></span>
+                            Memoria de Lucru (`JARVIS_MEMORY.md`)
+                        </h4>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Fisier ultra-compact (&lt; 3KB). Păstrează doar starea imediată a senzorilor și sarcinile curente din ultimele 2-3 ore.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-bold text-slate-900 text-sm flex items-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block mr-2"></span>
+                            Jurnalele de Sesiune (RECAP Log-uri)
+                        </h4>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Salvare zilnică cronologică. Permite recuperarea instantanee din prăbușiri (Crash Recovery) și reluarea conversațiilor (Mid-Session Resume).
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-bold text-slate-900 text-sm flex items-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 inline-block mr-2"></span>
+                            Identitatea Centrală (`GEMINI.md`)
+                        </h4>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Fișier permanent încărcat automat de Antigravity la inițializare. Conține regulile de siguranță și instrucțiunile de bootstrapping.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                        <h4 class="font-bold text-slate-900 text-sm flex items-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block mr-2"></span>
+                            Memoria Semantică (SurrealDB MCP)
+                        </h4>
+                        <p class="text-xs text-slate-600 mt-1">
+                            Bază de date graf/vectorială accesată prin `@mcp.tool` (`memory_recall`, `memory_store`). Interogare asincronă cu consum redus de tokeni.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 text-slate-200 p-5 rounded-2xl border border-slate-800 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                        <h3 class="font-bold text-sm text-white">Simulare Flux Inițializare Memorie</h3>
+                        <span class="text-xs text-emerald-400 font-mono">Status: Activ</span>
+                    </div>
+
+                    <div class="space-y-2 font-mono text-xs">
+                        <div class="text-slate-400">&gt; Start sesiune nouă Jarvis daemon...</div>
+                        <div class="text-blue-400">&gt; Citire ~/.gemini/GEMINI.md (Identitate & Reguli)</div>
+                        <div class="text-amber-400">&gt; Scanare JARVIS_MEMORY.md (3 KB detectați)</div>
+                        <div class="p-2 bg-slate-800 rounded border border-slate-700 text-slate-300">
+                            [RECAP DETECTAT] Sesiunea anterioară întreruptă brusc la ora 14:22.<br>
+                            Ultimul task: "Actualizare rută rețea IoT". Reluare automată stare.
+                        </div>
+                        <div class="text-emerald-400">&gt; Interogare SurrealDB via MCP: scope="user_preferences"</div>
+                        <div class="text-slate-300">&gt; Memorie sincronizată. Fereastră de context optimizată (&lt; 12.000 tokeni).</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-audio" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+            <div>
+                <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Capitolul 3</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">3. Procesarea Vocală: Cascadă vs. Speech-to-Speech</h2>
+                <p class="mt-2 text-slate-600 text-sm sm:text-base">
+                    Alegerea arhitecturii vocale determină precizia și stabilitatea asistentului. Deși modelele Speech-to-Speech (S2S) oferă latență redusă, ele suferă de erori opace ("fail silently") și dificultăți în apelarea instrumentelor. Arhitectura în Cascadă rămâne standardul de producție.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 items-center">
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200">
+                    <h3 class="text-base font-bold text-slate-900 mb-2 text-center">Comparație Arhitecturală Multi-Axială</h3>
+                    <p class="text-xs text-slate-500 mb-4 text-center">Vizualizarea punctelor forte ale Cascadelor față de modelele S2S End-to-End</p>
+                    <div class="chart-container">
+                        <canvas id="chartParadigm"></canvas>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900">De ce Arhitectura în Cascadă este Superioară pentru Jarvis?</h3>
+                    <ul class="space-y-3 text-xs sm:text-sm text-slate-600">
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span><strong>Determinism în Tool Calling:</strong> Componenta LLM pe bază de text generează argumente JSON/Pydantic valide fără distorsiuni acustice.</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span><strong>Izolarea Erorilor:</strong> Artefactele intermediare de text permit depanarea exactă a modulelor (STT vs. LLM vs. TTS).</span>
+                        </li>
+                        <li class="flex items-start space-x-2">
+                            <span class="text-emerald-500 font-bold">✓</span>
+                            <span><strong>Streaming Latență Redusă:</strong> Începerea generării TTS înainte ca LLM-ul să termine întreaga propoziție scade TTFB la 100-250 ms.</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-6 border-t border-slate-200 pt-4">
+                        <h4 class="font-bold text-slate-900 text-sm mb-3">Benchmark Modele Transcriere Whisper (STT)</h4>
+                        <div class="chart-container">
+                            <canvas id="chartWhisper"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-50/60 border border-indigo-200 rounded-xl p-5 mt-6">
+                <h3 class="text-base font-bold text-indigo-950 mb-2">Simularea Segmentării Vocale Silero VAD</h3>
+                <p class="text-xs text-indigo-800 mb-4">
+                    Ajustează pragul de tăcere (`min_silence_duration_ms`) pentru a vedea cum decupează algoritmul neural blocurile audio transmise către Whisper:
+                </p>
+
+                <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <div class="w-full sm:w-1/2 space-y-2">
+                        <div class="flex justify-between text-xs font-semibold text-indigo-900">
+                            <span>Prag Tăcere (ms):</span>
+                            <span id="vad-value" class="text-indigo-600 font-bold">500 ms</span>
+                        </div>
+                        <input id="vad-slider" type="range" min="200" max="1000" step="50" value="500" class="w-full accent-indigo-600 cursor-pointer">
+                    </div>
+                    <div class="w-full sm:w-1/2 p-3 bg-white rounded-lg border border-indigo-200 text-xs text-slate-700">
+                        <span id="vad-eval" class="font-semibold text-emerald-600">Echilibru Optim (500ms):</span>
+                        <span id="vad-desc"> Decupează propozițiile natural pe baza respirației, prevenind tăierea ideilor la jumătate și eliminând halucinațiile pe zgomot de fond.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-duplex" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-6">
+            <div>
+                <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Capitolul 4</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">4. Control Full-Duplex și Anularea Ecoului (Barge-In)</h2>
+                <p class="mt-2 text-slate-600 text-sm sm:text-base">
+                    Pentru a fi cu adevărat interactiv, asistentul trebuie să asculte în timp ce vorbește. Problema suprapunerii audio (Double-Talk) este rezolvată printr-o arhitectură hibridă de Anulare a Ecoului Acustic (AEC) și întrerupere directă pe client.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900">Mecanismul Hibrid de Întrerupere Vocală</h3>
+                    <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                        Când utilizatorul începe să vorbească peste vocea lui Jarvis, așteptarea ca serverul să proceseze semnalul creează latență inacceptabilă. Soluția este rularera unui filtru VAD ușor în browser (WebAssembly), care trimite instant un semnal de "flush" și anulează LLM-ul.
+                    </p>
+
+                    <div class="p-4 bg-slate-900 rounded-xl text-white space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">Interactive Barge-In Simulator</span>
+                            <button onclick="triggerBargeInSimulation()" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold text-xs rounded transition">
+                                Simulează Vorbire Utilizator
+                            </button>
+                        </div>
+                        <div id="bargein-status" class="p-3 bg-slate-800 rounded font-mono text-xs text-slate-300 space-y-1">
+                            <div>[Stare Curentă]: Jarvis redă răspuns audio (TTS Kokoro Active)...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-3">Matrice Suport Suport Nativ AEC pe Browsere</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
+                                    <th class="p-2.5 font-bold">Platformă / Browser</th>
+                                    <th class="p-2.5 font-bold">Suport AEC</th>
+                                    <th class="p-2.5 font-bold">Comportament & Mitigări</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="p-2.5 font-semibold text-slate-900">Google Chrome (Desktop)</td>
+                                    <td class="p-2.5 text-emerald-600 font-bold">Robust</td>
+                                    <td class="p-2.5 text-slate-600">Integrat nativ (`echoCancellation: true`). Performanță excelentă.</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-semibold text-slate-900">Mozilla Firefox</td>
+                                    <td class="p-2.5 text-rose-500 font-bold">Slab</td>
+                                    <td class="p-2.5 text-slate-600">Lasă vocea TTS să treacă prin microfon; necesită rutare izolată pe backend.</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-semibold text-slate-900">Safari (iOS)</td>
+                                    <td class="p-2.5 text-emerald-600 font-bold">Excelent</td>
+                                    <td class="p-2.5 text-slate-600">Anulare hardware. Necesită `keepalive` pe fundal pentru a nu reseta filtrele WebRTC.</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-2.5 font-semibold text-slate-900">Android Chrome</td>
+                                    <td class="p-2.5 text-amber-600 font-bold">Variabil</td>
+                                    <td class="p-2.5 text-slate-600">Depinde de producător (OEM). Terminalele ieftine pot bloca AEC.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-mcp-blueprint" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 space-y-8">
+            <div>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Capitolul 5 & 6</span>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">5. Model Context Protocol (FastMCP), IoT & Blueprint Operativ</h2>
+                <p class="mt-2 text-slate-600 text-sm sm:text-base">
+                    FastMCP simplifică conectarea modelului la funcții din sistemul de operare și API-uri Home Assistant. Blueprint-ul de mai jos este pregătit pentru a fi copiat direct într-un agent Antigravity în vederea generării bazei de cod.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-6">
+                <div class="border border-slate-200 rounded-xl p-5 bg-slate-50 space-y-4">
+                    <h3 class="text-base font-bold text-slate-900">Testare Simulare Tool FastMCP Home Assistant</h3>
+                    <p class="text-xs text-slate-600">
+                        Selectează o acțiune pentru a vedea cererea REST transmisă către Home Assistant (`localhost:8123/api/states`):
+                    </p>
+
+                    <div class="flex gap-2">
+                        <button onclick="runMcpDemo('get_temp')" class="px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition">
+                            Citire Senzor Temperatură
+                        </button>
+                        <button onclick="runMcpDemo('set_lights')" class="px-3 py-1.5 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 transition">
+                            Aprindere Lumini Birou
+                        </button>
+                    </div>
+
+                    <div id="mcp-code-output" class="p-3 bg-slate-900 rounded-lg text-emerald-400 font-mono text-xs overflow-x-auto">
+                        // Așteptare comandă... Apasă pe un buton de mai sus.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl p-5 bg-slate-50 space-y-3">
+                    <h3 class="text-base font-bold text-slate-900">Orchestrare Sub-Agenți Paraleli</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Pentru sarcini lungi (ex. căutări web sau analiza știrilor), Jarvis folosește `ParallelAgent`. Sub-agentul rulează în fundal într-o ramură izolată (`_run_async_impl`), fără a bloca ascultarea vocală principală.
+                    </p>
+                    <div class="p-3 bg-white rounded border border-slate-200 text-xs space-y-1 font-mono text-slate-700">
+                        <div class="text-blue-600 font-bold">[Main Process] Ascultare microfon activă...</div>
+                        <div class="text-slate-500">[Sub-Agent ID #82] Invocat: "Căutare știri AI"</div>
+                        <div class="text-slate-500">[Sub-Agent ID #82] Stare: Execuție asincronă în fundal...</div>
+                        <div class="text-emerald-600 font-bold">[Main Process] Răspuns vocal instant: "Am pornit căutarea în fundal!"</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-200 pt-6">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <h3 class="text-lg font-bold text-slate-900">Blueprint Executabil pentru Agentul Antigravity</h3>
+                    <button onclick="copyBlueprintPrompt()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-lg transition flex items-center space-x-1">
+                        <span>📋 Copiază Promptul Blueprint</span>
+                    </button>
+                </div>
+
+                <div class="relative">
+                    <pre id="blueprint-text" class="p-4 bg-slate-900 text-slate-200 rounded-xl text-xs font-mono overflow-x-auto custom-scrollbar max-h-80 leading-relaxed border border-slate-800">
+Rolul Tău (Antigravity AI): Ești Arhitectul Principal de Sistem. Obiectivul tău este să generezi baza de cod (Python 3.12+), cu fișiere configurate complet, pentru un agent vocal complet autonom "Jarvis".
+
+ETAPA 1: Inițializarea și Fundamentul SDK-ului Antigravity
+- Generarea structurii directoare: app/core/, app/audio/, app/tools/, app/memory/.
+- Fișier requirements.txt: google-antigravity, fastmcp, pydantic, faster-whisper, silero-vad, sounddevice, aiohttp, onnxruntime.
+- În core/main.py: Buclă async def main() cu LocalAgentConfig() și manager de context async with Agent(config) as agent:.
+
+ETAPA 2: Subsistemul Audio (Pipeline în Cascadă și AEC logic)
+- În audio/stt.py: Captare sounddevice + Silero VAD (min_silence_duration_ms=500). Transcriere via faster-whisper ('large-v3-turbo', compute_type='int8').
+- În audio/tts.py: Legătură ONNX Kokoro-82M (24kHz). Emitere audio din pachete ChatResponse.
+- Barge-in: Semnal global asyncio.Event. La recepționare voce în timpul redării, execută flush pe buffer și anulează LLM.
+
+ETAPA 3: Persistența și Integrare FastMCP (Tools & IoT)
+- În tools/mcp_server.py: FastMCP("JarvisControls"). Tool-uri cu @mcp.tool și aiohttp către Home Assistant (localhost:8123/api/states).
+- În memory/session.py: Redactare log RECAP în JARVIS_MEMORY.md. Integration SurrealDB MCP recall.
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+            <p>Arhitectura Asistent AI „Jarvis” – Sincronizat cu Raportul Tehnic Google Antigravity Ecosystem.</p>
+            <p class="text-slate-600">Generat automat ca Single Page Application interactivă.</p>
+        </div>
+    </footer>
+
+    <script>
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function showSDKDetails(tier) {
+            const box = document.getElementById('sdk-details-box');
+            const btn1 = document.getElementById('btn-tier1');
+            const btn2 = document.getElementById('btn-tier2');
+            const btn3 = document.getElementById('btn-tier3');
+
+            [btn1, btn2, btn3].forEach(b => {
+                b.className = "text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 transition";
+                b.querySelector('div').className = "text-xs font-bold text-slate-400 uppercase";
+            });
+
+            if (tier === 'tier1') {
+                btn1.className = "text-left p-4 rounded-xl border-2 border-blue-600 bg-blue-50/50 transition";
+                btn1.querySelector('div').className = "text-xs font-bold text-blue-600 uppercase";
+                box.innerHTML = `<span class="text-amber-400 font-bold">Stratul 1 (Agent):</span> Clasa superioară 'Agent' (high-level, batteries-included). Folosită prin 'async with Agent(config) as agent:'. Preia automat ciclul de viață, descoperirea binarelor necesare, inițializarea instrumentelor și conexiunea. Ideal pentru modul daemon vocal.`;
+            } else if (tier === 'tier2') {
+                btn2.className = "text-left p-4 rounded-xl border-2 border-blue-600 bg-blue-50/50 transition";
+                btn2.querySelector('div').className = "text-xs font-bold text-blue-600 uppercase";
+                box.innerHTML = `<span class="text-amber-400 font-bold">Stratul 2 (Conversație & Hook-uri):</span> Introduce clasele stateful: 'Conversation', 'ChatResponse', 'Step' și 'ToolCall'. Conține motorul de siguranță și hook-urile: Inspect (read-only telemetrie), Decide (blocking audit) și Transform (sanitizare date).`;
+            } else if (tier === 'tier3') {
+                btn3.className = "text-left p-4 rounded-xl border-2 border-blue-600 bg-blue-50/50 transition";
+                btn3.querySelector('div').className = "text-xs font-bold text-blue-600 uppercase";
+                box.innerHTML = `<span class="text-amber-400 font-bold">Stratul 3 (Conexiune & Adaptor):</span> Nivel inferior care gestionează comunicarea fizică cu modelul. Folosește 'LocalConnection' pentru execuție strict locală pe mașină sau adaptori la distanță pentru cloud-ul Google.`;
+            }
+        }
+
+        const vadSlider = document.getElementById('vad-slider');
+        const vadVal = document.getElementById('vad-value');
+        const vadEval = document.getElementById('vad-eval');
+        const vadDesc = document.getElementById('vad-desc');
+
+        if (vadSlider) {
+            vadSlider.addEventListener('input', (e) => {
+                const val = e.target.value;
+                vadVal.textContent = val + " ms";
+
+                if (val < 350) {
+                    vadEval.textContent = "Risc Tăiere Precoce (" + val + "ms):";
+                    vadEval.className = "font-semibold text-rose-600";
+                    vadDesc.textContent = " Pragul este prea agresiv. Riscuri mari de a fragmenta propoziția la pauzele naturale de respirație ale omului.";
+                } else if (val > 700) {
+                    vadEval.textContent = "Latență Ridicată (" + val + "ms):";
+                    vadEval.className = "font-semibold text-amber-600";
+                    vadDesc.textContent = " Sistemul așteaptă prea mult timp după încheierea vorbirii, crescând latența percepută înainte de declanșarea STT-ului.";
+                } else {
+                    vadEval.textContent = "Echilibru Optim (" + val + "ms):";
+                    vadEval.className = "font-semibold text-emerald-600";
+                    vadDesc.textContent = " Decupează propozițiile natural pe baza respirației, prevenind tăierea ideilor la jumătate și eliminând halucinațiile.";
+                }
+            });
+        }
+
+        function triggerBargeInSimulation() {
+            const statusBox = document.getElementById('bargein-status');
+            statusBox.innerHTML = `
+                <div class="text-rose-400 font-bold">&gt; DETECTAT ZGOMOT VOCAL UMAN (Client-side Silero VAD)</div>
+                <div class="text-amber-400">&gt; Transmitere semnal BARGE-IN (asyncio.Event.set())</div>
+                <div class="text-slate-300">&gt; Flush buffer audio difuzor... Redare TTS Kokoro OPRITĂ [0 ms delay]</div>
+                <div class="text-blue-400">&gt; Anulare generare stream LLM în Antigravity SDK</div>
+                <div class="text-emerald-400 font-bold">&gt; Resetare pipeline -&gt; Ascultare nouă secvență STT!</div>
+            `;
+        }
+
+        function runMcpDemo(action) {
+            const out = document.getElementById('mcp-code-output');
+            if (action === 'get_temp') {
+                out.innerHTML = `
+<span class="text-slate-400">// Client HTTP Asincron -&gt; Home Assistant REST</span>
+GET /api/states/sensor.weather_temperature HTTP/1.1
+Host: localhost:8123
+Authorization: Bearer [INJECTED_TOKEN_VIA_FASTMCP_DEPENDS]
+
+<span class="text-emerald-400">&lt;-- Response HTTP 200 OK</span>
+{
+  "entity_id": "sensor.weather_temperature",
+  "state": "-3.9",
+  "attributes": { "unit_of_measurement": "°C", "friendly_name": "Senzor Exterior" }
+}
+<span class="text-amber-300">// Răspuns Vocal Jarvis: "Temperatura exterioară este de -3.9 grade Celsius."</span>`;
+            } else if (action === 'set_lights') {
+                out.innerHTML = `
+<span class="text-slate-400">// Apel Tool FastMCP @mcp.tool</span>
+POST /api/states/light.office_lights HTTP/1.1
+Host: localhost:8123
+Content-Type: application/json
+
+{ "state": "on", "attributes": { "brightness": 255 } }
+
+<span class="text-emerald-400">&lt;-- Response HTTP 200 OK</span>
+{ "state": "on", "updated": true }
+<span class="text-amber-300">// Răspuns Vocal Jarvis: "Am aprins luminile din birou la intensitate maximă."</span>`;
+            }
+        }
+
+        function copyBlueprintPrompt() {
+            const text = document.getElementById('blueprint-text').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Blueprint-ul a fost copiat în clipboard!');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctxParadigm = document.getElementById('chartParadigm');
+            if (ctxParadigm) {
+                new Chart(ctxParadigm, {
+                    type: 'radar',
+                    data: {
+                        labels: [
+                            'Latență TTFB',
+                            'Izolare Erori (Debug)',
+                            'Control Tool Calling',
+                            'Flexibilitate Stivă',
+                            'Nuanțe Paralingvistice'
+                        ],
+                        datasets: [
+                            {
+                                label: 'Arhitectură în Cascadă (STT->LLM->TTS)',
+                                data: [85, 95, 98, 95, 40],
+                                backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                                borderColor: 'rgba(37, 99, 235, 1)',
+                                borderWidth: 2,
+                                pointBackgroundColor: 'rgba(37, 99, 235, 1)'
+                            },
+                            {
+                                label: 'Speech-to-Speech (End-to-End)',
+                                data: [95, 30, 45, 20, 95],
+                                backgroundColor: 'rgba(217, 119, 6, 0.2)',
+                                borderColor: 'rgba(217, 119, 6, 1)',
+                                borderWidth: 2,
+                                pointBackgroundColor: 'rgba(217, 119, 6, 1)'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                angleLines: { color: '#e2e8f0' },
+                                grid: { color: '#cbd5e1' },
+                                pointLabels: { font: { size: 10, weight: 'bold' } },
+                                min: 0,
+                                max: 100
+                            }
+                        },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { font: { size: 11 } } }
+                        }
+                    }
+                });
+            }
+
+            const ctxWhisper = document.getElementById('chartWhisper');
+            if (ctxWhisper) {
+                new Chart(ctxWhisper, {
+                    type: 'bar',
+                    data: {
+                        labels: [
+                            'Whisper Small',
+                            'Large-v3-Turbo (INT8)',
+                            'Distil-Large-v3',
+                            'Large-v3 (FP16)'
+                        ],
+                        datasets: [
+                            {
+                                label: 'Consum VRAM (GB)',
+                                data: [0.5, 3.0, 2.8, 6.0],
+                                backgroundColor: [
+                                    'rgba(148, 163, 184, 0.8)',
+                                    'rgba(16, 185, 129, 0.85)',
+                                    'rgba(59, 130, 246, 0.8)',
+                                    'rgba(244, 63, 94, 0.8)'
+                                ],
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'VRAM Necesar (GB)', font: { size: 11 } },
+                                grid: { color: '#f1f5f9' }
+                            },
+                            y: { grid: { display: false } }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

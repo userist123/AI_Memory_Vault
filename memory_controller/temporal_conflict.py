@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Dict, Iterable, Optional
 
-from .temporal_controller import matches_temporal
 from .semantic_conflict import detect_pair
 
 
@@ -23,13 +22,16 @@ class TemporalConflict:
     status: str = "conflict"
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        data: dict[str, Any] = {
             "left_id": self.left_id,
             "right_id": self.right_id,
             "reason": self.reason,
-            "score": self.score,
-            "status": self.status,
         }
+        if self.score is not None:
+            data["score"] = self.score
+        if self.status not in {"explicit", "conflict"}:
+            data["status"] = self.status
+        return data
 
 
 def detect_temporal_conflicts(
@@ -38,6 +40,7 @@ def detect_temporal_conflicts(
     as_of: Optional[date] = None,
     known_as_of: Optional[date] = None,
 ) -> list[TemporalConflict]:
+    from .temporal_controller import matches_temporal
     eligible = [note for note in notes if matches_temporal(note, as_of=as_of, known_as_of=known_as_of)]
     by_id = {str(note.get("id")): note for note in eligible if note.get("id")}
     conflicts: set[tuple[str, str]] = set()

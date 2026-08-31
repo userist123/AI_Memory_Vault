@@ -26,7 +26,7 @@ from .context.query_classifier import QueryClassifier
 from .context.retrieval import RetrievalEngine
 from .context.relevance_scoring import RelevanceScorer
 from .context.progressive_disclosure import ProgressiveDisclosure
-from .context.budget import ContextBudget, load_agent_budget
+from .context.budget import ContextBudget, load_agent_budget, BudgetExceededError
 from .context.pack_builder import ContextPackBuilder
 from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntityResolver
 
@@ -246,14 +246,13 @@ class MemoryController:
             target_id = query_fp
             # Load budget for this agent
             budget = load_agent_budget(principal.value)
+            disclosure_level = getattr(self, 'default_disclosure', 'metadata')
             # Classify query
             classified = self.query_classifier.classify(sanitized)
             if lifecycles is not None:
                 classified['lifecycle_filters'] = [l.value if isinstance(l, Lifecycle) else l for l in lifecycles]
             if types is not None:
                 classified['target_types'] = types
-            # Ensure we have a max_notes limit from budget
-            classified['max_notes'] = budget.max_notes
             # Handle pagination token decoding if provided
             offset = 0
             if page_token:
@@ -279,8 +278,9 @@ class MemoryController:
                 if payload.get('page_size') != page_size:
                     raise InvalidPaginationTokenError('Token page size does not match current request')
                 offset = payload.get('offset', 0)
+            
             # Retrieval
-            notes = self.retrieval_engine.retrieve(classified, principal, query_fp, disclosure_level, budget)
+            notes = self.retrieval_engine.retrieve(classified, principal, query_fp, disclosure_level, budget, offset=offset)
     
             # Score relevance (correct argument order)
             scored = self.scorer.score(sanitized, notes)
@@ -288,7 +288,6 @@ class MemoryController:
             notes = sorted(notes, key=lambda n: score_map.get(n.get('id'), 0), reverse=True)
             # Apply progressive disclosure
             pd = ProgressiveDisclosure(budget)
-            disclosure_level = getattr(self, 'default_disclosure', 'metadata')
             if disclosure_level == 'metadata':
                 disclosed = pd.metadata_only(notes)
             elif disclosure_level == 'snippet':
@@ -305,7 +304,7 @@ class MemoryController:
             if end < total:
                 payload = {
                     'offset': end,
-                                    'query_fp': hashlib.sha256(sanitized.encode()).hexdigest(),
+                    'query_fp': hashlib.sha256(sanitized.encode()).hexdigest(),
                     'agent_id': principal.value,
                     'page_size': page_size,
                     # Bind lifecycle filters (as list of values)
@@ -322,17 +321,25 @@ class MemoryController:
                 token_obj = PaginationToken(payload, secret.encode())
                 next_token = token_obj.encode()
             # Build context pack
-            pack = self.pack_builder.build(
-                request_id='search',
-                agent_id=principal.value,
-                budget={'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
-                results=page_results,
-                disclosure_level=disclosure_level,
-                minimal_provenance=None,
-                next_page_token=next_token,
-                audit_ref=None
-    
-            )
+            try:
+                pack = self.pack_builder.build(
+                    request_id='search',
+                    agent_id=principal.value,
+                    budget={'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
+                    results=page_results,
+                    disclosure_level=disclosure_level,
+                    minimal_provenance=None,
+                    next_page_token=next_token,
+                    audit_ref=None
+                )
+            except BudgetExceededError:
+                pack = {
+                    'requestId': 'search',
+                    'agentId': principal.value,
+                    'budget': {'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
+                    'disclosureLevel': disclosure_level,
+                    'results': [],
+                }
             pack['next_page_token'] = next_token
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack

@@ -72,3 +72,5 @@ generated/
 
 .vs/
 *.zip
+[Bb]in/
+[Oo]bj/

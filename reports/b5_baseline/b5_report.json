@@ -1,0 +1,183 @@
+{
+  "run_count": 30,
+  "total_model_calls": 133,
+  "total_specialist_calls": 103,
+  "total_synthesis_calls": 30,
+  "estimated_input": 39869,
+  "actual_input": 39869,
+  "estimated_output": 972,
+  "actual_output": 972,
+  "estimated_total": 40841,
+  "actual_total": 40841,
+  "cached_input": 0,
+  "reasoning_tokens": 0,
+  "variance": {
+    "estimated": 40841,
+    "actual": 40841,
+    "delta": 0,
+    "delta_percent": 0.0
+  },
+  "actual_total_per_run": {
+    "avg": 1361.3666666666666,
+    "median": 1246.0,
+    "min": 360.0,
+    "max": 2481.0,
+    "p95": 2362.0,
+    "n": 30
+  },
+  "actual_total_per_specialist": {
+    "avg": 368.8349514563107,
+    "median": 349.0,
+    "min": 61.0,
+    "max": 688.0,
+    "p95": 648.9,
+    "n": 103
+  },
+  "actual_total_per_synthesis": {
+    "avg": 95.03333333333333,
+    "median": 96.5,
+    "min": 64.0,
+    "max": 127.0,
+    "p95": 127.0,
+    "n": 30
+  },
+  "wall_time_stats": {
+    "avg": 0.00014878999985133609,
+    "median": 0.0001385000068694353,
+    "min": 0.00011909997556358576,
+    "max": 0.0002552000805735588,
+    "p95": 0.000210645014885813,
+    "n": 30
+  },
+  "agent_breakdown": {
+    "ROUTER": {
+      "calls": 21,
+      "estimated": 7745,
+      "actual": 7745,
+      "avg": 368.8095238095238,
+      "p95": 658.0,
+      "share_of_total": 18.9638
+    },
+    "VERIFIER": {
+      "calls": 20,
+      "estimated": 7842,
+      "actual": 7842,
+      "avg": 392.1,
+      "p95": 651.45,
+      "share_of_total": 19.2013
+    },
+    "SYNTHESIS": {
+      "calls": 30,
+      "estimated": 2851,
+      "actual": 2851,
+      "avg": 95.03333333333333,
+      "p95": 127.0,
+      "share_of_total": 6.9807
+    },
+    "CRITIC": {
+      "calls": 22,
+      "estimated": 8082,
+      "actual": 8082,
+      "avg": 367.3636363636364,
+      "p95": 647.1,
+      "share_of_total": 19.7889
+    },
+    "CONSOLIDATOR": {
+      "calls": 19,
+      "estimated": 6493,
+      "actual": 6493,
+      "avg": 341.7368421052632,
+      "p95": 584.2,
+      "share_of_total": 15.8982
+    },
+    "RETRIEVAL": {
+      "calls": 21,
+      "estimated": 7828,
+      "actual": 7828,
+      "avg": 372.76190476190476,
+      "p95": 634.0,
+      "share_of_total": 19.167
+    }
+  },
+  "tier_breakdown": {
+    "light": {
+      "calls": 62,
+      "actual_input": 22981,
+      "actual_output": 434,
+      "actual_total": 23415,
+      "avg_total": 377.66129032258067,
+      "tokens_per_call": 377.66129032258067,
+      "share_of_total": 57.3321
+    },
+    "heavy": {
+      "calls": 30,
+      "actual_input": 2641,
+      "actual_output": 210,
+      "actual_total": 2851,
+      "avg_total": 95.03333333333333,
+      "tokens_per_call": 95.03333333333333,
+      "share_of_total": 6.9807
+    },
+    "standard": {
+      "calls": 41,
+      "actual_input": 14247,
+      "actual_output": 328,
+      "actual_total": 14575,
+      "avg_total": 355.4878048780488,
+      "tokens_per_call": 355.4878048780488,
+      "share_of_total": 35.6872
+    }
+  },
+  "provider_model_breakdown": {
+    "fake/fake-light/light": {
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "calls": 62,
+      "actual_total": 23415,
+      "estimated_total": 23415,
+      "share_of_total": 57.3321
+    },
+    "fake/fake-heavy/heavy": {
+      "provider": "fake",
+      "model": "fake-heavy",
+      "model_tier": "heavy",
+      "calls": 30,
+      "actual_total": 2851,
+      "estimated_total": 2851,
+      "share_of_total": 6.9807
+    },
+    "fake/fake-standard/standard": {
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "calls": 41,
+      "actual_total": 14575,
+      "estimated_total": 14575,
+      "share_of_total": 35.6872
+    }
+  },
+  "context_efficiency": {
+    "context_estimated_tokens_total": 37228,
+    "actual_input_total": 39869,
+    "actual_output_total": 972,
+    "context_to_input_ratio": 0.933758057638767,
+    "output_to_input_ratio": 0.024379843989064186
+  },
+  "cost": null,
+  "regressions": [],
+  "verdict": {
+    "runs_analyzed": 30,
+    "avg_actual_tokens_per_run": 1361.3666666666666,
+    "median_actual_tokens_per_run": 1246.0,
+    "p95_actual_tokens_per_run": 2362.0,
+    "estimated_vs_actual_percent": 0.0,
+    "specialist_share_percent": 93.0193,
+    "synthesis_share_percent": 6.9807,
+    "heavy_tier_share_percent": 6.9807,
+    "context_to_input_ratio": 0.933758057638767,
+    "token_regression": false,
+    "top_optimization_candidate": "CRITIC / light",
+    "top_optimization_reason": "19.8% of total tokens; tier 'light' accounts for 57.3% of total tokens"
+  }
+}

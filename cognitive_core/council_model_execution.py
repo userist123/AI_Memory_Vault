@@ -29,12 +29,67 @@ Four rules enforced by this module:
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, Mapping, Optional
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Mapping, Optional
 
 from .actual_usage_telemetry import ActualUsageTelemetry
 from .model_provider import ModelRequest, ModelResponse
 from .model_tier_router import ModelTierRouter
+
+VALID_OUTCOMES = {"success", "failure", "partial", "unknown"}
+VALID_OUTCOME_SOURCES = {"synthesis_presence", "exit_code", "test_result", "human", "llm_judge"}
+VALID_CONFIDENCES = {"low", "medium", "high"}
+
+
+def append_outcome_event_to_disk(event: OutcomeEvent, path: Optional[str] = None) -> None:
+    """Safely append an OutcomeEvent to a JSONL file on disk."""
+    from pathlib import Path
+    out_path = Path(path or "04_MEMORY/outcome_events.jsonl")
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
+    except Exception:
+        # Failsafe: in-memory run remains valid even if disk write is mocked or unwritable
+        pass
+
+
+@dataclass(frozen=True)
+class OutcomeEvent:
+    """Immutable outcome observation event for a council execution run."""
+
+    event_id: str
+    run_id: str
+    timestamp: str
+    outcome: str
+    source: str
+    confidence: str
+    evidence: str
+    labeled_by: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        if self.outcome not in VALID_OUTCOMES:
+            raise ValueError(f"Invalid outcome '{self.outcome}'. Must be one of {sorted(VALID_OUTCOMES)}")
+        if self.source not in VALID_OUTCOME_SOURCES:
+            raise ValueError(f"Invalid source '{self.source}'. Must be one of {sorted(VALID_OUTCOME_SOURCES)}")
+        if self.confidence not in VALID_CONFIDENCES:
+            raise ValueError(f"Invalid confidence '{self.confidence}'. Must be one of {sorted(VALID_CONFIDENCES)}")
+        if not isinstance(self.evidence, str):
+            raise TypeError("evidence must be a string")
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "event_id": self.event_id,
+            "run_id": self.run_id,
+            "timestamp": self.timestamp,
+            "outcome": self.outcome,
+            "source": self.source,
+            "confidence": self.confidence,
+            "evidence": self.evidence,
+            "labeled_by": self.labeled_by,
+        }
 
 
 @dataclass
@@ -42,8 +97,9 @@ class CouncilRunWithExecution:
     """Composition wrapper around a Council_Orchestrator CouncilRun.
 
     Never mutates the wrapped council_run. Adds specialist/synthesis
-    execution results and REAL usage tracking alongside the existing,
-    untouched estimated telemetry on council_run.telemetry.
+    execution results, REAL usage tracking, and append-only outcome
+    events alongside the existing, untouched estimated telemetry on
+    council_run.telemetry.
     """
 
     council_run: Any
@@ -51,6 +107,8 @@ class CouncilRunWithExecution:
     specialist_results: Dict[str, ModelResponse] = field(default_factory=dict)
     synthesis_result: Optional[ModelResponse] = None
     actual_usage: ActualUsageTelemetry = field(default_factory=ActualUsageTelemetry)
+    run_id: str = field(default_factory=lambda: f"run_{uuid.uuid4().hex[:12]}")
+    _outcome_events: List[OutcomeEvent] = field(default_factory=list)
 
     @property
     def agent_packs(self) -> Mapping[str, Any]:
@@ -59,6 +117,39 @@ class CouncilRunWithExecution:
     @property
     def estimated_telemetry(self) -> Any:
         return self.council_run.telemetry
+
+    @property
+    def outcome_events(self) -> List[OutcomeEvent]:
+        """Return a copy of recorded outcome events (append-only)."""
+        return list(self._outcome_events)
+
+    def add_outcome_event(
+        self,
+        outcome: str,
+        source: str,
+        confidence: str = "low",
+        evidence: str = "",
+        labeled_by: Optional[str] = None,
+        event_id: Optional[str] = None,
+        timestamp: Optional[str] = None,
+        persist: bool = False,
+        persist_path: Optional[str] = None,
+    ) -> OutcomeEvent:
+        """Append an outcome event. Strictly append-only."""
+        evt = OutcomeEvent(
+            event_id=event_id or f"evt_{uuid.uuid4().hex[:12]}",
+            run_id=self.run_id,
+            timestamp=timestamp or datetime.now(timezone.utc).isoformat(),
+            outcome=outcome,
+            source=source,
+            confidence=confidence,
+            evidence=str(evidence),
+            labeled_by=labeled_by,
+        )
+        self._outcome_events.append(evt)
+        if persist:
+            append_outcome_event_to_disk(evt, path=persist_path)
+        return evt
 
 
 def _serialize_pack_for_prompt(pack: Any) -> str:
@@ -91,6 +182,7 @@ def run_council_with_model_execution(
     synthesis_model_tier: str,
     model_execution_enabled: bool = False,
     synthesis_system_prompt: Optional[str] = None,
+    persist_events: bool = False,
 ) -> CouncilRunWithExecution:
     """Execute specialist + synthesis model calls on top of an existing CouncilRun.
 
@@ -157,6 +249,16 @@ def run_council_with_model_execution(
         provider=synthesis_response.provider,
         model=synthesis_response.model,
         model_tier=synthesis_response.model_tier,
+    )
+
+    # Automatic minimal telemetry population (synthesis_presence)
+    outcome_status = "success" if (wrapped.synthesis_result and wrapped.synthesis_result.content) else "partial"
+    wrapped.add_outcome_event(
+        outcome=outcome_status,
+        source="synthesis_presence",
+        confidence="low",
+        evidence=f"Council model execution completed ({len(wrapped.specialist_results)} specialists, 1 synthesis).",
+        persist=persist_events,
     )
 
     return wrapped

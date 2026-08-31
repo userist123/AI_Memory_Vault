@@ -34,6 +34,14 @@ def confidence(promotable=True, score=0.9):
     return {"promotable": promotable, "score": score}
 
 
+def snapshot(promotable=True, score=0.9):
+    return {
+        "fingerprint": "snap-1",
+        "confidence": {"promotable": promotable, "score": score},
+        "decision_threshold": 0.7,
+    }
+
+
 def test_human_can_promote_verified_learning_candidate():
     controller = RecordingController()
     result = LearningPromotionGate(controller).apply(
@@ -43,6 +51,7 @@ def test_human_can_promote_verified_learning_candidate():
         evidence_verification=verified(),
         evidence_bundle_hash="a" * 64,
         confidence=confidence(),
+        confidence_snapshot=snapshot(),
     )
     assert result.changed is True
     assert result.confidence_score == 0.9
@@ -59,6 +68,7 @@ def test_ai_agent_cannot_promote():
             evidence_verification=verified(),
             evidence_bundle_hash="a" * 64,
             confidence=confidence(),
+            confidence_snapshot=snapshot(),
         )
     assert controller.calls == []
 
@@ -75,6 +85,7 @@ def test_hash_mismatch_blocks_promotion():
             evidence_verification=evidence,
             evidence_bundle_hash="a" * 64,
             confidence=confidence(),
+            confidence_snapshot=snapshot(),
         )
     assert controller.calls == []
 
@@ -89,5 +100,6 @@ def test_non_promotable_confidence_blocks_promotion():
             evidence_verification=verified(),
             evidence_bundle_hash="a" * 64,
             confidence=confidence(promotable=False, score=0.99),
+            confidence_snapshot=snapshot(),
         )
     assert controller.calls == []

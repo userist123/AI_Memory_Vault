@@ -1,0 +1,4 @@
+provider,model,model_tier,calls,actual_total,estimated_total,share_of_total_percent
+fake,fake-light,light,62,23415,23415,57.3321
+fake,fake-heavy,heavy,30,2851,2851,6.9807
+fake,fake-standard,standard,41,14575,14575,35.6872

@@ -1,0 +1,167 @@
+{
+  "run_id": "run_0016",
+  "specialist_calls": 5,
+  "synthesis_calls": 1,
+  "total_model_calls": 6,
+  "estimated_input": 1036,
+  "actual_input": 1036,
+  "estimated_output": 44,
+  "actual_output": 44,
+  "cached_input": 0,
+  "reasoning_tokens": 0,
+  "actual_total": 1080,
+  "estimated_total": 1080,
+  "per_agent_usage": {
+    "ROUTER": {
+      "estimated_total": 73,
+      "actual_total": 73,
+      "calls": 1
+    },
+    "RETRIEVAL": {
+      "estimated_total": 217,
+      "actual_total": 217,
+      "calls": 1
+    },
+    "CRITIC": {
+      "estimated_total": 65,
+      "actual_total": 65,
+      "calls": 1
+    },
+    "VERIFIER": {
+      "estimated_total": 490,
+      "actual_total": 490,
+      "calls": 1
+    },
+    "CONSOLIDATOR": {
+      "estimated_total": 108,
+      "actual_total": 108,
+      "calls": 1
+    },
+    "SYNTHESIS": {
+      "estimated_total": 127,
+      "actual_total": 127,
+      "calls": 1
+    }
+  },
+  "per_tier_usage": {
+    "light": {
+      "estimated_total": 780,
+      "actual_total": 780,
+      "calls": 3
+    },
+    "standard": {
+      "estimated_total": 173,
+      "actual_total": 173,
+      "calls": 2
+    },
+    "heavy": {
+      "estimated_total": 127,
+      "actual_total": 127,
+      "calls": 1
+    }
+  },
+  "context_bytes": 2744,
+  "context_estimated_tokens": 916,
+  "wall_time_seconds": 0.00013609998859465122,
+  "tokens_per_specialist": 190.6,
+  "tokens_per_council_run": 1080.0,
+  "tokens_per_synthesis": 127.0,
+  "calls": [
+    {
+      "agent_id": "ROUTER",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 66,
+      "estimated_output": 7,
+      "actual_input": 66,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 73,
+      "estimated_total": 73,
+      "source": "provider"
+    },
+    {
+      "agent_id": "RETRIEVAL",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 210,
+      "estimated_output": 7,
+      "actual_input": 210,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 217,
+      "estimated_total": 217,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CRITIC",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 57,
+      "estimated_output": 8,
+      "actual_input": 57,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 65,
+      "estimated_total": 65,
+      "source": "provider"
+    },
+    {
+      "agent_id": "VERIFIER",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 483,
+      "estimated_output": 7,
+      "actual_input": 483,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 490,
+      "estimated_total": 490,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CONSOLIDATOR",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 100,
+      "estimated_output": 8,
+      "actual_input": 100,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 108,
+      "estimated_total": 108,
+      "source": "provider"
+    },
+    {
+      "agent_id": "SYNTHESIS",
+      "kind": "synthesis",
+      "provider": "fake",
+      "model": "fake-heavy",
+      "model_tier": "heavy",
+      "estimated_input": 120,
+      "estimated_output": 7,
+      "actual_input": 120,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 127,
+      "estimated_total": 127,
+      "source": "provider"
+    }
+  ]
+}

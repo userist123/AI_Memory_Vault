@@ -1,0 +1,203 @@
+<Window x:Class="Jarvis.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="JARVIS"
+        Width="1500"
+        Height="900"
+        MinWidth="1120"
+        MinHeight="700"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing">
+    <Border Background="{StaticResource Obsidian}" BorderBrush="#2A4354" BorderThickness="1" CornerRadius="22">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="70"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="32"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" Background="#0B121B" BorderBrush="{StaticResource Line}" BorderThickness="0,0,0,1" MouseLeftButtonDown="TopBar_MouseLeftButtonDown">
+                <Grid Margin="24,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition/><ColumnDefinition Width="290"/><ColumnDefinition Width="70"/></Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Grid Width="38" Height="38" Margin="0,0,12,0">
+                            <Ellipse Stroke="{StaticResource Cyan}" StrokeThickness="1"/>
+                            <Ellipse Width="10" Height="10" Fill="{StaticResource Cyan}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <StackPanel>
+                            <TextBlock Text="JARVIS" FontSize="19" Foreground="{StaticResource Cyan}" FontWeight="SemiBold"/>
+                            <TextBlock Text="COGNITIVE COMMAND CENTER" FontSize="9" Foreground="{StaticResource Muted}"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Ellipse x:Name="ConnectionIndicator" Width="8" Height="8" Fill="{StaticResource Amber}" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="ConnectionLabel" Text="CONNECTING" FontSize="10" Foreground="{StaticResource Amber}" Margin="0,0,24,0"/>
+                        <TextBlock Text="LOCAL / PRIVATE" FontSize="10" Foreground="{StaticResource Muted}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="—" Width="30" Height="30" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Muted}" FontSize="17" Click="Minimize_Click"/>
+                        <Button Content="×" Width="30" Height="30" Background="Transparent" BorderThickness="0" Foreground="{StaticResource Muted}" FontSize="20" Click="Close_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="205"/><ColumnDefinition/><ColumnDefinition Width="310"/></Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="#091019" BorderBrush="{StaticResource Line}" BorderThickness="0,0,1,0">
+                    <Grid Margin="14,24">
+                        <Grid.RowDefinitions><RowDefinition/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="OPERATIONS" FontSize="10" Foreground="{StaticResource Muted}" Margin="15,0,0,12"/>
+                            <Button Style="{StaticResource NavButton}" Content="◈   OVERVIEW" Click="Overview_Click"/>
+                            <Button Style="{StaticResource NavButton}" Content="⌕   MEMORY VAULT" Click="Memory_Click"/>
+                            <Button Style="{StaticResource NavButton}" Content="◎   AGENT COUNCIL" Click="Council_Click"/>
+                            <Button Style="{StaticResource NavButton}" Content="⌁   EXECUTION FLOW" Click="Execution_Click"/>
+                            <Button Style="{StaticResource NavButton}" Content="⚙   SETTINGS" Click="Settings_Click"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="1" Margin="14,0">
+                            <Border BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0" Padding="0,16,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="RUNTIME" FontSize="9" Foreground="{StaticResource Muted}"/>
+                                    <TextBlock x:Name="RuntimeState" Text="INITIALIZING" FontSize="11" Foreground="{StaticResource Amber}" Margin="0,7,0,0"/>
+                                    <TextBlock x:Name="RuntimeDetail" Text="native host" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,3,0,18"/>
+                                </StackPanel>
+                            </Border>
+                            <Button Style="{StaticResource ActionButton}" Content="RECONNECT CORE" Click="Reconnect_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ScrollViewer x:Name="MainScroll" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="30,28,30,22">
+                        <Grid Margin="0,0,0,22">
+                            <StackPanel>
+                                <TextBlock Text="JARVIS // COGNITIVE OS" FontSize="11" Foreground="{StaticResource Cyan}"/>
+                                <TextBlock Text="Good evening, operator." FontSize="30" FontWeight="Light" Margin="0,8,0,4"/>
+                                <TextBlock Text="Your local intelligence layer is ready for command." FontSize="13" Foreground="{StaticResource Muted}"/>
+                            </StackPanel>
+                            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <TextBlock x:Name="ClockLabel" Text="--:--:--" FontSize="22" HorizontalAlignment="Right"/>
+                                <TextBlock x:Name="DateLabel" Text="LOCAL SESSION" FontSize="10" Foreground="{StaticResource Muted}" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="24" Margin="0,0,0,18">
+                            <Grid Height="238">
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="270"/></Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="NEURAL CORE" FontSize="10" Foreground="{StaticResource Muted}"/>
+                                    <TextBlock Text="Observe. Reason. Act." FontSize="29" FontWeight="Light" Margin="0,11,0,5"/>
+                                    <TextBlock Text="A private cognitive partner with persistent memory, safe proposals, specialist agents and large-scale software synthesis." TextWrapping="Wrap" Width="430" FontSize="13" Foreground="{StaticResource Muted}" LineHeight="21"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+                                        <Border Background="#102A32" CornerRadius="5" Padding="9,5" Margin="0,0,8,0"><TextBlock Text="OODA LOOP" FontSize="9" Foreground="{StaticResource Emerald}"/></Border>
+                                        <Border Background="#182634" CornerRadius="5" Padding="9,5" Margin="0,0,8,0"><TextBlock Text="MEMORY V6" FontSize="9" Foreground="{StaticResource Cyan}"/></Border>
+                                        <Border Background="#2A2114" CornerRadius="5" Padding="9,5"><TextBlock Text="LOCAL FIRST" FontSize="9" Foreground="{StaticResource Amber}"/></Border>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Grid Grid.Column="1" Width="218" Height="218" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                    <Ellipse x:Name="OuterRing" Width="210" Height="210" Stroke="#1E5264" StrokeThickness="1" RenderTransformOrigin="0.5,0.5"/>
+                                    <Ellipse x:Name="InnerRing" Width="180" Height="180" Stroke="#247C8B" StrokeThickness="1" StrokeDashArray="2,6" RenderTransformOrigin="0.5,0.5"/>
+                                    <Ellipse Width="145" Height="145" Stroke="{StaticResource Cyan}" StrokeThickness="2" Opacity=".75"/>
+                                    <Ellipse Width="112" Height="112" Fill="#0D2734" Stroke="#8DF5FF" StrokeThickness="1.5"/>
+                                    <Ellipse x:Name="CorePulse" Width="68" Height="68" Fill="#103F4C" Stroke="{StaticResource Cyan}" StrokeThickness="2" RenderTransformOrigin="0.5,0.5"/>
+                                    <Ellipse Width="24" Height="24" Fill="#C7FBFF"/>
+                                    <TextBlock Text="J" FontSize="14" FontWeight="Bold" Foreground="#07202A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="ONLINE" FontSize="9" Foreground="{StaticResource Emerald}" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <Grid Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Background="{StaticResource PanelSoft}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,8,0"><StackPanel><TextBlock Text="MEMORY NODES" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="MemoryMetric" Text="—" FontSize="24" Foreground="{StaticResource Cyan}" Margin="0,6,0,0"/><TextBlock Text="indexed" FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel></Border>
+                            <Border Grid.Column="1" Background="{StaticResource PanelSoft}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,8,0"><StackPanel><TextBlock Text="AGENTS ONLINE" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="AgentsMetric" Text="—" FontSize="24" Foreground="{StaticResource Emerald}" Margin="0,6,0,0"/><TextBlock Text="specialists" FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel></Border>
+                            <Border Grid.Column="2" Background="{StaticResource PanelSoft}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,8,0"><StackPanel><TextBlock Text="SKILLS READY" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="SkillsMetric" Text="—" FontSize="24" Foreground="{StaticResource Cyan}" Margin="0,6,0,0"/><TextBlock Text="operational" FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel></Border>
+                            <Border Grid.Column="3" Background="{StaticResource PanelSoft}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="10" Padding="15"><StackPanel><TextBlock Text="PROPOSALS" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="ProposalsMetric" Text="—" FontSize="24" Foreground="{StaticResource Amber}" Margin="0,6,0,0"/><TextBlock Text="review queue" FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel></Border>
+                        </Grid>
+
+                        <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="14" Padding="18" Margin="0,0,0,18">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <StackPanel><TextBlock Text="TACTICAL COMMAND PALETTE" FontSize="10" Foreground="{StaticResource Muted}"/><TextBlock Text="Direct access to the cognitive subsystems." FontSize="17" Margin="0,5,0,0"/></StackPanel>
+                                <WrapPanel Grid.Row="1" Margin="0,16,0,0">
+                                    <Button x:Name="StatusButton" Style="{StaticResource ActionButton}" Content="SYSTEM STATUS" Margin="0,0,8,0" Click="QuickStatus_Click"/>
+                                    <Button x:Name="CouncilButton" Style="{StaticResource ActionButton}" Content="RUN COUNCIL" Margin="0,0,8,0" Click="RunCouncil_Click"/>
+                                    <Button x:Name="SyncMemoryButton" Style="{StaticResource ActionButton}" Content="SYNC MEMORY" Margin="0,0,8,0" Click="SyncMemory_Click"/>
+                                    <Button x:Name="VoiceBriefingButton" Style="{StaticResource ActionButton}" Content="VOICE BRIEFING" Click="VoiceBriefing_Click"/>
+                                </WrapPanel>
+                            </Grid>
+                        </Border>
+                        <Border x:Name="ForgePanel" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,0,0,18">
+                            <StackPanel>
+                                <Grid><StackPanel><TextBlock Text="PROGRAM FORGE" FontSize="10" Foreground="{StaticResource Muted}"/><TextBlock Text="Architect large systems. Ship vertical slices." FontSize="20" Margin="0,6,0,0"/></StackPanel><TextBlock x:Name="ForgeStatusLabel" Text="STANDBY" FontSize="10" Foreground="{StaticResource Cyan}" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                                <TextBlock Text="Describe the program, constraints, users and integrations. Jarvis will generate an architecture package before implementation." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,8,0,12"/>
+                                <TextBox x:Name="ForgeSpecBox" Height="84" Background="#0A111A" BorderBrush="#294354" Foreground="{StaticResource Text}" Padding="12" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Text="Build a production-grade C# platform for autonomous project planning, memory, agents and secure tool execution." GotFocus="ForgeSpecBox_GotFocus"/>
+                                <WrapPanel Margin="0,10,0,0"><ComboBox x:Name="ForgeLanguageBox" Width="110" Height="34" Background="#111B25" Foreground="White" BorderBrush="#294354" SelectedIndex="0" Margin="0,0,8,0"><ComboBoxItem Content="C# / .NET" Tag="csharp"/><ComboBoxItem Content="C++ / CORE" Tag="cpp"/></ComboBox><Button x:Name="PlanMissionButton" Style="{StaticResource ActionButton}" Content="DECOMPOSE MISSION" Margin="0,0,8,0" Click="PlanMission_Click"/><Button x:Name="BuildBlueprintButton" Style="{StaticResource ActionButton}" Content="GENERATE BLUEPRINT" Margin="0,0,8,0" Click="BuildBlueprint_Click"/><Button x:Name="ImplementProgramButton" Style="{StaticResource ActionButton}" Content="DESIGN VERTICAL SLICE" Margin="0,0,8,0" Click="ImplementProgram_Click"/><Button x:Name="ExportBlueprintButton" Style="{StaticResource ActionButton}" Content="EXPORT PACKAGE" IsEnabled="False" Margin="0,0,8,0" Click="ExportBlueprint_Click"/><Button x:Name="VerifyPackageButton" Style="{StaticResource ActionButton}" Content="VERIFY PACKAGE" IsEnabled="False" Click="VerifyPackage_Click"/></WrapPanel>
+                                <Border Background="#0B1721" BorderBrush="#1C4658" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,12,0,0"><StackPanel><Grid><TextBlock Text="MISSION GRAPH" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="ForgeMissionLabel" Text="DECOMPOSITION STANDBY" FontSize="10" Foreground="{StaticResource Cyan}" HorizontalAlignment="Right"/></Grid><TextBlock x:Name="ForgeArchitectureLabel" Text="The cognitive council will map boundaries, delivery slices and quality gates." TextWrapping="Wrap" FontSize="10" Foreground="{StaticResource Text}" Margin="0,6,0,0"/><StackPanel x:Name="ForgePhaseList" Margin="0,10,0,0"><TextBlock Text="No mission phases loaded." FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel></StackPanel></Border>
+                                <TextBox x:Name="ForgeOutput" Height="190" Margin="0,14,0,0" Background="#080D14" BorderBrush="#1B2C3A" Foreground="{StaticResource Text}" Padding="12" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Text="Forge output will appear here."/>
+                            </StackPanel>
+                        </Border>
+                        <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,0,0,18">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <StackPanel><TextBlock Text="CONVERSATION CHANNEL" FontSize="10" Foreground="{StaticResource Muted}"/><TextBlock Text="Ask Jarvis anything." FontSize="20" Margin="0,6,0,0"/></StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center"><Ellipse x:Name="VoiceIndicator" Width="7" Height="7" Fill="{StaticResource Muted}" Margin="0,0,6,0"/><TextBlock x:Name="VoiceStatusLabel" Text="VOICE OFF" Foreground="{StaticResource Muted}" FontSize="9" Margin="0,0,8,0"/><TextBlock x:Name="VoiceEngineLabel" Text="NEURAL STANDBY" Foreground="{StaticResource Cyan}" FontSize="9" Margin="0,0,18,0"/><TextBlock x:Name="ChatStatus" Text="READY" Foreground="{StaticResource Emerald}" FontSize="10"/></StackPanel>
+                                <Border Grid.Row="1" Grid.ColumnSpan="2" Background="#0A111A" BorderBrush="#1B2C3A" BorderThickness="1" CornerRadius="10" Margin="0,18,0,0" Padding="14">
+                                    <Grid>
+                                        <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                        <ScrollViewer x:Name="ChatScroll" Height="185" VerticalScrollBarVisibility="Auto"><StackPanel x:Name="ChatMessages"><Border Background="#102331" CornerRadius="8" Padding="12" Margin="0,0,80,10"><StackPanel><TextBlock Text="JARVIS // SYSTEM" FontSize="9" Foreground="{StaticResource Cyan}"/><TextBlock Text="Cognitive core online. Ask about memory, architecture, projects, agents or code." TextWrapping="Wrap" FontSize="12" Margin="0,5,0,0"/></StackPanel></Border></StackPanel></ScrollViewer>
+                                        <Grid Grid.Row="1" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="MessageBox" Height="42" Background="#111B25" BorderBrush="#294354" Foreground="{StaticResource Text}" Padding="12" VerticalContentAlignment="Center" Text="Type a command for Jarvis..." GotFocus="MessageBox_GotFocus" KeyDown="MessageBox_KeyDown"/><Button x:Name="VoiceButton" Grid.Column="1" Style="{StaticResource ActionButton}" Content="MIC OFF" Height="42" Margin="10,0,0,0" Click="Voice_Click"/><Button x:Name="SendButton" Grid.Column="2" Style="{StaticResource ActionButton}" Content="SEND  →" Height="42" Margin="10,0,0,0" Click="Send_Click"/></Grid>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border x:Name="ActivityPanel" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="20">
+                            <StackPanel><Grid><TextBlock Text="LIVE EXECUTION FLOW" FontSize="10" Foreground="{StaticResource Muted}"/><TextBlock Text="OODA / AGENT TELEMETRY" Foreground="{StaticResource Cyan}" FontSize="10" HorizontalAlignment="Right"/></Grid><StackPanel x:Name="ActivityLog" Margin="0,16,0,0"/></StackPanel>
+                        </Border>
+                        <Border x:Name="CouncilPanel" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,18,0,0">
+                            <StackPanel>
+                                <Grid><StackPanel><TextBlock Text="COUNCIL VERDICT" FontSize="10" Foreground="{StaticResource Muted}"/><TextBlock x:Name="CouncilVerdictLabel" Text="STANDBY" FontSize="19" Margin="0,5,0,0"/></StackPanel><TextBlock x:Name="CouncilLatencyLabel" Text="—" FontSize="10" Foreground="{StaticResource Cyan}" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+                                <TextBlock Text="Parallel specialist review for evidence, safety and quality." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,8,0,14"/>
+                                <StackPanel x:Name="CouncilResults"><TextBlock Text="Run the council from the tactical palette." FontSize="11" Foreground="{StaticResource Muted}"/></StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Column="2" Background="#091019" BorderBrush="{StaticResource Line}" BorderThickness="1,0,0,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="18,28">
+                            <TextBlock Text="SYSTEM TELEMETRY" FontSize="10" Foreground="{StaticResource Muted}"/>
+                            <Border Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,14,0,18">
+                                <StackPanel><Grid><TextBlock Text="COGNITIVE CORE" FontSize="11"/><TextBlock x:Name="CoreBadge" Text="ONLINE" Foreground="{StaticResource Emerald}" FontSize="10" HorizontalAlignment="Right"/></Grid><TextBlock Text="Observe → Retrieve → Reason → Act" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,9,0,14"/><ProgressBar x:Name="CoreProgress" Height="4" Value="20" Foreground="{StaticResource Cyan}" Background="#1B2A35" BorderThickness="0"/><Grid Margin="0,13,0,0"><TextBlock Text="LATENCY" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="LatencyLabel" Text="—" FontSize="10" HorizontalAlignment="Right"/></Grid><Grid Margin="0,8,0,0"><TextBlock Text="LAST SYNC" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="LastSyncLabel" Text="—" FontSize="10" HorizontalAlignment="Right"/></Grid><Grid Margin="0,8,0,0"><TextBlock Text="EVENT STREAM" FontSize="9" Foreground="{StaticResource Muted}"/><TextBlock x:Name="StreamStatusLabel" Text="WS STANDBY" FontSize="10" Foreground="{StaticResource Cyan}" HorizontalAlignment="Right"/></Grid></StackPanel>
+                            </Border>
+                            <TextBlock Text="MEMORY SEARCH" FontSize="10" Foreground="{StaticResource Muted}"/>
+                            <Grid Margin="0,14,0,18"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="SearchBox" Height="34" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" Foreground="{StaticResource Text}" Padding="10" Text="Search memory..." GotFocus="SearchBox_GotFocus" KeyDown="SearchBox_KeyDown"/><Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="⌕" Height="34" Width="42" Padding="0" Click="Search_Click"/></Grid>
+                            <StackPanel x:Name="SearchResults"><TextBlock Text="Search the canonical memory layer." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource Muted}" Margin="0,0,0,18"/></StackPanel>
+                            <TextBlock Text="AGENT COUNCIL" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,4,0,12"/>
+                            <StackPanel x:Name="AgentList"/>
+                            <TextBlock Text="PROPOSAL QUEUE" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,20,0,12"/>
+                            <StackPanel x:Name="ProposalList"><TextBlock Text="No proposals loaded." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource Muted}"/></StackPanel>
+                            <Button Style="{StaticResource ActionButton}" Content="REFRESH QUEUE" Margin="0,14,0,0" Click="RefreshProposals_Click"/>
+                            <TextBlock Text="SKILLS EXPLORER" FontSize="10" Foreground="{StaticResource Muted}" Margin="0,20,0,12"/>
+                            <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBox x:Name="SkillSearchBox" Height="34" Background="{StaticResource Panel}" BorderBrush="{StaticResource Line}" Foreground="{StaticResource Text}" Padding="10" Text="Filter skills..." GotFocus="SkillSearchBox_GotFocus" KeyDown="SkillSearchBox_KeyDown"/><Button Grid.Column="1" Style="{StaticResource ActionButton}" Content="INDEX" Height="34" Margin="8,0,0,0" Click="SearchSkills_Click"/></Grid>
+                            <TextBlock x:Name="SkillCountLabel" Text="SKILLS STANDBY" FontSize="9" Foreground="{StaticResource Cyan}" Margin="0,0,0,8"/>
+                            <StackPanel x:Name="SkillList"><TextBlock Text="Load the operational skill index." TextWrapping="Wrap" FontSize="10" Foreground="{StaticResource Muted}"/></StackPanel>                            <Button Style="{StaticResource ActionButton}" Content="RUN DIAGNOSTICS" Margin="0,16,0,0" Click="Diagnostics_Click"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+
+            <Border Grid.Row="2" Background="#0B121B" BorderBrush="{StaticResource Line}" BorderThickness="0,1,0,0">
+                <Grid Margin="24,0"><TextBlock Text="JARVIS DESKTOP  •  LOCAL-FIRST INTELLIGENCE  •  TRUST BOUNDARY ACTIVE" FontSize="9" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/><TextBlock x:Name="FooterLabel" Text="C# WPF HOST" FontSize="9" Foreground="{StaticResource Cyan}" HorizontalAlignment="Right" VerticalAlignment="Center"/></Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

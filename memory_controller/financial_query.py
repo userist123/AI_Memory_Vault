@@ -55,14 +55,15 @@ class FinancialQueryEngine:
             "lifecycle": "REVIEW",
             "category": "financial",
             "tags": note.get("tags", []),
-            "created": now,
-            "updated": now,
+            "created": note.get("date") or now,
+            "updated": note.get("date") or now,
             "provenance": provenance,
             "confidence": note.get("confidence", "unknown"),
             "verification": note.get("verification", "unverified"),
         }
-        stored_note = {"frontmatter": frontmatter, "content": note}
+        stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
         self.storage.set(note_id, stored_note)
+        self.search_engine.index_note(stored_note)
         return note_id
 
     def search(
@@ -70,6 +71,8 @@ class FinancialQueryEngine:
         query: str,
         filters: Optional[Dict] = None,
         top_k: int = 10,
+        limit: Optional[int] = None,
+        **kwargs
     ) -> List[Dict]:
         """Run layered search.
 
@@ -77,29 +80,47 @@ class FinancialQueryEngine:
         * Optional filtering on ``symbol``, ``date`` range, and ``tags``.
         * Optional vector fallback (currently disabled).
         """
-        results = self.search_engine.search(query, top_k=top_k)
+        effective_limit = limit if limit is not None else top_k
+        effective_limit = max(0, min(int(effective_limit), 10000))
+        results = self.search_engine.search(query, top_k=effective_limit, **kwargs)
         if filters:
             def match(note: Dict) -> bool:
-                fm = note.get("frontmatter", {})
-                content = note.get("content", {})
-                if "symbol" in filters and content.get("symbol") != filters["symbol"]:
+                full_note = self.storage.get(note.get("id")) or note
+                fm = full_note.get("frontmatter", {}) if isinstance(full_note.get("frontmatter"), dict) else {}
+                content = full_note.get("content", {})
+                if isinstance(content, str):
+                    try:
+                        content = json.loads(content)
+                    except Exception:
+                        content = {}
+                if not isinstance(content, dict):
+                    content = {}
+
+                note_symbol = content.get("symbol") or full_note.get("symbol") or fm.get("symbol")
+                if "symbol" in filters and note_symbol != filters["symbol"]:
                     return False
-                # Date range filter expects ISO‑8601 strings
+
                 if "date_from" in filters or "date_to" in filters:
-                    note_date = content.get("date")
+                    note_date = content.get("date") or full_note.get("date") or fm.get("date") or full_note.get("created")
                     if not note_date:
                         return False
                     if "date_from" in filters and note_date < filters["date_from"]:
                         return False
                     if "date_to" in filters and note_date > filters["date_to"]:
                         return False
+
                 if "tags" in filters:
-                    note_tags = set(content.get("tags", []))
+                    note_tags = set(content.get("tags") or full_note.get("tags") or fm.get("tags") or [])
                     if not note_tags.intersection(set(filters["tags"])):
                         return False
                 return True
             results = [r for r in results if match(r)]
-        if ENABLE_VECTOR_SEARCH:
-            # Placeholder for future integration (e.g., pgvector, qdrant)
-            pass
-        return results[:top_k]
+        enriched_results = []
+        for r in results[:top_k]:
+            full = self.storage.get(r.get("id")) or {}
+            content = full.get("content", "")
+            content_str = json.dumps(content) if isinstance(content, dict) else str(content)
+            enriched = {**r, **full, "content": content_str}
+            enriched_results.append(enriched)
+
+        return enriched_results

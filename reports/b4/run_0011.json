@@ -1,0 +1,167 @@
+{
+  "run_id": "run_0011",
+  "specialist_calls": 5,
+  "synthesis_calls": 1,
+  "total_model_calls": 6,
+  "estimated_input": 2307,
+  "actual_input": 2307,
+  "estimated_output": 44,
+  "actual_output": 44,
+  "cached_input": 0,
+  "reasoning_tokens": 0,
+  "actual_total": 2351,
+  "estimated_total": 2351,
+  "per_agent_usage": {
+    "CRITIC": {
+      "estimated_total": 525,
+      "actual_total": 525,
+      "calls": 1
+    },
+    "VERIFIER": {
+      "estimated_total": 572,
+      "actual_total": 572,
+      "calls": 1
+    },
+    "CONSOLIDATOR": {
+      "estimated_total": 499,
+      "actual_total": 499,
+      "calls": 1
+    },
+    "ROUTER": {
+      "estimated_total": 259,
+      "actual_total": 259,
+      "calls": 1
+    },
+    "RETRIEVAL": {
+      "estimated_total": 369,
+      "actual_total": 369,
+      "calls": 1
+    },
+    "SYNTHESIS": {
+      "estimated_total": 127,
+      "actual_total": 127,
+      "calls": 1
+    }
+  },
+  "per_tier_usage": {
+    "standard": {
+      "estimated_total": 1024,
+      "actual_total": 1024,
+      "calls": 2
+    },
+    "light": {
+      "estimated_total": 1200,
+      "actual_total": 1200,
+      "calls": 3
+    },
+    "heavy": {
+      "estimated_total": 127,
+      "actual_total": 127,
+      "calls": 1
+    }
+  },
+  "context_bytes": 6559,
+  "context_estimated_tokens": 2187,
+  "wall_time_seconds": 0.0002552000805735588,
+  "tokens_per_specialist": 444.8,
+  "tokens_per_council_run": 2351.0,
+  "tokens_per_synthesis": 127.0,
+  "calls": [
+    {
+      "agent_id": "CRITIC",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 517,
+      "estimated_output": 8,
+      "actual_input": 517,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 525,
+      "estimated_total": 525,
+      "source": "provider"
+    },
+    {
+      "agent_id": "VERIFIER",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 565,
+      "estimated_output": 7,
+      "actual_input": 565,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 572,
+      "estimated_total": 572,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CONSOLIDATOR",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 491,
+      "estimated_output": 8,
+      "actual_input": 491,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 499,
+      "estimated_total": 499,
+      "source": "provider"
+    },
+    {
+      "agent_id": "ROUTER",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 252,
+      "estimated_output": 7,
+      "actual_input": 252,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 259,
+      "estimated_total": 259,
+      "source": "provider"
+    },
+    {
+      "agent_id": "RETRIEVAL",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 362,
+      "estimated_output": 7,
+      "actual_input": 362,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 369,
+      "estimated_total": 369,
+      "source": "provider"
+    },
+    {
+      "agent_id": "SYNTHESIS",
+      "kind": "synthesis",
+      "provider": "fake",
+      "model": "fake-heavy",
+      "model_tier": "heavy",
+      "estimated_input": 120,
+      "estimated_output": 7,
+      "actual_input": 120,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 127,
+      "estimated_total": 127,
+      "source": "provider"
+    }
+  ]
+}

@@ -119,6 +119,14 @@ def main() -> None:
     route.add_argument("task")
     route.add_argument("--top-k", type=int, default=5)
 
+    label_outcome = sub.add_parser("label-outcome")
+    label_outcome.add_argument("--run-id", required=True)
+    label_outcome.add_argument("--outcome", required=True, choices=["success", "failure", "partial", "unknown"])
+    label_outcome.add_argument("--evidence", required=True)
+    label_outcome.add_argument("--confidence", default="medium", choices=["low", "medium", "high"])
+    label_outcome.add_argument("--labeled-by", default="human")
+    label_outcome.add_argument("--output", default="04_MEMORY/outcome_events.jsonl")
+
     args = parser.parse_args()
     queue = MemoryProposalQueue(root() / "06_INBOX" / "memory_proposals.jsonl")
 
@@ -226,6 +234,29 @@ def main() -> None:
         router = SkillRouter(root() / ".agents" / "skills")
         for match in router.route(args.task, top_k=args.top_k):
             print(f"{match.score:.4f}  {match.skill}")
+    elif args.command == "label-outcome":
+        import json
+        import uuid
+        from datetime import datetime, timezone
+        from .council_model_execution import OutcomeEvent
+
+        event = OutcomeEvent(
+            event_id=f"evt_{uuid.uuid4().hex[:12]}",
+            run_id=args.run_id,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            outcome=args.outcome,
+            source="human",
+            confidence=args.confidence,
+            evidence=args.evidence,
+            labeled_by=args.labeled_by,
+        )
+        out_path = Path(args.output)
+        if not out_path.is_absolute():
+            out_path = root() / out_path
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
+        print(f"event_id={event.event_id} run_id={event.run_id} outcome={event.outcome} source={event.source} evidence={event.evidence}")
 
 
 if __name__ == "__main__":

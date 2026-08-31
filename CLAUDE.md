@@ -90,9 +90,13 @@ Preserve source repository, URL/path, license when known, discovery origin, comm
 
 Do not execute external scripts, binaries, installers, package managers or build steps merely to inspect or ingest imported skills. Ingestion is read/analyze/hash/classify/validate/promote.
 
-## Distributed compute
+## Multi-Agent Development Coordination
 
-For tasks that require the Vault's existing distributed compute system, use its documented API/CLI and policies rather than inventing new dispatch mechanisms.
+When multiple AI systems (Claude Code, Antigravity, ChatGPT, Perplexity) collaborate on this repository:
+1. **Check `tasks/todo.md`**: Before touching any file, check `tasks/todo.md` for in-progress work or completed tasks by another AI session.
+2. **Claim & Mark**: Stamp completed tasks in `tasks/todo.md` with your agent name (`owner: claude`) and an ISO timestamp. Document non-obvious findings in `tasks/lessons.md`.
+3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by `cognitive_core/tests/test_protected_core_boundaries.py`.
+4. **Empirical Verification**: Run the relevant `pytest` suites and verify zero regressions before closing any task.
 
 ---
 

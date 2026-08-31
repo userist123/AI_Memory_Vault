@@ -72,7 +72,12 @@ class TemporalMemoryController:
             if item.get("lifecycle") != Lifecycle.SUPERSEDED.value:
                 continue
             successor_id = item.get("superseded_by")
-            if not successor_id or successor_id in seen:
+            if not successor_id:
+                continue
+            if successor_id in seen:
+                for res in resolved:
+                    if str(res.get("id")) == str(successor_id):
+                        res["_temporal_lineage_from"] = item.get("id")
                 continue
             try:
                 pack = self.controller.cognitive_read(principal, successor_id)

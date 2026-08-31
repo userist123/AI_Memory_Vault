@@ -13,17 +13,102 @@ import re
 _ENTITY_RE = re.compile(r"\b[A-Z][a-zA-Z0-9_\-]{2,}\b")
 _CAUSAL_RELATIONS = {"causes", "leads_to", "replaced_by", "replaces", "depends_on", "blocks"}
 
+CONTROLLED_NODE_TYPES = {
+    "fact",
+    "decision",
+    "procedure",
+    "lesson",
+    "task",
+    "intent",
+    "tool",
+    "failure",
+    "correction",
+    "outcome",
+}
+
+DEFAULT_CATEGORY_NODE_TYPES = {
+    "architecture": "decision",
+    "architecture-review": "decision",
+    "system-architecture": "decision",
+    "enterprise-architecture": "decision",
+    "decisions": "decision",
+    "decision": "decision",
+    "procedures": "procedure",
+    "procedure": "procedure",
+    "protocol": "procedure",
+    "rules": "procedure",
+    "policy-lesson": "lesson",
+    "lessons": "lesson",
+    "lesson": "lesson",
+    "experiences": "lesson",
+    "errors": "failure",
+    "failure": "failure",
+    "correction": "correction",
+    "outcome": "outcome",
+    "task": "task",
+    "goals": "task",
+    "intent": "intent",
+    "tool": "tool",
+    "soc-tooling": "tool",
+    "session": "fact",
+    "knowledge": "fact",
+    "consolidated-knowledge": "fact",
+    "audit": "fact",
+    "secops": "fact",
+    "security": "fact",
+    "memory": "fact",
+    "projects": "fact",
+    "resources": "fact",
+}
+
+
+def validate_node_type(node_type: str, allow_custom: bool = True) -> str:
+    """Validates node_type against controlled vocabulary or custom identifier."""
+    if not isinstance(node_type, str):
+        raise ValueError(f"node_type must be a string, got {type(node_type).__name__}")
+    cleaned = node_type.strip().lower()
+    if not cleaned:
+        raise ValueError("node_type cannot be empty")
+    if cleaned in CONTROLLED_NODE_TYPES:
+        return cleaned
+    if allow_custom and re.match(r"^[a-z0-9_\-]+$", cleaned):
+        return cleaned
+    raise ValueError(
+        f"Invalid node_type '{node_type}'. Expected one of {sorted(CONTROLLED_NODE_TYPES)} or valid custom identifier."
+    )
+
+
+def resolve_node_type(note: Dict[str, Any]) -> str:
+    """Resolves node_type for a note.
+
+    If explicit node_type is provided, validates it.
+    Otherwise maps from category or defaults to 'fact' with zero destructive migration.
+    """
+    raw_node_type = note.get("node_type")
+    if raw_node_type is not None:
+        return validate_node_type(str(raw_node_type))
+    cat = str(note.get("category", "")).strip().lower()
+    return DEFAULT_CATEGORY_NODE_TYPES.get(cat, "fact")
+
 
 @dataclass
 class Graph:
-    """Simple directed labeled multigraph."""
+    """Simple directed labeled multigraph with typed nodes."""
 
     name: str
     nodes: Set[str] = field(default_factory=set)
+    node_types: Dict[str, str] = field(default_factory=dict)
     edges: List[Tuple[str, str, Dict[str, Any]]] = field(default_factory=list)
 
-    def add_node(self, node_id: str) -> None:
+    def add_node(self, node_id: str, node_type: Optional[str] = None) -> None:
         self.nodes.add(node_id)
+        if node_type is not None:
+            self.node_types[node_id] = validate_node_type(node_type)
+        elif node_id not in self.node_types:
+            self.node_types[node_id] = "fact"
+
+    def get_node_type(self, node_id: str) -> Optional[str]:
+        return self.node_types.get(node_id)
 
     def add_edge(self, source: str, target: str, **attrs: Any) -> None:
         self.add_node(source)
@@ -43,6 +128,7 @@ class Graph:
         return {
             "name": self.name,
             "nodes": sorted(self.nodes),
+            "node_types": dict(self.node_types),
             "edges": [{"source": s, "target": t, **a} for s, t, a in self.edges],
         }
 
@@ -67,10 +153,11 @@ class MultiGraphMemory:
 
         notes_list = [n for n in notes if n.get("id")]
         for note in notes_list:
-            self.semantic.add_node(note["id"])
-            self.temporal.add_node(note["id"])
-            self.causal.add_node(note["id"])
-            self.entity.add_node(note["id"])
+            ntype = resolve_node_type(note)
+            self.semantic.add_node(note["id"], node_type=ntype)
+            self.temporal.add_node(note["id"], node_type=ntype)
+            self.causal.add_node(note["id"], node_type=ntype)
+            self.entity.add_node(note["id"], node_type=ntype)
 
         # Semantic graph: shared category or overlapping tags
         for i, a in enumerate(notes_list):

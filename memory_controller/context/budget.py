@@ -1,26 +1,29 @@
 import json
 import math
+import zlib
 from typing import Dict, Any, List
 
 
-class BudgetExceededError(RuntimeError):
+class ContextBudgetError(RuntimeError):
+    """Base error for context budget failures."""
+
+
+class BudgetExceededError(ContextBudgetError):
     """Raised when the final context cannot fit within the hard budget."""
-
-
-class ContextBudgetError(BudgetExceededError):
-    """Backward-compatible alias for budget failures."""
 
 
 class ContextBudget:
     """Per-request context budget with deterministic byte and token limits."""
 
     def __init__(self, config: Dict[str, Any]):
-        self.max_notes = max(1, int(config.get("max_notes", 5)))
-        self.max_full_documents = max(0, int(config.get("max_full_documents", 2)))
-        self.soft_limit_bytes = max(1, int(config.get("soft_limit_bytes", 12 * 1024)))
-        self.hard_limit_bytes = max(self.soft_limit_bytes, int(config.get("hard_limit_bytes", 24 * 1024)))
-        self.soft_limit_tokens = max(1, int(config.get("soft_limit_tokens", 1800)))
-        self.hard_limit_tokens = max(self.soft_limit_tokens, int(config.get("hard_limit_tokens", 3000)))
+        self.max_notes = max(1, int(config.get("max_notes", 50)))
+        self.max_full_documents = max(0, int(config.get("max_full_documents", 3)))
+        soft = config.get("soft_limit_bytes", config.get("soft_context_budget", config.get("soft", 16 * 1024)))
+        hard = config.get("hard_limit_bytes", config.get("hard_context_budget", config.get("hard", 32 * 1024)))
+        self.soft_limit_bytes = max(1, int(soft))
+        self.hard_limit_bytes = int(hard)
+        self.soft_limit_tokens = max(1, int(config.get("soft_limit_tokens", config.get("soft_tokens", 1800))))
+        self.hard_limit_tokens = max(1, int(config.get("hard_limit_tokens", config.get("hard_tokens", 3000))))
         self.chars_per_token = max(1.0, float(config.get("chars_per_token", 3.0)))
 
     @property
@@ -40,7 +43,16 @@ class ContextBudget:
         return self.hard_limit_tokens
 
     @staticmethod
+    def _size_of(note: Dict[str, Any]) -> int:
+        content = note.get("content", "")
+        if isinstance(content, bytes):
+            return len(content)
+        return len(str(content).encode("utf-8"))
+
+    @staticmethod
     def serialized_size(value: Any) -> int:
+        if isinstance(value, bytes):
+            return len(value)
         return len(json.dumps(value, ensure_ascii=False, default=str, separators=(",", ":")).encode("utf-8"))
 
     def estimate_tokens(self, value: Any) -> int:
@@ -48,7 +60,7 @@ class ContextBudget:
         return max(1, math.ceil(len(text) / self.chars_per_token))
 
     def usage(self, notes: List[Dict[str, Any]]) -> int:
-        return sum(self.serialized_size(n) for n in notes)
+        return sum(self._size_of(n) for n in notes)
 
     def check_hard_limit(self, usage: int) -> None:
         if usage > self.hard_limit_bytes:
@@ -67,22 +79,33 @@ class ContextBudget:
             if index >= self.max_full_documents:
                 note["content"] = ""
 
-        while len(ordered) > 1 and self.usage(ordered) > self.soft_limit_bytes:
+        while len(ordered) > 1 and (self.usage(ordered) > self.soft_limit_bytes or self.serialized_size(ordered) > self.hard_limit_bytes):
             ordered.pop()
 
         if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in ordered:
                 content = note.get("content", "")
-                if isinstance(content, str) and len(content) > 256:
-                    note["content"] = content[:256] + "...[PARTIAL]"
+                if isinstance(content, str) and len(content) > 50:
+                    note["content"] = content[:50] + "...[PARTIAL]"
                     if self.usage(ordered) <= self.soft_limit_bytes:
                         break
 
         if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in reversed(ordered):
+                note["content"] = ""
                 if self.usage(ordered) <= self.soft_limit_bytes:
                     break
-                note["content"] = ""
+
+        for note in ordered:
+            content = note.get("content", "")
+            if isinstance(content, str) and len(content.encode("utf-8")) > 1024:
+                note["content"] = zlib.compress(content.encode("utf-8"))
+
+        while len(ordered) > 1 and self.serialized_size(ordered) > self.hard_limit_bytes:
+            ordered.pop()
+
+        if ordered and self.serialized_size(ordered) > self.hard_limit_bytes:
+            raise BudgetExceededError(f"Context usage exceeds hard limit {self.hard_limit_bytes} bytes")
 
         self.check_hard_limit(self.usage(ordered))
         return ordered

@@ -60,3 +60,36 @@ def test_report_never_mutates_storage():
     snapshot_before = dict(controller.storage.store["a"])
     SleepConsolidator(controller).run()
     assert controller.storage.store["a"] == snapshot_before
+
+
+def test_budget_cap_stops_run_and_reports_counts():
+    notes = [
+        {"id": f"note_{i}", "lifecycle": "ACTIVE", "category": "test", "content": f"content {i}", "updated": _iso_days_ago(i + 1)}
+        for i in range(20)
+    ]
+    controller = _FakeController(notes)
+    consolidator = SleepConsolidator(controller, max_items_per_run=6)
+    report = consolidator.run()
+
+    assert report.stats["total_notes"] == 20
+    assert report.stats["eligible_notes"] == 20
+    assert report.stats["processed_notes"] == 6
+    assert report.stats["budget_cap"] == 6
+    assert report.stats["budget_exhausted"] is True
+
+
+def test_budget_prioritizes_oldest_notes():
+    notes = [
+        {"id": "recent", "lifecycle": "ACTIVE", "category": "c", "content": "recent content", "updated": _iso_days_ago(2)},
+        {"id": "ancient", "lifecycle": "ACTIVE", "category": "c", "content": "ancient content", "updated": _iso_days_ago(200)},
+        {"id": "mid", "lifecycle": "ACTIVE", "category": "c", "content": "mid content", "updated": _iso_days_ago(50)},
+    ]
+    controller = _FakeController(notes)
+    # Budget of 1 should pick "ancient"
+    consolidator = SleepConsolidator(controller, max_items_per_run=1, dormant_days=60)
+    report = consolidator.run()
+
+    assert report.stats["processed_notes"] == 1
+    assert any(item["id"] == "ancient" for item in report.dormant_candidates)
+    assert not any(item["id"] in {"recent", "mid"} for item in report.dormant_candidates)
+

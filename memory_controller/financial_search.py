@@ -1085,6 +1085,12 @@ class MultiLayeredFinancialSearchEngine:
                     return self.storage.query()
         return []
 
+    def search(self, query: str = "", top_k: int = 10, **kwargs) -> List[Dict[str, Any]]:
+        """Convenience alias for execute_search returning results list."""
+        kwargs_clean = {k: v for k, v in kwargs.items() if k not in ("limit", "page_size")}
+        pack = self.execute_search(principal=Principal.AI_AGENT, query=query, limit=top_k, page_size=top_k, **kwargs_clean)
+        return pack.get("results", [])
+
     def execute_search(
         self,
         principal: Principal,
@@ -1112,6 +1118,7 @@ class MultiLayeredFinancialSearchEngine:
         Returns a context pack dictionary with cryptographic pagination tokens.
         """
         effective_page_size = limit if limit is not None else page_size
+        effective_page_size = max(0, min(int(effective_page_size), 1000))
         check_query_size(query)
         sanitized = sanitize_query(query)
         query_fp = hashlib.sha256(f"{sanitized}:{effective_page_size}".encode("utf-8")).hexdigest()
@@ -1405,7 +1412,11 @@ class MultiLayeredFinancialSearchEngine:
         pack = self.pack_builder.build(
             request_id="financial_search",
             agent_id=principal.value,
-            budget={"soft": budget.soft_context_budget, "hard": budget.hard_context_budget},
+            budget={
+                "soft": budget.soft_context_budget,
+                "hard": budget.hard_context_budget,
+                "max_notes": max(effective_page_size, budget.max_notes),
+            },
             results=page_results,
             disclosure_level=disclosure_level,
             next_page_token=next_token,

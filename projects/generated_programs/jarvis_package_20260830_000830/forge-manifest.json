@@ -1,0 +1,10 @@
+{
+  "generated_at": "2026-08-30T00:08:30.7186593+03:00",
+  "language": "csharp",
+  "mode": "blueprint",
+  "source": "JARVIS Program Forge",
+  "files": [
+    "MISSION_PLAN.json"
+  ],
+  "plan_included": true
+}

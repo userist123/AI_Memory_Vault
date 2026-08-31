@@ -1,0 +1,167 @@
+{
+  "run_id": "run_0018",
+  "specialist_calls": 5,
+  "synthesis_calls": 1,
+  "total_model_calls": 6,
+  "estimated_input": 2437,
+  "actual_input": 2437,
+  "estimated_output": 44,
+  "actual_output": 44,
+  "cached_input": 0,
+  "reasoning_tokens": 0,
+  "actual_total": 2481,
+  "estimated_total": 2481,
+  "per_agent_usage": {
+    "RETRIEVAL": {
+      "estimated_total": 349,
+      "actual_total": 349,
+      "calls": 1
+    },
+    "ROUTER": {
+      "estimated_total": 649,
+      "actual_total": 649,
+      "calls": 1
+    },
+    "CONSOLIDATOR": {
+      "estimated_total": 521,
+      "actual_total": 521,
+      "calls": 1
+    },
+    "CRITIC": {
+      "estimated_total": 501,
+      "actual_total": 501,
+      "calls": 1
+    },
+    "VERIFIER": {
+      "estimated_total": 334,
+      "actual_total": 334,
+      "calls": 1
+    },
+    "SYNTHESIS": {
+      "estimated_total": 127,
+      "actual_total": 127,
+      "calls": 1
+    }
+  },
+  "per_tier_usage": {
+    "light": {
+      "estimated_total": 1332,
+      "actual_total": 1332,
+      "calls": 3
+    },
+    "standard": {
+      "estimated_total": 1022,
+      "actual_total": 1022,
+      "calls": 2
+    },
+    "heavy": {
+      "estimated_total": 127,
+      "actual_total": 127,
+      "calls": 1
+    }
+  },
+  "context_bytes": 6947,
+  "context_estimated_tokens": 2317,
+  "wall_time_seconds": 0.00017420004587620497,
+  "tokens_per_specialist": 470.8,
+  "tokens_per_council_run": 2481.0,
+  "tokens_per_synthesis": 127.0,
+  "calls": [
+    {
+      "agent_id": "RETRIEVAL",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 342,
+      "estimated_output": 7,
+      "actual_input": 342,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 349,
+      "estimated_total": 349,
+      "source": "provider"
+    },
+    {
+      "agent_id": "ROUTER",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 642,
+      "estimated_output": 7,
+      "actual_input": 642,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 649,
+      "estimated_total": 649,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CONSOLIDATOR",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 513,
+      "estimated_output": 8,
+      "actual_input": 513,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 521,
+      "estimated_total": 521,
+      "source": "provider"
+    },
+    {
+      "agent_id": "CRITIC",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-standard",
+      "model_tier": "standard",
+      "estimated_input": 493,
+      "estimated_output": 8,
+      "actual_input": 493,
+      "actual_output": 8,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 501,
+      "estimated_total": 501,
+      "source": "provider"
+    },
+    {
+      "agent_id": "VERIFIER",
+      "kind": "specialist",
+      "provider": "fake",
+      "model": "fake-light",
+      "model_tier": "light",
+      "estimated_input": 327,
+      "estimated_output": 7,
+      "actual_input": 327,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 334,
+      "estimated_total": 334,
+      "source": "provider"
+    },
+    {
+      "agent_id": "SYNTHESIS",
+      "kind": "synthesis",
+      "provider": "fake",
+      "model": "fake-heavy",
+      "model_tier": "heavy",
+      "estimated_input": 120,
+      "estimated_output": 7,
+      "actual_input": 120,
+      "actual_output": 7,
+      "cached_input": 0,
+      "reasoning_tokens": 0,
+      "actual_total": 127,
+      "estimated_total": 127,
+      "source": "provider"
+    }
+  ]
+}

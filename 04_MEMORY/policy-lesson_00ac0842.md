@@ -10,8 +10,9 @@ provenance:
 confidence: high
 verification: unverified
 relations: []
-lifecycle: REVIEW
+lifecycle: ARCHIVED
 id: 00ac0842-2c43-4a9d-a579-a83bfa271995
+archive_reason: Consolidated into knowledge node
 ---
 ## Formal Reflexion Analysis
 

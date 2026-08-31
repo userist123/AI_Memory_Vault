@@ -4,16 +4,20 @@ on:
   push:
     paths:
       - 'cognitive_core/**'
+      - 'memory_controller/**'
+      - 'tests/**'
       - 'requirements-memory-v6.txt'
       - '.github/workflows/memory-v6-tests.yml'
   pull_request:
     paths:
       - 'cognitive_core/**'
+      - 'memory_controller/**'
+      - 'tests/**'
   workflow_dispatch:
 
 jobs:
   test:
-    name: Run pytest for cognitive_core (Memory V6)
+    name: Run pytest for Memory V6 (cognitive_core, memory_controller, tests)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,4 +37,4 @@ jobs:
           pip install -r requirements-memory-v6.txt
 
       - name: Run Memory V6 test suite
-        run: pytest cognitive_core/tests -v
+        run: pytest cognitive_core/tests memory_controller/tests tests/ -v

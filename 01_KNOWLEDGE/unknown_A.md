@@ -9,4 +9,4 @@ provenance:
 relations:
 - target_id: B
 ---
-Content A
+Content for A

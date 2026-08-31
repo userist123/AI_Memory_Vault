@@ -81,12 +81,15 @@ def ingest_financial_note_endpoint(req: FinancialNoteRequest):
         or req.content
         or f"# {req.title}\nSymbol: {req.symbol or ''}\n\n{req.narrative}"
     )
+    note_tags = list(req.tags) if req.tags else ["finance"]
+    if req.symbol and req.symbol.lower() not in [t.lower() for t in note_tags]:
+        note_tags.append(req.symbol.lower())
     note_data = {
         "id": note_id,
         "type": "knowledge",
         "lifecycle": "REVIEW",
         "category": req.category,
-        "tags": req.tags or ["finance", (req.symbol or "").lower()],
+        "tags": note_tags,
         "created": current_date,
         "updated": current_date,
         "provenance": {
@@ -117,13 +120,14 @@ def unified_search_endpoint(
 ):
     search_q = q or query or ""
     try:
+        eff_limit = max(0, min(int(limit), 10000))
         pack = controller.search_financial(
             principal=Principal.AI_AGENT,
             query=search_q,
             symbol=symbol,
             category=category,
-            limit=limit,
-            page_size=limit
+            limit=eff_limit,
+            page_size=eff_limit
         )
         return {
             "status": "success",
