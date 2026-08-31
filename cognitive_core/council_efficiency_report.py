@@ -26,10 +26,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from .council_usage_audit import CouncilUsageAuditReport
 
 
-# ---------------------------------------------------------------------------
-# Section 2/3 — distribution stats + estimated/actual variance
-# ---------------------------------------------------------------------------
-
 @dataclass
 class TokenStats:
     avg: float = 0.0
@@ -72,10 +68,6 @@ def _variance(estimated: int, actual: int) -> VarianceReport:
     return VarianceReport(estimated=estimated, actual=actual, delta=delta, delta_percent=delta_percent)
 
 
-# ---------------------------------------------------------------------------
-# Section 4/5/6 — per-agent / per-tier / per-provider-model breakdown
-# ---------------------------------------------------------------------------
-
 @dataclass
 class AgentBreakdown:
     calls: int = 0
@@ -108,10 +100,6 @@ class ProviderModelBreakdown:
     share_of_total: float = 0.0
 
 
-# ---------------------------------------------------------------------------
-# Section 7 — context efficiency
-# ---------------------------------------------------------------------------
-
 @dataclass
 class ContextEfficiency:
     context_estimated_tokens_total: int = 0
@@ -120,10 +108,6 @@ class ContextEfficiency:
     context_to_input_ratio: float = 0.0
     output_to_input_ratio: float = 0.0
 
-
-# ---------------------------------------------------------------------------
-# Section 8 — cost model (no hardcoded prices)
-# ---------------------------------------------------------------------------
 
 @dataclass
 class CostProfile:
@@ -152,10 +136,6 @@ class CostSummary:
     cost_per_synthesis: float = 0.0
 
 
-# ---------------------------------------------------------------------------
-# Section 9 — A/B comparison
-# ---------------------------------------------------------------------------
-
 @dataclass
 class ABComparisonResult:
     baseline_run_count: int = 0
@@ -165,10 +145,6 @@ class ABComparisonResult:
     calls_saved: float = 0.0
     latency_delta_seconds: float = 0.0
 
-
-# ---------------------------------------------------------------------------
-# Section 12 — verdict
-# ---------------------------------------------------------------------------
 
 @dataclass
 class EfficiencyVerdict:
@@ -185,10 +161,6 @@ class EfficiencyVerdict:
     top_optimization_candidate: Optional[str] = None
     top_optimization_reason: Optional[str] = None
 
-
-# ---------------------------------------------------------------------------
-# Top-level report
-# ---------------------------------------------------------------------------
 
 @dataclass
 class CouncilEfficiencyReport:
@@ -230,18 +202,10 @@ class CouncilEfficiencyReport:
         return json.dumps(self.to_dict(), indent=indent, ensure_ascii=False)
 
 
-# ---------------------------------------------------------------------------
-# Main aggregation
-# ---------------------------------------------------------------------------
-
 def build_efficiency_report(
     reports: Sequence[CouncilUsageAuditReport],
     cost_profiles: Optional[Dict[Tuple[str, str], CostProfile]] = None,
 ) -> CouncilEfficiencyReport:
-    """Aggregate a series of B4 CouncilUsageAuditReport objects into a
-    historical B5 efficiency report. Provider-neutral by construction —
-    reports may come from any mix of Fake/Local/OpenAI/future providers.
-    """
     reports = list(reports)
     result = CouncilEfficiencyReport(run_count=len(reports))
     if not reports:
@@ -269,7 +233,6 @@ def build_efficiency_report(
     result.actual_total_per_synthesis = _stats(synthesis_totals)
     result.wall_time_stats = _stats([r.wall_time_seconds for r in reports])
 
-    # Section 4 — per-agent breakdown
     agent_calls: Dict[str, List[Any]] = {}
     for r in reports:
         for c in r.calls:
@@ -285,7 +248,6 @@ def build_efficiency_report(
             share_of_total=round((actual / grand_total) * 100.0, 4),
         )
 
-    # Section 5 — per-tier breakdown
     tier_calls: Dict[str, List[Any]] = {}
     for r in reports:
         for c in r.calls:
@@ -302,7 +264,6 @@ def build_efficiency_report(
             share_of_total=round((actual_total / grand_total) * 100.0, 4),
         )
 
-    # Section 6 — per provider/model/tier breakdown
     pm_calls: Dict[str, List[Any]] = {}
     for r in reports:
         for c in r.calls:
@@ -318,7 +279,6 @@ def build_efficiency_report(
             share_of_total=round((actual_total / grand_total) * 100.0, 4),
         )
 
-    # Section 7 — context efficiency
     context_tokens_total = sum(r.context_estimated_tokens for r in reports)
     actual_input_total = result.actual_input
     actual_output_total = result.actual_output
@@ -330,7 +290,6 @@ def build_efficiency_report(
         output_to_input_ratio=(actual_output_total / actual_input_total) if actual_input_total else 0.0,
     )
 
-    # Section 8 — cost model (opt-in via cost_profiles)
     if cost_profiles:
         estimated_cost = 0.0
         actual_cost = 0.0
@@ -352,22 +311,37 @@ def build_efficiency_report(
             cost_per_synthesis=actual_cost * (result.total_synthesis_calls / max(1, result.total_model_calls)) / n_synthesis if result.total_model_calls else 0.0,
         )
 
-    # Section 12 — verdict
     specialist_share = (sum(specialist_totals) / grand_total * 100.0) if specialist_totals else 0.0
     synthesis_share = (sum(synthesis_totals) / grand_total * 100.0) if synthesis_totals else 0.0
     heavy_share = result.tier_breakdown.get("heavy", TierBreakdown()).share_of_total
 
+    # Fix: the top optimization candidate must be a REAL (agent, tier) pair
+    # actually observed together in the calls, not an independently-selected
+    # top agent concatenated with an independently-selected top tier (which
+    # can name a tier that agent never ran on, e.g. "CRITIC / light" when
+    # CRITIC always runs on "standard"). We group by the exact (agent_id,
+    # model_tier) pair that appears on calls and pick the pair with the
+    # highest actual_total.
+    agent_tier_pairs: Dict[Tuple[str, str], int] = {}
+    for r in reports:
+        for c in r.calls:
+            key = (c.agent_id, c.model_tier)
+            agent_tier_pairs[key] = agent_tier_pairs.get(key, 0) + c.actual_total
+
     top_candidate = None
     top_reason = None
-    if result.tier_breakdown:
-        top_tier = max(result.tier_breakdown.items(), key=lambda kv: kv[1].actual_total)
-        if result.agent_breakdown:
-            top_agent = max(result.agent_breakdown.items(), key=lambda kv: kv[1].actual)
-            top_candidate = f"{top_agent[0]} / {top_tier[0]}"
-            top_reason = (
-                f"{round(top_agent[1].share_of_total, 1)}% of total tokens; "
-                f"tier '{top_tier[0]}' accounts for {round(top_tier[1].share_of_total, 1)}% of total tokens"
-            )
+    if agent_tier_pairs:
+        (top_agent_id, top_agent_tier), _top_pair_total = max(
+            agent_tier_pairs.items(), key=lambda kv: kv[1]
+        )
+        agent_share = result.agent_breakdown[top_agent_id].share_of_total
+        tier_share = result.tier_breakdown[top_agent_tier].share_of_total
+        top_candidate = f"{top_agent_id} / {top_agent_tier}"
+        top_reason = (
+            f"{round(agent_share, 1)}% of total tokens; "
+            f"tier '{top_agent_tier}' (this agent's actual tier) accounts for "
+            f"{round(tier_share, 1)}% of total tokens overall"
+        )
 
     result.verdict = EfficiencyVerdict(
         runs_analyzed=result.run_count,
@@ -386,10 +360,6 @@ def build_efficiency_report(
 
     return result
 
-
-# ---------------------------------------------------------------------------
-# Section 9 — A/B comparison
-# ---------------------------------------------------------------------------
 
 def compare_baseline_vs_optimized(
     baseline_reports: Sequence[CouncilUsageAuditReport],
@@ -418,10 +388,6 @@ def compare_baseline_vs_optimized(
         latency_delta_seconds=latency_delta,
     )
 
-
-# ---------------------------------------------------------------------------
-# Section 10 — regression detection
-# ---------------------------------------------------------------------------
 
 def detect_regressions(
     current: CouncilEfficiencyReport,
@@ -457,10 +423,6 @@ def detect_regressions(
     current.verdict.token_regression = "TOKEN REGRESSION" in flags
     return flags
 
-
-# ---------------------------------------------------------------------------
-# Section 11 — exports: JSON (via to_json), CSV x4, Markdown
-# ---------------------------------------------------------------------------
 
 def to_csv_runs(reports: Sequence[CouncilUsageAuditReport]) -> str:
     buf = io.StringIO()
