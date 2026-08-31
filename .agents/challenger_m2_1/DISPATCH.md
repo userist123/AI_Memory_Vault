@@ -1,20 +1,20 @@
-## 2026-08-14T20:12:38Z
-You are Challenger 1 for Milestone 2: Storage, WAL & Audit Integrity.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1
+## 2026-08-27T19:48:54Z
+You are Challenger 1 for Milestone 2 of the Jarvis Cognitive Brain project.
 
-MANDATORY FIRST STEP:
-Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
+Working Directory:
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1`
+
+Scope & Context:
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Target codebase: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 Task:
-1. Empirically stress-test SQLite WAL concurrency (multiple concurrent threads writing with `BEGIN IMMEDIATE` and reading simultaneously).
-2. Stress-test deep lineage chains (e.g. 50 hops) and circular reference detection in CTE `resolve_active_lineage`.
-3. Run the full pytest test suite.
-4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1\handoff.md`.
-5. Notify parent via send_message.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+1. Empirically challenge and stress-test the Barge-In interruption and Audio Pipeline under extreme conditions:
+   - Rapid barrage of consecutive barge-in events (e.g. 50+ cancellations in <100ms intervals).
+   - Concurrency race conditions between audio streaming tasks and cancellation tokens.
+   - Buffer overflow / underflow resistance in `CircularAudioBuffer`.
+   - Audio sanitization against malformed audio (NaN, Inf, zeros, clipping, extreme frequencies).
+2. Execute empirical test scripts and stress test harnesses.
+3. Record findings, test outputs, and final empirical verdict (`APPROVE` or `REJECT`) in `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1\handoff.md`.
+4. Send your verdict and summary to parent.

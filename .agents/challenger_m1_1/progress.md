@@ -1,21 +1,19 @@
-# Progress Tracking - Challenger M1
+# Progress — Challenger 1 (Adversarial Correctness & OODA Stress)
 
-- **Role**: Empirical Challenger 1
-- **Status**: COMPLETED
-- **Last visited**: 2026-08-14T20:07:40Z
+- **Status**: Adversarial Stress Testing Complete — Report Compiled
+- **Last visited**: 2026-08-27T19:32:00Z
 
-## Step Tracking
-- [x] Read ORIGINAL_REQUEST.md and PROJECT.md
-- [x] Initialize DISPATCH.md, BRIEFING.md, progress.md
-- [x] Empirically verify type introspection command
-- [x] Inspect relevant source files (`learning.py`, `reflection.py`, `budget.py`)
-- [x] Run full pytest test suite (197/197 passed)
-- [x] Produce handoff report with verdict (APPROVE)
-- [x] Notify parent agent via send_message
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Checklist
+- [x] Initialized DISPATCH.md and BRIEFING.md
+- [x] Read worker handoff and codebase architecture
+- [x] Formulated and executed adversarial test suite (`tests/unit/test_adversarial_m1.py`)
+- [x] Tested Rapid Cancellation Token triggers mid-stream (pre-stream, mid-token, concurrent callbacks)
+- [x] Tested Corrupted / Malformed Perception events (empty, whitespace, prompt injection, massive 130KB payloads)
+- [x] Tested Error Recovery & simulated tool failures triggering 6-stage Reflexion
+- [x] Tested Checkpoint recovery from truncated, empty, and schema-mismatched `wm.json` and `plan.json`
+- [x] Identified 2 empirical vulnerabilities:
+  1. `search_bm25` SQLite Expression Tree Depth Overflow on large inputs
+  2. `WorkingMemory.load_state` unvalidated JSON assignment causing subsequent `admit()` failure
+- [x] Formulated actionable remediation proposals
+- [x] Compiled handoff report in `.agents/challenger_m1_1/handoff.md`
+- [x] Sent message to parent agent

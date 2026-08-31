@@ -1,82 +1,60 @@
-# BRIEFING — 2026-08-15T02:02:49Z
+# BRIEFING — 2026-08-28T14:26:45Z
 
 ## Mission
-Conduct an independent code inspection, robustness assessment, and adversarial review of Milestone 4: Cognitive Loop & Multi-Agent Coordination.
+Review remediated FastMCPIoTServer and HomeAssistantClient in Jarvis Cognitive Brain, verify security/robustness invariants, execute test suite (434 tests), and deliver adversarial review and quality verdict.
 
 ## 🔒 My Identity
-- Archetype: reviewer_critic
+- Archetype: teamwork_preview_reviewer
 - Roles: reviewer, critic
 - Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_2
-- Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Milestone: Milestone 4 (Cognitive Loop & Multi-Agent Coordination)
-- Instance: 2 of 2
+- Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Milestone: M4.2 Remediation Review
+- Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
-- Actively check for integrity violations (hardcoded test results, facade implementations, shortcuts, fabricated verification)
-- Enforce P0-P15 trust boundary invariants and least-privilege constraints
-- Verify OODA loop fault tolerance, atomic checkpointing, version algebra, and full test suite
+- Respect Vault rules and integrity invariants
+- Require strict evidence-based verification
 
 ## Current Parent
-- Conversation ID: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Updated: 2026-08-15T02:00:19Z
+- Conversation ID: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Updated: 2026-08-28T14:26:45Z
 
 ## Review Scope
 - **Files to review**:
-  - `cognitive_core/executive.py`
-  - `cognitive_core/reasoning.py`
-  - `cognitive_core/reflection.py`
-  - `cognitive_core/recall.py`
-  - `cognitive_core/planning.py`
-  - `cognitive_core/working_memory.py`
-  - `cognitive_core/consolidation.py`
-  - `cognitive_core/tool_router.py`
-  - `cognitive_core/orchestrator.py`
-  - `cognitive_core/agents/base_agent.py`
-  - `cognitive_core/agents/router_agent.py`
-  - `cognitive_core/agents/retrieval_agent.py`
-  - `cognitive_core/agents/verifier_agent.py`
-  - `cognitive_core/agents/consolidator_agent.py`
-  - `cognitive_core/agents/critic_agent.py`
-  - `cognitive_core/tests/test_milestone4_empirical_challenge.py`
-- **Interface contracts**: `PROJECT.md`, `AGENTS.md`, `.agents/rules/vault_cognitive_rules.md`
-- **Review criteria**: correctness, robustness, P0-P15 trust boundary adherence, adversarial resilience, test integrity
-
-## Review Checklist
-- **Items reviewed**:
-  - Full OODA Cognitive Loop (`executive.py`, `working_memory.py`, `planning.py`)
-  - Multi-Branch Reasoning & Consistency Validation (`reasoning.py`: Tree-of-Thought & ThoughtValidator)
-  - Associative Recall Engine (`recall.py`: 10% freshness bonus, version algebra, REVIEW unverified flags)
-  - 6-Stage Formal Reflexion (`reflection.py`: error & blocked learning pipelines)
-  - SelfRefine Critique & Consolidation (`consolidation.py`, `reflection.py`)
-  - Specialized Subagents & Least Privilege (`agents/`, `tool_router.py`, `orchestrator.py`)
-  - Target test suites & empirical challenge suite (`test_milestone4_empirical_challenge.py`)
-- **Verdict**: APPROVE
-- **Unverified claims**: None. All core claims verified through direct source inspection, AST analysis, and test suite execution.
-
-## Attack Surface
-- **Hypotheses tested**:
-  - Privilege escalation via subagent action bypass or direct storage modification: Verified strictly blocked via `can_perform`, `execute_action`, and `ToolRouter`.
-  - Atomic checkpoint failure modes and recovery: Verified safe under missing or invalid states.
-  - ThoughtValidator boundary conditions (empty context, grounding division by zero): Verified safe with fallback grounding ratio and length checks.
-  - Lineage traversal cycles and freshness bonus calculation: Verified lineage resolution terminates safely and cap adheres to <= 1.0.
-  - Integrity violation checks (hardcoding, facades, shortcuts, self-certification): Verified 0 integrity violations present.
-- **Vulnerabilities found**: None in Milestone 4 implementation. All P0-P15 invariants and architectural requirements strictly enforced.
-- **Untested angles**: Large-scale distributed multi-agent concurrency (> 100 concurrent agents) — deferred to Milestone 5 end-to-end stress testing.
+  - `projects/jarvis_cognitive_brain/jarvis/iot/fastmcp_server.py`
+  - `projects/jarvis_cognitive_brain/jarvis/iot/ha_client.py`
+  - `projects/jarvis_cognitive_brain/tests/unit/test_challenger_m4_stress.py`
+  - `projects/jarvis_cognitive_brain/tests/unit/test_fastmcp_iot.py`
+- **Interface contracts**: `PROJECT.md`, `worker_m4_2/handoff.md`
+- **Review criteria**:
+  1. Non-dict JSON payloads return JSON-RPC 2.0 error code -32600 Invalid Request (CONFIRMED)
+  2. Multi-entity list/tuple `entity_id` handling is safe (CONFIRMED)
+  3. 401 Unauthorized errors are handled without uncaught exceptions (CONFIRMED)
+  4. Full test suite execution and integrity inspection (CONFIRMED: 434/434 passing)
 
 ## Key Decisions Made
-- Confirmed full architectural conformance of Milestone 4 with 0 critical defects.
+- Confirmed full compliance with JSON-RPC 2.0 and Home Assistant API resilience requirements.
+- Confirmed no integrity violations or hardcoded facades.
 - Issued verdict: APPROVE.
 
 ## Artifact Index
-- `.agents/reviewer_m4_2/DISPATCH.md` — Dispatch mission and scope
-- `.agents/reviewer_m4_2/BRIEFING.md` — Persistent working memory and state
-- `.agents/reviewer_m4_2/progress.md` — Liveness heartbeat and progress tracker
-- `.agents/reviewer_m4_2/handoff.md` — Final 5-component handoff report with verdict
+- `.agents/reviewer_m4_2/DISPATCH.md` — Incoming dispatch log
+- `.agents/reviewer_m4_2/BRIEFING.md` — Active briefing and state
+- `.agents/reviewer_m4_2/progress.md` — Liveness and execution progress
+- `.agents/reviewer_m4_2/report.md` — Detailed review & adversarial findings
+- `.agents/reviewer_m4_2/handoff.md` — Standard 5-component handoff report
 
----
+## Review Checklist
+- **Items reviewed**:
+  - `fastmcp_server.py` (JSON-RPC 2.0 protocol handling, -32600, -32700, -32601, -32602, -32002 mapping)
+  - `ha_client.py` (`safe_call_service`, `async_safe_call_service`, list/tuple entity handling, 401 try/except wrapper)
+  - `test_challenger_m4_stress.py` (84 tests passing)
+  - Full pytest suite (434 tests passing)
+- **Verdict**: APPROVE
+- **Unverified claims**: None.
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Attack Surface
+- **Hypotheses tested**: Non-dict JSON strings, list/tuple unhashable type crashes, 401 token authentication errors, concurrent async load.
+- **Vulnerabilities found**: None. All edge cases handled cleanly.
+- **Untested angles**: None within milestone scope.

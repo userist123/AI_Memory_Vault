@@ -1,26 +1,18 @@
-# Challenger 2 Progress Heartbeat
+# Progress — Challenger 2 (Adversarial Storage & Concurrency)
 
-**Last visited**: 2026-08-14T20:10:15Z
-**Current Milestone**: Milestone 1: Codebase Hygiene & Typing Validation
-**Status**: COMPLETED
+Last visited: 2026-08-27T19:32:00Z
 
-## Completed Steps
-1. Initialized DISPATCH.md and BRIEFING.md.
-2. Inspected ORIGINAL_REQUEST.md, PROJECT.md, memory_controller/context/budget.py, and existing test modules.
-3. Executed extensive empirical verification and 900-combination parameter sweep across budget degradation tiers:
-   - Tier 1: Fits within soft/hard limits -> No degradation.
-   - Tier 2: Exceeds max_full_documents -> Content truncated to empty string for lower relevance notes.
-   - Tier 3: Soft limit exceeded -> Drops notes, truncates top notes to 50 chars + `...[PARTIAL]`, and downgrades to empty string metadata-only if still over soft limit.
-   - Tier 4: Zlib compression for note contents > 1024 bytes -> Verified round-trip decompression.
-   - Tier 5: Hard limit exceeded -> Verified BudgetExceededError and ContextBudgetError raised.
-   - Edge cases: UTF-8 multibyte strings (CJK, emoji), empty lists, missing/negative relevance, pre-compressed bytes, 1000+ notes scaling.
-4. Created `memory_controller/tests/test_context_budget.py` covering all 13 degradation tier and edge-case tests.
-5. Ran full pytest suite: 210/210 passed in 7.80s (38 test modules, 0 failures).
-6. Prepared 5-component handoff report with verdict: APPROVE.
+## Status
+All adversarial stress tests written and executed empirically with 100% pass rate. Verdict: APPROVE.
 
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Steps
+- [x] Step 1: Initialize briefing, dispatch, and progress tracking.
+- [x] Step 2: Read worker_m1 handoff, PROJECT.md, ORIGINAL_REQUEST.md, and source files.
+- [x] Step 3: Implement comprehensive adversarial tests covering:
+  - 16-thread high concurrency read/write stress on SQLiteStore.
+  - Invariant bypass attempts (AI_AGENT forging verified/user/official/experience provenance).
+  - Recursive CTE lineage loop injection / circular reference cycles.
+  - ACT-R mathematical edge cases ($t < t_j$, zero decay, negative time, empty history, log(0)).
+- [x] Step 4: Execute tests via pytest / python and analyze outputs (13/13 passed in test_adversarial_storage_concurrency.py, 87/87 passed across full test suite).
+- [x] Step 5: Document findings and write handoff.md with final verdict APPROVE.
+- [ ] Step 6: Send message to parent.

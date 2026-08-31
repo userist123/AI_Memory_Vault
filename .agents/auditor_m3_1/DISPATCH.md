@@ -1,26 +1,18 @@
-## 2026-08-14T20:19:56Z
-Task:
-Perform forensic integrity audit of Milestone 3: Security Invariants & Attestation Gates.
+## 2026-08-28T14:03:55Z
+You are teamwork_preview_auditor (auditor_m3_1).
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m3_1`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-Required reading:
-1. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
-2. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
-3. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\AGENTS.md
-4. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md
-5. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
-6. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Cognitive Rules: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
+Worker Handoff: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md`
 
-Forensic Audit Checks:
-1. Verify genuine implementation of all P0-P15 security rules in source code (no hardcoded returns, no bypasses, no dummy validations).
-2. Trace code paths in memory_controller/controller.py, memory_controller/authorizer.py, cognitive_core/tool_router.py.
-3. Validate runtime behavior and verify that tests genuinely execute the production code paths.
-4. Verify tamper-evident audit logging integrity.
-5. Confirm whether Milestone 3 implementation is CLEAN or has INTEGRITY VIOLATIONS.
-6. Write full forensic evidence in report.md and handoff.md, and send verdict message back to caller.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+TASK:
+Perform a comprehensive Forensic Integrity Audit on Milestone 3:
+1. Static analysis: Check for hardcoded test results, dummy facade implementations, mock overrides in production files (`jarvis/agents/`), or shortcuts that bypass genuine logic.
+2. Verify that all classes in `jarvis/agents/` (`models.py`, `base.py`, `router.py`, `retrieval.py`, `verifier.py`, `consolidator.py`, `critic.py`, `supervisor.py`) are genuine production-grade code.
+3. Run the full pytest test suite to confirm genuine runtime behavior.
+4. Check for secret leaks, tamper-evident audit logging, and trust boundary enforcement.
+5. Write your complete forensic audit report to `.agents/auditor_m3_1/report.md` and handoff to `.agents/auditor_m3_1/handoff.md` with binary verdict: `CLEAN` or `INTEGRITY VIOLATION`.
+6. Send your verdict to the parent orchestrator.

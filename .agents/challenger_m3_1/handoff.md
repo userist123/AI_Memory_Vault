@@ -1,91 +1,97 @@
-# Handoff Report — Milestone 3 Empirical Challenger (P0-P15 Security Invariants)
+# Milestone 3 Challenger: Handoff Report
 
 ## 1. Observation
-1. **Adversarial Invariant Test Suite Execution (`memory_controller/tests/test_adversarial_p0_p15_invariants.py`)**:
-   - Executed 11 adversarial attack test functions targeting trust boundaries:
-     ```text
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_propose_verified_strict_rejection_and_zero_writes PASSED [  9%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_update_escalate_verification_strict_rejection PASSED [ 18%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_attest_unauthorized_permission_error PASSED [ 27%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_forge_privileged_provenance_types PASSED [ 36%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_provenance_source_type_post_creation_immutability PASSED [ 45%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_propose_active_lifecycle_strict_rejection PASSED [ 54%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_lifecycle_field_immutability_on_update PASSED [ 63%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_tool_router_reconciliation_boundary_blocks_unauthorized_mutations PASSED [ 72%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_tool_router_high_risk_actions_gated PASSED [ 81%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_file_storage_zero_disk_artifacts_on_rejected_proposals PASSED [ 90%]
-     memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_multi_threaded_adversarial_barrage_zero_partial_writes PASSED [100%]
-     ============================= 11 passed in 7.18s ==============================
-     ```
 
-2. **Attestation Race Condition & Hostile Payload Fuzzing (`memory_controller/tests/test_milestone3_empirical_challenge.py`)**:
-   - Executed 8 high-concurrency and fuzzing tests:
-     ```text
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_concurrent_attest_and_update_race_sqlite PASSED [ 12%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_concurrent_multi_note_attestation_blitz PASSED [ 25%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_attest_reason_and_evidence_empty_and_whitespace_rejections PASSED [ 37%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_attest_arguments_hostile_payload_fuzzing PASSED [ 50%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_attest_invalid_verification_state_rejection PASSED [ 62%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_attest_nonexistent_and_traversal_ids PASSED [ 75%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_audit_log_sha256_chain_integrity_under_attack_barrage PASSED [ 87%]
-     memory_controller/tests/test_milestone3_empirical_challenge.py::test_audit_log_concurrent_multithreaded_attack_barrage PASSED [100%]
-     ============================== 8 passed in 7.64s ==============================
-     ```
-
-3. **Complete Pytest Suite Run**:
-   - Executed `python -m pytest`:
-     ```text
-     ============================ 292 passed in 24.20s =============================
-     ```
-   - 0 failures, 0 errors across all 38 test suites (including core, storage, audit, cognitive loop, reasoning, and security modules).
-
-4. **Zero Partial Writes & Atomic Rollback Verification**:
-   - In SQLite storage (`SQLiteStorageEngine`), every rejected proposal or update was verified via direct SQL `SELECT COUNT(*) FROM notes` and `PRAGMA integrity_check`, showing exactly 0 phantom rows, 0 partial writes, and `ok` database health.
-   - In File storage (`FileStorageEngine`), directory scans confirmed 0 dangling `.md` files created during rejected proposals.
-   - Under multi-threaded contention (16 concurrent threads: 8 attacker threads, 4 legitimate writer threads, 4 reader threads), all 200 attack attempts failed cleanly, exactly 100 legitimate notes were stored, and 0 database locks or corrupted records occurred.
-
-5. **Audit Log Cryptographic Chaining**:
-   - Every rejected operation recorded an `outcome="error"` entry.
-   - `AuditLogger.verify_integrity()` successfully validated the SHA-256 cryptographic hash chain across dense barrages of hostile operations.
-   - Tamper-detection test verified that altering any single field in an audit entry immediately causes `verify_integrity()` to return `False`.
-
-## 2. Logic Chain
-1. From Observation 1, `test_attack_ai_propose_verified_strict_rejection_and_zero_writes` and `test_attack_ai_update_escalate_verification_strict_rejection` empirically demonstrate that `Principal.AI_AGENT` cannot set `verification="verified"` either at creation or via update (enforcing P0-001 and P0-005).
-2. From Observation 1, `test_attack_ai_forge_privileged_provenance_types` proves that `Principal.AI_AGENT` cannot claim `user`, `official`, `experience`, or `import` provenance (enforcing P0-002 and P0-003).
-3. From Observation 1, `test_attack_provenance_source_type_post_creation_immutability` demonstrates that `provenance.source_type` cannot be mutated post-creation by any principal (enforcing P0-006).
-4. From Observation 1, `test_attack_ai_propose_active_lifecycle_strict_rejection` proves that `Principal.AI_AGENT` cannot inject `ACTIVE`, `VERIFIED`, `SUPERSEDED`, or `ARCHIVED` lifecycles directly at creation (enforcing P0-004).
-5. From Observation 1 & 2, `test_attack_ai_attest_unauthorized_permission_error` and `test_concurrent_multi_note_attestation_blitz` confirm that `attest()` is strictly gated to `Principal.HUMAN` and `Principal.ADMIN`, raising `PermissionError` on all AI attempts (enforcing P0-010 and P0-011).
-6. From Observation 1, `test_attack_tool_router_reconciliation_boundary_blocks_unauthorized_mutations` confirms that human-verified canonical memories are guarded from automated mutation, archiving, or supersession via `ToolRouter` (enforcing BRAIN-13 / P0-009).
-7. From Observation 4 & 5, transactional atomic rollbacks and SHA-256 audit chaining prevent silent database corruption and guarantee forensic traceability.
-8. From Observation 3, all 292 project tests pass cleanly with zero regressions.
-
-## 3. Caveats
-- Concurrency testing was performed using Python multi-threading (`ThreadPoolExecutor`) with WAL mode and `PRAGMA busy_timeout=5000`. Cross-process SQLite WAL locking was simulated within the process space across multiple thread-local connections.
-
-## 4. Conclusion
-Milestone 3 Security Invariants (P0-P15) are strictly enforced, robust against hostile adversarial payloads, resilient under multi-threaded write contention, and guaranteed against partial persistence.
-
-**Verdict: APPROVE**
-
-## 5. Verification Method
-To independently reproduce all adversarial and stress test results:
-1. Run the dedicated P0-P15 adversarial suite:
-   ```powershell
-   python -m pytest -v memory_controller/tests/test_adversarial_p0_p15_invariants.py
+### 1.1 Direct File and Code Observations
+1. In `jarvis/agents/supervisor.py` lines 306–308:
+   ```python
+   # Re-queue task
+   heapq.heappush(self.queue, task)
+   self._async_queue.put_nowait((task.priority, self._seq + 1, task))
+   return await self._dispatch(task)
    ```
-2. Run the attestation race and hostile fuzzing suite:
-   ```powershell
-   python -m pytest -v memory_controller/tests/test_milestone3_empirical_challenge.py
+2. In `jarvis/agents/supervisor.py` lines 230–320:
+   `_dispatch()` wraps role execution in `asyncio.timeout(timeout)` and catches `except asyncio.TimeoutError` and `except Exception as exc`. It does **not** catch `asyncio.CancelledError`.
+3. In `jarvis/agents/supervisor.py` lines 191–193:
+   `_worker_loop()` catches `except asyncio.CancelledError: break`.
+4. In `jarvis/agents/supervisor.py` lines 352–376:
+   `cancel_tasks_matching()` cancels futures and removes items from `self.queue`, but cannot remove elements already queued in `self._async_queue`. If `task.cancellation_token` is `None`, `_dispatch()` executes the task upon dequeueing.
+
+### 1.2 Verbatim Test Failures Observed During Execution
+1. **Retry Duplicate Execution Test** (`tests/unit/test_challenger_m3_bug_retry.py`):
    ```
-3. Run the full project test suite:
-   ```powershell
-   python -m pytest
+   FAILED tests/unit/test_challenger_m3_bug_retry.py::test_retry_duplicate_execution_race
+   AssertionError: Expected 2 executions (1 fail + 1 retry), but observed 3 due to duplicate queue put!
+   assert 3 == 2
    ```
-4. Invalidation condition: Any test failure or any condition where `Principal.AI_AGENT` creates/mutates a `verified` note, forges privileged provenance, or bypasses attestation gates without an exception.
+2. **Worker Cancellation Deadlock Test** (`tests/unit/test_challenger_m3_bug_cancellation.py`):
+   ```
+   FAILED tests/unit/test_challenger_m3_bug_cancellation.py::test_worker_survives_asyncio_cancelled_error
+   TimeoutError: Future was never resolved because worker loop terminated on unhandled CancelledError.
+   ```
+3. **Pending Task Cancellation Test** (`tests/unit/test_challenger_m3_bug_pending_cancel.py`):
+   ```
+   FAILED tests/unit/test_challenger_m3_bug_pending_cancel.py::test_cancelled_pending_task_must_not_execute
+   AssertionError: Expected only ['blocker'], but observed ['blocker', 'pending-0', 'pending-1', 'pending-2'] (pending tasks executed despite cancellation!)
+   ```
 
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## 2. Logic Chain
+
+1. **Duplicate Execution via Redundant Dispatch (Finding 1)**:
+   - *Observation 1.1.1*: `_dispatch()` puts `task` back into `self._async_queue` AND recurses into `_dispatch(task)`.
+   - *Logic*: In a concurrent worker pool, Worker 1 immediately runs the retry attempt via recursion, while Worker 2 pulls the re-queued task from `self._async_queue` and executes the retry a second time. This causes duplicate side-effects and breaks task count invariants (Observation 1.2.1).
+
+2. **Worker Pool Death on Task Cancellation (Finding 2)**:
+   - *Observation 1.1.2 & 1.1.3*: In Python 3.8+, `asyncio.CancelledError` inherits from `BaseException` rather than `Exception`.
+   - *Logic*: When a worker coroutine raises `CancelledError` during cancellation/barge-in, `_dispatch()` fails to catch it. The exception escapes into `_worker_loop()` where `except asyncio.CancelledError: break` catches it and immediately terminates the worker task permanently. The future in `self._task_futures[task.task_id]` is never resolved, causing awaiting callers to deadlock (Observation 1.2.2).
+
+3. **Phantom Cancellation for Pending Tasks (Finding 3)**:
+   - *Observation 1.1.4*: `cancel_tasks_matching()` modifies `self.queue` but cannot modify `asyncio.PriorityQueue` (`self._async_queue`).
+   - *Logic*: Tasks submitted without explicit `CancellationToken` remain in `_async_queue`. When a worker pulls them, `_dispatch()` sees no active cancellation token and executes the full workload, wasting system resources (Observation 1.2.3).
+
+---
+
+## 3. Caveats
+
+- **Scope boundary**: This challenger review evaluated the concurrency, scheduling, retry, and cancellation properties of the supervisor and worker agents in Milestone 3.
+- **RBAC Boundaries**: `ScopedStorageProxy` and invariant rules P0–P18 were verified under 50-task adversarial bombardment (`test_concurrent_proxy_rbac_invariant_bombardment`) and performed with 100% compliance.
+- No caveats regarding reproducibility of the 3 identified bugs.
+
+---
+
+## 4. Conclusion
+
+**Verdict: REQUEST_CHANGES**
+
+Milestone 3 cannot be approved in its current state due to the 2 CRITICAL and 1 HIGH concurrency flaws in `jarvis/agents/supervisor.py`. The worker (`worker_m3_1`) must remediate:
+1. Prevent duplicate retry dispatches (either recurse without `_async_queue.put_nowait` or re-queue and return).
+2. Catch `asyncio.CancelledError` inside `_dispatch()`, mark `TaskStatus.CANCELLED`, and resolve the awaiting future cleanly without crashing `_worker_loop()`.
+3. Track cancelled task IDs in `cancel_tasks_matching()` (e.g. via `self._cancelled_task_ids` or default `CancellationToken`) so `_dispatch()` skips execution of cancelled pending tasks.
+
+---
+
+## 5. Verification Method
+
+To independently verify the bugs and subsequent fixes:
+
+1. Change directory to project root:
+   ```powershell
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   ```
+
+2. Run the reproducer test suite:
+   ```powershell
+   python -m pytest tests/unit/test_challenger_m3_bug_retry.py tests/unit/test_challenger_m3_bug_cancellation.py tests/unit/test_challenger_m3_bug_pending_cancel.py -v
+   ```
+
+3. Run the full adversarial deep suite:
+   ```powershell
+   python -m pytest tests/unit/test_challenger_m3_adversarial_deep.py -v
+   ```
+
+4. Run the full regression test suite:
+   ```powershell
+   python -m pytest
+   ```

@@ -1,0 +1,21 @@
+{
+  "goal": "What is the system status?",
+  "steps": [
+    {
+      "step_id": 1,
+      "action": "synthesize_response",
+      "kwargs": {
+        "query": "What is the system status?",
+        "context": []
+      },
+      "description": "Generate assistant conversational response",
+      "status": "success",
+      "result": {
+        "answer": "All systems are operating nominally."
+      },
+      "error": null
+    }
+  ],
+  "current_step_index": 1,
+  "id": "21c20d62-caf2-4b36-8931-6271d0bd49cc"
+}

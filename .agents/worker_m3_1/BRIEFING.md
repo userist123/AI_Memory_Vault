@@ -1,64 +1,71 @@
-# BRIEFING — 2026-08-14T23:19:00Z
+# BRIEFING — 2026-08-28T14:03:00Z
 
 ## Mission
-Verify and enforce all P0-P15 security invariants, attestation gates, and tool router security in `memory_controller` and `cognitive_core`.
+Implement Milestone 3: Multi-Agent Subsystem, Agent Roles, RBAC Scoping, Supervisor, and Full Test Suite in `projects/jarvis_cognitive_brain`.
 
 ## 🔒 My Identity
-- Archetype: Implementer / QA / Specialist
+- Archetype: implementer / qa / specialist
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
-- Original parent: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
-- Milestone: Milestone 3 (Security Invariants & Attestation Gates)
+- Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Milestone: Milestone 3 - Multi-Agent Architecture
 
 ## 🔒 Key Constraints
 - DO NOT CHEAT. All implementations must be genuine.
-- Enforce Invariants P0-001 through P0-015 in `memory_controller/controller.py` and `cognitive_core/`.
-- Ensure invalid proposals/updates are rejected cleanly without partial database writes.
-- Verify with `memory_controller/tests/test_security_hardening.py`, `cognitive_core/tests/test_tool_router_security.py`, and the full test suite.
+- Respect all Cognitive Rules and Invariants P0-P18.
+- Principal.AI_AGENT cannot self-verify (cannot set verification="verified").
+- Principal.AI_AGENT cannot claim privileged source_types (user, official, experience, import).
+- Principal.AI_AGENT can only propose into {RAW, CLASSIFIED, NORMALIZED, REVIEW}.
+- ScopedStorageProxy enforces least-privilege role boundaries per AgentRole.
+- MultiAgentSupervisor executes tasks in priority order (P1-P5) asynchronously without blocking voice loop.
+- 100% test pass rate across all existing (235+) and new tests.
 
 ## Current Parent
-- Conversation ID: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
-- Updated: 2026-08-14T23:19:00Z
+- Conversation ID: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Updated: 2026-08-28T14:03:00Z
 
 ## Task Summary
-- **What to build**: Verification and enforcement of P0-P15 security invariants (AI verification gating, provenance restrictions, attestation gate for HUMAN/ADMIN, tool router security bounds).
-- **Success criteria**: All security invariants tested and passing, all test suites passing cleanly, no partial database writes on rejected operations, clean audit chaining.
-- **Interface contracts**: `PROJECT.md`
-- **Code layout**: `PROJECT.md § Code Layout`
+- **What to build**: Full multi-agent subsystem under `jarvis/agents/` (models, base, router, retrieval, verifier, consolidator, critic, supervisor, init), backwards-compatible `jarvis/core/multi_agent.py`, and test suite (`test_multi_agent.py`, `test_agent_least_privilege.py`, `test_challenger_m3_stress.py`, and update `test_t1_multi_agent.py`).
+- **Success criteria**: All existing and new tests pass cleanly with pytest.
+- **Interface contracts**: PROJECT.md, vault_cognitive_rules.md, explorer reports.
+- **Code layout**: `projects/jarvis_cognitive_brain/`
 
 ## Key Decisions Made
-- Confirmed full invariant enforcement in `MemoryController` (`propose`, `update`, `attest`) and `ToolRouter`.
-- Enhanced `test_security_hardening.py` with explicit tests for prohibited provenance types (`experience`, `import`), permitted provenance types (`execution`, `ai`, `inference`, `unknown`), prohibited lifecycles (`VERIFIED`, `SUPERSEDED`, `ARCHIVED`), and SQLite WAL engine integration.
+- Implemented `ScopedStorageProxy` enforcing RBAC capability matrix and P0-P18 trust invariants on all storage calls.
+- Built `MultiAgentSupervisor` with dual min-heap and async priority queue, supporting async worker pool, timeout guards, retry policies, cancellation tokens, and dead-letter queues.
+- Built specialized agents: `RouterAgent` (query decomposition), `RetrievalAgent` (multi-signal recall & CTE lineage), `VerifierAgent` (frontmatter & invariant audits), `ConsolidatorAgent` (lesson distillation & plastic reconsolidation), and `CriticAgent` (6-stage Reflexion & SelfRefine).
 
 ## Artifact Index
-- `.agents/worker_m3_1/DISPATCH.md` — Dispatch assignment
-- `.agents/worker_m3_1/vault-security-audit.md` — Security audit skill
-- `.agents/worker_m3_1/vault-operations.md` — Vault operations skill
-- `.agents/worker_m3_1/changes.md` — Changes & verification report
-- `.agents/worker_m3_1/handoff.md` — 5-component handoff report
-- `.agents/worker_m3_1/progress.md` — Progress tracker
+- `.agents/worker_m3_1/DISPATCH.md` — Assignment instructions
+- `.agents/worker_m3_1/progress.md` — Progress heartbeat
+- `.agents/worker_m3_1/handoff.md` — Final handoff report
 
 ## Change Tracker
-- **Files modified**: `memory_controller/tests/test_security_hardening.py` (added tests for experience/import provenance, creation lifecycles, and SQLite engine integration)
-- **Build status**: 269 passed in 13.66s, 0 failures, 0 errors.
+- **Files modified/created**:
+  - `jarvis/agents/models.py` (Created - AgentRole, TaskPriority, TaskStatus, AgentTask, TaskResult, models)
+  - `jarvis/agents/base.py` (Created - BaseAgent, ScopedStorageProxy)
+  - `jarvis/agents/router.py` (Created - RouterAgent)
+  - `jarvis/agents/retrieval.py` (Created - RetrievalAgent)
+  - `jarvis/agents/verifier.py` (Created - VerifierAgent)
+  - `jarvis/agents/consolidator.py` (Created - ConsolidatorAgent)
+  - `jarvis/agents/critic.py` (Created - CriticAgent)
+  - `jarvis/agents/supervisor.py` (Created - MultiAgentSupervisor, SupervisorCoordinator)
+  - `jarvis/agents/__init__.py` (Created - Package exports)
+  - `jarvis/core/multi_agent.py` (Created - Backwards-compatible exports)
+  - `tests/unit/test_multi_agent.py` (Created - 31 unit tests)
+  - `tests/unit/test_agent_least_privilege.py` (Created - 7 invariant security attack tests)
+  - `tests/unit/test_challenger_m3_stress.py` (Created - 7 concurrency & stress tests)
+  - `tests/e2e/tier1_features/test_t1_multi_agent.py` (Updated - 5 tests using production classes)
+- **Build status**: PASS (280/280 tests passed in 7.61s)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: 100% pass across all 37 test modules (269/269 tests).
+- **Build/test result**: 280 passed, 0 failed, 0 warnings
 - **Lint status**: Clean
-- **Tests added/modified**: 4 new tests in `test_security_hardening.py` (`test_p0_additional_ai_prohibited_provenance_types`, `test_p0_ai_permitted_provenance_types`, `test_p0_ai_prohibited_creation_lifecycles`, `test_p0_sqlite_storage_security_hardening`).
+- **Tests added/modified**: 50 tests added/updated
 
 ## Loaded Skills
-- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
-  - **Local copy**: `.agents/worker_m3_1/vault-security-audit.md`
-  - **Core methodology**: Runbook for testing trust boundaries and invariants P0-P15.
-- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
-  - **Local copy**: `.agents/worker_m3_1/vault-operations.md`
-  - **Core methodology**: Operating procedures for recall, proposal, human attestation, and error reflexion.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+  - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
+- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+  - **Core methodology**: Runbook for interacting with the AI Memory Vault cognitive operating system.

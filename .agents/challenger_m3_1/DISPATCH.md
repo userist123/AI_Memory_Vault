@@ -1,32 +1,15 @@
-## 2026-08-14T20:20:00Z
-You are challenger_m3_1.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m3_1
+## 2026-08-28T14:03:55Z
+You are teamwork_preview_challenger (challenger_m3_1).
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m3_1`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-Task:
-Perform empirical adversarial stress testing on Milestone 3 Security Invariants (P0-P15).
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Worker Handoff: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md`
 
-Required reading:
-1. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
-2. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
-3. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\AGENTS.md
-4. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md
-5. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md
-
-Adversarial Objectives:
-1. Create and execute adversarial attack scripts/test cases attempting to bypass P0-P15 invariants:
-   - Attempting to propose notes with verification="verified" under Principal.AI_AGENT.
-   - Attempting to forge provenance.source_type as "user" or "official" under Principal.AI_AGENT.
-   - Attempting to update provenance.source_type post-creation.
-   - Attempting to call controller.attest() as Principal.AI_AGENT.
-   - Attempting to create notes directly into ACTIVE lifecycle as Principal.AI_AGENT.
-   - Attempting to mutate verified canonical notes through tool router without authorization.
-2. Verify that in all failure cases, 0 partial writes occur in SQLite storage (database state unchanged).
-3. Run test suites and your adversarial harnesses.
-4. Report detailed results and verdict (APPROVE or REQUEST_CHANGES) in handoff.md and send a message back to caller.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+TASK:
+Empirically stress-test the MultiAgentSupervisor and worker pool:
+1. Run and evaluate tests in `tests/unit/test_challenger_m3_stress.py` and `tests/unit/test_multi_agent.py`.
+2. Test concurrency limits, rapid task cancellation, task timeouts, worker crashes, dead-letter queue, and priority preemption under heavy load.
+3. Write your findings and test execution logs to `.agents/challenger_m3_1/report.md` and `.agents/challenger_m3_1/handoff.md` with verdict `APPROVE` or `REQUEST_CHANGES`.
+4. Send your verdict to the parent orchestrator.

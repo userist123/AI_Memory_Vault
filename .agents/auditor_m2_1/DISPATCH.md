@@ -1,25 +1,22 @@
-# Milestone 2 Verification: Forensic Auditor
-Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1
+## 2026-08-27T22:48:54Z
 
-## 2026-08-14T20:12:38Z
-You are the Forensic Integrity Auditor for Milestone 2.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1
+<USER_REQUEST>
+You are the Forensic Auditor for Milestone 2 of the Jarvis Cognitive Brain project.
 
-MANDATORY FIRST STEP:
-Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
+Working Directory:
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1`
+
+Scope & Context:
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Target codebase: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 Task:
-1. Perform forensic integrity checks on the storage and audit systems:
-   - Verify that SQLite WAL transactions are genuine and not mocked.
-   - Verify that SHA-256 hash chaining is cryptographically authentic.
-   - Verify that atomic checkpointing uses real filesystem operations.
-2. Run the test suite and inspect execution traces.
-3. Produce your formal audit report and verdict (CLEAN or INTEGRITY VIOLATION) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1\report.md` and `handoff.md`.
-4. Notify parent via send_message.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+1. Perform exhaustive forensic integrity verification on all Milestone 2 code under `jarvis/audio/`:
+   - Static analysis: check for hardcoded test results, cheat checks, facade implementations, bypassed assertions, or fake mock values substituted in production code.
+   - Verify that production classes (`SileroONNXVADEngine`, `FasterWhisperSTTEngine`, `KokoroTTSEngine`, `SoundDeviceInputDriver`, `SoundDeviceOutputDriver`, `BargeInController`, `AudioPipeline`) contain real, genuine processing logic and not empty pass/return dummy blocks.
+   - Verify that mock implementations (`MockSTTEngine`, `MockTTSEngine`, `VirtualAudioDriver`) are strictly separated and designated for testing/headless environments without compromising production paths.
+   - Run tests and trace executions to ensure genuine behavior.
+2. Record your detailed forensic evidence and integrity verdict (`CLEAN` or `INTEGRITY VIOLATION`) in `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1\handoff.md`.
+3. Send your audit verdict and summary to parent.
+</USER_REQUEST>

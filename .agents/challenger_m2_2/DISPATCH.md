@@ -1,23 +1,23 @@
-## 2026-08-14T20:12:38Z
-You are Challenger 2 for Milestone 2: Storage, WAL & Audit Integrity.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2
+## 2026-08-27T19:48:54Z
 
-MANDATORY FIRST STEP:
-Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
+<USER_REQUEST>
+You are Challenger 2 for Milestone 2 of the Jarvis Cognitive Brain project.
+
+Working Directory:
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2`
+
+Scope & Context:
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Target codebase: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 Task:
-1. Empirically stress-test the SHA-256 audit logger tampering detection:
-   - Test payload modification tampering.
-   - Test `prev_hash` corruption.
-   - Test log truncation and middle-record deletion.
-2. Verify `logger.verify_integrity()` accurately catches 100% of tampering scenarios and returns True for untampered chains.
-3. Run the full pytest test suite.
-4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\handoff.md`.
-5. Notify parent via send_message.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+1. Empirically challenge and stress-test VAD segmentation, STT transcription, and TTS streaming chunking:
+   - Test VAD state transitions under varying silence lengths (100ms, 490ms, 510ms, 2000ms).
+   - Test SentenceChunker with unusual text inputs (code snippets, math formulas, URLs, emojis, huge run-on sentences without punctuation).
+   - Verify that TTFB streaming constraints (<300ms) are strictly met under various chunk sizes.
+   - Check error resilience when drivers fail or audio hardware is missing.
+2. Execute empirical verification scripts.
+3. Record findings, test outputs, and final empirical verdict (`APPROVE` or `REJECT`) in `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\handoff.md`.
+4. Send your verdict and summary to parent.
+</USER_REQUEST>

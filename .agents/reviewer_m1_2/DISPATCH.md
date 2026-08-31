@@ -1,20 +1,19 @@
-## 2026-08-14T20:07:09Z
-You are Reviewer 2 for Milestone 1: Codebase Hygiene & Typing Validation.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2
+﻿## 2026-08-27T19:28:41Z
+You are Reviewer 2 (Security Invariants & Memory Concurrency Specialist) for Milestone 1 of the Jarvis Cognitive Brain ('Creier Vorbitor') project.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2`.
+The target project codebase is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
-MANDATORY FIRST STEP:
-Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
+Read:
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z)
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1\handoff.md`
 
-Task:
-1. Inspect changes made in cognitive_core/learning.py, cognitive_core/reflection.py, and memory_controller/context/budget.py.
-2. Independently verify type safety and run the full pytest test suite (197 tests).
-3. Check for any side-effects or regressions.
-4. Record your detailed review and explicit verdict (APPROVE or REQUEST_CHANGES) in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2\handoff.md.
-5. Notify parent via send_message.
+Examine:
+1. Strict adherence to Trust Boundary Invariants P0-P18 in `jarvis/memory/invariants.py` and `jarvis/memory/sqlite_engine.py`.
+2. SQLite WAL concurrency, busy_timeout=5000, BEGIN IMMEDIATE transactions, thread-local connection safety under concurrent multi-agent access.
+3. Atomic file writes in `jarvis/memory/markdown_sync.py` and checkpoint writing in `jarvis/core/executive.py`.
+4. Run tests (`python -m pytest tests/unit/test_memory_storage.py -v`).
 
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+Provide a clear verdict in your handoff report: `APPROVE` or `REQUEST_CHANGES`.
+Write your report in `.agents/reviewer_m1_2/handoff.md` and notify parent via `send_message`.

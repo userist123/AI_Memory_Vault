@@ -1,24 +1,15 @@
-# Progress Tracker — Explorer M5.1
+# Progress - Milestone 5 Exploration
 
-- Last visited: 2026-08-15T02:26:00Z
-- Status: COMPLETED
-- Current step: Task complete. Detailed report and handoff generated. Communicating completion to parent.
-
-## Steps
-1. [x] Initialize dispatch, briefing, progress tracker.
-2. [x] Review requirements in ORIGINAL_REQUEST.md & PROJECT.md regarding Milestone 5.
-3. [x] Investigate `cognitive_core/learning.py` and inspect `LearningEngine` and `ContinualLearningGuard`.
-4. [x] Verify `ContinualLearningGuard` implementation (anchor registration, drift/regression detection, performance vs baseline).
-5. [x] Verify confidence promotion gating (`very_high` requiring `source_type="execution"`, rejection of unauthorized promotions).
-6. [x] Run initial tests on `test_continual_learning.py` and `test_learning.py` (4/4 passed).
-7. [x] Run full test suites in `cognitive_core/tests/` (186/186 passed).
-8. [x] Deep-dive into edge cases, bugs, or missing test coverage in learning & confidence gating.
-9. [x] Generate detailed `report.md` and `handoff.md`.
-10. [x] Notify parent orchestrator.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+- Last visited: 2026-08-28T14:28:00Z
+- Status: In Progress
+- Steps completed:
+  1. Initialized DISPATCH.md and BRIEFING.md
+- Next steps:
+  1. Inspect `PROJECT.md`, `ORIGINAL_REQUEST.md` for M5 requirements and constraints.
+  2. Inspect existing jarvis codebase (`jarvis/`, `jarvis/hud/`, `jarvis/executive/`, `jarvis/audio/`, `jarvis/agents/`, `jarvis/tools/`).
+  3. Inspect existing tests, especially `tests/e2e/tier1_features/test_t1_hud_websocket_telemetry.py` and unit tests.
+  4. Design the FastAPI & WebSocket Telemetry Server (`jarvis/hud/server.py`).
+  5. Design the Responsive Sci-Fi HUD & 3D WebGL / Force-graph Assets (`index.html`, `style.css`, `visualizer3d.js`, `memory_graph.js`, `app.js`).
+  6. Design the Unified Production Entry Point (`jarvis/main.py` and root `run.py`).
+  7. Design unit and e2e test suite (`tests/unit/test_hud_server.py`).
+  8. Compile comprehensive `report.md` and `handoff.md`.

@@ -1,31 +1,18 @@
-# DISPATCH: Forensic Auditor for Milestone 4 (auditor_m4_1)
+## 2026-08-28T14:19:38Z
+You are teamwork_preview_auditor (auditor_m4_1).
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-## Mission
-Perform an independent forensic integrity audit of Milestone 4: Cognitive Loop & Multi-Agent Coordination.
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Cognitive Rules: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
+Worker Handoff: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1\handoff.md`
 
-## Audit Checks
-1. **Authenticity Check**: Verify that OODA loop, Tree-of-Thought, 10% freshness bonus, 6-stage Formal Reflexion, SelfRefine critique, and multi-agent coordination are genuinely implemented without facades, test mocks, hardcoded test IDs, or cheating.
-2. **Static Analysis & Runtime Inspection**: Check code paths in `cognitive_core/executive.py`, `reasoning.py`, `recall.py`, `reflection.py`, `consolidation.py`, `agents/base_agent.py`, `router_agent.py`, `retrieval_agent.py`, `verifier_agent.py`, `consolidator_agent.py`, `critic_agent.py`, and `orchestrator.py`.
-3. **P0-P15 Integrity**: Confirm that no component in `cognitive_core` bypasses `MemoryController` trust boundaries, sets `verification="verified"` for AI agents, or mutates human-attested notes without approval.
-4. **Empirical Verification**: Run the full test suite (`python -m pytest`) and execute independent forensic probes.
-
-## Mandatory Reference Documents
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\AGENTS.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1\handoff.md`
-
-## Working Directory
-`.agents/auditor_m4_1`
-
-## Output Requirements
-1. Formulate your explicit verdict (**CLEAN** or **INTEGRITY VIOLATION**).
-2. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\handoff.md`.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+TASK:
+Perform Forensic Integrity Audit on Milestone 4:
+1. Static analysis: Check `jarvis/iot/` (`fastmcp_server.py`, `ha_client.py`, `ha_simulator.py`, `__init__.py`) and `jarvis/tools/fastmcp.py` for any hardcoded test bypasses, empty facades, or shortcuts.
+2. Confirm genuine production implementations of JSON-RPC 2.0 tool execution, mock state persistence, and HTTP client retry/error handling.
+3. Run full pytest suite from `projects/jarvis_cognitive_brain`.
+4. Check for secret leaks, tamper-evident audit logging, and trust boundary enforcement.
+5. Write your audit report to `.agents/auditor_m4_1/report.md` and handoff to `.agents/auditor_m4_1/handoff.md` with binary verdict: `CLEAN` or `INTEGRITY VIOLATION`.
+6. Send your verdict to the parent orchestrator.

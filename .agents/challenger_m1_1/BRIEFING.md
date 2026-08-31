@@ -1,51 +1,66 @@
-# BRIEFING — 2026-08-14T20:07:40Z
+# BRIEFING — 2026-08-27T19:32:00Z
 
 ## Mission
-Empirically verify typing annotations and run pytest test suite for Milestone 1 (Codebase Hygiene & Typing Validation) as Challenger 1.
+Adversarial Stress Testing & Correctness verification for Milestone 1 (Jarvis Cognitive Brain: OODA loop, LLM streaming, Reflexion, Checkpoints).
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
 - Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_1
-- Original parent: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
-- Milestone: Milestone 1: Codebase Hygiene & Typing Validation
+- Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
+- Milestone: Milestone 1 (OODA loop, LLM streaming, Reflexion, Checkpoints)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code
-- Empirically verify typing introspections and test suite execution
-- Do not trust unverified claims
+- Review-only regarding production architecture design — do NOT modify production implementation code unless agreed, but write rigorous adversarial tests under projects/jarvis_cognitive_brain/tests/ or test harnesses.
+- Must execute verification code empirical run (run_command / pytest).
+- Report verdict: APPROVE or REQUEST_CHANGES.
 
 ## Current Parent
-- Conversation ID: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
-- Updated: 2026-08-14T20:07:09Z
+- Conversation ID: 5a625f23-4992-4b00-bb13-1f4b316b216c
+- Updated: 2026-08-27T19:32:00Z
 
 ## Review Scope
-- **Files to review**: `cognitive_core/learning.py`, `cognitive_core/reflection.py`, `memory_controller/context/budget.py`
-- **Interface contracts**: `PROJECT.md`
-- **Review criteria**: Runtime type introspection correctness (`typing.get_type_hints`), pytest suite passes 100%
+- **Files to review**:
+  - `projects/jarvis_cognitive_brain/jarvis/core/executive.py`
+  - `projects/jarvis_cognitive_brain/jarvis/core/ooda.py`
+  - `projects/jarvis_cognitive_brain/jarvis/core/models.py`
+  - `projects/jarvis_cognitive_brain/jarvis/llm/base.py`
+  - `projects/jarvis_cognitive_brain/jarvis/memory/sqlite_engine.py`
+  - `projects/jarvis_cognitive_brain/jarvis/memory/reflection.py`
+  - `projects/jarvis_cognitive_brain/jarvis/memory/consolidation.py`
+- **Review criteria**:
+  - Rapid cancellation token triggers mid-stream
+  - Corrupted / malformed perception events
+  - Error recovery with simulated tool failures triggering 6-stage Reflexion
+  - Checkpoint recovery from partial / corrupt wm.json and plan.json files
+  - Robustness under stress and concurrency
 
 ## Attack Surface
-- **Hypotheses tested**: Type hints can be resolved at runtime without NameError, pytest passes.
-- **Vulnerabilities found**: None. 280 functions/classes checked with 0 failures.
-- **Untested angles**: Full runtime integration across other milestones (deferred to respective milestone challenges).
+- **Hypotheses tested**:
+  1. Mid-stream token cancellation halting within ≤1 token window -> CONFIRMED PASS
+  2. Empty / whitespace sensory payloads causing OODA crashes -> CONFIRMED SAFE
+  3. Massive / repetitive queries triggering SQL expression tree overflow -> CONFIRMED BUG in search_bm25
+  4. Prompt injection attempting to forge privileged provenance -> CONFIRMED INVARIANT GATED
+  5. Multi-step failure triggering 6-stage Reflexion and lesson consolidation -> CONFIRMED PASS
+  6. Corrupted JSON syntax / 0-byte checkpoint files -> CONFIRMED HANDLED
+  7. Non-list JSON in wm.json poisoning WorkingMemory -> CONFIRMED BUG in WorkingMemory.load_state
+- **Vulnerabilities found**:
+  - `SQLiteStorageEngine.search_bm25`: Unbounded query token expansion causes `sqlite3.OperationalError: Expression tree is too large (maximum depth 1000)`.
+  - `WorkingMemory.load_state`: Assigns unvalidated JSON directly to `active_chunks`, causing `AttributeError` on subsequent operations if `wm.json` is a dict.
+- **Untested angles**:
+  - Live audio hardware drivers (scheduled for Milestone 2).
+  - Live Home Assistant network socket integration (scheduled for Milestone 4).
 
 ## Loaded Skills
-- None explicitly requested for M1.
+- **Source**: vault-operations, vault-security-audit, unit-test-generation-contract
+- **Local copy**: None needed
+- **Core methodology**: Adversarial fuzzing, empirical oracle testing, race condition checking, corrupted state injection.
 
 ## Key Decisions Made
-- Executed empirical verification via Python CLI commands and `python -m pytest`.
-- Exhaustive verification across 280 functions/classes for type hint resolution.
-- Verdict: APPROVE.
+- Implemented comprehensive adversarial test suite in `tests/unit/test_adversarial_m1.py`.
+- Formulated verdict: `REQUEST_CHANGES` due to 2 confirmed vulnerabilities.
 
 ## Artifact Index
-- `.agents/challenger_m1_1/DISPATCH.md` — Original dispatch
-- `.agents/challenger_m1_1/progress.md` — Liveness and execution tracking
-- `.agents/challenger_m1_1/handoff.md` — Final verification report (APPROVE)
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+- `.agents/challenger_m1_1/progress.md` — Liveness & task tracker
+- `.agents/challenger_m1_1/handoff.md` — Final 5-component handoff report

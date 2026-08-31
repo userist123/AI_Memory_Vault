@@ -1,24 +1,15 @@
 # Progress Log — challenger_m4_1
 
-- **Status**: Completed empirical challenge testing and authoring handoff report
-- **Last visited**: 2026-08-15T02:03:52Z
+Last visited: 2026-08-28T14:22:15Z
 
-## Steps Completed
-- [x] Initialized DISPATCH.md, BRIEFING.md, and local skill dumps.
-- [x] Inspected implementation of cognitive core (executive, reasoning, recall, reflection, consolidation, agents, orchestrator).
-- [x] Authored and executed comprehensive empirical adversarial test suite (`cognitive_core/tests/test_milestone4_adversarial_challenger.py`, 16 tests, 100% passing in 0.66s):
-  1. OODA Loop: multi-step failure recovery, retry exhaustion, replanning, atomic checkpoint persistence, co-activation synapse firing.
-  2. Tree-of-Thought: adversarial inputs, zero-grounding hallucinations, extreme query length, complex query branching, edge cases (empty text, non-string, unicode, prompt injections).
-  3. Recall Scoring & Lineages: 5-hop deep supersession chains, branching supersession lineages, circular supersession avoidance, 10% freshness bonus bounds, `_cognitive_unverified` flagging on draft notes.
-  4. Multi-Agent Coordination: least-privilege boundary violations, unauthorized action rejection across all 5 subagents.
-- [x] Discovered two concrete implementation bugs:
-  1. `ReflectionPipeline.propose_synapse` (`cognitive_core/reflection.py:124-153`): creates non-canonical relations schema (`type` instead of `relation`, missing `target`, invalid `confidence` property) and submits `verification="verified"` in update, causing silent rejection on real controller.
-  2. `SelfRefine.refine_memory`: raises `AttributeError` when `candidate={"content": None}`.
-- [x] Wrote handoff report with explicit verdict `REQUEST_CHANGES` to `.agents/challenger_m4_1/handoff.md`.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Status
+- [x] Initialized DISPATCH.md and BRIEFING.md
+- [x] Inspected source code of `ha_simulator.py`, `ha_client.py`, `fastmcp_server.py`, and cognitive loop integration
+- [x] Ran baseline `pytest` across entire codebase (349 passed)
+- [x] Created and executed empirical challenger stress test harness `tests/unit/test_challenger_m4_stress.py` (84 tests, 74 passed, 10 failed)
+- [x] Successfully reproduced 3 distinct bugs:
+  1. Non-object JSON-RPC payloads crashing `handle_jsonrpc` with `AttributeError` (8 test cases)
+  2. List `entity_id` crashing `safe_call_service` with `TypeError` (1 test case)
+  3. Invalid auth token crashing `safe_call_service` with `PermissionError` (1 test case)
+- [x] Generated comprehensive `report.md` and `handoff.md` with explicit verdict `REQUEST_CHANGES`
+- [ ] Transmit final verdict to parent orchestrator

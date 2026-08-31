@@ -1,61 +1,26 @@
 @echo off
-title JARVIS AI Memory Vault Command Center
-color 0B
 setlocal
-
-set "JARVIS_DIR=%~dp0"
-for %%I in ("%JARVIS_DIR%..\..") do set "VAULT_ROOT=%%~fI"
-
-if exist "%JARVIS_DIR%.jarvis-voice.env.cmd" call "%JARVIS_DIR%.jarvis-voice.env.cmd"
-if not defined PIPER_DATA_DIR set "PIPER_DATA_DIR=%JARVIS_DIR%voice_models"
-if not defined JARVIS_TTS_MODEL set "JARVIS_TTS_MODEL=ro_RO-mihai-medium"
-
-where python >nul 2>&1 || (echo  ERROR: Python is not installed/in PATH.& pause & exit /b 1)
-where node >nul 2>&1 || (echo  ERROR: Node.js is not installed/in PATH.& pause & exit /b 1)
-
-if not exist "%VAULT_ROOT%\memory_controller\api_server.py" (
-  echo ERROR: AI Memory Vault root not found.
-  pause
-  exit /b 1
-)
+set "VAULT_ROOT=C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY"
+set "COGNITIVE_ROOT=%VAULT_ROOT%\projects\jarvis_cognitive_brain"
+set "PYTHONPATH=%VAULT_ROOT%;%COGNITIVE_ROOT%"
+set "JARVIS_UNIFIED_PORT=3000"
+if "%JARVIS_BACKEND_AUDIO%"=="" set "JARVIS_BACKEND_AUDIO=0"
 
 echo.
-echo  ==================================================
-echo   JARVIS AI MEMORY VAULT COMMAND CENTER V2
-echo  ==================================================
-echo   Vault: %VAULT_ROOT%
+echo ============================================================
+echo   JARVIS UNIFIED AI COMMAND CENTER
+echo   Single process: web + memory + cognition + TTS + agents
+echo ============================================================
+echo.
+echo   URL: http://127.0.0.1:%JARVIS_UNIFIED_PORT%
+echo   Backend audio: %JARVIS_BACKEND_AUDIO%
+echo.
+echo   Stop with CTRL+C.
 echo.
 
-echo  [1/5] Starting Memory Vault API on port 8000...
-start "JARVIS Memory Vault API" /D "%VAULT_ROOT%" cmd /k "python -m memory_controller.api_server 8000"
-timeout /t 2 /nobreak >nul
-
-echo  [2/5] Starting neural Romanian voice on port 8002...
-start "JARVIS Romanian Neural Voice" /D "%JARVIS_DIR%" cmd /k "python voice_server.py"
-timeout /t 2 /nobreak >nul
-
-echo  [3/5] Starting JARVIS V2 Supervisor on port 8003...
-start "JARVIS V2 Supervisor" /D "%VAULT_ROOT%" cmd /k "python -m projects.jarvis_web.jarvis_v2.server"
-timeout /t 2 /nobreak >nul
-
-echo  [4/5] Starting JARVIS Command Center on port 3000...
-start "JARVIS Command Center" /D "%JARVIS_DIR%" cmd /k "node server.cjs"
-timeout /t 2 /nobreak >nul
-
-echo  [5/5] Opening JARVIS...
-start "" "http://127.0.0.1:3000"
-
+cd /d "%COGNITIVE_ROOT%"
+python unified_server.py --host 127.0.0.1 --port %JARVIS_UNIFIED_PORT%
+set "EXIT_CODE=%ERRORLEVEL%"
 echo.
-echo  ==================================================
-echo   JARVIS:        http://127.0.0.1:3000
-echo   Memory API:    http://127.0.0.1:8000
-echo   Voice API:     http://127.0.0.1:8002
-echo   Supervisor V2: http://127.0.0.1:8003
-echo   Voice model:   %JARVIS_TTS_MODEL%
-echo  ==================================================
-echo.
-echo  For first-time neural voice setup run:
-echo  powershell -ExecutionPolicy Bypass -File setup_jarvis_voice.ps1
-echo.
-pause
-endlocal
+echo JARVIS stopped with exit code %EXIT_CODE%.
+exit /b %EXIT_CODE%

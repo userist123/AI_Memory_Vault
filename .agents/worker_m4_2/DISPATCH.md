@@ -1,35 +1,31 @@
-# DISPATCH: Worker 2 for Milestone 4 Remediation (worker_m4_2)
+﻿## 2026-08-28T14:22:53Z
 
-## Mission
-Remediate the two defects identified by `challenger_m4_1` in `cognitive_core/reflection.py`:
+You are teamwork_preview_worker (worker_m4_2).
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-1. **Fix `ReflectionPipeline.propose_synapse` (`cognitive_core/reflection.py:124-153`)**:
-   - Align relations format with `_CANONICAL_SCHEMA`: Use `{"relation": relation_type, "target": target_node.get("type", "knowledge") if isinstance(target_node, dict) else "knowledge", "target_id": target_id}` (requires `relation` and `target` strings, optional `target_id` UUID string).
-   - In `controller.update`, pass only the updated fields: `{"relations": relations}` instead of the entire `source_node` dictionary (which contains `verification="verified"` and causes `controller.update` to reject the update).
-2. **Fix `SelfRefine.refine_memory` (`cognitive_core/reflection.py:39`)**:
-   - Safely extract content: `content = (candidate.get("content") or "")` and verify `isinstance(content, str)` before calling `.strip()`, ensuring `{"content": None}` or non-string content is safely handled without raising `AttributeError`.
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Auditor M4-1 Report: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\report.md`
+Challenger M4-1 Report: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\report.md`
 
-## Mandatory Integrity Warning
-DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A forensic auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
+MANDATORY INTEGRITY WARNING:
+DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A teamwork_preview_auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
 
-## Mandatory Reference Documents
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
-- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\handoff.md`
+SCOPE & REMEDIATION TASKS:
+Fix the 3 edge cases in `jarvis/iot/fastmcp_server.py` and `jarvis/iot/ha_client.py`:
+1. `FastMCPIoTServer.handle_jsonrpc` & `async_handle_jsonrpc`:
+   Ensure `payload` parsed from `json.loads(request)` is checked: `if not isinstance(payload, dict):` return JSON-RPC 2.0 error:
+   `{"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request: expected JSON object"}, "id": None}`.
+2. `HomeAssistantClient.safe_call_service` & `async_safe_call_service`:
+   Support list/tuple of strings for `entity_id` without raising `TypeError: unhashable type: 'list'`.
+3. `HomeAssistantClient.safe_call_service` & `async_safe_call_service`:
+   Ensure all simulator/network calls (including pre-checks) are wrapped inside the `try...except` block so that `PermissionError` (401 Unauthorized) or connection errors return `ServiceResponse(success=False, error=str(exc))` rather than raising uncaught exceptions.
 
-## Working Directory
-`.agents/worker_m4_2`
-
-## Verification Requirements
-1. Implement the fixes in `cognitive_core/reflection.py`.
-2. Run `python -m pytest cognitive_core/tests/test_milestone4_adversarial_challenger.py cognitive_core/tests/test_milestone4_adversarial_challenger_m4_2.py cognitive_core/tests/test_reflection.py cognitive_core/tests/test_dynamic_synapses.py -v`.
-3. Run the full test suite: `python -m pytest`. Ensure 100% pass across all test modules.
-4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+VERIFICATION:
+Run the stress test suite and the full repository test suite:
+```powershell
+python -m pytest tests/unit/test_challenger_m4_stress.py -v
+python -m pytest
+```
+Ensure all 359+ tests pass with 100% success rate. Document changes and test results in `handoff.md` and send a completion message back.

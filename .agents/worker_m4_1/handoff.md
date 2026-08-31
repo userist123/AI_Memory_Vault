@@ -1,118 +1,78 @@
-# Milestone 4 Handoff Report: Cognitive Loop & Multi-Agent Coordination
+# Milestone 4 Handoff Report — FastMCP IoT & Home Assistant Integration
+
+**Author**: `worker_m4_1` (`teamwork_preview_worker`)  
+**Date**: 2026-08-28T14:19:30Z  
+**Project**: Jarvis Cognitive Brain (`projects/jarvis_cognitive_brain`)  
+**Status**: COMPLETE (Hard Handoff)
+
+---
 
 ## 1. Observation
 
-### Codebase Inspection & Verification
-1. **OODA Execution Loop (`cognitive_core/executive.py`)**:
-   - `Executive.process_intent(principal, intent_text)` executes the full sequence: Observe (`_parse_intent`, lines 76-77) -> Retrieve & Activate (`activation_engine.activate_from_query` + `recall_engine.recall`, lines 198-205) -> Attend (`working_memory.admit`, lines 208-209) -> Reason (`reasoning_engine.synthesize`, lines 212) -> Plan (`planner.create_plan` + `planner.evaluate_plan`, lines 215-218) -> Checkpoint (`_auto_checkpoint`, lines 222) -> Act (`step_loop`, lines 79-153).
-   - Atomic Checkpointing: `save_state` and `load_state` persist `wm.json` and `plan.json` atomically (lines 50-70).
-   - Dynamic Synapses: Co-activated nodes in working memory context trigger `_fire_synapses` via `reflection.propose_synapse` (lines 155-167).
-   - Error Recovery & Replanning: `step_loop` catches exceptions, retries up to `_max_retries = 2`, and calls `planner.replan` while capturing reflection memories (lines 127-152).
-   - Post-Task Maintenance: `_run_maintenance` invokes `consolidator.consolidate_lessons`, `deduplicator.scan_for_duplicates`, and `learning_engine.promote_memories` upon plan completion (lines 168-182).
-
-2. **Tree-of-Thought Reasoning (`cognitive_core/reasoning.py`)**:
-   - `ThoughtValidator.validate_branch` evaluates branch validity and context grounding ratio (`score = min(1.0, 0.5 + 0.5 * grounding_ratio)`, lines 9-29).
-   - `TreeOfThoughtReasoner.reason` generates 3 distinct perspectives (`branch-direct`, `branch-comparative`, `branch-counterfactual`), validates each branch, prunes invalid branches, and selects the optimal path (lines 31-84).
-   - `ReasoningEngine._is_high_complexity` inspects query complexity using regex word boundaries `\b` (`why`, `how`, `root cause`, `compare`, `plan`, `troubleshoot`, `evaluate`, `complex`, `architecture` or `len(query.split()) > 10`) to selectively trigger Tree-of-Thought (lines 95-98).
-
-3. **Recall Scoring with Freshness Boost (`cognitive_core/recall.py`)**:
-   - Multi-signal scoring: Semantic similarity to query (0.35), semantic similarity to working memory (0.15), confidence & authority (0.15), activation (0.25), and temporal/authority factor (0.10) (lines 26-32, 145-151).
-   - Successor Score Inheritance & 10% Freshness Boost:
-     ```python
-     # lines 166-177
-     if node.get("lifecycle") == "SUPERSEDED" and node.get("superseded_by"):
-         active_id = resolve_active_lineage(self.controller.storage, node.get("id"))
-         if active_id and active_id != node.get("id"):
-             active_note = self.controller.storage.get(active_id)
-             if active_note and active_note.get("lifecycle") == "ACTIVE":
-                 inherited_score = min(1.0, score * 1.1)
-     ```
-   - Notes in `REVIEW` lifecycle are flagged with `_cognitive_unverified = True` (lines 95-96, 187-203).
-   - Version range matching applies a +0.3 boost for matched technology versions and -0.3 penalty for mismatches (lines 134-143).
-
-4. **6-Stage Formal Reflexion (`cognitive_core/reflection.py`)**:
-   - `FormalReflexion.format_reflection`: Formats error analysis across 6 stages: Error -> Root Cause -> Fix -> Verification -> Prevention -> Lesson (lines 13-29).
-   - `ReflectionPipeline.evaluate_outcome`: Automatically routes failure outcomes (`status="error"` via `_learn_from_error` and `status="blocked"` via `_learn_from_blocked`) into structured REVIEW memories with source types `inference`/`formal-reflexion` and `inference`/`autonomy-policy` (lines 56-123).
-
-5. **SelfRefine Memory Critique (`cognitive_core/consolidation.py`)**:
-   - `SelfRefine.refine_memory`: Filters out empty or sparse memories (< 15 characters) and validates structure before proposal (lines 31-48).
-   - `Consolidator.consolidate_lessons`: Aggregates 2+ ephemeral REVIEW lessons into a canonical knowledge note with `derived_from` relations, passes it through `SelfRefine`, proposes it into REVIEW, and archives the source lessons via `ToolRouter` (lines 18-81).
-
-6. **Specialized Multi-Agent Coordination (`cognitive_core/agents/` & `cognitive_core/orchestrator.py`)**:
-   - `BaseWorkerAgent`: Enforces least privilege via `permitted_actions` and step limits via `max_steps` (lines 7-31).
-   - `RouterAgent`: Role `router`, permitted actions `['search', 'read']`, decomposes tasks and determines target subagents.
-   - `RetrievalAgent`: Role `retrieval`, permitted actions `['search', 'read']`, executes associative recall and lineage traversal.
-   - `VerifierAgent`: Role `verifier`, permitted actions `['read']`, inspects provenance and detects unattested `user`/`official` claims.
-   - `ConsolidatorAgent`: Role `consolidator`, permitted actions `['search', 'read', 'propose', 'archive']`, runs dedup and lesson consolidation.
-   - `CriticAgent`: Role `critic`, permitted actions `['read', 'propose']`, executes 6-stage Reflexion and SelfRefine critique.
-   - `MultiAgentOrchestrator`: Dispatches queries across subagents (Router -> Retrieval -> Verifier -> Synthesizer) and executes background maintenance.
-
-### Test Execution Results
-- `python -m pytest cognitive_core/tests/test_milestone4_empirical_challenge.py`: 15 passed in 0.64s.
-- `python -m pytest`: 307 passed across all 38 test suites in 23.15s with 0 failures.
+- **Initial State**:
+  - Baseline test run (`python -m pytest`): 323 passed in 11.30s.
+  - Directory `jarvis/iot/` and `jarvis/tools/` did not exist.
+  - Router agent clause classifier (`jarvis/agents/router.py`) needed thermostat/climate keyword recognition.
+- **Implemented Deliverables**:
+  1. `jarvis/iot/ha_simulator.py`: In-memory thread-safe mock Home Assistant REST daemon with full state dictionary pre-seeded across 6 domains (`light.living_room_ceiling`, `light.kitchen_strip`, `light.bedroom_lamp`, `switch.coffee_maker`, `switch.living_room_fan`, `climate.living_room_thermostat`, `sensor.outdoor_temperature`, `sensor.living_room_humidity`, `lock.front_door`, `scene.movie_night`, `scene.good_morning`), Bearer token validation, service dispatching, call history logging, and reset.
+  2. `jarvis/iot/ha_client.py`: Resilient sync & async Home Assistant REST client (`HomeAssistantClient`, `HomeAssistantRESTClient`, `ResilientIoTClient`) with Bearer token formatting, safe parameter validation, entity checking, and exponential retry backoff.
+  3. `jarvis/iot/fastmcp_server.py`: FastMCP JSON-RPC 2.0 tool engine (`FastMCPIoTServer`, `JarvisControlsServer`, `JarvisControls`) exposing high-level semantic tools (`get_device_state`, `list_entities`, `turn_on`, `turn_off`, `toggle`, `set_brightness`, `set_temperature`, `trigger_scene`, `call_service`) and legacy/E2E compatibility aliases (`ha_get_states`, `ha_get_state`, `ha_call_service`, `ha_toggle_device`, `ha_query_entities`) with JSON Schema validation and standard JSON-RPC 2.0 error codes (`-32700`, `-32600`, `-32601`, `-32602`, `-32002`, `-32603`).
+  4. `jarvis/iot/__init__.py`: Clean package exports for all IoT components.
+  5. `jarvis/tools/__init__.py`, `jarvis/tools/fastmcp.py`, `jarvis/iot/homeassistant.py`: Backwards-compatible aliases.
+  6. `jarvis/agents/router.py`: Enhanced climate & thermostat keyword matching in clause classifier.
+  7. `tests/unit/test_fastmcp_iot.py`: Dedicated unit test suite with 26 comprehensive test cases.
+- **Test Execution Result**:
+  - `python -m pytest tests/unit/test_fastmcp_iot.py -v`: 26 passed in 0.12s.
+  - `python -m pytest`: 349 passed in 11.20s (100% success rate, 0 failures, 0 regressions).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Requirement R1 & Milestone 4 Verification**:
-   - Inspection of `executive.py`, `reasoning.py`, `recall.py`, `reflection.py`, `consolidation.py`, and `agents/` confirmed that all six Milestone 4 architectural components are genuinely implemented and integrated.
-2. **Complexity Trigger Hardening**:
-   - In `ReasoningEngine._is_high_complexity`, single-word triggers like `"how"` previously matched substrings (e.g. `"show"`).
-   - Upgrading `_is_high_complexity` to use regex word boundaries `\b` (`re.search(rf"\b{re.escape(t)}\b", lowered)`) guarantees that Tree-of-Thought is selectively triggered only for genuinely complex queries.
-3. **Schema Alignment for Lesson Consolidation**:
-   - In `Consolidator.consolidate_lessons`, the synthesized knowledge node was updated to use a string `source_ref` and canonical `relations` format (`relation`, `target`, and optional UUID `target_id`), ensuring strict compliance with `_CANONICAL_SCHEMA` during `controller.propose`.
-4. **Empirical Challenge Verification**:
-   - Authored `cognitive_core/tests/test_milestone4_empirical_challenge.py` containing 15 comprehensive unit and end-to-end integration tests.
-   - Tests verify: OODA full cycle, atomic checkpointing & state recovery, tool error recovery & replanning, ThoughtValidator grounding & edge cases, Tree-of-Thought 3-branch generation, ReasoningEngine complexity triggers, RecallEngine 10% freshness boost & version algebra, 6-stage Formal Reflexion formatting & pipeline persistence, SelfRefine filtering, Consolidator lesson aggregation & archival, subagent least-privilege permission enforcement, and MultiAgentOrchestrator pipeline execution.
-5. **Full Repository Regression Check**:
-   - Running `pytest` across all 38 test suites confirmed 307 passed tests with 0 failures and 0 regressions.
+1. **Hermetic In-Memory Mock Daemon (`ha_simulator.py`)**:
+   - Built an in-memory dictionary store preserving device state representations conforming to standard Home Assistant schemas (`entity_id`, `state`, `attributes`, `last_changed`, `last_updated`).
+   - Implemented domain-specific state transitions for lighting (brightness, RGB), switches (power states), climate (setpoints and HVAC modes), locks (locked/unlocked), and composite scene activations (`movie_night`, `good_morning`).
+   - Enforced Bearer token authentication header checks (`Bearer <token>`), raising `PermissionError` ("401 Unauthorized") on mismatch.
+2. **Resilient Client Layer (`ha_client.py`)**:
+   - Implemented `HomeAssistantClient` with seamless in-memory simulator binding and network abstraction.
+   - Built `safe_call_service` providing input parameter sanitization and structured `EntityNotFound` detection.
+   - Implemented `execute_with_retry` using exponential backoff to handle transient network dropouts.
+3. **Standards-Compliant FastMCP JSON-RPC 2.0 Engine (`fastmcp_server.py`)**:
+   - Implemented `list_tools` returning full JSON Schema specifications with type constraints, integer bounds, and required parameter definitions.
+   - Built `call_tool` executing semantic commands (`turn_on`, `set_brightness`, `set_temperature`, `trigger_scene`, etc.) and legacy aliases (`ha_call_service`, `ha_get_states`).
+   - Implemented `handle_jsonrpc` and `async_handle_jsonrpc` adhering to JSON-RPC 2.0 specification with accurate error code mapping (`-32700` parse error, `-32600` invalid request, `-32601` method not found, `-32602` invalid params, `-32002` unauthorized, `-32603` internal error).
+4. **Cognitive Loop & Multi-Agent Integration**:
+   - Wired `FastMCPIoTServer` to `OODACognitiveEngine.act_step()` and `RouterAgent` intent decomposition.
+   - Tested failure recovery whereby actuation failures automatically trigger 6-stage Reflexion and persist structured lesson notes in `04_MEMORY/Lessons/` with `REVIEW` lifecycle.
 
 ---
 
 ## 3. Caveats
 
-No caveats. All Milestone 4 capabilities have been verified, hardened, and covered by 100% passing tests.
+- **No live physical Home Assistant required**: The simulator operates entirely in-memory and hermetically offline, satisfying 100% air-gapped test and deployment constraints without external network calls.
+- **No external third-party dependencies added**: Implemented purely using standard library Python (`asyncio`, `json`, `time`, `typing`) and existing project models.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 4 (Cognitive Loop & Multi-Agent Coordination) is fully implemented, verified, hardened, and passing all tests. All requirements (OODA execution loop, Tree-of-Thought reasoning with ThoughtValidator, Recall scoring with 10% freshness bonus, 6-stage Formal Reflexion, SelfRefine critique filter, and least-privilege specialized worker agents) are verified with genuine logic and 0 test failures.
+Milestone 4 (FastMCP IoT Server & Home Assistant Integration) is fully completed, verified, and integrated into the Jarvis Cognitive Brain architecture. All 349 test cases across Tier 1, Tier 2, Tier 3, Tier 4, unit test suites, adversarial tests, and challenger suites pass with 100% success rate.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify this milestone:
+To independently verify the implementation, execute the following commands from `projects/jarvis_cognitive_brain`:
 
-1. **Run Full Test Suite**:
-   ```bash
-   python -m pytest
-   ```
-   *Expected Result*: 307 passed in ~23s with 0 failures.
+```powershell
+# 1. Run dedicated FastMCP IoT unit tests:
+python -m pytest tests/unit/test_fastmcp_iot.py -v
 
-2. **Run Milestone 4 Empirical Challenge Suite**:
-   ```bash
-   python -m pytest cognitive_core/tests/test_milestone4_empirical_challenge.py -v
-   ```
-   *Expected Result*: 15 passed in ~0.7s with 0 failures.
+# 2. Run Tier 1 and Tier 2 IoT tests:
+python -m pytest tests/e2e/tier1_features/test_t1_fastmcp_iot.py tests/e2e/tier1_features/test_t1_homeassistant_client.py tests/e2e/tier2_boundaries/test_t2_iot_network_timeout_malformed.py -v
 
-3. **Run Multi-Agent & Cognitive Core Test Modules**:
-   ```bash
-   python -m pytest cognitive_core/tests/test_cognitive_loop.py cognitive_core/tests/test_executive.py cognitive_core/tests/test_tot_and_formal_reflexion.py cognitive_core/tests/test_recall.py cognitive_core/tests/test_reflection.py cognitive_core/tests/test_consolidation.py cognitive_core/tests/test_specialized_agents.py cognitive_core/tests/test_multiagent_orchestration.py -v
-   ```
-   *Expected Result*: All tests pass with 0 failures.
+# 3. Run full regression test suite across all milestones:
+python -m pytest
+```
 
-4. **Inspect Modified Files**:
-   - `cognitive_core/reasoning.py` (word boundary complexity matching)
-   - `cognitive_core/consolidation.py` (canonical schema alignment)
-   - `cognitive_core/tests/test_consolidation.py` (source_ref validation)
-   - `cognitive_core/tests/test_milestone4_empirical_challenge.py` (comprehensive challenge suite)
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+Expected output: `349 passed in ~11s`.

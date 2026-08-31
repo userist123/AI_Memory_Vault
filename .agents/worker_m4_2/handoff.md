@@ -1,109 +1,38 @@
-# Milestone 4 Remediation Handoff Report: Worker M4-2
+﻿# Handoff Report — Milestone 4 Remediation (worker_m4_2)
 
 ## 1. Observation
-
-### Verified Defects in `cognitive_core/reflection.py`
-1. **Defect 1: `ReflectionPipeline.propose_synapse` Schema Incompatibility and Update Failure**
-   - **File & Lines**: `cognitive_core/reflection.py:124-153`
-   - **Previous Code**:
-     ```python
-     relations.append({
-         "target_id": target_id,
-         "type": relation_type,
-         "confidence": "unverified"
-     })
-     source_node["relations"] = relations
-     if hasattr(self.controller, "update"):
-         self.controller.update(principal, source_id, source_node)
-         return source_id
-     ```
-   - **Observed Invariant Violations**:
-     - `_CANONICAL_SCHEMA` in `memory_controller/validation/schema.py:54-65` specifies relations items must have required fields `relation` and `target` and disallow additional properties (`additionalProperties: False`). Emitting `type` and `confidence` caused `jsonschema.exceptions.ValidationError`.
-     - Passing `source_node` containing `"verification": "verified"` to `controller.update` violated `memory_controller/controller.py:478` (`Verification status 'verified' cannot be escalated via update. Use attest() instead.`).
-     - Because `propose_synapse` trapped exceptions silently (`except Exception: return None`), synapse link persistence failed completely on real controllers.
-
-2. **Defect 2: `SelfRefine.refine_memory` Unhandled Non-String / `None` Content**
-   - **File & Lines**: `cognitive_core/reflection.py:39`
-   - **Previous Code**:
-     ```python
-     content = candidate.get("content", "").strip()
-     ```
-   - **Observed Exception**:
-     When `candidate` was `{"content": None}` or contained non-string content (e.g. integer, list, or non-dict input), `candidate.get("content", "")` evaluated to `None` or non-string, triggering `AttributeError: 'NoneType' object has no attribute 'strip'`.
-
----
+- **Initial Test State**: Running `python -m pytest tests/unit/test_challenger_m4_stress.py -v` yielded **10 failures** out of 84 stress tests:
+  1. 8 test cases in `test_jsonrpc_non_dict_json_strings_should_not_crash` failed with `AttributeError: '<type>' object has no attribute 'get'` in `projects/jarvis_cognitive_brain/jarvis/iot/fastmcp_server.py:360` when `request` was parsed as a primitive/list (`"123"`, `"true"`, `"false"`, `"null"`, `"NaN"`, `"[1, 2, 3]"`, `'["tool_call"]'`, `'"just_a_string"'`).
+  2. `test_ha_client_safe_call_service_list_entity_id_crash` failed with `TypeError: cannot use 'list' as a dict key (unhashable type: 'list')` in `projects/jarvis_cognitive_brain/jarvis/iot/ha_simulator.py:155` called by `projects/jarvis_cognitive_brain/jarvis/iot/ha_client.py:91`.
+  3. `test_ha_client_safe_call_service_unauthorized_token_crash` failed with unhandled `PermissionError: 401 Unauthorized: Invalid or missing token` in `projects/jarvis_cognitive_brain/jarvis/iot/ha_client.py:91`.
+- **Target Files**:
+  - `projects/jarvis_cognitive_brain/jarvis/iot/fastmcp_server.py`
+  - `projects/jarvis_cognitive_brain/jarvis/iot/ha_client.py`
+  - `projects/jarvis_cognitive_brain/tests/unit/test_fastmcp_iot.py`
 
 ## 2. Logic Chain
-
-1. **Remediation of `SelfRefine.refine_memory`**:
-   - Implemented type checking: if candidate is not a dict or `candidate.get("content")` is not an `isinstance(raw_content, str)`, `content` defaults to `""`.
-   - `.strip()` is invoked strictly on validated string values.
-   - Preserves filtering for content length `< 15` and ensures `"confidence": "medium"` default normalization when not specified.
-
-2. **Remediation of `ReflectionPipeline.propose_synapse`**:
-   - Formats synapse links strictly conforming to `_CANONICAL_SCHEMA`:
-     ```python
-     canonical_relation = {
-         "relation": relation_type,
-         "target": target_type,
-         "target_id": target_id
-     }
-     ```
-   - Target node type is dynamically resolved via `controller.read(principal, target_id)` with fallback to `"knowledge"`.
-   - Duplicate prevention checks both canonical `relation` and legacy/mock `type` keys.
-   - Passes strictly the delta payload `{"relations": relations}` to `controller.update(principal, source_id, {"relations": relations})`, preventing verification escalation errors.
-
-3. **Test Suite Adaptation & Enhancement**:
-   - Updated `cognitive_core/tests/test_dynamic_synapses.py` to assert canonical schema keys (`relation`, `target`, `target_id`) on updates and added `test_propose_synapse_real_controller_schema_validation` to verify end-to-end storage persistence and canonical schema validation against a live `MemoryController`.
-   - Enhanced `cognitive_core/tests/test_reflection.py` with `test_self_refine_none_and_non_string_content_safety` covering `None`, integer, list, dict, and non-dict inputs.
-
-4. **Empirical Execution Validation**:
-   - Targeted test suite (`test_milestone4_adversarial_challenger.py`, `test_milestone4_adversarial_challenger_m4_2.py`, `test_reflection.py`, `test_dynamic_synapses.py`): 37 passed in 6.51s.
-   - Full repository test suite (`python -m pytest`): 339 passed across all 38 test suites in 30.19s with 0 failures.
-
----
+1. In `FastMCPIoTServer.handle_jsonrpc`, `json.loads(request)` parses valid non-object JSON strings into Python primitives or lists (`int`, `float`, `bool`, `list`, `str`, `NoneType`).
+2. Per the JSON-RPC 2.0 Specification Section 4, a request MUST be a JSON object (mapping). If `not isinstance(payload, dict)`, the server must return `{"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request: expected JSON object"}}` without crashing.
+3. In `HomeAssistantClient.safe_call_service` and `async_safe_call_service`, `entity_id` can be either a single string or a list/tuple of strings.
+4. Passing a list/tuple to `self.simulator.get_state(entity_id)` causes unhashable type errors when queried against `self.states`. Checking `isinstance(entity_id, str)` vs `isinstance(entity_id, (list, tuple))` iterates and validates each entity individually.
+5. In `safe_call_service` and `async_safe_call_service`, enclosing the entity pre-checks inside the `try...except` block ensures any `PermissionError` (401 Unauthorized) or communication failure is safely intercepted and returned as `{"status": "error", "error": str(exc)}`.
 
 ## 3. Caveats
-
-- No caveats. All changes are strictly bounded to `cognitive_core/reflection.py` and co-located unit tests in `cognitive_core/tests/`.
-
----
+- No caveats. The fixes strictly adhere to the JSON-RPC 2.0 specification and Home Assistant client interface contracts without modifying existing public API signatures or breaking backward compatibility.
 
 ## 4. Conclusion
-
-Both defects identified by `challenger_m4_1` in `cognitive_core/reflection.py` have been remediated:
-1. `ReflectionPipeline.propose_synapse` now generates canonical schema relations (`relation`, `target`, `target_id`) and updates notes via payload isolation (`{"relations": relations}`), allowing dynamic synapses to persist without triggering controller verification guards.
-2. `SelfRefine.refine_memory` safely handles `None`, non-string, and malformed content without raising `AttributeError`.
-
-The full test suite passes with 100% success (339 passed / 0 failures).
-
----
+All 3 identified edge cases are resolved:
+1. `FastMCPIoTServer.handle_jsonrpc` cleanly rejects non-dict JSON requests with standard error code `-32600`.
+2. `HomeAssistantClient.safe_call_service` and `async_safe_call_service` support `str`, `list`, and `tuple` `entity_id` arguments.
+3. `HomeAssistantClient.safe_call_service` and `async_safe_call_service` safely encapsulate authentication and simulation errors in structured error responses.
 
 ## 5. Verification Method
-
-To independently verify this remediation:
-
-1. **Execute Targeted Test Suite**:
-   ```bash
-   python -m pytest cognitive_core/tests/test_milestone4_adversarial_challenger.py cognitive_core/tests/test_milestone4_adversarial_challenger_m4_2.py cognitive_core/tests/test_reflection.py cognitive_core/tests/test_dynamic_synapses.py -v
-   ```
-   *Expected Output*: `37 passed`.
-
-2. **Execute Full Repository Pytest Suite**:
-   ```bash
-   python -m pytest
-   ```
-   *Expected Output*: `339 passed in ~30s`.
-
-3. **Execute Live Schema & Synapse Integration Probe**:
-   ```bash
-   python -c "import uuid; from cognitive_core.reflection import ReflectionPipeline; from memory_controller.controller import MemoryController, StorageEngine; from memory_controller.authorizer import Principal; s = StorageEngine(); c = MemoryController(s); r = ReflectionPipeline(c); u1 = str(uuid.uuid4()); u2 = str(uuid.uuid4()); note = {'id': u1, 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'cat', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'ref'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'hello'}; s.set(u1, note); s.set(u2, {'id': u2, 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'cat', 'tags': ['t'], 'created': '2026-08-15', 'updated': '2026-08-15', 'provenance': {'source_type': 'user', 'source_ref': 'ref'}, 'confidence': 'high', 'verification': 'verified', 'relations': [], 'content': 'target'}); res = r.propose_synapse(Principal.AI_AGENT, u1, u2); print('RESULT:', res); print('RELATIONS:', s.get(u1).get('relations'))"
-   ```
-   *Expected Output*: `RESULT: <uuid>`, `RELATIONS: [{'relation': 'related_to', 'target': 'knowledge', 'target_id': '<uuid>'}]`.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+Execute the adversarial stress test suite and the complete test suite:
+```powershell
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+python -m pytest tests/unit/test_challenger_m4_stress.py -v
+python -m pytest
+```
+**Empirical Results**:
+- `test_challenger_m4_stress.py`: 84 passed, 0 failed in 0.09s.
+- Full pytest suite: 434 passed, 0 failed in 11.27s (100% pass rate across all unit and E2E tiers).

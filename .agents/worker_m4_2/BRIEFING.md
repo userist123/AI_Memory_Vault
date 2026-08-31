@@ -1,61 +1,53 @@
-# BRIEFING — 2026-08-15T02:10:30Z
+﻿# BRIEFING — 2026-08-28T17:25:00+03:00
 
 ## Mission
-Remediate the two defects identified by `challenger_m4_1` in `cognitive_core/reflection.py` (propose_synapse schema/update and SelfRefine None/non-string content handling).
+Remediate 3 edge cases in `jarvis/iot/fastmcp_server.py` and `jarvis/iot/ha_client.py` for Milestone 4 remediation and achieve 100% pass on all 359+ tests.
 
 ## 🔒 My Identity
-- Archetype: worker
+- Archetype: teamwork_preview_worker
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2
-- Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Milestone: Milestone 4 Remediation
+- Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Milestone: M4 Remediation (worker_m4_2)
 
 ## 🔒 Key Constraints
-- Fix `ReflectionPipeline.propose_synapse` to format relations with canonical schema (`relation`, `target`, `target_id`) and pass only `{"relations": relations}` to `controller.update`.
-- Fix `SelfRefine.refine_memory` to safely handle `None` or non-string content without raising `AttributeError`.
-- Genuine implementation only; no shortcuts or dummy/facade implementations.
-- Full pytest suite must pass with 100% success.
-- Handoff report in `.agents/worker_m4_2/handoff.md`.
+- Genuine implementations only: no hardcoding, no mock facades.
+- All 359+ tests must pass with 100% rate.
+- Minimal changes: fix only the targeted edge cases without regressions.
 
 ## Current Parent
-- Conversation ID: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Updated: 2026-08-15T02:10:30Z
+- Conversation ID: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Updated: 2026-08-28T17:25:00+03:00
 
 ## Task Summary
-- **What to build**: Remediation of 2 defects in `cognitive_core/reflection.py` + update test expectations in `test_dynamic_synapses.py` and `test_reflection.py`.
-- **Success criteria**: 100% test pass (339/339 tests), canonical schema adhered to, no `AttributeError` on `None` content, controller update invariants preserved.
-- **Interface contracts**: `PROJECT.md` and `memory_controller/validation/schema.py`
-- **Code layout**: `cognitive_core/reflection.py`, `cognitive_core/tests/test_dynamic_synapses.py`, `cognitive_core/tests/test_reflection.py`
+- **What to build**: Fix JSON-RPC non-dict validation, HA entity_id list/tuple support, and HA network/simulator call exception wrapping in safe_call_service.
+- **Success criteria**: All tests (434 collected) passing with 100% rate.
+- **Interface contracts**: PROJECT.md, fastmcp_server.py, ha_client.py
+- **Code layout**: projects/jarvis_cognitive_brain
 
 ## Key Decisions Made
-- `propose_synapse`: Formats relations conforming to `_CANONICAL_SCHEMA` (`relation`, `target`, optional `target_id`), checks duplicates flexibly across both `relation` and `type` keys, fetches `target_node` type if available or defaults to `"knowledge"`, and passes only `{"relations": relations}` payload to `controller.update(principal, source_id, ...)`.
-- `SelfRefine.refine_memory`: Safely extracts content checking `isinstance(raw_content, str)` before calling `.strip()`, handling `None`, non-string types (int, list, dict, bool), and non-dict candidates cleanly without exceptions.
-- `test_dynamic_synapses.py`: Updated mock assertions to check canonical keys (`relation`, `target`, `target_id`) and added a real `MemoryController` integration test with active verified notes validating frontmatter schema.
-- `test_reflection.py`: Added explicit test cases verifying `None` and non-string content handling in `SelfRefine`.
+- `fastmcp_server.py`: In `handle_jsonrpc`, added `if not isinstance(payload, dict):` check immediately after JSON parsing that returns JSON-RPC 2.0 `-32600 Invalid Request: expected JSON object` error.
+- `ha_client.py`: In `safe_call_service` and `async_safe_call_service`, wrapped entity pre-validation and service dispatch inside `try...except`, supported both `str` and `(list, tuple)` for `entity_id` with individual entity verification, and mapped exceptions to structured error dictionaries.
+- Added comprehensive unit tests in `test_fastmcp_iot.py` covering multi-entity tuple/list execution, invalid list element type rejection, and async unauthorized token handling.
 
 ## Artifact Index
-- `cognitive_core/reflection.py` — Remediated reflection pipeline and SelfRefine filter
-- `cognitive_core/tests/test_dynamic_synapses.py` — Synapse test suite with canonical assertions & integration test
-- `cognitive_core/tests/test_reflection.py` — Reflection tests with SelfRefine edge cases
-- `.agents/worker_m4_2/progress.md` — Progress tracker
-- `.agents/worker_m4_2/handoff.md` — Final handoff report
+- DISPATCH.md — Assignment instructions
+- BRIEFING.md — Situational awareness
+- progress.md — Liveness & heartbeat
+- handoff.md — Final handoff report
 
 ## Change Tracker
 - **Files modified**:
-  - `cognitive_core/reflection.py`: Remediated `propose_synapse` schema/update and `SelfRefine.refine_memory` content handling.
-  - `cognitive_core/tests/test_dynamic_synapses.py`: Updated assertions for canonical schema and added real controller integration test.
-  - `cognitive_core/tests/test_reflection.py`: Added edge-case test for None/non-string content in SelfRefine.
-- **Build status**: PASS (339 passed across full suite in 30.19s; 37 passed across targeted tests in 6.51s)
+  - `projects/jarvis_cognitive_brain/jarvis/iot/fastmcp_server.py`: Added dict payload check in `handle_jsonrpc`.
+  - `projects/jarvis_cognitive_brain/jarvis/iot/ha_client.py`: Added list/tuple entity handling and wrapped pre-checks in `try...except` in `safe_call_service` & `async_safe_call_service`.
+  - `projects/jarvis_cognitive_brain/tests/unit/test_fastmcp_iot.py`: Added edge case unit tests.
+- **Build status**: PASS (434 passed in 11.27s)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: 339/339 passed (100% pass rate)
+- **Build/test result**: PASS (434 / 434 tests passing, 100% pass rate)
 - **Lint status**: Clean
-- **Tests added/modified**: `test_propose_synapse_real_controller_schema_validation`, `test_self_refine_none_and_non_string_content_safety`
+- **Tests added/modified**: `test_ha_client_safe_call_service_parameter_validation` (extended with list/tuple/invalid element tests) and `test_ha_client_async_safe_call_service_unauthorized`.
 
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Loaded Skills
+- None

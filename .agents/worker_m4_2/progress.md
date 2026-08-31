@@ -1,20 +1,14 @@
-# Progress Log - Worker M4-2 (Milestone 4 Remediation)
+﻿# Progress Log — worker_m4_2
 
-- [x] Initialized workspace and briefing
-- [x] Investigate `cognitive_core/reflection.py` defects and affected tests
-- [x] Implement fix for `SelfRefine.refine_memory` (safe handling of None/non-string content)
-- [x] Implement fix for `ReflectionPipeline.propose_synapse` (canonical relation schema and payload isolation)
-- [x] Verify unit tests and update mock assertions in `test_dynamic_synapses.py`
-- [x] Add comprehensive test cases for the remediated defects (`test_propose_synapse_real_controller_schema_validation`, `test_self_refine_none_and_non_string_content_safety`)
-- [x] Run targeted test suite (37 passed in 6.51s)
-- [x] Run full pytest suite (339 passed in 30.19s)
-- [x] Write handoff report and notify parent
+Last visited: 2026-08-28T17:25:05+03:00
 
-Last visited: 2026-08-15T02:10:40Z
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Completed Tasks
+- [x] Initialized DISPATCH.md and BRIEFING.md.
+- [x] Inspected auditor and challenger reports identifying the 3 edge cases in Milestone 4.
+- [x] Reproduced failures using `pytest tests/unit/test_challenger_m4_stress.py` (10 failed out of 84).
+- [x] Remediated `FastMCPIoTServer.handle_jsonrpc` in `jarvis/iot/fastmcp_server.py` to check `isinstance(payload, dict)` and return code `-32600`.
+- [x] Remediated `HomeAssistantClient.safe_call_service` & `async_safe_call_service` in `jarvis/iot/ha_client.py` to support `list` and `tuple` for `entity_id` and wrapped pre-checks in `try...except`.
+- [x] Verified stress test suite `tests/unit/test_challenger_m4_stress.py` passes 100% (84/84 passed).
+- [x] Extended `tests/unit/test_fastmcp_iot.py` with additional edge-case unit tests (27/27 passed).
+- [x] Verified full repository test suite: 434 tests passed in 11.27s (100% pass rate).
+- [x] Authored `handoff.md`.

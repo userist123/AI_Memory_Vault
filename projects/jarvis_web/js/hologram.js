@@ -1,4 +1,23 @@
-const canvas=document.querySelector('#jarvis-3d');let gl=null,program=null,positionBuffer=null,colorBuffer=null,count=0,rotation=0,last=0;
+export const HOLOGRAM_STATES = Object.freeze({
+  IDLE: { primaryColor: 0x00f2fe, accentColor: 0x00f2fe, rotSpeedOuter: 0.4, rotSpeedInner: 0.22, pulseFrequency: 2.0, arcActivity: 0.35, coreScale: 1.0 },
+  LISTENING: { primaryColor: 0x10b981, accentColor: 0x10b981, rotSpeedOuter: 0.7, rotSpeedInner: 0.38, pulseFrequency: 8.0, arcActivity: 0.8, coreScale: 1.08 },
+  THINKING: { primaryColor: 0x8b5cf6, accentColor: 0xf59e0b, rotSpeedOuter: 0.9, rotSpeedInner: 1.15, pulseFrequency: 14.0, arcActivity: 1.0, coreScale: 1.16 },
+  SPEAKING: { primaryColor: 0xffffff, accentColor: 0x22d3ee, rotSpeedOuter: 0.8, rotSpeedInner: 0.55, pulseFrequency: 10.0, arcActivity: 0.95, coreScale: 1.28 },
+  MUTED: { primaryColor: 0x64748b, accentColor: 0xd97706, rotSpeedOuter: 0.16, rotSpeedInner: 0.08, pulseFrequency: 1.0, arcActivity: 0.12, coreScale: 0.9 },
+  ERROR: { primaryColor: 0xef4444, accentColor: 0xf97316, rotSpeedOuter: 0.55, rotSpeedInner: 0.85, pulseFrequency: 18.0, arcActivity: 1.0, coreScale: 1.12 }
+});
+
+export function detectWebGL() {
+  if (typeof document === 'undefined' || typeof document.createElement !== 'function') return false;
+  try {
+    const probe = document.createElement('canvas');
+    return Boolean(probe.getContext('webgl') || probe.getContext('experimental-webgl'));
+  } catch {
+    return false;
+  }
+}
+
+const canvas=typeof document !== 'undefined' ? document.querySelector('#jarvis-3d') : null;let gl=null,program=null,positionBuffer=null,colorBuffer=null,count=0,rotation=0,last=0;
 function mat4Perspective(o,fovy,aspect,near,far){const f=1/Math.tan(fovy/2),nf=1/(near-far);o[0]=f/aspect;o[1]=0;o[2]=0;o[3]=0;o[4]=0;o[5]=f;o[6]=0;o[7]=0;o[8]=0;o[9]=0;o[10]=(far+near)*nf;o[11]=-1;o[12]=0;o[13]=0;o[14]=2*far*near*nf;o[15]=0;return o}
 function mat4Model(o,a,s=1){const c=Math.cos(a),q=Math.sin(a);o.set([c*s,0,-q*s,0,0,s,0,0,q*s,0,c*s,0,0,-0.08,-2.65,1]);return o}
 function add(pts,cols,x,y,z,i=1){pts.push(x,y,z);cols.push(.2*i,.9*i,1*i,.88)}

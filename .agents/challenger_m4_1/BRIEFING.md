@@ -1,64 +1,55 @@
-# BRIEFING — 2026-08-15T02:00:19Z
+# BRIEFING — 2026-08-28T14:22:20Z
 
 ## Mission
-Perform empirical adversarial testing and stress testing of Milestone 4: OODA Loop Execution, Tree-of-Thought Reasoning, 10% Freshness Boost across complex supersession lineages, Formal Reflexion, SelfRefine, and Multi-Agent Coordination.
+Empirically stress-test and challenge Milestone 4 deliverables: FastMCP JarvisControls server, HomeAssistantClient, HomeAssistantSimulator, OODA loop act step multi-device actuation, error handling, JSON-RPC 2.0 conformance, and test suite integrity.
 
 ## 🔒 My Identity
-- Archetype: challenger
+- Archetype: empirical_challenger
 - Roles: critic, specialist
 - Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1
-- Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Milestone: Milestone 4 (Cognitive Loop & Multi-Agent Coordination)
+- Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Milestone: milestone_4
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code (write empirical tests to verify/challenge)
-- Strict compliance with P0-P15 trust boundaries
-- Follow 5-component handoff report structure
-- Run all tests and verify empirically
+- Review-only — do NOT modify implementation code directly in the main codebase
+- Strictly empirical: verify all bugs and claims with executable code
+- Never trust worker claims or logs without reproduction
 
 ## Current Parent
-- Conversation ID: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Updated: not yet
+- Conversation ID: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Updated: 2026-08-28T14:22:20Z
 
 ## Review Scope
-- **Files to review**: `cognitive_core/executive.py`, `cognitive_core/reasoning.py`, `cognitive_core/recall.py`, `cognitive_core/reflection.py`, `cognitive_core/consolidation.py`, `cognitive_core/agents/`, `cognitive_core/orchestrator.py`, `cognitive_core/planning.py`, `cognitive_core/working_memory.py`
-- **Interface contracts**: `PROJECT.md`, `vault_cognitive_rules.md`, `AGENTS.md`
-- **Review criteria**: OODA execution loop, Tree-of-Thought reasoning under adversarial/complex inputs, 10% freshness boost across complex lineages, 6-stage Formal Reflexion, SelfRefine critique, least privilege subagents
+- **Files to review**:
+  - `projects/jarvis_cognitive_brain/jarvis/iot/ha_simulator.py`
+  - `projects/jarvis_cognitive_brain/jarvis/iot/ha_client.py`
+  - `projects/jarvis_cognitive_brain/jarvis/iot/fastmcp_server.py`
+  - `projects/jarvis_cognitive_brain/jarvis/iot/__init__.py`
+  - `projects/jarvis_cognitive_brain/jarvis/tools/`
+  - `projects/jarvis_cognitive_brain/jarvis/agents/router.py`
+  - `projects/jarvis_cognitive_brain/jarvis/core/ooda.py`
+  - `projects/jarvis_cognitive_brain/tests/unit/test_fastmcp_iot.py`
+- **Interface contracts**: `PROJECT.md`, `AGENTS.md`, `vault_cognitive_rules.md`
+- **Review criteria**: JSON-RPC 2.0 conformance, robustness to malformed inputs, 401 unauthorized handling, out-of-range parameters, unknown entities, OODA multi-device actuation, reflection triggers on error, full test suite integrity.
 
 ## Attack Surface
-- **Hypotheses tested**:
-  1. OODA multi-step execution, state recovery, retry bounds (`_max_retries = 2`), replanning, dynamic synapse coactivation under corrupt/missing IDs.
-  2. ThoughtValidator grounding under malicious injection strings, zero/extreme length thoughts, unicode, and ToT 3-branch generation.
-  3. ReasoningEngine regex word boundary precision preventing false positive ToT triggers (e.g. "show", "shadow", "plane").
-  4. RecallEngine 10% freshness boost inheritance across 5-hop deep chains, branching lineages, circular cycles, and dead lineages.
-  5. Subagent least privilege enforcement across all 5 specialized worker agents.
+- **Hypotheses tested**: Non-object JSON-RPC strings, invalid method names, out-of-range bounds, 401 auth headers, multi-device active plans, list entity IDs in safe call, high concurrency.
 - **Vulnerabilities found**:
-  1. `ReflectionPipeline.propose_synapse` (`cognitive_core/reflection.py:124-153`): Formats relations with `"type"` and `"confidence"` instead of canonical `_CANONICAL_SCHEMA` (`"relation"` and `"target"` with `additionalProperties: False`), and passes entire note with `verification="verified"` into `controller.update`, causing silent failure caught by generic `except Exception: return None`. Unit tests in `test_dynamic_synapses.py` missed this because they used MagicMock instead of real schema-validating controller.
-  2. `SelfRefine.refine_memory`: Raises `AttributeError: 'NoneType' object has no attribute 'strip'` when candidate contains `{"content": None}`.
-- **Untested angles**:
-  1. Distributed multi-node consensus (out of single-vault scope).
+  1. `FastMCPIoTServer.handle_jsonrpc` AttributeError on non-object JSON payloads.
+  2. `HomeAssistantClient.safe_call_service` TypeError on list `entity_id`.
+  3. `HomeAssistantClient.safe_call_service` PermissionError on invalid auth token.
+- **Untested angles**: None.
 
 ## Loaded Skills
-- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
-  - **Local copy**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\skills\vault-operations\SKILL.md
-  - **Core methodology**: Runbook for memory lifecycle, recall, proposal, attestation, and reflexion.
-- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
-  - **Local copy**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\skills\vault-security-audit\SKILL.md
-  - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
+- **Source**: vault-security-audit
+  - **Local copy**: N/A
+  - **Core methodology**: Invariant verification and boundary stress testing.
 
 ## Key Decisions Made
-- Authored comprehensive 16-test empirical challenge suite `cognitive_core/tests/test_milestone4_adversarial_challenger.py`.
-- Formulated verdict: `REQUEST_CHANGES` due to silent failure in dynamic synapse proposal (`propose_synapse`) and `SelfRefine` NoneType handling.
+- Created `tests/unit/test_challenger_m4_stress.py` containing 84 adversarial stress tests.
+- Issued verdict `REQUEST_CHANGES` to address 3 reproducible crash vulnerabilities.
 
 ## Artifact Index
-- handoff.md — Final adversarial verification and challenge report
-- progress.md — Liveness heartbeat and step tracking
-- cognitive_core/tests/test_milestone4_adversarial_challenger.py — Dedicated empirical stress test suite (16 passed)
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+- `.agents/challenger_m4_1/report.md` — Detailed challenger report
+- `.agents/challenger_m4_1/handoff.md` — 5-component handoff report

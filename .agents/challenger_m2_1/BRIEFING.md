@@ -1,61 +1,54 @@
-# BRIEFING — 2026-08-14T20:15:30Z
+# BRIEFING — 2026-08-27T19:51:00Z
 
 ## Mission
-Empirically stress-test and challenge Milestone 2 (Storage, WAL & Audit Integrity), including SQLite WAL concurrency, lineage traversal / circular reference detection, and audit hash chaining, and run full test suite.
+Empirically stress-test and challenge Milestone 2 of Jarvis Cognitive Brain (Barge-In interruption, audio pipeline, CircularAudioBuffer, concurrency race conditions, malformed audio handling).
 
 ## 🔒 My Identity
 - Archetype: EMPIRICAL CHALLENGER
 - Roles: critic, specialist
-- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1
-- Original parent: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
-- Milestone: Milestone 2: Storage, WAL & Audit Integrity
-- Instance: 1 of 1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1
+- Original parent: 0bbc34c1-eddc-44cf-8e9e-c4d23195d41e
+- Milestone: Milestone 2 (Barge-In Interruption & Audio Pipeline)
+- Instance: 1 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code directly
-- Must empirically verify and reproduce all claims using actual execution/tests
-- Write reports and metadata only in `.agents/challenger_m2_1/`
+- Review/Challenger role — write independent adversarial stress tests and harnesses to verify claims empirically.
+- Execute test scripts directly, capture stdout/stderr, do not assume success.
+- Do NOT modify production code directly; findings and bugs must be documented with reproductions in handoff report.
+- Deliver hard verdict (APPROVE / REJECT) based on empirical results.
 
 ## Current Parent
-- Conversation ID: e71a16ec-5ebc-4ca2-ab0f-6beddef86e94
-- Updated: 2026-08-14T20:15:30Z
+- Conversation ID: 0bbc34c1-eddc-44cf-8e9e-c4d23195d41e
+- Updated: 2026-08-27T19:51:00Z
 
 ## Review Scope
-- **Files to review**: `memory_controller/storage/sqlite_engine.py`, `memory_controller/audit/logger.py`, `memory_controller/tests/`, `cognitive_core/tests/`
+- **Files to review**: `projects/jarvis_cognitive_brain/jarvis/audio/` (`bargein.py`, `drivers.py`, `pipeline.py`, `vad.py`, `stt.py`, `tts.py`, `chunker.py`)
 - **Interface contracts**: `PROJECT.md`, `ORIGINAL_REQUEST.md`
-- **Review criteria**: Concurrency correctness (WAL, busy timeout, BEGIN IMMEDIATE), Lineage traversal (deep chains, cycles), Hash chain integrity, Full test pass rate.
-
-## Attack Surface
-- **Hypotheses tested**:
-  1. High concurrency SQLite WAL mode with 50 threads doing 1000 transactions with `BEGIN IMMEDIATE` -> PASSED (0 errors, 2.18s).
-  2. Recursive lineage CTE traversal with 50-hop boundaries, self-loops, 2/3-node cycles, lasso topologies -> PASSED (deterministic termination, depth limit enforced).
-  3. SHA-256 audit log tamper detection forensics -> PASSED (100% anomaly detection across actor, timestamp, payload, reorder, deletion mutations).
-  4. Concurrent audit logging without mutex -> DISCOVERY: Race condition on `_get_last_entry_hash()` produces hash chain forks under concurrent logging without thread synchronization.
-  5. Full test suite execution -> DISCOVERY: `test_audit.py` uses `def setup_function():` without `(function)` parameter, causing pytest xunit fixture to be skipped during multi-file suite runs.
-- **Vulnerabilities found**:
-  - `AuditLogger._write_entry` needs internal `threading.Lock()` to prevent race conditions during concurrent logging.
-  - `memory_controller/tests/test_audit.py` needs signature `def setup_function(function):` or `@pytest.fixture(autouse=True)` to ensure clean test state across multi-test suite runs.
-- **Untested angles**: All core M2 angles have been comprehensively tested.
-
-## Loaded Skills
-- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
-  - **Core methodology**: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
-- **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
-  - **Core methodology**: Runbook for operating and interacting with the Vault.
+- **Review criteria**: Concurrency safety, cancellation latency & idempotency, buffer boundary integrity, audio sanitization, leak-free cancellation under load.
 
 ## Key Decisions Made
-- Executed empirical stress suite `test_milestone2_empirical_challenge.py` (7 tests, all passed).
-- Verified SQLite WAL concurrency up to 50 threads with 0 database lock errors.
-- Documented audit logger concurrency mutex recommendation and test fixture signature bug in handoff report.
-- Verdict: APPROVE (Milestone 2 core storage, WAL, lineage, and audit integrity requirements fully verified).
+- Authored and executed 13 adversarial stress tests in `tests/unit/test_adversarial_m2_audio.py` covering 500-iteration barrages, multi-threaded storms, async jitter races, circular buffer wrapping, and malformed signals.
+- Authored and executed empirical reproduction suite in `tests/unit/test_adversarial_m2_edge_bugs.py` uncovering 1 CRITICAL deadlock, 2 MEDIUM defects, and 1 LOW anomaly.
+- Issued verdict: `REJECT (Remediation Required)` with exact line numbers and proposed fixes.
 
 ## Artifact Index
-- `.agents/challenger_m2_1/handoff.md` — Final handoff report and verdict
-- `.agents/challenger_m2_1/progress.md` — Liveness & step progress tracking
+- `.agents/challenger_m2_1/DISPATCH.md` — Initial dispatch
+- `.agents/challenger_m2_1/BRIEFING.md` — Working memory
+- `.agents/challenger_m2_1/progress.md` — Progress tracker
+- `.agents/challenger_m2_1/handoff.md` — Final handoff report
+- `projects/jarvis_cognitive_brain/tests/unit/test_adversarial_m2_audio.py` — Adversarial stress test suite
+- `projects/jarvis_cognitive_brain/tests/unit/test_adversarial_m2_edge_bugs.py` — Empirical edge bugs repro suite
 
----
+## Attack Surface
+- **Hypotheses tested**: 
+  - Rapid barge-in barrage SLA (<50ms): PASSED (avg 0.0011ms, max 0.0129ms).
+  - Multi-threaded concurrent cancellation: PASSED under non-reentrant conditions.
+  - Reentrant callback safety in BargeInController: FAILED (Critical Deadlock confirmed).
+  - Malformed audio sanitization (NaN/Inf/Clipping): PASSED for 1D/2D arrays; FAILED for 0-d scalar arrays (TypeError).
+  - CircularAudioBuffer 2M-sample stream wrap & multi-threading: PASSED; FAILED on empty buffer off-by-one return.
+  - AsyncQueue cross-thread put_nowait safety in AudioPipeline: FAILED (potential event loop race).
+- **Vulnerabilities found**: 1 Critical, 2 Medium, 1 Low.
+- **Untested angles**: Hardware sounddevice physical loopback with live microphone hardware (due to headless environment).
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Loaded Skills
+- None required directly beyond test engineering and async Python concurrency.

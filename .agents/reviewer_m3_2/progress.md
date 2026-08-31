@@ -1,21 +1,9 @@
-# Progress — reviewer_m3_2
+# Progress Log - reviewer_m3_2
 
-Last visited: 2026-08-14T20:23:00Z
-Status: COMPLETED
-
-## Steps
-- [x] Initialized DISPATCH.md and BRIEFING.md
-- [x] Read required documents (ORIGINAL_REQUEST.md, PROJECT.md, AGENTS.md, vault_cognitive_rules.md, worker_m3_1/handoff.md, SKILL.md)
-- [x] Inspected implementation files (`controller.py`, `authorizer.py`, `tool_router.py`, `logger.py`) and verified logic against security invariants P0-P15
-- [x] Ran security test suite (`python -m pytest -v memory_controller/tests/test_security_hardening.py cognitive_core/tests/test_tool_router_security.py` -> 21/21 passed)
-- [x] Ran full project test suite (`python -m pytest` -> 281/281 passed in 18.93s)
-- [x] Performed adversarial review and integrity audit across attestation, authorization, immutability, atomic non-persistence, and hash chaining
-- [x] Formulated findings and documented handoff.md with APPROVE verdict
-- [x] Sent summary message to caller
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+- **Last visited**: 2026-08-28T14:07:30Z
+- **Status**: Review & Adversarial Stress-Testing Complete
+- **Verdict**: REQUEST_CHANGES
+- **Summary**:
+  - Invariants P0-P18 and Least Privilege Scoping: Verified compliant across `ScopedStorageProxy`, `VerifierAgent`, `ConsolidatorAgent`, `CriticAgent`, and storage engine.
+  - Concurrency & Supervisor Quality: 3 Critical/Major defects identified in `jarvis/agents/supervisor.py` (Worker death on `asyncio.CancelledError`, duplicate task execution on retries, and pending task execution despite queue cancellation).
+  - Test Results: 280 baseline tests pass, but deep adversarial / cancellation stress tests fail/hang due to the supervisor lifecycle defects.

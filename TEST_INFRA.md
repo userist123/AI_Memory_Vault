@@ -1,56 +1,40 @@
-# E2E Test Infra: AI Memory Vault Cognitive Brain
+# E2E Test Infra: Jarvis Cognitive Brain
 
 ## Test Philosophy
-- Opaque-box, requirement-driven verification and adversarial security validation.
-- Methodology: Category-Partition + Boundary Value Analysis + Pairwise Interaction + Workload & Security Stress Testing.
-- Security Zero Tolerance: Invariants P0-P15 enforced via adversarial mutation and attestation barrier tests.
+- Opaque-box, requirement-driven. No dependency on implementation design.
+- Methodology: Category-Partition + Boundary Value Analysis (BVA) + Pairwise Combinatorial + Real-World Workload Testing + White-box Adversarial Hardening.
 
-## Feature Inventory & Test Mapping
-| # | Feature | Source (Requirement) | Tier 1 (Unit) | Tier 2 (Boundary) | Tier 3 (Integration) | Tier 4 (E2E) |
-|---|---------|----------------------|:-------------:|:-----------------:|:--------------------:|:------------:|
-| 1 | Python Typing & Import Hygiene | Code Quality | 5 | 5 | ✓ | ✓ |
-| 2 | SQLite WAL Mode & Concurrency | ORIGINAL_REQUEST §R3 | 10 | 5 | ✓ | ✓ |
-| 3 | Atomic File Checkpointing | ORIGINAL_REQUEST §R3 | 5 | 5 | ✓ | ✓ |
-| 4 | SHA-256 Audit Log Chaining | ORIGINAL_REQUEST §R3 | 5 | 5 | ✓ | ✓ |
-| 5 | Recursive Lineage Traversal | ORIGINAL_REQUEST §R3 | 5 | 5 | ✓ | ✓ |
-| 6 | P0-P15 Trust Boundary Invariants | ORIGINAL_REQUEST §R2 | 15 | 10 | ✓ | ✓ |
-| 7 | Attestation Gate Protocol | ORIGINAL_REQUEST §R2 | 10 | 5 | ✓ | ✓ |
-| 8 | ToolRouter Security Gating | ORIGINAL_REQUEST §R2 | 5 | 5 | ✓ | ✓ |
-| 9 | OODA Cognitive Execution Loop | ORIGINAL_REQUEST §R1 | 10 | 5 | ✓ | ✓ |
-| 10 | Tree-of-Thought Reasoning | ORIGINAL_REQUEST §R1 | 5 | 5 | ✓ | ✓ |
-| 11 | Memory Recall with Freshness Boost | ORIGINAL_REQUEST §Acceptance | 10 | 5 | ✓ | ✓ |
-| 12 | 6-Stage Formal Reflexion | ORIGINAL_REQUEST §R1 | 5 | 5 | ✓ | ✓ |
-| 13 | SelfRefine Memory Critique | ORIGINAL_REQUEST §R1 | 5 | 5 | ✓ | ✓ |
-| 14 | Multi-Agent Worker Coordination | ORIGINAL_REQUEST §R4 | 10 | 5 | ✓ | ✓ |
-| 15 | ContinualLearningGuard | ORIGINAL_REQUEST §Acceptance | 5 | 5 | ✓ | ✓ |
-| 16 | Confidence Promotion Gating | ORIGINAL_REQUEST §Acceptance | 5 | 5 | ✓ | ✓ |
-| 17 | TRACe & IR Benchmark Evaluation | ORIGINAL_REQUEST §Acceptance | 5 | 5 | ✓ | ✓ |
-| 18 | Full 197+ Pytest Suite Verification | ORIGINAL_REQUEST §Acceptance | All 197 tests pass with 0 failures |
+## Feature Inventory Mapping
+| # | Feature | Source | Tier 1 (Features) | Tier 2 (Boundaries) | Tier 3 (Interactions) | Tier 4 (Real-World) |
+|---|---------|--------|:-----------------:|:-------------------:|:---------------------:|:-------------------:|
+| 1 | Modular LLM Provider Layer | R1 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 2 | Complete Stateful OODA Loop | R1 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 3 | Multi-Layer Associative Recall | R1 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 4 | Dual Persistence Storage Engine | R1 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 5 | Trust Boundary Invariants (P0-P18) | R1 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 6 | Continuous STT with Silero VAD | R2 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 7 | Streaming TTS Engine (Kokoro-82M) | R2 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 8 | Sub-50ms Barge-In Interruption | R2 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 9 | Headless Audio Drivers & Mock Engine | R2 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 10 | Multi-Agent Supervisor | R3 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 11 | Least-Privilege Specialized Agents | R3 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 12 | FastMCP JarvisControls Server | R4 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 13 | Home Assistant REST Client | R4 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 14 | Local Home Assistant Simulator | R4 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 15 | 3D WebGL Holographic Visualizer & HUD | R5 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 16 | Real-Time OODA Thought Stream | R5 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 17 | Interactive Memory Graph Visualizer | R5 | ≥5 tests | ≥5 tests | ✓ | ✓ |
+| 18 | System Health & Audio Controls | R5 | ≥5 tests | ≥5 tests | ✓ | ✓ |
 
 ## Test Architecture
-- **Test Runner**: `pytest -v`
-- **Central Fixtures**: `memory_controller/tests/conftest.py` (temporary vault directories, in-memory/temp SQLite WAL engines, deterministic semantic providers).
-- **Test Suites Breakdown**:
-  - `memory_controller/tests/`: 21 test files (Storage, WAL, Controller, Security Hardening, Audit, Context Budget, Attestation).
-  - `cognitive_core/tests/`: 16 test files (Executive, Reasoning, Reflexion, Recall, Planning, Consolidation, Continual Learning, Evaluation, Specialized Agents, Tool Router Security).
-
-## Real-World Application Scenarios (Tier 4)
-| # | Scenario | Features Exercised | Complexity |
-|---|----------|--------------------|------------|
-| 1 | Multi-turn task execution with tool routing and failure recovery | F9, F10, F12, F14 | High |
-| 2 | Hostile AI agent attempt to elevate verification and forge user provenance | F6, F7, F8, F4 | High |
-| 3 | Concurrent multi-threaded writes under WAL with immediate transaction isolation | F2, F3, F4, F5 | High |
-| 4 | Full OODA cycle with Tree-of-Thought reasoning, Reflexion, and SelfRefine consolidation | F9, F10, F11, F12, F13 | High |
-| 5 | Continual learning anchor memory retention check during incremental knowledge consolidation | F15, F16, F17 | High |
+- Test runner: `pytest -v tests/` and dedicated E2E runner script `python -m tests.e2e.test_runner`.
+- Pass/fail semantics: Exit code 0, 0 test failures, 100% pass rate.
+- Deterministic headless drivers for audio I/O, WebSockets, and mock LLM / HA simulator.
 
 ## Coverage Thresholds
-- All 197+ collected test cases must execute with 100% pass rate.
-- 0 tampering anomalies in SHA-256 audit log verification.
-- 0 regressions across P0-P15 security invariants.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+- Tier 1: ≥5 per feature (≥90 test cases)
+- Tier 2: ≥5 per feature boundary (≥90 test cases)
+- Tier 3: Pairwise coverage of major feature combinations (≥20 test cases)
+- Tier 4: Realistic end-to-end voice and cognitive workflows (≥10 test cases)
+- Tier 5: Adversarial edge-case, race-condition, and fault-injection suites (≥15 test cases)
+- **Total Minimum Test Count: ≥225 test cases**

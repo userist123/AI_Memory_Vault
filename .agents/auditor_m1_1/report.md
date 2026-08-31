@@ -1,99 +1,117 @@
-# Forensic Audit Report: Milestone 1
+# Forensic Integrity Audit Report: Milestone 1 (Financial Schema & Domain Models)
 
-**Work Product**: Milestone 1 Codebase Hygiene & Typing Validation (`cognitive_core/learning.py`, `cognitive_core/reflection.py`, `memory_controller/context/budget.py`)
-**Profile**: General Project / Forensic Integrity
-**Verdict**: CLEAN
+**Auditor**: Forensic Auditor M1 (`teamwork_preview_auditor`)  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1`  
+**Target Files**:
+- `memory_controller/financial_schema.py`
+- `tests/financial/test_schema.py`
 
----
-
-### Executive Summary
-An independent forensic audit was executed on Milestone 1 code changes and overall repository integrity. All recent modifications were inspected for hardcoded outputs, fake verification logic, facade stubs, and pre-populated artifacts. The entire 197-test suite was executed dynamically and verified with 0 failures.
-
----
-
-### Phase 1: Source Code & Forensic Invariant Analysis
-| Check # | Forensic Check Description | Target Files / Scope | Result | Details |
-|:---:|---|---|:---:|---|
-| 1 | Hardcoded Output Detection | `cognitive_core/`, `memory_controller/` | **PASS** | No hardcoded test responses, strings, or fake bypass logic found. |
-| 2 | Facade / Stub Detection | `learning.py`, `reflection.py`, `budget.py` | **PASS** | Genuine algorithm implementations for `ContinualLearningGuard`, `LearningEngine`, `FormalReflexion`, `SelfRefine`, and `ContextBudget`. |
-| 3 | Typing & Import Hygiene | `learning.py`, `reflection.py`, `budget.py` | **PASS** | `Tuple` typing import resolved; dead code removed from `budget.py`; runtime introspection verified via `typing.get_type_hints`. |
-| 4 | Pre-populated Verification Artifacts | Project Root, Test Logs | **PASS** | No pre-populated attestations or spoofed results; test logs generated dynamically. |
-| 5 | P0-P15 Trust Boundary Invariants | `controller.py`, `authorizer.py`, `sqlite_engine.py` | **PASS** | AI self-verification is strictly rejected; privileged provenance is gated; database writes are atomic with 0 partial writes. |
+**Integrity Mode**: Development (per `ORIGINAL_REQUEST.md`)  
+**Verdict**: **INTEGRITY VIOLATION**
 
 ---
 
-### Phase 2: Dynamic Behavioral Verification
-| Check # | Dynamic Verification Step | Command / Evidence | Result | Details |
-|:---:|---|---|:---:|---|
-| 1 | Full Test Suite Execution | `python -m pytest` | **PASS** | 197 / 197 tests passed across all 37 test modules in 7.52s. |
-| 2 | Runtime Type Introspection | `typing.get_type_hints(...)` | **PASS** | Introspected `ContinualLearningGuard.verify_no_catastrophic_regression` and `SelfRefine.refine_memory` without exceptions. |
-| 3 | Security & Invariant Hardening | `test_security_hardening.py`, `test_tool_router_security.py` | **PASS** | 17 adversarial security tests passed; AI cannot self-verify or forge provenance. |
-| 4 | Audit Log Hash Chain Verification | `test_audit.py`, `AuditLogger.verify_integrity` | **PASS** | Cryptographic SHA-256 hash chaining and tamper detection functional. |
+## Executive Summary
+
+A comprehensive forensic audit of Milestone 1 (`memory_controller/financial_schema.py` and `tests/financial/test_schema.py`) was performed, evaluating static code structure, Draft-07 JSON Schema fidelity, Pydantic domain models, trust boundary invariants (P0-P18), secret exposure, and test suite rigor.
+
+While Pydantic model definitions, secret hygiene, and Python-level invariant checks (P0/P2/P3) are implemented, **`FINANCIAL_NOTE_SCHEMA` suffers from a critical facade / validation circumvention defect**: `Variant C` in the `anyOf` schema definition has no required properties and permits `additionalProperties: True`. As a result, **Draft-07 JSON schema validation matches and accepts ANY arbitrary dictionary** (including completely empty objects, malformed frontmatter, invalid enums, and out-of-bounds metrics) without raising any schema validation errors.
+
+Furthermore, `tests/financial/test_schema.py` selectively omits negative schema tests for structural invalidity, creating a false impression of full Draft-07 schema enforcement.
 
 ---
 
-### Raw Evidence & Command Outputs
+## 1. Phase 1: Source Code & Forensic Analysis
 
-#### 1. Pytest Full Suite Run (197 Tests)
+### 1.1 Draft-07 Schema Flaw (Facade / Bypass via Catch-All Variant C)
+In `memory_controller/financial_schema.py` (lines 247–400):
+```python
+FINANCIAL_NOTE_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "FinancialMemoryNote",
+    ...
+    "anyOf": [
+        # Variant A: Canonical Note
+        { "type": "object", "required": ["id", "type", ...], ... },
+        # Variant B: Nested Frontmatter Note Payload
+        { "type": "object", "required": ["frontmatter"], ... },
+        # Variant C: Raw Financial Note Payload
+        {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string"},
+                "symbol": {"type": "string"},
+                "category": {"type": "string"},
+                "indicators": {"type": "object"},
+                "signals": {"type": "array"},
+                "risk_metrics": {"type": "object"},
+                "narrative": {"type": "string"},
+                "raw_content": {"type": "string"}
+            },
+            "additionalProperties": True
+        }
+    ]
+}
 ```
-platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
-plugins: anyio-4.12.1
-collected 197 items
+**Forensic Proof**:
+Because `Variant C` specifies `type: "object"`, has NO `required` fields, and sets `additionalProperties: True`, every JSON dictionary satisfies `Variant C`. Because `anyOf` succeeds if any single branch matches, `Draft7Validator(FINANCIAL_NOTE_SCHEMA).iter_errors(instance)` produces **0 errors** for arbitrary invalid inputs.
 
-cognitive_core\tests\test_activation.py .......                          [  3%]
-cognitive_core\tests\test_cognitive_loop.py .                            [  4%]
-cognitive_core\tests\test_consolidation.py ..                            [  5%]
-cognitive_core\tests\test_continual_learning.py ..                       [  6%]
-cognitive_core\tests\test_continuity.py .                                [  6%]
-cognitive_core\tests\test_deduplication.py .....                         [  9%]
-cognitive_core\tests\test_dynamic_synapses.py ..                         [ 10%]
-cognitive_core\tests\test_end_to_end_workflow.py .                       [ 10%]
-cognitive_core\tests\test_evaluation_and_recall_lineage.py ...           [ 12%]
-cognitive_core\tests\test_executive.py .                                 [ 12%]
-cognitive_core\tests\test_learning.py ..                                 [ 13%]
-cognitive_core\tests\test_multiagent_orchestration.py .....              [ 16%]
-cognitive_core\tests\test_planning.py ..                                 [ 17%]
-cognitive_core\tests\test_reasoning.py .                                 [ 17%]
-cognitive_core\tests\test_recall.py ..                                   [ 18%]
-cognitive_core\tests\test_reconciliation_boundary.py ..                  [ 19%]
-cognitive_core\tests\test_reflection.py ...                              [ 21%]
-cognitive_core\tests\test_specialized_agents.py .....                    [ 23%]
-cognitive_core\tests\test_tool_router_security.py ...                    [ 25%]
-cognitive_core\tests\test_tot_and_formal_reflexion.py .....              [ 27%]
-cognitive_core\tests\test_version_parsing.py ...............             [ 35%]
-cognitive_core\tests\test_working_memory.py .....                        [ 38%]
-cognitive_core\tests\test_working_memory_persistence.py ..               [ 39%]
-memory_controller\tests\test_audit.py .........                          [ 43%]
-memory_controller\tests\test_authorization.py ............               [ 49%]
-memory_controller\tests\test_cache.py ...........                        [ 55%]
-memory_controller\tests\test_context_economy.py ...                      [ 56%]
-memory_controller\tests\test_core.py .......                             [ 60%]
-memory_controller\tests\test_git_isolation.py .                          [ 60%]
-memory_controller\tests\test_lifecycle.py .................              [ 69%]
-memory_controller\tests\test_pagination.py ......                        [ 72%]
-memory_controller\tests\test_raw_imports.py ..                           [ 73%]
-memory_controller\tests\test_security.py ........                        [ 77%]
-memory_controller\tests\test_security_hardening.py ..............        [ 84%]
-memory_controller\tests\test_sqlite_storage.py ......                    [ 87%]
-memory_controller\tests\test_storage.py ...............                  [ 95%]
-memory_controller\tests\test_supersession_phase43.py .........           [100%]
-
-============================= 197 passed in 7.52s =============================
+Empirical verification test:
+```python
+bogus = {
+    'id': None,
+    'type': 'bogus_type',
+    'lifecycle': 'BOGUS_LIFECYCLE',
+    'confidence': 'bogus_confidence',
+    'verification': 'bogus_verification',
+    'technical_indicators': {'rsi_14': 999999}
+}
+is_valid, errors = validate_financial_note(bogus, is_ai_agent=True)
+# Result: is_valid == True, errors == []
 ```
 
-#### 2. Runtime Type Introspection Verification
-```
-Command: python -c "import cognitive_core.learning, cognitive_core.reflection, memory_controller.context.budget; import typing; print('All modules imported successfully.'); print('learning annotations:', typing.get_type_hints(cognitive_core.learning.ContinualLearningGuard.verify_no_catastrophic_regression)); print('reflection annotations:', typing.get_type_hints(cognitive_core.reflection.SelfRefine.refine_memory))"
-Output:
-All modules imported successfully.
-learning annotations: {'current_storage_notes': typing.List[typing.Dict[str, typing.Any]], 'return': typing.Tuple[bool, typing.List[str]]}
-reflection annotations: {'candidate': typing.Dict[str, typing.Any], 'return': typing.Tuple[bool, typing.Dict[str, typing.Any]]}
-```
+### 1.2 Selective Negative Testing in `tests/financial/test_schema.py`
+The test file `tests/financial/test_schema.py` contains 22 passing unit tests. However:
+- `TestDraft07JsonSchemaValidation` only tests valid canonical notes and valid nested payloads. It never executes a negative test case for invalid schema data (e.g., missing required fields, invalid enum types, or out-of-range indicators).
+- `test_frontmatter_schema_rejects_extra_top_level_keys` imports and tests `validate_frontmatter` from `memory_controller.validation.schema` (an external module), rather than testing `validate_financial_note` or `FINANCIAL_NOTE_SCHEMA`.
+
+### 1.3 Pydantic Model Union Type Inconsistency
+In `FinancialNoteModel`:
+- `technical_indicators: Optional[Union[TechnicalIndicatorsPayload, Dict[str, Any]]] = None`
+- `quantitative_signal: Optional[Union[QuantitativeSignalPayload, Dict[str, Any]]] = None`
+
+When passing base classes `FinancialIndicators(...)` or `TradeSignal(...)`, Pydantic v2 rejects the instantiation with `ValidationError` because only the subclass (`TechnicalIndicatorsPayload` / `QuantitativeSignalPayload`) or `dict` is accepted.
+
+### 1.4 Secret Leakage & Invariant Checks
+- **Secret Scan**: Automated regex scan across `financial_schema.py` and `test_schema.py` detected 0 hardcoded secrets, tokens, or API keys. (PASS)
+- **Trust Boundary Invariants**:
+  - P0 (AI agent cannot produce `verification='verified'`): Properly enforced in `validate_financial_note` when `is_ai_agent=True`. (PASS)
+  - P2 (AI agent cannot claim privileged `source_type` in `{'user', 'official', 'experience', 'import'}`): Properly enforced in `validate_financial_note`. (PASS)
+  - P3 (AI agent can only create in `{'RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW'}`): Properly enforced in `validate_financial_note`. (PASS)
 
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## 2. Phase Results & Checklist
+
+| Check | Expected | Observed | Status |
+|-------|----------|----------|:------:|
+| Draft-07 JSON Schema Validation | Rejects malformed objects & invalid enums | Accepts any dictionary with 0 errors via catch-all Variant C | 🔴 FAIL |
+| `validate_financial_note` Schema Realism | Real schema validation of required fields & types | Facade: schema validation bypassed for all dicts | 🔴 FAIL |
+| Trust Boundary Invariants (P0, P2, P3) | Strict enforcement for AI agents | Correctly enforced via Python checks | 🟢 PASS |
+| Secret Scanning | Zero hardcoded keys or credentials | 0 secrets found | 🟢 PASS |
+| Unit Test Integrity | Rigorous positive & negative test coverage | Negative schema tests omitted | 🔴 FAIL |
+| Pydantic v2 Models | Type-safe, validated domain models | Validated, but union inheritance bug in `FinancialNoteModel` | 🟡 WARN |
+
+---
+
+## 3. Forensic Remediation Requirements
+
+To achieve a `CLEAN` verdict, the worker must resolve:
+1. **Fix `FINANCIAL_NOTE_SCHEMA`**:
+   - In `Variant C`, define required fields (e.g. `required: ["title", "category"]`) and/or set `additionalProperties: False`.
+   - Or replace `anyOf` with a discriminated schema or strict subschemas so that canonical notes and payloads cannot trivially match an unconstrained empty object.
+2. **Add Negative Tests to `tests/financial/test_schema.py`**:
+   - Test that invalid `type`, invalid `confidence`, invalid `lifecycle`, and missing required frontmatter fields fail `validate_financial_note`.
+   - Test that out-of-bounds indicator values (e.g., `rsi_14: 150.0`) fail schema validation.
+3. **Fix Union Types in `FinancialNoteModel`**:
+   - Update union annotations to include base models: `Union[TechnicalIndicatorsPayload, FinancialIndicators, Dict[str, Any]]` and `Union[QuantitativeSignalPayload, TradeSignal, Dict[str, Any]]`.

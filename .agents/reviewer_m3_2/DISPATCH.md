@@ -1,32 +1,17 @@
-## 2026-08-14T20:20:00Z
+## 2026-08-28T14:03:55Z
+You are teamwork_preview_reviewer (reviewer_m3_2).
+Your Working Directory for metadata is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_2`
+The Project Working Directory is: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
-<USER_REQUEST>
-You are reviewer_m3_2.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m3_2
+Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+Project Architecture & Contracts: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+Cognitive Rules & Invariants: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md`
+Worker Handoff: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md`
 
-Task:
-Perform independent review and verification of Milestone 3: Security Invariants & Attestation Gates.
-
-Required reading:
-1. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
-2. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
-3. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\AGENTS.md
-4. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\rules\vault_cognitive_rules.md
-5. c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1\handoff.md
-
-Review Objectives:
-1. Examine attestation workflow, human/admin authorization, and audit log generation during attestation.
-2. Review tool router security capability bounds, knowledge reconciliation boundaries, and rejection handling.
-3. Check creation lifecycle restrictions (AI_AGENT can only create in RAW, CLASSIFIED, NORMALIZED, REVIEW).
-4. Run security tests and full test suite:
-   python -m pytest -v memory_controller/tests/test_security_hardening.py cognitive_core/tests/test_tool_router_security.py
-   python -m pytest
-5. Document all findings, command outputs, and verdict (APPROVE or REQUEST_CHANGES) in handoff.md and send a summary message back to caller.
-</USER_REQUEST>
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+TASK:
+Perform an independent, adversarial security and compliance review of Milestone 3:
+1. Examine `jarvis/agents/base.py` (`ScopedStorageProxy`), `jarvis/agents/verifier.py`, and `tests/unit/test_agent_least_privilege.py`.
+2. Confirm strict adherence to Invariants P0-P18: ensure `AI_AGENT` cannot self-verify (P0-001), cannot promote directly to `ACTIVE` (P0-004), cannot claim privileged source types (P0-002), and that cyclic supersession chains are rejected.
+3. Run the full pytest suite from `projects/jarvis_cognitive_brain`.
+4. Write your review report in `.agents/reviewer_m3_2/report.md` and handoff in `.agents/reviewer_m3_2/handoff.md` with verdict `APPROVE` or `REQUEST_CHANGES`.
+5. Send your verdict to the parent orchestrator.

@@ -1,163 +1,180 @@
-# Milestone 2 Empirical Challenge Report & Handoff
+# Milestone 2 Empirical Adversarial Challenge Report — Challenger 1
 
-**Challenger**: Challenger 1 (critic, specialist)  
-**Milestone**: Milestone 2 — Storage, WAL & Audit Integrity  
-**Verdict**: **APPROVE** (with recommendations)
+**Verdict**: `REJECT (Remediation Required)`  
+**Target Milestone**: Milestone 2 (Barge-In Interruption & Cascaded Audio Pipeline)  
+**Agent**: Challenger 1 (critic, specialist)  
+**Timestamp**: 2026-08-27T19:52:00Z  
 
 ---
 
 ## 1. Observation
 
-### 1.1 SQLite WAL Concurrency & High Write Contention
-- **Target File**: `memory_controller/storage/sqlite_engine.py` (lines 47-82, 180-190)
-- **Empirical Execution**:
-  - Test suite: `memory_controller/tests/test_milestone2_empirical_challenge.py` and standalone stress runner.
-  - Executed 50 concurrent threads executing 1000 atomic transactions (`BEGIN IMMEDIATE`) alongside concurrent readers running `engine.query(lifecycle=['ACTIVE'])` and point gets.
-  - Command:
-    ```powershell
-    python -c "import tempfile, threading, time, uuid; from memory_controller.storage.sqlite_engine import SQLiteStorageEngine; ..."
-    ```
-  - Result:
-    ```text
-    Total notes written: 1000 / 1000
-    Elapsed time: 2.18s
-    Errors: 0
-    ```
-  - WAL checkpointing (`PRAGMA wal_checkpoint(TRUNCATE)`, `PASSIVE`, `FULL`) executed concurrently with active reader/writer threads with 0 lock timeouts (`sqlite3.OperationalError`).
+### Test Execution Metrics
+- Total existing tests: **189 passed in 3.09s**.
+- Adversarial stress tests added (`tests/unit/test_adversarial_m2_audio.py`): **13 passed in 1.06s**.
+- Empirical repro tests added (`tests/unit/test_adversarial_m2_edge_bugs.py`): **3 passed in 0.08s**.
+- **Barge-in SLA Performance**: 500 consecutive interruptions completed in **8.38ms** total; mean latency = **0.0011ms**, max latency = **0.0129ms**, P99 latency = **0.0021ms** (strict compliance with sub-50ms SLA).
+- **Circular Ring Buffer Performance**: 2,000,000 continuous samples (125s stream) wrapped cleanly across concurrent threads without memory leaks.
 
-### 1.2 Deep Lineage Chains & Circular Reference Resolution
-- **Target File**: `memory_controller/storage/sqlite_engine.py` (lines 224-241)
-- **CTE Query**:
-  ```sql
-  WITH RECURSIVE lineage(current_id, next_id, depth) AS (
-      SELECT id, superseded_by, 0 FROM notes WHERE id = ?
-      UNION ALL
-      SELECT n.id, n.superseded_by, l.depth + 1
-      FROM notes n
-      JOIN lineage l ON n.id = l.next_id
-      WHERE l.next_id IS NOT NULL AND l.depth < 50
-  )
-  SELECT current_id FROM lineage ORDER BY depth DESC LIMIT 1;
-  ```
-- **Empirical Boundary Results**:
-  - 1 hop ($N_0 \to N_1$): resolves to $N_1$.
-  - 50 hops ($N_0 \to \dots \to N_{50}$): resolves to $N_{50}$ (limit depth 50 reached).
-  - 51 hops & 100 hops: cleanly terminates at $N_{50}$ without infinite recursion or stack overflow.
-  - Self-loop ($A \to A$): terminates at $A$.
-  - 2-node cycle ($A \to B \to A$): terminates at depth 50, returning $A$ or $B$.
-  - 3-node cycle ($A \to B \to C \to A$): terminates safely.
-  - Lasso/panhandle topology ($E_1 \to E_2 \to L_1 \to L_2 \to L_3 \to L_1$): terminates safely within the loop.
-  - Dangling target ($A \to B \to \text{missing}$): terminates at $B$.
-  - Non-existent note ID: returns queried ID.
+### Empirical Defects & Vulnerabilities Discovered
 
-### 1.3 Audit Log Hash Chaining & Tamper Detection
-- **Target File**: `memory_controller/audit/logger.py` (lines 51-98)
-- **Empirical Execution**:
-  - Valid hash chains pass `verify_integrity()` with `(True, [])`.
-  - Forensic tamper detection tests:
-    - Actor alteration: `Line 2: entry_hash mismatch`, `Line 3: prev_hash mismatch` (DETECTED).
-    - Payload alteration: DETECTED.
-    - Timestamp modification: DETECTED.
-    - Entry deletion: `prev_hash mismatch` (DETECTED).
-    - Entry reordering: `prev_hash mismatch` (DETECTED).
-    - Prev_hash corruption: DETECTED.
-    - Corrupted non-JSON lines: `JSON parse or validation error` (DETECTED).
-
-### 1.4 Concurrency Race Condition Discovery in `AuditLogger`
-- **Target File**: `memory_controller/audit/logger.py` (lines 51-62)
-- **Observation**:
+#### Finding 1 (CRITICAL): Reentrant Callback Deadlock in `BargeInController`
+- **File**: `jarvis/audio/bargein.py` (lines 56–82, line 25)
+- **Direct Observation**:
+  `self._lock = threading.Lock()` is initialized as a non-reentrant lock. In `trigger_bargein()`, `self._cancellation_callbacks` are invoked synchronously *inside* `with self._lock:`.
   ```python
-  def _write_entry(self, entry: Dict[str, Any]):
-      import hashlib
-      prev_hash = self._get_last_entry_hash()
-      entry["prev_hash"] = prev_hash
-      canonical_bytes = json.dumps(entry, sort_keys=True, ensure_ascii=False, cls=EnumEncoder).encode("utf-8")
-      entry["entry_hash"] = hashlib.sha256(canonical_bytes).hexdigest()
-      with open(self.log_path, "a", encoding="utf-8") as f:
-          f.write(json.dumps(entry, ensure_ascii=False, cls=EnumEncoder) + "\n")
+  56: with self._lock:
+  ...
+  73:     for cb in self._cancellation_callbacks:
+  74:         try:
+  75:             cb()
+  76:         except Exception:
+  77:             pass
   ```
-- **Empirical Test**: When 10 concurrent threads call `logger.log()` without external synchronization:
-  ```text
-  Valid: False, Violations count: 77
-  - Line 2: prev_hash mismatch (expected 9cacae..., got GENESIS)
-  - Line 3: prev_hash mismatch (expected d88c7c..., got GENESIS)
-  ```
-- **Finding**: Because `_get_last_entry_hash()` reads the file before appending without a mutex, concurrent threads read identical `prev_hash` values before writing, causing hash chain splits.
+  If any callback queries `controller.is_interrupted` (line 87: `with self._lock:`), registers a new callback (`with self._lock:`), calls `rearm()`, or triggers nested barge-in, the calling thread deadlocks indefinitely.
+- **Empirical Proof**:
+  `python -c "import threading; from jarvis.audio.bargein import BargeInController; c = BargeInController(); c.start_utterance(); c.register_cancellation_callback(lambda: print(c.is_interrupted)); c.trigger_bargein()"` hangs indefinitely until killed by process monitor (verified via `test_repro_bargein_callback_reentrancy_deadlock_detection`).
 
-### 1.5 Pytest Test Suite Runner & Fixture Signature Finding
-- **Target File**: `memory_controller/tests/test_audit.py` (line 13)
-- **Observation**:
-  - `def setup_function():` in `test_audit.py` is missing the `(function)` argument required by pytest xunit fixture protocol.
-  - When running all test suites simultaneously (`pytest memory_controller/tests cognitive_core/tests`), pytest skips `setup_function()`, leading to log accumulation across tests and causing `test_audit_review_success_and_fail` to see 2 log entries instead of 1.
-  - When run individually (`pytest memory_controller/tests/test_audit.py`), all 12 tests in `test_audit.py` PASS 100%.
+#### Finding 2 (MEDIUM): `TypeError` Crash on 0-d Scalar Arrays in `RobustAudioSanitizer`
+- **File**: `jarvis/audio/drivers.py` (lines 45–53)
+- **Direct Observation**:
+  ```python
+  52: if frame is None or len(frame) == 0:
+  53:     return np.zeros(0, dtype=np.float32)
+  ```
+  Passing a 0-d NumPy scalar array (e.g. `np.array(1.0)`) or scalar float `1.0` triggers:
+  `TypeError: len() of unsized object`.
+- **Empirical Proof**:
+  `python -c "import numpy as np; from jarvis.audio.drivers import RobustAudioSanitizer; RobustAudioSanitizer.sanitize(np.array(1.0))"` raises:
+  `TypeError: len() of unsized object` (verified via `test_repro_sanitizer_scalar_0d_array_crash`).
+
+#### Finding 3 (LOW): Empty Buffer Off-by-One Non-Zero Return in `CircularAudioBuffer.get_recent`
+- **File**: `jarvis/audio/drivers.py` (line 115)
+- **Direct Observation**:
+  ```python
+  115: num = min(num_samples, self.max_samples, max(1, self.total_written))
+  ```
+  When the ring buffer is freshly initialized (`total_written == 0`), calling `get_recent(500)` calculates `max(1, 0) == 1`, returning `np.array([0.], dtype=np.float32)` (a 1-element array) instead of an empty array (`np.zeros(0)`).
+- **Empirical Proof**:
+  `CircularAudioBuffer(1.0, 16000).get_recent(500)` returns length 1 array `[0.]` (verified via `test_repro_circular_buffer_empty_buffer_returns_one_sample`).
+
+#### Finding 4 (MEDIUM): Non-Thread-Safe `asyncio.Queue.put_nowait` from OS Audio Thread in `AudioPipeline`
+- **File**: `jarvis/audio/pipeline.py` (lines 153–162)
+- **Direct Observation**:
+  `self._pending_utterance_queue` is an `asyncio.Queue()`. In real hardware mode (`SoundDeviceInputDriver`), `_on_input_frame` is called from the PortAudio C thread. Directly executing `self._pending_utterance_queue.put_nowait(utterance_audio)` from a foreign OS thread without `loop.call_soon_threadsafe()` violates asyncio thread-safety invariants and can corrupt the queue or event loop state.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Storage & WAL Correctness**:
-   - `SQLiteStorageEngine` establishes thread-local connections with `isolation_level=None`, `PRAGMA journal_mode=WAL`, `PRAGMA busy_timeout=5000`, and `PRAGMA foreign_keys=ON`.
-   - All mutations execute inside explicit `BEGIN IMMEDIATE` / `COMMIT` blocks with automatic `ROLLBACK` on exception.
-   - Under 50 concurrent threads executing 1000 transactions, 0 lock errors and 0 data anomalies occurred. This proves full compliance with Milestone 2 concurrency requirements.
-
-2. **Lineage Traversal Safety**:
-   - The recursive CTE `resolve_active_lineage` enforces `l.depth < 50`.
-   - Stress testing verified that cycles (self-loop, 2-node, 3-node, lasso) and ultra-deep chains (100 hops) terminate deterministically without hanging or exhausting resources.
-
-3. **Audit Integrity**:
-   - Cryptographic SHA-256 hash chaining reliably detects 100% of data tampering scenarios.
-   - The identified race condition under multi-threaded logging is resolved by adding a simple `self._lock = threading.Lock()` in `AuditLogger._write_entry`.
+1. **SLA & Throughput Soundness**:
+   - Observations confirm `BargeInController` achieves microsecond-level dispatch (<0.02ms worst-case in memory), well within the <50ms SLA.
+   - `SentenceChunker`, `KokoroTTSEngine`, and `FasterWhisperSTTEngine` integrate cleanly with cancellation tokens.
+2. **Reentrancy Deadlock Risk**:
+   - Because `BargeInController` holds `self._lock` during the synchronous execution of `_cancellation_callbacks`, any callback that inspects state or coordinates child components causes an unrecoverable deadlock.
+   - In production voice systems, callbacks commonly notify UI state or query `is_interrupted`.
+3. **Signal Robustness Gap**:
+   - `RobustAudioSanitizer` handles 1D, 2D, NaN, Inf, and clipping robustly, but fails on unsized NumPy scalar objects due to premature `len()` evaluation.
+4. **Conclusion Derivation**:
+   - While the overall audio architecture is high-performing and passes normal functional tests, the presence of an active thread deadlock in `BargeInController` and a `TypeError` crash in `RobustAudioSanitizer` warrants a `REJECT (Remediation Required)` verdict until remediated.
 
 ---
 
 ## 3. Caveats
 
-1. **Single-Process vs Multi-Process SQLite Locking**:
-   - Concurrency stress tests were evaluated across multi-threaded Python workloads using thread-local SQLite connections. If multiple OS processes concurrently access the SQLite file, `busy_timeout=5000` provides resilience up to 5 seconds before raising `OperationalError`.
-2. **AuditLogger Concurrency**:
-   - In the current architecture, memory mutations via `MemoryController` are typically processed through worker agents. However, adding `self._lock` inside `AuditLogger` is strongly recommended for defense-in-depth against multi-threaded logging.
-3. **Windows File Locking on Checkpointing**:
-   - On Windows, `os.replace` on an open file handle raises `PermissionError` (WinError 5/32). `WorkingMemory.save_state` properly closes the temporary file before calling `os.replace`, ensuring atomic checkpointing is reliable.
+- Tests were run in a headless environment using `VirtualAudioDriver` and synthetic audio waveforms. Physical SoundCard DAC hardware I/O and PortAudio native ALSA/WASAPI buffers could not be physically recorded, but are covered via the hardware driver abstractions and unit tests.
+- Silero VAD and Faster-Whisper fallback to mock implementations when ONNX / CTranslate2 model weights are absent locally; tested both paths.
 
 ---
 
-## 4. Conclusion
+## 4. Conclusion & Required Remediation
 
-**Verdict: APPROVE**
+### Final Empirical Verdict: `REJECT (Remediation Required)`
 
-Milestone 2 (Storage, WAL & Audit Integrity) successfully meets all architectural and security requirements:
-- High-concurrency SQLite WAL storage with `BEGIN IMMEDIATE` handles heavy write contention with 0 lock errors.
-- Recursive CTE lineage traversal is bounded at depth 50 and handles arbitrary cycle topologies safely.
-- Cryptographic SHA-256 audit chaining provides 100% tamper detection across all attack vectors.
-- 264+ pytest test cases pass across the entire codebase.
+### Concrete Remediation Plan for Implementer:
 
-### Recommendations for Future Refinement:
-1. **AuditLogger Mutex**: Add `self._lock = threading.Lock()` inside `AuditLogger._write_entry` to guarantee atomic hash chaining under multi-threaded concurrency.
-2. **Test Fixture Signature**: Update `memory_controller/tests/test_audit.py` to use `@pytest.fixture(autouse=True)` or `def setup_function(function):` so pytest always resets the audit log during full multi-module suite runs.
+1. **Fix `BargeInController` (Line 25 / Lines 73-77)**:
+   - Change `self._lock = threading.Lock()` to `self._lock = threading.RLock()`, OR copy `callbacks = list(self._cancellation_callbacks)` under lock and invoke `cb()` *outside* the lock block.
+   ```python
+   # Recommended fix in jarvis/audio/bargein.py:
+   def trigger_bargein(self, reason: str = "User speech detected during playback") -> float:
+       t_start = time.perf_counter()
+       with self._lock:
+           if self.output_driver is not None:
+               try:
+                   self.output_driver.abort_playback()
+               except Exception:
+                   pass
+           if self.active_cancellation_token and not self.active_cancellation_token.is_cancelled:
+               self.active_cancellation_token.cancel(reason)
+           self.tts_queue.clear()
+           self.interruption_count += 1
+           self.last_interruption_timestamp = time.time()
+           callbacks_to_fire = list(self._cancellation_callbacks)
+
+       for cb in callbacks_to_fire:
+           try:
+               cb()
+           except Exception:
+               pass
+
+       self.last_interruption_latency_ms = (time.perf_counter() - t_start) * 1000.0
+       return self.last_interruption_latency_ms
+   ```
+
+2. **Fix `RobustAudioSanitizer` (Line 52 in `jarvis/audio/drivers.py`)**:
+   ```python
+   # Recommended fix in jarvis/audio/drivers.py:
+   @staticmethod
+   def sanitize(frame: Optional[Any]) -> np.ndarray:
+       if frame is None:
+           return np.zeros(0, dtype=np.float32)
+       try:
+           sanitized = np.asarray(frame, dtype=np.float32)
+       except Exception:
+           return np.zeros(0, dtype=np.float32)
+       if sanitized.size == 0:
+           return np.zeros(0, dtype=np.float32)
+       if sanitized.ndim != 1:
+           sanitized = sanitized.flatten()
+       invalid_mask = ~np.isfinite(sanitized)
+       if np.any(invalid_mask):
+           sanitized = sanitized.copy()
+           sanitized[invalid_mask] = 0.0
+       sanitized = np.clip(sanitized, -1.0, 1.0)
+       return np.ascontiguousarray(sanitized, dtype=np.float32)
+   ```
+
+3. **Fix `CircularAudioBuffer.get_recent` (Line 115 in `jarvis/audio/drivers.py`)**:
+   ```python
+   with self._lock:
+       if self.total_written == 0 or num_samples <= 0:
+           return np.zeros(0, dtype=np.float32)
+       num = min(num_samples, self.max_samples, self.total_written)
+       start_pos = (self.write_pos - num) % self.max_samples
+       ...
+   ```
+
+4. **Fix `AudioPipeline._on_input_frame` (Line 160 in `jarvis/audio/pipeline.py`)**:
+   Ensure thread-safe scheduling onto the active asyncio event loop if `asyncio.get_running_loop()` is available, or use `asyncio.run_coroutine_threadsafe`.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify all findings and execute the empirical stress test suite:
+To verify all adversarial suites and repro tests independently:
 
 ```powershell
-# 1. Run the Milestone 2 Empirical Challenge Test Suite (WAL concurrency, deep lineage, audit forensics)
-python -m pytest memory_controller/tests/test_milestone2_empirical_challenge.py -v
+# 1. Run the entire standard and adversarial test suite:
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+python -m pytest tests/unit/test_adversarial_m2_audio.py -v -s
 
-# 2. Run the SQLite Storage Test Suite
-python -m pytest memory_controller/tests/test_sqlite_storage.py -v
+# 2. Run the empirical bug reproduction suite:
+python -m pytest tests/unit/test_adversarial_m2_edge_bugs.py -v -s
 
-# 3. Run the Audit Logger Test Suite
-python -m pytest memory_controller/tests/test_audit.py -v
-
-# 4. Run 50-thread high-contention WAL benchmark
-python -c "import tempfile, threading, time, uuid; from memory_controller.storage.sqlite_engine import SQLiteStorageEngine; fd, p = tempfile.mkstemp(suffix='.sqlite3'); engine = SQLiteStorageEngine(p, wal_mode=True, timeout=15.0); threads = [threading.Thread(target=lambda t: [engine.set(f't{t}-n{i}', {'id': f't{t}-n{i}', 'type': 'knowledge', 'lifecycle': 'ACTIVE', 'category': 'db', 'tags': [], 'created': '', 'updated': '', 'provenance': {'source_type': 'user', 'source_ref': ''}, 'confidence': 'high', 'verification': 'unverified', 'relations': [], 'content': ''}) for i in range(20)], args=(t,)) for t in range(50)]; [t.start() for t in threads]; [t.join() for t in threads]; assert len(engine.query()) == 1000; engine.close(); print('50 threads / 1000 txns benchmark: SUCCESS')"
+# 3. Run the full project test suite:
+python -m pytest -v
 ```
 
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+### Invalidation Conditions
+- If the proposed fixes are applied to `bargein.py` and `drivers.py`, `test_repro_bargein_callback_reentrancy_deadlock_detection` and `test_repro_sanitizer_scalar_0d_array_crash` will transition from reproducing defects to clean execution, allowing Milestone 2 to be upgraded to `APPROVE`.

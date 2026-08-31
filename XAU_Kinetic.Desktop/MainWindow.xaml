@@ -1,0 +1,132 @@
+<Window x:Class="XAU_Kinetic.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="XAU_Kinetic Institutional Quant Control Center (v2.0)" Height="720" Width="1200"
+        Background="{StaticResource BackgroundBrush}" WindowStartupLocation="CenterScreen">
+    
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Main Body -->
+            <RowDefinition Height="200"/>  <!-- Audit Ledger -->
+        </Grid.RowDefinitions>
+
+        <!-- HEADER SECTION -->
+        <Border Grid.Row="0" Background="{StaticResource PanelBrush}" CornerRadius="8" Padding="16" Margin="0,0,0,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="XAU_KINETIC" Foreground="{StaticResource AccentGoldBrush}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <TextBlock Text="QUANT CONTROL CENTER" Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" VerticalAlignment="Center" Margin="12,4,0,0"/>
+                </StackPanel>
+
+                <!-- ACCOUNT SUMMARY METRICS -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <Border Background="{StaticResource HeaderBrush}" CornerRadius="6" Padding="12,6" Margin="8,0">
+                        <StackPanel>
+                            <TextBlock Text="EQUITY" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Equity, StringFormat='${0:N2}'}" Foreground="{StaticResource SignalGreenBrush}" FontSize="18" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{StaticResource HeaderBrush}" CornerRadius="6" Padding="12,6" Margin="8,0">
+                        <StackPanel>
+                            <TextBlock Text="BALANCE" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Balance, StringFormat='${0:N2}'}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="18" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Background="{StaticResource HeaderBrush}" CornerRadius="6" Padding="12,6" Margin="8,0">
+                        <StackPanel>
+                            <TextBlock Text="STATUS" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource AccentGoldBrush}" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- CONTROLS & KILL SWITCH -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="START ENGINE" Command="{Binding StartEngineCommand}" Background="{StaticResource SignalGreenBrush}" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="4,0" BorderThickness="0"/>
+                    <Button Content="STOP ENGINE" Command="{Binding StopEngineCommand}" Background="{StaticResource HeaderBrush}" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="4,0" BorderThickness="0"/>
+                    <Button Content="KILL SWITCH" Command="{Binding TriggerEmergencyKillSwitchCommand}" Background="{StaticResource EmergencyRedBrush}" Foreground="White" FontWeight="Bold" Padding="16,8" Margin="8,0" BorderThickness="0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- MAIN BODY SECTION -->
+        <Grid Grid.Row="1" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/> <!-- Risk Panel -->
+                <ColumnDefinition Width="*"/>   <!-- Positions & Orders -->
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT RISK PANEL -->
+            <Border Grid.Column="0" Background="{StaticResource PanelBrush}" CornerRadius="8" Padding="16" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="RISK &amp; CIRCUIT BREAKER" Foreground="{StaticResource TextPrimaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,0,0,12"/>
+                    
+                    <TextBlock Text="Max Daily Drawdown Cap: 3.0%" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4"/>
+                    <ProgressBar Value="{Binding DrawdownPercentage}" Maximum="3.0" Height="10" Foreground="{StaticResource EmergencyRedBrush}" Background="{StaticResource HeaderBrush}"/>
+
+                    <Separator Margin="0,16" Background="{StaticResource HeaderBrush}"/>
+
+                    <TextBlock Text="Symbol Exposure Cap: 2.0 Lots" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4"/>
+                    <TextBlock Text="Instrument Target: XAUUSD (M15)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4"/>
+                    <TextBlock Text="Anti-Look-Ahead: Closed Bars Only" Foreground="{StaticResource SignalGreenBrush}" Margin="0,4"/>
+
+                    <Separator Margin="0,16" Background="{StaticResource HeaderBrush}"/>
+
+                    <TextBlock Text="CIRCUIT BREAKER STATUS:" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding CircuitReason}" Foreground="{StaticResource AccentGoldBrush}" TextWrapping="Wrap" Margin="0,4"/>
+                </StackPanel>
+            </Border>
+
+            <!-- RIGHT POSITIONS PANEL -->
+            <Border Grid.Column="1" Background="{StaticResource PanelBrush}" CornerRadius="8" Padding="16">
+                <DockPanel>
+                    <TextBlock Text="ACTIVE POSITIONS &amp; EXECUTION STREAM" DockPanel.Dock="Top" Foreground="{StaticResource TextPrimaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,0,0,12"/>
+                    
+                    <DataGrid ItemsSource="{Binding ActivePositions}" AutoGenerateColumns="False" IsReadOnly="True" Background="Transparent" RowBackground="{StaticResource HeaderBrush}" Foreground="{StaticResource TextPrimaryBrush}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BackgroundBrush}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ticket" Binding="{Binding Ticket}" Width="100"/>
+                            <DataGridTextColumn Header="Symbol" Binding="{Binding Symbol}" Width="100"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="80"/>
+                            <DataGridTextColumn Header="Volume" Binding="{Binding Volume}" Width="80"/>
+                            <DataGridTextColumn Header="Open Price" Binding="{Binding OpenPrice, StringFormat='${0:F2}'}" Width="110"/>
+                            <DataGridTextColumn Header="Stop Loss" Binding="{Binding StopLoss, StringFormat='${0:F2}'}" Width="110"/>
+                            <DataGridTextColumn Header="Take Profit" Binding="{Binding TakeProfit, StringFormat='${0:F2}'}" Width="110"/>
+                            <DataGridTextColumn Header="Profit (USD)" Binding="{Binding Profit, StringFormat='${0:F2}'}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- AUDIT LEDGER SECTION -->
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}" CornerRadius="8" Padding="16">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <TextBlock Text="CRYPTOGRAPHIC SHA-256 AUDIT LEDGER INSPECTOR" Foreground="{StaticResource TextPrimaryBrush}" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+                    <Button Content="VERIFY LEDGER INTEGRITY" Command="{Binding VerifyAuditLedgerCommand}" HorizontalAlignment="Right" Background="{StaticResource HeaderBrush}" Foreground="{StaticResource AccentGoldBrush}" FontWeight="Bold" Padding="12,4" BorderThickness="0"/>
+                </Grid>
+
+                <DataGrid ItemsSource="{Binding AuditLogs}" AutoGenerateColumns="False" IsReadOnly="True" Background="Transparent" RowBackground="{StaticResource HeaderBrush}" Foreground="{StaticResource TextPrimaryBrush}" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{StaticResource BackgroundBrush}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60"/>
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="160"/>
+                        <DataGridTextColumn Header="Event Type" Binding="{Binding EventType}" Width="150"/>
+                        <DataGridTextColumn Header="SHA-256 Current Hash" Binding="{Binding CurrentHash}" Width="280"/>
+                        <DataGridTextColumn Header="Previous Hash" Binding="{Binding PrevHash}" Width="280"/>
+                        <DataGridTextColumn Header="Payload" Binding="{Binding PayloadJson}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

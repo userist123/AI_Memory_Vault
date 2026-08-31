@@ -1,73 +1,61 @@
-# BRIEFING — 2026-08-15T01:59:45+03:00
+# BRIEFING — 2026-08-28T14:19:30Z
 
 ## Mission
-Verify, complete, and harden all Milestone 4 capabilities (Cognitive Loop & Multi-Agent Coordination) in the AI Memory Vault cognitive brain: OODA loop, Tree-of-Thought, 10% freshness bonus, 6-stage Formal Reflexion, SelfRefine critique, and multi-agent worker coordination.
+Implement Milestone 4: FastMCP IoT Server & Home Assistant Integration (`JarvisControls`), including `ha_simulator.py`, `ha_client.py`, `fastmcp_server.py`, tool aliases, cognitive brain OODA integration, and comprehensive unit tests `tests/unit/test_fastmcp_iot.py`.
 
 ## 🔒 My Identity
-- Archetype: worker
+- Archetype: implementer
 - Roles: implementer, qa, specialist
 - Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1
-- Original parent: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Milestone: Milestone 4 (Cognitive Loop & Multi-Agent Coordination)
+- Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Milestone: Milestone 4 (FastMCP IoT & Home Assistant Integration)
 
 ## 🔒 Key Constraints
-- DO NOT CHEAT. All implementations must be genuine.
-- Strict P0-P15 Trust Boundary Enforcement (no AI self-verification, no privileged provenance forging).
-- Ensure 0 failures and 100% test pass across pytest test suites.
-- Follow minimal change principle and layout compliance (.agents/ holds only metadata).
-- Maintain 5-component handoff report.
+- 100% offline hermetic execution (no external network dependencies).
+- Strict adherence to JSON-RPC 2.0 error codes (-32601, -32602, -32700, -32002, etc.).
+- Genuine state management, zero dummy/facade implementations.
+- No regressions on existing 323+ test suite.
 
 ## Current Parent
-- Conversation ID: 4d8619ff-fda6-4c9e-8801-2dbe0fd86141
-- Updated: 2026-08-15T01:59:45+03:00
+- Conversation ID: 8b531079-7cca-4ec6-a0e3-4ce625943430
+- Updated: 2026-08-28T14:19:30Z
 
 ## Task Summary
-- **What to build**: Verify, test, and harden Milestone 4 features in cognitive_core:
-  1. OODA Execution Loop (`cognitive_core/executive.py`)
-  2. Tree-of-Thought Reasoning (`cognitive_core/reasoning.py`)
-  3. Recall Scoring with 10% Freshness Boost (`cognitive_core/recall.py`)
-  4. 6-Stage Formal Reflexion (`cognitive_core/reflection.py`)
-  5. SelfRefine Memory Critique (`cognitive_core/consolidation.py`)
-  6. Multi-Agent Worker Coordination (`cognitive_core/agents/`)
-- **Success criteria**: All 307 tests in 38 test suites across the repository passing with 0 failures.
-- **Interface contracts**: PROJECT.md § Interface Contracts
-- **Code layout**: PROJECT.md § Code Layout
-
-## Key Decisions Made
-- Added word boundary regex checks `\b` for single-word complexity triggers in `ReasoningEngine._is_high_complexity` to prevent false positive triggers (e.g. "show" matching substring "how").
-- Aligned `Consolidator` knowledge node synthesis with canonical frontmatter schema (`source_ref` string, proper `relations` format with relation/target/target_id).
-- Implemented comprehensive empirical challenge suite `cognitive_core/tests/test_milestone4_empirical_challenge.py` covering all 6 Milestone 4 capabilities.
+- **What to build**:
+  1. `jarvis/iot/ha_simulator.py`: In-memory Home Assistant REST daemon with full state dictionary, service dispatcher (`light.turn_on`, `climate.set_temperature`, `switch.toggle`, `scene.turn_on`, `lock`, `unlock`), call log history, `/api/states`, `/api/services`, Bearer token auth.
+  2. `jarvis/iot/ha_client.py`: Resilient HomeAssistantClient supporting direct in-memory simulator binding or live HTTP requests, retries with exponential backoff, timeout handling, error normalization.
+  3. `jarvis/iot/fastmcp_server.py`: FastMCPIoTServer (`JarvisControls`) implementing JSON-RPC 2.0 protocol (`list_tools`, `call_tool`, `handle_jsonrpc`), semantic tools (`turn_on`, `turn_off`, `toggle`, `set_brightness`, `set_temperature`, `trigger_scene`, `get_device_state`, `list_entities`) + legacy aliases (`ha_get_states`, `ha_get_state`, `ha_call_service`, `ha_toggle_device`, `ha_query_entities`).
+  4. `jarvis/iot/__init__.py`: Clean exports.
+  5. `jarvis/tools/__init__.py`, `jarvis/tools/fastmcp.py` & `jarvis/iot/homeassistant.py`: Backwards-compatible aliases.
+  6. `tests/unit/test_fastmcp_iot.py`: Dedicated unit test suite validating tool registry, JSON Schema, error codes, simulator state updates, OODA integration.
+- **Success criteria**: All existing tests (323+) + new M4 unit tests pass with 100% success rate (349 passed).
+- **Interface contracts**: `PROJECT.md` & `.agents/explorer_m4_1/report.md`
 
 ## Change Tracker
 - **Files modified**:
-  - `cognitive_core/reasoning.py`: Added word-boundary regex for query complexity triggers.
-  - `cognitive_core/consolidation.py`: Aligned consolidated note structure with schema.
-  - `cognitive_core/tests/test_consolidation.py`: Updated `source_ref` assertion.
-  - `cognitive_core/tests/test_milestone4_empirical_challenge.py`: New comprehensive 15-test challenge suite.
-- **Build status**: 307 passed in 23.15s (100% PASS, 0 failures)
+  - `jarvis/iot/ha_simulator.py`: Created HomeAssistantSimulator daemon
+  - `jarvis/iot/ha_client.py`: Created HomeAssistantClient & ResilientIoTClient
+  - `jarvis/iot/fastmcp_server.py`: Created FastMCPIoTServer (JarvisControls)
+  - `jarvis/iot/__init__.py`: Created IoT package exports
+  - `jarvis/tools/__init__.py`: Created tools package
+  - `jarvis/tools/fastmcp.py`: Created tool alias module
+  - `jarvis/iot/homeassistant.py`: Created HA alias module
+  - `jarvis/agents/router.py`: Enhanced climate & thermostat keyword matching in clause classifier
+  - `tests/unit/test_fastmcp_iot.py`: Created 26 unit tests
+- **Build status**: PASS (349/349 tests passed in 11.20s)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: 307 passed across all 38 test suites
+- **Build/test result**: 349 passed, 0 failed, 0 warnings
 - **Lint status**: Clean
-- **Tests added/modified**: Added 15 thorough end-to-end tests in `test_milestone4_empirical_challenge.py`
+- **Tests added/modified**: 26 new unit tests in `tests/unit/test_fastmcp_iot.py`
 
 ## Loaded Skills
-- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
-  - **Core methodology**: Procedure for memory retrieval, safe proposal, attestation, and error reflection in the vault.
-- **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
-  - **Core methodology**: Security verification for trust boundaries P0-P15, audit integrity, SQLite WAL concurrency.
+- **Source**: `vault-operations` (`.agents/skills/vault-operations/SKILL.md`)
+- **Local copy**: N/A
+- **Core methodology**: Runbook for interacting with AI Memory Vault cognitive operating system.
 
-## Artifact Index
-- `.agents/worker_m4_1/DISPATCH.md` — Assignment instructions
-- `.agents/worker_m4_1/BRIEFING.md` — Agent state and memory
-- `.agents/worker_m4_1/progress.md` — Progress tracker and liveness heartbeat
-- `.agents/worker_m4_1/handoff.md` — Final 5-component handoff report
-- `cognitive_core/tests/test_milestone4_empirical_challenge.py` — Empirical challenge test suite
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Key Decisions Made
+- Implemented in-memory state dictionary with multi-domain entity seeding (`light`, `switch`, `climate`, `sensor`, `lock`, `scene`).
+- Supported both direct Python call dispatch and JSON-RPC 2.0 string/dict parsing.
+- Implemented standard JSON-RPC 2.0 error codes (-32700, -32600, -32601, -32602, -32002, -32603).

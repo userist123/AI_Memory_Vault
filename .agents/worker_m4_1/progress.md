@@ -1,36 +1,13 @@
-# Progress Tracker — worker_m4_1 (Milestone 4)
+# Progress Log — worker_m4_1
 
-Last visited: 2026-08-15T01:59:45+03:00
+Last visited: 2026-08-28T14:18:45Z
 
-## Current Status: Milestone 4 Verification & Hardening Complete
-
-### Tasks
-- [x] Read DISPATCH.md, ORIGINAL_REQUEST.md, PROJECT.md, AGENTS.md, rules and skills
-- [x] Setup BRIEFING.md and progress.md
-- [x] Run pytest across all test suites to establish baseline (292 tests passed)
-- [x] Inspect cognitive_core/ source files:
-  - [x] `executive.py` (OODA loop, auto-checkpointing, dynamic synapses, replanning)
-  - [x] `reasoning.py` (Tree-of-Thought, ThoughtValidator, complexity gating)
-  - [x] `recall.py` (Multi-signal scoring, 10% freshness bonus, version algebra)
-  - [x] `reflection.py` (6-stage Formal Reflexion, SelfRefine critique)
-  - [x] `consolidation.py` (SelfRefine critique filter, lesson consolidation)
-  - [x] `agents/*` (Router, Retrieval, Verifier, Consolidator, Critic subagents)
-- [x] Inspect cognitive_core/tests/ test suites:
-  - [x] `test_cognitive_executive.py`
-  - [x] `test_tree_of_thought.py` / `test_tot_and_formal_reflexion.py`
-  - [x] `test_recall_scoring.py` / `test_recall.py`
-  - [x] `test_formal_reflexion.py` / `test_reflection.py`
-  - [x] `test_self_refine_critique.py` / `test_consolidation.py`
-  - [x] `test_multi_agent_coordination.py` / `test_specialized_agents.py` / `test_multiagent_orchestration.py`
-- [x] Harden complexity triggers in `ReasoningEngine._is_high_complexity` (added word boundary `\b` matching)
-- [x] Align `Consolidator` knowledge node format with canonical schema (`source_ref` string, proper `relations` structure)
-- [x] Author comprehensive 15-test challenge suite `cognitive_core/tests/test_milestone4_empirical_challenge.py`
-- [x] Verify full test suite passes with 0 failures (307 passed in 23.15s)
-- [x] Write 5-component handoff.md and send completion message to parent
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## Current Status
+- Milestone 4 implementation completed:
+  1. `jarvis/iot/ha_simulator.py`: In-memory Home Assistant mock REST daemon with full state dictionary, service dispatcher (`light.turn_on`, `climate.set_temperature`, `switch.toggle`, `scene.turn_on`, `lock`, `unlock`), call log history, `/api/states`, `/api/services`, and Bearer token auth.
+  2. `jarvis/iot/ha_client.py`: Resilient HomeAssistantClient supporting direct in-memory simulator binding or live HTTP requests, retries with exponential backoff, timeout handling, error normalization.
+  3. `jarvis/iot/fastmcp_server.py`: FastMCPIoTServer (`JarvisControls`) implementing JSON-RPC 2.0 protocol (`list_tools`, `call_tool`, `handle_jsonrpc`), exposing semantic tools (`turn_on`, `turn_off`, `toggle`, `set_brightness`, `set_temperature`, `trigger_scene`, `get_device_state`, `list_entities`) as well as legacy/E2E aliases (`ha_get_states`, `ha_get_state`, `ha_call_service`, `ha_toggle_device`, `ha_query_entities`).
+  4. `jarvis/iot/__init__.py`: Clean module exports.
+  5. `jarvis/tools/__init__.py`, `jarvis/tools/fastmcp.py` & `jarvis/iot/homeassistant.py`: Backwards-compatible aliases.
+  6. `tests/unit/test_fastmcp_iot.py`: 26 comprehensive unit tests passing with 100% success rate.
+- Running full regression test suite (349 total tests).

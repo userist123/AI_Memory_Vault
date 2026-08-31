@@ -1,25 +1,18 @@
-## 2026-08-14T20:07:09Z
+## 2026-08-27T19:28:41Z
+You are Reviewer 1 (Code Correctness & Architecture Specialist) for Milestone 1 of the Jarvis Cognitive Brain ('Creier Vorbitor') project.
+Your assigned working directory is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1`.
+The target project codebase is `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`.
 
-You are Reviewer 1 for Milestone 1: Codebase Hygiene & Typing Validation.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1
+Read:
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (specifically timestamp 2026-08-27T19:19:42Z)
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1\handoff.md`
 
-MANDATORY FIRST STEP:
-Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
+Examine the implementation in `projects/jarvis_cognitive_brain`:
+1. Check `jarvis/llm/` (BaseLLMProvider, OllamaProvider, CloudProviders, MockLLMProvider, CancellationToken, async streaming).
+2. Check `jarvis/memory/` (invariants P0-P18, SQLite WAL engine, atomic markdown sync, recall formulas, ACT-R activation decay, 6-stage Reflexion, memory reconsolidation).
+3. Check `jarvis/core/` (models, OODA loop, executive daemon, atomic checkpointing wm.json/plan.json).
+4. Run the unit test suite (`python -m pytest tests/unit/`).
 
-Task:
-1. Inspect the changes made by worker_m1_1 documented in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_1\changes.md and .agents\worker_m1_1\handoff.md.
-2. Verify files:
-   - cognitive_core/learning.py
-   - cognitive_core/reflection.py
-   - memory_controller/context/budget.py
-3. Run pytest across the workspace to ensure all 197 tests pass.
-4. Verify code correctness, interface conformance, and that no regressions were introduced.
-5. Provide a clear verdict (APPROVE or REQUEST_CHANGES) in your handoff report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1\handoff.md.
-6. Notify parent via send_message.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+Provide a clear verdict in your handoff report: `APPROVE` or `REQUEST_CHANGES`.
+Write your report in `.agents/reviewer_m1_1/handoff.md` and notify parent via `send_message`.

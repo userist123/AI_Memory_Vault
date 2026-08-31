@@ -1,115 +1,206 @@
-# Project: AI Memory Vault Autonomous Cognitive Brain
+# Project: Jarvis Cognitive Brain ("Creier Vorbitor")
 
 ## Architecture
-The Cognitive Brain transforms the AI Memory Vault into an autonomous, self-improving cognitive system operating across two foundational layers:
+Autonomous, local, self-improving Cognitive Brain system integrating real-time streaming audio I/O with barge-in interruption, a stateful OODA cognitive loop, persistent SQLite WAL + Markdown memory, multi-agent least-privilege background workers, FastMCP IoT Home Assistant integration, and an ultra-modern 3D WebGL HUD dashboard.
 
-1. **Memory Controller Layer (`memory_controller/`)**:
-   - **Authoritative Storage**: SQLite with Write-Ahead Logging (`PRAGMA journal_mode=WAL;`, `PRAGMA busy_timeout=5000;`, `PRAGMA foreign_keys=ON;`) and explicit `BEGIN IMMEDIATE` transactions.
-   - **Security Invariants (P0-001 through P0-015)**: Strict trust boundaries separating `Principal.AI_AGENT`, `Principal.HUMAN`, `Principal.ADMIN`, and `Principal.SYSTEM`. Enforces immutable provenance, attestation gates, and rejects AI self-verification.
-   - **Tamper-Evident Audit Logging**: Cryptographic SHA-256 hash chaining (`prev_hash`, `entry_hash`) across all operational mutations.
-   - **Lineage Traversal**: Recursive CTE (`resolve_active_lineage`) resolving superseded notes up to depth 50.
-
-2. **Cognitive Core Layer (`cognitive_core/`)**:
-   - **Autonomous OODA Execution Loop (`cognitive_core/executive.py`)**: Observe -> Retrieve -> Attend -> Reason -> Plan -> Act -> Reflect -> Consolidate.
-   - **Multi-Branch Reasoning (`cognitive_core/reasoning.py`)**: `TreeOfThoughtReasoner` (direct, comparative, counterfactual branches) paired with `ThoughtValidator` lexical consistency checking.
-   - **Memory Recall & Scoring (`cognitive_core/recall.py`)**: Multi-signal scoring with a 10% freshness bonus on successor nodes.
-   - **Formal Reflection & Critique (`cognitive_core/reflection.py`, `cognitive_core/consolidation.py`)**: 6-stage `FormalReflexion` (Error -> Root Cause -> Fix -> Verification -> Prevention -> Lesson) and `SelfRefine` critique filter.
-   - **Continual Learning & Metrics (`cognitive_core/learning.py`, `cognitive_core/evaluation.py`)**: `ContinualLearningGuard` anchor memory protection, execution evidence gating for `very_high` confidence, TRACe framework and IR ranking benchmarks.
-   - **Specialized Multi-Agent Coordination (`cognitive_core/agents/`)**: Least-privilege worker subagents (Router, Retrieval, Verifier, Consolidator, Critic).
-
----
+```
++---------------------------------------------------------------------------------------------------------+
+|                                    JARVIS COGNITIVE BRAIN ARCHITECTURE                                  |
++---------------------------------------------------------------------------------------------------------+
+|                                                                                                         |
+|  [Microphone Input] <---> [Cascaded Audio Pipeline (STT/TTS/Barge-in)] <---> [Speaker Output]           |
+|                                     │                     ▲                                             |
+|                                     │ Transcribed Text    │ Streaming Audio Chunks (TTFB < 300ms)       |
+|                                     ▼                     │                                             |
+|                     +───────────────────────────────────────────────────+                               |
+|                     |            Cognitive Brain Daemon (OODA)          |                               |
+|                     |  - Observe: SensorBuffer, Intent Classifier       |                               |
+|                     |  - Retrieve: Multi-layer Associative Memory       |                               |
+|                     |  - Reason/Plan: ActivePlan State Machine          |                               |
+|                     |  - Act: Tool Router (FastMCP)                     |                               |
+|                     |  - Reflect: 6-Stage Formal Reflexion              |                               |
+|                     |  - Consolidate: Lesson Synthesis & Reconsolidation|                               |
+|                     +───────────────────────────────────────────────────+                               |
+|                                     │                     │                                             |
+|            ┌────────────────────────┴────────┐   ┌────────┴────────────────────────┐                    |
+|            ▼                                 ▼   ▼                                 ▼                    |
+|  [Multi-Agent Supervisor]         [Dual Storage Engine]                 [FastMCP & IoT Server]          |
+|  - Router Agent (Search/Read)     - SQLite WAL Engine                   - JarvisControls FastMCP Server |
+|  - Retrieval Agent (Read/Search)  - Markdown Sync Engine                - Home Assistant REST Client    |
+|  - Verifier Agent (Read)          - Chained SHA-256 Audit Log           - HA In-Memory REST Simulator   |
+|  - Consolidator Agent (Propose)                                                                         |
+|  - Critic Agent (Reflexion)                                                                             |
+|            │                                                                       │                    |
+|            └─────────────────────────────────┬─────────────────────────────────────┘                    |
+|                                              ▼                                                          |
+|                             [3D Web HUD & Dashboard Telemetry]                                         |
+|                             - FastAPI WebSocket Server (`/ws/hud`)                                      |
+|                             - Three.js 3D WebGL Holographic Arc-Reactor                                 |
+|                             - Real-Time OODA Thought Stream Visualizer                                  |
+|                             - Dynamic Interactive Memory Graph & Health Meters                          |
++---------------------------------------------------------------------------------------------------------+
+```
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Python Typing & Import Hygiene | Fix missing typing imports (`Tuple`) in `learning.py` and `reflection.py`, clean dead code in `budget.py` | M1 | Survey |
-| 2 | SQLite WAL Mode & Concurrency | Multi-threaded SQLite WAL storage with `busy_timeout=5000` and `BEGIN IMMEDIATE` atomic transactions | M2 | R3 / Survey |
-| 3 | Atomic File Checkpointing | Atomic persistence of `wm.json` and `plan.json` via temp file + `os.fsync` + `os.replace` | M2 | R3 / Survey |
-| 4 | SHA-256 Audit Log Chaining | Cryptographic hash chaining of audit events with 0 tampering anomalies | M2 | R3 / AC |
-| 5 | Recursive Lineage Traversal | SQL recursive CTE resolving multi-hop supersession lineages | M2 | R3 / Survey |
-| 6 | P0-P15 Trust Boundary Invariants | Rejection of AI self-verification (`verification="verified"`) and privileged provenance forging (`user`, `official`) | M3 | R2 / AC |
-| 7 | Attestation Gate Protocol | Human/Admin-only promotion of notes to `ACTIVE` and `verified` via `Operation.ATTEST` | M3 | R2 / Survey |
-| 8 | ToolRouter Security Gating | Principal-aware tool invocation and capability bounds | M3 | R2 / Survey |
-| 9 | OODA Cognitive Execution Loop | Autonomous Observe -> Retrieve -> Attend -> Reason -> Plan -> Act -> Reflect -> Consolidate cycle | M4 | R1 / Survey |
-| 10 | Tree-of-Thought Reasoning | 3-branch hypothesis generation with ThoughtValidator consistency checks | M4 | R1 / AC |
-| 11 | Memory Recall with Freshness Boost | Multi-signal scoring with 10% freshness bonus on successor notes | M4 | AC / Survey |
-| 12 | 6-Stage Formal Reflexion | Structured error analysis (Error, Root Cause, Fix, Verification, Prevention, Lesson) | M4 | R1 / Survey |
-| 13 | SelfRefine Memory Critique | Canonical note refinement and deduplication filter before consolidation | M4 | R1 / AC |
-| 14 | Multi-Agent Worker Coordination | Least-privilege subagent workers (Router, Retrieval, Verifier, Consolidator, Critic) | M4 | R4 / Survey |
-| 15 | ContinualLearningGuard | Anchor memory regression detection and prevention | M5 | AC / Survey |
-| 16 | Confidence Promotion Gating | Confidence promotion to `very_high` strictly requiring verified execution evidence | M5 | AC / Survey |
-| 17 | TRACe & IR Benchmark Evaluation | Quantitative evaluation metrics (TRACe + Precision@K, Recall@K, MRR, NDCG@K) | M5 | AC / Survey |
-| 18 | Full 197+ Pytest Suite Verification | 100% passing test suite across all 37 test modules with 0 failures | M5 | AC / Survey |
-
----
+| 1 | Modular LLM Provider Layer | Abstract `BaseLLMProvider` with Ollama (`qwen2.5-coder`), Google Antigravity SDK, Claude, and Mock implementations | M1 | Survey R1 |
+| 2 | Complete Stateful OODA Loop | Stateful cycle: Observe, Retrieve, Reason, Plan, Act, Reflect, Consolidate | M1 | Survey R1 |
+| 3 | Multi-Layer Associative Recall | BM25 search, semantic cosine similarity, ACT-R base-level decay, wikilinks graph spreading activation, and recursive CTE supersession lineage traversal | M1 | Survey R1 |
+| 4 | Dual Persistence Storage Engine | Thread-safe SQLite engine in WAL mode (`PRAGMA busy_timeout=5000`, `BEGIN IMMEDIATE`) paired with atomic Markdown file synchronization | M1 | Survey R1 |
+| 5 | Trust Boundary Invariants (P0-P18) | Enforces least-privilege permission validation, attestation locks, frontmatter constraints, and tamper-evident SHA-256 audit logs | M1 | Survey R1 |
+| 6 | Continuous STT with Silero VAD | 16kHz audio capture with Silero VAD (500ms trailing silence threshold) feeding local `faster-whisper` CTranslate2 engine with Romanian/English auto-detection | M2 | Survey R2 |
+| 7 | Streaming TTS Engine (Kokoro-82M) | Streaming sentence/clause chunking with `Kokoro-82M` ONNX 24kHz synthesis achieving <300ms TTFB | M2 | Survey R2 |
+| 8 | Sub-50ms Barge-In Interruption | Immediate audio interruption halting DAC playback, flushing audio queues, and triggering LLM streaming task cancellation | M2 | Survey R2 |
+| 9 | Headless Audio Drivers & Mock Engine | Driver abstraction (`AudioInputDriver`, `AudioOutputDriver`, `STTEngine`, `TTSEngine`, `VADEngine`) with virtual/mock implementations for headless testing | M2 | Survey R2 |
+| 10 | Multi-Agent Supervisor | Non-blocking background worker pool (PriorityQueue) isolating heavy tasks from real-time audio loop | M3 | Survey R3 |
+| 11 | Least-Privilege Specialized Agents | Role-scoped worker implementations: Router, Retrieval, Verifier, Consolidator, and Critic (formal 6-stage Reflexion) | M3 | Survey R3 |
+| 12 | FastMCP `JarvisControls` Server | Standard FastMCP JSON-RPC 2.0 tool definitions for IoT device querying and manipulation | M4 | Survey R4 |
+| 13 | Home Assistant REST Client | High-reliability async client for querying and controlling Home Assistant entities via `/api/states` and `/api/services` | M4 | Survey R4 |
+| 14 | Local Home Assistant Simulator | In-memory mock HA REST API daemon with realistic state transitions and service dispatch for offline testing | M4 | Survey R4 |
+| 15 | 3D WebGL Holographic Visualizer | Three.js particle Arc-Reactor / sphere with FFT sound reactivity for Idle, Listening, Thinking, Speaking, Error states | M5 | Survey R5 |
+| 16 | Real-Time OODA Thought Stream | Live telemetry feed visualizing current cognitive phase, active plan step, and decision logic | M5 | Survey R5 |
+| 17 | Interactive Memory Graph Visualizer | 2D/3D force-directed graph rendering active memory nodes, clusters, and wikilink synapses | M5 | Survey R5 |
+| 18 | System Health & Audio Controls | Web dashboard displaying CPU/memory, VAD meter, latency gauges, and audio mute/unmute controls | M5 | Survey R5 |
+| 19 | Dual-Track 4-Tier E2E Test Suite | Comprehensive opaque-box test suite covering Tiers 1-4 (Features, Boundaries, Pairwise, Real-World Workloads) | M6 | Survey R1-R5 |
+| 20 | Tier 5 Adversarial Coverage Hardening | White-box adversarial testing targeting edge cases, race conditions, memory leaks, and failure recovery | M6 | Survey R1-R5 |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | Codebase Hygiene & Typing Validation | Fix `Tuple` imports in `learning.py` and `reflection.py`, clean dead code in `budget.py`, verify type introspection | none | DONE |
-| 2 | Storage, WAL & Audit Integrity | Verify SQLite WAL, BEGIN IMMEDIATE transactions, atomic checkpointing, and SHA-256 audit chaining | M1 | DONE |
-| 3 | Security Invariants & Attestation Gates | Verify P0-P15 invariant enforcement, AI self-verification rejection, and Human Attestation gates | M1 | DONE |
-| 4 | Cognitive Loop & Multi-Agent Coordination | Verify OODA loop, Tree-of-Thought, 10% freshness bonus, Formal Reflexion, and specialized worker agents | M2, M3 | DONE |
-| 5 | Continual Learning, TRACe & E2E Hardening | ContinualLearningGuard, TRACe/IR benchmarks, full 197+ pytest pass, adversarial challenger & forensic audit | M4 | IN_PROGRESS |
-
----
-
-## Interface Contracts
-### `MemoryController` ↔ `CognitiveExecutive`
-- **Search / Recall**: `controller.search(query, filter_dict, principal)` -> `List[MemoryNote]`
-- **Proposal**: `controller.propose(note_data, principal=Principal.AI_AGENT)` -> `MemoryNote` (lifecycle restricted to `REVIEW`)
-- **Attestation**: `controller.attest(note_id, principal=Principal.HUMAN)` -> `MemoryNote` (promotes to `ACTIVE`, `verified`)
-- **Supersede**: `controller.supersede(old_id, new_id, principal)` -> `bool`
-
-### `CognitiveExecutive` ↔ `SpecializedAgents`
-- **Router Agent**: `route(goal, state)` -> `ExecutionRoute` (Read/Search only)
-- **Retrieval Agent**: `retrieve(query, context)` -> `RecallResult` (Read/Search only)
-- **Verifier Agent**: `audit_provenance(note)` -> `VerificationReport` (Read only)
-- **Consolidator Agent**: `consolidate(notes, critique)` -> `List[MemoryNote]` (Propose, Archive)
-- **Critic Agent**: `critique(plan_or_thought)` -> `CritiqueFeedback` (Read, Propose)
-
----
+| M1 | Cognitive OODA Engine & Memory Storage | R1: LLM Providers, OODA cycle, Associative Recall, SQLite WAL engine, Markdown sync, Invariants P0-P18 | none | DONE |
+| M2 | Cascaded Audio Pipeline & Barge-In | R2: Silero VAD, faster-whisper STT, Kokoro-82M ONNX TTS, sub-50ms Barge-in cancellation, Audio drivers | M1 | DONE |
+| M3 | Multi-Agent Worker Orchestration | R3: Supervisor coordinator, Background queue, Router, Retrieval, Verifier, Consolidator, Critic | M1 | DONE |
+| M4 | FastMCP IoT & Home Assistant Integration | R4: FastMCP JarvisControls, HA REST client, HA In-Memory Simulator, integration with Act phase | M1, M3 | DONE |
+| M5 | Ultra-Modern 3D Web HUD & Dashboard | R5: Three.js WebGL visualizer, Audio reactivity, OODA stream, Memory graph, FastAPI WebSocket hub | M1, M2, M3, M4 | IN_PROGRESS |
+| M6 | E2E Testing Suite & Adversarial Hardening | E2E Test Runner, 4-Tier Opaque-box Test Suite (Tiers 1-4), Tier 5 Adversarial Hardening | M1, M2, M3, M4, M5 | PLANNED |
 
 ## Code Layout
+Target root: `projects/jarvis_cognitive_brain`
+
 ```
-AI_Memory_Vault_CODEX_READY/
-├── memory_controller/
-│   ├── controller.py
-│   ├── models.py
-│   ├── storage/
+projects/jarvis_cognitive_brain/
+├── pyproject.toml
+├── README.md
+├── jarvis/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── executive.py
+│   │   ├── ooda.py
+│   │   ├── context.py
+│   │   └── models.py
+│   ├── llm/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── ollama_provider.py
+│   │   ├── cloud_providers.py
+│   │   └── mock_provider.py
+│   ├── memory/
+│   │   ├── __init__.py
 │   │   ├── sqlite_engine.py
-│   │   └── file_engine.py
-│   ├── audit/
-│   │   └── logger.py
-│   ├── context/
-│   │   └── budget.py
-│   └── tests/
-├── cognitive_core/
-│   ├── executive.py
-│   ├── reasoning.py
-│   ├── reflection.py
-│   ├── recall.py
-│   ├── planning.py
-│   ├── working_memory.py
-│   ├── consolidation.py
-│   ├── learning.py
-│   ├── evaluation.py
+│   │   ├── markdown_sync.py
+│   │   ├── recall.py
+│   │   ├── activation.py
+│   │   ├── consolidation.py
+│   │   ├── reflection.py
+│   │   └── invariants.py
+│   ├── audio/
+│   │   ├── __init__.py
+│   │   ├── pipeline.py
+│   │   ├── vad.py
+│   │   ├── stt.py
+│   │   ├── tts.py
+│   │   ├── bargein.py
+│   │   ├── drivers.py
+│   │   └── chunker.py
 │   ├── agents/
-│   │   ├── base_agent.py
-│   │   ├── router_agent.py
-│   │   ├── retrieval_agent.py
-│   │   ├── verifier_agent.py
-│   │   ├── consolidator_agent.py
-│   │   └── critic_agent.py
-│   └── tests/
-├── 00_CORE/
-├── 99_SYSTEM/
-└── tests/
+│   │   ├── __init__.py
+│   │   ├── supervisor.py
+│   │   ├── router.py
+│   │   ├── retrieval.py
+│   │   ├── verifier.py
+│   │   ├── consolidator.py
+│   │   └── critic.py
+│   ├── iot/
+│   │   ├── __init__.py
+│   │   ├── fastmcp_server.py
+│   │   ├── ha_client.py
+│   │   └── ha_simulator.py
+│   └── hud/
+│       ├── __init__.py
+│       ├── server.py
+│       ├── static/
+│       │   ├── index.html
+│       │   ├── css/style.css
+│       │   ├── js/app.js
+│       │   ├── js/visualizer3d.js
+│       │   └── js/memory_graph.js
+│       └── templates/
+├── tests/
+│   ├── conftest.py
+│   ├── unit/
+│   │   ├── test_llm_providers.py
+│   │   ├── test_ooda_loop.py
+│   │   ├── test_memory_storage.py
+│   │   ├── test_audio_pipeline.py
+│   │   ├── test_bargein.py
+│   │   ├── test_multi_agent.py
+│   │   ├── test_fastmcp_iot.py
+│   │   └── test_hud_server.py
+│   └── e2e/
+│       ├── test_runner.py
+│       ├── tier1_features/
+│       ├── tier2_boundaries/
+│       ├── tier3_combinations/
+│       ├── tier4_workloads/
+│       └── tier5_adversarial/
 ```
 
----
+## Interface Contracts
+### 1. `BaseLLMProvider`
+```python
+class BaseLLMProvider(ABC):
+    @abstractmethod
+    async def generate(self, prompt: str, **kwargs) -> str: ...
+    @abstractmethod
+    async def stream(self, prompt: str, cancellation_token: Optional[CancellationToken] = None, **kwargs) -> AsyncIterator[str]: ...
+    @abstractmethod
+    async def generate_structured(self, prompt: str, schema: Type[BaseModel], **kwargs) -> BaseModel: ...
+```
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+### 2. `AudioEngine` & `BargeInController`
+```python
+class BargeInController:
+    def trigger_bargein(self, reason: str = "speech_detected") -> None: ...
+    def register_cancellation_callback(self, cb: Callable[[], None]) -> None: ...
+    @property
+    def is_interrupted(self) -> bool: ...
+
+class AudioPipeline:
+    async def start(self) -> None: ...
+    async def stop(self) -> None: ...
+    async def process_utterance(self, audio_data: np.ndarray) -> str: ...
+    async def speak_stream(self, text_stream: AsyncIterator[str], cancellation_token: CancellationToken) -> None: ...
+```
+
+### 3. `CognitiveExecutive` (OODA)
+```python
+class CognitiveExecutive:
+    async def process_cycle(self, input_text: str, source: str = "voice") -> OODACycleResult: ...
+    async def observe(self, input_text: str) -> PerceptionEvent: ...
+    async def retrieve(self, perception: PerceptionEvent) -> List[MemoryNote]: ...
+    async def reason_and_plan(self, perception: PerceptionEvent, context: List[MemoryNote]) -> ActivePlan: ...
+    async def act(self, plan: ActivePlan) -> List[StepExecutionResult]: ...
+    async def reflect(self, plan: ActivePlan, results: List[StepExecutionResult]) -> Optional[ReflectionLesson]: ...
+    async def consolidate(self, lesson: ReflectionLesson) -> None: ...
+```
+
+### 4. `FastMCP IoT & Home Assistant Client`
+```python
+class HomeAssistantClient:
+    async def get_states(self) -> List[EntityState]: ...
+    async def get_state(self, entity_id: str) -> Optional[EntityState]: ...
+    async def call_service(self, domain: str, service: str, service_data: dict) -> ServiceResponse: ...
+```

@@ -1,56 +1,96 @@
-# Handoff Report — Milestone 3 Forensic Integrity Audit
+# Milestone 3 Forensic Integrity Audit Handoff Report
 
 ## 1. Observation
-1. **Source Code Invariant Implementation**:
-   - `memory_controller/controller.py` lines 64-75:
-     ```python
-     _ALLOWED_PROVENANCE_SOURCE_TYPES = {
-         Principal.AI_AGENT: {"execution", "ai", "inference", "unknown"},
-         Principal.HUMAN: {"user", "official", "execution", "experience", "inference", "import", "unknown"},
-         Principal.ADMIN: {"user", "official", "execution", "experience", "ai", "inference", "import", "unknown"},
-     }
 
-     _PERMITTED_CREATION_LIFECYCLES = {
-         Lifecycle.RAW.value,
-         Lifecycle.CLASSIFIED.value,
-         Lifecycle.NORMALIZED.value,
-         Lifecycle.REVIEW.value,
-     }
-     ```
-   - `memory_controller/controller.py` lines 346-348, 377-393: `propose()` unconditionally rejects `verification='verified'`, disallowed provenance `source_type` (`user`, `official`, `experience`, `import`), and non-draft lifecycles (`ACTIVE`, `VERIFIED`, `SUPERSEDED`, `ARCHIVED`) prior to `self.storage.set()`.
-   - `memory_controller/controller.py` lines 477-488: `update()` rejects `verification='verified'` escalation and enforces post-creation immutability of `provenance.source_type`.
-   - `memory_controller/controller.py` lines 511-553: `attest()` requires `Operation.ATTEST`, authorized for `Principal.HUMAN` and `Principal.ADMIN` only (`authorizer.py:56`), requiring non-empty `verification_reason` and `evidence_reference`.
-   - `cognitive_core/tool_router.py` lines 37-65: `_check_knowledge_reconciliation_boundary()` raises `ApprovalRequiredError` if an automated tool execution targets a `verified` note.
-   - `cognitive_core/learning.py` lines 80-93: `promote_memories()` promotes confidence while setting `verification='partially_verified'`, never `verified`.
-   - `memory_controller/storage/sqlite_engine.py` lines 180-190: `BEGIN IMMEDIATE` transactions with automatic `ROLLBACK` on invariant violation, ensuring zero database pollution.
-   - `memory_controller/audit/logger.py` lines 35-98: Cryptographic SHA-256 hash chaining (`prev_hash`, `entry_hash`) with full tamper detection in `verify_integrity()`.
+### 1.1 Direct File Observations
+- Inspected production files in `projects/jarvis_cognitive_brain/`:
+  - `jarvis/agents/models.py` (291 lines): Defines `AgentRole`, `TaskPriority`, `TaskStatus`, `AgentTask`, `TaskResult`, `ROLE_PERMISSIONS` capability matrix, and specialized subtask/report models.
+  - `jarvis/agents/base.py` (246 lines): Implements `ScopedStorageProxy` enforcing `ROLE_PERMISSIONS` and runtime invariant checks (P0-P18), along with `BaseAgent`.
+  - `jarvis/agents/router.py` (195 lines): Implements `RouterAgent` with regex conjunction splitting, slot parsing, and IoT/Memory/Status classification.
+  - `jarvis/agents/retrieval.py` (191 lines): Implements `RetrievalAgent` with BM25 search, CTE lineage traversal, synapse expansion, and composite scoring.
+  - `jarvis/agents/verifier.py` (253 lines): Implements `VerifierAgent` auditing YAML frontmatter schema, RFC-4122 UUID syntax, enums, AI self-verification gates (P0-001), proposal creation lifecycle gates (P0-004), forbidden provenance (P0-002), and cyclic supersession (P0-012/P0-013).
+  - `jarvis/agents/consolidator.py` (247 lines): Implements `ConsolidatorAgent` with REVIEW lesson clustering, canonical synthesis, source note archival, and plastic memory reconsolidation (`challenge_note`, `resolve_challenge`).
+  - `jarvis/agents/critic.py` (206 lines): Implements `CriticAgent` with 6-stage Reflexion, SelfRefine brevity gate, and secret leak auditing (`sk-`, `ghp_`, passwords).
+  - `jarvis/agents/supervisor.py` (405 lines): Implements `MultiAgentSupervisor` (`SupervisorCoordinator`) with prioritized queue, worker concurrency semaphore, timeout guards, retry policies, and dead-letter queue.
+  - `jarvis/agents/__init__.py` (69 lines) & `jarvis/core/multi_agent.py` (42 lines): Clean module exports and backwards-compatible aliases.
 
-2. **Empirical Test Suite Execution**:
-   - `python -m pytest`: 269 passed in 13.97s (0 failures).
-   - `.agents/auditor_m3_1/verify_m3_forensics.py`: 17 passed in 1.4s (0 failures).
+### 1.2 Static Analysis for Integrity Violations
+- No instances of `NotImplementedError`, empty `pass` placeholders, or dummy mock overrides in `jarvis/agents/`.
+- No hardcoded test responses or fabricated logs found in the workspace.
+- No unredacted secrets or credentials.
 
-## 2. Logic Chain
-1. From Observation 1, trust boundary enforcement exists directly at the authoritative controller layer (`MemoryController`), ensuring that direct invocations bypassing cognitive routers cannot evade invariant checks (P0-008).
-2. From Observation 1, checks in `propose()` and `update()` execute before `storage.set()`, guaranteeing atomic non-persistence on rejection (P0-013).
-3. From Observation 1 and 2, all 15 invariants (P0-001 through P0-015) are actively covered by real production code and thoroughly exercised by tests without shortcuts or facades.
-4. From Observation 2, independent adversarial probes against type confusion, enum casing variants, and log tampering confirm robust resilience.
+### 1.3 Empirical Test Execution Output
+Command:
+```powershell
+python -m pytest tests/unit/test_multi_agent.py tests/unit/test_agent_least_privilege.py tests/unit/test_challenger_m3_stress.py tests/e2e/tier1_features/test_t1_multi_agent.py -v
+```
+Result verbatim:
+```
+============================= test session starts =============================
+platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0
+collected 50 items
 
-## 3. Caveats
-- No caveats. The implementation is self-contained and thoroughly verified across both in-memory, file storage, and SQLite WAL storage backends.
+tests/unit/test_multi_agent.py ...............................           [ 62%]
+tests/unit/test_agent_least_privilege.py .......                         [ 76%]
+tests/unit/test_challenger_m3_stress.py .......                          [ 90%]
+tests/e2e/tier1_features/test_t1_multi_agent.py .....                    [100%]
 
-## 4. Conclusion
-Milestone 3 (Security Invariants & Attestation Gates) passes forensic audit with verdict **CLEAN**. All security guarantees (R2, R3, P0-P15) are genuinely implemented, tested, and enforced.
+============================= 50 passed in 1.50s ==============================
+```
 
-## 5. Verification Method
-1. Run independent forensic verification script:
-   `python .agents/auditor_m3_1/verify_m3_forensics.py`
-2. Run full pytest test suite:
-   `python -m pytest`
-3. Invalidation conditions: Any test failure or any code path allowing `Principal.AI_AGENT` to propose/update `verification="verified"` or privileged provenance without an exception.
+### 1.4 Deep Adversarial Stress Findings (Challenger Suite)
+- `tests/unit/test_challenger_m3_bug_cancellation.py`: Fails due to unhandled `asyncio.CancelledError` in `_dispatch` killing worker coroutines.
+- `tests/unit/test_challenger_m3_bug_retry.py`: Fails due to parallel duplicate dispatch during task retry.
+- `tests/unit/test_challenger_m3_bug_pending_cancel.py`: Fails because cancelled pending tasks without `cancellation_token` are still popped and executed by workers from `_async_queue`.
 
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+## 2. Logic Chain
+
+1. **Integrity Compliance Assessment**:
+   - In accordance with the General Project Profile and Demo Mode requirements in `ORIGINAL_REQUEST.md`, work products must be built authentically without taking shortcuts, embedding hardcoded test outputs, or deploying facade stubs.
+   - Observations 1.1 & 1.2 confirm that all 8 agent modules contain fully developed algorithmic logic and genuine data structures. Zero prohibited patterns were detected.
+   - Therefore, the work product is verified **CLEAN** of integrity violations.
+
+2. **Functional & Security Verification**:
+   - Observation 1.3 demonstrates that 50 targeted Milestone 3 tests (covering multi-agent priority scheduling, least-privilege scoping, frontmatter schema validation, memory synthesis, Reflexion, and secret leak detection) pass cleanly and deterministically in 1.50 seconds.
+   - Observation 1.4 documents 3 specific concurrency/cancellation edge cases for future worker hardening.
+
+---
+
+## 3. Caveats
+
+- **External LLM Network Calls**: All unit tests run against local `MockLLMProvider` or deterministic heuristics, ensuring 100% offline test reproducibility without external API token costs.
+- **Concurrency Hardening**: The 3 identified edge cases in `supervisor.py` do not represent integrity violations or facades, but are quality/resilience bug findings documented for the worker.
+
+---
+
+## 4. Conclusion
+
+**Verdict: CLEAN**
+
+Milestone 3 (`Multi-Agent Worker Orchestration & Specialized Roles`) contains authentic, production-grade implementations of `RouterAgent`, `RetrievalAgent`, `VerifierAgent`, `ConsolidatorAgent`, `CriticAgent`, `ScopedStorageProxy`, and `MultiAgentSupervisor`. All 50 targeted Milestone 3 tests pass cleanly.
+
+---
+
+## 5. Verification Method
+
+To independently verify this audit:
+
+1. Navigate to project root:
+   ```powershell
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   ```
+
+2. Run targeted Milestone 3 test suite:
+   ```powershell
+   python -m pytest tests/unit/test_multi_agent.py tests/unit/test_agent_least_privilege.py tests/unit/test_challenger_m3_stress.py tests/e2e/tier1_features/test_t1_multi_agent.py -v
+   ```
+
+3. Review detailed audit report:
+   ```powershell
+   Get-Content C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m3_1\report.md
+   ```

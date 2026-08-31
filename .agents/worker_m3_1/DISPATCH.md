@@ -1,30 +1,20 @@
-## 2026-08-14T23:16:31+03:00
+## 2026-08-28T13:58:25Z
+Task: Implement Milestone 3 (Multi-Agent Subsystem, Agent Roles, RBAC Scoping, Supervisor, and Full Test Suite) for jarvis_cognitive_brain.
+Working metadata dir: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
+Project root: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
-You are the Implementation Worker for Milestone 3: Security Invariants & Attestation Gates.
-Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_1
-
-MANDATORY FIRST STEP:
-Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md and c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md.
-
-MANDATORY INTEGRITY WARNING:
-DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results, create dummy/facade implementations, or circumvent the intended task. A auditor will independently verify your work. Integrity violations WILL be detected and your work WILL be rejected.
-
-Scope & Tasks:
-1. Verify and enforce all P0-P15 security invariants in `memory_controller/controller.py` and `cognitive_core/`:
-   - Invariant P0-001 / P0-005: AI Agent (`Principal.AI_AGENT`) cannot propose or update `verification="verified"`.
-   - Invariant P0-002 / P0-003: AI Agent cannot claim privileged `source_type` (`user`, `official`, `experience`, `import`). Permitted: `execution`, `ai`, `inference`, `unknown`.
-   - Invariant P0-004: AI Agent can only propose into `{RAW, CLASSIFIED, NORMALIZED, REVIEW}` lifecycles.
-   - Invariant P0-006: Provenance `source_type` is immutable after creation.
-   - Invariant P0-007 / P0-008: Attestation gate requires `Operation.ATTEST` and is strictly restricted to `Principal.HUMAN` and `Principal.ADMIN`.
-   - Invariant P0-009 / P0-015: Tool router capability bounds and principal checks.
-2. Verify that any invalid proposal/update is rejected cleanly without partial database writes.
-3. Run security tests: `memory_controller/tests/test_security_hardening.py`, `cognitive_core/tests/test_tool_router_security.py`, and the full test suite.
-4. Record your findings in `.agents/worker_m3_1/changes.md` and write handoff in `.agents/worker_m3_1/handoff.md`.
-5. Send message to parent.
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+Deliverables:
+1. jarvis/agents/models.py
+2. jarvis/agents/base.py
+3. jarvis/agents/router.py
+4. jarvis/agents/retrieval.py
+5. jarvis/agents/verifier.py
+6. jarvis/agents/consolidator.py
+7. jarvis/agents/critic.py
+8. jarvis/agents/supervisor.py
+9. jarvis/agents/__init__.py
+10. jarvis/core/multi_agent.py
+11. tests/unit/test_multi_agent.py
+12. tests/unit/test_agent_least_privilege.py
+13. tests/unit/test_challenger_m3_stress.py
+14. tests/e2e/tier1_features/test_t1_multi_agent.py update.

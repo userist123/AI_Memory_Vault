@@ -9,6 +9,7 @@ from datetime import datetime, timezone, timedelta
 
 # Core imports
 import hashlib
+import threading
 from .authorizer import Authorizer, DefaultAuthorizer, Principal, Operation
 from .validation.schema import validate_frontmatter
 from .validation.provenance import validate_provenance
@@ -27,6 +28,7 @@ from .context.relevance_scoring import RelevanceScorer
 from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.budget import ContextBudget, load_agent_budget
 from .context.pack_builder import ContextPackBuilder
+from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntityResolver
 
 class StorageEngine:
     def __init__(self):
@@ -82,11 +84,13 @@ class MemoryController:
         self.authorizer = authorizer or DefaultAuthorizer()
         self.cache = Cache()
         self.supersession_enforcer = SupersessionEnforcer(self.storage)
+        self._mutation_lock = threading.RLock()
         # Initialize pipeline components
         self.query_classifier = QueryClassifier()
         self.retrieval_engine = RetrievalEngine(storage, cache=self.cache)
         self.scorer = RelevanceScorer()
         self.pack_builder = ContextPackBuilder()
+        self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
         # Counter for generating review note IDs (r2, r3, ...)
         self._review_counter = 2
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
@@ -336,302 +340,363 @@ class MemoryController:
             audit_event('search', principal, target_id, success=False, details={'error': str(e)})
             raise
 
+    def search_financial(
+        self,
+        principal: Principal = Principal.AI_AGENT,
+        query: str = "",
+        symbol: Optional[str] = None,
+        symbols: Optional[List[str]] = None,
+        asset_symbol: Optional[str] = None,
+        category: Optional[str] = None,
+        asset_classes: Optional[List[str]] = None,
+        min_confidence: Optional[str] = None,
+        confidence_min: Optional[str] = None,
+        verification_state: Optional[str] = None,
+        verification_states: Optional[List[str]] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        types: Optional[List[str]] = None,
+        lifecycles: Optional[List[Lifecycle]] = None,
+        page_size: int = 10,
+        limit: Optional[int] = None,
+        page_token: Optional[str] = None,
+        disclosure_level: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Execute high-precision multi-layered financial search pipeline.
+        
+        Preserves all P0-P18 invariants, context budgets, and HMAC pagination security.
+        """
+        self._check_auth(principal, Operation.SEARCH)
+        effective_disclosure = disclosure_level or getattr(self, 'default_disclosure', 'metadata')
+        return self.financial_search_engine.execute_search(
+            principal=principal,
+            query=query,
+            symbol=symbol,
+            symbols=symbols,
+            asset_symbol=asset_symbol,
+            category=category,
+            asset_classes=asset_classes,
+            min_confidence=min_confidence,
+            confidence_min=confidence_min,
+            verification_state=verification_state,
+            verification_states=verification_states,
+            date_from=date_from,
+            date_to=date_to,
+            types=types,
+            lifecycles=lifecycles,
+            page_size=page_size,
+            limit=limit,
+            page_token=page_token,
+            disclosure_level=effective_disclosure,
+        )
+
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
-        note_id = note_data.get('id', 'unknown')
-        try:
-            self._check_auth(principal, Operation.PROPOSE)
-            if not note_data.get('id'):
-                raise ValueError('Note must include an id')
-            check_path_traversal(note_id)
+        with self._mutation_lock:
+            note_id = note_data.get('id', 'unknown')
+            try:
+                self._check_auth(principal, Operation.PROPOSE)
+                if not note_data.get('id'):
+                    raise ValueError('Note must include an id')
+                check_path_traversal(note_id)
 
-            if note_data.get('verification') == 'verified':
-                raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
+                if note_data.get('verification') == 'verified':
+                    raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
 
-            # Build note using canonical defaults and overlay caller data
-            now_date = datetime.now(timezone.utc).date().isoformat()
-            defaults = {
-                'type': 'knowledge',
-                'category': 'test',  # free‑text allowed
-                'tags': [],
-                'created': now_date,
-                'updated': now_date,
-                'provenance': {
-                    'source_type': 'user' if principal in {Principal.HUMAN, Principal.ADMIN} else 'inference',
-                    'source_ref': 'generated',
-                },
-                'confidence': 'high',
-                'verification': 'unverified',
-                'relations': [],
-                'lifecycle': Lifecycle.RAW.value,
-            }
-            # Start with defaults
-            note = defaults.copy()
-            # Overlay all provided fields
-            note.update(note_data)
-            # Merge provenance specially to allow partial overrides
-            prov = defaults['provenance'].copy()
-            prov.update(note_data.get('provenance', {}))
-            note['provenance'] = prov
-            # Ensure id remains note_id
-            note['id'] = note_id
+                # Build note using canonical defaults and overlay caller data
+                now_date = datetime.now(timezone.utc).date().isoformat()
+                defaults = {
+                    'type': 'knowledge',
+                    'category': 'test',  # free‑text allowed
+                    'tags': [],
+                    'created': now_date,
+                    'updated': now_date,
+                    'provenance': {
+                        'source_type': 'user' if principal in {Principal.HUMAN, Principal.ADMIN} else 'inference',
+                        'source_ref': 'generated',
+                    },
+                    'confidence': 'high',
+                    'verification': 'unverified',
+                    'relations': [],
+                    'lifecycle': Lifecycle.RAW.value,
+                }
+                # Start with defaults
+                note = defaults.copy()
+                # Overlay all provided fields
+                note.update(note_data)
+                # Merge provenance specially to allow partial overrides
+                prov = defaults['provenance'].copy()
+                prov.update(note_data.get('provenance', {}))
+                note['provenance'] = prov
+                # Ensure id remains note_id
+                note['id'] = note_id
 
-            if note.get('verification') == 'verified':
-                raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
+                if note.get('verification') == 'verified':
+                    raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
 
-            # Validate provenance source_type against principal allowlist
-            source_type = note['provenance'].get('source_type', 'unknown')
-            allowed_sources = _ALLOWED_PROVENANCE_SOURCE_TYPES.get(principal, {"unknown"})
-            if source_type not in allowed_sources:
-                raise ValueError(f"Principal '{principal.value}' is not permitted to claim provenance source_type '{source_type}'")
+                # Validate provenance source_type against principal allowlist
+                source_type = note['provenance'].get('source_type', 'unknown')
+                allowed_sources = _ALLOWED_PROVENANCE_SOURCE_TYPES.get(principal, {"unknown"})
+                if source_type not in allowed_sources:
+                    raise ValueError(f"Principal '{principal.value}' is not permitted to claim provenance source_type '{source_type}'")
 
-            # Validate lifecycle at creation (AI_AGENT cannot inject escalated lifecycles like ACTIVE)
-            lifecycle_val = note.get('lifecycle')
-            if isinstance(lifecycle_val, Lifecycle):
-                lifecycle_val = lifecycle_val.value
-                note['lifecycle'] = lifecycle_val
-            if principal == Principal.AI_AGENT and lifecycle_val not in _PERMITTED_CREATION_LIFECYCLES:
-                raise ValueError(f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW.")
+                # Validate lifecycle at creation (AI_AGENT cannot inject escalated lifecycles like ACTIVE)
+                lifecycle_val = note.get('lifecycle')
+                if isinstance(lifecycle_val, Lifecycle):
+                    lifecycle_val = lifecycle_val.value
+                    note['lifecycle'] = lifecycle_val
+                if principal == Principal.AI_AGENT and lifecycle_val not in _PERMITTED_CREATION_LIFECYCLES:
+                    raise ValueError(f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW.")
 
-            # Force server timestamps
-            note['created'] = now_date
-            note['updated'] = now_date
+                # Force server timestamps if not explicitly provided
+                note['created'] = note_data.get('created', now_date)
+                note['updated'] = note_data.get('updated', now_date)
 
-            # Build a copy without extra fields for validation
-            validation_note = {k: v for k, v in note.items() if k != "content"}
-            self._validate_note(validation_note)
-            # Store the full note (including possible extra fields like content)
-            self.storage.set(note_id, note)
-            self.cache.invalidate_by_event('memory_updated')
-            audit_event('propose', principal, note_id, success=True)
-            return note_id
-        except Exception as e:
-            audit_event('propose', principal, note_id, success=False, details={'error': str(e)})
-            raise
+                # Build a copy without extra fields for validation
+                validation_note = {k: v for k, v in note.items() if k != "content"}
+                self._validate_note(validation_note)
+                # Store the full note (including possible extra fields like content)
+                self.storage.set(note_id, note)
+                self.cache.invalidate_by_event('memory_updated')
+                if hasattr(self, 'financial_search_engine') and self.financial_search_engine is not None:
+                    self.financial_search_engine.index_note(note)
+                audit_event('propose', principal, note_id, success=True)
+                return note_id
+            except Exception as e:
+                audit_event('propose', principal, note_id, success=False, details={'error': str(e)})
+                raise
 
     def review(self, principal: Principal, note_id: str, decision: str, comments: Optional[str] = None) -> None:
-        try:
-            self._check_auth(principal, Operation.REVIEW)
-            check_path_traversal(note_id)
-            note = self.storage.get(note_id)
-            if not note:
-                raise ValueError('Note not found')
-            if note['lifecycle'] not in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED, Lifecycle.REVIEW}:
-                raise ValueError('Only RAW/CLASSIFIED/NORMALIZED/REVIEW notes can be reviewed')
-            if decision not in {'agree', 'approve', 'reject'}:
-                # Keep original strict set but allow 'agree' for compatibility
-                raise ValueError('Decision must be approve or reject')
-            # Update original note lifecycle to REVIEW (if not already)
-            note['lifecycle'] = Lifecycle.REVIEW
-            self.storage.set(note_id, note)
-            # Create a separate review record note
-            review_id = f"r{MemoryController._global_review_counter}"
-            MemoryController._global_review_counter += 1
-            review_note = {
-                'id': review_id,
-                'review': {'by': principal.value, 'decision': decision, 'comments': comments}
-            }
-            self.storage.set(review_id, review_note)
-            self.cache.invalidate_by_event('memory_updated')
-            audit_event('review', principal, note_id, success=True, details={'decision': decision})
-        except Exception as e:
-            audit_event('review', principal, note_id, success=False, details={'decision': decision, 'error': str(e)})
-            raise
+        with self._mutation_lock:
+            try:
+                self._check_auth(principal, Operation.REVIEW)
+                check_path_traversal(note_id)
+                note = self.storage.get(note_id)
+                if not note:
+                    raise ValueError('Note not found')
+                if note['lifecycle'] not in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED, Lifecycle.REVIEW}:
+                    raise ValueError('Only RAW/CLASSIFIED/NORMALIZED/REVIEW notes can be reviewed')
+                if decision not in {'agree', 'approve', 'reject'}:
+                    # Keep original strict set but allow 'agree' for compatibility
+                    raise ValueError('Decision must be approve or reject')
+                # Update original note lifecycle to REVIEW (if not already)
+                note['lifecycle'] = Lifecycle.REVIEW
+                self.storage.set(note_id, note)
+                # Create a separate review record note
+                review_id = f"r{MemoryController._global_review_counter}"
+                MemoryController._global_review_counter += 1
+                review_note = {
+                    'id': review_id,
+                    'review': {'by': principal.value, 'decision': decision, 'comments': comments}
+                }
+                self.storage.set(review_id, review_note)
+                self.cache.invalidate_by_event('memory_updated')
+                audit_event('review', principal, note_id, success=True, details={'decision': decision})
+            except Exception as e:
+                audit_event('review', principal, note_id, success=False, details={'decision': decision, 'error': str(e)})
+                raise
 
     def promote(self, principal: Principal, note_id: str) -> None:
-        try:
-            self._check_auth(principal, Operation.PROMOTE)
-            check_path_traversal(note_id)
-            note = self.storage.get(note_id)
-            if not note:
-                raise ValueError('Note not found')
-            if note['lifecycle'] != Lifecycle.REVIEW:
-                raise ValueError('Only REVIEW notes can be promoted')
-            note['lifecycle'] = Lifecycle.ACTIVE
-            self.storage.set(note_id, note)
-            self.cache.invalidate_by_event('memory_updated')
-            audit_event('promote', principal, note_id, success=True)
-        except Exception as e:
-            audit_event('promote', principal, note_id, success=False, details={'error': str(e)})
-            raise
+        with self._mutation_lock:
+            try:
+                self._check_auth(principal, Operation.PROMOTE)
+                check_path_traversal(note_id)
+                note = self.storage.get(note_id)
+                if not note:
+                    raise ValueError('Note not found')
+                if note['lifecycle'] != Lifecycle.REVIEW:
+                    raise ValueError('Only REVIEW notes can be promoted')
+                note['lifecycle'] = Lifecycle.ACTIVE
+                self.storage.set(note_id, note)
+                self.cache.invalidate_by_event('memory_updated')
+                audit_event('promote', principal, note_id, success=True)
+            except Exception as e:
+                audit_event('promote', principal, note_id, success=False, details={'error': str(e)})
+                raise
 
     def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
-        try:
-            self._check_auth(principal, Operation.UPDATE)
-            check_path_traversal(note_id)
-            if updates is None:
-                updates = {}
-            if kwargs:
-                updates = {**updates, **kwargs}
-            note = self.storage.get(note_id)
-            if not note:
-                raise ValueError('Note not found')
-            if note['lifecycle'] != Lifecycle.ACTIVE:
-                if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
-                    pass
+        with self._mutation_lock:
+            try:
+                self._check_auth(principal, Operation.UPDATE)
+                check_path_traversal(note_id)
+                if updates is None:
+                    updates = {}
+                if kwargs:
+                    updates = {**updates, **kwargs}
+                note = self.storage.get(note_id)
+                if not note:
+                    raise ValueError('Note not found')
+                if note['lifecycle'] != Lifecycle.ACTIVE:
+                    if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
+                        pass
+                    else:
+                        raise ValueError('Updates not permitted for this lifecycle and principal')
+                immutable = {'id', 'lifecycle'}
+                for k in immutable:
+                    if k in updates and updates[k] != note.get(k):
+                        raise ValueError(f'Field {k} is immutable')
+
+                # Reject verification='verified' via update for all principals
+                if updates.get('verification') == 'verified':
+                    raise ValueError("Verification status 'verified' cannot be escalated via update. Use attest() instead.")
+
+                # Reject changes to provenance.source_type (immutable post-creation for all principals)
+                if 'provenance' in updates and isinstance(updates['provenance'], dict):
+                    if 'source_type' in updates['provenance']:
+                        new_st = updates['provenance']['source_type']
+                        old_st = note.get('provenance', {}).get('source_type')
+                        if new_st != old_st:
+                            raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
+
+                old_valid_until = note.get('valid_until')
+                new_valid_until = updates.get('valid_until')
+                has_valid_until_changed = 'valid_until' in updates and old_valid_until != new_valid_until
+
+                note.update(updates)
+                # Force server updated timestamp
+                now_date = datetime.now(timezone.utc).date().isoformat()
+                note['updated'] = now_date
+
+                self._validate_note(note)
+                self.storage.set(note_id, note)
+                self.cache.invalidate_by_event('memory_updated')
+                if hasattr(self, 'financial_search_engine') and self.financial_search_engine is not None:
+                    self.financial_search_engine.index_note(note)
+
+                if has_valid_until_changed:
+                    audit_event('valid_until_update', principal, note_id, success=True, 
+                                details={'old_valid_until': old_valid_until, 'new_valid_until': new_valid_until})
                 else:
-                    raise ValueError('Updates not permitted for this lifecycle and principal')
-            immutable = {'id', 'lifecycle'}
-            for k in immutable:
-                if k in updates and updates[k] != note.get(k):
-                    raise ValueError(f'Field {k} is immutable')
-
-            # Reject verification='verified' via update for all principals
-            if updates.get('verification') == 'verified':
-                raise ValueError("Verification status 'verified' cannot be escalated via update. Use attest() instead.")
-
-            # Reject changes to provenance.source_type (immutable post-creation for all principals)
-            if 'provenance' in updates and isinstance(updates['provenance'], dict):
-                if 'source_type' in updates['provenance']:
-                    new_st = updates['provenance']['source_type']
-                    old_st = note.get('provenance', {}).get('source_type')
-                    if new_st != old_st:
-                        raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
-
-            old_valid_until = note.get('valid_until')
-            new_valid_until = updates.get('valid_until')
-            has_valid_until_changed = 'valid_until' in updates and old_valid_until != new_valid_until
-
-            note.update(updates)
-            # Force server updated timestamp
-            now_date = datetime.now(timezone.utc).date().isoformat()
-            note['updated'] = now_date
-
-            self._validate_note(note)
-            self.storage.set(note_id, note)
-            self.cache.invalidate_by_event('memory_updated')
-
-            if has_valid_until_changed:
-                audit_event('valid_until_update', principal, note_id, success=True, 
-                            details={'old_valid_until': old_valid_until, 'new_valid_until': new_valid_until})
-            else:
-                audit_event('update', principal, note_id, success=True)
-        except Exception as e:
-            audit_event('update', principal, note_id, success=False, details={'error': str(e)})
-            raise
+                    audit_event('update', principal, note_id, success=True)
+            except Exception as e:
+                audit_event('update', principal, note_id, success=False, details={'error': str(e)})
+                raise
 
     def attest(self, principal: Principal, note_id: str, verification_reason: str, evidence_reference: str, verification_state: str = "verified") -> None:
-        try:
-            self._check_auth(principal, Operation.ATTEST)
-            check_path_traversal(note_id)
-            if not verification_reason or not verification_reason.strip():
-                raise ValueError("Attestation requires a non-empty verification_reason")
-            if not evidence_reference or not evidence_reference.strip():
-                raise ValueError("Attestation requires a non-empty evidence_reference")
+        with self._mutation_lock:
+            try:
+                self._check_auth(principal, Operation.ATTEST)
+                check_path_traversal(note_id)
+                if not verification_reason or not verification_reason.strip():
+                    raise ValueError("Attestation requires a non-empty verification_reason")
+                if not evidence_reference or not evidence_reference.strip():
+                    raise ValueError("Attestation requires a non-empty evidence_reference")
 
-            note = self.storage.get(note_id)
-            if not note:
-                raise ValueError('Note not found')
+                note = self.storage.get(note_id)
+                if not note:
+                    raise ValueError('Note not found')
 
-            previous_state = note.get('verification', 'unverified')
-            if previous_state == verification_state:
-                return
+                previous_state = note.get('verification', 'unverified')
+                if previous_state == verification_state:
+                    return
 
-            now_date = datetime.now(timezone.utc).date().isoformat()
-            note['verification'] = verification_state
-            note['verification_source'] = principal.value
-            note['last_verified'] = now_date
-            note['updated'] = now_date
+                now_date = datetime.now(timezone.utc).date().isoformat()
+                note['verification'] = verification_state
+                note['verification_source'] = principal.value
+                note['last_verified'] = now_date
+                note['updated'] = now_date
 
-            validation_note = {k: v for k, v in note.items() if k != "content"}
-            self._validate_note(validation_note)
-            self.storage.set(note_id, note)
-            self.cache.invalidate_by_event('memory_updated')
+                validation_note = {k: v for k, v in note.items() if k != "content"}
+                self._validate_note(validation_note)
+                self.storage.set(note_id, note)
+                self.cache.invalidate_by_event('memory_updated')
 
-            audit_event('attest', principal, note_id, success=True, details={
-                'attested_by': principal.value,
-                'reason': verification_reason,
-                'evidence_reference': evidence_reference,
-                'previous_verification_state': previous_state,
-                'new_verification_state': verification_state
-            })
-        except Exception as e:
-            audit_event('attest', principal, note_id, success=False, details={
-                'attested_by': principal.value,
-                'reason': verification_reason if 'verification_reason' in locals() else '',
-                'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '',
-                'error': str(e)
-            })
-            raise
+                audit_event('attest', principal, note_id, success=True, details={
+                    'attested_by': principal.value,
+                    'reason': verification_reason,
+                    'evidence_reference': evidence_reference,
+                    'previous_verification_state': previous_state,
+                    'new_verification_state': verification_state
+                })
+            except Exception as e:
+                audit_event('attest', principal, note_id, success=False, details={
+                    'attested_by': principal.value,
+                    'reason': verification_reason if 'verification_reason' in locals() else '',
+                    'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '',
+                    'error': str(e)
+                })
+                raise
 
     def archive(self, principal: Principal, note_id: str, reason: str) -> None:
-        try:
-            self._check_auth(principal, Operation.ARCHIVE)
-            check_path_traversal(note_id)
-            note = self.storage.get(note_id)
-            if not note:
-                raise ValueError('Note not found')
-            note['lifecycle'] = Lifecycle.ARCHIVED
-            note['archive_reason'] = reason
-            self.storage.set(note_id, note)
-            self.cache.invalidate_by_event('memory_updated')
-            audit_event('archive', principal, note_id, success=True, details={'reason': reason})
-        except Exception as e:
-            audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)})
-            raise
+        with self._mutation_lock:
+            try:
+                self._check_auth(principal, Operation.ARCHIVE)
+                check_path_traversal(note_id)
+                note = self.storage.get(note_id)
+                if not note:
+                    raise ValueError('Note not found')
+                note['lifecycle'] = Lifecycle.ARCHIVED
+                note['archive_reason'] = reason
+                self.storage.set(note_id, note)
+                self.cache.invalidate_by_event('memory_updated')
+                audit_event('archive', principal, note_id, success=True, details={'reason': reason})
+            except Exception as e:
+                audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)})
+                raise
 
     def supersede(self, principal: Principal, old_id: str, new_id: str, evidence: str = "") -> None:
-        try:
-            self._check_auth(principal, Operation.SUPERSEDE)
-            check_path_traversal(old_id)
-            check_path_traversal(new_id)
-            
-            # 1. Validate invariants
-            self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
-            
-            old_note = self.storage.get(old_id)
-            new_note = self.storage.get(new_id)
-            
-            # Keep original state for atomic rollback on failure
-            old_note_orig = old_note.copy()
-            new_note_orig = new_note.copy()
-            
-            now_date = datetime.now(timezone.utc).date().isoformat()
-            
-            # Prepare updates for OLD note (only allowed field modifications to keep content intact)
-            old_note["lifecycle"] = Lifecycle.SUPERSEDED.value
-            old_note["superseded_by"] = new_id
-            old_note["updated"] = now_date
-            
-            # Add reciprocal relation in OLD note
-            if not any(r.get("target_id") == new_id and r.get("relation") == "replaced_by" for r in old_note.get("relations", [])):
-                old_note.setdefault("relations", []).append({
-                    "relation": "replaced_by",
-                    "target": new_note.get("type", "knowledge"),
-                    "target_id": new_id
-                })
-                
-            # Prepare updates for NEW note
-            new_note["supersedes"] = old_id
-            new_note["updated"] = now_date
-            
-            # Add reciprocal relation in NEW note
-            if not any(r.get("target_id") == old_id and r.get("relation") == "replaces" for r in new_note.get("relations", [])):
-                new_note.setdefault("relations", []).append({
-                    "relation": "replaces",
-                    "target": old_note.get("type", "knowledge"),
-                    "target_id": old_id
-                })
-                
-            # Transactional atomic persistence
+        with self._mutation_lock:
             try:
-                self.storage.set(old_id, old_note)
-                try:
-                    self.storage.set(new_id, new_note)
-                except Exception as e:
-                    # Rollback first set operation on failure
-                    self.storage.set(old_id, old_note_orig)
-                    raise e
-            except Exception as e:
-                raise ValueError(f"Atomic supersession write failed: {str(e)}")
+                self._check_auth(principal, Operation.SUPERSEDE)
+                check_path_traversal(old_id)
+                check_path_traversal(new_id)
                 
-            self.cache.invalidate_by_event('memory_updated')
-            
-            # Audit logging: supersede operation and archive_superseded
-            audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence})
-            audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
-        except Exception as e:
-            audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
-            raise
+                # 1. Validate invariants
+                self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
+                
+                old_note = self.storage.get(old_id)
+                new_note = self.storage.get(new_id)
+                
+                # Keep original state for atomic rollback on failure
+                old_note_orig = old_note.copy()
+                new_note_orig = new_note.copy()
+                
+                now_date = datetime.now(timezone.utc).date().isoformat()
+                
+                # Prepare updates for OLD note (only allowed field modifications to keep content intact)
+                old_note["lifecycle"] = Lifecycle.SUPERSEDED.value
+                old_note["superseded_by"] = new_id
+                old_note["updated"] = now_date
+                
+                # Add reciprocal relation in OLD note
+                if not any(r.get("target_id") == new_id and r.get("relation") == "replaced_by" for r in old_note.get("relations", [])):
+                    old_note.setdefault("relations", []).append({
+                        "relation": "replaced_by",
+                        "target": new_note.get("type", "knowledge"),
+                        "target_id": new_id
+                    })
+                    
+                # Prepare updates for NEW note
+                new_note["supersedes"] = old_id
+                new_note["updated"] = now_date
+                
+                # Add reciprocal relation in NEW note
+                if not any(r.get("target_id") == old_id and r.get("relation") == "replaces" for r in new_note.get("relations", [])):
+                    new_note.setdefault("relations", []).append({
+                        "relation": "replaces",
+                        "target": old_note.get("type", "knowledge"),
+                        "target_id": old_id
+                    })
+                    
+                # Transactional atomic persistence
+                try:
+                    self.storage.set(old_id, old_note)
+                    try:
+                        self.storage.set(new_id, new_note)
+                    except Exception as e:
+                        # Rollback first set operation on failure
+                        self.storage.set(old_id, old_note_orig)
+                        raise e
+                except Exception as e:
+                    raise ValueError(f"Atomic supersession write failed: {str(e)}")
+                    
+                self.cache.invalidate_by_event('memory_updated')
+                
+                # Audit logging: supersede operation and archive_superseded
+                audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence})
+                audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
+            except Exception as e:
+                audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
+                raise
 
 
 # Export singleton

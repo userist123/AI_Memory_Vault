@@ -1,0 +1,113 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarvis HUD - Cognitive Brain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/hud.css">
+</head>
+<body>
+
+  <!-- Layer 0: WebGL laser shader background -->
+  <canvas class="laser-canvas" data-webgl-laser></canvas>
+
+  <!-- Layer 1: Three.js 3D brain core -->
+  <canvas id="brainCanvas" class="brain-canvas"></canvas>
+
+  <!-- Layer 2: DOM HUD overlay -->
+  <div id="hud-overlay">
+
+    <!-- â”€â”€ Header â”€â”€ -->
+    <header id="hud-header">
+      <div class="logo">
+        <span class="logo-hex">â¬¡</span> JARVIS
+        <span class="logo-sub">COGNITIVE BRAIN</span>
+      </div>
+      <div class="status" id="status-indicator">
+        <span class="status-dot"></span>
+        STANDBY
+      </div>
+    </header>
+
+    <!-- â”€â”€ Main grid: sidebar + content â”€â”€ -->
+    <div id="hud-body">
+
+      <!-- Left sidebar: OODA cycle -->
+      <aside id="ooda-sidebar">
+        <div class="sidebar-title">OODA CYCLE</div>
+        <div class="ooda-pills">
+          <div class="ooda-pill" data-phase="observe">
+            <span class="ooda-label">OBSERVE</span>
+            <span class="ooda-state">IDLE</span>
+          </div>
+          <div class="ooda-pill" data-phase="orient">
+            <span class="ooda-label">ORIENT</span>
+            <span class="ooda-state">IDLE</span>
+          </div>
+          <div class="ooda-pill" data-phase="decide">
+            <span class="ooda-label">DECIDE</span>
+            <span class="ooda-state">IDLE</span>
+          </div>
+          <div class="ooda-pill" data-phase="act">
+            <span class="ooda-label">ACT</span>
+            <span class="ooda-state">IDLE</span>
+          </div>
+        </div>
+        <div class="sidebar-title" style="margin-top:24px;">SYSTEM</div>
+        <div class="sys-stat">
+          <span class="sys-label">DB Notes</span>
+          <span class="sys-value" id="val-db-count">â€”</span>
+        </div>
+        <div class="sys-stat">
+          <span class="sys-label">Uptime</span>
+          <span class="sys-value" id="val-uptime">0s</span>
+        </div>
+      </aside>
+
+      <!-- Right content area -->
+      <div id="hud-content">
+
+        <!-- Top panels -->
+        <section id="panels">
+          <div class="panel">
+            <div class="panel-title">WORKING MEMORY</div>
+            <div class="panel-value" id="val-memory">0</div>
+            <div class="panel-label">entries loaded</div>
+            <div class="panel-bar">
+              <div class="panel-bar-fill" id="bar-memory" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">PRINCIPAL</div>
+            <div class="panel-value" id="val-principal">â€”</div>
+            <div class="panel-label">active agent</div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">ACTIVE PLAN</div>
+            <div class="panel-value plan-id" id="val-plan">none</div>
+            <div class="panel-label">current objective</div>
+          </div>
+        </section>
+
+        <!-- Event log -->
+        <section id="log-section">
+          <div class="log-header">
+            <span class="panel-title">EVENT LOG</span>
+            <button class="log-clear" id="btn-clear-log" title="Clear log">âœ•</button>
+          </div>
+          <ul id="event-log"></ul>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/three@0.152.0/build/three.min.js"></script>
+  <script src="/static/hud.js"></script>
+</body>
+</html>
+
+
