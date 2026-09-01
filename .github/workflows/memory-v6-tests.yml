@@ -62,7 +62,10 @@ jobs:
 
           root = Path('.agents/skills')
           catalog_path = Path('01_KNOWLEDGE/Master_Skills_Catalog_251.md')
-          dirs = sorted(p for p in root.iterdir() if p.is_dir())
+
+          # A physical skill directory is a top-level directory that owns a SKILL.md.
+          # Packaging/namespace wrappers (for example skillsweb/) are not skill entries.
+          dirs = sorted(p for p in root.iterdir() if p.is_dir() and (p / 'SKILL.md').is_file())
           names = [p.name for p in dirs]
 
           if len(names) != len(set(names)):
@@ -71,8 +74,6 @@ jobs:
           entries = []
           for directory in dirs:
               skill_path = directory / 'SKILL.md'
-              if not skill_path.is_file():
-                  raise SystemExit(f'Missing SKILL.md: {skill_path}')
 
               # Tier 1: read only the YAML frontmatter block, then only description/tags.
               text = skill_path.read_text(encoding='utf-8')
@@ -92,7 +93,6 @@ jobs:
                   m = re.match(r'^description:\s*(.*)$', line)
                   if m:
                       value = m.group(1).strip()
-                      # Handle YAML folded/literal continuation conservatively without reading beyond frontmatter.
                       continuation = []
                       j = i + 1
                       while j < len(lines) and (lines[j].startswith('  ') or lines[j].startswith('\t')):
@@ -150,7 +150,7 @@ jobs:
               '',
               '# 📦 Catalog Canonic: Skills reale din `.agents/skills/`',
               '',
-              'Sursă: directoarele fizice `.agents/skills/` din acest repository.',
+              'Sursă: directoarele fizice de top-level care conțin `SKILL.md` în `.agents/skills/`.',
               'Pentru fiecare skill sunt păstrate doar `description` și `tags` din YAML frontmatter-ul `SKILL.md`.',
               '',
               f'**Directoare reale:** {directory_count}  |  **Intrări catalog:** {entry_count}  |  **Diferență:** {directory_count - entry_count}',
@@ -173,7 +173,7 @@ jobs:
               flags=re.M,
           )
           if catalog_names != names:
-              raise SystemExit('ACCEPTANCE FAILED: catalog names do not exactly match sorted physical directories')
+              raise SystemExit('ACCEPTANCE FAILED: catalog names do not exactly match sorted physical skill directories')
 
           print(f'REAL_DIRECTORIES={directory_count}')
           print(f'NEW_CATALOG_ENTRIES={entry_count}')
