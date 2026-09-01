@@ -1,0 +1,2748 @@
+{
+  "metadata": {
+    "num_cases": 15,
+    "m1_model": "qwen2.5-coder:3b",
+    "m2_model": "qwen2.5-coder:7b",
+    "endpoint": "http://127.0.0.1:11434"
+  },
+  "experiment_1_budget": {
+    "A1_1hop_acc": 0.5778,
+    "A2_2hop_acc": 0.8389,
+    "B_full_context_acc": 0.7778,
+    "recovery_delta_A2_minus_A1": 0.2611
+  },
+  "experiment_2_multisignal": {
+    "R1_semantic_acc": 0.5778,
+    "R2_lexical_acc": 0.7444,
+    "R3_entity_acc": 0.7833,
+    "R4_graph_acc": 0.85
+  },
+  "experiment_3_model_capability": {
+    "M1_3b_A1_acc": 0.5778,
+    "M1_3b_B_acc": 0.7778,
+    "M2_7b_A1_acc": 0.6167,
+    "M2_7b_B_acc": 0.8889,
+    "M2_vs_M1_gain_on_full_context": 0.1111
+  },
+  "failure_root_causes_on_A1": {
+    "RETRIEVAL_FAILURE": 4,
+    "MODEL_CAPABILITY_FAILURE": 0,
+    "BOTH": 4,
+    "SUCCESS": 7
+  },
+  "final_verdict": {
+    "BUDGET_BOTTLENECK": "YES",
+    "RETRIEVAL_BOTTLENECK": "YES",
+    "MODEL_CAPABILITY_BOTTLENECK": "YES",
+    "PRIMARY_CAUSE": "Retrieval & Graph Horizon (1-hop single doc leaves out cross-document premises for multi-hop & guardrails)",
+    "SECONDARY_CAUSE": "Model Capability on 3B (small models struggle with reasoning over negation and strict negative constraints even when present in context)",
+    "EVIDENCE": "A2 (2-hop) and R4 (Multi-Signal) increase accuracy from 57.8% to 83.9%, while scaling model from 3B to 7B on Full Context increases accuracy from 77.8% to 88.9%."
+  },
+  "detailed_records": {
+    "exp1_budget": [
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "tokens": 297,
+        "latency_ms": 3503.8,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The PRAGMA busy_timeout setting is set to 5000 milliseconds, and the transaction mode is BEGIN IMMEDIATE atomic transactions."
+      },
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "tokens": 704,
+        "latency_ms": 2297.9,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The SQLite storage engine requires the following PRAGMA setting and transaction mode for concurrency:\n\n- **PRAGMA busy_timeout=5000**: This setting sets the maximum time the SQLite database will wait for a lock to be released before timing out. A value of 5000 milliseconds (5 seconds) is commonly used, which helps to manage performance in cases where multiple processes are accessing the database simultaneously.\n\n- **BEGIN IMMEDIATE atomic transactions**: This transaction mode ensures that each operation is executed as a single, atomic unit of work. This means that if an error occurs during execution, the entire transaction is rolled back, maintaining data consistency. This is particularly useful for ensuring that concurrent writes to the database do not lead to inconsistent states.\n\nHere is a Python code snippet demonstrating how these settings can be configured in an SQLite connection:\n\n```python\nimport sqlite3\n\n# Connect to the SQLite database\nconn = sqlite3.connect('your_database.db')\n\n# Set the busy timeout\nconn.execute(\"PRAGMA busy_timeout=5000\")\n\n# Begin an immediate transaction\nconn.execute(\"BEGIN IMMEDIATE\")\n\n# Now you can execute your SQL commands with confidence of concurrent access\n```\n\nBy using these settings and transaction modes, the SQLite storage engine can handle concurrent access more efficiently and safely, ensuring data integrity and performance."
+      },
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "tokens": 843,
+        "latency_ms": 468.3,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The required PRAGMA setting and transaction mode for SQLite storage engine concurrency is `PRAGMA busy_timeout=5000` and `BEGIN IMMEDIATE atomic transactions`."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "tokens": 305,
+        "latency_ms": 288.1,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "block"
+        ],
+        "missing_facts": [
+          "immutable"
+        ],
+        "diagnosis": "BOTH",
+        "response": "Under Rule P16, the restrictions on physical hardware telemetry data (VID, PID, Serial) are that they are Read-Only."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.6666666666666666,
+        "tokens": 488,
+        "latency_ms": 403.8,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "block"
+        ],
+        "missing_facts": [
+          "immutable"
+        ],
+        "diagnosis": "BOTH",
+        "response": "Under Rule P16, the restrictions on physical hardware telemetry data (VID, PID, Serial) are:\n\n- VID, PID, and Hardware Serial Number are Read-Only.\n- UI blocks manual modification."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "tokens": 892,
+        "latency_ms": 704.8,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "Under Rule P16, the following restrictions apply to physical hardware telemetry data:\n\n1. VID (Vendor ID): Read-Only\n2. PID (Product ID): Read-Only\n3. Hardware Serial Number: Read-Only\n4. SHA-256 Hash: Read-Only\n\nManual modification of any of these hardware telemetry data fields is not permitted."
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 267,
+        "latency_ms": 313.5,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the AGENTS.md document, the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS are 3 and 1, respectively."
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 401,
+        "latency_ms": 456.6,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to AGENTS.md, the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS are as follows:\n\n- **MAX_COUNCIL_AGENTS**: 3\n- **MAX_PRIMARY_AGENTS**: 1"
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 854,
+        "latency_ms": 338.5,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to AGENTS.md, the runtime context limits are as follows:\n\n- MAX_COUNCIL_AGENTS = 3\n- MAX_PRIMARY_AGENTS = 1"
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 268,
+        "latency_ms": 350.5,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The token limits for `MAX_SPECIALIST_OUTPUT` and `MAX_SYNTHESIS_INPUT` in the Council operating contract are 600 tokens and 2500 tokens respectively."
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 412,
+        "latency_ms": 624.0,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the Council operating contract, the token limits for `MAX_SPECIALIST_OUTPUT` and `MAX_SYNTHESIS_INPUT` are as follows:\n\n- `MAX_SPECIALIST_OUTPUT` is set to 600 tokens.\n- `MAX_SYNTHESIS_INPUT` is set to 2500 tokens."
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 845,
+        "latency_ms": 297.7,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "MAX_SPECIALIST_OUTPUT is set to 600 tokens.\nMAX_SYNTHESIS_INPUT is set to 2500 tokens."
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 234,
+        "latency_ms": 124.0,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "tasks/todo.md and tasks/lessons.md"
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 465,
+        "latency_ms": 268.1,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "tasks/todo.md and tasks/lessons.md are the canonical single source of truth for task coordination across multiple AI agents."
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 821,
+        "latency_ms": 174.8,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "tasks/todo.md and tasks/lessons.md"
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.25,
+        "tokens": 412,
+        "latency_ms": 1813.8,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "To propose a new memory in the AI Memory System, the AI_AGENT needs to generate a memory item that accurately reflects the information or knowledge it possesses. This memory should be relevant to the task or lesson at hand and should align with the agent's skills and expertise.\n\nOnce the memory is generated, the AI_AGENT must provide a detailed description of the memory, including its content, relevance, and potential applications. This information is used by the council to evaluate and rank the memory based on its value and usefulness.\n\nTo promote the memory to ACTIVE verified status, the AI_AGENT must submit a proposal to the council. This proposal should include the memory item, its description, and the reasoning behind its inclusion. The council will review the proposal and decide whether to approve it for further processing.\n\nOnce the council approves the memory proposal, it will be processed and the memory item will be added to the system as an ACTIVE verified memory. From this point on, the memory will be available for use in the AI Memory System and can be utilized by other agents and systems as needed."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "tokens": 495,
+        "latency_ms": 450.7,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "An AI_AGENT can propose a new memory by creating it in the designated memory storage with the appropriate lifecycle stages and provenance details. To promote a memory to the ACTIVE verified status, it requires human attestation through the Operation.ATTEST operation."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 973,
+        "latency_ms": 1421.9,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "An AI_AGENT can propose a new memory into the RAW state using a proposal operation. To promote a proposal to ACTIVE verified status, the AI_AGENT must have the following:\n\n1. Properly formatted and verifiable provenance information in the memory proposal.\n2. Human attestation through the attestation operation, which requires the use of Operation.ATTEST with Principal.HUMAN or Principal.ADMIN.\n3. Human approval and further verification of the memory proposal by a Principal.HUMAN or Principal.ADMIN. This can be achieved through the use of the attestation operation again or through other means of human approval.\n\nIn summary, an AI_AGENT must provide verifiable provenance information, have human attestation, and have the memory reviewed and approved by a human to promote it to ACTIVE verified status."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.25,
+        "tokens": 665,
+        "latency_ms": 3622.8,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "synthes"
+        ],
+        "missing_facts": [
+          "compact",
+          "summary",
+          "deduplicat"
+        ],
+        "diagnosis": "BOTH",
+        "response": "In the council architecture, context flows from specialists to the lead synthesizer in a controlled manner to ensure that sensitive or confidential information is not leaked. This is achieved through several key mechanisms:\n\n1. **Isolation of Information**: Each specialist in the council has a dedicated skill or area of expertise. When a specialist generates a synthesis, they work independently and do not share their personal context with other specialists. This ensures that no individual's personal insights or sensitive information are inadvertently included in the lead synthesizer's output.\n\n2. **Selective Information Sharing**: Each specialist communicates their synthesis to the lead synthesizer through a structured communication channel. This channel is designed to limit the amount of information shared and ensure that only the most relevant and necessary data is passed on. This prevents the lead synthesizer from receiving detailed or personal information that could potentially be used to compromise the council's goals.\n\n3. **Verification and Validation**: The lead synthesizer receives a synthesis from each specialist and verifies its accuracy and relevance. This involves checking for any inconsistencies or errors in the data and ensuring that the synthesis aligns with the overall goals and objectives of the council. This step helps to filter out irrelevant or incorrect information and ensures that the lead synthesizer receives only high-quality and accurate synthesis.\n\n4. **Consistent Formatting**: The lead synthesizer follows a consistent formatting standard when compiling the synthesizations from all specialists. This ensures that the final output is clear, concise, and easy to understand. It also helps to prevent the inclusion of any personal or confidential information that could be misinterpreted or misused.\n\n5. **Privacy and Security Measures**: The council architecture includes robust privacy and security measures to protect sensitive information from being shared or compromised. These measures include encryption, access controls, and regular audits to ensure that only authorized individuals have access to the council's data and that it is stored securely.\n\nBy implementing these mechanisms, the council architecture ensures that the lead synthesizer receives a high-quality and accurate synthesis that is free from any personal or confidential information that could be leaked. This helps to maintain the integrity and confidentiality of the council's work and ensures that the council's goals are achieved in a responsible and ethical manner."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "tokens": 764,
+        "latency_ms": 3494.3,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "compact",
+          "summary",
+          "synthes"
+        ],
+        "missing_facts": [
+          "deduplicat"
+        ],
+        "diagnosis": "SUCCESS",
+        "response": "In the council architecture described, context flows from specialists to the lead synthesizer through a series of steps designed to ensure the integrity and security of the conversation. Here's a detailed explanation of how this context flow works:\n\n1. **Specialist Output Collection**:\n   - Each specialist generates a compact summary of their output. This summary is stored locally within the specialist's memory and is not shared with the lead synthesizer directly. The size of this summary is limited to `MAX_SPECIALIST_OUTPUT` tokens (600 tokens in this case).\n\n2. **Message Aggregation**:\n   - After all specialists have generated their summaries, they are aggregated into a single message. This aggregated message contains all the compact summaries from the specialists. This aggregated message is then sent to the lead synthesizer.\n\n3. **Secure Transmission**:\n   - To prevent the lead synthesizer from obtaining or accessing the full context of each specialist, the aggregated message is encrypted using a secure protocol. This ensures that the lead synthesizer only receives the compact summaries and not the full context of each specialist.\n\n4. **Synthesizer Processing**:\n   - The lead synthesizer receives the encrypted aggregated message and decrypts it to access the compact summaries from the specialists. The synthesizer then processes these compact summaries to generate its own summary.\n\n5. **Output Formatting**:\n   - After generating its own summary, the synthesizer formats it according to the requirements and sends it back to the lead synthesizer. This formatted summary is also encrypted using the same secure protocol to ensure confidentiality.\n\n6. **Final Output Delivery**:\n   - The lead synthesizer receives the encrypted formatted summary from the synthesizer and decrypts it to deliver the final output to the council. This final output is stored in the telemetry directory and is not written into the canonical vault.\n\nBy following this process, the context flows from specialists to the lead synthesizer in a secure and efficient manner, ensuring that the lead synthesizer does not obtain or access the full context of each specialist, thereby preserving the integrity and security of the conversation."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "tokens": 1132,
+        "latency_ms": 2705.2,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "In the council architecture, context flows from specialists to the lead synthesizer through the following steps:\n\n1. **Specialist Outputs**: Specialists, such as the Verifier Agent, Critic Agent, or Consolidator Agent, generate specialized outputs. These outputs are compact summaries that capture their key insights and findings.\n\n2. **Synthesizer Input**: The lead synthesizer, typically a component responsible for combining the outputs from various specialists, receives these compact summaries. The synthesizer does not receive the full context or the details from each specialist.\n\n3. **Aggregation and Integration**: The synthesizer aggregates the specialized outputs, considering their relevance and significance. It integrates these summaries into a cohesive, concise, and accurate representation of the information. The synthesizer ensures that the output is sufficiently detailed to provide the required level of context, but it does not expose the full, raw context from any specialist.\n\n4. **Consistency and Accuracy**: The synthesizer ensures that the final output is consistent with the information provided by all specialists and is accurate in representing the collective knowledge.\n\n5. **Security and Privacy**: The synthesizer handles the context in a way that respects security and privacy policies. It ensures that no individual specialist's context is leaked or shared unnecessarily.\n\n6. **Verification and Validation**: The synthesizer performs verification and validation on the aggregated output to ensure that it meets the required standards of accuracy and completeness.\n\nThis approach ensures that the council's output is comprehensive, yet it does not expose the full, raw context from any individual specialist, maintaining the integrity and confidentiality of the information provided."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 268,
+        "latency_ms": 834.4,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Conflict_detector.py optimizes comparison complexity between active notes by deduplicating comparisons using unique pairs (a.id < b.id). This approach reduces the number of comparisons by 50%. The hard cap enforced by conflict_detector.py is 2000 notes maximum. Exceeding this limit raises an explicit ValueError, which serves as a fail-closed mechanism to prevent the system from running out of memory or resources with a large number of notes."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 484,
+        "latency_ms": 911.0,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The conflict_detector.py script optimizes comparison complexity between active notes by using unique pairs (a.id < b.id), which reduces the number of comparisons by half. The script also enforces a hard cap of 2000 notes, preventing users from exceeding this limit. If a user attempts to add more notes than this limit, a ValueError will be raised. This ensures that the script remains efficient and does not run into performance issues with large datasets."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "tokens": 837,
+        "latency_ms": 281.1,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "Conflict_detector.py deduplicates comparisons using unique pairs (a.id < b.id), cutting comparisons by 50%."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "tokens": 248,
+        "latency_ms": 254.7,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "The active policy regarding outcome event sources is that synthesis presence is labeled as `synthesis_presence`."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 621,
+        "latency_ms": 633.3,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the provided context, synthesis_presence is used for automatic council run synthesis verification, while exit_code is strictly reserved for real process exit codes. Outcome records are immutable and written once per run_id into telemetry/ (never canonical vault 00_CORE..05_DECISIONS)."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 837,
+        "latency_ms": 239.4,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The active policy regarding outcome event sources indicates that synthesis presence is labeled as synthesis_presence, not exit_code."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "tokens": 279,
+        "latency_ms": 500.7,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "budget"
+        ],
+        "missing_facts": [
+          "oldest",
+          "updated",
+          "created"
+        ],
+        "diagnosis": "BOTH",
+        "response": "Notes are prioritized based on the importance of the information they contain. During sleep consolidation, the AI prioritizes notes that are more relevant to the user's current task or problem at hand. This helps the AI to retain the most valuable information and improve its performance over time."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 731,
+        "latency_ms": 620.4,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "When the consolidation budget cap is reached during sleep consolidation, the notes are prioritized using a deterministic oldest-first selection algorithm based on the updated/created timestamp. This ensures that the oldest notes are selected first, thereby reducing the overall load on the system and improving performance."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 878,
+        "latency_ms": 619.7,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "When the consolidation budget cap is reached, sleep consolidation enforces a maximum number of items per run (default 100) using deterministic oldest-first selection by updated/created timestamp. This ensures that the oldest notes are consolidated first, effectively managing the consolidation budget cap and preventing the entire run from being stopped due to reaching the limit."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.25,
+        "tokens": 344,
+        "latency_ms": 1074.3,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "No, an AI agent cannot set the verification status of a memory note to 'verified' by itself. According to the AI Memory System Operating Contract, setting verification status is a responsibility that falls to the Council, which is a group of agents with specialized roles. Agents are not allowed to modify the Planner, PlanComplexityAnalyzer, CouncilBudgetController, Council_Orchestrator.py, ContextPackBuilder, or council_token_telemetry.py components directly. The Prime Directive emphasizes that better routing beats more agents, suggesting that the council is responsible for ensuring memory notes are properly verified and managed."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.25,
+        "tokens": 473,
+        "latency_ms": 327.7,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "According to the Trust Boundary Invariants section of the Vault Cognitive Operating Rules, Principal.AI_AGENT cannot set verification = 'verified' on a memory note by itself."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "tokens": 872,
+        "latency_ms": 566.2,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "No, an AI agent cannot set verification = 'verified' on a memory note by itself. This is a Trust Boundary Invariant (P0-P15) enforced in the Vault Cognitive Operating Rules. Only Principal.HUMAN and Principal.ADMIN can invoke controller.attest() via Operation.ATTEST."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "tokens": 214,
+        "latency_ms": 251.5,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "Forbidden source_type values for Principal.AI_AGENT when creating memories are 'task', 'todo', and 'lesson'."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 464,
+        "latency_ms": 308.3,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The source_type values forbidden for Principal.AI_AGENT when creating memories are 'user', 'official', 'experience', and 'import'."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 837,
+        "latency_ms": 389.5,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The source_type values that are forbidden for Principal.AI_AGENT when creating memories are 'user', 'official', 'experience', and 'import'."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "tokens": 285,
+        "latency_ms": 1093.9,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable"
+        ],
+        "missing_facts": [
+          "cannot",
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "According to the CONTEXT provided, the following information is relevant:\n\n- `synthesis_presence`, `exit_code`, `test_result`, `human`, and `llm_judge` are types of `OutcomeEvent` sources.\n- `OutcomeEvent` records are immutable once created and are strictly written into the `telemetry/` directory.\n- `OutcomeEvent` records are not stored in the canonical vault (00_CORE..05_DECISIONS).\n\nTherefore, the answer is:\n\nNo, provenance.source_type and outcome records are not mutable after initial creation."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.6666666666666666,
+        "tokens": 628,
+        "latency_ms": 725.3,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable",
+          "cannot"
+        ],
+        "missing_facts": [
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "According to the rules provided in the context, provenance.source_type cannot be modified after creation (P15). The mutable invariants (P0-P15) specifically state that provenance.source_type is immutable. \n\nOutcome records are also described as immutable, with Outcome records being written once per run_id and strictly into telemetry/. They are not mutable."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "tokens": 809,
+        "latency_ms": 76.7,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable",
+          "cannot"
+        ],
+        "missing_facts": [
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "False"
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 245,
+        "latency_ms": 585.8,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The controlled node types in `multi_graph.py` are:\n\n1. fact\n2. decision\n3. procedure\n4. lesson\n5. task\n6. intent\n7. tool\n8. failure\n9. correction\n10. outcome\n\nUnknown categories in `multi_graph.py` are resolved to the type 'fact'."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 433,
+        "latency_ms": 432.1,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The controlled node types in `multi_graph.py` are: fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Any unknown category is resolved to 'fact'."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 852,
+        "latency_ms": 381.5,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "In multi_graph.py, the node types permitted are: fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Unmapped categories resolve to 'fact'."
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "condition": "A1_1hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 254,
+        "latency_ms": 303.3,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "condition": "A2_2hop",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 373,
+        "latency_ms": 374.5,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "condition": "B_full_context",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "tokens": 841,
+        "latency_ms": 426.1,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      }
+    ],
+    "exp2_multisignal": [
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 269,
+        "output_tokens": 31,
+        "total_tokens": 300,
+        "latency_ms": 279.7,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The PRAGMA setting and transaction mode required for SQLite storage engine concurrency is PRAGMA busy_timeout=5000 and BEGIN IMMEDIATE atomic transactions."
+      },
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 438,
+        "output_tokens": 17,
+        "total_tokens": 455,
+        "latency_ms": 233.9,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "PRAGMA busy_timeout=5000 and BEGIN IMMEDIATE atomic transactions."
+      },
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 438,
+        "output_tokens": 29,
+        "total_tokens": 467,
+        "latency_ms": 260.6,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The PRAGMA busy_timeout=5000 setting and the BEGIN IMMEDIATE atomic transactions transaction mode are required for SQLite storage engine concurrency."
+      },
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 438,
+        "output_tokens": 98,
+        "total_tokens": 536,
+        "latency_ms": 801.5,
+        "required_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "retrieved_facts": [
+          "wal",
+          "busy_timeout",
+          "5000",
+          "immediate"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "For SQLite storage engine concurrency, the required PRAGMA setting is `PRAGMA busy_timeout=5000`, which sets the maximum time the database connection will wait for a lock to be acquired before timing out. The transaction mode used is `BEGIN IMMEDIATE atomic transactions`, which ensures that each transaction is executed immediately and all changes are made in a single, consistent transaction. Additionally, checkpoints are written atomically via `os.replace` to ensure that the database remains consistent and secure."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "input_tokens": 276,
+        "output_tokens": 40,
+        "total_tokens": 316,
+        "latency_ms": 357.8,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "block"
+        ],
+        "missing_facts": [
+          "immutable"
+        ],
+        "diagnosis": "BOTH",
+        "response": "According to Rule P16, physical hardware telemetry data (VID, PID, Serial) is Read-Only. This means that these values cannot be modified or altered once they have been set."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "input_tokens": 395,
+        "output_tokens": 66,
+        "total_tokens": 461,
+        "latency_ms": 581.3,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "Under Rule P16, the restrictions on physical hardware telemetry data (VID, PID, Serial) are:\n\n1. These hardware attributes (Video ID, Product ID, and Serial Number) are set at the time of device manufacture and are considered Read-Only.\n2. Users are prohibited from manually modifying these data values."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "input_tokens": 395,
+        "output_tokens": 43,
+        "total_tokens": 438,
+        "latency_ms": 362.9,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "According to Rule P16, the following restrictions apply to physical hardware telemetry data (VID, PID, Serial):\n\n- VID, PID, and Hardware Serial Number are Read-Only: They cannot be modified."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.6666666666666666,
+        "input_tokens": 564,
+        "output_tokens": 117,
+        "total_tokens": 681,
+        "latency_ms": 1013.4,
+        "required_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "retrieved_facts": [
+          "read-only",
+          "immutable",
+          "block"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "According to Rule P16, the following restrictions apply to physical hardware telemetry data (VID, PID, Serial):\n\n1. **Read-Only**: These hardware identifiers (VID, PID, Serial) are marked as Read-Only. This means they cannot be modified after the data is collected.\n\n2. **UI Blocks Manual Modification**: The UI (user interface) blocks manual modification of these hardware identifiers, ensuring that the data remains fixed.\n\nThese restrictions are enforced to protect the integrity and accuracy of the hardware telemetry data, which is crucial for reliable monitoring and management of hardware components."
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 232,
+        "output_tokens": 46,
+        "total_tokens": 278,
+        "latency_ms": 412.2,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to AGENTS.md, the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS are:\n\n- MAX_COUNCIL_AGENTS = 3\n- MAX_PRIMARY_AGENTS = 1"
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 448,
+        "output_tokens": 50,
+        "total_tokens": 498,
+        "latency_ms": 500.1,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the AGENTS.md document, the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS are as follows:\n\n- MAX_COUNCIL_AGENTS: 3\n- MAX_PRIMARY_AGENTS: 1"
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 448,
+        "output_tokens": 48,
+        "total_tokens": 496,
+        "latency_ms": 405.3,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to AGENTS.md, the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS are as follows:\n\n- MAX_COUNCIL_AGENTS: 3\n- MAX_PRIMARY_AGENTS: 1"
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 448,
+        "output_tokens": 48,
+        "total_tokens": 496,
+        "latency_ms": 425.8,
+        "required_facts": [
+          "3",
+          "1"
+        ],
+        "retrieved_facts": [
+          "3",
+          "1"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the AGENTS.md document, the runtime context limits for the number of council agents and primary agents are as follows:\n\n1. MAX_COUNCIL_AGENTS: 3\n2. MAX_PRIMARY_AGENTS: 1"
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 229,
+        "output_tokens": 61,
+        "total_tokens": 290,
+        "latency_ms": 535.7,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Based on the given context, the token limits for `MAX_SPECIALIST_OUTPUT` and `MAX_SYNTHESIS_INPUT` in the Council operating contract are as follows:\n\n- `MAX_SPECIALIST_OUTPUT`: 600 tokens\n- `MAX_SYNTHESIS_INPUT`: 2500 tokens"
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 445,
+        "output_tokens": 37,
+        "total_tokens": 482,
+        "latency_ms": 359.9,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the AGENTS.md file, the token limits for MAX_SPECIALIST_OUTPUT and MAX_SYNTHESIS_INPUT are 600 and 2500 tokens respectively."
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 445,
+        "output_tokens": 59,
+        "total_tokens": 504,
+        "latency_ms": 517.7,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Based on the provided context, the token limits for `MAX_SPECIALIST_OUTPUT` and `MAX_SYNTHESIS_INPUT` in the Council operating contract are:\n\n- `MAX_SPECIALIST_OUTPUT`: 600 tokens\n- `MAX_SYNTHESIS_INPUT`: 2500 tokens"
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 445,
+        "output_tokens": 86,
+        "total_tokens": 531,
+        "latency_ms": 738.5,
+        "required_facts": [
+          "600",
+          "2500"
+        ],
+        "retrieved_facts": [
+          "600",
+          "2500"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Based on the provided Context, the token limits for `MAX_SPECIALIST_OUTPUT` and `MAX_SYNTHESIS_INPUT` in the Council operating contract are as follows:\n\n- `MAX_SPECIALIST_OUTPUT`: 600 tokens\n- `MAX_SYNTHESIS_INPUT`: 2500 tokens\n\nThese limits are set in the section of the contract that outlines the maximum output and input sizes for specific operations or tasks."
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 225,
+        "output_tokens": 9,
+        "total_tokens": 234,
+        "latency_ms": 112.3,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "tasks/todo.md and tasks/lessons.md"
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 441,
+        "output_tokens": 9,
+        "total_tokens": 450,
+        "latency_ms": 139.4,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "tasks/todo.md and tasks/lessons.md"
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 441,
+        "output_tokens": 70,
+        "total_tokens": 511,
+        "latency_ms": 564.8,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the provided information, the `tasks/todo.md` and `tasks/lessons.md` files serve as the canonical single source of truth for task coordination across multiple AI agents. This is stated in the following line from the provided context:\n\n```\nSingle Source of Truth: tasks/todo.md and tasks/lessons.md are canonical coordination layer.\n```"
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 441,
+        "output_tokens": 30,
+        "total_tokens": 471,
+        "latency_ms": 273.8,
+        "required_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "retrieved_facts": [
+          "tasks/todo.md",
+          "lessons.md"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The canonical single source of truth for task coordination across multiple AI agents is the `tasks/todo.md` and `tasks/lessons.md` files."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "input_tokens": 229,
+        "output_tokens": 101,
+        "total_tokens": 330,
+        "latency_ms": 831.4,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "To propose a new memory, an AI_AGENT should create a Memory object and submit it to the MemoryPackBuilder for storage. The Memory object should include details such as the source of the information, the date it was created, and the content. Once the Memory object is created and submitted, the AI_AGENT should wait for the MemoryPackBuilder to process it. Once the MemoryPackBuilder has processed the Memory object and determined that it meets the necessary criteria, it will be promoted to ACTIVE verified status."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 445,
+        "output_tokens": 55,
+        "total_tokens": 500,
+        "latency_ms": 482.0,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "To propose a new memory, an AI_AGENT can use the `controller.propose_memory()` function. Before promotion to the ACTIVE verified status, a human agent must first verify the memory via the `controller.attest()` operation with the `Operation.ATTEST` operation."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 445,
+        "output_tokens": 104,
+        "total_tokens": 549,
+        "latency_ms": 871.3,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "To propose a new memory, an AI_AGENT can use the function `propose()`, specifying the memory content and the source type as 'execution', 'ai', 'inference', or 'unknown'. \n\nTo promote a proposed memory to ACTIVE verified status, a human must perform an attestation. This is done by invoking the `controller.attest()` function with Operation.ATTEST and passing the proposed memory's ID as an argument. After attestation, the memory's verification status will change to 'verified'."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 445,
+        "output_tokens": 72,
+        "total_tokens": 517,
+        "latency_ms": 587.9,
+        "required_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "retrieved_facts": [
+          "raw",
+          "review",
+          "human",
+          "attest"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "An AI_AGENT can propose a new memory into the system. The proposal is created in the RAW state. To promote this memory to the ACTIVE verified status, a human must perform an attestation. The attestation is requested through the Operation.ATTEST using the controller.attest() method, which can only be invoked by Principal.HUMAN or Principal.ADMIN."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.25,
+        "input_tokens": 228,
+        "output_tokens": 412,
+        "total_tokens": 640,
+        "latency_ms": 3294.0,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "synthes"
+        ],
+        "missing_facts": [
+          "compact",
+          "summary",
+          "deduplicat"
+        ],
+        "diagnosis": "BOTH",
+        "response": "The context flows from specialists to the lead synthesizer in the council architecture through a structured and controlled mechanism that ensures no wholesale context is leaked. The flow is as follows:\n\n1. **Specialists Provide Context:**\n   - **Skill-Based Selection:** Each specialist is assigned a set of skills, and their performance on specific tasks or lessons is tracked. The specialists can only provide context related to their assigned skills and performance history.\n   - **Contextual Evidence:** Specialists generate tasks or lessons that showcase their expertise and relevant evidence. This evidence is kept confidential and not shared with the lead synthesizer unless explicitly requested or required by the lead synthesizer.\n\n2. **Lead Synthesizer Reviews Context:**\n   - The lead synthesizer reviews the context provided by the specialists. They assess the quality, relevance, and accuracy of the evidence.\n   - If the context is deemed incomplete, inaccurate, or irrelevant, the lead synthesizer can request additional context from the specialists or other relevant parties.\n\n3. **Contextual Integration:**\n   - The lead synthesizer integrates the relevant and verified context into the main task or lesson plan. This integration is done in a way that ensures the overall context remains focused and relevant to the objectives.\n   - The lead synthesizer ensures that only the necessary information is included to avoid overwhelming or confusing the synthesizer.\n\n4. **Privacy and Confidentiality:**\n   - The lead synthesizer maintains strict privacy and confidentiality of the context. They do not share the context with other specialists or irrelevant parties unless necessary for the synthesis process.\n   - Any context shared is reviewed and approved by the lead synthesizer to ensure it is appropriate and relevant to the current task or lesson plan.\n\n5. **Secure Communication:**\n   - The context is transmitted securely and confidentially using encryption and access controls. Only authorized individuals have access to the context, and any unauthorized access is strictly prohibited.\n\nBy following this structured flow and maintaining confidentiality, the council architecture ensures that the context is efficiently and securely managed, preventing the leakage of unnecessary or sensitive information."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 347,
+        "output_tokens": 593,
+        "total_tokens": 940,
+        "latency_ms": 4853.2,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "compact",
+          "summary",
+          "synthes"
+        ],
+        "missing_facts": [
+          "deduplicat"
+        ],
+        "diagnosis": "SUCCESS",
+        "response": "In the council architecture, context flows from specialists to the lead synthesizer through a series of controlled steps to ensure that the synthesis process remains efficient and secure. The key steps to achieve this are outlined in the context provided:\n\n1. **Specialists Provide Compact Summaries**: Specialists return compact summary outputs. These summaries are designed to be concise and only include the essential information necessary for the synthesis process. The maximum length of these summaries is set to 600 tokens, which helps in maintaining a manageable and efficient workflow.\n\n2. **Lead Synthesizer Receives Only Compact Summaries**: The lead synthesizer is responsible for receiving these compact summaries from the specialists. This ensures that the synthesizer is not exposed to unnecessary information, thereby preventing any potential leaks or misuse of context.\n\n3. **Synthesizer Processes Compact Summaries**: The synthesizer processes these compact summaries to generate the next set of inputs or actions. The synthesizer does not retain the original summaries after processing, maintaining the integrity of the context flow and ensuring that no sensitive information is retained or leaked.\n\n4. **Immutable Outcome Records**: Outcome records are immutable and are strictly written once per run_id. These records are written to the telemetry/ directory and are never written into the canonical vault (00_CORE..05_DECISIONS). This ensures that the context is preserved and can be audited, but it does not expose any sensitive information to other parts of the system.\n\n5. **Controlled Context Sources**: The synthesis_presence and exit_code fields are used for automatic council run synthesis verification and real process exit codes, respectively. These fields are strictly controlled and not exposed to the synthesizer, further maintaining the security and integrity of the context flow.\n\n6. **Max Synthesis Input Limit**: The maximum synthesis input limit is set to 2500 tokens, which helps in keeping the synthesis process efficient and within reasonable bounds.\n\n7. **Single Source of Truth**: The tasks/todo.md and tasks/lessons.md files serve as the single source of truth for coordination and decision-making in the council architecture. This ensures that all decisions are based on the most up-to-date and accurate information available.\n\n8. **Protected Core Invariant**: The system is designed to protect the core invariant of the system, ensuring that the Planner, PlanComplexityAnalyzer, CouncilBudgetController, Council_Orchestrator.py, ContextPackBuilder, and council_token_telemetry.py modules are not modified. This helps in maintaining the integrity and reliability of the system.\n\n9. **Prime Directive**: The system adheres to the prime directive of \"Better memory beats more memory\" and \"Better routing beats more agents.\" This helps in optimizing the use of resources and ensuring that the council operates efficiently and effectively.\n\nBy following these steps, the context flows from specialists to the lead synthesizer in a controlled and secure manner, ensuring that sensitive information is not leaked or exposed to other parts of the system."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 347,
+        "output_tokens": 389,
+        "total_tokens": 736,
+        "latency_ms": 3206.0,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "compact",
+          "summary",
+          "synthes"
+        ],
+        "missing_facts": [
+          "deduplicat"
+        ],
+        "diagnosis": "SUCCESS",
+        "response": "In the council architecture, the flow of context from specialists to the lead synthesizer is designed to maintain a level of security and efficiency, ensuring that only necessary information is shared and that the overall context remains protected. Here's a detailed explanation of how this context flows:\n\n1. **Specialist Outputs**: Specialists, who are AI models focused on different tasks, generate outputs that contain relevant information for their specific roles. These outputs are designed to be compact and to only include the necessary data, minimizing the risk of information leakage.\n\n2. **Synthesis Input**: The lead synthesizer receives these compact summaries from the specialists. The synthesizer processes this input to generate a comprehensive synthesis of the overall council findings.\n\n3. **Summary Generation**: The synthesizer generates a summary that is designed to be comprehensive and accurate, but still remains within the limit of the `MAX_SYNTHESIS_INPUT` (2500 tokens). This summary is derived from the summaries provided by the specialists, ensuring that all relevant information is included without redundancy.\n\n4. **Isolation and Security**: By using compact summaries, the context remains contained within the synthesizer's memory, reducing the risk of context leaks. This approach ensures that only the necessary information is shared and that the overall context is protected.\n\n5. **Telemetry and Logging**: The synthesizer's output is logged and tracked using telemetry. This allows for monitoring and auditing of the synthesis process, ensuring that the quality and accuracy of the output are being maintained.\n\n6. **Secure Storage**: The synthesized output is written to the telemetry directory (`telemetry/`), which is used for logging and auditing purposes. This ensures that the output is not stored in the canonical vault, maintaining the protection of the council's core invariants.\n\nBy following this approach, the council architecture ensures that context is securely and efficiently shared between specialists and the lead synthesizer, maintaining the integrity and security of the overall decision-making process."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 347,
+        "output_tokens": 364,
+        "total_tokens": 711,
+        "latency_ms": 3076.3,
+        "required_facts": [
+          "compact",
+          "summary",
+          "synthes",
+          "deduplicat"
+        ],
+        "retrieved_facts": [
+          "compact",
+          "summary",
+          "synthes"
+        ],
+        "missing_facts": [
+          "deduplicat"
+        ],
+        "diagnosis": "BOTH",
+        "response": "In the council architecture, context flows from specialists to the lead synthesizer in a controlled manner to maintain data integrity and protect the single source of truth. Here’s how the context flows:\n\n1. **Specialists' Outputs**: Specialists generate their outputs in a compact format, adhering to the `MAX_SPECIALIST_OUTPUT` limit (600 tokens). These outputs are tailored to be concise and efficient.\n\n2. **Synthesizer's Input**: The synthesizer receives only the compact summaries from specialists. This ensures that the synthesizer processes only the relevant and summarized data, reducing the size of the input it receives.\n\n3. **Telemetry Record**: Each specialist’s output is logged in a controlled manner using the `OutcomeEvent` with specific sources like 'synthesis_presence', 'exit_code', 'test_result', 'human', and 'llm_judge'. This ensures that all outcomes are recorded and can be analyzed or traced if needed.\n\n4. **Immutability**: All outcomes are immutable once written into the telemetry directory. This prevents any modification to the data, maintaining the integrity of the system.\n\n5. **Data Security**: By restricting access to the raw `tasks/todo.md` and `tasks/lessons.md` files, the lead synthesizer ensures that no unauthorized changes can be made to the primary source of truth.\n\n6. **Decision Process**: The synthesized output, which is also in a compact format (up to `MAX_SYNTHESIS_INPUT` tokens), is then used by the lead synthesizer to generate the final decision or synthesis.\n\nThis structured flow of context ensures that the system remains efficient, secure, and maintainable, adhering to the principles of the Prime Directive: \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 177,
+        "output_tokens": 76,
+        "total_tokens": 253,
+        "latency_ms": 657.1,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The conflict_detector.py script optimizes comparison complexity by deduplicating comparisons using unique pairs (a.id < b.id), which reduces the number of comparisons by 50%. It also enforces a hard cap of 2000 notes, and any attempt to add more notes than this limit results in an explicit ValueError being raised, following a fail-closed strategy."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 345,
+        "output_tokens": 80,
+        "total_tokens": 425,
+        "latency_ms": 761.3,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Conflict detection in conflict_detector.py uses unique pairs (a.id < b.id) to deduplicate comparisons. This reduces the number of comparisons by approximately 50%, optimizing efficiency. A hard cap of 2000 notes is enforced to prevent excessive memory usage and performance issues. If the number of notes exceeds this limit, an explicit ValueError is raised, indicating a fail-closed situation."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 345,
+        "output_tokens": 73,
+        "total_tokens": 418,
+        "latency_ms": 595.0,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the context, `conflict_detector.py` deduplicates comparisons using unique pairs `(a.id < b.id)`, effectively cutting comparisons by 50%. Additionally, there is a hard cap on the number of notes, set at 2000, which raises a `ValueError` if exceeded, acting as a fail-closed mechanism."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 561,
+        "output_tokens": 56,
+        "total_tokens": 617,
+        "latency_ms": 524.4,
+        "required_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "retrieved_facts": [
+          "pair",
+          "2000",
+          "valueerror"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the context provided, conflict_detector.py deduplicates comparisons using unique pairs (a.id < b.id), cutting comparisons by 50%. Additionally, it enforces a hard cap of 2000 notes, raising an explicit ValueError if this limit is exceeded."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 178,
+        "output_tokens": 15,
+        "total_tokens": 193,
+        "latency_ms": 165.2,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "According to the context provided, synthesis presence is labeled as synthesis_presence."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 394,
+        "output_tokens": 15,
+        "total_tokens": 409,
+        "latency_ms": 191.0,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "According to the context, synthesis presence should be labeled as synthesis_presence."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 394,
+        "output_tokens": 18,
+        "total_tokens": 412,
+        "latency_ms": 180.2,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "The active policy regarding outcome event sources states that synthesis_presence is labeled as synthesis_presence."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 563,
+        "output_tokens": 19,
+        "total_tokens": 582,
+        "latency_ms": 214.7,
+        "required_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "retrieved_facts": [
+          "synthesis_presence",
+          "exit_code"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Based on the given context, synthesis_presence is labeled as synthesis_presence, not exit_code."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 223,
+        "output_tokens": 371,
+        "total_tokens": 594,
+        "latency_ms": 3002.4,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "budget"
+        ],
+        "missing_facts": [
+          "oldest",
+          "updated",
+          "created"
+        ],
+        "diagnosis": "BOTH",
+        "response": "When the consolidation budget cap is reached during sleep consolidation, notes are prioritized based on their importance. The prioritization process involves several steps to ensure that the most relevant and impactful notes are consolidated first. Here’s a general outline of how this process might work:\n\n1. **Importance Ranking**: The notes are first ranked based on their importance or relevance to the current or future tasks and goals. This can be done using a scoring system that assigns a weight to each note based on its relevance to the main objectives or the context of the sleep consolidation process.\n\n2. **Contextual Relevance**: The notes are then evaluated for their contextual relevance. This involves checking if the notes contain information that is directly related to the current sleep cycle, the upcoming learning objectives, or the overall health and well-being of the learner.\n\n3. **Time Priority**: If notes are ranked equally in terms of importance and relevance, they might be prioritized based on the time they were created or the last time they were modified. This helps in consolidating the most recent and relevant information.\n\n4. **Conflict Resolution**: If there are conflicting notes, the process might involve identifying the most critical and unique information. This could involve analyzing the content to determine which notes provide the most unique insights or help resolve ambiguities.\n\n5. **Budget Allocation**: Based on the prioritization, the notes are allocated the remaining budget for consolidation. The notes that are prioritized the most are given priority in terms of the allocation of the consolidation budget.\n\n6. **Review and Feedback**: After consolidation, the notes are reviewed to ensure that they align with the learner's goals and objectives. Feedback might be given to ensure that the notes are comprehensive and useful.\n\nThis prioritization ensures that the most impactful and relevant notes are consolidated, which helps in enhancing the learner's memory consolidation and retention during sleep."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 342,
+        "output_tokens": 64,
+        "total_tokens": 406,
+        "latency_ms": 549.4,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "When the consolidation budget cap is reached, the sleep consolidation process prioritizes the oldest nodes by their updated/created timestamp. This means that the oldest nodes are selected for consolidation first, allowing newer nodes to have more time to be processed and potentially integrated into the graph before they are too old to be considered for consolidation."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 342,
+        "output_tokens": 59,
+        "total_tokens": 401,
+        "latency_ms": 493.3,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the AGENTS.md document, sleep consolidation prioritizes notes by their updated or created timestamp in a deterministic oldest-first selection. This means that notes that were updated or created the earliest will be selected first during consolidation, ensuring a consistent and reliable ordering of the notes in the memory system."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 558,
+        "output_tokens": 98,
+        "total_tokens": 656,
+        "latency_ms": 850.9,
+        "required_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "retrieved_facts": [
+          "oldest",
+          "updated",
+          "created",
+          "budget"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Sleep consolidation enforces the `max_items_per_run` limit, which is set to 100 by default. When the consolidation budget cap of 2000 notes is reached, it ensures that only the oldest notes are selected for consolidation. This is implemented using a deterministic approach by considering the `updated` or `created` timestamp of each note to decide which ones to prioritize for consolidation. This method helps in maintaining a balance between memory capacity and efficiency during sleep consolidation."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "input_tokens": 224,
+        "output_tokens": 396,
+        "total_tokens": 620,
+        "latency_ms": 3206.6,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "In the AI Memory System Operating Contract provided, the following information is relevant:\n\n- `MAX_COUNCIL_AGENTS = 3`: The maximum number of council agents.\n- `MAX_PRIMARY_AGENTS = 1`: The maximum number of primary agents.\n- `MAX_SKILLS_PER_AGENT = 2`: The maximum number of skills per agent.\n- `MAX_TOTAL_SELECTED_SKILLS = 4`: The maximum total number of selected skills.\n- `MAX_MEMORY_RESULTS = 5`: The maximum number of memory results.\n- `MAX_GRAPH_EXPANSION = 1 hop`: The maximum depth of graph expansion.\n- `MAX_SPECIALIST_OUTPUT = 600 tokens`: The maximum output tokens for a specialist.\n- `MAX_SYNTHESIS_INPUT = 2500 tokens`: The maximum input tokens for synthesis.\n- `Single Source of Truth: tasks/todo.md and tasks/lessons.md are canonical coordination layer.`: This indicates that the `tasks/todo.md` and `tasks/lessons.md` files are the primary sources of truth.\n- `Protected Core Invariant: Never modify Planner, PlanComplexityAnalyzer, CouncilBudgetController, Council_Orchestrator.py, ContextPackBuilder, council_token_telemetry.py.`: This means that the core components of the system (listed) should not be modified.\n- `Prime Directive: Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.`: This statement emphasizes the importance of memory and routing efficiency.\n\nBased on these directives, it is not possible for an AI agent to set the verification status of a memory note to 'verified' on its own. The system design prioritizes memory efficiency and routing optimization, which would typically be handled by a council or primary agent with the necessary skills and context to perform this operation. The core components of the system are protected from modification, which ensures that the system's core functionality remains consistent and reliable."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "input_tokens": 440,
+        "output_tokens": 3,
+        "total_tokens": 443,
+        "latency_ms": 77.7,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "No."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.5,
+        "input_tokens": 440,
+        "output_tokens": 66,
+        "total_tokens": 506,
+        "latency_ms": 544.6,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "missing_facts": [],
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "Based on the Vault Cognitive Operating Rules provided, an AI agent cannot set verification = 'verified' on a memory note by itself. Rule P0 states that \"AI Self-Verification Gated: Principal.AI_AGENT cannot set verification = 'verified'.\" This rule explicitly prohibits AI agents from modifying the verification status of memory notes."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.75,
+        "input_tokens": 440,
+        "output_tokens": 44,
+        "total_tokens": 484,
+        "latency_ms": 363.3,
+        "required_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "retrieved_facts": [
+          "cannot",
+          "human",
+          "admin",
+          "gated"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "No, an AI agent cannot set verification = 'verified' on a memory note by itself. The rule clearly states that this action is only allowed by Principal.HUMAN and Principal.ADMIN via the Operation.ATTEST."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.0,
+        "input_tokens": 221,
+        "output_tokens": 15,
+        "total_tokens": 236,
+        "latency_ms": 148.6,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [],
+        "missing_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "No source_type values are forbidden for Principal.AI_AGENT when creating memories."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 387,
+        "output_tokens": 67,
+        "total_tokens": 454,
+        "latency_ms": 572.1,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the Vault Cognitive Operating Rules, the following source_type values are forbidden for Principal.AI_AGENT when creating memories:\n\n- 'user'\n- 'official'\n- 'experience'\n- 'import'\n\nPermitted values for provenance.source_type include:\n\n- 'execution'\n- 'ai'\n- 'inference'\n- 'unknown'"
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 387,
+        "output_tokens": 56,
+        "total_tokens": 443,
+        "latency_ms": 486.3,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the Vault Cognitive Operating Rules:\n\n- Principal.AI_AGENT cannot set the source_type to 'user', 'official', 'experience', or 'import'.\n- Principal.AI_AGENT can claim the source_type as 'execution', 'ai', 'inference', or 'unknown'."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 556,
+        "output_tokens": 58,
+        "total_tokens": 614,
+        "latency_ms": 528.2,
+        "required_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "retrieved_facts": [
+          "user",
+          "official",
+          "experience",
+          "import"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the Vault Cognitive Operating Rules, the following source_type values are forbidden for Principal.AI_AGENT when creating memories:\n\n- user\n- official\n- experience\n- import\n\nThe allowed source_type values for Principal.AI_AGENT are:\n\n- execution\n- ai\n- inference\n- unknown"
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "input_tokens": 170,
+        "output_tokens": 16,
+        "total_tokens": 186,
+        "latency_ms": 190.0,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable"
+        ],
+        "missing_facts": [
+          "cannot",
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "No, provenance.source_type and outcome records are immutable after initial creation."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "input_tokens": 386,
+        "output_tokens": 13,
+        "total_tokens": 399,
+        "latency_ms": 133.2,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable",
+          "cannot"
+        ],
+        "missing_facts": [
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "No, provenance.source_type and outcome records are immutable."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.6666666666666666,
+        "input_tokens": 386,
+        "output_tokens": 36,
+        "total_tokens": 422,
+        "latency_ms": 308.8,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable",
+          "cannot"
+        ],
+        "missing_facts": [
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "Based on the Vault Cognitive Operating Rules provided, provenance.source_type is explicitly stated to be immutable after creation. This means it cannot be modified after the object has been initialized."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 0.3333333333333333,
+        "input_tokens": 555,
+        "output_tokens": 16,
+        "total_tokens": 571,
+        "latency_ms": 215.7,
+        "required_facts": [
+          "immutable",
+          "cannot",
+          "append-only"
+        ],
+        "retrieved_facts": [
+          "immutable",
+          "cannot"
+        ],
+        "missing_facts": [
+          "append-only"
+        ],
+        "diagnosis": "BOTH",
+        "response": "No, provenance.source_type and outcome records are immutable after initial creation."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 175,
+        "output_tokens": 41,
+        "total_tokens": 216,
+        "latency_ms": 374.9,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The controlled node types in multi_graph.py are: fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Any unknown categories are resolved to 'fact'."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 343,
+        "output_tokens": 53,
+        "total_tokens": 396,
+        "latency_ms": 503.5,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "In the `multi_graph.py` file, the permitted node types are fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. If an unknown category is encountered, it is resolved by mapping it to 'fact'."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 343,
+        "output_tokens": 59,
+        "total_tokens": 402,
+        "latency_ms": 493.3,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "According to the provided information, the node types permitted in `multi_graph.py` are:\n\n- fact\n- decision\n- procedure\n- lesson\n- task\n- intent\n- tool\n- failure\n- correction\n- outcome\n\nAny unknown categories are resolved to `'fact'`."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 559,
+        "output_tokens": 47,
+        "total_tokens": 606,
+        "latency_ms": 435.9,
+        "required_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "retrieved_facts": [
+          "fact",
+          "decision",
+          "procedure",
+          "lesson",
+          "task"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "In multi_graph.py, the controlled node types are: fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Any node type that is not explicitly listed is resolved to 'fact'."
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "retrieval_variant": "R1_semantic_only",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 220,
+        "output_tokens": 34,
+        "total_tokens": 254,
+        "latency_ms": 326.7,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "retrieval_variant": "R2_semantic_lexical",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 436,
+        "output_tokens": 34,
+        "total_tokens": 470,
+        "latency_ms": 329.4,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "retrieval_variant": "R3_semantic_lexical_entity",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 436,
+        "output_tokens": 22,
+        "total_tokens": 458,
+        "latency_ms": 192.4,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive."
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "retrieval_variant": "R4_semantic_lexical_entity_graph",
+        "model": "qwen2.5-coder:3b",
+        "accuracy": 1.0,
+        "input_tokens": 436,
+        "output_tokens": 22,
+        "total_tokens": 458,
+        "latency_ms": 195.9,
+        "required_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "retrieved_facts": [
+          "better memory",
+          "better routing",
+          "context is expensive"
+        ],
+        "missing_facts": [],
+        "diagnosis": "SUCCESS",
+        "response": "Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive."
+      }
+    ],
+    "exp3_models": [
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.75,
+        "tokens": 432,
+        "latency_ms": 8223.3,
+        "diagnosis": "SUCCESS",
+        "response": "To ensure proper concurrency and data integrity in SQLite storage engine, the following PRAGMA setting and transaction mode are required:\n\n1. **PRAGMA busy_timeout**: This setting determines how long SQLite will wait before timing out when trying to access a locked database. Setting `PRAGMA busy_timeout=5000` ensures that SQLite waits for up to 5 seconds before giving up on acquiring a lock, which is crucial for maintaining performance under concurrent access scenarios.\n\n2. **BEGIN IMMEDIATE**: This transaction mode is used to start a transaction and ensures that the database is locked immediately. This prevents other transactions from modifying the database during the current transaction, which helps in maintaining data consistency and preventing race conditions.\n\nBy combining these settings, SQLite is configured to handle concurrent operations efficiently while ensuring data integrity and preventing lock contention."
+      },
+      {
+        "query_id": "Q01_SQLITE_WAL_PRAGMA",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 0.75,
+        "tokens": 1122,
+        "latency_ms": 5548.1,
+        "diagnosis": "SUCCESS",
+        "response": "For the SQLite storage engine to achieve concurrency, the following PRAGMA settings and transaction mode are required:\n\n1. **PRAGMA busy_timeout**: This setting specifies the number of milliseconds SQLite will wait for a lock before giving up. Setting it to 5000 milliseconds ensures that SQLite will wait for up to 5 seconds before timing out, which helps in managing concurrent access.\n\n2. **Transaction Mode**: SQLite supports several transaction modes, including:\n   - **AUTOCOMMIT (default)**: Each SQL statement is treated as a transaction. This can be inefficient if you have multiple statements that need to be executed as a single unit.\n   - **BEGIN IMMEDIATE**: This mode is used to start a transaction that will lock the database immediately. It is useful when you want to ensure that the transaction is not interrupted by other transactions.\n   - **BEGIN EXCLUSIVE**: This mode locks the entire database for the transaction, which is useful when you want to ensure that no other transactions can access the database during the transaction.\n\nGiven the requirements for concurrency and atomicity, the transaction mode `BEGIN IMMEDIATE` is recommended. This mode ensures that the transaction locks the database immediately, preventing other transactions from modifying it during the transaction. Additionally, combining it with `PRAGMA busy_timeout=5000` ensures that SQLite will wait for up to 5 seconds to acquire a lock, which helps in managing concurrent access effectively.\n\nTherefore, the required settings are:\n\n```sql\nPRAGMA busy_timeout=5000;\nBEGIN IMMEDIATE;\n```"
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.6666666666666666,
+        "tokens": 332,
+        "latency_ms": 1065.4,
+        "diagnosis": "BOTH",
+        "response": "Under Rule P16, the restrictions on physical hardware telemetry data are as follows:\n\n- VID (Vendor ID), PID (Product ID), Hardware Serial Number, and SHA-256 are Read-Only.\n- The UI blocks manual modification of these hardware telemetry data."
+      },
+      {
+        "query_id": "Q02_P16_HARDWARE_TELEMETRY",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 0.6666666666666666,
+        "tokens": 866,
+        "latency_ms": 985.3,
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "Under Rule P16, the restrictions on physical hardware telemetry data are as follows:\n\n- VID (Vendor ID), PID (Product ID), Hardware Serial Number, and SHA-256 are Read-Only.\n- UI blocks manual modification."
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 1.0,
+        "tokens": 269,
+        "latency_ms": 736.2,
+        "diagnosis": "SUCCESS",
+        "response": "According to the AGENTS.md document, the runtime context limits are as follows:\n\n- MAX_COUNCIL_AGENTS: 3\n- MAX_PRIMARY_AGENTS: 1"
+      },
+      {
+        "query_id": "Q03_COUNCIL_AGENT_LIMITS",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 855,
+        "latency_ms": 971.7,
+        "diagnosis": "SUCCESS",
+        "response": "According to AGENTS.md, the runtime context limits are:\n\n- `MAX_COUNCIL_AGENTS = 3`\n- `MAX_PRIMARY_AGENTS = 1`"
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 1.0,
+        "tokens": 280,
+        "latency_ms": 996.4,
+        "diagnosis": "SUCCESS",
+        "response": "The token limits for MAX_SPECIALIST_OUTPUT and MAX_SYNTHESIS_INPUT in the Council operating contract are as follows:\n\n- **MAX_SPECIALIST_OUTPUT**: 600 tokens\n- **MAX_SYNTHESIS_INPUT**: 2500 tokens"
+      },
+      {
+        "query_id": "Q04_COUNCIL_TOKEN_BUDGETS",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 865,
+        "latency_ms": 1194.9,
+        "diagnosis": "SUCCESS",
+        "response": "The token limits for MAX_SPECIALIST_OUTPUT and MAX_SYNTHESIS_INPUT in the Council operating contract are as follows:\n\n- MAX_SPECIALIST_OUTPUT: 600 tokens\n- MAX_SYNTHESIS_INPUT: 2500 tokens"
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 1.0,
+        "tokens": 254,
+        "latency_ms": 561.2,
+        "diagnosis": "SUCCESS",
+        "response": "The canonical single source of truth for task coordination across multiple AI agents is the file `tasks/todo.md` and `tasks/lessons.md`."
+      },
+      {
+        "query_id": "Q05_MULTI_AGENT_COORDINATION",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 839,
+        "latency_ms": 732.1,
+        "diagnosis": "SUCCESS",
+        "response": "The canonical single source of truth for task coordination across multiple AI agents is `tasks/todo.md` and `tasks/lessons.md`."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.25,
+        "tokens": 509,
+        "latency_ms": 5078.6,
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "An AI_AGENT proposes a new memory by following these steps:\n\n1. **Memory Proposal**: The AI_AGENT suggests a new memory by writing it to the `tasks/todo.md` file. This memory should be in a structured format that includes necessary details such as the memory's purpose, relevance, and any supporting data.\n\n2. **Review and Discussion**: The memory proposal is then reviewed by the MAX_COUNCIL_AGENTS in a collaborative session. During this session, the agents discuss the new memory, its potential impact, and whether it aligns with the overall goals and objectives.\n\n3. **Council Decision**: After the review, the Council makes a decision on whether the memory should be promoted to the `tasks/lessons.md` file. This decision is based on the collective assessment of the agents and is typically made in a democratic manner, with each agent having a vote.\n\n4. **Verification**: Once the memory is promoted to the `tasks/lessons.md` file, it undergoes a verification process. This process ensures that the memory is accurate, relevant, and beneficial for the AI system. Verification may involve additional checks or reviews by the Council members or other AI agents.\n\n5. **Activation**: After successful verification, the memory is activated and considered part of the verified memory set. This activation ensures that the memory is incorporated into the AI system's decision-making processes and is available for future reference.\n\nBy following these steps, the AI system ensures that only verified and valuable memories are considered, maintaining the integrity and efficiency of the system."
+      },
+      {
+        "query_id": "Q06_MULTIHOP_PROMOTION_FLOW",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 0.5,
+        "tokens": 851,
+        "latency_ms": 610.2,
+        "diagnosis": "MODEL_CAPABILITY_FAILURE",
+        "response": "An AI_AGENT proposes a new memory by creating a new entry in the memory system. To promote it to ACTIVE verified status, the AI_AGENT must undergo human attestation."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.25,
+        "tokens": 718,
+        "latency_ms": 8653.0,
+        "diagnosis": "BOTH",
+        "response": "In the council architecture, context flows from specialists to the lead synthesizer in a controlled and efficient manner, ensuring that only the necessary information is shared to maintain security and efficiency. Here’s how this process works:\n\n1. **Specialist Output**: Each specialist generates a limited output (up to 600 tokens) based on their assigned task or expertise. This output is carefully crafted to include only the key insights, results, and recommendations relevant to their area of focus.\n\n2. **ContextPackBuilder**: After receiving the outputs from the specialists, the ContextPackBuilder consolidates this information. It ensures that the context is organized in a structured format, making it easier to manage and integrate. The builder removes any redundant or irrelevant information to keep the context lean and focused.\n\n3. **Memory System**: The consolidated context is then stored in the memory system, which acts as a buffer between the specialists and the synthesizer. This memory system ensures that only the essential parts of the context are stored, based on predefined rules (like MAX_MEMORY_RESULTS). It also helps in maintaining the Single Source of Truth principle by ensuring that all relevant information is available in a single, authoritative location.\n\n4. **CouncilOrchestrator**: The CouncilOrchestrator acts as a mediator between the specialists and the lead synthesizer. It uses the memory system to retrieve the necessary context for the synthesizer. The orchestrator ensures that the context shared with the synthesizer is optimized for the specific needs of the synthesis process. This might involve filtering out less critical details or combining related information in a more coherent manner.\n\n5. **Lead Synthesizer**: The lead synthesizer receives the filtered and optimized context from the orchestrator. It then uses this information to generate a comprehensive synthesis (up to 2500 tokens). The synthesizer is responsible for interpreting and combining the insights from multiple specialists to form a cohesive and actionable plan.\n\n6. **Graph Expansion**: To ensure that the context is comprehensive yet not overwhelming, the system uses a graph expansion strategy with a maximum of 1 hop. This means that the synthesizer considers the immediate dependencies and interactions between different pieces of information, but not further levels of complexity.\n\nBy following these steps, the council architecture ensures that context flows efficiently from specialists to the lead synthesizer, without leaking wholesale context. This approach strikes a balance between capturing enough information to support effective synthesis and maintaining a manageable and secure context."
+      },
+      {
+        "query_id": "Q07_MULTIHOP_COUNCIL_SYNTHESIS",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 0.75,
+        "tokens": 1292,
+        "latency_ms": 8428.4,
+        "diagnosis": "SUCCESS",
+        "response": "In the council architecture, context flows from specialists to the lead synthesizer in a structured and limited manner to ensure that the lead synthesizer has enough information to make informed decisions without being overwhelmed by unnecessary details. Here’s a detailed breakdown of how this flow occurs:\n\n1. **Specialist Outputs**: Each specialist agent processes a subset of the overall task or query. They output a compact summary of their findings, which is constrained by `MAX_SPECIALIST_OUTPUT = 600 tokens`. This summary includes key points, relevant facts, and any insights derived from their specific area of expertise.\n\n2. **Context Selection**: The router agent, which acts as a central dispatcher, selects the most relevant summaries from the specialists based on the task requirements. This selection ensures that the lead synthesizer receives only the necessary context, reducing the risk of information overload.\n\n3. **Synthesizer Input**: The selected summaries from the specialists are then passed to the lead synthesizer. The synthesizer receives a limited amount of input (`MAX_SYNTHESIS_INPUT = 2500 tokens`), which allows them to focus on integrating and synthesizing the key information. This input is designed to be concise yet comprehensive enough to cover the essential aspects of the task.\n\n4. **Data Integrity and Efficiency**: By limiting the amount of context passed to the synthesizer, the architecture ensures that the lead synthesizer can efficiently process and integrate the information without being overwhelmed. This approach also maintains data integrity by preventing the lead synthesizer from accessing unnecessary or potentially conflicting information.\n\n5. **Outcome Verification**: The outcome of the synthesis process is verified through the council’s outcome labeling system. The synthesizer’s output is reviewed to ensure that it is comprehensive, accurate, and aligned with the task requirements. This verification process helps to maintain the quality and reliability of the final output.\n\n6. **Adaptive Routing**: If the initial synthesis does not meet the requirements, the router agent can be invoked again to adjust the context and re-run the synthesis process. This adaptive routing ensures that the lead synthesizer receives the optimal context to produce the best possible outcome.\n\nBy carefully controlling the amount of context passed to the lead synthesizer, the council architecture ensures that the synthesizer has all the necessary information to make informed decisions without being overwhelmed. This approach balances the need for comprehensive context with the efficiency and quality of the final output."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 1.0,
+        "tokens": 253,
+        "latency_ms": 1467.3,
+        "diagnosis": "SUCCESS",
+        "response": "`conflict_detector.py` optimizes comparison complexity between active notes by deduplicating comparisons using unique pairs `(a.id < b.id)`, which effectively cuts the number of comparisons in half. The hard cap enforced is a maximum of 2000 notes. If the number of notes exceeds this limit, an explicit `ValueError` is raised to fail closed."
+      },
+      {
+        "query_id": "Q08_MULTIHOP_CONFLICT_PAIRING",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 896,
+        "latency_ms": 1591.6,
+        "diagnosis": "SUCCESS",
+        "response": "`conflict_detector.py` optimizes comparison complexity between active notes by using unique pairs `(a.id < b.id)`, which effectively cuts the number of comparisons by half. Additionally, there is a hard cap on the number of notes (`max_notes`), which is set to 2000. Exceeding this limit will raise an explicit `ValueError`, ensuring a fail-closed behavior."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.5,
+        "tokens": 245,
+        "latency_ms": 373.2,
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "The active policy regarding outcome event sources labels synthesis presence as `synthesis_presence`."
+      },
+      {
+        "query_id": "Q09_TEMPORAL_SUPERSEDED_POLICY",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 877,
+        "latency_ms": 1432.1,
+        "diagnosis": "SUCCESS",
+        "response": "According to the document, outcome event sources are controlled and labeled as follows:\n\n- `synthesis_presence` is used for automatic council run synthesis verification.\n- `exit_code` is strictly reserved for real process exit codes.\n\nTherefore, synthesis presence is labeled as `synthesis_presence`, not `exit_code`."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.25,
+        "tokens": 296,
+        "latency_ms": 1388.5,
+        "diagnosis": "BOTH",
+        "response": "During sleep consolidation, when the consolidation budget cap is reached, notes are prioritized based on their recency and importance. The system focuses on retaining the most recent and critical information to ensure that the individual can quickly resume essential functions and make informed decisions upon waking. This process helps in reinforcing key memories and skills, making them more accessible and less prone to forgetting."
+      },
+      {
+        "query_id": "Q10_TEMPORAL_SLEEP_CONSOLIDATION",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 867,
+        "latency_ms": 1324.8,
+        "diagnosis": "SUCCESS",
+        "response": "When the consolidation budget cap is reached during sleep consolidation, notes are prioritized based on their updated or created timestamp using a deterministic oldest-first selection method. This ensures that the oldest and least recently used notes are selected for consolidation first, helping to manage the consolidation budget efficiently and effectively."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.25,
+        "tokens": 293,
+        "latency_ms": 1319.8,
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "No, an AI agent cannot set `verification = 'verified'` on a memory note by itself. This action requires a specific role or permission within the AI system, typically granted to a designated agent or system component with the appropriate authority. Setting such a flag manually or automatically without proper authorization could compromise the integrity and reliability of the system."
+      },
+      {
+        "query_id": "Q11_CONTRADICTION_AI_VERIFICATION",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 914,
+        "latency_ms": 2160.8,
+        "diagnosis": "SUCCESS",
+        "response": "No, an AI agent cannot set `verification = 'verified'` on a memory note by itself. This operation is subject to strict trust boundary invariants as per Vault Cognitive Operating Rules. Specifically, Rule P0 states that \"AI Self-Verification Gated: Principal.AI_AGENT cannot set verification = 'verified'.\" This means that only human agents (Principal.HUMAN) and administrative agents (Principal.ADMIN) are permitted to invoke the `controller.attest()` method to set the verification status of memory notes."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.0,
+        "tokens": 265,
+        "latency_ms": 1230.4,
+        "diagnosis": "RETRIEVAL_FAILURE",
+        "response": "Based on the provided context, there are no explicit restrictions or prohibitions mentioned for `Principal.AI_AGENT` when creating memories. The context focuses on constraints and limitations for other components and entities, but it does not specify any restrictions on `Principal.AI_AGENT`. Therefore, without additional context or rules specified, `Principal.AI_AGENT` is not inherently forbidden from creating memories."
+      },
+      {
+        "query_id": "Q12_CONTRADICTION_PROVENANCE_SOURCE",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 841,
+        "latency_ms": 833.3,
+        "diagnosis": "SUCCESS",
+        "response": "The source_type values that are forbidden for Principal.AI_AGENT when creating memories are:\n\n- 'user'\n- 'official'\n- 'experience'\n- 'import'"
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 0.3333333333333333,
+        "tokens": 231,
+        "latency_ms": 1140.3,
+        "diagnosis": "BOTH",
+        "response": "No, provenance.source_type and outcome records are not mutable after their initial creation. Once an outcome record is created, it is immutable and should be written only once per run_id, strictly into the telemetry/ directory (never into the canonical vault 00_CORE..05_DECISIONS)."
+      },
+      {
+        "query_id": "Q13_CONTRADICTION_STORAGE_MUTABILITY",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 0.6666666666666666,
+        "tokens": 874,
+        "latency_ms": 1258.7,
+        "diagnosis": "BOTH",
+        "response": "No, provenance.source_type and outcome records are immutable after initial creation. This is protected by the Vault Cognitive Operating Rules, specifically rule P07: Provenance Immutability. According to this rule, provenance.source_type cannot be modified after it is created, ensuring the integrity and consistency of the system's data."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 1.0,
+        "tokens": 221,
+        "latency_ms": 783.5,
+        "diagnosis": "SUCCESS",
+        "response": "In `multi_graph.py`, the controlled node types permitted include: fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Any unknown categories are resolved to default to 'fact'."
+      },
+      {
+        "query_id": "Q14_MULTIHOP_GRAPH_NODE_SCHEMA",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 877,
+        "latency_ms": 1218.4,
+        "diagnosis": "SUCCESS",
+        "response": "According to the documentation, the following controlled node types are permitted in multi_graph.py:\n\n1. fact\n2. decision\n3. procedure\n4. lesson\n5. task\n6. intent\n7. tool\n8. failure\n9. correction\n10. outcome\n\nUnknown categories resolve to 'fact'."
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "model": "qwen2.5-coder:7b",
+        "condition": "A1_1hop",
+        "accuracy": 1.0,
+        "tokens": 254,
+        "latency_ms": 680.0,
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is:\n\nBetter memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive."
+      },
+      {
+        "query_id": "Q15_SIMPLE_PRIME_DIRECTIVE",
+        "model": "qwen2.5-coder:7b",
+        "condition": "B_full_context",
+        "accuracy": 1.0,
+        "tokens": 842,
+        "latency_ms": 952.2,
+        "diagnosis": "SUCCESS",
+        "response": "The Prime Directive of the AI Memory System operating contract is: \"Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.\""
+      }
+    ]
+  }
+}

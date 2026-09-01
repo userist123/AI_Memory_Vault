@@ -1,4 +1,35 @@
+# P0 Diagnostic — Budget vs Retrieval vs Model Capability
+
+## Implementation
+- [x] Create `evaluation/retrieval_diagnostic_runner.py` with 3 isolated diagnostic experiments `[owner: antigravity | timestamp: 2026-09-01T21:04:45+03:00]`
+  - [x] Experiment 1 — Budget: A1 (1-hop / 5 results) vs A2 (2-hop / 10 results) vs B (full context)
+  - [x] Experiment 2 — Multi-Signal Retrieval: R1 (Semantic), R2 (Semantic + Lexical), R3 (Semantic + Lexical + Entity), R4 (Semantic + Lexical + Entity + Graph)
+  - [x] Experiment 3 — Model Capability: M1 (`qwen2.5-coder:3b`) vs M2 (`qwen2.5-coder:7b`) on A1 and B
+  - [x] Required-Fact Root Cause Analysis: Categorize failures into `RETRIEVAL_FAILURE`, `MODEL_CAPABILITY_FAILURE`, `BOTH`, `SUCCESS`
+  - [x] Outputs generated: `evaluation/retrieval_diagnostic_report.json` and `evaluation/retrieval_diagnostic_report.md`
+
+## Verification
+- [x] Create `evaluation/tests/test_retrieval_diagnostic.py` with 4 unit tests `[owner: antigravity | timestamp: 2026-09-01T21:05:42+03:00]`
+  - [x] Test fact presence checking in context
+  - [x] Test failure taxonomy classification logic
+  - [x] Test multi-signal retrieval layers (R1 to R4) output validity
+  - [x] Test evaluation cases dataset integrity (15/15 cases validated)
+  - [x] Run pytest suite: 4/4 passed in 0.02s; full suite: 1591 passed in 50.34s
+
+## Review
+- **What Changed**: Implemented isolated `evaluation/retrieval_diagnostic_runner.py` and test suite `evaluation/tests/test_retrieval_diagnostic.py`.
+- **Invariants Maintained**:
+  - `Council_Runtime_Profile.yaml`: 100% untouched
+  - `ContextPackBuilder`: 100% untouched
+  - `config/model_tiers.json`: 100% untouched
+  - `cognitive_core/conflict_detector.py`: 100% untouched
+  - `Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`: 100% untouched
+- **Proof**: Complete matrix of 135 LLM executions on local Ollama, 4/4 diagnostic tests pass, 1591 full suite tests pass.
+
+---
+
 # P0a — Outcome Tracker Implementation (`memory_controller/outcome_tracker.py`)
+
 
 ## Implementation
 - [x] Create `memory_controller/outcome_tracker.py` with immutable `OutcomeRecord` schema `[owner: antigravity | timestamp: 2026-09-01T20:20:26+03:00]`

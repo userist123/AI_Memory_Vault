@@ -34,3 +34,9 @@
 - Fail-Closed Success Invariant: Disallowing `outcome="success"` when `verification_method="none"` prevents silent assumption of task success.
 - Append-Only Provenance: Supporting multiple observations per `run_id` without destructive overwrites preserves full chronological audit trails (e.g. initial automated observation followed by human operator attestation).
 
+## P0 Diagnostic Lessons — Budget vs Retrieval vs Model Capability
+- Retrieval & Graph Horizon Bottleneck: 1-hop semantic retrieval alone isolates single documents and fails on multi-hop questions (Q06, Q07, Q11, Q12) by omitting cross-document governance premises (e.g. `AGENTS.md` operating contract $\leftrightarrow$ `vault_cognitive_rules.md` trust invariants).
+- Multi-Signal Synergy (R4): Layering Lexical BM25, Entity Anchoring, and 2-hop Graph Expansion recovers accuracy from 57.8% (R1) to 85.0% (R4) while consuming ~492 tokens (44% fewer than Full-Context 878 tokens).
+- Model Scaling Sensitivity: Upgrading from 3B to 7B on Full Context improves accuracy from 77.8% to 88.9%, but 3B models suffer heavily when negation tokens or negative constraints require multi-step deduction without explicit entity prompting.
+
+

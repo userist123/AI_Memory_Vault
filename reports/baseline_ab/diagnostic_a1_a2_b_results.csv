@@ -1,0 +1,73 @@
+case_id,category,condition,tokens_input,tokens_output,tokens_total,latency_ms,accuracy_score,pass_verdict,response_text
+Q01_SQLITE_WAL_PRAGMA,simple_fact,A1_1hop,292,29,321,299.42,0.75,True,"To ensure concurrency safety in SQLite storage engine, the PRAGMA busy_timeout=5000 and BEGIN IMMEDIATE atomic transactions are required."
+Q01_SQLITE_WAL_PRAGMA,simple_fact,A2_2hop,461,20,481,206.42,1.0,True,SQLite WAL mode with PRAGMA busy_timeout=5000 and BEGIN IMMEDIATE atomic transactions
+Q01_SQLITE_WAL_PRAGMA,simple_fact,B_full_context,834,39,873,349.79,0.75,True,"To ensure concurrency in the SQLite storage engine, the following PRAGMA setting and transaction mode are required:
+
+PRAGMA busy_timeout=5000  
+Transaction mode: BEGIN IMMEDIATE atomic transactions"
+Q02_P16_HARDWARE_TELEMETRY,simple_fact,A1_1hop,299,51,350,496.48,0.33,False,"According to Rule P16, the following restrictions apply to physical hardware telemetry data (VID, PID, Serial):
+
+- These hardware serial numbers are Read-Only.
+- Users are not allowed to manually modify the VID, PID, or Serial numbers."
+Q02_P16_HARDWARE_TELEMETRY,simple_fact,A2_2hop,468,19,487,288.1,0.33,False,"VID, PID, and Hardware Serial Number are read-only, and users cannot modify them."
+Q02_P16_HARDWARE_TELEMETRY,simple_fact,B_full_context,841,61,902,738.09,0.33,False,"According to Rule P16 in the Vault Cognitive Operating Rules, the following restrictions are in place for physical hardware telemetry data:
+
+- VID (Vendor ID): Read-Only.
+- PID (Product ID): Read-Only.
+- Hardware Serial Number: Read-Only.
+
+These data cannot be modified."
+Q03_COUNCIL_AGENT_LIMITS,simple_fact,A1_1hop,255,32,287,422.28,1.0,True,"The runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS according to AGENTS.md are 3 and 1, respectively."
+Q03_COUNCIL_AGENT_LIMITS,simple_fact,A2_2hop,374,31,405,407.19,1.0,True,The runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS according to AGENTS.md are 3 and 1 respectively.
+Q03_COUNCIL_AGENT_LIMITS,simple_fact,B_full_context,844,29,873,396.95,1.0,True,"According to the AGENTS.md context, the maximum number of council agents is 3 and the maximum number of primary agents is 1."
+Q04_COUNCIL_TOKEN_BUDGETS,simple_fact,A1_1hop,252,26,278,364.09,1.0,True,"MAX_SPECIALIST_OUTPUT is 600 tokens, and MAX_SYNTHESIS_INPUT is 2500 tokens."
+Q04_COUNCIL_TOKEN_BUDGETS,simple_fact,A2_2hop,371,34,405,440.07,1.0,True,The token limits for MAX_SPECIALIST_OUTPUT and MAX_SYNTHESIS_INPUT in the Council operating contract are 600 and 2500 tokens respectively.
+Q04_COUNCIL_TOKEN_BUDGETS,simple_fact,B_full_context,841,35,876,448.93,1.0,True,"MAX_SPECIALIST_OUTPUT is set to 600 tokens, while MAX_SYNTHESIS_INPUT is set to 2500 tokens in the Council operating contract."
+Q05_MULTI_AGENT_COORDINATION,simple_fact,A1_1hop,248,24,272,334.42,1.0,True,The canonical single source of truth for task coordination across multiple AI agents is tasks/todo.md and tasks/lessons.md.
+Q05_MULTI_AGENT_COORDINATION,simple_fact,A2_2hop,464,24,488,362.27,1.0,True,The canonical single source of truth for task coordination across multiple AI agents is tasks/todo.md and tasks/lessons.md.
+Q05_MULTI_AGENT_COORDINATION,simple_fact,B_full_context,837,9,846,162.88,1.0,True,tasks/todo.md and tasks/lessons.md
+Q06_MULTIHOP_PROMOTION_FLOW,multihop,A1_1hop,222,77,299,903.85,0.0,False,"An AI_AGENT proposes a new memory by creating an instance of it and calling the `submit` method on the `PlanComplexityAnalyzer` class. This method requires the agent to have a `skill` and a `memory` parameter. After creating and submitting the memory, the agent waits for approval by the council. Once approved, the memory is marked as `ACTIVE verified`."
+Q06_MULTIHOP_PROMOTION_FLOW,multihop,A2_2hop,468,42,510,559.99,0.75,True,"An AI_AGENT can propose a new memory into the states RAW, CLASSIFIED, or NORMALIZED. To promote it to the ACTIVE verified status, human attestation is required through the Operation.ATTEST."
+Q06_MULTIHOP_PROMOTION_FLOW,multihop,B_full_context,841,73,914,943.82,1.0,True,"To propose a new memory, an AI_AGENT can use the `tasks/todo.md` and `tasks/lessons.md` files as the canonical coordination layer. The AI_AGENT can only propose into the {RAW, CLASSIFIED, NORMALIZED, REVIEW} categories and promote it to ACTIVE verified status after receiving human attestation via the `controller.attest()` method."
+Q07_MULTIHOP_COUNCIL_SYNTHESIS,multihop,A1_1hop,251,239,490,2880.96,0.5,False,"In the council architecture, context flows from specialists to the lead synthesizer through the following steps:
+
+1. **Specialist Outputs**: Each specialist generates a synthesized output, which is a summary or explanation of the task or problem being addressed. This output is generated based on their personal expertise and the context they have access to.
+
+2. **Lead Synthesizer**: The lead synthesizer receives the outputs from all specialists. It then processes these outputs to gather information and generate a comprehensive and detailed summary or synthesis of the task.
+
+3. **Context Flows**: The lead synthesizer retains the context from each specialist's output while synthesizing it. This ensures that the synthesizer does not leak wholesale context to other parts of the system.
+
+4. **Communication**: The lead synthesizer communicates this synthesized context back to the planner or the system in which the task is being executed. This context is used to guide the execution of the task more effectively.
+
+By maintaining the context of each specialist's output while synthesizing, the system ensures that the lead synthesizer has the necessary information to generate accurate and comprehensive summaries, while also ensuring that the system does not share sensitive information with other components of the system."
+Q07_MULTIHOP_COUNCIL_SYNTHESIS,multihop,A2_2hop,370,32,402,487.9,0.5,False,"The context flows from specialists to the lead synthesizer in the council architecture through compact summaries, which ensures that only relevant information is shared without leaking wholesale context."
+Q07_MULTIHOP_COUNCIL_SYNTHESIS,multihop,B_full_context,840,118,958,1281.81,0.25,False,"In the council architecture, context flows from specialists to the lead synthesizer through a mechanism that ensures the flow of information remains secure and protected, preventing wholesale leakage. This is achieved through the use of a dedicated channel or interface between the specialists and the lead synthesizer, which allows for the secure transmission of the necessary context for synthesis without exposing sensitive details to other parts of the system. The lead synthesizer is specifically designed to process and synthesize this context, ensuring that the synthesis is accurate and relevant to the overall task at hand, while maintaining the privacy and security of the context itself."
+Q08_MULTIHOP_CONFLICT_PAIRING,multihop,A1_1hop,200,53,253,511.65,1.0,True,"Conflict_detector.py deduplicates comparisons by using unique pairs (a.id < b.id), which reduces the number of comparisons by 50%. Additionally, a hard cap of 2000 notes is enforced, meaning exceeding this limit raises an explicit ValueError."
+Q08_MULTIHOP_CONFLICT_PAIRING,multihop,A2_2hop,415,25,440,266.98,0.33,False,"conflict_detector.py deduplicates comparisons using unique pairs (a.id < b.id), cutting comparisons by 50%."
+Q08_MULTIHOP_CONFLICT_PAIRING,multihop,B_full_context,838,47,885,419.42,0.67,False,"Conflict_detector.py optimizes comparison complexity by deduplicating comparisons using unique pairs (a.id < b.id), reducing them by 50%. A hard cap of 2000 notes is enforced to prevent excessive comparisons."
+Q09_TEMPORAL_SUPERSEDED_POLICY,temporal,A1_1hop,251,4,255,82.73,0.5,False,synthesis_presence
+Q09_TEMPORAL_SUPERSEDED_POLICY,temporal,A2_2hop,586,10,596,179.34,0.5,False,Synthesis presence is labeled as synthesis_presence.
+Q09_TEMPORAL_SUPERSEDED_POLICY,temporal,B_full_context,840,15,855,180.22,0.5,False,Synthesis presence is labeled as synthesis_presence in the outcome event sources.
+Q10_TEMPORAL_SLEEP_CONSOLIDATION,temporal,A1_1hop,246,18,264,200.32,0.0,False,"Notes are prioritized based on the ""Consolidation Score"" during sleep consolidation."
+Q10_TEMPORAL_SLEEP_CONSOLIDATION,temporal,A2_2hop,700,34,734,397.12,0.75,True,"During sleep consolidation, when the consolidation budget cap is reached, notes are prioritized by their creation or updated timestamp, and selected in a deterministic order of oldest-first."
+Q10_TEMPORAL_SLEEP_CONSOLIDATION,temporal,B_full_context,835,32,867,321.2,1.0,True,"When the consolidation budget cap is reached during sleep consolidation, notes are prioritized by their updated/created timestamp. The oldest note is selected to be consolidated."
+Q11_CONTRADICTION_AI_VERIFICATION,contradiction_guardrail,A1_1hop,247,13,260,166.86,0.0,False,No. Verification can only be set by a council member.
+Q11_CONTRADICTION_AI_VERIFICATION,contradiction_guardrail,A2_2hop,463,34,497,305.83,0.25,False,"No, an AI agent cannot set verification = 'verified' on a memory note by itself. The rule states that Principal.AI_AGENT cannot set verification = 'verified'."
+Q11_CONTRADICTION_AI_VERIFICATION,contradiction_guardrail,B_full_context,836,50,886,476.59,0.25,False,"No, according to the AGENTS.md file, a Principal.AI_AGENT cannot set verification = 'verified' on a memory note by itself. This is one of the Trust Boundary Invariants (P0-P15) that must be maintained."
+Q12_CONTRADICTION_PROVENANCE_SOURCE,contradiction_guardrail,A1_1hop,214,24,238,257.96,0.25,False,"The source_type values forbidden for Principal.AI_AGENT when creating memories are 'user', 'agent', and 'system'."
+Q12_CONTRADICTION_PROVENANCE_SOURCE,contradiction_guardrail,A2_2hop,460,37,497,381.87,1.0,True,"According to the provided context, the source_type values forbidden for Principal.AI_AGENT when creating memories are:
+
+- 'user'
+- 'official'
+- 'experience'
+- 'import'"
+Q12_CONTRADICTION_PROVENANCE_SOURCE,contradiction_guardrail,B_full_context,833,26,859,268.5,1.0,True,"Forbidden source_type values for Principal.AI_AGENT when creating memories are 'user', 'official', 'experience', and 'import'."
+Q13_CONTRADICTION_STORAGE_MUTABILITY,contradiction_guardrail,A1_1hop,193,16,209,190.17,0.33,False,"No, provenance.source_type and outcome records are immutable after initial creation."
+Q13_CONTRADICTION_STORAGE_MUTABILITY,contradiction_guardrail,A2_2hop,578,23,601,255.12,0.67,False,"Based on the provided context, provenance.source_type cannot be modified after creation, and outcome records are immutable."
+Q13_CONTRADICTION_STORAGE_MUTABILITY,contradiction_guardrail,B_full_context,832,17,849,190.97,0.33,False,"No, provenance.source_type and outcome records are immutable after their initial creation."
+Q14_MULTIHOP_GRAPH_NODE_SCHEMA,multihop,A1_1hop,198,41,239,387.67,1.0,True,"The controlled node types in multi_graph.py are: fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Unmapped categories are resolved to 'fact'."
+Q14_MULTIHOP_GRAPH_NODE_SCHEMA,multihop,A2_2hop,413,41,454,423.37,1.0,True,"In the multi_graph.py file, controlled node types are fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Unmapped categories resolve to 'fact'."
+Q14_MULTIHOP_GRAPH_NODE_SCHEMA,multihop,B_full_context,836,40,876,382.41,1.0,True,"In multi_graph.py, the permitted node types are fact, decision, procedure, lesson, task, intent, tool, failure, correction, and outcome. Unknown categories are resolved to 'fact'."
+Q15_SIMPLE_PRIME_DIRECTIVE,simple_fact,A1_1hop,243,22,265,247.36,1.0,True,Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.
+Q15_SIMPLE_PRIME_DIRECTIVE,simple_fact,A2_2hop,362,22,384,229.99,1.0,True,Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.
+Q15_SIMPLE_PRIME_DIRECTIVE,simple_fact,B_full_context,832,22,854,227.3,1.0,True,Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.
