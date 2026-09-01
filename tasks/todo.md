@@ -1,4 +1,38 @@
+# P0a — Outcome Tracker Implementation (`memory_controller/outcome_tracker.py`)
+
+## Implementation
+- [x] Create `memory_controller/outcome_tracker.py` with immutable `OutcomeRecord` schema `[owner: antigravity | timestamp: 2026-09-01T20:20:26+03:00]`
+  - [x] Fields: `event_id`, `run_id`, `outcome` (success|fail|partial|unknown, default: unknown), `verification_method` (test_pass|exit_code|human_confirmed|none, default: none), `timestamp`, `task_signature`, `evidence`, `recorded_by`
+  - [x] Fail-closed: `outcome="success"` with `verification_method="none"` raises `ValueError`
+  - [x] Storage isolation: Writes strictly to `telemetry/outcomes/council_outcomes.jsonl` (raises `PermissionError` on canonical vault dirs)
+  - [x] Append-only provenance: Multiple observations per `run_id` (e.g. automatic then human) preserved chronologically
+  - [x] Zero coupling: No imports or calls to `proposal_queue`
+
+## Verification
+- [x] Create `memory_controller/tests/test_outcome_tracker.py` with test cases A-H `[owner: antigravity | timestamp: 2026-09-01T20:21:17+03:00]`
+  - [x] Test A: Verified success run (`outcome=success`, `verification_method=test_pass`)
+  - [x] Test B: Failed run (`outcome=fail`, `verification_method=test_pass`)
+  - [x] Test C: Unverified run (`outcome=unknown`, `verification_method=none`)
+  - [x] Test D: Partial run (`outcome=partial`)
+  - [x] Test E: Append-only provenance preservation
+  - [x] Test F: Invalid enum values rejected
+  - [x] Test G: Canonical memory write isolation (PermissionError)
+  - [x] Test H: Zero proposal queue coupling AST verification
+  - [x] Run pytest suite: 8/8 passed in 0.06s; full suite: 1591 passed in 69.03s
+
+## Review
+- **What Changed**: Implemented standalone `memory_controller/outcome_tracker.py` and unit suite `test_outcome_tracker.py`.
+- **Invariants Maintained**:
+  - `config/model_tiers.json`: 100% untouched
+  - `cognitive_core/conflict_detector.py`: 100% untouched
+  - `proposal_queue.py`: 100% untouched
+  - Canonical vault (`00_CORE`..`05_DECISIONS`): 100% untouched
+- **Proof**: 8/8 tests in `test_outcome_tracker.py` pass; full suite passes with 1591 passed, 1 skipped, 0 failures.
+
+---
+
 # Fix Pack Implementation Tasks (Pack 3 — Outcome Labeling on Council Run)
+
 
 - [x] Task 1: `OutcomeEvent` Schema & Append-Only Invariants on `CouncilRunWithExecution` `[owner: antigravity | timestamp: 2026-08-31T23:53:52+03:00]`
   - [x] Define `OutcomeEvent` (frozen dataclass) with `event_id`, `run_id`, `timestamp`, `outcome` (success|failure|partial|unknown), `source` (exit_code|test_result|human|llm_judge), `confidence` (low|medium|high), `evidence` (str), `labeled_by` (optional)

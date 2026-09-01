@@ -28,3 +28,9 @@
 
 ### Task 3 — Human Labeling CLI
 - Disconnected Human Audit Logging: Storing CLI-generated human labels in `04_MEMORY/outcome_events.jsonl` preserves append-only event logs on disk with timestamps, run IDs, and explicit confidence scores, ready for future offline analysis without runtime overhead.
+
+## P0a Outcome Tracker Lessons
+- Strict Storage Isolation: Enforcing hard boundary checks against canonical vault directories (`00_CORE`..`05_DECISIONS`, `99_SYSTEM`) at tracker initialization guarantees that execution outcome telemetry remains decoupled from verified memory.
+- Fail-Closed Success Invariant: Disallowing `outcome="success"` when `verification_method="none"` prevents silent assumption of task success.
+- Append-Only Provenance: Supporting multiple observations per `run_id` without destructive overwrites preserves full chronological audit trails (e.g. initial automated observation followed by human operator attestation).
+
