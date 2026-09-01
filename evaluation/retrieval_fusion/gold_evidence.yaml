@@ -1,0 +1,120 @@
+queries:
+  - id: "Q01_SQLITE_WAL_PRAGMA"
+    class: "SIMPLE_FACT"
+    query: "What PRAGMA setting and transaction mode are required for SQLite storage engine concurrency?"
+    gold_relevant_notes: ["note_vault_cognitive_rules"]
+    gold_required_facts: ["wal", "busy_timeout", "5000", "immediate"]
+    entities: ["SQLite", "PRAGMA", "StorageEngine"]
+    expected_relations: ["implements", "governs"]
+
+  - id: "Q02_P16_HARDWARE_TELEMETRY"
+    class: "SIMPLE_FACT"
+    query: "Under Rule P16, what are the restrictions on physical hardware telemetry data (VID, PID, Serial)?"
+    gold_relevant_notes: ["note_vault_cognitive_rules"]
+    gold_required_facts: ["read-only", "immutable", "block"]
+    entities: ["P16", "HardwareTelemetry", "VID", "PID"]
+    expected_relations: ["governs", "restricts"]
+
+  - id: "Q03_COUNCIL_AGENT_LIMITS"
+    class: "SIMPLE_FACT"
+    query: "What are the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS according to AGENTS.md?"
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["3", "1"]
+    entities: ["MAX_COUNCIL_AGENTS", "MAX_PRIMARY_AGENTS", "Council"]
+    expected_relations: ["defines", "limits"]
+
+  - id: "Q04_COUNCIL_TOKEN_BUDGETS"
+    class: "SIMPLE_FACT"
+    query: "What are the token limits for MAX_SPECIALIST_OUTPUT and MAX_SYNTHESIS_INPUT in the Council operating contract?"
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["600", "2500"]
+    entities: ["MAX_SPECIALIST_OUTPUT", "MAX_SYNTHESIS_INPUT", "Council"]
+    expected_relations: ["defines", "allocates"]
+
+  - id: "Q05_MULTI_AGENT_COORDINATION"
+    class: "SIMPLE_FACT"
+    query: "Which file serves as the canonical single source of truth for task coordination across multiple AI agents?"
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["tasks/todo.md", "lessons.md"]
+    entities: ["SingleSourceOfTruth", "tasks/todo.md", "tasks/lessons.md"]
+    expected_relations: ["coordinates", "records"]
+
+  - id: "Q06_MULTIHOP_PROMOTION_FLOW"
+    class: "MULTI_HOP"
+    query: "How does an AI_AGENT propose a new memory, and what is required to promote it to ACTIVE verified status?"
+    gold_relevant_notes: ["note_vault_cognitive_rules", "note_agents_contract"]
+    gold_required_facts: ["raw", "review", "human", "attest"]
+    entities: ["Principal.AI_AGENT", "Lifecycle", "Operation.ATTEST"]
+    expected_relations: ["proposes_to", "requires_attestation"]
+
+  - id: "Q07_MULTIHOP_COUNCIL_SYNTHESIS"
+    class: "MULTI_HOP"
+    query: "Explain how context flows from specialists to the lead synthesizer in the council architecture without leaking wholesale context."
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["compact", "summary", "synthes", "deduplicat"]
+    entities: ["Specialist", "Synthesizer", "ContextPack"]
+    expected_relations: ["compresses_to", "deduplicates"]
+
+  - id: "Q08_MULTIHOP_CONFLICT_PAIRING"
+    class: "MULTI_HOP"
+    query: "How does conflict_detector.py optimize comparison complexity between active notes, and what hard cap is enforced?"
+    gold_relevant_notes: ["note_vault_cognitive_rules"]
+    gold_required_facts: ["pair", "2000", "valueerror"]
+    entities: ["ConflictDetector", "max_notes", "ValueError"]
+    expected_relations: ["optimizes", "enforces_cap"]
+
+  - id: "Q09_TEMPORAL_SUPERSEDED_POLICY"
+    class: "TEMPORAL"
+    query: "What is the active policy regarding outcome event sources: is synthesis presence labeled as exit_code or synthesis_presence?"
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["synthesis_presence", "exit_code"]
+    entities: ["OutcomeEvent", "synthesis_presence", "exit_code"]
+    expected_relations: ["supersedes", "records"]
+
+  - id: "Q10_TEMPORAL_SLEEP_CONSOLIDATION"
+    class: "TEMPORAL"
+    query: "How are notes prioritized during sleep consolidation when the consolidation budget cap is reached?"
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["oldest", "updated", "created", "budget"]
+    entities: ["SleepConsolidation", "TimestampOrder", "BudgetCap"]
+    expected_relations: ["prioritizes_by", "evicts_oldest"]
+
+  - id: "Q11_CONTRADICTION_AI_VERIFICATION"
+    class: "CONTRADICTION_GUARDRAIL"
+    query: "Can an AI agent set verification = 'verified' on a memory note by itself?"
+    gold_relevant_notes: ["note_vault_cognitive_rules"]
+    gold_required_facts: ["cannot", "human", "admin", "gated"]
+    entities: ["Principal.AI_AGENT", "Verification", "Principal.HUMAN"]
+    expected_relations: ["prohibits", "gates"]
+
+  - id: "Q12_CONTRADICTION_PROVENANCE_SOURCE"
+    class: "CONTRADICTION_GUARDRAIL"
+    query: "Which source_type values are forbidden for Principal.AI_AGENT when creating memories?"
+    gold_relevant_notes: ["note_vault_cognitive_rules"]
+    gold_required_facts: ["user", "official", "experience", "import"]
+    entities: ["Principal.AI_AGENT", "Provenance", "SourceType"]
+    expected_relations: ["forbids", "validates"]
+
+  - id: "Q13_CONTRADICTION_STORAGE_MUTABILITY"
+    class: "CONTRADICTION_GUARDRAIL"
+    query: "Are provenance.source_type and outcome records mutable after initial creation?"
+    gold_relevant_notes: ["note_vault_cognitive_rules"]
+    gold_required_facts: ["immutable", "cannot", "append-only"]
+    entities: ["Provenance", "OutcomeRecord", "Immutability"]
+    expected_relations: ["enforces_immutability", "appends"]
+
+  - id: "Q14_MULTIHOP_GRAPH_NODE_SCHEMA"
+    class: "MULTI_HOP"
+    query: "What controlled node types are permitted in multi_graph.py and how are unknown categories resolved?"
+    gold_relevant_notes: ["note_vault_cognitive_rules", "note_agents_contract"]
+    gold_required_facts: ["fact", "decision", "procedure", "lesson", "task"]
+    entities: ["MultiGraph", "ControlledNodeTypes", "GraphSchema"]
+    expected_relations: ["defines_schema", "falls_back_to"]
+
+  - id: "Q15_SIMPLE_PRIME_DIRECTIVE"
+    class: "SIMPLE_FACT"
+    query: "What is the Prime Directive of the AI Memory System operating contract?"
+    gold_relevant_notes: ["note_agents_contract"]
+    gold_required_facts: ["better memory", "better routing", "context is expensive"]
+    entities: ["PrimeDirective", "OperatingContract"]
+    expected_relations: ["mandates", "prioritizes"]

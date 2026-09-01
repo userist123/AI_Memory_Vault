@@ -34,9 +34,51 @@
 - Fail-Closed Success Invariant: Disallowing `outcome="success"` when `verification_method="none"` prevents silent assumption of task success.
 - Append-Only Provenance: Supporting multiple observations per `run_id` without destructive overwrites preserves full chronological audit trails (e.g. initial automated observation followed by human operator attestation).
 
-## P0 Diagnostic Lessons — Budget vs Retrieval vs Model Capability
-- Retrieval & Graph Horizon Bottleneck: 1-hop semantic retrieval alone isolates single documents and fails on multi-hop questions (Q06, Q07, Q11, Q12) by omitting cross-document governance premises (e.g. `AGENTS.md` operating contract $\leftrightarrow$ `vault_cognitive_rules.md` trust invariants).
-- Multi-Signal Synergy (R4): Layering Lexical BM25, Entity Anchoring, and 2-hop Graph Expansion recovers accuracy from 57.8% (R1) to 85.0% (R4) while consuming ~492 tokens (44% fewer than Full-Context 878 tokens).
-- Model Scaling Sensitivity: Upgrading from 3B to 7B on Full Context improves accuracy from 77.8% to 88.9%, but 3B models suffer heavily when negation tokens or negative constraints require multi-step deduction without explicit entity prompting.
+## P0 Real Pipeline Diagnostic Correction Lessons
+- **Real Pipeline vs Synthetic Simulation**: When measuring production retrieval performance, simulated dictionary lookups mask real retrieval behavior. Ingesting actual Markdown disk notes into `StorageEngine` and querying through `MemoryController.search` -> `QueryClassifier` -> `RetrievalEngine` -> `RelevanceScorer` -> `ProgressiveDisclosure` -> `ContextPackBuilder` revealed that default retrieval achieved only 6.7% factual evidence coverage on complex governance queries because token overlap alone without graph expansion fails to retrieve cross-referenced policy rules.
+- **Evidence Coverage vs Model Correctness**: Decoupling context factual presence (`evidence_coverage`) from model semantic accuracy (`answer_correctness`) proved that when the model is provided with full context (Real B), accuracy jumps to 63.3% on 3B and 75.9% on 7B, pinpointing the primary bottleneck in the retrieval layer rather than model reasoning capacity.
+- **Multi-Signal Reality**: An empirical audit showed that while BM25, Qdrant vectors, and 4-view Multi-Graphs exist in specialized modules (`financial_search.py`, `cognitive_core/multi_graph.py`, `qdrant_retrieval.py`), they are `PARTIAL` because they are not yet unified into the default `MemoryController.search` pipeline.
+
+## R1→R4 Retrieval Fusion Laboratory Lessons
+- **Lexical BM25 (R2) Recovers Exact Terms**: Adding Okapi BM25 (`BM25Ranker`) via Reciprocal Rank Fusion boosted `SIMPLE_FACT` fact recall from 88.8% to 94.5% and `CONTRADICTION_GUARDRAIL` fact recall from 61.0% to 69.3%, confirming hypothesis `R-H002` that lexical matching resolves exact acronym/PRAGMA blindness.
+- **Entity Anchoring (R3) Drives Candidate Recall**: Explicit tag and identifier matching increased overall candidate recall from 63.3% to 76.7% (+13.4%), achieving the highest guardrail coverage (77.7%).
+- **Graph Expansion (R4) Doubles 7B Reasoning Accuracy**: Expanding candidate seeds through 1-hop relational neighbors (`MultiGraphMemory`) increased `qwen2.5-coder:7b` accuracy on multi-hop questions from 12.8% to 26.7% (+13.9% net accuracy), demonstrating that connected dependency nodes are vital for cross-document synthesis.
+- **Packing Bottleneck (`PACKING_FAILURE`)**: Across all strategies, the dominant remaining failure mode was `PACKING_FAILURE` (7-10 cases per strategy) where candidate notes contained the required facts, but progressive disclosure truncation or aggressive section filtering pruned the evidence before passing the context pack to the LLM.
+- **Zero Production Modification Invariant**: Running the fusion lab through isolated adapters (`evaluation/retrieval_fusion/`) allowed rigorous empirical validation of all 4 candidate generation signals on real vault data while keeping production cognitive core modules 100% frozen.
+
+## P1 Context Packing Laboratory Lessons
+- **Packing Loss Was the Hidden Killer**: In the production baseline (P0), `apply_degradation` discarded `76.1%` of all discovered candidate facts due to zlib binary compression of notes > 1024 bytes and content blanking on notes beyond index 3 (`max_full_documents=3`), rendering them unreadable to the LLM.
+- **Section-Aware Extractive Packing (P2) Recovers 100% of Lost Context**: By parsing Markdown headers and extracting relevant section chunks rather than whole documents, Context Fact Recall jumped from `10.0%` to `76.7%` with `0.0%` packing loss.
+- **Prompt Token Reduction Boosts Small Model Accuracy**: Extractive packing cut context tokens by 50% (from ~3000 to ~1470 tokens), eliminating attention noise. This lifted 3B model accuracy from `11.7%` to `61.7%` (P4) and 7B model accuracy from `15.6%` to `71.1%` (P2), completely exceeding the uncompressed Full Context baseline (`68.3%`).
+- **Guardrail Negation Preservation**: Preserving critical negation words (`NOT`, `NEVER`, `CANNOT`, `GATED`, `IMMUTABLE`) restored `CONTRADICTION_GUARDRAIL` fact recall from `0.0%` in P0 to `77.7%` in P2-P4.
+
+## P2 Temporal Memory Laboratory Lessons
+- **Metadata Availability Gap**: Audit of all 832 notes showed that while `created`, `updated`, and `lifecycle` are 100% available, `valid_from`, `valid_until`, and `supersedes` are 0.0% populated in static Markdown frontmatters on disk, causing static keyword search to be temporally blind.
+- **Supersession Lineage Traversal (T2) Resolves Outdated Seeds**: Dynamically traversing reciprocal `supersedes` / `superseded_by` edges lifted accuracy on superseded policy queries from 0.0% to 100.0% (boosting overall 3B accuracy from 23.8% to 40.5%).
+- **Non-Overlapping Intervals Eliminate False Contradictions**: Evaluating validity intervals (`valid_from` .. `valid_until`) prevents the system from treating sequential rule revisions as simultaneous contradictions.
+- **Abstention on Missing Temporal Metadata**: When timestamps are missing, the system must emit explicit `UNKNOWN` status rather than guessing temporal priority.
+
+## External Memory Usage Audit Lessons
+- **Passive Proximity vs Active Utilization**: Access to the Vault does not equal usage. Agents frequently claim "I followed the architecture" or "I checked the skills" without executing a single file read or search tool call.
+- **Anti-Fabrication Principle**: Unsubstantiated agent self-reports evaluate strictly to `UNVERIFIED` (score: 0.0) across all 11 audit stages unless corroborated by tool logs, file reads, or command execution traces.
+- **Mandatory Provenance Chain**: A claim of memory utilization requires an unbroken chain from `query` $\rightarrow$ `retrieval` $\rightarrow$ `decision` $\rightarrow$ `execution` $\rightarrow$ `empirical verification` $\rightarrow$ `outcome log`.
+
+## Agent Memory Trace Emitter Protocol Lessons
+- **Declared vs Observed Distinction**: Enforcing a strict schema separation between `declared` claims and `observed` events with concrete evidence references (`tool_calls`, `pytest exit_code`, `telemetry hashes`) allows automated detection of memory hallucinations.
+- **Trace Completeness State Machine**: The canonical 8-stage lifecycle (`QUERY` $\rightarrow$ `RETRIEVE` $\rightarrow$ `LOAD` $\rightarrow$ `ACTIVATE` $\rightarrow$ `DECIDE` $\rightarrow$ `EXECUTE` $\rightarrow$ `VERIFY` $\rightarrow$ `OUTCOME`) immediately isolates the exact first broken link (e.g. `RETRIEVE` in WOB ART).
+- **Causal Decision Verification**: A decision can only achieve `MEMORY_INFLUENCE_VERIFIED` if the governing note was retrieved, loaded into working memory, and explicitly referenced in the decision event.
+
+## Runtime Observed Memory Trace Lessons
+- **Final Context Filtering Invariant**: The observed memory trace must record only the IDs present in the final context pack after degradation and budget fitting (`pack["results"]`), ignoring candidates rejected during earlier retrieval/scoring phases.
+- **Fail-Safe Passive Instrumentation**: Telemetry write failures (e.g. disk write issues) must be caught silently within `ContextPackBuilder` so that context pack delivery and model execution are never blocked.
+- **Data Minimization Rule**: Persisting only `run_id`, `timestamp`, `retrieved_memory_ids`, and `retrieval_scores` eliminates any risk of prompt or private note content leakage into telemetry logs.
+
+## Memory Trace Hardening & Proof Lessons
+- **Caller Passthrough Invariance**: An audit of all 5 callers of `ContextPackBuilder.build()` confirmed that `pack["results"]` is never mutated, pruned, or reordered downstream. Thus `PACK_OBSERVED == MODEL_CONTEXT_OBSERVED`.
+- **Thread-Safe Lock Isolation**: Appending observed memory traces under `_TRACE_LOCK` ensures zero corruption or record intermixing under multi-threaded concurrency.
+- **No False Observation on Persistence Failure**: When telemetry writes fail, `reconcile_observed_trace` emits `OBSERVATION_FAILED`, preventing the system from falsely hallucinating an `OBSERVED` state when logs are missing.
+
+
+
 
 

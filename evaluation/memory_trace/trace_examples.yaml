@@ -1,0 +1,148 @@
+examples:
+  - id: "complete_verified_trace"
+    description: "Fully verified memory trace with unbroken causal links and empirical test proof"
+    trace:
+      trace_id: "tr-20260902-001"
+      task_id: "task-sqlite-wal"
+      session_id: "sess-12345"
+      agent_id: "antigravity"
+      timestamp: "2026-09-02T00:15:00Z"
+      query: "Configure SQLite WAL mode concurrency and test it."
+      declared:
+        retrieved_memories: ["00_CORE/Storage_Architecture.md"]
+        activated_skills: ["sqlite-wal-optimization"]
+        activated_subagents: []
+        decisions_influenced: ["Applied PRAGMA busy_timeout=5000 and BEGIN IMMEDIATE"]
+        verification_claims: ["Ran test_sqlite_storage.py and all 5 tests passed"]
+        outcome_claims: ["success"]
+      observed:
+        retrieval_events:
+          - event_id: "evt-ret-01"
+            memory_id: "00_CORE/Storage_Architecture.md"
+            source: "filesystem_read"
+            evidence_ref: "tool_calls[0]: view_file(00_CORE/Storage_Architecture.md)"
+        memory_load_events:
+          - event_id: "evt-load-01"
+            memory_id: "00_CORE/Storage_Architecture.md"
+            evidence_ref: "context_pack: bytes=2450"
+        skill_load_events:
+          - event_id: "evt-sk-01"
+            skill_name: "sqlite-wal-optimization"
+            state: "ACTIVATED"
+            evidence_ref: "tool_calls[1]: view_file(.agents/skills/sqlite-wal-optimization/SKILL.md)"
+        subagent_events: []
+        decision_events:
+          - event_id: "evt-dec-01"
+            decision: "Configured PRAGMA busy_timeout=5000"
+            governing_memory_id: "00_CORE/Storage_Architecture.md"
+        tool_events:
+          - event_id: "evt-tool-01"
+            tool: "run_command"
+            command: "python -m pytest memory_controller/tests/test_sqlite_storage.py -q"
+        verification_events:
+          - event_id: "evt-ver-01"
+            type: "test_pass"
+            evidence_ref: "exit_code=0, output='5 passed in 0.12s'"
+        outcome_events:
+          - event_id: "evt-out-01"
+            outcome: "success"
+            verification_method: "test_pass"
+            evidence_ref: "telemetry: outcome_events.jsonl append"
+      links:
+        query_to_memory: "VALID"
+        memory_to_skill: "VALID"
+        memory_to_decision: "VALID"
+        decision_to_execution: "VALID"
+        execution_to_verification: "VALID"
+        verification_to_outcome: "VALID"
+      status:
+        memory_usage: "VERIFIED"
+        skill_usage: "VERIFIED"
+        decision_influence: "MEMORY_INFLUENCE_VERIFIED"
+        verification: "VERIFIED"
+        outcome: "VERIFIED"
+        completeness: "COMPLETE"
+
+  - id: "wob_art_retroactive_trace"
+    description: "Retroactive trace of WOB ART conversation showing declared claims with zero observed evidence"
+    trace:
+      trace_id: "tr-wob-art-001"
+      task_id: "task-wob-art"
+      session_id: "sess-wob"
+      agent_id: "external_agent"
+      timestamp: "2026-09-02T00:00:00Z"
+      query: "Work on WOB ART, follow vault rules, use UI skills, verify implementation."
+      declared:
+        retrieved_memories: ["Vault Architecture Rules"]
+        activated_skills: ["UI and Three.js styling"]
+        activated_subagents: []
+        decisions_influenced: ["Followed vault architecture and made GitHub changes"]
+        verification_claims: ["Verified implementation and everything is working properly"]
+        outcome_claims: ["success"]
+      observed:
+        retrieval_events: []
+        memory_load_events: []
+        skill_load_events: []
+        subagent_events: []
+        decision_events: []
+        tool_events: []
+        verification_events: []
+        outcome_events: []
+      links:
+        query_to_memory: "MISSING"
+        memory_to_skill: "MISSING"
+        memory_to_decision: "MISSING"
+        decision_to_execution: "MISSING"
+        execution_to_verification: "MISSING"
+        verification_to_outcome: "MISSING"
+      status:
+        memory_usage: "DECLARED_ONLY"
+        skill_usage: "DECLARED_ONLY"
+        decision_influence: "MEMORY_INFLUENCE_UNVERIFIED"
+        verification: "MISSING"
+        outcome: "MISSING"
+        completeness: "BROKEN"
+
+  - id: "broken_causal_link_trace"
+    description: "Trace where memory is retrieved but decision does not link to it"
+    trace:
+      trace_id: "tr-broken-001"
+      task_id: "task-broken"
+      session_id: "sess-broken"
+      agent_id: "agent"
+      timestamp: "2026-09-02T00:10:00Z"
+      query: "Check rules and write app."
+      declared:
+        retrieved_memories: ["00_CORE/Memory_Protocol.md"]
+        activated_skills: []
+        activated_subagents: []
+        decisions_influenced: ["Wrote unrelated frontend button"]
+        verification_claims: []
+        outcome_claims: []
+      observed:
+        retrieval_events:
+          - event_id: "evt-ret-02"
+            memory_id: "00_CORE/Memory_Protocol.md"
+            source: "filesystem_read"
+            evidence_ref: "view_file(00_CORE/Memory_Protocol.md)"
+        memory_load_events: []
+        skill_load_events: []
+        subagent_events: []
+        decision_events: []
+        tool_events: []
+        verification_events: []
+        outcome_events: []
+      links:
+        query_to_memory: "VALID"
+        memory_to_skill: "N/A"
+        memory_to_decision: "BROKEN"
+        decision_to_execution: "MISSING"
+        execution_to_verification: "MISSING"
+        verification_to_outcome: "MISSING"
+      status:
+        memory_usage: "TOOL_OBSERVED"
+        skill_usage: "MISSING"
+        decision_influence: "MEMORY_INFLUENCE_UNVERIFIED"
+        verification: "MISSING"
+        outcome: "MISSING"
+        completeness: "BROKEN"

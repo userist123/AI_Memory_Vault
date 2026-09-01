@@ -1,0 +1,84 @@
+queries:
+  - id: "Q09_TEMPORAL_SUPERSEDED_POLICY"
+    class: "CURRENT_STATE"
+    query: "What is the active policy regarding outcome event sources: is synthesis presence labeled as exit_code or synthesis_presence?"
+    entities: ["OutcomeEvent", "synthesis_presence", "exit_code"]
+    temporal_constraints:
+      target_time: "current"
+      mode: "current_truth"
+    expected_current_fact: "source='synthesis_presence' for council syntheses, while exit_code is reserved strictly for real process executions"
+    expected_historical_fact: "synthesis was previously inferred or unclassified"
+    supersession_chain: ["legacy_outcome_event", "active_outcome_event"]
+    required_evidence: ["synthesis_presence", "exit_code"]
+
+  - id: "Q10_TEMPORAL_SLEEP_CONSOLIDATION"
+    class: "PRIORITY_ORDERING"
+    query: "How are notes prioritized during sleep consolidation when the consolidation budget cap is reached?"
+    entities: ["SleepConsolidation", "TimestampOrder"]
+    temporal_constraints:
+      target_time: "current"
+      mode: "timestamp_ordering"
+    expected_current_fact: "oldest-first ordering based on updated/created timestamps to prevent starvation"
+    expected_historical_fact: "arbitrary or newest-first ordering"
+    supersession_chain: []
+    required_evidence: ["oldest", "updated", "created", "budget"]
+
+  - id: "Q16_TEMPORAL_SUPERSESSION_CHAIN"
+    class: "SUPERSESSION"
+    query: "If Note A (2024 Python 3.10 guide) was superseded by Note B (2026 Python 3.12+ guide), which version is active and what links them?"
+    entities: ["Python", "supersedes", "superseded_by"]
+    temporal_constraints:
+      target_time: "current"
+      mode: "supersession_resolution"
+    expected_current_fact: "Note B is ACTIVE, Note A is SUPERSEDED, linked by reciprocal supersedes and superseded_by pointers"
+    expected_historical_fact: "Note A was previously ACTIVE"
+    supersession_chain: ["note_a_2024", "note_b_2026"]
+    required_evidence: ["active", "superseded", "supersedes", "superseded_by"]
+
+  - id: "Q17_TEMPORAL_VALIDITY_WINDOW"
+    class: "HISTORICAL_STATE"
+    query: "What was the valid policy for council agent limits prior to the 2026 Council Runtime Profile specification?"
+    entities: ["MAX_COUNCIL_AGENTS", "Council_Runtime_Profile"]
+    temporal_constraints:
+      target_time: "historical"
+      mode: "as_of_query"
+    expected_current_fact: "MAX_COUNCIL_AGENTS = 3"
+    expected_historical_fact: "Uncapped or legacy monolithic agent dispatch"
+    supersession_chain: ["legacy_council_profile", "Council_Runtime_Profile.yaml"]
+    required_evidence: ["legacy", "3", "contract"]
+
+  - id: "Q18_TEMPORAL_NON_CONTRADICTION"
+    class: "TEMPORAL_CONTRADICTION"
+    query: "Rule 1 was valid from 2020 to 2024, and Rule 2 is valid from 2025 onwards. Do they represent a true simultaneous contradiction or sequential supersession?"
+    entities: ["valid_from", "valid_until", "supersession"]
+    temporal_constraints:
+      target_time: "disjoint_intervals"
+      mode: "temporal_reconciliation"
+    expected_current_fact: "Sequential validity across non-overlapping intervals, not a simultaneous contradiction"
+    expected_historical_fact: "Rule 1 valid [2020-2024]"
+    supersession_chain: ["rule_1", "rule_2"]
+    required_evidence: ["non-overlapping", "sequential", "supersession", "not a contradiction"]
+
+  - id: "Q19_TEMPORAL_ABSTAIN_UNKNOWN"
+    class: "ABSTAIN_UNKNOWN"
+    query: "When validity dates and timestamps are completely missing from a proposed guideline, what is the valid temporal status?"
+    entities: ["valid_from", "valid_until", "timestamp"]
+    temporal_constraints:
+      target_time: "unknown"
+      mode: "abstention"
+    expected_current_fact: "UNKNOWN / UNRESOLVED temporal status, system must abstain from claiming current validity"
+    expected_historical_fact: "none"
+    supersession_chain: []
+    required_evidence: ["unknown", "unresolved", "abstain"]
+
+  - id: "Q20_TEMPORAL_OBSERVATION_VS_VALID"
+    class: "BI_TEMPORAL_OBSERVATION"
+    query: "Explain the difference between a memory's valid_from date (valid time) and its audit_log timestamp (transaction/observation time)."
+    entities: ["valid_from", "audit_log", "observation_time"]
+    temporal_constraints:
+      target_time: "bitemporal_distinction"
+      mode: "bitemporal_semantics"
+    expected_current_fact: "Valid time is when the rule applies in reality; observation/transaction time is when the vault recorded the event in tamper-evident logs"
+    expected_historical_fact: "none"
+    supersession_chain: []
+    required_evidence: ["valid time", "observation", "reality", "audit"]

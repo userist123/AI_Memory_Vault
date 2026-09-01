@@ -1,0 +1,67 @@
+audit_schema_version: "1.0.0"
+
+evidence_levels:
+  - id: "VERIFIED"
+    description: "Hard empirical evidence (tool calls, passing pytest, exact file edits, telemetry records)"
+    weight: 1.0
+  - id: "SUPPORTED"
+    description: "Consistent contextual evidence without direct execution proof"
+    weight: 0.6
+  - id: "UNVERIFIED"
+    description: "Agent self-report, assertion, or claim lacking tool logs or concrete artifacts"
+    weight: 0.0
+  - id: "MISSING"
+    description: "Stage was completely unaddressed or absent"
+    weight: 0.0
+  - id: "CONTRADICTED"
+    description: "Agent assertion directly refuted by disk state, git history, or test failures"
+    weight: -0.5
+
+stages:
+  - id: "A_MEMORY_DISCOVERY"
+    name: "Memory Discovery"
+    description: "Searching memory vault or indexing candidates"
+  - id: "B_MEMORY_RETRIEVAL"
+    name: "Memory Retrieval"
+    description: "Fetching specific memory notes from storage"
+  - id: "C_MEMORY_LOADING"
+    name: "Memory Loading"
+    description: "Placing retrieved content into prompt context"
+  - id: "D_SKILL_DISCOVERY"
+    name: "Skill Discovery"
+    description: "Querying capability registry or skill index"
+  - id: "E_SKILL_ACTIVATION"
+    name: "Skill Activation"
+    description: "Loading full SKILL.md file and instructions"
+  - id: "F_SUBAGENT_ROUTING"
+    name: "Subagent Routing"
+    description: "Invoking specialized subagent via invoke_subagent"
+  - id: "G_DECISION_INFLUENCE"
+    name: "Memory-Influenced Decision"
+    description: "Connecting retrieved memory/skill to actual implementation decision"
+  - id: "H_EXECUTION"
+    name: "Execution"
+    description: "Performing code changes or tool calls"
+  - id: "I_VERIFICATION"
+    name: "Verification"
+    description: "Running empirical tests, browser checks, or visual proof"
+  - id: "J_OUTCOME_CAPTURE"
+    name: "Outcome Capture"
+    description: "Logging execution result to outcome_events or telemetry"
+  - id: "K_CONSOLIDATION"
+    name: "Learning / Consolidation"
+    description: "Writing lessons learned to tasks/lessons.md or knowledge vault"
+
+scoring_dimensions:
+  - id: "memory_access_score"
+    stages: ["A_MEMORY_DISCOVERY", "D_SKILL_DISCOVERY"]
+  - id: "memory_retrieval_score"
+    stages: ["B_MEMORY_RETRIEVAL", "C_MEMORY_LOADING"]
+  - id: "skill_usage_score"
+    stages: ["E_SKILL_ACTIVATION", "F_SUBAGENT_ROUTING"]
+  - id: "decision_influence_score"
+    stages: ["G_DECISION_INFLUENCE"]
+  - id: "verification_score"
+    stages: ["I_VERIFICATION"]
+  - id: "outcome_learning_score"
+    stages: ["J_OUTCOME_CAPTURE", "K_CONSOLIDATION"]

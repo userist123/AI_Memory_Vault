@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Optional
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
+from ..memory_trace import record_observed_memory_trace
 
 
 class ContextPackBuilder:
@@ -86,6 +87,15 @@ class ContextPackBuilder:
             serialized_size = resolved.serialized_size(pack)
             estimated_tokens = resolved.estimate_tokens(pack)
             if serialized_size <= resolved.hard_context_budget and estimated_tokens <= resolved.hard_token_budget:
+                try:
+                    record_observed_memory_trace(
+                        run_id=request_id,
+                        results=pack.get("results", []),
+                        context_size_bytes=serialized_size,
+                        estimated_tokens=estimated_tokens,
+                    )
+                except Exception:
+                    pass
                 return pack
             safe_results = safe_results[:-1]
 
@@ -105,4 +115,14 @@ class ContextPackBuilder:
             raise BudgetExceededError(
                 f"Final context pack exceeds hard token budget: {estimated_tokens} > {resolved.hard_token_budget} tokens"
             )
+        try:
+            record_observed_memory_trace(
+                run_id=request_id,
+                results=[],
+                context_size_bytes=serialized_size,
+                estimated_tokens=estimated_tokens,
+            )
+        except Exception:
+            pass
         return pack
+

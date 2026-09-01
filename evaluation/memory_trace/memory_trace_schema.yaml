@@ -1,0 +1,71 @@
+schema_name: "agent_memory_trace"
+version: "1.0.0"
+
+required_top_level_fields:
+  - trace_id
+  - task_id
+  - session_id
+  - agent_id
+  - timestamp
+  - query
+  - declared
+  - observed
+  - links
+  - status
+
+declared_fields:
+  - retrieved_memories
+  - activated_skills
+  - activated_subagents
+  - decisions_influenced
+  - verification_claims
+  - outcome_claims
+
+observed_fields:
+  - retrieval_events
+  - memory_load_events
+  - skill_load_events
+  - subagent_events
+  - decision_events
+  - tool_events
+  - verification_events
+  - outcome_events
+
+event_evidence_sources:
+  - tool_execution_trace
+  - filesystem_read
+  - database_query
+  - subagent_dispatch
+  - test_execution
+  - browser_verification
+  - telemetry_record
+
+trust_levels:
+  T0:
+    id: "DECLARED_ONLY"
+    weight: 0.0
+    description: "Agent self-report without observed tool or telemetry evidence"
+  T1:
+    id: "TOOL_OBSERVED"
+    weight: 0.5
+    description: "Concrete tool call recorded in transcript"
+  T2:
+    id: "EXECUTION_VERIFIED"
+    weight: 0.8
+    description: "Observed execution + passing verification output"
+  T3:
+    id: "OUTCOME_VERIFIED"
+    weight: 1.0
+    description: "Complete chain from retrieval to tamper-evident outcome record"
+
+skill_lifecycle_states:
+  - DISCOVERED
+  - LOADED
+  - ACTIVATED
+  - APPLIED
+  - VERIFIED
+
+trace_completeness_states:
+  - COMPLETE
+  - PARTIAL
+  - BROKEN

@@ -1,0 +1,29 @@
+experiment_name: "p2_temporal_memory_lab"
+version: "1.0.0"
+
+runtime:
+  endpoint: "http://127.0.0.1:11434"
+  models:
+    m1: "qwen2.5-coder:3b"
+    m2: "qwen2.5-coder:7b"
+  timeout_seconds: 120.0
+  timeout_m2_seconds: 240.0
+  num_ctx: 4096
+  temperature: 0.0
+
+budget:
+  soft_limit_tokens: 1800
+  hard_limit_tokens: 2500
+  max_notes: 5
+
+conditions:
+  - id: "T0"
+    name: "Control Baseline (No Temporal Traversal)"
+  - id: "T1"
+    name: "Valid-Time Interval Filtering"
+  - id: "T2"
+    name: "Supersession Lineage Traversal"
+  - id: "T3"
+    name: "Valid-Time + Supersession Fusion"
+  - id: "T4"
+    name: "Bi-Temporal Traversal (Valid Time + Observation Time)"

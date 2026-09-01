@@ -1,0 +1,135 @@
+queries:
+  - id: "Q01_SQLITE_WAL_PRAGMA"
+    class: "SIMPLE_FACT"
+    query: "What PRAGMA setting and transaction mode are required for SQLite storage engine concurrency?"
+    required_facts: ["wal", "busy_timeout", "5000", "immediate"]
+    required_sections: ["3. Storage & Integrity Invariants"]
+    critical_invariants: ["PRAGMA busy_timeout=5000", "BEGIN IMMEDIATE"]
+    critical_negations: []
+    critical_entities: ["SQLite", "PRAGMA", "StorageEngine"]
+
+  - id: "Q02_P16_HARDWARE_TELEMETRY"
+    class: "SIMPLE_FACT"
+    query: "Under Rule P16, what are the restrictions on physical hardware telemetry data (VID, PID, Serial)?"
+    required_facts: ["read-only", "immutable", "block"]
+    required_sections: ["4. Hardware Telemetry & Forensics Invariants (P16-P18)"]
+    critical_invariants: ["P16 - Hardware Telemetry Immutability"]
+    critical_negations: ["blochează orice modificare"]
+    critical_entities: ["VID", "PID", "Serial Number", "P16"]
+
+  - id: "Q03_COUNCIL_AGENT_LIMITS"
+    class: "SIMPLE_FACT"
+    query: "What are the runtime context limits for MAX_COUNCIL_AGENTS and MAX_PRIMARY_AGENTS according to AGENTS.md?"
+    required_facts: ["3", "1"]
+    required_sections: ["## Runtime Context Contract"]
+    critical_invariants: ["MAX_COUNCIL_AGENTS = 3", "MAX_PRIMARY_AGENTS = 1"]
+    critical_negations: []
+    critical_entities: ["MAX_COUNCIL_AGENTS", "MAX_PRIMARY_AGENTS"]
+
+  - id: "Q04_COUNCIL_TOKEN_BUDGETS"
+    class: "SIMPLE_FACT"
+    query: "What are the token limits for MAX_SPECIALIST_OUTPUT and MAX_SYNTHESIS_INPUT in the Council operating contract?"
+    required_facts: ["600", "2500"]
+    required_sections: ["## Runtime Context Contract"]
+    critical_invariants: ["MAX_SPECIALIST_OUTPUT = 600 tokens", "MAX_SYNTHESIS_INPUT = 2500 tokens"]
+    critical_negations: []
+    critical_entities: ["MAX_SPECIALIST_OUTPUT", "MAX_SYNTHESIS_INPUT"]
+
+  - id: "Q05_MULTI_AGENT_COORDINATION"
+    class: "SIMPLE_FACT"
+    query: "Which file serves as the canonical single source of truth for task coordination across multiple AI agents?"
+    required_facts: ["tasks/todo.md", "lessons.md"]
+    required_sections: ["## Multi-Agent Development Coordination"]
+    critical_invariants: ["Single Source of Truth: tasks/todo.md and tasks/lessons.md"]
+    critical_negations: ["Never mark tasks done without attaching empirical execution proof"]
+    critical_entities: ["tasks/todo.md", "tasks/lessons.md"]
+
+  - id: "Q06_MULTIHOP_PROMOTION_FLOW"
+    class: "MULTI_HOP"
+    query: "How does an AI_AGENT propose a new memory, and what is required to promote it to ACTIVE verified status?"
+    required_facts: ["raw", "review", "human", "attest"]
+    required_sections: ["1. Trust Boundary Invariants (P0-P15)", "## Memory Rules"]
+    critical_invariants: ["Creation Lifecycles", "controller.attest()", "Operation.ATTEST"]
+    critical_negations: ["cannot set verification = 'verified'", "can only propose into {RAW, CLASSIFIED, NORMALIZED, REVIEW}"]
+    critical_entities: ["Principal.AI_AGENT", "Principal.HUMAN", "ACTIVE"]
+
+  - id: "Q07_MULTIHOP_COUNCIL_SYNTHESIS"
+    class: "MULTI_HOP"
+    query: "Explain how context flows from specialists to the lead synthesizer in the council architecture without leaking wholesale context."
+    required_facts: ["compact", "summary", "synthes", "deduplicat"]
+    required_sections: ["### Mandatory routing", "## Runtime Context Contract"]
+    critical_invariants: ["Specialists return compact evidence; the lead performs one synthesis"]
+    critical_negations: ["Assigned capabilities MUST NOT be loaded wholesale", "do not repeat the same task"]
+    critical_entities: ["Specialists", "Lead Synthesizer", "ContextPack"]
+
+  - id: "Q08_MULTIHOP_CONFLICT_PAIRING"
+    class: "MULTI_HOP"
+    query: "How does conflict_detector.py optimize comparison complexity between active notes, and what hard cap is enforced?"
+    required_facts: ["pair", "2000", "valueerror"]
+    required_sections: ["Task 1 — Pairwise Conflict Deduplication & Cap", "3. Storage & Integrity Invariants"]
+    critical_invariants: ["N * (N - 1) / 2 unique pairs", "max_notes=2000 raising ValueError"]
+    critical_negations: ["fail-closed hard cap"]
+    critical_entities: ["conflict_detector.py", "max_notes", "ValueError"]
+
+  - id: "Q09_TEMPORAL_SUPERSEDED_POLICY"
+    class: "TEMPORAL"
+    query: "What is the active policy regarding outcome event sources: is synthesis presence labeled as exit_code or synthesis_presence?"
+    required_facts: ["synthesis_presence", "exit_code"]
+    required_sections: ["Task 1 & 2 — Outcome Events Telemetry & Immutability"]
+    critical_invariants: ["source='synthesis_presence'", "exit_code is reserved strictly for real process executions"]
+    critical_negations: ["never infer outcome without verifiable proof"]
+    critical_entities: ["OutcomeEvent", "synthesis_presence", "exit_code"]
+
+  - id: "Q10_TEMPORAL_SLEEP_CONSOLIDATION"
+    class: "TEMPORAL"
+    query: "How are notes prioritized during sleep consolidation when the consolidation budget cap is reached?"
+    required_facts: ["oldest", "updated", "created", "budget"]
+    required_sections: ["Task 2 — Sleep Consolidation Budgeting", "## Memory Rules"]
+    critical_invariants: ["oldest-first ordering based on updated/created timestamps", "max_items_per_consolidation_run"]
+    critical_negations: ["starvation prevention"]
+    critical_entities: ["SleepConsolidation", "TimestampOrder"]
+
+  - id: "Q11_CONTRADICTION_AI_VERIFICATION"
+    class: "CONTRADICTION_GUARDRAIL"
+    query: "Can an AI agent set verification = 'verified' on a memory note by itself?"
+    required_facts: ["cannot", "human", "admin", "gated"]
+    required_sections: ["1. Trust Boundary Invariants (P0-P15)"]
+    critical_invariants: ["AI Self-Verification Gated: Principal.AI_AGENT cannot set verification = 'verified'"]
+    critical_negations: ["cannot", "gated", "Only Principal.HUMAN and Principal.ADMIN"]
+    critical_entities: ["Principal.AI_AGENT", "Principal.HUMAN", "Principal.ADMIN"]
+
+  - id: "Q12_CONTRADICTION_PROVENANCE_SOURCE"
+    class: "CONTRADICTION_GUARDRAIL"
+    query: "Which source_type values are forbidden for Principal.AI_AGENT when creating memories?"
+    required_facts: ["user", "official", "experience", "import"]
+    required_sections: ["1. Trust Boundary Invariants (P0-P15)"]
+    critical_invariants: ["Privileged Provenance: Principal.AI_AGENT cannot claim source_type"]
+    critical_negations: ["forbidden", "cannot claim", "Permitted: execution, ai, inference, unknown"]
+    critical_entities: ["source_type", "user", "official", "experience", "import"]
+
+  - id: "Q13_CONTRADICTION_STORAGE_MUTABILITY"
+    class: "CONTRADICTION_GUARDRAIL"
+    query: "Are provenance.source_type and outcome records mutable after initial creation?"
+    required_facts: ["immutable", "cannot", "append-only"]
+    required_sections: ["1. Trust Boundary Invariants (P0-P15)", "3. Storage & Integrity Invariants"]
+    critical_invariants: ["Provenance Immutability", "tamper-evident SHA-256 hashes", "append-only"]
+    critical_negations: ["cannot be modified after initial creation", "immutable"]
+    critical_entities: ["provenance.source_type", "OutcomeRecord"]
+
+  - id: "Q14_MULTIHOP_GRAPH_NODE_SCHEMA"
+    class: "MULTI_HOP"
+    query: "What controlled node types are permitted in multi_graph.py and how are unknown categories resolved?"
+    required_facts: ["fact", "decision", "procedure", "lesson", "task"]
+    required_sections: ["Task 3 — Multi-Graph Node Type Controlled Vocabulary"]
+    critical_invariants: ["CONTROLLED_NODE_TYPES = {fact, decision, procedure, lesson, task, intent, tool, failure, correction, outcome}"]
+    critical_negations: ["unmapped categories fallback to fact"]
+    critical_entities: ["multi_graph.py", "CONTROLLED_NODE_TYPES"]
+
+  - id: "Q15_SIMPLE_PRIME_DIRECTIVE"
+    class: "SIMPLE_FACT"
+    query: "What is the Prime Directive of the AI Memory System operating contract?"
+    required_facts: ["better memory", "better routing", "context is expensive"]
+    required_sections: ["## Prime Directive"]
+    critical_invariants: ["Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive."]
+    critical_negations: []
+    critical_entities: ["Prime Directive", "AGENTS.md"]

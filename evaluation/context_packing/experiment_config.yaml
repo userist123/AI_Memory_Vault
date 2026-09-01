@@ -1,0 +1,31 @@
+experiment_name: "p1_context_packing_lab"
+version: "1.0.0"
+
+runtime:
+  endpoint: "http://127.0.0.1:11434"
+  models:
+    m1: "qwen2.5-coder:3b"
+    m2: "qwen2.5-coder:7b"
+  timeout_seconds: 120.0
+  timeout_m2_seconds: 240.0
+  num_ctx: 4096
+  temperature: 0.0
+
+budget:
+  soft_limit_tokens: 1800
+  hard_limit_tokens: 2500
+  soft_limit_bytes: 16384
+  hard_limit_bytes: 32768
+  max_notes: 5
+
+strategies:
+  - id: "P0"
+    name: "Production Degradation Baseline"
+  - id: "P1"
+    name: "Full Context Candidate Oracle"
+  - id: "P2"
+    name: "Section-Aware Extractive Packing"
+  - id: "P3"
+    name: "Section-Aware + Fact/Invariant Protection"
+  - id: "P4"
+    name: "Section-Aware + Fact Protection + Deduplication"

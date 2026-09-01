@@ -1,72 +1,62 @@
-# P0 Diagnostic Report: Budget vs Retrieval vs Model Capability
+# P0 Real Pipeline Diagnostic Report — Evidence Coverage & Correctness
 
-## 1. Executive Verdict
+## 1. Traced Real Retrieval Pipeline
 
-- **BUDGET BOTTLENECK**: `YES`
-- **RETRIEVAL BOTTLENECK**: `YES`
-- **MODEL CAPABILITY BOTTLENECK**: `YES`
-
-**PRIMARY CAUSE**: Retrieval & Graph Horizon (1-hop single doc leaves out cross-document premises for multi-hop & guardrails)
-**SECONDARY CAUSE**: Model Capability on 3B (small models struggle with reasoning over negation and strict negative constraints even when present in context)
-**EVIDENCE**: A2 (2-hop) and R4 (Multi-Signal) increase accuracy from 57.8% to 83.9%, while scaling model from 3B to 7B on Full Context increases accuracy from 77.8% to 88.9%.
-
----
-
-## 2. Experiment 1 — Budget Impact (A1 vs A2 vs B)
-
-| Condition | Configuration | Avg Accuracy | Avg Tokens | Delta vs A1 |
-|---|---|---|---|---|
-| **A1 (Current)** | 1-hop / max 5 results | **57.8%** | ~285t | Baseline |
-| **A2 (Doubled)** | 2-hop / max 10 results | **83.9%** | ~492t | **+26.1%** |
-| **B (Full Context)** | Raw dump | **77.8%** | ~878t | **+20.0%** |
+- **Entry Point**: `MemoryController.search(principal=Principal.AI_AGENT, query=q, page_size=...)`
+- **Classification**: `QueryClassifier.classify(sanitized_query)`
+- **Retrieval**: `RetrievalEngine.retrieve(classified, principal, query_fp, disclosure_level, budget)`
+- **Relevance Scoring**: `RelevanceScorer.score(sanitized_query, notes)`
+- **Progressive Disclosure**: `ProgressiveDisclosure(budget).full_document(notes)`
+- **Context Packaging**: `ContextPackBuilder.build(request_id, agent_id, budget, results, ...)`
+- **Final Object**: Structured Context Pack dictionary with byte and token envelope limits.
 
 ---
 
-## 3. Experiment 2 — Multi-Signal Retrieval Signals (R1 to R4)
+## 2. Real Multi-Signal Capabilities in Repository (Factual Audit)
 
-| Signal Layer | Description | Avg Accuracy |
+| Signal Layer | Real Codebase Status | Architectural Evidence |
 |---|---|---|
-| **R1 (Semantic Only)** | Coarse topic routing | 57.8% |
-| **R2 (Semantic + Lexical)** | BM25 token overlap | 74.4% |
-| **R3 (Semantic + Lexical + Entity)** | Named entity anchoring | 78.3% |
-| **R4 (Semantic + Lexical + Entity + Graph)** | 2-hop connected graph expansion | **85.0%** |
+| **Semantic / Vector** | `PARTIAL` | QdrantRetrieval & DeterministicSemanticProvider exist in cognitive_core/qdrant_retrieval.py and financial_search.py, but are not wired into the default MemoryController.search flow. |
+| **Lexical / BM25** | `PARTIAL` | BM25Scorer exists in memory_controller/financial_search.py; default RelevanceScorer in controller.py uses token overlap ratio + confidence weighting. |
+| **Entity Resolution** | `PARTIAL` | FinancialEntityResolver exists in memory_controller/financial_search.py; general domain vault entity extractors are missing in standard controller. |
+| **Graph Expansion** | `PARTIAL` | MultiGraph exists in cognitive_core/multi_graph.py with 4 orthogonal views, but RetrievalEngine in memory_controller does not traverse multi-hop graph edges automatically during search. |
 
 ---
 
-## 4. Experiment 3 — Model Capability Comparison (M1: 3B vs M2: 7B)
+## 3. Empirical Results: Real A1 vs Real A2 vs Real B
 
-| Model | Condition A1 (1-hop) | Condition B (Full Context) | Gain from Model Size |
-|---|---|---|---|
-| **M1 (qwen2.5-coder:3b)** | 57.8% | 77.8% | Baseline |
-| **M2 (qwen2.5-coder:7b)** | 61.7% | **88.9%** | **+11.1% on B** |
-
----
-
-## 5. Required-Fact Failure Breakdown on Condition A1
-
-- **RETRIEVAL_FAILURE** (required facts absent from context): `4`
-- **MODEL_CAPABILITY_FAILURE** (facts present, but answer wrong): `0`
-- **BOTH** (partially missing facts + reasoning gap): `4`
-- **SUCCESS** (accurately answered): `7`
+| Condition | Configuration | Evidence Coverage | M1 (3B) Accuracy | M2 (7B) Accuracy |
+|---|---|---|---|---|
+| **Real A1** | Default `page_size=5` | **6.7%** | **11.7%** | **18.3%** |
+| **Real A2** | Doubled `page_size=10` | **6.7%** | **18.3%** | N/A |
+| **Real B (Full)** | Full Vault dump | **71.1%** | **63.3%** | **75.9%** |
 
 ---
 
-## 6. Detailed Query Breakdown Matrix
+## 4. Diagnostic Effects
 
-| Query ID | Category | A1 Acc | A2 Acc | B Acc | M2 (7B) B Acc | Failure Classification (A1) |
-|---|---|---|---|---|---|---|
-| `Q01_SQLITE_WAL_PRAGMA` | simple_fact | 0.75 | 0.75 | 0.75 | 0.75 | `SUCCESS` |
-| `Q02_P16_HARDWARE_TELEMETRY` | simple_fact | 0.33 | 0.67 | 0.33 | 0.67 | `BOTH` |
-| `Q03_COUNCIL_AGENT_LIMITS` | simple_fact | 1.00 | 1.00 | 1.00 | 1.00 | `SUCCESS` |
-| `Q04_COUNCIL_TOKEN_BUDGETS` | simple_fact | 1.00 | 1.00 | 1.00 | 1.00 | `SUCCESS` |
-| `Q05_MULTI_AGENT_COORDINATION` | simple_fact | 1.00 | 1.00 | 1.00 | 1.00 | `SUCCESS` |
-| `Q06_MULTIHOP_PROMOTION_FLOW` | multihop | 0.25 | 0.50 | 1.00 | 0.50 | `RETRIEVAL_FAILURE` |
-| `Q07_MULTIHOP_COUNCIL_SYNTHESIS` | multihop | 0.25 | 0.75 | 0.50 | 0.75 | `BOTH` |
-| `Q08_MULTIHOP_CONFLICT_PAIRING` | multihop | 1.00 | 1.00 | 0.33 | 1.00 | `SUCCESS` |
-| `Q09_TEMPORAL_SUPERSEDED_POLICY` | temporal | 0.50 | 1.00 | 1.00 | 1.00 | `RETRIEVAL_FAILURE` |
-| `Q10_TEMPORAL_SLEEP_CONSOLIDATION` | temporal | 0.00 | 1.00 | 1.00 | 1.00 | `BOTH` |
-| `Q11_CONTRADICTION_AI_VERIFICATION` | contradiction_guardrail | 0.25 | 0.25 | 0.75 | 1.00 | `RETRIEVAL_FAILURE` |
-| `Q12_CONTRADICTION_PROVENANCE_SOURCE` | contradiction_guardrail | 0.00 | 1.00 | 1.00 | 1.00 | `RETRIEVAL_FAILURE` |
-| `Q13_CONTRADICTION_STORAGE_MUTABILITY` | contradiction_guardrail | 0.33 | 0.67 | 0.00 | 0.67 | `BOTH` |
-| `Q14_MULTIHOP_GRAPH_NODE_SCHEMA` | multihop | 1.00 | 1.00 | 1.00 | 1.00 | `SUCCESS` |
-| `Q15_SIMPLE_PRIME_DIRECTIVE` | simple_fact | 1.00 | 1.00 | 1.00 | 1.00 | `SUCCESS` |
+- **BUDGET EFFECT**: `MODERATE` (Doubling `page_size` from 5 to 10 improves evidence coverage from 6.7% to 6.7% and accuracy by +6.7%)
+- **RETRIEVAL EFFECT**: `CRITICAL` (Current default retrieval misses 64.4% of required facts due to single-document keyword bias without graph expansion)
+- **MODEL EFFECT**: `MEASURABLE` (Scaling from 3B to 7B increases Full Context accuracy from 63.3% to 75.9%)
+
+---
+
+## 5. 15 Queries Detailed Breakdown
+
+| Query ID | Category | Real A1 Cov | Real A1 Acc | Real A2 Cov | Real A2 Acc | Real B Cov | Real B Acc |
+|---|---|---|---|---|---|---|---|
+| `Q01_SQLITE_WAL_PRAGMA` | simple_fact | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 1.00 |
+| `Q02_P16_HARDWARE_TELEMETRY` | simple_fact | 0.00 | 0.00 | 0.00 | 0.00 | 0.33 | 0.67 |
+| `Q03_COUNCIL_AGENT_LIMITS` | simple_fact | 1.00 | 0.50 | 1.00 | 0.50 | 1.00 | 1.00 |
+| `Q04_COUNCIL_TOKEN_BUDGETS` | simple_fact | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 1.00 |
+| `Q05_MULTI_AGENT_COORDINATION` | simple_fact | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 0.50 |
+| `Q06_MULTIHOP_PROMOTION_FLOW` | multihop | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 1.00 |
+| `Q07_MULTIHOP_COUNCIL_SYNTHESIS` | multihop | 0.00 | 0.25 | 0.00 | 0.50 | 0.75 | 0.75 |
+| `Q08_MULTIHOP_CONFLICT_PAIRING` | multihop | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| `Q09_TEMPORAL_SUPERSEDED_POLICY` | temporal | 0.00 | 0.50 | 0.00 | 1.00 | 0.00 | 0.50 |
+| `Q10_TEMPORAL_SLEEP_CONSOLIDATION` | temporal | 0.00 | 0.25 | 0.00 | 0.25 | 0.25 | 0.00 |
+| `Q11_CONTRADICTION_AI_VERIFICATION` | contradiction_guardrail | 0.00 | 0.25 | 0.00 | 0.50 | 1.00 | 0.75 |
+| `Q12_CONTRADICTION_PROVENANCE_SOURCE` | contradiction_guardrail | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 1.00 |
+| `Q13_CONTRADICTION_STORAGE_MUTABILITY` | contradiction_guardrail | 0.00 | 0.00 | 0.00 | 0.00 | 0.33 | 0.33 |
+| `Q14_MULTIHOP_GRAPH_NODE_SCHEMA` | multihop | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 0.00 |
+| `Q15_SIMPLE_PRIME_DIRECTIVE` | simple_fact | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 1.00 |

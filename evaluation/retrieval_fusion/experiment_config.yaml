@@ -1,0 +1,33 @@
+experiment_name: "retrieval_fusion_r1_to_r4"
+version: "1.0.0"
+runtime:
+  endpoint: "http://127.0.0.1:11434"
+  models:
+    m1: "qwen2.5-coder:3b"
+    m2: "qwen2.5-coder:7b"
+  timeout_seconds: 60.0
+  num_ctx: 4096
+  temperature: 0.0
+
+budget:
+  candidate_limit: 10
+  max_context_notes: 5
+  disclosure_level: "full"
+
+strategies:
+  - id: "R1"
+    name: "Semantic Only"
+    signals: ["semantic"]
+  - id: "R2"
+    name: "Semantic + Lexical BM25"
+    signals: ["semantic", "lexical_bm25"]
+  - id: "R3"
+    name: "Semantic + Lexical + Entity"
+    signals: ["semantic", "lexical_bm25", "entity"]
+  - id: "R4"
+    name: "Semantic + Lexical + Entity + Graph"
+    signals: ["semantic", "lexical_bm25", "entity", "graph"]
+
+evaluator:
+  mode: "deterministic_rule_based"
+  separate_evidence_from_accuracy: true

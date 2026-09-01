@@ -1,30 +1,245 @@
-# P0 Diagnostic — Budget vs Retrieval vs Model Capability
+# Memory Trace Hardening & Proof
 
 ## Implementation
-- [x] Create `evaluation/retrieval_diagnostic_runner.py` with 3 isolated diagnostic experiments `[owner: antigravity | timestamp: 2026-09-01T21:04:45+03:00]`
-  - [x] Experiment 1 — Budget: A1 (1-hop / 5 results) vs A2 (2-hop / 10 results) vs B (full context)
-  - [x] Experiment 2 — Multi-Signal Retrieval: R1 (Semantic), R2 (Semantic + Lexical), R3 (Semantic + Lexical + Entity), R4 (Semantic + Lexical + Entity + Graph)
-  - [x] Experiment 3 — Model Capability: M1 (`qwen2.5-coder:3b`) vs M2 (`qwen2.5-coder:7b`) on A1 and B
-  - [x] Required-Fact Root Cause Analysis: Categorize failures into `RETRIEVAL_FAILURE`, `MODEL_CAPABILITY_FAILURE`, `BOTH`, `SUCCESS`
-  - [x] Outputs generated: `evaluation/retrieval_diagnostic_report.json` and `evaluation/retrieval_diagnostic_report.md`
+- [x] verify actual git state (`b7fba17`) `[owner: antigravity | timestamp: 2026-09-02T00:29:17+03:00]`
+- [x] inspect data flow (`ContextPackBuilder.build()` -> caller) `[owner: antigravity | timestamp: 2026-09-02T00:29:32+03:00]`
+- [x] verify semantic definitions (`OBSERVED = final pack presence`, `OBSERVED != USED`) `[owner: antigravity | timestamp: 2026-09-02T00:30:05+03:00]`
+- [x] validate run_id uniqueness & concurrency `[owner: antigravity | timestamp: 2026-09-02T00:29:58+03:00]`
+- [x] validate score integrity (no recalculation, no invented scores) `[owner: antigravity | timestamp: 2026-09-02T00:29:58+03:00]`
+- [x] harden telemetry failure semantics (`OBSERVATION_FAILED` status, zero crashes) `[owner: antigravity | timestamp: 2026-09-02T00:29:41+03:00]`
+- [x] prove no false observation when persistence fails `[owner: antigravity | timestamp: 2026-09-02T00:29:58+03:00]`
+- [x] strengthen final-context test (4 candidates, budget drops 2) `[owner: antigravity | timestamp: 2026-09-02T00:29:58+03:00]`
+- [x] perform post-build transformation audit across all 5 callers `[owner: antigravity | timestamp: 2026-09-02T00:29:32+03:00]`
+- [x] update canonical protocol (`01_KNOWLEDGE/Agent_Memory_Trace_Protocol.md`) `[owner: antigravity | timestamp: 2026-09-02T00:30:05+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-02T00:30:30+03:00]`
+- [x] verify protected core `[owner: antigravity | timestamp: 2026-09-02T00:30:45+03:00]`
+- [x] commit
+
+---
+
+# Actual Runtime Observed Memory Trace
+
+
+## Implementation
+- [x] audit current context assembly point (`ContextPackBuilder.build`) `[owner: antigravity | timestamp: 2026-09-02T00:23:30+03:00]`
+- [x] implement runtime trace emitter (`memory_controller/memory_trace.py`) `[owner: antigravity | timestamp: 2026-09-02T00:23:42+03:00]`
+- [x] implement minimal passive hook in `ContextPackBuilder.build()` `[owner: antigravity | timestamp: 2026-09-02T00:23:57+03:00]`
+- [x] implement append-only telemetry storage (`telemetry/observed_memory_traces.jsonl`) `[owner: antigravity | timestamp: 2026-09-02T00:23:42+03:00]`
+- [x] implement declared vs observed reconciliation with fabrication & unacknowledged detection `[owner: antigravity | timestamp: 2026-09-02T00:23:42+03:00]`
+- [x] implement acceptance test for final-context-only presence `[owner: antigravity | timestamp: 2026-09-02T00:24:35+03:00]`
+- [x] implement real runtime integration test `[owner: antigravity | timestamp: 2026-09-02T00:24:35+03:00]`
+- [x] verify telemetry failure safety `[owner: antigravity | timestamp: 2026-09-02T00:24:35+03:00]`
+- [x] verify data minimization (no prompt/content leakage) `[owner: antigravity | timestamp: 2026-09-02T00:24:35+03:00]`
+- [x] update canonical knowledge note (`01_KNOWLEDGE/Agent_Memory_Trace_Protocol.md`) `[owner: antigravity | timestamp: 2026-09-02T00:24:42+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-02T00:25:00+03:00]`
+- [x] verify protected core `[owner: antigravity | timestamp: 2026-09-02T00:25:15+03:00]`
+- [x] commit
+
+---
+
+# Agent Memory Trace Emitter Protocol
+
+
+## Implementation
+- [x] define memory trace schema (`evaluation/memory_trace/memory_trace_schema.yaml`) `[owner: antigravity | timestamp: 2026-09-02T00:18:31+03:00]`
+- [x] create trace examples (`evaluation/memory_trace/trace_examples.yaml`) `[owner: antigravity | timestamp: 2026-09-02T00:18:39+03:00]`
+- [x] implement trace validator (`evaluation/memory_trace/trace_validator.py`) `[owner: antigravity | timestamp: 2026-09-02T00:18:48+03:00]`
+- [x] implement declared vs observed reconciliation logic `[owner: antigravity | timestamp: 2026-09-02T00:19:10+03:00]`
+- [x] implement causal memory-to-decision verification `[owner: antigravity | timestamp: 2026-09-02T00:19:10+03:00]`
+- [x] implement skill lifecycle tracking (DISCOVERED -> LOADED -> ACTIVATED -> APPLIED -> VERIFIED) `[owner: antigravity | timestamp: 2026-09-02T00:19:10+03:00]`
+- [x] implement subagent & verification trace evaluation `[owner: antigravity | timestamp: 2026-09-02T00:19:10+03:00]`
+- [x] implement trace completeness evaluation (COMPLETE / PARTIAL / BROKEN) `[owner: antigravity | timestamp: 2026-09-02T00:19:10+03:00]`
+- [x] execute retroactive WOB ART trace audit `[owner: antigravity | timestamp: 2026-09-02T00:19:15+03:00]`
+- [x] implement anti-fabrication test suite (`evaluation/tests/test_memory_trace_protocol.py`) `[owner: antigravity | timestamp: 2026-09-02T00:19:15+03:00]`
+- [x] document canonical protocol (`01_KNOWLEDGE/Agent_Memory_Trace_Protocol.md`) `[owner: antigravity | timestamp: 2026-09-02T00:19:23+03:00]`
+- [x] update knowledge (`01_KNOWLEDGE/Memory_Usage_Audit_Principles.md`) `[owner: antigravity | timestamp: 2026-09-02T00:19:33+03:00]`
+- [x] document runtime integration preparation points `[owner: antigravity | timestamp: 2026-09-02T00:19:23+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-02T00:20:00+03:00]`
+- [x] verify protected core `[owner: antigravity | timestamp: 2026-09-02T00:20:15+03:00]`
+- [x] commit
+
+
+---
+
+# External Memory Usage Audit
+
+
+## Implementation
+- [x] create audit model & schema (`evaluation/memory_usage_audit/audit_schema.yaml`) `[owner: antigravity | timestamp: 2026-09-02T00:15:48+03:00]`
+- [x] implement conversation auditor (`evaluation/memory_usage_audit/conversation_auditor.py`) `[owner: antigravity | timestamp: 2026-09-02T00:16:05+03:00]`
+- [x] implement multi-dimensional scoring (`evaluation/memory_usage_audit/scoring.py`) `[owner: antigravity | timestamp: 2026-09-02T00:15:54+03:00]`
+- [x] define anti-fabrication rules & tests `[owner: antigravity | timestamp: 2026-09-02T00:16:16+03:00]`
+- [x] audit WOB ART conversation case `[owner: antigravity | timestamp: 2026-09-02T00:16:22+03:00]`
+- [x] produce audit scorecard & report (`evaluation/reports/memory_usage_audit_wob_art.md`) `[owner: antigravity | timestamp: 2026-09-02T00:16:22+03:00]`
+- [x] create knowledge note (`01_KNOWLEDGE/Memory_Usage_Audit_Principles.md`) `[owner: antigravity | timestamp: 2026-09-02T00:16:29+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-02T00:17:00+03:00]`
+- [x] verify protected core `[owner: antigravity | timestamp: 2026-09-02T00:17:15+03:00]`
+- [x] commit
+
+
+---
+
+# P2 Temporal Memory Laboratory
+
+
+## Implementation
+- [x] audit temporal metadata `[owner: antigravity | timestamp: 2026-09-02T00:10:00+03:00]`
+- [x] audit supersession representation `[owner: antigravity | timestamp: 2026-09-02T00:10:00+03:00]`
+- [x] audit graph temporal edges `[owner: antigravity | timestamp: 2026-09-02T00:10:00+03:00]`
+- [x] define temporal gold set (`evaluation/temporal_memory/gold_temporal.yaml`) `[owner: antigravity | timestamp: 2026-09-02T00:09:37+03:00]`
+- [x] build temporal experiment adapter (`evaluation/temporal_memory/temporal_adapters.py`) `[owner: antigravity | timestamp: 2026-09-02T00:09:45+03:00]`
+- [x] implement temporal baseline (T0) `[owner: antigravity | timestamp: 2026-09-02T00:09:45+03:00]`
+- [x] implement valid-time traversal (T1) `[owner: antigravity | timestamp: 2026-09-02T00:09:45+03:00]`
+- [x] implement supersession traversal (T2) `[owner: antigravity | timestamp: 2026-09-02T00:09:45+03:00]`
+- [x] implement bi-temporal traversal (T3/T4) `[owner: antigravity | timestamp: 2026-09-02T00:09:45+03:00]`
+- [x] evaluate Q09/Q10 and temporal queries `[owner: antigravity | timestamp: 2026-09-02T00:10:54+03:00]`
+- [x] evaluate contradiction queries `[owner: antigravity | timestamp: 2026-09-02T00:10:54+03:00]`
+- [x] measure temporal recall & final context recall `[owner: antigravity | timestamp: 2026-09-02T00:10:54+03:00]`
+- [x] measure answer correctness M1 (3B) & M2 (7B) `[owner: antigravity | timestamp: 2026-09-02T00:10:54+03:00]`
+- [x] measure tokens & latency `[owner: antigravity | timestamp: 2026-09-02T00:10:54+03:00]`
+- [x] update hypotheses (`01_KNOWLEDGE/Retrieval_Hypothesis_Registry.md` T-H001..T-H004) `[owner: antigravity | timestamp: 2026-09-02T00:11:25+03:00]`
+- [x] update knowledge (`01_KNOWLEDGE/Temporal_Memory_P2_Empirical_Findings.md`) `[owner: antigravity | timestamp: 2026-09-02T00:11:18+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-02T00:12:00+03:00]`
+- [x] verify protected core `[owner: antigravity | timestamp: 2026-09-02T00:12:15+03:00]`
+- [x] commit
+
+
+---
+
+# P1 Context Packing Laboratory
+
+
+## Implementation
+- [x] audit current packing pipeline `[owner: antigravity | timestamp: 2026-09-01T23:38:11+03:00]`
+- [x] identify exact packing failure causes `[owner: antigravity | timestamp: 2026-09-01T23:38:11+03:00]`
+- [x] define gold required sections/facts (`evaluation/context_packing/gold_context.yaml`) `[owner: antigravity | timestamp: 2026-09-01T23:38:28+03:00]`
+- [x] implement isolated baseline packer (P0) `[owner: antigravity | timestamp: 2026-09-01T23:38:40+03:00]`
+- [x] implement full-context diagnostic packer (P1) `[owner: antigravity | timestamp: 2026-09-01T23:38:40+03:00]`
+- [x] implement section-aware experimental packer (P2) `[owner: antigravity | timestamp: 2026-09-01T23:38:40+03:00]`
+- [x] implement invariant & fact-preserving extraction (P3) `[owner: antigravity | timestamp: 2026-09-01T23:38:40+03:00]`
+- [x] implement provenance-preserving deduplication (P4) `[owner: antigravity | timestamp: 2026-09-01T23:38:40+03:00]`
+- [x] benchmark against R4 candidates `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] benchmark against Full Context `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] measure context recall & required fact recall `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] measure accuracy M1 (3B) & M2 (7B) `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] measure tokens & latency `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] measure packing loss and packing loss rate `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] classify failures (taxonomic breakdown) `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] calculate Full-Context gap recovery `[owner: antigravity | timestamp: 2026-09-01T23:44:21+03:00]`
+- [x] update knowledge (`01_KNOWLEDGE/Context_Packing_P1_Empirical_Findings.md`) `[owner: antigravity | timestamp: 2026-09-01T23:46:52+03:00]`
+- [x] update hypotheses (`01_KNOWLEDGE/Retrieval_Hypothesis_Registry.md` P-H001..P-H004) `[owner: antigravity | timestamp: 2026-09-01T23:48:35+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-01T23:50:00+03:00]`
+- [x] verify protected core `[owner: antigravity | timestamp: 2026-09-01T23:50:15+03:00]`
+- [x] commit
+
+
+---
+
+# Retrieval Fusion Laboratory (R1→R4 Real Experimentation)
+
+
+## Implementation
+- [x] audit production retrieval `[owner: antigravity | timestamp: 2026-09-01T22:10:30+03:00]`
+- [x] define experiment adapter `[owner: antigravity | timestamp: 2026-09-01T22:10:57+03:00]`
+- [x] implement R1 (Semantic Only) `[owner: antigravity | timestamp: 2026-09-01T22:10:57+03:00]`
+- [x] implement R2 (Semantic + Lexical BM25) `[owner: antigravity | timestamp: 2026-09-01T22:10:57+03:00]`
+- [x] implement R3 (Semantic + Lexical + Entity) `[owner: antigravity | timestamp: 2026-09-01T22:10:57+03:00]`
+- [x] implement R4 (Semantic + Lexical + Entity + Graph) `[owner: antigravity | timestamp: 2026-09-01T22:10:57+03:00]`
+- [x] define gold evidence (`evaluation/retrieval_fusion/gold_evidence.yaml`) `[owner: antigravity | timestamp: 2026-09-01T22:10:47+03:00]`
+- [x] measure candidate recall `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] measure required fact recall `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] measure final context recall `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] measure answer correctness `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] measure tokens `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] measure latency `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] run controlled benchmark `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] analyze failures (taxonomic breakdown) `[owner: antigravity | timestamp: 2026-09-01T22:18:37+03:00]`
+- [x] document conclusions `[owner: antigravity | timestamp: 2026-09-01T22:18:40+03:00]`
+- [x] run regression suite `[owner: antigravity | timestamp: 2026-09-01T22:19:15+03:00]`
+- [x] commit
+
+
+---
+
+# Memory Vault Enrichment — Retrieval Intelligence from P0 Evidence
+
+
+## Implementation
+- [x] Create canonical knowledge note `01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md` `[owner: antigravity | timestamp: 2026-09-01T21:56:08+03:00]`
+  - [x] Frontmatter governance: `lifecycle: REVIEW`, `verification: unverified`, `provenance.source_type: execution`
+  - [x] Explicit section separation: Observed Facts, Measurements, Interpretation, Confidence, Limitations, Open Questions
+  - [x] Memory Quality Principle formalized: `Candidate Recall > Candidate Count` ($10\text{ irrelevant} < 5\text{ relevant}$, $\text{larger page\_size} \neq \text{better retrieval}$)
+  - [x] Decoupled metric hierarchy: `retrieval_candidate_recall`, `required_fact_recall`, `final_context_fact_recall`, `answer_correctness`
+  - [x] Long-term memory quality multiplicative formula and 7 core lessons for future agents
+- [x] Create `01_KNOWLEDGE/Retrieval_Hypothesis_Registry.md` `[owner: antigravity | timestamp: 2026-09-01T21:56:18+03:00]`
+  - [x] Registered testable hypotheses: R-H001 through R-H007 with supporting evidence, counterevidence, confidence, and next experiment
+- [x] Create controlled experiment specification `evaluation/retrieval_fusion_experiment_spec.md` `[owner: antigravity | timestamp: 2026-09-01T21:56:31+03:00]`
+  - [x] Real codebase signal mapping (R1-R4) with absent signals marked `PARTIAL` / `MISSING` (zero simulation)
+  - [x] Query class cognitive taxonomy (Simple Fact, Multi-Hop, Temporal, Guardrail) and expected signal synergy
+  - [x] Autonomous Skill Evolution evidence feedback loop mapping
+- [x] Protected Core Invariant: Zero modifications to production ranking, graph traversal, or budget profiles
 
 ## Verification
-- [x] Create `evaluation/tests/test_retrieval_diagnostic.py` with 4 unit tests `[owner: antigravity | timestamp: 2026-09-01T21:05:42+03:00]`
-  - [x] Test fact presence checking in context
-  - [x] Test failure taxonomy classification logic
-  - [x] Test multi-signal retrieval layers (R1 to R4) output validity
-  - [x] Test evaluation cases dataset integrity (15/15 cases validated)
-  - [x] Run pytest suite: 4/4 passed in 0.02s; full suite: 1591 passed in 50.34s
+- [x] Update `evaluation/tests/test_retrieval_diagnostic.py` with 6 automated validation tests `[owner: antigravity | timestamp: 2026-09-01T21:57:21+03:00]`
+  - [x] Verify knowledge note frontmatter, governance headers, and principles
+  - [x] Verify hypothesis registry schema and testable identifiers (R-H001 to R-H007)
+  - [x] Verify experiment spec structure and taxonomy classes
+  - [x] Run pytest suite: 6/6 passed in 1.77s; full evaluation & memory suite: 229 passed in 10.47s
 
 ## Review
-- **What Changed**: Implemented isolated `evaluation/retrieval_diagnostic_runner.py` and test suite `evaluation/tests/test_retrieval_diagnostic.py`.
+- **What Changed**: Captured P0 empirical evidence as structured knowledge in `01_KNOWLEDGE/` with explicit hypothesis registry and rigorous experiment specification in `evaluation/`.
 - **Invariants Maintained**:
   - `Council_Runtime_Profile.yaml`: 100% untouched
   - `ContextPackBuilder`: 100% untouched
   - `config/model_tiers.json`: 100% untouched
   - `cognitive_core/conflict_detector.py`: 100% untouched
   - `Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`: 100% untouched
-- **Proof**: Complete matrix of 135 LLM executions on local Ollama, 4/4 diagnostic tests pass, 1591 full suite tests pass.
+- **Proof**: 6/6 diagnostic tests passing, 229 evaluation/memory suite tests passing.
+
+---
+
+# P0 Diagnostic Correction — Real Retrieval Pipeline vs Simulated Retrieval
+
+
+## Implementation
+- [x] Trace real retrieval pipeline in `evaluation/retrieval_diagnostic_runner.py` `[owner: antigravity | timestamp: 2026-09-01T21:47:30+03:00]`
+  - [x] Entry Point: `MemoryController.search(principal=Principal.AI_AGENT, query=q, page_size=...)`
+  - [x] Query Classification: `QueryClassifier.classify(sanitized_query)`
+  - [x] Retrieval Engine: `RetrievalEngine.retrieve(classified, principal, query_fp, disclosure_level, budget)`
+  - [x] Relevance Scoring: `RelevanceScorer.score(sanitized_query, notes)`
+  - [x] Progressive Disclosure: `ProgressiveDisclosure(budget).full_document(notes)`
+  - [x] Context Packaging: `ContextPackBuilder.build(request_id, agent_id, budget, results, ...)`
+  - [x] Real Vault Ingestion: Real disk notes ingested into `StorageEngine`
+- [x] Condition Real A1: Default budget (`page_size=5`, `max_notes=5`) via real `ContextPackBuilder`
+- [x] Condition Real A2: Doubled test budget (`page_size=10`, `max_notes=10`) via local harness override
+- [x] Condition Real B: Full context dump of core real candidate notes from vault
+- [x] Factual Multi-Signal Codebase Audit (EXISTS / PARTIAL / MISSING, zero simulation):
+  - [x] Semantic / Vector: `PARTIAL` (Qdrant & DeterministicSemanticProvider exist in `cognitive_core/qdrant_retrieval.py` and `financial_search.py`, but not wired into default `MemoryController.search`)
+  - [x] Lexical / BM25: `PARTIAL` (BM25Scorer exists in `financial_search.py`; default `RelevanceScorer` uses token overlap)
+  - [x] Entity Resolution: `PARTIAL` (FinancialEntityResolver exists in `financial_search.py`; general vault entity extractors missing in default controller)
+  - [x] Graph Expansion: `PARTIAL` (MultiGraph exists in `cognitive_core/multi_graph.py`, but `RetrievalEngine` does not traverse multi-hop graph edges automatically)
+- [x] Model Scaling Comparison: M1 (`qwen2.5-coder:3b`) vs M2 (`qwen2.5-coder:7b`) on real retrieved context
+- [x] Outputs generated: `evaluation/retrieval_diagnostic_report.json` and `evaluation/retrieval_diagnostic_report.md`
+
+## Verification
+- [x] Create `evaluation/tests/test_retrieval_diagnostic.py` with 5 unit tests `[owner: antigravity | timestamp: 2026-09-01T21:40:06+03:00]`
+  - [x] Test real vault storage loader builds valid note objects from disk
+  - [x] Test real MemoryController.search executes with ContextPackBuilder envelope
+  - [x] Test evidence coverage calculates factual presence without conflating model accuracy
+  - [x] Test factual multi-signal status reports valid architectural classifications
+  - [x] Test evaluation cases dataset integrity (15/15 cases validated)
+  - [x] Run pytest suite: 5/5 passed in 1.78s; full suite: 1596 passed in 86.23s
+
+## Review
+- **What Changed**: Refactored `evaluation/retrieval_diagnostic_runner.py` to use 100% real `MemoryController` + real disk notes + real `ContextPackBuilder` without synthetic in-memory mocks.
+- **Invariants Maintained**:
+  - `Council_Runtime_Profile.yaml`: 100% untouched
+  - `ContextPackBuilder`: 100% untouched
+  - `config/model_tiers.json`: 100% untouched
+  - `cognitive_core/conflict_detector.py`: 100% untouched
+  - `Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`: 100% untouched
+- **Proof**: 1596 unit/integration tests passing (100% clean suite), empirical reports written to `evaluation/retrieval_diagnostic_report.json` and `.md`.
+
 
 ---
 
