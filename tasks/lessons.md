@@ -78,6 +78,12 @@
 - **Thread-Safe Lock Isolation**: Appending observed memory traces under `_TRACE_LOCK` ensures zero corruption or record intermixing under multi-threaded concurrency.
 - **No False Observation on Persistence Failure**: When telemetry writes fail, `reconcile_observed_trace` emits `OBSERVATION_FAILED`, preventing the system from falsely hallucinating an `OBSERVED` state when logs are missing.
 
+## Memory Vault Reorganization Lessons
+- **Preserved Provenance via 10_ARCHIVE**: Relocating legacy duplicate files (`*_Claude_Legacy.md`, `*_Perplexity_Legacy.md`) into `10_ARCHIVE/legacy_duplicates/` via `git mv` purges active namespace clutter while 100% preserving historical Git attribution and full provenance.
+- **Master Navigational Index (`VAULT_INDEX.md`)**: Providing a centralized root index in `01_KNOWLEDGE/VAULT_INDEX.md` prevents duplicate notes from being authored by giving agents an immediate lookup table of all canonical domain notes, ADRs, runbooks, and evaluation labs.
+- **Architectural Layer Separation**: Structurally decoupling machine telemetry (`telemetry/`), external conversation audits (`evaluation/memory_usage_audit/`), empirical research labs (`evaluation/`), and verified knowledge (`01_KNOWLEDGE/`) enforces clean boundaries and prevents unverified runtime artifacts from polluting canonical memory.
+
+
 
 
 
