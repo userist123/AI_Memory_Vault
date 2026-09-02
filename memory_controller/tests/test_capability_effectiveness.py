@@ -1,6 +1,6 @@
 """memory_controller/tests/test_capability_effectiveness.py — Test suite for Capability Effectiveness Matrix and Trend Analysis.
 
-Tests cover all 20 required acceptance criteria:
+Tests cover all required acceptance criteria under the strict ObservedMemoryTrace evidence boundary:
 1. Empty matrix
 2. Single skill observed + success
 3. Single skill observed + fail
@@ -21,6 +21,8 @@ Tests cover all 20 required acceptance criteria:
 18. Trend: Insufficient sample size
 19. Determinism
 20. Missing outcome record for run
+21. Regression Test: OutcomeRecord.observed_capabilities CANNOT create matrix cells without trace
+22. Regression Test: Trace-only capability creates matrix cell
 """
 import pytest
 from datetime import datetime, timedelta, timezone
@@ -50,9 +52,13 @@ def test_2_single_skill_observed_success():
         outcome=Outcome.SUCCESS.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="frontend_motion",
-        observed_capabilities={"skills": ["SKILL-ANIMATION"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-01",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-ANIMATION"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     assert "skills:SKILL-ANIMATION:frontend_motion" in res["matrix"]
     cell = res["matrix"]["skills:SKILL-ANIMATION:frontend_motion"]
     assert cell["total_runs"] == 1
@@ -68,9 +74,13 @@ def test_3_single_skill_observed_fail():
         outcome=Outcome.FAIL.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="backend_api",
-        observed_capabilities={"skills": ["SKILL-API-ROUTER"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-02",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-API-ROUTER"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     cell = res["matrix"]["skills:SKILL-API-ROUTER:backend_api"]
     assert cell["total_runs"] == 1
     assert cell["fail_runs"] == 1
@@ -84,9 +94,13 @@ def test_4_partial_outcome():
         run_id="run-03",
         outcome=Outcome.PARTIAL.value,
         task_category="database",
-        observed_capabilities={"skills": ["SKILL-SQLITE-WAL"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-03",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-SQLITE-WAL"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     cell = res["matrix"]["skills:SKILL-SQLITE-WAL:database"]
     assert cell["total_runs"] == 1
     assert cell["partial_runs"] == 1
@@ -100,9 +114,13 @@ def test_5_unknown_outcome():
         run_id="run-04",
         outcome=Outcome.UNKNOWN.value,
         task_category="testing",
-        observed_capabilities={"skills": ["SKILL-UNIT-TEST"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-04",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-UNIT-TEST"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     cell = res["matrix"]["skills:SKILL-UNIT-TEST:testing"]
     assert cell["total_runs"] == 1
     assert cell["unknown_runs"] == 1
@@ -113,36 +131,51 @@ def test_5_unknown_outcome():
 def test_6_multiple_categories_for_same_skill():
     """Same skill across different categories produces separate, non-aggregated matrix cells."""
     records = []
+    traces = []
     # 10 successes out of 12 for frontend_motion
     for i in range(12):
         outcome = Outcome.SUCCESS.value if i < 10 else Outcome.FAIL.value
         v_method = VerificationMethod.TEST_PASS.value if i < 10 else VerificationMethod.NONE.value
+        r_id = f"run-motion-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-motion-{i}",
+                run_id=r_id,
                 outcome=outcome,
                 verification_method=v_method,
                 task_category="frontend_motion",
-                observed_capabilities={"skills": ["frontend-animation"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp="2026-09-02T10:00:00Z",
+                retrieved_memory_ids=["SKILL-FRONTEND-ANIMATION"],
             )
         )
     # 2 successes out of 10 for backend_api
     for i in range(10):
         outcome = Outcome.SUCCESS.value if i < 2 else Outcome.FAIL.value
         v_method = VerificationMethod.TEST_PASS.value if i < 2 else VerificationMethod.NONE.value
+        r_id = f"run-backend-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-backend-{i}",
+                run_id=r_id,
                 outcome=outcome,
                 verification_method=v_method,
                 task_category="backend_api",
-                observed_capabilities={"skills": ["frontend-animation"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp="2026-09-02T10:00:00Z",
+                retrieved_memory_ids=["SKILL-FRONTEND-ANIMATION"],
             )
         )
 
-    res = effectiveness_matrix(outcome_records=records, traces=[])
-    motion_cell = res["matrix"]["skills:frontend-animation:frontend_motion"]
-    backend_cell = res["matrix"]["skills:frontend-animation:backend_api"]
+    res = effectiveness_matrix(outcome_records=records, traces=traces)
+    motion_cell = res["matrix"]["skills:SKILL-FRONTEND-ANIMATION:frontend_motion"]
+    backend_cell = res["matrix"]["skills:SKILL-FRONTEND-ANIMATION:backend_api"]
 
     assert motion_cell["total_runs"] == 12
     assert motion_cell["success_runs"] == 10
@@ -162,14 +195,18 @@ def test_7_multiple_capability_types():
         outcome=Outcome.SUCCESS.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="security_audit",
-        observed_capabilities={
-            "skills": ["SKILL-AUDIT-VULN"],
-            "agents": ["AGENT-CRITIC"],
-            "knowledge_refs": ["00_CORE/Storage_Architecture.md"],
-            "procedure_refs": ["03_PROCEDURES/Import_Sanitization.md"],
-        },
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-multi-type",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=[
+            "SKILL-AUDIT-VULN",
+            "AGENT-CRITIC",
+            "00_CORE/Storage_Architecture.md",
+            "03_PROCEDURES/Import_Sanitization.md",
+        ],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     assert "skills:SKILL-AUDIT-VULN:security_audit" in res["matrix"]
     assert "agents:AGENT-CRITIC:security_audit" in res["matrix"]
     assert "knowledge_refs:00_CORE/Storage_Architecture.md:security_audit" in res["matrix"]
@@ -208,9 +245,13 @@ def test_9_one_out_of_one_is_insufficient_data():
         outcome=Outcome.SUCCESS.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="trading_logic",
-        observed_capabilities={"skills": ["SKILL-QUANT"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-one",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-QUANT"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     cell = res["matrix"]["skills:SKILL-QUANT:trading_logic"]
     assert cell["total_runs"] == 1
     assert cell["observed_rate"] == 1.0
@@ -225,11 +266,18 @@ def test_10_five_runs_is_valid():
             outcome=Outcome.SUCCESS.value,
             verification_method=VerificationMethod.TEST_PASS.value,
             task_category="testing",
-            observed_capabilities={"skills": ["SKILL-PYTEST"]},
         )
         for i in range(5)
     ]
-    res = effectiveness_matrix(outcome_records=records, traces=[])
+    traces = [
+        ObservedMemoryTrace(
+            run_id=f"run-five-{i}",
+            timestamp="2026-09-02T10:00:00Z",
+            retrieved_memory_ids=["SKILL-PYTEST"],
+        )
+        for i in range(5)
+    ]
+    res = effectiveness_matrix(outcome_records=records, traces=traces)
     cell = res["matrix"]["skills:SKILL-PYTEST:testing"]
     assert cell["total_runs"] == 5
     assert cell["status"] == "VALID"
@@ -238,17 +286,25 @@ def test_10_five_runs_is_valid():
 def test_11_wilson_reused_from_effectiveness_stats():
     """Wilson lower bound matches the exact formula output for 10/12."""
     records = []
+    traces = []
     for i in range(12):
+        r_id = f"run-w-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-w-{i}",
+                run_id=r_id,
                 outcome=Outcome.SUCCESS.value if i < 10 else Outcome.FAIL.value,
                 verification_method=VerificationMethod.TEST_PASS.value if i < 10 else VerificationMethod.NONE.value,
                 task_category="documentation",
-                observed_capabilities={"skills": ["SKILL-DOCS"]},
             )
         )
-    res = effectiveness_matrix(outcome_records=records, traces=[])
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp="2026-09-02T10:00:00Z",
+                retrieved_memory_ids=["SKILL-DOCS"],
+            )
+        )
+    res = effectiveness_matrix(outcome_records=records, traces=traces)
     cell = res["matrix"]["skills:SKILL-DOCS:documentation"]
     assert abs(cell["wilson_lower_bound"] - 0.552) < 0.005
 
@@ -260,9 +316,13 @@ def test_12_laplace_reused():
         outcome=Outcome.SUCCESS.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="infra_devops",
-        observed_capabilities={"skills": ["SKILL-ANSIBLE"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="run-laplace",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-ANSIBLE"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     cell = res["matrix"]["skills:SKILL-ANSIBLE:infra_devops"]
     # 1 success / 1 trial -> (1+1)/(1+2) = 2/3 ~ 0.6667
     assert abs(cell["smoothed_rate"] - (2.0 / 3.0)) < 0.001
@@ -276,7 +336,12 @@ def test_13_project_id_filtering():
         outcome=Outcome.SUCCESS.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="backend_api",
-        observed_capabilities={"skills": ["SKILL-ROUTER"]},
+    )
+    t1 = ObservedMemoryTrace(
+        run_id="r1",
+        project_id="PROJ-ALPHA",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-ROUTER"],
     )
     r2 = OutcomeRecord(
         run_id="r2",
@@ -284,15 +349,20 @@ def test_13_project_id_filtering():
         outcome=Outcome.FAIL.value,
         verification_method=VerificationMethod.TEST_PASS.value,
         task_category="backend_api",
-        observed_capabilities={"skills": ["SKILL-ROUTER"]},
+    )
+    t2 = ObservedMemoryTrace(
+        run_id="r2",
+        project_id="PROJ-BETA",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-ROUTER"],
     )
 
-    res_alpha = effectiveness_matrix(outcome_records=[r1, r2], project_id="PROJ-ALPHA", traces=[])
+    res_alpha = effectiveness_matrix(outcome_records=[r1, r2], traces=[t1, t2], project_id="PROJ-ALPHA")
     cell = res_alpha["matrix"]["skills:SKILL-ROUTER:backend_api"]
     assert cell["total_runs"] == 1
     assert cell["success_runs"] == 1
 
-    res_beta = effectiveness_matrix(outcome_records=[r1, r2], project_id="PROJ-BETA", traces=[])
+    res_beta = effectiveness_matrix(outcome_records=[r1, r2], traces=[t1, t2], project_id="PROJ-BETA")
     cell_beta = res_beta["matrix"]["skills:SKILL-ROUTER:backend_api"]
     assert cell_beta["total_runs"] == 1
     assert cell_beta["fail_runs"] == 1
@@ -304,41 +374,58 @@ def test_14_task_category_unknown_fallback():
         run_id="r-unk",
         outcome=Outcome.SUCCESS.value,
         verification_method=VerificationMethod.TEST_PASS.value,
-        observed_capabilities={"skills": ["SKILL-GENERAL"]},
     )
-    res = effectiveness_matrix(outcome_records=[rec], traces=[])
+    t = ObservedMemoryTrace(
+        run_id="r-unk",
+        timestamp="2026-09-02T10:00:00Z",
+        retrieved_memory_ids=["SKILL-GENERAL"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
     assert "skills:SKILL-GENERAL:unknown" in res["matrix"]
     assert res["matrix"]["skills:SKILL-GENERAL:unknown"]["task_category"] == "unknown"
-
-
 
 
 def test_15_trend_improving():
     """Trend analysis flags IMPROVING when recent window success rate is substantially higher."""
     base_time = datetime(2026, 9, 1, 10, 0, 0, tzinfo=timezone.utc)
     records = []
+    traces = []
     # Previous window (5 runs): 1 success / 5 (rate = 0.20)
     for i in range(5):
+        r_id = f"run-prev-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-prev-{i}",
+                run_id=r_id,
                 timestamp=(base_time + timedelta(hours=i)).isoformat(),
                 outcome=Outcome.SUCCESS.value if i == 0 else Outcome.FAIL.value,
                 verification_method=VerificationMethod.TEST_PASS.value if i == 0 else VerificationMethod.NONE.value,
                 task_category="frontend_motion",
-                observed_capabilities={"skills": ["SKILL-MOTION"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp=(base_time + timedelta(hours=i)).isoformat(),
+                retrieved_memory_ids=["SKILL-MOTION"],
             )
         )
     # Recent window (5 runs): 5 successes / 5 (rate = 1.00)
     for i in range(5):
+        r_id = f"run-recent-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-recent-{i}",
+                run_id=r_id,
                 timestamp=(base_time + timedelta(hours=5 + i)).isoformat(),
                 outcome=Outcome.SUCCESS.value,
                 verification_method=VerificationMethod.TEST_PASS.value,
                 task_category="frontend_motion",
-                observed_capabilities={"skills": ["SKILL-MOTION"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp=(base_time + timedelta(hours=5 + i)).isoformat(),
+                retrieved_memory_ids=["SKILL-MOTION"],
             )
         )
 
@@ -347,6 +434,7 @@ def test_15_trend_improving():
         capability_id="SKILL-MOTION",
         task_category="frontend_motion",
         outcome_records=records,
+        traces=traces,
         window_size=5,
     )
     assert res["trend"] == "IMPROVING"
@@ -360,15 +448,23 @@ def test_16_trend_stable():
     """Trend analysis flags STABLE when delta is within tolerance."""
     base_time = datetime(2026, 9, 1, 10, 0, 0, tzinfo=timezone.utc)
     records = []
+    traces = []
     for i in range(10):
+        r_id = f"run-stable-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-stable-{i}",
+                run_id=r_id,
                 timestamp=(base_time + timedelta(hours=i)).isoformat(),
                 outcome=Outcome.SUCCESS.value,
                 verification_method=VerificationMethod.TEST_PASS.value,
                 task_category="backend_api",
-                observed_capabilities={"skills": ["SKILL-STABLE"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp=(base_time + timedelta(hours=i)).isoformat(),
+                retrieved_memory_ids=["SKILL-STABLE"],
             )
         )
 
@@ -376,6 +472,7 @@ def test_16_trend_stable():
         capability_type="skills",
         capability_id="SKILL-STABLE",
         outcome_records=records,
+        traces=traces,
         window_size=5,
     )
     assert res["trend"] == "STABLE"
@@ -386,27 +483,42 @@ def test_17_trend_degrading():
     """Trend analysis flags DEGRADING when recent window success rate drops."""
     base_time = datetime(2026, 9, 1, 10, 0, 0, tzinfo=timezone.utc)
     records = []
+    traces = []
     # Previous window (5 runs): 5 successes / 5
     for i in range(5):
+        r_id = f"run-deg-prev-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-deg-prev-{i}",
+                run_id=r_id,
                 timestamp=(base_time + timedelta(hours=i)).isoformat(),
                 outcome=Outcome.SUCCESS.value,
                 verification_method=VerificationMethod.TEST_PASS.value,
                 task_category="database",
-                observed_capabilities={"skills": ["SKILL-DB"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp=(base_time + timedelta(hours=i)).isoformat(),
+                retrieved_memory_ids=["SKILL-DB"],
             )
         )
     # Recent window (5 runs): 0 successes / 5
     for i in range(5):
+        r_id = f"run-deg-rec-{i}"
         records.append(
             OutcomeRecord(
-                run_id=f"run-deg-rec-{i}",
+                run_id=r_id,
                 timestamp=(base_time + timedelta(hours=5 + i)).isoformat(),
                 outcome=Outcome.FAIL.value,
                 task_category="database",
-                observed_capabilities={"skills": ["SKILL-DB"]},
+            )
+        )
+        traces.append(
+            ObservedMemoryTrace(
+                run_id=r_id,
+                timestamp=(base_time + timedelta(hours=5 + i)).isoformat(),
+                retrieved_memory_ids=["SKILL-DB"],
             )
         )
 
@@ -414,6 +526,7 @@ def test_17_trend_degrading():
         capability_type="skills",
         capability_id="SKILL-DB",
         outcome_records=records,
+        traces=traces,
         window_size=5,
     )
     assert res["trend"] == "DEGRADING"
@@ -429,7 +542,14 @@ def test_18_trend_insufficient_sample_size():
             run_id=f"r-trend-small-{i}",
             outcome=Outcome.SUCCESS.value,
             verification_method=VerificationMethod.TEST_PASS.value,
-            observed_capabilities={"skills": ["SKILL-SMALL"]},
+        )
+        for i in range(4)
+    ]
+    traces = [
+        ObservedMemoryTrace(
+            run_id=f"r-trend-small-{i}",
+            timestamp="2026-09-02T10:00:00Z",
+            retrieved_memory_ids=["SKILL-SMALL"],
         )
         for i in range(4)
     ]
@@ -437,6 +557,7 @@ def test_18_trend_insufficient_sample_size():
         capability_type="skills",
         capability_id="SKILL-SMALL",
         outcome_records=records,
+        traces=traces,
         window_size=5,
     )
     assert res["trend"] == "INSUFFICIENT_DATA"
@@ -451,12 +572,19 @@ def test_19_determinism():
             outcome=Outcome.SUCCESS.value if i % 2 == 0 else Outcome.FAIL.value,
             verification_method=VerificationMethod.TEST_PASS.value if i % 2 == 0 else VerificationMethod.NONE.value,
             task_category="security_audit",
-            observed_capabilities={"agents": ["AGENT-AUDITOR"]},
         )
         for i in range(8)
     ]
-    res1 = effectiveness_matrix(outcome_records=records, traces=[])
-    res2 = effectiveness_matrix(outcome_records=records, traces=[])
+    traces = [
+        ObservedMemoryTrace(
+            run_id=f"run-det-{i}",
+            timestamp="2026-09-02T10:00:00Z",
+            retrieved_memory_ids=["AGENT-AUDITOR"],
+        )
+        for i in range(8)
+    ]
+    res1 = effectiveness_matrix(outcome_records=records, traces=traces)
+    res2 = effectiveness_matrix(outcome_records=records, traces=traces)
     assert res1 == res2
 
 
@@ -474,3 +602,48 @@ def test_20_missing_outcome_record_for_run():
     assert cell["success_runs"] == 0
     assert cell["observed_rate"] == 0.0
     assert cell["status"] == "INSUFFICIENT_DATA"
+
+
+def test_21_regression_declared_in_outcome_cannot_create_matrix_cell():
+    """Task 3.1 Hard Invariant: OutcomeRecord.observed_capabilities CANNOT create matrix cells without trace."""
+    rec = OutcomeRecord(
+        run_id="run-X",
+        outcome=Outcome.SUCCESS.value,
+        verification_method=VerificationMethod.TEST_PASS.value,
+        task_category="backend_api",
+        observed_capabilities={"skills": ["SKILL-NOT-IN-TRACE"]},
+    )
+    t = ObservedMemoryTrace(
+        run_id="run-X",
+        timestamp="2026-09-02T12:00:00Z",
+        retrieved_memory_ids=[],  # Empty trace
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
+
+    # SKILL-NOT-IN-TRACE must NOT appear in matrix
+    assert "skills:SKILL-NOT-IN-TRACE:backend_api" not in res["matrix"]
+    assert res["matrix"] == {}
+
+
+def test_22_regression_trace_only_creates_matrix_cell():
+    """Task 3.1 Invariant: ObservedMemoryTrace.retrieved_memory_ids creates matrix cell even if OutcomeRecord has empty capabilities."""
+    rec = OutcomeRecord(
+        run_id="run-Y",
+        outcome=Outcome.SUCCESS.value,
+        verification_method=VerificationMethod.TEST_PASS.value,
+        task_category="frontend_motion",
+        observed_capabilities={},  # Empty declared
+    )
+    t = ObservedMemoryTrace(
+        run_id="run-Y",
+        timestamp="2026-09-02T12:00:00Z",
+        retrieved_memory_ids=["SKILL-IN-TRACE"],
+    )
+    res = effectiveness_matrix(outcome_records=[rec], traces=[t])
+
+    # SKILL-IN-TRACE MUST appear in matrix
+    assert "skills:SKILL-IN-TRACE:frontend_motion" in res["matrix"]
+    cell = res["matrix"]["skills:SKILL-IN-TRACE:frontend_motion"]
+    assert cell["total_runs"] == 1
+    assert cell["success_runs"] == 1
+    assert cell["observed_rate"] == 1.0

@@ -107,6 +107,10 @@
 - **Run-Level Deduplication Invariant**: Aggregating observations strictly at the unique `run_id` level prevents duplicate telemetry emissions or multiple retrieved references from inflating success counters.
 - **Empirical Association vs Causality Boundary**: Explicitly distinguishing empirical co-occurrence from causal attribution protects cognitive integrity against post-hoc reasoning fallacies.
 
+## Capability Evidence Engine — Task 3.1 Observed Evidence Boundary Lessons
+- **Strict Trace-Only Evidence Authority**: Relying exclusively on `ObservedMemoryTrace.retrieved_memory_ids` for capability attribution prevents declared claims or unverified outcome metadata (`OutcomeRecord.observed_capabilities`) from generating synthetic capability cells without physical trace verification.
+
+
 
 
 

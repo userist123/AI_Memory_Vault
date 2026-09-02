@@ -103,10 +103,14 @@ def _classify_memory_id(memory_id: str) -> Tuple[str, str]:
 
 
 def _extract_run_capabilities(
-    record: Optional[OutcomeRecord],
     traces: List[ObservedMemoryTrace],
 ) -> Dict[str, Set[str]]:
-    """Extracts all observed capabilities for a given run_id across outcome record and traces."""
+    """Extracts observed capabilities for a given run_id strictly from ObservedMemoryTrace.
+
+    In accordance with Task 3.1 evidence boundary:
+    ObservedMemoryTrace.retrieved_memory_ids is the sole authoritative evidence source.
+    OutcomeRecord.observed_capabilities is never used to independently create matrix cells.
+    """
     caps: Dict[str, Set[str]] = {
         "skills": set(),
         "agents": set(),
@@ -114,16 +118,6 @@ def _extract_run_capabilities(
         "procedure_refs": set(),
     }
 
-    # 1. Extract from OutcomeRecord.observed_capabilities
-    if record and record.observed_capabilities:
-        obs = record.observed_capabilities
-        if isinstance(obs, dict):
-            for k in ("skills", "agents", "knowledge_refs", "procedure_refs"):
-                for item in obs.get(k, []):
-                    if item and str(item).strip():
-                        caps[k].add(str(item).strip())
-
-    # 2. Extract from ObservedMemoryTrace.retrieved_memory_ids
     for trace in traces:
         for mid in trace.retrieved_memory_ids:
             if mid and str(mid).strip():
@@ -215,8 +209,8 @@ def effectiveness_matrix(
         if outcome not in {"success", "fail", "partial", "unknown"}:
             outcome = "unknown"
 
-        # Extract capabilities observed in this run
-        run_caps = _extract_run_capabilities(rec, run_traces)
+        # Extract capabilities observed in this run (strictly from ObservedMemoryTrace)
+        run_caps = _extract_run_capabilities(run_traces)
 
         # Attribute outcome once per (capability_type, capability_id, cat)
         for c_type, ids in run_caps.items():
@@ -355,7 +349,7 @@ def effectiveness_trend(
         outcome = rec.outcome if rec else "unknown"
         ts = rec.timestamp if rec else (run_traces[0].timestamp if run_traces else "")
 
-        run_caps = _extract_run_capabilities(rec, run_traces)
+        run_caps = _extract_run_capabilities(run_traces)
         if c_id in run_caps.get(c_type, set()):
             events.append((ts, r_id, outcome))
 

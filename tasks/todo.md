@@ -1,4 +1,18 @@
+# Capability Evidence Engine — Task 3.1 Fix Observed Evidence Boundary
+
+## Implementation
+- [x] enforce `ObservedMemoryTrace.retrieved_memory_ids` as sole capability evidence source in `memory_controller/capability_effectiveness.py` `[owner: antigravity | timestamp: 2026-09-02T20:40:09+03:00]`
+- [x] ensure `OutcomeRecord.observed_capabilities` cannot create matrix entries without trace `[owner: antigravity | timestamp: 2026-09-02T20:40:09+03:00]`
+- [x] add regression tests in `memory_controller/tests/test_capability_effectiveness.py` (22/22 passed) `[owner: antigravity | timestamp: 2026-09-02T20:40:50+03:00]`
+- [x] run master test regression (278 passed in memory_controller, 43 in evaluation - total 321) `[owner: antigravity | timestamp: 2026-09-02T20:41:28+03:00]`
+- [x] update lessons (`tasks/lessons.md`) `[owner: antigravity | timestamp: 2026-09-02T20:41:34+03:00]`
+- [x] commit
+- [x] push to `origin/main`
+
+---
+
 # Capability Evidence Engine — Task 3 Capability Effectiveness Matrix
+
 
 ## Implementation
 - [x] implement `memory_controller/capability_effectiveness.py` with `effectiveness_matrix` and `effectiveness_trend` `[owner: antigravity | timestamp: 2026-09-02T19:53:16+03:00]`
