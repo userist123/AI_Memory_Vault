@@ -60,9 +60,9 @@ Raw imports remain under `06_INBOX/RAW_IMPORTS/` and are evidence, not canonical
 ## Multi-Agent Development Coordination
 
 When multiple AI development environments/agents (Antigravity, Claude Code, ChatGPT, Perplexity, etc.) operate on this repository:
-1. **Single Source of Truth**: `tasks/todo.md` and `tasks/lessons.md` are the canonical coordination layer for active and completed work.
-2. **Pre-flight Check**: Before touching any code or files, inspect `tasks/todo.md` to ensure another AI session is not actively executing or has not already resolved the task.
-3. **Execution Ownership**: When starting a task, claim it or check for an active owner. When completing a task, mark it in `tasks/todo.md` with `owner: <tool_name>` and an ISO 8601 timestamp.
+1. **Single Source of Truth**: `09_COORDINATION/todo.md` and `09_COORDINATION/lessons.md` are the canonical coordination layer for active and completed work.
+2. **Pre-flight Check**: Before touching any code or files, inspect `09_COORDINATION/todo.md` to ensure another AI session is not actively executing or has not already resolved the task.
+3. **Execution Ownership**: When starting a task, claim it or check for an active owner. When completing a task, mark it in `09_COORDINATION/todo.md` with `owner: <tool_name>` and an ISO 8601 timestamp.
 4. **Protected Core Invariant**: Never modify frozen cognitive core modules (`Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`) unless explicitly required by an audited specification. All core contracts are validated against `cognitive_core/tests/test_protected_core_boundaries.py`.
 5. **No Speculation**: Never mark tasks done without attaching empirical execution proof (passing `pytest` suite output).
 

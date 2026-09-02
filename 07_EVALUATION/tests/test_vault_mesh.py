@@ -10,8 +10,8 @@ from evaluation.vault_mesh.mesh_validator import (
 )
 
 VAULT_ROOT = Path(__file__).resolve().parent.parent.parent
-INVENTORY_PATH = VAULT_ROOT / "evaluation" / "vault_mesh" / "vault_inventory.yaml"
-GRAPH_PATH = VAULT_ROOT / "evaluation" / "vault_mesh" / "vault_graph.yaml"
+INVENTORY_PATH = VAULT_ROOT / "07_EVALUATION" / "vault_mesh" / "vault_inventory.yaml"
+GRAPH_PATH = VAULT_ROOT / "07_EVALUATION" / "vault_mesh" / "vault_graph.yaml"
 
 
 @pytest.fixture

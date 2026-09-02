@@ -22,12 +22,12 @@ CANONICAL_LAYERS = [
     "04_MEMORY",
     "05_RESOURCES",
     "06_INBOX",
+    "07_EVALUATION",
+    "08_EXPORTS",
+    "09_COORDINATION",
     "10_ARCHIVE",
     "90_TEMPLATES",
     "99_SYSTEM",
-    "evaluation",
-    "telemetry",
-    "tasks",
 ]
 
 REQUIRED_CANONICAL_DOCS = [
@@ -47,8 +47,8 @@ REQUIRED_CANONICAL_DOCS = [
     "02_PROJECTS/Registru_de_transferuri.md",
     "03_PROCEDURES/Closed_Loop_Reflexion_Pipeline.md",
     "99_SYSTEM/Council_Runtime_Profile.yaml",
-    "tasks/todo.md",
-    "tasks/lessons.md",
+    "09_COORDINATION/todo.md",
+    "09_COORDINATION/lessons.md",
 ]
 
 
@@ -89,8 +89,8 @@ def test_archived_legacy_duplicates_preserved():
 
 def test_separation_of_telemetry_audit_and_evaluation():
     telemetry_dir = VAULT_ROOT / "telemetry"
-    audit_dir = VAULT_ROOT / "evaluation" / "memory_usage_audit"
-    reports_dir = VAULT_ROOT / "evaluation" / "reports"
+    audit_dir = VAULT_ROOT / "07_EVALUATION" / "memory_usage_audit"
+    reports_dir = VAULT_ROOT / "07_EVALUATION" / "reports"
 
     assert telemetry_dir.exists()
     assert audit_dir.exists()

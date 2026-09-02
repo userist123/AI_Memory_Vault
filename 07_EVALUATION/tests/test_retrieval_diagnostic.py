@@ -123,7 +123,7 @@ def test_retrieval_knowledge_note_and_hypotheses_integrity():
     assert "R-H007" in reg_txt
 
     # 3. Experiment Spec
-    spec_path = vault_root / "evaluation" / "retrieval_fusion_experiment_spec.md"
+    spec_path = vault_root / "07_EVALUATION" / "retrieval_fusion_experiment_spec.md" if (vault_root / "07_EVALUATION").exists() else vault_root / "07_EVALUATION" / "retrieval_fusion_experiment_spec.md"
     assert spec_path.exists(), "Experiment spec must exist"
     spec_txt = spec_path.read_text(encoding="utf-8")
     assert "R1" in spec_txt

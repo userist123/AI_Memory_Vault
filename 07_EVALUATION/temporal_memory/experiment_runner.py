@@ -71,7 +71,7 @@ def run_temporal_memory_lab(
     m2_name: str = "qwen2.5-coder:7b",
     reports_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    rep_dir = reports_dir or (ROOT / "evaluation" / "reports")
+    rep_dir = reports_dir or (ROOT / "07_EVALUATION" / "reports")
     rep_dir.mkdir(parents=True, exist_ok=True)
 
     config = load_experiment_config()
