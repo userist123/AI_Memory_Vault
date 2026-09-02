@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_013",
+  "runtime_case_id": "rec_013",
+  "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate"
+    ],
+    "skill_hash": "4a2dcccfbc878c8e1fdce57336141ca596e7814dc82b3d068eaf3df65faef23f",
+    "skill_in_context": true,
+    "context_hash": "6614b462171f486adb45b2148975c50170d0d2254e94f4500077a150f0d32604"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.008332+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.008340+00:00",
+  "commands": [
+    "eval_treatment --skill cicd-automation-workflow-automate --task task_cicd-automation-workflow-automate"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+      "hash": "4a2dcccfbc878c8e1fdce57336141ca596e7814dc82b3d068eaf3df65faef23f"
+    }
+  ],
+  "files_created": [
+    "cicd-automation-workflow-automate_spec.json",
+    "cicd-automation-workflow-automate_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill cicd-automation-workflow-automate loaded (hash 4a2dcccf). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_cicd_automation_workflow_automate",
+    "command": "python -m verify_treatment rec_013 --schema cicd-automation-workflow-automate",
+    "exit_code": 0,
+    "passed": true,
+    "score": 83,
+    "evidence": "Delivered verified contract matching cicd-automation-workflow-automate specifications."
+  },
+  "redactions": []
+}

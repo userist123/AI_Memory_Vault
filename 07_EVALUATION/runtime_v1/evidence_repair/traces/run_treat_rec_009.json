@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_009",
+  "runtime_case_id": "rec_009",
+  "skill_id": "skill:awesome-copilot:repo-standardizer",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:awesome-copilot:repo-standardizer"
+    ],
+    "skill_hash": "4c693e4ab0c7a9147754d1a1bf6ac952d40ebdec1ea216c4df11395342d78c27",
+    "skill_in_context": true,
+    "context_hash": "bf701460ba45e4a8079a7f832a5ef0355e2c2b5aba387ed59127ad018b2adf37"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.005748+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.005757+00:00",
+  "commands": [
+    "eval_treatment --skill repo-standardizer --task task_repo-standardizer"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:awesome-copilot:repo-standardizer",
+      "hash": "4c693e4ab0c7a9147754d1a1bf6ac952d40ebdec1ea216c4df11395342d78c27"
+    }
+  ],
+  "files_created": [
+    "repo-standardizer_spec.json",
+    "repo-standardizer_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill repo-standardizer loaded (hash 4c693e4a). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_repo_standardizer",
+    "command": "python -m verify_treatment rec_009 --schema repo-standardizer",
+    "exit_code": 0,
+    "passed": true,
+    "score": 84,
+    "evidence": "Delivered verified contract matching repo-standardizer specifications."
+  },
+  "redactions": []
+}

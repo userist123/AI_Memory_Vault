@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_025",
+  "runtime_case_id": "rec_025",
+  "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:check-identity-pack"
+    ],
+    "skill_hash": "0cd8661fb2c0a7b8b5de0be0d690ad95205223f33d9d46ff225234704fcda2c0",
+    "skill_in_context": true,
+    "context_hash": "f631a45ddd22f720b573c7e1009e93ce84a9b9da8db5e8ee5f9c7565ae7544ac"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.016332+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.016338+00:00",
+  "commands": [
+    "eval_repeat --skill check-identity-pack --task task_check-identity-pack"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:check-identity-pack",
+      "hash": "0cd8661fb2c0a7b8b5de0be0d690ad95205223f33d9d46ff225234704fcda2c0"
+    }
+  ],
+  "files_created": [
+    "check-identity-pack_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for check-identity-pack. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_check_identity_pack",
+    "command": "python -m verify_treatment rec_025 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 88,
+    "evidence": "Repeat score 88 vs 87 (delta=1)."
+  },
+  "redactions": []
+}

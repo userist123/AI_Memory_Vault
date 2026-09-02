@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_027",
+  "runtime_case_id": "rec_027",
+  "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup"
+    ],
+    "skill_hash": "0010ee85453144e6b7b390c411fd0f27c82f2d69012da47052a593ea511756f6",
+    "skill_in_context": true,
+    "context_hash": "7f4a4bbd85b465965e55b97cb12cba20efa34cac4979afbff023c120f8e91884"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.017666+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.017674+00:00",
+  "commands": [
+    "eval_treatment --skill odoo-hr-payroll-setup --task task_odoo-hr-payroll-setup"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+      "hash": "0010ee85453144e6b7b390c411fd0f27c82f2d69012da47052a593ea511756f6"
+    }
+  ],
+  "files_created": [
+    "odoo-hr-payroll-setup_spec.json",
+    "odoo-hr-payroll-setup_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill odoo-hr-payroll-setup loaded (hash 0010ee85). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_odoo_hr_payroll_setup",
+    "command": "python -m verify_treatment rec_027 --schema odoo-hr-payroll-setup",
+    "exit_code": 0,
+    "passed": true,
+    "score": 85,
+    "evidence": "Delivered verified contract matching odoo-hr-payroll-setup specifications."
+  },
+  "redactions": []
+}

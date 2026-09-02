@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_008",
+  "runtime_case_id": "rec_008",
+  "skill_id": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:unsloth-finetuning"
+    ],
+    "skill_hash": "02110ef5472e346ec84ca60914c25b539336262bfcbfd5d6f506a7656097e19b",
+    "skill_in_context": true,
+    "context_hash": "7ffaa59bba2938bd6f933991b11cc28833e0f958b87e7ed7c9ab7d8a4ec21e5d"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.005027+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.005035+00:00",
+  "commands": [
+    "eval_treatment --skill unsloth-finetuning --task task_unsloth-finetuning"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+      "hash": "02110ef5472e346ec84ca60914c25b539336262bfcbfd5d6f506a7656097e19b"
+    }
+  ],
+  "files_created": [
+    "unsloth-finetuning_spec.json",
+    "unsloth-finetuning_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill unsloth-finetuning loaded (hash 02110ef5). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_unsloth_finetuning",
+    "command": "python -m verify_treatment rec_008 --schema unsloth-finetuning",
+    "exit_code": 0,
+    "passed": true,
+    "score": 86,
+    "evidence": "Delivered verified contract matching unsloth-finetuning specifications."
+  },
+  "redactions": []
+}

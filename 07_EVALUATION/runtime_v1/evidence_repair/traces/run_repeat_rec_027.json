@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_027",
+  "runtime_case_id": "rec_027",
+  "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup"
+    ],
+    "skill_hash": "0010ee85453144e6b7b390c411fd0f27c82f2d69012da47052a593ea511756f6",
+    "skill_in_context": true,
+    "context_hash": "1afff7e60549a227d2e59a7d6485d47f713e0f75767ad16a141c81acef298f81"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.017875+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.017880+00:00",
+  "commands": [
+    "eval_repeat --skill odoo-hr-payroll-setup --task task_odoo-hr-payroll-setup"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+      "hash": "0010ee85453144e6b7b390c411fd0f27c82f2d69012da47052a593ea511756f6"
+    }
+  ],
+  "files_created": [
+    "odoo-hr-payroll-setup_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for odoo-hr-payroll-setup. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_odoo_hr_payroll_setup",
+    "command": "python -m verify_treatment rec_027 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 85,
+    "evidence": "Repeat score 85 vs 85 (delta=0)."
+  },
+  "redactions": []
+}

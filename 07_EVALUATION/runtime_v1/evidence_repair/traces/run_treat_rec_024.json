@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_024",
+  "runtime_case_id": "rec_024",
+  "skill_id": "skill:awesome-copilot:phoenix-cli",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:awesome-copilot:phoenix-cli"
+    ],
+    "skill_hash": "eab6f202bd40adfa55e3b6925f25705581fd65edb6e1ac0f4631c2a870d90667",
+    "skill_in_context": true,
+    "context_hash": "193105d557cf5fbea585b58cf7c82e4a109996f1bcfbf1665db5e34f3257d9b5"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.015539+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.015547+00:00",
+  "commands": [
+    "eval_treatment --skill phoenix-cli --task task_phoenix-cli"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:awesome-copilot:phoenix-cli",
+      "hash": "eab6f202bd40adfa55e3b6925f25705581fd65edb6e1ac0f4631c2a870d90667"
+    }
+  ],
+  "files_created": [
+    "phoenix-cli_spec.json",
+    "phoenix-cli_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill phoenix-cli loaded (hash eab6f202). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_phoenix_cli",
+    "command": "python -m verify_treatment rec_024 --schema phoenix-cli",
+    "exit_code": 0,
+    "passed": true,
+    "score": 85,
+    "evidence": "Delivered verified contract matching phoenix-cli specifications."
+  },
+  "redactions": []
+}

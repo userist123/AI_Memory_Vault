@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_020",
+  "runtime_case_id": "rec_020",
+  "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:acceptance-orchestrator"
+    ],
+    "skill_hash": "d1824a4f2f64476b65e5bf4adf5eb734009f812b825fa431a5cd56bcfbde5aee",
+    "skill_in_context": true,
+    "context_hash": "ef129a238f0b5939d512def99abae8213d9282e021cfca41d44829dad150f315"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.013017+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.013023+00:00",
+  "commands": [
+    "eval_repeat --skill acceptance-orchestrator --task task_acceptance-orchestrator"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+      "hash": "d1824a4f2f64476b65e5bf4adf5eb734009f812b825fa431a5cd56bcfbde5aee"
+    }
+  ],
+  "files_created": [
+    "acceptance-orchestrator_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for acceptance-orchestrator. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_acceptance_orchestrator",
+    "command": "python -m verify_treatment rec_020 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 81,
+    "evidence": "Repeat score 81 vs 82 (delta=1)."
+  },
+  "redactions": []
+}

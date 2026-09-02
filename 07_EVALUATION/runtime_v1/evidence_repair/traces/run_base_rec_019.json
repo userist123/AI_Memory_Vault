@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_019",
+  "runtime_case_id": "rec_019",
+  "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "cfd35d2e9476517e9ff6eef3fdb6bf36bc3a65bb90380d6a81971def3fcdcef0"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.011789+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.011796+00:00",
+  "commands": [
+    "eval_baseline --task task_nextjs-best-practices"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "nextjs-best-practices_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_nextjs-best-practices without skill nextjs-best-practices. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_nextjs_best_practices",
+    "command": "python -m verify_baseline rec_019",
+    "exit_code": 0,
+    "passed": true,
+    "score": 67,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_018",
+  "runtime_case_id": "rec_018",
+  "skill_id": "skill:agentic-awesome-skills-main:wiki-changelog",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:wiki-changelog"
+    ],
+    "skill_hash": "75571c6ec9183590eec49ecfd7f438aa9c08201fd380b80217d2c0c7651c7a1c",
+    "skill_in_context": true,
+    "context_hash": "fb567ac7c774d75adbd68533f28cbfe6a349276e5cc8187795b659e4c2544d2d"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.011429+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.011437+00:00",
+  "commands": [
+    "eval_treatment --skill wiki-changelog --task task_wiki-changelog"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:wiki-changelog",
+      "hash": "75571c6ec9183590eec49ecfd7f438aa9c08201fd380b80217d2c0c7651c7a1c"
+    }
+  ],
+  "files_created": [
+    "wiki-changelog_spec.json",
+    "wiki-changelog_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill wiki-changelog loaded (hash 75571c6e). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_wiki_changelog",
+    "command": "python -m verify_treatment rec_018 --schema wiki-changelog",
+    "exit_code": 0,
+    "passed": true,
+    "score": 89,
+    "evidence": "Delivered verified contract matching wiki-changelog specifications."
+  },
+  "redactions": []
+}

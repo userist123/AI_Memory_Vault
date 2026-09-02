@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_029",
+  "runtime_case_id": "rec_029",
+  "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "ca403dcbbf77fba731a5d78512d25e07be3e73a3dce2c92f67f40b074d8a7f30"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.018692+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.018698+00:00",
+  "commands": [
+    "eval_baseline --task task_orchestrate-batch-refactor"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "orchestrate-batch-refactor_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_orchestrate-batch-refactor without skill orchestrate-batch-refactor. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_orchestrate_batch_refactor",
+    "command": "python -m verify_baseline rec_029",
+    "exit_code": 0,
+    "passed": true,
+    "score": 61,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

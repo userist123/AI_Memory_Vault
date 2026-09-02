@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_020",
+  "runtime_case_id": "rec_020",
+  "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:acceptance-orchestrator"
+    ],
+    "skill_hash": "d1824a4f2f64476b65e5bf4adf5eb734009f812b825fa431a5cd56bcfbde5aee",
+    "skill_in_context": true,
+    "context_hash": "c19fdeb5cebf3b7c1efbeec8d6511b385465998eea12b2d02539461caf96b8fa"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.012786+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.012794+00:00",
+  "commands": [
+    "eval_treatment --skill acceptance-orchestrator --task task_acceptance-orchestrator"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+      "hash": "d1824a4f2f64476b65e5bf4adf5eb734009f812b825fa431a5cd56bcfbde5aee"
+    }
+  ],
+  "files_created": [
+    "acceptance-orchestrator_spec.json",
+    "acceptance-orchestrator_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill acceptance-orchestrator loaded (hash d1824a4f). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_acceptance_orchestrator",
+    "command": "python -m verify_treatment rec_020 --schema acceptance-orchestrator",
+    "exit_code": 0,
+    "passed": true,
+    "score": 82,
+    "evidence": "Delivered verified contract matching acceptance-orchestrator specifications."
+  },
+  "redactions": []
+}

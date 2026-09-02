@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_017",
+  "runtime_case_id": "rec_017",
+  "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "be81a21d834f49a52f7f2e44b9616a683793eb2e100624f3bea19d7587a8fd93"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.010608+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.010615+00:00",
+  "commands": [
+    "eval_baseline --task task_differential-review"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "differential-review_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_differential-review without skill differential-review. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_differential_review",
+    "command": "python -m verify_baseline rec_017",
+    "exit_code": 0,
+    "passed": true,
+    "score": 64,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

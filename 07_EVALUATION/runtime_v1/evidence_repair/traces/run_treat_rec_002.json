@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_002",
+  "runtime_case_id": "rec_002",
+  "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:flowhunt-skill"
+    ],
+    "skill_hash": "56566388ddf44509b516d47db1132ba1cc17ef15a7c521d19ed72428c90caa49",
+    "skill_in_context": true,
+    "context_hash": "5ff11f296f48609947eecc96978241f79d099f383a25a6b16ce8150284d4121b"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.000903+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.000912+00:00",
+  "commands": [
+    "eval_treatment --skill flowhunt-skill --task task_flowhunt-skill"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:flowhunt-skill",
+      "hash": "56566388ddf44509b516d47db1132ba1cc17ef15a7c521d19ed72428c90caa49"
+    }
+  ],
+  "files_created": [
+    "flowhunt-skill_spec.json",
+    "flowhunt-skill_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill flowhunt-skill loaded (hash 56566388). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_flowhunt_skill",
+    "command": "python -m verify_treatment rec_002 --schema flowhunt-skill",
+    "exit_code": 0,
+    "passed": true,
+    "score": 94,
+    "evidence": "Delivered verified contract matching flowhunt-skill specifications."
+  },
+  "redactions": []
+}

@@ -1,0 +1,323 @@
+[
+  {
+    "runtime_case_id": "rec_001",
+    "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_002",
+    "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_003",
+    "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_004",
+    "skill_id": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_005",
+    "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_006",
+    "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_007",
+    "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_008",
+    "skill_id": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "tool_dependent",
+      "high_semantic"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_009",
+    "skill_id": "skill:awesome-copilot:repo-standardizer",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "tool_dependent",
+      "high_semantic",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_010",
+    "skill_id": "skill:agentic-awesome-skills-main:data-structure-protocol",
+    "primary_stratum": "high_semantic",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_011",
+    "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+    "primary_stratum": "high_overlap",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_012",
+    "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+    "primary_stratum": "high_overlap",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_013",
+    "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+    "primary_stratum": "high_overlap",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_014",
+    "skill_id": "skill:awesome-copilot:readme-blueprint-generator",
+    "primary_stratum": "high_overlap",
+    "cohorts": [
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_015",
+    "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+    "primary_stratum": "high_overlap",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_016",
+    "skill_id": "skill:agentic-awesome-skills-main:weaviate",
+    "primary_stratum": "tool_dependent",
+    "cohorts": [
+      "specialized",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_017",
+    "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+    "primary_stratum": "tool_dependent",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_018",
+    "skill_id": "skill:agentic-awesome-skills-main:wiki-changelog",
+    "primary_stratum": "tool_dependent",
+    "cohorts": [
+      "specialized",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_019",
+    "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+    "primary_stratum": "tool_dependent",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_020",
+    "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+    "primary_stratum": "tool_dependent",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_021",
+    "skill_id": "skill:agentic-awesome-skills-main:graphql-architect",
+    "primary_stratum": "specialized",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_022",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+    "primary_stratum": "specialized",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_023",
+    "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+    "primary_stratum": "specialized",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_024",
+    "skill_id": "skill:awesome-copilot:phoenix-cli",
+    "primary_stratum": "specialized",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_025",
+    "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+    "primary_stratum": "specialized",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_026",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+    "primary_stratum": "random_control",
+    "cohorts": [
+      "random_control",
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_027",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+    "primary_stratum": "random_control",
+    "cohorts": [
+      "random_control",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_028",
+    "skill_id": "skill:agentic-awesome-skills-main:async-python-patterns",
+    "primary_stratum": "random_control",
+    "cohorts": [
+      "random_control",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_029",
+    "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+    "primary_stratum": "random_control",
+    "cohorts": [
+      "random_control",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "runtime_case_id": "rec_030",
+    "skill_id": "skill:agentic-awesome-skills-main:zod-validation-expert",
+    "primary_stratum": "random_control",
+    "cohorts": [
+      "random_control",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  }
+]

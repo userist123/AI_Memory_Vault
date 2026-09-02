@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_009",
+  "runtime_case_id": "rec_009",
+  "skill_id": "skill:awesome-copilot:repo-standardizer",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "cca89d7831e1455d231a88a4a1e3b3b777552a0518fdd4b367caf22578a5a016"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.005504+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.005512+00:00",
+  "commands": [
+    "eval_baseline --task task_repo-standardizer"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "repo-standardizer_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_repo-standardizer without skill repo-standardizer. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_repo_standardizer",
+    "command": "python -m verify_baseline rec_009",
+    "exit_code": 0,
+    "passed": true,
+    "score": 61,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_021",
+  "runtime_case_id": "rec_021",
+  "skill_id": "skill:agentic-awesome-skills-main:graphql-architect",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:graphql-architect"
+    ],
+    "skill_hash": "0076ba5af769339e6e8ee9e26029791cae87545569f2e330630117aa33302d51",
+    "skill_in_context": true,
+    "context_hash": "22133ee9a25a05bd240ed683ae4ad830690d5cb34fb196936880c22a5ece5ca8"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.013564+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.013573+00:00",
+  "commands": [
+    "eval_treatment --skill graphql-architect --task task_graphql-architect"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:graphql-architect",
+      "hash": "0076ba5af769339e6e8ee9e26029791cae87545569f2e330630117aa33302d51"
+    }
+  ],
+  "files_created": [
+    "graphql-architect_spec.json",
+    "graphql-architect_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill graphql-architect loaded (hash 0076ba5a). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_graphql_architect",
+    "command": "python -m verify_treatment rec_021 --schema graphql-architect",
+    "exit_code": 0,
+    "passed": true,
+    "score": 83,
+    "evidence": "Delivered verified contract matching graphql-architect specifications."
+  },
+  "redactions": []
+}

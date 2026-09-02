@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_003",
+  "runtime_case_id": "rec_003",
+  "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:context-compression"
+    ],
+    "skill_hash": "45f557891adb8f5238ad8034f448be9b9f08956f08ce12f212071c27b30b6e7f",
+    "skill_in_context": true,
+    "context_hash": "bde2109c051f9a51cca38ff568014fecc6c5aaec8bac9efb8ae3724ec238152e"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.001699+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.001707+00:00",
+  "commands": [
+    "eval_treatment --skill context-compression --task task_context-compression"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:context-compression",
+      "hash": "45f557891adb8f5238ad8034f448be9b9f08956f08ce12f212071c27b30b6e7f"
+    }
+  ],
+  "files_created": [
+    "context-compression_spec.json",
+    "context-compression_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill context-compression loaded (hash 45f55789). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_context_compression",
+    "command": "python -m verify_treatment rec_003 --schema context-compression",
+    "exit_code": 0,
+    "passed": true,
+    "score": 90,
+    "evidence": "Delivered verified contract matching context-compression specifications."
+  },
+  "redactions": []
+}

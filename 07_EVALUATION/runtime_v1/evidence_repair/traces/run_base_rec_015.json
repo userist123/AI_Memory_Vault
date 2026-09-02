@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_015",
+  "runtime_case_id": "rec_015",
+  "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "672423cab3d44e77f326b04b55ba5777044b8c8a198bcb33343e1d4bdbbd3ef8"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.009255+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.009262+00:00",
+  "commands": [
+    "eval_baseline --task task_diagram-generator"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "diagram-generator_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_diagram-generator without skill diagram-generator. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_diagram_generator",
+    "command": "python -m verify_baseline rec_015",
+    "exit_code": 0,
+    "passed": true,
+    "score": 67,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

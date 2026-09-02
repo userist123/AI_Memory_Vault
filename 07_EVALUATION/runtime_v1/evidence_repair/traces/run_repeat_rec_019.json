@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_019",
+  "runtime_case_id": "rec_019",
+  "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:nextjs-best-practices"
+    ],
+    "skill_hash": "08a3b5d6a02c1644112a155ddd1dc815e258bd6420e051dca2318092d8eecee7",
+    "skill_in_context": true,
+    "context_hash": "8ce51bcde1b9befc799c82dcc331446b9a0c3585ecfe05e342ab8a126f23db95"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.012227+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.012233+00:00",
+  "commands": [
+    "eval_repeat --skill nextjs-best-practices --task task_nextjs-best-practices"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+      "hash": "08a3b5d6a02c1644112a155ddd1dc815e258bd6420e051dca2318092d8eecee7"
+    }
+  ],
+  "files_created": [
+    "nextjs-best-practices_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for nextjs-best-practices. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_nextjs_best_practices",
+    "command": "python -m verify_treatment rec_019 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 91,
+    "evidence": "Repeat score 91 vs 89 (delta=2)."
+  },
+  "redactions": []
+}

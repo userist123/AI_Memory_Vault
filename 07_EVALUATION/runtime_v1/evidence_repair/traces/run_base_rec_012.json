@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_012",
+  "runtime_case_id": "rec_012",
+  "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "3b4c10c823402a4e0e0ab9ecd074d06d3ebe025f9092ad4bb4f4e01ee956d146"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.007560+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.007567+00:00",
+  "commands": [
+    "eval_baseline --task task_wordpress-woocommerce-development"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "wordpress-woocommerce-development_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_wordpress-woocommerce-development without skill wordpress-woocommerce-development. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_wordpress_woocommerce_development",
+    "command": "python -m verify_baseline rec_012",
+    "exit_code": 0,
+    "passed": true,
+    "score": 62,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_007",
+  "runtime_case_id": "rec_007",
+  "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "61e2ac6559a7212769af101cfc071a30df29a77e59953715d9f553f0c218537b"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.004200+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.004208+00:00",
+  "commands": [
+    "eval_baseline --task task_html-injection-testing"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "html-injection-testing_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_html-injection-testing without skill html-injection-testing. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_html_injection_testing",
+    "command": "python -m verify_baseline rec_007",
+    "exit_code": 0,
+    "passed": true,
+    "score": 62,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

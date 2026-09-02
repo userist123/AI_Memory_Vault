@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_023",
+  "runtime_case_id": "rec_023",
+  "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "a13a4fc3002e7ed3759f8d2edc734331689bf485a4be6976391b17a320453675"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.014441+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.014449+00:00",
+  "commands": [
+    "eval_baseline --task task_cc-skill-project-guidelines-example"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "cc-skill-project-guidelines-example_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_cc-skill-project-guidelines-example without skill cc-skill-project-guidelines-example. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_cc_skill_project_guidelines_example",
+    "command": "python -m verify_baseline rec_023",
+    "exit_code": 0,
+    "passed": true,
+    "score": 62,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

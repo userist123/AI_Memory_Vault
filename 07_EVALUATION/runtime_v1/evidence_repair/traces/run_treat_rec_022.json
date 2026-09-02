@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_022",
+  "runtime_case_id": "rec_022",
+  "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:odoo-upgrade-advisor"
+    ],
+    "skill_hash": "14582df087cd4e827304495b4da8d796c85e262ecad1c0b51cb3e937a8c183d6",
+    "skill_in_context": true,
+    "context_hash": "d5674d3492fe9bc50de4b1177afc1e2c81e17d3652c924115e5fa7340e80f7f4"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.014112+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.014120+00:00",
+  "commands": [
+    "eval_treatment --skill odoo-upgrade-advisor --task task_odoo-upgrade-advisor"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+      "hash": "14582df087cd4e827304495b4da8d796c85e262ecad1c0b51cb3e937a8c183d6"
+    }
+  ],
+  "files_created": [
+    "odoo-upgrade-advisor_spec.json",
+    "odoo-upgrade-advisor_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill odoo-upgrade-advisor loaded (hash 14582df0). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_odoo_upgrade_advisor",
+    "command": "python -m verify_treatment rec_022 --schema odoo-upgrade-advisor",
+    "exit_code": 0,
+    "passed": true,
+    "score": 80,
+    "evidence": "Delivered verified contract matching odoo-upgrade-advisor specifications."
+  },
+  "redactions": []
+}

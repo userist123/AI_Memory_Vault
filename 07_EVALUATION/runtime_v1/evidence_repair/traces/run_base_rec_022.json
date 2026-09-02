@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_022",
+  "runtime_case_id": "rec_022",
+  "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "8417af081dbbe5d09915af9acf7197ee18477d1fe745648ed788c9ca15d55430"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.013899+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.013905+00:00",
+  "commands": [
+    "eval_baseline --task task_odoo-upgrade-advisor"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "odoo-upgrade-advisor_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_odoo-upgrade-advisor without skill odoo-upgrade-advisor. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_odoo_upgrade_advisor",
+    "command": "python -m verify_baseline rec_022",
+    "exit_code": 0,
+    "passed": false,
+    "score": 58,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

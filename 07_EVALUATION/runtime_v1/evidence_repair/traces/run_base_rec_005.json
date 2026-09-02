@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_005",
+  "runtime_case_id": "rec_005",
+  "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "cfc53156f025ea0d17fe5e45547540f82673bbbd11b3bcca8649da1fbaaf1d52"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.002569+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.002576+00:00",
+  "commands": [
+    "eval_baseline --task task_docx-official"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "docx-official_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_docx-official without skill docx-official. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_docx_official",
+    "command": "python -m verify_baseline rec_005",
+    "exit_code": 0,
+    "passed": true,
+    "score": 61,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_029",
+  "runtime_case_id": "rec_029",
+  "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:orchestrate-batch-refactor"
+    ],
+    "skill_hash": "20ae7d71da8b4f4815a00511eecd6d4fcebd45757251e1592d72ebf14ac917fc",
+    "skill_in_context": true,
+    "context_hash": "f326cf89bba85728145f7ff56bf8bc5d21990949305f53c9cc7b1df823b2ebee"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.019111+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.019117+00:00",
+  "commands": [
+    "eval_repeat --skill orchestrate-batch-refactor --task task_orchestrate-batch-refactor"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+      "hash": "20ae7d71da8b4f4815a00511eecd6d4fcebd45757251e1592d72ebf14ac917fc"
+    }
+  ],
+  "files_created": [
+    "orchestrate-batch-refactor_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for orchestrate-batch-refactor. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_orchestrate_batch_refactor",
+    "command": "python -m verify_treatment rec_029 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 82,
+    "evidence": "Repeat score 82 vs 81 (delta=1)."
+  },
+  "redactions": []
+}

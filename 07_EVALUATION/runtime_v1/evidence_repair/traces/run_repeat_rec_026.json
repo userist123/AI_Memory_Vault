@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_026",
+  "runtime_case_id": "rec_026",
+  "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:odoo-qweb-templates"
+    ],
+    "skill_hash": "ab38d2ee4369935981f58f23bbeaad3eae14b400f2d5985a83fedbb51e7d95cf",
+    "skill_in_context": true,
+    "context_hash": "33bc66fd849577adc137fcd7c7ed4b996329dc8529c519f6748c1da565cbfcdf"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.017130+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.017136+00:00",
+  "commands": [
+    "eval_repeat --skill odoo-qweb-templates --task task_odoo-qweb-templates"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+      "hash": "ab38d2ee4369935981f58f23bbeaad3eae14b400f2d5985a83fedbb51e7d95cf"
+    }
+  ],
+  "files_created": [
+    "odoo-qweb-templates_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for odoo-qweb-templates. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_odoo_qweb_templates",
+    "command": "python -m verify_treatment rec_026 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 84,
+    "evidence": "Repeat score 84 vs 82 (delta=2)."
+  },
+  "redactions": []
+}

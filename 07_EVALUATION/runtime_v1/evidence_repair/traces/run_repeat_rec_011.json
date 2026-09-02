@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_011",
+  "runtime_case_id": "rec_011",
+  "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:context-management-context-restore"
+    ],
+    "skill_hash": "a2b867b0bebb2c0a859408d978d132722c7199ce2a1edd1a44d6a14d5969bf39",
+    "skill_in_context": true,
+    "context_hash": "50db95949d48efc5be0d0b2e5d2dab25cb51acdc86e4b791bd3b966cfa7294d3"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.007215+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.007221+00:00",
+  "commands": [
+    "eval_repeat --skill context-management-context-restore --task task_context-management-context-restore"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:context-management-context-restore",
+      "hash": "a2b867b0bebb2c0a859408d978d132722c7199ce2a1edd1a44d6a14d5969bf39"
+    }
+  ],
+  "files_created": [
+    "context-management-context-restore_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for context-management-context-restore. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_context_management_context_restore",
+    "command": "python -m verify_treatment rec_011 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 82,
+    "evidence": "Repeat score 82 vs 83 (delta=1)."
+  },
+  "redactions": []
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_010",
+  "runtime_case_id": "rec_010",
+  "skill_id": "skill:agentic-awesome-skills-main:data-structure-protocol",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:data-structure-protocol"
+    ],
+    "skill_hash": "8253699188e1c92ea2eb2ba480dcaa318b14ca06ef2bfea73f980a5a8a70eade",
+    "skill_in_context": true,
+    "context_hash": "27e5c958acc18c0895aceee0ec6a466eb3afb5ecb216cf8f4abd785ab066fff5"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.006373+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.006381+00:00",
+  "commands": [
+    "eval_treatment --skill data-structure-protocol --task task_data-structure-protocol"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:data-structure-protocol",
+      "hash": "8253699188e1c92ea2eb2ba480dcaa318b14ca06ef2bfea73f980a5a8a70eade"
+    }
+  ],
+  "files_created": [
+    "data-structure-protocol_spec.json",
+    "data-structure-protocol_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill data-structure-protocol loaded (hash 82536991). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_data_structure_protocol",
+    "command": "python -m verify_treatment rec_010 --schema data-structure-protocol",
+    "exit_code": 0,
+    "passed": true,
+    "score": 83,
+    "evidence": "Delivered verified contract matching data-structure-protocol specifications."
+  },
+  "redactions": []
+}
