@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTP Finder – Zboruri ieftine din București</title>
+  <meta name="description" content="Găsește cele mai ieftine zboruri din Aeroportul Henri Coandă (OTP) București." />
+
+  <!-- Tailwind CSS Play CDN v3 -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'otp-bg':    '#0a0f1a',
+            'otp-glow':  '#1a2744',
+          },
+          fontFamily: {
+            sans: ['-apple-system','BlinkMacSystemFont','"Segoe UI"','Roboto','"Helvetica Neue"','Arial','sans-serif'],
+          },
+          keyframes: {
+            shimmer: {
+              '0%':   { backgroundPosition: '-700px 0' },
+              '100%': { backgroundPosition: '700px 0'  },
+            },
+            pageFade: {
+              '0%':   { opacity: '0', transform: 'translateY(6px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+          animation: {
+            shimmer:  'shimmer 1.5s infinite linear',
+            pageFade: 'pageFade 0.4s ease both',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Supplementary styles -->
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+
+<body class="min-h-screen font-sans text-white antialiased animate-pageFade"
+      style="background:#0a0f1a;">
+
+  <!-- Radial ambient glow (fixed, non-interactive) -->
+  <div class="fixed inset-0 pointer-events-none select-none" aria-hidden="true"
+       style="background: radial-gradient(ellipse 80% 60% at 50% 0%, #1a2744 0%, transparent 70%);"></div>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════════ -->
+  <header class="relative z-10 pt-10 pb-6 px-4 text-center">
+    <div class="max-w-4xl mx-auto">
+      <!-- Logo -->
+      <div class="inline-flex items-center gap-2 mb-2">
+        <span class="text-3xl" aria-hidden="true">✈</span>
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight"
+            style="color:#3b82f6; letter-spacing:-0.03em;">
+          OTP Finder
+        </h1>
+      </div>
+      <p class="text-sm sm:text-base" style="color:#94a3b8;">
+        Zboruri ieftine din București Henri Coandă
+      </p>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN
+  ════════════════════════════════════════════ -->
+  <main class="relative z-10 max-w-5xl mx-auto px-4 pb-24">
+
+    <!-- ╔══════════════════════════════════════╗
+         ║        SEARCH FORM CARD             ║
+         ╚══════════════════════════════════════╝ -->
+    <section class="glass-card p-6 sm:p-8 mb-10" aria-label="Formular căutare zboruri">
+
+      <h2 class="text-base font-semibold mb-5 flex items-center gap-2" style="color:#e2e8f0;">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
+        </svg>
+        Caută zborul tău
+      </h2>
+
+      <form id="searchForm" novalidate>
+
+        <!-- ── Row 1: Destination (full width) ── -->
+        <div class="mb-4">
+          <label for="destFilter" class="block text-xs font-medium mb-1" style="color:#94a3b8;">
+            Destinație
+          </label>
+
+          <!-- Inline search-filter input -->
+          <div class="relative mb-1">
+            <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none" style="color:#475569;" aria-hidden="true">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+              </svg>
+            </span>
+            <input id="destFilter" type="text" placeholder="Caută destinație…"
+                   autocomplete="off" spellcheck="false"
+                   class="form-input w-full pl-9 pr-3 py-2 text-sm"
+                   aria-label="Filtrează lista de destinații" />
+          </div>
+
+          <!-- Native select with all destinations -->
+          <select id="destination" name="destination" required
+                  class="form-input w-full px-3 py-2 text-sm"
+                  aria-label="Selectează destinația" aria-required="true">
+            <option value="" disabled selected>— selectează destinația —</option>
+          </select>
+          <p id="destError" class="text-xs mt-1 hidden" style="color:#f87171;"
+             role="alert">Te rugăm să selectezi o destinație.</p>
+        </div>
+
+        <!-- ── Row 2: Trip type toggle ── -->
+        <div class="mb-5">
+          <label class="block text-xs font-medium mb-2" style="color:#94a3b8;">Tip zbor</label>
+          <div class="inline-flex rounded-lg overflow-hidden border" style="border-color:rgba(255,255,255,0.10);">
+            <button type="button" id="btnOneway"
+                    class="trip-btn trip-btn-active px-5 py-2 text-sm font-medium transition-all"
+                    aria-pressed="true">
+              ✈ Dus
+            </button>
+            <button type="button" id="btnRoundtrip"
+                    class="trip-btn px-5 py-2 text-sm font-medium transition-all border-l"
+                    style="border-color:rgba(255,255,255,0.10);"
+                    aria-pressed="false">
+              ↩ Dus-întors
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Row 3: Dates + Adults ── -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+          <!-- Departure date -->
+          <div>
+            <label for="depDate" class="block text-xs font-medium mb-1" style="color:#94a3b8;">
+              Data plecare
+            </label>
+            <input id="depDate" name="dep_date" type="date" required
+                   class="form-input w-full px-3 py-2 text-sm"
+                   aria-required="true" />
+          </div>
+
+          <!-- Return date (hidden until roundtrip selected) -->
+          <div id="retDateWrap" class="hidden transition-all">
+            <label for="retDate" class="block text-xs font-medium mb-1" style="color:#94a3b8;">
+              Data întoarcere
+            </label>
+            <input id="retDate" name="ret_date" type="date"
+                   class="form-input w-full px-3 py-2 text-sm" />
+          </div>
+
+          <!-- Adults counter -->
+          <div class="sm:col-start-3">
+            <label class="block text-xs font-medium mb-1" style="color:#94a3b8;">Adulți</label>
+            <div class="flex items-center gap-3 h-[38px]">
+              <button type="button" id="btnAdultMinus"
+                      class="counter-btn w-9 h-9 rounded-full flex items-center justify-center text-xl font-bold transition-all"
+                      aria-label="Scade numărul de adulți" disabled>−</button>
+              <span id="adultCount" class="text-lg font-bold w-5 text-center select-none tabular-nums"
+                    aria-live="polite" aria-atomic="true">1</span>
+              <button type="button" id="btnAdultPlus"
+                      class="counter-btn w-9 h-9 rounded-full flex items-center justify-center text-xl font-bold transition-all"
+                      aria-label="Adaugă un adult">+</button>
+              <input type="hidden" id="adults" name="adults" value="1" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Search CTA ── -->
+        <div class="flex flex-col sm:flex-row gap-3 items-start">
+          <button type="submit" id="searchBtn"
+                  class="cta-btn w-full sm:w-auto sm:min-w-[220px] py-3 px-8 rounded-xl text-base font-bold transition-all">
+            Caută zboruri →
+          </button>
+          <button type="button" id="resetBtn"
+                  class="reset-btn w-full sm:w-auto py-3 px-6 rounded-xl text-sm font-medium transition-all">
+            Resetează
+          </button>
+        </div>
+
+      </form>
+    </section><!-- /search card -->
+
+    <!-- ╔══════════════════════════════════════╗
+         ║         RESULTS AREA                ║
+         ╚══════════════════════════════════════╝ -->
+    <section id="resultsSection" aria-live="polite" aria-label="Rezultate căutare zboruri">
+
+      <!-- Results count bar (hidden until results load) -->
+      <div id="resultsBar" class="hidden flex items-center justify-between mb-4 px-1">
+        <p class="text-sm font-medium" style="color:#94a3b8;">
+          <span id="resultsCount" class="font-bold" style="color:#e2e8f0;">0</span> zboruri găsite
+        </p>
+      </div>
+
+      <!-- Loading skeleton (6 cards) -->
+      <div id="skeleton" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+           aria-label="Se încarcă rezultatele…" role="status">
+        <!-- Skeleton card template repeated 6× -->
+        <div class="glass-card p-5 space-y-3" aria-hidden="true">
+          <div class="sk-line h-5 w-24 rounded-full"></div>
+          <div class="sk-line h-6 w-36 rounded mt-1"></div>
+          <div class="glass-divider"></div>
+          <div class="sk-line h-4 w-full rounded"></div>
+          <div class="sk-line h-4 w-4/5 rounded"></div>
+          <div class="sk-line h-4 w-2/3 rounded"></div>
+          <div class="glass-divider"></div>
+          <div class="flex justify-between items-end">
+            <div class="sk-line h-9 w-20 rounded"></div>
+            <div class="sk-line h-9 w-24 rounded-lg"></div>
+          </div>
+        </div>
+        <div class="glass-card p-5 space-y-3" aria-hidden="true">
+          <div class="sk-line h-5 w-24 rounded-full"></div>
+          <div class="sk-line h-6 w-36 rounded mt-1"></div>
+          <div class="glass-divider"></div>
+          <div class="sk-line h-4 w-full rounded"></div>
+          <div class="sk-line h-4 w-4/5 rounded"></div>
+          <div class="sk-line h-4 w-2/3 rounded"></div>
+          <div class="glass-divider"></div>
+          <div class="flex justify-between items-end">
+            <div class="sk-line h-9 w-20 rounded"></div>
+            <div class="sk-line h-9 w-24 rounded-lg"></div>
+          </div>
+        </div>
+        <div class="glass-card p-5 space-y-3" aria-hidden="true">
+          <div class="sk-line h-5 w-24 rounded-full"></div>
+          <div class="sk-line h-6 w-36 rounded mt-1"></div>
+          <div class="glass-divider"></div>
+          <div class="sk-line h-4 w-full rounded"></div>
+          <div class="sk-line h-4 w-4/5 rounded"></div>
+          <div class="sk-line h-4 w-2/3 rounded"></div>
+          <div class="glass-divider"></div>
+          <div class="flex justify-between items-end">
+            <div class="sk-line h-9 w-20 rounded"></div>
+            <div class="sk-line h-9 w-24 rounded-lg"></div>
+          </div>
+        </div>
+        <div class="glass-card p-5 space-y-3" aria-hidden="true">
+          <div class="sk-line h-5 w-24 rounded-full"></div>
+          <div class="sk-line h-6 w-36 rounded mt-1"></div>
+          <div class="glass-divider"></div>
+          <div class="sk-line h-4 w-full rounded"></div>
+          <div class="sk-line h-4 w-4/5 rounded"></div>
+          <div class="sk-line h-4 w-2/3 rounded"></div>
+          <div class="glass-divider"></div>
+          <div class="flex justify-between items-end">
+            <div class="sk-line h-9 w-20 rounded"></div>
+            <div class="sk-line h-9 w-24 rounded-lg"></div>
+          </div>
+        </div>
+        <div class="glass-card p-5 space-y-3" aria-hidden="true">
+          <div class="sk-line h-5 w-24 rounded-full"></div>
+          <div class="sk-line h-6 w-36 rounded mt-1"></div>
+          <div class="glass-divider"></div>
+          <div class="sk-line h-4 w-full rounded"></div>
+          <div class="sk-line h-4 w-4/5 rounded"></div>
+          <div class="sk-line h-4 w-2/3 rounded"></div>
+          <div class="glass-divider"></div>
+          <div class="flex justify-between items-end">
+            <div class="sk-line h-9 w-20 rounded"></div>
+            <div class="sk-line h-9 w-24 rounded-lg"></div>
+          </div>
+        </div>
+        <div class="glass-card p-5 space-y-3" aria-hidden="true">
+          <div class="sk-line h-5 w-24 rounded-full"></div>
+          <div class="sk-line h-6 w-36 rounded mt-1"></div>
+          <div class="glass-divider"></div>
+          <div class="sk-line h-4 w-full rounded"></div>
+          <div class="sk-line h-4 w-4/5 rounded"></div>
+          <div class="sk-line h-4 w-2/3 rounded"></div>
+          <div class="glass-divider"></div>
+          <div class="flex justify-between items-end">
+            <div class="sk-line h-9 w-20 rounded"></div>
+            <div class="sk-line h-9 w-24 rounded-lg"></div>
+          </div>
+        </div>
+      </div><!-- /skeleton -->
+
+      <!-- Empty state -->
+      <div id="emptyState" class="hidden text-center py-20" role="status">
+        <div class="text-5xl mb-4" aria-hidden="true">🛫</div>
+        <p class="text-lg font-semibold" style="color:#94a3b8;">Niciun zbor găsit</p>
+        <p class="text-sm mt-2" style="color:#64748b;">
+          Încearcă alte date sau o destinație diferită.
+        </p>
+      </div>
+
+      <!-- Error state -->
+      <div id="errorState" class="hidden text-center py-20" role="alert">
+        <div class="text-5xl mb-4" aria-hidden="true">⚠️</div>
+        <p class="text-lg font-semibold" style="color:#f87171;">Eroare la căutare</p>
+        <p id="errorMsg" class="text-sm mt-2" style="color:#94a3b8;"></p>
+        <button type="button" id="retryBtn"
+                class="mt-5 reserve-btn">Încearcă din nou</button>
+      </div>
+
+      <!-- Results grid -->
+      <div id="resultsGrid"
+           class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      </div>
+
+    </section><!-- /results -->
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════════ -->
+  <footer class="relative z-10 border-t py-8 px-4 text-center"
+          style="border-color:rgba(255,255,255,0.06);">
+    <p class="text-xs mb-1" style="color:#475569;">
+      Prețurile sunt orientative. Rezervarea se face pe site-ul oficial al companiei aeriene.
+    </p>
+    <p class="text-xs" style="color:#334155;">© 2026 OTP Finder</p>
+  </footer>
+
+  <!-- App logic -->
+  <script src="/static/app.js"></script>
+
+</body>
+</html>
