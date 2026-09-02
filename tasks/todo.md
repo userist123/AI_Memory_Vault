@@ -1,4 +1,21 @@
+# Project Session Ledger & Skill Effectiveness Engine
+
+## Implementation
+- [x] add optional `project_id` to `OutcomeRecord` and `OutcomeTracker` (`memory_controller/outcome_tracker.py`) `[owner: antigravity | timestamp: 2026-09-02T19:30:46+03:00]`
+- [x] add optional `project_id` to `ObservedMemoryTrace`, `record_observed_memory_trace`, and `load_observed_memory_traces` (`memory_controller/memory_trace.py`) `[owner: antigravity | timestamp: 2026-09-02T19:31:11+03:00]`
+- [x] add `project_id` to `evaluation/memory_trace/memory_trace_schema.yaml` `[owner: antigravity | timestamp: 2026-09-02T19:31:18+03:00]`
+- [x] create `memory_controller/project_ledger.py` with `record_project_session`, `project_report`, and `skill_effectiveness_report` `[owner: antigravity | timestamp: 2026-09-02T19:31:35+03:00]`
+- [x] implement acceptance test suite (`memory_controller/tests/test_project_ledger.py` - 5/5 passed) `[owner: antigravity | timestamp: 2026-09-02T19:31:50+03:00]`
+- [x] verify 66.7% empirical acceptance test across 3 simulated runs `[owner: antigravity | timestamp: 2026-09-02T19:31:50+03:00]`
+- [x] verify exclusion of DECLARED-only skills from effectiveness calculations `[owner: antigravity | timestamp: 2026-09-02T19:31:50+03:00]`
+- [x] run master regression suite (281 passed in memory_controller & evaluation, 1,368 in cognitive core) `[owner: antigravity | timestamp: 2026-09-02T19:32:26+03:00]`
+- [x] update lessons (`tasks/lessons.md`) `[owner: antigravity | timestamp: 2026-09-02T19:32:40+03:00]`
+- [x] commit
+
+---
+
 # Memory Vault Canonicalization & Cognitive Mesh
+
 
 ## Implementation
 - [x] define 11-type canonical object taxonomy (`KNOWLEDGE`, `MEMORY`, `SKILL`, `PROCEDURE`, `AGENT`, `EXPERIMENT`, `EVIDENCE`, `OUTCOME`, `TRACE`, `AUDIT`, `RESEARCH`) `[owner: antigravity | timestamp: 2026-09-02T19:21:46+03:00]`

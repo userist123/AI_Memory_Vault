@@ -13,6 +13,11 @@ required_top_level_fields:
   - links
   - status
 
+optional_top_level_fields:
+  - project_id
+
+
+
 declared_fields:
   - retrieved_memories
   - activated_skills

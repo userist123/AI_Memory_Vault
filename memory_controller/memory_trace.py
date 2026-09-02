@@ -33,6 +33,7 @@ class ObservedMemoryTrace:
     retrieval_scores: Dict[str, float] = field(default_factory=dict)
     context_size_bytes: int = 0
     estimated_tokens: int = 0
+    project_id: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -46,6 +47,7 @@ class ObservedMemoryTrace:
             retrieval_scores=data.get("retrieval_scores", {}),
             context_size_bytes=int(data.get("context_size_bytes", 0)),
             estimated_tokens=int(data.get("estimated_tokens", 0)),
+            project_id=data.get("project_id"),
         )
 
 
@@ -65,6 +67,7 @@ def record_observed_memory_trace(
     context_size_bytes: int = 0,
     estimated_tokens: int = 0,
     telemetry_dir: Optional[Path] = None,
+    project_id: Optional[str] = None,
 ) -> Optional[ObservedMemoryTrace]:
     """Passively records the exact memory IDs present in the final context pack."""
     try:
@@ -95,6 +98,7 @@ def record_observed_memory_trace(
             retrieval_scores=scores,
             context_size_bytes=context_size_bytes,
             estimated_tokens=estimated_tokens,
+            project_id=str(project_id).strip() if project_id else None,
         )
 
         trace_path = _resolve_trace_path(telemetry_dir)
@@ -111,6 +115,7 @@ def record_observed_memory_trace(
 def load_observed_memory_traces(
     run_id: Optional[str] = None,
     telemetry_dir: Optional[Path] = None,
+    project_id: Optional[str] = None,
 ) -> List[ObservedMemoryTrace]:
     """Loads recorded traces from append-only telemetry storage."""
     trace_path = _resolve_trace_path(telemetry_dir)
@@ -128,13 +133,17 @@ def load_observed_memory_traces(
                     try:
                         data = json.loads(line)
                         trace = ObservedMemoryTrace.from_dict(data)
-                        if run_id is None or trace.run_id == run_id:
-                            traces.append(trace)
+                        if run_id is not None and trace.run_id != run_id:
+                            continue
+                        if project_id is not None and trace.project_id != project_id:
+                            continue
+                        traces.append(trace)
                     except Exception:
                         continue
         except Exception:
             return []
     return traces
+
 
 
 def reconcile_observed_trace(

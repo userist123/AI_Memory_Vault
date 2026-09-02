@@ -88,6 +88,12 @@
 - **Directional Typed Relationships & Evidence Lineage**: Structuring typed edges (`produced_by`, `supported_by`, `tested_by`, `requires`, `uses`, `implements`, `observed_by`) enables full trace traversal from external research through experiments to canonical memory without mutating production retrieval graphs.
 - **Zero Runtime Interference**: Constructing the mesh metadata index in `evaluation/vault_mesh/` and testing via `MeshValidator` keeps `cognitive_core/multi_graph.py` completely frozen while achieving 100% graph verification across 877 nodes and 2,411 edges.
 
+## Project Ledger & Skill Effectiveness Lessons
+- **Explicit project_id Invariance**: `project_id` must be established once at session initiation (by human or orchestrator) and NEVER inferred by an LLM from query or context text. Historical records without `project_id` must remain `null` to avoid synthetic attribution.
+- **Empirical Skill Effectiveness**: Measuring `success_rate = (runs with outcome=success AND skill in OBSERVED_TRACE) / (total runs with skill in OBSERVED_TRACE)` grounds knowledge valuation directly in empirical usage evidence, completely bypassing synthetic benchmarks or unverified declared claims.
+- **Relational Join Without Data Duplication**: `telemetry/project_sessions.jsonl` acts as a lightweight join table between `project_id` and `run_id`, querying underlying telemetry dynamically without copying bulky trace or outcome payloads.
+
+
 
 
 

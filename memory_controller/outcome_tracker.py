@@ -83,8 +83,10 @@ class OutcomeRecord:
     evidence: Optional[str] = None
     recorded_by: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
+    project_id: Optional[str] = None
 
     def __post_init__(self) -> None:
+
         if not self.run_id or not str(self.run_id).strip():
             raise ValueError("run_id must be a non-empty string")
 
@@ -144,6 +146,7 @@ class OutcomeTracker:
         metadata: Optional[Dict[str, Any]] = None,
         timestamp: Optional[str] = None,
         event_id: Optional[str] = None,
+        project_id: Optional[str] = None,
     ) -> OutcomeRecord:
         """Append an outcome observation record. Strictly append-only and immutable."""
         run_id = str(run_id or "").strip()
@@ -164,6 +167,7 @@ class OutcomeTracker:
             evidence=evidence,
             recorded_by=recorded_by,
             metadata=metadata,
+            project_id=str(project_id).strip() if project_id else None,
         )
 
         with open(self.ledger_path, "a", encoding="utf-8") as f:
@@ -199,6 +203,7 @@ class OutcomeTracker:
         self,
         outcome: Optional[str] = None,
         task_signature: Optional[str] = None,
+        project_id: Optional[str] = None,
     ) -> List[OutcomeRecord]:
         """List all recorded outcomes matching optional filters."""
         if not self.ledger_path.exists():
@@ -217,7 +222,10 @@ class OutcomeTracker:
                         continue
                     if task_signature and rec.task_signature != task_signature:
                         continue
+                    if project_id and rec.project_id != project_id:
+                        continue
                     results.append(rec)
                 except (json.JSONDecodeError, TypeError, ValueError):
                     continue
         return results
+
