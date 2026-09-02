@@ -102,6 +102,12 @@
 - **Laplace Smoothing vs Wilson Independence**: Keeping Laplace smoothed probability $(s+1)/(n+2)$ strictly separated from Wilson confidence lower bounds ensures clear differentiation between point estimation under sparsity and conservative decision thresholds for promotion/quarantine.
 - **Fail-Closed Minimum Sample Guard**: Hard-gating confidence evaluations below $N=5$ (e.g. $1/1 \rightarrow \text{INSUFFICIENT\_DATA}$) prevents overconfident capability promotions based on solitary anecdotal successes.
 
+## Capability Evidence Engine — Task 3 Capability Effectiveness Matrix Lessons
+- **Multi-Dimensional Granular Attribution**: Disaggregating capability effectiveness across controlled task categories (`(capability_type, capability_id, task_category)`) prevents erroneous global aggregation (e.g. recognizing that a skill succeeds in `frontend_motion` but fails in `backend_api`).
+- **Run-Level Deduplication Invariant**: Aggregating observations strictly at the unique `run_id` level prevents duplicate telemetry emissions or multiple retrieved references from inflating success counters.
+- **Empirical Association vs Causality Boundary**: Explicitly distinguishing empirical co-occurrence from causal attribution protects cognitive integrity against post-hoc reasoning fallacies.
+
+
 
 
 

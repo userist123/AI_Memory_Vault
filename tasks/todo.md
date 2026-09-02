@@ -1,4 +1,19 @@
+# Capability Evidence Engine — Task 3 Capability Effectiveness Matrix
+
+## Implementation
+- [x] implement `memory_controller/capability_effectiveness.py` with `effectiveness_matrix` and `effectiveness_trend` `[owner: antigravity | timestamp: 2026-09-02T19:53:16+03:00]`
+- [x] enforce run deduplication, 4 capability types, and controlled task categories `[owner: antigravity | timestamp: 2026-09-02T19:53:16+03:00]`
+- [x] author architecture and correlation-vs-causality guide (`evaluation/capability_effectiveness.md`) `[owner: antigravity | timestamp: 2026-09-02T19:52:34+03:00]`
+- [x] implement 20-test validation suite (`memory_controller/tests/test_capability_effectiveness.py` - 20/20 passed) `[owner: antigravity | timestamp: 2026-09-02T19:53:40+03:00]`
+- [x] run master test regression (276 passed in memory_controller, 43 in evaluation - total 319) `[owner: antigravity | timestamp: 2026-09-02T19:54:18+03:00]`
+- [x] update lessons (`tasks/lessons.md`) `[owner: antigravity | timestamp: 2026-09-02T19:54:25+03:00]`
+- [x] commit
+- [x] push to `origin/main`
+
+---
+
 # Capability Evidence Engine — Task 2 Statistical Estimators
+
 
 ## Implementation
 - [x] implement `memory_controller/effectiveness_stats.py` with `wilson_lower_bound`, `laplace_smoothed_rate`, `evaluate_proportion` `[owner: antigravity | timestamp: 2026-09-02T19:46:09+03:00]`
