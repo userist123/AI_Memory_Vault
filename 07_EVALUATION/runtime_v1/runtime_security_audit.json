@@ -1,0 +1,802 @@
+[
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:llm-structured-output",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:graphql-architect",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:test-automator",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:papers-skill",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:debug-buttercup",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:data-structure-protocol",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:git-pr-workflows-onboard",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:ontoly-software-graph",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:vulnerability-scanner",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:foundry-agent-sync",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:freshservice-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:ai-wrapper-product",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:security-scanning-security-sast",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:batch-files",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:free-tier-strategy",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:unity-ai-game-creator",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:deployment-procedures",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:aws-secrets-rotation",
+    "classification": "REQUIRES_SECRET",
+    "execution_allowed": true,
+    "reason": "Requires API token in live environment; evaluated against dry-run fixtures",
+    "sandbox": "REDACTED_MOCK_FIXTURES",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:referral-program",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Procedural instructions executable directly by LLM reasoning",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-storage-file-datalake-py",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:hugging-face-model-trainer",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Procedural instructions executable directly by LLM reasoning",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:gemini-deep-research",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:react-flow-architect",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:claude-d3js-skill",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:readme-blueprint-generator",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:breakdown-feature-prd",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:linkedin-post-formatter",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-ai-document-intelligence-ts",
+    "classification": "REQUIRES_SECRET",
+    "execution_allowed": true,
+    "reason": "Requires API token in live environment; evaluated against dry-run fixtures",
+    "sandbox": "REDACTED_MOCK_FIXTURES",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:one-drive-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Procedural instructions executable directly by LLM reasoning",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:zoho-desk-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:developer-signup-flow",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:health-trend-analyzer",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:flat-design-2",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:folder-structure-blueprint-generator",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:apify-audience-analysis",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:grpc-golang",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:docmosis-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:ditto",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:js-reverse",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:fomo-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:foundry-hosted-agent-copilotkit",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:npm-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:mx-technologies-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:google-slides-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:power-platform-architect",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:vibe-delegate",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:repo-standardizer",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:winui3-migration-guide",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:babysit-pr",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:swift-mcp-server-generator",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:phoenix-cli",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:survey-generator",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:java-mcp-server-generator",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:workiq-copilot",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:notion-template-business",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:wiki-changelog",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-edi-connector",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:agentic-eval",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:golang-pro",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:prismic-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:python-mcp-server-generator",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:weaviate",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:jobgpt",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:hugging-face-jobs",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-speech-to-text-rest-py",
+    "classification": "REQUIRES_SECRET",
+    "execution_allowed": true,
+    "reason": "Requires API token in live environment; evaluated against dry-run fixtures",
+    "sandbox": "REDACTED_MOCK_FIXTURES",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:user-thoughts",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:typescript",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:nerdzao-elite-gemini-high",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:minimize-latency",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:powershell-windows",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:c4-code",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:zod-validation-expert",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-resource-manager-postgresql-dotnet",
+    "classification": "REQUIRES_SECRET",
+    "execution_allowed": true,
+    "reason": "Requires API token in live environment; evaluated against dry-run fixtures",
+    "sandbox": "REDACTED_MOCK_FIXTURES",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-eventgrid-py",
+    "classification": "REQUIRES_SECRET",
+    "execution_allowed": true,
+    "reason": "Requires API token in live environment; evaluated against dry-run fixtures",
+    "sandbox": "REDACTED_MOCK_FIXTURES",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:landing-page-conversion-audit",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:modelry-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:jotform-automation",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:chat-widget",
+    "classification": "REQUIRES_EXTERNAL_SERVICE",
+    "execution_allowed": true,
+    "reason": "Tool requires local or simulated service daemon",
+    "sandbox": "MOCK_SERVICE_FIXTURE",
+    "side_effects": "CONTAINED_READ_ONLY"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+    "classification": "SAFE_SANDBOX",
+    "execution_allowed": true,
+    "reason": "Command-line tool calls executed against sandbox workspace fixtures",
+    "sandbox": "LOCAL_SANDBOX",
+    "side_effects": "MOCKED_WORKSPACE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:async-python-patterns",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+    "classification": "SAFE_DIRECT",
+    "execution_allowed": true,
+    "reason": "Standard instructions executable without host mutations",
+    "sandbox": "PURE_IN_MEMORY",
+    "side_effects": "NONE"
+  }
+]

@@ -1,0 +1,902 @@
+[
+  {
+    "runtime_case_id": "rtc_001",
+    "skill_id": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+    "task_id": "task_0311",
+    "prompt": "Apply skill using-n8n-mcp-skills to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of using-n8n-mcp-skills workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with using-n8n-mcp-skills contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_002",
+    "skill_id": "skill:agentic-awesome-skills-main:llm-structured-output",
+    "task_id": "task_0186",
+    "prompt": "Apply skill llm-structured-output to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of llm-structured-output workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with llm-structured-output contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_003",
+    "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+    "task_id": "task_0113",
+    "prompt": "Apply skill differential-review to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of differential-review workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with differential-review contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_004",
+    "skill_id": "skill:agentic-awesome-skills-main:graphql-architect",
+    "task_id": "task_0161",
+    "prompt": "Apply skill graphql-architect to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of graphql-architect workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with graphql-architect contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_005",
+    "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+    "task_id": "task_0329",
+    "prompt": "Apply skill wordpress-woocommerce-development to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of wordpress-woocommerce-development workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with wordpress-woocommerce-development contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_006",
+    "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+    "task_id": "task_0236",
+    "prompt": "Apply skill planning-and-task-breakdown to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of planning-and-task-breakdown workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with planning-and-task-breakdown contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_007",
+    "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+    "task_id": "task_0167",
+    "prompt": "Apply skill html-injection-testing to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of html-injection-testing workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with html-injection-testing contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_008",
+    "skill_id": "skill:agentic-awesome-skills-main:test-automator",
+    "task_id": "task_0294",
+    "prompt": "Apply skill test-automator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of test-automator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with test-automator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_009",
+    "skill_id": "skill:agentic-awesome-skills-main:papers-skill",
+    "task_id": "task_0229",
+    "prompt": "Apply skill papers-skill to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of papers-skill workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with papers-skill contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_010",
+    "skill_id": "skill:agentic-awesome-skills-main:debug-buttercup",
+    "task_id": "task_0103",
+    "prompt": "Apply skill debug-buttercup to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of debug-buttercup workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with debug-buttercup contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_011",
+    "skill_id": "skill:agentic-awesome-skills-main:data-structure-protocol",
+    "task_id": "task_0100",
+    "prompt": "Apply skill data-structure-protocol to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of data-structure-protocol workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with data-structure-protocol contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_012",
+    "skill_id": "skill:agentic-awesome-skills-main:git-pr-workflows-onboard",
+    "task_id": "task_0151",
+    "prompt": "Apply skill git-pr-workflows-onboard to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of git-pr-workflows-onboard workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with git-pr-workflows-onboard contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_013",
+    "skill_id": "skill:agentic-awesome-skills-main:ontoly-software-graph",
+    "task_id": "task_0223",
+    "prompt": "Apply skill ontoly-software-graph to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of ontoly-software-graph workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with ontoly-software-graph contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_014",
+    "skill_id": "skill:agentic-awesome-skills-main:vulnerability-scanner",
+    "task_id": "task_0320",
+    "prompt": "Apply skill vulnerability-scanner to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of vulnerability-scanner workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with vulnerability-scanner contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_015",
+    "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+    "task_id": "task_0089",
+    "prompt": "Apply skill context-compression to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of context-compression workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with context-compression contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_016",
+    "skill_id": "skill:awesome-copilot:foundry-agent-sync",
+    "task_id": "task_0446",
+    "prompt": "Apply skill foundry-agent-sync to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of foundry-agent-sync workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with foundry-agent-sync contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_017",
+    "skill_id": "skill:agentic-awesome-skills-main:freshservice-automation",
+    "task_id": "task_0146",
+    "prompt": "Apply skill freshservice-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of freshservice-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with freshservice-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_018",
+    "skill_id": "skill:agentic-awesome-skills-main:ai-wrapper-product",
+    "task_id": "task_0009",
+    "prompt": "Apply skill ai-wrapper-product to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of ai-wrapper-product workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with ai-wrapper-product contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_019",
+    "skill_id": "skill:agentic-awesome-skills-main:security-scanning-security-sast",
+    "task_id": "task_0267",
+    "prompt": "Apply skill security-scanning-security-sast to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of security-scanning-security-sast workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with security-scanning-security-sast contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_020",
+    "skill_id": "skill:awesome-copilot:batch-files",
+    "task_id": "task_0427",
+    "prompt": "Apply skill batch-files to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of batch-files workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with batch-files contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_021",
+    "skill_id": "skill:agentic-awesome-skills-main:free-tier-strategy",
+    "task_id": "task_0145",
+    "prompt": "Apply skill free-tier-strategy to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of free-tier-strategy workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with free-tier-strategy contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_022",
+    "skill_id": "skill:agentic-awesome-skills-main:unity-ai-game-creator",
+    "task_id": "task_0306",
+    "prompt": "Apply skill unity-ai-game-creator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of unity-ai-game-creator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with unity-ai-game-creator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_023",
+    "skill_id": "skill:agentic-awesome-skills-main:deployment-procedures",
+    "task_id": "task_0104",
+    "prompt": "Apply skill deployment-procedures to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of deployment-procedures workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with deployment-procedures contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_024",
+    "skill_id": "skill:agentic-awesome-skills-main:aws-secrets-rotation",
+    "task_id": "task_0023",
+    "prompt": "Apply skill aws-secrets-rotation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of aws-secrets-rotation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with aws-secrets-rotation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_025",
+    "skill_id": "skill:agentic-awesome-skills-main:referral-program",
+    "task_id": "task_0250",
+    "prompt": "Apply skill referral-program to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of referral-program workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with referral-program contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_026",
+    "skill_id": "skill:agentic-awesome-skills-main:azure-storage-file-datalake-py",
+    "task_id": "task_0048",
+    "prompt": "Apply skill azure-storage-file-datalake-py to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of azure-storage-file-datalake-py workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with azure-storage-file-datalake-py contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_027",
+    "skill_id": "skill:agentic-awesome-skills-main:hugging-face-model-trainer",
+    "task_id": "task_0172",
+    "prompt": "Apply skill hugging-face-model-trainer to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of hugging-face-model-trainer workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with hugging-face-model-trainer contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_028",
+    "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+    "task_id": "task_0092",
+    "prompt": "Apply skill context-management-context-restore to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of context-management-context-restore workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with context-management-context-restore contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_029",
+    "skill_id": "skill:agentic-awesome-skills-main:gemini-deep-research",
+    "task_id": "task_0150",
+    "prompt": "Apply skill gemini-deep-research to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of gemini-deep-research workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with gemini-deep-research contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_030",
+    "skill_id": "skill:agentic-awesome-skills-main:react-flow-architect",
+    "task_id": "task_0248",
+    "prompt": "Apply skill react-flow-architect to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of react-flow-architect workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with react-flow-architect contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_031",
+    "skill_id": "skill:agentic-awesome-skills-main:claude-d3js-skill",
+    "task_id": "task_0073",
+    "prompt": "Apply skill claude-d3js-skill to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of claude-d3js-skill workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with claude-d3js-skill contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_032",
+    "skill_id": "skill:awesome-copilot:readme-blueprint-generator",
+    "task_id": "task_0483",
+    "prompt": "Apply skill readme-blueprint-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of readme-blueprint-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with readme-blueprint-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_033",
+    "skill_id": "skill:awesome-copilot:breakdown-feature-prd",
+    "task_id": "task_0429",
+    "prompt": "Apply skill breakdown-feature-prd to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of breakdown-feature-prd workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with breakdown-feature-prd contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_034",
+    "skill_id": "skill:awesome-copilot:linkedin-post-formatter",
+    "task_id": "task_0457",
+    "prompt": "Apply skill linkedin-post-formatter to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of linkedin-post-formatter workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with linkedin-post-formatter contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_035",
+    "skill_id": "skill:agentic-awesome-skills-main:azure-ai-document-intelligence-ts",
+    "task_id": "task_0027",
+    "prompt": "Apply skill azure-ai-document-intelligence-ts to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of azure-ai-document-intelligence-ts workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with azure-ai-document-intelligence-ts contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_036",
+    "skill_id": "skill:agentic-awesome-skills-main:one-drive-automation",
+    "task_id": "task_0222",
+    "prompt": "Apply skill one-drive-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of one-drive-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with one-drive-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_037",
+    "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+    "task_id": "task_0071",
+    "prompt": "Apply skill cicd-automation-workflow-automate to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of cicd-automation-workflow-automate workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with cicd-automation-workflow-automate contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_038",
+    "skill_id": "skill:awesome-claude-skills-master:zoho-desk-automation",
+    "task_id": "task_0416",
+    "prompt": "Apply skill zoho-desk-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of zoho-desk-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with zoho-desk-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_039",
+    "skill_id": "skill:agentic-awesome-skills-main:developer-signup-flow",
+    "task_id": "task_0108",
+    "prompt": "Apply skill developer-signup-flow to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of developer-signup-flow workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with developer-signup-flow contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_040",
+    "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+    "task_id": "task_0066",
+    "prompt": "Apply skill cc-skill-project-guidelines-example to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of cc-skill-project-guidelines-example workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with cc-skill-project-guidelines-example contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_041",
+    "skill_id": "skill:agentic-awesome-skills-main:health-trend-analyzer",
+    "task_id": "task_0164",
+    "prompt": "Apply skill health-trend-analyzer to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of health-trend-analyzer workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with health-trend-analyzer contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_042",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+    "task_id": "task_0221",
+    "prompt": "Apply skill odoo-upgrade-advisor to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of odoo-upgrade-advisor workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with odoo-upgrade-advisor contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_043",
+    "skill_id": "skill:agentic-awesome-skills-main:flat-design-2",
+    "task_id": "task_0137",
+    "prompt": "Apply skill flat-design-2 to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of flat-design-2 workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with flat-design-2 contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_044",
+    "skill_id": "skill:awesome-copilot:folder-structure-blueprint-generator",
+    "task_id": "task_0445",
+    "prompt": "Apply skill folder-structure-blueprint-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of folder-structure-blueprint-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with folder-structure-blueprint-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_045",
+    "skill_id": "skill:agentic-awesome-skills-main:apify-audience-analysis",
+    "task_id": "task_0017",
+    "prompt": "Apply skill apify-audience-analysis to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of apify-audience-analysis workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with apify-audience-analysis contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_046",
+    "skill_id": "skill:agentic-awesome-skills-main:grpc-golang",
+    "task_id": "task_0163",
+    "prompt": "Apply skill grpc-golang to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of grpc-golang workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with grpc-golang contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_047",
+    "skill_id": "skill:awesome-claude-skills-master:docmosis-automation",
+    "task_id": "task_0359",
+    "prompt": "Apply skill docmosis-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of docmosis-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with docmosis-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_048",
+    "skill_id": "skill:agentic-awesome-skills-main:ditto",
+    "task_id": "task_0116",
+    "prompt": "Apply skill ditto to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of ditto workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with ditto contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_049",
+    "skill_id": "skill:agentic-awesome-skills-main:js-reverse",
+    "task_id": "task_0183",
+    "prompt": "Apply skill js-reverse to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of js-reverse workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with js-reverse contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_050",
+    "skill_id": "skill:awesome-claude-skills-master:fomo-automation",
+    "task_id": "task_0369",
+    "prompt": "Apply skill fomo-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of fomo-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with fomo-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_051",
+    "skill_id": "skill:awesome-copilot:foundry-hosted-agent-copilotkit",
+    "task_id": "task_0447",
+    "prompt": "Apply skill foundry-hosted-agent-copilotkit to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of foundry-hosted-agent-copilotkit workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with foundry-hosted-agent-copilotkit contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_052",
+    "skill_id": "skill:awesome-claude-skills-master:npm-automation",
+    "task_id": "task_0392",
+    "prompt": "Apply skill npm-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of npm-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with npm-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_053",
+    "skill_id": "skill:awesome-claude-skills-master:mx-technologies-automation",
+    "task_id": "task_0390",
+    "prompt": "Apply skill mx-technologies-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of mx-technologies-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with mx-technologies-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_054",
+    "skill_id": "skill:agentic-awesome-skills-main:google-slides-automation",
+    "task_id": "task_0158",
+    "prompt": "Apply skill google-slides-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of google-slides-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with google-slides-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_055",
+    "skill_id": "skill:awesome-copilot:power-platform-architect",
+    "task_id": "task_0475",
+    "prompt": "Apply skill power-platform-architect to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of power-platform-architect workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with power-platform-architect contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_056",
+    "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+    "task_id": "task_0210",
+    "prompt": "Apply skill nextjs-best-practices to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of nextjs-best-practices workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with nextjs-best-practices contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_057",
+    "skill_id": "skill:agentic-awesome-skills-main:vibe-delegate",
+    "task_id": "task_0316",
+    "prompt": "Apply skill vibe-delegate to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of vibe-delegate workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with vibe-delegate contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_058",
+    "skill_id": "skill:awesome-copilot:repo-standardizer",
+    "task_id": "task_0484",
+    "prompt": "Apply skill repo-standardizer to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of repo-standardizer workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with repo-standardizer contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_059",
+    "skill_id": "skill:awesome-copilot:winui3-migration-guide",
+    "task_id": "task_0498",
+    "prompt": "Apply skill winui3-migration-guide to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of winui3-migration-guide workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with winui3-migration-guide contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_060",
+    "skill_id": "skill:agentic-awesome-skills-main:babysit-pr",
+    "task_id": "task_0050",
+    "prompt": "Apply skill babysit-pr to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of babysit-pr workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with babysit-pr contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_061",
+    "skill_id": "skill:awesome-copilot:swift-mcp-server-generator",
+    "task_id": "task_0491",
+    "prompt": "Apply skill swift-mcp-server-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of swift-mcp-server-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with swift-mcp-server-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_062",
+    "skill_id": "skill:awesome-copilot:phoenix-cli",
+    "task_id": "task_0470",
+    "prompt": "Apply skill phoenix-cli to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of phoenix-cli workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with phoenix-cli contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_063",
+    "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+    "task_id": "task_0111",
+    "prompt": "Apply skill diagram-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of diagram-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with diagram-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_064",
+    "skill_id": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+    "task_id": "task_0308",
+    "prompt": "Apply skill unsloth-finetuning to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of unsloth-finetuning workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with unsloth-finetuning contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_065",
+    "skill_id": "skill:agentic-awesome-skills-main:survey-generator",
+    "task_id": "task_0288",
+    "prompt": "Apply skill survey-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of survey-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with survey-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_066",
+    "skill_id": "skill:awesome-copilot:java-mcp-server-generator",
+    "task_id": "task_0454",
+    "prompt": "Apply skill java-mcp-server-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of java-mcp-server-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with java-mcp-server-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_067",
+    "skill_id": "skill:awesome-copilot:workiq-copilot",
+    "task_id": "task_0499",
+    "prompt": "Apply skill workiq-copilot to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of workiq-copilot workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with workiq-copilot contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_068",
+    "skill_id": "skill:agentic-awesome-skills-main:notion-template-business",
+    "task_id": "task_0212",
+    "prompt": "Apply skill notion-template-business to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of notion-template-business workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with notion-template-business contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_069",
+    "skill_id": "skill:agentic-awesome-skills-main:wiki-changelog",
+    "task_id": "task_0325",
+    "prompt": "Apply skill wiki-changelog to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of wiki-changelog workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with wiki-changelog contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_070",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-edi-connector",
+    "task_id": "task_0217",
+    "prompt": "Apply skill odoo-edi-connector to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of odoo-edi-connector workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with odoo-edi-connector contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_071",
+    "skill_id": "skill:awesome-copilot:agentic-eval",
+    "task_id": "task_0418",
+    "prompt": "Apply skill agentic-eval to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of agentic-eval workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with agentic-eval contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_072",
+    "skill_id": "skill:agentic-awesome-skills-main:golang-pro",
+    "task_id": "task_0156",
+    "prompt": "Apply skill golang-pro to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of golang-pro workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with golang-pro contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_073",
+    "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+    "task_id": "task_0069",
+    "prompt": "Apply skill check-identity-pack to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of check-identity-pack workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with check-identity-pack contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_074",
+    "skill_id": "skill:awesome-claude-skills-master:prismic-automation",
+    "task_id": "task_0398",
+    "prompt": "Apply skill prismic-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of prismic-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with prismic-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_075",
+    "skill_id": "skill:awesome-copilot:python-mcp-server-generator",
+    "task_id": "task_0477",
+    "prompt": "Apply skill python-mcp-server-generator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of python-mcp-server-generator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with python-mcp-server-generator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_076",
+    "skill_id": "skill:agentic-awesome-skills-main:weaviate",
+    "task_id": "task_0321",
+    "prompt": "Apply skill weaviate to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of weaviate workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with weaviate contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_077",
+    "skill_id": "skill:agentic-awesome-skills-main:jobgpt",
+    "task_id": "task_0182",
+    "prompt": "Apply skill jobgpt to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of jobgpt workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with jobgpt contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_078",
+    "skill_id": "skill:agentic-awesome-skills-main:hugging-face-jobs",
+    "task_id": "task_0171",
+    "prompt": "Apply skill hugging-face-jobs to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of hugging-face-jobs workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with hugging-face-jobs contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_079",
+    "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+    "task_id": "task_0230",
+    "prompt": "Apply skill parallel-agents to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of parallel-agents workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with parallel-agents contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_080",
+    "skill_id": "skill:agentic-awesome-skills-main:azure-speech-to-text-rest-py",
+    "task_id": "task_0045",
+    "prompt": "Apply skill azure-speech-to-text-rest-py to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of azure-speech-to-text-rest-py workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with azure-speech-to-text-rest-py contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_081",
+    "skill_id": "skill:agentic-awesome-skills-main:user-thoughts",
+    "task_id": "task_0310",
+    "prompt": "Apply skill user-thoughts to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of user-thoughts workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with user-thoughts contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_082",
+    "skill_id": "skill:agentic-awesome-skills-main:typescript",
+    "task_id": "task_0303",
+    "prompt": "Apply skill typescript to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of typescript workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with typescript contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_083",
+    "skill_id": "skill:agentic-awesome-skills-main:nerdzao-elite-gemini-high",
+    "task_id": "task_0209",
+    "prompt": "Apply skill nerdzao-elite-gemini-high to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of nerdzao-elite-gemini-high workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with nerdzao-elite-gemini-high contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_084",
+    "skill_id": "skill:awesome-copilot:minimize-latency",
+    "task_id": "task_0463",
+    "prompt": "Apply skill minimize-latency to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of minimize-latency workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with minimize-latency contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_085",
+    "skill_id": "skill:agentic-awesome-skills-main:powershell-windows",
+    "task_id": "task_0240",
+    "prompt": "Apply skill powershell-windows to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of powershell-windows workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with powershell-windows contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_086",
+    "skill_id": "skill:agentic-awesome-skills-main:c4-code",
+    "task_id": "task_0060",
+    "prompt": "Apply skill c4-code to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of c4-code workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with c4-code contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_087",
+    "skill_id": "skill:agentic-awesome-skills-main:zod-validation-expert",
+    "task_id": "task_0335",
+    "prompt": "Apply skill zod-validation-expert to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of zod-validation-expert workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with zod-validation-expert contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_088",
+    "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+    "task_id": "task_0139",
+    "prompt": "Apply skill flowhunt-skill to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of flowhunt-skill workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with flowhunt-skill contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_089",
+    "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+    "task_id": "task_0226",
+    "prompt": "Apply skill orchestrate-batch-refactor to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of orchestrate-batch-refactor workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with orchestrate-batch-refactor contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_090",
+    "skill_id": "skill:agentic-awesome-skills-main:azure-resource-manager-postgresql-dotnet",
+    "task_id": "task_0043",
+    "prompt": "Apply skill azure-resource-manager-postgresql-dotnet to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of azure-resource-manager-postgresql-dotnet workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with azure-resource-manager-postgresql-dotnet contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_091",
+    "skill_id": "skill:agentic-awesome-skills-main:azure-eventgrid-py",
+    "task_id": "task_0033",
+    "prompt": "Apply skill azure-eventgrid-py to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of azure-eventgrid-py workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with azure-eventgrid-py contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_092",
+    "skill_id": "skill:awesome-copilot:landing-page-conversion-audit",
+    "task_id": "task_0456",
+    "prompt": "Apply skill landing-page-conversion-audit to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of landing-page-conversion-audit workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with landing-page-conversion-audit contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_093",
+    "skill_id": "skill:awesome-claude-skills-master:modelry-automation",
+    "task_id": "task_0389",
+    "prompt": "Apply skill modelry-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of modelry-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with modelry-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_094",
+    "skill_id": "skill:awesome-claude-skills-master:jotform-automation",
+    "task_id": "task_0383",
+    "prompt": "Apply skill jotform-automation to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of jotform-automation workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with jotform-automation contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_095",
+    "skill_id": "skill:agentic-awesome-skills-main:chat-widget",
+    "task_id": "task_0068",
+    "prompt": "Apply skill chat-widget to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of chat-widget workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with chat-widget contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_096",
+    "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+    "task_id": "task_0118",
+    "prompt": "Apply skill docx-official to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of docx-official workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with docx-official contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_097",
+    "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+    "task_id": "task_0003",
+    "prompt": "Apply skill acceptance-orchestrator to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of acceptance-orchestrator workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with acceptance-orchestrator contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_098",
+    "skill_id": "skill:agentic-awesome-skills-main:async-python-patterns",
+    "task_id": "task_0019",
+    "prompt": "Apply skill async-python-patterns to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of async-python-patterns workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with async-python-patterns contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_099",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+    "task_id": "task_0220",
+    "prompt": "Apply skill odoo-qweb-templates to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of odoo-qweb-templates workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with odoo-qweb-templates contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  },
+  {
+    "runtime_case_id": "rtc_100",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+    "task_id": "task_0218",
+    "prompt": "Apply skill odoo-hr-payroll-setup to configure, analyze, and generate standard production deliverables according to its canonical specifications.",
+    "expected_capability": "Deterministic execution of odoo-hr-payroll-setup workflow",
+    "success_criteria": "Comprehensive, actionable deliverable complying with odoo-hr-payroll-setup contracts, zero hallucinations, complete verification steps",
+    "verification_method": "Automated schema inspection and contract boundary verification"
+  }
+]
