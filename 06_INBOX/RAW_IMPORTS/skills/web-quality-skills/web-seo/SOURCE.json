@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/seed-sources/web-quality-skills",
+    "source_url": "https://github.com/seed-sources/web-quality-skills/tree/main/web-seo",
+    "source_path": "web-quality-skills/web-seo/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: web-quality-skills",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "a06ca86d0b0cc75982ee10651bd7398c0242a13d91d3b4c8eae0bf1360d18b92",
+    "status": "RAW_EXTERNAL"
+}

@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/seed-sources/garden-skills",
+    "source_url": "https://github.com/seed-sources/garden-skills/tree/main/design-system-apple",
+    "source_path": "garden-skills/design-system-apple/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: garden-skills",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "ff5320657869a70f562526b7230289e8861004e8dc97a55cf8be6a5d9c670ed6",
+    "status": "RAW_EXTERNAL"
+}

@@ -1,0 +1,14 @@
+{
+    "source_repository": "https://github.com/seed-sources/web-quality-skills",
+    "source_url": "https://github.com/seed-sources/web-quality-skills/tree/main/accessibility",
+    "source_path": "web-quality-skills/accessibility/SKILL.md",
+    "source_commit": "main-latest",
+    "source_branch": "main",
+    "license": "MIT",
+    "author": "Ecosystem Community",
+    "discovered_from": "Master Seed Collection: web-quality-skills",
+    "discovery_depth": 1,
+    "import_timestamp": "2026-08-24T17:51:42.561582+00:00",
+    "sha256": "e7193cfa7082217ef89d9dd942c06e578774c0a52808703417e4d83fd3b3104c",
+    "status": "RAW_EXTERNAL"
+}
