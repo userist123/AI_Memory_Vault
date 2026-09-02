@@ -1,4 +1,18 @@
+# Capability Evidence Engine — Task 2 Statistical Estimators
+
+## Implementation
+- [x] implement `memory_controller/effectiveness_stats.py` with `wilson_lower_bound`, `laplace_smoothed_rate`, `evaluate_proportion` `[owner: antigravity | timestamp: 2026-09-02T19:46:09+03:00]`
+- [x] enforce `MIN_SAMPLE_SIZE = 5` and fail-closed `INSUFFICIENT_DATA` guards `[owner: antigravity | timestamp: 2026-09-02T19:46:09+03:00]`
+- [x] implement 12-test validation suite (`memory_controller/tests/test_effectiveness_stats.py` - 12/12 passed) `[owner: antigravity | timestamp: 2026-09-02T19:46:33+03:00]`
+- [x] run master test regression (256 passed in memory_controller, 43 in evaluation) `[owner: antigravity | timestamp: 2026-09-02T19:46:59+03:00]`
+- [x] update lessons (`tasks/lessons.md`) `[owner: antigravity | timestamp: 2026-09-02T19:47:07+03:00]`
+- [x] commit
+- [x] push to `origin/main`
+
+---
+
 # Git State Reconciliation / Source-of-Truth Reset
+
 
 ## Implementation
 - [x] audit local vs remote git head pointers (`HEAD = 4350f6f`, `origin/main = d18bc49`) `[owner: antigravity | timestamp: 2026-09-02T19:38:02+03:00]`

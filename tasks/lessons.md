@@ -97,6 +97,12 @@
 - **Controlled Task Category Invariance**: Restricting `task_category` to a fixed 10-item controlled vocabulary (`frontend_motion`, `frontend_layout`, `backend_api`, `database`, `security_audit`, `trading_logic`, `documentation`, `testing`, `infra_devops`, `unknown`) prevents free-form LLM category hallucination and guarantees deterministic telemetry filtering.
 - **Observed Capabilities Isolation**: Structuring `observed_capabilities` (`skills`, `agents`, `knowledge_refs`, `procedure_refs`) and strictly populating it from verified runtime evidence guarantees that declared-only claims in LLM prose never leak into capability effectiveness records.
 
+## Capability Evidence Engine — Task 2 Statistical Estimators Lessons
+- **Wilson Score Interval Lower Bound**: Utilizing the Wilson score interval lower bound instead of naive observed proportion provides robust, sample-size-calibrated confidence bounds that penalize low sample volumes without requiring external statistical dependencies.
+- **Laplace Smoothing vs Wilson Independence**: Keeping Laplace smoothed probability $(s+1)/(n+2)$ strictly separated from Wilson confidence lower bounds ensures clear differentiation between point estimation under sparsity and conservative decision thresholds for promotion/quarantine.
+- **Fail-Closed Minimum Sample Guard**: Hard-gating confidence evaluations below $N=5$ (e.g. $1/1 \rightarrow \text{INSUFFICIENT\_DATA}$) prevents overconfident capability promotions based on solitary anecdotal successes.
+
+
 
 
 
