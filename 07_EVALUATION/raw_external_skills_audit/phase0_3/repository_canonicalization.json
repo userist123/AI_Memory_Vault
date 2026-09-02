@@ -1,0 +1,853 @@
+{
+  "summary": {
+    "total_repository_identities": 74,
+    "multi_instance_repositories": 9
+  },
+  "repositories": [
+    {
+      "repo_id": "repo:100-days-of-code-in-python",
+      "name": "100-days-of-code-in-python",
+      "canonical_url": "https://github.com/local/100-days-of-code-in-python",
+      "physical_sources": [
+        "100-days-of-code-in-python-main"
+      ],
+      "canonical_source": "100-days-of-code-in-python-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:agentic-awesome-skills",
+      "name": "agentic-awesome-skills",
+      "canonical_url": "https://github.com/agentic-awesome-skills",
+      "physical_sources": [
+        "agentic-awesome-skills-main"
+      ],
+      "canonical_source": "agentic-awesome-skills-main",
+      "mirror_sources": [],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:api_literalura",
+      "name": "api_literalura",
+      "canonical_url": "https://github.com/local/api_literalura",
+      "physical_sources": [
+        "api_literalura-master"
+      ],
+      "canonical_source": "api_literalura-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:appwrite",
+      "name": "appwrite",
+      "canonical_url": "https://github.com/appwrite/appwrite",
+      "physical_sources": [
+        "appwrite-main"
+      ],
+      "canonical_source": "appwrite-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:aspire-samples",
+      "name": "aspire-samples",
+      "canonical_url": "https://github.com/dotnet/aspire-samples",
+      "physical_sources": [
+        "aspire-samples-main"
+      ],
+      "canonical_source": "aspire-samples-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:awesome-agent-skills",
+      "name": "awesome-agent-skills",
+      "canonical_url": "https://github.com/local/awesome-agent-skills",
+      "physical_sources": [
+        "awesome-agent-skills-main"
+      ],
+      "canonical_source": "awesome-agent-skills-main",
+      "mirror_sources": [],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:awesome-cheatsheets",
+      "name": "awesome-cheatsheets",
+      "canonical_url": "https://github.com/local/awesome-cheatsheets",
+      "physical_sources": [
+        "awesome-cheatsheets-master"
+      ],
+      "canonical_source": "awesome-cheatsheets-master",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:awesome-claude-skills",
+      "name": "awesome-claude-skills",
+      "canonical_url": "https://github.com/awesome-claude-skills",
+      "physical_sources": [
+        "awesome-claude-skills-master"
+      ],
+      "canonical_source": "awesome-claude-skills-master",
+      "mirror_sources": [],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:awesome-copilot",
+      "name": "awesome-copilot",
+      "canonical_url": "https://github.com/github/awesome-copilot",
+      "physical_sources": [
+        "awesome-copilot",
+        "awesome-copilot-main",
+        "awesome-copilot-main (1)",
+        "github-awesome-copilot"
+      ],
+      "canonical_source": "awesome-copilot",
+      "mirror_sources": [
+        "awesome-copilot-main",
+        "awesome-copilot-main (1)",
+        "github-awesome-copilot"
+      ],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:awesome-design-skills",
+      "name": "awesome-design-skills",
+      "canonical_url": "https://github.com/local/awesome-design-skills",
+      "physical_sources": [
+        "awesome-design-skills-main"
+      ],
+      "canonical_source": "awesome-design-skills-main",
+      "mirror_sources": [],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:awesome-python-backend",
+      "name": "awesome-python-backend",
+      "canonical_url": "https://github.com/local/awesome-python-backend",
+      "physical_sources": [
+        "awesome-python-backend-main"
+      ],
+      "canonical_source": "awesome-python-backend-main",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:awesome-python",
+      "name": "awesome-python",
+      "canonical_url": "https://github.com/vinta/awesome-python",
+      "physical_sources": [
+        "awesome-python-master"
+      ],
+      "canonical_source": "awesome-python-master",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:awesome-rust",
+      "name": "awesome-rust",
+      "canonical_url": "https://github.com/rust-unofficial/awesome-rust",
+      "physical_sources": [
+        "awesome-rust-main"
+      ],
+      "canonical_source": "awesome-rust-main",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:awesome-scalability",
+      "name": "awesome-scalability",
+      "canonical_url": "https://github.com/local/awesome-scalability",
+      "physical_sources": [
+        "awesome-scalability-master"
+      ],
+      "canonical_source": "awesome-scalability-master",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:awesome-security",
+      "name": "awesome-security",
+      "canonical_url": "https://github.com/local/awesome-security",
+      "physical_sources": [
+        "awesome-security-master"
+      ],
+      "canonical_source": "awesome-security-master",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:awesome-software-architecture",
+      "name": "awesome-software-architecture",
+      "canonical_url": "https://github.com/local/awesome-software-architecture",
+      "physical_sources": [
+        "awesome-software-architecture-main"
+      ],
+      "canonical_source": "awesome-software-architecture-main",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:backend-reference-skills",
+      "name": "backend-reference-skills",
+      "canonical_url": "https://github.com/local/backend-reference-skills",
+      "physical_sources": [
+        "backend",
+        "backend-reference-skills"
+      ],
+      "canonical_source": "backend-reference-skills",
+      "mirror_sources": [
+        "backend"
+      ],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:Backend-SistemaMedico",
+      "name": "Backend-SistemaMedico",
+      "canonical_url": "https://github.com/local/Backend-SistemaMedico",
+      "physical_sources": [
+        "Backend-SistemaMedico-main (1)"
+      ],
+      "canonical_source": "Backend-SistemaMedico-main (1)",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:BackendSaaS.Api",
+      "name": "BackendSaaS.Api",
+      "canonical_url": "https://github.com/local/BackendSaaS.Api",
+      "physical_sources": [
+        "BackendSaaS.Api-main"
+      ],
+      "canonical_source": "BackendSaaS.Api-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Balsm-API-DotNet",
+      "name": "Balsm-API-DotNet",
+      "canonical_url": "https://github.com/local/Balsm-API-DotNet",
+      "physical_sources": [
+        "Balsm-API-DotNet-main"
+      ],
+      "canonical_source": "Balsm-API-DotNet-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:bilemo-symfony-rest-api",
+      "name": "bilemo-symfony-rest-api",
+      "canonical_url": "https://github.com/local/bilemo-symfony-rest-api",
+      "physical_sources": [
+        "bilemo-symfony-rest-api-main"
+      ],
+      "canonical_source": "bilemo-symfony-rest-api-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:chatbot-template",
+      "name": "chatbot-template",
+      "canonical_url": "https://github.com/local/chatbot-template",
+      "physical_sources": [
+        "chatbot-template-main"
+      ],
+      "canonical_source": "chatbot-template-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:classmanager-student-teacher-portal",
+      "name": "classmanager-student-teacher-portal",
+      "canonical_url": "https://github.com/local/classmanager-student-teacher-portal",
+      "physical_sources": [
+        "classmanager-student-teacher-portal-master"
+      ],
+      "canonical_source": "classmanager-student-teacher-portal-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:codefather",
+      "name": "codefather",
+      "canonical_url": "https://github.com/local/codefather",
+      "physical_sources": [
+        "codefather-main"
+      ],
+      "canonical_source": "codefather-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:programming",
+      "name": "programming",
+      "canonical_url": "https://github.com/local/programming",
+      "physical_sources": [
+        "coding",
+        "programming"
+      ],
+      "canonical_source": "programming",
+      "mirror_sources": [
+        "coding"
+      ],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:data-viz-design",
+      "name": "data-viz-design",
+      "canonical_url": "https://github.com/local/data-viz-design",
+      "physical_sources": [
+        "data-viz-design"
+      ],
+      "canonical_source": "data-viz-design",
+      "mirror_sources": [],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:dbvw-backend",
+      "name": "dbvw-backend",
+      "canonical_url": "https://github.com/local/dbvw-backend",
+      "physical_sources": [
+        "dbvw-backend-master"
+      ],
+      "canonical_source": "dbvw-backend-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:design-system-foundation",
+      "name": "design-system-foundation",
+      "canonical_url": "https://github.com/local/design-system-foundation",
+      "physical_sources": [
+        "design",
+        "design-system-foundation"
+      ],
+      "canonical_source": "design-system-foundation",
+      "mirror_sources": [
+        "design"
+      ],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:Dev-Mind-Backend",
+      "name": "Dev-Mind-Backend",
+      "canonical_url": "https://github.com/local/Dev-Mind-Backend",
+      "physical_sources": [
+        "Dev-Mind-Backend-master"
+      ],
+      "canonical_source": "Dev-Mind-Backend-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:dokploy",
+      "name": "dokploy",
+      "canonical_url": "https://github.com/Dokploy/dokploy",
+      "physical_sources": [
+        "dokploy-canary"
+      ],
+      "canonical_source": "dokploy-canary",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:domain-driven-hexagon",
+      "name": "domain-driven-hexagon",
+      "canonical_url": "https://github.com/local/domain-driven-hexagon",
+      "physical_sources": [
+        "domain-driven-hexagon-master"
+      ],
+      "canonical_source": "domain-driven-hexagon-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:express-typescript-prisma7-neon-boilerplate",
+      "name": "express-typescript-prisma7-neon-boilerplate",
+      "canonical_url": "https://github.com/local/express-typescript-prisma7-neon-boilerplate",
+      "physical_sources": [
+        "express-typescript-prisma7-neon-boilerplate-main"
+      ],
+      "canonical_source": "express-typescript-prisma7-neon-boilerplate-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:flask_python-auth-system",
+      "name": "flask_python-auth-system",
+      "canonical_url": "https://github.com/local/flask_python-auth-system",
+      "physical_sources": [
+        "flask_python-auth-system-main"
+      ],
+      "canonical_source": "flask_python-auth-system-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Full-Stack-Web-Development-Technologies",
+      "name": "Full-Stack-Web-Development-Technologies",
+      "canonical_url": "https://github.com/local/Full-Stack-Web-Development-Technologies",
+      "physical_sources": [
+        "Full-Stack-Web-Development-Technologies-master"
+      ],
+      "canonical_source": "Full-Stack-Web-Development-Technologies-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:garden-skills",
+      "name": "garden-skills",
+      "canonical_url": "https://github.com/ConardLi/garden-skills",
+      "physical_sources": [
+        "garden-skills",
+        "garden-skills-main"
+      ],
+      "canonical_source": "garden-skills",
+      "mirror_sources": [
+        "garden-skills-main"
+      ],
+      "repository_type": "SKILL_COLLECTION"
+    },
+    {
+      "repo_id": "repo:GitHubDaily",
+      "name": "GitHubDaily",
+      "canonical_url": "https://github.com/local/GitHubDaily",
+      "physical_sources": [
+        "GitHubDaily-master"
+      ],
+      "canonical_source": "GitHubDaily-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:globio",
+      "name": "globio",
+      "canonical_url": "https://github.com/local/globio",
+      "physical_sources": [
+        "globio-main"
+      ],
+      "canonical_source": "globio-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:GreeverBackend",
+      "name": "GreeverBackend",
+      "canonical_url": "https://github.com/local/GreeverBackend",
+      "physical_sources": [
+        "GreeverBackend-main"
+      ],
+      "canonical_source": "GreeverBackend-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Hello-Python",
+      "name": "Hello-Python",
+      "canonical_url": "https://github.com/local/Hello-Python",
+      "physical_sources": [
+        "Hello-Python-main"
+      ],
+      "canonical_source": "Hello-Python-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Hello-Rails-Backend",
+      "name": "Hello-Rails-Backend",
+      "canonical_url": "https://github.com/local/Hello-Rails-Backend",
+      "physical_sources": [
+        "Hello-Rails-Backend-dev"
+      ],
+      "canonical_source": "Hello-Rails-Backend-dev",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Hotel-Reservation-System",
+      "name": "Hotel-Reservation-System",
+      "canonical_url": "https://github.com/local/Hotel-Reservation-System",
+      "physical_sources": [
+        "Hotel-Reservation-System-master"
+      ],
+      "canonical_source": "Hotel-Reservation-System-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Intelligent-Document-Processing-System",
+      "name": "Intelligent-Document-Processing-System",
+      "canonical_url": "https://github.com/local/Intelligent-Document-Processing-System",
+      "physical_sources": [
+        "Intelligent-Document-Processing-System-main"
+      ],
+      "canonical_source": "Intelligent-Document-Processing-System-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:kawerify-transfer",
+      "name": "kawerify-transfer",
+      "canonical_url": "https://github.com/local/kawerify-transfer",
+      "physical_sources": [
+        "kawerify-transfer-main"
+      ],
+      "canonical_source": "kawerify-transfer-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:landing-page-design",
+      "name": "landing-page-design",
+      "canonical_url": "https://github.com/local/landing-page-design",
+      "physical_sources": [
+        "landing-page-design"
+      ],
+      "canonical_source": "landing-page-design",
+      "mirror_sources": [],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:lewp-rs",
+      "name": "lewp-rs",
+      "canonical_url": "https://github.com/local/lewp-rs",
+      "physical_sources": [
+        "lewp-rs-main"
+      ],
+      "canonical_source": "lewp-rs-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Login-Sign-up-System",
+      "name": "Login-Sign-up-System",
+      "canonical_url": "https://github.com/local/Login-Sign-up-System",
+      "physical_sources": [
+        "Login-Sign-up-System-master"
+      ],
+      "canonical_source": "Login-Sign-up-System-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:motion-design",
+      "name": "motion-design",
+      "canonical_url": "https://github.com/local/motion-design",
+      "physical_sources": [
+        "motion-design"
+      ],
+      "canonical_source": "motion-design",
+      "mirror_sources": [],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:MyCRM",
+      "name": "MyCRM",
+      "canonical_url": "https://github.com/local/MyCRM",
+      "physical_sources": [
+        "MyCRM-main"
+      ],
+      "canonical_source": "MyCRM-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:NaloMedQuery",
+      "name": "NaloMedQuery",
+      "canonical_url": "https://github.com/local/NaloMedQuery",
+      "physical_sources": [
+        "NaloMedQuery-main"
+      ],
+      "canonical_source": "NaloMedQuery-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:nhost",
+      "name": "nhost",
+      "canonical_url": "https://github.com/nhost/nhost",
+      "physical_sources": [
+        "nhost-main"
+      ],
+      "canonical_source": "nhost-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:node-express-backend-template-for-intermediate",
+      "name": "node-express-backend-template-for-intermediate",
+      "canonical_url": "https://github.com/local/node-express-backend-template-for-intermediate",
+      "physical_sources": [
+        "node-express-backend-template-for-intermediate-main"
+      ],
+      "canonical_source": "node-express-backend-template-for-intermediate-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:online-shop-stylify",
+      "name": "online-shop-stylify",
+      "canonical_url": "https://github.com/local/online-shop-stylify",
+      "physical_sources": [
+        "online-shop-stylify-main"
+      ],
+      "canonical_source": "online-shop-stylify-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:parse-server",
+      "name": "parse-server",
+      "canonical_url": "https://github.com/local/parse-server",
+      "physical_sources": [
+        "parse-server-alpha"
+      ],
+      "canonical_source": "parse-server-alpha",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Placement--Management--System",
+      "name": "Placement--Management--System",
+      "canonical_url": "https://github.com/local/Placement--Management--System",
+      "physical_sources": [
+        "Placement--Management--System-master"
+      ],
+      "canonical_source": "Placement--Management--System-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:pocketbase",
+      "name": "pocketbase",
+      "canonical_url": "https://github.com/pocketbase/pocketbase",
+      "physical_sources": [
+        "pocketbase-main",
+        "pocketbase-master"
+      ],
+      "canonical_source": "pocketbase-main",
+      "mirror_sources": [
+        "pocketbase-master"
+      ],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:portfolio",
+      "name": "portfolio",
+      "canonical_url": "https://github.com/local/portfolio",
+      "physical_sources": [
+        "portfolio-main"
+      ],
+      "canonical_source": "portfolio-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:prosto-platform",
+      "name": "prosto-platform",
+      "canonical_url": "https://github.com/local/prosto-platform",
+      "physical_sources": [
+        "prosto-platform-develop"
+      ],
+      "canonical_source": "prosto-platform-develop",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:PulseAPI",
+      "name": "PulseAPI",
+      "canonical_url": "https://github.com/local/PulseAPI",
+      "physical_sources": [
+        "PulseAPI-main"
+      ],
+      "canonical_source": "PulseAPI-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:RealTime-Chat-API",
+      "name": "RealTime-Chat-API",
+      "canonical_url": "https://github.com/local/RealTime-Chat-API",
+      "physical_sources": [
+        "RealTime-Chat-API-main"
+      ],
+      "canonical_source": "RealTime-Chat-API-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:realworld",
+      "name": "realworld",
+      "canonical_url": "https://github.com/local/realworld",
+      "physical_sources": [
+        "realworld-main"
+      ],
+      "canonical_source": "realworld-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Restaurant-Webapp",
+      "name": "Restaurant-Webapp",
+      "canonical_url": "https://github.com/local/Restaurant-Webapp",
+      "physical_sources": [
+        "Restaurant-Webapp-master"
+      ],
+      "canonical_source": "Restaurant-Webapp-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Second-Hand-Seller",
+      "name": "Second-Hand-Seller",
+      "canonical_url": "https://github.com/local/Second-Hand-Seller",
+      "physical_sources": [
+        "Second-Hand-Seller-main"
+      ],
+      "canonical_source": "Second-Hand-Seller-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:soko-treasures",
+      "name": "soko-treasures",
+      "canonical_url": "https://github.com/local/soko-treasures",
+      "physical_sources": [
+        "soko-treasures-main"
+      ],
+      "canonical_source": "soko-treasures-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:sonic",
+      "name": "sonic",
+      "canonical_url": "https://github.com/local/sonic",
+      "physical_sources": [
+        "sonic-master"
+      ],
+      "canonical_source": "sonic-master",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:Subnix",
+      "name": "Subnix",
+      "canonical_url": "https://github.com/local/Subnix",
+      "physical_sources": [
+        "Subnix-main"
+      ],
+      "canonical_source": "Subnix-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:subtrackr",
+      "name": "subtrackr",
+      "canonical_url": "https://github.com/local/subtrackr",
+      "physical_sources": [
+        "subtrackr-main"
+      ],
+      "canonical_source": "subtrackr-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:system-design-101",
+      "name": "system-design-101",
+      "canonical_url": "https://github.com/ByteByteGoHq/system-design-101",
+      "physical_sources": [
+        "system-design-101-main"
+      ],
+      "canonical_source": "system-design-101-main",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:system-design-primer",
+      "name": "system-design-primer",
+      "canonical_url": "https://github.com/donnemartin/system-design-primer",
+      "physical_sources": [
+        "system-design-primer-master"
+      ],
+      "canonical_source": "system-design-primer-master",
+      "mirror_sources": [],
+      "repository_type": "KNOWLEDGE_REPOSITORY"
+    },
+    {
+      "repo_id": "repo:Tawasal",
+      "name": "Tawasal",
+      "canonical_url": "https://github.com/local/Tawasal",
+      "physical_sources": [
+        "Tawasal-main"
+      ],
+      "canonical_source": "Tawasal-main",
+      "mirror_sources": [],
+      "repository_type": "SOFTWARE_PROJECT"
+    },
+    {
+      "repo_id": "repo:ui-sensei",
+      "name": "ui-sensei",
+      "canonical_url": "https://github.com/gbrasil720/ui-sensei",
+      "physical_sources": [
+        "ui-sensei",
+        "ui-sensei-main"
+      ],
+      "canonical_source": "ui-sensei",
+      "mirror_sources": [
+        "ui-sensei-main"
+      ],
+      "repository_type": "INDIVIDUAL_SKILL"
+    },
+    {
+      "repo_id": "repo:ui-ux-pro-max",
+      "name": "ui-ux-pro-max",
+      "canonical_url": "https://github.com/local/ui-ux-pro-max",
+      "physical_sources": [
+        "ui-ux-pro-max"
+      ],
+      "canonical_source": "ui-ux-pro-max",
+      "mirror_sources": [],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:ui-ux-review",
+      "name": "ui-ux-review",
+      "canonical_url": "https://github.com/local/ui-ux-review",
+      "physical_sources": [
+        "ui-ux-review"
+      ],
+      "canonical_source": "ui-ux-review",
+      "mirror_sources": [],
+      "repository_type": "RESOURCE_COLLECTION"
+    },
+    {
+      "repo_id": "repo:web-design",
+      "name": "web-design",
+      "canonical_url": "https://github.com/xiaopu-ai/web-design",
+      "physical_sources": [
+        "web-design",
+        "web-design-main"
+      ],
+      "canonical_source": "web-design",
+      "mirror_sources": [
+        "web-design-main"
+      ],
+      "repository_type": "INDIVIDUAL_SKILL"
+    },
+    {
+      "repo_id": "repo:web-quality-skills",
+      "name": "web-quality-skills",
+      "canonical_url": "https://github.com/addyosmani/web-quality-skills",
+      "physical_sources": [
+        "web-quality-skills",
+        "web-quality-skills-main"
+      ],
+      "canonical_source": "web-quality-skills",
+      "mirror_sources": [
+        "web-quality-skills-main"
+      ],
+      "repository_type": "SKILL_COLLECTION"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "summary": {
+    "KEEP_TOTAL": 34621,
+    "EXCLUDE_TOTAL": 31994,
+    "REVIEW_TOTAL": 61,
+    "TOTAL_PHYSICAL_FILES": 66676,
+    "INVARIANT_HOLDS": true
+  },
+  "crosstab": {
+    "KEEP": {
+      "SKILL_SUPPORT": 29274,
+      "AGENT": 257,
+      "PROVENANCE": 1251,
+      "PLUGIN": 286,
+      "OPERATIONAL_SKILL": 3545,
+      "INSTRUCTION": 8
+    },
+    "EXCLUDE": {
+      "OTHER": 25285,
+      "DEPENDENCY_MANIFEST": 471,
+      "AGENT": 455,
+      "SKILL_SUPPORT": 4515,
+      "PROVENANCE": 338,
+      "PLUGIN": 210,
+      "BUILD_JUNK": 718,
+      "INSTRUCTION": 2
+    },
+    "REVIEW": {
+      "SECURITY": 60,
+      "BUILD_JUNK": 1
+    }
+  }
+}

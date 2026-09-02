@@ -1,0 +1,1014 @@
+{
+  "summary": {
+    "TOTAL_SECURITY_FLAGGED_FILES": 746,
+    "breakdown": {
+      "CREDENTIAL_FILE": 60,
+      "SUSPICIOUS_BUT_BENIGN": 542,
+      "DOCUMENTATION_EXAMPLE": 123,
+      "DANGEROUS_COMMAND": 19,
+      "OVERSIZED_BINARY_GATED": 2
+    }
+  },
+  "records": [
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/subtrackr-main/subtrackr-main/.env.development.local",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1064
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/subtrackr-main/subtrackr-main/.env.production.local",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 337
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/soko-treasures-main/soko-treasures-main/src/settings.py",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3978
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/soko-treasures-main/soko-treasures-main/.github/workflows/django.yml",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 730
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Second-Hand-Seller-main/Second-Hand-Seller-main/backend/controllers/userController.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 8558
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/RealTime-Chat-API-main/RealTime-Chat-API-main/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 470
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/dashboard/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1116
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/dashboard/.env.production",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 442
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/demo/.env",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 365
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/demo/.env.sample",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 303
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/demo/monitoring.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3169
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/k6/loadtest.js",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 5015
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/shared/cache/lrucache.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 145
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/shared/middlewares/validateApiKey.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3586
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/shared/models/ApiKey.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3974
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/ingest/routes/ingestRoutes.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1282
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/client/Dependencies/dependencies.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2010
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/client/repository/ApiKeyRepository.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2999
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/client/repository/BaseApiKeyRepository.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1100
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/client/routes/clientRoutes.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2001
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/client/service/clientService.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 14333
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/server/src/services/auth/repository/UserRepository.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3638
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/dashboard/src/App.jsx",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3709
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/dashboard/src/pages/ApiKeysPage.jsx",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 15348
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main/PulseAPI-main/dashboard/src/components/landing/DocsPreview.jsx",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 10593
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/packages/platform-core/tests/unit/diagnostics/diagnostics-reporter.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 4801
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/packages/platform-core/tests/unit/security/secrets-redactor.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 2919
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/packages/platform-core/src/security/redactors/secrets.redactor.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6515
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/packages/platform-admin-shell/src/shared/observability/console-admin-shell.logger.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3464
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/packages/platform-adapters/platform-adapter-admin-bff/src/observability/console-admin-bff-logger.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3748
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/examples/admin-bff-http-host/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1440
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.agents/rules/observability.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 9094
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/.env",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1125
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/.env.development",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 41
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-main/pocketbase-main/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 105
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-main/pocketbase-main/Dockerfile",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 1091
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/AuthenticationAdapters.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 73704
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/LiveQuery/RequestSchema.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3013
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/BaseCodeAuthAdapter.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3597
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/facebook.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6291
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/github.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 4610
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/janraincapture.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2741
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/janrainengage.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1975
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/keycloak.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6363
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/meetup.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1275
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/phantauth.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1524
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/src/Adapters/Auth/vkontakte.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2262
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/myoauth.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 417
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/cert/anothercert.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1773
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/cert/cert.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1773
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/cert/DigiCertTrustedG4CodeSigningRSA4096SHA3842021CA1.crt.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 2378
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/cert/game_center.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1704
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/cert/game_center_2.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 2634
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/support/cert/key.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 3243
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/Adapters/Auth/github.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 7622
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/Adapters/Auth/gpgames.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 9953
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/Adapters/Auth/instagram.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 7732
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/Adapters/Auth/line.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 8040
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/Adapters/Auth/oauth2.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 13890
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/spec/Adapters/Auth/wechat.spec.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 8079
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/gqlgenc.yaml",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 981
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/project.nix",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 9838
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/dashboard/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1636
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/golang.org/x/oauth2/token.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6275
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/oapi-codegen/runtime/Makefile",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 1908
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/nhost/be/services/mimir/schema/appconfig/ai.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1779
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/google/s2a-go/internal/tokenmanager/tokenmanager.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2632
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/go-playground/universal-translator/Makefile",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 404
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/go-playground/validator/v10/Makefile",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 399
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/bits-and-blooms/bitset/azure-pipelines.yml",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 1088
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/aws/smithy-go/auth/scheme_id.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 411
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/aws/aws-sdk-go-v2/config/env_config.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 29680
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/aws/aws-sdk-go-v2/service/signin/api_op_CreateOAuth2Token.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 5135
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/aws/aws-sdk-go-v2/service/signin/api_op_IntrospectOAuth2TokenWithIAM.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 5965
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/aws/aws-sdk-go-v2/service/signin/api_op_RevokeOAuth2TokenWithIAM.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3740
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/anthropics/anthropic-sdk-go/client.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6778
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/cloud.google.com/go/auth/credentials/internal/stsexchange/sts_exchange.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 5316
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/tools/codegen/processor/testdata/form-url-encoded.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1644
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/tools/codegen/processor/testdata/form-url-encoded.yaml.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 3787
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/README.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2223
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 3500
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/example_curl.sh",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1528
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/controller/user_session.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 984
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/controller/user_session_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 2225
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/storage/s3_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 6041
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/middleware/cdn/fastly/fastly.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2663
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/integration/.secrets.example",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 328
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/metadata/internal/hasura/testdata/TestFromYAML/success/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1414
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/integration/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/docs/user/remote-schema.md",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 8828
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/build/dev/docker/initdb.d/0001-create-auth-schema.sql",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 4494
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/go/providers/bitbucket.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3603
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/go/providers/facebook.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1886
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/go/providers/twitter.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1966
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/go/migrations/postgres/00001_create-initial-tables.up.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 4448
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/nginx/ssl/nginx-selfsigned.key",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 1704
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/openai/openai.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1037
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/.secrets.ci",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 311
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/README.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1821
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/dev/docker/docker-compose.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 7309
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/nhost.toml",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2496
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/data/full/01-movies.backup",
+      "security_class": "OVERSIZED_BINARY_GATED",
+      "size": 77009393
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/provider/anthropic.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 7514
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/provider/google.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 9195
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/provider/openai.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6268
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/provider/provider.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 5042
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/provider/provider_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 2258
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/tool/websearch.go",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 5259
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/agents/tool/websearch_internal_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 9404
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/stripe-graphql-js/src/utils.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1055
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/internal/lib/oapi/example/controller/controller.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1290
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/docker-compose/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 949
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/docker-compose/docker-compose.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 19744
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/tutorials/backend/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/quickstarts/backend/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/guides/backend/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/demos/outline/outline.toml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1461
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/demos/outline/setup.sh",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 999
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/demos/backend/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1432
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/dashboard/src/pages/api/support/create-ticket.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 12519
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/dashboard/src/gql/app/settings/updateConfig.graphql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 541
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/dashboard/src/features/orgs/projects/ai/settings/gql/getAISettings.gql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 371
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/dockercompose/ai_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1955
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/dockercompose/auth_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 13333
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/dockercompose/main_test.go",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 12451
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/ssl/.ssl/local-fullchain.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 5089
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/ssl/.ssl/local-privkey.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 241
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/ssl/.ssl/sub-fullchain.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 5117
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/ssl/.ssl/sub-privkey.pem",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 241
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/mcp/resources/cloud_schema-with-mutations.graphql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 31147
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/mcp/resources/cloud_schema.graphql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 18740
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/mcp/graphql/testdata/without_filter.graphql",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 455406
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/mcp/graphql/testdata/with_filter.graphql",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 165239
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/mcp/graphql/testdata/with_filter_and_disable_nesting.graphql",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 34190
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/examples/myproject/nhost/nhost.toml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 3005
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/cli/examples/myproject/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/MyCRM-main/MyCRM-main/src/WebClient/Models/LoginResponse.cs",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 380
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/MyCRM-main/MyCRM-main/src/WebClient/Services/TokenProvider.cs",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1606
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Intelligent-Document-Processing-System-main/Intelligent-Document-Processing-System-main/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 80
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Hello-Python-main/Hello-Python-main/Backend/FastAPI/routers/jwt_auth_users.py",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3136
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot/elevenlabs-tts/SKILL.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3760
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/website/gpt-image2-website/src/data/docs.json",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 30934
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/website/gpt-image2-website/src/components/skills/SkillsPage.tsx",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 18231
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/skills/gpt-image-2/README.zh-CN.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 18979
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/skills/gpt-image-2/SKILL.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 26643
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/skills/web-video-presentation/references/AUDIO.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 11126
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/skills/web-video-presentation/templates/scripts/tts-providers/openai.sh",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2636
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/skills/web-video-presentation/templates/scripts/tts-providers/README.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 11950
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main/garden-skills-main/skills/gpt-image-2/scripts/check-mode.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2213
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/website/gpt-image2-website/src/components/skills/SkillsPage.tsx",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 18681
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/web-video-presentation/references/AUDIO.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 11552
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/web-video-presentation/templates/scripts/tts-providers/openai.sh",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2706
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/web-video-presentation/templates/scripts/tts-providers/README.md",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 12424
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/gpt-image-2/scripts/check-mode.js",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2277
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/express-typescript-prisma7-neon-boilerplate-main/express-typescript-prisma7-neon-boilerplate-main/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 263
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/domain-driven-hexagon-master/domain-driven-hexagon-master/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 89
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/domain-driven-hexagon-master/domain-driven-hexagon-master/.env.test",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 160
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/lib/auth-cli.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1505
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/lib/auth-secret.ts",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 857
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/lib/auth.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 17417
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/services/dns-provider.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6967
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/services/user.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 11901
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/utils/dns/porkbun.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3266
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/db/schema/account.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 8696
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/db/schema/ai.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2375
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/db/schema/dns-provider.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3628
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/db/schema/gitea.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2864
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/db/schema/gitlab.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2106
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/packages/server/src/db/schema/user.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 6777
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/api/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 537
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/.env.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 114
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/.env.production.example",
+      "security_class": "CREDENTIAL_FILE",
+      "size": 29
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/schedules/src/index.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3209
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/0068_complex_rhino.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 465
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/0079_bizarre_wendell_rand.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2120
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/0120_lame_captain_midlands.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3639
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/0138_pretty_ironclad.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 542
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/0150_nappy_blue_blade.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 425
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/0151_modern_sunfire.sql",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 328
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/lib/api-keys.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 701
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/lib/auth-client.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 698
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/scripts/migrate-auth-secret.ts",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 2685
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/scripts/reset-onboarding.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3761
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/__test__/api/api-key-name.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 884
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/__test__/dns/porkbun.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 5781
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/__test__/env/encryption.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 3183
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/__test__/env/environment.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 16522
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/__test__/env/stack-environment.test.ts",
+      "security_class": "DOCUMENTATION_EXAMPLE",
+      "size": 4717
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/__test__/git-provider/git-clone-command-injection.test.ts",
+      "security_class": "DANGEROUS_COMMAND",
+      "size": 3084
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/server/utils/backup.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1969
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/server/utils/billing.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 3732
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/server/utils/deploy.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2039
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/server/api/routers/user.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 21227
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/pages/dashboard/settings/profile.tsx",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 1854
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/pages/api/providers/gitea/callback.ts",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 2749
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/meta/0107_snapshot.json",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 169109
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/meta/0108_snapshot.json",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 169272
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary/dokploy-canary/apps/dokploy/drizzle/meta/0109_snapshot.json",
+      "security_class": "SUSPICIOUS_BUT_BENIGN",
+      "size": 169484
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "dimensions": {
+    "structural_relation": {
+      "EXACT": "Exact SHA-256 binary match across instances",
+      "NEAR": "Levenshtein / normalized token similarity > 85%",
+      "NONE": "Structurally distinct asset structures"
+    },
+    "semantic_relation": {
+      "OVERLAP": "Identical functional capability (e.g. 2 different Tailwind CSS tools)",
+      "COMPLEMENTARY": "Synergistic workflow steps (e.g. Audit then Fix)",
+      "NONE": "Unrelated semantic domains"
+    },
+    "ecosystem_relation": {
+      "SAME": "Both target same ecosystem (e.g. React/Next.js)",
+      "DIFFERENT": "Targets different runtimes (e.g. Python vs Go)"
+    },
+    "lineage_relation": {
+      "PARENT_CHILD": "One skill is a specialization of another",
+      "NONE": "Independent lineages"
+    }
+  },
+  "advisory_rule": "No automated destructive collapsing is permitted during extraction. Skills with semantic overlap retain independent provenance."
+}
