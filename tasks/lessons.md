@@ -93,6 +93,11 @@
 - **Empirical Skill Effectiveness**: Measuring `success_rate = (runs with outcome=success AND skill in OBSERVED_TRACE) / (total runs with skill in OBSERVED_TRACE)` grounds knowledge valuation directly in empirical usage evidence, completely bypassing synthetic benchmarks or unverified declared claims.
 - **Relational Join Without Data Duplication**: `telemetry/project_sessions.jsonl` acts as a lightweight join table between `project_id` and `run_id`, querying underlying telemetry dynamically without copying bulky trace or outcome payloads.
 
+## Capability Evidence Engine — Task 1 Schema Extension Lessons
+- **Controlled Task Category Invariance**: Restricting `task_category` to a fixed 10-item controlled vocabulary (`frontend_motion`, `frontend_layout`, `backend_api`, `database`, `security_audit`, `trading_logic`, `documentation`, `testing`, `infra_devops`, `unknown`) prevents free-form LLM category hallucination and guarantees deterministic telemetry filtering.
+- **Observed Capabilities Isolation**: Structuring `observed_capabilities` (`skills`, `agents`, `knowledge_refs`, `procedure_refs`) and strictly populating it from verified runtime evidence guarantees that declared-only claims in LLM prose never leak into capability effectiveness records.
+
+
 
 
 

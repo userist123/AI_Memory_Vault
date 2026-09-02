@@ -277,3 +277,42 @@ def test_telemetry_failure_status_reconciliation():
     assert rec["acknowledged"] == []
     assert rec["fabrications"] == ["M1", "M2"]
 
+
+def test_legacy_trace_deserialization_and_new_trace_with_project_id(tmp_path):
+    """Test backward compatibility: Legacy trace records without project_id parse cleanly with project_id=None."""
+    trace_path = tmp_path / "observed_memory_traces.jsonl"
+
+    legacy_json = {
+        "run_id": "legacy-trace-001",
+        "timestamp": "2026-09-01T12:00:00Z",
+        "retrieved_memory_ids": ["note_x", "note_y"],
+        "retrieval_scores": {"note_x": 0.99},
+        "context_size_bytes": 512,
+        "estimated_tokens": 128,
+    }
+    with open(trace_path, "w", encoding="utf-8") as f:
+        f.write(json.dumps(legacy_json) + "\n")
+
+    loaded = load_observed_memory_traces(run_id="legacy-trace-001", telemetry_dir=tmp_path)
+    assert len(loaded) == 1
+    assert loaded[0].run_id == "legacy-trace-001"
+    assert loaded[0].project_id is None
+
+    # Now append a new trace with project_id
+    new_trace = record_observed_memory_trace(
+        run_id="new-trace-002",
+        results=[{"id": "note_z", "score": 0.88}],
+        context_size_bytes=256,
+        estimated_tokens=64,
+        telemetry_dir=tmp_path,
+        project_id="PROJ-BETA",
+    )
+    assert new_trace is not None
+    assert new_trace.project_id == "PROJ-BETA"
+
+    # Filter by project_id
+    beta_traces = load_observed_memory_traces(project_id="PROJ-BETA", telemetry_dir=tmp_path)
+    assert len(beta_traces) == 1
+    assert beta_traces[0].run_id == "new-trace-002"
+
+

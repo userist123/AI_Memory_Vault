@@ -29,6 +29,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+from memory_controller.task_categories import (
+    TaskCategory,
+    VALID_TASK_CATEGORIES,
+    validate_task_category,
+)
+
 FORBIDDEN_VAULT_DIRS = {
     "00_CORE",
     "01_KNOWLEDGE",
@@ -71,6 +77,34 @@ def compute_task_signature(task: str) -> str:
 
 
 @dataclass(frozen=True)
+class ObservedCapabilities:
+    """Deterministic capabilities actually observed in runtime execution."""
+    skills: List[str] = field(default_factory=list)
+    agents: List[str] = field(default_factory=list)
+    knowledge_refs: List[str] = field(default_factory=list)
+    procedure_refs: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, List[str]]:
+        return {
+            "skills": list(self.skills),
+            "agents": list(self.agents),
+            "knowledge_refs": list(self.knowledge_refs),
+            "procedure_refs": list(self.procedure_refs),
+        }
+
+    @classmethod
+    def from_dict(cls, data: Optional[Dict[str, Any]]) -> ObservedCapabilities:
+        if not data or not isinstance(data, dict):
+            return cls()
+        return cls(
+            skills=list(data.get("skills", [])),
+            agents=list(data.get("agents", [])),
+            knowledge_refs=list(data.get("knowledge_refs", [])),
+            procedure_refs=list(data.get("procedure_refs", [])),
+        )
+
+
+@dataclass(frozen=True)
 class OutcomeRecord:
     """Immutable record representing an outcome observation event."""
 
@@ -84,9 +118,17 @@ class OutcomeRecord:
     recorded_by: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
     project_id: Optional[str] = None
+    task_category: str = TaskCategory.UNKNOWN.value
+    observed_capabilities: Dict[str, List[str]] = field(
+        default_factory=lambda: {
+            "skills": [],
+            "agents": [],
+            "knowledge_refs": [],
+            "procedure_refs": [],
+        }
+    )
 
     def __post_init__(self) -> None:
-
         if not self.run_id or not str(self.run_id).strip():
             raise ValueError("run_id must be a non-empty string")
 
@@ -108,8 +150,18 @@ class OutcomeRecord:
                 "verification_method='none'. Verifiable proof required."
             )
 
+        if self.task_category not in VALID_TASK_CATEGORIES:
+            raise ValueError(
+                f"Invalid task_category '{self.task_category}'. "
+                f"Must be one of {sorted(VALID_TASK_CATEGORIES)}"
+            )
+
+        if not isinstance(self.observed_capabilities, dict):
+            raise ValueError("observed_capabilities must be a dictionary")
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
 
 
 class OutcomeTracker:
@@ -147,6 +199,8 @@ class OutcomeTracker:
         timestamp: Optional[str] = None,
         event_id: Optional[str] = None,
         project_id: Optional[str] = None,
+        task_category: Optional[str] = None,
+        observed_capabilities: Optional[Dict[str, List[str]] | ObservedCapabilities] = None,
     ) -> OutcomeRecord:
         """Append an outcome observation record. Strictly append-only and immutable."""
         run_id = str(run_id or "").strip()
@@ -156,6 +210,24 @@ class OutcomeTracker:
         task_sig = compute_task_signature(task)
         ts = timestamp or datetime.now(timezone.utc).isoformat()
         eid = event_id or f"evt_{uuid.uuid4().hex[:12]}"
+        cat = validate_task_category(task_category)
+
+        if isinstance(observed_capabilities, ObservedCapabilities):
+            obs_dict = observed_capabilities.to_dict()
+        elif isinstance(observed_capabilities, dict):
+            obs_dict = {
+                "skills": list(observed_capabilities.get("skills", [])),
+                "agents": list(observed_capabilities.get("agents", [])),
+                "knowledge_refs": list(observed_capabilities.get("knowledge_refs", [])),
+                "procedure_refs": list(observed_capabilities.get("procedure_refs", [])),
+            }
+        else:
+            obs_dict = {
+                "skills": [],
+                "agents": [],
+                "knowledge_refs": [],
+                "procedure_refs": [],
+            }
 
         record = OutcomeRecord(
             run_id=run_id,
@@ -168,6 +240,8 @@ class OutcomeTracker:
             recorded_by=recorded_by,
             metadata=metadata,
             project_id=str(project_id).strip() if project_id else None,
+            task_category=cat,
+            observed_capabilities=obs_dict,
         )
 
         with open(self.ledger_path, "a", encoding="utf-8") as f:
@@ -189,6 +263,15 @@ class OutcomeTracker:
                 try:
                     data = json.loads(line)
                     if data.get("run_id") == run_id:
+                        if "task_category" not in data or data["task_category"] is None:
+                            data["task_category"] = TaskCategory.UNKNOWN.value
+                        if "observed_capabilities" not in data or data["observed_capabilities"] is None:
+                            data["observed_capabilities"] = {
+                                "skills": [],
+                                "agents": [],
+                                "knowledge_refs": [],
+                                "procedure_refs": [],
+                            }
                         history.append(OutcomeRecord(**data))
                 except (json.JSONDecodeError, TypeError, ValueError):
                     continue
@@ -204,6 +287,7 @@ class OutcomeTracker:
         outcome: Optional[str] = None,
         task_signature: Optional[str] = None,
         project_id: Optional[str] = None,
+        task_category: Optional[str] = None,
     ) -> List[OutcomeRecord]:
         """List all recorded outcomes matching optional filters."""
         if not self.ledger_path.exists():
@@ -217,6 +301,15 @@ class OutcomeTracker:
                     continue
                 try:
                     data = json.loads(line)
+                    if "task_category" not in data or data["task_category"] is None:
+                        data["task_category"] = TaskCategory.UNKNOWN.value
+                    if "observed_capabilities" not in data or data["observed_capabilities"] is None:
+                        data["observed_capabilities"] = {
+                            "skills": [],
+                            "agents": [],
+                            "knowledge_refs": [],
+                            "procedure_refs": [],
+                        }
                     rec = OutcomeRecord(**data)
                     if outcome and rec.outcome != outcome:
                         continue
@@ -224,8 +317,11 @@ class OutcomeTracker:
                         continue
                     if project_id and rec.project_id != project_id:
                         continue
+                    if task_category and rec.task_category != task_category:
+                        continue
                     results.append(rec)
                 except (json.JSONDecodeError, TypeError, ValueError):
                     continue
         return results
+
 

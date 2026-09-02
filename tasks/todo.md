@@ -1,4 +1,21 @@
+# Capability Evidence Engine — Task 1 Schema Extension
+
+## Implementation
+- [x] create controlled vocabulary module (`memory_controller/task_categories.py`) `[owner: antigravity | timestamp: 2026-09-02T19:34:27+03:00]`
+- [x] extend `OutcomeRecord` with `task_category`, `task_signature`, and `observed_capabilities` (`memory_controller/outcome_tracker.py`) `[owner: antigravity | timestamp: 2026-09-02T19:35:04+03:00]`
+- [x] extend `OutcomeTracker.record_run` and `list_records` with backward-compatible defaults `[owner: antigravity | timestamp: 2026-09-02T19:35:04+03:00]`
+- [x] implement comprehensive test suite for Task 1 in `memory_controller/tests/test_outcome_tracker.py` and `test_observed_memory_trace.py` `[owner: antigravity | timestamp: 2026-09-02T19:35:38+03:00]`
+- [x] verify legacy outcome/trace deserialization without `project_id`/`task_category`/`observed_capabilities` `[owner: antigravity | timestamp: 2026-09-02T19:35:55+03:00]`
+- [x] verify strict rejection of arbitrary categories `[owner: antigravity | timestamp: 2026-09-02T19:35:55+03:00]`
+- [x] verify declared-only capability exclusion from observed capabilities `[owner: antigravity | timestamp: 2026-09-02T19:35:55+03:00]`
+- [x] run master test regression (244 passed in memory_controller, 43 in evaluation) `[owner: antigravity | timestamp: 2026-09-02T19:36:18+03:00]`
+- [x] update lessons (`tasks/lessons.md`) `[owner: antigravity | timestamp: 2026-09-02T19:36:35+03:00]`
+- [x] commit
+
+---
+
 # Project Session Ledger & Skill Effectiveness Engine
+
 
 ## Implementation
 - [x] add optional `project_id` to `OutcomeRecord` and `OutcomeTracker` (`memory_controller/outcome_tracker.py`) `[owner: antigravity | timestamp: 2026-09-02T19:30:46+03:00]`

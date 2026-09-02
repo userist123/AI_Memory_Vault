@@ -199,3 +199,152 @@ def test_case_h_no_proposal_queue_coupling():
     assert "proposal_queue" not in src.lower(), (
         "Coupling violation: string reference to proposal_queue in outcome_tracker"
     )
+
+
+def test_legacy_outcome_without_project_id_deserialization(tmp_path):
+    """Test backward compatibility: Legacy outcome records without new fields parse cleanly."""
+    import json
+    ledger = tmp_path / "telemetry" / "outcomes" / "council_outcomes.jsonl"
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+
+    legacy_json = {
+        "run_id": "legacy_run_001",
+        "outcome": "fail",
+        "verification_method": "exit_code",
+        "timestamp": "2026-09-01T10:00:00Z",
+        "task_signature": "abc123sig",
+        "event_id": "evt_legacy001",
+        "evidence": "process crashed",
+        "recorded_by": "old_agent",
+        "metadata": None,
+    }
+    with open(ledger, "w", encoding="utf-8") as f:
+        f.write(json.dumps(legacy_json) + "\n")
+
+    tracker = OutcomeTracker(ledger_path=ledger)
+    record = tracker.get_record("legacy_run_001")
+    assert record is not None
+    assert record.run_id == "legacy_run_001"
+    assert record.project_id is None
+    assert record.task_category == "unknown"
+    assert record.observed_capabilities == {
+        "skills": [],
+        "agents": [],
+        "knowledge_refs": [],
+        "procedure_refs": [],
+    }
+
+
+def test_new_outcome_with_project_id_and_task_category(tmp_path):
+    """Test new outcome records with project_id, controlled task_category, and observed_capabilities."""
+    ledger = tmp_path / "telemetry" / "outcomes" / "council_outcomes.jsonl"
+    tracker = OutcomeTracker(ledger_path=ledger)
+
+    rec = tracker.record_run(
+        run_id="run_new_002",
+        task="Build API router endpoint",
+        outcome=Outcome.SUCCESS.value,
+        verification_method=VerificationMethod.TEST_PASS.value,
+        project_id="PROJ-VAULT-CORE",
+        task_category="backend_api",
+        observed_capabilities={
+            "skills": ["SKILL-API-DESIGN"],
+            "agents": ["AGENT-ROUTER"],
+            "knowledge_refs": ["KNOW-Backend-Spec"],
+            "procedure_refs": ["PROC-API-Standard"],
+        },
+    )
+
+    assert rec.project_id == "PROJ-VAULT-CORE"
+    assert rec.task_category == "backend_api"
+    assert rec.observed_capabilities["skills"] == ["SKILL-API-DESIGN"]
+    assert rec.observed_capabilities["agents"] == ["AGENT-ROUTER"]
+    assert rec.observed_capabilities["knowledge_refs"] == ["KNOW-Backend-Spec"]
+    assert rec.observed_capabilities["procedure_refs"] == ["PROC-API-Standard"]
+
+    fetched = tracker.get_record("run_new_002")
+    assert fetched is not None
+    assert fetched.project_id == "PROJ-VAULT-CORE"
+    assert fetched.task_category == "backend_api"
+
+
+def test_controlled_task_category_validation_and_rejection(tmp_path):
+    """Test strict controlled vocabulary for task_category."""
+    ledger = tmp_path / "telemetry" / "outcomes" / "council_outcomes.jsonl"
+    tracker = OutcomeTracker(ledger_path=ledger)
+
+    # Valid categories pass
+    for cat in [
+        "frontend_motion", "frontend_layout", "backend_api", "database",
+        "security_audit", "trading_logic", "documentation", "testing",
+        "infra_devops", "unknown"
+    ]:
+        rec = tracker.record_run(
+            run_id=f"run_cat_{cat}",
+            task="task text",
+            outcome=Outcome.UNKNOWN.value,
+            task_category=cat,
+        )
+        assert rec.task_category == cat
+
+    # None or empty defaults to 'unknown'
+    rec_none = tracker.record_run(
+        run_id="run_cat_none",
+        task="task text",
+        outcome=Outcome.UNKNOWN.value,
+        task_category=None,
+    )
+    assert rec_none.task_category == "unknown"
+
+    # Arbitrary strings rejected
+    with pytest.raises(ValueError, match="Invalid task_category 'magic_ai_marketing'"):
+        tracker.record_run(
+            run_id="run_cat_invalid",
+            task="task text",
+            outcome=Outcome.UNKNOWN.value,
+            task_category="magic_ai_marketing",
+        )
+
+
+def test_declared_capability_does_not_populate_observed_capabilities(tmp_path):
+    """Hard invariant: declared capabilities in metadata never populate observed_capabilities."""
+    ledger = tmp_path / "telemetry" / "outcomes" / "council_outcomes.jsonl"
+    tracker = OutcomeTracker(ledger_path=ledger)
+
+    rec = tracker.record_run(
+        run_id="run_anti_fab_001",
+        task="task with declared skills in prose",
+        outcome=Outcome.UNKNOWN.value,
+        metadata={"declared_skills": ["SKILL-FABRICATED-VOICE", "SKILL-MAGIC"]},
+        observed_capabilities=None,
+    )
+
+    assert rec.observed_capabilities["skills"] == []
+    assert "SKILL-FABRICATED-VOICE" not in rec.observed_capabilities["skills"]
+
+
+def test_project_id_remains_unchanged_across_lifecycle(tmp_path):
+    """Test that project_id remains consistent across append-only observations."""
+    ledger = tmp_path / "telemetry" / "outcomes" / "council_outcomes.jsonl"
+    tracker = OutcomeTracker(ledger_path=ledger)
+
+    rec1 = tracker.record_run(
+        run_id="run_proj_lifecycle",
+        task="execute migration",
+        outcome=Outcome.PARTIAL.value,
+        verification_method=VerificationMethod.EXIT_CODE.value,
+        project_id="PROJ-LIFECYCLE-1",
+    )
+    rec2 = tracker.record_run(
+        run_id="run_proj_lifecycle",
+        task="execute migration",
+        outcome=Outcome.SUCCESS.value,
+        verification_method=VerificationMethod.TEST_PASS.value,
+        project_id="PROJ-LIFECYCLE-1",
+    )
+
+    history = tracker.get_history("run_proj_lifecycle")
+    assert len(history) == 2
+    assert history[0].project_id == "PROJ-LIFECYCLE-1"
+    assert history[1].project_id == "PROJ-LIFECYCLE-1"
+
