@@ -1,0 +1,351 @@
+{
+  "reconciliation_metadata": {
+    "generated_at": "2026-09-03T01:44:00Z",
+    "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+    "status": "COMPLETED",
+    "canonical_numeric_specification_found": false,
+    "verdict_code": "NO_CANONICAL_NUMERIC_SPECIFICATION_FOUND",
+    "canonical_specification_summary": "No 1-to-1 sequential specification of P0 through P15 as individual security invariant definitions exists in the repository. The numeric label P0-P15 is an umbrella shorthand derived from the 15 adversarial test contracts (P0-001 through P0-015) in 99_SYSTEM/Phase43_P0_Implementation_Contract.md that enforce the 12 canonical invariants (I-001 through I-012). Conversely, P16, P17, and P18 possess exact, explicit definitions in .agents/rules/vault_cognitive_rules.md."
+  },
+  "canonical_discovery_by_source": {
+    "99_SYSTEM/Phase43_P0_Implementation_Contract.md": {
+      "finding_type": "PRIMARY_AUTHORITATIVE_SPECIFICATION",
+      "p0_meaning": "Phase 4.3 P0 (Priority 0) Security Hardening",
+      "test_contract_range": "P0-001 through P0-015 (15 test contracts)",
+      "invariants_defined": "I-001 through I-012 (12 security invariants)"
+    },
+    "99_SYSTEM/Phase43_Forensic_Validation.md": {
+      "finding_type": "PRIORITY_TIER_DEFINITION",
+      "p0_meaning": "Priority 0 Security/Trust Boundary Violation (OMEGA-001, OMEGA-002, OMEGA-006)",
+      "p1_meaning": "Priority 1 Correctness/Data Integrity (OMEGA-004, OMEGA-005, OMEGA-008)",
+      "p2_meaning": "Priority 2 Architectural Weakness (OMEGA-003, OMEGA-007, OMEGA-009)",
+      "p3_meaning": "Priority 3 Maintainability (OMEGA-012)"
+    },
+    ".agents/rules/vault_cognitive_rules.md": {
+      "finding_type": "OPERATIONAL_RULE_SPECIFICATION",
+      "section_1_header": "## 1. Trust Boundary Invariants (P0-P15)",
+      "section_1_entries": [
+        "AI Self-Verification Gated (Principal.AI_AGENT cannot set verification = 'verified')",
+        "Attestation (Only Principal.HUMAN and Principal.ADMIN can invoke controller.attest() via Operation.ATTEST)",
+        "Privileged Provenance (Principal.AI_AGENT cannot claim user, official, experience, import)",
+        "Creation Lifecycles (Principal.AI_AGENT can only propose into {RAW, CLASSIFIED, NORMALIZED, REVIEW})",
+        "Provenance Immutability (provenance.source_type cannot be modified post-creation)",
+        "Unified Secure Retrieval Invariant (MemoryController.search() gating across REST API and recall_cli fallback)"
+      ],
+      "section_4_header": "## 4. Hardware Telemetry & Forensics Invariants (P16-P18)",
+      "section_4_entries": [
+        "P16 - Hardware Telemetry Immutability",
+        "P17 - Friendly Name Isolation",
+        "P18 - Forensics & Chain of Custody Integrity"
+      ]
+    },
+    "scratch/p08.txt": {
+      "finding_type": "SPRINT_WBS_ONLY",
+      "entries": [
+        "P0-1 LIFECYCLE",
+        "P0-2 PAGINATION",
+        "P0-3 FRONTMATTER VALIDATION",
+        "P0-4 RAW_IMPORTS",
+        "P0-5 GIT ISOLATION",
+        "P0-6 CONTEXT ECONOMY",
+        "P0-7 CACHE",
+        "P0-8 SECURITY",
+        "P0-9 AUDIT"
+      ]
+    },
+    "memory_controller/financial_schema.py": {
+      "finding_type": "INFORMAL_AD_HOC_MAPPING",
+      "entries": [
+        "P0: Cannot produce verification='verified'",
+        "P2: Cannot claim privileged source_type",
+        "P3: Cannot directly propose into ACTIVE, VERIFIED, SUPERSEDED, ARCHIVED"
+      ],
+      "gap": "P1 and P4 through P15 are absent."
+    }
+  },
+  "canonical_invariant_matrix": [
+    {
+      "id": "I-001",
+      "canonical_definition": "AI cannot self-verify (Principal.AI_AGENT cannot set verification='verified')",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L280; .agents/rules/vault_cognitive_rules.md:L9",
+      "current_implementation": "memory_controller/controller.py:L133-L136, L241-L245",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_001_ai_cannot_propose_verified, test_p0_005_ai_cannot_update_verification_to_verified; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_propose_verified_strict_rejection_and_zero_writes",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-002",
+      "canonical_definition": "AI cannot claim privileged provenance (cannot claim source_type in {user, official, experience, import})",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L281; .agents/rules/vault_cognitive_rules.md:L11",
+      "current_implementation": "memory_controller/controller.py:L138-L144",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_002_ai_cannot_claim_official_provenance, test_p0_003_ai_cannot_claim_user_provenance; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_forge_privileged_provenance_types",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-003",
+      "canonical_definition": "AI cannot inject an escalated lifecycle at creation (cannot propose into {ACTIVE, VERIFIED, SUPERSEDED, ARCHIVED})",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L282; .agents/rules/vault_cognitive_rules.md:L12",
+      "current_implementation": "memory_controller/controller.py:L146-L151",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_004_ai_cannot_inject_active_lifecycle_at_creation; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_propose_active_lifecycle_strict_rejection",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-004",
+      "canonical_definition": "Verification escalation requires authorized attestation (only Principal.HUMAN and Principal.ADMIN can invoke Operation.ATTEST)",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L283; .agents/rules/vault_cognitive_rules.md:L10",
+      "current_implementation": "memory_controller/controller.py:L316-L355; memory_controller/authorizer.py:L26",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_010_human_attestation, test_p0_011_admin_attestation_and_ai_agent_denied; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_attest_unauthorized_permission_error",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-005",
+      "canonical_definition": "Provenance source_type is principal-scoped at creation and immutable thereafter",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L284; .agents/rules/vault_cognitive_rules.md:L13",
+      "current_implementation": "memory_controller/controller.py:L247-L253",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_006_provenance_source_type_immutable; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_provenance_source_type_post_creation_immutability",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-006",
+      "canonical_definition": "Security fields (verification, provenance.source_type, lifecycle, created, updated) cannot be arbitrarily overwritten by caller payload",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L285",
+      "current_implementation": "memory_controller/controller.py:L128-L155, L239-L256",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_007_lifecycle_immutable_on_update; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_lifecycle_field_immutability_on_update",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-007",
+      "canonical_definition": "Rejected payloads never persist (zero partial writes across memory and disk storage engines)",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L286",
+      "current_implementation": "memory_controller/controller.py:L170-L177, L268-L275; memory_controller/storage/file_engine.py",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_013_atomic_non_persistence; memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_file_storage_zero_disk_artifacts_on_rejected_proposals, test_attack_multi_threaded_adversarial_barrage_zero_partial_writes",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-008",
+      "canonical_definition": "MemoryController remains the final security boundary, independent of Executive or ToolRouter wrappers",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L287",
+      "current_implementation": "memory_controller/controller.py:L124-L155",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_008_direct_controller_attack_blocked; cognitive_core/tests/test_tool_router_security.py::test_p0_009_tool_router_blocks_ai_verified_propose",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-009",
+      "canonical_definition": "Legitimate AI provenance (inference, ai, execution) continues working without false rejection",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L288",
+      "current_implementation": "memory_controller/controller.py:L139 (ai_permitted_types = {'execution', 'ai', 'inference', 'unknown'})",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_ai_permitted_provenance_types",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-010",
+      "canonical_definition": "LearningEngine cannot manufacture verified, only partially_verified",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L289",
+      "current_implementation": "cognitive_core/learning.py; memory_controller/controller.py:L241-L245",
+      "test_coverage": "cognitive_core/tests/test_tool_router_security.py::test_p0_012_learning_engine_partially_verified_promotion",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-011",
+      "canonical_definition": "Supersession does not transfer verification or provenance trust to new notes",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L290",
+      "current_implementation": "memory_controller/controller.py:L280-L314; memory_controller/validation/supersession.py",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_015_supersession_does_not_transfer_trust",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-012",
+      "canonical_definition": "Vault reload / restart preserves attested trust state durably",
+      "source": "99_SYSTEM/Phase43_P0_Implementation_Contract.md:L291",
+      "current_implementation": "memory_controller/storage/file_engine.py; memory_controller/storage/sqlite_engine.py",
+      "test_coverage": "memory_controller/tests/test_security_hardening.py::test_p0_014_restart_preserves_attestation",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "I-RETRIEVAL",
+      "canonical_definition": "Unified Secure Retrieval Invariant: all queries (API REST or CLI fallback) must pass MemoryController.search() with Principal.AI_AGENT; raw filesystem scans are prohibited",
+      "source": ".agents/rules/vault_cognitive_rules.md:L14; AGENTS.md:L60-L68; CLAUDE.md:L26-L28",
+      "current_implementation": "cognitive_core/recall_cli.py:L14-L88; vault_api.py:L28-L50",
+      "test_coverage": "cognitive_core/tests/test_secure_recall_cli.py::test_search_markdown_vault_valid_query, test_search_markdown_vault_p0_p15_raw_lifecycle_excluded, test_search_markdown_vault_oversized_query_rejected, test_recall_cli_cli_subprocess",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "P16",
+      "canonical_definition": "Hardware Telemetry Immutability: physical OS identifiers (VID, PID, Serial Number, Physical Capacity, Host ID, Timestamp, SHA-256) are strict Read-Only; UI blocks manual edits",
+      "source": ".agents/rules/vault_cognitive_rules.md:L31",
+      "current_implementation": "projects/registru-transferuri/ (C#/.NET 10 WPF subsystem models)",
+      "test_coverage": "projects/registru-transferuri/ (Tested via desktop solution tests; not part of python memory_controller suite)",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "P17",
+      "canonical_definition": "Friendly Name Isolation: user can modify logical volume label and administrative metadata without altering physical hardware identifiers",
+      "source": ".agents/rules/vault_cognitive_rules.md:L32",
+      "current_implementation": "projects/registru-transferuri/ (C#/.NET 10 WPF subsystem models)",
+      "test_coverage": "projects/registru-transferuri/ (Tested via desktop solution tests; not part of python memory_controller suite)",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "id": "P18",
+      "canonical_definition": "Forensics & Chain of Custody Integrity: transfer events link immutable hardware fingerprint into tamper-evident audit log",
+      "source": ".agents/rules/vault_cognitive_rules.md:L33",
+      "current_implementation": "projects/registru-transferuri/ (C#/.NET 10 WPF subsystem models); memory_controller/audit/logger.py (tamper-evident SHA-256 hash chaining)",
+      "test_coverage": "memory_controller/tests/test_audit_logger.py::test_audit_logger_hash_chaining",
+      "status": "IMPLEMENTED_AND_TESTED"
+    }
+  ],
+  "actual_security_controls_inventory": [
+    {
+      "control_name": "Principal authorization",
+      "implementation_path": "memory_controller/authorizer.py:L18-L38",
+      "primary_test": "memory_controller/tests/test_authorizer.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Operation authorization",
+      "implementation_path": "memory_controller/authorizer.py:L6-L16",
+      "primary_test": "memory_controller/tests/test_authorizer.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Query-size validation (MAX_QUERY_LENGTH=4096)",
+      "implementation_path": "memory_controller/security/utils.py:L14-L22",
+      "primary_test": "cognitive_core/tests/test_secure_recall_cli.py::test_search_markdown_vault_oversized_query_rejected; memory_controller/tests/test_security_utils.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Query sanitization",
+      "implementation_path": "memory_controller/security/utils.py:L24-L35",
+      "primary_test": "memory_controller/tests/test_security_utils.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Path traversal checks",
+      "implementation_path": "memory_controller/security/utils.py:L37-L49",
+      "primary_test": "memory_controller/tests/test_security_utils.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Cache-poisoning checks and event-based invalidation",
+      "implementation_path": "memory_controller/security/utils.py:L51-L63; memory_controller/cache/",
+      "primary_test": "memory_controller/tests/test_cache.py, memory_controller/tests/test_cache_invalidation.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "RAW lifecycle exclusion from search",
+      "implementation_path": "memory_controller/controller.py:L200-L225",
+      "primary_test": "cognitive_core/tests/test_secure_recall_cli.py::test_search_markdown_vault_p0_p15_raw_lifecycle_excluded",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Creation lifecycle restriction (blocks ACTIVE/VERIFIED)",
+      "implementation_path": "memory_controller/controller.py:L146-L151",
+      "primary_test": "memory_controller/tests/test_security_hardening.py::test_p0_004_ai_cannot_inject_active_lifecycle_at_creation",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Provenance source_type validation",
+      "implementation_path": "memory_controller/controller.py:L138-L144; memory_controller/validation/provenance.py",
+      "primary_test": "memory_controller/tests/test_security_hardening.py::test_p0_002_ai_cannot_claim_official_provenance",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Provenance immutability on update",
+      "implementation_path": "memory_controller/controller.py:L247-L253",
+      "primary_test": "memory_controller/tests/test_security_hardening.py::test_p0_006_provenance_source_type_immutable",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Pagination token HMAC-SHA256 integrity",
+      "implementation_path": "memory_controller/pagination/token.py:L45-L95",
+      "primary_test": "memory_controller/tests/test_pagination.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "HMAC secret requirement enforcement",
+      "implementation_path": "memory_controller/pagination/token.py:L30-L42",
+      "primary_test": "memory_controller/tests/test_pagination.py::test_missing_hmac_secret",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Context budget enforcement",
+      "implementation_path": "cognitive_core/council_budget.py:L40-L110",
+      "primary_test": "cognitive_core/tests/test_council_budget.py, test_council_context_budget.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Progressive disclosure filtering",
+      "implementation_path": "memory_controller/controller.py:L215-L230",
+      "primary_test": "memory_controller/tests/test_controller_search.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Cryptographic audit logging (SHA-256 chaining)",
+      "implementation_path": "memory_controller/audit/logger.py:L60-L125",
+      "primary_test": "memory_controller/tests/test_audit_logger.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Supersession trust isolation",
+      "implementation_path": "memory_controller/controller.py:L280-L315; memory_controller/validation/supersession.py",
+      "primary_test": "memory_controller/tests/test_security_hardening.py::test_p0_015_supersession_does_not_transfer_trust",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Least-privilege worker action scoping",
+      "implementation_path": "cognitive_core/orchestrator.py:L40-L90; cognitive_core/tool_router.py",
+      "primary_test": "cognitive_core/tests/test_tool_router_security.py",
+      "status": "IMPLEMENTED_AND_TESTED"
+    },
+    {
+      "control_name": "Attestation authorization (Human/Admin only)",
+      "implementation_path": "memory_controller/controller.py:L316-L355",
+      "primary_test": "memory_controller/tests/test_security_hardening.py::test_p0_010_human_attestation, test_p0_011_admin_attestation_and_ai_agent_denied",
+      "status": "IMPLEMENTED_AND_TESTED"
+    }
+  ],
+  "documentation_classification": {
+    "canonical_specification": [
+      "99_SYSTEM/Phase43_P0_Implementation_Contract.md (defines P0-001 through P0-015 test contracts and I-001 through I-012 invariants)",
+      ".agents/rules/vault_cognitive_rules.md:L30-L34 (defines P16, P17, P18 hardware forensics invariants)"
+    ],
+    "implementation_comment": [
+      "memory_controller/tests/test_security_hardening.py:L60-L267 (# P0-001 through # P0-015 comments)",
+      "cognitive_core/tests/test_tool_router_security.py:L26, L40, L54 (# P0-009, # P0-009b, # P0-012)",
+      "memory_controller/tests/test_adversarial_p0_p15_invariants.py:L67, L86, L158, L223, L266",
+      "memory_controller/controller.py:L203, L374",
+      "cognitive_core/tests/test_secure_recall_cli.py:L23, L57",
+      "vault_api.py:L28"
+    ],
+    "active_operational_instruction": [
+      "AGENTS.md:L64-L66 (Unified Secure Retrieval Policy citing P0-P15)",
+      "CLAUDE.md:L26-L28 (Fallback retrieval instruction citing P0-P15)",
+      ".agents/rules/vault_cognitive_rules.md:L8-L14 (Trust Boundary Invariants section)",
+      "cognitive_core/recall_cli.py:L49, L101 (CLI help and docstring citing P0-P15)"
+    ],
+    "historical_audit": [
+      "07_EVALUATION/reports/security_removal_v1_2026-09.md:L4",
+      "07_EVALUATION/reports/vault_reorganization_phase1a_blockers_2026-09.md:L190, L247, L272",
+      "07_EVALUATION/reports/vault_reorganization_phase1b_canonical_architecture_2026-09.md:L52, L124, L136, L267",
+      "07_EVALUATION/reports/vault_reorganization_phase2_migration_design_2026-09.md:L112, L313",
+      "07_EVALUATION/reports/vault_numeric_architecture_redesign_2026-09.md:L39, L74, L249",
+      "07_EVALUATION/reports/vault_numeric_architecture_v2_2026-09.md:L129",
+      "07_EVALUATION/reports/post_cleanup_baseline_2026-09.md"
+    ],
+    "stale_or_informal_documentation": [
+      "memory_controller/financial_schema.py:L7, L105, L568, L573-L575, L632, L644, L664, L679 (Uses informal P0, P2, P3 labels without defining P1 or P4-P15)",
+      "99_SYSTEM/MCP_Memory_Server_Specification.md:L52 (References P0-P18 without listing numeric items P0-P15)",
+      "README.md:L6 (Uses P0-P18 badge/summary without clarifying the distinction between P0-015 test cases and P16-P18 hardware invariants)"
+    ],
+    "ambiguous_or_unresolved": [
+      "The compound label 'P0-P15' when interpreted as 16 discrete sequentially numbered invariant rules P0, P1, ..., P15, because no such 1-to-1 list exists anywhere in the repository."
+    ]
+  },
+  "verdict_answers": {
+    "q1_is_there_a_canonical_p_numbered_specification": "PARTIAL / NO for sequential P0-P15. There is NO canonical document defining 16 individual invariant rules numbered P0, P1, P2, ..., P15. The canonical specification for P0 is 99_SYSTEM/Phase43_P0_Implementation_Contract.md, which defines 15 adversarial test contracts (P0-001 through P0-015) and 12 security invariants (I-001 through I-012). For P16, P17, P18, the canonical specification is .agents/rules/vault_cognitive_rules.md.",
+    "q2_is_it_p0_p15_or_p0_p18": "It is a hybrid composite: 'P0-P15' refers to the Memory Controller Phase 4.3 P0 test suite (P0-001 through P0-015 covering invariants I-001 through I-012). 'P16-P18' refers to the Hardware Telemetry & Forensics Invariants in .agents/rules/vault_cognitive_rules.md. The compound phrase 'P0-P18' was created by appending P16-P18 to P0-P15.",
+    "q3_which_controls_are_actually_implemented": "All 18 core security controls enumerated in the actual controls inventory are fully implemented in code (Principal auth, Operation auth, query size check, query sanitization, path traversal, cache invalidation, RAW exclusion, creation lifecycle gate, provenance validation, provenance immutability, HMAC pagination tokens, HMAC secret requirement, context budgeting, progressive disclosure, audit log hash-chaining, supersession isolation, least-privilege worker scoping, attestation authorization). In addition, P16-P18 hardware forensics controls are implemented in the C# desktop solution.",
+    "q4_which_controls_are_tested": "All 18 implemented memory security controls have passing automated test suites in memory_controller/tests/ and cognitive_core/tests/ (37 passing security-specific tests, 1,671 tests overall in the repository).",
+    "q5_which_documentation_is_stale": "1) memory_controller/financial_schema.py (informal P0, P2, P3 shorthand); 2) README.md (mentions P0-P18 without explaining the composite nature of P0-015 tests vs P16-P18 hardware invariants); 3) MCP_Memory_Server_Specification.md (cites P0-P18 without numeric definitions).",
+    "q6_minimum_corrective_action_required": "Publish this canonical reconciliation report establishing that P0-P15 represents the 15 adversarial test contracts (P0-001 to P0-015) and 12 trust invariants (I-001 to I-012), while P16-P18 represents the hardware telemetry invariants. In future documentation cleanup tasks, add explicit references in .agents/rules/vault_cognitive_rules.md linking Section 1 to Phase43_P0_Implementation_Contract.md without modifying any production code."
+  }
+}
