@@ -32,13 +32,14 @@ relations:
 <p align="center">
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions"><img alt="CI" src="https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/agents"><img alt="Agents" src="https://img.shields.io/badge/Agents-21-FF8A00"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills"><img alt="Skills" src="https://img.shields.io/badge/Operational%20Skills-250%2B-22C55E"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.agents/skills"><img alt="Skills" src="https://img.shields.io/badge/Cataloged%20Skills-3%2C699-22C55E"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/07_EVALUATION"><img alt="Security" src="https://img.shields.io/badge/Trust%20Invariants-P0--P18%20Verified-blueviolet"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-Plugin-7C3AED"></a>
   <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Synced-7C3AED"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY"><img alt="Repository" src="https://img.shields.io/badge/Repository-Git--based-111827"></a>
 </p>
 
-> **AI Memory Vault** is the canonical persistence and knowledge layer for a multi-agent AI ecosystem. It lets different AI clients and local agents share the same durable memory, skill library, procedures, provenance, retrieval infrastructure and human-auditable state without creating parallel memories.
+> **AI Memory Vault** is the canonical persistence and knowledge layer for a multi-agent AI ecosystem. It lets different AI clients (Claude Code, Antigravity, Codex) and local agents share the same durable memory, skill library, procedures, provenance, retrieval infrastructure and human-auditable state without creating parallel memories.
 
 ---
 
@@ -188,6 +189,22 @@ large persistent knowledge
 
 ---
 
+## 🛡️ Unified Secure Memory Retrieval Policy
+
+All agents (Claude Code, Antigravity, Codex, etc.) access vault memory exclusively through authorized, audited interfaces:
+
+- **Primary Interface**: Local REST API (`http://localhost:8000/memory/search?query=...`)
+- **Secure Fallback CLI**: `python -m cognitive_core.recall_cli --query "..."` (safe by design, delegates directly to `MemoryController.search()` under `Principal.AI_AGENT`)
+
+### Enforced Trust Controls:
+1. **P0–P15 Trust Boundary Gating**: Strict enforcement preventing AI self-verification (`verification = 'verified'` is rejected), privileged provenance claiming (`user`, `official` rejected for AI), and creation lifecycle escalation (proposals restricted to `RAW`, `CLASSIFIED`, `NORMALIZED`, `REVIEW`).
+2. **RAW Lifecycle Exclusion**: Unvetted `RAW` notes are filtered out of all normal search results.
+3. **Query Boundary & Sanitization**: Strict 4,096-character limit with injection sanitization.
+4. **Tamper-Evident Audit Logging**: Cryptographically chained SHA-256 hash logging (`audit_log.jsonl`).
+5. **No Direct Filesystem Scans**: Raw `os.walk` traversals and unauthenticated memory bypasses are strictly prohibited across all runtimes.
+
+---
+
 # 🤖 Agents & Council
 
 The repository contains a specialized agent ecosystem coordinated through capability and skill matching.
@@ -226,17 +243,22 @@ Agent profiles live under `.agents/agents/`; routing and coverage are maintained
 
 Skills are treated as reusable **capabilities**, not just prompt snippets.
 
-## Operational skill library
+## Canonical Skill Catalog (3,699 Physical Skills)
 
 ```text
 .agents/skills/
 ```
 
-The repository currently contains a broad operational skill library covering engineering, web, UI/UX, animation, visualization, AI/LLM, infrastructure, security and domain-specific work. The canonical project catalog is:
+The active skill tree contains **3,699 physical skill directories** owning an independent `SKILL.md`, cataloged without drift in:
 
 ```text
 01_KNOWLEDGE/Master_Skills_Catalog_251.md
 ```
+
+### Population Breakdown:
+- **3,448 Extracted Canonical Skills**: Imported from verified repositories with formal `PROVENANCE.json` lineage (representing the 3,450 extraction baseline minus 2 permanently removed critical skills).
+- **252 Native / Core Skills**: Pre-existing skills native to the vault's core capabilities.
+- **Automated GitHub Actions Regeneration**: Every commit to `main` executes the `regenerate-skill-catalog` job in `.github/workflows/memory-v6-tests.yml`, guaranteeing continuous 1:1 synchronization between physical directories and catalog entries (0 difference).
 
 ## UI/UX Pro Max
 
@@ -587,6 +609,29 @@ CI is the authority for commit-level pass/fail claims; local test output is supp
 
 ---
 
+# 🛡️ Security Invariants & Verified Baseline
+
+The repository enforces strict trust boundaries and forensic invariants to prevent unauthorized AI self-elevation and memory tampering:
+
+### 1. Invariant Architecture (`P0-P18`)
+- **`P0-P15` Memory Trust Boundaries**:
+  - Originates from the 15 adversarial test contracts (`P0-001` through `P0-015`) in `99_SYSTEM/Phase43_P0_Implementation_Contract.md`.
+  - Formally codifies 12 canonical security invariants (`I-001` through `I-012`): blocks AI self-verification (`verification = 'verified'` rejected for AI), prevents privileged provenance forging, restricts proposal lifecycles to non-authoritative states (`RAW`, `CLASSIFIED`, `NORMALIZED`, `REVIEW`), enforces post-creation provenance immutability, guarantees zero partial writes on rejection, requires human/admin attestation, and isolates supersession trust.
+- **`P16-P18` Hardware Telemetry & Forensics**:
+  - Codified in `.agents/rules/vault_cognitive_rules.md` (Section 4): enforces hardware immutability (`P16`), friendly name isolation (`P17`), and tamper-evident forensics chain-of-custody logging (`P18`).
+- **Authoritative Reconciliation**: Full archaeological audit and test mappings are maintained in:
+  - `07_EVALUATION/security_invariant_reconciliation_2026-09.md`
+  - `07_EVALUATION/security_invariant_reconciliation_2026-09.json`
+
+### 2. Verified Post-Cleanup Baseline
+- **Defender Hygiene**: 6 weaponized XSS payloads in `06_INBOX/RAW_IMPORTS/` confirmed by Windows Defender were deleted; 2 critical active skills (`sandbase-mcp`, `aspire`) permanently removed.
+- **Corpus Integrity**: The raw external research corpus (`66,750` files across 85 repositories) remains fully preserved without broad purge.
+- **Baseline Manifest**:
+  - `07_EVALUATION/reports/post_cleanup_baseline_2026-09.md`
+  - `07_EVALUATION/post_cleanup_baseline_2026-09.json`
+
+---
+
 # 🏗️ Repository Structure
 
 ```text
@@ -629,9 +674,13 @@ AI_Memory_Vault_CODEX_READY/
 | Canonical memory | `04_MEMORY/` |
 | Incoming/raw data | `06_INBOX/` |
 | System architecture | `99_SYSTEM/Memory_V6_Architecture.md` |
+| Secure Retrieval CLI (safe by design) | `cognitive_core/recall_cli.py` |
+| Memory Controller & P0-P15 Gating | `memory_controller/controller.py` |
 | Agent/skill mapping | `01_KNOWLEDGE/Agents_Skill_Matrix.md` |
-| Skill catalog | `01_KNOWLEDGE/Master_Skills_Catalog_251.md` |
+| Canonical Skill Catalog (3,699 skills) | `01_KNOWLEDGE/Master_Skills_Catalog_251.md` |
 | UI/UX Pro Max | `.agents/skills/ui-ux-pro-max/SKILL.md` |
+| Security Invariant Reconciliation | `07_EVALUATION/security_invariant_reconciliation_2026-09.md` |
+| Verified Post-Cleanup Baseline | `07_EVALUATION/reports/post_cleanup_baseline_2026-09.md` |
 | Skill ingestion | `scripts/skill_ingestion.py` |
 | Outcome labeling | `scripts/label_council_outcome.py` |
 | Obsidian synchronization | `99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync.md` |
@@ -759,6 +808,10 @@ The desired end state is not simply a larger database. It is a system that can *
 |---|---|
 | Canonical Vault | Active |
 | Memory V6 | Active |
+| Secure Retrieval CLI (`recall_cli`) | Active (Safe by Design, P0-P15 gated) |
+| Security Invariants (`P0-P18`) | Reconciled & Verified (37 passing security tests) |
+| Canonical Skill Catalog | 3,699 Active Physical Directories (CI Synchronized) |
+| Windows Defender Hygiene | Clean (6 XSS payloads & 2 critical skills removed) |
 | Multi-agent / Council architecture | Active |
 | Deterministic complexity & budget routing | Active |
 | Fake / Local / OpenAI model providers | Implemented |
@@ -776,7 +829,9 @@ The desired end state is not simply a larger database. It is a system that can *
 
 - [Memory V6 Architecture](99_SYSTEM/Memory_V6_Architecture.md)
 - [Agent ↔ Skill Matrix](01_KNOWLEDGE/Agents_Skill_Matrix.md)
-- [Master Skill Catalog](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
+- [Master Skill Catalog (3,699 skills)](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
+- [Security Invariant Reconciliation Report](07_EVALUATION/security_invariant_reconciliation_2026-09.md)
+- [Verified Post-Cleanup Baseline](07_EVALUATION/reports/post_cleanup_baseline_2026-09.md)
 - [Frontend UI/UX Standards](01_KNOWLEDGE/MOC_Frontend_UI_UX_Standards.md)
 - [UI Sensei Design Philosophy](01_KNOWLEDGE/UI_Sensei_Design_Philosophy.md)
 - [UI/UX Pro Max](.agents/skills/ui-ux-pro-max/SKILL.md)
