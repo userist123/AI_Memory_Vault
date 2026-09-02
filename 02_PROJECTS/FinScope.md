@@ -29,7 +29,7 @@ relations:
 
 ## 3. Location & Environment
 - **Path**: `C:\Users\user\finscope`
-- **Orchestration**: Claude Code with distributed GPU compute delegation (`cognitive_core/dispatch_cli.py`).
+- **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by P0-P15 `MemoryController`).
 
 ---
 

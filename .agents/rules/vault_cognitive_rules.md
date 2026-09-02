@@ -11,6 +11,7 @@ description: Cognitive Core and Memory Controller operating rules and trust boun
 - **Privileged Provenance**: `Principal.AI_AGENT` cannot claim `source_type` of `user`, `official`, `experience`, or `import`. Permitted: `execution`, `ai`, `inference`, `unknown`.
 - **Creation Lifecycles**: `Principal.AI_AGENT` can only propose into `{RAW, CLASSIFIED, NORMALIZED, REVIEW}`. Direct promotion to `ACTIVE` requires human review/attestation.
 - **Provenance Immutability**: `provenance.source_type` cannot be modified after initial creation.
+- **Unified Secure Retrieval Invariant**: Toate interogările de memorie (API REST sau CLI fallback) sunt supuse autorizării `MemoryController.search()`. Dacă serverul local e offline, se folosește exclusiv `python -m cognitive_core.recall_cli --query ...` (versiune securizată, trece prin aceleași verificări P0-P15). Orice ocolire prin scanare directă nesecurizată de fișiere este strict interzisă.
 
 ## 2. Multi-Agent Least Privilege Scoping
 - **Router Agent**: Analyzes queries and decomposes goals (Read/Search only).

@@ -57,6 +57,14 @@ Memory types include `knowledge`, `project`, `procedure`, `decision`, `experienc
 
 Raw imports remain under `06_INBOX/RAW_IMPORTS/` and are evidence, not canonical knowledge. Secrets must never be stored.
 
+### Unified Secure Retrieval Policy
+
+All agents (Claude Code, Antigravity, Codex, etc.) must access vault memory exclusively through authorized interfaces:
+- Primary: REST API `http://localhost:8000/memory/search?query=...`
+- Offline fallback: `python -m cognitive_core.recall_cli --query "..."` (versiune securizată, trece prin aceleași verificări P0-P15)
+
+Direct unauthenticated filesystem scans, raw `os.walk` traversals, or any attempts to bypass P0-P15 trust boundaries are strictly prohibited across all runtimes.
+
 ## Multi-Agent Development Coordination
 
 When multiple AI development environments/agents (Antigravity, Claude Code, ChatGPT, Perplexity, etc.) operate on this repository:
