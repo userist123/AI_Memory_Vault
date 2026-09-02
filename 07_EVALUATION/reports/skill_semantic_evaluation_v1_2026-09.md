@@ -1,14 +1,21 @@
 # Skill Semantic Evaluation V1 — Benchmark & Stratified Review
 
-**Evaluation Date**: 2026-09-03
-**Evaluator**: Antigravity Cognitive Core System Auditor (Semantic Benchmark Engine)
-**Cohort Size (Unique Skills)**: `502`
-**Starting Commit**: `46df686b6dafe33e8a75ae9e39efae86cd239fe4`
-**Phase**: `SKILL_SEMANTIC_EVALUATION_V1`
+**Evaluation Date**: 2026-09-03  
+**Evaluator**: Antigravity Cognitive Core System Auditor (Semantic Benchmark Engine)  
+**Cohort Size (Unique Skills)**: `502`  
+**Total Cohort Memberships**: `534`  
+**Starting Commit**: `30e10bdb029446a5846d5c8480d6d7ae1381cd04`  
+**Phase**: `SKILL_SEMANTIC_EVALUATION_V1`  
+
+```text
+REPORT_RECONCILIATION:
+Machine-readable artifacts are authoritative.
+Narrative metrics were corrected where inconsistent.
+```
 
 ---
 
-## 1. Executive Summary & Required Metrics
+## 1. Executive Summary & Reconciled Metrics
 
 ```text
 COHORT_SIZE=502
@@ -37,7 +44,21 @@ REVIEW_REQUIRED=9
 
 ---
 
-## 2. Score Distributions & Statistical Baseline
+## 2. Cohort Cardinality & Overlap Reconciliation
+
+```text
+Cohort memberships are intentionally overlapping.
+The benchmark evaluates 502 unique skills across 534 cohort memberships.
+```
+
+- **Sum of Cohort Memberships**: **`534`** ($9 + 100 + 50 + 100 + 100 + 50 + 25 + 100 = 534$)
+- **Unique Skills Across All Cohorts**: **`502`**
+- **Overlapping Memberships**: **`32`**
+- **Duplicate Skills Within Any Individual Cohort**: **`0`** (100% unique within each cohort)
+
+---
+
+## 3. Score Distributions & Statistical Baseline
 
 - **Average Semantic Score**: **`70.97 / 100`**
 - **Median Semantic Score**: **`72.0 / 100`**
@@ -59,7 +80,7 @@ REVIEW_REQUIRED=9
 
 ---
 
-## 3. P0 Security Cohort Deep Audit (9 Skills)
+## 4. P0 Security Cohort Deep Audit (9 Skills)
 
 | Skill Name | Risk | Pattern Detected | Required Safeguard |
 | :--- | :---: | :--- | :--- |
@@ -67,9 +88,9 @@ REVIEW_REQUIRED=9
 | `claude-in-chrome-troubleshooting` | `HIGH` | Privileged filesystem deletion or system config modification | Enforce container isolation and least-privilege non-root execution |
 | `gcp-cloud-run` | `HIGH` | Privileged filesystem deletion or system config modification | Enforce container isolation and least-privilege non-root execution |
 | `manage-skills` | `HIGH` | Privileged filesystem deletion or system config modification | Enforce container isolation and least-privilege non-root execution |
-| `sandbase-mcp` | `CRITICAL` | Remote download and pipe execution (curl | bash or iex webclient) | Prohibit dynamic execution; require audited local binary or checksum-verified wheel |
+| `sandbase-mcp` | `CRITICAL` | Remote download and pipe execution (curl \| bash or iex webclient) | Prohibit dynamic execution; require audited local binary or checksum-verified wheel |
 | `xss-html-injection` | `HIGH` | Privileged filesystem deletion or system config modification | Enforce container isolation and least-privilege non-root execution |
-| `aspire` | `CRITICAL` | Remote download and pipe execution (curl | bash or iex webclient) | Prohibit dynamic execution; require audited local binary or checksum-verified wheel |
+| `aspire` | `CRITICAL` | Remote download and pipe execution (curl \| bash or iex webclient) | Prohibit dynamic execution; require audited local binary or checksum-verified wheel |
 | `containerize-aspnetcore` | `HIGH` | Privileged filesystem deletion or system config modification | Enforce container isolation and least-privilege non-root execution |
 | `mcp-implementation-security-review` | `HIGH` | Privileged filesystem deletion or system config modification | Enforce container isolation and least-privilege non-root execution |
 
@@ -77,16 +98,29 @@ REVIEW_REQUIRED=9
 
 ---
 
-## 4. Gold Standard Dual Evaluation (30 Skills)
+## 5. Gold Standard Dual Evaluation (30 Skills Reconciled)
+
+Recomputed strictly from `gold_standard_dual_evaluation.json`:
 
 - **Evaluated Skills**: `30`
 - **Average Score Delta (|A - B|)**: **`2.20` points**
 - **Classification Agreement**: **`100.0%`**
-- **Disagreements Flagged for Human Review**: **`0`**
+- **Major Disagreements (|Delta| >= 10 or Class Mismatch)**: **`0`**
+- **Review Required in Gold Sample**: **`0`**
 
 ---
 
-## 5. Quality Invariants
+## 6. Benchmark Tasks & Ledger Cardinality
+
+- **Benchmark Task Count**: **`502`**
+- **Unique Skills Referenced in Tasks**: **`502`** (1:1 mapping with evaluated skills)
+- **Semantic Ledger Records**: **`502`**
+- **Unique Skill IDs in Ledger**: **`502`**
+- **P0 Skills Required / Audited**: **`9 / 9`** (`UNEXECUTED = TRUE`)
+
+---
+
+## 7. Quality Invariants
 
 ```text
 BENCHMARK_EVALUATED_SKILLS = 502
