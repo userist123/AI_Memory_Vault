@@ -110,6 +110,12 @@
 ## Capability Evidence Engine — Task 3.1 Observed Evidence Boundary Lessons
 - **Strict Trace-Only Evidence Authority**: Relying exclusively on `ObservedMemoryTrace.retrieved_memory_ids` for capability attribution prevents declared claims or unverified outcome metadata (`OutcomeRecord.observed_capabilities`) from generating synthetic capability cells without physical trace verification.
 
+## Capability Evidence Engine — Task 4 Promotion & Retirement Candidates Lessons
+- **Human-Gated Recommendation Boundary**: Preserving the fundamental principle `METRIC -> CANDIDATE` (never `METRIC -> AUTOMATIC ACTION`) ensures cognitive safety, preventing autonomous destructive actions or unverified capability mutations.
+- **Multi-Category Generalizability Invariant**: Requiring $\ge 2$ valid categories with Wilson lower bound $> 0.85$ prevents narrow, overfitted capabilities from qualifying for global promotion.
+- **Anti-Gaming Project Dominance Cap**: Restricting maximum project contribution to $\le 40\%$ eliminates benchmark-gaming and synthetic looping vulnerabilities within single project workspaces.
+
+
 
 
 

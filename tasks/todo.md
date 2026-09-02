@@ -1,4 +1,21 @@
+# Capability Evidence Engine — Task 4 Promotion / Retirement Candidates & Anti-Gaming
+
+## Implementation
+- [x] implement `memory_controller/promotion_candidates.py` with `flag_review_candidates` `[owner: antigravity | timestamp: 2026-09-02T20:44:52+03:00]`
+- [x] enforce Wilson lower bound thresholds (promotion > 0.85, retirement < 0.40) `[owner: antigravity | timestamp: 2026-09-02T20:44:52+03:00]`
+- [x] enforce multi-category generalizability (>= 2 valid categories) and trend safety (no degrading) `[owner: antigravity | timestamp: 2026-09-02T20:44:52+03:00]`
+- [x] enforce anti-gaming project usage cap (<= 40% max project share) `[owner: antigravity | timestamp: 2026-09-02T20:44:52+03:00]`
+- [x] author architecture and human-gated guide (`evaluation/promotion_candidates.md`) `[owner: antigravity | timestamp: 2026-09-02T20:45:05+03:00]`
+- [x] implement 20-test validation suite (`memory_controller/tests/test_promotion_candidates.py` - 20/20 passed) `[owner: antigravity | timestamp: 2026-09-02T20:45:55+03:00]`
+- [x] run master test regression (298 passed in memory_controller, 43 in evaluation - total 341) `[owner: antigravity | timestamp: 2026-09-02T20:46:34+03:00]`
+- [x] update lessons (`tasks/lessons.md`) `[owner: antigravity | timestamp: 2026-09-02T20:46:42+03:00]`
+- [x] commit
+- [x] push to `origin/main`
+
+---
+
 # Capability Evidence Engine — Task 3.1 Fix Observed Evidence Boundary
+
 
 ## Implementation
 - [x] enforce `ObservedMemoryTrace.retrieved_memory_ids` as sole capability evidence source in `memory_controller/capability_effectiveness.py` `[owner: antigravity | timestamp: 2026-09-02T20:40:09+03:00]`
