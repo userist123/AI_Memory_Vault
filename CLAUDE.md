@@ -23,9 +23,9 @@ Use the existing Vault memory interface when available:
 `http://localhost:8000/memory/search?query=subiectul_cautat`
 
 Dacă serverul local este offline, folosește CLI-ul securizat al vault-ului:
-`python -m cognitive_core.recall_cli --query "subiectul_cautat"` (versiune securizată, trece prin aceleași verificări P0-P15 ca și API-ul)
+`python -m cognitive_core.recall_cli --query "subiectul_cautat"` (versiune securizată, delegată la `MemoryController.search()`, respectă invariantele canonice `I-001..I-012` și `I-RETRIEVAL`, validate prin testele adversariale `P0-001..P0-015`)
 
-Use actual local Vault APIs/tools when available rather than inventing a parallel memory mechanism. Direct unauthenticated filesystem scans or bypasses of P0-P15 are strictly prohibited.
+Use actual local Vault APIs/tools when available rather than inventing a parallel memory mechanism. Direct unauthenticated filesystem scans or bypasses of memory trust boundaries (`I-001..I-012`, `I-RETRIEVAL`) are strictly prohibited.
 
 ## Skill ingestion → operational skill → agent
 

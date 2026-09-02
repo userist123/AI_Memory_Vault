@@ -49,12 +49,13 @@ Acest document definește adaptorul de server **Model Context Protocol (MCP)** s
 
 ---
 
-## 🛡️ 3. Conformitate cu Invariantele P0-P18
+## 🛡️ 3. Conformitate cu Invariantele de Securitate a Memoriei (I-001..I-012, I-RETRIEVAL)
 
-Adaptorul MCP este învelit peste `MemoryController` și impune strict:
-1. Blocarea oricărei încercări a agenților AI de a auto-atesta memoriile (`attest_memory` permisă exclusiv principalilor `HUMAN` / `ADMIN`).
-2. Protecția provenienței privilegiate (`user`, `official` pot fi atribuite doar de oameni).
-3. Înregistrarea tuturor apelurilor de unelte în jurnalul criptografic imutabil SHA-256 (`audit_log.jsonl`).
+Adaptorul MCP este integrat cu `MemoryController` și impune invariantele canonice de securitate a memoriei (validate prin suita de teste adversariale `P0-001..P0-015` conform `Phase43_P0_Implementation_Contract.md`):
+1. **I-001 / I-004**: Blocarea oricărei încercări a agenților AI de a auto-atesta memoriile (`attest_memory` permisă exclusiv principalilor `HUMAN` / `ADMIN`).
+2. **I-002 / I-005**: Protecția provenienței privilegiate (`user`, `official` pot fi atribuite doar de oameni; imutabilitate post-creare).
+3. **I-003**: Restricționarea ciclurilor de viață inițiale pentru propuneri AI la stările ne-canonice (`RAW`, `CLASSIFIED`, `NORMALIZED`, `REVIEW`).
+4. **I-007**: Înregistrarea tuturor apelurilor de unelte în jurnalul criptografic imutabil SHA-256 (`audit_log.jsonl`), garantând zero scrieri parțiale în caz de respingere.
 
 ---
 

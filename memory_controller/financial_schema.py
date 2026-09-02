@@ -565,14 +565,14 @@ def validate_financial_note(
 ) -> Tuple[bool, List[str]]:
     """
     Validates an input dictionary against FINANCIAL_NOTE_SCHEMA and enforces
-    Trust Boundary Invariants (P0-P18).
+    memory trust boundary invariants (I-001, I-002, I-003, tested under Phase 4.3 P0 contract).
 
     Args:
         data: Financial note dictionary (canonical note or payload).
         is_ai_agent: If True, enforces strict AI agent trust boundary invariants:
-          - P0: Cannot produce verification='verified' (allowed: partially_verified, unverified, inferred).
-          - P2: Cannot claim privileged provenance source_type ('user', 'official', 'experience', 'import').
-          - P3: Cannot directly propose into 'ACTIVE', 'VERIFIED', 'SUPERSEDED', or 'ARCHIVED'.
+          - I-001 (AI Self-Verification Gated): Cannot produce verification='verified' (allowed: partially_verified, unverified, inferred).
+          - I-002 (Privileged Provenance Gated): Cannot claim privileged provenance source_type ('user', 'official', 'experience', 'import').
+          - I-003 (Creation Lifecycle Restricted): Cannot directly propose into 'ACTIVE', 'VERIFIED', 'SUPERSEDED', or 'ARCHIVED'.
 
     Returns:
         Tuple[bool, List[str]]: (is_valid, error_messages)
@@ -629,7 +629,7 @@ def validate_financial_note(
             if confidence not in allowed_confidence:
                 errors.append(f"Invalid confidence: '{confidence}'. Allowed: {allowed_confidence}")
 
-    # 4. Invariant Enforcement (P0, P2, P3)
+    # 4. Invariant Enforcement (I-001, I-002, I-003 tested under P0 contract)
     if "verification" in fm:
         verification = fm.get("verification")
         if not isinstance(verification, str):

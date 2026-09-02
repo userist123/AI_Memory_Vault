@@ -61,9 +61,18 @@ Raw imports remain under `06_INBOX/RAW_IMPORTS/` and are evidence, not canonical
 
 All agents (Claude Code, Antigravity, Codex, etc.) must access vault memory exclusively through authorized interfaces:
 - Primary: REST API `http://localhost:8000/memory/search?query=...`
-- Offline fallback: `python -m cognitive_core.recall_cli --query "..."` (versiune securizată, trece prin aceleași verificări P0-P15)
+- Offline fallback: `python -m cognitive_core.recall_cli --query "..."` (versiune securizată, delegată la `MemoryController.search()` și supusă acelorași verificări ale invariantelor `I-001..I-012` și `I-RETRIEVAL` validate prin testele adversariale `P0-001..P0-015`)
 
-Direct unauthenticated filesystem scans, raw `os.walk` traversals, or any attempts to bypass P0-P15 trust boundaries are strictly prohibited across all runtimes.
+Direct unauthenticated filesystem scans, raw `os.walk` traversals, or any attempts to bypass memory trust boundaries (`I-001..I-012`, `I-RETRIEVAL`) are strictly prohibited across all runtimes.
+
+> **Nomenclatură Model de Securitate**:
+> - `P0` = Prioritatea Phase 4.3 P0 Security Hardening.
+> - `P0-001..P0-015` = Contractele de testare adversarială.
+> - `I-001..I-012` = Invariantele canonice de securitate a memoriei.
+> - `I-RETRIEVAL` = Invarianta de regăsire unificată securizată.
+> - `P1/P2/P3` = Niveluri de prioritate criminalistică (corectitudine, arhitectură, mentenanță).
+> - `P16/P17/P18` = Invariante separate de telemetrie hardware și criminalistică.
+> - `P0-P18` = Termen umbrelă sintetic; nu reprezintă 19 invariante secvențiale de memorie.
 
 ## Multi-Agent Development Coordination
 

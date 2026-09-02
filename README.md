@@ -613,17 +613,23 @@ CI is the authority for commit-level pass/fail claims; local test output is supp
 
 The repository enforces strict trust boundaries and forensic invariants to prevent unauthorized AI self-elevation and memory tampering:
 
-### 1. Invariant Architecture (`P0-P18`)
-- **`P0-P15` Memory Trust Boundaries**:
-  - Originates from the 15 adversarial test contracts (`P0-001` through `P0-015`) in `99_SYSTEM/Phase43_P0_Implementation_Contract.md`.
-  - Formally codifies 12 canonical security invariants (`I-001` through `I-012`): blocks AI self-verification (`verification = 'verified'` rejected for AI), prevents privileged provenance forging, restricts proposal lifecycles to non-authoritative states (`RAW`, `CLASSIFIED`, `NORMALIZED`, `REVIEW`), enforces post-creation provenance immutability, guarantees zero partial writes on rejection, requires human/admin attestation, and isolates supersession trust.
-- **`P16-P18` Hardware Telemetry & Forensics**:
-  - Codified in `.agents/rules/vault_cognitive_rules.md` (Section 4): enforces hardware immutability (`P16`), friendly name isolation (`P17`), and tamper-evident forensics chain-of-custody logging (`P18`).
-- **Authoritative Reconciliation**: Full archaeological audit and test mappings are maintained in:
-  - `07_EVALUATION/security_invariant_reconciliation_2026-09.md`
-  - `07_EVALUATION/security_invariant_reconciliation_2026-09.json`
+### 1. Canonical Security Model Nomenclature
+- **`P0`**: Phase 4.3 Priority-0 Security Hardening designation.
+- **`P0-001` .. `P0-015`**: 15 adversarial test contracts defined in `99_SYSTEM/Phase43_P0_Implementation_Contract.md`.
+- **`I-001` .. `I-012`**: Canonical Phase 4.3 memory security invariants (blocking AI self-verification, preventing privileged provenance forging, restricting proposal lifecycles to non-authoritative states, enforcing provenance immutability, ensuring zero partial writes on rejection, requiring human/admin attestation, and isolating supersession trust).
+- **`I-RETRIEVAL`**: Unified secure retrieval invariant introduced subsequently (delegating all recall to `MemoryController.search()`, prohibiting unauthenticated filesystem traversals).
+- **`P1 / P2 / P3`**: Forensic priority tiers (correctness/data integrity, architectural weakness, maintainability).
+- **`P16 / P17 / P18`**: Desktop / hardware forensics invariants codified in `.agents/rules/vault_cognitive_rules.md` (hardware immutability, friendly name isolation, and chain-of-custody audit logging).
+- **`P0-P18`**: Umbrella shorthand only; must not be interpreted as 19 sequential memory invariants.
 
-### 2. Verified Post-Cleanup Baseline
+### 2. Authoritative Reconciliation & Nomenclature Artifacts
+Full archaeological audit, test mappings, and terminology standards are maintained in:
+- `07_EVALUATION/security_invariant_nomenclature_2026-09.md`
+- `07_EVALUATION/security_invariant_nomenclature_2026-09.json`
+- `07_EVALUATION/security_invariant_reconciliation_2026-09.md`
+- `07_EVALUATION/security_invariant_reconciliation_2026-09.json`
+
+### 3. Verified Post-Cleanup Baseline
 - **Defender Hygiene**: 6 weaponized XSS payloads in `06_INBOX/RAW_IMPORTS/` confirmed by Windows Defender were deleted; 2 critical active skills (`sandbase-mcp`, `aspire`) permanently removed.
 - **Corpus Integrity**: The raw external research corpus (`66,750` files across 85 repositories) remains fully preserved without broad purge.
 - **Baseline Manifest**:
@@ -675,11 +681,12 @@ AI_Memory_Vault_CODEX_READY/
 | Incoming/raw data | `06_INBOX/` |
 | System architecture | `99_SYSTEM/Memory_V6_Architecture.md` |
 | Secure Retrieval CLI (safe by design) | `cognitive_core/recall_cli.py` |
-| Memory Controller & P0-P15 Gating | `memory_controller/controller.py` |
+| Memory Controller & Trust Invariant Gating (`I-001..I-012`, `I-RETRIEVAL`) | `memory_controller/controller.py` |
 | Agent/skill mapping | `01_KNOWLEDGE/Agents_Skill_Matrix.md` |
 | Canonical Skill Catalog (3,699 skills) | `01_KNOWLEDGE/Master_Skills_Catalog_251.md` |
 | UI/UX Pro Max | `.agents/skills/ui-ux-pro-max/SKILL.md` |
-| Security Invariant Reconciliation | `07_EVALUATION/security_invariant_reconciliation_2026-09.md` |
+| Security Invariant Nomenclature Standard | `07_EVALUATION/security_invariant_nomenclature_2026-09.md` |
+| Security Invariant Reconciliation Report | `07_EVALUATION/security_invariant_reconciliation_2026-09.md` |
 | Verified Post-Cleanup Baseline | `07_EVALUATION/reports/post_cleanup_baseline_2026-09.md` |
 | Skill ingestion | `scripts/skill_ingestion.py` |
 | Outcome labeling | `scripts/label_council_outcome.py` |
@@ -808,8 +815,8 @@ The desired end state is not simply a larger database. It is a system that can *
 |---|---|
 | Canonical Vault | Active |
 | Memory V6 | Active |
-| Secure Retrieval CLI (`recall_cli`) | Active (Safe by Design, P0-P15 gated) |
-| Security Invariants (`P0-P18`) | Reconciled & Verified (37 passing security tests) |
+| Secure Retrieval CLI (`recall_cli`) | Active (Safe by Design, `I-RETRIEVAL` / `I-001..I-012` gated) |
+| Security Invariants (`I-001..I-012`, `P16-P18`) | Reconciled & Standardized (37 passing security tests) |
 | Canonical Skill Catalog | 3,699 Active Physical Directories (CI Synchronized) |
 | Windows Defender Hygiene | Clean (6 XSS payloads & 2 critical skills removed) |
 | Multi-agent / Council architecture | Active |
@@ -830,6 +837,7 @@ The desired end state is not simply a larger database. It is a system that can *
 - [Memory V6 Architecture](99_SYSTEM/Memory_V6_Architecture.md)
 - [Agent ↔ Skill Matrix](01_KNOWLEDGE/Agents_Skill_Matrix.md)
 - [Master Skill Catalog (3,699 skills)](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
+- [Security Invariant Nomenclature Standard](07_EVALUATION/security_invariant_nomenclature_2026-09.md)
 - [Security Invariant Reconciliation Report](07_EVALUATION/security_invariant_reconciliation_2026-09.md)
 - [Verified Post-Cleanup Baseline](07_EVALUATION/reports/post_cleanup_baseline_2026-09.md)
 - [Frontend UI/UX Standards](01_KNOWLEDGE/MOC_Frontend_UI_UX_Standards.md)

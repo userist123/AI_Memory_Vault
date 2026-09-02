@@ -1,6 +1,6 @@
 # Coada de Atestare Umană (Human Review & Attestation Queue)
 
-Acest document înregistrează toate activele cognitive noi sau modificate, plasate în ciclul de viață `REVIEW`, conform contractului operațional `AGENTS.md` și a invariantelor de securitate `P0-P15`.
+Acest document înregistrează toate activele cognitive noi sau modificate, plasate în ciclul de viață `REVIEW`, conform contractului operațional `AGENTS.md` și a invariantelor canonice de securitate `I-001..I-012` (validate prin testele adversariale `P0-001..P0-015`).
 
 Operatorul Uman (`Principal.HUMAN` / `Principal.ADMIN`) poate aproba (`Operation.ATTEST`), respinge sau solicita editări pentru fiecare element de mai jos.
 
@@ -25,7 +25,7 @@ Operatorul Uman (`Principal.HUMAN` / `Principal.ADMIN`) poate aproba (`Operation
 
 ### Instrucțiuni pentru Operator:
 - Pentru a promova o notiță din starea `REVIEW` în starea `ACTIVE`, schimbați câmpul frontmatter `lifecycle: ACTIVE` și setați `verification: verified`.
-- Conform invariantelor **P0-P15**, AI-ul nu poate efectua auto-atestarea.
+- Conform invariantelor **I-001 / I-004**, AI-ul nu poate efectua auto-atestarea. Promovarea la `verified` necesită atestare umană (`Operation.ATTEST`).
 | - | [`01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md) | knowledge | `markdawn/GLOBAL_ANTIGRAVITY_AGENT.md` | Import global agent | Minim | `ATTEST` |
 | - | [`01_KNOWLEDGE/Global_Claude_Code_Profile.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md) | knowledge | `markdawn/GLOBAL_CLAUDE.md` | Import global agent | Minim | `ATTEST` |
 | - | [`01_KNOWLEDGE/Global_Gemini_CLI_Profile.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md) | knowledge | `markdawn/GLOBAL_GEMINI.md` | Import global agent | Minim | `ATTEST` |

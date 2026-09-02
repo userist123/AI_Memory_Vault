@@ -29,8 +29,8 @@ Consiliul de Agenți acoperă toate disciplinele necesare pentru dezvoltarea com
 | # | Nume Agent | Rol Principal | Skill-uri Cheie |
 |---|---|---|---|
 | 1 | `system_architecture_agent` | Arhitect de Sistem (.NET 10, Clean Arch, Modules) | Arhitectură pe 7 Module, Air-Gapped loopback, Dependency Injection |
-| 2 | `memory_controller_architect` | Arhitect Memory Vault & Concursibilitate | PRAGMA WAL, Invariante P0-P15, RAG, Sinapse & Supersession |
-| 3 | `database_and_persistence_engineer` | Baze de Date & Integritate Date | SQLite WAL, EF Core 10, SHA-256 Hash Chain, Imutabilitate P16-P18 |
+| 2 | `memory_controller_architect` | Arhitect Memory Vault & Concursibilitate | PRAGMA WAL, Invariante Memorie `I-001..I-012` (`P0-001..P0-015`), RAG, Sinapse & Supersession |
+| 3 | `database_and_persistence_engineer` | Baze de Date & Integritate Date | SQLite WAL, EF Core 10, SHA-256 Hash Chain, Imutabilitate Hardware `P16-P18` |
 | 4 | `secops_auditor` | Securitate, Audit & Conformitate Guvernamentală | `dfir-operations`, `vault-security-audit`, HG 585/2002, NATO AC/35 |
 | 5 | `threat_hunting_analyst` | DFIR, YARA, Sigma & Containment | Playbook-uri YARA/Sigma offline, analiză artefacte EVTX |
 | 6 | `wpf_engineer` | Dezvoltare C# WPF .NET 10 | `ui-tokens` (Obsidian Tactical), MVVM, Async I/O, ControlTemplates |
