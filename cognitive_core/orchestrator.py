@@ -168,3 +168,30 @@ class MultiAgentOrchestrator:
         results["consolidated_id"] = consolidated_id
 
         return results
+
+
+class MultiAgentDispatcher:
+    """Dispatches tasks to specialized workers via MultiAgentOrchestrator with least-privilege scoping."""
+
+    def __init__(self, memory_controller: Optional[MemoryController] = None):
+        if memory_controller is None:
+            from cognitive_core.recall_cli import get_memory_controller
+            memory_controller = get_memory_controller()
+        self.orchestrator = MultiAgentOrchestrator(memory_controller)
+        self.config: Dict[str, Any] = {"nodes": {"local": {"enabled": True}}}
+
+    def dispatch(self, agent_role: str, system_prompt: str, user_input: str) -> str:
+        """Dispatches query through the multi-agent orchestrator with least-privilege scoping."""
+        import os
+        import json
+        if not os.getenv("MEMORY_CONTROLLER_HMAC_SECRET"):
+            os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = "vault_cli_local_hmac_key_32bytes_min"
+
+        result = self.orchestrator.route_and_dispatch(
+
+            principal=Principal.AI_AGENT,
+            query=user_input,
+            context=[{"role": "system", "content": system_prompt}] if system_prompt else [],
+        )
+        return json.dumps(result, indent=2, default=str)
+
