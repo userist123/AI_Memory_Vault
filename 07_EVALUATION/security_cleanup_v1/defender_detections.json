@@ -1,0 +1,345 @@
+{
+  "detections": [
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:59:55.6080000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:59:36.0000000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:59:35.9640000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:59:14.2940000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:59:12.3610000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:56:41.8190000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:56:41.8190000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:56:36.7630000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:55:53.5820000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:55:53.5660000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:51:14.0350000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:51:11.3380000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:47:36.8690000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:47:36.8160000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:46:52.2390000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:46:51.9610000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Win32/Vigorf.A",
+      "threat_id": "2147714384",
+      "timestamp": "2026-09-03T00:46:45.1010000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:46:44.5210000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:46:37.9580000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:46:32.9700000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:46:15.3470000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:13:26.5830000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.H!ml",
+      "threat_id": "2147814524",
+      "timestamp": "2026-09-03T00:13:02.5840000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-03T00:13:02.2940000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Win32/Vigorf.A",
+      "threat_id": "2147714384",
+      "timestamp": "2026-09-02T23:56:55.1830000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-02T23:56:55.0960000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-02T23:49:38.4370000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-02T23:48:52.6760000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Win32/Vigorf.A",
+      "threat_id": "2147714384",
+      "timestamp": "2026-09-02T23:46:42.1780000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-02T23:46:41.9690000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    },
+    {
+      "detection_name": "Trojan:Script/Wacatac.B!ml",
+      "threat_id": "2147735503",
+      "timestamp": "2026-09-02T23:46:36.7600000+03:00",
+      "repository_relative_paths": [
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+        "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md"
+      ],
+      "action_success": true
+    }
+  ]
+}
