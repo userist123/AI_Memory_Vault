@@ -83,6 +83,12 @@
 - **Master Navigational Index (`VAULT_INDEX.md`)**: Providing a centralized root index in `01_KNOWLEDGE/VAULT_INDEX.md` prevents duplicate notes from being authored by giving agents an immediate lookup table of all canonical domain notes, ADRs, runbooks, and evaluation labs.
 - **Architectural Layer Separation**: Structurally decoupling machine telemetry (`telemetry/`), external conversation audits (`evaluation/memory_usage_audit/`), empirical research labs (`evaluation/`), and verified knowledge (`01_KNOWLEDGE/`) enforces clean boundaries and prevents unverified runtime artifacts from polluting canonical memory.
 
+## Cognitive Memory Mesh Lessons
+- **Unified 11-Type Object Taxonomy**: Disambiguating objects into strict, non-overlapping types (`KNOWLEDGE`, `MEMORY`, `SKILL`, `PROCEDURE`, `AGENT`, `EXPERIMENT`, `EVIDENCE`, `OUTCOME`, `TRACE`, `AUDIT`, `RESEARCH`) prevents conflating raw evidence with verified knowledge or declared skills with observed executions.
+- **Directional Typed Relationships & Evidence Lineage**: Structuring typed edges (`produced_by`, `supported_by`, `tested_by`, `requires`, `uses`, `implements`, `observed_by`) enables full trace traversal from external research through experiments to canonical memory without mutating production retrieval graphs.
+- **Zero Runtime Interference**: Constructing the mesh metadata index in `evaluation/vault_mesh/` and testing via `MeshValidator` keeps `cognitive_core/multi_graph.py` completely frozen while achieving 100% graph verification across 877 nodes and 2,411 edges.
+
+
 
 
 

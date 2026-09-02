@@ -34,13 +34,15 @@ This index provides canonical, structured navigation across all verified knowled
 
 ## 2. Canonical Domain Knowledge (`01_KNOWLEDGE/`)
 * **Memory Trace Protocol**: [[01_KNOWLEDGE/Agent_Memory_Trace_Protocol|Agent_Memory_Trace_Protocol.md]] — Machine-readable trace protocol separating declared from observed.
+* **Vault Memory Mesh**: [[01_KNOWLEDGE/Vault_Memory_Mesh_Architecture|Vault_Memory_Mesh_Architecture.md]] — Semantic cognitive mesh mapping taxonomy, relationships, and evidence lineage.
 * **Memory Usage Audit**: [[01_KNOWLEDGE/Memory_Usage_Audit_Principles|Memory_Usage_Audit_Principles.md]] — 11-stage utilization audit & anti-fabrication rules.
 * **P0 Retrieval Bottleneck**: [[01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings|Retrieval_Bottleneck_P0_Empirical_Findings.md]] — Empirical discovery and multi-signal fusion analysis.
 * **P1 Context Packing**: [[01_KNOWLEDGE/Context_Packing_P1_Empirical_Findings|Context_Packing_P1_Empirical_Findings.md]] — Section-aware extractive packing empirical findings.
 * **P2 Temporal Memory**: [[01_KNOWLEDGE/Temporal_Memory_P2_Empirical_Findings|Temporal_Memory_P2_Empirical_Findings.md]] — Bi-temporal lineage and supersession traversal.
-* **UI/UX & Design Systems**: [[01_KNOWLEDGE/UI_Sensei_Design_Philosophy|UI_Sensei_Design_Philosophy.md]], [[01_KNOWLEDGE/Design_System_Foundation|Design_System_Foundation.md]]}, [[01_KNOWLEDGE/Motion_Design_Principles|Motion_Design_Principles.md]].
+* **UI/UX & Design Systems**: [[01_KNOWLEDGE/UI_Sensei_Design_Philosophy|UI_Sensei_Design_Philosophy.md]], [[01_KNOWLEDGE/Design_System_Foundation|Design_System_Foundation.md]], [[01_KNOWLEDGE/Motion_Design_Principles|Motion_Design_Principles.md]].
 * **Enterprise Security**: [[01_KNOWLEDGE/Romania_Classified_Information_Digital_Security_Reform|Romania_Classified_Information_Digital_Security_Reform.md]], [[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture|LogAnalyzer_DFIR_Enterprise_Architecture.md]].
 * **Trading & Quantitative Systems**: [[01_KNOWLEDGE/XAU_Kinetic_Clean_Architecture|XAU_Kinetic_Clean_Architecture.md]], [[01_KNOWLEDGE/Python_Algorithmic_Trading_Architecture|Python_Algorithmic_Trading_Architecture.md]].
+
 
 ---
 
@@ -81,3 +83,12 @@ This index provides canonical, structured navigation across all verified knowled
 
 ## 7. Machine Telemetry (`telemetry/`)
 * **Observed Memory Traces**: `telemetry/observed_memory_traces.jsonl` — Machine-generated log of physical context presence.
+
+---
+
+## 8. Cognitive Memory Mesh (`evaluation/vault_mesh/`)
+* **Architecture & Governance**: [[01_KNOWLEDGE/Vault_Memory_Mesh_Architecture|Vault_Memory_Mesh_Architecture.md]] — 11-type taxonomy, directional relationships, and confidence models.
+* **Canonical Inventory**: `evaluation/vault_mesh/vault_inventory.yaml` — Machine-readable inventory of all canonical vault objects.
+* **Knowledge Graph Mesh**: `evaluation/vault_mesh/vault_graph.yaml` — Directed graph connecting experiments, evidences, knowledge, skills, and agents.
+* **Deterministic Validator**: `evaluation/vault_mesh/mesh_validator.py` — Offline validator ensuring zero dangling edges and strict schema integrity.
+
