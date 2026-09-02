@@ -1,58 +1,52 @@
-# VERIFIED POST-CLEANUP BASELINE (2026-09)
+# VERIFIED POST-CLEANUP BASELINE & RECONCILIATION REPORT (2026-09)
 
 **Repository**: `userist123/AI_Memory_Vault_CODEX_READY`  
 **Date**: `2026-09-03`  
-**Status**: `VERIFIED_POST_CLEANUP_BASELINE`  
-**Baseline Commit**: `619757a2ae0be015db68db0db9219cdf74bba66e`  
-**Parent Commit**: `feeaee697994c1f9a9cbdd4e8143a94a204a8245`  
+**Status**: `RECONCILED_WITH_REMEDIATED_MAIN`  
+**Current HEAD**: `3939b4e2325be37eddbcabde792c54821a242971`  
+**Historical Baseline Commit**: `28c371ac77e19a378aefbe3a107328d4c8450984`  
+**Security Cleanup Commit**: `619757a2ae0be015db68db0db9219cdf74bba66e`  
 
 ---
 
-## 1. Phase A — Git State Verification
+## 1. Lineage & Ancestry
 
-The post-security-cleanup baseline was verified directly against GitHub `main`:
+The current repository state on GitHub `main` reflects a precise sequential progression from the security cleanup through the post-cleanup baseline, retrieval remediation, and automated catalog regeneration:
 
 ```text
-HEAD_COMMIT=619757a2ae0be015db68db0db9219cdf74bba66e
-PARENT_COMMIT=feeaee697994c1f9a9cbdd4e8143a94a204a8245
-HEAD_CHANGED_FILES_COUNT=10
+619757a2ae0be015db68db0db9219cdf74bba66e
+ └─► 28c371ac77e19a378aefbe3a107328d4c8450984 (post-cleanup baseline)
+      └─► 9bf43b05f28a8d99850c755661e3eeedcd428027 (secure recall CLI remediation)
+           └─► ad73e626fb4c3c2aa8dc2a3fb50b67ad4861d5d2 (unified multi-agent documentation)
+                └─► 3939b4e2325be37eddbcabde792c54821a242971 (catalog regeneration via CI)
 ```
 
-### Exact Files Modified in Baseline Commit
-1. `D 06_INBOX/RAW_IMPORTS/.../plugins/agentic-awesome-skills-claude/.../xss跨站脚本.md`
-2. `D 06_INBOX/RAW_IMPORTS/.../plugins/agentic-awesome-skills-claude/.../xss.md`
-3. `D 06_INBOX/RAW_IMPORTS/.../plugins/agentic-awesome-skills/.../xss跨站脚本.md`
-4. `D 06_INBOX/RAW_IMPORTS/.../plugins/agentic-awesome-skills/.../xss.md`
-5. `D 06_INBOX/RAW_IMPORTS/.../skills/pentest-tools/src-hunter/.../xss跨站脚本.md`
-6. `D 06_INBOX/RAW_IMPORTS/.../skills/pentest-tools/src-hunter/.../xss.md`
-7. `A 07_EVALUATION/reports/defender_cleanup_v1_2026-09.md`
-8. `A 07_EVALUATION/security_cleanup_v1/defender_detections.json`
-9. `A 07_EVALUATION/security_cleanup_v1/defender_removal_ledger.jsonl`
-10. `A 07_EVALUATION/security_cleanup_v1/test_defender_cleanup.py`
-
-### Invariant Verification
-- **Defender-Confirmed Raw Artifacts**: All 6 confirmed files are absent from disk and repository tree (`6/6 absent`).
-- **Critical Active Skills**: `sandbase-mcp` and `aspire` remain absent (`absent=True`).
-- **Raw Corpus Boundary**: The raw external corpus was strictly preserved without broad purge (`66,750` total files intact in `06_INBOX/RAW_IMPORTS`).
+### Confirmed Invariant State
+- **Defender-Confirmed Artifacts**: All 6 weaponized XSS payload artifacts in `06_INBOX/RAW_IMPORTS/` remain absent (`6/6 absent`).
+- **Critical Active Skills**: `sandbase-mcp` and `aspire` remain absent (`0` instances).
+- **Corpus Integrity**: No broad purge was performed; `66,750` raw external files remain preserved under `06_INBOX/RAW_IMPORTS/`.
 
 ---
 
-## 2. Phase B — Recomputed Repository Inventory
+## 2. Catalog & Repository Inventory Reconciliation
 
-All metrics below were computed directly from disk:
+### Physical Directories vs. Population Metrics
+The generated catalog (`01_KNOWLEDGE/Master_Skills_Catalog_251.md`) was updated by GitHub Actions and reports:
+- **Directoare reale:** `3699`
+- **Intrări catalog:** `3699`
+- **Diferență:** `0`
 
-### Active Skills Corpus
-- **Total Installed Skills (`.agents/skills/`)**: `3,700`
-  - Extracted skills with `PROVENANCE.json`: `3,448`
-  - Native / core pre-existing skills: `252`
-  - Permanently removed critical skills: `2` (`sandbase-mcp`, `aspire`)
+### Distinction Between Skill Populations:
+1. **Extracted Canonical Skills (`3,448`)**:
+   - Skills originating from the external import batches that possess valid `PROVENANCE.json` files anchored to source repositories.
+   - Represents the original 3,450 extraction baseline minus the 2 permanently removed CRITICAL skills (`sandbase-mcp` and `aspire`).
+2. **Native / Core Skills (`252`)**:
+   - Skills developed specifically for the vault prior to the bulk extraction process.
+3. **Physical Skill Directories in Generated Catalog (`3,699`)**:
+   - Top-level directories directly in `.agents/skills/` that contain an independent `SKILL.md` file.
+   - Package/wrapper namespaces without top-level `SKILL.md` (e.g. `skillsweb/`) are excluded by the catalog generator, leading to the exact count of 3,699 cataloged active skills.
 
-### Raw External Corpus
-- **Total Ingested Repositories**: `85`
-- **Total Files in `06_INBOX/RAW_IMPORTS/`**: `66,750`
-- **Markdown Notes in `06_INBOX/RAW_IMPORTS/`**: `26,046`
-
-### Canonical Vault Layers
+### Canonical Vault Layers Breakdown
 | Layer | Description | Markdown Notes | Total Files |
 |---|---|---|---|
 | `00_CORE` | Cognitive operating protocols, confidence model, identity | 32 | 32 |
@@ -72,43 +66,55 @@ All metrics below were computed directly from disk:
 
 ---
 
-## 3. Phase C — Evidence Classification
+## 3. Evidence Classification
 
-| Evaluation Phase | Evidence Category | Verified Finding | Claim Status |
+All historical and current claims are strictly classified as follows:
+
+| Evidence Category | Scope / Source | Verified Claim | Status |
 |---|---|---|---|
-| `skills_quality_v1` | `STATIC` | Structural validity, AST lint, docstrings, schema compliance for 3,450 skills. | **INDEPENDENTLY_PROVEN** (Fully reproducible via static analyzer). |
-| `skills_semantic_v1` | `SEMANTIC` | Jaccard token overlap, taxonomy alignment, redundancy clusters. | **INDEPENDENTLY_PROVEN** (Text similarity only; does not claim runtime value). |
-| `runtime_v1` & `evidence_repair` | `STRUCTURAL_RUNTIME` | Sandboxed fixture execution across 100 test cases (30 deterministic traces). | **NOT_ESTABLISHED_AS_CAUSAL_RUNTIME_EVIDENCE** (Evaluated mock fixture scripts; not live agent production work). |
-| *Live Production* | `REAL_RUNTIME` | End-to-end user problem-solving outcome measurements. | **NOT_ESTABLISHED** (No production telemetric outcome data exists). |
-| `security_removal_v1` & `security_cleanup_v1` | `SECURITY` | Gating of P0-P18 invariants, removal of 2 CRITICAL skills, deletion of 6 Defender-confirmed XSS files. | **INDEPENDENTLY_PROVEN** (Validated against host `Get-MpThreatDetection` and pytest suite). |
-| `raw_external_skills_audit` | `PROVENANCE` | Repository commit hashes, source URLs, extraction manifests. | **INDEPENDENTLY_PROVEN** (Lineage anchored to git commit trees). |
+| **`STATIC`** | `skills_quality_v1` | Structural AST validity, frontmatter compliance, docstrings, schema adherence for 3,450 skills. | **INDEPENDENTLY_PROVEN** (Fully reproducible via static analyzers). |
+| **`SEMANTIC`** | `skills_semantic_v1` | Jaccard token overlap, intent classification, redundancy clusters. | **INDEPENDENTLY_PROVEN** (Lexical similarity; does not establish runtime effectiveness). |
+| **`STRUCTURAL_RUNTIME`** | `runtime_v1` & `evidence_repair` | Execution in isolated test harness scripts across 100 test cases (30 deterministic traces). | **NOT_ESTABLISHED_AS_CAUSAL_RUNTIME_EVIDENCE** (Evaluated mock fixture scripts; not live agent production work). |
+| **`REAL_RUNTIME`** | Full Repository | Empirical measurement of agent task success caused by memory/skill retrieval in live user problem-solving. | **NOT_ESTABLISHED** (No real production telemetric outcome data exists). |
+| **`SECURITY`** | `security_removal_v1`, `security_cleanup_v1`, `test_secure_recall_cli` | P0-P18 trust boundary enforcement, 2 critical skills removed, 6 raw Defender detections deleted, and `recall_cli.py` delegated to `MemoryController`. | **INDEPENDENTLY_PROVEN** (Validated against host `Get-MpThreatDetection` and 1,671 passing pytest tests). |
+| **`PROVENANCE`** | `raw_external_skills_audit` | Lineage linking installed skills to git commit trees and upstream source URLs. | **INDEPENDENTLY_PROVEN** (Anchored to commit history and upstream URLs). |
 
 ---
 
-## 4. Phase D — Architecture Gap Analysis
+## 4. Current Architecture State & Remediation Analysis
 
-Evaluation against the end-to-end production memory pipeline:
+### Historical Baseline State (Commit `28c371ac7`)
+At commit `28c371ac7`, a security gap existed:
+- `recall_cli.py` used an unauthenticated `os.walk` scan on canonical folders, bypassing `MemoryController` and P0-P15 authorization checks.
+- `dispatch_cli.py` imported a non-existent `MultiAgentDispatcher` from `cognitive_core.orchestrator` causing an immediate `ImportError`.
 
-```text
-RESEARCH → EVIDENCE → EVALUATION → KNOWLEDGE → MEMORY/SKILL/PROCEDURE → RETRIEVAL → AGENT EXECUTION → TRACE → OUTCOME → EVIDENCE
-```
-
-### Current Status per Stage
-1. **RESEARCH**: `PARTIALLY_IMPLEMENTED`. External scrapers and subagents exist, but research ingestion lacks formal automated provenance schemas.
-2. **EVIDENCE**: `PARTIALLY_IMPLEMENTED`. Raw files are versioned in `06_INBOX/RAW_IMPORTS/` and mutations logged in `audit_log.jsonl`, but individual claims lack verifiable evidence linking.
-3. **EVALUATION**: `IMPLEMENTED_STATIC_ONLY`. Static quality, semantic deduplication, and security scanning are complete. Dynamic runtime evaluation is absent.
-4. **KNOWLEDGE**: `IMPLEMENTED_WITH_STORAGE_DIVERGENCE_RISK`. Canonical markdown vault exists, but a storage divergence risk exists between markdown wikilinks and SQLite WAL (`vault_memory.sqlite3`).
-5. **MEMORY/SKILL/PROCEDURE**: `IMPLEMENTED`. 3,700 active skills exist. Proposal queue (`MemoryProposalQueue`) enforces least-privilege review gates.
-6. **RETRIEVAL**: `FRAGMENTED_ENTRY_POINTS`. `vault_api.py` enforces full P0-P15 security, while `recall_cli.py` and `dispatch_cli.py` bypass `MemoryController` via raw string scans.
-7. **AGENT EXECUTION**: `PARTIALLY_IMPLEMENTED`. Least-privilege `SubagentSpec` and `CouncilBudgetController` are defined, but execution currently relies on local Ollama or unit test mocks.
-8. **TRACE**: `PARTIALLY_IMPLEMENTED`. Token telemetry (`council_token_telemetry.py`) and audit logging exist, but full multi-step causal execution graphs are not persisted.
-9. **OUTCOME**: `PARTIALLY_IMPLEMENTED`. Outcome labeling schema exists (`04_MEMORY/outcome_events.jsonl`), but automated verification from task results is missing.
-10. **FEEDBACK LOOP**: `NOT_IMPLEMENTED`. Automatic self-refinement adjusting memory confidence based on empirical outcome is not closed.
+### Remediated Current State (Commit `9bf43b05f` & `ad73e626f`)
+Following commit `9bf43b05f` and `ad73e626f`, the architecture was transitioned from "safe by accident" to "safe by design":
+1. **Secure Recall CLI**:
+   - `cognitive_core/recall_cli.py` delegates all searches to `MemoryController.search()` under `Principal.AI_AGENT`.
+   - Automatically initializes `SQLiteStorageEngine("vault_memory.sqlite3", wal_mode=True)` with fallback to `FileStorageEngine(VAULT_ROOT)`.
+   - Enforces query sanitization (`sanitize_query`), query size validation (`check_query_size`), RAW lifecycle exclusion, progressive disclosure, and SHA-256 tamper-evident audit logging.
+2. **MultiAgentDispatcher Resolution**:
+   - Added `MultiAgentDispatcher` in `cognitive_core/orchestrator.py`, routing tasks to bounded workers (`AgentRole.ROUTER`, `AgentRole.RETRIEVAL`, `AgentRole.VERIFIER`, etc.) with `Principal.AI_AGENT` scoping.
+3. **Unified Multi-Agent Policy**:
+   - `CLAUDE.md`, `AGENTS.md`, `.agents/rules/vault_cognitive_rules.md`, and `02_PROJECTS/FinScope.md` are strictly aligned:
+     - Primary: REST API `http://localhost:8000/memory/search?query=...`
+     - Offline fallback: `python -m cognitive_core.recall_cli --query "..."` (P0-P15 verified).
+     - Direct unauthenticated filesystem scans or bypasses of P0-P15 are strictly prohibited.
 
 ---
 
-## 5. Recommended Smallest Safe Next Milestone
+## 5. Remaining Architectural Gaps on Current `main`
 
-### Milestone: `UNIFIED_SECURE_RETRIEVAL_CLI_V1`
-- **Objective**: Refactor `cognitive_core/recall_cli.py` to route all queries through `MemoryController.search()` using `Principal.AI_AGENT`.
-- **Safety**: Closes the security bypass identified in the forensic audit, enforces P0-P15 invariants across CLI consumers (Claude Code, Antigravity, local scripts), and eliminates the broken `dispatch_cli.py` dependencies without altering core storage models.
+Inspection of the codebase confirms that while retrieval entry points are now securely gated, the following gaps remain for a full production cognitive loop:
+
+1. **Real LLM Provider / Runtime Binding**:
+   - `SubagentSpec` specifies model tiers (`light`, `standard`, `heavy`), but worker execution currently connects only to local Ollama endpoints or test mocks rather than a production LLM provider stream.
+2. **Durable Multi-Step Execution Traces**:
+   - Step budgets and token counts are recorded by `council_token_telemetry.py`, but causal execution trees (linking incoming intent -> retrieved note IDs -> subagent tool calls -> final output) are not persisted to long-term storage.
+3. **Causal Attribution from Memory/Skill to Outcome**:
+   - An outcome event schema exists (`04_MEMORY/outcome_events.jsonl`), but automated verification that attributes task success/failure specifically to retrieved memory notes vs. base model capability is not implemented.
+4. **Closed Dynamic Feedback Loop**:
+   - Automated reflection (`Reflexion`) can propose candidate notes into `06_INBOX/memory_proposals.jsonl`, but automated calibration that updates confidence scores or supersedes obsolete notes based on empirical production results is not closed.
+5. **Storage Layer Synchronization**:
+   - The Obsidian markdown wikilinks graph and the SQLite WAL database (`vault_memory.sqlite3`) operate as dual indexing layers, requiring consistent bidirectional reconciliation.
