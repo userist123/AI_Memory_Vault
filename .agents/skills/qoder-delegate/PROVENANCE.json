@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:qoder-delegate",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/qoder-delegate",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/qoder-delegate/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/qoder-delegate/SKILL.md",
+  "content_hash": "0256a5a5d52099e7545d67d9231f9d6b41bcaa2a92e97fe5d0269a7bf484321f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 5,
+  "target_installed_path": ".agents/skills/qoder-delegate"
+}

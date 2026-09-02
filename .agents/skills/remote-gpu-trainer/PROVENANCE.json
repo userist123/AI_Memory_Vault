@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:remote-gpu-trainer",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/remote-gpu-trainer",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/remote-gpu-trainer/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/remote-gpu-trainer/SKILL.md",
+  "content_hash": "cfe3878a8614555bfb92e1e107b2cba672438b4499552fe269c9fea8e36f6ec7",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 48,
+  "target_installed_path": ".agents/skills/remote-gpu-trainer"
+}

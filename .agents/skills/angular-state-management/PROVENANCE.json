@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:angular-state-management",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/angular-state-management",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/angular-state-management/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/angular-state-management/SKILL.md",
+  "content_hash": "32ddc9343ed7e6416b2fb071a3267c590b820d00a03218bdaf797823d2032714",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/angular-state-management"
+}

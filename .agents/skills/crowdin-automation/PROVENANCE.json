@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:crowdin-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/crowdin-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/crowdin-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/crowdin-automation/SKILL.md",
+  "content_hash": "e03d8cd8087ee807bc1c1852f6bb1cf86718b098f27e8a7f97376d26c7ef618e",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/crowdin-automation"
+}

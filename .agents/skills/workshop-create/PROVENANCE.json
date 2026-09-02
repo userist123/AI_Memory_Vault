@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:workshop-create",
+  "bundle_instance_id": "inst:awesome-copilot:skills/workshop-create",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/workshop-create/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/workshop-create/SKILL.md",
+  "content_hash": "aa83fd7f9e6ce1c50f47c2d01b30c577b52cd4319091dd0ae99b57e632ef8ff4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/workshop-create"
+}

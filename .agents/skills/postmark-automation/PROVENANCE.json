@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:postmark-automation",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/postmark-automation",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/postmark-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/postmark-automation/SKILL.md",
+  "content_hash": "63c33a38aa03a3fda42fd336950a18a4969c9166416d5edb0ea7a19c0bffaa0a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/postmark-automation"
+}

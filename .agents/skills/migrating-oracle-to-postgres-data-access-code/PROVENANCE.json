@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:migrating-oracle-to-postgres-data-access-code",
+  "bundle_instance_id": "inst:awesome-copilot:skills/migrating-oracle-to-postgres-data-access-code",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/migrating-oracle-to-postgres-data-access-code/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/migrating-oracle-to-postgres-data-access-code/SKILL.md",
+  "content_hash": "34956bd55420b23a89fe70b1850083af5c4add31ba8d29b849cdc17d26001e39",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/migrating-oracle-to-postgres-data-access-code"
+}

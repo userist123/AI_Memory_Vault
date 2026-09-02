@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:app-store-optimization",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/app-store-optimization",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/app-store-optimization/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/app-store-optimization/SKILL.md",
+  "content_hash": "2804d2cca1d04f71b37fb077d756282a8490577452d476f3adf3b0c8bf322efb",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 13,
+  "target_installed_path": ".agents/skills/app-store-optimization"
+}

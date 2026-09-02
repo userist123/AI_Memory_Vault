@@ -1,0 +1,240 @@
+{
+  "total_duplicate_content_groups": 13,
+  "total_secondary_instances_aliased": 13,
+  "groups": [
+    {
+      "content_hash": "7ba9ad5cef00bce5a8d32ca56ce43d0f04e1a87f74681c36fac5754b11817de7",
+      "canonical_bundle_instance_id": "inst:web-quality-skills:accessibility",
+      "canonical_skill_id": "skill:web-quality-skills:accessibility",
+      "canonical_source_id": "web-quality-skills",
+      "canonical_repository_id": "repo:web-quality-skills",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/accessibility/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:web-quality-skills:skills/accessibility",
+          "skill_id": "skill:web-quality-skills:accessibility",
+          "repository_id": "repo:web-quality-skills",
+          "source_id": "web-quality-skills",
+          "relative_skill_path": "skills/accessibility",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/accessibility/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "f9b0b32b0173c1c294b6c2cb16b1f030d16a33b1b8930b10559512a460c9763f",
+      "canonical_bundle_instance_id": "inst:web-quality-skills:core-web-vitals",
+      "canonical_skill_id": "skill:web-quality-skills:core-web-vitals",
+      "canonical_source_id": "web-quality-skills",
+      "canonical_repository_id": "repo:web-quality-skills",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/core-web-vitals/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:web-quality-skills:skills/core-web-vitals",
+          "skill_id": "skill:web-quality-skills:core-web-vitals",
+          "repository_id": "repo:web-quality-skills",
+          "source_id": "web-quality-skills",
+          "relative_skill_path": "skills/core-web-vitals",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/core-web-vitals/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "eaae59b2e868850f0cfa444d3667d466e1671d13d79b293e4ca1ae4246ff4e63",
+      "canonical_bundle_instance_id": "inst:web-quality-skills:skills/web-quality-audit",
+      "canonical_skill_id": "skill:web-quality-skills:web-quality-audit",
+      "canonical_source_id": "web-quality-skills",
+      "canonical_repository_id": "repo:web-quality-skills",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/web-quality-audit/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:web-quality-skills:web-quality-audit",
+          "skill_id": "skill:web-quality-skills:web-quality-audit",
+          "repository_id": "repo:web-quality-skills",
+          "source_id": "web-quality-skills",
+          "relative_skill_path": "web-quality-audit",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/web-quality-audit/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "f26635c36d58ce373c3fbec7f51e114aea1341569fb9be6088d5fdbfa1f6ce5a",
+      "canonical_bundle_instance_id": "inst:web-quality-skills:skills/seo",
+      "canonical_skill_id": "skill:web-quality-skills:seo",
+      "canonical_source_id": "web-quality-skills",
+      "canonical_repository_id": "repo:web-quality-skills",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/seo/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:web-quality-skills:web-seo",
+          "skill_id": "skill:web-quality-skills:web-seo",
+          "repository_id": "repo:web-quality-skills",
+          "source_id": "web-quality-skills",
+          "relative_skill_path": "web-seo",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/web-seo/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "6ab036d1ac9c23eadbab67396fa0aee5912ed56a8af140d7e449060d1c1f4675",
+      "canonical_bundle_instance_id": "inst:programming:skill-api-design-governance",
+      "canonical_skill_id": "skill:programming:skill-api-design-governance",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-api-design-governance/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-api-design-governance",
+          "skill_id": "skill:backend-reference-skills:skill-api-design-governance",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-api-design-governance",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-api-design-governance/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "c42e3e0bfba8049c98114a69f4c62d3f13ce0c4aec02f3db5abe264ea5a7e445",
+      "canonical_bundle_instance_id": "inst:programming:skill-backend-performance-tuning",
+      "canonical_skill_id": "skill:programming:skill-backend-performance-tuning",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-backend-performance-tuning/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-backend-performance-tuning",
+          "skill_id": "skill:backend-reference-skills:skill-backend-performance-tuning",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-backend-performance-tuning",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-backend-performance-tuning/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "4a57998fe4cc7c22e6cbec3e1cb78c213dd169084b97b49308502f89d3f79df3",
+      "canonical_bundle_instance_id": "inst:programming:skill-cpp-drogon-coroutine-backend",
+      "canonical_skill_id": "skill:programming:skill-cpp-drogon-coroutine-backend",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cpp-drogon-coroutine-backend/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-cpp-drogon-coroutine-backend",
+          "skill_id": "skill:backend-reference-skills:skill-cpp-drogon-coroutine-backend",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-cpp-drogon-coroutine-backend",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-cpp-drogon-coroutine-backend/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "1892c7f8d6f5a8869fc139633e7540ea16dd13e252f4b9226303b73752701554",
+      "canonical_bundle_instance_id": "inst:programming:skill-dotnet10-minimal-api-aot",
+      "canonical_skill_id": "skill:programming:skill-dotnet10-minimal-api-aot",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-dotnet10-minimal-api-aot/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-dotnet10-minimal-api-aot",
+          "skill_id": "skill:backend-reference-skills:skill-dotnet10-minimal-api-aot",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-dotnet10-minimal-api-aot",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-dotnet10-minimal-api-aot/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "da2a1a5af21ddc33c2c630711f93ee213bebc6f018e5487240f3b2555f6af409",
+      "canonical_bundle_instance_id": "inst:programming:skill-owasp-backend-hardening",
+      "canonical_skill_id": "skill:programming:skill-owasp-backend-hardening",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-owasp-backend-hardening/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-owasp-backend-hardening",
+          "skill_id": "skill:backend-reference-skills:skill-owasp-backend-hardening",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-owasp-backend-hardening",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-owasp-backend-hardening/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "f36cdad02c9117f5a2e380414e459cc98330843fa76bf39483293f0fd2028152",
+      "canonical_bundle_instance_id": "inst:programming:skill-postgresql-indexing-tuning",
+      "canonical_skill_id": "skill:programming:skill-postgresql-indexing-tuning",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-postgresql-indexing-tuning/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-postgresql-indexing-tuning",
+          "skill_id": "skill:backend-reference-skills:skill-postgresql-indexing-tuning",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-postgresql-indexing-tuning",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-postgresql-indexing-tuning/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "931a91bd8bde7ceea708ebc77f7efb68f31c390455cef951f9237303a335ebf9",
+      "canonical_bundle_instance_id": "inst:programming:skill-python-fastapi-async-worker",
+      "canonical_skill_id": "skill:programming:skill-python-fastapi-async-worker",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-python-fastapi-async-worker/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-python-fastapi-async-worker",
+          "skill_id": "skill:backend-reference-skills:skill-python-fastapi-async-worker",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-python-fastapi-async-worker",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-python-fastapi-async-worker/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "49c4ded90981ae127905ea480c9e41b47947c390652fa3e9445924456a2c167b",
+      "canonical_bundle_instance_id": "inst:programming:skill-sqlite-wal-optimization",
+      "canonical_skill_id": "skill:programming:skill-sqlite-wal-optimization",
+      "canonical_source_id": "programming",
+      "canonical_repository_id": "repo:programming",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-sqlite-wal-optimization/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:backend-reference-skills:skill-sqlite-wal-optimization",
+          "skill_id": "skill:backend-reference-skills:skill-sqlite-wal-optimization",
+          "repository_id": "repo:backend-reference-skills",
+          "source_id": "backend-reference-skills",
+          "relative_skill_path": "skill-sqlite-wal-optimization",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/skill-sqlite-wal-optimization/SKILL.md"
+        }
+      ]
+    },
+    {
+      "content_hash": "05ab164f6882bd8800960085152f30a80e828d70aed5be769e790379c646b726",
+      "canonical_bundle_instance_id": "inst:garden-skills:garden-web-design-engineer",
+      "canonical_skill_id": "skill:garden-skills:garden-web-design-engineer",
+      "canonical_source_id": "garden-skills",
+      "canonical_repository_id": "repo:garden-skills",
+      "canonical_entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/garden-web-design-engineer/SKILL.md",
+      "secondary_instances": [
+        {
+          "bundle_instance_id": "inst:garden-skills:skills/web-design-engineer",
+          "skill_id": "skill:garden-skills:web-design-engineer",
+          "repository_id": "repo:garden-skills",
+          "source_id": "garden-skills",
+          "relative_skill_path": "skills/web-design-engineer",
+          "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/web-design-engineer/SKILL.md"
+        }
+      ]
+    }
+  ]
+}

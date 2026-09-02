@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:batch-files",
+  "bundle_instance_id": "inst:awesome-copilot:skills/batch-files",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/batch-files/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/batch-files/SKILL.md",
+  "content_hash": "c56fece2bc6c4fca935193baa11411da42e4a2b49bca7902d8d9ab8e9054beec",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 10,
+  "target_installed_path": ".agents/skills/batch-files"
+}

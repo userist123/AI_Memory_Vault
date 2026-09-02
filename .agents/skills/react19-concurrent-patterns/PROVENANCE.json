@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:react19-concurrent-patterns",
+  "bundle_instance_id": "inst:awesome-copilot:skills/react19-concurrent-patterns",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react19-concurrent-patterns/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react19-concurrent-patterns/SKILL.md",
+  "content_hash": "3a982f15c71897d76bdafc46e9db32c1f261486417aa91bbd102fe4b87579226",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/react19-concurrent-patterns"
+}

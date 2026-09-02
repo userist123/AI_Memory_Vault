@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:phoenix-evals",
+  "bundle_instance_id": "inst:awesome-copilot:skills/phoenix-evals",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/phoenix-evals/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/phoenix-evals/SKILL.md",
+  "content_hash": "38a4716379d5ca7622949c5b9db7a4ff12f5d542f96e7bb8624ba1d064f99ea2",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 35,
+  "target_installed_path": ".agents/skills/phoenix-evals"
+}

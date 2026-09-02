@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:hookdeck-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/hookdeck-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/hookdeck-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/hookdeck-automation/SKILL.md",
+  "content_hash": "8f23c6a9208c2c7510bb2c66ea128c1fe3b868d29b38aa23269978ac22ae96a9",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/hookdeck-automation"
+}

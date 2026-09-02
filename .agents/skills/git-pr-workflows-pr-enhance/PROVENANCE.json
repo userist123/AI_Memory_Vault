@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:git-pr-workflows-pr-enhance",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/git-pr-workflows-pr-enhance",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/git-pr-workflows-pr-enhance/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/git-pr-workflows-pr-enhance/SKILL.md",
+  "content_hash": "2a9419bf3ee7046d5c2373a16e9087d21a7b072df6d75a8658ec272d382e3765",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/git-pr-workflows-pr-enhance"
+}

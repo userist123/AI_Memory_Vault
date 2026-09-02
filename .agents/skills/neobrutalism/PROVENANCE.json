@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:neobrutalism",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/neobrutalism",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/neobrutalism/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/neobrutalism/SKILL.md",
+  "content_hash": "a192e7b45613a95bb8e21931ad86552b0531b111d631d89e5c6a0b1f294f2c4f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/neobrutalism"
+}

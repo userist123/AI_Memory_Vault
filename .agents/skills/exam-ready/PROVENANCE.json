@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:exam-ready",
+  "bundle_instance_id": "inst:awesome-copilot:skills/exam-ready",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/exam-ready/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/exam-ready/SKILL.md",
+  "content_hash": "9c67b441c0b78f2678a7e9b1dd3e5a1b65c4d9e530f082f5ffd60586613a823e",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/exam-ready"
+}

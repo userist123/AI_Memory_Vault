@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:react18-batching-patterns",
+  "bundle_instance_id": "inst:awesome-copilot:skills/react18-batching-patterns",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react18-batching-patterns/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react18-batching-patterns/SKILL.md",
+  "content_hash": "c0ed4bdbd748323210d8104a30091a83e19b90deb37a849c1321f101894423fc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/react18-batching-patterns"
+}

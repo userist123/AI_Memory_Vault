@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:convert-pdf-to-md",
+  "bundle_instance_id": "inst:awesome-copilot:skills/convert-pdf-to-md",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/convert-pdf-to-md/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/convert-pdf-to-md/SKILL.md",
+  "content_hash": "1e09d1f0a307e189157c396a9611fa5229064ef90b73c4a5b3d142c8b7aef450",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/convert-pdf-to-md"
+}

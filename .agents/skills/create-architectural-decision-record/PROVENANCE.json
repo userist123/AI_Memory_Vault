@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:create-architectural-decision-record",
+  "bundle_instance_id": "inst:awesome-copilot:skills/create-architectural-decision-record",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-architectural-decision-record/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-architectural-decision-record/SKILL.md",
+  "content_hash": "57fab6a012c4561ce1e7e94f06ce59dd113d5b4bf8e9c2b71a91b1853fe3bb12",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/create-architectural-decision-record"
+}

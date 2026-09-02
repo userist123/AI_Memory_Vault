@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:react19-source-patterns",
+  "bundle_instance_id": "inst:awesome-copilot:skills/react19-source-patterns",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react19-source-patterns/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react19-source-patterns/SKILL.md",
+  "content_hash": "d3e7a0f9f828ca57fa2301c8ad7bbb76a78b3fc817ec39159b334e6bde56c1b8",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/react19-source-patterns"
+}

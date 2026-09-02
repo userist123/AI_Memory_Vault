@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:transloadit-media-processing",
+  "bundle_instance_id": "inst:awesome-copilot:skills/transloadit-media-processing",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/transloadit-media-processing/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/transloadit-media-processing/SKILL.md",
+  "content_hash": "822388b785178ef8d0c28df92b7b862e0422ce79412b44f115effad613adcf29",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/transloadit-media-processing"
+}

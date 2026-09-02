@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:epic-games-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/epic-games-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/epic-games-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/epic-games-automation/SKILL.md",
+  "content_hash": "f115853acc6ae7d0b9d20897c1d43d41a2855dabdf13ee8b288b4237fb11a1ab",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/epic-games-automation"
+}

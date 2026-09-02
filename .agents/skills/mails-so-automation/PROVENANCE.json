@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:mails-so-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/mails-so-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/mails-so-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/mails-so-automation/SKILL.md",
+  "content_hash": "dc05ee4d62f2e685345091471c5c94b3ed865fc1976e95a42bb03cfca0314700",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mails-so-automation"
+}

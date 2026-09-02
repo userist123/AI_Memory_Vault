@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:desk-journal",
+  "bundle_instance_id": "inst:awesome-copilot:skills/desk-journal",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/desk-journal/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/desk-journal/SKILL.md",
+  "content_hash": "e4be53afd0fda8bac33dedd9228dbf8227c578197c956ba96f4002d05fcd951c",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/desk-journal"
+}

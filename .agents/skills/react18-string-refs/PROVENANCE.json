@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:react18-string-refs",
+  "bundle_instance_id": "inst:awesome-copilot:skills/react18-string-refs",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react18-string-refs/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react18-string-refs/SKILL.md",
+  "content_hash": "3fefab8c4596d38e5e80d0d15f63d26687290f7b47d7f9486962d2c494cdbd3f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/react18-string-refs"
+}

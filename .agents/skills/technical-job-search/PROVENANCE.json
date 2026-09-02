@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:technical-job-search",
+  "bundle_instance_id": "inst:awesome-copilot:skills/technical-job-search",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/technical-job-search/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/technical-job-search/SKILL.md",
+  "content_hash": "9332b0db4df709ba6167d9a808a565a21224b890f3c6055b50640b1f2caf25c7",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/technical-job-search"
+}

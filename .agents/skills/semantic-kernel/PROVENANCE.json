@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:semantic-kernel",
+  "bundle_instance_id": "inst:awesome-copilot:skills/semantic-kernel",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/semantic-kernel/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/semantic-kernel/SKILL.md",
+  "content_hash": "7e7fea7c7f8ab1ac315e3839580edbeb7146ba73efbe027553cbaad3c722147b",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/semantic-kernel"
+}

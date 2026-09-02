@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:googlemeet-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/googlemeet-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/googlemeet-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/googlemeet-automation/SKILL.md",
+  "content_hash": "a0d6e6c5b7f300a3a23039e4f9e555e7f55bb70ee032e17031e6e8e3fd8112c6",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/googlemeet-automation"
+}

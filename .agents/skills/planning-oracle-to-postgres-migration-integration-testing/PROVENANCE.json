@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:planning-oracle-to-postgres-migration-integration-testing",
+  "bundle_instance_id": "inst:awesome-copilot:skills/planning-oracle-to-postgres-migration-integration-testing",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/planning-oracle-to-postgres-migration-integration-testing/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/planning-oracle-to-postgres-migration-integration-testing/SKILL.md",
+  "content_hash": "5d7af824c1b352c5d17e39f0f86ecb832ad5abce1b0e4f7302d257d28466edf1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/planning-oracle-to-postgres-migration-integration-testing"
+}

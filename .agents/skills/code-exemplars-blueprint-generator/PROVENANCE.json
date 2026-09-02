@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:code-exemplars-blueprint-generator",
+  "bundle_instance_id": "inst:awesome-copilot:skills/code-exemplars-blueprint-generator",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/code-exemplars-blueprint-generator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/code-exemplars-blueprint-generator/SKILL.md",
+  "content_hash": "5f8b6adf9c1036e5f110cd71428ce233eb748287ae23bd32453a145d72d195bb",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/code-exemplars-blueprint-generator"
+}

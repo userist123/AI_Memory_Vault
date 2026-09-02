@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:terraform-azurerm-set-diff-analyzer",
+  "bundle_instance_id": "inst:awesome-copilot:skills/terraform-azurerm-set-diff-analyzer",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/terraform-azurerm-set-diff-analyzer/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/terraform-azurerm-set-diff-analyzer/SKILL.md",
+  "content_hash": "95060b3774531662071cdfb86193408f109665a0a26df5a084988e37c3bbf779",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 6,
+  "target_installed_path": ".agents/skills/terraform-azurerm-set-diff-analyzer"
+}

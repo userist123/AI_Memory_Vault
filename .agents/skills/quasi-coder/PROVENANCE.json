@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:quasi-coder",
+  "bundle_instance_id": "inst:awesome-copilot:skills/quasi-coder",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/quasi-coder/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/quasi-coder/SKILL.md",
+  "content_hash": "8cbbf205965e4d7452f0f74b2f3c61d03a1ce6df6dae324f800418048bfc1568",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/quasi-coder"
+}

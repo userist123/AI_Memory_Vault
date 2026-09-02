@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:server-side-conversion-tracking",
+  "bundle_instance_id": "inst:awesome-copilot:skills/server-side-conversion-tracking",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/server-side-conversion-tracking/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/server-side-conversion-tracking/SKILL.md",
+  "content_hash": "a0b63e6421ce357f40d8389eb90ae121860777144973ed36e4f44059c7b6163f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/server-side-conversion-tracking"
+}

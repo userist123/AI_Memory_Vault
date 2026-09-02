@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:aspnet-minimal-api-openapi",
+  "bundle_instance_id": "inst:awesome-copilot:skills/aspnet-minimal-api-openapi",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/aspnet-minimal-api-openapi/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/aspnet-minimal-api-openapi/SKILL.md",
+  "content_hash": "d47a0d85bd9e353720d2804ecd18064ea61e84795ef87f3fcced6c9493288c53",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/aspnet-minimal-api-openapi"
+}

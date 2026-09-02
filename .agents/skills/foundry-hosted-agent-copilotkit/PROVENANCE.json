@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:foundry-hosted-agent-copilotkit",
+  "bundle_instance_id": "inst:awesome-copilot:skills/foundry-hosted-agent-copilotkit",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/foundry-hosted-agent-copilotkit/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/foundry-hosted-agent-copilotkit/SKILL.md",
+  "content_hash": "a78e6ee875fcf4af20f983bd54e832d2b5f95214c9f54da1340a1c7da137b7e0",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 7,
+  "target_installed_path": ".agents/skills/foundry-hosted-agent-copilotkit"
+}

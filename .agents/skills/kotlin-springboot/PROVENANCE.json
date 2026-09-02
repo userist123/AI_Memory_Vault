@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:kotlin-springboot",
+  "bundle_instance_id": "inst:awesome-copilot:skills/kotlin-springboot",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/kotlin-springboot/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/kotlin-springboot/SKILL.md",
+  "content_hash": "3e3a35f95ac2e9bf51357cb0ae4fa01100f2f239e880a7177c379269a4761a75",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/kotlin-springboot"
+}

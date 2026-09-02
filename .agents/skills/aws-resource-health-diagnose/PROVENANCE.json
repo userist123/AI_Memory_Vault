@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:aws-resource-health-diagnose",
+  "bundle_instance_id": "inst:awesome-copilot:skills/aws-resource-health-diagnose",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/aws-resource-health-diagnose/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/aws-resource-health-diagnose/SKILL.md",
+  "content_hash": "a478aa992921e80a97059223c03e32784ebcb3ca02679c0f7950f256959ea052",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/aws-resource-health-diagnose"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:garden-skills:gpt-image-2",
+  "bundle_instance_id": "inst:garden-skills:skills/gpt-image-2",
+  "canonical_repository_id": "repo:garden-skills",
+  "canonical_source_id": "garden-skills",
+  "source_url": "https://github.com/ConardLi/garden-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/gpt-image-2/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/gpt-image-2/SKILL.md",
+  "content_hash": "0fcc87576d84deb794d397a3aee9375dd9d3d889abe2215d833369ecb3cae13b",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 103,
+  "target_installed_path": ".agents/skills/gpt-image-2"
+}

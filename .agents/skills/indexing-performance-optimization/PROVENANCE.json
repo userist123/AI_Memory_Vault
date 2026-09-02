@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:indexing-performance-optimization",
+  "bundle_instance_id": "inst:awesome-copilot:skills/qdrant-performance-optimization/indexing-performance-optimization",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/qdrant-performance-optimization/indexing-performance-optimization/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/qdrant-performance-optimization/indexing-performance-optimization/SKILL.md",
+  "content_hash": "8ec91c0e37593121b35fa8db36d50a280494723eb810703106c41bc1fe4dcc40",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/indexing-performance-optimization"
+}

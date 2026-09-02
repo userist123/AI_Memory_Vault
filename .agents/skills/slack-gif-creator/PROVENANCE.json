@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:slack-gif-creator",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/slack-gif-creator",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/slack-gif-creator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/slack-gif-creator/SKILL.md",
+  "content_hash": "e5ce81d3dc40e7780b0fa2a0a36b5ada888beb3931d2badd2909b57c50002aed",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 23,
+  "target_installed_path": ".agents/skills/slack-gif-creator"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:garden-skills:beautiful-article",
+  "bundle_instance_id": "inst:garden-skills:skills/beautiful-article",
+  "canonical_repository_id": "repo:garden-skills",
+  "canonical_source_id": "garden-skills",
+  "source_url": "https://github.com/ConardLi/garden-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/beautiful-article/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/beautiful-article/SKILL.md",
+  "content_hash": "179091549cab1ba0543e4d8622bead668594a1a9651d58ef795a1a9de504d3de",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 58,
+  "target_installed_path": ".agents/skills/beautiful-article"
+}

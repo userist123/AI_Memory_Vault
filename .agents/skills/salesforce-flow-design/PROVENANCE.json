@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:salesforce-flow-design",
+  "bundle_instance_id": "inst:awesome-copilot:skills/salesforce-flow-design",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/salesforce-flow-design/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/salesforce-flow-design/SKILL.md",
+  "content_hash": "32995ff3e359e6522ef4f5d7a0415d061d66fcefb40726ef704075ba274d29c5",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/salesforce-flow-design"
+}

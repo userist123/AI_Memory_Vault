@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:update-markdown-file-index",
+  "bundle_instance_id": "inst:awesome-copilot:skills/update-markdown-file-index",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/update-markdown-file-index/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/update-markdown-file-index/SKILL.md",
+  "content_hash": "eb031bf12599b8cf9ad21d7668e349d1b231b25c14576d58e13bfe63e2ce15d8",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/update-markdown-file-index"
+}

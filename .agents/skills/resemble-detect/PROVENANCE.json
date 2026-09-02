@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:resemble-detect",
+  "bundle_instance_id": "inst:awesome-copilot:skills/resemble-detect",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/resemble-detect/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/resemble-detect/SKILL.md",
+  "content_hash": "b46ccf48ad9bb7b838f85ef3b98c34dc998db3643e4f57ed121449742a0fd79d",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/resemble-detect"
+}

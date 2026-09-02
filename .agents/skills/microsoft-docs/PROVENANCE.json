@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:microsoft-docs",
+  "bundle_instance_id": "inst:awesome-copilot:skills/microsoft-docs",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/microsoft-docs/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/microsoft-docs/SKILL.md",
+  "content_hash": "cb2750cd8beaf5ccc69d5a68122c21dbb50d6b094616f74a298a261fabc65ebf",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/microsoft-docs"
+}

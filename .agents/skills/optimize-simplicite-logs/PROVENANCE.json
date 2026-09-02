@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:optimize-simplicite-logs",
+  "bundle_instance_id": "inst:awesome-copilot:skills/optimize-simplicite-logs",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/optimize-simplicite-logs/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/optimize-simplicite-logs/SKILL.md",
+  "content_hash": "f589060719418c1a3568cfcaf09f9cf89f6a10fb684b81931d40677594d50b30",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/optimize-simplicite-logs"
+}

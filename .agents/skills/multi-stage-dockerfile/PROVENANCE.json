@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:multi-stage-dockerfile",
+  "bundle_instance_id": "inst:awesome-copilot:skills/multi-stage-dockerfile",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/multi-stage-dockerfile/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/multi-stage-dockerfile/SKILL.md",
+  "content_hash": "d4202ed1ada9653d509b03f6846bc8c4e64c244b9bc2326fc339f68a38efb2cf",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/multi-stage-dockerfile"
+}

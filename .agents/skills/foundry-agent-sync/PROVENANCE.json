@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:foundry-agent-sync",
+  "bundle_instance_id": "inst:awesome-copilot:skills/foundry-agent-sync",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/foundry-agent-sync/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/foundry-agent-sync/SKILL.md",
+  "content_hash": "c8ffb1a36edb38d1d82ea5bf7c4d1f8c5ff138bf9f0f4534814191ea7c40826d",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/foundry-agent-sync"
+}

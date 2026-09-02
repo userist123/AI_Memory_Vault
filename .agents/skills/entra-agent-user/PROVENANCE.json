@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:entra-agent-user",
+  "bundle_instance_id": "inst:awesome-copilot:skills/entra-agent-user",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/entra-agent-user/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/entra-agent-user/SKILL.md",
+  "content_hash": "482f590aa8f92bb6763fafa92929038a037fbb55cbf8926340bdc64716deb4b1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/entra-agent-user"
+}

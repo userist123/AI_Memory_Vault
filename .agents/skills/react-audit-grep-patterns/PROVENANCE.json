@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:react-audit-grep-patterns",
+  "bundle_instance_id": "inst:awesome-copilot:skills/react-audit-grep-patterns",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react-audit-grep-patterns/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react-audit-grep-patterns/SKILL.md",
+  "content_hash": "7f23bb0803fd0a95210f01892a6f8e98b77eefa80567a2088c1291675f147102",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 5,
+  "target_installed_path": ".agents/skills/react-audit-grep-patterns"
+}

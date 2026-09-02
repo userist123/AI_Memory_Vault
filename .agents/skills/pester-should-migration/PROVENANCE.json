@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:pester-should-migration",
+  "bundle_instance_id": "inst:awesome-copilot:skills/pester-should-migration",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/pester-should-migration/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/pester-should-migration/SKILL.md",
+  "content_hash": "04673abb268e744d29ce3be668cc45b434b40bc900059308a83a91e9a934fcf6",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/pester-should-migration"
+}

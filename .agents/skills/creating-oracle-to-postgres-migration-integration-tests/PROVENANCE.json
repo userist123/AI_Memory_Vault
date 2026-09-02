@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:creating-oracle-to-postgres-migration-integration-tests",
+  "bundle_instance_id": "inst:awesome-copilot:skills/creating-oracle-to-postgres-migration-integration-tests",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/creating-oracle-to-postgres-migration-integration-tests/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/creating-oracle-to-postgres-migration-integration-tests/SKILL.md",
+  "content_hash": "089239342ddb5854475f1077d6914c997bf1bfa4596a17eed40e497a552e32cf",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/creating-oracle-to-postgres-migration-integration-tests"
+}

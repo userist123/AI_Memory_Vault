@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:microsoft-agent-framework",
+  "bundle_instance_id": "inst:awesome-copilot:skills/microsoft-agent-framework",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/microsoft-agent-framework/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/microsoft-agent-framework/SKILL.md",
+  "content_hash": "ca684d0c91583dfc125f19e4dcbad9258f2b54ca246ac63c78dfd01b62e47a21",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/microsoft-agent-framework"
+}

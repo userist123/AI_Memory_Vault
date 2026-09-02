@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:dotnet-timezone",
+  "bundle_instance_id": "inst:awesome-copilot:skills/dotnet-timezone",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/dotnet-timezone/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/dotnet-timezone/SKILL.md",
+  "content_hash": "33fff12c81606bf567b3f1f3f30ce0ca0e4cbf9a5b7431eb454f0de317f7b7d1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/dotnet-timezone"
+}

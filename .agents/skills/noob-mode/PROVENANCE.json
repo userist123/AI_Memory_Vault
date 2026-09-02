@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:noob-mode",
+  "bundle_instance_id": "inst:awesome-copilot:skills/noob-mode",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/noob-mode/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/noob-mode/SKILL.md",
+  "content_hash": "ba96d43b7f3112394d85a3d96bdd11f13ec5927d66ce04c7c203cc82434bb8ba",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/noob-mode"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:power-platform-mcp-connector-suite",
+  "bundle_instance_id": "inst:awesome-copilot:skills/power-platform-mcp-connector-suite",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/power-platform-mcp-connector-suite/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/power-platform-mcp-connector-suite/SKILL.md",
+  "content_hash": "f9f42fdd049e1f809c0307a756d0aa83a0a31f77f7add7788abc6cd8a0569ee6",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/power-platform-mcp-connector-suite"
+}

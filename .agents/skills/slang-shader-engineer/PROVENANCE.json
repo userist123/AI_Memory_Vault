@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:slang-shader-engineer",
+  "bundle_instance_id": "inst:awesome-copilot:skills/slang-shader-engineer",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/slang-shader-engineer/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/slang-shader-engineer/SKILL.md",
+  "content_hash": "3f45b7d27499c2c408e6e11b87ce9f42bad772b08103411217e1d9d3a48e923b",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/slang-shader-engineer"
+}

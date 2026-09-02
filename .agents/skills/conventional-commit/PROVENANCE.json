@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:conventional-commit",
+  "bundle_instance_id": "inst:awesome-copilot:skills/conventional-commit",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/conventional-commit/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/conventional-commit/SKILL.md",
+  "content_hash": "f3f1f85540fcbad799df7e1133089fc0ad78838322b3afef2401a895615b47c2",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/conventional-commit"
+}

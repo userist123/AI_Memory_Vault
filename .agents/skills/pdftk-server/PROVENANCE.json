@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:pdftk-server",
+  "bundle_instance_id": "inst:awesome-copilot:skills/pdftk-server",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/pdftk-server/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/pdftk-server/SKILL.md",
+  "content_hash": "b0fcd7fb041af9cbd80d02e8073b6a323669aa670f7324a23b21e0ad4cb1ccb0",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 6,
+  "target_installed_path": ".agents/skills/pdftk-server"
+}

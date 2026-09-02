@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:ad-campaign-analyzer",
+  "bundle_instance_id": "inst:awesome-copilot:skills/ad-campaign-analyzer",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ad-campaign-analyzer/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ad-campaign-analyzer/SKILL.md",
+  "content_hash": "8d24cd3de8d918cd995ae8167627623948f5bccc88c1330722de07ea4e186ea5",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/ad-campaign-analyzer"
+}

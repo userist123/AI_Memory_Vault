@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:gh-attach",
+  "bundle_instance_id": "inst:awesome-copilot:skills/gh-attach",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gh-attach/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gh-attach/SKILL.md",
+  "content_hash": "8f57b4ffecd3f8985344f50f8d4101665564506956b5ca89ec8242b8562b82c2",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/gh-attach"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:arize-link",
+  "bundle_instance_id": "inst:awesome-copilot:skills/arize-link",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arize-link/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arize-link/SKILL.md",
+  "content_hash": "0cb506e6ea47d6184e72ef499efce753e84b0e7091c2f8f3a422e1e9980e72b4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/arize-link"
+}

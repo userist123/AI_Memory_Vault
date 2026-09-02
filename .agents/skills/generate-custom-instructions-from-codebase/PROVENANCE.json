@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:generate-custom-instructions-from-codebase",
+  "bundle_instance_id": "inst:awesome-copilot:skills/generate-custom-instructions-from-codebase",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/generate-custom-instructions-from-codebase/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/generate-custom-instructions-from-codebase/SKILL.md",
+  "content_hash": "f97dc80cb72a6d932dea037b395692a398d518e50cd18103a935d227374f103f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/generate-custom-instructions-from-codebase"
+}

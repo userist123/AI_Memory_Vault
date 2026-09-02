@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:terracotta",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/terracotta",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/terracotta/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/terracotta/SKILL.md",
+  "content_hash": "a65615e45cbf15de8724a5d85a1b735079f12cd81aad924a1ef3d355564f8231",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/terracotta"
+}

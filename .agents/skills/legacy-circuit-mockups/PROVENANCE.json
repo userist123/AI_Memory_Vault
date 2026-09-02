@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:legacy-circuit-mockups",
+  "bundle_instance_id": "inst:awesome-copilot:skills/legacy-circuit-mockups",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/legacy-circuit-mockups/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/legacy-circuit-mockups/SKILL.md",
+  "content_hash": "abbdcea74cc4a30040599b3820a76005b51b455d9bb5e7c6038366d79acf918a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 21,
+  "target_installed_path": ".agents/skills/legacy-circuit-mockups"
+}

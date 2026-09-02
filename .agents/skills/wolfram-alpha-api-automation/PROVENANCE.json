@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:wolfram-alpha-api-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/wolfram-alpha-api-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/wolfram-alpha-api-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/wolfram-alpha-api-automation/SKILL.md",
+  "content_hash": "81b4d89c34a4aa9a75ae872f48eca1d27089ec9cd480e3d90152a4f3e37a408c",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/wolfram-alpha-api-automation"
+}

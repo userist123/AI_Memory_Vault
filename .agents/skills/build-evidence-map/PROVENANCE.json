@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:build-evidence-map",
+  "bundle_instance_id": "inst:awesome-copilot:skills/build-evidence-map",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/build-evidence-map/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/build-evidence-map/SKILL.md",
+  "content_hash": "bc6e00cc11368664546037a0c125810bc9b2e04e580268691471966fd713d914",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 5,
+  "target_installed_path": ".agents/skills/build-evidence-map"
+}

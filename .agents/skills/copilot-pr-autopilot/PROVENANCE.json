@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:copilot-pr-autopilot",
+  "bundle_instance_id": "inst:awesome-copilot:skills/copilot-pr-autopilot",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/copilot-pr-autopilot/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/copilot-pr-autopilot/SKILL.md",
+  "content_hash": "800ef4d3ca8f12aafbf08c2462c4a35f1e877e3570b4037a3300b565bafb50b3",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 24,
+  "target_installed_path": ".agents/skills/copilot-pr-autopilot"
+}

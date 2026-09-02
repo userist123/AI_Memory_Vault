@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:create-tldr-page",
+  "bundle_instance_id": "inst:awesome-copilot:skills/create-tldr-page",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-tldr-page/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-tldr-page/SKILL.md",
+  "content_hash": "161d2b871cf933ef60b5ae8fa06daa0db329a0837d6b5ae333019e77245f53b0",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/create-tldr-page"
+}

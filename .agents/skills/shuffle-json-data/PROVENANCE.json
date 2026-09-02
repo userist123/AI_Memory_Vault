@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:shuffle-json-data",
+  "bundle_instance_id": "inst:awesome-copilot:skills/shuffle-json-data",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/shuffle-json-data/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/shuffle-json-data/SKILL.md",
+  "content_hash": "1f72f4bcadf9583a99e9bd25e35c269bb5e434a806de0aafc6ae1db18203c93e",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/shuffle-json-data"
+}

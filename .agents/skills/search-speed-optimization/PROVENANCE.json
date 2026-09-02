@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:search-speed-optimization",
+  "bundle_instance_id": "inst:awesome-copilot:skills/qdrant-performance-optimization/search-speed-optimization",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/qdrant-performance-optimization/search-speed-optimization/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/qdrant-performance-optimization/search-speed-optimization/SKILL.md",
+  "content_hash": "773ccfd94208adcdfee9a2b8acde583301c7906e51adb072b235102d572acba1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/search-speed-optimization"
+}

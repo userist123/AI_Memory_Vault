@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mini-context-graph",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mini-context-graph",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mini-context-graph/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mini-context-graph/SKILL.md",
+  "content_hash": "9250a2b4db4decc2d6ec06363a4de3298c6672071136c0e9a39b606a11a739d5",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 15,
+  "target_installed_path": ".agents/skills/mini-context-graph"
+}

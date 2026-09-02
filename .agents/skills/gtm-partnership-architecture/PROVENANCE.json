@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:gtm-partnership-architecture",
+  "bundle_instance_id": "inst:awesome-copilot:skills/gtm-partnership-architecture",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gtm-partnership-architecture/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gtm-partnership-architecture/SKILL.md",
+  "content_hash": "bb3b10d11daa35bae818689304cc2b3a895b62155b33fe6f3b382e14e2f86baa",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/gtm-partnership-architecture"
+}

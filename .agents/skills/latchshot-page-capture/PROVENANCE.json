@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:latchshot-page-capture",
+  "bundle_instance_id": "inst:awesome-copilot:skills/latchshot-page-capture",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/latchshot-page-capture/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/latchshot-page-capture/SKILL.md",
+  "content_hash": "3b3778ecd730d1928f676fbdaf8cc82d427730a12eee2e57090302130ff0b5ee",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/latchshot-page-capture"
+}

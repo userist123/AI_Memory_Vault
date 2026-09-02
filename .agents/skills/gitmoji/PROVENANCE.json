@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:gitmoji",
+  "bundle_instance_id": "inst:awesome-copilot:skills/gitmoji",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gitmoji/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gitmoji/SKILL.md",
+  "content_hash": "8a042880070cf070e8075cb6cded405702c6e92128657cffc8959cc77d7b80c1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/gitmoji"
+}

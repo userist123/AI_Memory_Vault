@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:gsap-framer-scroll-animation",
+  "bundle_instance_id": "inst:awesome-copilot:skills/gsap-framer-scroll-animation",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gsap-framer-scroll-animation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/gsap-framer-scroll-animation/SKILL.md",
+  "content_hash": "898164f4f3bd7baa5c616c800d31251202378c7e283f282e90c50e8d5b7eb6fc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/gsap-framer-scroll-animation"
+}

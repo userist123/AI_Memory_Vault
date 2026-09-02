@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:java-docs",
+  "bundle_instance_id": "inst:awesome-copilot:skills/java-docs",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-docs/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-docs/SKILL.md",
+  "content_hash": "311230d7b0c5e4beb0cc507683a28d4c20ca4c1bb3b3ec200129bbdb05ac533a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/java-docs"
+}

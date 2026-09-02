@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:onboard-context-matic",
+  "bundle_instance_id": "inst:awesome-copilot:skills/onboard-context-matic",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/onboard-context-matic/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/onboard-context-matic/SKILL.md",
+  "content_hash": "7d175ea3659e6aa6164f5a4dff36b3652b5508613ab919890eb0b717767c6005",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/onboard-context-matic"
+}

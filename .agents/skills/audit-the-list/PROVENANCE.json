@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-python-master:audit-the-list",
+  "bundle_instance_id": "inst:awesome-python-master:awesome-python-master/.claude/skills/audit-the-list",
+  "canonical_repository_id": "repo:awesome-python",
+  "canonical_source_id": "awesome-python-master",
+  "source_url": "https://github.com/vinta/awesome-python",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master/awesome-python-master/.claude/skills/audit-the-list/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master/awesome-python-master/.claude/skills/audit-the-list/SKILL.md",
+  "content_hash": "ad0a866d7ac44374c679cd17cd1b8aa4b949af2971236600c0b1d34e50261a74",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/audit-the-list"
+}

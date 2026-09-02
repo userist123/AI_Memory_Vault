@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:claymorphism",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/claymorphism",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/claymorphism/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/claymorphism/SKILL.md",
+  "content_hash": "4eca069658e2615d3afd7e2bc9844f25fc917d037b6c70cab35a71deda0288c8",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/claymorphism"
+}

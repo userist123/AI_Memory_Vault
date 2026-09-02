@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:comment-code-generate-a-tutorial",
+  "bundle_instance_id": "inst:awesome-copilot:skills/comment-code-generate-a-tutorial",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/comment-code-generate-a-tutorial/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/comment-code-generate-a-tutorial/SKILL.md",
+  "content_hash": "6a4e76c357be59f6a6633c7fa2be853e7c43b7a1db0b4b9572ff0f8fdd2bf343",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/comment-code-generate-a-tutorial"
+}

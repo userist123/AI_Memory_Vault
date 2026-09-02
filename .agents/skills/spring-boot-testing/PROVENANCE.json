@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:spring-boot-testing",
+  "bundle_instance_id": "inst:awesome-copilot:skills/spring-boot-testing",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/spring-boot-testing/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/spring-boot-testing/SKILL.md",
+  "content_hash": "08aaf041e9cc370ff15a2297e72994e4a888fcc12c5d1d7d3bd83a00352394a4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 15,
+  "target_installed_path": ".agents/skills/spring-boot-testing"
+}

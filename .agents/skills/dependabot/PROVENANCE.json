@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:dependabot",
+  "bundle_instance_id": "inst:awesome-copilot:skills/dependabot",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/dependabot/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/dependabot/SKILL.md",
+  "content_hash": "65c80dfb13a19bde3295dfab208d661f56d9209a0a8594af5a1b278a970d3ad4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/dependabot"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:audit-integrity",
+  "bundle_instance_id": "inst:awesome-copilot:skills/audit-integrity",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/audit-integrity/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/audit-integrity/SKILL.md",
+  "content_hash": "dc83de0d5df7be36f6d40c4c6a7d3abca339c3209e46544921ad73a58db751e5",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 8,
+  "target_installed_path": ".agents/skills/audit-integrity"
+}

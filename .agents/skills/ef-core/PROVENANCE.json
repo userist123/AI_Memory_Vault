@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:ef-core",
+  "bundle_instance_id": "inst:awesome-copilot:skills/ef-core",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ef-core/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ef-core/SKILL.md",
+  "content_hash": "cb2f021701c47ba855fb68721a2480ef2f230338e8cc0e3b2c12d27ded52e6a9",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/ef-core"
+}

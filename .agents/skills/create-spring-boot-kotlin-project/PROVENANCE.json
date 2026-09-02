@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:create-spring-boot-kotlin-project",
+  "bundle_instance_id": "inst:awesome-copilot:skills/create-spring-boot-kotlin-project",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-spring-boot-kotlin-project/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-spring-boot-kotlin-project/SKILL.md",
+  "content_hash": "6a55a2f22e7db783c643f31a64ae2a7cdb7c9e22093528ceb4c646b1ac55e217",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/create-spring-boot-kotlin-project"
+}

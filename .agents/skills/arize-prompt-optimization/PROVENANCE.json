@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:arize-prompt-optimization",
+  "bundle_instance_id": "inst:awesome-copilot:skills/arize-prompt-optimization",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arize-prompt-optimization/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arize-prompt-optimization/SKILL.md",
+  "content_hash": "cb44b502b800e8c153d5e126d807bfb469bc23c7cda7f669a1456a4c6ede60dd",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/arize-prompt-optimization"
+}
