@@ -1,0 +1,16 @@
+{
+  "total_top_level_sources": 95,
+  "repository_identities": {
+    "unique_primary_repositories": 52,
+    "duplicate_mirror_sources": 16,
+    "root_metadata_files": 10
+  },
+  "sources_by_classification": {
+    "SKILL_COLLECTION": 13,
+    "INDIVIDUAL_SKILL": 11,
+    "COMPLETE_REPOSITORY": 13,
+    "SOFTWARE_PROJECT": 32,
+    "KNOWLEDGE_REPOSITORY": 7,
+    "RESOURCE_COLLECTION": 9
+  }
+}

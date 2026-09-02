@@ -1,0 +1,13 @@
+{
+  "phase0_total_candidates": 9735,
+  "reconciliation_breakdown": {
+    "RAW_MARKER_COUNT": 9735,
+    "TRUE_SKILL_CANDIDATES": 9204,
+    "AGENT_CANDIDATES": 20,
+    "INSTRUCTION_CANDIDATES": 26,
+    "PLUGIN_CANDIDATES": 480,
+    "NESTED_SUPPORT_FILES": 5,
+    "FALSE_POSITIVES": 0,
+    "AMBIGUOUS": 0
+  }
+}

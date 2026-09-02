@@ -1,0 +1,21 @@
+{
+  "phase0_audit": {
+    "total_physical_files": 66673,
+    "keep_files": 17185,
+    "exclude_files": 465,
+    "review_files": 0,
+    "unclassified_files": 49023,
+    "contradictory_files": 0,
+    "completeness_ratio": 0.2647
+  },
+  "reconciliation_audit": {
+    "total_physical_files": 66673,
+    "keep_files": 55319,
+    "exclude_files": 10603,
+    "review_files": 751,
+    "unclassified_files": 0,
+    "contradictory_files": 0,
+    "completeness_ratio": 1.0,
+    "invariant_holds": true
+  }
+}

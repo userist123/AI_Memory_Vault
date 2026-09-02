@@ -1,0 +1,10 @@
+{
+  "total_phase0_bundles": 9735,
+  "classification": {
+    "VALID_BUNDLE": 2251,
+    "DUPLICATE_BUNDLE": 7152,
+    "NESTED_BUNDLE": 4,
+    "AMBIGUOUS_BUNDLE": 328,
+    "NOT_A_SKILL_BUNDLE": 0
+  }
+}

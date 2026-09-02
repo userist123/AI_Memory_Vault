@@ -1,0 +1,32 @@
+{
+  "total_files": {
+    "phase0_value": 66676,
+    "recomputed_value": 66673,
+    "delta": -3,
+    "status": "MISMATCH"
+  },
+  "total_directories": {
+    "phase0_value": 22121,
+    "recomputed_value": 22121,
+    "delta": 0,
+    "status": "MATCH"
+  },
+  "total_bytes": {
+    "phase0_value": 1768795427,
+    "recomputed_value": 1768773084,
+    "delta": -22343,
+    "status": "MISMATCH"
+  },
+  "unique_hashes": {
+    "phase0_value": 46750,
+    "recomputed_value": 46749,
+    "delta": -1,
+    "status": "MISMATCH"
+  },
+  "duplicate_files_count": {
+    "phase0_value": 19926,
+    "recomputed_value": 19924,
+    "delta": -2,
+    "status": "MISMATCH"
+  }
+}
