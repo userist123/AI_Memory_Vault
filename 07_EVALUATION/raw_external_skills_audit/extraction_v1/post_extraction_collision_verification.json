@@ -1,0 +1,1493 @@
+{
+  "summary": {
+    "SELECTED": 3532,
+    "INSTALLED": 3450,
+    "SKIPPED": 82,
+    "NATIVE_COLLISIONS": 57,
+    "EXTERNAL_COLLISIONS": 25,
+    "NATIVE_OVERWRITES": 0,
+    "MISSING_PROVENANCE": 0,
+    "UNEXPLAINED_SKIPS": 0,
+    "RAW_CORPUS_MODIFIED": "NO",
+    "NATIVE_SKILLS_MODIFIED": "NO",
+    "VERDICT": "PASS"
+  },
+  "collisions": [
+    {
+      "collision_id": "col_001",
+      "skill_id": "skill:data-viz-design:data-viz-design",
+      "bundle_instance_id": "inst:data-viz-design:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/data-viz-design",
+      "source_repository": "repo:data-viz-design",
+      "source_id": "data-viz-design",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/data-viz-design/SKILL.md",
+      "content_hash": "50aed5a43c3a919f6ed6fcaaed0ca86dbe0047a4974ba957f5d58caf483e8df1",
+      "reason": "Pre-existing native vault skill located at .agents/skills/data-viz-design; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/data-viz-design/SKILL.md",
+        "retrieved_from": "data-viz-design"
+      }
+    },
+    {
+      "collision_id": "col_002",
+      "skill_id": "skill:design-system-foundation:design-system-foundation",
+      "bundle_instance_id": "inst:design-system-foundation:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/design-system-foundation",
+      "source_repository": "repo:design-system-foundation",
+      "source_id": "design-system-foundation",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/design-system-foundation/SKILL.md",
+      "content_hash": "226ebd2e3505ec4841cbdb70f8f7c38125defdab90c9af2d57aaf6f22c722ec7",
+      "reason": "Pre-existing native vault skill located at .agents/skills/design-system-foundation; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/design-system-foundation/SKILL.md",
+        "retrieved_from": "design-system-foundation"
+      }
+    },
+    {
+      "collision_id": "col_003",
+      "skill_id": "skill:landing-page-design:landing-page-design",
+      "bundle_instance_id": "inst:landing-page-design:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/landing-page-design",
+      "source_repository": "repo:landing-page-design",
+      "source_id": "landing-page-design",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/landing-page-design/SKILL.md",
+      "content_hash": "10b1dcb50a27a77c8c9463473a37f0d5058bcaf29de6e6460b0b8de5aade6bb4",
+      "reason": "Pre-existing native vault skill located at .agents/skills/landing-page-design; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/landing-page-design/SKILL.md",
+        "retrieved_from": "landing-page-design"
+      }
+    },
+    {
+      "collision_id": "col_004",
+      "skill_id": "skill:motion-design:motion-design",
+      "bundle_instance_id": "inst:motion-design:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/motion-design",
+      "source_repository": "repo:motion-design",
+      "source_id": "motion-design",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/motion-design/SKILL.md",
+      "content_hash": "35c07d746e7c539904d76c8c48c96e77faaa73cd260c032aa71375dc185f5477",
+      "reason": "Pre-existing native vault skill located at .agents/skills/motion-design; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/motion-design/SKILL.md",
+        "retrieved_from": "motion-design"
+      }
+    },
+    {
+      "collision_id": "col_005",
+      "skill_id": "skill:ui-sensei:ui-sensei",
+      "bundle_instance_id": "inst:ui-sensei:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/ui-sensei",
+      "source_repository": "repo:ui-sensei",
+      "source_id": "ui-sensei",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/ui-sensei/SKILL.md",
+      "content_hash": "5bc19a25d37cc2c9334ffefb462a18fcbed083f5ecc63e1505c0bf0831b41b73",
+      "reason": "Pre-existing native vault skill located at .agents/skills/ui-sensei; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/gbrasil720/ui-sensei",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/ui-sensei/SKILL.md",
+        "retrieved_from": "ui-sensei"
+      }
+    },
+    {
+      "collision_id": "col_006",
+      "skill_id": "skill:ui-ux-pro-max:ui-ux-pro-max",
+      "bundle_instance_id": "inst:ui-ux-pro-max:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/ui-ux-pro-max",
+      "source_repository": "repo:ui-ux-pro-max",
+      "source_id": "ui-ux-pro-max",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/ui-ux-pro-max/SKILL.md",
+      "content_hash": "b5a74da68ba5d7b1740f33791832bc96d6b67960618b9df23ea4d68a917f407e",
+      "reason": "Pre-existing native vault skill located at .agents/skills/ui-ux-pro-max; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/ui-ux-pro-max/SKILL.md",
+        "retrieved_from": "ui-ux-pro-max"
+      }
+    },
+    {
+      "collision_id": "col_007",
+      "skill_id": "skill:ui-ux-review:ui-ux-review",
+      "bundle_instance_id": "inst:ui-ux-review:.",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/ui-ux-review",
+      "source_repository": "repo:ui-ux-review",
+      "source_id": "ui-ux-review",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/ui-ux-review/SKILL.md",
+      "content_hash": "9612d87010a364fcf7bc38cc500ae8b794d194f49c56800dce74ad818d251f38",
+      "reason": "Pre-existing native vault skill located at .agents/skills/ui-ux-review; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/ui-ux-review/SKILL.md",
+        "retrieved_from": "ui-ux-review"
+      }
+    },
+    {
+      "collision_id": "col_008",
+      "skill_id": "skill:web-quality-skills:accessibility",
+      "bundle_instance_id": "inst:web-quality-skills:accessibility",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/accessibility",
+      "source_repository": "repo:web-quality-skills",
+      "source_id": "web-quality-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/accessibility/SKILL.md",
+      "content_hash": "7ba9ad5cef00bce5a8d32ca56ce43d0f04e1a87f74681c36fac5754b11817de7",
+      "reason": "Pre-existing native vault skill located at .agents/skills/accessibility; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/addyosmani/web-quality-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/accessibility/SKILL.md",
+        "retrieved_from": "web-quality-skills"
+      }
+    },
+    {
+      "collision_id": "col_009",
+      "skill_id": "skill:web-quality-skills:core-web-vitals",
+      "bundle_instance_id": "inst:web-quality-skills:core-web-vitals",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/core-web-vitals",
+      "source_repository": "repo:web-quality-skills",
+      "source_id": "web-quality-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/core-web-vitals/SKILL.md",
+      "content_hash": "f9b0b32b0173c1c294b6c2cb16b1f030d16a33b1b8930b10559512a460c9763f",
+      "reason": "Pre-existing native vault skill located at .agents/skills/core-web-vitals; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/addyosmani/web-quality-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/core-web-vitals/SKILL.md",
+        "retrieved_from": "web-quality-skills"
+      }
+    },
+    {
+      "collision_id": "col_010",
+      "skill_id": "skill:web-quality-skills:web-quality-audit",
+      "bundle_instance_id": "inst:web-quality-skills:skills/web-quality-audit",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/web-quality-audit",
+      "source_repository": "repo:web-quality-skills",
+      "source_id": "web-quality-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/web-quality-audit/SKILL.md",
+      "content_hash": "eaae59b2e868850f0cfa444d3667d466e1671d13d79b293e4ca1ae4246ff4e63",
+      "reason": "Pre-existing native vault skill located at .agents/skills/web-quality-audit; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/addyosmani/web-quality-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/web-quality-audit/SKILL.md",
+        "retrieved_from": "web-quality-skills"
+      }
+    },
+    {
+      "collision_id": "col_011",
+      "skill_id": "skill:programming:argocd-gitops",
+      "bundle_instance_id": "inst:programming:argocd-gitops",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/argocd-gitops",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/argocd-gitops/SKILL.md",
+      "content_hash": "af54e37fd8c63cd1fa1ff299c4423ede98af65fa247ca2a9e1753d331e058e2b",
+      "reason": "Pre-existing native vault skill located at .agents/skills/argocd-gitops; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/argocd-gitops/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_012",
+      "skill_id": "skill:programming:code-refactoring-patterns",
+      "bundle_instance_id": "inst:programming:code-refactoring-patterns",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/code-refactoring-patterns",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/code-refactoring-patterns/SKILL.md",
+      "content_hash": "5faf23208ebed3a6e9a47d25ebccba203ad6e8fd76abd615379d304c559beac6",
+      "reason": "Pre-existing native vault skill located at .agents/skills/code-refactoring-patterns; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/code-refactoring-patterns/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_013",
+      "skill_id": "skill:programming:company-logos",
+      "bundle_instance_id": "inst:programming:company-logos",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/company-logos",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/company-logos/SKILL.md",
+      "content_hash": "fc88111da7a9b69b7fff6d65d82e4555fcd9712e05bb2d926c58cbe67121d3fe",
+      "reason": "Pre-existing native vault skill located at .agents/skills/company-logos; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/company-logos/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_014",
+      "skill_id": "skill:programming:corner-diagonals",
+      "bundle_instance_id": "inst:programming:corner-diagonals",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/corner-diagonals",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/corner-diagonals/SKILL.md",
+      "content_hash": "0da33ea052d14433365c8798a35a0acdba85306957eb188dadce786b2494363b",
+      "reason": "Pre-existing native vault skill located at .agents/skills/corner-diagonals; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/corner-diagonals/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_015",
+      "skill_id": "skill:programming:csharp-wpf-desktop",
+      "bundle_instance_id": "inst:programming:csharp-wpf-desktop",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/csharp-wpf-desktop",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/csharp-wpf-desktop/SKILL.md",
+      "content_hash": "c93598952e9d157b7e3a7f8f0f0d067b75587653a75e2302f6c2a3b2fef167ab",
+      "reason": "Pre-existing native vault skill located at .agents/skills/csharp-wpf-desktop; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/csharp-wpf-desktop/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_016",
+      "skill_id": "skill:programming:global-skill-registry-router",
+      "bundle_instance_id": "inst:programming:global-skill-registry-router",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/global-skill-registry-router",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/global-skill-registry-router/SKILL.md",
+      "content_hash": "73213f7d9393d478685ec39559aa85a9d214ba1ab7f3654d3e9cde1625e0107e",
+      "reason": "Pre-existing native vault skill located at .agents/skills/global-skill-registry-router; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/global-skill-registry-router/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_017",
+      "skill_id": "skill:programming:gooey-blob-system",
+      "bundle_instance_id": "inst:programming:gooey-blob-system",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/gooey-blob-system",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/gooey-blob-system/SKILL.md",
+      "content_hash": "5de4737f459d0d4c2edc2abc4ba367e30d428434315a1cd732e7959a14529bb4",
+      "reason": "Pre-existing native vault skill located at .agents/skills/gooey-blob-system; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/gooey-blob-system/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_018",
+      "skill_id": "skill:programming:opa-rego-policy-enforcement",
+      "bundle_instance_id": "inst:programming:opa-rego-policy-enforcement",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/opa-rego-policy-enforcement",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/opa-rego-policy-enforcement/SKILL.md",
+      "content_hash": "b54223419c63d6cb4d2aa1469ca17ca8bb8d30476f18bd4e7d81378aac763a0b",
+      "reason": "Pre-existing native vault skill located at .agents/skills/opa-rego-policy-enforcement; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/opa-rego-policy-enforcement/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_019",
+      "skill_id": "skill:programming:python-trading-systems",
+      "bundle_instance_id": "inst:programming:python-trading-systems",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/python-trading-systems",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/python-trading-systems/SKILL.md",
+      "content_hash": "a971a3e40ac6e1d73a9b25dee32617c2cb19f8d320cd4806590f4fd4548824ba",
+      "reason": "Pre-existing native vault skill located at .agents/skills/python-trading-systems; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/python-trading-systems/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_020",
+      "skill_id": "skill:programming:skill-api-design-governance",
+      "bundle_instance_id": "inst:programming:skill-api-design-governance",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-api-design-governance",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-api-design-governance/SKILL.md",
+      "content_hash": "6ab036d1ac9c23eadbab67396fa0aee5912ed56a8af140d7e449060d1c1f4675",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-api-design-governance; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-api-design-governance/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_021",
+      "skill_id": "skill:programming:skill-backend-performance-tuning",
+      "bundle_instance_id": "inst:programming:skill-backend-performance-tuning",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-backend-performance-tuning",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-backend-performance-tuning/SKILL.md",
+      "content_hash": "c42e3e0bfba8049c98114a69f4c62d3f13ce0c4aec02f3db5abe264ea5a7e445",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-backend-performance-tuning; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-backend-performance-tuning/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_022",
+      "skill_id": "skill:programming:skill-clean-architecture-layering",
+      "bundle_instance_id": "inst:programming:skill-clean-architecture-layering",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-clean-architecture-layering",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-clean-architecture-layering/SKILL.md",
+      "content_hash": "7a0e99b1af9df20cae91a6c824a86c8f46bad17bcf01c5441f98bd1f84d5a1b5",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-clean-architecture-layering; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-clean-architecture-layering/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_023",
+      "skill_id": "skill:programming:skill-cpp-drogon-coroutine-backend",
+      "bundle_instance_id": "inst:programming:skill-cpp-drogon-coroutine-backend",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-cpp-drogon-coroutine-backend",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cpp-drogon-coroutine-backend/SKILL.md",
+      "content_hash": "4a57998fe4cc7c22e6cbec3e1cb78c213dd169084b97b49308502f89d3f79df3",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-cpp-drogon-coroutine-backend; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cpp-drogon-coroutine-backend/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_024",
+      "skill_id": "skill:programming:skill-cqrs-event-sourcing",
+      "bundle_instance_id": "inst:programming:skill-cqrs-event-sourcing",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-cqrs-event-sourcing",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cqrs-event-sourcing/SKILL.md",
+      "content_hash": "634608953481cf5d10d566376a99787611336ec539ed26c1476d190a8ef82ba5",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-cqrs-event-sourcing; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cqrs-event-sourcing/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_025",
+      "skill_id": "skill:programming:skill-distributed-rate-limiting",
+      "bundle_instance_id": "inst:programming:skill-distributed-rate-limiting",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-distributed-rate-limiting",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-distributed-rate-limiting/SKILL.md",
+      "content_hash": "1b58fc5e6ec2a19d8f975cc19cf88cbaba8eb22331d6113e3f8b16d58fd836b9",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-distributed-rate-limiting; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-distributed-rate-limiting/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_026",
+      "skill_id": "skill:programming:skill-dotnet10-minimal-api-aot",
+      "bundle_instance_id": "inst:programming:skill-dotnet10-minimal-api-aot",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-dotnet10-minimal-api-aot",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-dotnet10-minimal-api-aot/SKILL.md",
+      "content_hash": "1892c7f8d6f5a8869fc139633e7540ea16dd13e252f4b9226303b73752701554",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-dotnet10-minimal-api-aot; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-dotnet10-minimal-api-aot/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_027",
+      "skill_id": "skill:programming:skill-go-worker-pool-concurrency",
+      "bundle_instance_id": "inst:programming:skill-go-worker-pool-concurrency",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-go-worker-pool-concurrency",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-go-worker-pool-concurrency/SKILL.md",
+      "content_hash": "afca0d0236728e78f8e9cae26accb7872cf48bcd73fa67332653bf3df9fdf37d",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-go-worker-pool-concurrency; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-go-worker-pool-concurrency/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_028",
+      "skill_id": "skill:programming:skill-graphql-schema-evolution",
+      "bundle_instance_id": "inst:programming:skill-graphql-schema-evolution",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-graphql-schema-evolution",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-graphql-schema-evolution/SKILL.md",
+      "content_hash": "782a771382871823015ddcdfe72ac9fbded7024ae04dcfc4c3173711fc73394b",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-graphql-schema-evolution; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-graphql-schema-evolution/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_029",
+      "skill_id": "skill:programming:skill-grpc-contract-management",
+      "bundle_instance_id": "inst:programming:skill-grpc-contract-management",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-grpc-contract-management",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-grpc-contract-management/SKILL.md",
+      "content_hash": "af0116b61f5dd4c44f2c7ebd972d96d66c88b7136cd02c8e73db3b1cd68390a6",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-grpc-contract-management; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-grpc-contract-management/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_030",
+      "skill_id": "skill:programming:skill-oauth2-jwt-security",
+      "bundle_instance_id": "inst:programming:skill-oauth2-jwt-security",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-oauth2-jwt-security",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-oauth2-jwt-security/SKILL.md",
+      "content_hash": "1f12268c33da9b7d0c3382e7a41fd9ae59e79ff8839b52f87a5d381e8b9fea49",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-oauth2-jwt-security; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-oauth2-jwt-security/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_031",
+      "skill_id": "skill:programming:skill-owasp-backend-hardening",
+      "bundle_instance_id": "inst:programming:skill-owasp-backend-hardening",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-owasp-backend-hardening",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-owasp-backend-hardening/SKILL.md",
+      "content_hash": "da2a1a5af21ddc33c2c630711f93ee213bebc6f018e5487240f3b2555f6af409",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-owasp-backend-hardening; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-owasp-backend-hardening/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_032",
+      "skill_id": "skill:programming:skill-postgresql-indexing-tuning",
+      "bundle_instance_id": "inst:programming:skill-postgresql-indexing-tuning",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-postgresql-indexing-tuning",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-postgresql-indexing-tuning/SKILL.md",
+      "content_hash": "f36cdad02c9117f5a2e380414e459cc98330843fa76bf39483293f0fd2028152",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-postgresql-indexing-tuning; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-postgresql-indexing-tuning/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_033",
+      "skill_id": "skill:programming:skill-python-fastapi-async-worker",
+      "bundle_instance_id": "inst:programming:skill-python-fastapi-async-worker",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-python-fastapi-async-worker",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-python-fastapi-async-worker/SKILL.md",
+      "content_hash": "931a91bd8bde7ceea708ebc77f7efb68f31c390455cef951f9237303a335ebf9",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-python-fastapi-async-worker; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-python-fastapi-async-worker/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_034",
+      "skill_id": "skill:programming:skill-rbac-abac-authorization",
+      "bundle_instance_id": "inst:programming:skill-rbac-abac-authorization",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-rbac-abac-authorization",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rbac-abac-authorization/SKILL.md",
+      "content_hash": "70a9164309b06734606b44d3393af499c39e27a6911d3d7f15933013337cd28e",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-rbac-abac-authorization; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rbac-abac-authorization/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_035",
+      "skill_id": "skill:programming:skill-redis-caching-patterns",
+      "bundle_instance_id": "inst:programming:skill-redis-caching-patterns",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-redis-caching-patterns",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-redis-caching-patterns/SKILL.md",
+      "content_hash": "08a3293a9cad0d5a08c6a68d7759596bd2117e34c351d592155b952f2abdc6ec",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-redis-caching-patterns; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-redis-caching-patterns/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_036",
+      "skill_id": "skill:programming:skill-rust-tokio-axum-architecture",
+      "bundle_instance_id": "inst:programming:skill-rust-tokio-axum-architecture",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-rust-tokio-axum-architecture",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rust-tokio-axum-architecture/SKILL.md",
+      "content_hash": "b8ff7623c26996a404754a2bca5c527779173dbb871247ddde286f665c72b63b",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-rust-tokio-axum-architecture; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rust-tokio-axum-architecture/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_037",
+      "skill_id": "skill:programming:skill-saga-orchestration-choreography",
+      "bundle_instance_id": "inst:programming:skill-saga-orchestration-choreography",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-saga-orchestration-choreography",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-saga-orchestration-choreography/SKILL.md",
+      "content_hash": "3b72213a7075e13d7fd8979e523fb73b907fffc1a0792378672e4d51852b4294",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-saga-orchestration-choreography; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-saga-orchestration-choreography/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_038",
+      "skill_id": "skill:programming:skill-sqlite-wal-optimization",
+      "bundle_instance_id": "inst:programming:skill-sqlite-wal-optimization",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-sqlite-wal-optimization",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-sqlite-wal-optimization/SKILL.md",
+      "content_hash": "49c4ded90981ae127905ea480c9e41b47947c390652fa3e9445924456a2c167b",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-sqlite-wal-optimization; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-sqlite-wal-optimization/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_039",
+      "skill_id": "skill:programming:skill-transactional-outbox-cdc",
+      "bundle_instance_id": "inst:programming:skill-transactional-outbox-cdc",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-transactional-outbox-cdc",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-transactional-outbox-cdc/SKILL.md",
+      "content_hash": "3221074f7514bb9744a084e2452d58ae502f6825704e5c219e216eaf0eeaf6e7",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-transactional-outbox-cdc; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-transactional-outbox-cdc/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_040",
+      "skill_id": "skill:programming:skill-typescript-nest-bullmq-orm",
+      "bundle_instance_id": "inst:programming:skill-typescript-nest-bullmq-orm",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/skill-typescript-nest-bullmq-orm",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-typescript-nest-bullmq-orm/SKILL.md",
+      "content_hash": "9a09fae392ed24d6c354a831240cdc63c880957b5ad1b689d86deeb232748290",
+      "reason": "Pre-existing native vault skill located at .agents/skills/skill-typescript-nest-bullmq-orm; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/skill-typescript-nest-bullmq-orm/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_041",
+      "skill_id": "skill:programming:unit-test-generation-contract",
+      "bundle_instance_id": "inst:programming:unit-test-generation-contract",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/unit-test-generation-contract",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/unit-test-generation-contract/SKILL.md",
+      "content_hash": "c01ddc7e67af203fe09f196020f4dd09b347f834efb2b4b42ab3b976166edc8c",
+      "reason": "Pre-existing native vault skill located at .agents/skills/unit-test-generation-contract; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/unit-test-generation-contract/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_042",
+      "skill_id": "skill:programming:zero-trust-architecture",
+      "bundle_instance_id": "inst:programming:zero-trust-architecture",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/zero-trust-architecture",
+      "source_repository": "repo:programming",
+      "source_id": "programming",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/programming/zero-trust-architecture/SKILL.md",
+      "content_hash": "7388a2bdf0957eda030de816dcac7d5a3ada58c49fe57b8543bf978994cbc239",
+      "reason": "Pre-existing native vault skill located at .agents/skills/zero-trust-architecture; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/programming/zero-trust-architecture/SKILL.md",
+        "retrieved_from": "programming"
+      }
+    },
+    {
+      "collision_id": "col_043",
+      "skill_id": "skill:garden-skills:design-system-apple",
+      "bundle_instance_id": "inst:garden-skills:design-system-apple",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/design-system-apple",
+      "source_repository": "repo:garden-skills",
+      "source_id": "garden-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-apple/SKILL.md",
+      "content_hash": "b2172c457f7d58d3398e17c09c8466c3116d4fead03ea109e4fb3b5c6df937bc",
+      "reason": "Pre-existing native vault skill located at .agents/skills/design-system-apple; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/ConardLi/garden-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-apple/SKILL.md",
+        "retrieved_from": "garden-skills"
+      }
+    },
+    {
+      "collision_id": "col_044",
+      "skill_id": "skill:garden-skills:design-system-linear",
+      "bundle_instance_id": "inst:garden-skills:design-system-linear",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/design-system-linear",
+      "source_repository": "repo:garden-skills",
+      "source_id": "garden-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-linear/SKILL.md",
+      "content_hash": "89d00d6fc23e681ac704cb211ac1a13a2bf431a31a1f1b6d0c3471aa8df7764c",
+      "reason": "Pre-existing native vault skill located at .agents/skills/design-system-linear; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/ConardLi/garden-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-linear/SKILL.md",
+        "retrieved_from": "garden-skills"
+      }
+    },
+    {
+      "collision_id": "col_045",
+      "skill_id": "skill:garden-skills:design-system-stripe",
+      "bundle_instance_id": "inst:garden-skills:design-system-stripe",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/design-system-stripe",
+      "source_repository": "repo:garden-skills",
+      "source_id": "garden-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-stripe/SKILL.md",
+      "content_hash": "366d5a9e84b3a912e25e597759d1033821c7def457cecdcad9e58897b579018c",
+      "reason": "Pre-existing native vault skill located at .agents/skills/design-system-stripe; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/ConardLi/garden-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-stripe/SKILL.md",
+        "retrieved_from": "garden-skills"
+      }
+    },
+    {
+      "collision_id": "col_046",
+      "skill_id": "skill:garden-skills:garden-web-design-engineer",
+      "bundle_instance_id": "inst:garden-skills:garden-web-design-engineer",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/garden-web-design-engineer",
+      "source_repository": "repo:garden-skills",
+      "source_id": "garden-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/garden-web-design-engineer/SKILL.md",
+      "content_hash": "05ab164f6882bd8800960085152f30a80e828d70aed5be769e790379c646b726",
+      "reason": "Pre-existing native vault skill located at .agents/skills/garden-web-design-engineer; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/ConardLi/garden-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/garden-web-design-engineer/SKILL.md",
+        "retrieved_from": "garden-skills"
+      }
+    },
+    {
+      "collision_id": "col_047",
+      "skill_id": "skill:garden-skills:ui-sensei",
+      "bundle_instance_id": "inst:garden-skills:ui-sensei",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/ui-sensei",
+      "source_repository": "repo:garden-skills",
+      "source_id": "garden-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/ui-sensei/SKILL.md",
+      "content_hash": "3212be6ceb6477bd4c95720101d3ff9f08f56bf70f6eb3cbd3737bf2e8acfa77",
+      "reason": "Pre-existing native vault skill located at .agents/skills/ui-sensei; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/ConardLi/garden-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/ui-sensei/SKILL.md",
+        "retrieved_from": "garden-skills"
+      }
+    },
+    {
+      "collision_id": "col_048",
+      "skill_id": "skill:garden-skills:web-design-engineer",
+      "bundle_instance_id": "inst:garden-skills:web-design-engineer",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/web-design-engineer",
+      "source_repository": "repo:garden-skills",
+      "source_id": "garden-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/web-design-engineer/SKILL.md",
+      "content_hash": "caf7d9752d09a1d2eff781ba8dfc7d4937fa4c4da55094570e70afd7ff0a1081",
+      "reason": "Pre-existing native vault skill located at .agents/skills/web-design-engineer; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/ConardLi/garden-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/web-design-engineer/SKILL.md",
+        "retrieved_from": "garden-skills"
+      }
+    },
+    {
+      "collision_id": "col_049",
+      "skill_id": "skill:backend-reference-skills:backend-api-design",
+      "bundle_instance_id": "inst:backend-reference-skills:backend-api-design",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/backend-api-design",
+      "source_repository": "repo:backend-reference-skills",
+      "source_id": "backend-reference-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-api-design/SKILL.md",
+      "content_hash": "1232116cf8c4310ff9dd21456115b5d318b2e8fb0832737c8e196ba86274ac8c",
+      "reason": "Pre-existing native vault skill located at .agents/skills/backend-api-design; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-api-design/SKILL.md",
+        "retrieved_from": "backend-reference-skills"
+      }
+    },
+    {
+      "collision_id": "col_050",
+      "skill_id": "skill:backend-reference-skills:backend-security-authz",
+      "bundle_instance_id": "inst:backend-reference-skills:backend-security-authz",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/backend-security-authz",
+      "source_repository": "repo:backend-reference-skills",
+      "source_id": "backend-reference-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-security-authz/SKILL.md",
+      "content_hash": "b342c7dc8299bda32ee1dddc0dae277bf0d4c2af2ac8b6321e3fef624ecf7daa",
+      "reason": "Pre-existing native vault skill located at .agents/skills/backend-security-authz; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-security-authz/SKILL.md",
+        "retrieved_from": "backend-reference-skills"
+      }
+    },
+    {
+      "collision_id": "col_051",
+      "skill_id": "skill:backend-reference-skills:build-game-audio-feedback",
+      "bundle_instance_id": "inst:backend-reference-skills:build-game-audio-feedback",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/build-game-audio-feedback",
+      "source_repository": "repo:backend-reference-skills",
+      "source_id": "backend-reference-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/build-game-audio-feedback/SKILL.md",
+      "content_hash": "2403e6edba82d6374d1c0614391b2c8f87e984bb825efb666f1d8ea4b9a80ebb",
+      "reason": "Pre-existing native vault skill located at .agents/skills/build-game-audio-feedback; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/build-game-audio-feedback/SKILL.md",
+        "retrieved_from": "backend-reference-skills"
+      }
+    },
+    {
+      "collision_id": "col_052",
+      "skill_id": "skill:backend-reference-skills:clean-architecture-backend",
+      "bundle_instance_id": "inst:backend-reference-skills:clean-architecture-backend",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/clean-architecture-backend",
+      "source_repository": "repo:backend-reference-skills",
+      "source_id": "backend-reference-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/clean-architecture-backend/SKILL.md",
+      "content_hash": "20d45ab1f064728584449afbfe9ebfd61018ce6e1842fcb1e115225cb000219a",
+      "reason": "Pre-existing native vault skill located at .agents/skills/clean-architecture-backend; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/clean-architecture-backend/SKILL.md",
+        "retrieved_from": "backend-reference-skills"
+      }
+    },
+    {
+      "collision_id": "col_053",
+      "skill_id": "skill:backend-reference-skills:duckdb-analytical-queries",
+      "bundle_instance_id": "inst:backend-reference-skills:duckdb-analytical-queries",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/duckdb-analytical-queries",
+      "source_repository": "repo:backend-reference-skills",
+      "source_id": "backend-reference-skills",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/duckdb-analytical-queries/SKILL.md",
+      "content_hash": "f63e68f93369e05ff4c1d85f91b574f8dcd6c686967e445545d1f9dc8385e4ec",
+      "reason": "Pre-existing native vault skill located at .agents/skills/duckdb-analytical-queries; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/local",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/duckdb-analytical-queries/SKILL.md",
+        "retrieved_from": "backend-reference-skills"
+      }
+    },
+    {
+      "collision_id": "col_054",
+      "skill_id": "skill:awesome-claude-skills-master:webapp-testing",
+      "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/webapp-testing",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/webapp-testing",
+      "source_repository": "repo:awesome-claude-skills",
+      "source_id": "awesome-claude-skills-master",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/webapp-testing/SKILL.md",
+      "content_hash": "51b7349e77ec63b7744a6f63647e7566a0b4d2e301121cc10e8c2113af6556a2",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/webapp-testing (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/awesome-claude-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/webapp-testing/SKILL.md",
+        "retrieved_from": "awesome-claude-skills-master"
+      }
+    },
+    {
+      "collision_id": "col_055",
+      "skill_id": "skill:agentic-awesome-skills-main:ad-campaign-analyzer",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/ad-campaign-analyzer",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/ad-campaign-analyzer",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ad-campaign-analyzer/SKILL.md",
+      "content_hash": "7071ea53813328dec6247b9891d16e0ed0c0c6408afc5f5679282e2007f2547d",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/ad-campaign-analyzer (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ad-campaign-analyzer/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_056",
+      "skill_id": "skill:agentic-awesome-skills-main:anti-ui-slop",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/anti-ui-slop",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/anti-ui-slop",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/anti-ui-slop/SKILL.md",
+      "content_hash": "8ff04df7f8bcce91ecd62bc33660c31f903d319d652faa38c9d005e5e8dc3b36",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/anti-ui-slop (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/anti-ui-slop/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_057",
+      "skill_id": "skill:agentic-awesome-skills-main:brand-guidelines",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/brand-guidelines",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/brand-guidelines",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/brand-guidelines/SKILL.md",
+      "content_hash": "f72fe7452fe3f9f1f9edb2256b1096f8324fc9e2c73145b0f34194999d624fcb",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/brand-guidelines (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/brand-guidelines/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_058",
+      "skill_id": "skill:agentic-awesome-skills-main:canvas-design",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/canvas-design",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/canvas-design",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/canvas-design/SKILL.md",
+      "content_hash": "97e4dfb96730ff1fa6ef377c5b9a4c9f9d02031852ffa457cc1294d5cf1fe813",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/canvas-design (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/canvas-design/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_059",
+      "skill_id": "skill:agentic-awesome-skills-main:competitor-ad-intelligence",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/competitor-ad-intelligence",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/competitor-ad-intelligence",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/competitor-ad-intelligence/SKILL.md",
+      "content_hash": "e38b5d8fa2b373abe00882732180984bc56dfa2b4a97bfc1cc08a8c79b32263c",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/competitor-ad-intelligence (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/competitor-ad-intelligence/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_060",
+      "skill_id": "skill:agentic-awesome-skills-main:copilot-sdk",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/copilot-sdk",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/copilot-sdk",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/copilot-sdk/SKILL.md",
+      "content_hash": "a4eacd141072121a7aba71982208d1c8737f5243e4572665e25f3be799dce45b",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/copilot-sdk (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/copilot-sdk/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_061",
+      "skill_id": "skill:agentic-awesome-skills-main:file-organizer",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/file-organizer",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/file-organizer",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/file-organizer/SKILL.md",
+      "content_hash": "42e16cdf80bdcb33dad80b63d1556371806a08831ee91cbe9e4f2141e04d8a8f",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/file-organizer (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/file-organizer/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_062",
+      "skill_id": "skill:agentic-awesome-skills-main:gh-attach",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/gh-attach",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/gh-attach",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/gh-attach/SKILL.md",
+      "content_hash": "ea46f53311a9e3161228561c66824873552c7d060eb7b42d80272e2287301a3d",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/gh-attach (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/gh-attach/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_063",
+      "skill_id": "skill:agentic-awesome-skills-main:internal-comms",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/internal-comms",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/internal-comms",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/internal-comms/SKILL.md",
+      "content_hash": "d44108ba4e58fa3ca3809d6b4200111137676c3974e3a3cf6c742adb344241c6",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/internal-comms (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/internal-comms/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_064",
+      "skill_id": "skill:agentic-awesome-skills-main:markstream-install",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/markstream-install",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/markstream-install",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/markstream-install/SKILL.md",
+      "content_hash": "4cab4b427bac39f2572fa5ac0f03655c8f912a2071208e06b541010ddc2c5890",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/markstream-install (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/markstream-install/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_065",
+      "skill_id": "skill:agentic-awesome-skills-main:mcp-builder",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/mcp-builder",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/mcp-builder",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/mcp-builder/SKILL.md",
+      "content_hash": "b56b358ca68d6417f52fe19ac2e6864c2ea3569d0849b46d1cda4f97d5bd0368",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/mcp-builder (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/mcp-builder/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_066",
+      "skill_id": "skill:agentic-awesome-skills-main:performance-profiling",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/performance-profiling",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/performance-profiling",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/performance-profiling/SKILL.md",
+      "content_hash": "d342af405c6d35d9750c12cbdd9b11afc1f030a7938dcaa0aea7eba3600ef5f3",
+      "reason": "Pre-existing native vault skill located at .agents/skills/performance-profiling; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/performance-profiling/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_067",
+      "skill_id": "skill:agentic-awesome-skills-main:postgresql-optimization",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/postgresql-optimization",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/postgresql-optimization",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/postgresql-optimization/SKILL.md",
+      "content_hash": "7e38bae10d0df33400530075c9b0d2037f97bcbf7c8532bacc3e373a55a74e34",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/postgresql-optimization (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/postgresql-optimization/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_068",
+      "skill_id": "skill:agentic-awesome-skills-main:seo",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/seo",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/seo",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/seo/SKILL.md",
+      "content_hash": "28db18da7d7095eb33780a300ca039c3a5a55b65366c0724b8f0df7f7c173ef0",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/seo (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/seo/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_069",
+      "skill_id": "skill:agentic-awesome-skills-main:shadcn",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/shadcn",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/shadcn",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/shadcn/SKILL.md",
+      "content_hash": "faa5fb30df1f79a4e70d98ace24acd183ab7a5feabbeeba73ce1e9ba007f2ea8",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/shadcn (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/shadcn/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_070",
+      "skill_id": "skill:agentic-awesome-skills-main:shopify-review-triage",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/shopify-review-triage",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/shopify-review-triage",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/shopify-review-triage/SKILL.md",
+      "content_hash": "3463e54e972510d6c314e2f373f7877c37ceb460a301c4a03e675e7360b15b6c",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/shopify-review-triage (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/shopify-review-triage/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_071",
+      "skill_id": "skill:agentic-awesome-skills-main:skill-creator",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/skill-creator",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/skill-creator",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/skill-creator/SKILL.md",
+      "content_hash": "1a85559f223f30a40dca46755ef12052fb9b0d5c843fe692e475cd5c50ff60ba",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/skill-creator (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/skill-creator/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_072",
+      "skill_id": "skill:agentic-awesome-skills-main:slack-gif-creator",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/slack-gif-creator",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/slack-gif-creator",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/slack-gif-creator/SKILL.md",
+      "content_hash": "cc22057253c2667b149e26871ac9756cc74b9f76d16902d35a302d1fb9f52e2f",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/slack-gif-creator (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/slack-gif-creator/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_073",
+      "skill_id": "skill:agentic-awesome-skills-main:terraform-infrastructure",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/terraform-infrastructure",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/terraform-infrastructure",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/terraform-infrastructure/SKILL.md",
+      "content_hash": "457d530e81474ff50f730636f0ceb342630410953838fd31616023a0e61c269d",
+      "reason": "Pre-existing native vault skill located at .agents/skills/terraform-infrastructure; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/terraform-infrastructure/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_074",
+      "skill_id": "skill:agentic-awesome-skills-main:theme-factory",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/theme-factory",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/theme-factory",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/theme-factory/SKILL.md",
+      "content_hash": "0df5aafb0aff388e2fdbeff08a77738d047c466aa6165aa8f403a1ec909b394d",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/theme-factory (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/theme-factory/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_075",
+      "skill_id": "skill:agentic-awesome-skills-main:ui-tokens",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/ui-tokens",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/ui-tokens",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ui-tokens/SKILL.md",
+      "content_hash": "80405ce06a517255c728b214667092e07a14e0290f06c4f0e3f741004b1af83a",
+      "reason": "Pre-existing native vault skill located at .agents/skills/ui-tokens; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ui-tokens/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_076",
+      "skill_id": "skill:agentic-awesome-skills-main:ui-ux-pro-max",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/ui-ux-pro-max",
+      "collision_type": "NATIVE_SKILL_COLLISION",
+      "existing_target": ".agents/skills/ui-ux-pro-max",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ui-ux-pro-max/SKILL.md",
+      "content_hash": "6af744a0222c3387b8765e15ac7b114fff34ab997ae64641bc614fc9e7545b85",
+      "reason": "Pre-existing native vault skill located at .agents/skills/ui-ux-pro-max; preserved native implementation without overwriting.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ui-ux-pro-max/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_077",
+      "skill_id": "skill:agentic-awesome-skills-main:webapp-testing",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/webapp-testing",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/webapp-testing",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/webapp-testing/SKILL.md",
+      "content_hash": "8aaf1ffc62b979ee0e475869b782134fdd89fe8bc8e58cc7ecca2a5736d6a88e",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/webapp-testing (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/webapp-testing/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_078",
+      "skill_id": "skill:agentic-awesome-skills-main:x-twitter-scraper",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/x-twitter-scraper",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/x-twitter-scraper",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/x-twitter-scraper/SKILL.md",
+      "content_hash": "1879d7d6006e2929529dd1d094848a2a8c50b0a35f3273323ee077f8052dae49",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/x-twitter-scraper (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/x-twitter-scraper/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_079",
+      "skill_id": "skill:agentic-awesome-skills-main:brutalism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/brutalism",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/brutalism",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/brutalism/SKILL.md",
+      "content_hash": "961e5224ce9885132e303730dfd7630692d2cdbe6114254fb2baf7a7fe509e68",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/brutalism (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/brutalism/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_080",
+      "skill_id": "skill:agentic-awesome-skills-main:claymorphism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/claymorphism",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/claymorphism",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/claymorphism/SKILL.md",
+      "content_hash": "eaad35448097d4bd3c9f1a91e4672c1a223295fc019e7a8b2137d81ee599c768",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/claymorphism (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/claymorphism/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_081",
+      "skill_id": "skill:agentic-awesome-skills-main:glassmorphism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/glassmorphism",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/glassmorphism",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/glassmorphism/SKILL.md",
+      "content_hash": "942b06877e1c1cc4ed5c8e90e3e903ad253bb69f0ccfa9b9b766f4eda3c9d301",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/glassmorphism (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/glassmorphism/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    },
+    {
+      "collision_id": "col_082",
+      "skill_id": "skill:agentic-awesome-skills-main:neumorphism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/neumorphism",
+      "collision_type": "EXTERNAL_SKILL_NAME_COLLISION",
+      "existing_target": ".agents/skills/neumorphism",
+      "source_repository": "repo:agentic-awesome-skills",
+      "source_id": "agentic-awesome-skills-main",
+      "source_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/neumorphism/SKILL.md",
+      "content_hash": "56714c3cbe66d82fd36876970be037332954345c230ea3b2373724f53395c91b",
+      "reason": "External folder name collision with winning canonical instance at .agents/skills/neumorphism (DIFFERENT_CONTENT); skipped to prevent collision.",
+      "final_action": "REVIEW",
+      "provenance": {
+        "source_url": "https://github.com/agentic-awesome-skills",
+        "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/neumorphism/SKILL.md",
+        "retrieved_from": "agentic-awesome-skills-main"
+      }
+    }
+  ]
+}
