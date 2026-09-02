@@ -1,3 +1,13 @@
+# Registru Transferuri Project Integration
+
+## Implementation
+- [x] copy `registru-transferuri` solution into `projects/registru-transferuri` `[owner: antigravity | timestamp: 2026-09-02T21:22:27+03:00]`
+- [x] verify .NET 10 solution build and 18/18 tests in new vault location `[owner: antigravity | timestamp: 2026-09-02T21:22:44+03:00]`
+- [x] update project note `02_PROJECTS/Registru_de_transferuri.md` `[owner: antigravity | timestamp: 2026-09-02T21:22:56+03:00]`
+- [x] commit and push to `origin/main`
+
+---
+
 # Capability Evidence Engine — Task 4 Promotion / Retirement Candidates & Anti-Gaming
 
 ## Implementation

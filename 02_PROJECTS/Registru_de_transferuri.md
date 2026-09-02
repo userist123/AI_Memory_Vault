@@ -5,13 +5,13 @@ lifecycle: REVIEW
 category: projects.compliance_desktop_app
 tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
 created: 2026-08-14
-updated: 2026-08-18
+updated: 2026-09-02
 provenance:
   source_type: ai_conversation
   source_ref: github.com/userist123/Registru-de-transferuri
-  source_date: 2026-08-18
-  original_path: not_applicable
-  extraction_date: 2026-08-18
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
   redaction: not_applicable
 confidence: high
 verification: unverified

@@ -1,0 +1,29 @@
+INSTALARE REGISTRU TRANSFERURI MEDIA v3.1
+===========================================
+
+1. Cerințe:
+   - Python 3.11 sau mai nou
+   - pip
+
+2. Instalare dependențe:
+   pip install -r requirements.txt
+
+3. Rulare:
+   Windows: dublu-click pe PORNIRE.bat
+   Linux/Mac: ./pornire.sh sau python3 main.py
+
+4. Prima autentificare:
+   - Selectați "Administrator Sistem" din lista de operatori
+   - Introduceți PIN-ul implicit: 123456
+   - Mergeți la tab-ul "Administrare" și schimbați PIN-urile implicite
+   - Creați conturi individuale pentru fiecare operator real
+
+5. Configurare instituție:
+   - Editați config.ini pentru a seta numele și prefixul instituției dvs.
+
+6. Backup:
+   - Backup-urile se pot crea manual din tab-ul Administrare
+   - Se recomandă backup extern periodic (medii detașabile securizate)
+
+IMPORTANT: Baza de date locală (transferuri.db) conține informații clasificate.
+Asigurați stocarea acesteia pe un sistem izolat (air-gapped), conform politicii de securitate a instituției.

@@ -1,0 +1,22 @@
+# Build and Output
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Database & Sensitive Local Logs
+*.db-wal
+*.db-shm
+audit_log.jsonl
+*.dpapi
+master.key.*
+anchor.bin
+
+# Python Legacy
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
