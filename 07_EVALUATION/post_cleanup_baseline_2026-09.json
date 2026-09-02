@@ -1,0 +1,130 @@
+{
+  "baseline_metadata": {
+    "generated_at": "2026-09-03T01:17:00Z",
+    "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+    "baseline_commit": "619757a2ae0be015db68db0db9219cdf74bba66e",
+    "parent_commit": "feeaee697994c1f9a9cbdd4e8143a94a204a8245",
+    "status": "VERIFIED_POST_CLEANUP_BASELINE"
+  },
+  "git_state": {
+    "head_commit": "619757a2ae0be015db68db0db9219cdf74bba66e",
+    "parent_commit": "feeaee697994c1f9a9cbdd4e8143a94a204a8245",
+    "changed_files_in_head": [
+      "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+      "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills-claude/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+      "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+      "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/plugins/agentic-awesome-skills/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+      "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/payloader/by-category/web/xss跨站脚本.md",
+      "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/pentest-tools/src-hunter/references/playbooks/xss.md",
+      "07_EVALUATION/reports/defender_cleanup_v1_2026-09.md",
+      "07_EVALUATION/security_cleanup_v1/defender_detections.json",
+      "07_EVALUATION/security_cleanup_v1/defender_removal_ledger.jsonl",
+      "07_EVALUATION/security_cleanup_v1/test_defender_cleanup.py"
+    ],
+    "defender_confirmed_raw_artifacts_absent": true,
+    "critical_skills_absent": {
+      "sandbase-mcp": true,
+      "aspire": true
+    },
+    "raw_corpus_preserved_without_broad_purge": true,
+    "raw_corpus_total_files": 66750
+  },
+  "repository_inventory": {
+    "active_skills": {
+      "total_active_skills": 3700,
+      "native_skills": 252,
+      "extracted_skills_with_provenance": 3448,
+      "removed_critical_skills": 2
+    },
+    "raw_external_corpus": {
+      "total_repositories": 85,
+      "total_files": 66750,
+      "total_markdown_notes": 26046
+    },
+    "agent_and_system_specs": {
+      "agents_count": 43,
+      "instruction_files_root": 2,
+      "plugins_count": 0
+    },
+    "vault_layers_breakdown": {
+      "00_CORE": {"notes": 32, "total_files": 32},
+      "01_KNOWLEDGE": {"notes": 120, "total_files": 128},
+      "02_PROJECTS": {"notes": 10, "total_files": 10},
+      "03_PROCEDURES": {"notes": 15, "total_files": 15},
+      "04_MEMORY": {"notes": 585, "total_files": 585},
+      "05_RESOURCES": {"notes": 102, "total_files": 104},
+      "06_INBOX": {"notes": 26046, "total_files": 66750},
+      "07_EVALUATION": {"notes": 45, "total_files": 258},
+      "09_COORDINATION": {"notes": 2, "total_files": 2},
+      "10_ARCHIVE": {"notes": 46, "total_files": 47},
+      "99_SYSTEM": {"notes": 36, "total_files": 49},
+      "cognitive_core": {"notes": 3, "total_files": 321},
+      "memory_controller": {"notes": 0, "total_files": 174},
+      ".agents": {"notes": 8495, "total_files": 15571}
+    },
+    "evaluation_artifacts": {
+      "evaluation_subdirectories": 16,
+      "evaluation_reports": 25,
+      "canonical_manifests": 5
+    }
+  },
+  "evidence_classification": {
+    "STATIC": {
+      "modules": ["07_EVALUATION/skills_quality_v1/"],
+      "claims": "Static validity, schema compliance, docstring completeness, structural dependencies for 3,450 skills.",
+      "provenance": "Independently verified from repository files."
+    },
+    "SEMANTIC": {
+      "modules": ["07_EVALUATION/skills_semantic_v1/"],
+      "claims": "Jaccard lexical similarity, intent classification, redundancy cohorts, dual evaluator agreement.",
+      "provenance": "Independently verified from static text similarity algorithms; does not establish runtime effectiveness."
+    },
+    "STRUCTURAL_RUNTIME": {
+      "modules": ["07_EVALUATION/runtime_v1/"],
+      "claims": "Candidate skill execution in sandboxed fixture test harness across 100 cases (30 repaired traces).",
+      "provenance": "NOT_ESTABLISHED_AS_CAUSAL_RUNTIME_EVIDENCE. The benchmark exercised isolated script fixtures without live agent OODA loops or user outcome verification."
+    },
+    "REAL_RUNTIME": {
+      "modules": [],
+      "claims": "Live causal runtime effectiveness of installed skills in production development workflows.",
+      "provenance": "NOT_ESTABLISHED. No real-world runtime production execution data exists."
+    },
+    "SECURITY": {
+      "modules": [
+        "07_EVALUATION/security_removal_v1/",
+        "07_EVALUATION/security_cleanup_v1/"
+      ],
+      "claims": "Removal of 2 CRITICAL skills (sandbase-mcp, aspire) and deletion of 6 confirmed Defender-triggering raw XSS payload files.",
+      "provenance": "Empirically verified against Windows Defender subsystem (Get-MpThreatDetection) and passing pytest suites."
+    },
+    "PROVENANCE": {
+      "modules": ["07_EVALUATION/raw_external_skills_audit/"],
+      "claims": "Origin URLs, extraction manifests, git commit anchors, and deduplication clusters.",
+      "provenance": "Empirically verified against repository commit history and raw bundle hashes."
+    }
+  },
+  "architecture_gap_analysis": {
+    "pipeline_state": {
+      "1_RESEARCH": "PARTIALLY_IMPLEMENTED",
+      "2_EVIDENCE": "PARTIALLY_IMPLEMENTED",
+      "3_EVALUATION": "IMPLEMENTED_STATIC_ONLY",
+      "4_KNOWLEDGE": "IMPLEMENTED_WITH_STORAGE_DIVERGENCE_RISK",
+      "5_MEMORY_SKILL_PROCEDURE": "IMPLEMENTED",
+      "6_RETRIEVAL": "FRAGMENTED_ENTRY_POINTS",
+      "7_AGENT_EXECUTION": "PARTIALLY_IMPLEMENTED_LEAST_PRIVILEGE_SPECS_EXIST",
+      "8_TRACE": "PARTIALLY_IMPLEMENTED_TELEMETRY_EXISTS",
+      "9_OUTCOME": "PARTIALLY_IMPLEMENTED_SCHEMA_EXISTS",
+      "10_FEEDBACK_LOOP": "NOT_IMPLEMENTED"
+    },
+    "critical_gaps": [
+      "Fragmented retrieval entry points: recall_cli.py and dispatch_cli.py bypass MemoryController and P0-P15 security invariants.",
+      "Divergence risk between Obsidian Markdown wikilinks graph and SQLite WAL database (vault_memory.sqlite3).",
+      "Runtime effectiveness metrics were derived from sandboxed fixture runs rather than live production agent execution.",
+      "Lack of automated outcome verification linking agent execution traces back to memory confidence scoring."
+    ],
+    "smallest_safe_next_milestone": {
+      "milestone": "UNIFIED_SECURE_RETRIEVAL_CLI_V1",
+      "scope": "Refactor recall_cli.py into a thin, secure CLI wrapper calling MemoryController.search() with Principal.AI_AGENT, deprecating insecure raw os.walk, and restoring unified P0-P15 security compliance across all entry points."
+    }
+  }
+}
