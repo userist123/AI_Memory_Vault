@@ -1,0 +1,13 @@
+{
+  "persistence": {
+    "typeorm": {
+      "enabled": true,
+      "type": "sqlite",
+      "database": ".prosto/local-auth.sqlite",
+      "synchronize": false,
+      "migrationsRun": true,
+      "migrationTransactionMode": "each",
+      "migrationLockTimeoutMs": 60000
+    }
+  }
+}

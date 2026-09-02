@@ -1,0 +1,21 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "paths": {
+      "@/tests/fixtures/*": ["./tests/fixtures/*"],
+      "@/bench/*": ["./bench/*"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.package.json"
+    },
+    {
+      "path": "./tsconfig.vitest.json"
+    }
+  ]
+}

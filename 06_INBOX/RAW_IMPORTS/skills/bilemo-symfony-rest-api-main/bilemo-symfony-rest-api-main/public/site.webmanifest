@@ -1,0 +1,6 @@
+{
+    "name": "BileMo API",
+    "short_name": "BileMo",
+    "start_url": "/",
+    "display": "standalone"
+}

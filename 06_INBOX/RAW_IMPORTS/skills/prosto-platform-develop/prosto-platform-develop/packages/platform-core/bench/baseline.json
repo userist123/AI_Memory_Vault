@@ -1,0 +1,9 @@
+{
+  "startupP95Ms": 0.03,
+  "eventDispatchP95Us": 3.3,
+  "establishedAt": "2026-06-02T19:11:14.862Z",
+  "environment": "ci-ubuntu-latest",
+  "warmupIterations": 100,
+  "measuredIterations": 1000,
+  "notes": "Calibrated by scripts/calibrate-bench-baseline.mjs. Review the diff before merging and update the regression budget only after the change is intentional."
+}

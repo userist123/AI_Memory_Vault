@@ -1,0 +1,5 @@
+pydantic
+python-dotenv
+SQLAlchemy>=2.0
+psycopg2-binary
+redis>=5.0.0

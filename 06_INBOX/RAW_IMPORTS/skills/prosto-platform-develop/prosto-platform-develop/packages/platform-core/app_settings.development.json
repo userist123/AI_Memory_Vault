@@ -1,0 +1,6 @@
+{
+  "logging": {
+    "level": "debug",
+    "format": "text"
+  }
+}

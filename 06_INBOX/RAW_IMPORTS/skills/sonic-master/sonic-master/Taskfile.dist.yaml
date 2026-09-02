@@ -1,0 +1,128 @@
+# See <https://taskfile.dev/usage> and <https://taskfile.dev/reference/schema>
+# to find all keys and their usage.
+version: "3"
+
+env:
+  SELF: task {{ .ALIAS | default .TASK }} --
+
+includes:
+  server: ./server
+
+tasks:
+  help:
+    desc: Shows available tasks for this project.
+    aliases: [default]
+    silent: true
+    cmd: task -a --sort none
+
+  doc:open:
+    desc: Build and open Cargo docs.
+    aliases: [doc]
+    cmd: cargo doc --no-deps --lib --open
+
+  test:
+    desc: >-
+      Runs native Rust tests.
+      You can use `task test:foo,bar` to run tests foo and bar.
+    aliases: [test:*]
+    cmds:
+      - cargo test --locked --no-fail-fast{{ if .MATCH }} --test {{ .MATCH | first | splitList "," | join " --test " }}{{ end }}{{ if .ARGS }} {{ .ARGS }}{{ end }}
+      - task: util:update-tested-at-version
+    vars:
+      ARGS: '{{ without .CLI_ARGS_LIST "--trace" "--debug" "--info" "--warn" | join " " }}'
+    env:
+      # This matches the last log level flag specified (expected behavior).
+      LOG_LEVEL: '{{ regexFindAll "(^| )--(trace|debug|info|warn)( |$)" (.CLI_ARGS_LIST | join "  ") -1 | last | default "--" | trim | substr 2 -1 }}'
+
+  e2e-test:
+    desc: Runs end-to-end tests.
+    cmd: cargo test --locked -p sonic-server
+
+  ci:
+    desc: Runs all CI checks.
+    cmds:
+      - task: deps:lint
+      - cargo fmt --check
+      - cargo clippy --locked
+      - cargo check --locked --release
+      - cargo test --locked
+      - task: util:update-tested-at-version
+
+  changelog:prepare:
+    desc: Prepares changelog entries for the next release.
+    cmd: ./scripts/changelog_prepare.sh {{ .CLI_ARGS }}
+
+  release:core:
+    desc: Makes a new release (git tag) of Sonic core. CD will publish the library.
+    silent: true
+    cmd: ./scripts/make_release.sh core {{ .CLI_ARGS }}
+
+  release:server:
+    desc: Makes a new release (git tag) of Sonic server. CD will build and release the binary.
+    silent: true
+    cmd: ./scripts/make_release.sh server {{ .CLI_ARGS }}
+
+  release:client:
+    desc: Makes a new release (git tag) of Sonic client. CD will build and release the binary.
+    silent: true
+    cmd: ./scripts/make_release.sh client {{ .CLI_ARGS }}
+
+  deps:update:
+    desc: Updates dependencies (non-breaking).
+    cmds:
+      - cargo update
+      - cargo fetch
+      - cargo deny check bans >/dev/null 2>&1 || task deps:validate-build-scripts
+      - task: deps:lint
+
+  deps:lint:
+    desc: Lints the dependency graph (checks for advisories, unwanted licenses, untrusted sources…).
+    aliases: [lint:deps]
+    cmd: cargo deny check --show-stats {{ .CLI_ARGS }}
+    sources:
+      - server/Cargo.toml
+      - core/Cargo.toml
+      - client/Cargo.toml
+      - Cargo.lock
+      - deny.toml
+    preconditions:
+      - sh: command -v cargo-deny >/dev/null
+        msg: "`cargo deny` is required. Install using `cargo install cargo-deny --locked`."
+
+  deps:validate-build-scripts:
+    desc: Lets you validate build script changes in dependencies after updating.
+    silent: true
+    cmd: ./scripts/validate-dep-build-script-change.sh
+
+  lint:md:
+    desc: Lints Markdown files. You can pass a rule name to check it individually.
+    aliases: [lint:md:*]
+    silent: true
+    cmd: markdownlint-cli2 '**/*.md' '!target' '!LICENSE.md' 2>&1{{ if .MATCH }} | { ! grep {{ index .MATCH 0 }}; }{{ end }}
+    preconditions:
+      - sh: command -v markdownlint-cli2 >/dev/null
+        msg: "`markdownlint-cli2` is required. See <https://github.com/DavidAnson/markdownlint-cli2#install>."
+
+  dev:doc:
+    desc: Rebuild Cargo docs on source file changes.
+    aliases: [doc:watch]
+    preconditions:
+      - sh: command -v cargo-watch >/dev/null 2>&1
+        msg: "Install `cargo-watch` using `cargo install cargo-watch`."
+    cmds:
+      - task: doc:open
+      - cmd: cargo watch -x 'doc --no-deps --lib'
+
+  util:update-tested-at-version:
+    desc: Updates "Tested at Rust version" in the `README`.
+    internal: true
+    vars:
+      RUST_VERSION:
+        sh: rustc --version
+      PATTERN: 's/(Tested at Rust version: `).+(`)/\1{{.RUST_VERSION}}\2/'
+      README: README.md
+    cmds:
+      - cmd: "sed -i -E '{{.PATTERN}}' '{{.README}}'"
+        platforms: [linux]
+      - cmd: "sed -i '' -E '{{.PATTERN}}' '{{.README}}'"
+        platforms: [darwin]

@@ -1,0 +1,134 @@
+    {% extends 'base.html' %}{% block title %}{{ store_info.name|title }}{% endblock %}
+    {% block content %}
+    <main>
+        <div class="breadcrumbs d-flex align-items-center" style="background-image: url({{store_info.cover_photo.url}});">
+            <div class="container position-relative d-flex flex-column align-items-center">
+                <h2>{{ store_info.name|title }}</h2>
+                <h4 class="text-white">Specialized {{ store_info.services }} retail store</h4>    
+            </div>
+        </div>
+    
+        <section class="retail-store-details">
+            <div class="container my-5" data-aos="fade-up">
+                <div class="row gy-4">
+                    <div class="col-lg-8">
+                        {% include 'messages.html' %}
+                        <div class="slides-1 retail-store-details-slider swiper">
+                            <div class="swiper-wrapper align-items-center">
+                                <div class="swiper-slide">
+                                    <img src="{{ store_info.image.url }}" alt="image">
+                                </div>
+                                <div class="swiper-slide">
+                                    <img src="{{ store_info.image.url }}" alt="image">
+                                </div>
+                                <div class="swiper-slide">
+                                    <img src="{{ store_info.image.url }}" alt="image">
+                                </div>
+                                <div class="swiper-slide">
+                                    <img src="{{ store_info.image.url }}" alt="image">
+                                </div>
+                            </div>
+                            <div class="swiper-pagination"></div>
+                        </div>
+                    </div>
+            
+                    <div class="col-lg-4">
+                        <div class="retail-store-info">
+                            <h3>Store details</h3>
+                            <ul>
+                                <li><strong>Name</strong>: {{ store_info.name }}</li>
+                                <li><strong>Seller</strong>: {{ store_info.owner.first_name|title }} {{ store_info.owner.last_name|title }}</li>
+                                <li><strong>Services</strong>: {{ store_info.services }}</li>
+                                <li>
+                                    <strong>Rating</strong>: 
+                                    {% if store_info.rating == 1 %}
+                                        <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                    {% elif store_info.rating == 2 %}
+                                        <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                    {% elif store_info.rating == 3 %}
+                                        <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                    {% elif store_info.rating == 4 %}
+                                        <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i>
+                                    {% elif store_info.rating == 5 %}
+                                        <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i>
+                                    {% else %}
+                                        <i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                    {% endif %}
+                                </li>
+                                <li> 
+                                    <a href=""><i class="bi-facebook" style="font-size: 25px;"></i></a>
+                                    <a href=""><i class="bi-twitter-x" style="font-size: 25px; color: #141111;"></i></a>
+                                    <a href=""><i class="bi-instagram" style="font-size: 25px; color: #0e0d0d;"></i></a>
+                                </li>
+                            </ul>
+                            <hr>
+                            <a href="{% url 'report_store' store_info.id %}" class="btn btn-sm btn-outline-danger w-100"><i class="bi-exclamation-triangle-fill"></i> Report this store</a>
+                        </div>
+                        <div class="retail-store-description">
+                            <h2>Retail store bio</h2>
+                            <p>{{ store_info.description }}</p>
+                        </div>
+                    </div>    
+                </div>
+                <hr>
+                <div class="row">
+                    <div id="products" class="products">
+                        <div class="container" data-aos="fade-up">
+                            <div class="section-header">
+                                <h2 class="text-center">Products</h2>
+                                <h5 class="text-center text-muted">Products sold by {{ store_info.name }}</h5>
+                            </div>
+                            <div class="slides-3 swiper" data-aos="fade-up" data-aos-delay="100">
+                                <div class="swiper-wrapper">
+                                    {% for item in products %}
+                                    <div class="swiper-slide">
+                                        <div class="product-item">
+                                            <div class="stars">
+                                                <h3 class="card-title text-center mb-0 pb-0">{{ item.seller }}</h3>
+                                                {% if item.rating == 1 %}
+                                                <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                                {% elif item.rating == 2 %}
+                                                <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                                {% elif item.rating == 3 %}
+                                                <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                                {% elif item.rating == 4 %}
+                                                <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star"></i>
+                                                {% elif item.rating == 5 %}
+                                                <i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i><i class="bi-star-fill" style="color: #ffc107;"></i>
+                                                {% else %}
+                                                <i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i><i class="bi-star"></i>
+                                                {% endif %}  
+                                            </div>
+                                            <img src="{{ item.img_file.url }}" alt="store">
+                                            <h3 class="card-title text-start mb-0 pb-0">{{ item.product }}</h3>
+                                            <p class="card-text py-2">{{ item.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <small class="text-body-secondary">
+                                                    <i class="bi-cash-coin" style="font-size: 20px; color: #18bb46;"></i> {{ item.price|floatformat:"2g" }}/=
+                                                </small>
+                                                <a href="{% url 'add_to_cart' item.id %}" class="btn btn-sm btn-outline-secondary">View</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <div class="col-md-12 col-lg-12 text-center">
+                                        <i class="bi-emoji-expressionless" style="font-size: 45px;"></i>
+                                        <h6 class="text-center text-muted fst-italic">No products available</h6>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="swiper-pagination"></div>
+                                <hr>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 text-center">
+                                    <a href="{% url 'products_for_sale' store_info.id %}" class="btn btn-primary">View all products</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    {% endblock %}

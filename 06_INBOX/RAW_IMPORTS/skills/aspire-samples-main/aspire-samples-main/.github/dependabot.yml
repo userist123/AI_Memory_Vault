@@ -1,0 +1,179 @@
+version: 2
+registries:
+  public-nuget:
+    type: nuget-feed
+    url: https://api.nuget.org/v3/index.json
+updates:
+  - package-ecosystem: nuget
+    directory: "/.github"
+    registries:
+      - public-nuget
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 15
+    ignore:
+       # See https://github.com/dotnet/aspire/issues/7123
+      - dependency-name: "OpenTelemetry.*"
+    groups:
+      Aspire:
+        patterns:
+          - "Aspire.*"
+          - "Microsoft.Extensions.ServiceDiscovery.*"
+      AspNetCore:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+      EntityFrameworkCore:
+        patterns:
+          - "Microsoft.EntityFrameworkCore*"
+      MicrosoftExtensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+          - "Microsoft.Bcl.*"
+      Grpc:
+        patterns:
+          - "Grpc.*"
+      OpenTelemetry:
+        patterns:
+          - "OpenTelemetry.*"
+      MicrosoftTest:
+        patterns:
+          - "Microsoft.NET.Test.*"
+      xunit:
+        patterns:
+          - "xunit*"
+      Orleans:
+        patterns:
+          - "Microsoft.Orleans*"
+    labels:
+      - area-engineering-systems
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: npm
+    directory: "samples/aspire-with-javascript/AspireJavaScript.Angular"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      # Angular 22 requires TypeScript >=6.0 <6.1. Revisit for the next Angular major.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      angular-core:
+        patterns:
+          - "@angular/*"
+          - "zone.js"
+          - "rxjs"
+      angular-tooling:
+        patterns:
+          - "@angular-devkit/*"
+          - "typescript"
+          - "@types/*"
+          - "eslint*"
+          - "karma*"
+          - "webpack*"
+      misc-deps:
+        patterns:
+          - "*"
+    labels:
+      - area-engineering-systems
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: npm
+    directory: "samples/aspire-with-javascript/AspireJavaScript.React"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    groups:
+      react-core:
+        patterns:
+          - "react"
+          - "react-dom"
+      react-tooling:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "eslint*"
+          - "jest*"
+          - "vite*"
+          - "@vitejs/*"
+          - "webpack*"
+      misc-deps:
+        patterns:
+          - "*"
+    labels:
+      - area-engineering-systems
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: npm
+    directory: "samples/aspire-with-javascript/AspireJavaScript.Vue"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      vue-core:
+        patterns:
+          - "vue"
+          - "@vue/*"
+          - "vue-router"
+          - "pinia"
+      vue-tooling:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "typescript"
+          - "@types/*"
+          - "eslint*"
+      misc-deps:
+        patterns:
+          - "*"
+    labels:
+      - area-engineering-systems
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: npm
+    directory: "samples/aspire-with-javascript/AspireJavaScript.Vite"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 1
+    ignore:
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+    groups:
+      vite-tooling:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "typescript"
+          - "@types/*"
+          - "eslint*"
+      misc-deps:
+        patterns:
+          - "*"
+    labels:
+      - area-engineering-systems
+    cooldown:
+      default-days: 7
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 15
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    labels:
+      - area-engineering-systems
+    cooldown:
+      default-days: 7

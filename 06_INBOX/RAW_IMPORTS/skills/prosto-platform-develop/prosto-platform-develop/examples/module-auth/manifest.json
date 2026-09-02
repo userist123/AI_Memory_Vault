@@ -1,0 +1,7 @@
+{
+  "id": "module-auth",
+  "version": "1.0.0",
+  "sdkVersion": "^0.1.0",
+  "title": "Authentification",
+  "dependencies": []
+}

@@ -1,0 +1,156 @@
+name: typeorm-dialect-certification
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'packages/platform-adapters/platform-adapter-typeorm/**'
+      - 'packages/platform-sdk/src/persistence/**'
+      - 'packages/platform-core/src/bootstrap/**'
+      - 'packages/platform-core/src/modularity/**'
+      - 'packages/platform-core/src/runtime/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/typeorm-dialect-certification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typeorm-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: prosto_typeorm_ci
+          POSTGRES_USER: prosto
+          POSTGRES_PASSWORD: prosto-ci-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U prosto -d prosto_typeorm_ci"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+    env:
+      PROSTO_TYPEORM_DIALECT: postgres
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: prosto_typeorm_ci
+      POSTGRES_USERNAME: prosto
+      POSTGRES_PASSWORD: prosto-ci-password
+    steps: &certification_steps
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:integration --workspace=@prosto/platform-adapter-typeorm
+        env:
+          PROSTO_TYPEORM_INTEGRATION: 1
+
+  typeorm-mysql8:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: prosto_typeorm_ci
+          MYSQL_USER: prosto
+          MYSQL_PASSWORD: prosto-ci-password
+          MYSQL_ROOT_PASSWORD: prosto-ci-root-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping -h localhost -uroot -pprosto-ci-root-password"
+          --health-interval 10s --health-timeout 5s --health-retries 15
+    env:
+      PROSTO_TYPEORM_DIALECT: mysql
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: prosto_typeorm_ci
+      MYSQL_USERNAME: prosto
+      MYSQL_PASSWORD: prosto-ci-password
+    steps: *certification_steps
+
+  typeorm-mariadb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: prosto_typeorm_ci
+          MARIADB_USER: prosto
+          MARIADB_PASSWORD: prosto-ci-password
+          MARIADB_ROOT_PASSWORD: prosto-ci-root-password
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 10s --health-timeout 5s --health-retries 15
+    env:
+      PROSTO_TYPEORM_DIALECT: mariadb
+      MARIADB_HOST: 127.0.0.1
+      MARIADB_PORT: 3306
+      MARIADB_DATABASE: prosto_typeorm_ci
+      MARIADB_USERNAME: prosto
+      MARIADB_PASSWORD: prosto-ci-password
+    steps: *certification_steps
+
+  typeorm-sqlite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROSTO_TYPEORM_DIALECT: sqlite
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:integration --workspace=@prosto/platform-adapter-typeorm
+        env:
+          PROSTO_TYPEORM_INTEGRATION: 1
+          PROSTO_TYPEORM_SQLITE_DIRECTORY: ${{ runner.temp }}
+
+  typeorm-sqlserver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: Prosto_ci_password_2026!
+        ports: ['1433:1433']
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P 'Prosto_ci_password_2026!' -Q 'SELECT 1'"
+          --health-interval 10s --health-timeout 10s --health-retries 20
+    env:
+      PROSTO_TYPEORM_DIALECT: mssql
+      MSSQL_HOST: 127.0.0.1
+      MSSQL_PORT: 1433
+      MSSQL_DATABASE: prosto_typeorm_ci
+      MSSQL_USERNAME: sa
+      MSSQL_PASSWORD: Prosto_ci_password_2026!
+      MSSQL_OPTIONS: '{"trustServerCertificate":true}'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Create SQL Server test database
+        run: >-
+          docker exec ${{ job.services.sqlserver.id }} /opt/mssql-tools18/bin/sqlcmd
+          -C -S localhost -U sa -P 'Prosto_ci_password_2026!'
+          -Q "IF DB_ID(N'prosto_typeorm_ci') IS NULL CREATE DATABASE [prosto_typeorm_ci]"
+      - run: npm run test:integration --workspace=@prosto/platform-adapter-typeorm
+        env:
+          PROSTO_TYPEORM_INTEGRATION: 1

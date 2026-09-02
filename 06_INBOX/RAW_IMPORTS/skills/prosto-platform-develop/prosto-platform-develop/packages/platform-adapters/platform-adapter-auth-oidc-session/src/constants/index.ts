@@ -1,0 +1,13 @@
+export const SESSION_SCHEMA_VERSION = 1;
+export const SESSION_ABSOLUTE_TTL_MS = 8 * 60 * 60 * 1000;
+export const SESSION_IDLE_TTL_MS = 30 * 60 * 1000;
+export const SESSION_TOUCH_INTERVAL_MS = 5 * 60 * 1000;
+export const ACCESS_REFRESH_WINDOW_MS = 60 * 1000;
+export const REFRESH_LEASE_MS = 10 * 1000;
+export const REFRESH_POLL_MS = 100;
+export const REFRESH_WAIT_MS = 5 * 1000;
+export const OIDC_TRANSACTION_TTL_SECONDS = 10 * 60;
+export const SESSION_COOKIE_PREFIX = '__Host-prosto-admin-session-v';
+export const TRANSACTION_COOKIE_NAME = '__Host-prosto-admin-oidc-tx';
+export const MIN_TOKEN_EXPIRY_SECONDS = 120;
+export const MAX_TOKEN_EXPIRY_SECONDS = 15 * 60;

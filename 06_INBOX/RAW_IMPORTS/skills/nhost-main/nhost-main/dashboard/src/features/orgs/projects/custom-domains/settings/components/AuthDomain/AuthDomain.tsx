@@ -1,0 +1,194 @@
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import * as Yup from 'yup';
+import { ApplyLocalSettingsDialog } from '@/components/common/ApplyLocalSettingsDialog';
+import { useDialog } from '@/components/common/DialogProvider';
+import { Form } from '@/components/form/Form';
+import { FormInput } from '@/components/form/FormInput';
+import {
+  SettingsCard,
+  SettingsCardContent,
+  SettingsCardFooter,
+  SettingsCardHeader,
+} from '@/components/layout/SettingsCard';
+import { ButtonWithLoading } from '@/components/ui/v3/button';
+import { useIsPlatform } from '@/features/orgs/projects/common/hooks/useIsPlatform';
+import { VerifyDomain } from '@/features/orgs/projects/custom-domains/settings/components/VerifyDomain';
+import { useLocalMimirClient } from '@/features/orgs/projects/hooks/useLocalMimirClient';
+import { useProject } from '@/features/orgs/projects/hooks/useProject';
+import { execPromiseWithErrorToast } from '@/features/orgs/utils/execPromiseWithErrorToast';
+import {
+  type ConfigIngressUpdateInput,
+  useGetAuthenticationSettingsQuery,
+  useUpdateConfigMutation,
+} from '@/generated/graphql';
+import { useTrackEvent } from '@/hooks/useTrackEvent';
+import { isEmptyValue, isNotEmptyValue } from '@/lib/utils';
+
+const validationSchema = Yup.object({
+  auth_fqdn: Yup.string(),
+});
+
+export type AuthDomainFormValues = Yup.InferType<typeof validationSchema>;
+
+export default function AuthDomain() {
+  const { openDialog } = useDialog();
+  const isPlatform = useIsPlatform();
+  const localMimirClient = useLocalMimirClient();
+  const track = useTrackEvent();
+  const [isVerified, setIsVerified] = useState(false);
+
+  const { project, refetch: refetchProject } = useProject();
+
+  const [updateConfig] = useUpdateConfigMutation({
+    ...(!isPlatform ? { client: localMimirClient } : {}),
+  });
+
+  const form = useForm<Yup.InferType<typeof validationSchema>>({
+    reValidateMode: 'onSubmit',
+    defaultValues: { auth_fqdn: '' },
+    resolver: yupResolver(validationSchema),
+  });
+
+  const { data, loading, error } = useGetAuthenticationSettingsQuery({
+    variables: {
+      appId: project?.id,
+    },
+    ...(!isPlatform ? { client: localMimirClient } : {}),
+  });
+
+  const { networking } = data?.config?.auth?.resources || {};
+  const initialValue = networking?.ingresses?.[0]?.fqdn?.[0];
+
+  const { formState, watch } = form;
+  const isDirty = Object.keys(formState.dirtyFields).length > 0;
+
+  const auth_fqdn = watch('auth_fqdn');
+
+  const submitButtonDisabled = (() => {
+    if (!isPlatform) {
+      return !isDirty;
+    }
+
+    if (isEmptyValue(auth_fqdn) && isDirty) {
+      return false;
+    }
+
+    return !isDirty || !isVerified;
+  })();
+
+  useEffect(() => {
+    if (!loading && data) {
+      form.reset({ auth_fqdn: initialValue });
+    }
+  }, [data, loading, form, initialValue]);
+
+  if (error) {
+    throw error;
+  }
+
+  async function handleSubmit(formValues: AuthDomainFormValues) {
+    let ingresses: ConfigIngressUpdateInput[] | null;
+    let successMessage = '';
+
+    if (isNotEmptyValue(formValues.auth_fqdn)) {
+      ingresses = [{ fqdn: [formValues.auth_fqdn] }];
+      successMessage = 'Auth domain has been updated successfully.';
+    } else {
+      ingresses = null;
+      successMessage = 'Custom Auth domain has been removed successfully.';
+    }
+
+    const updateConfigPromise = updateConfig({
+      variables: {
+        appId: project!.id,
+        config: {
+          auth: {
+            resources: {
+              networking: {
+                ingresses,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await execPromiseWithErrorToast(
+      async () => {
+        await updateConfigPromise;
+        if (!initialValue && isNotEmptyValue(formValues.auth_fqdn)) {
+          track('Custom Domain Added', { service: 'auth' });
+        }
+        form.reset(formValues);
+        await refetchProject();
+
+        if (!isPlatform) {
+          openDialog({
+            title: 'Apply your changes',
+            component: <ApplyLocalSettingsDialog />,
+            props: {
+              PaperProps: {
+                className: 'max-w-2xl',
+              },
+            },
+          });
+        }
+      },
+      {
+        loadingMessage: 'Auth domain is being updated...',
+        successMessage,
+        errorMessage:
+          'An error occurred while trying to update the auth domain.',
+      },
+    );
+  }
+
+  return (
+    <FormProvider {...form}>
+      <Form onSubmit={handleSubmit}>
+        <SettingsCard>
+          <SettingsCardHeader
+            title="Auth Domain"
+            description="Enter below your custom domain for the authentication service."
+          />
+
+          <SettingsCardContent className="gap-x-4 gap-y-4 lg:grid-cols-5">
+            <FormInput
+              control={form.control}
+              name="auth_fqdn"
+              containerClassName="col-span-5 lg:col-span-2"
+              placeholder="auth.mydomain.dev"
+              onChange={() => {
+                if (isVerified) {
+                  setIsVerified(false);
+                }
+              }}
+            />
+            <div className="col-span-5 row-start-2">
+              <VerifyDomain
+                recordType="CNAME"
+                hostname={auth_fqdn}
+                value={`lb.${project?.region.name}.${project?.region.domain}.`}
+                onHostNameVerified={() => setIsVerified(true)}
+                saveEnabled={!submitButtonDisabled}
+              />
+            </div>
+          </SettingsCardContent>
+
+          <SettingsCardFooter>
+            <ButtonWithLoading
+              type="submit"
+              disabled={submitButtonDisabled}
+              loading={formState.isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Save
+            </ButtonWithLoading>
+          </SettingsCardFooter>
+        </SettingsCard>
+      </Form>
+    </FormProvider>
+  );
+}

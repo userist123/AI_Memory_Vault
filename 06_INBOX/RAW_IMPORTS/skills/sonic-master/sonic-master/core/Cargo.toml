@@ -1,0 +1,55 @@
+[package]
+name = "sonic-core"
+version = "0.2.1"
+description = "Fast, lightweight and schema-less search backend."
+readme = "../README.md"
+license = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+keywords = ["search", "query", "server", "index"]
+categories = ["database-implementations", "web-programming"]
+authors = { workspace = true }
+
+[lib]
+name = "sonic"
+path = "src/lib.rs"
+doc = true
+
+[dependencies]
+unicode-normalization = { version = "0.1", default-features = false }
+caseless = { version = "0.2", default-features = false }
+tracing = { version = "0.1", default-features = false }
+serde = { version = "1", default-features = false, features = ["derive", "rc", "std"] }
+unicode-segmentation = { version = "1", default-features = false }
+radix = { version = "0.6", default-features = false }
+rocksdb = { version = "0.25", default-features = false, features = ["bindgen-runtime", "zstd"] }
+fst = { version = "0.3", default-features = false }
+fst-levenshtein = { version = "0.3", default-features = false }
+fst-regex = { version = "0.3", default-features = false }
+regex-syntax = { version = "0.8", default-features = false, features = ["std", "unicode"] }
+twox-hash = { version = "2", default-features = false, features = ["xxhash32"] }
+byteorder = { version = "1", default-features = false }
+hashbrown = { version = "0.17", default-features = false, features = ["allocator-api2", "default-hasher", "inline-more"] }
+indexmap = { version = "2", default-features = false, features = ["std"] }
+linked_hash_set = { version = "0.1", default-features = false }
+whatlang = { version = "0.18", default-features = false }
+regex = { version = "1", default-features = false, features = ["std", "unicode", "perf"] }
+jieba-rs = { optional = true, version = "0.10", default-features = false, features = ["default-dict"] }
+lindera-core = { optional = true, version = "0.31", default-features = false }
+lindera-dictionary = { optional = true, version = "0.31", default-features = false, features = ["unidic"] }
+lindera-tokenizer = { optional = true, version = "0.31", default-features = false, features = ["unidic"] }
+snowball = { package = "waken_snowball", optional = true, version = "0.1", default-features = false }
+
+[dev-dependencies]
+config = { version = "0.15", default-features = false, features = ["toml"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["std", "fmt"] }
+
+[features]
+default = ["stemming", "tokenizer-chinese"]
+allocator-jemalloc = ["rocksdb/jemalloc"]
+stemming = ["dep:snowball"]
+tokenizer-chinese = ["jieba-rs"]
+tokenizer-japanese = ["lindera-core", "lindera-dictionary", "lindera-tokenizer"]
+benchmark = []

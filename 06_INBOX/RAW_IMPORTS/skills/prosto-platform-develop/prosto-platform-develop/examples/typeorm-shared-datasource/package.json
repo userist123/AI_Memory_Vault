@@ -1,0 +1,25 @@
+{
+  "name": "@examples/typeorm-shared-datasource",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@prosto/platform-adapter-typeorm": "0.0.0",
+    "@prosto/platform-core": "0.0.0",
+    "@prosto/platform-sdk": "0.0.0",
+    "fastify": "^5.10.0",
+    "reflect-metadata": "^0.2.2",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@internal/tsconfig": "*",
+    "@types/node": "^22.20.1",
+    "typescript": "^6.0.3"
+  }
+}

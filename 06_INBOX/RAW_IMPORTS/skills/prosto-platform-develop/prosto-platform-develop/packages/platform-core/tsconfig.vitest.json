@@ -1,0 +1,13 @@
+{
+  "extends": "@internal/tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@/tests/fixtures/*": ["./tests/fixtures/*"],
+      "@/bench/*": ["./bench/*"],
+      "@/*": ["./src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["bench/**/*.ts", "tests/**/*.ts"]
+}
