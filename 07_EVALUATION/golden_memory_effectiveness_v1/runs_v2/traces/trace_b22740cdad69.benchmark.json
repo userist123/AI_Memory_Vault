@@ -1,0 +1,76 @@
+{
+  "trace_id": "trace_b22740cdad69",
+  "agent_id": "golden-agent",
+  "agent_role": "synthesizer",
+  "task_id": "G07",
+  "started_at": "2026-09-03T21:49:37.270138+00:00",
+  "finished_at": "2026-09-03T21:49:38.305462+00:00",
+  "memory": {
+    "query": "Implement has_provenance(note) requiring source and sha256 keys.",
+    "memory_ids": [
+      "298a49f3-0a29-436f-92ce-fd748047f64b",
+      "399e33c6-6014-4f5c-8abd-b86d49529fba",
+      "182db43c-aed1-4840-b0a2-a22a699ae718",
+      "a43a3323-00d2-4b2e-868d-a5d1fe1e33fd",
+      "933a556c-31dc-47d8-a2ef-a68977ba5e64"
+    ],
+    "retrieval_count": 5,
+    "relevance_scores": {},
+    "context_hash": "8a93a5820d24e92aabdedb8d836007cb020f036670254a77e8c66e3c1e28790f"
+  },
+  "model": {
+    "provider_mode": "local",
+    "provider_name": "local",
+    "model_name": "qwen2.5-coder:3b",
+    "request_started_at": "2026-09-03T21:49:37.274024+00:00",
+    "response_finished_at": "2026-09-03T21:49:37.864701+00:00",
+    "latency_ms": 590.67,
+    "response_status": "success",
+    "response_text": "{\n  \"actions\": [\n    {\n      \"action\": \"write_file\",\n      \"path\": \"solution.py\",\n      \"content\": \"def has_provenance(note):\\n    if 'source' in note and 'sha256' in note:\\n        return True\\n    else:\\n        return False\"\n    }\n  ]\n}",
+    "error_details": null
+  },
+  "actions": [
+    {
+      "action_type": "write_file",
+      "validated": true,
+      "execution_status": "validated"
+    }
+  ],
+  "execution": {
+    "commands": [],
+    "stdout": "",
+    "stderr": "",
+    "exit_codes": []
+  },
+  "workspace": {
+    "files_created": [
+      "solution.py"
+    ],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "verification": {
+    "command": "python -m pytest test_task.py -q",
+    "stdout": ".                                                                        [100%]\n1 passed in 0.02s\n",
+    "stderr": "",
+    "exit_code": 0,
+    "status": "passed"
+  },
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "run_id": "G07-2-FULL_CONTEXT_ORACLE",
+  "condition": "FULL_CONTEXT_ORACLE",
+  "task_seed": 20260911,
+  "run_seed": 20261111,
+  "condition_order": [
+    "CONTROL",
+    "TREATMENT",
+    "FULL_CONTEXT_ORACLE"
+  ],
+  "git_commit": "dab6bcc9303c23f9aa2c53c06bcfc06b69275deb",
+  "retrieval_enabled": true,
+  "provider": "qwen2.5-coder:3b",
+  "model_name": "qwen2.5-coder:3b",
+  "model_request_hash": "c87760fa00b1ad74d6357dd1eead3c203965d14efe4faf24200175491921129d",
+  "model_response_hash": "92efa84890e7136874a2c5acb36574ed8971469d7129cb6bb109925dcef909c3",
+  "final_success": true
+}

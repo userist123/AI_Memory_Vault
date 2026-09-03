@@ -1,0 +1,68 @@
+{
+  "trace_id": "trace_eaca8ece3a96",
+  "agent_id": "golden-agent",
+  "agent_role": "synthesizer",
+  "task_id": "G05",
+  "started_at": "2026-09-03T21:46:59.472707+00:00",
+  "finished_at": "2026-09-03T21:48:59.924237+00:00",
+  "memory": {
+    "query": "Implement cache_get(cache, key, default) using default for a missing key.",
+    "memory_ids": [
+      "1c091acf-badc-43f6-9c09-85053001854f",
+      "f976443c-8058-4f03-ae70-9b13ab274c0e",
+      "e87b5c3d-47cb-4baa-8625-597d30c2d8c8",
+      "a43a3323-00d2-4b2e-868d-a5d1fe1e33fd",
+      "933a556c-31dc-47d8-a2ef-a68977ba5e64"
+    ],
+    "retrieval_count": 5,
+    "relevance_scores": {},
+    "context_hash": "50b91b68f2c8f8b0513fa750178775b0680c303bb2137cf85859c120e8ee7e08"
+  },
+  "model": {
+    "provider_mode": "local",
+    "provider_name": "local",
+    "model_name": "qwen2.5-coder:3b",
+    "request_started_at": "2026-09-03T21:46:59.476195+00:00",
+    "response_finished_at": "2026-09-03T21:48:59.504552+00:00",
+    "latency_ms": 120028.35,
+    "response_status": "failed",
+    "response_text": "LocalProviderError: Could not reach local model endpoint http://localhost:11434/api/generate: timed out",
+    "error_details": "Provider endpoint connection failure: Could not reach local model endpoint http://localhost:11434/api/generate: timed out"
+  },
+  "actions": [],
+  "execution": {
+    "commands": [],
+    "stdout": "",
+    "stderr": "",
+    "exit_codes": []
+  },
+  "workspace": {
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "verification": {
+    "command": "python -m pytest test_task.py -q",
+    "stdout": "\n=================================== ERRORS ====================================\n_ ERROR collecting 07_EVALUATION/golden_memory_effectiveness_v1/runs_v2/workspaces/G05_1_treatment_8d8535f5/test_task.py _\nImportError while importing test module 'C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\07_EVALUATION\\golden_memory_effectiveness_v1\\runs_v2\\workspaces\\G05_1_treatment_8d8535f5\\test_task.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Python314\\Lib\\importlib\\__init__.py:88: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntest_task.py:1: in <module>\n    from solution import cache_get\nE   ModuleNotFoundError: No module named 'solution'\n=========================== short test summary info ===========================\nERROR test_task.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.10s\n",
+    "stderr": "",
+    "exit_code": 2,
+    "status": "failed"
+  },
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "run_id": "G05-1-TREATMENT",
+  "condition": "TREATMENT",
+  "task_seed": 20260909,
+  "run_seed": 20261009,
+  "condition_order": [
+    "TREATMENT",
+    "FULL_CONTEXT_ORACLE",
+    "CONTROL"
+  ],
+  "git_commit": "dab6bcc9303c23f9aa2c53c06bcfc06b69275deb",
+  "retrieval_enabled": true,
+  "provider": "qwen2.5-coder:3b",
+  "model_name": "qwen2.5-coder:3b",
+  "model_request_hash": "55b21dc325517402f8f1c4026c5daba5ed3f3d04f8cb71691ecbc1127b9f8140",
+  "model_response_hash": "fae5dd7abf3dcd595a784bbf661dd8b25611eac0036b0c9b11f40c96d38caf24",
+  "final_success": false
+}

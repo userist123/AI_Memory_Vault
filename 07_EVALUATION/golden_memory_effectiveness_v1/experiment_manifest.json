@@ -1,0 +1,12 @@
+{
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "conditions": [
+    "CONTROL",
+    "TREATMENT",
+    "FULL_CONTEXT_ORACLE"
+  ],
+  "executions_expected": 90,
+  "executions_observed": 90,
+  "trace_directory": "runs_v2/traces",
+  "reproducibility_manifest": "REPRODUCIBILITY_MANIFEST.json"
+}

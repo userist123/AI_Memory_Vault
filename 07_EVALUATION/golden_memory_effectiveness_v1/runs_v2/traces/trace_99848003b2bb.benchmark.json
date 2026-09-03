@@ -1,0 +1,70 @@
+{
+  "trace_id": "trace_99848003b2bb",
+  "agent_id": "golden-agent",
+  "agent_role": "synthesizer",
+  "task_id": "G01",
+  "started_at": "2026-09-03T21:49:20.563846+00:00",
+  "finished_at": "2026-09-03T21:49:21.589224+00:00",
+  "memory": {
+    "query": "",
+    "memory_ids": [],
+    "retrieval_count": 0,
+    "relevance_scores": {},
+    "context_hash": "e3a725786fc3088005e3df867d49fb57c599a943815598e56dccb8221b022ccf"
+  },
+  "model": {
+    "provider_mode": "local",
+    "provider_name": "local",
+    "model_name": "qwen2.5-coder:3b",
+    "request_started_at": "2026-09-03T21:49:20.564146+00:00",
+    "response_finished_at": "2026-09-03T21:49:21.115316+00:00",
+    "latency_ms": 551.17,
+    "response_status": "success",
+    "response_text": "{\n  \"actions\": [\n    {\n      \"action\": \"write_file\",\n      \"path\": \"solution.py\",\n      \"content\": \"def lookup(key):\\n    if key == 'a':\\n        return 1\\n    else:\\n        return 0\"\n    }\n  ]\n}",
+    "error_details": null
+  },
+  "actions": [
+    {
+      "action_type": "write_file",
+      "validated": true,
+      "execution_status": "validated"
+    }
+  ],
+  "execution": {
+    "commands": [],
+    "stdout": "",
+    "stderr": "",
+    "exit_codes": []
+  },
+  "workspace": {
+    "files_created": [
+      "solution.py"
+    ],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "verification": {
+    "command": "python -m pytest test_task.py -q",
+    "stdout": "F                                                                        [100%]\n================================== FAILURES ===================================\n__________________________________ test_task __________________________________\n\n>   def test_task(): assert lookup('a') == 1 and lookup('x') is None\n                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nE   AssertionError: assert (1 == 1 and 0 is None)\nE    +  where 1 = lookup('a')\nE    +  and   0 = lookup('x')\n\ntest_task.py:2: AssertionError\n=========================== short test summary info ===========================\nFAILED test_task.py::test_task - AssertionError: assert (1 == 1 and 0 is None)\n1 failed in 0.09s\n",
+    "stderr": "",
+    "exit_code": 1,
+    "status": "failed"
+  },
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "run_id": "G01-2-CONTROL",
+  "condition": "CONTROL",
+  "task_seed": 20260905,
+  "run_seed": 20261105,
+  "condition_order": [
+    "FULL_CONTEXT_ORACLE",
+    "TREATMENT",
+    "CONTROL"
+  ],
+  "git_commit": "dab6bcc9303c23f9aa2c53c06bcfc06b69275deb",
+  "retrieval_enabled": false,
+  "provider": "qwen2.5-coder:3b",
+  "model_name": "qwen2.5-coder:3b",
+  "model_request_hash": "c4ba74b17e04c1ba2ae58b78fc9520b87995514f70f3eac528fc1593134a1213",
+  "model_response_hash": "fb9052692f4ee086034a87aa97b8adf38308ccbf152e9c35f72a39c2d71f33e4",
+  "final_success": false
+}

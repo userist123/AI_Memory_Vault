@@ -1,0 +1,6 @@
+{
+  "traces_checked": 90,
+  "trace_integrity_pass": 90,
+  "trace_integrity_fail": 0,
+  "validator": "trace_validator.py"
+}
