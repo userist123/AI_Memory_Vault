@@ -1,5 +1,10 @@
 # Lessons Learned
 
+## Real Agent Execution 01 — Reproducible Agent Execution Harness
+- Real Execution Contract: Decomposing agent execution into an explicit 12-step lifecycle (role validation, memory search, context binding, real command execution, workspace diffing, verification, and trace persistence) guarantees deterministic execution while cleanly decoupling orchestration, tool execution, and neural inference.
+- Memory-to-Context Observation Boundary: Computing a SHA-256 digest over the exact serialized execution context captures the empirical presence of retrieved memory notes (`OBSERVED`) without conflating presence with usage or claiming unproven causal effectiveness.
+- Persistence Under Error Conditions: Wrapping execution and verification in fail-safe trace persisters ensures that failed commands, non-zero exit codes, and assertion errors are recorded with full diagnostic fidelity rather than disappearing on test failure.
+
 ## CI Repair 01 — Cross-Platform CI Matrix & Dependency Hardening
 - Python 3.10 vs 3.11+ Enum Compatibility: `enum.StrEnum` was only introduced in Python 3.11. Using `class MyEnum(str, Enum):` provides identical behavior while ensuring 100% backward compatibility with Python 3.10.
 - Runtime Annotation Evaluation in Python <= 3.12: While Python 3.14 (PEP 649) defers annotation evaluation, Python 3.10-3.12 evaluates type annotations in function signatures at import time unless `from __future__ import annotations` is present. All referenced typing symbols (`List`, `Tuple`, `Optional`, `Any`) must be explicitly imported at the module level.
