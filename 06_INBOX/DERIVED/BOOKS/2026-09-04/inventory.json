@@ -1,0 +1,11 @@
+{
+  "batch_id": "BOOK_INGEST_2026-09-04_01",
+  "source_commit": "669ccc3ef7a85c442454d614d7bb65eb8570a5d8",
+  "github_actions_run": 33806399882,
+  "artifact_id": 9913117768,
+  "books_processed": 6,
+  "total_source_pages": 4055,
+  "total_extracted_words_estimate": 1426732,
+  "candidate_memories": 54,
+  "promotion_policy": "human-gated; no automatic canonical promotion"
+}
