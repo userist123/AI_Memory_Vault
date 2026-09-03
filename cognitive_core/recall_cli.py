@@ -56,8 +56,13 @@ def get_memory_controller() -> MemoryController:
     if os.path.exists(db_path):
         try:
             storage = SQLiteStorageEngine(db_path, wal_mode=True)
-            _CACHED_CONTROLLER = MemoryController(storage)
-            return _CACHED_CONTROLLER
+            with storage._get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM notes")
+                count = cur.fetchone()[0]
+            if count > 0:
+                _CACHED_CONTROLLER = MemoryController(storage)
+                return _CACHED_CONTROLLER
         except Exception:
             pass
 
