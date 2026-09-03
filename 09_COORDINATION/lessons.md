@@ -1,5 +1,11 @@
 # Lessons Learned
 
+## CI Repair 01 — Cross-Platform CI Matrix & Dependency Hardening
+- Python 3.10 vs 3.11+ Enum Compatibility: `enum.StrEnum` was only introduced in Python 3.11. Using `class MyEnum(str, Enum):` provides identical behavior while ensuring 100% backward compatibility with Python 3.10.
+- Runtime Annotation Evaluation in Python <= 3.12: While Python 3.14 (PEP 649) defers annotation evaluation, Python 3.10-3.12 evaluates type annotations in function signatures at import time unless `from __future__ import annotations` is present. All referenced typing symbols (`List`, `Tuple`, `Optional`, `Any`) must be explicitly imported at the module level.
+- Storage Fallback & Test Pollution: When test suites import modules like `vault_api.py`, SQLite database files (`vault_memory.sqlite3`) may be initialized on disk with valid schema but zero records. Any storage resolver (`get_memory_controller`) must verify `SELECT COUNT(*) FROM notes > 0` before selecting SQLite over fallback filesystem storage engines.
+- Cross-Platform File Globbing: On POSIX filesystems, `glob.glob(os.path.join(folder, "**", "*.md"), recursive=True)` can miss top-level directory files when operating on absolute paths in certain environments. Combining `glob("*.md")` with `glob("**/*.md")` guarantees full directory traversal across Windows, macOS, and Linux.
+
 ## Task 1
 - Circular import between `temporal_controller.py` and `temporal_conflict.py` prevented `tests/test_temporal_controller.py` from loading during pytest collection when `tests/` is included. Moving the import inside the function or ordering imports cleanly resolves the issue.
 - Context budget limits during pagination: when large `limit` (e.g. 50,000) or high numbers of duplicate test records are stored, `apply_degradation` must dynamically prune `ordered` notes in a loop by checking both `usage(ordered) <= soft_limit_bytes` and `serialized_size(ordered) <= hard_limit_bytes` to prevent `BudgetExceededError` on legitimate search queries.

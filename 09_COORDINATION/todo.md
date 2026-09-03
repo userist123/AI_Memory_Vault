@@ -1,3 +1,17 @@
+# CI Repair 01 — Cross-Platform CI Matrix & Dependency Hardening
+
+## Implementation
+- [x] investigate GitHub Actions CI run `33797653639`, `33798144743`, `33798491769`, `33799509396` logs `[owner: antigravity | timestamp: 2026-09-03T22:50:00+03:00]`
+- [x] add missing runtime/test dependencies (`pydantic`, `numpy`, `pandas`, `requests`) to `requirements-memory-v6.txt` `[owner: antigravity | timestamp: 2026-09-03T22:51:00+03:00]`
+- [x] fix unimported typing primitives (`List`, `Tuple`, `Optional`, `Any`) in test files for Python 3.10-3.12 compatibility `[owner: antigravity | timestamp: 2026-09-03T22:52:00+03:00]`
+- [x] replace `StrEnum` (Python 3.11+) with `(str, Enum)` in `memory_controller/review_state.py` for Python 3.10 compatibility `[owner: antigravity | timestamp: 2026-09-03T22:53:00+03:00]`
+- [x] combine top-level and recursive globbing in `FileStorageEngine` for robust POSIX cross-platform markdown note indexing `[owner: antigravity | timestamp: 2026-09-03T22:57:40+03:00]`
+- [x] ensure `recall_cli.get_memory_controller()` falls back to `FileStorageEngine` when SQLite database exists but contains zero notes `[owner: antigravity | timestamp: 2026-09-03T23:00:54+03:00]`
+- [x] verify local pytest passes (1680 passed, 1 skipped) `[owner: antigravity | timestamp: 2026-09-03T23:04:40+03:00]`
+- [x] verify GitHub Actions matrix run `33799804873` passes across Python 3.10, 3.11, 3.12 `[owner: antigravity | timestamp: 2026-09-03T23:04:50+03:00]`
+
+---
+
 # LogAnalyzer DFIR Project Integration
 
 ## Implementation
