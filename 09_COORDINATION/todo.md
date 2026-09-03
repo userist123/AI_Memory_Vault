@@ -1,3 +1,16 @@
+# Real LLM Agent Execution 01 — Model Execution Boundary & Action Scoping
+
+## Implementation
+- [x] inspect existing `ModelProvider` abstraction (`FakeModelProvider`, `LocalProvider`, `OpenAIProvider`) `[owner: antigravity | timestamp: 2026-09-03T23:20:00+03:00]`
+- [x] implement `AgentModelExecutor` in `cognitive_core/real_execution_harness.py` supporting deterministic, fake, local, and openai modes with strict fail-closed policy (no silent fake fallback) `[owner: antigravity | timestamp: 2026-09-03T23:21:00+03:00]`
+- [x] implement structured action parser `_extract_json_payload` and validation engine `_extract_and_validate_actions` enforcing action types, role permissions (`ROLE_ALLOWED_ACTIONS`), and workspace path containment `[owner: antigravity | timestamp: 2026-09-03T23:21:30+03:00]`
+- [x] extend execution trace with `model` and `actions` sections while preserving existing `memory`, `execution`, `workspace`, and `verification` structures `[owner: antigravity | timestamp: 2026-09-03T23:21:40+03:00]`
+- [x] implement recursive secret redaction `_redact_secrets` guaranteeing API keys and HMAC secrets never persist into trace JSON or JSONL records `[owner: antigravity | timestamp: 2026-09-03T23:21:50+03:00]`
+- [x] implement test suite `cognitive_core/tests/test_model_agent_execution_harness.py` (Tests A through F + `REAL_PROVIDER_INTEGRATION` skip mark) (6 passed, 1 skipped) `[owner: antigravity | timestamp: 2026-09-03T23:22:05+03:00]`
+- [x] run master regression suite (1693 passed, 2 skipped) `[owner: antigravity | timestamp: 2026-09-03T23:23:05+03:00]`
+
+---
+
 # Real Agent Execution 01 — Reproducible Agent Execution Harness
 
 ## Implementation

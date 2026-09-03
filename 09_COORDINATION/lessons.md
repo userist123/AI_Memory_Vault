@@ -1,5 +1,10 @@
 # Lessons Learned
 
+## Real LLM Agent Execution 01 — Model Execution Boundary & Action Scoping
+- Fail-Closed Model Execution: Enforcing distinct provider modes (`deterministic`, `fake`, `local`, `openai`) without silent fallbacks guarantees that missing credentials or unavailable endpoints are caught and traced with exact error diagnostics instead of falsely passing via synthetic mocks.
+- Structured Action Validation & Least Privilege: Parsing model output into formal action contracts (`write_file`, `run_command`, `read_file`) and cross-validating against `ROLE_ALLOWED_ACTIONS` prevents unauthorized actions (such as a read-only `verifier` attempting `write_file`) and prevents path traversal escapes outside the workspace boundary.
+- Recursive Secret Redaction: Sweeping in-memory trace objects against all active environment and argument credentials (`OPENAI_API_KEY`, `MEMORY_CONTROLLER_HMAC_SECRET`) prior to disk serialization ensures zero token or key leakage into persistent telemetry artifacts.
+
 ## Real Agent Execution 01 — Reproducible Agent Execution Harness
 - Real Execution Contract: Decomposing agent execution into an explicit 12-step lifecycle (role validation, memory search, context binding, real command execution, workspace diffing, verification, and trace persistence) guarantees deterministic execution while cleanly decoupling orchestration, tool execution, and neural inference.
 - Memory-to-Context Observation Boundary: Computing a SHA-256 digest over the exact serialized execution context captures the empirical presence of retrieved memory notes (`OBSERVED`) without conflating presence with usage or claiming unproven causal effectiveness.
