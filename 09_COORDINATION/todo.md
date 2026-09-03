@@ -1,3 +1,13 @@
+# Memory Ablation 01 — Controlled Memory Ablation Benchmark
+
+## Implementation
+- [x] implement `enable_memory` parameter and `experiment` metadata tracking in `RealAgentExecutionHarness.execute()` `[owner: antigravity | timestamp: 2026-09-03T23:45:50+03:00]`
+- [x] implement `cognitive_core/memory_ablation_benchmark.py` with 20 fixed canonical tasks, paired alternating trial runner, failure taxonomy classifier, statistical aggregation, and artifact exporter `[owner: antigravity | timestamp: 2026-09-03T23:48:35+03:00]`
+- [x] implement deterministic test suite `cognitive_core/tests/test_memory_ablation.py` covering suite integrity, condition handling, paired trial structure, trace schema, aggregations, failure classification, and artifact export (8/8 passed) `[owner: antigravity | timestamp: 2026-09-03T23:48:59+03:00]`
+- [x] run master regression suite (1701 passed, 2 skipped) `[owner: antigravity | timestamp: 2026-09-03T23:49:53+03:00]`
+
+---
+
 # Real Provider Execution 01 — End-to-End Real Model Inference & Action Execution
 
 ## Implementation

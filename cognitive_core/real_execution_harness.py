@@ -163,9 +163,13 @@ class ExecutionTrace:
     execution: Dict[str, Any]
     workspace: Dict[str, Any]
     verification: Dict[str, Any]
+    experiment: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        if self.experiment is None:
+            data.pop("experiment", None)
+        return data
 
 
 def _redact_secrets(data: Any, secrets: List[str]) -> Any:
@@ -298,11 +302,16 @@ class AgentModelExecutor:
             f"CONTEXT MEMORIES:\n{json.dumps(context.get('retrieved_memories', []), indent=2)}\n\n"
             "Produce structured JSON with actions to solve the task."
         )
+        system_prompt = (
+            f"You are an AI Agent with role: {context.get('agent_role', 'synthesizer')}.\n"
+            "You must respond ONLY with a single valid JSON object containing an 'actions' list, e.g.:\n"
+            '{"actions": [{"action": "write_file", "path": "...", "content": "..."}]}'
+        )
         model_req = ModelRequest(
             prompt=prompt,
             model_tier=self.model_tier,
-            system_prompt=f"You are an AI Agent with role: {context.get('agent_role', 'synthesizer')}",
-            metadata={"task_id": task.task_id},
+            system_prompt=system_prompt,
+            metadata={"task_id": task.task_id, "format": "json"},
         )
 
         req_start = datetime.now(timezone.utc)
@@ -709,10 +718,12 @@ class RealAgentExecutionHarness:
         agent_id: str,
         agent_role: Union[str, AgentRole],
         workspace: Union[str, Path],
-        memory_query: str,
+        memory_query: Optional[str] = None,
         agent_policy: Optional[BaseAgentPolicy] = None,
         verification_command: Optional[List[str]] = None,
         model_executor: Optional[AgentModelExecutor] = None,
+        enable_memory: bool = True,
+        experiment: Optional[Dict[str, Any]] = None,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Executes task following the full agent execution contract."""
         started_at = datetime.now(timezone.utc).isoformat()
@@ -739,12 +750,16 @@ class RealAgentExecutionHarness:
         authorized_role = validate_agent_role(agent_role)
 
         # 2 & 3. Retrieve memory through MemoryController.search() and capture IDs
-        pack = self.controller.search(
-            principal=self.principal,
-            query=memory_query,
-            page_size=5,
-        )
-        raw_results = pack.get('results', []) if isinstance(pack, dict) else []
+        raw_results: List[Dict[str, Any]] = []
+        effective_query = memory_query if (enable_memory and memory_query) else ""
+        if enable_memory and memory_query:
+            pack = self.controller.search(
+                principal=self.principal,
+                query=memory_query,
+                page_size=5,
+            )
+            raw_results = pack.get('results', []) if isinstance(pack, dict) else []
+
         retrieved_memory_ids: List[str] = []
         relevance_scores: Dict[str, float] = {}
 
@@ -766,11 +781,12 @@ class RealAgentExecutionHarness:
         context_memories: List[Dict[str, Any]] = []
         for item in raw_results:
             if isinstance(item, dict) and item.get('id'):
+                content = item.get('content') or item.get('snippet') or ''
                 context_memories.append({
                     'id': str(item['id']),
                     'type': str(item.get('type', 'unknown')),
                     'lifecycle': str(item.get('lifecycle', 'unknown')),
-                    'content': str(item.get('content', ''))[:500],
+                    'content': str(content)[:500],
                 })
 
         execution_context: Dict[str, Any] = {
@@ -779,7 +795,7 @@ class RealAgentExecutionHarness:
             'instructions': task_obj.instructions,
             'agent_id': agent_id,
             'agent_role': authorized_role.value,
-            'memory_query': memory_query,
+            'memory_query': effective_query,
             'retrieved_memories': context_memories,
         }
         canonical_context_bytes = json.dumps(execution_context, sort_keys=True, ensure_ascii=False).encode('utf-8')
@@ -905,7 +921,7 @@ class RealAgentExecutionHarness:
             started_at=started_at,
             finished_at=finished_at,
             memory={
-                'query': memory_query,
+                'query': effective_query,
                 'memory_ids': retrieved_memory_ids,
                 'retrieval_count': retrieval_count,
                 'relevance_scores': relevance_scores,
@@ -921,6 +937,7 @@ class RealAgentExecutionHarness:
             },
             workspace=workspace_diff.to_dict(),
             verification=v_record.to_dict(),
+            experiment=experiment,
         )
 
         trace_dict = trace.to_dict()

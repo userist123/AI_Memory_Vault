@@ -1,5 +1,10 @@
 # Lessons Learned
 
+## Memory Ablation 01 — Controlled Memory Ablation Benchmark
+- Paired Alternating Experimental Design: Running benchmark trials in counterbalanced alternating order (Control $\to$ Treatment vs. Treatment $\to$ Control) across independent fresh workspaces eliminates workspace contamination and mitigates temporal or sequence drift.
+- Deterministic Benchmark Suite Fingerprinting: Calculating a canonical SHA-256 hash over the task suite (target files, test code, instructions, memory queries) ensures full experimental replication and verifies the benchmark definition was not altered between runs.
+- Failure Taxonomy Categorization: Separating failures into `PROVIDER_FAILURE`, `TIMEOUT`, `MODEL_OUTPUT_INVALID`, `ACTION_UNAUTHORIZED`, `TOOL_EXECUTION_FAILURE`, and `TEST_ASSERTION_FAILURE` allows precise diagnostic attribution of where memory helps or hinders performance.
+
 ## Real Provider Execution 01 — End-to-End Real Model Inference & Action Execution
 - Genuine Model Inference Verification: Testing against a running local Ollama endpoint (`qwen2.5-coder:3b`) with explicit model tag resolution proves that the harness transitions from synthetic/fake tests to empirical neural inference (1101.4ms latency) producing valid structured action JSON.
 - Tag Exactness in Local LLM Endpoints: Local model servers (such as Ollama) strictly enforce precise tag specifications (e.g. `qwen2.5-coder:3b` instead of unqualified `qwen2.5-coder`). Explicitly querying `/api/tags` or providing tagged model names prevents 404 tag resolution failures.
