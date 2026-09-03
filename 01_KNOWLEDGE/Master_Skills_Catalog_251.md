@@ -7,7 +7,7 @@ tags: [skills, catalog, local-corpus, generated-from-directories]
 provenance:
   source_type: repository-scan
   source_ref: "userist123/AI_Memory_Vault_CODEX_READY/.agents/skills/"
-  source_commit: "8a72389491dfe02fe3e48f2753e55378ce3ab85b"
+  source_commit: "0e8b4ff8167d7dd02f6eee84c9172eab9f111c94"
 confidence: very_high
 verification: verified
 relations:
