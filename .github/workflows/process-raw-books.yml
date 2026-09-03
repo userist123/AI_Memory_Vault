@@ -1,0 +1,72 @@
+name: Process Raw Books
+
+on:
+  push:
+    paths:
+      - '06_INBOX/RAW_IMPORTS/BOOKS/**'
+      - '.github/workflows/process-raw-books.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    name: Extract PDF corpus from raw books
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install PDF tooling
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Extract text and build manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p book-extraction/text
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, re, subprocess
+
+          root = Path('06_INBOX/RAW_IMPORTS/BOOKS')
+          out = Path('book-extraction/text')
+          manifest = []
+
+          for pdf in sorted(root.glob('*.pdf')):
+              data = pdf.read_bytes()
+              sha256 = hashlib.sha256(data).hexdigest()
+              stem = re.sub(r'[^A-Za-z0-9._-]+', '_', pdf.stem).strip('_')[:180]
+              txt = out / f'{stem}.txt'
+              subprocess.run(['pdftotext', '-layout', str(pdf), str(txt)], check=True)
+              info = subprocess.run(['pdfinfo', str(pdf)], check=True, text=True, capture_output=True).stdout
+              pages = None
+              for line in info.splitlines():
+                  if line.startswith('Pages:'):
+                      pages = int(line.split(':', 1)[1].strip())
+                      break
+              text = txt.read_text(encoding='utf-8', errors='replace')
+              manifest.append({
+                  'source_path': str(pdf),
+                  'source_name': pdf.name,
+                  'sha256': sha256,
+                  'bytes': len(data),
+                  'pages': pages,
+                  'extracted_characters': len(text),
+                  'extracted_words_estimate': len(text.split()),
+                  'extracted_text_path': str(txt),
+              })
+
+          Path('book-extraction/manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          print(json.dumps({'books': len(manifest), 'total_pages': sum(x['pages'] or 0 for x in manifest), 'total_chars': sum(x['extracted_characters'] for x in manifest)}, indent=2))
+          PY
+
+      - name: Upload extracted corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: raw-books-extracted-text
+          path: book-extraction/
+          retention-days: 7
