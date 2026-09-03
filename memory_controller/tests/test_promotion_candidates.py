@@ -24,6 +24,7 @@ Tests cover all 20 required acceptance criteria:
 """
 import copy
 from datetime import datetime, timedelta, timezone
+from typing import List, Optional, Tuple
 import pytest
 
 from memory_controller.capability_effectiveness import effectiveness_matrix
