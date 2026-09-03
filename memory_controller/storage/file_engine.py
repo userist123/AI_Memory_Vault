@@ -27,7 +27,10 @@ class FileStorageEngine:
             if not os.path.exists(folder_path):
                 continue
             
-            for filepath in glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True):
+            found_files = set(glob.glob(os.path.join(folder_path, "*.md"))).union(
+                set(glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True))
+            )
+            for filepath in sorted(found_files):
                 # Double check to prevent RAW_IMPORTS or Obsidian MOC leakage
                 if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
                     continue
