@@ -1,3 +1,4 @@
+import sys
 import unittest
 
 from importlib.util import module_from_spec, spec_from_file_location
@@ -6,6 +7,7 @@ from pathlib import Path
 MODULE = Path(__file__).parents[1] / "99_SYSTEM" / "council_token_telemetry.py"
 spec = spec_from_file_location("council_token_telemetry", MODULE)
 mod = module_from_spec(spec)
+sys.modules["council_token_telemetry"] = mod
 spec.loader.exec_module(mod)
 
 
