@@ -8,8 +8,36 @@ VAULT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if VAULT_ROOT not in sys.path:
     sys.path.insert(0, VAULT_ROOT)
 
-# Asiguram un secret HMAC local pentru integritatea tokenurilor de paginare / sesiune
-os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "vault_cli_local_hmac_key_32bytes_min")
+MIN_HMAC_SECRET_LENGTH = 32
+
+class MissingHMACSecretError(ValueError):
+    """Raised when MEMORY_CONTROLLER_HMAC_SECRET is missing from the environment."""
+    pass
+
+class InvalidHMACSecretError(ValueError):
+    """Raised when MEMORY_CONTROLLER_HMAC_SECRET is present but invalid or too short."""
+    pass
+
+def validate_hmac_secret() -> str:
+    """Validates that MEMORY_CONTROLLER_HMAC_SECRET is present in the environment and valid.
+
+    A1: If present and valid (>= 32 chars): returns the secret string.
+    A2: If missing: fails closed with MissingHMACSecretError.
+    A3: If invalid / too short (< 32 chars): fails closed with InvalidHMACSecretError.
+    A4: No hardcoded fallback or invented secret.
+    """
+    secret = os.getenv("MEMORY_CONTROLLER_HMAC_SECRET")
+    if not secret:
+        raise MissingHMACSecretError(
+            "MEMORY_CONTROLLER_HMAC_SECRET environment variable is missing. "
+            "Please set MEMORY_CONTROLLER_HMAC_SECRET with at least 32 characters."
+        )
+    if len(secret.strip()) < MIN_HMAC_SECRET_LENGTH:
+        raise InvalidHMACSecretError(
+            f"MEMORY_CONTROLLER_HMAC_SECRET is invalid: must be at least {MIN_HMAC_SECRET_LENGTH} characters "
+            f"(got {len(secret.strip())})."
+        )
+    return secret
 
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
@@ -53,8 +81,8 @@ def search_markdown_vault(
     - Calculul relevantei si filtrarea prin bugetul de context (ContextBudget)
     - Jurnalizare criptografica tamper-evidenta SHA-256 (audit logging)
     """
-    if not os.getenv("MEMORY_CONTROLLER_HMAC_SECRET"):
-        os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = "vault_cli_local_hmac_key_32bytes_min"
+    # Enforce strict HMAC secret validation (fails closed if missing or invalid)
+    validate_hmac_secret()
 
     ctrl = controller or get_memory_controller()
 
