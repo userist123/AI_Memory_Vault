@@ -1,0 +1,175 @@
+{
+  "candidate_count": 54,
+  "clusters": [
+    {
+      "cluster_id": "AGENTS",
+      "candidate_ids": [
+        "book-agents-2026-c001",
+        "book-aima-4e-c001",
+        "book-aima-4e-c003"
+      ]
+    },
+    {
+      "cluster_id": "AI_FOUNDATIONS",
+      "candidate_ids": [
+        "book-aima-4e-c004"
+      ]
+    },
+    {
+      "cluster_id": "DISTRIBUTED_SYSTEMS",
+      "candidate_ids": [
+        "book-ddia-2017-c006",
+        "book-ddia-2017-c008",
+        "book-ddia-2017-c010"
+      ]
+    },
+    {
+      "cluster_id": "EVALUATION",
+      "candidate_ids": [
+        "book-agents-2026-c005",
+        "book-agents-2026-c008",
+        "book-mlsystems-2022-c005"
+      ]
+    },
+    {
+      "cluster_id": "LEARNING",
+      "candidate_ids": [
+        "book-aima-4e-c006",
+        "book-aima-4e-c008",
+        "book-ddia-2017-c003",
+        "book-ddia-2017-c007",
+        "book-ddia-2017-c011",
+        "book-learning-deep-learning-c002",
+        "book-learning-deep-learning-c003",
+        "book-mlsystems-2022-c001",
+        "book-mlsystems-2022-c002",
+        "book-mlsystems-2022-c003",
+        "book-mlsystems-2022-c008"
+      ]
+    },
+    {
+      "cluster_id": "MEMORY",
+      "candidate_ids": [
+        "book-agents-2026-c007",
+        "book-aima-4e-c002"
+      ]
+    },
+    {
+      "cluster_id": "MODEL_ADAPTATION",
+      "candidate_ids": [
+        "book-agents-2026-c002",
+        "book-agents-2026-c006",
+        "book-llm-apps-c001",
+        "book-llm-apps-c004"
+      ]
+    },
+    {
+      "cluster_id": "REPRESENTATIONS",
+      "candidate_ids": [
+        "book-aima-4e-c005",
+        "book-aima-4e-c007",
+        "book-aima-4e-c009",
+        "book-learning-deep-learning-c001",
+        "book-learning-deep-learning-c004",
+        "book-learning-deep-learning-c005",
+        "book-learning-deep-learning-c006",
+        "book-learning-deep-learning-c008",
+        "book-learning-deep-learning-c009",
+        "book-llm-apps-c003",
+        "book-llm-apps-c006"
+      ]
+    },
+    {
+      "cluster_id": "RETRIEVAL",
+      "candidate_ids": [
+        "book-agents-2026-c003",
+        "book-ddia-2017-c004",
+        "book-learning-deep-learning-c007",
+        "book-llm-apps-c007"
+      ]
+    },
+    {
+      "cluster_id": "SECURITY_GOVERNANCE",
+      "candidate_ids": [
+        "book-aima-4e-c010"
+      ]
+    },
+    {
+      "cluster_id": "SYSTEM_RELIABILITY",
+      "candidate_ids": [
+        "book-ddia-2017-c001",
+        "book-ddia-2017-c002",
+        "book-ddia-2017-c005",
+        "book-ddia-2017-c009",
+        "book-mlsystems-2022-c004",
+        "book-mlsystems-2022-c006",
+        "book-mlsystems-2022-c007"
+      ]
+    },
+    {
+      "cluster_id": "TOOLS",
+      "candidate_ids": [
+        "book-agents-2026-c004",
+        "book-llm-apps-c002",
+        "book-llm-apps-c005",
+        "book-llm-apps-c008"
+      ]
+    }
+  ],
+  "candidate_to_cluster": {
+    "book-agents-2026-c001": "AGENTS",
+    "book-agents-2026-c002": "MODEL_ADAPTATION",
+    "book-agents-2026-c003": "RETRIEVAL",
+    "book-agents-2026-c004": "TOOLS",
+    "book-agents-2026-c005": "EVALUATION",
+    "book-agents-2026-c006": "MODEL_ADAPTATION",
+    "book-agents-2026-c007": "MEMORY",
+    "book-agents-2026-c008": "EVALUATION",
+    "book-aima-4e-c001": "AGENTS",
+    "book-aima-4e-c002": "MEMORY",
+    "book-aima-4e-c003": "AGENTS",
+    "book-aima-4e-c004": "AI_FOUNDATIONS",
+    "book-aima-4e-c005": "REPRESENTATIONS",
+    "book-aima-4e-c006": "LEARNING",
+    "book-aima-4e-c007": "REPRESENTATIONS",
+    "book-aima-4e-c008": "LEARNING",
+    "book-aima-4e-c009": "REPRESENTATIONS",
+    "book-aima-4e-c010": "SECURITY_GOVERNANCE",
+    "book-ddia-2017-c001": "SYSTEM_RELIABILITY",
+    "book-ddia-2017-c002": "SYSTEM_RELIABILITY",
+    "book-ddia-2017-c003": "LEARNING",
+    "book-ddia-2017-c004": "RETRIEVAL",
+    "book-ddia-2017-c005": "SYSTEM_RELIABILITY",
+    "book-ddia-2017-c006": "DISTRIBUTED_SYSTEMS",
+    "book-ddia-2017-c007": "LEARNING",
+    "book-ddia-2017-c008": "DISTRIBUTED_SYSTEMS",
+    "book-ddia-2017-c009": "SYSTEM_RELIABILITY",
+    "book-ddia-2017-c010": "DISTRIBUTED_SYSTEMS",
+    "book-ddia-2017-c011": "LEARNING",
+    "book-learning-deep-learning-c001": "REPRESENTATIONS",
+    "book-learning-deep-learning-c002": "LEARNING",
+    "book-learning-deep-learning-c003": "LEARNING",
+    "book-learning-deep-learning-c004": "REPRESENTATIONS",
+    "book-learning-deep-learning-c005": "REPRESENTATIONS",
+    "book-learning-deep-learning-c006": "REPRESENTATIONS",
+    "book-learning-deep-learning-c007": "RETRIEVAL",
+    "book-learning-deep-learning-c008": "REPRESENTATIONS",
+    "book-learning-deep-learning-c009": "REPRESENTATIONS",
+    "book-llm-apps-c001": "MODEL_ADAPTATION",
+    "book-llm-apps-c002": "TOOLS",
+    "book-llm-apps-c003": "REPRESENTATIONS",
+    "book-llm-apps-c004": "MODEL_ADAPTATION",
+    "book-llm-apps-c005": "TOOLS",
+    "book-llm-apps-c006": "REPRESENTATIONS",
+    "book-llm-apps-c007": "RETRIEVAL",
+    "book-llm-apps-c008": "TOOLS",
+    "book-mlsystems-2022-c001": "LEARNING",
+    "book-mlsystems-2022-c002": "LEARNING",
+    "book-mlsystems-2022-c003": "LEARNING",
+    "book-mlsystems-2022-c004": "SYSTEM_RELIABILITY",
+    "book-mlsystems-2022-c005": "EVALUATION",
+    "book-mlsystems-2022-c006": "SYSTEM_RELIABILITY",
+    "book-mlsystems-2022-c007": "SYSTEM_RELIABILITY",
+    "book-mlsystems-2022-c008": "LEARNING"
+  }
+}
