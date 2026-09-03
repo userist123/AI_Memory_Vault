@@ -407,7 +407,7 @@ def test_harness_test_f_workspace_escape_rejected(
 def test_real_provider_integration(workspace_dir: Path, temp_trace_dir: Path) -> None:
     """REAL_PROVIDER_INTEGRATION: Manual/live integration test with real external/local provider."""
     provider_mode = os.getenv("REAL_PROVIDER_MODE", "local")
-    model_name = os.getenv("REAL_PROVIDER_MODEL", "qwen2.5-coder")
+    model_name = os.getenv("REAL_PROVIDER_MODEL", "qwen2.5-coder:3b")
     base_url = os.getenv("REAL_PROVIDER_BASE_URL", "http://localhost:11434")
     api_key = os.getenv("OPENAI_API_KEY")
 
@@ -423,7 +423,12 @@ def test_real_provider_integration(workspace_dir: Path, temp_trace_dir: Path) ->
         description="Live model execution with real provider",
         target_file="math_ops.py",
         test_file="test_math_ops.py",
-        instructions="Implement multiply(a, b) and test_multiply() in pytest format.",
+        instructions=(
+            "Write Python function multiply(a, b) in math_ops.py. "
+            "Write pytest test function test_multiply() in test_math_ops.py that asserts multiply(3, 4) == 12. "
+            "Return ONLY a JSON object with this exact structure: "
+            '{"actions": [{"action": "write_file", "path": "math_ops.py", "content": "..."}, {"action": "write_file", "path": "test_math_ops.py", "content": "..."}]}'
+        ),
     )
 
     controller = get_memory_controller()

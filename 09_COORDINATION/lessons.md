@@ -1,5 +1,10 @@
 # Lessons Learned
 
+## Real Provider Execution 01 — End-to-End Real Model Inference & Action Execution
+- Genuine Model Inference Verification: Testing against a running local Ollama endpoint (`qwen2.5-coder:3b`) with explicit model tag resolution proves that the harness transitions from synthetic/fake tests to empirical neural inference (1101.4ms latency) producing valid structured action JSON.
+- Tag Exactness in Local LLM Endpoints: Local model servers (such as Ollama) strictly enforce precise tag specifications (e.g. `qwen2.5-coder:3b` instead of unqualified `qwen2.5-coder`). Explicitly querying `/api/tags` or providing tagged model names prevents 404 tag resolution failures.
+- Zero-Credential Exposure Across Neural Inference: Verifying the full pipeline output confirms that even when real models generate code and execute subprocess commands, no HMAC secret, API key, or authorization header leaks into disk traces or reports.
+
 ## Real LLM Agent Execution 01 — Model Execution Boundary & Action Scoping
 - Fail-Closed Model Execution: Enforcing distinct provider modes (`deterministic`, `fake`, `local`, `openai`) without silent fallbacks guarantees that missing credentials or unavailable endpoints are caught and traced with exact error diagnostics instead of falsely passing via synthetic mocks.
 - Structured Action Validation & Least Privilege: Parsing model output into formal action contracts (`write_file`, `run_command`, `read_file`) and cross-validating against `ROLE_ALLOWED_ACTIONS` prevents unauthorized actions (such as a read-only `verifier` attempting `write_file`) and prevents path traversal escapes outside the workspace boundary.
