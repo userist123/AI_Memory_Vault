@@ -2,11 +2,20 @@
 
 This directory is the coordination surface for the multi-agent Memory Vault workflow.
 
+## Single entry point
+
+Start every agent session with:
+
+`AGENT_START_HERE.md`
+
+It defines the persistent read order, current-SHA rule, lane ownership, evidence contract, security invariants and future-round continuation protocol.
+
 ## Read first
 
-1. `../00_CORE/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md`
-2. `PARALLEL_EXECUTION_V1.md`
-3. `ROUND_NEXT_WORK_V1.md`
+1. `AGENT_START_HERE.md`
+2. `../00_CORE/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md`
+3. `PARALLEL_EXECUTION_V1.md`
+4. `ROUND_NEXT_WORK_V1.md`
 
 ## Agent prompts
 
@@ -31,10 +40,10 @@ They synchronize at evidence barriers rather than by serial task execution.
 - `07_EVALUATION/perplexity/`
 - `07_EVALUATION/luna/`
 
-## Current known evidence anchor
+## Baseline note
 
-At the time this coordination pack was created, `main` was anchored at:
+The historical anchor below is retained for traceability only. It is not the current baseline:
 
 `9a663213c52b971dee28d4eff729d1e93914fdce`
 
-Future rounds must resolve the actual current `main` SHA again.
+Every future round must resolve the actual current `main` SHA again.
