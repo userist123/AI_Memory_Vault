@@ -16,10 +16,15 @@ MEMORY_RECOMMENDATIONS: Tuple[str, ...] = (
     "strategy_c", "strategy_a", "strategy_d", "strategy_b",
 )
 
-# Frozen independently of task outcomes. This is an experiment input, not an oracle-derived label.
+# Frozen independently of task outcomes. These are experiment inputs, not oracle-derived labels.
 MEMORY_APPLICABILITY: Tuple[str, ...] = (
     "APPLICABLE", "APPLICABLE_WITH_VERIFICATION", "INSUFFICIENTLY_KNOWN", "NOT_APPLICABLE",
     "APPLICABLE_WITH_VERIFICATION", "APPLICABLE", "INSUFFICIENTLY_KNOWN", "NOT_APPLICABLE",
+)
+MEMORY_EVIDENCE_STRENGTH: Tuple[float, ...] = (0.90, 0.60, 0.25, 0.00, 0.75, 0.50, 0.20, 0.00)
+MEMORY_CONTRADICTION_STATE: Tuple[str, ...] = (
+    "NONE", "NONE", "POSSIBLE_CONTRADICTION", "CONFIRMED_CONTRADICTION",
+    "NONE", "POSSIBLE_CONTRADICTION", "NONE", "CONFIRMED_CONTRADICTION",
 )
 
 APPLICABILITY_STRENGTH: Dict[str, float] = {
@@ -27,6 +32,9 @@ APPLICABILITY_STRENGTH: Dict[str, float] = {
     "APPLICABLE_WITH_VERIFICATION": 0.35,
     "INSUFFICIENTLY_KNOWN": 0.15,
     "NOT_APPLICABLE": 0.0,
+}
+VALID_CONTRADICTION_STATES = {
+    "NONE", "POSSIBLE_CONTRADICTION", "CONFIRMED_CONTRADICTION",
 }
 
 @dataclass(frozen=True)
@@ -54,9 +62,13 @@ class Scenario:
 class MemoryInfluenceState:
     memory_id: str
     applicability: str
+    evidence_strength: float
+    contradiction_state: str
     priors: Dict[str, float]
     source_branch: str
     influence_strength: float
+    verification_required: bool
+    verification_cost: float
 
 @dataclass(frozen=True)
 class PlannerTrace:
@@ -68,7 +80,6 @@ class PlannerTrace:
 def build_scenarios(count: int = 30) -> List[Scenario]:
     scenarios: List[Scenario] = []
     for idx in range(count):
-        # Outcome assignment and memory recommendation are generated independently.
         shift = (idx * 3 + 1) % len(BRANCHES)
         order = tuple(BRANCHES[(shift + offset) % len(BRANCHES)] for offset in range(4))
         memory_recommended = MEMORY_RECOMMENDATIONS[idx % len(MEMORY_RECOMMENDATIONS)]
@@ -86,28 +97,58 @@ def build_scenarios(count: int = 30) -> List[Scenario]:
 def matched_context(memory_lesson: str) -> str:
     return f"MEMORY_LESSON:{memory_lesson[:64]}"
 
-def compile_memory(scenario: Scenario, applicability: str, memory_id: str) -> MemoryInfluenceState:
+def _verification_cost(applicability: str, evidence_strength: float) -> float:
+    if applicability != "APPLICABLE_WITH_VERIFICATION":
+        return 0.0
+    return round(1.0 + (1.0 - evidence_strength), 6)
+
+def compile_memory(
+    scenario: Scenario,
+    applicability: str,
+    memory_id: str,
+    *,
+    evidence_strength: float = 1.0,
+    contradiction_state: str = "NONE",
+) -> MemoryInfluenceState:
     if applicability not in APPLICABILITY_STRENGTH:
         raise ValueError(f"Unknown applicability state: {applicability}")
-    # The compiler never reads scenario.optimal. The recommendation is an
-    # independently frozen memory input, preventing oracle leakage.
+    if contradiction_state not in VALID_CONTRADICTION_STATES:
+        raise ValueError(f"Unknown contradiction state: {contradiction_state}")
+    if not 0.0 <= float(evidence_strength) <= 1.0:
+        raise ValueError("evidence_strength must be within [0.0, 1.0]")
+
+    # The compiler never reads scenario.optimal. Recommendation/evidence/applicability are
+    # independent experiment inputs, preventing oracle leakage.
     recommended = scenario.memory_recommended
-    strength = APPLICABILITY_STRENGTH[applicability]
-    if applicability == "APPLICABLE":
-        winner_prior = 0.65
-        loser_prior = 0.35 / 3
-        priors = {branch: (winner_prior if branch == recommended else loser_prior) for branch in scenario.branches}
-    elif applicability == "APPLICABLE_WITH_VERIFICATION":
-        winner_prior = 0.25 + (0.40 * strength)
-        loser_mass = 1.0 - winner_prior
-        priors = {branch: (winner_prior if branch == recommended else loser_mass / 3) for branch in scenario.branches}
-    elif applicability == "INSUFFICIENTLY_KNOWN":
-        winner_prior = 0.25 + (0.40 * strength)
-        loser_mass = 1.0 - winner_prior
-        priors = {branch: (winner_prior if branch == recommended else loser_mass / 3) for branch in scenario.branches}
-    else:
+    evidence_strength = float(evidence_strength)
+    applicability_strength = APPLICABILITY_STRENGTH[applicability]
+    verification_required = applicability == "APPLICABLE_WITH_VERIFICATION"
+    verification_cost = _verification_cost(applicability, evidence_strength)
+
+    # Confirmed contradiction or explicit non-applicability is a safety veto.
+    if contradiction_state == "CONFIRMED_CONTRADICTION" or applicability == "NOT_APPLICABLE":
         priors = {branch: 0.25 for branch in scenario.branches}
-    return MemoryInfluenceState(memory_id, applicability, priors, recommended, strength)
+        influence_strength = 0.0
+    else:
+        influence_strength = applicability_strength * evidence_strength
+        winner_prior = 0.25 + (0.40 * influence_strength)
+        loser_mass = 1.0 - winner_prior
+        priors = {
+            branch: (winner_prior if branch == recommended else loser_mass / 3)
+            for branch in scenario.branches
+        }
+
+    return MemoryInfluenceState(
+        memory_id=memory_id,
+        applicability=applicability,
+        evidence_strength=evidence_strength,
+        contradiction_state=contradiction_state,
+        priors=priors,
+        source_branch=recommended,
+        influence_strength=influence_strength,
+        verification_required=verification_required,
+        verification_cost=verification_cost,
+    )
 
 def normalize(priors: Dict[str, float], branches: Sequence[str]) -> Dict[str, float]:
     values = {branch: max(0.0, float(priors.get(branch, 0.0))) for branch in branches}
@@ -119,7 +160,13 @@ def normalize(priors: Dict[str, float], branches: Sequence[str]) -> Dict[str, fl
 def puct_score(q: float, visits: int, parent_visits: int, prior: float, exploration: float) -> float:
     return q + exploration * prior * math.sqrt(max(1, parent_visits)) / (1 + visits)
 
-def run_planner(scenario: Scenario, priors: Dict[str, float], *, rollouts: int = 16, exploration: float = 1.414) -> PlannerTrace:
+def run_planner(
+    scenario: Scenario,
+    priors: Dict[str, float],
+    *,
+    rollouts: int = 16,
+    exploration: float = 1.414,
+) -> PlannerTrace:
     branches = scenario.branches
     priors = normalize(priors, branches)
     visits = {branch: 0 for branch in branches}
@@ -128,43 +175,91 @@ def run_planner(scenario: Scenario, priors: Dict[str, float], *, rollouts: int =
     for _ in range(rollouts):
         parent_visits = sum(visits.values())
         branch = max(branches, key=lambda candidate: (
-            puct_score(values[candidate] / visits[candidate] if visits[candidate] else 0.0,
-                       visits[candidate], parent_visits, priors[candidate], exploration),
-            -branches.index(candidate)))
+            puct_score(
+                values[candidate] / visits[candidate] if visits[candidate] else 0.0,
+                visits[candidate], parent_visits, priors[candidate], exploration,
+            ),
+            -branches.index(candidate),
+        ))
         selected.append(branch)
         visits[branch] += 1
         _, reward = scenario.oracle(branch)
         values[branch] += reward
         if branch == scenario.optimal:
-            return PlannerTrace(tuple(selected), len(selected), sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected), True)
-    return PlannerTrace(tuple(selected), len(selected), sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected), False)
+            return PlannerTrace(
+                tuple(selected), len(selected),
+                sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected),
+                True,
+            )
+    return PlannerTrace(
+        tuple(selected), len(selected),
+        sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected),
+        False,
+    )
 
 def run_experiment(count: int = 30) -> Dict[str, object]:
     scenarios = build_scenarios(count)
-    aggregate: Dict[str, Dict[str, float]] = {arm: {"success": 0, "nodes": 0, "fatal": 0} for arm in ("arm1_baseline", "arm2_advisory", "arm3_treatment", "arm4_stale")}
+    aggregate: Dict[str, Dict[str, float]] = {
+        arm: {"success": 0, "nodes": 0, "fatal": 0, "verification": 0}
+        for arm in ("arm1_baseline", "arm2_advisory", "arm3_treatment", "arm4_stale")
+    }
     traces: List[Dict[str, object]] = []
     for idx, scenario in enumerate(scenarios):
         uniform = {branch: 0.25 for branch in scenario.branches}
         applicability = MEMORY_APPLICABILITY[idx % len(MEMORY_APPLICABILITY)]
-        memory = compile_memory(scenario, applicability, f"memory-{scenario.scenario_id}")
-        stale = compile_memory(scenario, "NOT_APPLICABLE", f"stale-{scenario.scenario_id}")
-        arms = {"arm1_baseline": uniform, "arm2_advisory": uniform, "arm3_treatment": memory.priors, "arm4_stale": stale.priors}
+        evidence_strength = MEMORY_EVIDENCE_STRENGTH[idx % len(MEMORY_EVIDENCE_STRENGTH)]
+        contradiction_state = MEMORY_CONTRADICTION_STATE[idx % len(MEMORY_CONTRADICTION_STATE)]
+        memory = compile_memory(
+            scenario,
+            applicability,
+            f"memory-{scenario.scenario_id}",
+            evidence_strength=evidence_strength,
+            contradiction_state=contradiction_state,
+        )
+        stale = compile_memory(
+            scenario,
+            "NOT_APPLICABLE",
+            f"stale-{scenario.scenario_id}",
+            evidence_strength=0.0,
+        )
+        arms = {
+            "arm1_baseline": uniform,
+            "arm2_advisory": uniform,
+            "arm3_treatment": memory.priors,
+            "arm4_stale": stale.priors,
+        }
         for arm, priors in arms.items():
             trace = run_planner(scenario, priors)
             aggregate[arm]["success"] += int(trace.success)
             aggregate[arm]["nodes"] += trace.node_visits
             aggregate[arm]["fatal"] += trace.fatal_visits
-            traces.append({"scenario_id": scenario.scenario_id, "arm": arm,
-                           "memory_id": memory.memory_id if arm == "arm3_treatment" else stale.memory_id if arm == "arm4_stale" else None,
-                           "applicability": memory.applicability if arm == "arm3_treatment" else stale.applicability if arm == "arm4_stale" else "NONE",
-                           "memory_recommended": scenario.memory_recommended,
-                           "planner_prior": priors, "selected_branches": list(trace.selected_branches),
-                           "node_visits": trace.node_visits, "fatal_visits": trace.fatal_visits, "success": trace.success,
-                           "recommendation_matches_optimal": scenario.memory_recommended == scenario.optimal})
+            if arm == "arm3_treatment":
+                aggregate[arm]["verification"] += int(memory.verification_required)
+            traces.append({
+                "scenario_id": scenario.scenario_id,
+                "arm": arm,
+                "memory_id": memory.memory_id if arm == "arm3_treatment" else stale.memory_id if arm == "arm4_stale" else None,
+                "applicability": memory.applicability if arm == "arm3_treatment" else stale.applicability if arm == "arm4_stale" else "NONE",
+                "evidence_strength": memory.evidence_strength if arm == "arm3_treatment" else stale.evidence_strength if arm == "arm4_stale" else None,
+                "contradiction_state": memory.contradiction_state if arm == "arm3_treatment" else stale.contradiction_state if arm == "arm4_stale" else "NONE",
+                "influence_strength": memory.influence_strength if arm == "arm3_treatment" else stale.influence_strength if arm == "arm4_stale" else 0.0,
+                "verification_required": memory.verification_required if arm == "arm3_treatment" else False,
+                "verification_cost": memory.verification_cost if arm == "arm3_treatment" else 0.0,
+                "memory_recommended": scenario.memory_recommended,
+                "planner_prior": priors,
+                "selected_branches": list(trace.selected_branches),
+                "node_visits": trace.node_visits,
+                "fatal_visits": trace.fatal_visits,
+                "success": trace.success,
+                "recommendation_matches_optimal": scenario.memory_recommended == scenario.optimal,
+            })
     return {"scenario_count": count, "aggregate": aggregate, "traces": traces}
 
 def summarize_treatment_by_memory_quality(results: Dict[str, object]) -> Dict[str, Dict[str, int]]:
-    summary = {"match": {"count": 0, "success": 0, "nodes": 0, "fatal": 0}, "mismatch": {"count": 0, "success": 0, "nodes": 0, "fatal": 0}}
+    summary = {
+        "match": {"count": 0, "success": 0, "nodes": 0, "fatal": 0},
+        "mismatch": {"count": 0, "success": 0, "nodes": 0, "fatal": 0},
+    }
     for trace in results["traces"]:
         if trace["arm"] != "arm3_treatment":
             continue
@@ -179,9 +274,17 @@ def render_report(results: Dict[str, object]) -> str:
     aggregate = results["aggregate"]
     count = int(results["scenario_count"])
     quality = summarize_treatment_by_memory_quality(results)
-    lines = ["Planning Influence MVE V2 — deterministic mechanics pilot", "EVIDENCE_LEVEL=UNVERIFIED_UNTIL_CI_EXECUTION", f"scenario_count={count}", ""]
+    lines = [
+        "Planning Influence MVE V2 — deterministic mechanics pilot",
+        "EVIDENCE_LEVEL=UNVERIFIED_UNTIL_CI_EXECUTION",
+        f"scenario_count={count}",
+        "",
+    ]
     for arm, metrics in aggregate.items():
-        lines.append(f"{arm}: success={int(metrics['success'])}/{count} nodes={int(metrics['nodes'])} fatal={int(metrics['fatal'])}")
+        lines.append(
+            f"{arm}: success={int(metrics['success'])}/{count} nodes={int(metrics['nodes'])} "
+            f"fatal={int(metrics['fatal'])} verification={int(metrics['verification'])}"
+        )
     control_nodes = max(1, int(aggregate["arm2_advisory"]["nodes"]))
     treatment_nodes = int(aggregate["arm3_treatment"]["nodes"])
     reduction = 1.0 - (treatment_nodes / control_nodes)
