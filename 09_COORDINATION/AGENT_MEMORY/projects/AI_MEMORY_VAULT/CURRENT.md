@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T19:08:00Z
-current_main_sha: ae00890951cc37dfb1c6427e35bafb8a2c75e397
+last_updated_utc: 2026-09-04T19:14:00Z
+current_main_sha: d5033490dd85dc2412629560ebf0a6686232e603
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -37,8 +37,14 @@ recent_state:
   - added regression coverage for classifier lifecycle/intent boundaries
   - added branch consolidation manifest on main
   - closed consolidation PR #14 instead of merging the 111-file divergent Antigravity branch wholesale
+  - froze an isolated Planning Influence MVE V2 design
+  - added a deterministic four-arm MVE mechanics harness with soft priors and stale-memory applicability control
+  - added deterministic unit tests for MVE planner mechanics
+  - added CI workflow that executes the MVE and uploads runtime stdout as evidence
 open_requirements:
   - await CI verification of the GAP-011 change on main
+  - await CI execution of Planning Influence MVE workflow
+  - do not promote the deterministic mechanics pilot to evidence of model-level cognitive planning without the stronger causal experiment
   - no feature-branch development for normal work
   - no parallel agent work on the same project task chain
   - every substantive session must persist state before handoff
@@ -46,12 +52,12 @@ open_requirements:
   - a receiving agent must not depend on chat history
   - legacy branches receive no new work and are administrative/archive references only
 blockers:
-  - remote branch deletion cannot be completed with the currently available GitHub connector because no branch-delete operation is exposed
-  - historical branch refs remain until GitHub branch administration deletes them
+  - remote branch deletion must be handled only through an explicit delete-ref capability; do not fabricate deletion
+  - Codex is unavailable this week
 next_actions:
-  - verify Memory V6 CI run for commit ae00890951cc37dfb1c6427e35bafb8a2c75e397
-  - after CI, continue cognitive-memory Planning Influence MVE readiness work directly on main
+  - verify Planning Influence MVE CI completion and inspect runtime artifact/log output
+  - verify Memory V6 CI completion and inspect test results
+  - if deterministic pilot passes, preserve its actual output as pilot evidence and then design the model-backed paired MVE without changing production Vault contracts
   - preserve any remaining unique verified legacy artifacts only when they add evidence not already on main
-  - do not merge legacy branches wholesale
   - delete legacy remote branches and _consolidation_tmp through GitHub branch administration when available
   - keep all agent CURRENT records aligned to main
