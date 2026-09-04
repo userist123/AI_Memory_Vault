@@ -1,0 +1,1 @@
+The shared cognitive-memory work for this cycle continues from `main`. Implementation by Codex is deferred this week. Reviewed research/design artifacts should be integrated to `main` before further work.
