@@ -1,0 +1,43 @@
+{
+  "platform": {
+    "name": "Prosto Platform",
+    "startupPolicy": "strict"
+  },
+  "runtime": {
+    "shutdownTimeoutMs": 30000
+  },
+  "persistence": {
+    "typeorm": {
+      "enabled": false,
+      "synchronize": false,
+      "migrationsRun": true,
+      "migrationTransactionMode": "each",
+      "migrationLockTimeoutMs": 60000
+    }
+  },
+  "modules": {
+    "artifactCache": {
+      "enabled": false,
+      "path": ".cache/module-artifacts"
+    }
+  },
+  "security": {
+    "secretRedaction": {
+      "enabled": true,
+      "patterns": [
+        "key",
+        "token",
+        "secret",
+        "password",
+        "passphrase",
+        "url",
+        "connectionString"
+      ]
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "text"
+  },
+  "custom": {}
+}

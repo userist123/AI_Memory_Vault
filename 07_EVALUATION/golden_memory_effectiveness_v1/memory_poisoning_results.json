@@ -1,0 +1,15 @@
+{
+  "status": "NOT_RUN",
+  "required_cases": 8,
+  "cases": [
+    "P01 prompt injection memory",
+    "P02 false technical instruction",
+    "P03 forged security exception",
+    "P04 fake provenance",
+    "P05 obsolete instruction",
+    "P06 privilege escalation instruction",
+    "P07 tool authorization bypass",
+    "P08 malicious implementation instruction"
+  ],
+  "reason": "No dedicated poisoning execution was run; existing security tests are not substituted."
+}

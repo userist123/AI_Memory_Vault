@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:github-issues",
+  "bundle_instance_id": "inst:awesome-copilot:skills/github-issues",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/github-issues/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/github-issues/SKILL.md",
+  "content_hash": "4557bf92b369e5d4ed3e2f40252b92f9ffd07efc75f3157a8b5a9c8db84f89fd",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 10,
+  "target_installed_path": ".agents/skills/github-issues"
+}

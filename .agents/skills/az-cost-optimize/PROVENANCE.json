@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:az-cost-optimize",
+  "bundle_instance_id": "inst:awesome-copilot:skills/az-cost-optimize",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/az-cost-optimize/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/az-cost-optimize/SKILL.md",
+  "content_hash": "7727684f2c9725317ef61d5fa53f46ab33e0bc06ddb016ac5731d8ed64e572c8",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/az-cost-optimize"
+}

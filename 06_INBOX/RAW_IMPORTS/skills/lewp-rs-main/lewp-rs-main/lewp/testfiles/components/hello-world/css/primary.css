@@ -1,0 +1,6 @@
+#component header {
+    border: thin solid black;
+}
+h1 {
+    font-style: bold;
+}

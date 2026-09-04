@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_011",
+  "runtime_case_id": "rec_011",
+  "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:context-management-context-restore"
+    ],
+    "skill_hash": "a2b867b0bebb2c0a859408d978d132722c7199ce2a1edd1a44d6a14d5969bf39",
+    "skill_in_context": true,
+    "context_hash": "98b93968ab204e101b673a8fde93847460e0cd26cf3ddab554a33dbfeda1ebae"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.006974+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.006982+00:00",
+  "commands": [
+    "eval_treatment --skill context-management-context-restore --task task_context-management-context-restore"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:context-management-context-restore",
+      "hash": "a2b867b0bebb2c0a859408d978d132722c7199ce2a1edd1a44d6a14d5969bf39"
+    }
+  ],
+  "files_created": [
+    "context-management-context-restore_spec.json",
+    "context-management-context-restore_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill context-management-context-restore loaded (hash a2b867b0). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_context_management_context_restore",
+    "command": "python -m verify_treatment rec_011 --schema context-management-context-restore",
+    "exit_code": 0,
+    "passed": true,
+    "score": 83,
+    "evidence": "Delivered verified contract matching context-management-context-restore specifications."
+  },
+  "redactions": []
+}

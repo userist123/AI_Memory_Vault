@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Tracker API</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Subnix</h1>
+        <h3>A Subscription Reminder Management System</h3>
+
+        <div class="status">
+            ✅ API Status: Active
+        </div>
+
+        <div class="endpoints">
+            <h2>📋 Available Endpoints</h2>
+
+            <div class="endpoint">
+                <span class="method">POST</span><code>/api/v1/auth/sign-up</code><button class="copy-button"
+                    onclick="copyText('/api/v1/auth/sign-up', this)">Copy</button><span class="feedback"> Endpoint Copied!</span>
+                <div class="description">Register a new user account</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method">POST</span> <code>/api/v1/auth/sign-in</code><button class="copy-button"
+                    onclick="copyText('/api/v1/auth/sign-in', this)">Copy</button><span class="feedback">Endpoint Copied!</span>
+                <div class="description">Login with existing credentials</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method">GET</span><code>/api/v1/users</code>
+                <button class="copy-button" onclick="copyText('/api/v1/users', this)">Copy</button><span
+                    class="feedback">Endpoint Copied!</span>
+                <div class="description">Get users profile information</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method">GET</span><code>/api/v1/users/:id</code><button class="copy-button"
+                    onclick="copyText('/api/v1/users/:id', this)">Copy</button><span class="feedback">Endpoint Copied!</span>
+                <div class="description">Get user profile information</div>
+            </div>
+
+
+            <div class="endpoint">
+                <span class="method">POST</span> <code>/api/v1/subscriptions</code><button class="copy-button"
+                    onclick="copyText('/api/v1/subscriptions', this)">Copy</button><span class="feedback">Endpoint Copied!</span>
+                <div class="description">Create a new subscription</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method">GET</span><code>/api/v1/subscriptions</code>
+                <button class="copy-button" onclick="copyText('/api/v1/subscriptions', this)">Copy</button><span
+                    class="feedback">Endpoint Copied!</span>
+                <div class="description">Get all user subscriptions</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method">GET</span> <code>/api/v1/workflows</code><button class="copy-button"
+                    onclick="copyText('/api/v1/workflows', this)">Copy</button><span class="feedback">Endpoint Copied!</span>
+                <div class="description">Get user workflows</div>
+            </div>
+        </div>
+
+        <div class="note">
+            <ul>
+                <li><strong>Development Tip:</strong> Use HTTPie for quick command-line API interactions.
+                    <p>
+                <li>Go to my GitHub repo. readme.md and copy the <mark>JSON data</mark> provided in Subscription Model
+                    Sample.<p>
+                        -> <a
+                            href="https://github.com/shayaan-git/subscription-tracker-api?tab=readme-ov-file#-subscription-model-sample"
+                            target="_blank">json file Direct Link</a>
+                    <p>
+                <li><strong>Endpoint
+                        Example:<br></strong><code> GET https://subscription-tracker-api-m2wh.onrender.com/api/v1/subscriptions<br> Authorization:"Bearer your-token"</code>
+                    <p>
+                <li><strong>🎮 API Playground:</strong> <a href="https://httpie.io/app" target="_blank">Click Here!</a>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>🚀 Powered by Node.js & Express | 🛡️ Protected by Arcjet | 📊 MongoDB Database | 🔐 JWT Authentication
+            </p><br>
+        </div>
+        <div class="footer-bottom">
+            <p>📧 For any queries: <a href="https://www.linkedin.com/in/mohdshayaan/" target="_blank">Contact
+                    Support</a>
+                <br>&copy; <span id="year"></span> Subnix Forge & Co. All rights reserved.
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+
+</html>

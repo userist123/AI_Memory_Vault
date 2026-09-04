@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_001",
+  "runtime_case_id": "rec_001",
+  "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "d88e525927ca036394d38fbd1c600f3ac67017e68050d4cc1f2499a3fcdea0ea"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.000051+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.000066+00:00",
+  "commands": [
+    "eval_baseline --task task_parallel-agents"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "parallel-agents_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_parallel-agents without skill parallel-agents. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_parallel_agents",
+    "command": "python -m verify_baseline rec_001",
+    "exit_code": 0,
+    "passed": true,
+    "score": 62,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

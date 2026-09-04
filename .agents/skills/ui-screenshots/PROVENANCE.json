@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:ui-screenshots",
+  "bundle_instance_id": "inst:awesome-copilot:skills/ui-screenshots",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ui-screenshots/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ui-screenshots/SKILL.md",
+  "content_hash": "bf88680904077643f3d6c4abe948552a54a45376811c50c68582236364eb64db",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/ui-screenshots"
+}

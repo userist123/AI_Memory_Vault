@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_003",
+  "runtime_case_id": "rec_003",
+  "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "1802c462819e06b495fa54b9543275de2c99886fc1701a260e79f4ea28e2e3b5"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.001484+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.001490+00:00",
+  "commands": [
+    "eval_baseline --task task_context-compression"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "context-compression_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_context-compression without skill context-compression. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_context_compression",
+    "command": "python -m verify_baseline rec_003",
+    "exit_code": 0,
+    "passed": true,
+    "score": 66,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

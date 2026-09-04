@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:tripadvisor-content-api-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/tripadvisor-content-api-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/tripadvisor-content-api-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/tripadvisor-content-api-automation/SKILL.md",
+  "content_hash": "de8cb183e43928d938b8a1f202eb51acecc03771ed22d590b5efff967d632a88",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/tripadvisor-content-api-automation"
+}

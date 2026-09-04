@@ -73,6 +73,17 @@ def test_rank_fuses_base_scores_with_activation():
     assert ranked[0][0] == "a"
 
 
+def test_spreading_activation_respects_edge_weight():
+    graph_memory = MultiGraphMemory()
+    graph_memory.semantic.add_edge("seed", "weak", weight=0.25)
+    graph_memory.semantic.add_edge("seed", "strong", weight=1.0)
+    engine = SpreadingActivationEngine(graph_memory, decay=0.5, max_hops=1)
+
+    activated = engine.activate({"seed": 1.0})
+
+    assert activated["strong"] > activated["weak"]
+
+
 def test_graph_node_types_explicit_and_default_resolution():
     notes = [
         {"id": "t1", "category": "session", "node_type": "task", "content": "run audit"},

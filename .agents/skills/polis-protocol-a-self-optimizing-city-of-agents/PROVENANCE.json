@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:agentic-awesome-skills-main:polis-protocol-a-self-optimizing-city-of-agents",
+  "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/polis-protocol-a-self-optimizing-city-of-agents",
+  "canonical_repository_id": "repo:agentic-awesome-skills",
+  "canonical_source_id": "agentic-awesome-skills-main",
+  "source_url": "https://github.com/agentic-awesome-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/polis-protocol-a-self-optimizing-city-of-agents/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/polis-protocol-a-self-optimizing-city-of-agents/SKILL.md",
+  "content_hash": "3e027fed4b0846a4d8380c1deac32c29a434c200e1167f649b30b57f5f8da9fa",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/polis-protocol-a-self-optimizing-city-of-agents"
+}

@@ -1,0 +1,1 @@
+Migration work starts from the current `main` tree and must consist of concrete inventory, moves, compatibility checks, and cleanup.

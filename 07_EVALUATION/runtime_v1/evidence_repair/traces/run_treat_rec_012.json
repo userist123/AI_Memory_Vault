@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_012",
+  "runtime_case_id": "rec_012",
+  "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:wordpress-woocommerce-development"
+    ],
+    "skill_hash": "23f6bde77bb8ca3dd07b4fcff94894256b6c09dcc3f1faa949136b33dd778e7d",
+    "skill_in_context": true,
+    "context_hash": "9dd969d4a2f52265838af0d517698b9644208b6c0c1ed740b6417d86e09f36cc"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.007777+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.007785+00:00",
+  "commands": [
+    "eval_treatment --skill wordpress-woocommerce-development --task task_wordpress-woocommerce-development"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+      "hash": "23f6bde77bb8ca3dd07b4fcff94894256b6c09dcc3f1faa949136b33dd778e7d"
+    }
+  ],
+  "files_created": [
+    "wordpress-woocommerce-development_spec.json",
+    "wordpress-woocommerce-development_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill wordpress-woocommerce-development loaded (hash 23f6bde7). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_wordpress_woocommerce_development",
+    "command": "python -m verify_treatment rec_012 --schema wordpress-woocommerce-development",
+    "exit_code": 0,
+    "passed": true,
+    "score": 86,
+    "evidence": "Delivered verified contract matching wordpress-woocommerce-development specifications."
+  },
+  "redactions": []
+}

@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_006",
+  "runtime_case_id": "rec_006",
+  "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "8e157c8704ac99eb6047f6e07a9682a2ef2c21f5ae2865bbf3730e81df4508bd"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.003404+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.003411+00:00",
+  "commands": [
+    "eval_baseline --task task_planning-and-task-breakdown"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "planning-and-task-breakdown_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_planning-and-task-breakdown without skill planning-and-task-breakdown. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_planning_and_task_breakdown",
+    "command": "python -m verify_baseline rec_006",
+    "exit_code": 0,
+    "passed": true,
+    "score": 64,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

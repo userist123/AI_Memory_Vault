@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:update-specification",
+  "bundle_instance_id": "inst:awesome-copilot:skills/update-specification",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/update-specification/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/update-specification/SKILL.md",
+  "content_hash": "988576894d4a36014532c7a5e2d3be7e9f2a263693e446ec1f1122c3297db8fc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/update-specification"
+}

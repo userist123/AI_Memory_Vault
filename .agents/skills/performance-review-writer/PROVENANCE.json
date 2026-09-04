@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:performance-review-writer",
+  "bundle_instance_id": "inst:awesome-copilot:skills/performance-review-writer",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/performance-review-writer/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/performance-review-writer/SKILL.md",
+  "content_hash": "2fb5527c2f41cc27790d0b870607e1e2f86dee68a25824cdcfa1165f9e997f22",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/performance-review-writer"
+}

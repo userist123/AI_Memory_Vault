@@ -1,0 +1,458 @@
+{
+  "total_gold_skills": 30,
+  "average_score_delta": 2.2,
+  "classification_agreement_pct": 100.0,
+  "disagreement_count": 0,
+  "evaluations": [
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:azure-ai-transcription-py",
+      "skill_name": "azure-ai-transcription-py",
+      "evaluator_a": {
+        "score": 66.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 67.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-claude-skills-master:fidel-api-automation",
+      "skill_name": "fidel-api-automation",
+      "evaluator_a": {
+        "score": 69.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 65.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:copy-editing",
+      "skill_name": "copy-editing",
+      "evaluator_a": {
+        "score": 66.0,
+        "class": "REFERENCE"
+      },
+      "evaluator_b": {
+        "score": 66.0,
+        "class": "REFERENCE"
+      },
+      "score_delta": 0.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:elon-musk",
+      "skill_name": "elon-musk",
+      "evaluator_a": {
+        "score": 66.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 64.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 2.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-claude-skills-master:dovetail-automation",
+      "skill_name": "dovetail-automation",
+      "evaluator_a": {
+        "score": 69.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 72.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 3.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:debug-buttercup",
+      "skill_name": "debug-buttercup",
+      "evaluator_a": {
+        "score": 80.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 79.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:xlsx-official",
+      "skill_name": "xlsx-official",
+      "evaluator_a": {
+        "score": 74.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 74.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 0.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:flat-design-2",
+      "skill_name": "flat-design-2",
+      "evaluator_a": {
+        "score": 60.0,
+        "class": "COMPLEMENTARY"
+      },
+      "evaluator_b": {
+        "score": 60.0,
+        "class": "COMPLEMENTARY"
+      },
+      "score_delta": 0.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+      "skill_name": "context-management-context-restore",
+      "evaluator_a": {
+        "score": 76.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 78.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 2.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:monte-carlo-push-ingestion",
+      "skill_name": "monte-carlo-push-ingestion",
+      "evaluator_a": {
+        "score": 71.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 75.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:google-slides-automation",
+      "skill_name": "google-slides-automation",
+      "evaluator_a": {
+        "score": 65.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 61.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:twilio-communications",
+      "skill_name": "twilio-communications",
+      "evaluator_a": {
+        "score": 83.0,
+        "class": "CORE"
+      },
+      "evaluator_b": {
+        "score": 84.0,
+        "class": "CORE"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:azure-eventhub-py",
+      "skill_name": "azure-eventhub-py",
+      "evaluator_a": {
+        "score": 71.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 68.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 3.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+      "skill_name": "orchestrate-batch-refactor",
+      "evaluator_a": {
+        "score": 77.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 80.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 3.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:bugs-are-annoying",
+      "skill_name": "bugs-are-annoying",
+      "evaluator_a": {
+        "score": 83.0,
+        "class": "CORE"
+      },
+      "evaluator_b": {
+        "score": 81.0,
+        "class": "CORE"
+      },
+      "score_delta": 2.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+      "skill_name": "acceptance-orchestrator",
+      "evaluator_a": {
+        "score": 81.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 84.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 3.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-claude-skills-master:conveyor-automation",
+      "skill_name": "conveyor-automation",
+      "evaluator_a": {
+        "score": 69.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 65.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:ruby",
+      "skill_name": "ruby",
+      "evaluator_a": {
+        "score": 58.0,
+        "class": "REFERENCE"
+      },
+      "evaluator_b": {
+        "score": 57.0,
+        "class": "REFERENCE"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:diary",
+      "skill_name": "diary",
+      "evaluator_a": {
+        "score": 75.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 76.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-copilot:resemble-detect",
+      "skill_name": "resemble-detect",
+      "evaluator_a": {
+        "score": 79.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 80.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-copilot:java-helidon",
+      "skill_name": "java-helidon",
+      "evaluator_a": {
+        "score": 77.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 81.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:zapier-make-patterns",
+      "skill_name": "zapier-make-patterns",
+      "evaluator_a": {
+        "score": 72.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 68.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-claude-skills-master:brand-guidelines",
+      "skill_name": "brand-guidelines",
+      "evaluator_a": {
+        "score": 49.0,
+        "class": "REFERENCE"
+      },
+      "evaluator_b": {
+        "score": 48.0,
+        "class": "REFERENCE"
+      },
+      "score_delta": 1.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-copilot:plantuml-ascii",
+      "skill_name": "plantuml-ascii",
+      "evaluator_a": {
+        "score": 82.0,
+        "class": "CORE"
+      },
+      "evaluator_b": {
+        "score": 85.0,
+        "class": "CORE"
+      },
+      "score_delta": 3.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-claude-skills-master:openai-automation",
+      "skill_name": "openai-automation",
+      "evaluator_a": {
+        "score": 72.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 68.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:neo-brutalism",
+      "skill_name": "neo-brutalism",
+      "evaluator_a": {
+        "score": 65.0,
+        "class": "REFERENCE"
+      },
+      "evaluator_b": {
+        "score": 63.0,
+        "class": "REFERENCE"
+      },
+      "score_delta": 2.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:vulnerability-scanner",
+      "skill_name": "vulnerability-scanner",
+      "evaluator_a": {
+        "score": 79.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 77.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 2.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:sandbase-mcp",
+      "skill_name": "sandbase-mcp",
+      "evaluator_a": {
+        "score": 65.5,
+        "class": "UNSAFE_TO_USE"
+      },
+      "evaluator_b": {
+        "score": 65.5,
+        "class": "UNSAFE_TO_USE"
+      },
+      "score_delta": 0.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-copilot:qdrant-performance-optimization",
+      "skill_name": "qdrant-performance-optimization",
+      "evaluator_a": {
+        "score": 49.0,
+        "class": "REDUNDANT"
+      },
+      "evaluator_b": {
+        "score": 45.0,
+        "class": "REDUNDANT"
+      },
+      "score_delta": 4.0,
+      "classification_agreement": true,
+      "review_required": false
+    },
+    {
+      "skill_id": "skill:awesome-copilot:brag-sheet",
+      "skill_name": "brag-sheet",
+      "evaluator_a": {
+        "score": 69.0,
+        "class": "SPECIALIZED"
+      },
+      "evaluator_b": {
+        "score": 67.0,
+        "class": "SPECIALIZED"
+      },
+      "score_delta": 2.0,
+      "classification_agreement": true,
+      "review_required": false
+    }
+  ]
+}

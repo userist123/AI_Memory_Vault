@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-python-master:review-prs",
+  "bundle_instance_id": "inst:awesome-python-master:awesome-python-master/.claude/skills/review-prs",
+  "canonical_repository_id": "repo:awesome-python",
+  "canonical_source_id": "awesome-python-master",
+  "source_url": "https://github.com/vinta/awesome-python",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master/awesome-python-master/.claude/skills/review-prs/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master/awesome-python-master/.claude/skills/review-prs/SKILL.md",
+  "content_hash": "f579d09b907f9db428cf10f5dd482f8d2390aec4506bcb42336365d7cd9dbcf4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/review-prs"
+}

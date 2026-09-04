@@ -1,0 +1,6 @@
+@BackendSaaS.Api_HostAddress = http://localhost:5048
+
+GET {{BackendSaaS.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

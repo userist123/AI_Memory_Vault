@@ -1,0 +1,1270 @@
+{
+  "summary": {
+    "total_files": 66676,
+    "total_directories": 22121,
+    "total_bytes": 1768795427,
+    "total_mb": 1686.85,
+    "unique_hashes": 46750,
+    "duplicate_files_count": 19926
+  },
+  "by_extension": {
+    ".md": {
+      "count": 25790,
+      "bytes": 211352099
+    },
+    ".go": {
+      "count": 8274,
+      "bytes": 91665576
+    },
+    ".ts": {
+      "count": 4115,
+      "bytes": 14297154
+    },
+    ".json": {
+      "count": 3748,
+      "bytes": 72318850
+    },
+    ".php": {
+      "count": 2830,
+      "bytes": 21817660
+    },
+    ".py": {
+      "count": 2410,
+      "bytes": 23892117
+    },
+    ".png": {
+      "count": 2336,
+      "bytes": 602505423
+    },
+    "(no_ext)": {
+      "count": 2067,
+      "bytes": 43935497
+    },
+    ".tsx": {
+      "count": 1988,
+      "bytes": 9730811
+    },
+    ".js": {
+      "count": 1685,
+      "bytes": 31044984
+    },
+    ".txt": {
+      "count": 918,
+      "bytes": 16085376
+    },
+    ".mjs": {
+      "count": 772,
+      "bytes": 10913658
+    },
+    ".yaml": {
+      "count": 712,
+      "bytes": 5582088
+    },
+    ".patch": {
+      "count": 626,
+      "bytes": 1374569
+    },
+    ".svg": {
+      "count": 594,
+      "bytes": 13589248
+    },
+    ".css": {
+      "count": 557,
+      "bytes": 14314397
+    },
+    ".html": {
+      "count": 536,
+      "bytes": 3508857
+    },
+    ".rs": {
+      "count": 477,
+      "bytes": 2137874
+    },
+    ".sql": {
+      "count": 429,
+      "bytes": 1223354
+    },
+    ".sh": {
+      "count": 415,
+      "bytes": 1767775
+    },
+    ".yml": {
+      "count": 405,
+      "bytes": 4316037
+    },
+    ".ttf": {
+      "count": 402,
+      "bytes": 40890124
+    },
+    ".cs": {
+      "count": 358,
+      "bytes": 1053218
+    },
+    ".xsd": {
+      "count": 322,
+      "bytes": 10317562
+    },
+    ".mdx": {
+      "count": 310,
+      "bytes": 1954065
+    },
+    ".jpg": {
+      "count": 235,
+      "bytes": 42870190
+    },
+    ".java": {
+      "count": 177,
+      "bytes": 322664
+    },
+    ".astro": {
+      "count": 161,
+      "bytes": 860723
+    },
+    ".bru": {
+      "count": 156,
+      "bytes": 68869
+    },
+    ".dart": {
+      "count": 136,
+      "bytes": 204484
+    },
+    ".csv": {
+      "count": 128,
+      "bytes": 1971910
+    },
+    ".s": {
+      "count": 125,
+      "bytes": 3425582
+    },
+    ".m4a": {
+      "count": 120,
+      "bytes": 1080264
+    },
+    ".razor": {
+      "count": 103,
+      "bytes": 212485
+    },
+    ".gif": {
+      "count": 96,
+      "bytes": 123446545
+    },
+    ".webp": {
+      "count": 95,
+      "bytes": 3404786
+    },
+    ".csproj": {
+      "count": 94,
+      "bytes": 76655
+    },
+    ".gql": {
+      "count": 88,
+      "bytes": 29833
+    },
+    ".graphql": {
+      "count": 86,
+      "bytes": 1572671
+    },
+    ".mo": {
+      "count": 85,
+      "bytes": 7545477
+    },
+    ".kriti": {
+      "count": 75,
+      "bytes": 9414
+    },
+    ".ogg": {
+      "count": 75,
+      "bytes": 905295
+    },
+    ".xml": {
+      "count": 74,
+      "bytes": 299370
+    },
+    ".map": {
+      "count": 72,
+      "bytes": 14512119
+    },
+    ".jsx": {
+      "count": 60,
+      "bytes": 250101
+    },
+    ".woff2": {
+      "count": 60,
+      "bytes": 7454096
+    },
+    ".scss": {
+      "count": 59,
+      "bytes": 320168
+    },
+    ".nix": {
+      "count": 59,
+      "bytes": 524538
+    },
+    ".toml": {
+      "count": 51,
+      "bytes": 161812
+    },
+    ".po": {
+      "count": 51,
+      "bytes": 2972206
+    },
+    ".tmpl": {
+      "count": 49,
+      "bytes": 189385
+    },
+    ".example": {
+      "count": 43,
+      "bytes": 25302
+    },
+    ".ps1": {
+      "count": 41,
+      "bytes": 389912
+    },
+    ".vue": {
+      "count": 38,
+      "bytes": 122688
+    },
+    ".jpeg": {
+      "count": 34,
+      "bytes": 23122598
+    },
+    ".tar": {
+      "count": 32,
+      "bytes": 129536
+    },
+    ".rb": {
+      "count": 31,
+      "bytes": 18996
+    },
+    ".graphqls": {
+      "count": 30,
+      "bytes": 3403358
+    },
+    ".mp4": {
+      "count": 30,
+      "bytes": 133234276
+    },
+    ".cshtml": {
+      "count": 29,
+      "bytes": 54298
+    },
+    ".attrs": {
+      "count": 27,
+      "bytes": 5545
+    },
+    ".template": {
+      "count": 27,
+      "bytes": 155742
+    },
+    ".lock": {
+      "count": 24,
+      "bytes": 2460881
+    },
+    ".excalidraw": {
+      "count": 24,
+      "bytes": 201237
+    },
+    ".ico": {
+      "count": 22,
+      "bytes": 334892
+    },
+    ".h": {
+      "count": 20,
+      "bytes": 803507
+    },
+    ".graffle": {
+      "count": 17,
+      "bytes": 84319
+    },
+    ".less": {
+      "count": 17,
+      "bytes": 79424
+    },
+    ".cjs": {
+      "count": 16,
+      "bytes": 110747
+    },
+    ".slnx": {
+      "count": 15,
+      "bytes": 8966
+    },
+    ".pyc": {
+      "count": 15,
+      "bytes": 39068
+    },
+    ".drawio": {
+      "count": 15,
+      "bytes": 178530
+    },
+    ".conf": {
+      "count": 14,
+      "bytes": 42139
+    },
+    ".hurl": {
+      "count": 13,
+      "bytes": 41044
+    },
+    ".eot": {
+      "count": 13,
+      "bytes": 536485
+    },
+    ".woff": {
+      "count": 13,
+      "bytes": 622292
+    },
+    ".mts": {
+      "count": 13,
+      "bytes": 11629
+    },
+    ".tpl": {
+      "count": 13,
+      "bytes": 19803
+    },
+    ".phtml": {
+      "count": 13,
+      "bytes": 78873
+    },
+    ".props": {
+      "count": 12,
+      "bytes": 6246
+    },
+    ".swift": {
+      "count": 11,
+      "bytes": 3520
+    },
+    ".svelte": {
+      "count": 11,
+      "bytes": 60081
+    },
+    ".pem": {
+      "count": 10,
+      "bytes": 24193
+    },
+    ".cue": {
+      "count": 10,
+      "bytes": 75387
+    },
+    ".pdf": {
+      "count": 9,
+      "bytes": 2441397
+    },
+    ".ini": {
+      "count": 9,
+      "bytes": 7159
+    },
+    ".gz": {
+      "count": 9,
+      "bytes": 1126629
+    },
+    ".sum": {
+      "count": 8,
+      "bytes": 105570
+    },
+    ".properties": {
+      "count": 8,
+      "bytes": 3461
+    },
+    ".xcconfig": {
+      "count": 8,
+      "bytes": 1500
+    },
+    ".c": {
+      "count": 8,
+      "bytes": 9315613
+    },
+    ".env": {
+      "count": 7,
+      "bytes": 503
+    },
+    ".mod": {
+      "count": 7,
+      "bytes": 17992
+    },
+    ".otf": {
+      "count": 7,
+      "bytes": 704116
+    },
+    ".cpp": {
+      "count": 7,
+      "bytes": 17173
+    },
+    ".plist": {
+      "count": 7,
+      "bytes": 4435
+    },
+    ".ipynb": {
+      "count": 6,
+      "bytes": 30007
+    },
+    ".0": {
+      "count": 6,
+      "bytes": 23478
+    },
+    ".db": {
+      "count": 6,
+      "bytes": 1238016
+    },
+    ".erb": {
+      "count": 6,
+      "bytes": 21632
+    },
+    ".zip": {
+      "count": 6,
+      "bytes": 3315
+    },
+    ".cmd": {
+      "count": 5,
+      "bytes": 25405
+    },
+    ".bin": {
+      "count": 5,
+      "bytes": 2038298
+    },
+    ".cast": {
+      "count": 5,
+      "bytes": 135865
+    },
+    ".mp3": {
+      "count": 5,
+      "bytes": 4784944
+    },
+    ".jsonl": {
+      "count": 5,
+      "bytes": 450782
+    },
+    ".1": {
+      "count": 4,
+      "bytes": 5713
+    },
+    ".hbs": {
+      "count": 4,
+      "bytes": 2113
+    },
+    ".cc": {
+      "count": 4,
+      "bytes": 5444
+    },
+    ".backup": {
+      "count": 4,
+      "bytes": 78693943
+    },
+    ".pot": {
+      "count": 4,
+      "bytes": 313811
+    },
+    ".http": {
+      "count": 4,
+      "bytes": 570
+    },
+    ".dot": {
+      "count": 4,
+      "bytes": 23880
+    },
+    ".sln": {
+      "count": 3,
+      "bytes": 33263
+    },
+    ".apkg": {
+      "count": 3,
+      "bytes": 129671
+    },
+    ".gradle": {
+      "count": 3,
+      "bytes": 2400
+    },
+    ".xcworkspacedata": {
+      "count": 3,
+      "bytes": 439
+    },
+    ".bash": {
+      "count": 3,
+      "bytes": 3886
+    },
+    ".proto": {
+      "count": 3,
+      "bytes": 2199
+    },
+    ".diff": {
+      "count": 3,
+      "bytes": 7696
+    },
+    ".init": {
+      "count": 3,
+      "bytes": 348076
+    },
+    ".inc": {
+      "count": 3,
+      "bytes": 27456
+    },
+    ".neon": {
+      "count": 3,
+      "bytes": 6356
+    },
+    ".webmanifest": {
+      "count": 3,
+      "bytes": 1162
+    },
+    ".sha256": {
+      "count": 3,
+      "bytes": 3267
+    },
+    ".targets": {
+      "count": 3,
+      "bytes": 285
+    },
+    ".tm7": {
+      "count": 3,
+      "bytes": 3334095
+    },
+    ".bicep": {
+      "count": 3,
+      "bytes": 2277
+    },
+    ".local": {
+      "count": 2,
+      "bytes": 1401
+    },
+    ".cfg": {
+      "count": 2,
+      "bytes": 2247
+    },
+    ".2": {
+      "count": 2,
+      "bytes": 2497
+    },
+    ".3": {
+      "count": 2,
+      "bytes": 2497
+    },
+    ".4": {
+      "count": 2,
+      "bytes": 3024
+    },
+    ".sqlite3": {
+      "count": 2,
+      "bytes": 565248
+    },
+    ".prisma": {
+      "count": 2,
+      "bytes": 2440
+    },
+    ".sample": {
+      "count": 2,
+      "bytes": 462
+    },
+    ".iml": {
+      "count": 2,
+      "bytes": 2000
+    },
+    ".cmake": {
+      "count": 2,
+      "bytes": 1532
+    },
+    ".entitlements": {
+      "count": 2,
+      "bytes": 588
+    },
+    ".pbxproj": {
+      "count": 2,
+      "bytes": 50061
+    },
+    ".xcscheme": {
+      "count": 2,
+      "bytes": 7314
+    },
+    ".xcsettings": {
+      "count": 2,
+      "bytes": 452
+    },
+    ".storyboard": {
+      "count": 2,
+      "bytes": 3982
+    },
+    ".gotmpl": {
+      "count": 2,
+      "bytes": 2645
+    },
+    ".work": {
+      "count": 2,
+      "bytes": 191
+    },
+    ".rl": {
+      "count": 2,
+      "bytes": 18855
+    },
+    ".makefile": {
+      "count": 2,
+      "bytes": 4386
+    },
+    ".feature": {
+      "count": 2,
+      "bytes": 1624
+    },
+    ".dev": {
+      "count": 2,
+      "bytes": 511
+    },
+    ".xaml": {
+      "count": 2,
+      "bytes": 15177
+    },
+    ".bat": {
+      "count": 2,
+      "bytes": 6346
+    },
+    ".tape": {
+      "count": 2,
+      "bytes": 6632
+    },
+    ".5": {
+      "count": 1,
+      "bytes": 918
+    },
+    ".6": {
+      "count": 1,
+      "bytes": 918
+    },
+    ".7": {
+      "count": 1,
+      "bytes": 918
+    },
+    ".8": {
+      "count": 1,
+      "bytes": 918
+    },
+    ".9": {
+      "count": 1,
+      "bytes": 918
+    },
+    ".install": {
+      "count": 1,
+      "bytes": 42
+    },
+    ".postinst": {
+      "count": 1,
+      "bytes": 212
+    },
+    ".service": {
+      "count": 1,
+      "bytes": 226
+    },
+    ".sysusers": {
+      "count": 1,
+      "bytes": 31
+    },
+    ".production": {
+      "count": 1,
+      "bytes": 442
+    },
+    ".consumer": {
+      "count": 1,
+      "bytes": 160
+    },
+    ".sqlite": {
+      "count": 1,
+      "bytes": 20480
+    },
+    ".development": {
+      "count": 1,
+      "bytes": 41
+    },
+    ".wasm": {
+      "count": 1,
+      "bytes": 4171851
+    },
+    ".cer": {
+      "count": 1,
+      "bytes": 1216
+    },
+    ".manifest": {
+      "count": 1,
+      "bytes": 602
+    },
+    ".rc": {
+      "count": 1,
+      "bytes": 3041
+    },
+    ".xib": {
+      "count": 1,
+      "bytes": 23729
+    },
+    ".kt": {
+      "count": 1,
+      "bytes": 124
+    },
+    ".jsonc": {
+      "count": 1,
+      "bytes": 664
+    },
+    ".binpb": {
+      "count": 1,
+      "bytes": 154
+    },
+    ".libyaml": {
+      "count": 1,
+      "bytes": 1313
+    },
+    ".dockerfile": {
+      "count": 1,
+      "bytes": 391
+    },
+    ".rst": {
+      "count": 1,
+      "bytes": 977
+    },
+    ".common": {
+      "count": 1,
+      "bytes": 9495
+    },
+    ".arm": {
+      "count": 1,
+      "bytes": 563
+    },
+    ".arm64": {
+      "count": 1,
+      "bytes": 598
+    },
+    ".abnf": {
+      "count": 1,
+      "bytes": 7029
+    },
+    ".docs": {
+      "count": 1,
+      "bytes": 20004
+    },
+    ".circleci": {
+      "count": 1,
+      "bytes": 261
+    },
+    ".github-actions": {
+      "count": 1,
+      "bytes": 226
+    },
+    ".bsd": {
+      "count": 1,
+      "bytes": 1548
+    },
+    ".golang": {
+      "count": 1,
+      "bytes": 329
+    },
+    ".mock_tmpl": {
+      "count": 1,
+      "bytes": 10689
+    },
+    ".y": {
+      "count": 1,
+      "bytes": 7408
+    },
+    ".heic": {
+      "count": 1,
+      "bytes": 12968
+    },
+    ".db-shm": {
+      "count": 1,
+      "bytes": 32768
+    },
+    ".db-wal": {
+      "count": 1,
+      "bytes": 0
+    },
+    ".crt": {
+      "count": 1,
+      "bytes": 1200
+    },
+    ".key": {
+      "count": 1,
+      "bytes": 1704
+    },
+    ".ci": {
+      "count": 1,
+      "bytes": 311
+    },
+    ".golden": {
+      "count": 1,
+      "bytes": 2065
+    },
+    ".opts": {
+      "count": 1,
+      "bytes": 36
+    },
+    ".stat": {
+      "count": 1,
+      "bytes": 103605
+    },
+    ".mermaidjs": {
+      "count": 1,
+      "bytes": 973
+    },
+    ".api": {
+      "count": 1,
+      "bytes": 710
+    },
+    ".worker": {
+      "count": 1,
+      "bytes": 704
+    },
+    ".ru": {
+      "count": 1,
+      "bytes": 160
+    },
+    ".enc": {
+      "count": 1,
+      "bytes": 464
+    },
+    ".test": {
+      "count": 1,
+      "bytes": 160
+    },
+    ".cloud": {
+      "count": 1,
+      "bytes": 1935
+    },
+    ".monitoring": {
+      "count": 1,
+      "bytes": 927
+    },
+    ".schedule": {
+      "count": 1,
+      "bytes": 1129
+    },
+    ".server": {
+      "count": 1,
+      "bytes": 1075
+    },
+    ".dbml": {
+      "count": 1,
+      "bytes": 27222
+    },
+    ".mako": {
+      "count": 1,
+      "bytes": 704
+    },
+    ".styl": {
+      "count": 1,
+      "bytes": 180
+    },
+    ".log": {
+      "count": 1,
+      "bytes": 578
+    },
+    ".sketch": {
+      "count": 1,
+      "bytes": 4661104
+    },
+    ".psd": {
+      "count": 1,
+      "bytes": 95046
+    },
+    ".config": {
+      "count": 1,
+      "bytes": 199
+    },
+    ".proj": {
+      "count": 1,
+      "bytes": 8286
+    },
+    ".resx": {
+      "count": 1,
+      "bytes": 5634
+    },
+    ".jfif": {
+      "count": 1,
+      "bytes": 131958
+    },
+    ".tmp": {
+      "count": 1,
+      "bytes": 52907
+    },
+    ".jar": {
+      "count": 1,
+      "bytes": 62547
+    },
+    ".ndjson": {
+      "count": 1,
+      "bytes": 20384799
+    }
+  },
+  "by_source": {
+    "_BACKEND_SOURCES.json": {
+      "count": 1,
+      "mb": 0.04
+    },
+    "_DEDUPLICATION.json": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "_DISCOVERY_GRAPH.json": {
+      "count": 1,
+      "mb": 0.05
+    },
+    "_IMPORT_REPORT.md": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "_LICENSES.json": {
+      "count": 1,
+      "mb": 0.01
+    },
+    "_PROGRAMMING_SOURCES.json": {
+      "count": 1,
+      "mb": 0.04
+    },
+    "_REGISTRY.json": {
+      "count": 1,
+      "mb": 0.2
+    },
+    "_SOURCE_GRAPH.json": {
+      "count": 1,
+      "mb": 0.02
+    },
+    "_SOURCE_REGISTRY.json": {
+      "count": 1,
+      "mb": 0.09
+    },
+    "_VALIDATION_REPORT.md": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "awesome-copilot": {
+      "count": 2744,
+      "mb": 97.67
+    },
+    "data-viz-design": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "design-system-foundation": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "garden-skills": {
+      "count": 605,
+      "mb": 18.77
+    },
+    "landing-page-design": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "motion-design": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "ui-sensei": {
+      "count": 29,
+      "mb": 1.69
+    },
+    "ui-ux-pro-max": {
+      "count": 2,
+      "mb": 0.0
+    },
+    "ui-ux-review": {
+      "count": 1,
+      "mb": 0.0
+    },
+    "web-design": {
+      "count": 123,
+      "mb": 2.4
+    },
+    "web-quality-skills": {
+      "count": 30,
+      "mb": 0.18
+    },
+    "web-quality-skills-main": {
+      "count": 31,
+      "mb": 0.15
+    },
+    "web-design-main": {
+      "count": 123,
+      "mb": 2.37
+    },
+    "ui-sensei-main": {
+      "count": 29,
+      "mb": 1.69
+    },
+    "Tawasal-main": {
+      "count": 153,
+      "mb": 10.3
+    },
+    "system-design-primer-master": {
+      "count": 139,
+      "mb": 12.96
+    },
+    "system-design-101-main": {
+      "count": 424,
+      "mb": 1.66
+    },
+    "subtrackr-main": {
+      "count": 23,
+      "mb": 0.09
+    },
+    "Subnix-main": {
+      "count": 29,
+      "mb": 0.14
+    },
+    "sonic-master": {
+      "count": 278,
+      "mb": 1.3
+    },
+    "soko-treasures-main": {
+      "count": 348,
+      "mb": 11.27
+    },
+    "Second-Hand-Seller-main": {
+      "count": 57,
+      "mb": 1.92
+    },
+    "Restaurant-Webapp-master": {
+      "count": 68,
+      "mb": 1.78
+    },
+    "realworld-main": {
+      "count": 330,
+      "mb": 2.42
+    },
+    "RealTime-Chat-API-main": {
+      "count": 24,
+      "mb": 0.2
+    },
+    "PulseAPI-main": {
+      "count": 160,
+      "mb": 0.73
+    },
+    "prosto-platform-develop": {
+      "count": 931,
+      "mb": 2.45
+    },
+    "programming": {
+      "count": 64,
+      "mb": 0.05
+    },
+    "portfolio-main": {
+      "count": 52,
+      "mb": 2.92
+    },
+    "pocketbase-master": {
+      "count": 923,
+      "mb": 15.25
+    },
+    "pocketbase-main": {
+      "count": 11,
+      "mb": 0.01
+    },
+    "Placement--Management--System-master": {
+      "count": 490,
+      "mb": 35.62
+    },
+    "parse-server-alpha": {
+      "count": 485,
+      "mb": 7.93
+    },
+    "online-shop-stylify-main": {
+      "count": 274,
+      "mb": 1.08
+    },
+    "node-express-backend-template-for-intermediate-main": {
+      "count": 38,
+      "mb": 0.27
+    },
+    "nhost-main": {
+      "count": 18364,
+      "mb": 649.83
+    },
+    "NaloMedQuery-main": {
+      "count": 65,
+      "mb": 0.19
+    },
+    "MyCRM-main": {
+      "count": 80,
+      "mb": 0.74
+    },
+    "Login-Sign-up-System-master": {
+      "count": 26,
+      "mb": 1.81
+    },
+    "lewp-rs-main": {
+      "count": 318,
+      "mb": 1.17
+    },
+    "kawerify-transfer-main": {
+      "count": 33,
+      "mb": 0.18
+    },
+    "Intelligent-Document-Processing-System-main": {
+      "count": 34,
+      "mb": 0.03
+    },
+    "Hotel-Reservation-System-master": {
+      "count": 10,
+      "mb": 0.02
+    },
+    "Hello-Rails-Backend-dev": {
+      "count": 87,
+      "mb": 0.05
+    },
+    "Hello-Python-main": {
+      "count": 47,
+      "mb": 4.96
+    },
+    "GreeverBackend-main": {
+      "count": 33,
+      "mb": 0.51
+    },
+    "globio-main": {
+      "count": 2,
+      "mb": 0.01
+    },
+    "GitHubDaily-master": {
+      "count": 19,
+      "mb": 3.93
+    },
+    "github-awesome-copilot": {
+      "count": 460,
+      "mb": 1.0
+    },
+    "garden-skills-main": {
+      "count": 593,
+      "mb": 18.61
+    },
+    "Full-Stack-Web-Development-Technologies-master": {
+      "count": 2,
+      "mb": 0.03
+    },
+    "flask_python-auth-system-main": {
+      "count": 3,
+      "mb": 0.01
+    },
+    "express-typescript-prisma7-neon-boilerplate-main": {
+      "count": 13,
+      "mb": 0.13
+    },
+    "domain-driven-hexagon-master": {
+      "count": 123,
+      "mb": 1.41
+    },
+    "dokploy-canary": {
+      "count": 1525,
+      "mb": 36.97
+    },
+    "Dev-Mind-Backend-master": {
+      "count": 22,
+      "mb": 0.21
+    },
+    "design": {
+      "count": 4,
+      "mb": 0.01
+    },
+    "dbvw-backend-master": {
+      "count": 1630,
+      "mb": 28.05
+    },
+    "coding": {
+      "count": 5,
+      "mb": 0.01
+    },
+    "codefather-main": {
+      "count": 1055,
+      "mb": 9.82
+    },
+    "classmanager-student-teacher-portal-master": {
+      "count": 87,
+      "mb": 5.79
+    },
+    "chatbot-template-main": {
+      "count": 112,
+      "mb": 5.56
+    },
+    "bilemo-symfony-rest-api-main": {
+      "count": 62,
+      "mb": 3.91
+    },
+    "Balsm-API-DotNet-main": {
+      "count": 129,
+      "mb": 0.3
+    },
+    "BackendSaaS.Api-main": {
+      "count": 13,
+      "mb": 0.02
+    },
+    "Backend-SistemaMedico-main (1)": {
+      "count": 107,
+      "mb": 0.2
+    },
+    "backend-reference-skills": {
+      "count": 26,
+      "mb": 0.02
+    },
+    "backend": {
+      "count": 26,
+      "mb": 0.02
+    },
+    "awesome-software-architecture-main": {
+      "count": 314,
+      "mb": 1.18
+    },
+    "awesome-security-master": {
+      "count": 3,
+      "mb": 0.07
+    },
+    "awesome-scalability-master": {
+      "count": 10,
+      "mb": 0.14
+    },
+    "awesome-rust-main": {
+      "count": 11,
+      "mb": 0.48
+    },
+    "awesome-python-master": {
+      "count": 43,
+      "mb": 0.55
+    },
+    "awesome-python-backend-main": {
+      "count": 5,
+      "mb": 0.05
+    },
+    "awesome-design-skills-main": {
+      "count": 215,
+      "mb": 10.56
+    },
+    "awesome-copilot-main (1)": {
+      "count": 2832,
+      "mb": 105.13
+    },
+    "awesome-copilot-main": {
+      "count": 2832,
+      "mb": 105.13
+    },
+    "awesome-claude-skills-master": {
+      "count": 1142,
+      "mb": 11.1
+    },
+    "awesome-cheatsheets-master": {
+      "count": 63,
+      "mb": 5.42
+    },
+    "awesome-agent-skills-main": {
+      "count": 4,
+      "mb": 0.24
+    },
+    "aspire-samples-main": {
+      "count": 1038,
+      "mb": 69.82
+    },
+    "appwrite-main": {
+      "count": 3164,
+      "mb": 102.16
+    },
+    "api_literalura-master": {
+      "count": 20,
+      "mb": 0.1
+    },
+    "agentic-awesome-skills-main": {
+      "count": 20816,
+      "mb": 263.43
+    },
+    "100-days-of-code-in-python-main": {
+      "count": 17,
+      "mb": 0.04
+    }
+  }
+}

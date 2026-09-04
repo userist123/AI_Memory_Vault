@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:issue-fields-migration",
+  "bundle_instance_id": "inst:awesome-copilot:skills/issue-fields-migration",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/issue-fields-migration/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/issue-fields-migration/SKILL.md",
+  "content_hash": "0a645fa7167447d0bf5965509148696c7cba5fc92e18e147ccf439d1a723b31f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/issue-fields-migration"
+}

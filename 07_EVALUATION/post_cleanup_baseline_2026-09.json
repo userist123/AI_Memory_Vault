@@ -1,0 +1,164 @@
+{
+  "baseline_metadata": {
+    "generated_at": "2026-09-03T01:34:00Z",
+    "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+    "status": "RECONCILED_WITH_REMEDIATED_MAIN",
+    "historical_baseline_commit": "28c371ac77e19a378aefbe3a107328d4c8450984",
+    "security_cleanup_parent_commit": "619757a2ae0be015db68db0db9219cdf74bba66e",
+    "remediated_head_commit": "3939b4e2325be37eddbcabde792c54821a242971",
+    "lineage": [
+      {
+        "commit": "619757a2ae0be015db68db0db9219cdf74bba66e",
+        "description": "security(repo): remove Defender-detected raw artifacts"
+      },
+      {
+        "commit": "28c371ac77e19a378aefbe3a107328d4c8450984",
+        "description": "baseline(eval): establish verified post-cleanup baseline"
+      },
+      {
+        "commit": "9bf43b05f28a8d99850c755661e3eeedcd428027",
+        "description": "fix(security): add P0-P15 gating to recall_cli fallback path"
+      },
+      {
+        "commit": "ad73e626fb4c3c2aa8dc2a3fb50b67ad4861d5d2",
+        "description": "docs(security): unify multi-agent memory retrieval instructions"
+      },
+      {
+        "commit": "3939b4e2325be37eddbcabde792c54821a242971",
+        "description": "Regenerate skill catalog from physical skill directories"
+      }
+    ]
+  },
+  "git_state": {
+    "current_head": "3939b4e2325be37eddbcabde792c54821a242971",
+    "historical_baseline_commit": "28c371ac77e19a378aefbe3a107328d4c8450984",
+    "security_cleanup_commit": "619757a2ae0be015db68db0db9219cdf74bba66e",
+    "defender_confirmed_raw_artifacts_absent": true,
+    "critical_skills_absent": {
+      "sandbase-mcp": true,
+      "aspire": true
+    },
+    "raw_corpus_preserved_without_broad_purge": true,
+    "raw_corpus_total_files": 66750
+  },
+  "repository_inventory": {
+    "skill_catalog_reconciliation": {
+      "physical_directories_in_catalog": 3699,
+      "catalog_entries_count": 3699,
+      "catalog_difference": 0,
+      "catalog_source": "01_KNOWLEDGE/Master_Skills_Catalog_251.md",
+      "population_breakdown": {
+        "extracted_canonical_skills": 3448,
+        "extracted_skills_provenance_basis": "Extraction baseline with PROVENANCE.json, excluding sandbase-mcp and aspire",
+        "native_core_skills": 252,
+        "native_skills_basis": "Pre-existing core vault skills",
+        "total_active_directories": 3700,
+        "catalog_representation": 3699,
+        "catalog_exclusion_rationale": "Namespace/package wrappers without independent top-level SKILL.md (e.g. skillsweb/) are excluded by catalog generator"
+      }
+    },
+    "raw_external_corpus": {
+      "total_repositories": 85,
+      "total_files": 66750,
+      "total_markdown_notes": 26046
+    },
+    "agent_and_system_specs": {
+      "agents_count": 43,
+      "instruction_files_root": 2,
+      "plugins_count": 0
+    },
+    "vault_layers_breakdown": {
+      "00_CORE": {"notes": 32, "total_files": 32},
+      "01_KNOWLEDGE": {"notes": 120, "total_files": 128},
+      "02_PROJECTS": {"notes": 10, "total_files": 10},
+      "03_PROCEDURES": {"notes": 15, "total_files": 15},
+      "04_MEMORY": {"notes": 585, "total_files": 585},
+      "05_RESOURCES": {"notes": 102, "total_files": 104},
+      "06_INBOX": {"notes": 26046, "total_files": 66750},
+      "07_EVALUATION": {"notes": 45, "total_files": 258},
+      "09_COORDINATION": {"notes": 2, "total_files": 2},
+      "10_ARCHIVE": {"notes": 46, "total_files": 47},
+      "99_SYSTEM": {"notes": 36, "total_files": 49},
+      "cognitive_core": {"notes": 3, "total_files": 321},
+      "memory_controller": {"notes": 0, "total_files": 174},
+      ".agents": {"notes": 8495, "total_files": 15571}
+    }
+  },
+  "evidence_classification": {
+    "STATIC": {
+      "modules": ["07_EVALUATION/skills_quality_v1/"],
+      "claims": "Static validity, schema compliance, docstring completeness, structural dependencies for 3,450 skills.",
+      "provenance": "Independently proven by reproducible repository inspection."
+    },
+    "SEMANTIC": {
+      "modules": ["07_EVALUATION/skills_semantic_v1/"],
+      "claims": "Jaccard lexical similarity, intent classification, redundancy cohorts, dual evaluator agreement.",
+      "provenance": "Independently proven by static similarity/evaluation methodology; does not establish runtime effectiveness."
+    },
+    "STRUCTURAL_RUNTIME": {
+      "modules": ["07_EVALUATION/runtime_v1/"],
+      "claims": "Candidate skill execution in sandboxed fixture test harness across 100 cases (30 repaired traces).",
+      "provenance": "NOT_ESTABLISHED_AS_CAUSAL_RUNTIME_EVIDENCE. The benchmark exercised isolated script fixtures without live agent OODA loops or user outcome verification."
+    },
+    "REAL_RUNTIME": {
+      "modules": [],
+      "claims": "Live causal runtime effectiveness of installed skills in production development workflows.",
+      "provenance": "NOT_ESTABLISHED. No empirical production execution outcome data exists."
+    },
+    "SECURITY": {
+      "modules": [
+        "07_EVALUATION/security_removal_v1/",
+        "07_EVALUATION/security_cleanup_v1/",
+        "cognitive_core/tests/test_secure_recall_cli.py"
+      ],
+      "claims": "Gating of P0-P18 invariants, removal of 2 CRITICAL skills, deletion of 6 confirmed Defender XSS payloads, and full delegation of recall_cli to MemoryController.",
+      "provenance": "Independently proven against Windows Defender subsystem (Get-MpThreatDetection) and passing pytest suites."
+    },
+    "PROVENANCE": {
+      "modules": ["07_EVALUATION/raw_external_skills_audit/"],
+      "claims": "Origin URLs, extraction manifests, git commit anchors, and deduplication clusters.",
+      "provenance": "Independently proven by git commit trees and upstream source URLs."
+    }
+  },
+  "architecture_state": {
+    "retrieval_remediation_status": {
+      "historical_state_at_28c371ac": "Fragmented entry points existed; recall_cli.py and dispatch_cli.py bypassed MemoryController via raw os.walk string matching.",
+      "current_state_at_head": "Remediated in 9bf43b05f. recall_cli.py delegates directly to MemoryController.search() under Principal.AI_AGENT, enforcing P0-P15 trust boundaries, query sanitization, context budgets, and SHA-256 audit logging. MultiAgentDispatcher resolves cleanly in orchestrator.py."
+    },
+    "multi_agent_policy": {
+      "status": "UNIFIED_ACROSS_ALL_AGENTS",
+      "authorized_interfaces": [
+        "REST API: http://localhost:8000/memory/search?query=...",
+        "Secure CLI fallback: python -m cognitive_core.recall_cli --query ..."
+      ],
+      "governing_docs": [
+        "CLAUDE.md",
+        "AGENTS.md",
+        ".agents/rules/vault_cognitive_rules.md",
+        "02_PROJECTS/FinScope.md"
+      ]
+    },
+    "remaining_architectural_gaps": [
+      {
+        "gap": "REAL_LLM_PROVIDER_BINDING",
+        "description": "Cognitive workers in cognitive_core/orchestrator.py and executive.py define model_tier metadata (light/standard/heavy) but lack production streaming bindings to live LLM providers outside of local Ollama or test mocks."
+      },
+      {
+        "gap": "END_TO_END_EXECUTION_TRACES",
+        "description": "Council token telemetry tracks budgets and step counts, but full multi-step causal execution graphs connecting user goal -> intent -> retrieved memory IDs -> tool calls -> final output are not durably persisted."
+      },
+      {
+        "gap": "CAUSAL_ATTRIBUTION_MEMORY_TO_OUTCOME",
+        "description": "Outcome event schema exists (04_MEMORY/outcome_events.jsonl), but automated verification attributing success/failure specifically to retrieved memory notes vs. model capability is not implemented."
+      },
+      {
+        "gap": "DYNAMIC_FEEDBACK_LOOP_CALIBRATION",
+        "description": "Automatic memory self-refinement (adjusting memory confidence scores or proposing superseding notes based on empirical task outcomes) is not closed."
+      },
+      {
+        "gap": "STORAGE_LAYER_SYNC",
+        "description": "Obsidian markdown wikilinks graph and SQLite WAL database (vault_memory.sqlite3) operate as separate indexes, requiring ongoing bidirectional synchronization."
+      }
+    ]
+  }
+}

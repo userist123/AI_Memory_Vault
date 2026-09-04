@@ -1,0 +1,26 @@
+{
+  "source_commit": "30e10bdb029446a5846d5c8480d6d7ae1381cd04",
+  "gold_standard": {
+    "average_score_delta": 2.2,
+    "classification_agreement": 100.0,
+    "major_disagreements": 0
+  },
+  "cohorts": {
+    "membership_total": 534,
+    "unique_skills": 502,
+    "overlap_count": 32
+  },
+  "benchmark_tasks": {
+    "task_count": 502,
+    "unique_skills": 502
+  },
+  "semantic_ledger": {
+    "records": 502,
+    "unique_skill_ids": 502
+  },
+  "p0": {
+    "required": 9,
+    "audited": 9
+  },
+  "verdict": "PASS"
+}

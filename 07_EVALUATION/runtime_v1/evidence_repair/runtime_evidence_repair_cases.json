@@ -1,0 +1,692 @@
+[
+  {
+    "runtime_case_id": "rec_001",
+    "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+    "task_id": "task_parallel-agents",
+    "prompt": "Implement a complete, production-ready specification and procedure for parallel-agents. Must adhere strictly to parallel-agents conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "parallel-agents",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Multi-agent orchestration patterns. Use when multiple independent tasks can run with different domain expertise or when comprehensive analysis requires multiple perspectives.\"",
+    "expected_artifacts": [
+      "parallel-agents_spec.json",
+      "parallel-agents_runbook.md"
+    ],
+    "verification_method": "verify_parallel_agents",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to parallel-agents structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_002",
+    "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+    "task_id": "task_flowhunt-skill",
+    "prompt": "Implement a complete, production-ready specification and procedure for flowhunt-skill. Must adhere strictly to flowhunt-skill conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "flowhunt-skill",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Automation discovery audit skill. Walks through a 5-question workflow intake, then audits Gmail/Calendar/Slack/task trackers to identify automation opportunities. Use when a user wants to discover what processes in their business can be automated.\"",
+    "expected_artifacts": [
+      "flowhunt-skill_spec.json",
+      "flowhunt-skill_runbook.md"
+    ],
+    "verification_method": "verify_flowhunt_skill",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to flowhunt-skill structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_003",
+    "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+    "task_id": "task_context-compression",
+    "prompt": "Implement a complete, production-ready specification and procedure for context-compression. Must adhere strictly to context-compression conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "context-compression",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"When agent sessions generate millions of tokens of conversation history, compression becomes mandatory. The naive approach is aggressive compression to minimize tokens per request.\"",
+    "expected_artifacts": [
+      "context-compression_spec.json",
+      "context-compression_runbook.md"
+    ],
+    "verification_method": "verify_context_compression",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to context-compression structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_004",
+    "skill_id": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+    "task_id": "task_using-n8n-mcp-skills",
+    "prompt": "Implement a complete, production-ready specification and procedure for using-n8n-mcp-skills. Must adhere strictly to using-n8n-mcp-skills conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "using-n8n-mcp-skills",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Route n8n MCP workflow design, editing, validation, testing, deployment, credential, execution, and debugging tasks to specialist guidance.",
+    "expected_artifacts": [
+      "using-n8n-mcp-skills_spec.json",
+      "using-n8n-mcp-skills_runbook.md"
+    ],
+    "verification_method": "verify_using_n8n_mcp_skills",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to using-n8n-mcp-skills structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_005",
+    "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+    "task_id": "task_docx-official",
+    "prompt": "Implement a complete, production-ready specification and procedure for docx-official. Must adhere strictly to docx-official conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "docx-official",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"A user may ask you to create, edit, or analyze the contents of a .docx file. A .docx file is essentially a ZIP archive containing XML files and other resources that you can read or edit. You have different tools and workflows available for different tasks.\"",
+    "expected_artifacts": [
+      "docx-official_spec.json",
+      "docx-official_runbook.md"
+    ],
+    "verification_method": "verify_docx_official",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to docx-official structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_006",
+    "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+    "task_id": "task_planning-and-task-breakdown",
+    "prompt": "Implement a complete, production-ready specification and procedure for planning-and-task-breakdown. Must adhere strictly to planning-and-task-breakdown conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "planning-and-task-breakdown",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Breaks work into ordered tasks. Use when you have a spec or clear requirements and need to break work into implementable tasks. Use when a task feels too large to start, when you need to estimate scope, or when parallel work is possible.",
+    "expected_artifacts": [
+      "planning-and-task-breakdown_spec.json",
+      "planning-and-task-breakdown_runbook.md"
+    ],
+    "verification_method": "verify_planning_and_task_breakdown",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to planning-and-task-breakdown structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_007",
+    "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+    "task_id": "task_html-injection-testing",
+    "prompt": "Implement a complete, production-ready specification and procedure for html-injection-testing. Must adhere strictly to html-injection-testing conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "html-injection-testing",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Identify and exploit HTML injection vulnerabilities that allow attackers to inject malicious HTML content into web applications. This vulnerability enables attackers to modify page appearance, create phishing pages, and steal user credentials through injected forms.\"",
+    "expected_artifacts": [
+      "html-injection-testing_spec.json",
+      "html-injection-testing_runbook.md"
+    ],
+    "verification_method": "verify_html_injection_testing",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to html-injection-testing structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_008",
+    "skill_id": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+    "task_id": "task_unsloth-finetuning",
+    "prompt": "Implement a complete, production-ready specification and procedure for unsloth-finetuning. Must adhere strictly to unsloth-finetuning conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "unsloth-finetuning",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Fine-tune and post-train LLMs with Unsloth Core on a single consumer GPU: VRAM sizing, LoRA/QLoRA, GRPO/DPO, chat-template correctness, and GGUF export.\"",
+    "expected_artifacts": [
+      "unsloth-finetuning_spec.json",
+      "unsloth-finetuning_runbook.md"
+    ],
+    "verification_method": "verify_unsloth_finetuning",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to unsloth-finetuning structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_009",
+    "skill_id": "skill:awesome-copilot:repo-standardizer",
+    "task_id": "task_repo-standardizer",
+    "prompt": "Implement a complete, production-ready specification and procedure for repo-standardizer. Must adhere strictly to repo-standardizer conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "repo-standardizer",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Polish any GitHub repository's surface \u2014 labels (emoji rating tiers, P0\u2013P3 priority, impact severity), issue forms, PR template, CI workflows, CODEOWNERS, rulesets, docs. Repo meta & config only \u2014 no code logic touched. Use when creating a new repo or polishing an existing one.",
+    "expected_artifacts": [
+      "repo-standardizer_spec.json",
+      "repo-standardizer_runbook.md"
+    ],
+    "verification_method": "verify_repo_standardizer",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to repo-standardizer structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_010",
+    "skill_id": "skill:agentic-awesome-skills-main:data-structure-protocol",
+    "task_id": "task_data-structure-protocol",
+    "prompt": "Implement a complete, production-ready specification and procedure for data-structure-protocol. Must adhere strictly to data-structure-protocol conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "data-structure-protocol",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Give agents persistent structural memory of a codebase \u2014 navigate dependencies, track public APIs, and understand why connections exist without re-reading the whole repo.\"",
+    "expected_artifacts": [
+      "data-structure-protocol_spec.json",
+      "data-structure-protocol_runbook.md"
+    ],
+    "verification_method": "verify_data_structure_protocol",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to data-structure-protocol structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_011",
+    "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+    "task_id": "task_context-management-context-restore",
+    "prompt": "Implement a complete, production-ready specification and procedure for context-management-context-restore. Must adhere strictly to context-management-context-restore conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "context-management-context-restore",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Use when working with context management context restore\"",
+    "expected_artifacts": [
+      "context-management-context-restore_spec.json",
+      "context-management-context-restore_runbook.md"
+    ],
+    "verification_method": "verify_context_management_context_restore",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to context-management-context-restore structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_012",
+    "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+    "task_id": "task_wordpress-woocommerce-development",
+    "prompt": "Implement a complete, production-ready specification and procedure for wordpress-woocommerce-development. Must adhere strictly to wordpress-woocommerce-development conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "wordpress-woocommerce-development",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"WooCommerce store development workflow covering store setup, payment integration, shipping configuration, customization, and WordPress 7.0 features: AI connectors, DataViews, and collaboration tools.\"",
+    "expected_artifacts": [
+      "wordpress-woocommerce-development_spec.json",
+      "wordpress-woocommerce-development_runbook.md"
+    ],
+    "verification_method": "verify_wordpress_woocommerce_development",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to wordpress-woocommerce-development structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_013",
+    "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+    "task_id": "task_cicd-automation-workflow-automate",
+    "prompt": "Implement a complete, production-ready specification and procedure for cicd-automation-workflow-automate. Must adhere strictly to cicd-automation-workflow-automate conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "cicd-automation-workflow-automate",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"You are a workflow automation expert specializing in creating efficient CI/CD pipelines, GitHub Actions workflows, and automated development processes. Design and implement automation that reduces manual work, improves consistency, and accelerates delivery while maintaining quality and security.\"",
+    "expected_artifacts": [
+      "cicd-automation-workflow-automate_spec.json",
+      "cicd-automation-workflow-automate_runbook.md"
+    ],
+    "verification_method": "verify_cicd_automation_workflow_automate",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to cicd-automation-workflow-automate structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_014",
+    "skill_id": "skill:awesome-copilot:readme-blueprint-generator",
+    "task_id": "task_readme-blueprint-generator",
+    "prompt": "Implement a complete, production-ready specification and procedure for readme-blueprint-generator. Must adhere strictly to readme-blueprint-generator conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "readme-blueprint-generator",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "'Intelligent README.md generation prompt that analyzes project documentation structure and creates comprehensive repository documentation. Scans .github/copilot directory files and copilot-instructions.md to extract project information, technology stack, architecture, development workflow, coding standards, and testing approaches while generating well-structured markdown documentation with proper formatting, cross-references, and developer-focused content.'",
+    "expected_artifacts": [
+      "readme-blueprint-generator_spec.json",
+      "readme-blueprint-generator_runbook.md"
+    ],
+    "verification_method": "verify_readme_blueprint_generator",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to readme-blueprint-generator structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_015",
+    "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+    "task_id": "task_diagram-generator",
+    "prompt": "Implement a complete, production-ready specification and procedure for diagram-generator. Must adhere strictly to diagram-generator conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "diagram-generator",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Generate, refine, validate, and render diagrams from natural language, notes, code, schemas, or existing diagram sources: flowcharts, swimlanes, attack-path graphs, data-flow diagrams, architecture, and state machines.\"",
+    "expected_artifacts": [
+      "diagram-generator_spec.json",
+      "diagram-generator_runbook.md"
+    ],
+    "verification_method": "verify_diagram_generator",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to diagram-generator structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_016",
+    "skill_id": "skill:agentic-awesome-skills-main:weaviate",
+    "task_id": "task_weaviate",
+    "prompt": "Implement a complete, production-ready specification and procedure for weaviate. Must adhere strictly to weaviate conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "weaviate",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Search, query, inspect, create, and import data into Weaviate vector database collections using official scripts and references.\"",
+    "expected_artifacts": [
+      "weaviate_spec.json",
+      "weaviate_runbook.md"
+    ],
+    "verification_method": "verify_weaviate",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to weaviate structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_017",
+    "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+    "task_id": "task_differential-review",
+    "prompt": "Implement a complete, production-ready specification and procedure for differential-review. Must adhere strictly to differential-review conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "differential-review",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Security-focused code review for PRs, commits, and diffs.\"",
+    "expected_artifacts": [
+      "differential-review_spec.json",
+      "differential-review_runbook.md"
+    ],
+    "verification_method": "verify_differential_review",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to differential-review structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_018",
+    "skill_id": "skill:agentic-awesome-skills-main:wiki-changelog",
+    "task_id": "task_wiki-changelog",
+    "prompt": "Implement a complete, production-ready specification and procedure for wiki-changelog. Must adhere strictly to wiki-changelog conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "wiki-changelog",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Generate structured changelogs from git history. Use when user asks \\\"what changed recently\\\", \\\"generate a changelog\\\", \\\"summarize commits\\\" or user wants to understand recent development activity.\"",
+    "expected_artifacts": [
+      "wiki-changelog_spec.json",
+      "wiki-changelog_runbook.md"
+    ],
+    "verification_method": "verify_wiki_changelog",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to wiki-changelog structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_019",
+    "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+    "task_id": "task_nextjs-best-practices",
+    "prompt": "Implement a complete, production-ready specification and procedure for nextjs-best-practices. Must adhere strictly to nextjs-best-practices conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "nextjs-best-practices",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Next.js App Router principles. Server Components, data fetching, routing patterns.\"",
+    "expected_artifacts": [
+      "nextjs-best-practices_spec.json",
+      "nextjs-best-practices_runbook.md"
+    ],
+    "verification_method": "verify_nextjs_best_practices",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to nextjs-best-practices structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_020",
+    "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+    "task_id": "task_acceptance-orchestrator",
+    "prompt": "Implement a complete, production-ready specification and procedure for acceptance-orchestrator. Must adhere strictly to acceptance-orchestrator conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "acceptance-orchestrator",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Use when a coding task should be driven end-to-end from issue intake through implementation, review, deployment, and acceptance verification with minimal human re-intervention.",
+    "expected_artifacts": [
+      "acceptance-orchestrator_spec.json",
+      "acceptance-orchestrator_runbook.md"
+    ],
+    "verification_method": "verify_acceptance_orchestrator",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to acceptance-orchestrator structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_021",
+    "skill_id": "skill:agentic-awesome-skills-main:graphql-architect",
+    "task_id": "task_graphql-architect",
+    "prompt": "Implement a complete, production-ready specification and procedure for graphql-architect. Must adhere strictly to graphql-architect conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "graphql-architect",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Master modern GraphQL with federation, performance optimization, and enterprise security. Build scalable schemas, implement advanced caching, and design real-time systems.",
+    "expected_artifacts": [
+      "graphql-architect_spec.json",
+      "graphql-architect_runbook.md"
+    ],
+    "verification_method": "verify_graphql_architect",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to graphql-architect structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_022",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+    "task_id": "task_odoo-upgrade-advisor",
+    "prompt": "Implement a complete, production-ready specification and procedure for odoo-upgrade-advisor. Must adhere strictly to odoo-upgrade-advisor conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "odoo-upgrade-advisor",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Step-by-step Odoo version upgrade advisor: pre-upgrade checklist, community vs enterprise upgrade path, OCA module compatibility, and post-upgrade validation.\"",
+    "expected_artifacts": [
+      "odoo-upgrade-advisor_spec.json",
+      "odoo-upgrade-advisor_runbook.md"
+    ],
+    "verification_method": "verify_odoo_upgrade_advisor",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to odoo-upgrade-advisor structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_023",
+    "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+    "task_id": "task_cc-skill-project-guidelines-example",
+    "prompt": "Implement a complete, production-ready specification and procedure for cc-skill-project-guidelines-example. Must adhere strictly to cc-skill-project-guidelines-example conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "cc-skill-project-guidelines-example",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Project Guidelines Skill (Example)\"",
+    "expected_artifacts": [
+      "cc-skill-project-guidelines-example_spec.json",
+      "cc-skill-project-guidelines-example_runbook.md"
+    ],
+    "verification_method": "verify_cc_skill_project_guidelines_example",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to cc-skill-project-guidelines-example structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_024",
+    "skill_id": "skill:awesome-copilot:phoenix-cli",
+    "task_id": "task_phoenix-cli",
+    "prompt": "Implement a complete, production-ready specification and procedure for phoenix-cli. Must adhere strictly to phoenix-cli conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "phoenix-cli",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Debug LLM applications using the Phoenix CLI. Fetch traces, analyze errors, structure trace review with open coding and axial coding, inspect datasets, review experiments, query annotation configs, and use the GraphQL API. Use whenever the user is analyzing traces or spans, investigating LLM/agent failures, deciding what to do after instrumenting an app, building failure taxonomies, choosing what evals to write, or asking \"what's going wrong\", \"what kinds of mistakes\", or \"where do I focus\" \u2014 even without naming a technique.",
+    "expected_artifacts": [
+      "phoenix-cli_spec.json",
+      "phoenix-cli_runbook.md"
+    ],
+    "verification_method": "verify_phoenix_cli",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to phoenix-cli structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_025",
+    "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+    "task_id": "task_check-identity-pack",
+    "prompt": "Implement a complete, production-ready specification and procedure for check-identity-pack. Must adhere strictly to check-identity-pack conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "check-identity-pack",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "Run an AFP 100-point or AUSTRAC safe-harbour identity check over a set of documents, and report exactly what's missing. Use when the user asks to check identity documents, verify someone's ID for onboarding, or assess whether a document pack satisfies Australian identity requirements.",
+    "expected_artifacts": [
+      "check-identity-pack_spec.json",
+      "check-identity-pack_runbook.md"
+    ],
+    "verification_method": "verify_check_identity_pack",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to check-identity-pack structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_026",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+    "task_id": "task_odoo-qweb-templates",
+    "prompt": "Implement a complete, production-ready specification and procedure for odoo-qweb-templates. Must adhere strictly to odoo-qweb-templates conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "odoo-qweb-templates",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Expert in Odoo QWeb templating for PDF reports, email templates, and website pages. Covers t-if, t-foreach, t-field, and report actions.\"",
+    "expected_artifacts": [
+      "odoo-qweb-templates_spec.json",
+      "odoo-qweb-templates_runbook.md"
+    ],
+    "verification_method": "verify_odoo_qweb_templates",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to odoo-qweb-templates structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_027",
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+    "task_id": "task_odoo-hr-payroll-setup",
+    "prompt": "Implement a complete, production-ready specification and procedure for odoo-hr-payroll-setup. Must adhere strictly to odoo-hr-payroll-setup conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "odoo-hr-payroll-setup",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Expert guide for Odoo HR and Payroll: salary structures, payslip rules, leave policies, employee contracts, and payroll journal entries.\"",
+    "expected_artifacts": [
+      "odoo-hr-payroll-setup_spec.json",
+      "odoo-hr-payroll-setup_runbook.md"
+    ],
+    "verification_method": "verify_odoo_hr_payroll_setup",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to odoo-hr-payroll-setup structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_028",
+    "skill_id": "skill:agentic-awesome-skills-main:async-python-patterns",
+    "task_id": "task_async-python-patterns",
+    "prompt": "Implement a complete, production-ready specification and procedure for async-python-patterns. Must adhere strictly to async-python-patterns conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "async-python-patterns",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Comprehensive guidance for implementing asynchronous Python applications using asyncio, concurrent programming patterns, and async/await for building high-performance, non-blocking systems.\"",
+    "expected_artifacts": [
+      "async-python-patterns_spec.json",
+      "async-python-patterns_runbook.md"
+    ],
+    "verification_method": "verify_async_python_patterns",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to async-python-patterns structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_029",
+    "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+    "task_id": "task_orchestrate-batch-refactor",
+    "prompt": "Implement a complete, production-ready specification and procedure for orchestrate-batch-refactor. Must adhere strictly to orchestrate-batch-refactor conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "orchestrate-batch-refactor",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Plan and execute large refactors with dependency-aware work packets and parallel analysis.\"",
+    "expected_artifacts": [
+      "orchestrate-batch-refactor_spec.json",
+      "orchestrate-batch-refactor_runbook.md"
+    ],
+    "verification_method": "verify_orchestrate_batch_refactor",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to orchestrate-batch-refactor structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  },
+  {
+    "runtime_case_id": "rec_030",
+    "skill_id": "skill:agentic-awesome-skills-main:zod-validation-expert",
+    "task_id": "task_zod-validation-expert",
+    "prompt": "Implement a complete, production-ready specification and procedure for zod-validation-expert. Must adhere strictly to zod-validation-expert conventions, defining inputs, outputs, operational constraints, and a formal verification plan.",
+    "inputs": {
+      "target_domain": "zod-validation-expert",
+      "environment": "production_hardened",
+      "enforce_standards": true
+    },
+    "expected_capability": "\"Expert in Zod \u2014 TypeScript-first schema validation. Covers parsing, custom errors, refinements, type inference, and integration with React Hook Form, Next.js, and tRPC.\"",
+    "expected_artifacts": [
+      "zod-validation-expert_spec.json",
+      "zod-validation-expert_runbook.md"
+    ],
+    "verification_method": "verify_zod_validation_expert",
+    "success_criteria": [
+      "Valid JSON/Markdown deliverable",
+      "Adherence to zod-validation-expert structural contract",
+      "Includes actionable verification checklist",
+      "Zero placeholder tokens or empty schemas"
+    ]
+  }
+]

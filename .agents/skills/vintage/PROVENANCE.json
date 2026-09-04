@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:vintage",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/vintage",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/vintage/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/vintage/SKILL.md",
+  "content_hash": "4581e10a639b4f21c8a5f200ca028c444d68e37fb4edca11e5780e33ad45e13f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/vintage"
+}

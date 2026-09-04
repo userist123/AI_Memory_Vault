@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:react19-test-patterns",
+  "bundle_instance_id": "inst:awesome-copilot:skills/react19-test-patterns",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react19-test-patterns/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/react19-test-patterns/SKILL.md",
+  "content_hash": "2637147682c07f4086bbbeb19054fd605284f7e4dffbe30260e71ddcb34544dd",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/react19-test-patterns"
+}

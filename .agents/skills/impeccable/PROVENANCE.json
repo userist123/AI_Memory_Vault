@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:impeccable",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/impeccable",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/impeccable/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/impeccable/SKILL.md",
+  "content_hash": "8b70782442eacd7bf2fd4cdc60c1a312ef2546d75eb1502ea0e123fe0f58dc1f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/impeccable"
+}

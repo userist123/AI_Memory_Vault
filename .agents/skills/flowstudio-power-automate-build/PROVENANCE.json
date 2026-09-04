@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:flowstudio-power-automate-build",
+  "bundle_instance_id": "inst:awesome-copilot:skills/flowstudio-power-automate-build",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/flowstudio-power-automate-build/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/flowstudio-power-automate-build/SKILL.md",
+  "content_hash": "5ba76f9f4d2830809c28070a8b778a991b5e27c75feb9a1952229c7195840930",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 7,
+  "target_installed_path": ".agents/skills/flowstudio-power-automate-build"
+}

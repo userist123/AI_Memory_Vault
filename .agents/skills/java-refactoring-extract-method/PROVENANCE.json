@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:java-refactoring-extract-method",
+  "bundle_instance_id": "inst:awesome-copilot:skills/java-refactoring-extract-method",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-refactoring-extract-method/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-refactoring-extract-method/SKILL.md",
+  "content_hash": "8707d8419aa025ec0986d4a874f80b4c8cda6024d13712a5d480aa4b0cd684a1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/java-refactoring-extract-method"
+}

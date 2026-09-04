@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mcp-release-qa",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mcp-release-qa",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-release-qa/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-release-qa/SKILL.md",
+  "content_hash": "216ed85eda24d7da259c408166276fae8f84774ce46a48c767afa4eee48d95d4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mcp-release-qa"
+}

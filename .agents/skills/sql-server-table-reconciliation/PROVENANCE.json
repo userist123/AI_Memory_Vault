@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:sql-server-table-reconciliation",
+  "bundle_instance_id": "inst:awesome-copilot:skills/sql-server-table-reconciliation",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/sql-server-table-reconciliation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/sql-server-table-reconciliation/SKILL.md",
+  "content_hash": "4c34fb0345409de2ff1538a58c716818f0781836004cf37fc07cbd6237f3a950",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/sql-server-table-reconciliation"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:scaling-qps",
+  "bundle_instance_id": "inst:awesome-copilot:skills/qdrant-scaling/scaling-qps",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/qdrant-scaling/scaling-qps/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/qdrant-scaling/scaling-qps/SKILL.md",
+  "content_hash": "334fc15ecf202a01712877e973b1d675e62b119997e2b49e9476c99e1a1ebb2c",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/scaling-qps"
+}

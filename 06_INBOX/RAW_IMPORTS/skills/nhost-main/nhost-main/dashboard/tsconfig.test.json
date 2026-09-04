@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vitest/globals"],
+    "paths": {
+      "@/*": ["./*"],
+      "@/tests/*": ["tests/*"],
+      "@/e2e/*": ["../e2e/*"],
+      "@/components/*": ["components/*"],
+      "@/hooks/*": ["hooks/*"],
+      "@/utils/*": ["utils/*"],
+      "@/types/*": ["types/*"],
+      "@/styles/*": ["styles/*"],
+      "@/data/*": ["data/*"],
+      "@/generated/graphite": ["utils/__generated__/graphite.graphql"],
+      "@/generated/*": ["utils/__generated__/*"],
+      "@/features/*": ["features/*"],
+      "@nhost/nextjs": ["../../packages/nextjs/src/index.ts"],
+      "@nhost/react-apollo": ["../../packages/react-apollo/src/index.ts"]
+    }
+  }
+}

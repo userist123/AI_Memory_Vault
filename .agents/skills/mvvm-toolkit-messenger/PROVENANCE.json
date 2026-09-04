@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mvvm-toolkit-messenger",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mvvm-toolkit-messenger",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mvvm-toolkit-messenger/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mvvm-toolkit-messenger/SKILL.md",
+  "content_hash": "ccaa95ae20b4cc16636f88134a9c9b5470a3f91d068e6a98053db4db5c1f2f65",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/mvvm-toolkit-messenger"
+}

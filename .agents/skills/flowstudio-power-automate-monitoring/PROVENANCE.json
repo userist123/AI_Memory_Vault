@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:flowstudio-power-automate-monitoring",
+  "bundle_instance_id": "inst:awesome-copilot:skills/flowstudio-power-automate-monitoring",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/flowstudio-power-automate-monitoring/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/flowstudio-power-automate-monitoring/SKILL.md",
+  "content_hash": "b2c04e8df2c01ac3833b5cf437e459a758e5e3df502d88ae70f33fc8e2f4fe17",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/flowstudio-power-automate-monitoring"
+}

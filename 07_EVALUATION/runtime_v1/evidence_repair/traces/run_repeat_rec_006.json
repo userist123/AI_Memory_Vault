@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_006",
+  "runtime_case_id": "rec_006",
+  "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:planning-and-task-breakdown"
+    ],
+    "skill_hash": "b732a79a26425313bebb1845966a39e930c9461cf4cf090e2ac4dcf060d1c627",
+    "skill_in_context": true,
+    "context_hash": "fb5c349d578e82e7f11cbe37c1a09da01de377ed9311f5ff4da92542a11fce1c"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.003858+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.003864+00:00",
+  "commands": [
+    "eval_repeat --skill planning-and-task-breakdown --task task_planning-and-task-breakdown"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+      "hash": "b732a79a26425313bebb1845966a39e930c9461cf4cf090e2ac4dcf060d1c627"
+    }
+  ],
+  "files_created": [
+    "planning-and-task-breakdown_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for planning-and-task-breakdown. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_planning_and_task_breakdown",
+    "command": "python -m verify_treatment rec_006 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 84,
+    "evidence": "Repeat score 84 vs 84 (delta=0)."
+  },
+  "redactions": []
+}

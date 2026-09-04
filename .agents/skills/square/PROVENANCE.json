@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:square",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/square",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/square/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/square/SKILL.md",
+  "content_hash": "332b404c21e30398266a1ef45c6759b0177cc6d17ddd576a6d7f941569b3f863",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/square"
+}

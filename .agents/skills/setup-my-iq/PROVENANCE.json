@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:setup-my-iq",
+  "bundle_instance_id": "inst:awesome-copilot:skills/setup-my-iq",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/setup-my-iq/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/setup-my-iq/SKILL.md",
+  "content_hash": "407c1e90b3e68b962101486f903df2474e9e87277d00000eb8f376435b3d0ed1",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 8,
+  "target_installed_path": ".agents/skills/setup-my-iq"
+}

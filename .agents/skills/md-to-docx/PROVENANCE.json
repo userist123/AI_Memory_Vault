@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:md-to-docx",
+  "bundle_instance_id": "inst:awesome-copilot:skills/md-to-docx",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/md-to-docx/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/md-to-docx/SKILL.md",
+  "content_hash": "2807a9fb5bac6f41050dbd4bd35f9f3478c9a79e42303508458e3d93659550dc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/md-to-docx"
+}

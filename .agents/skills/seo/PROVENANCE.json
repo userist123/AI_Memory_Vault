@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:web-quality-skills:seo",
+  "bundle_instance_id": "inst:web-quality-skills:skills/seo",
+  "canonical_repository_id": "repo:web-quality-skills",
+  "canonical_source_id": "web-quality-skills",
+  "source_url": "https://github.com/addyosmani/web-quality-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/seo/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/seo/SKILL.md",
+  "content_hash": "f26635c36d58ce373c3fbec7f51e114aea1341569fb9be6088d5fdbfa1f6ce5a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/seo"
+}

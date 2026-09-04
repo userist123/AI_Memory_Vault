@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_025",
+  "runtime_case_id": "rec_025",
+  "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:check-identity-pack"
+    ],
+    "skill_hash": "0cd8661fb2c0a7b8b5de0be0d690ad95205223f33d9d46ff225234704fcda2c0",
+    "skill_in_context": true,
+    "context_hash": "3d7dc12e32432ee5719af98b92fff0ef916588e08bea9f40221b3428053e7423"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.016091+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.016100+00:00",
+  "commands": [
+    "eval_treatment --skill check-identity-pack --task task_check-identity-pack"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:check-identity-pack",
+      "hash": "0cd8661fb2c0a7b8b5de0be0d690ad95205223f33d9d46ff225234704fcda2c0"
+    }
+  ],
+  "files_created": [
+    "check-identity-pack_spec.json",
+    "check-identity-pack_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill check-identity-pack loaded (hash 0cd8661f). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_check_identity_pack",
+    "command": "python -m verify_treatment rec_025 --schema check-identity-pack",
+    "exit_code": 0,
+    "passed": true,
+    "score": 87,
+    "evidence": "Delivered verified contract matching check-identity-pack specifications."
+  },
+  "redactions": []
+}

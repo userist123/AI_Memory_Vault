@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:datanalysis-credit-risk",
+  "bundle_instance_id": "inst:awesome-copilot:skills/datanalysis-credit-risk",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/datanalysis-credit-risk/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/datanalysis-credit-risk/SKILL.md",
+  "content_hash": "947a46d3e2beaac8886a95863cff7f6a9d6524dbebe6b5c7e6093e2eeac17605",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/datanalysis-credit-risk"
+}

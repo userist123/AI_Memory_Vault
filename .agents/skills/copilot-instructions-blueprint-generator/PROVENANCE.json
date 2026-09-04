@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:copilot-instructions-blueprint-generator",
+  "bundle_instance_id": "inst:awesome-copilot:skills/copilot-instructions-blueprint-generator",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/copilot-instructions-blueprint-generator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/copilot-instructions-blueprint-generator/SKILL.md",
+  "content_hash": "ddeed2834d5f455b8031cf11c336ebac07e91fc17c5e131490291a9ecc0b3fef",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/copilot-instructions-blueprint-generator"
+}

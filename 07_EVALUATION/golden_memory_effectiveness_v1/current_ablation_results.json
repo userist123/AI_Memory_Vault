@@ -1,0 +1,5 @@
+{
+  "status": "NOT_RUN",
+  "historical_artifact": "07_EVALUATION/memory_ablation_2026-09.json",
+  "reason": "The separate 20-task current ablation was not run."
+}

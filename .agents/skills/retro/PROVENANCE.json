@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:retro",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/retro",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/retro/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/retro/SKILL.md",
+  "content_hash": "71cedf74925dee90d1cf529611ddd9ff2a39c2f16dc3090ee284c7c30ba046d9",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/retro"
+}

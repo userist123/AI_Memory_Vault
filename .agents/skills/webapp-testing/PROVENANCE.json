@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:webapp-testing",
+  "bundle_instance_id": "inst:awesome-copilot:skills/webapp-testing",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/webapp-testing/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/webapp-testing/SKILL.md",
+  "content_hash": "6e75a939e98012f44b8ef71b7aa1f8483191b7ad379724da57be09d91fba2555",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/webapp-testing"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mcp-deploy-manage-agents",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mcp-deploy-manage-agents",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-deploy-manage-agents/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-deploy-manage-agents/SKILL.md",
+  "content_hash": "56c88bcd1a4199e5bb6673171b4f9162e0b672a3e6dee8f1063dda6c696c9d6b",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mcp-deploy-manage-agents"
+}

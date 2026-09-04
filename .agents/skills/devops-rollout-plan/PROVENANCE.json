@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:devops-rollout-plan",
+  "bundle_instance_id": "inst:awesome-copilot:skills/devops-rollout-plan",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/devops-rollout-plan/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/devops-rollout-plan/SKILL.md",
+  "content_hash": "2812cc113611dc848b3e403cbfc7aa2121184f8e331b7c7c75f68d4ef7935197",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/devops-rollout-plan"
+}

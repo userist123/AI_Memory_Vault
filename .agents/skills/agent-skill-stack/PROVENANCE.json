@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:agent-skill-stack",
+  "bundle_instance_id": "inst:awesome-copilot:skills/agent-skill-stack",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/agent-skill-stack/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/agent-skill-stack/SKILL.md",
+  "content_hash": "829beac8a338c7e18f06e16a971f62986437c42f120e21bed85b79050b0f1777",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 11,
+  "target_installed_path": ".agents/skills/agent-skill-stack"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:phoenix-tracing",
+  "bundle_instance_id": "inst:awesome-copilot:skills/phoenix-tracing",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/phoenix-tracing/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/phoenix-tracing/SKILL.md",
+  "content_hash": "299943993a0e85be0b31ef71a576d444fd8a4f71cea643b203b5aa8af2ba1ef8",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 32,
+  "target_installed_path": ".agents/skills/phoenix-tracing"
+}

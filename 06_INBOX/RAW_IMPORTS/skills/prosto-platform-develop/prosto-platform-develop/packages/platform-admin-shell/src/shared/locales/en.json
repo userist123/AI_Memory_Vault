@@ -1,0 +1,48 @@
+{
+  "app": {
+    "title": "Prosto Platform"
+  },
+  "authentication": {
+    "failedTitle": "Sign-in failed",
+    "failedMessage": "The authentication request could not be completed.",
+    "tryAgain": "Try again",
+    "logout": "Sign out",
+    "login": {
+      "title": "Sign in",
+      "message": "Use your local administrator account.",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign in",
+      "failed": "Sign-in failed. Check your credentials and try again."
+    },
+    "changePassword": {
+      "title": "Change password",
+      "message": "You must choose a new password before continuing.",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "submit": "Save new password",
+      "failed": "The password could not be changed. Try again."
+    },
+    "validation": {
+      "required": "Required",
+      "minimumPasswordLength": "Must contain at least 8 characters"
+    }
+  },
+  "dashboard": {
+    "title": "Control Panel",
+    "noPlugins": "No plugins loaded"
+  },
+  "diagnostics": {
+    "title": "Diagnostics",
+    "noRejected": "No rejected plugins"
+  },
+  "diagnostics_panel": {
+    "title": "Rejected Plugins",
+    "degradedMode": "Shell is running in degraded mode",
+    "clear": "Clear"
+  },
+  "degraded_banner": {
+    "title": "Degraded Mode",
+    "viewDiagnostics": "View Diagnostics"
+  }
+}

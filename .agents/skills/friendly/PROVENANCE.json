@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:friendly",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/friendly",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/friendly/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/friendly/SKILL.md",
+  "content_hash": "1521b9be47d7d73f311df3922f7cce3fb4ad520e8b09f716115a33c258c7260a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/friendly"
+}

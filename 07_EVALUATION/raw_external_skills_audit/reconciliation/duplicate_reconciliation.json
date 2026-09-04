@@ -1,0 +1,8 @@
+{
+  "total_duplicate_files": 19924,
+  "unique_duplicate_hash_groups": 9883,
+  "cross_repository_duplicates": 8658,
+  "intra_repository_duplicates": 21149,
+  "wasted_bytes": 418203630,
+  "provenance_preservation_note": "Duplicates occurring across independent repositories carry distinct provenance and are NOT automatically purged."
+}

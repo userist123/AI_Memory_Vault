@@ -1,0 +1,48 @@
+#!/bin/sh
+set -euo pipefail
+
+# * Look for the package.json file.
+# * If not found, create it in the "functions" directory.
+if [ -f "./functions/package.json" ]; then
+    # * ./functions/package.json exists
+    FUNCTIONS_WORKING_DIR=./functions
+    FUNCTIONS_RELATIVE_PATH=.
+else
+    # * ./functions/package.json DOES NOT exist
+    if [ -f "./package.json" ]; then
+        # * ./package.json exists
+        FUNCTIONS_WORKING_DIR=.
+        FUNCTIONS_RELATIVE_PATH=./functions
+    else
+        # * ./package.json DOES NOT exist"
+        mkdir -p functions
+        cd functions
+        npm init -y 1> /dev/null
+        cd ..
+        FUNCTIONS_WORKING_DIR=./functions
+        FUNCTIONS_RELATIVE_PATH=.
+    fi
+fi
+
+# * Create a default tsconfig.json file in the functions' working directory.
+cp -n "$SERVER_PATH/tsconfig.json" "$FUNCTIONS_WORKING_DIR/tsconfig.json"
+
+# * NODE_OPTIONS bumps the V8 heap so esbuild's watch context has headroom for
+# * projects with many functions / heavy deps. Override via env if needed.
+: "${NODE_OPTIONS:=--max-old-space-size=4096}"
+export NODE_OPTIONS
+
+# * Install dependencies via the shared library (byte-identical to services/cd
+# * in nhost/be): it bootstraps corepack (installing it when the Node image no
+# * longer bundles it, Node >= 25), sets strictDepBuilds, and does a frozen,
+# * workspace-isolated install that requires a committed lockfile.
+. "$SERVER_PATH/nhost-install-deps.sh"
+WORK_DIR="$FUNCTIONS_WORKING_DIR"
+export WORK_DIR
+nhost_install_deps
+
+# * Start the server from the functions working directory (cwd must be
+# * FUNCTIONS_WORKING_DIR so FUNCTIONS_RELATIVE_PATH resolves correctly).
+cd "$FUNCTIONS_WORKING_DIR" && \
+FUNCTIONS_RELATIVE_PATH="$FUNCTIONS_RELATIVE_PATH" \
+node "$SERVER_PATH/server.js"

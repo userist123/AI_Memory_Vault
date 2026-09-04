@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_013",
+  "runtime_case_id": "rec_013",
+  "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "38617e1bb5b523ec9f75289dd7e5fe53ca904083b8fd29a1393f89c8b0d4c91e"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.008103+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.008110+00:00",
+  "commands": [
+    "eval_baseline --task task_cicd-automation-workflow-automate"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "cicd-automation-workflow-automate_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_cicd-automation-workflow-automate without skill cicd-automation-workflow-automate. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_cicd_automation_workflow_automate",
+    "command": "python -m verify_baseline rec_013",
+    "exit_code": 0,
+    "passed": true,
+    "score": 60,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

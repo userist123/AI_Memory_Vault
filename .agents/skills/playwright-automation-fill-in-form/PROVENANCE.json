@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:playwright-automation-fill-in-form",
+  "bundle_instance_id": "inst:awesome-copilot:skills/playwright-automation-fill-in-form",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/playwright-automation-fill-in-form/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/playwright-automation-fill-in-form/SKILL.md",
+  "content_hash": "513c977287c3d5466f77b45de9d5feb185bef8493ebed9624761818f73708881",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/playwright-automation-fill-in-form"
+}

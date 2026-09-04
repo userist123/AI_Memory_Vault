@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:codebase-memory-mcp",
+  "bundle_instance_id": "inst:awesome-copilot:skills/codebase-memory-mcp",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/codebase-memory-mcp/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/codebase-memory-mcp/SKILL.md",
+  "content_hash": "ef9e883d0896a821f6905d6c7248588da3e9c2bad92a7e23449aa8fd66dd8e31",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/codebase-memory-mcp"
+}

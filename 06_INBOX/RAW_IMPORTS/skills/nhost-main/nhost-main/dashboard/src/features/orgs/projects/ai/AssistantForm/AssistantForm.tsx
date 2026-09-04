@@ -1,0 +1,328 @@
+import { yupResolver } from '@hookform/resolvers/yup';
+import { PlusIcon, RefreshCwIcon } from 'lucide-react';
+import { useEffect } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import * as Yup from 'yup';
+import { useDialog } from '@/components/common/DialogProvider';
+import { Form } from '@/components/form/Form';
+import { FormInput } from '@/components/form/FormInput';
+import { FormSelect } from '@/components/form/FormSelect';
+import { FormTextarea } from '@/components/form/FormTextarea';
+import { Button } from '@/components/ui/v3/button';
+import { SelectItem } from '@/components/ui/v3/select';
+import { useRemoteApplicationGQLClient } from '@/features/orgs/hooks/useRemoteApplicationGQLClient';
+import { GraphqlDataSourcesFormSection } from '@/features/orgs/projects/ai/AssistantForm/components/GraphqlDataSourcesFormSection';
+import { WebhooksDataSourcesFormSection } from '@/features/orgs/projects/ai/AssistantForm/components/WebhooksDataSourcesFormSection';
+import {
+  fileStoreFieldTransform,
+  NO_FILE_STORE_SELECT_VALUE,
+} from '@/features/orgs/projects/ai/AssistantForm/utils/fileStoreSelectValue';
+import type { GraphiteFileStore } from '@/features/orgs/projects/ai/file-stores/types';
+import { InfoTooltip } from '@/features/orgs/projects/common/components/InfoTooltip';
+import { useIsFileStoreSupported } from '@/features/orgs/projects/common/hooks/useIsFileStoreSupported';
+import { execPromiseWithErrorToast } from '@/features/orgs/utils/execPromiseWithErrorToast';
+import {
+  useInsertAssistantMutation,
+  useUpdateAssistantMutation,
+} from '@/generated/graphite';
+import { useTrackEvent } from '@/hooks/useTrackEvent';
+import type { DialogFormProps } from '@/types/common';
+import { type DeepRequired, removeTypename } from '@/utils/helpers';
+
+export const validationSchema = Yup.object({
+  name: Yup.string().required('The name is required.'),
+  description: Yup.string(),
+  instructions: Yup.string().required('The instructions are required'),
+  model: Yup.string().required('The model is required'),
+  fileStore: Yup.string().label('File Store'),
+  graphql: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required(),
+      description: Yup.string().required(),
+      query: Yup.string().required(),
+      arguments: Yup.array().of(
+        Yup.object().shape({
+          name: Yup.string().required(),
+          description: Yup.string().required(),
+          type: Yup.string().required(),
+          required: Yup.bool().required(),
+        }),
+      ),
+    }),
+  ),
+  webhooks: Yup.array().of(
+    Yup.object().shape({
+      name: Yup.string().required(),
+      description: Yup.string().required(),
+      URL: Yup.string().required(),
+      arguments: Yup.array().of(
+        Yup.object().shape({
+          name: Yup.string().required(),
+          description: Yup.string().required(),
+          type: Yup.string().required(),
+          required: Yup.bool().required(),
+        }),
+      ),
+    }),
+  ),
+});
+
+export type AssistantFormValues = Yup.InferType<typeof validationSchema>;
+export type AssistantFormInitialData = AssistantFormValues & {
+  fileStores?: string[];
+};
+
+export interface AssistantFormProps extends DialogFormProps {
+  /**
+   * To use in conjunction with initialData to allow for updating the Assistant Configuration
+   */
+  assistantId?: string;
+
+  /**
+   * if there is initialData then it's an update operation
+   */
+  initialData?: AssistantFormInitialData;
+  fileStores?: GraphiteFileStore[];
+
+  /**
+   * Function to be called when the operation is cancelled.
+   */
+  onCancel?: () => Promise<unknown>;
+  /**
+   * Function to be called when the submit is successful.
+   */
+  onSubmit?: () => Promise<unknown>;
+}
+
+export default function AssistantForm({
+  assistantId,
+  initialData,
+  fileStores,
+  onSubmit,
+  onCancel,
+  location,
+}: AssistantFormProps) {
+  const { onDirtyStateChange } = useDialog();
+  const track = useTrackEvent();
+
+  const remoteProjectGQLClient = useRemoteApplicationGQLClient();
+
+  const [insertAssistantMutation] = useInsertAssistantMutation({
+    client: remoteProjectGQLClient,
+  });
+
+  const [updateAssistantMutation] = useUpdateAssistantMutation({
+    client: remoteProjectGQLClient,
+  });
+
+  const { isFileStoreSupported } = useIsFileStoreSupported();
+
+  const fileStoresOptions = fileStores
+    ? fileStores.map((fileStore: GraphiteFileStore) => ({
+        label: fileStore.name,
+        value: fileStore.name,
+        id: fileStore.id,
+      }))
+    : [];
+
+  const assistantFileStore = initialData?.fileStores
+    ? fileStores?.find(
+        (fileStore: GraphiteFileStore) =>
+          fileStore.id === initialData?.fileStores?.[0],
+      )
+    : null;
+
+  const formDefaultValues = { ...initialData, fileStores: [] };
+  formDefaultValues.fileStore = assistantFileStore ? assistantFileStore.id : '';
+
+  const form = useForm<AssistantFormValues>({
+    defaultValues: formDefaultValues,
+    reValidateMode: 'onSubmit',
+    resolver: yupResolver(validationSchema),
+  });
+
+  const {
+    formState: { isSubmitting, dirtyFields },
+  } = form;
+
+  const isDirty = Object.keys(dirtyFields).length > 0;
+
+  useEffect(() => {
+    onDirtyStateChange(isDirty, location);
+  }, [isDirty, location, onDirtyStateChange]);
+
+  const createOrUpdateAssistant = async (
+    values: DeepRequired<AssistantFormValues> & {
+      assistantID: string;
+    },
+  ) => {
+    // remove any __typename from the form values
+    const payload = removeTypename(values);
+
+    if (values.webhooks?.length === 0) {
+      delete payload.webhooks;
+    }
+
+    if (values.graphql?.length === 0) {
+      delete payload.graphql;
+    }
+
+    if (isFileStoreSupported && values.fileStore) {
+      payload.fileStores = [values.fileStore];
+    }
+    if (!isFileStoreSupported) {
+      delete payload.fileStores;
+    }
+
+    // remove assistantId because the update mutation fails otherwise
+    delete payload.assistantID;
+    delete payload.fileStore;
+
+    // If the assistantId is set then we do an update
+    if (assistantId) {
+      await updateAssistantMutation({
+        variables: {
+          id: assistantId,
+          data: payload,
+        },
+      });
+
+      return;
+    }
+
+    await insertAssistantMutation({
+      variables: {
+        data: {
+          ...payload,
+        },
+      },
+    });
+    track('AI Assistant Created');
+  };
+
+  const handleSubmit = async (
+    values: DeepRequired<AssistantFormValues> & { assistantID: string },
+  ) => {
+    await execPromiseWithErrorToast(
+      async () => {
+        await createOrUpdateAssistant(values);
+        onSubmit?.();
+      },
+      {
+        loadingMessage: 'Configuring the Assistant...',
+        successMessage: 'The Assistant has been configured successfully.',
+        errorMessage:
+          'An error occurred while configuring the Assistant. Please try again.',
+      },
+    );
+  };
+
+  const fileStoreTooltip = isFileStoreSupported
+    ? 'If specified, all text documents in this file store will be available to the assistant.'
+    : 'Please upgrade Graphite to its latest version in order to use file stores.';
+
+  return (
+    <FormProvider {...form}>
+      <Form
+        onSubmit={handleSubmit}
+        className="flex h-full flex-col overflow-hidden border-t"
+      >
+        <div className="flex flex-1 flex-col space-y-4 overflow-auto p-4">
+          <FormInput
+            control={form.control}
+            name="name"
+            label={
+              <div className="flex flex-row items-center space-x-2">
+                <span>Name</span>
+                <InfoTooltip>Name of the assistant</InfoTooltip>
+              </div>
+            }
+            placeholder=""
+            autoComplete="off"
+            autoFocus
+          />
+
+          <FormTextarea
+            control={form.control}
+            name="description"
+            label={
+              <div className="flex flex-row items-center space-x-2">
+                <span>Description</span>
+                <InfoTooltip>Description of the assistant</InfoTooltip>
+              </div>
+            }
+            placeholder=""
+            autoComplete="off"
+            className="min-h-10 resize-y"
+          />
+
+          <FormTextarea
+            control={form.control}
+            name="instructions"
+            label={
+              <div className="flex flex-row items-center space-x-2">
+                <span>Instructions</span>
+                <InfoTooltip>
+                  Instructions for the assistant. This is used to instruct the
+                  AI assistant on how to behave and respond to the user
+                </InfoTooltip>
+              </div>
+            }
+            placeholder=""
+            autoComplete="off"
+            className="min-h-10 resize-y"
+          />
+
+          <FormInput
+            control={form.control}
+            name="model"
+            label={
+              <div className="flex flex-row items-center space-x-2">
+                <span>Model</span>
+                <InfoTooltip>Model to use for the assistant.</InfoTooltip>
+              </div>
+            }
+            placeholder=""
+            autoComplete="off"
+          />
+          <GraphqlDataSourcesFormSection />
+          <WebhooksDataSourcesFormSection />
+          <FormSelect
+            control={form.control}
+            name="fileStore"
+            label={
+              <div className="flex flex-row items-center space-x-2">
+                <span>File Store</span>
+                <InfoTooltip>{fileStoreTooltip}</InfoTooltip>
+              </div>
+            }
+            contentClassName="z-[10000]"
+            disabled={!isFileStoreSupported}
+            transform={fileStoreFieldTransform}
+          >
+            <SelectItem value={NO_FILE_STORE_SELECT_VALUE}>None</SelectItem>
+            {fileStoresOptions.map((fileStore) => (
+              <SelectItem key={fileStore.id} value={fileStore.id}>
+                {fileStore.label}
+              </SelectItem>
+            ))}
+          </FormSelect>
+        </div>
+
+        <div className="flex w-full flex-row justify-between rounded border-t p-4">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {assistantId ? (
+              <RefreshCwIcon className="mr-2 h-4 w-4" />
+            ) : (
+              <PlusIcon className="mr-2 h-4 w-4" />
+            )}
+            {assistantId ? 'Update' : 'Create'}
+          </Button>
+        </div>
+      </Form>
+    </FormProvider>
+  );
+}

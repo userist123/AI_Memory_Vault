@@ -1,0 +1,9 @@
+{
+  "total_dependencies_cataloged": 1230,
+  "manifest_sources_count": 267,
+  "ecosystems": {
+    "npm": 986,
+    "pypi": 244
+  },
+  "runtime_dependency_note": "Dependencies represent external packaging contracts for skills/scripts and do not indicate packages installed in the local environment."
+}

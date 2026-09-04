@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:java-mcp-server-generator",
+  "bundle_instance_id": "inst:awesome-copilot:skills/java-mcp-server-generator",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-mcp-server-generator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-mcp-server-generator/SKILL.md",
+  "content_hash": "904c1da4fca4fb9ea9bddb4603177028af366d7e5796ee0cc743902cc1dfb436",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/java-mcp-server-generator"
+}

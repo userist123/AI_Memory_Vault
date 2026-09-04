@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:appinsights-instrumentation",
+  "bundle_instance_id": "inst:awesome-copilot:skills/appinsights-instrumentation",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/appinsights-instrumentation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/appinsights-instrumentation/SKILL.md",
+  "content_hash": "d57b73100a20728e7914fa45a9a8047b777a465d541887eb01b8d553f5422a42",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 8,
+  "target_installed_path": ".agents/skills/appinsights-instrumentation"
+}

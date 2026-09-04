@@ -1,0 +1,19 @@
+{
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "benchmark_version": "1.0.0",
+  "git_commit": "dab6bcc9303c23f9aa2c53c06bcfc06b69275deb",
+  "git_branch": "main",
+  "provider": "local",
+  "model": "qwen2.5-coder:3b",
+  "provider_endpoint": "http://localhost:11434",
+  "task_count": 10,
+  "repeat_count": 3,
+  "condition_count": 3,
+  "seeds": {
+    "task_seed": 20260904,
+    "run_seed_formula": "20260904 + repeat*100 + task_number"
+  },
+  "python_version": "3.14.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "timestamp": "2026-09-03T21:56:11.336455+00:00"
+}

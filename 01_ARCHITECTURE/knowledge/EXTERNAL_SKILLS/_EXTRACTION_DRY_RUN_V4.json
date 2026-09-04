@@ -1,0 +1,498 @@
+{
+  "generated_at_utc": "2026-09-02T19:39:48Z",
+  "link_occurrences": 389,
+  "unique_urls": 289,
+  "unique_repositories": 33,
+  "classifications": {},
+  "bundles": [],
+  "failures": [
+    {
+      "repository": "ByteByteGoHq/system-design-101",
+      "source_urls": [
+        "https://github.com/ByteByteGoHq/system-design-101"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "ComposioHQ/awesome-claude-skills",
+      "source_urls": [
+        "https://github.com/ComposioHQ/awesome-claude-skills"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "ConardLi/garden-skills",
+      "source_urls": [
+        "https://github.com/ConardLi/garden-skills",
+        "https://github.com/ConardLi/garden-skills/tree/main/skills/web-design-engineer"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "Eldar1205/awesome-python-backend",
+      "source_urls": [
+        "https://github.com/Eldar1205/awesome-python-backend"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "Sairyss/domain-driven-hexagon",
+      "source_urls": [
+        "https://github.com/Sairyss/domain-driven-hexagon"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "ToastShaman/awesome-backend",
+      "source_urls": [
+        "https://github.com/ToastShaman/awesome-backend"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "VoltAgent/awesome-agent-skills",
+      "source_urls": [
+        "https://github.com/VoltAgent/awesome-agent-skills"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "addyosmani/web-quality-skills",
+      "source_urls": [
+        "https://github.com/addyosmani/web-quality-skills",
+        "https://github.com/addyosmani/web-quality-skills/tree/main/build-awwwards-quality-sites",
+        "https://github.com/addyosmani/web-quality-skills/tree/main/core-web-vitals",
+        "https://github.com/addyosmani/web-quality-skills/tree/main/skills",
+        "https://github.com/addyosmani/web-quality-skills/tree/main/web-quality-audit"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "avelino/awesome-go",
+      "source_urls": [
+        "https://github.com/avelino/awesome-go"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "awesome-selfhosted/awesome-sysadmin",
+      "source_urls": [
+        "https://github.com/awesome-selfhosted/awesome-sysadmin"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "bergside/awesome-design-skills",
+      "source_urls": [
+        "https://github.com/bergside/awesome-design-skills",
+        "https://github.com/bergside/awesome-design-skills/tree/main/author-game-levels",
+        "https://github.com/bergside/awesome-design-skills/tree/main/create-game-vfx",
+        "https://github.com/bergside/awesome-design-skills/tree/main/optimize-threejs-games",
+        "https://github.com/bergside/awesome-design-skills/tree/main/skills",
+        "https://github.com/bergside/awesome-design-skills/tree/main/threejs",
+        "https://github.com/bergside/awesome-design-skills/tree/main/threejs-landscape",
+        "https://github.com/bergside/awesome-design-skills/tree/main/threejs-post-processing",
+        "https://github.com/bergside/awesome-design-skills/tree/main/threejs-towers",
+        "https://github.com/bergside/awesome-design-skills/tree/main/threejs-weather"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "collections/programming-languages",
+      "source_urls": [
+        "https://github.com/collections/programming-languages"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "donnemartin/system-design-primer",
+      "source_urls": [
+        "https://github.com/donnemartin/system-design-primer",
+        "https://github.com/donnemartin/system-design-primer/tree/main/backend-security-authz",
+        "https://github.com/donnemartin/system-design-primer/tree/main/clean-architecture-backend",
+        "https://github.com/donnemartin/system-design-primer/tree/main/database-architecture-caching",
+        "https://github.com/donnemartin/system-design-primer/tree/main/database-migration-flyway",
+        "https://github.com/donnemartin/system-design-primer/tree/main/database-sharding-vitess",
+        "https://github.com/donnemartin/system-design-primer/tree/main/neo4j-graph-database",
+        "https://github.com/donnemartin/system-design-primer/tree/main/qdrant-vector-database",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-backend-performance-tuning",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-cpp-drogon-coroutine-backend",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-dotnet10-minimal-api-aot",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-owasp-backend-hardening",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-postgresql-indexing-tuning",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-python-fastapi-async-worker",
+        "https://github.com/donnemartin/system-design-primer/tree/main/skill-sqlite-wal-optimization"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "dotnet/aspire-samples",
+      "source_urls": [
+        "https://github.com/dotnet/aspire-samples"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "enaqx/awesome-react",
+      "source_urls": [
+        "https://github.com/enaqx/awesome-react"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "gbrasil720/ui-sensei",
+      "source_urls": [
+        "https://github.com/gbrasil720/ui-sensei"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "github/awesome-copilot",
+      "source_urls": [
+        "https://github.com/github/awesome-copilot",
+        "https://github.com/github/awesome-copilot/tree/main/accessibility",
+        "https://github.com/github/awesome-copilot/tree/main/add-mouse-driven-orbit",
+        "https://github.com/github/awesome-copilot/tree/main/add-shader-cursor-trail",
+        "https://github.com/github/awesome-copilot/tree/main/agency-grid-layout-minimal",
+        "https://github.com/github/awesome-copilot/tree/main/ambient-section-particles",
+        "https://github.com/github/awesome-copilot/tree/main/animation-on-scroll",
+        "https://github.com/github/awesome-copilot/tree/main/animation-systems",
+        "https://github.com/github/awesome-copilot/tree/main/ansible-automation",
+        "https://github.com/github/awesome-copilot/tree/main/argocd-gitops",
+        "https://github.com/github/awesome-copilot/tree/main/article-prompts-to-skills",
+        "https://github.com/github/awesome-copilot/tree/main/atmosphere-background",
+        "https://github.com/github/awesome-copilot/tree/main/audit-reference-originality",
+        "https://github.com/github/awesome-copilot/tree/main/audit-verify-explain-grade-5",
+        "https://github.com/github/awesome-copilot/tree/main/aura-asset-images",
+        "https://github.com/github/awesome-copilot/tree/main/aws-cloud-architecture",
+        "https://github.com/github/awesome-copilot/tree/main/azure-cloud-architecture",
+        "https://github.com/github/awesome-copilot/tree/main/beam-glow-states",
+        "https://github.com/github/awesome-copilot/tree/main/beautiful-shadows",
+        "https://github.com/github/awesome-copilot/tree/main/blue-cloudy-clean-modern",
+        "https://github.com/github/awesome-copilot/tree/main/blue-laser-clean-glass-layout",
+        "https://github.com/github/awesome-copilot/tree/main/book-serif-index",
+        "https://github.com/github/awesome-copilot/tree/main/brand-identity",
+        "https://github.com/github/awesome-copilot/tree/main/browser-video-recording",
+        "https://github.com/github/awesome-copilot/tree/main/casbin-authorization",
+        "https://github.com/github/awesome-copilot/tree/main/cinematic-gsap-lenis-motion-system",
+        "https://github.com/github/awesome-copilot/tree/main/cinematic-scroll-storytelling",
+        "https://github.com/github/awesome-copilot/tree/main/clean-minimal-beige-light-mode",
+        "https://github.com/github/awesome-copilot/tree/main/clickhouse-time-series",
+        "https://github.com/github/awesome-copilot/tree/main/cobejs",
+        "https://github.com/github/awesome-copilot/tree/main/code-refactoring-patterns",
+        "https://github.com/github/awesome-copilot/tree/main/company-logos",
+        "https://github.com/github/awesome-copilot/tree/main/container-lines",
+        "https://github.com/github/awesome-copilot/tree/main/container-vulnerability-scanning",
+        "https://github.com/github/awesome-copilot/tree/main/copilot-agentic-workflows",
+        "https://github.com/github/awesome-copilot/tree/main/copilot-custom-instructions",
+        "https://github.com/github/awesome-copilot/tree/main/corner-diagonals",
+        "https://github.com/github/awesome-copilot/tree/main/corner-lasers",
+        "https://github.com/github/awesome-copilot/tree/main/csharp-wpf-desktop",
+        "https://github.com/github/awesome-copilot/tree/main/css-alpha-masking",
+        "https://github.com/github/awesome-copilot/tree/main/css-border-gradient",
+        "https://github.com/github/awesome-copilot/tree/main/dark-blue-contrasting-clean",
+        "https://github.com/github/awesome-copilot/tree/main/dark-glass-clean-layout",
+        "https://github.com/github/awesome-copilot/tree/main/dast-dynamic-testing",
+        "https://github.com/github/awesome-copilot/tree/main/datadog-observability",
+        "https://github.com/github/awesome-copilot/tree/main/debezium-cdc-pipeline",
+        "https://github.com/github/awesome-copilot/tree/main/dfir-operations",
+        "https://github.com/github/awesome-copilot/tree/main/dither-background",
+        "https://github.com/github/awesome-copilot/tree/main/dither-laser-dark-mode",
+        "https://github.com/github/awesome-copilot/tree/main/docker-containerization",
+        "https://github.com/github/awesome-copilot/tree/main/documentary-brutalist-agency",
+        "https://github.com/github/awesome-copilot/tree/main/duckdb-analytical-queries",
+        "https://github.com/github/awesome-copilot/tree/main/editorial-portfolio-chapters",
+        "https://github.com/github/awesome-copilot/tree/main/editorial-service-booking",
+        "https://github.com/github/awesome-copilot/tree/main/editorial-tech",
+        "https://github.com/github/awesome-copilot/tree/main/elastic-stack-logging",
+        "https://github.com/github/awesome-copilot/tree/main/elasticsearch-full-text",
+        "https://github.com/github/awesome-copilot/tree/main/elevenlabs-tts",
+        "https://github.com/github/awesome-copilot/tree/main/envoy-proxy-configuration",
+        "https://github.com/github/awesome-copilot/tree/main/falling-leaves",
+        "https://github.com/github/awesome-copilot/tree/main/fine-tuning-lora-peft",
+        "https://github.com/github/awesome-copilot/tree/main/framed-grid-layout",
+        "https://github.com/github/awesome-copilot/tree/main/framed-tech-dark-border-gradient",
+        "https://github.com/github/awesome-copilot/tree/main/funky-purple-container-tech",
+        "https://github.com/github/awesome-copilot/tree/main/gcp-cloud-architecture",
+        "https://github.com/github/awesome-copilot/tree/main/generate-reference-inspired-brand-worlds",
+        "https://github.com/github/awesome-copilot/tree/main/github-actions-ci-cd",
+        "https://github.com/github/awesome-copilot/tree/main/gitlab-ci-cd",
+        "https://github.com/github/awesome-copilot/tree/main/glass-dark-mode-clock",
+        "https://github.com/github/awesome-copilot/tree/main/global-skill-registry-router",
+        "https://github.com/github/awesome-copilot/tree/main/globe-gl",
+        "https://github.com/github/awesome-copilot/tree/main/globe-particles",
+        "https://github.com/github/awesome-copilot/tree/main/gooey-blob-system",
+        "https://github.com/github/awesome-copilot/tree/main/gsap",
+        "https://github.com/github/awesome-copilot/tree/main/gsap-scrolltrigger-storytelling",
+        "https://github.com/github/awesome-copilot/tree/main/guardrails-ai-safety",
+        "https://github.com/github/awesome-copilot/tree/main/helm-chart-management",
+        "https://github.com/github/awesome-copilot/tree/main/high-contrast-skeuomorphic-clean",
+        "https://github.com/github/awesome-copilot/tree/main/html-to-interaction-prompts",
+        "https://github.com/github/awesome-copilot/tree/main/image-first-grid-layout",
+        "https://github.com/github/awesome-copilot/tree/main/implement-fog-of-war",
+        "https://github.com/github/awesome-copilot/tree/main/istio-service-mesh",
+        "https://github.com/github/awesome-copilot/tree/main/iterate-until-verified",
+        "https://github.com/github/awesome-copilot/tree/main/kubernetes-orchestration",
+        "https://github.com/github/awesome-copilot/tree/main/landing-page",
+        "https://github.com/github/awesome-copilot/tree/main/langchain-agentic-chains",
+        "https://github.com/github/awesome-copilot/tree/main/light-mode-paper-technical",
+        "https://github.com/github/awesome-copilot/tree/main/llamaindex-rag-pipeline",
+        "https://github.com/github/awesome-copilot/tree/main/local-ai-integration",
+        "https://github.com/github/awesome-copilot/tree/main/marquee-loop",
+        "https://github.com/github/awesome-copilot/tree/main/masked-reveal",
+        "https://github.com/github/awesome-copilot/tree/main/matterjs",
+        "https://github.com/github/awesome-copilot/tree/main/mcp-server-integrations",
+        "https://github.com/github/awesome-copilot/tree/main/mesh-gradient-dark-blue-clean",
+        "https://github.com/github/awesome-copilot/tree/main/nested-container-clean-agency",
+        "https://github.com/github/awesome-copilot/tree/main/nested-container-frames",
+        "https://github.com/github/awesome-copilot/tree/main/nextjs-saas-frontend",
+        "https://github.com/github/awesome-copilot/tree/main/nginx-ingress-tuning",
+        "https://github.com/github/awesome-copilot/tree/main/number-details",
+        "https://github.com/github/awesome-copilot/tree/main/ollama-local-llm-integration",
+        "https://github.com/github/awesome-copilot/tree/main/opa-rego-policy-enforcement",
+        "https://github.com/github/awesome-copilot/tree/main/open-telemetry-tracing",
+        "https://github.com/github/awesome-copilot/tree/main/operational-enterprise-ai",
+        "https://github.com/github/awesome-copilot/tree/main/orange-clean-paper-saas",
+        "https://github.com/github/awesome-copilot/tree/main/owasp-top-10-audit",
+        "https://github.com/github/awesome-copilot/tree/main/penetration-testing-playbook",
+        "https://github.com/github/awesome-copilot/tree/main/performance-profiling",
+        "https://github.com/github/awesome-copilot/tree/main/pgvector-embeddings",
+        "https://github.com/github/awesome-copilot/tree/main/pki-certificate-management",
+        "https://github.com/github/awesome-copilot/tree/main/playwright-e2e-testing",
+        "https://github.com/github/awesome-copilot/tree/main/pointer-trail-emitter",
+        "https://github.com/github/awesome-copilot/tree/main/powershell-secops",
+        "https://github.com/github/awesome-copilot/tree/main/pricing-page",
+        "https://github.com/github/awesome-copilot/tree/main/product-proof-saas",
+        "https://github.com/github/awesome-copilot/tree/main/progressive-blur",
+        "https://github.com/github/awesome-copilot/tree/main/prometheus-grafana-monitoring",
+        "https://github.com/github/awesome-copilot/tree/main/publish-project-to-github",
+        "https://github.com/github/awesome-copilot/tree/main/pydantic-json-mode-validation",
+        "https://github.com/github/awesome-copilot/tree/main/python-trading-systems",
+        "https://github.com/github/awesome-copilot/tree/main/react-query-tanstack",
+        "https://github.com/github/awesome-copilot/tree/main/reveal-hover-effect",
+        "https://github.com/github/awesome-copilot/tree/main/sast-static-analysis",
+        "https://github.com/github/awesome-copilot/tree/main/scroll-progress-timeline",
+        "https://github.com/github/awesome-copilot/tree/main/scroll-scrubbed-visual-sequence",
+        "https://github.com/github/awesome-copilot/tree/main/scroll-scrubbed-word-reveal",
+        "https://github.com/github/awesome-copilot/tree/main/scroll-world-storytelling",
+        "https://github.com/github/awesome-copilot/tree/main/secret-leak-prevention",
+        "https://github.com/github/awesome-copilot/tree/main/security-invariants",
+        "https://github.com/github/awesome-copilot/tree/main/shaders-cursor-ripples",
+        "https://github.com/github/awesome-copilot/tree/main/skill-clean-architecture-layering",
+        "https://github.com/github/awesome-copilot/tree/main/skill-cqrs-event-sourcing",
+        "https://github.com/github/awesome-copilot/tree/main/skill-distributed-rate-limiting",
+        "https://github.com/github/awesome-copilot/tree/main/skill-go-worker-pool-concurrency",
+        "https://github.com/github/awesome-copilot/tree/main/skill-graphql-schema-evolution",
+        "https://github.com/github/awesome-copilot/tree/main/skill-grpc-contract-management",
+        "https://github.com/github/awesome-copilot/tree/main/skill-oauth2-jwt-security",
+        "https://github.com/github/awesome-copilot/tree/main/skill-rbac-abac-authorization",
+        "https://github.com/github/awesome-copilot/tree/main/skill-redis-caching-patterns",
+        "https://github.com/github/awesome-copilot/tree/main/skill-rust-tokio-axum-architecture",
+        "https://github.com/github/awesome-copilot/tree/main/skill-saga-orchestration-choreography",
+        "https://github.com/github/awesome-copilot/tree/main/skill-transactional-outbox-cdc",
+        "https://github.com/github/awesome-copilot/tree/main/skill-typescript-nest-bullmq-orm",
+        "https://github.com/github/awesome-copilot/tree/main/skills",
+        "https://github.com/github/awesome-copilot/tree/main/solar-duotone-bold",
+        "https://github.com/github/awesome-copilot/tree/main/split-layout-technical",
+        "https://github.com/github/awesome-copilot/tree/main/staggered-word-reveal",
+        "https://github.com/github/awesome-copilot/tree/main/stitched-full-page-capture",
+        "https://github.com/github/awesome-copilot/tree/main/storybook-component-docs",
+        "https://github.com/github/awesome-copilot/tree/main/tailwind-v4-theme-engine",
+        "https://github.com/github/awesome-copilot/tree/main/tailwindcss",
+        "https://github.com/github/awesome-copilot/tree/main/tech-green-dark-mode-modern",
+        "https://github.com/github/awesome-copilot/tree/main/technical-wireframe-info-layout",
+        "https://github.com/github/awesome-copilot/tree/main/terraform-infrastructure",
+        "https://github.com/github/awesome-copilot/tree/main/thinking-orbs",
+        "https://github.com/github/awesome-copilot/tree/main/tune-enemy-ai",
+        "https://github.com/github/awesome-copilot/tree/main/unicorn-studio",
+        "https://github.com/github/awesome-copilot/tree/main/unit-test-generation-contract",
+        "https://github.com/github/awesome-copilot/tree/main/unsplash-asset-images",
+        "https://github.com/github/awesome-copilot/tree/main/vantajs",
+        "https://github.com/github/awesome-copilot/tree/main/vault-operations",
+        "https://github.com/github/awesome-copilot/tree/main/vault-secrets-management",
+        "https://github.com/github/awesome-copilot/tree/main/vault-security-audit",
+        "https://github.com/github/awesome-copilot/tree/main/video-to-superprompt",
+        "https://github.com/github/awesome-copilot/tree/main/vite-bundler-optimization",
+        "https://github.com/github/awesome-copilot/tree/main/vllm-inference-optimization",
+        "https://github.com/github/awesome-copilot/tree/main/write-like-meng-on-x",
+        "https://github.com/github/awesome-copilot/tree/main/x-bookmark-quote-posts",
+        "https://github.com/github/awesome-copilot/tree/main/zero-trust-architecture",
+        "https://github.com/github/awesome-copilot/tree/main/zustand-state-management"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "gothinkster/realworld",
+      "source_urls": [
+        "https://github.com/gothinkster/realworld"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "khalidbelk/awesome-backend",
+      "source_urls": [
+        "https://github.com/khalidbelk/awesome-backend"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "mehdihadeli/awesome-software-architecture",
+      "source_urls": [
+        "https://github.com/mehdihadeli/awesome-software-architecture"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "quozd/awesome-dotnet",
+      "source_urls": [
+        "https://github.com/quozd/awesome-dotnet"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "ramitsurana/awesome-kubernetes",
+      "source_urls": [
+        "https://github.com/ramitsurana/awesome-kubernetes"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "rust-unofficial/awesome-rust",
+      "source_urls": [
+        "https://github.com/rust-unofficial/awesome-rust"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "sbilly/awesome-security",
+      "source_urls": [
+        "https://github.com/sbilly/awesome-security"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "sickn33/agentic-awesome-skills",
+      "source_urls": [
+        "https://github.com/sickn33/agentic-awesome-skills"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "topics/backend",
+      "source_urls": [
+        "https://github.com/topics/backend"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "topics/backend-app",
+      "source_urls": [
+        "https://github.com/topics/backend-app"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "topics/backend-webdevelopment",
+      "source_urls": [
+        "https://github.com/topics/backend-webdevelopment"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "veggiemonk/awesome-docker",
+      "source_urls": [
+        "https://github.com/veggiemonk/awesome-docker"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "vinta/awesome-python",
+      "source_urls": [
+        "https://github.com/vinta/awesome-python"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "wowners/awesome-devops",
+      "source_urls": [
+        "https://github.com/wowners/awesome-devops"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "xiaopu-ai/web-design",
+      "source_urls": [
+        "https://github.com/xiaopu-ai/web-design",
+        "https://github.com/xiaopu-ai/web-design/blob/main/SKILL.md",
+        "https://github.com/xiaopu-ai/web-design/tree/main/backend-api-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/background-grid-webgl",
+        "https://github.com/xiaopu-ai/web-design/tree/main/bright-green-tech-system-webgl",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-daily-inspiration-sites",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-game-audio-feedback",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-game-camera-controls",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-game-changelog",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-game-inventory",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-game-map-editor",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-game-monster-system",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-hybrid-game-assets",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-interactive-particle-trail",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-isometric-arpg",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-mobile-threejs-games",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-rigged-game-assets",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-threejs-enemy-systems",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-threejs-scroll-worlds",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-vesperfall-review-assets",
+        "https://github.com/xiaopu-ai/web-design/tree/main/build-wireframe-scan-reveal",
+        "https://github.com/xiaopu-ai/web-design/tree/main/daily-ui-inspiration-capture",
+        "https://github.com/xiaopu-ai/web-design/tree/main/dashboard-admin-ui",
+        "https://github.com/xiaopu-ai/web-design/tree/main/data-viz-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-action-combat",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-first-ui-prompting",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-game-encounters",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-system-apple",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-system-foundation",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-system-linear",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-system-stripe",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-system-supabase",
+        "https://github.com/xiaopu-ai/web-design/tree/main/design-system-vercel",
+        "https://github.com/xiaopu-ai/web-design/tree/main/email-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/garden-web-design-engineer",
+        "https://github.com/xiaopu-ai/web-design/tree/main/glass-dark-ui",
+        "https://github.com/xiaopu-ai/web-design/tree/main/landing-page-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/liquid-metal-border",
+        "https://github.com/xiaopu-ai/web-design/tree/main/microservices-system-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/motion-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/optimize-web-animations",
+        "https://github.com/xiaopu-ai/web-design/tree/main/presentation-design",
+        "https://github.com/xiaopu-ai/web-design/tree/main/ship-web-games",
+        "https://github.com/xiaopu-ai/web-design/tree/main/skeuomorphic-ui",
+        "https://github.com/xiaopu-ai/web-design/tree/main/skill-api-design-governance",
+        "https://github.com/xiaopu-ai/web-design/tree/main/skillsweb",
+        "https://github.com/xiaopu-ai/web-design/tree/main/test-playable-web-games",
+        "https://github.com/xiaopu-ai/web-design/tree/main/ui-sensei",
+        "https://github.com/xiaopu-ai/web-design/tree/main/ui-tokens",
+        "https://github.com/xiaopu-ai/web-design/tree/main/ui-ux-review",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-best-practices",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-design-engineer",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-design-style-seeds",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-interaction-patterns",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-performance",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-seo",
+        "https://github.com/xiaopu-ai/web-design/tree/main/web-technique-to-skill",
+        "https://github.com/xiaopu-ai/web-design/tree/main/webgl-3d-object",
+        "https://github.com/xiaopu-ai/web-design/tree/main/webgl-landing-steering",
+        "https://github.com/xiaopu-ai/web-design/tree/main/webgl-laser",
+        "https://github.com/xiaopu-ai/web-design/tree/main/xiaopu-web-design"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    },
+    {
+      "repository": "zhashkevych/awesome-backend",
+      "source_urls": [
+        "https://github.com/zhashkevych/awesome-backend"
+      ],
+      "error": "GitHub API rate/authentication limit reached. Set GITHUB_TOKEN and retry."
+    }
+  ],
+  "external_code_executed": false
+}

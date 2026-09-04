@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:make-repo-contribution",
+  "bundle_instance_id": "inst:awesome-copilot:skills/make-repo-contribution",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/make-repo-contribution/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/make-repo-contribution/SKILL.md",
+  "content_hash": "a78f49b9a378a2778ff60285b95e465a30d0a707afaf3255b05f249581f40234",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/make-repo-contribution"
+}

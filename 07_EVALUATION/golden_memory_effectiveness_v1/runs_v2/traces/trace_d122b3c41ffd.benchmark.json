@@ -1,0 +1,70 @@
+{
+  "trace_id": "trace_d122b3c41ffd",
+  "agent_id": "golden-agent",
+  "agent_role": "synthesizer",
+  "task_id": "G05",
+  "started_at": "2026-09-03T21:49:30.586264+00:00",
+  "finished_at": "2026-09-03T21:49:31.498200+00:00",
+  "memory": {
+    "query": "",
+    "memory_ids": [],
+    "retrieval_count": 0,
+    "relevance_scores": {},
+    "context_hash": "9fb2b7745e381fa5d0010c0cb996c07d9d67ee01d73a48dfc953779ae5b4afb8"
+  },
+  "model": {
+    "provider_mode": "local",
+    "provider_name": "local",
+    "model_name": "qwen2.5-coder:3b",
+    "request_started_at": "2026-09-03T21:49:30.586475+00:00",
+    "response_finished_at": "2026-09-03T21:49:31.088051+00:00",
+    "latency_ms": 501.57,
+    "response_status": "success",
+    "response_text": "{\"actions\": [\n    {\n        \"action\": \"write_file\",\n        \"path\": \"solution.py\",\n        \"content\": \"def cache_get(cache, key, default):\\n    if key in cache:\\n        return cache[key]\\n    return default\"\n    }\n]}",
+    "error_details": null
+  },
+  "actions": [
+    {
+      "action_type": "write_file",
+      "validated": true,
+      "execution_status": "validated"
+    }
+  ],
+  "execution": {
+    "commands": [],
+    "stdout": "",
+    "stderr": "",
+    "exit_codes": []
+  },
+  "workspace": {
+    "files_created": [
+      "solution.py"
+    ],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "verification": {
+    "command": "python -m pytest test_task.py -q",
+    "stdout": ".                                                                        [100%]\n1 passed in 0.02s\n",
+    "stderr": "",
+    "exit_code": 0,
+    "status": "passed"
+  },
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "run_id": "G05-2-CONTROL",
+  "condition": "CONTROL",
+  "task_seed": 20260909,
+  "run_seed": 20261109,
+  "condition_order": [
+    "FULL_CONTEXT_ORACLE",
+    "CONTROL",
+    "TREATMENT"
+  ],
+  "git_commit": "dab6bcc9303c23f9aa2c53c06bcfc06b69275deb",
+  "retrieval_enabled": false,
+  "provider": "qwen2.5-coder:3b",
+  "model_name": "qwen2.5-coder:3b",
+  "model_request_hash": "7e2f370b78079271c11ee0afef1816533cfb6694506f887dd96e3482a00f2243",
+  "model_response_hash": "04be24630b66de4a0e78ac94da7f23ae6c4aec962d1486f161f30fdeb638cfd0",
+  "final_success": true
+}

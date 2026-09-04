@@ -27,8 +27,10 @@ class FileStorageEngine:
             if not os.path.exists(folder_path):
                 continue
             
-            for filepath in glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True):
-                # Double check to prevent RAW_IMPORTS or Obsidian MOC leakage
+            found_files = set(glob.glob(os.path.join(folder_path, "*.md"))).union(
+                set(glob.glob(os.path.join(folder_path, "**", "*.md"), recursive=True))
+            )
+            for filepath in sorted(found_files):
                 if "RAW_IMPORTS" in filepath or "Obsidian" in filepath:
                     continue
                 try:
@@ -38,7 +40,6 @@ class FileStorageEngine:
                     note_id = data.get("id")
                     if note_id:
                         if note_id in self.id_to_path:
-                            # DUPLICATE UUID => FATAL INTEGRITY ERROR
                             raise ValueError(f"Duplicate UUID found: {note_id} in {filepath} and {self.id_to_path[note_id]}")
                         self.id_to_path[note_id] = filepath
                         mtime = os.path.getmtime(filepath)
@@ -47,11 +48,9 @@ class FileStorageEngine:
                     if "Duplicate UUID" in str(e):
                         raise e
                     if "Malformed YAML" in str(e):
-                        # SKIP + AUDIT
-                        audit_event("storage_error", "system", "unknown", success=False, 
+                        audit_event("storage_error", "system", "unknown", success=False,
                                     details={"error": "Malformed YAML", "path": filepath, "message": str(e)})
                         continue
-                    # Ignored
                     continue
 
     def get(self, note_id: str) -> Optional[Dict[str, Any]]:
@@ -59,13 +58,11 @@ class FileStorageEngine:
         if not filepath or not os.path.exists(filepath):
             self._cache.pop(note_id, None)
             return None
-            
         try:
             mtime = os.path.getmtime(filepath)
             cached = self._cache.get(note_id)
             if cached and cached[0] == mtime:
                 return dict(cached[1])
-                
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
             data = deserialize(content)
@@ -75,18 +72,12 @@ class FileStorageEngine:
             return None
 
     def set(self, note_id: str, data: Dict[str, Any]) -> None:
-        # INVARIANT: storage key == data["id"]
         yaml_id = data.get("id")
         if str(note_id) != str(yaml_id):
             raise ValueError(f"ID mismatch: storage key '{note_id}' must equal YAML id '{yaml_id}'")
-            
         target_path = resolve_path(self.vault_root, data)
         serialized_content = serialize(data)
-        
-        # Ensure directory exists
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
-        
-        # ATOMIC WRITE: Write to a temporary file in the same directory, then replace
         dir_name = os.path.dirname(target_path)
         fd, temp_path = tempfile.mkstemp(dir=dir_name, prefix=".tmp_")
         try:
@@ -94,19 +85,15 @@ class FileStorageEngine:
                 f.write(serialized_content)
                 f.flush()
                 os.fsync(f.fileno())
-            # Replace target atomically
             os.replace(temp_path, target_path)
         except Exception as e:
             if os.path.exists(temp_path):
                 os.remove(temp_path)
             raise e
-            
-        # Update/Rename semantic: if old path is different, delete old file
         existing_path = self.id_to_path.get(note_id)
         if existing_path and existing_path != target_path:
             if os.path.exists(existing_path):
                 os.remove(existing_path)
-                
         self.id_to_path[note_id] = target_path
         mtime = os.path.getmtime(target_path)
         self._cache[note_id] = (mtime, data)
@@ -114,7 +101,6 @@ class FileStorageEngine:
     def delete(self, note_id: str) -> None:
         filepath = self.id_to_path.get(note_id)
         if filepath:
-            # Re-verify we don't accidentally delete outside
             if "06_INBOX" in filepath:
                 raise ValueError("Cannot delete from RAW_IMPORTS")
             if os.path.exists(filepath):
@@ -124,16 +110,13 @@ class FileStorageEngine:
 
     def query(self, intent: str, lifecycle: List[str] = None, types: List[str] = None) -> List[Dict[str, Any]]:
         """Query notes, excluding RAW notes."""
-        # Lazy import to avoid circular dependency
         from memory_controller.controller import Lifecycle
-
         results = []
         for note_id in list(self.id_to_path.keys()):
             try:
                 note = self.get(note_id)
                 if not note:
                     continue
-                # Exclude RAW notes from normal queries
                 if note.get('lifecycle') == Lifecycle.RAW.value:
                     continue
                 if lifecycle and note.get('lifecycle') not in lifecycle:
@@ -144,3 +127,7 @@ class FileStorageEngine:
             except Exception:
                 continue
         return results
+
+    def all_notes(self) -> List[Dict[str, Any]]:
+        """Return all non-RAW notes for read-only indexing consumers."""
+        return self.query("graph")

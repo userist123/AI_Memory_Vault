@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:tiny-stepping",
+  "bundle_instance_id": "inst:awesome-copilot:skills/tiny-stepping",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/tiny-stepping/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/tiny-stepping/SKILL.md",
+  "content_hash": "4259865042ccdded3ad3081a2db11cc315bf0a9275dd296390028af4203e4aa7",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/tiny-stepping"
+}

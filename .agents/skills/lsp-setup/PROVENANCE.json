@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:lsp-setup",
+  "bundle_instance_id": "inst:awesome-copilot:skills/lsp-setup",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/lsp-setup/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/lsp-setup/SKILL.md",
+  "content_hash": "1ea42c133cd1960a7f91e0b642cc0ef25b19447c419647952c78722469cfc358",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/lsp-setup"
+}

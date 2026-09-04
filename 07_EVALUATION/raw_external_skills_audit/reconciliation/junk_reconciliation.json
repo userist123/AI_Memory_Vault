@@ -1,0 +1,14 @@
+{
+  "phase0_junk_candidates_count": 500,
+  "reconciled_breakdown": {
+    "junk_in_exclude": 491,
+    "junk_in_keep": 0,
+    "junk_in_review": 9,
+    "newly_detected_junk": 236
+  },
+  "classification": {
+    "EXTRACTION_JUNK": 491,
+    "ARCHIVAL_PROVENANCE": 0,
+    "POTENTIALLY_OPERATIONAL": 9
+  }
+}

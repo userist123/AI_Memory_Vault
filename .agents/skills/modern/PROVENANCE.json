@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:modern",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/modern",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/modern/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/modern/SKILL.md",
+  "content_hash": "e5f9a231783dedcb47724ab49e6a0f3c4a5b4c3ab8ab1e3c82b63aae53243a61",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/modern"
+}

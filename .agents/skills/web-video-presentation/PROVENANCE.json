@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:garden-skills:web-video-presentation",
+  "bundle_instance_id": "inst:garden-skills:skills/web-video-presentation",
+  "canonical_repository_id": "repo:garden-skills",
+  "canonical_source_id": "garden-skills",
+  "source_url": "https://github.com/ConardLi/garden-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/web-video-presentation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/web-video-presentation/SKILL.md",
+  "content_hash": "9f50c7cc15c5d530442cdfcdecec803b4785cedb7fa65853a3858590284a568e",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 95,
+  "target_installed_path": ".agents/skills/web-video-presentation"
+}

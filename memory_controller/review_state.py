@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 
-class ReviewState(StrEnum):
+class ReviewState(str, Enum):
     OPEN = "OPEN"
     EVIDENCE_PENDING = "EVIDENCE_PENDING"
     VERIFIED = "VERIFIED"

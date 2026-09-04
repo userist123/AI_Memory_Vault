@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="WEB_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.temp" />
+      <excludeFolder url="file://$MODULE_DIR$/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/module-auth/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/module-health/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-adapter-http/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-cli/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-contract-tests/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-core/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-sdk/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/module-auth/artifacts" />
+      <excludeFolder url="file://$MODULE_DIR$/examples/module-health/artifacts" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-core/.cache" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-adapter-admin-bff/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-admin-contracts/.turbo" />
+      <excludeFolder url="file://$MODULE_DIR$/packages/platform-admin-shell/.turbo" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

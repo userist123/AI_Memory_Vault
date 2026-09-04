@@ -1,0 +1,130 @@
+package typescript
+
+import (
+	"embed"
+	"fmt"
+	"io/fs"
+	"strings"
+
+	"github.com/nhost/nhost/tools/codegen/format"
+	"github.com/nhost/nhost/tools/codegen/processor"
+)
+
+// extCustomType values are emitted verbatim and must be safe on the left of `|`;
+// nullable function types therefore need parentheses in the extension value.
+const extCustomType = "x-ts-type"
+
+//go:embed templates/*.tmpl
+var templatesFS embed.FS
+
+type Typescript struct{}
+
+func (t *Typescript) GetTemplates() fs.FS {
+	return templatesFS
+}
+
+func quotePropertyIfNeeded(name string) string {
+	if strings.Contains(name, "-") || strings.Contains(name, "[") {
+		return fmt.Sprintf("\"%s\"", name)
+	}
+
+	return name
+}
+
+func (t *Typescript) GetFuncMap() map[string]any {
+	return map[string]any{
+		"quotePropertyIfNeeded": quotePropertyIfNeeded,
+	}
+}
+
+func (t *Typescript) TypeObjectName(name string) string {
+	return format.ToCamelCase(name)
+}
+
+func (t *Typescript) TypeScalarName(scalar *processor.TypeScalar) string {
+	switch scalar.Schema().Schema().Type[0] {
+	case "integer":
+		return "number"
+	case "string":
+		if scalar.Schema().Schema().Format == "binary" {
+			return "Blob"
+		}
+	}
+
+	return scalar.Schema().Schema().Type[0]
+}
+
+func (t *Typescript) TypeArrayName(array *processor.TypeArray) string {
+	// A nullable item must be parenthesised: `(string | null)[]` is an array of
+	// nullable strings, whereas `string | null[]` would parse as a union.
+	if processor.SchemaNullable(array.Item.Schema()) {
+		return fmt.Sprintf("(%s | null)[]", array.Item.Name())
+	}
+
+	return array.Item.Name() + "[]"
+}
+
+func (t *Typescript) TypeEnumName(name string) string {
+	return format.ToCamelCase(name)
+}
+
+func (t *Typescript) TypeEnumValues(values []any) []string {
+	enumValues := make([]string, len(values))
+	if len(values) == 0 {
+		return enumValues
+	}
+
+	for i, v := range values {
+		if s, ok := v.(string); ok {
+			enumValues[i] = fmt.Sprintf("\"%v\"", s)
+		} else {
+			enumValues[i] = fmt.Sprintf("%v", v)
+		}
+	}
+
+	return enumValues
+}
+
+func (t *Typescript) TypeMapName(schema *processor.TypeMap) string {
+	if v, ok := schema.Schema().Schema().Extensions.Get(extCustomType); ok {
+		return v.Value
+	}
+
+	// Schema-form additionalProperties yields a typed map (e.g. Record<string,
+	// string>). Only scalar/$ref value types are emitted typed; anything else
+	// falls back to Record<string, unknown> to avoid a dangling reference.
+	if ap := schema.Schema().Schema().AdditionalProperties; ap != nil && ap.A != nil {
+		valueType, _, err := processor.GetType(ap.A, "", t, false)
+		if err == nil &&
+			(ap.A.IsReference() || valueType.Kind() == processor.KindIdentifierScalar) {
+			valueName := valueType.Name()
+			if processor.SchemaNullable(ap.A) {
+				valueName += " | null"
+			}
+
+			return fmt.Sprintf("Record<string, %s>", valueName)
+		}
+	}
+
+	return "Record<string, unknown>"
+}
+
+func (t *Typescript) MethodName(name string) string {
+	return format.AntiTitle(format.ToCamelCase(name))
+}
+
+func (t *Typescript) MethodPath(name string) string {
+	return strings.ReplaceAll(name, "{", "${")
+}
+
+func (t *Typescript) ParameterName(name string) string {
+	return name
+}
+
+func (t *Typescript) PropertyName(name string) string {
+	return name
+}
+
+func (t *Typescript) BinaryType() string {
+	return "Blob"
+}

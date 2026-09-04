@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-python-master:preview-verdicts",
+  "bundle_instance_id": "inst:awesome-python-master:awesome-python-master/.claude/skills/preview-verdicts",
+  "canonical_repository_id": "repo:awesome-python",
+  "canonical_source_id": "awesome-python-master",
+  "source_url": "https://github.com/vinta/awesome-python",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master/awesome-python-master/.claude/skills/preview-verdicts/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master/awesome-python-master/.claude/skills/preview-verdicts/SKILL.md",
+  "content_hash": "cd69d42550f40aa8ab68fb62a7cbb57ef70b84720297ffe6d426bcf1b33fec58",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/preview-verdicts"
+}

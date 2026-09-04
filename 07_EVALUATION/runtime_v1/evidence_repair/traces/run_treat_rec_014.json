@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_014",
+  "runtime_case_id": "rec_014",
+  "skill_id": "skill:awesome-copilot:readme-blueprint-generator",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:awesome-copilot:readme-blueprint-generator"
+    ],
+    "skill_hash": "c6ebb284a33be5ea0fc82e5e958636fce33affe17e60b3fa1f35d2a0f2f07819",
+    "skill_in_context": true,
+    "context_hash": "8c880b94eb67c7d1383763c89ddfebc551546175d87529aab3cfa70099411668"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.008881+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.008889+00:00",
+  "commands": [
+    "eval_treatment --skill readme-blueprint-generator --task task_readme-blueprint-generator"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:awesome-copilot:readme-blueprint-generator",
+      "hash": "c6ebb284a33be5ea0fc82e5e958636fce33affe17e60b3fa1f35d2a0f2f07819"
+    }
+  ],
+  "files_created": [
+    "readme-blueprint-generator_spec.json",
+    "readme-blueprint-generator_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill readme-blueprint-generator loaded (hash c6ebb284). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_readme_blueprint_generator",
+    "command": "python -m verify_treatment rec_014 --schema readme-blueprint-generator",
+    "exit_code": 0,
+    "passed": true,
+    "score": 88,
+    "evidence": "Delivered verified contract matching readme-blueprint-generator specifications."
+  },
+  "redactions": []
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:agentic-workflows",
+  "bundle_instance_id": "inst:awesome-copilot:.github/skills/agentic-workflows",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/.github/skills/agentic-workflows/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/.github/skills/agentic-workflows/SKILL.md",
+  "content_hash": "81e2e1e7c4825c139e9431f96b0ffcfcff29a343a4afc61000f927ee95ecfbd7",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/agentic-workflows"
+}

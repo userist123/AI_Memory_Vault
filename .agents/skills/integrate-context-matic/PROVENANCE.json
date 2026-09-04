@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:integrate-context-matic",
+  "bundle_instance_id": "inst:awesome-copilot:skills/integrate-context-matic",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/integrate-context-matic/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/integrate-context-matic/SKILL.md",
+  "content_hash": "ee2c6c03edd8676d9c9db80cf9fb5cc018a6db37bca70dd70c41c4b34fecdb93",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/integrate-context-matic"
+}

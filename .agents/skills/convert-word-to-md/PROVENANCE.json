@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:convert-word-to-md",
+  "bundle_instance_id": "inst:awesome-copilot:skills/convert-word-to-md",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/convert-word-to-md/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/convert-word-to-md/SKILL.md",
+  "content_hash": "7a025716bc2cb0132893e20600f5c90738f60eb03a0344bb60a89e36ecf10307",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 4,
+  "target_installed_path": ".agents/skills/convert-word-to-md"
+}

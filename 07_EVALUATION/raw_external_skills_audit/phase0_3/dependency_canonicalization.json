@@ -1,0 +1,54 @@
+{
+  "summary": {
+    "total_manifest_files": 484,
+    "total_dependency_declarations": 2016,
+    "ecosystems_covered": 9
+  },
+  "ecosystems": {
+    "npm": {
+      "manifest_count": 255,
+      "dependency_declaration_count": 986,
+      "unique_packages": 237
+    },
+    "pypi": {
+      "manifest_count": 102,
+      "dependency_declaration_count": 304,
+      "unique_packages": 116
+    },
+    "cargo": {
+      "manifest_count": 10,
+      "dependency_declaration_count": 100,
+      "unique_packages": 0
+    },
+    "go": {
+      "manifest_count": 7,
+      "dependency_declaration_count": 56,
+      "unique_packages": 0
+    },
+    "nuget": {
+      "manifest_count": 99,
+      "dependency_declaration_count": 495,
+      "unique_packages": 0
+    },
+    "gem": {
+      "manifest_count": 1,
+      "dependency_declaration_count": 5,
+      "unique_packages": 0
+    },
+    "composer": {
+      "manifest_count": 5,
+      "dependency_declaration_count": 40,
+      "unique_packages": 0
+    },
+    "maven": {
+      "manifest_count": 3,
+      "dependency_declaration_count": 18,
+      "unique_packages": 0
+    },
+    "gradle": {
+      "manifest_count": 2,
+      "dependency_declaration_count": 12,
+      "unique_packages": 0
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_016",
+  "runtime_case_id": "rec_016",
+  "skill_id": "skill:agentic-awesome-skills-main:weaviate",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:weaviate"
+    ],
+    "skill_hash": "99085b738bb2c306501082c087a722a26a01702a0711aeeba1320f35123e865a",
+    "skill_in_context": true,
+    "context_hash": "d19bf89da5d15a4df563a2fbf9fde092be3f2634976eee4033aad3309bdfd108"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.010266+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.010272+00:00",
+  "commands": [
+    "eval_repeat --skill weaviate --task task_weaviate"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:weaviate",
+      "hash": "99085b738bb2c306501082c087a722a26a01702a0711aeeba1320f35123e865a"
+    }
+  ],
+  "files_created": [
+    "weaviate_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for weaviate. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_weaviate",
+    "command": "python -m verify_treatment rec_016 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 83,
+    "evidence": "Repeat score 83 vs 81 (delta=2)."
+  },
+  "redactions": []
+}

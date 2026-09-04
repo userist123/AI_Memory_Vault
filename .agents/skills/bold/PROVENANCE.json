@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:bold",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/bold",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/bold/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/bold/SKILL.md",
+  "content_hash": "0c0a2ae550df2665a7e5d3a02cac2d64a8c417a53371ad7d00726a25345305bc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/bold"
+}

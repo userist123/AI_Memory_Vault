@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_017",
+  "runtime_case_id": "rec_017",
+  "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:differential-review"
+    ],
+    "skill_hash": "f42aa890252c0422e387c56266f2c643a4ab209691935de9ab3486450436e657",
+    "skill_in_context": true,
+    "context_hash": "56fba5173ad88132f0e637bf2bf2e6d2a208c13160760ae2e1f7d050033f4f0b"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.010862+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.010871+00:00",
+  "commands": [
+    "eval_treatment --skill differential-review --task task_differential-review"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:differential-review",
+      "hash": "f42aa890252c0422e387c56266f2c643a4ab209691935de9ab3486450436e657"
+    }
+  ],
+  "files_created": [
+    "differential-review_spec.json",
+    "differential-review_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill differential-review loaded (hash f42aa890). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_differential_review",
+    "command": "python -m verify_treatment rec_017 --schema differential-review",
+    "exit_code": 0,
+    "passed": true,
+    "score": 89,
+    "evidence": "Delivered verified contract matching differential-review specifications."
+  },
+  "redactions": []
+}

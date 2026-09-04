@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_005",
+  "runtime_case_id": "rec_005",
+  "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:docx-official"
+    ],
+    "skill_hash": "39784ede81ac32b04229868d650c7e37450cffcc071aaef16b8abf559f44e8bf",
+    "skill_in_context": true,
+    "context_hash": "7872a4ed8a08e3fbbd57cf73445fc46ce1a9e223d55a9fc890175c97756cabca"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.003035+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.003055+00:00",
+  "commands": [
+    "eval_repeat --skill docx-official --task task_docx-official"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:docx-official",
+      "hash": "39784ede81ac32b04229868d650c7e37450cffcc071aaef16b8abf559f44e8bf"
+    }
+  ],
+  "files_created": [
+    "docx-official_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for docx-official. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_docx_official",
+    "command": "python -m verify_treatment rec_005 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 80,
+    "evidence": "Repeat score 80 vs 82 (delta=2)."
+  },
+  "redactions": []
+}

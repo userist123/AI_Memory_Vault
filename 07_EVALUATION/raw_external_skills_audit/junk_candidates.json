@@ -1,0 +1,3007 @@
+{
+  "total_junk_files": 736,
+  "total_junk_bytes": 100294814,
+  "total_junk_mb": 95.65,
+  "candidates": [
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery-validation/dist/additional-methods.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 51466
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery-validation/dist/additional-methods.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22174
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery-validation/dist/jquery.validate.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 51171
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery-validation/dist/jquery.validate.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 24601
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery/dist/jquery.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 288580
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery/dist/jquery.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 89501
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/jquery/dist/jquery.min.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 137972
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 70538
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 196535
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 51319
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 117439
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.rtl.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 70612
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.rtl.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 196539
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.rtl.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 51394
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-grid.rtl.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 117516
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5850
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 105138
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4646
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 35330
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.rtl.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5827
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.rtl.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 105151
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.rtl.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4718
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-reboot.rtl.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 41570
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 71584
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 192271
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 53479
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 111875
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.rtl.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 71451
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.rtl.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 192214
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.rtl.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 53407
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap-utilities.rtl.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 111710
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 204136
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 536547
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 162720
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 449111
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.rtl.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 203803
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.rtl.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 536461
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.rtl.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 162825
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/css/bootstrap.rtl.min.css.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 661035
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 208492
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.js.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 425643
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 78468
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.bundle.min.js.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 327261
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.esm.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 139019
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.esm.js.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 288320
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.esm.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 72016
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.esm.min.js.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 222508
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 148168
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.js.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 289522
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 59511
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main/Tawasal-main/Tawasal/wwwroot/lib/bootstrap/dist/js/bootstrap.min.js.map",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 217145
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/pastebin.graffle",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4996
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/pastebin.png",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 215794
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/pastebin.py",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1055
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/pastebin_basic.graffle",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3163
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/pastebin_basic.png",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 84925
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/README-zh-Hans.md",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 16490
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/README.md",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 15782
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master/system-design-primer-master/solutions/system_design/pastebin/__init__.py",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 0
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/realworld-main/realworld-main/docs/.vscode/extensions.json",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 87
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/realworld-main/realworld-main/docs/.vscode/launch.json",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 207
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/.gitignore",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 228
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/compiler.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 253
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/dataSources.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 1001
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/db-forest-config.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 292
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/explyt_open_chat_tabs.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 344
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/jsonSchemas.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 1623
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/modules.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 282
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/prettier.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 189
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/prosto-platform.iml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 1496
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/vcs.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 167
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/codeStyles/codeStyleConfig.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 142
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/codeStyles/Project.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 3358
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop/prosto-platform-develop/.idea/inspectionProfiles/Project_Default.xml",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 251
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/index.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 656
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsAuthRefresh-Cq3xTY6M.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4026
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsAuthWithOAuth2-qI6si9uJ.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6943
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsAuthWithOTP-75iz1Xmg.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7751
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsAuthWithPassword-NXiq7pZI.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5021
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsBatch-CQUyIsim.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7482
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsCreate-Ap21j9FE.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7100
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsDelete-CeK6pY9P.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2955
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsEmailChange-VWbqXOVy.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7229
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsList-DsIHfo2q.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 9692
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsListAuthMethods-CYETXzX7.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2723
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsPasswordReset-UqmNW8HA.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6599
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsRealtime-BR9-cDED.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6137
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsUpdate-DAnNYWFv.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4843
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsVerification-CIbF1DIL.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5172
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/docsView-oyuvqZP8.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3571
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/expandInfo-CJ9aeAaN.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 575
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/fieldsInfo-CiLcXgNq.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 715
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/index-CZinEv5W.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 275524
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/index-DoeyJa3f.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 635771
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageConfirmEmailChange-CHsJ3R1m.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2167
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageConfirmPasswordReset-DNNaanks.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2997
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageConfirmVerification-C3EYht4b.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1870
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageInstaller-4MeBunv0.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4329
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageOAuth2RedirectFailure-CRvz4PXa.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 411
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageOAuth2RedirectSuccess-DmZV1eyz.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 404
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/assets/pageRequestSuperuserPasswordReset-C39AMhGf.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1632
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/favicon.png",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 731
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/favicon_prod.png",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 744
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/logo.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1715
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/logo_white.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1688
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/prism/prism.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 67442
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/shablon/shablon.iife.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7213
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/tinymce.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 433465
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/uplot/uplot.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1858
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/uplot/uplot.iife.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 53166
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/themes/silver/theme.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 410171
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/skins/ui/oxide/content.inline.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23846
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/skins/ui/oxide/content.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22536
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/skins/ui/oxide/skin.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 76132
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/skins/ui/oxide/skin.shadowdom.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 508
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/skins/content/default/content.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1632
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/skins/content/default/content.min.css",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1284
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/autolink/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3237
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/autoresize/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2514
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/code/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 871
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/codesample/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 48466
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/directionality/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4576
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/fullscreen/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 15591
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/image/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19568
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/link/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 15833
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/lists/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 28118
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/media/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 17298
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/table/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 47832
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/plugins/wordcount/plugin.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12028
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/models/dom/model.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 96619
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/libs/tinymce/icons/default/icons.min.js",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 69427
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/apple.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 532
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/bitbucket.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 563
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/box.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 631
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/discord.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 654
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/facebook.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 479
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/gitea.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1090
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/gitee.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 470
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/github.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1164
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/gitlab.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 725
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/google.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 675
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/instagram.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2737
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/kakao.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 672
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/lark.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 791
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/linear.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 487
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/livechat.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 445
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/mailcow.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4069
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/microsoft.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 287
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/monday.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 544
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/notion.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 403
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/oidc.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 332
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/patreon.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 265
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/planningcenter.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 488
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/spotify.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 694
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/strava.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 291
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/trakt.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1150
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/twitch.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 245
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/twitter.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 175
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/vk.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 484
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/wakatime.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 550
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/images/oauth2/yandex.svg",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 303
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/ibm-plex-mono/ibm-plex-mono-v20-latin-600.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 15620
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/ibm-plex-mono/ibm-plex-mono-v20-latin-regular.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 14708
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/ibm-plex-sans/ibm-plex-sans-v23-cyrillic_latin_latin-ext-600.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 76564
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/ibm-plex-sans/ibm-plex-sans-v23-cyrillic_latin_latin-ext-600italic.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 83508
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/ibm-plex-sans/ibm-plex-sans-v23-cyrillic_latin_latin-ext-italic.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 76204
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/ibm-plex-sans/ibm-plex-sans-v23-cyrillic_latin_latin-ext-regular.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 69868
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master/pocketbase-master/ui/dist/fonts/remixicon/remixicon.woff2",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 176812
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/bin/parse-live-query-server",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 68
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha/parse-server-alpha/bin/parse-server",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 57
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/google.golang.org/grpc/balancer/roundrobin/roundrobin.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2164
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/goobj/builtin.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1050
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/goobj/builtinlist.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6916
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/goobj/funcinfo.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6386
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/goobj/objfile.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23541
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/abi_string.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 351
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/addrtype_string.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 572
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/data.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6540
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/dwarf.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22513
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/go.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 342
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/inl.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4114
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ld.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2681
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/line.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1021
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/link.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 24865
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/objfile.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 18832
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/pass.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4994
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/pcln.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12020
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/plist.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 8650
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/sym.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12293
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/textflag.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1552
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/util.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 13849
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7097
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1439
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm/anames5.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1284
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm/asm5.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 80187
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm/list5.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3237
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm/obj5.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 20653
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 15404
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5274
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/anames7.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1282
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/asm7.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 176941
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/doc.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 9039
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/list7.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6944
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/obj7.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 25598
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/arm64/sysRegEnc.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 36254
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/mips/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7715
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/mips/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1369
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/mips/anames0.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 554
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/mips/asm0.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 55517
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/mips/list0.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2595
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/mips/obj0.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 29399
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 13662
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6884
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/anames9.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 614
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/asm9.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 151064
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/doc.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 9875
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/list9.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2937
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/ppc64/obj9.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31672
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/riscv/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2712
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/riscv/cpu.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 11354
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/riscv/inst.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12441
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/riscv/list.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 702
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/riscv/obj.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 57153
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12613
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7274
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/anamesz.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 505
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/asmz.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 177957
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/condition_code.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3213
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/listz.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2461
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/objz.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19056
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/rotate.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1358
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/s390x/vector.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19825
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/wasm/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4361
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/wasm/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2786
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/wasm/wasmobj.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 29868
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/a.out.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 6714
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/aenum.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 16663
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/anames.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19557
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/asm6.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 149461
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/avx_optabs.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 266528
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/evex.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 9505
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/list6.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4178
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/obj6.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 34240
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/twitchyliquid64/golang-asm/obj/x86/ytab.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1215
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/docker/docker/api/types/build/build.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2695
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/docker/docker/api/types/build/cache.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1544
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/github.com/docker/docker/api/types/build/disk_usage.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 171
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/cuelang.org/go/cue/build/context.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3305
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/cuelang.org/go/cue/build/doc.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 679
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/cuelang.org/go/cue/build/file.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3313
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/cuelang.org/go/cue/build/import.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3995
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/vendor/cuelang.org/go/cue/build/instance.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 8830
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/nix-docker-image.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 759
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/nix.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 254
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/clamav/clamd.conf.tmpl",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 168
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/clamav/entrypoint.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 635
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/clamav/freshclam.conf.tmpl",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 118
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/docker/docker-compose.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2674
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/docker/Makefile",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 133
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/jwt-gen/get-jwt.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 156
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/jwt-gen/go.mod",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 80
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/jwt-gen/go.sum",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 412
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/jwt-gen/main.go",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1249
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/docker/initdb.d/0001-create-auth-schema.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 171
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/docker/minio/Dockerfile",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 109
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/storage/build/dev/docker/minio/init.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 365
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/postgres/postgres/bin/init.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5457
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/functions/build/dev/docker/docker-compose.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3025
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/build/dev/docker/docker-compose.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 369
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/build/dev/docker/initdb.d/0001-create-auth-schema.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4494
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/constellation/build/dev/docker/initdb.d/0002-insert-test-users.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 958
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/nix-docker-image.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 759
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/nix.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 254
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/.gitignore",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 41
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/auth-proxy.conf",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 523
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/docker-compose.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 10613
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/pg_hba_local.conf",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 43
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/README.md",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12117
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/run-tests.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2977
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/run.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2051
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/setup.sh",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 5229
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/docker-compose.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 9966
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/pg_hba_local.conf",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 43
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/cimd-server/nginx.conf",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 265
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/nginx/nginx.conf",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2028
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/nginx/html/index.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3077
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/nginx/ssl/nginx-selfsigned.crt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1200
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/nginx/ssl/nginx-selfsigned.key",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1704
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/docker/cimd-server/oauth/client-metadata.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 343
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/auto-consent/Dockerfile",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 94
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/auth/build/dev/conformance/auto-consent/server.py",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3128
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/.gitignore",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 16
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/.secrets.ci",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 311
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/README.md",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1821
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/dev/docker/docker-compose.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 7309
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/dev/docker/pg_hba_local.conf",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 43
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/dev/docker/initdb.d/0001-create-ai-schema.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 32
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/data/quickstart.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 169
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/functions/meaning.ts",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 723
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/functions/package.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 248
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/functions/pnpm-lock.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 93
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/functions/tsconfig.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 217
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/config.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 11
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/nhost.toml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2496
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/actions.graphql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 0
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/actions.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 86
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/allow_list.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/api_limits.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/backend_configs.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/cron_triggers.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/graphql_schema_introspection.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/inherited_roles.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/metrics_config.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/network.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/opentelemetry.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/query_collections.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/remote_schemas.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/rest_endpoints.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/version.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 11
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/overlays/local.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 84
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/migrations/default/1698331279313_create_table_public_movies/down.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 30
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/migrations/default/1698331279313_create_table_public_movies/up.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1002
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/migrations/default/1699864999205_movies_embeddings/down.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 327
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/migrations/default/1699864999205_movies_embeddings/up.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 886
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/databases.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 443
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/functions/functions.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 85
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/functions/public_ai_search_movies.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 166
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/functions/public_ai_similar_movies.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 169
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/ai_auto_embeddings_configuration.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2065
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_providers.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 680
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_provider_requests.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 633
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_refresh_tokens.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1302
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_refresh_token_types.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 742
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_roles.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 791
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_users.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3002
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_user_roles.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 833
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/auth_user_security_keys.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 917
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/public_amazon_reviews.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 47
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/public_genres.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 223
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/public_movies.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 742
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/public_movies_genres.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 206
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/storage_buckets.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1268
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/storage_files.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1172
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/storage_virus.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 914
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/metadata/databases/default/tables/tables.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 508
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 271
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 272
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 25
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 299
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 34
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 257
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 29
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/fr/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 293
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 41
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 274
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 264
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 21
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 250
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/es/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 236
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 25
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 223
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 17
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 229
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 215
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/en/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 21
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 270
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 30
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 275
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 34
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 236
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 244
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 33
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/cs/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 359
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 56
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 342
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 42
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 323
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 28
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 305
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 41
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/nhost/emails/bg/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/data/full/01-movies.backup",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 77009393
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/data/full/02-auto-embeddings-configuration.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1101
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/services/ai/build/demo-movies/data/qs/01-movies.backup",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 132769
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/.gitignore",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 16
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/.secrets.example",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 242
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/functions/crash.ts",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 152
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/functions/echo.ts",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1481
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/functions/helloworld.ts",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 690
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/functions/package-lock.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 4890
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/functions/package.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 314
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/functions/tsconfig.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 164
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/config.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 11
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/nhost.toml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2988
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/actions.graphql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 0
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/actions.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 86
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/allow_list.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/api_limits.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/backend_configs.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/cron_triggers.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/graphql_schema_introspection.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/inherited_roles.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/metrics_config.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/network.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/opentelemetry.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/query_collections.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/remote_schemas.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/rest_endpoints.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/version.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 11
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/migrations/default/1751454848182_create_movies_table_with_data/down.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 37
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/migrations/default/1751454848182_create_movies_table_with_data/up.sql",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 827
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/databases.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 386
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_providers.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 680
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_provider_requests.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 633
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_refresh_tokens.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1302
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_refresh_token_types.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 742
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_roles.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 791
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_users.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3439
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_user_providers.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1234
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_user_roles.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 833
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/auth_user_security_keys.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1448
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/public_movies.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 270
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/storage_buckets.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 1268
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/storage_files.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2334
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/storage_virus.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 914
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/metadata/databases/default/tables/tables.yaml",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 457
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/test/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 100
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/test/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 99
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3538
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3521
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 25
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3548
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 34
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/signin-otp/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2799
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/signin-otp/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 48
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3512
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 29
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/fr/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3561
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 41
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3542
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3532
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 21
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/signin-otp/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2800
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/signin-otp/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 46
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3518
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 23
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/es/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3504
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 25
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3491
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 17
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3497
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/signin-otp/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2775
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/signin-otp/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 36
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3486
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 19
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/en/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 21
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3538
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 30
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3543
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 34
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3504
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 12
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/signin-otp/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2793
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/signin-otp/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 38
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3512
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 33
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/cs/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 22
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/email-confirm-change/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3627
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/email-confirm-change/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 56
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/email-verify/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3610
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/email-verify/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 42
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/password-reset/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3591
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/password-reset/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 28
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/signin-otp/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 2829
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/signin-otp/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 53
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/signin-passwordless/body.html",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 3573
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/signin-passwordless/subject.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 41
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/packages/nhost-js/build/backend/nhost/emails/bg/signin-passwordless-sms/body.txt",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 31
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/tutorials/nhost-vue-tutorial/.vscode/extensions.json",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 39
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/quickstarts/vue/.vscode/extensions.json",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 39
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/quickstarts/svelte/.vscode/extensions.json",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 50
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/quickstarts/reactnative/.vscode/settings.json",
+      "reason": "IDE workspace metadata",
+      "confidence": 0.95,
+      "size": 152
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/docker-compose/data/minio/.minio.sys/buckets/.minio.sys/buckets/.bloomcycle.bin/fs.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 126
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/docker-compose/data/minio/.minio.sys/buckets/.minio.sys/buckets/.usage-cache.bin/fs.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 126
+    },
+    {
+      "path": "06_INBOX/RAW_IMPORTS/skills/nhost-main/nhost-main/examples/docker-compose/data/minio/.minio.sys/buckets/.minio.sys/buckets/nhost/.usage-cache.bin/fs.json",
+      "reason": "Compiler and build output",
+      "confidence": 0.95,
+      "size": 126
+    }
+  ]
+}

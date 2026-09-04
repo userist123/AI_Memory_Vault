@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:java-refactoring-remove-parameter",
+  "bundle_instance_id": "inst:awesome-copilot:skills/java-refactoring-remove-parameter",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-refactoring-remove-parameter/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/java-refactoring-remove-parameter/SKILL.md",
+  "content_hash": "0477855d948f0991cff38509d84a4b2f4710215b7839e695b01969a751cc2c13",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/java-refactoring-remove-parameter"
+}

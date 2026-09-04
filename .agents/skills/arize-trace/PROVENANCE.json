@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:arize-trace",
+  "bundle_instance_id": "inst:awesome-copilot:skills/arize-trace",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arize-trace/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arize-trace/SKILL.md",
+  "content_hash": "f4a08b2c05237acb1babbb2b022c2e46d3b7918423f19170ce795d7cae60dd29",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/arize-trace"
+}

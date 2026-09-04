@@ -1,0 +1,13 @@
+{
+  "extends": "@internal/tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["tests/**/*.test.ts"]
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_001",
+  "runtime_case_id": "rec_001",
+  "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:parallel-agents"
+    ],
+    "skill_hash": "b345cf1ec5c9c1b63f4adfbdb6f63fede49223fbf46d6f57a0d1302a35e879f6",
+    "skill_in_context": true,
+    "context_hash": "d499755242972ab1d39db753404abc4712234007359c44c3f9003cdc0722f5ba"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.000323+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.000336+00:00",
+  "commands": [
+    "eval_treatment --skill parallel-agents --task task_parallel-agents"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:parallel-agents",
+      "hash": "b345cf1ec5c9c1b63f4adfbdb6f63fede49223fbf46d6f57a0d1302a35e879f6"
+    }
+  ],
+  "files_created": [
+    "parallel-agents_spec.json",
+    "parallel-agents_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill parallel-agents loaded (hash b345cf1e). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_parallel_agents",
+    "command": "python -m verify_treatment rec_001 --schema parallel-agents",
+    "exit_code": 0,
+    "passed": true,
+    "score": 81,
+    "evidence": "Delivered verified contract matching parallel-agents specifications."
+  },
+  "redactions": []
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_004",
+  "runtime_case_id": "rec_004",
+  "skill_id": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:using-n8n-mcp-skills"
+    ],
+    "skill_hash": "3e5752ecc062eab19fd1e42a1cd2f902175158ed15f656c5ec387aa12ab30a20",
+    "skill_in_context": true,
+    "context_hash": "1183c25c1239283b07d96d8fc7c621a74f4fd06e43a0df121a0d978a31386353"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.002253+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.002261+00:00",
+  "commands": [
+    "eval_treatment --skill using-n8n-mcp-skills --task task_using-n8n-mcp-skills"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+      "hash": "3e5752ecc062eab19fd1e42a1cd2f902175158ed15f656c5ec387aa12ab30a20"
+    }
+  ],
+  "files_created": [
+    "using-n8n-mcp-skills_spec.json",
+    "using-n8n-mcp-skills_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill using-n8n-mcp-skills loaded (hash 3e5752ec). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_using_n8n_mcp_skills",
+    "command": "python -m verify_treatment rec_004 --schema using-n8n-mcp-skills",
+    "exit_code": 0,
+    "passed": true,
+    "score": 86,
+    "evidence": "Delivered verified contract matching using-n8n-mcp-skills specifications."
+  },
+  "redactions": []
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:openapi-to-application-code",
+  "bundle_instance_id": "inst:awesome-copilot:skills/openapi-to-application-code",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/openapi-to-application-code/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/openapi-to-application-code/SKILL.md",
+  "content_hash": "3d7eee7e9d74c3589e308cbc7fc9dddf2d61edca5db9418933f972ff1954b6e3",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/openapi-to-application-code"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:web-design:web-design",
+  "bundle_instance_id": "inst:web-design:.",
+  "canonical_repository_id": "repo:web-design",
+  "canonical_source_id": "web-design",
+  "source_url": "https://github.com/xiaopu-ai/web-design",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-design/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/web-design/SKILL.md",
+  "content_hash": "cf35ce55c927c97e176f096719e1a01d0854e4f550793c5a24ecd12c07642a02",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 123,
+  "target_installed_path": ".agents/skills/web-design"
+}

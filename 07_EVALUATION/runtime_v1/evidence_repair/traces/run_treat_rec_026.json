@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_026",
+  "runtime_case_id": "rec_026",
+  "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:odoo-qweb-templates"
+    ],
+    "skill_hash": "ab38d2ee4369935981f58f23bbeaad3eae14b400f2d5985a83fedbb51e7d95cf",
+    "skill_in_context": true,
+    "context_hash": "58317c39e3d9e1f6f2dbdd6d8c2864b3ad185fb54c2010b8446d1eb5b5dcc513"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.016901+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.016909+00:00",
+  "commands": [
+    "eval_treatment --skill odoo-qweb-templates --task task_odoo-qweb-templates"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+      "hash": "ab38d2ee4369935981f58f23bbeaad3eae14b400f2d5985a83fedbb51e7d95cf"
+    }
+  ],
+  "files_created": [
+    "odoo-qweb-templates_spec.json",
+    "odoo-qweb-templates_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill odoo-qweb-templates loaded (hash ab38d2ee). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_odoo_qweb_templates",
+    "command": "python -m verify_treatment rec_026 --schema odoo-qweb-templates",
+    "exit_code": 0,
+    "passed": true,
+    "score": 82,
+    "evidence": "Delivered verified contract matching odoo-qweb-templates specifications."
+  },
+  "redactions": []
+}

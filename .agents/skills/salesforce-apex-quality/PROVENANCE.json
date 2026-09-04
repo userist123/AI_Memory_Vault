@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:salesforce-apex-quality",
+  "bundle_instance_id": "inst:awesome-copilot:skills/salesforce-apex-quality",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/salesforce-apex-quality/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/salesforce-apex-quality/SKILL.md",
+  "content_hash": "6ff1969cb79353d444fd164806e2c3f898df89327eb0225a4ccb6c2ffb4d0294",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/salesforce-apex-quality"
+}

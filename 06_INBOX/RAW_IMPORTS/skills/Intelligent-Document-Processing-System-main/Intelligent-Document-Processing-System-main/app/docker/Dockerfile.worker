@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System deps
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# CRITICAL: install NumPy 1.x first
+RUN pip install --no-cache-dir "numpy<2.0"
+
+ENV HF_HOME=/app/.hf_cache
+
+COPY requirements/base.txt requirements/base.txt
+COPY requirements/worker.txt requirements/worker.txt
+
+# Install remaining deps
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements/worker.txt
+
+# preload
+RUN python - <<EOF
+from transformers import pipeline
+pipeline("ner", model="dslim/bert-base-NER")
+EOF
+
+COPY app ./app
+
+CMD ["python", "-m", "app.workers.worker"]

@@ -1,0 +1,859 @@
+[
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:using-n8n-mcp-skills",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:llm-structured-output",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:differential-review",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:graphql-architect",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:wordpress-woocommerce-development",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:planning-and-task-breakdown",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:test-automator",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:papers-skill",
+    "cohorts": [
+      "high_semantic",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:debug-buttercup",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:data-structure-protocol",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:git-pr-workflows-onboard",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:ontoly-software-graph",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:vulnerability-scanner",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:context-compression",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:foundry-agent-sync",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:freshservice-automation",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:ai-wrapper-product",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:security-scanning-security-sast",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:batch-files",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:free-tier-strategy",
+    "cohorts": [
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:unity-ai-game-creator",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:deployment-procedures",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:aws-secrets-rotation",
+    "cohorts": [
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:referral-program",
+    "cohorts": [
+      "high_semantic",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-storage-file-datalake-py",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:hugging-face-model-trainer",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:context-management-context-restore",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:gemini-deep-research",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:react-flow-architect",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:claude-d3js-skill",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:readme-blueprint-generator",
+    "cohorts": [
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:breakdown-feature-prd",
+    "cohorts": [
+      "high_overlap",
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:linkedin-post-formatter",
+    "cohorts": [
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-ai-document-intelligence-ts",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:one-drive-automation",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:cicd-automation-workflow-automate",
+    "cohorts": [
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:zoho-desk-automation",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:developer-signup-flow",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:health-trend-analyzer",
+    "cohorts": [
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-upgrade-advisor",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:flat-design-2",
+    "cohorts": [
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:folder-structure-blueprint-generator",
+    "cohorts": [
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:apify-audience-analysis",
+    "cohorts": [
+      "high_overlap",
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:grpc-golang",
+    "cohorts": [
+      "tool_dependent",
+      "high_semantic",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:docmosis-automation",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:ditto",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:js-reverse",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:fomo-automation",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:foundry-hosted-agent-copilotkit",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:npm-automation",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:mx-technologies-automation",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:google-slides-automation",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:power-platform-architect",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:vibe-delegate",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:repo-standardizer",
+    "cohorts": [
+      "tool_dependent",
+      "high_semantic",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:winui3-migration-guide",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:babysit-pr",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:swift-mcp-server-generator",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:phoenix-cli",
+    "cohorts": [
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+    "cohorts": [
+      "tool_dependent",
+      "high_overlap",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:unsloth-finetuning",
+    "cohorts": [
+      "tool_dependent",
+      "high_semantic"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:survey-generator",
+    "cohorts": [
+      "tool_dependent",
+      "high_semantic",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:java-mcp-server-generator",
+    "cohorts": [
+      "specialized",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:workiq-copilot",
+    "cohorts": [
+      "specialized",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:notion-template-business",
+    "cohorts": [
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:wiki-changelog",
+    "cohorts": [
+      "specialized",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-edi-connector",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:agentic-eval",
+    "cohorts": [
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:golang-pro",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:check-identity-pack",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:prismic-automation",
+    "cohorts": [
+      "specialized",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:python-mcp-server-generator",
+    "cohorts": [
+      "specialized",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:weaviate",
+    "cohorts": [
+      "specialized",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:jobgpt",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:hugging-face-jobs",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:parallel-agents",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-speech-to-text-rest-py",
+    "cohorts": [
+      "specialized",
+      "high_semantic",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:user-thoughts",
+    "cohorts": [
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:typescript",
+    "cohorts": [
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:nerdzao-elite-gemini-high",
+    "cohorts": [
+      "reference",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:minimize-latency",
+    "cohorts": [
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:powershell-windows",
+    "cohorts": [
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:c4-code",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:zod-validation-expert",
+    "cohorts": [
+      "random_control",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+    "cohorts": [
+      "random_control",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-resource-manager-postgresql-dotnet",
+    "cohorts": [
+      "random_control",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:azure-eventgrid-py",
+    "cohorts": [
+      "random_control",
+      "high_overlap",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-copilot:landing-page-conversion-audit",
+    "cohorts": [
+      "random_control",
+      "high_overlap",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:modelry-automation",
+    "cohorts": [
+      "random_control",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:awesome-claude-skills-master:jotform-automation",
+    "cohorts": [
+      "random_control",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:chat-widget",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:docx-official",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+    "cohorts": [
+      "random_control",
+      "high_semantic",
+      "tool_dependent",
+      "specialized"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:async-python-patterns",
+    "cohorts": [
+      "random_control",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-qweb-templates",
+    "cohorts": [
+      "random_control",
+      "reference"
+    ],
+    "selection_seed": 20260903
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:odoo-hr-payroll-setup",
+    "cohorts": [
+      "random_control",
+      "high_overlap"
+    ],
+    "selection_seed": 20260903
+  }
+]

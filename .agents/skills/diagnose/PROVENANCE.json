@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:diagnose",
+  "bundle_instance_id": "inst:awesome-copilot:skills/diagnose",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/diagnose/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/diagnose/SKILL.md",
+  "content_hash": "ffb336d256577ff2db1c3bcd77f7d494ce72ef08852e024c23cf4951a776194a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/diagnose"
+}

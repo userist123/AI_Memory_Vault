@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mcp-copilot-studio-server-generator",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mcp-copilot-studio-server-generator",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-copilot-studio-server-generator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-copilot-studio-server-generator/SKILL.md",
+  "content_hash": "7e7fce7f78be88752a41afe818dfc3dc1349cb88c128c61fbfc582d94e676199",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mcp-copilot-studio-server-generator"
+}

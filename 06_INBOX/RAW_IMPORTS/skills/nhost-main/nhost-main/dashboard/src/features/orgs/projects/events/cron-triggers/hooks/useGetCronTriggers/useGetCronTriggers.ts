@@ -1,0 +1,56 @@
+import { type UseQueryOptions, useQuery } from '@tanstack/react-query';
+import { useAdminApiTarget } from '@/features/orgs/projects/common/hooks/useAdminApiTarget';
+import { useProject } from '@/features/orgs/projects/hooks/useProject';
+import type { CronTrigger } from '@/utils/hasura-api/generated/schemas';
+import getCronTriggers from './getCronTriggers';
+
+export interface UseGetCronTriggersOptions {
+  /**
+   * Options passed to the underlying query hook.
+   */
+  queryOptions?: Omit<
+    UseQueryOptions<
+      CronTrigger[],
+      unknown,
+      CronTrigger[],
+      readonly ['get-cron-triggers', string | undefined]
+    >,
+    'queryKey' | 'queryFn'
+  >;
+}
+
+/**
+ * This hook is a wrapper around a fetch call that gets all the cron triggers of the project.
+ *
+ * @returns The cron triggers of the project.
+ */
+export default function useGetCronTriggers({
+  queryOptions,
+}: UseGetCronTriggersOptions = {}) {
+  const { project, loading } = useProject();
+  const adminApi = useAdminApiTarget();
+
+  const query = useQuery({
+    queryKey: ['get-cron-triggers', project?.subdomain] as const,
+    queryFn: () => {
+      const appUrl = adminApi!.appUrl;
+
+      const adminSecret = adminApi!.adminSecret;
+
+      return getCronTriggers({
+        appUrl,
+        adminSecret,
+      });
+    },
+    ...queryOptions,
+    enabled: !!(
+      project?.subdomain &&
+      project?.region &&
+      project?.config?.hasura.adminSecret &&
+      queryOptions?.enabled !== false &&
+      !loading
+    ),
+  });
+
+  return query;
+}

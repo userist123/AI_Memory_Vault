@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:sleek",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/sleek",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/sleek/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/sleek/SKILL.md",
+  "content_hash": "09abe15f5258034f374551e4d06754f5443110c4c3bca19b592105a7b45f8c14",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/sleek"
+}

@@ -1,0 +1,101 @@
+[
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:audit-skills",
+    "skill_name": "audit-skills",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:claude-in-chrome-troubleshooting",
+    "skill_name": "claude-in-chrome-troubleshooting",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:gcp-cloud-run",
+    "skill_name": "gcp-cloud-run",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:manage-skills",
+    "skill_name": "manage-skills",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:sandbase-mcp",
+    "skill_name": "sandbase-mcp",
+    "security_risk": "CRITICAL",
+    "detected_pattern": "Remote download and pipe execution (curl | bash or iex webclient)",
+    "why_it_exists": "Installation helper script documentation",
+    "legitimate_use_case": "Standard upstream installer instructions for developer CLI tool",
+    "abuse_potential": "Arbitrary code execution without hash verification",
+    "required_safeguard": "Prohibit dynamic execution; require audited local binary or checksum-verified wheel",
+    "review_recommendation": "BLOCK_DYNAMIC_EXECUTION / AUDIT_PREREQUISITE"
+  },
+  {
+    "skill_id": "skill:agentic-awesome-skills-main:xss-html-injection",
+    "skill_name": "xss-html-injection",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:aspire",
+    "skill_name": "aspire",
+    "security_risk": "CRITICAL",
+    "detected_pattern": "Remote download and pipe execution (curl | bash or iex webclient)",
+    "why_it_exists": "Installation helper script documentation",
+    "legitimate_use_case": "Standard upstream installer instructions for developer CLI tool",
+    "abuse_potential": "Arbitrary code execution without hash verification",
+    "required_safeguard": "Prohibit dynamic execution; require audited local binary or checksum-verified wheel",
+    "review_recommendation": "BLOCK_DYNAMIC_EXECUTION / AUDIT_PREREQUISITE"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:containerize-aspnetcore",
+    "skill_name": "containerize-aspnetcore",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  },
+  {
+    "skill_id": "skill:awesome-copilot:mcp-implementation-security-review",
+    "skill_name": "mcp-implementation-security-review",
+    "security_risk": "HIGH",
+    "detected_pattern": "Privileged filesystem deletion or system config modification",
+    "why_it_exists": "Clean environment teardown or permissions setup guide",
+    "legitimate_use_case": "Automated cleanup in isolated sandbox container",
+    "abuse_potential": "Host filesystem or registry tampering outside container boundary",
+    "required_safeguard": "Enforce container isolation and least-privilege non-root execution",
+    "review_recommendation": "CONTAINER_ISOLATION_REQUIRED"
+  }
+]

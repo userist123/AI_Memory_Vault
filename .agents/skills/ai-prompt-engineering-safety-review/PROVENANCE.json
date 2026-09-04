@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:ai-prompt-engineering-safety-review",
+  "bundle_instance_id": "inst:awesome-copilot:skills/ai-prompt-engineering-safety-review",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ai-prompt-engineering-safety-review/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/ai-prompt-engineering-safety-review/SKILL.md",
+  "content_hash": "22b7631b8e43ef8a9f2f47b3733ac536fb208956b42f8549b9e7cb706f88c537",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/ai-prompt-engineering-safety-review"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:sega",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/sega",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/sega/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/sega/SKILL.md",
+  "content_hash": "898dd663cfc5aa8bef770e3cf8b54bf423e4426fca641a6cc39bc32acdf74714",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/sega"
+}

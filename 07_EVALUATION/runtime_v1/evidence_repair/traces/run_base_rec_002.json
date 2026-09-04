@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_002",
+  "runtime_case_id": "rec_002",
+  "skill_id": "skill:agentic-awesome-skills-main:flowhunt-skill",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "0e4dac47540c6ae7429c4f3a45ee9b2975ef065ffd2a13aee7d87967556bc79e"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.000675+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.000683+00:00",
+  "commands": [
+    "eval_baseline --task task_flowhunt-skill"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "flowhunt-skill_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_flowhunt-skill without skill flowhunt-skill. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_flowhunt_skill",
+    "command": "python -m verify_baseline rec_002",
+    "exit_code": 0,
+    "passed": true,
+    "score": 70,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

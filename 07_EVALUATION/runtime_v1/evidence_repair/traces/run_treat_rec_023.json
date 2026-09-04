@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_023",
+  "runtime_case_id": "rec_023",
+  "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example"
+    ],
+    "skill_hash": "479f1a6b2bf7f0ffc891123662a606280c703f2dd477d3abb841074218ff65c0",
+    "skill_in_context": true,
+    "context_hash": "9e5fb4f26b2b5deb6655fd1cfd1d9a867847a4969220819ad5cf599d307caf40"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.014673+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.014682+00:00",
+  "commands": [
+    "eval_treatment --skill cc-skill-project-guidelines-example --task task_cc-skill-project-guidelines-example"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+      "hash": "479f1a6b2bf7f0ffc891123662a606280c703f2dd477d3abb841074218ff65c0"
+    }
+  ],
+  "files_created": [
+    "cc-skill-project-guidelines-example_spec.json",
+    "cc-skill-project-guidelines-example_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill cc-skill-project-guidelines-example loaded (hash 479f1a6b). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_cc_skill_project_guidelines_example",
+    "command": "python -m verify_treatment rec_023 --schema cc-skill-project-guidelines-example",
+    "exit_code": 0,
+    "passed": true,
+    "score": 81,
+    "evidence": "Delivered verified contract matching cc-skill-project-guidelines-example specifications."
+  },
+  "redactions": []
+}

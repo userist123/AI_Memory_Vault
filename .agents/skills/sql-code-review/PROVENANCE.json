@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:sql-code-review",
+  "bundle_instance_id": "inst:awesome-copilot:skills/sql-code-review",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/sql-code-review/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/sql-code-review/SKILL.md",
+  "content_hash": "18dd9e2240ddffd427f6b8ca368341a2b632df34f0f080ca9e9256ea1ecec546",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/sql-code-review"
+}

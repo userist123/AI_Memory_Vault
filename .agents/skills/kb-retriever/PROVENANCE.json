@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:garden-skills:kb-retriever",
+  "bundle_instance_id": "inst:garden-skills:skills/kb-retriever",
+  "canonical_repository_id": "repo:garden-skills",
+  "canonical_source_id": "garden-skills",
+  "source_url": "https://github.com/ConardLi/garden-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/kb-retriever/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills/skills/kb-retriever/SKILL.md",
+  "content_hash": "cfea90eb59d1a33df3b9debb3e9a0732a69d05d95b199be92caaf0e37fd483ae",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 8,
+  "target_installed_path": ".agents/skills/kb-retriever"
+}

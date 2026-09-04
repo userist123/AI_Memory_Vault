@@ -1,0 +1,12 @@
+{
+  "status": "TEST_BACKED_PARTIAL",
+  "required_cases": 5,
+  "cases": [
+    "CURRENT",
+    "SUPERSEDED",
+    "EXPIRED",
+    "FUTURE",
+    "UNKNOWN"
+  ],
+  "evidence": "tests/test_temporal_controller.py; not part of the 90-run matrix."
+}

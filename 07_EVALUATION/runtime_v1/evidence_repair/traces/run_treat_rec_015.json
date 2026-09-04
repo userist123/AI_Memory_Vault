@@ -1,0 +1,38 @@
+{
+  "run_id": "run_treat_rec_015",
+  "runtime_case_id": "rec_015",
+  "skill_id": "skill:agentic-awesome-skills-main:diagram-generator",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:diagram-generator"
+    ],
+    "skill_hash": "f9dc667fb4fd2559bd8b653a1bc9b5b59c306dec7527c51e2ebd95990fa189f7",
+    "skill_in_context": true,
+    "context_hash": "2f7a3be1cd9325ae24ceb1f98586b39a2ffd4d4648cd8a87b69bea0247cfdef7"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.009489+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.009496+00:00",
+  "commands": [
+    "eval_treatment --skill diagram-generator --task task_diagram-generator"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "diagram-generator_spec.json",
+    "diagram-generator_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill diagram-generator loaded, but general guidance was identical to baseline. Specific procedure was not incorporated.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_diagram_generator",
+    "command": "python -m verify_treatment rec_015 --schema diagram-generator",
+    "exit_code": 0,
+    "passed": true,
+    "score": 66,
+    "evidence": "Fallback structure."
+  },
+  "redactions": []
+}

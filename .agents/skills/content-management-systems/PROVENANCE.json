@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:content-management-systems",
+  "bundle_instance_id": "inst:awesome-copilot:skills/content-management-systems",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/content-management-systems/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/content-management-systems/SKILL.md",
+  "content_hash": "1ee4f329c558ee6537e8b789b01ce965c6b9ef5f016124f3abe950ad9ba01da3",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/content-management-systems"
+}

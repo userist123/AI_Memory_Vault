@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:arduino-azure-iot-edge-integration",
+  "bundle_instance_id": "inst:awesome-copilot:skills/arduino-azure-iot-edge-integration",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arduino-azure-iot-edge-integration/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/arduino-azure-iot-edge-integration/SKILL.md",
+  "content_hash": "d94258643bba3cda820ab6086c0b959aac06531c2372a30004818fac825eac56",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/arduino-azure-iot-edge-integration"
+}

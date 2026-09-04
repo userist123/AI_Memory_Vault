@@ -1,0 +1,70 @@
+{
+  "id": "amber",
+  "title": "AMBER: Production Asset Management Platform",
+  "subtitle": "Enterprise-scale system to catalog, organize, and reuse production assets across concurrent film projects — eliminating duplicate purchasing and reducing production costs at scale.",
+  "tag": "Enterprise Platform · Major Film Studio",
+  "role": "Senior Frontend Engineer",
+  "period": "Oct 2023 – Sep 2025",
+  "projectType": "Full-time via Globant",
+  "tech": [
+    "React 18",
+    "TypeScript",
+    "Vite",
+    "TailwindCSS",
+    "Storybook",
+    "TanStack Query",
+    "Zustand",
+    "React Hook Form + Zod",
+    "Playwright",
+    "React Aria"
+  ],
+  "cardThumbnail": "/screenshots/amber/project-details (case study 2).png",
+  "heroImage": "/screenshots/amber/login (case study 2).png",
+  "darkTheme": true,
+  "challenge": [
+    "Film and television productions generate enormous quantities of physical and digital assets — props, set pieces, costumes, equipment, digital files — across dozens of concurrent projects. Without a centralized tracking system, production teams had no reliable way to know what had already been purchased, where it was stored, or whether it could be reused. The result was systematic duplicate purchasing and significant cost overruns.",
+    "NBCUniversal needed a platform that would allow production managers to catalog every asset with rich metadata, organize them into hierarchical collections, assign them to projects, and track their complete lifecycle. The scale — thousands of assets per project across dozens of active productions — demanded highly performant UI, deep organizational capabilities, and rock-solid data integrity.",
+    "I joined as Senior Frontend Engineer through Globant to lead the frontend architecture, define the tech stack, and build the core views and component library that became the operational backbone for production coordinators across the studio."
+  ],
+  "solution": {
+    "modules": [
+      {
+        "name": "Project List Dashboard",
+        "description": "A data-rich table view of all active productions with avatar stacks showing assigned users, status indicators, sortable columns, full-text search, and server-side pagination. Designed to give production managers an immediate portfolio overview — the starting point for all daily navigation across the platform.",
+        "screenshot": "/screenshots/amber/project-list (case study 2).png",
+        "isFlow": false
+      },
+      {
+        "name": "Project Detail & Collections",
+        "description": "The operational core of the platform. A three-panel layout with a tree-based collection navigator on the left for drilling into asset hierarchies, a filterable multi-column element list in the center with searchable categories and relationship badges, and a full properties panel on the right with editable fields — category, source, state, dates, and custom attributes. This interface allowed teams to manage thousands of assets with surgical precision.",
+        "screenshot": "/screenshots/amber/project-details (case study 2).png",
+        "isFlow": false
+      },
+      {
+        "name": "Design System (50+ Components)",
+        "description": "A comprehensive component library built with React Aria for WCAG AA accessibility, fully documented in Storybook. Includes data tables with sorting and pagination, multi-step wizards, modals, drawers, file uploaders with drag-and-drop and image cropping, date pickers, avatar stacks, and tree navigators. The design system served as the foundation for rapid feature development and ensured visual consistency across the entire platform.",
+        "screenshot": null,
+        "isFlow": false
+      }
+    ]
+  },
+  "technicalApproach": [
+    {
+      "technology": "React 18 + TypeScript",
+      "description": "Strict typing was essential for a platform managing deeply nested data models — projects contain collections, which contain elements with attributes, relationships, and user assignments. TypeScript caught data modeling errors at compile time that would have been extremely costly to diagnose in production with thousands of live assets and concurrent users."
+    },
+    {
+      "technology": "TanStack Query + Zustand",
+      "description": "Server state management with automatic caching, background refetching, and optimistic updates via TanStack Query — critical for handling thousands of assets without performance degradation. Zustand handled client-side UI state with minimal boilerplate, keeping the architecture clean and predictable across complex multi-panel views."
+    },
+    {
+      "technology": "React Hook Form + Zod",
+      "description": "Type-safe form validation with runtime schema checking. Zod schemas served as both TypeScript types and runtime validators, eliminating the gap between compile-time and runtime validation. This was especially important for the element properties panel, where production coordinators edit dozens of fields with complex interdependencies."
+    },
+    {
+      "technology": "Storybook + React Aria",
+      "description": "50+ production components developed in isolation with full WAI-ARIA accessibility — keyboard navigation, screen reader support, and focus management baked in from day one. Storybook served as both the living documentation and the visual review tool for the engineering team, dramatically reducing integration bugs across overlapping UI surfaces."
+    }
+  ],
+  "outcome": "AMBER became the central coordination tool for production asset management at NBCUniversal, used daily by production coordinators across multiple concurrent film projects. The structured approach to asset tracking and hierarchical organization directly addressed the duplicate purchasing problem that motivated the project. The component library (50+ production components documented in Storybook) established the design system foundation, and the Playwright E2E test suite provided confidence for continuous deployment to production."
+}

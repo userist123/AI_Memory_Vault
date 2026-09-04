@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:copilot-usage-metrics",
+  "bundle_instance_id": "inst:awesome-copilot:skills/copilot-usage-metrics",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/copilot-usage-metrics/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/copilot-usage-metrics/SKILL.md",
+  "content_hash": "776c8e3286f66cfeeb20b7ec03d9ce9d2b50457c4b3641aa1d08d0e3f7d7ffdc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 5,
+  "target_installed_path": ".agents/skills/copilot-usage-metrics"
+}

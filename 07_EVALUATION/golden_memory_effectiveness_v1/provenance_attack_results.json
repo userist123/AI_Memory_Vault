@@ -1,0 +1,13 @@
+{
+  "status": "TEST_BACKED_PARTIAL",
+  "required_cases": 6,
+  "cases": [
+    "wrong SHA",
+    "modified source",
+    "wrong locator",
+    "missing source",
+    "forged source mapping",
+    "tampered evidence bundle"
+  ],
+  "evidence": "tests/test_evidence_verifier.py and memory_controller provenance tests; not a new six-case harness."
+}

@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_019",
+  "runtime_case_id": "rec_019",
+  "skill_id": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:nextjs-best-practices"
+    ],
+    "skill_hash": "08a3b5d6a02c1644112a155ddd1dc815e258bd6420e051dca2318092d8eecee7",
+    "skill_in_context": true,
+    "context_hash": "108f15f8ec1d0f44fcfb5ddcdefde864694646ddc4075c72aac0ecee7981a483"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.012006+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.012015+00:00",
+  "commands": [
+    "eval_treatment --skill nextjs-best-practices --task task_nextjs-best-practices"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:nextjs-best-practices",
+      "hash": "08a3b5d6a02c1644112a155ddd1dc815e258bd6420e051dca2318092d8eecee7"
+    }
+  ],
+  "files_created": [
+    "nextjs-best-practices_spec.json",
+    "nextjs-best-practices_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill nextjs-best-practices loaded (hash 08a3b5d6). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_nextjs_best_practices",
+    "command": "python -m verify_treatment rec_019 --schema nextjs-best-practices",
+    "exit_code": 0,
+    "passed": true,
+    "score": 89,
+    "evidence": "Delivered verified contract matching nextjs-best-practices specifications."
+  },
+  "redactions": []
+}

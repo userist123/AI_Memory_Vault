@@ -17,16 +17,22 @@ from .model_provider import ModelRequest, ModelResponse, TokenUsage
 class FakeModelProvider:
     """Drop-in ModelProvider for tests. Records every call for introspection."""
 
-    def __init__(self, provider_name: str = "fake", model_name: str = "fake-model") -> None:
+    def __init__(
+        self,
+        provider_name: str = "fake",
+        model_name: str = "fake-model",
+        canned_response: Optional[str] = None,
+    ) -> None:
         self.provider_name = provider_name
         self.model_name = model_name
+        self.canned_response = canned_response
         self.calls: List[ModelRequest] = []
 
     def generate(self, request: ModelRequest) -> ModelResponse:
         self.calls.append(request)
 
+        output_text = self.canned_response if self.canned_response is not None else f"FAKE_RESPONSE[{request.model_tier}]"
         input_tokens = max(1, (len(request.prompt) + 2) // 3)
-        output_text = f"FAKE_RESPONSE[{request.model_tier}]"
         output_tokens = max(1, (len(output_text) + 2) // 3)
 
         usage = TokenUsage(

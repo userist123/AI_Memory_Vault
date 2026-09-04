@@ -1,0 +1,768 @@
+{
+  "total_skipped_collisions": 82,
+  "collisions": [
+    {
+      "skill_id": "skill:data-viz-design:data-viz-design",
+      "bundle_instance_id": "inst:data-viz-design:.",
+      "target_skill_name": "data-viz-design",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/data-viz-design/SKILL.md",
+      "source_id": "data-viz-design"
+    },
+    {
+      "skill_id": "skill:design-system-foundation:design-system-foundation",
+      "bundle_instance_id": "inst:design-system-foundation:.",
+      "target_skill_name": "design-system-foundation",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/design-system-foundation/SKILL.md",
+      "source_id": "design-system-foundation"
+    },
+    {
+      "skill_id": "skill:landing-page-design:landing-page-design",
+      "bundle_instance_id": "inst:landing-page-design:.",
+      "target_skill_name": "landing-page-design",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/landing-page-design/SKILL.md",
+      "source_id": "landing-page-design"
+    },
+    {
+      "skill_id": "skill:motion-design:motion-design",
+      "bundle_instance_id": "inst:motion-design:.",
+      "target_skill_name": "motion-design",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/motion-design/SKILL.md",
+      "source_id": "motion-design"
+    },
+    {
+      "skill_id": "skill:ui-sensei:ui-sensei",
+      "bundle_instance_id": "inst:ui-sensei:.",
+      "target_skill_name": "ui-sensei",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/ui-sensei/SKILL.md",
+      "source_id": "ui-sensei"
+    },
+    {
+      "skill_id": "skill:ui-ux-pro-max:ui-ux-pro-max",
+      "bundle_instance_id": "inst:ui-ux-pro-max:.",
+      "target_skill_name": "ui-ux-pro-max",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/ui-ux-pro-max/SKILL.md",
+      "source_id": "ui-ux-pro-max"
+    },
+    {
+      "skill_id": "skill:ui-ux-review:ui-ux-review",
+      "bundle_instance_id": "inst:ui-ux-review:.",
+      "target_skill_name": "ui-ux-review",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/ui-ux-review/SKILL.md",
+      "source_id": "ui-ux-review"
+    },
+    {
+      "skill_id": "skill:web-quality-skills:accessibility",
+      "bundle_instance_id": "inst:web-quality-skills:accessibility",
+      "target_skill_name": "accessibility",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/accessibility/SKILL.md",
+      "source_id": "web-quality-skills"
+    },
+    {
+      "skill_id": "skill:web-quality-skills:core-web-vitals",
+      "bundle_instance_id": "inst:web-quality-skills:core-web-vitals",
+      "target_skill_name": "core-web-vitals",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/core-web-vitals/SKILL.md",
+      "source_id": "web-quality-skills"
+    },
+    {
+      "skill_id": "skill:web-quality-skills:web-quality-audit",
+      "bundle_instance_id": "inst:web-quality-skills:skills/web-quality-audit",
+      "target_skill_name": "web-quality-audit",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/web-quality-audit/SKILL.md",
+      "source_id": "web-quality-skills"
+    },
+    {
+      "skill_id": "skill:programming:argocd-gitops",
+      "bundle_instance_id": "inst:programming:argocd-gitops",
+      "target_skill_name": "argocd-gitops",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/argocd-gitops/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:code-refactoring-patterns",
+      "bundle_instance_id": "inst:programming:code-refactoring-patterns",
+      "target_skill_name": "code-refactoring-patterns",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/code-refactoring-patterns/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:company-logos",
+      "bundle_instance_id": "inst:programming:company-logos",
+      "target_skill_name": "company-logos",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/company-logos/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:corner-diagonals",
+      "bundle_instance_id": "inst:programming:corner-diagonals",
+      "target_skill_name": "corner-diagonals",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/corner-diagonals/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:csharp-wpf-desktop",
+      "bundle_instance_id": "inst:programming:csharp-wpf-desktop",
+      "target_skill_name": "csharp-wpf-desktop",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/csharp-wpf-desktop/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:global-skill-registry-router",
+      "bundle_instance_id": "inst:programming:global-skill-registry-router",
+      "target_skill_name": "global-skill-registry-router",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/global-skill-registry-router/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:gooey-blob-system",
+      "bundle_instance_id": "inst:programming:gooey-blob-system",
+      "target_skill_name": "gooey-blob-system",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/gooey-blob-system/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:opa-rego-policy-enforcement",
+      "bundle_instance_id": "inst:programming:opa-rego-policy-enforcement",
+      "target_skill_name": "opa-rego-policy-enforcement",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/opa-rego-policy-enforcement/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:python-trading-systems",
+      "bundle_instance_id": "inst:programming:python-trading-systems",
+      "target_skill_name": "python-trading-systems",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/python-trading-systems/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-api-design-governance",
+      "bundle_instance_id": "inst:programming:skill-api-design-governance",
+      "target_skill_name": "skill-api-design-governance",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-api-design-governance/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-backend-performance-tuning",
+      "bundle_instance_id": "inst:programming:skill-backend-performance-tuning",
+      "target_skill_name": "skill-backend-performance-tuning",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-backend-performance-tuning/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-clean-architecture-layering",
+      "bundle_instance_id": "inst:programming:skill-clean-architecture-layering",
+      "target_skill_name": "skill-clean-architecture-layering",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-clean-architecture-layering/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-cpp-drogon-coroutine-backend",
+      "bundle_instance_id": "inst:programming:skill-cpp-drogon-coroutine-backend",
+      "target_skill_name": "skill-cpp-drogon-coroutine-backend",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cpp-drogon-coroutine-backend/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-cqrs-event-sourcing",
+      "bundle_instance_id": "inst:programming:skill-cqrs-event-sourcing",
+      "target_skill_name": "skill-cqrs-event-sourcing",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-cqrs-event-sourcing/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-distributed-rate-limiting",
+      "bundle_instance_id": "inst:programming:skill-distributed-rate-limiting",
+      "target_skill_name": "skill-distributed-rate-limiting",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-distributed-rate-limiting/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-dotnet10-minimal-api-aot",
+      "bundle_instance_id": "inst:programming:skill-dotnet10-minimal-api-aot",
+      "target_skill_name": "skill-dotnet10-minimal-api-aot",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-dotnet10-minimal-api-aot/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-go-worker-pool-concurrency",
+      "bundle_instance_id": "inst:programming:skill-go-worker-pool-concurrency",
+      "target_skill_name": "skill-go-worker-pool-concurrency",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-go-worker-pool-concurrency/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-graphql-schema-evolution",
+      "bundle_instance_id": "inst:programming:skill-graphql-schema-evolution",
+      "target_skill_name": "skill-graphql-schema-evolution",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-graphql-schema-evolution/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-grpc-contract-management",
+      "bundle_instance_id": "inst:programming:skill-grpc-contract-management",
+      "target_skill_name": "skill-grpc-contract-management",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-grpc-contract-management/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-oauth2-jwt-security",
+      "bundle_instance_id": "inst:programming:skill-oauth2-jwt-security",
+      "target_skill_name": "skill-oauth2-jwt-security",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-oauth2-jwt-security/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-owasp-backend-hardening",
+      "bundle_instance_id": "inst:programming:skill-owasp-backend-hardening",
+      "target_skill_name": "skill-owasp-backend-hardening",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-owasp-backend-hardening/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-postgresql-indexing-tuning",
+      "bundle_instance_id": "inst:programming:skill-postgresql-indexing-tuning",
+      "target_skill_name": "skill-postgresql-indexing-tuning",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-postgresql-indexing-tuning/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-python-fastapi-async-worker",
+      "bundle_instance_id": "inst:programming:skill-python-fastapi-async-worker",
+      "target_skill_name": "skill-python-fastapi-async-worker",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-python-fastapi-async-worker/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-rbac-abac-authorization",
+      "bundle_instance_id": "inst:programming:skill-rbac-abac-authorization",
+      "target_skill_name": "skill-rbac-abac-authorization",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rbac-abac-authorization/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-redis-caching-patterns",
+      "bundle_instance_id": "inst:programming:skill-redis-caching-patterns",
+      "target_skill_name": "skill-redis-caching-patterns",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-redis-caching-patterns/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-rust-tokio-axum-architecture",
+      "bundle_instance_id": "inst:programming:skill-rust-tokio-axum-architecture",
+      "target_skill_name": "skill-rust-tokio-axum-architecture",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-rust-tokio-axum-architecture/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-saga-orchestration-choreography",
+      "bundle_instance_id": "inst:programming:skill-saga-orchestration-choreography",
+      "target_skill_name": "skill-saga-orchestration-choreography",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-saga-orchestration-choreography/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-sqlite-wal-optimization",
+      "bundle_instance_id": "inst:programming:skill-sqlite-wal-optimization",
+      "target_skill_name": "skill-sqlite-wal-optimization",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-sqlite-wal-optimization/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-transactional-outbox-cdc",
+      "bundle_instance_id": "inst:programming:skill-transactional-outbox-cdc",
+      "target_skill_name": "skill-transactional-outbox-cdc",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-transactional-outbox-cdc/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:skill-typescript-nest-bullmq-orm",
+      "bundle_instance_id": "inst:programming:skill-typescript-nest-bullmq-orm",
+      "target_skill_name": "skill-typescript-nest-bullmq-orm",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/skill-typescript-nest-bullmq-orm/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:unit-test-generation-contract",
+      "bundle_instance_id": "inst:programming:unit-test-generation-contract",
+      "target_skill_name": "unit-test-generation-contract",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/unit-test-generation-contract/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:programming:zero-trust-architecture",
+      "bundle_instance_id": "inst:programming:zero-trust-architecture",
+      "target_skill_name": "zero-trust-architecture",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/programming/zero-trust-architecture/SKILL.md",
+      "source_id": "programming"
+    },
+    {
+      "skill_id": "skill:garden-skills:design-system-apple",
+      "bundle_instance_id": "inst:garden-skills:design-system-apple",
+      "target_skill_name": "design-system-apple",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-apple/SKILL.md",
+      "source_id": "garden-skills"
+    },
+    {
+      "skill_id": "skill:garden-skills:design-system-linear",
+      "bundle_instance_id": "inst:garden-skills:design-system-linear",
+      "target_skill_name": "design-system-linear",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-linear/SKILL.md",
+      "source_id": "garden-skills"
+    },
+    {
+      "skill_id": "skill:garden-skills:design-system-stripe",
+      "bundle_instance_id": "inst:garden-skills:design-system-stripe",
+      "target_skill_name": "design-system-stripe",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/design-system-stripe/SKILL.md",
+      "source_id": "garden-skills"
+    },
+    {
+      "skill_id": "skill:garden-skills:garden-web-design-engineer",
+      "bundle_instance_id": "inst:garden-skills:garden-web-design-engineer",
+      "target_skill_name": "garden-web-design-engineer",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/garden-web-design-engineer/SKILL.md",
+      "source_id": "garden-skills"
+    },
+    {
+      "skill_id": "skill:garden-skills:ui-sensei",
+      "bundle_instance_id": "inst:garden-skills:ui-sensei",
+      "target_skill_name": "ui-sensei",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/ui-sensei/SKILL.md",
+      "source_id": "garden-skills"
+    },
+    {
+      "skill_id": "skill:garden-skills:web-design-engineer",
+      "bundle_instance_id": "inst:garden-skills:web-design-engineer",
+      "target_skill_name": "web-design-engineer",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/garden-skills/web-design-engineer/SKILL.md",
+      "source_id": "garden-skills"
+    },
+    {
+      "skill_id": "skill:backend-reference-skills:backend-api-design",
+      "bundle_instance_id": "inst:backend-reference-skills:backend-api-design",
+      "target_skill_name": "backend-api-design",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-api-design/SKILL.md",
+      "source_id": "backend-reference-skills"
+    },
+    {
+      "skill_id": "skill:backend-reference-skills:backend-security-authz",
+      "bundle_instance_id": "inst:backend-reference-skills:backend-security-authz",
+      "target_skill_name": "backend-security-authz",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/backend-security-authz/SKILL.md",
+      "source_id": "backend-reference-skills"
+    },
+    {
+      "skill_id": "skill:backend-reference-skills:build-game-audio-feedback",
+      "bundle_instance_id": "inst:backend-reference-skills:build-game-audio-feedback",
+      "target_skill_name": "build-game-audio-feedback",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/build-game-audio-feedback/SKILL.md",
+      "source_id": "backend-reference-skills"
+    },
+    {
+      "skill_id": "skill:backend-reference-skills:clean-architecture-backend",
+      "bundle_instance_id": "inst:backend-reference-skills:clean-architecture-backend",
+      "target_skill_name": "clean-architecture-backend",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/clean-architecture-backend/SKILL.md",
+      "source_id": "backend-reference-skills"
+    },
+    {
+      "skill_id": "skill:backend-reference-skills:duckdb-analytical-queries",
+      "bundle_instance_id": "inst:backend-reference-skills:duckdb-analytical-queries",
+      "target_skill_name": "duckdb-analytical-queries",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills/duckdb-analytical-queries/SKILL.md",
+      "source_id": "backend-reference-skills"
+    },
+    {
+      "skill_id": "skill:awesome-claude-skills-master:webapp-testing",
+      "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/webapp-testing",
+      "target_skill_name": "webapp-testing",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/webapp-testing",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/webapp-testing/SKILL.md",
+      "source_id": "awesome-claude-skills-master"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:ad-campaign-analyzer",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/ad-campaign-analyzer",
+      "target_skill_name": "ad-campaign-analyzer",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/ad-campaign-analyzer",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ad-campaign-analyzer/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:anti-ui-slop",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/anti-ui-slop",
+      "target_skill_name": "anti-ui-slop",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/anti-ui-slop",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/anti-ui-slop/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:brand-guidelines",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/brand-guidelines",
+      "target_skill_name": "brand-guidelines",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/brand-guidelines",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/brand-guidelines/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:canvas-design",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/canvas-design",
+      "target_skill_name": "canvas-design",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/canvas-design",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/canvas-design/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:competitor-ad-intelligence",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/competitor-ad-intelligence",
+      "target_skill_name": "competitor-ad-intelligence",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/competitor-ad-intelligence",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/competitor-ad-intelligence/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:copilot-sdk",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/copilot-sdk",
+      "target_skill_name": "copilot-sdk",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/copilot-sdk",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/copilot-sdk/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:file-organizer",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/file-organizer",
+      "target_skill_name": "file-organizer",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/file-organizer",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/file-organizer/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:gh-attach",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/gh-attach",
+      "target_skill_name": "gh-attach",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/gh-attach",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/gh-attach/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:internal-comms",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/internal-comms",
+      "target_skill_name": "internal-comms",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/internal-comms",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/internal-comms/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:markstream-install",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/markstream-install",
+      "target_skill_name": "markstream-install",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/markstream-install",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/markstream-install/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:mcp-builder",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/mcp-builder",
+      "target_skill_name": "mcp-builder",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/mcp-builder",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/mcp-builder/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:performance-profiling",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/performance-profiling",
+      "target_skill_name": "performance-profiling",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/performance-profiling/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:postgresql-optimization",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/postgresql-optimization",
+      "target_skill_name": "postgresql-optimization",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/postgresql-optimization",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/postgresql-optimization/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:seo",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/seo",
+      "target_skill_name": "seo",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:web-quality-skills:skills/seo",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/seo/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:shadcn",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/shadcn",
+      "target_skill_name": "shadcn",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/shadcn",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/shadcn/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:shopify-review-triage",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/shopify-review-triage",
+      "target_skill_name": "shopify-review-triage",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/shopify-review-triage",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/shopify-review-triage/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:skill-creator",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/skill-creator",
+      "target_skill_name": "skill-creator",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/skill-creator",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/skill-creator/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:slack-gif-creator",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/slack-gif-creator",
+      "target_skill_name": "slack-gif-creator",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/slack-gif-creator",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/slack-gif-creator/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:terraform-infrastructure",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/terraform-infrastructure",
+      "target_skill_name": "terraform-infrastructure",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/terraform-infrastructure/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:theme-factory",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/theme-factory",
+      "target_skill_name": "theme-factory",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-claude-skills-master:awesome-claude-skills-master/theme-factory",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/theme-factory/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:ui-tokens",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/ui-tokens",
+      "target_skill_name": "ui-tokens",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ui-tokens/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:ui-ux-pro-max",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/ui-ux-pro-max",
+      "target_skill_name": "ui-ux-pro-max",
+      "collision_type": "EXTERNAL_IMPORT_COLLISION_WITH_NATIVE_VAULT_SKILL",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/ui-ux-pro-max/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:webapp-testing",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/webapp-testing",
+      "target_skill_name": "webapp-testing",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/webapp-testing",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/webapp-testing/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:x-twitter-scraper",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/x-twitter-scraper",
+      "target_skill_name": "x-twitter-scraper",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-copilot:skills/x-twitter-scraper",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/x-twitter-scraper/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:brutalism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/brutalism",
+      "target_skill_name": "brutalism",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/brutalism",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/brutalism/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:claymorphism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/claymorphism",
+      "target_skill_name": "claymorphism",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/claymorphism",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/claymorphism/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:glassmorphism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/glassmorphism",
+      "target_skill_name": "glassmorphism",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/glassmorphism",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/glassmorphism/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    },
+    {
+      "skill_id": "skill:agentic-awesome-skills-main:neumorphism",
+      "bundle_instance_id": "inst:agentic-awesome-skills-main:agentic-awesome-skills-main/skills/design-it/neumorphism",
+      "target_skill_name": "neumorphism",
+      "collision_type": "EXTERNAL_NAME_COLLISION_WITH_ANOTHER_IMPORTED_SKILL",
+      "collided_with_bundle_instance": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/neumorphism",
+      "resolution": "REVIEW_SKIPPED",
+      "entry_file": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main/agentic-awesome-skills-main/skills/design-it/neumorphism/SKILL.md",
+      "source_id": "agentic-awesome-skills-main"
+    }
+  ]
+}

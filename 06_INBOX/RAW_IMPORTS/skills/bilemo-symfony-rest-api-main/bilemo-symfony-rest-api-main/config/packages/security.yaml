@@ -1,0 +1,56 @@
+security:
+    # Password hashing configuration
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    # User provider (Where Symfony looks for B2B Clients)
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\Client
+                property: username
+
+    # Firewalls configuration (Order is critical!)
+    firewalls:
+        dev:
+            # Ensure dev tools and static assets are always allowed without security
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        # FIREWALL 1: Dedicated to authentication and JWT token generation
+        login:
+            pattern: ^/login
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /login_check
+                username_path: username
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        # FIREWALL 2: Main firewall protecting all other API resources by checking the JWT
+        api:
+            pattern: ^/
+            stateless: true
+            jwt: ~
+
+    # Access control rules (Only the first matching rule is applied)
+    access_control:
+        # 1. Routes totalement publiques (Pas de token requis)
+        - { path: ^/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/bilemob2bapi/doc, roles: PUBLIC_ACCESS }
+
+        # 2. Périmètre API globalement sécurisé
+        - { path: ^/, roles: ROLE_USER }
+
+when@test:
+    security:
+        password_hashers:
+            # Password hashers are resource-intensive by design to ensure security.
+            # In tests, it's safe to reduce their cost to improve performance.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon

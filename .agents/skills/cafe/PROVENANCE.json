@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:cafe",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/cafe",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/cafe/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/cafe/SKILL.md",
+  "content_hash": "a1bd11a274ffcddca82d2a5654beea3233cc9244fa130b259b1227de5344fa11",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/cafe"
+}

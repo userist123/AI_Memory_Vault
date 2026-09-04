@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:doc-and-modernize",
+  "bundle_instance_id": "inst:awesome-copilot:skills/doc-and-modernize",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/doc-and-modernize/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/doc-and-modernize/SKILL.md",
+  "content_hash": "7a36de59c0364eb6896318e086b4691cf9a91bd221b04b058e1ef674fe225521",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 3,
+  "target_installed_path": ".agents/skills/doc-and-modernize"
+}

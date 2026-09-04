@@ -1,0 +1,94 @@
+import { useEffect } from 'react';
+import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
+import { useDialog } from '@/components/common/DialogProvider';
+import { Form } from '@/components/form/Form';
+import { FormInput } from '@/components/form/FormInput';
+import { Alert } from '@/components/ui/v3/alert';
+import { Button, ButtonWithLoading } from '@/components/ui/v3/button';
+import type { DialogFormProps } from '@/types/common';
+
+export interface BaseRoleFormProps extends DialogFormProps {
+  /**
+   * Function to be called when the form is submitted.
+   */
+  onSubmit: (values: BaseRoleFormValues) => void;
+  /**
+   * Function to be called when the operation is cancelled.
+   */
+  onCancel?: VoidFunction;
+  /**
+   * Submit button text.
+   *
+   * @default 'Save'
+   */
+  submitButtonText?: string;
+}
+
+export const baseRoleFormValidationSchema = Yup.object({
+  name: Yup.string()
+    .max(100, 'Role name must be at most 100 characters.')
+    .required('This field is required.'),
+});
+
+export type BaseRoleFormValues = Yup.InferType<
+  typeof baseRoleFormValidationSchema
+>;
+
+export default function BaseRoleForm({
+  onSubmit,
+  onCancel,
+  submitButtonText = 'Save',
+  location,
+}: BaseRoleFormProps) {
+  const { onDirtyStateChange } = useDialog();
+  const form = useFormContext<BaseRoleFormValues>();
+
+  const {
+    control,
+    formState: { dirtyFields, isSubmitting },
+  } = form;
+
+  const isDirty = Object.keys(dirtyFields).length > 0;
+
+  useEffect(() => {
+    onDirtyStateChange(isDirty, location);
+  }, [isDirty, location, onDirtyStateChange]);
+
+  return (
+    <div className="grid grid-flow-row gap-3 px-6 pb-6">
+      <p className="text-muted-foreground text-sm">
+        Enter the name for the allowed role below.
+      </p>
+
+      {submitButtonText !== 'Add' && (
+        <Alert variant="warning" className="text-left">
+          <span className="text-left">
+            <strong>Note:</strong> Changing the name of the role will lose the
+            associated permissions with that role.
+          </span>
+        </Alert>
+      )}
+
+      <Form onSubmit={onSubmit} className="grid grid-flow-row gap-4">
+        <FormInput
+          control={control}
+          name="name"
+          label="Name"
+          placeholder="Enter value"
+          autoComplete="off"
+        />
+
+        <div className="grid grid-flow-row gap-2">
+          <ButtonWithLoading type="submit" loading={isSubmitting}>
+            {submitButtonText}
+          </ButtonWithLoading>
+
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+        </div>
+      </Form>
+    </div>
+  );
+}

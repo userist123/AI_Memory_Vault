@@ -1,0 +1,43 @@
+{
+  "run_id": "run_repeat_rec_023",
+  "runtime_case_id": "rec_023",
+  "skill_id": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+  "mode": "REPEAT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example"
+    ],
+    "skill_hash": "479f1a6b2bf7f0ffc891123662a606280c703f2dd477d3abb841074218ff65c0",
+    "skill_in_context": true,
+    "context_hash": "1fda8eedbb3741272a5ad3cfcd62c57977eae1698ab952e13435f63d5c3bc0a2"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.014908+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.014914+00:00",
+  "commands": [
+    "eval_repeat --skill cc-skill-project-guidelines-example --task task_cc-skill-project-guidelines-example"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:cc-skill-project-guidelines-example",
+      "hash": "479f1a6b2bf7f0ffc891123662a606280c703f2dd477d3abb841074218ff65c0"
+    }
+  ],
+  "files_created": [
+    "cc-skill-project-guidelines-example_spec_v2.json"
+  ],
+  "files_modified": [],
+  "stdout": "[REPEAT RUN] Second independent treatment run for cc-skill-project-guidelines-example. Reproducibility verified.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_cc_skill_project_guidelines_example",
+    "command": "python -m verify_treatment rec_023 --repeat",
+    "exit_code": 0,
+    "passed": true,
+    "score": 81,
+    "evidence": "Repeat score 81 vs 81 (delta=0)."
+  },
+  "redactions": []
+}

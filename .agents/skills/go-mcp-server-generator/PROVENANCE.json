@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:go-mcp-server-generator",
+  "bundle_instance_id": "inst:awesome-copilot:skills/go-mcp-server-generator",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/go-mcp-server-generator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/go-mcp-server-generator/SKILL.md",
+  "content_hash": "13197becbfd35c5f994c8586a5ef2dfc6c802da24e913acfd1a05130a578ac16",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/go-mcp-server-generator"
+}

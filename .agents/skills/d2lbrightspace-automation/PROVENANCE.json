@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-claude-skills-master:d2lbrightspace-automation",
+  "bundle_instance_id": "inst:awesome-claude-skills-master:awesome-claude-skills-master/composio-skills/d2lbrightspace-automation",
+  "canonical_repository_id": "repo:awesome-claude-skills",
+  "canonical_source_id": "awesome-claude-skills-master",
+  "source_url": "https://github.com/awesome-claude-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/d2lbrightspace-automation/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master/awesome-claude-skills-master/composio-skills/d2lbrightspace-automation/SKILL.md",
+  "content_hash": "fee35fd9fd7e48e8a7f9fef55e8ffedc0e0a726d185dc03e3f014da9cb4736e4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/d2lbrightspace-automation"
+}

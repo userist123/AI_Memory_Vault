@@ -1,0 +1,57 @@
+@page "/login"
+@inject ApiClient Api
+@inject ITokenProvider TokenProvider
+@inject NavigationManager Nav
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4" Elevation="4">
+    <MudText Typo="Typo.h5">Login</MudText>
+
+    <MudTextField Label="Email" @bind-Value="Email" Required="true" />
+    <MudTextField Label="Password" @bind-Value="Password" InputType="InputType.Password" Required="true" />
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="DoLogin">Login</MudButton>
+</MudPaper>
+
+@code {
+    private string Email = string.Empty;
+    private string Password = string.Empty;
+
+    private async Task DoLogin()
+    {
+        try
+        {
+            var res = await Api.PostAsync<object>("/api/v1/auth/login", new { Email, Password }, includeAuth: false);
+            if (res.IsSuccess)
+            {
+                // read raw JSON to fetch tokens
+                // Note: ApiClient PostAsync<object> returned success but not tokens; call login directly via HttpClient instead
+                // Simpler: call /api/v1/auth/login via HttpClient here
+                var http = new HttpClient { BaseAddress = new Uri("http://localhost:5000") };
+                var r = await http.PostAsJsonAsync("/api/v1/auth/login", new { Email, Password });
+                if (r.IsSuccessStatusCode)
+                {
+                    var json = await r.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+                    var at = json.GetProperty("access_token").GetString()!;
+                    var rt = json.GetProperty("refresh_token").GetString()!;
+                    await TokenProvider.SetTokensAsync(at, rt, Email);
+                    await TokenProvider.NotifyTokensChangedAsync();
+                    Snackbar.Add("Login effettuato", Severity.Success);
+                    Nav.NavigateTo("/contacts");
+                }
+                else
+                {
+                    Snackbar.Add("Login fallito", Severity.Error);
+                }
+            }
+            else
+            {
+                Snackbar.Add("Login fallito", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Errore: {ex.Message}", Severity.Error);
+        }
+    }
+}

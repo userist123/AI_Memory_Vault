@@ -1,0 +1,10 @@
+{
+  "total_security_flags": 750,
+  "classified_breakdown": {
+    "CONFIRMED_PATTERN": 60,
+    "FALSE_POSITIVE": 684,
+    "POTENTIAL_PATTERN": 6
+  },
+  "redaction_verified": true,
+  "action_recommendation": "All flagged credential files and test keys routed to REVIEW."
+}

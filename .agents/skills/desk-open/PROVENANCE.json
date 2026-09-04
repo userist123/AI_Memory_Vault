@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:desk-open",
+  "bundle_instance_id": "inst:awesome-copilot:skills/desk-open",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/desk-open/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/desk-open/SKILL.md",
+  "content_hash": "bb72cc567223030a07def4a6976e98a30531e8bdf795a8eba39989bba8315aa4",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/desk-open"
+}

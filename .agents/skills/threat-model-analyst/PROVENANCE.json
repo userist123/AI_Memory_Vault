@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:threat-model-analyst",
+  "bundle_instance_id": "inst:awesome-copilot:skills/threat-model-analyst",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/threat-model-analyst/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/threat-model-analyst/SKILL.md",
+  "content_hash": "85e468dfc14c3dac3b947065d1d7c2c82340ef67e932120b2052f35ac2a50b72",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 17,
+  "target_installed_path": ".agents/skills/threat-model-analyst"
+}

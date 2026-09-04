@@ -1,0 +1,786 @@
+{
+  "generated_at_utc": "2026-09-02T19:52:24Z",
+  "repositories": {
+    "ByteByteGoHq/system-design-101": {
+      "repository": "ByteByteGoHq/system-design-101",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "Explain complex systems using visuals and simple terms. Help you prepare for system design interviews.",
+      "stars": 87994,
+      "forks": 9800,
+      "topics": [
+        "aws",
+        "cloud-computing",
+        "coding-interviews",
+        "computer-science",
+        "interview-questions",
+        "software-architecture",
+        "software-development",
+        "software-engineering",
+        "system-design",
+        "system-design-interview"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "ComposioHQ/awesome-claude-skills": {
+      "repository": "ComposioHQ/awesome-claude-skills",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "known external skill collection",
+        "tree contains 864 skill marker file(s)"
+      ],
+      "default_branch": "master",
+      "description": "A curated list of awesome Claude Skills, resources, and tools for customizing Claude AI workflows",
+      "stars": 74312,
+      "forks": 8529,
+      "topics": [
+        "agent-skills",
+        "ai-agents",
+        "antigravity",
+        "automation",
+        "claude",
+        "claude-code",
+        "codex",
+        "composio",
+        "cursor",
+        "developer-tools",
+        "gemini-cli",
+        "mcp",
+        "openai-codex",
+        "rube",
+        "saas",
+        "skill",
+        "workflow-automation"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "ConardLi/garden-skills": {
+      "repository": "ConardLi/garden-skills",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "repository name contains skill/agent/plugin signal",
+        "tree contains 5 skill marker file(s)"
+      ],
+      "default_branch": "main",
+      "description": "ConardLi's open-source Skills collection, featuring web design, knowledge retrieval, image generation, and more.",
+      "stars": 12078,
+      "forks": 1475,
+      "topics": [
+        "agent",
+        "claude",
+        "gpt-image-2",
+        "rag",
+        "skills",
+        "web-design"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "Eldar1205/awesome-python-backend": {
+      "repository": "Eldar1205/awesome-python-backend",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "Index for online reading materials in order to learn Python and backend development/engineering concepts from scratch and develop a mastery sufficient for Senior/Principal Backend Engineers and Data Engineers",
+      "stars": 119,
+      "forks": 19,
+      "topics": [
+        "backend",
+        "backendengineering",
+        "dataengineering",
+        "python"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "Sairyss/domain-driven-hexagon": {
+      "repository": "Sairyss/domain-driven-hexagon",
+      "classification": "KNOWLEDGE_REPOSITORY",
+      "confidence": "medium",
+      "reason": [
+        "URL alone is insufficient",
+        "tree is broad and lacks explicit skill markers"
+      ],
+      "default_branch": "master",
+      "description": "Learn Domain-Driven Design, software architecture, design patterns, best practices. Code examples included",
+      "stars": 14902,
+      "forks": 1560,
+      "topics": [
+        "architectural-patterns",
+        "architecture",
+        "backend",
+        "best-practices",
+        "clean-architecture",
+        "clean-code",
+        "ddd",
+        "design-patterns",
+        "development",
+        "domain-driven-design",
+        "hexagonal-architecture",
+        "javascript",
+        "nestjs",
+        "nodejs",
+        "onion-architecture",
+        "secure-by-design",
+        "solid-principles",
+        "system-design",
+        "typeorm",
+        "typescript"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "ToastShaman/awesome-backend": {
+      "repository": "ToastShaman/awesome-backend",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "A curated list of awesome frameworks, libraries and software",
+      "stars": 58,
+      "forks": 8,
+      "topics": [],
+      "archived": false,
+      "fork": false
+    },
+    "VoltAgent/awesome-agent-skills": {
+      "repository": "VoltAgent/awesome-agent-skills",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "known external skill collection"
+      ],
+      "default_branch": "main",
+      "description": "A curated collection of 1000+ agent skills from official dev teams and the community, compatible with Claude Code, Codex, Gemini CLI, Cursor, and more.",
+      "stars": 33626,
+      "forks": 3553,
+      "topics": [
+        "agent-skills",
+        "ai-agents",
+        "awesome",
+        "awesome-list",
+        "claude-code",
+        "claude-code-skills",
+        "claude-skills",
+        "codex-skills",
+        "cursor-skills",
+        "gemini-skills",
+        "opencode-skills",
+        "skills"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "addyosmani/web-quality-skills": {
+      "repository": "addyosmani/web-quality-skills",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "repository name contains skill/agent/plugin signal",
+        "tree contains 6 skill marker file(s)"
+      ],
+      "default_branch": "main",
+      "description": "Agent Skills for optimizing web quality based on Lighthouse and Core Web Vitals.",
+      "stars": 2741,
+      "forks": 249,
+      "topics": [
+        "accessibility",
+        "agent-skills",
+        "claude-skills",
+        "core-web-vitals",
+        "lighthouse",
+        "skills",
+        "testing",
+        "web-performance"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "avelino/awesome-go": {
+      "repository": "avelino/awesome-go",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "A curated list of awesome Go frameworks, libraries and software",
+      "stars": 182966,
+      "forks": 13532,
+      "topics": [
+        "awesome",
+        "awesome-list",
+        "go",
+        "golang",
+        "golang-library",
+        "hacktoberfest"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "bergside/awesome-design-skills": {
+      "repository": "bergside/awesome-design-skills",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "known external skill collection",
+        "tree contains 67 skill marker file(s)"
+      ],
+      "default_branch": "main",
+      "description": "List of 67 awesome DESIGN.md and SKILL.md design skill files for agentic tools like Claude Design, Google Stitch, Codex, Cursor, and other AI tools",
+      "stars": 2628,
+      "forks": 250,
+      "topics": [
+        "agent-skills",
+        "agentic-ai",
+        "agentic-workflow",
+        "agents",
+        "ai",
+        "ai-agents",
+        "ai-tools",
+        "awesome",
+        "awesome-list",
+        "awesome-readme",
+        "claude-design",
+        "codex",
+        "cursor",
+        "design",
+        "design-md",
+        "design-system",
+        "google-stitch",
+        "skills"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "donnemartin/system-design-primer": {
+      "repository": "donnemartin/system-design-primer",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "master",
+      "description": "Learn how to design large-scale systems. Prep for the system design interview.  Includes Anki flashcards.",
+      "stars": 367780,
+      "forks": 58198,
+      "topics": [
+        "design",
+        "design-patterns",
+        "design-system",
+        "development",
+        "interview",
+        "interview-practice",
+        "interview-questions",
+        "programming",
+        "python",
+        "system",
+        "web",
+        "web-application",
+        "webapp"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "dotnet/aspire-samples": {
+      "repository": "microsoft/aspire-samples",
+      "classification": "EXAMPLE_SOFTWARE",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles software/sample/template"
+      ],
+      "default_branch": "main",
+      "description": "Browse the sample apps demonstrating Aspire integration across C#, JavaScript, TypeScript, Python, Go, containers, databases, cloud, AI, and observability scenarios.",
+      "stars": 1188,
+      "forks": 345,
+      "topics": [
+        "apphost",
+        "aspire",
+        "azure",
+        "cloud-native",
+        "containers",
+        "csharp",
+        "distributed-apps",
+        "docker",
+        "fastapi",
+        "go",
+        "hacktoberfest",
+        "javascript",
+        "microservices",
+        "nodejs",
+        "observability",
+        "opentelemetry",
+        "otel",
+        "python",
+        "typescript"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "enaqx/awesome-react": {
+      "repository": "enaqx/awesome-react",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "master",
+      "description": "A collection of awesome things regarding React ecosystem",
+      "stars": 74468,
+      "forks": 7628,
+      "topics": [
+        "awesome",
+        "awesome-list",
+        "javascript",
+        "react",
+        "react-apps",
+        "react-native",
+        "react-tutorial",
+        "samples",
+        "tutorial",
+        "typescript"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "gbrasil720/ui-sensei": {
+      "repository": "gbrasil720/ui-sensei",
+      "classification": "SINGLE_SKILL",
+      "confidence": "high",
+      "reason": [
+        "URL alone is insufficient",
+        "tree contains an explicit skill marker"
+      ],
+      "default_branch": "main",
+      "description": "Different philosophies. Your choice. Lasting clarity.",
+      "stars": 3,
+      "forks": 0,
+      "topics": [
+        "skill-share",
+        "skills",
+        "skills-sh",
+        "ui-skill",
+        "ui-skills"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "github/awesome-copilot": {
+      "repository": "github/awesome-copilot",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection",
+        "tree contains 431 skill marker file(s)"
+      ],
+      "default_branch": "main",
+      "description": "Community-contributed instructions, agents, skills, and configurations to help you make the most of GitHub Copilot.",
+      "stars": 38561,
+      "forks": 4875,
+      "topics": [
+        "agent-skills",
+        "agents",
+        "ai",
+        "awesome",
+        "custom-agents",
+        "github-copilot",
+        "hacktoberfest",
+        "prompt-engineering"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "gothinkster/realworld": {
+      "repository": "realworld-apps/realworld",
+      "classification": "EXAMPLE_SOFTWARE",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles software/sample/template"
+      ],
+      "default_branch": "main",
+      "description": "\"The mother of all demo apps\" — Exemplary fullstack Medium.com clone powered by React, Angular, Node, Django, and many more",
+      "stars": 84182,
+      "forks": 7655,
+      "topics": [],
+      "archived": false,
+      "fork": false
+    },
+    "khalidbelk/awesome-backend": {
+      "repository": "khalidbelk/awesome-backend",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "A curated list of awesome backend tools, libraries and resources.",
+      "stars": 3,
+      "forks": 0,
+      "topics": [
+        "api",
+        "awesome",
+        "awesome-list",
+        "awesome-lists",
+        "backend",
+        "resources",
+        "web"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "mehdihadeli/awesome-software-architecture": {
+      "repository": "mehdihadeli/awesome-software-architecture",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "📚 A curated list of awesome articles, videos, and other resources to learn and practice software architecture, patterns, and principles.",
+      "stars": 11608,
+      "forks": 1012,
+      "topics": [
+        "architectural-patterns",
+        "architectural-styles",
+        "architecture",
+        "awesome-list",
+        "clean-architecture",
+        "ddd",
+        "ddd-architecture",
+        "design-pattern",
+        "design-patterns",
+        "design-systems",
+        "event-driven-architecture",
+        "microservice",
+        "microservices",
+        "microservices-architecture",
+        "modular-monoliths",
+        "onion-architecture",
+        "oop",
+        "software-architecture",
+        "system-design",
+        "vertical-slice-architecture"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "quozd/awesome-dotnet": {
+      "repository": "quozd/awesome-dotnet",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "master",
+      "description": "A collection of awesome .NET libraries, tools, frameworks and software",
+      "stars": 21583,
+      "forks": 2929,
+      "topics": [
+        "awesome",
+        "awesome-list",
+        "clr",
+        "csharp",
+        "dotnet",
+        "fsharp"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "ramitsurana/awesome-kubernetes": {
+      "repository": "ramitsurana/awesome-kubernetes",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "master",
+      "description": "A curated list for awesome kubernetes sources :ship::tada:",
+      "stars": 16066,
+      "forks": 2486,
+      "topics": [
+        "aws",
+        "azure",
+        "books",
+        "cloud-providers",
+        "deploy-kubernetes",
+        "docker",
+        "enterprise-kubernetes-products",
+        "google-cloud",
+        "google-kubernetes",
+        "kubernetes",
+        "kubernetes-cluster",
+        "kubernetes-sources",
+        "machine-learning",
+        "meetup",
+        "minikube",
+        "monitoring-kubernetes",
+        "resource",
+        "schedule"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "rust-unofficial/awesome-rust": {
+      "repository": "rust-unofficial/awesome-rust",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "A curated list of Rust code and resources.",
+      "stars": 59125,
+      "forks": 3583,
+      "topics": [
+        "awesome",
+        "rust"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "sbilly/awesome-security": {
+      "repository": "sbilly/awesome-security",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "master",
+      "description": "A collection of awesome software, libraries, documents, books, resources and cools stuffs about security.",
+      "stars": 14822,
+      "forks": 2387,
+      "topics": [
+        "awesome-list",
+        "security"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "sickn33/agentic-awesome-skills": {
+      "repository": "sickn33/agentic-awesome-skills",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "known external skill collection",
+        "tree contains 6632 skill marker file(s)"
+      ],
+      "default_branch": "main",
+      "description": "AAS Core is the local, agent-first control plane for complete catalog discovery, agent-owned selection, stack validation, and planning, backed by 2,005+ agentic skills. Includes CLI, local MCP, catalog, plugins, and Workbench.",
+      "stars": 45860,
+      "forks": 6707,
+      "topics": [
+        "agent-skills",
+        "agentic-skills",
+        "ai-agent-skills",
+        "ai-agents",
+        "ai-coding",
+        "ai-workflows",
+        "antigravity",
+        "antigravity-skills",
+        "claude-code",
+        "claude-code-skills",
+        "codex-cli",
+        "codex-skills",
+        "cursor",
+        "cursor-skills",
+        "developer-tools",
+        "gemini-cli",
+        "gemini-skills",
+        "kiro",
+        "mcp",
+        "skill-library"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "veggiemonk/awesome-docker": {
+      "repository": "veggiemonk/awesome-docker",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection",
+        "tree contains 1 skill marker file(s)"
+      ],
+      "default_branch": "master",
+      "description": ":whale: A curated list of Docker resources and projects",
+      "stars": 36763,
+      "forks": 3360,
+      "topics": [
+        "awesome",
+        "awesome-list",
+        "container",
+        "docker",
+        "docker-api",
+        "docker-container",
+        "docker-deployment",
+        "docker-environment",
+        "docker-image",
+        "docker-machine",
+        "docker-monitoring",
+        "docker-registry",
+        "docker-security",
+        "docker-swarm",
+        "dockerfile",
+        "list",
+        "moby",
+        "tools"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "vinta/awesome-python": {
+      "repository": "vinta/awesome-python",
+      "classification": "SKILL_COLLECTION",
+      "confidence": "high",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection",
+        "tree contains 3 skill marker file(s)"
+      ],
+      "default_branch": "master",
+      "description": "The definitive list that answers \"I want to do X in Python, which tool should I use?\"",
+      "stars": 318050,
+      "forks": 28627,
+      "topics": [
+        "awesome",
+        "awesome-list",
+        "python",
+        "python-frameworks",
+        "python-libraries",
+        "python-tools"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "wowners/awesome-devops": {
+      "repository": "wowners/awesome-devops",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "A curated list of awesome DevOps platforms, tools, practices and resources",
+      "stars": 4344,
+      "forks": 966,
+      "topics": [
+        "awesome",
+        "awesome-list",
+        "collections",
+        "development",
+        "devops",
+        "production",
+        "productivity",
+        "resources",
+        "sre",
+        "tools"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "xiaopu-ai/web-design": {
+      "repository": "xiaopu-ai/web-design",
+      "classification": "SINGLE_SKILL",
+      "confidence": "high",
+      "reason": [
+        "URL alone is insufficient",
+        "tree contains an explicit skill marker"
+      ],
+      "default_branch": "main",
+      "description": "A Claude Code SKILL for designing beautiful, consistent web pages — spec first, code second. ",
+      "stars": 714,
+      "forks": 70,
+      "topics": [
+        "claude-code",
+        "claude-skill",
+        "design-system",
+        "we-b",
+        "web-design",
+        "webdesign",
+        "xiaopu"
+      ],
+      "archived": false,
+      "fork": false
+    },
+    "zhashkevych/awesome-backend": {
+      "repository": "zhashkevych/awesome-backend",
+      "classification": "AWESOME_LIST",
+      "confidence": "medium",
+      "reason": [
+        "repository name resembles an awesome-list / curated collection"
+      ],
+      "default_branch": "main",
+      "description": "🚀 A curated and opinionated list of resources (English & Russian) for Backend developers | Структурированный список ресурсов для изучения Backend разработки",
+      "stars": 3458,
+      "forks": 406,
+      "topics": [
+        "architecture",
+        "backend",
+        "backend-developers",
+        "backend-engineers",
+        "computer-science",
+        "curated-list",
+        "databases",
+        "for-beginners",
+        "guide",
+        "guides",
+        "list",
+        "roadmap",
+        "software-engineering",
+        "topics",
+        "web"
+      ],
+      "archived": false,
+      "fork": false
+    }
+  },
+  "failures": [
+    {
+      "repository": "awesome-selfhosted/awesome-sysadmin",
+      "source_urls": [
+        "https://github.com/awesome-selfhosted/awesome-sysadmin"
+      ],
+      "error": "GitHub HTTP 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/repos#get-a-repository\",\"status\":\"404\"}"
+    },
+    {
+      "repository": "collections/programming-languages",
+      "source_urls": [
+        "https://github.com/collections/programming-languages"
+      ],
+      "error": "GitHub HTTP 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/repos#get-a-repository\",\"status\":\"404\"}"
+    },
+    {
+      "repository": "topics/backend",
+      "source_urls": [
+        "https://github.com/topics/backend"
+      ],
+      "error": "GitHub HTTP 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/repos#get-a-repository\",\"status\":\"404\"}"
+    },
+    {
+      "repository": "topics/backend-app",
+      "source_urls": [
+        "https://github.com/topics/backend-app"
+      ],
+      "error": "GitHub HTTP 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/repos#get-a-repository\",\"status\":\"404\"}"
+    },
+    {
+      "repository": "topics/backend-webdevelopment",
+      "source_urls": [
+        "https://github.com/topics/backend-webdevelopment"
+      ],
+      "error": "GitHub HTTP 404: {\"message\":\"Not Found\",\"documentation_url\":\"https://docs.github.com/rest/repos/repos#get-a-repository\",\"status\":\"404\"}"
+    }
+  ]
+}

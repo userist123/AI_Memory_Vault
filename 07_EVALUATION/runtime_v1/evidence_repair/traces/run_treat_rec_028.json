@@ -1,0 +1,38 @@
+{
+  "run_id": "run_treat_rec_028",
+  "runtime_case_id": "rec_028",
+  "skill_id": "skill:agentic-awesome-skills-main:async-python-patterns",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:async-python-patterns"
+    ],
+    "skill_hash": "ec109a485750ee96486cda7d7617db2b852b5705d85281cbe786793234cf089f",
+    "skill_in_context": true,
+    "context_hash": "8b58e2bc909150e11236256b69a0a8aa4dbefa48b95f128cb89058c5db96cf6d"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.018383+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.018390+00:00",
+  "commands": [
+    "eval_treatment --skill async-python-patterns --task task_async-python-patterns"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "async-python-patterns_spec.json",
+    "async-python-patterns_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill async-python-patterns loaded, but general guidance was identical to baseline. Specific procedure was not incorporated.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_async_python_patterns",
+    "command": "python -m verify_treatment rec_028 --schema async-python-patterns",
+    "exit_code": 0,
+    "passed": true,
+    "score": 69,
+    "evidence": "Fallback structure."
+  },
+  "redactions": []
+}

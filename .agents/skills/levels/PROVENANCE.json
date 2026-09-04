@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:levels",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/levels",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/levels/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/levels/SKILL.md",
+  "content_hash": "48618f1c13088e6a3b7f3bc784d80512da1660ba9b232928633170bcafcbf776",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/levels"
+}

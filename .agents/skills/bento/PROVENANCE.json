@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:bento",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/bento",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/bento/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/bento/SKILL.md",
+  "content_hash": "1bc7bc1f8df4effd6053be2255bf640e4ab036f477af3e42f8e5321786fe19f5",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/bento"
+}

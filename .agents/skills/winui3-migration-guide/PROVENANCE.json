@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:winui3-migration-guide",
+  "bundle_instance_id": "inst:awesome-copilot:skills/winui3-migration-guide",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/winui3-migration-guide/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/winui3-migration-guide/SKILL.md",
+  "content_hash": "ee801562fd3ca41bf820f4230df8600b83134ac438aa721b79f5ddf2da57eafa",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/winui3-migration-guide"
+}

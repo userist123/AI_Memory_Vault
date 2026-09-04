@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:python-mcp-server-generator",
+  "bundle_instance_id": "inst:awesome-copilot:skills/python-mcp-server-generator",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/python-mcp-server-generator/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/python-mcp-server-generator/SKILL.md",
+  "content_hash": "06fa201b785af546cdb24ec5eb849b1946d2f5d2aef5cf8b469daa76940c1209",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/python-mcp-server-generator"
+}

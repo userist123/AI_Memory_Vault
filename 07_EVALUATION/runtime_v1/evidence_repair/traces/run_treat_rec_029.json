@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_029",
+  "runtime_case_id": "rec_029",
+  "skill_id": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:orchestrate-batch-refactor"
+    ],
+    "skill_hash": "20ae7d71da8b4f4815a00511eecd6d4fcebd45757251e1592d72ebf14ac917fc",
+    "skill_in_context": true,
+    "context_hash": "0edfcffe1419090b97a25c64cccdf4aa1b76fbe8ab1eba659b87c27af9e3ce1f"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.018897+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.018905+00:00",
+  "commands": [
+    "eval_treatment --skill orchestrate-batch-refactor --task task_orchestrate-batch-refactor"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:orchestrate-batch-refactor",
+      "hash": "20ae7d71da8b4f4815a00511eecd6d4fcebd45757251e1592d72ebf14ac917fc"
+    }
+  ],
+  "files_created": [
+    "orchestrate-batch-refactor_spec.json",
+    "orchestrate-batch-refactor_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill orchestrate-batch-refactor loaded (hash 20ae7d71). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_orchestrate_batch_refactor",
+    "command": "python -m verify_treatment rec_029 --schema orchestrate-batch-refactor",
+    "exit_code": 0,
+    "passed": true,
+    "score": 81,
+    "evidence": "Delivered verified contract matching orchestrate-batch-refactor specifications."
+  },
+  "redactions": []
+}

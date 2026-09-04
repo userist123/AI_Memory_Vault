@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:web-quality-skills:performance",
+  "bundle_instance_id": "inst:web-quality-skills:skills/performance",
+  "canonical_repository_id": "repo:web-quality-skills",
+  "canonical_source_id": "web-quality-skills",
+  "source_url": "https://github.com/addyosmani/web-quality-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/performance/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/performance/SKILL.md",
+  "content_hash": "0fe5ac0dc61f261a97db64443c030e81def507c57883b07c5ea2de0bc6556290",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/performance"
+}

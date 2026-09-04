@@ -1,0 +1,43 @@
+name: Planning Influence MVE
+
+on:
+  push:
+    paths:
+      - '07_EVALUATION/luna/planning_influence_mve.py'
+      - '07_EVALUATION/luna/test_planning_influence_mve.py'
+      - '07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md'
+      - '.github/workflows/planning-influence-mve.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mve:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run deterministic unit tests
+        run: python -m pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
+
+      - name: Execute Planning Influence pilot
+        run: |
+          mkdir -p mve-output
+          python 07_EVALUATION/luna/planning_influence_mve.py | tee mve-output/planning_influence_runtime.txt
+
+      - name: Upload runtime evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: planning-influence-mve-runtime
+          path: mve-output/planning_influence_runtime.txt
+          if-no-files-found: error

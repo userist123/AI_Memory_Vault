@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:code-tour",
+  "bundle_instance_id": "inst:awesome-copilot:skills/code-tour",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/code-tour/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/code-tour/SKILL.md",
+  "content_hash": "9ed06a5292ce21009dca2b9e97c92d49e6c13f1b78b0ce720bf105daad6c7f30",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 5,
+  "target_installed_path": ".agents/skills/code-tour"
+}

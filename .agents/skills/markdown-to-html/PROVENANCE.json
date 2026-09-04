@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:markdown-to-html",
+  "bundle_instance_id": "inst:awesome-copilot:skills/markdown-to-html",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/markdown-to-html/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/markdown-to-html/SKILL.md",
+  "content_hash": "c57b934688c787018b9de55e9e62d612332a85a7c34fc2fb766a8b22dffc46ed",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 16,
+  "target_installed_path": ".agents/skills/markdown-to-html"
+}

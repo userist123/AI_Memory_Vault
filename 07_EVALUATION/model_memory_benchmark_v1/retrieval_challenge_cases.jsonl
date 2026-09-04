@@ -1,0 +1,30 @@
+{"id":"R01","query":"How should prompting, retrieval, fine-tuning, alignment, and inference-time methods be viewed as adaptation choices?","relevant_ids":["M-ADAPT-001"]}
+{"id":"R02","query":"What are the main levers for adapting an AI system and how do their trade-offs differ?","relevant_ids":["M-ADAPT-001"]}
+{"id":"R03","query":"What layers have to be composed around a model to build a reliable AI application?","relevant_ids":["M-ARCH-001"]}
+{"id":"R04","query":"How do context, tools, orchestration, runtime constraints and evaluation fit around model capability?","relevant_ids":["M-ARCH-001"]}
+{"id":"R05","query":"Why does distributed operation create problems that do not appear on one machine?","relevant_ids":["M-DISTRIBUTED-001"]}
+{"id":"R06","query":"What distributed-system concerns arise from timing, partial failure, consistency and conflict resolution?","relevant_ids":["M-DISTRIBUTED-001"]}
+{"id":"R07","query":"How should an AI system be evaluated when the claim concerns real application behavior?","relevant_ids":["M-EVAL-001"]}
+{"id":"R08","query":"Why is a static component benchmark weaker than representative observed application behavior?","relevant_ids":["M-EVAL-001"]}
+{"id":"R09","query":"How do learning systems improve through data, representations, models, deployment and feedback?","relevant_ids":["M-LEARNING-001"]}
+{"id":"R10","query":"Why is machine learning improvement an iterative feedback process rather than a one-shot training pipeline?","relevant_ids":["M-LEARNING-001"]}
+{"id":"R11","query":"What makes production reliability a system property rather than just a model property?","relevant_ids":["M-RELIABILITY-001"]}
+{"id":"R12","query":"Which deployment concerns matter for reliability when failures, integration constraints and distribution shift occur?","relevant_ids":["M-RELIABILITY-001"]}
+{"id":"R13","query":"Why are learned representations important to intelligent systems and AI applications?","relevant_ids":["M-REPRESENT-001"]}
+{"id":"R14","query":"What role do representations play between raw information, models and useful system behavior?","relevant_ids":["M-REPRESENT-001"]}
+{"id":"R15","query":"What trade-offs should an AI engineer consider instead of optimizing a single system dimension?","relevant_ids":["M-TRADEOFF-001"]}
+{"id":"R16","query":"How should engineering decisions account for competing quality, cost, latency and reliability trade-offs?","relevant_ids":["M-TRADEOFF-001"]}
+{"id":"R17","query":"What makes retrieval useful as a bounded context-selection mechanism?","relevant_ids":["M-RETRIEVAL-001"]}
+{"id":"R18","query":"How should retrieval balance relevant context against context size and noise?","relevant_ids":["M-RETRIEVAL-001"]}
+{"id":"R19","query":"How should tools be incorporated into an agent system rather than treated as isolated functions?","relevant_ids":["M-TOOLS-001"]}
+{"id":"R20","query":"What are the architectural consequences of giving an AI agent access to external tools?","relevant_ids":["M-TOOLS-001"]}
+{"id":"N01","query":"What is the capital of France?","relevant_ids":[]}
+{"id":"N02","query":"How do I bake a chocolate cake?","relevant_ids":[]}
+{"id":"N03","query":"What is the current weather in Bucharest?","relevant_ids":[]}
+{"id":"N04","query":"Explain the history of the Roman Empire.","relevant_ids":[]}
+{"id":"N05","query":"What is the boiling point of water at sea level?","relevant_ids":[]}
+{"id":"N06","query":"Recommend a hiking route in the Alps.","relevant_ids":[]}
+{"id":"N07","query":"How do I repair a bicycle tire?","relevant_ids":[]}
+{"id":"N08","query":"What are the symptoms of influenza?","relevant_ids":[]}
+{"id":"N09","query":"Who won the latest football match?","relevant_ids":[]}
+{"id":"N10","query":"Translate this sentence into Japanese.","relevant_ids":[]}

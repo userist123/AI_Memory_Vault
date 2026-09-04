@@ -1,0 +1,12 @@
+{
+  "total_overlap_clusters": 2656,
+  "reconciled_categories": {
+    "EXACT_DUPLICATE": 420,
+    "NEAR_DUPLICATE": 615,
+    "SEMANTIC_OVERLAP": 1120,
+    "COMPLEMENTARY_SKILLS": 310,
+    "PARENT_CHILD_SPECIALIZATION": 150,
+    "DIFFERENT_ECOSYSTEM": 41
+  },
+  "advisory_rule": "Semantic overlaps are preserved with full provenance during extraction; no automatic destructive merging is applied."
+}

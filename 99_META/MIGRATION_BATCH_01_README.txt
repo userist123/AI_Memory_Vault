@@ -1,0 +1,1 @@
+Inventory will continue from the canonical `main` tree. This marker exists only to record the batch boundary and will be consolidated later.

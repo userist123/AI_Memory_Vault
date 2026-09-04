@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:web-quality-skills:best-practices",
+  "bundle_instance_id": "inst:web-quality-skills:skills/best-practices",
+  "canonical_repository_id": "repo:web-quality-skills",
+  "canonical_source_id": "web-quality-skills",
+  "source_url": "https://github.com/addyosmani/web-quality-skills",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/best-practices/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills/skills/best-practices/SKILL.md",
+  "content_hash": "74b4a0659b7a000f0717644f5ae8dc525da039086c7ae0c145a3a5b7e6ef9c39",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/best-practices"
+}

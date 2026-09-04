@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:acquire-codebase-knowledge",
+  "bundle_instance_id": "inst:awesome-copilot:skills/acquire-codebase-knowledge",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/acquire-codebase-knowledge/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/acquire-codebase-knowledge/SKILL.md",
+  "content_hash": "01ce87c31b6779c39a32e5e63240637413a45122cddacd34c26a3d4b11e1ff52",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 11,
+  "target_installed_path": ".agents/skills/acquire-codebase-knowledge"
+}

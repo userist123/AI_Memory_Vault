@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mkdocs-translations",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mkdocs-translations",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mkdocs-translations/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mkdocs-translations/SKILL.md",
+  "content_hash": "37a8502abbfb68dd2f242de124ecd824442a4415f0aa11627981e6d89fe9cd53",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mkdocs-translations"
+}

@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mcp-create-declarative-agent",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mcp-create-declarative-agent",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-create-declarative-agent/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-create-declarative-agent/SKILL.md",
+  "content_hash": "ba4e3b573dd56bcc55b4b5a1583ef31ad91db08025f9eb4e6794c85692da5db5",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mcp-create-declarative-agent"
+}

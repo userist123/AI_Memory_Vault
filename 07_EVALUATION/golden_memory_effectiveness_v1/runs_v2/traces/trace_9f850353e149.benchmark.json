@@ -1,0 +1,70 @@
+{
+  "trace_id": "trace_9f850353e149",
+  "agent_id": "golden-agent",
+  "agent_role": "synthesizer",
+  "task_id": "G07",
+  "started_at": "2026-09-03T21:52:06.104730+00:00",
+  "finished_at": "2026-09-03T21:52:07.130083+00:00",
+  "memory": {
+    "query": "",
+    "memory_ids": [],
+    "retrieval_count": 0,
+    "relevance_scores": {},
+    "context_hash": "a84d281202085dc351771bec2964cfba775a6ba5a84d1aec5e50aed88c4ce269"
+  },
+  "model": {
+    "provider_mode": "local",
+    "provider_name": "local",
+    "model_name": "qwen2.5-coder:3b",
+    "request_started_at": "2026-09-03T21:52:06.105009+00:00",
+    "response_finished_at": "2026-09-03T21:52:06.773572+00:00",
+    "latency_ms": 668.56,
+    "response_status": "success",
+    "response_text": "{\n  \"actions\": [\n    {\n      \"action\": \"write_file\",\n      \"path\": \"solution.py\",\n      \"content\": \"def has_provenance(note):\\n    if 'source' in note and 'sha256' in note:\\n        return True\\n    else:\\n        return False\\n\"\n    }\n  ]\n}",
+    "error_details": null
+  },
+  "actions": [
+    {
+      "action_type": "write_file",
+      "validated": true,
+      "execution_status": "validated"
+    }
+  ],
+  "execution": {
+    "commands": [],
+    "stdout": "",
+    "stderr": "",
+    "exit_codes": []
+  },
+  "workspace": {
+    "files_created": [
+      "solution.py"
+    ],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "verification": {
+    "command": "python -m pytest test_task.py -q",
+    "stdout": ".                                                                        [100%]\n1 passed in 0.02s\n",
+    "stderr": "",
+    "exit_code": 0,
+    "status": "passed"
+  },
+  "experiment_id": "golden_memory_effectiveness_v1",
+  "run_id": "G07-3-CONTROL",
+  "condition": "CONTROL",
+  "task_seed": 20260911,
+  "run_seed": 20261211,
+  "condition_order": [
+    "FULL_CONTEXT_ORACLE",
+    "CONTROL",
+    "TREATMENT"
+  ],
+  "git_commit": "dab6bcc9303c23f9aa2c53c06bcfc06b69275deb",
+  "retrieval_enabled": false,
+  "provider": "qwen2.5-coder:3b",
+  "model_name": "qwen2.5-coder:3b",
+  "model_request_hash": "3c08d97daf1a39fb164c3d29e46d53e7d2fabb35a3a15935a102b2b41c513263",
+  "model_response_hash": "875d8a18443c932beb9ec3ebbf4e949ceb3bdf2b065c42e81bbe1e06eaac73f0",
+  "final_success": true
+}

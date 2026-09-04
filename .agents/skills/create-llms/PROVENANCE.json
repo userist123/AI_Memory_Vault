@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:create-llms",
+  "bundle_instance_id": "inst:awesome-copilot:skills/create-llms",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-llms/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/create-llms/SKILL.md",
+  "content_hash": "8d7e31c6e1b9103cb17df0087b8006db06f9cfeb691e2bdbdce9c2b87fe837dc",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/create-llms"
+}

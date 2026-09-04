@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:mcp-security-audit",
+  "bundle_instance_id": "inst:awesome-copilot:skills/mcp-security-audit",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-security-audit/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/mcp-security-audit/SKILL.md",
+  "content_hash": "4d0e9f538cc6d18d7e374297a31e51e5efa38d1c8274a7e7e38e7149a1865827",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/mcp-security-audit"
+}

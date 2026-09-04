@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:corporate",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/corporate",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/corporate/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/corporate/SKILL.md",
+  "content_hash": "2e4acf8cb18622e121b44d0b010c6c539dccd9cecc06b9c8c8767bee40f928ae",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/corporate"
+}

@@ -1,0 +1,4 @@
+title = "AI Memory Vault secret scanning"
+
+[extend]
+useDefault = true

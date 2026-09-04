@@ -1,0 +1,1107 @@
+[
+  {
+    "source_id": "awesome-copilot",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 429 SKILL.md files"
+    ],
+    "file_count": 2744,
+    "byte_count": 102415374,
+    "mb": 97.67,
+    "skill_md_count": 429
+  },
+  {
+    "source_id": "data-viz-design",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/data-viz-design",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 1,
+    "byte_count": 2604,
+    "mb": 0.0,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "design-system-foundation",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/design-system-foundation",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 1,
+    "byte_count": 2782,
+    "mb": 0.0,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "garden-skills",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 11 SKILL.md files"
+    ],
+    "file_count": 605,
+    "byte_count": 19684688,
+    "mb": 18.77,
+    "skill_md_count": 11
+  },
+  {
+    "source_id": "landing-page-design",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/landing-page-design",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 1,
+    "byte_count": 2689,
+    "mb": 0.0,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "motion-design",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/motion-design",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 1,
+    "byte_count": 2491,
+    "mb": 0.0,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "ui-sensei",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/ui-sensei",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 29,
+    "byte_count": 1776139,
+    "mb": 1.69,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "ui-ux-pro-max",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/ui-ux-pro-max",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 2,
+    "byte_count": 5152,
+    "mb": 0.0,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "ui-ux-review",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/ui-ux-review",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 1,
+    "byte_count": 2500,
+    "mb": 0.0,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "web-design",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/web-design",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 123,
+    "byte_count": 2515937,
+    "mb": 2.4,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "web-quality-skills",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 10 SKILL.md files"
+    ],
+    "file_count": 30,
+    "byte_count": 185317,
+    "mb": 0.18,
+    "skill_md_count": 10
+  },
+  {
+    "source_id": "web-quality-skills-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/web-quality-skills-main",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 6 SKILL.md files"
+    ],
+    "file_count": 31,
+    "byte_count": 162030,
+    "mb": 0.15,
+    "skill_md_count": 6
+  },
+  {
+    "source_id": "web-design-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/web-design-main",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 123,
+    "byte_count": 2482918,
+    "mb": 2.37,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "ui-sensei-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/ui-sensei-main",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 29,
+    "byte_count": 1771379,
+    "mb": 1.69,
+    "skill_md_count": 1
+  },
+  {
+    "source_id": "Tawasal-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Tawasal-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 153,
+    "byte_count": 10805247,
+    "mb": 10.3,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "system-design-primer-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/system-design-primer-master",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 139,
+    "byte_count": 13584837,
+    "mb": 12.96,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "system-design-101-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/system-design-101-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 424,
+    "byte_count": 1739163,
+    "mb": 1.66,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "subtrackr-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/subtrackr-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 23,
+    "byte_count": 96201,
+    "mb": 0.09,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Subnix-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Subnix-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 29,
+    "byte_count": 145249,
+    "mb": 0.14,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "sonic-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/sonic-master",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 278,
+    "byte_count": 1365466,
+    "mb": 1.3,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "soko-treasures-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/soko-treasures-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 348,
+    "byte_count": 11818785,
+    "mb": 11.27,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Second-Hand-Seller-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Second-Hand-Seller-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 57,
+    "byte_count": 2010394,
+    "mb": 1.92,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Restaurant-Webapp-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Restaurant-Webapp-master",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 68,
+    "byte_count": 1869135,
+    "mb": 1.78,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "realworld-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/realworld-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 330,
+    "byte_count": 2533851,
+    "mb": 2.42,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "RealTime-Chat-API-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/RealTime-Chat-API-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 24,
+    "byte_count": 209861,
+    "mb": 0.2,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "PulseAPI-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/PulseAPI-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 160,
+    "byte_count": 764692,
+    "mb": 0.73,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "prosto-platform-develop",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/prosto-platform-develop",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 931,
+    "byte_count": 2573776,
+    "mb": 2.45,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "programming",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/programming",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 32 SKILL.md files"
+    ],
+    "file_count": 64,
+    "byte_count": 52196,
+    "mb": 0.05,
+    "skill_md_count": 32
+  },
+  {
+    "source_id": "portfolio-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/portfolio-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 52,
+    "byte_count": 3058588,
+    "mb": 2.92,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "pocketbase-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-master",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 923,
+    "byte_count": 15991282,
+    "mb": 15.25,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "pocketbase-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/pocketbase-main",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 11,
+    "byte_count": 14830,
+    "mb": 0.01,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Placement--Management--System-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Placement--Management--System-master",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 490,
+    "byte_count": 37354087,
+    "mb": 35.62,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "parse-server-alpha",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/parse-server-alpha",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 485,
+    "byte_count": 8318609,
+    "mb": 7.93,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "online-shop-stylify-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/online-shop-stylify-main",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 274,
+    "byte_count": 1130746,
+    "mb": 1.08,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "node-express-backend-template-for-intermediate-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/node-express-backend-template-for-intermediate-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 38,
+    "byte_count": 286197,
+    "mb": 0.27,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "nhost-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/nhost-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 18364,
+    "byte_count": 681392301,
+    "mb": 649.83,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "NaloMedQuery-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/NaloMedQuery-main",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 65,
+    "byte_count": 199558,
+    "mb": 0.19,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "MyCRM-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/MyCRM-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 80,
+    "byte_count": 778168,
+    "mb": 0.74,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Login-Sign-up-System-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Login-Sign-up-System-master",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 26,
+    "byte_count": 1898362,
+    "mb": 1.81,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "lewp-rs-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/lewp-rs-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 318,
+    "byte_count": 1231359,
+    "mb": 1.17,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "kawerify-transfer-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/kawerify-transfer-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 33,
+    "byte_count": 186140,
+    "mb": 0.18,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Intelligent-Document-Processing-System-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Intelligent-Document-Processing-System-main",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 34,
+    "byte_count": 29130,
+    "mb": 0.03,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Hotel-Reservation-System-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Hotel-Reservation-System-master",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 10,
+    "byte_count": 16284,
+    "mb": 0.02,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Hello-Rails-Backend-dev",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Hello-Rails-Backend-dev",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 87,
+    "byte_count": 54300,
+    "mb": 0.05,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Hello-Python-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Hello-Python-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 47,
+    "byte_count": 5201817,
+    "mb": 4.96,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "GreeverBackend-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/GreeverBackend-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 33,
+    "byte_count": 530537,
+    "mb": 0.51,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "globio-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/globio-main",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 2,
+    "byte_count": 6113,
+    "mb": 0.01,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "GitHubDaily-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/GitHubDaily-master",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 19,
+    "byte_count": 4124985,
+    "mb": 3.93,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "github-awesome-copilot",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/github-awesome-copilot",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 230 SKILL.md files"
+    ],
+    "file_count": 460,
+    "byte_count": 1045893,
+    "mb": 1.0,
+    "skill_md_count": 230
+  },
+  {
+    "source_id": "garden-skills-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/garden-skills-main",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 593,
+    "byte_count": 19509526,
+    "mb": 18.61,
+    "skill_md_count": 5
+  },
+  {
+    "source_id": "Full-Stack-Web-Development-Technologies-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Full-Stack-Web-Development-Technologies-master",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 2,
+    "byte_count": 35347,
+    "mb": 0.03,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "flask_python-auth-system-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/flask_python-auth-system-main",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 3,
+    "byte_count": 5505,
+    "mb": 0.01,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "express-typescript-prisma7-neon-boilerplate-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/express-typescript-prisma7-neon-boilerplate-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 13,
+    "byte_count": 133811,
+    "mb": 0.13,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "domain-driven-hexagon-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/domain-driven-hexagon-master",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 123,
+    "byte_count": 1483059,
+    "mb": 1.41,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "dokploy-canary",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/dokploy-canary",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 1525,
+    "byte_count": 38768714,
+    "mb": 36.97,
+    "skill_md_count": 2
+  },
+  {
+    "source_id": "Dev-Mind-Backend-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Dev-Mind-Backend-master",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 22,
+    "byte_count": 215386,
+    "mb": 0.21,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "design",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/design",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 4,
+    "byte_count": 10790,
+    "mb": 0.01,
+    "skill_md_count": 4
+  },
+  {
+    "source_id": "dbvw-backend-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/dbvw-backend-master",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 1630,
+    "byte_count": 29408454,
+    "mb": 28.05,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "coding",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/coding",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 5,
+    "byte_count": 14160,
+    "mb": 0.01,
+    "skill_md_count": 5
+  },
+  {
+    "source_id": "codefather-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/codefather-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 1055,
+    "byte_count": 10292786,
+    "mb": 9.82,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "classmanager-student-teacher-portal-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/classmanager-student-teacher-portal-master",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 87,
+    "byte_count": 6072506,
+    "mb": 5.79,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "chatbot-template-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/chatbot-template-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 112,
+    "byte_count": 5832596,
+    "mb": 5.56,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "bilemo-symfony-rest-api-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/bilemo-symfony-rest-api-main",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 62,
+    "byte_count": 4095688,
+    "mb": 3.91,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Balsm-API-DotNet-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Balsm-API-DotNet-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 129,
+    "byte_count": 313150,
+    "mb": 0.3,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "BackendSaaS.Api-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/BackendSaaS.Api-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 13,
+    "byte_count": 16652,
+    "mb": 0.02,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "Backend-SistemaMedico-main (1)",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/Backend-SistemaMedico-main (1)",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 107,
+    "byte_count": 211775,
+    "mb": 0.2,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "backend-reference-skills",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/backend-reference-skills",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 13 SKILL.md files"
+    ],
+    "file_count": 26,
+    "byte_count": 18525,
+    "mb": 0.02,
+    "skill_md_count": 13
+  },
+  {
+    "source_id": "backend",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/backend",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 13 SKILL.md files"
+    ],
+    "file_count": 26,
+    "byte_count": 18031,
+    "mb": 0.02,
+    "skill_md_count": 13
+  },
+  {
+    "source_id": "awesome-software-architecture-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-software-architecture-main",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 314,
+    "byte_count": 1236060,
+    "mb": 1.18,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "awesome-security-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-security-master",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 3,
+    "byte_count": 78290,
+    "mb": 0.07,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "awesome-scalability-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-scalability-master",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 10,
+    "byte_count": 148734,
+    "mb": 0.14,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "awesome-rust-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-rust-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 11,
+    "byte_count": 505294,
+    "mb": 0.48,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "awesome-python-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-master",
+    "classification": "INDIVIDUAL_SKILL",
+    "confidence": 0.8,
+    "evidence": [
+      "Single skill directory structure"
+    ],
+    "file_count": 43,
+    "byte_count": 581599,
+    "mb": 0.55,
+    "skill_md_count": 3
+  },
+  {
+    "source_id": "awesome-python-backend-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-python-backend-main",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 5,
+    "byte_count": 49880,
+    "mb": 0.05,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "awesome-design-skills-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 67 SKILL.md files"
+    ],
+    "file_count": 215,
+    "byte_count": 11076884,
+    "mb": 10.56,
+    "skill_md_count": 67
+  },
+  {
+    "source_id": "awesome-copilot-main (1)",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot-main (1)",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 433 SKILL.md files"
+    ],
+    "file_count": 2832,
+    "byte_count": 110234074,
+    "mb": 105.13,
+    "skill_md_count": 433
+  },
+  {
+    "source_id": "awesome-copilot-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot-main",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 433 SKILL.md files"
+    ],
+    "file_count": 2832,
+    "byte_count": 110234074,
+    "mb": 105.13,
+    "skill_md_count": 433
+  },
+  {
+    "source_id": "awesome-claude-skills-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-claude-skills-master",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 864 SKILL.md files"
+    ],
+    "file_count": 1142,
+    "byte_count": 11643785,
+    "mb": 11.1,
+    "skill_md_count": 864
+  },
+  {
+    "source_id": "awesome-cheatsheets-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-cheatsheets-master",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 63,
+    "byte_count": 5688333,
+    "mb": 5.42,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "awesome-agent-skills-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/awesome-agent-skills-main",
+    "classification": "KNOWLEDGE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Curated knowledge / cheatsheets / architecture guides"
+    ],
+    "file_count": 4,
+    "byte_count": 254486,
+    "mb": 0.24,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "aspire-samples-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/aspire-samples-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 1038,
+    "byte_count": 73211587,
+    "mb": 69.82,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "appwrite-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/appwrite-main",
+    "classification": "SOFTWARE_PROJECT",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains runtime package manifest without skill definitions"
+    ],
+    "file_count": 3164,
+    "byte_count": 107120430,
+    "mb": 102.16,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "api_literalura-master",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/api_literalura-master",
+    "classification": "COMPLETE_REPOSITORY",
+    "confidence": 0.8,
+    "evidence": [
+      "Standard repository with README and LICENSE"
+    ],
+    "file_count": 20,
+    "byte_count": 101525,
+    "mb": 0.1,
+    "skill_md_count": 0
+  },
+  {
+    "source_id": "agentic-awesome-skills-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/agentic-awesome-skills-main",
+    "classification": "SKILL_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Contains 6634 SKILL.md files"
+    ],
+    "file_count": 20816,
+    "byte_count": 276224881,
+    "mb": 263.43,
+    "skill_md_count": 6634
+  },
+  {
+    "source_id": "100-days-of-code-in-python-main",
+    "root_path": "06_INBOX/RAW_IMPORTS/skills/100-days-of-code-in-python-main",
+    "classification": "RESOURCE_COLLECTION",
+    "confidence": 0.8,
+    "evidence": [
+      "Collection of reference assets / templates"
+    ],
+    "file_count": 17,
+    "byte_count": 44930,
+    "mb": 0.04,
+    "skill_md_count": 0
+  }
+]

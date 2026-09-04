@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_007",
+  "runtime_case_id": "rec_007",
+  "skill_id": "skill:agentic-awesome-skills-main:html-injection-testing",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:html-injection-testing"
+    ],
+    "skill_hash": "043e5abdb65dcbe5568473822d73eebc30120638071ea28f355d6d45fb38e919",
+    "skill_in_context": true,
+    "context_hash": "fd0ef67fc2467a3e6e89f9987cf62ad2b4e7c3a07218b7ad27abad7d5e3e0d92"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.004449+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.004458+00:00",
+  "commands": [
+    "eval_treatment --skill html-injection-testing --task task_html-injection-testing"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:html-injection-testing",
+      "hash": "043e5abdb65dcbe5568473822d73eebc30120638071ea28f355d6d45fb38e919"
+    }
+  ],
+  "files_created": [
+    "html-injection-testing_spec.json",
+    "html-injection-testing_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill html-injection-testing loaded (hash 043e5abd). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_html_injection_testing",
+    "command": "python -m verify_treatment rec_007 --schema html-injection-testing",
+    "exit_code": 0,
+    "passed": true,
+    "score": 86,
+    "evidence": "Delivered verified contract matching html-injection-testing specifications."
+  },
+  "redactions": []
+}

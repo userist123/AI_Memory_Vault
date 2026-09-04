@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-design-skills-main:doodle",
+  "bundle_instance_id": "inst:awesome-design-skills-main:awesome-design-skills-main/skills/doodle",
+  "canonical_repository_id": "repo:awesome-design-skills",
+  "canonical_source_id": "awesome-design-skills-main",
+  "source_url": "https://github.com/local",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/doodle/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-design-skills-main/awesome-design-skills-main/skills/doodle/SKILL.md",
+  "content_hash": "25b624dde85ac765b67e41e9e40dd6601c5087374a1af73913840cfaeff2382a",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 2,
+  "target_installed_path": ".agents/skills/doodle"
+}

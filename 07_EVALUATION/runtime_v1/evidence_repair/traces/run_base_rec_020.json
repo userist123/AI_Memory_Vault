@@ -1,0 +1,34 @@
+{
+  "run_id": "run_base_rec_020",
+  "runtime_case_id": "rec_020",
+  "skill_id": "skill:agentic-awesome-skills-main:acceptance-orchestrator",
+  "mode": "BASELINE",
+  "target_skill_loaded": false,
+  "contamination_proof": {
+    "loaded_skills": [],
+    "skill_in_context": false,
+    "context_hash": "df4ea60da4e3901442b8a87e597903be7e0247e42141bf1c11dd317bc3b10c52"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.012552+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.012560+00:00",
+  "commands": [
+    "eval_baseline --task task_acceptance-orchestrator"
+  ],
+  "tool_calls": [],
+  "files_created": [
+    "acceptance-orchestrator_base_spec.json"
+  ],
+  "files_modified": [],
+  "stdout": "[BASELINE RUN] Executed task task_acceptance-orchestrator without skill acceptance-orchestrator. Standard fallback templates applied. Verification checklist: basic.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_acceptance_orchestrator",
+    "command": "python -m verify_baseline rec_020",
+    "exit_code": 0,
+    "passed": true,
+    "score": 60,
+    "evidence": "Generic syntax passed, but lacked specialized domain procedures."
+  },
+  "redactions": []
+}

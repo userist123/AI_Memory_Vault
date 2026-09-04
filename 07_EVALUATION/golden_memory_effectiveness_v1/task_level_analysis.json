@@ -1,0 +1,212 @@
+[
+  {
+    "task_id": "G01",
+    "category": "retrieval",
+    "control": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "treatment_vs_control": 1,
+    "treatment_vs_oracle": -1
+  },
+  {
+    "task_id": "G02",
+    "category": "memory_application",
+    "control": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "treatment_vs_control": -1,
+    "treatment_vs_oracle": -1
+  },
+  {
+    "task_id": "G03",
+    "category": "security/policy",
+    "control": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment_vs_control": 0,
+    "treatment_vs_oracle": 1
+  },
+  {
+    "task_id": "G04",
+    "category": "resilience",
+    "control": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "treatment_vs_control": 1,
+    "treatment_vs_oracle": 0
+  },
+  {
+    "task_id": "G05",
+    "category": "caching/storage",
+    "control": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "treatment_vs_control": -2,
+    "treatment_vs_oracle": -1
+  },
+  {
+    "task_id": "G06",
+    "category": "orchestration",
+    "control": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment_vs_control": 2,
+    "treatment_vs_oracle": 2
+  },
+  {
+    "task_id": "G07",
+    "category": "provenance",
+    "control": {
+      "executions": 3,
+      "successes": 3,
+      "failures": 0
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment_vs_control": -1,
+    "treatment_vs_oracle": 1
+  },
+  {
+    "task_id": "G08",
+    "category": "temporal reasoning",
+    "control": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 0,
+      "failures": 3
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment_vs_control": -2,
+    "treatment_vs_oracle": -1
+  },
+  {
+    "task_id": "G09",
+    "category": "debugging",
+    "control": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment_vs_control": 1,
+    "treatment_vs_oracle": 1
+  },
+  {
+    "task_id": "G10",
+    "category": "implementation/refactoring",
+    "control": {
+      "executions": 3,
+      "successes": 1,
+      "failures": 2
+    },
+    "treatment": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "full_context_oracle": {
+      "executions": 3,
+      "successes": 2,
+      "failures": 1
+    },
+    "treatment_vs_control": 1,
+    "treatment_vs_oracle": 0
+  }
+]

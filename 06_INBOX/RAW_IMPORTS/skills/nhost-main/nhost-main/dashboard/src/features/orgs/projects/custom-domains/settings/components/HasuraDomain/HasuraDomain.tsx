@@ -1,0 +1,194 @@
+import { yupResolver } from '@hookform/resolvers/yup';
+import { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import * as Yup from 'yup';
+import { ApplyLocalSettingsDialog } from '@/components/common/ApplyLocalSettingsDialog';
+import { useDialog } from '@/components/common/DialogProvider';
+import { Form } from '@/components/form/Form';
+import { FormInput } from '@/components/form/FormInput';
+import {
+  SettingsCard,
+  SettingsCardContent,
+  SettingsCardFooter,
+  SettingsCardHeader,
+} from '@/components/layout/SettingsCard';
+import { ButtonWithLoading } from '@/components/ui/v3/button';
+import { useIsPlatform } from '@/features/orgs/projects/common/hooks/useIsPlatform';
+import { VerifyDomain } from '@/features/orgs/projects/custom-domains/settings/components/VerifyDomain';
+import { useLocalMimirClient } from '@/features/orgs/projects/hooks/useLocalMimirClient';
+import { useProject } from '@/features/orgs/projects/hooks/useProject';
+import { execPromiseWithErrorToast } from '@/features/orgs/utils/execPromiseWithErrorToast';
+import type { ConfigIngressUpdateInput } from '@/generated/graphql';
+import {
+  useGetHasuraSettingsQuery,
+  useUpdateConfigMutation,
+} from '@/generated/graphql';
+import { useTrackEvent } from '@/hooks/useTrackEvent';
+import { isEmptyValue, isNotEmptyValue } from '@/lib/utils';
+
+const validationSchema = Yup.object({
+  hasura_fqdn: Yup.string(),
+});
+
+export type HasuraDomainFormValues = Yup.InferType<typeof validationSchema>;
+
+export default function HasuraDomain() {
+  const { openDialog } = useDialog();
+  const isPlatform = useIsPlatform();
+  const localMimirClient = useLocalMimirClient();
+  const track = useTrackEvent();
+  const [isVerified, setIsVerified] = useState(false);
+
+  const { project, refetch: refetchProject } = useProject();
+
+  const [updateConfig] = useUpdateConfigMutation({
+    ...(!isPlatform ? { client: localMimirClient } : {}),
+  });
+
+  const form = useForm<Yup.InferType<typeof validationSchema>>({
+    reValidateMode: 'onSubmit',
+    defaultValues: { hasura_fqdn: '' },
+    resolver: yupResolver(validationSchema),
+  });
+
+  const { data, loading, error } = useGetHasuraSettingsQuery({
+    variables: {
+      appId: project?.id,
+    },
+    ...(!isPlatform ? { client: localMimirClient } : {}),
+  });
+
+  const { networking } = data?.config?.hasura?.resources || {};
+  const initialValue = networking?.ingresses?.[0]?.fqdn?.[0];
+
+  useEffect(() => {
+    if (!loading && data) {
+      form.reset({ hasura_fqdn: initialValue });
+    }
+  }, [data, loading, form, initialValue]);
+
+  const { formState, watch } = form;
+  const isDirty = Object.keys(formState.dirtyFields).length > 0;
+
+  const hasura_fqdn = watch('hasura_fqdn');
+
+  const submitButtonDisabled = (() => {
+    if (!isPlatform) {
+      return !isDirty;
+    }
+
+    if (isEmptyValue(hasura_fqdn) && isDirty) {
+      return false;
+    }
+
+    return !isDirty || !isVerified;
+  })();
+
+  if (error) {
+    throw error;
+  }
+
+  async function handleSubmit(formValues: HasuraDomainFormValues) {
+    let ingresses: ConfigIngressUpdateInput[] | null;
+    let successMessage = '';
+
+    if (isNotEmptyValue(formValues.hasura_fqdn)) {
+      ingresses = [{ fqdn: [formValues.hasura_fqdn] }];
+      successMessage = 'Hasura domain has been updated successfully.';
+    } else {
+      ingresses = null;
+      successMessage = 'Custom Hasura domain has been removed successfully.';
+    }
+
+    const updateConfigPromise = updateConfig({
+      variables: {
+        appId: project!.id,
+        config: {
+          hasura: {
+            resources: {
+              networking: {
+                ingresses,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    await execPromiseWithErrorToast(
+      async () => {
+        await updateConfigPromise;
+        if (!initialValue && isNotEmptyValue(formValues.hasura_fqdn)) {
+          track('Custom Domain Added', { service: 'hasura' });
+        }
+        form.reset(formValues);
+        await refetchProject();
+
+        if (!isPlatform) {
+          openDialog({
+            title: 'Apply your changes',
+            component: <ApplyLocalSettingsDialog />,
+            props: {
+              PaperProps: {
+                className: 'max-w-2xl',
+              },
+            },
+          });
+        }
+      },
+      {
+        loadingMessage: 'Hasura domain is being updated...',
+        successMessage,
+        errorMessage:
+          'An error occurred while trying to update the Hasura domain.',
+      },
+    );
+  }
+
+  return (
+    <FormProvider {...form}>
+      <Form onSubmit={handleSubmit}>
+        <SettingsCard>
+          <SettingsCardHeader
+            title="Hasura Domain"
+            description="Enter below your custom domain for the Hasura/GraphQL service."
+          />
+
+          <SettingsCardContent className="gap-x-4 gap-y-4 lg:grid-cols-5">
+            <FormInput
+              control={form.control}
+              name="hasura_fqdn"
+              containerClassName="col-span-5 lg:col-span-2"
+              placeholder="graphql.mydomain.dev"
+              onChange={() => {
+                if (isVerified) {
+                  setIsVerified(false);
+                }
+              }}
+            />
+            <div className="col-span-5 row-start-2">
+              <VerifyDomain
+                recordType="CNAME"
+                hostname={hasura_fqdn}
+                value={`lb.${project?.region.name}.${project?.region.domain}.`}
+                onHostNameVerified={() => setIsVerified(true)}
+                saveEnabled={!submitButtonDisabled}
+              />
+            </div>
+          </SettingsCardContent>
+
+          <SettingsCardFooter>
+            <ButtonWithLoading
+              type="submit"
+              disabled={submitButtonDisabled}
+              loading={formState.isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Save
+            </ButtonWithLoading>
+          </SettingsCardFooter>
+        </SettingsCard>
+      </Form>
+    </FormProvider>
+  );
+}

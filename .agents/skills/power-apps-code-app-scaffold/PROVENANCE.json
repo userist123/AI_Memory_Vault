@@ -1,0 +1,14 @@
+{
+  "skill_id": "skill:awesome-copilot:power-apps-code-app-scaffold",
+  "bundle_instance_id": "inst:awesome-copilot:skills/power-apps-code-app-scaffold",
+  "canonical_repository_id": "repo:awesome-copilot",
+  "canonical_source_id": "awesome-copilot",
+  "source_url": "https://github.com/github/awesome-copilot",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/power-apps-code-app-scaffold/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/awesome-copilot/skills/power-apps-code-app-scaffold/SKILL.md",
+  "content_hash": "714012d4c26af211deb2e3eab1f3c52ed67ff227e1565503a443c20936787d9f",
+  "extraction_commit": "adf0776995c5a77a1124cf9d7bb38a77d637c80e",
+  "extraction_status": "INSTALLED",
+  "bundle_files_count": 1,
+  "target_installed_path": ".agents/skills/power-apps-code-app-scaffold"
+}

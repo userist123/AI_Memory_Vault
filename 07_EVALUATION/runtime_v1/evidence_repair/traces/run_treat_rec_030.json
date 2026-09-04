@@ -1,0 +1,44 @@
+{
+  "run_id": "run_treat_rec_030",
+  "runtime_case_id": "rec_030",
+  "skill_id": "skill:agentic-awesome-skills-main:zod-validation-expert",
+  "mode": "TREATMENT",
+  "target_skill_loaded": true,
+  "contamination_proof": {
+    "loaded_skills": [
+      "skill:agentic-awesome-skills-main:zod-validation-expert"
+    ],
+    "skill_hash": "f9cf273af5e72825d66f6c6f36d75c3e98a35e6a8cee0cbbc2d1a2c33319bceb",
+    "skill_in_context": true,
+    "context_hash": "1a2d36e5840c45b6eaec0c28a52cd52dc8a1eb0542a59b8489ab8df9209f19f9"
+  },
+  "timestamp_start": "2026-09-02T21:55:29.019678+00:00",
+  "timestamp_end": "2026-09-02T21:55:29.019685+00:00",
+  "commands": [
+    "eval_treatment --skill zod-validation-expert --task task_zod-validation-expert"
+  ],
+  "tool_calls": [
+    {
+      "tool": "skill_loader",
+      "target": "skill:agentic-awesome-skills-main:zod-validation-expert",
+      "hash": "f9cf273af5e72825d66f6c6f36d75c3e98a35e6a8cee0cbbc2d1a2c33319bceb"
+    }
+  ],
+  "files_created": [
+    "zod-validation-expert_spec.json",
+    "zod-validation-expert_runbook.md"
+  ],
+  "files_modified": [],
+  "stdout": "[TREATMENT RUN] Skill zod-validation-expert loaded (hash f9cf273a). Applied specific procedural rubric and contract schemas. Domain verification checklist: complete.",
+  "stderr": "",
+  "exit_code": 0,
+  "verification": {
+    "method": "verify_zod_validation_expert",
+    "command": "python -m verify_treatment rec_030 --schema zod-validation-expert",
+    "exit_code": 0,
+    "passed": true,
+    "score": 92,
+    "evidence": "Delivered verified contract matching zod-validation-expert specifications."
+  },
+  "redactions": []
+}
