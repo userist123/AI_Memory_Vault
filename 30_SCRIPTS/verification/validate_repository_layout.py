@@ -48,7 +48,11 @@ def validate(paths: Iterable[str], root: Path | None = None) -> list[str]:
         for path in members:
             rel = path[len(prefix):]
             if "/" not in rel and rel not in ROOT_FILE_ALLOWLIST:
-                errors.append(f"NUMBERED_ROOT_DIRECT_FILE:{path}")
+                # Direct files are allowed for concise contracts, indexes,
+                # configuration and reports; executable implementation is not.
+                suffix = Path(rel).suffix.lower()
+                if suffix in {".py", ".ps1", ".sh", ".exe", ".dll", ".so", ".bat", ".cmd"}:
+                    errors.append(f"NUMBERED_ROOT_DIRECT_EXECUTABLE:{path}")
 
     for path in paths:
         parts = path.split("/")
