@@ -1,8 +1,0 @@
-- gitHub URL:
-   Lien git vers le projet Bilemo https://github.com/Mike031289/bilemo-symfony-rest-api.git
-
-- Lien vers la documentation de l'API Bilemo :
-    https://127.0.0.1:8000/bilemob2bapi/doc
-
-- Symfony Insight badge URL:
-    Lien de vers le badge Platinum certifiant la qualité du code de ce projet Bilemo https://insight.symfony.com/projects/375c8b0d-b50e-4b1c-8db3-286e55ae5fc4/analyses/10

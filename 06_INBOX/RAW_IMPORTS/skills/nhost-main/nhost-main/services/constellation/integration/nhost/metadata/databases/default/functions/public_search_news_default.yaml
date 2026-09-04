@@ -1,6 +1,0 @@
-function:
-  name: search_news_default
-  schema: public
-permissions:
-  - role: public
-  - role: user

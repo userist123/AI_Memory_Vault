@@ -1,1 +1,0 @@
-CRASH: kriti: Ratio has zero denominator

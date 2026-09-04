@@ -1,4 +1,0 @@
-dist/
-platforms/*/nhost
-*.tgz
-node_modules/

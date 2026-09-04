@@ -1,5 +1,10 @@
-# 03 — Implementation
+# 03_IMPLEMENTATION
 
-Purpose: executable production code only.
-Allowed: packages, adapters, CLI, migrations required by runtime.
-Forbidden: tests, notebooks, benchmarks, raw data, secrets, generated output.
+Canonical home for executable product/runtime code.
+
+Rules:
+- Production implementation only; tests, reports, notebooks, raw imports and generated artifacts belong elsewhere.
+- Runtime packages live under `packages/`.
+- Product implementations live under `products/`.
+- Compatibility shims are temporary, minimal, and explicitly tracked.
+- Imports from `06_INBOX`, `40_EXPERIMENTS`, `50_ARTIFACTS`, and `80_ARCHIVE` are prohibited.

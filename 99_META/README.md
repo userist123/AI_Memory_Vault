@@ -1,11 +1,5 @@
-# 99_META — REPOSITORY METADATA
+# 99_META
 
-Scop: repository maps, migration logs, generated indexes și metadata operațională.
+Operational repository metadata only.
 
-Permise: rapoarte de migrare, hărți structurale, manifesturi și indexuri regenerate din surse canonice.
-
-Interzise: secrete, date brute, dump-uri și claims fără evidence.
-
-Trust: metadata; nu conferă authority și nu modifică lifecycle-ul memoriei.
-
-Validare: fiecare raport trebuie să indice SHA-ul exact, comanda, data UTC, platforma și evidence level.
+Current state lives under `migration_logs/`; structural inventories live under `repository_map/`; generated indexes belong under `generated_indexes/`. Historical migration notes are archived under `migration_logs/archive/` and are not operational instructions.

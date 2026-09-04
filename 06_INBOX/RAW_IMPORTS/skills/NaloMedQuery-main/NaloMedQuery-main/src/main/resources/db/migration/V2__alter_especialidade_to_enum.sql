@@ -1,7 +1,0 @@
-ALTER TABLE doctors
-MODIFY especialidade ENUM(
-    'ORTOPEDIA',
-    'CARDIOLOGIA',
-    'GINECOLOGIA',
-    'DERMATOLOGIA'
-) NOT NULL;

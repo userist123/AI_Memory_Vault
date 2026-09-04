@@ -1,0 +1,12 @@
+{
+  "schema_version": "R001.v1",
+  "source_path": "06_INBOX/RAW_IMPORTS",
+  "source_git_tree_sha": "0915f9f7b38f6af9b44adf3c46d5d3e63f2a7c01",
+  "retention": "MANIFEST_ONLY",
+  "payload_retained": false,
+  "reason": "untrusted third-party/raw import boundary",
+  "risk": ["dependency poisoning", "secret leakage", "unreviewed executable content"],
+  "disposition": "DELETE_FROM_TRACKING",
+  "local_owner_action": "retain only in controlled local evidence storage when audit-preservation is legally/operationally required",
+  "verification": "CI must fail if 06_INBOX contains tracked payload beyond README.md/.gitkeep"
+}
