@@ -1,0 +1,1 @@
+The repository will be consolidated into a small functional spine; redundant numbered roots are to be absorbed, not multiplied.
