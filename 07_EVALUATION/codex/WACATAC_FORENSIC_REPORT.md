@@ -85,3 +85,18 @@ is not possible from the current filesystem.
 
 Defender was not disabled, no exclusion was added, and no flagged content was
 executed.
+
+## Current filesystem recheck
+
+At recheck time, six surviving local files were readable as Markdown but had
+different current filesystem hashes from the historical/origin Git blobs,
+indicating local content or line-ending changes. Their current hashes were:
+
+- canonical `xss跨站脚本.md`: `67B784A7159B73D1ED18B41B2DF55C624725C8B6281A0F28B1F7F58F815B8B07`;
+- canonical `xss.md`: `149A8AF564913A0E36E6E263B1308E09A021141911B519338AED544720F200FD`;
+- RAW `path-traversal.md`: `E62147E431DC1767CE568D2363A09159A8F97BEBB5DB027F30358444076E547C`;
+- RAW `系统命令.md`: `A463E1D15DC807F48CB9D0B372E55894CF793A5FF6ADD13DE14535EEF5B2FE85`.
+
+The two canonical copies of each xss family had identical current hashes.
+All six had MIME `text/markdown`, no `MZ` signature at offset zero, and no
+embedded byte sequence `MZ`. This filesystem recheck was read-only.
