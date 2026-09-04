@@ -2,7 +2,7 @@
 type: coordination
 category: parallel-round
 status: active
-version: 1.0.0
+version: 1.0.1
 round_id: "R001"
 ---
 
@@ -10,11 +10,13 @@ round_id: "R001"
 
 ## Baseline
 
-The round baseline is the exact `main` SHA recorded at launch:
+The launch document was created while coordination commits were still being added. The authoritative R001 baseline is therefore the **current `main` SHA resolved immediately before agent startup**, not a hard-coded stale value.
 
-`9efe8ae79f3d01ba3a0719297f8da85bc18bd07f`
+At the latest manifest verification, `main` resolves to:
 
-All agents must independently resolve and record the actual `main` SHA before beginning. If `main` has moved, use the newly resolved SHA and record the mismatch rather than silently using this document's value.
+`2f4c8360acb00f40ea1b2bc7dd132873d8dea4e9`
+
+This value must be re-resolved by every agent before starting. If `main` has moved, that newly observed SHA becomes the actual round baseline and the mismatch must be recorded.
 
 ## Objective
 
