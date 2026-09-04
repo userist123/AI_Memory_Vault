@@ -2,7 +2,7 @@
 
 ## State provenance
 
-Base `main` before this state record: `92ec5118cf16c72bca31449b08e16aa2961b53a5`.
+Latest structural commit: `9810133769963fadac6336e7a5a060311ed4631d`.
 
 ## Completed structural batches
 
@@ -42,12 +42,19 @@ Base `main` before this state record: `92ec5118cf16c72bca31449b08e16aa2961b53a5`
    - `config/model_tiers.json` → `04_CONFIG/model_tiers.json`
    - `config/model_tiers.local.example.json` → `04_CONFIG/model_tiers.local.example.json`
 
+6. Consolidated operational/experiment scripts:
+   - `scripts/book_knowledge_consolidation.py` → `30_SCRIPTS/knowledge/book_knowledge_consolidation.py`
+   - `scripts/build_mesh_files.py` → `30_SCRIPTS/memory/build_mesh_files.py`
+   - `scripts/skill_ingestion.py` → `30_SCRIPTS/skills/skill_ingestion.py`
+   - `scripts/label_council_outcome.py` → `30_SCRIPTS/observability/label_council_outcome.py`
+   - `scripts/generate_b4_baseline.py` → `40_EXPERIMENTS/harnesses/generate_b4_baseline.py`
+   - `scripts/run_ablation_experiment.py` → `40_EXPERIMENTS/harnesses/run_ablation_experiment.py`
+
 ## Remaining non-spine roots requiring compatibility-aware treatment
 
 - `cognitive_core`
 - `memory_controller`
 - `tests`
-- `scripts`
 - `xau_kinetic`
 - `XAU_Kinetic.Desktop`
 - `XAU_Kinetic_Standalone`
@@ -56,11 +63,12 @@ Base `main` before this state record: `92ec5118cf16c72bca31449b08e16aa2961b53a5`
 - `.github`
 - `.obsidian`
 
-The runtime/package roots are intentionally not moved blindly. They require import/path compatibility inspection before relocation into `03_IMPLEMENTATION`, `20_TESTS`, `30_SCRIPTS`, `60_DEPLOYMENT`, or `70_INTEGRATIONS`.
+The runtime/package roots are intentionally not moved blindly. They require import/path compatibility inspection before relocation into `03_IMPLEMENTATION`, `20_TESTS`, `60_DEPLOYMENT`, or `70_INTEGRATIONS`.
 
 ## Root files requiring explicit policy review
 
 - `audit_log.jsonl` — large generated audit state; do not move/delete until retention and reproducibility policy is verified.
+- `test_audit_log.jsonl` — test fixture/audit data; retain until test-data retention and provenance are verified.
 - `Fără titlu*.base` — duplicate Obsidian artifacts; retain until provenance/reference check is complete.
 - `.env.example`, `pytest.ini`, `AGENTS.md`, `CLAUDE.md`, `README.md` — remain at root for tooling/discoverability until path references are normalized.
 
