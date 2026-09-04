@@ -76,7 +76,7 @@ def parse_frontmatter(text: str) -> dict[str, str]:
         if ":" not in line:
             continue
         k, v = line.split(":", 1)
-        data[k.strip()] = v.strip().strip('"\'')
+        data[k.strip()] = v.strip().strip('\"\'')
     return data
 
 
@@ -123,12 +123,12 @@ def write_json(path: Path, payload: object) -> None:
 
 
 def sync_registry(records: list[SkillRecord]) -> None:
-    write_json(REGISTRY, {"version": 1, "generated_by": "scripts/skill_ingestion.py", "skills": [asdict(r) for r in records]})
+    write_json(REGISTRY, {"version": 1, "generated_by": "30_SCRIPTS/skills/skill_ingestion.py", "skills": [asdict(r) for r in records]})
     routing: dict[str, list[str]] = {agent: [] for agent in AGENT_KEYWORDS}
     for record in records:
         for agent in record.compatible_agents:
             routing.setdefault(agent, []).append(record.skill_id)
-    write_json(ROUTING, {"version": 1, "generated_by": "scripts/skill_ingestion.py", "routing": routing})
+    write_json(ROUTING, {"version": 1, "generated_by": "30_SCRIPTS/skills/skill_ingestion.py", "routing": routing})
 
 
 def promote(records: list[SkillRecord], skill_ids: set[str], verified: bool) -> int:
