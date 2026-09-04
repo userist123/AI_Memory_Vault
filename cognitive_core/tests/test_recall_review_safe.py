@@ -5,7 +5,7 @@ class FakeStorage:
     def __init__(self, notes):
         self.notes = notes
 
-    def query(self, lifecycle=None):
+    def query(self, intent=None, lifecycle=None):
         if lifecycle == ["REVIEW"]:
             return [n.copy() for n in self.notes if n.get("lifecycle") == "REVIEW"]
         return [n.copy() for n in self.notes]
