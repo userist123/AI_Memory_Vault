@@ -63,6 +63,19 @@ def test_spreading_activation_decays_with_distance():
     assert result.get("mid", 0) > result.get("far", 0)
 
 
+def test_spreading_activation_respects_edge_weight():
+    graph_memory = MultiGraphMemory().build_from_notes([_note("seed")])
+    graph_memory.semantic.add_node("weak")
+    graph_memory.semantic.add_node("strong")
+    graph_memory.semantic.add_edge("seed", "weak", relation="semantic", weight=0.1)
+    graph_memory.semantic.add_edge("seed", "strong", relation="semantic", weight=0.9)
+
+    engine = SpreadingActivationEngine(graph_memory, decay=0.5, max_hops=1)
+    result = engine.activate({"seed": 1.0})
+
+    assert result["strong"] > result["weak"]
+
+
 def test_rank_fuses_base_scores_with_activation():
     notes = [_note("a", tags=["x"]), _note("b", tags=["x"])]
     graph_memory = MultiGraphMemory().build_from_notes(notes)

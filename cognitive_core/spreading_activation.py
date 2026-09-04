@@ -34,8 +34,11 @@ class SpreadingActivationEngine:
                 continue
             for neighbor, attrs in graph.neighbors(node_id):
                 weight = float(attrs.get("weight", 1.0))
-                propagated = score * self.decay * min(weight, 3.0) / 3.0 if weight > 3 else score * self.decay * (weight if weight <= 1 else 1.0)
-                propagated = score * (self.decay ** (hop + 1))
+                # Edge weights must affect propagation.  Keep the existing
+                # bounded semantics: weights in (0, 1] scale the signal and
+                # weights above 1 are capped at full strength.
+                edge_factor = min(weight, 1.0) if weight > 0 else 0.0
+                propagated = score * self.decay * edge_factor
                 if propagated <= 1e-6:
                     continue
                 if propagated > activation.get(neighbor, 0.0):
