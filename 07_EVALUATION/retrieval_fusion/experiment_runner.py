@@ -19,6 +19,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+EVALUATION_ROOT = ROOT / "07_EVALUATION"
+if str(EVALUATION_ROOT) not in sys.path:
+    sys.path.insert(0, str(EVALUATION_ROOT))
 
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "test_hmac_secret_for_eval_harness_32bytes_long")
 
@@ -27,9 +30,9 @@ from memory_controller.authorizer import Principal
 from memory_controller.context.pack_builder import ContextPackBuilder
 from memory_controller.context.progressive_disclosure import ProgressiveDisclosure
 from memory_controller.context.budget import ContextBudget
-from evaluation.retrieval_diagnostic_runner import build_real_vault_storage, check_facts_in_context
-from evaluation.full_context_baseline import evaluate_response_accuracy
-from evaluation.retrieval_fusion.adapters import RetrievalAdapter, RetrievalSignalStatus
+from retrieval_diagnostic_runner import build_real_vault_storage, check_facts_in_context
+from full_context_baseline import evaluate_response_accuracy
+from retrieval_fusion.adapters import RetrievalAdapter, RetrievalSignalStatus
 
 
 def load_gold_evidence() -> List[Dict[str, Any]]:
