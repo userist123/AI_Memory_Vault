@@ -1,5 +1,10 @@
 # Lessons Learned
 
+## Antigravity R001 Traceability Suite — Retrieval Observability & Outcome Mapping
+- Multi-Tier Memory Utility Gap: In analyzing 120 retrieved memories from genuine LLM execution traces, 75.0% fell into `RETRIEVED_AND_UNUSED` (dead-weight context loaded into prompts but never operationalized in actions), while 25.0% demonstrated direct functional code/command compilation (`RETRIEVED_AND_FUNCTIONAL`). This proves that measuring context retrieval alone overestimates memory utility four-fold compared to verified execution usage.
+- Empirical Activation Inversion: Activating ACT-R frequency priming ($w_{\text{act}} = 0.25$) on identical candidate sets caused a full Top-1 rank inversion ($\text{Kendall's } \tau = -0.3333$, mean rank delta = 2.00). Spreading activation dramatically shifts priority from pure semantic relevance to contextual recency.
+- Lifecycle Degradation Boundaries: Non-historical queries against superseded memory drop relevance by 70.0% ($0.3875 \to 0.1163$), causing superseded candidates to reliably fall below the 0.20 abstention threshold unless promoted by active successors or targeted by explicit historical intent.
+
 ## Antigravity Parallel Observability V1 — Developer Observability & Pipeline Architecture Inspection
 - Component Island vs Integrated Engine: Modules can have high test coverage (`test_multi_graph.py`) while being completely detached from the production query flow (`MemoryController.search()`). Code existence must never be equated to runtime execution without empirical trace verification.
 - Lexical Scorer Failure Modes: Keyword/token-overlap scorers (`RelevanceScorer`) excel at verbatim match (+0.2025 margin) but degrade rapidly on paraphrases (+0.0470), completely fail on synonyms (collapsing to abstention floor), and remain vulnerable to lexical traps (ranking false positives +0.0290 over unrelated notes).

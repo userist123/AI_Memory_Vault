@@ -1,3 +1,16 @@
+# Antigravity R001 Traceability Suite — Retrieval Observability, Controlled A/B & Gap Register
+
+## Implementation
+- [x] implement 14-step `RetrievalTracer` (`cognitive_core/observability/retrieval_tracer.py`) capturing query, sanitization, classification, candidates, multi-signal scoring, ranking, abstention, and context fingerprinting `[owner: antigravity | timestamp: 2026-09-04T17:10:00+03:00]`
+- [x] implement `ABComparisonEngine` (`cognitive_core/observability/ab_comparison_engine.py`) calculating exact rank shifts, Kendall's tau, Spearman's rho, and lifecycle degradation multipliers `[owner: antigravity | timestamp: 2026-09-04T17:10:00+03:00]`
+- [x] implement `MemoryOutcomeTracer` (`cognitive_core/observability/memory_outcome_tracer.py`) scanning execution traces across 4 utility tiers (`RETRIEVED_AND_UNUSED`, `RETRIEVED_AND_REFERENCED`, `RETRIEVED_AND_FUNCTIONAL`, `RETRIEVED_AND_CAUSAL`) `[owner: antigravity | timestamp: 2026-09-04T17:12:35+03:00]`
+- [x] implement Developer Observability CLI `trace_cli.py` (`python -m cognitive_core.observability.trace_cli`) with `--query`, `--ab-activation`, `--outcomes`, `--json` modes `[owner: antigravity | timestamp: 2026-09-04T17:12:45+03:00]`
+- [x] author comprehensive Developer Dashboard (`07_EVALUATION/antigravity/RETRIEVAL_DASHBOARD_R001.md`) and Living Architecture Gap Register (`07_EVALUATION/antigravity/ARCHITECTURE_GAP_REGISTER.md`) with 8 actionable gap items (`GAP-001`..`GAP-008`) `[owner: antigravity | timestamp: 2026-09-04T17:13:20+03:00]`
+- [x] implement unit test suite `cognitive_core/tests/test_retrieval_observability.py` (4/4 passed) `[owner: antigravity | timestamp: 2026-09-04T17:12:00+03:00]`
+- [x] run master regression suite (809 passed, 2 skipped across cognitive_core and memory_controller) `[owner: antigravity | timestamp: 2026-09-04T17:13:49+03:00]`
+
+---
+
 # Antigravity Parallel Observability V1 — Developer Observability & Pipeline Architecture Inspection
 
 ## Implementation
