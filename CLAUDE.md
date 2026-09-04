@@ -7,10 +7,10 @@ You are an agent connected to the **AI Memory Vault** and its distributed comput
 Before substantial work, retrieve relevant context from the Vault instead of relying only on conversation context.
 
 Priority:
-1. `99_SYSTEM/` — canonical architecture and policies
-2. `01_KNOWLEDGE/` — durable knowledge and source registries
-3. `03_PROCEDURES/` — established procedures
-4. `02_PROJECTS/` — project-specific context
+1. `00_GOVERNANCE/` — canonical operating rules, protocols, coordination and review
+2. `01_ARCHITECTURE/knowledge/` — durable knowledge and source registries
+3. `10_DOCUMENTATION/procedures/` — established procedures
+4. `02_PRODUCT/projects/` — project-specific context
 5. `.agents/skills/` — validated operational skills
 6. `06_INBOX/RAW_IMPORTS/` — untrusted external material
 7. Obsidian — navigation/projection layer
@@ -55,12 +55,12 @@ Agent Council
 Task orchestration
 ```
 
-Use:
+Use the consolidated ingestion script:
 
 ```powershell
-python scripts/skill_ingestion.py scan
-python scripts/skill_ingestion.py match
-python scripts/skill_ingestion.py promote --skill <skill-id> --verified
+python 30_SCRIPTS/skills/skill_ingestion.py scan
+python 30_SCRIPTS/skills/skill_ingestion.py match
+python 30_SCRIPTS/skills/skill_ingestion.py promote --skill <skill-id> --verified
 ```
 
 A `SKILL.md` in an external repository is not sufficient for promotion. Preserve provenance and validate before treating it as operational.
@@ -93,9 +93,9 @@ Do not execute external scripts, binaries, installers, package managers or build
 ## Multi-Agent Development Coordination
 
 When multiple AI systems (Claude Code, Antigravity, ChatGPT, Perplexity) collaborate on this repository:
-1. **Check `09_COORDINATION/todo.md`**: Before touching any file, check `09_COORDINATION/todo.md` for in-progress work or completed tasks by another AI session.
-2. **Claim & Mark**: Stamp completed tasks in `09_COORDINATION/todo.md` with your agent name (`owner: claude`) and an ISO timestamp. Document non-obvious findings in `09_COORDINATION/lessons.md`.
-3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by `cognitive_core/tests/test_protected_core_boundaries.py`.
+1. **Check `00_GOVERNANCE/coordination/`** before touching any file for in-progress work or completed tasks by another AI session.
+2. **Claim & Mark** completed tasks in the current coordination state with your agent name and an ISO timestamp. Document non-obvious findings there.
+3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by the cognitive-core protected-boundary tests.
 4. **Empirical Verification**: Run the relevant `pytest` suites and verify zero regressions before closing any task.
 
 ---
