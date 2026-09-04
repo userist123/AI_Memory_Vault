@@ -34,6 +34,7 @@ Exhaustive index of canonical domain Markdown notes in the supplied snapshot.
 - [[01_KNOWLEDGE/BOOKS/Deep_Learning_Representations_and_Attention]]
 - [[01_KNOWLEDGE/BOOKS/LLM_Application_Design_and_RAG_Pipelines]]
 - [[01_KNOWLEDGE/BOOKS/Production_ML_Systems_and_Continual_Learning]]
+- [[01_KNOWLEDGE/BOOKS/Caiet_Teme_Aplicatii_Practice_Carti]]
 - [[01_KNOWLEDGE/HG585_MS111_Compliance_Requirements]]
 - [[01_KNOWLEDGE/Local_PIN_Auth_And_SQLCipher_Pattern]]
 - [[01_KNOWLEDGE/Monn_MT5_MultiStrategy]]

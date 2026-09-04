@@ -1,5 +1,8 @@
 # Lessons Learned
 
+## Operational Learning Principle — Notes, Drills & Production Playbooks
+- Applied School/Laboratory Learning Loop: Knowledge extracted from foundational engineering texts must not remain passive exposition. It follows a 3-stage progression: (1) extracting concise principles and invariants, (2) solving concrete, executable coding drills ("teme de laborator") covering real failure modes (e.g. crash recovery, heuristic search, tool sandboxing, XML prompt demarcation, drift detection, LoRA dynamics), and (3) formulating an instant execution playbook that dictates exact decisions, parameters, and tool invocations when production tasks are assigned.
+
 ## Antigravity R001 Traceability Suite — Retrieval Observability & Outcome Mapping
 - Multi-Tier Memory Utility Gap: In analyzing 120 retrieved memories from genuine LLM execution traces, 75.0% fell into `RETRIEVED_AND_UNUSED` (dead-weight context loaded into prompts but never operationalized in actions), while 25.0% demonstrated direct functional code/command compilation (`RETRIEVED_AND_FUNCTIONAL`). This proves that measuring context retrieval alone overestimates memory utility four-fold compared to verified execution usage.
 - Empirical Activation Inversion: Activating ACT-R frequency priming ($w_{\text{act}} = 0.25$) on identical candidate sets caused a full Top-1 rank inversion ($\text{Kendall's } \tau = -0.3333$, mean rank delta = 2.00). Spreading activation dramatically shifts priority from pure semantic relevance to contextual recency.
