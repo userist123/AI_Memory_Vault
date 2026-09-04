@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T20:12:00Z
-current_main_sha: 5fa457f394de1a0faaf7fd6e8525e5833ce960c0
+last_updated_utc: 2026-09-04T20:20:00Z
+current_main_sha: e2dfbd6837353e43c84a7b3917783334b230dbad
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -15,7 +15,7 @@ active_work:
 recent_state:
   - Perplexity adversarial validation: ACCEPT WITH CHANGES / GO WITH MANDATORY MVE CHANGES
   - main is the only canonical working branch for ongoing development
-  - README was restored atomically to the verified Owner-authored canonical version from 19537264; no production or MVE code changed in the restore
+  - README was reconstructed as a current-state technical landing page and now documents architecture, MVE, uncertainty policy, persistent agent memory, CI, security, and known gaps
   - GAP-011 lifecycle classifier substring matching fixed with whole-word matching
   - deterministic Planning Influence MVE contains four arms and soft priors
   - oracle-leak flaw removed: treatment priors derive from independent frozen memory recommendations
@@ -32,8 +32,8 @@ recent_state:
   - pre-registered uncertainty policy persisted in 07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md
   - latest MVE CI run observed as queued; no CI runtime claim made
 open_requirements:
-  - await GitHub Actions execution for the latest applicability-aware MVE and Memory V6
-  - do not promote deterministic pilot to model-level cognitive-planning evidence
+  - verify latest applicability-aware MVE CI run and inspect artifact/stdout
+  - verify Memory V6 CI and inspect test results
   - keep the uncertainty policy frozen before its first deterministic implementation run
   - implement the pre-registered verification route in the isolated MVE harness only
   - separate applicability, evidence strength, verification cost, planner influence and outcome
