@@ -2,7 +2,7 @@
 
 ## State provenance
 
-Latest structural commit: `9810133769963fadac6336e7a5a060311ed4631d`.
+Latest structural commit: `28c2ebd184d196cbcfebad82993c43f3707a58b5`.
 
 ## Completed structural batches
 
@@ -71,6 +71,10 @@ The runtime/package roots are intentionally not moved blindly. They require impo
 - `test_audit_log.jsonl` — test fixture/audit data; retain until test-data retention and provenance are verified.
 - `Fără titlu*.base` — duplicate Obsidian artifacts; retain until provenance/reference check is complete.
 - `.env.example`, `pytest.ini`, `AGENTS.md`, `CLAUDE.md`, `README.md` — remain at root for tooling/discoverability until path references are normalized.
+
+## Next structural gate
+
+Before moving runtime packages, inspect and normalize all hard-coded references to the retired legacy roots and then perform a compatibility migration with executable verification.
 
 ## Do not repeat
 
