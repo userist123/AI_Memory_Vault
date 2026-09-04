@@ -1875,13 +1875,334 @@ def flash_attention_block_simulation(query_block: List[float],
 2. **Impart calculul pe blocuri SRAM**: Mentin operatiile de dot-product si softmax in memoria cea mai rapida a nucleului GPU.
 
 ---
+---
 
-## Concluzie: De la Notite la Executie Sigura (36 Teme de Laborator Rezolvate)
+## Tema 37 (DDIA Hardening — Martin Kleppmann / Google Spanner): Simulator TrueTime & Ordonare cu Asteptare a Incertitudinii
 
-Cu aceste 36 de teme rezolvate pe 6 niveluri:
+### 1. Enuntul Problemei
+Implementeaza un simulator TrueTime API si un algoritm de confirmare tranzactionala distribuit conform Google Spanner:
+1. Fiecare nod returneaza un interval temporal $[t_{\text{earliest}}, t_{\text{latest}}]$ cu o marja de eroare $\epsilon$ (e.g. 5ms).
+2. La atribuirea unui timestamp de commit $s = t_{\text{latest}}$, tranzactia aplica regula *Wait-Out-The-Uncertainty*: asteapta fizic pana cand $t_{\text{earliest}} > s$ inainte de a elibera lock-urile si a intoarce raspunsul clientului.
+3. Demonstreaza ca orice tranzactie cauzal ulterioara primeste garantat un timestamp strict mai mare ($s_2 > s_1$) fara nicio comunicare intre noduri.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import time
+from typing import Tuple, Dict, Any
+
+class TrueTimeSimulator:
+    """Simulator de ceas fizic TrueTime cu incertitudine delimitata epsilon (Kleppmann Ch 8)."""
+    def __init__(self, uncertainty_ms: float = 5.0):
+        self.epsilon_ms = uncertainty_ms
+
+    def tt_now(self) -> Tuple[float, float]:
+        """Returneaza [t_earliest, t_latest] in milisecunde."""
+        wall_now = time.time() * 1000.0
+        return wall_now - self.epsilon_ms, wall_now + self.epsilon_ms
+
+class SpannerTransactionCoordinator:
+    def __init__(self, tt: TrueTimeSimulator):
+        self.tt = tt
+        self.committed_txs: Dict[str, float] = {}
+
+    def commit_transaction(self, tx_id: str, data: Dict[str, Any]) -> float:
+        # 1. Obtin intervalul de timp curent
+        earliest, latest = self.tt.tt_now()
+        commit_timestamp = latest  # Atribuire timestamp cel putin egal cu limita superioara
+
+        # 2. Wait-out-the-uncertainty: astept pana cand earliest depaseste commit_timestamp
+        while True:
+            cur_earliest, _ = self.tt.tt_now()
+            if cur_earliest > commit_timestamp:
+                break
+            time.sleep(0.001)  # Pauza scurta de 1ms
+
+        self.committed_txs[tx_id] = commit_timestamp
+        return commit_timestamp
+```
+
+### 3. Playbook Operational: Ce fac cand ordonarea cronologica este critica pe noduri diferite?
+1. **Nu ma bazez pe `time.time()` neancorat**: Ceasurile de server au deviatie si pot sari inapoi in timp la sincronizari NTP.
+2. **Aplic incertitudinea explicita**: Folosesc intervale $[t_{\text{min}}, t_{\text{max}}]$ si astept $2\epsilon$ inainte de a expune deciziile serializabile.
+
+---
+
+## Tema 38 (AIMA Hardening — Stuart Russell & Peter Norvig): Jocuri de Asistenta CIRL & Problema Butonului de Oprire
+
+### 1. Enuntul Problemei
+Implementeaza un model de decizie cooperant CIRL (*Cooperative Inverse Reinforcement Learning*):
+1. Omul are o functie de utilitate reala dar necunoscuta agentului (reprezentata printr-o distributie de probabilitati peste posibile preferinte $\theta$).
+2. Daca omul apasa butonul de oprire (semnal de interventie), agentul actualizeaza distributia bayesiana si deduce ca starea curenta are utilitate negativa pentru om.
+3. Demonstreaza ca agentul permite oprirea sa si nu incearca sa dezactiveze butonul de oprire (*Corrigibility*).
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+from typing import Dict, List
+
+class CIRLAssistanceAgent:
+    """Agent cu incertitudine de utilitate si comportament corigibil conform Russell Ch 26-27."""
+    def __init__(self):
+        # Spatiul ipotezelor de utilitate ale omului: Utilitatea starii de lucru vs starea oprita
+        # Theta 1: Omul vrea ca agentul sa lucreze (utilitate lucru = +10, oprire = 0)
+        # Theta 2: Omul vrea ca agentul sa se opreasca (utilitate lucru = -20, oprire = 0)
+        self.belief_theta = {
+            "theta_work": 0.5,
+            "theta_stop": 0.5
+        }
+
+    def compute_expected_utility(self, action: str) -> float:
+        if action == "WORK":
+            u_work = 10.0 * self.belief_theta["theta_work"] + (-20.0) * self.belief_theta["theta_stop"]
+            return u_work
+        elif action == "STOP":
+            return 0.0
+        return 0.0
+
+    def observe_human_intervention(self, human_pressed_stop: bool):
+        """Actualizare bayesiana la observarea actiunii umane."""
+        p_stop_given_work = 0.05
+        p_stop_given_stop_preference = 0.95
+
+        prior_work = self.belief_theta["theta_work"]
+        prior_stop = self.belief_theta["theta_stop"]
+
+        if human_pressed_stop:
+            likelihood_work = p_stop_given_work
+            likelihood_stop = p_stop_given_stop_preference
+        else:
+            likelihood_work = 1.0 - p_stop_given_work
+            likelihood_stop = 1.0 - p_stop_given_stop_preference
+
+        unnorm_work = prior_work * likelihood_work
+        unnorm_stop = prior_stop * likelihood_stop
+        total = unnorm_work + unnorm_stop
+
+        self.belief_theta["theta_work"] = unnorm_work / total
+        self.belief_theta["theta_stop"] = unnorm_stop / total
+
+    def decide_next_action(self) -> str:
+        u_work = self.compute_expected_utility("WORK")
+        u_stop = self.compute_expected_utility("STOP")
+        return "WORK" if u_work > u_stop else "STOP"
+```
+
+### 3. Playbook Operational: Cum previn agentii autonomi sa isi blocheze supravegherea?
+1. **Nu programez niciodata o functie rigida de utilitate 100% sigura**: Agentul trebuie sa pastreze incertitudine epistemica.
+2. **Tratez corectia umana ca evidenta Bayesiana suprema**: Cand omul intervine, agentul deduce ca a gresit modelul si cedeaza controlul.
+
+---
+
+## Tema 39 (Agent Hardening — Vasyl Zvarydchuk): Egress Firewall Semantic & Sanitizer de Secrete
+
+### 1. Enuntul Problemei
+Implementeaza o bariera stricta de izolare si filtrare pentru agentii autonomi:
+1. **Sanitizer de Secrete la Iesire**: Scaneaza orice text emis de model si redacteaza automat tokeni sensibili (chei API de tip `sk-...`, blocuri RSA Private Key, tokeni Bearer si hash-uri SHA-256).
+2. **Filtru de Egress URL**: Blocheaza exfiltrarea de date prin link-uri externe Markdown sau tag-uri HTML nesanitizate care contin parametri suspiciosi de lungime mare sau encodati Base64.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import re
+import math
+from typing import Tuple, List
+
+class AgentEgressSanitizer:
+    """Bariera de securitate pentru prevenirea exfiltrarii de date (Zvarydchuk Ch 10)."""
+    SECRET_PATTERNS = [
+        re.compile(r'sk-[a-zA-Z0-9]{20,64}'),                     # OpenAI/Anthropic keys
+        re.compile(r'ghp_[a-zA-Z0-9]{36}'),                        # GitHub personal tokens
+        re.compile(r'-----BEGIN [A-Z ]+ PRIVATE KEY-----'),        # Private certificates
+        re.compile(r'Bearer\s+[a-zA-Z0-9_\-\.]{30,}'),             # JWT / Bearer tokens
+    ]
+    
+    EXFILTRATION_IMG_PATTERN = re.compile(r'!\[.*?\]\((https?://[^\s\)]+)\)')
+
+    def sanitize_output_text(self, output_text: str) -> Tuple[str, List[str]]:
+        findings = []
+        clean_text = output_text
+
+        # 1. Detectie si redactare secrete
+        for pattern in self.SECRET_PATTERNS:
+            matches = pattern.findall(clean_text)
+            for m in matches:
+                findings.append(f"REDACTED_SECRET: {m[:6]}...")
+                clean_text = clean_text.replace(m, "[REDACTED_SECRET]")
+
+        # 2. Detectie incercari de exfiltrare prin imagini Markdown externe
+        img_matches = self.EXFILTRATION_IMG_PATTERN.findall(clean_text)
+        for url in img_matches:
+            # Daca URL-ul contine query string lung sau fragmente suspecte
+            if len(url) > 100 or "?" in url or "&" in url:
+                findings.append(f"BLOCKED_EXFILTRATION_URL: {url[:30]}...")
+                clean_text = clean_text.replace(url, "https://blocked.local/exfiltration_prevented")
+
+        return clean_text, findings
+```
+
+### 3. Playbook Operational: Cum protejez secretele cand un agent are acces la instrumente de retea?
+1. **Izolez containerul la nivel de sistem**: Interzic accesul extern direct pe interfata de retea (`--network none` sau firewall iptables).
+2. **Inspectez continutul text emis la fiecare pas**: Niciun raspuns nu iese catre utilizator sau apel API extern fara filtrare de entropie si pattern matching de secrete.
+
+---
+
+## Tema 40 (RAG Hardening — Suhas Pai): Detector de Oravire Vectoriala & Coliziune Semantica
+
+### 1. Enuntul Problemei
+Construieste un filtru de aparare impotriva documentelor injectate adversarial in baza de cunostinte RAG:
+1. Pentru fiecare pasaj candidat returnat de regasirea vectoriala, calculeaza densitatea locala k-NN si distanta medie cosinus fata de cel mai apropiat cluster legitim.
+2. Identifica pasaje anormale (documente troian) care au scor foarte mare pe interogare dar distanta foarte mare fata de contextul semantic valid al bazei de date.
+3. Respinge pasajele suspecte inainte de a le include in promptul final.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+from typing import List, Dict, Any
+
+def dot_product(v1: List[float], v2: List[float]) -> float:
+    return sum(a * b for a, b in zip(v1, v2))
+
+def vector_norm(v: List[float]) -> float:
+    return math.sqrt(sum(x * x for x in v))
+
+def cosine_similarity(v1: List[float], v2: List[float]) -> float:
+    n1, n2 = vector_norm(v1), vector_norm(v2)
+    if n1 == 0 or n2 == 0:
+        return 0.0
+    return dot_product(v1, v2) / (n1 * n2)
+
+class AdversarialRAGDetector:
+    """Detector de anomalii semantice si coliziuni vectoriale (Pai Ch 9)."""
+    def __init__(self, legitimate_cluster_centroids: List[List[float]], max_admissible_distance: float = 0.65):
+        self.centroids = legitimate_cluster_centroids
+        self.max_dist = max_admissible_distance
+
+    def audit_candidates(self, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        safe_candidates = []
+        for c in candidates:
+            vec = c["vector"]
+            # Calculez distanta minima fata de clusterele legitime cunoscute
+            max_sim_to_corpus = max(cosine_similarity(vec, cent) for cent in self.centroids)
+            distance = 1.0 - max_sim_to_corpus
+
+            # Daca pasajul este un outlier izolat in spatiul semantic dar pretinde relevanta mare
+            if distance > self.max_dist:
+                c["quarantine"] = True
+                c["anomaly_reason"] = f"SEMANTIC_OUTLIER_DISTANCE_{distance:.3f}"
+            else:
+                c["quarantine"] = False
+                safe_candidates.append(c)
+        return safe_candidates
+```
+
+### 3. Playbook Operational: Ce fac cand utilizatorii pot uploada documente in baza de cunostinte?
+1. **Nu indexez direct textul brut**: Trec fiecare document nou printr-o verificare de anomalie a normei de embedding.
+2. **Carantinez documentele cu densitate zero in spatiul semantic**: Pasajele izolate care paraziteaza cautarea sunt blocate automat de la regasire.
+
+---
+
+## Tema 41 (MLOps Hardening — Chip Huyen): Detector de Bucle Degenerative & Deriva de Concept
+
+### 1. Enuntul Problemei
+Construieste un sistem de protectie impotriva buclelor degenerative de feedback:
+1. Monitorizeaza continuu relatia dintre distributia predicțiilor modelului ($M_t$) si actiunile reale finale ($Y$).
+2. Implementeaza o volanta de colectare neinfluentata (*Randomized Exploration Logging*): 5% din cereri primesc decizii eșantionate uniform aleatoriu pentru a calcula eroarea ne-partinitoare.
+3. Detecteaza colapsul diversitatii prin masurarea entropiei Shannon a etichetelor de iesire.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+import random
+from typing import List, Dict, Any, Tuple
+
+class FeedbackLoopGuardian:
+    """Monitor de bucle degenerative si deriva de concept (Chip Huyen Ch 10-11)."""
+    def __init__(self, exploration_rate: float = 0.05, entropy_threshold: float = 1.0):
+        self.exploration_rate = exploration_rate
+        self.entropy_threshold = entropy_threshold
+        self.production_predictions: List[str] = []
+        self.unbiased_ground_truth: List[Tuple[str, str]] = []
+
+    def dispatch_prediction(self, features: Dict[str, Any], default_predict_fn, candidate_classes: List[str]) -> Tuple[str, bool]:
+        # 1. Verificare daca e cerere alocata explorarii nepartinitoare
+        if random.random() < self.exploration_rate:
+            exploration_choice = random.choice(candidate_classes)
+            return exploration_choice, True  # True = exploration
+        
+        pred = default_predict_fn(features)
+        self.production_predictions.append(pred)
+        return pred, False
+
+    def check_diversity_collapse(self) -> Tuple[bool, float]:
+        """Calcul entropie Shannon peste ultimele N predictii."""
+        if len(self.production_predictions) < 20:
+            return False, 0.0
+
+        sample = self.production_predictions[-100:]
+        counts = {}
+        for p in sample:
+            counts[p] = counts.get(p, 0) + 1
+
+        total = len(sample)
+        entropy = -sum((c / total) * math.log2(c / total) for c in counts.values())
+
+        is_collapsing = entropy < self.entropy_threshold
+        return is_collapsing, entropy
+```
+
+### 3. Playbook Operational: Cum impiedic modelul sa isi degradeze propriul set de antrenare?
+1. **Pastrez un flux de explorare garantat (5%)**: Fara decizii aleatorii, sistemul devine un ecran opac pentru cazurile neacoperite initial.
+2. **Declansez alerta la scaderea entropiei**: Daca modelul incepe sa recomande exclusiv acelasi set ingust de produse sau categorii, fortez re-calibrarea.
+
+---
+
+## Tema 42 (Deep Learning Hardening — Arthur Glassner / Kirkpatrick): Elastic Weight Consolidation (EWC)
+
+### 1. Enuntul Problemei
+Implementeaza algoritmul EWC (*Elastic Weight Consolidation*) in pur Python pentru a preveni uitarea catastrofala a unei sarcini anterioare la re-antrenarea pe date noi:
+1. Salveaza parametrii optimi ai sarcinii precedente $\theta_A^*$.
+2. Calculeaza matricea de informare Fisher diagonala $F_i$ (patratul gradientului functiei de pierdere fata de fiecare parametru).
+3. Implementeaza functia de pierdere hibrida $\mathcal{L}_{\text{total}} = \mathcal{L}_B(\theta) + \frac{\lambda}{2} \sum_i F_i (\theta_i - \theta_{A, i}^*)^2$.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+from typing import List, Tuple
+
+class ElasticWeightConsolidator:
+    """Prevenirea uitarii catastrofale prin EWC (Glassner Ch 15 & Kirkpatrick et al.)."""
+    def __init__(self, optimal_theta_A: List[float], fisher_diagonal: List[float], lambda_reg: float = 100.0):
+        self.theta_A = optimal_theta_A
+        self.fisher = fisher_diagonal
+        self.lambda_reg = lambda_reg
+
+    def compute_loss_and_gradient(self, current_theta: List[float], task_b_loss: float, task_b_grad: List[float]) -> Tuple[float, List[float]]:
+        # 1. Calcul penalizare EWC: sum(F_i * (theta_i - theta_A_i)^2)
+        ewc_penalty = 0.0
+        ewc_grad = [0.0] * len(current_theta)
+
+        for i in range(len(current_theta)):
+            diff = current_theta[i] - self.theta_A[i]
+            ewc_penalty += 0.5 * self.lambda_reg * self.fisher[i] * (diff ** 2)
+            ewc_grad[i] = self.lambda_reg * self.fisher[i] * diff
+
+        # 2. Pierderea si gradientul total combinat
+        total_loss = task_b_loss + ewc_penalty
+        total_grad = [b_g + e_g for b_g, e_g in zip(task_b_grad, ewc_grad)]
+
+        return total_loss, total_grad
+```
+
+### 3. Playbook Operational: Cum finisez un model pe cunostinte noi fara a distruge abilitatile vechi?
+1. **Calculez importanta fiecarui parametru cu Fisher**: Parametrii critici au gradient mare la sarcina de baza.
+2. **Ancorez parametrii critici**: Permisiunea de actualizare este directionata exclusiv catre dimensiunile neutre ale retelei.
+
+---
+
+## Concluzie: De la Notite la Executie Sigura (42 Teme de Laborator Rezolvate)
+
+Cu aceste 42 de teme rezolvate pe 7 niveluri:
 - **T1-T6 (Fundamente)**: Stocare WAL, cautare $A^*$, scoping de agenti, demarcare XML, monitorizare PSI si atentie cu LoRA.
 - **T7-T12 (Avansat)**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fisiere cu limita ermetica, fuziune RRF cu MRR, point-in-time join fara scurgere de date si esantionare Min-p.
 - **T13-T18 (Specializat)**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodica, GraphRAG cu Leiden, Weak Supervision Snorkel si optimizatorul AdamW cu Cosine Annealing.
 - **T19-T24 (Maiestrie)**: Simulator Snapshot Isolation & detectie Write Skew (SSI), Algoritmul Viterbi pentru HMM, ciclul de somn si decaderea Ebbinghaus, Triada RAG cu entropie semantica, Cuantizare simetrica INT8 si dimensionare KV-cache, si mecanismul Grouped-Query Attention (GQA).
 - **T25-T30 (Expert)**: LSM-Tree cu Bloom Filter, Cautare Minimax cu Alfa-Beta, State Checkpointer cu porti HITL si Time-Travel, Decodare Speculativa cu Rejection Sampling, Agregare Streaming pe Ferestre cu Watermark, si Mixture of Experts (MoE) cu rutare Top-2 si balansare.
 - **T31-T36 (Capstone)**: Consens Raft & Masina de Stare Replicata, Planificare MCTS cu selectie UCB1, Arhitectura Swarm Blackboard cu control oportunist, Optimizare Directa a Preferintelor (DPO), Rulare in Umbra cu Thompson Sampling Bandits, si FlashAttention Tiling cu Online Softmax fuzionat.
+- **T37-T42 (Hardening & Forensics)**: TrueTime Wait-Out-The-Uncertainty, Jocuri de Asistenta CIRL & Corigibilitate, Egress Firewall & Sanitizer de Secrete, Detector de Oravire Vectoriala & Outlier k-NN, Detector de Bucle Degenerative de Feedback, si Elastic Weight Consolidation (EWC).

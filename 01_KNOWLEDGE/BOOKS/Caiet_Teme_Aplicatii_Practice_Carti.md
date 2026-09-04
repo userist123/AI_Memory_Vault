@@ -98,17 +98,30 @@ relations:
   target: 01_KNOWLEDGE/BOOKS/CAPSTONE_MLOps_Shadow_Deployments_and_Bandit_Routing.md
 - relation: references
   target: 01_KNOWLEDGE/BOOKS/CAPSTONE_Transformer_FlashAttention_Tiling_and_IO_Awareness.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/HARDENING_DDIA_Byzantine_Faults_and_Clock_Drift.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/HARDENING_AIMA_Safety_Alignment_and_Reward_Hacking.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/HARDENING_Agent_Adversarial_Defense_and_Egress_Firewalls.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/HARDENING_RAG_Context_Poisoning_and_Adversarial_Retrieval.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/HARDENING_MLOps_Feedback_Loops_and_Concept_Drift.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/HARDENING_Transformer_Numerical_Stability_and_Catastrophic_Forgetting.md
 ---
 
 
-# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (36 Teme Rezolvate)
+
+# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (42 Teme Rezolvate)
 
 **Rol**: Manual operațional de laborator și exerciții rezolvate pentru transpunerea teoriei în sarcini practice de producție.  
 **Metodologie**: Învățare activă $\to$ Notițe sintetice $\to$ Teme rezolvate pas cu pas $\to$ Playbook de execuție imediată.
 
 ---
 
-## Cele 36 de Teme de Laborator & Decizii Operaționale
+## Cele 42 de Teme de Laborator & Decizii Operaționale
 
 ### Nivelul 1: Fundamente (Teme 1–6)
 | Nr. | Carte Sursă | Tema Aplicată | Cod / Algoritm Cheie | Decizia la primirea unei sarcini |
@@ -171,6 +184,17 @@ relations:
 | **35** | **Designing ML Systems** (Huyen) | Rulare în Umbră & Thompson Sampling | `ThompsonBanditCanaryRouter(Beta, circuit_open)` | Lansez noile versiuni în umbră și cresc traficul prin bandiți cu rollback automat |
 | **36** | **Learning Deep Learning** (Glassner) | FlashAttention Tiling & Online Softmax | `flash_attention_block_simulation(SRAM)` | Reduc memoria de la $O(N^2)$ la $O(N)$ calculând atenția exactă fără salvare intermediară |
 
+
+### Nivelul 7: Hardening & Inginerie Criminalistică (Teme 37–42)
+| Nr. | Carte Sursă | Tema Aplicată | Cod / Algoritm Cheie | Decizia la primirea unei sarcini |
+|---|---|---|---|---|
+| **37** | **DDIA** (Kleppmann) | TrueTime & Wait-Out-The-Uncertainty | `SpannerTransactionCoordinator(tt_now, epsilon)` | Folosesc intervale de incertitudine și aștept $2\epsilon$ pentru ordonare cauzală strictă |
+| **38** | **AIMA 4e** (Russell & Norvig) | Jocuri de Asistență CIRL & Corigibilitate | `CIRLAssistanceAgent(belief_theta, stop_button)` | Mențin incertitudine epistemica asupra utilității; tratez intervenția umană ca evidență Bayes |
+| **39** | **Agent Architecture** (Zvarydchuk) | Egress Firewall & Sanitizer de Secrete | `AgentEgressSanitizer(SECRET_PATTERNS, url)` | Blochez scurgerile de API keys și imaginile Markdown de exfiltrare înainte de emitere |
+| **40** | **Designing LLM Apps** (Pai) | Apărare Vectorială & Coliziune Semiotică | `AdversarialRAGDetector(kNN_centroids, distance)` | Detectez pasaje troian izolate în spațiul semantic și le carantinez automat |
+| **41** | **Designing ML Systems** (Huyen) | Bucle Degenerative & Derivă de Concept | `FeedbackLoopGuardian(random_exploration, entropy)` | Păstrez o cotă de 5% eșantionare aleatorie pentru a preveni colapsul diversității de date |
+| **42** | **Learning Deep Learning** (Glassner) | Elastic Weight Consolidation (EWC) | `ElasticWeightConsolidator(Fisher, lambda)` | Protejez parametrii cu Fisher mare și direcționez fine-tuning-ul doar în subspațiile libere |
+
 Ghidul complet cu implementările în cod este documentat în:
 - [`.agents/skills/learn/references/caiet_de_teme_si_aplicatii_practice.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/learn/references/caiet_de_teme_si_aplicatii_practice.md)
 
@@ -213,5 +237,11 @@ Ghidul complet cu implementările în cod este documentat în:
 - [[01_KNOWLEDGE/BOOKS/CAPSTONE_RAG_DPO_Alignment_and_Contrastive_Reasoning]]
 - [[01_KNOWLEDGE/BOOKS/CAPSTONE_MLOps_Shadow_Deployments_and_Bandit_Routing]]
 - [[01_KNOWLEDGE/BOOKS/CAPSTONE_Transformer_FlashAttention_Tiling_and_IO_Awareness]]
+- [[01_KNOWLEDGE/BOOKS/HARDENING_DDIA_Byzantine_Faults_and_Clock_Drift]]
+- [[01_KNOWLEDGE/BOOKS/HARDENING_AIMA_Safety_Alignment_and_Reward_Hacking]]
+- [[01_KNOWLEDGE/BOOKS/HARDENING_Agent_Adversarial_Defense_and_Egress_Firewalls]]
+- [[01_KNOWLEDGE/BOOKS/HARDENING_RAG_Context_Poisoning_and_Adversarial_Retrieval]]
+- [[01_KNOWLEDGE/BOOKS/HARDENING_MLOps_Feedback_Loops_and_Concept_Drift]]
+- [[01_KNOWLEDGE/BOOKS/HARDENING_Transformer_Numerical_Stability_and_Catastrophic_Forgetting]]
 - [[Knowledge Graph Home]]
 
