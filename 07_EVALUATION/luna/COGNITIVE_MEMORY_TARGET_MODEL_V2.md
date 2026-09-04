@@ -1,9 +1,9 @@
 # AI Memory Vault — Cognitive Memory Target Model V2
 
-Status: PROPOSED TARGET MODEL — NOT IMPLEMENTED
-Authoring agent: LUNA
-Project: AI_MEMORY_VAULT
-Round: R001
+Status: PROPOSED TARGET MODEL — NOT IMPLEMENTED  
+Authoring agent: LUNA  
+Project: AI_MEMORY_VAULT  
+Round: R001  
 Evidence level: UNVERIFIED / DESIGN TARGET
 
 ## 1. Definition
@@ -19,6 +19,29 @@ retrieval != influence
 context != cognition
 memory repository != runtime influence mechanism
 ```
+
+The cognitive architecture is a **bounded resolution pipeline**, not an infinite cognitive loop.
+
+```text
+TASK
+  ↓
+EXPERIENCE
+  ↓
+MODEL / PATTERN
+  ↓
+APPLICABILITY
+  ↓
+INFLUENCE
+  ↓
+VERIFICATION LOOP
+  ↺  observe → test → challenge → re-evaluate
+  ↓
+REORGANIZATION
+  ↓
+FINAL ANSWER / FINAL DECISION
+```
+
+The internal verification loop exists only to obtain sufficient evidence for a terminal response. It is not itself the product boundary.
 
 ## 2. Architectural Boundary
 
@@ -57,18 +80,22 @@ The persistent unit keeps five semantic layers:
 EXPERIENCE
   what happened
 
-EVIDENCE
-  what supports the record
-
-PATTERN
-  reusable transition / relation / lesson
+MODEL / PATTERN
+  what may generalize
 
 APPLICABILITY
-  conditions under which transfer is valid
+  where that memory should transfer
 
 INFLUENCE
-  how applicable memory should alter current computation
+  how it is allowed to affect computation
+
+REORGANIZATION
+  how verified outcomes alter future memory
 ```
+
+These are **semantic stages of a bounded reasoning process**, not a perpetual loop.
+
+Evidence, provenance, temporal validity, uncertainty, safety and token economy cross all five stages.
 
 Full evidence stays external. Compact influence artifacts are compiled on demand.
 
@@ -87,6 +114,8 @@ For a current task, memory may compile:
   "planning_influence": {},
   "epistemic_influence": {},
   "execution_constraints": {},
+  "verification_state": {},
+  "final_response_state": {},
   "evidence_refs": []
 }
 ```
@@ -180,24 +209,63 @@ Evidence support
 
 A memory can therefore be relevant but not applicable.
 
-## 7. Reorganization / Learning
+## 7. Verification and Terminal Resolution
 
-The target loop is:
+Verification is the bounded inner loop of the architecture.
 
 ```text
-OBSERVATION / TASK
+INFLUENCE
+   ↓
+HYPOTHESIS / PLAN
+   ↓
+CHECK
+   ↓
+OBSERVE RESULT
+   ↓
+CHALLENGE / RE-RANK
+   ↓
+SUFFICIENT EVIDENCE?
+   ├─ NO  → iterate within verification budget
+   └─ YES → REORGANIZATION → FINAL ANSWER
+```
+
+The verifier must operate with an explicit termination condition such as:
+
+- sufficient evidence;
+- safety gate satisfied;
+- verification budget exhausted;
+- required human confirmation received;
+- deterministic failure/abstention condition reached.
+
+When the verification process terminates, the system produces a **terminal response state**:
+
+```text
+FINAL ANSWER
+or
+FINAL DECISION
+or
+FINAL ABSTENTION
+or
+FINAL REQUEST FOR HUMAN CONFIRMATION
+```
+
+There is no implicit post-answer cognitive loop for the same task.
+
+## 8. Reorganization / Learning
+
+Reorganization occurs before the terminal response is emitted, using only verified or explicitly qualified outcome information.
+
+```text
+TASK
   -> EXPERIENCE
   -> EVIDENCE
-  -> PATTERN / EXPECTATION
+  -> MODEL / PATTERN
   -> APPLICABILITY
   -> MEMORY INFLUENCE
-  -> AGENT DECISION
-  -> ACTION / EXECUTION
-  -> OUTCOME
-  -> PREDICTION ERROR / FEEDBACK
+  -> VERIFICATION LOOP
+  -> VERIFIED OUTCOME
   -> REORGANIZATION
-  -> updated cues / pattern / applicability
-  -> MEMORY
+  -> FINAL ANSWER / FINAL DECISION
 ```
 
 Reorganization must preserve provenance and avoid promoting coincidence into causal knowledge without sufficient evidence.
@@ -210,7 +278,7 @@ Supported transformations may include:
 - value-prior updates when a planner exists;
 - quarantine of weak or contradictory lessons.
 
-## 8. Token Economy
+## 9. Token Economy
 
 The objective is lower token transport with preserved or increased cognitive capability.
 
@@ -219,12 +287,13 @@ FULL MEMORY RECORD
    -> offline/low-frequency extraction
    -> compact influence representation
    -> task-specific recall card
+   -> verification-aware reasoning
    -> optional evidence expansion
 ```
 
 No capability is removed merely to save tokens. Compression must preserve the operators, conditions and negations that determine applicability.
 
-## 9. Experimental Proof Standard
+## 10. Experimental Proof Standard
 
 A causal claim requires:
 
@@ -237,7 +306,7 @@ A causal claim requires:
 
 A single successful run is not sufficient evidence of causal influence.
 
-## 10. Planning Influence Gate Experiment
+## 11. Planning Influence Gate Experiment
 
 The first experiment isolates Planning Influence in a real search harness.
 
@@ -269,7 +338,7 @@ vs.
 COMPUTATION-LEVEL SEARCH INFLUENCE
 ```
 
-## 11. Failure Guards
+## 12. Failure Guards
 
 The model explicitly rejects:
 
@@ -278,12 +347,14 @@ The model explicitly rejects:
 - converting one accidental success into a causal invariant;
 - globally blocking an action from a single context-specific failure;
 - inflating prompts with verbose schemas as a substitute for cognition;
-- claiming influence from model self-report alone.
+- claiming influence from model self-report alone;
+- emitting a final answer before required verification gates complete;
+- allowing the final response to re-enter the same task's cognitive loop implicitly.
 
-## 12. Acceptance Criterion
+## 13. Acceptance Criterion
 
 The target crosses from "memory as retrieved context" toward "memory as active cognitive substrate" only when a controlled runtime experiment demonstrates that a defined memory intervention changes a computation channel and that the change is traceable and reproducible.
 
-The first acceptance target is Planning Influence. Subsequent targets are Epistemic Influence, Representation Influence, Execution Influence and the full Outcome -> Reorganization loop.
+The first acceptance target is Planning Influence. Subsequent targets are Epistemic Influence, Representation Influence, Execution Influence and the full verification-to-reorganization pipeline.
 
 Until runtime evidence exists, this file remains a design hypothesis.
