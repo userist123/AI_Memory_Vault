@@ -337,12 +337,272 @@ def compute_lora_delta(A: list[list[float]], B: list[list[float]], r: int, alpha
 
 ---
 
-## Concluzie: De la Notițe la Execuție Sigură
+## Tema 7 (DDIA Avansat — Martin Kleppmann): Replicare Quorum Dynamo cu Read Repair
 
-Cu aceste 6 teme rezolvate:
-- Știi **exact ce să faci** când proiectezi persistență (WAL + `fsync` + `os.replace`).
-- Știi **exact ce să faci** când cauți în graf ($A^*$ cu orizont $\le 2$).
-- Știi **exact ce să faci** când coordonezi agenți (Least Privilege + triada de erori).
-- Știi **exact ce să faci** când injectezi memorii (Demarcare XML `<untrusted_memory>`).
-- Știi **exact ce să faci** când monitorizezi modelele (Monitor PSI pentru derivă).
-- Știi **exact ce să faci** când calibrezi antrenamentele TRL (Atenție + LoRA $r, \alpha$).
+### 1. Enunțul Problemei
+Într-un cluster distribuit cu $N=3$ replici, dorim să garantăm consistență puternică a citirilor fără un lider central. Dacă la citire descoperim o replică cu o versiune veche a datelor, trebuie să declanșăm automat un *Read Repair* asincron.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import time
+
+class QuorumStorageCluster:
+    """Implementare de laborator pentru Quorum Dynamo (w + r > n) cu Read Repair (DDIA Ch 5)."""
+    def __init__(self, n: int = 3, w: int = 2, r: int = 2):
+        assert w + r > n, "Incalcarea invariantului de consistenta de quorum: w + r trebuie sa fie > n"
+        self.n = n
+        self.w = w
+        self.r = r
+        # Replicile contin {key: (value, version_timestamp)}
+        self.replicas = [{} for _ in range(n)]
+
+    def write(self, key: str, value: str) -> bool:
+        timestamp = time.time()
+        ack_count = 0
+        for replica in self.replicas:
+            replica[key] = (value, timestamp)
+            ack_count += 1
+            if ack_count >= self.w:
+                break
+        return ack_count >= self.w
+
+    def read(self, key: str) -> tuple[str, float]:
+        responses = []
+        for i in range(self.r):
+            replica = self.replicas[i]
+            if key in replica:
+                responses.append((replica[key], i))
+                
+        if not responses:
+            return None, 0.0
+            
+        # Determinam cea mai recenta versiune conform timestamp-ului
+        latest_val, latest_time = max((r[0] for r in responses), key=lambda x: x[1])
+        
+        # Read Repair oportunist: sincronizam replicile ruginite care au fost citite
+        for (val, t), replica_idx in responses:
+            if t < latest_time:
+                self.replicas[replica_idx][key] = (latest_val, latest_time)
+                
+        return latest_val, latest_time
+```
+
+### 3. Playbook Operațional: Ce fac când proiectez replicare fără lider?
+1. **Verific formula**: $w + r > n$ (de ex. $N=3, W=2, R=2$ sau $N=5, W=3, R=3$).
+2. **Aplic Read Repair**: La fiecare citire, orice replică cu timestamp inferior este actualizată automat în fundal.
+3. **Păstrez vector clocks sau timestamp-uri monotone**: Evit conflictele de tip *Last-Write-Wins* care pot șterge silențios scrieri legitime.
+
+---
+
+## Tema 8 (AIMA Avansat — Russell & Norvig): MCTS & Selecție UCB1 pentru Planificare de Agenți
+
+### 1. Enunțul Problemei
+Un agent are la dispoziție 4 unelte posibile pentru un pas de raționament. Dorim să simulăm pașii de explorare prin Monte Carlo Tree Search (MCTS) folosind UCB1 pentru a găsi traseul optim spre rezolvarea sarcinii.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+
+class MCTSNode:
+    """Nod de planificare MCTS cu calcul UCB1 (Russell & Norvig Ch 5)."""
+    def __init__(self, state_name: str, parent=None):
+        self.state_name = state_name
+        self.parent = parent
+        self.children = {}
+        self.visits = 0
+        self.total_reward = 0.0
+
+    def ucb1_score(self, exploration_constant: float = 1.414) -> float:
+        if self.visits == 0:
+            return float("inf")  # Prioritate maxima pentru nodurile neexplorate
+        exploit = self.total_reward / self.visits
+        explore = exploration_constant * math.sqrt(math.log(self.parent.visits) / self.visits)
+        return exploit + explore
+
+    def best_child(self):
+        return max(self.children.values(), key=lambda child: child.ucb1_score())
+
+    def backpropagate(self, reward: float):
+        self.visits += 1
+        self.total_reward += reward
+        if self.parent:
+            self.parent.backpropagate(reward)
+```
+
+### 3. Playbook Operațional: Ce fac când un agent trebuie să planifice căi alternative?
+1. **Aplic UCB1**: Nu folosesc o căutare greedy naivă; echilibrez rata de succes a uneltelor cu explorarea alternativelor.
+2. **Plafon de adâncime**: Opresc rollouts-urile la adâncime $\le 3$ pentru a menține latența sub 200ms.
+
+---
+
+## Tema 9 (Agent FastMCP Avansat — Vasyl Zvarydchuk): Izolarea Sandboxing a Uneltelor
+
+### 1. Enunțul Problemei
+Un agent rulează o unealtă de citire de fișiere `read_safe_file`. Trebuie să garantăm matematic că agentul nu poate citi fișiere din afara directorului de lucru (`WORKSPACE_ROOT`), blocând atacurile de Path Traversal (`../../etc/passwd` sau `..\..\Windows`).
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import os
+
+class SecurityBoundaryViolation(Exception):
+    pass
+
+def execute_sandboxed_file_read(target_rel_path: str, workspace_root: str) -> str:
+    """Valideaza ca path-ul rezolvat ramane strict in interiorul granitelor workspace-ului (Zvarydchuk Ch 4)."""
+    # 1. Rezolvam calea canonica absoluta a radacinii
+    canonical_root = os.path.realpath(workspace_root)
+    
+    # 2. Construim si rezolvam calea tinta
+    candidate_path = os.path.realpath(os.path.join(canonical_root, target_rel_path))
+    
+    # 3. Verificam ca path-ul candidat incepe cu radacina canonica + separator
+    if not (candidate_path == canonical_root or candidate_path.startswith(canonical_root + os.sep)):
+        raise SecurityBoundaryViolation(
+            f"Path traversal detectat! Calea rezolvata '{candidate_path}' evadeaza din '{canonical_root}'"
+        )
+        
+    if not os.path.exists(candidate_path):
+        raise FileNotFoundError(f"Fisierul '{candidate_path}' nu exista.")
+        
+    with open(candidate_path, "r", encoding="utf-8") as f:
+        return f.read()
+```
+
+### 3. Playbook Operațional: Ce fac când implementez unelte de filesystem?
+1. **Întotdeauna folosesc `os.path.realpath`**: Elimin orice legături simbolice sau secvențe `..`.
+2. **Verific prefixul**: `candidate.startswith(canonical_root + os.sep)` previne coliziunile de tip prefix parțial (ex: `/dir` vs `/dir2`).
+3. **Fail-closed**: Dacă verificarea eșuează, arunc excepție de securitate și blochez execuția.
+
+---
+
+## Tema 10 (RAG Avansat — Suhas Pai): Fuziunea Reciprocal Rank (RRF) & Metrici MRR / NDCG
+
+### 1. Enunțul Problemei
+Avem rezultatele unei căutări lexicale BM25 și ale unei căutări dense cu vectori. Vrem să fuzionăm cele două liste într-un clasament unificat prin RRF și să calculăm automat scorul MRR față de documentul relevant cunoscut.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def reciprocal_rank_fusion(rankings: list[list[str]], k: int = 60) -> list[tuple[str, float]]:
+    """Fuziunea clasamentelor dupa formula Suhas Pai Ch 6-7: RRF(d) = sum(1 / (k + rank))."""
+    scores = {}
+    for rank_list in rankings:
+        for rank_idx, doc_id in enumerate(rank_list, 1):
+            scores[doc_id] = scores.get(doc_id, 0.0) + (1.0 / (k + rank_idx))
+            
+    # Sortam descrescator dupa scorul acumulat
+    return sorted(scores.items(), key=lambda item: item[1], reverse=True)
+
+def compute_mrr(ranked_doc_ids: list[str], ground_truth_id: str) -> float:
+    """Calculeaza Mean Reciprocal Rank (MRR)."""
+    for idx, doc_id in enumerate(ranked_doc_ids, 1):
+        if doc_id == ground_truth_id:
+            return 1.0 / idx
+    return 0.0
+```
+
+### 3. Playbook Operațional: Ce fac când combin căutarea cu cuvinte cheie și semantică?
+1. **Aplic RRF cu $k=60$**: Este standardul din industrie pentru combinarea fără normalizare a scorurilor incompatibile.
+2. **Evaluez cu MRR**: Dacă MRR scade sub 0.50 pe interogările de test, verific dacă tokenizarea BM25 pierde cuvinte cheie specifice.
+
+---
+
+## Tema 11 (MLOps Avansat — Chip Huyen): Jointura la Punct Fix în Timp (Point-in-Time Join)
+
+### 1. Enunțul Problemei
+Construiești setul de date de antrenament pentru un model de predicție a erorilor. Pentru fiecare eveniment de eroare apărut la data $T$, caracteristicile extrase trebuie să reflecte doar istoricul până la data $T$, excluzând orice modificare apărută ulterior.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def point_in_time_feature_join(events: list[dict], features_history: list[dict]) -> list[dict]:
+    """Point-in-time join pentru prevenirea scurgerii de date (Data Leakage, Chip Huyen Ch 5).
+    Fiecare eveniment primeste cea mai recenta caracteristica existenta inainte de timestamp-ul evenimentului.
+    """
+    joined_dataset = []
+    
+    # Sortam istoricul caracteristicilor dupa timestamp crescator
+    sorted_features = sorted(features_history, key=lambda x: x["timestamp"])
+    
+    for event in events:
+        event_time = event["timestamp"]
+        entity_id = event["entity_id"]
+        
+        # Gasim cea mai recenta intrare cu timestamp <= event_time
+        valid_feature = None
+        for f in sorted_features:
+            if f["entity_id"] == entity_id and f["timestamp"] <= event_time:
+                valid_feature = f
+            elif f["timestamp"] > event_time:
+                break  # Oprim cautarea: am ajuns in viitorul evenimentului!
+                
+        joined_row = {
+            "event_id": event["event_id"],
+            "entity_id": entity_id,
+            "event_time": event_time,
+            "target": event.get("target"),
+            "feature_val": valid_feature["val"] if valid_feature else None,
+        }
+        joined_dataset.append(joined_row)
+        
+    return joined_dataset
+```
+
+### 3. Playbook Operațional: Ce fac când generez date de antrenament din tabele tranzacționale?
+1. **Filtrez strict temporal**: `feature_timestamp <= event_timestamp`.
+2. **Blochez jointurile naive pe cheie externă**: O jointură simplă pe `entity_id` leagă starea curentă a bazei de date și compromite validitatea modelului.
+
+---
+
+## Tema 12 (Deep Learning Avansat — Magnus Ekman): Mecanismul RoPE & Eșantionarea Min-p
+
+### 1. Enunțul Problemei
+Vrei să implementezi un pas de eșantionare robust pentru generarea autoregresivă a textului, folosind filtrarea Min-p pentru a elimina complet jetoanele halucinate din coada lungă a distribuției.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+import random
+
+def min_p_sampling(logits: list[float], min_p: float = 0.05, temperature: float = 1.0) -> int:
+    """Eșantionare Min-p conform cercetărilor recente (Ekman Ch 15).
+    Elimină toate jetoanele a căror probabilitate este < min_p * max_prob.
+    """
+    # 1. Aplicam temperatura
+    scaled_logits = [z / max(temperature, 1e-4) for z in logits]
+    max_logit = max(scaled_logits)
+    
+    # 2. Softmax
+    exps = [math.exp(z - max_logit) for z in scaled_logits]
+    sum_exps = sum(exps)
+    probs = [e / sum_exps for e in exps]
+    
+    # 3. Pragul Min-p
+    max_prob = max(probs)
+    threshold = min_p * max_prob
+    
+    # 4. Filtrare si renormalizare
+    filtered = [(idx, p) for idx, p in enumerate(probs) if p >= threshold]
+    filtered_sum = sum(p for _, p in filtered)
+    renorm_probs = [(idx, p / filtered_sum) for idx, p in filtered]
+    
+    # 5. Tragere la sorti conform distributiei renormalizate
+    r = random.random()
+    cumulative = 0.0
+    for idx, p in renorm_probs:
+        cumulative += p
+        if r <= cumulative:
+            return idx
+    return renorm_probs[-1][0]
+```
+
+### 3. Playbook Operațional: Ce fac când configurez parametrii de generare a răspunsurilor?
+1. **Setez $\text{min\_p} = 0.05$**: Este mult mai dinamic și adaptabil decât Top-p, adaptându-se automat certitudinii modelului.
+2. **Pentru generare de cod structurat**: Combin $\text{min\_p} = 0.05$ cu temperatură $T \in [0.1, 0.3]$.
+
+---
+
+## Concluzie: De la Notițe la Execuție Sigură (12 Teme Rezolvate)
+
+Cu aceste 12 teme rezolvate:
+- **T1-T6**: Stocare WAL, căutare $A^*$, scoping de agenți, demarcare XML, monitorizare PSI și atenție cu LoRA.
+- **T7-T12**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fișiere cu limită ermetică, fuziune RRF cu MRR, point-in-time join fără scurgere de date și eșantionare Min-p.
+
