@@ -93,8 +93,10 @@ class RecallEngine:
         """
         Scores activated nodes against the query and working memory context.
         REVIEW-gated nodes are added as read-only candidates with zero activation.
-        Abstention is applied only after lineage resolution so low-scoring
-        superseded nodes can still surface their active successor.
+        Abstention is decided from the best pre-lifecycle relevance score, while
+        lifecycle penalties remain ranking signals. This preserves supersession
+        lineage resolution without allowing a lifecycle penalty to turn an
+        otherwise relevant query into a false abstention.
         """
         wm_context = " ".join([n.get("content", "") for n in working_memory.get_active_context()])
 
@@ -177,8 +179,6 @@ class RecallEngine:
 
             scored_nodes.append((node, final_score))
 
-        # Resolve supersession before applying abstention. This preserves the
-        # lineage signal even when the historical node itself is below threshold.
         from memory_controller.validation.supersession import resolve_active_lineage
         active_candidates = {}
         for node, score in list(scored_nodes):
@@ -202,10 +202,11 @@ class RecallEngine:
 
         scored_nodes.sort(key=lambda x: (x[1], x[0].get("id", "")), reverse=True)
 
-        # Global abstention: only abstain when the best candidate is below the
-        # threshold. Do not discard individual low-scoring lineage/history nodes
-        # after the lineage resolver has done its work.
-        if not scored_nodes or scored_nodes[0][1] < self.abstention_threshold:
+        # Abstain only when there was no sufficiently relevant candidate before
+        # lifecycle down-ranking. A SUPERSEDED/ARCHIVED penalty must not erase the
+        # evidence that the query itself matched a known memory.
+        best_pre_lifecycle_score = max(pre_lifecycle_scores.values(), default=0.0)
+        if not scored_nodes or best_pre_lifecycle_score < self.abstention_threshold:
             scored_nodes = []
 
         from .activation import ActivationTracker
