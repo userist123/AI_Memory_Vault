@@ -1,10 +1,9 @@
 # Structure Migration State — 2026-09-04
 
-## Current main
+## State provenance
 
-`e4e037cc1fb2c2c983a69f37da83bbb8069e0c50`
-
-Evidence: remote `main` ref verified immediately before this write.
+Base `main` before this state record: `e4e037cc1fb2c2c983a69f37da83bbb8069e0c50`.
+State record commit: `6b48e95c11617b5a0327de9ca0255e15b286c7c4`.
 
 ## Completed structural batches
 
