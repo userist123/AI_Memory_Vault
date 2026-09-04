@@ -122,11 +122,23 @@ relations:
   target: 01_KNOWLEDGE/BOOKS/PRODUCTION_MLOps_AB_Testing_and_Statistical_Significance.md
 - relation: references
   target: 01_KNOWLEDGE/BOOKS/PRODUCTION_Transformer_Knowledge_Distillation_and_Model_Compression.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/SCALING_DDIA_Change_Data_Capture_and_Event_Sourcing.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/SCALING_AIMA_Bayesian_Networks_and_Variable_Elimination.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/SCALING_Agent_Context_Window_and_Conversation_Memory.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/SCALING_RAG_Prompt_Caching_and_KV_Cache_Sharing.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/SCALING_MLOps_Distribution_Shift_and_Monitoring.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/SCALING_Transformer_Curriculum_Learning_and_Self_Paced_Training.md
 ---
 
 
 
-# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (48 Teme Rezolvate)
+# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (54 Teme Rezolvate)
 
 **Rol**: Manual operațional de laborator și exerciții rezolvate pentru transpunerea teoriei în sarcini practice de producție.  
 **Metodologie**: Învățare activă $\to$ Notițe sintetice $\to$ Teme rezolvate pas cu pas $\to$ Playbook de execuție imediată.
@@ -267,3 +279,14 @@ Ghidul complet cu implementările în cod este documentat în:
 | T46 | LLM Apps | JSON Schema Constrained Validator cu Retry | Pydantic model, constrained decoding, retry cu feedback |
 | T47 | ML Systems | A/B Test Simulator cu Sequential Testing | Hypothesis testing, peeking, SPRT, Bonferroni correction |
 | T48 | Deep Learning | Knowledge Distillation Teacher-Student Trainer | Soft targets, temperatura, KL divergence, dark knowledge |
+
+### Nivelul 9 — Scalabilitate si Invatare Continua (Teme 49-54)
+
+| # | Carte | Tema | Concepte |
+| :--- | :--- | :--- | :--- |
+| T49 | DDIA | Event Sourcing Engine cu Replay si Snapshots | Event log, fold/reduce, snapshots, time-travel, CDC |
+| T50 | AIMA | Retea Bayesiana cu Variable Elimination | DAG probabilistic, CPT, marginalizare, d-separare |
+| T51 | Agent | Token Budget Controller cu Sumarizare Progresiva | Token budget, stratificare context, lost-in-the-middle |
+| T52 | LLM Apps | Prefix Cache Simulator cu Radix Tree | KV cache sharing, radix tree, prefix matching, token savings |
+| T53 | ML Systems | Distribution Shift Detector cu KS Test si PSI | KS test, PSI, covariate shift, alertare multi-nivel |
+| T54 | Deep Learning | Curriculum Learning Trainer cu Pacing Function | Difficulty scoring, pacing function, competence selection |

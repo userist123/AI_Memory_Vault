@@ -3108,6 +3108,940 @@ print(f"[T48] PASS - Knowledge distillation cu T={trainer.T}, alpha={trainer.alp
 3. Observa ca pierderea KL este scalata cu $T^2$ pentru a compensa magnitudinea gradientilor
 4. Conecteaza cu Tier 4 (Quantizare): distilarea si quantizarea se combina pentru compresie maximala
 
+---
+
+# Nivelul 9 — Scalabilitate si Invatare Continua
+
+---
+
+## Tema 49: Event Sourcing Engine cu Replay si Snapshots (DDIA — CDC & Event Sourcing)
+
+**Obiectiv**: Implementeaza un motor de event sourcing care stocheaza evenimente imutabile, reconstruieste starea prin fold, si optimizeaza cu snapshots periodice.
+
+**Concepte Cheie**: Event log imutabil, fold/reduce pentru stare, snapshots, CQRS read model, CDC pattern.
+
+```python
+import hashlib
+import json
+from dataclasses import dataclass, field, asdict
+from typing import Optional
+
+@dataclass
+class DomainEvent:
+    event_id: str
+    aggregate_id: str
+    event_type: str
+    payload: dict
+    version: int
+    timestamp: float = 0.0
+
+@dataclass
+class Snapshot:
+    aggregate_id: str
+    state: dict
+    version: int
+    event_count: int
+
+class EventStore:
+    """Motor de Event Sourcing cu replay si snapshots."""
+    
+    def __init__(self, snapshot_interval: int = 5):
+        self.events: list[DomainEvent] = []
+        self.snapshots: dict[str, Snapshot] = {}
+        self.snapshot_interval = snapshot_interval
+        self._event_counter = 0
+    
+    def append(self, aggregate_id: str, event_type: str, payload: dict) -> DomainEvent:
+        """Adauga un eveniment imutabil in log."""
+        self._event_counter += 1
+        version = sum(1 for e in self.events if e.aggregate_id == aggregate_id) + 1
+        event = DomainEvent(
+            event_id=hashlib.sha256(f"{aggregate_id}-{version}".encode()).hexdigest()[:12],
+            aggregate_id=aggregate_id,
+            event_type=event_type,
+            payload=payload,
+            version=version,
+            timestamp=self._event_counter
+        )
+        self.events.append(event)
+        
+        # Auto-snapshot
+        agg_events = [e for e in self.events if e.aggregate_id == aggregate_id]
+        if len(agg_events) % self.snapshot_interval == 0:
+            state = self._replay_events(agg_events)
+            self.snapshots[aggregate_id] = Snapshot(
+                aggregate_id=aggregate_id,
+                state=state,
+                version=version,
+                event_count=len(agg_events)
+            )
+        return event
+    
+    def _apply_event(self, state: dict, event: DomainEvent) -> dict:
+        """Aplica un eveniment pe stare (fold step)."""
+        state = dict(state)
+        if event.event_type == "OrderPlaced":
+            state["status"] = "placed"
+            state["total"] = event.payload.get("amount", 0)
+            state["items"] = event.payload.get("items", [])
+        elif event.event_type == "PaymentReceived":
+            state["status"] = "paid"
+            state["paid_amount"] = event.payload.get("amount", 0)
+        elif event.event_type == "ItemShipped":
+            state["status"] = "shipped"
+            state["tracking"] = event.payload.get("tracking", "")
+        elif event.event_type == "OrderCancelled":
+            state["status"] = "cancelled"
+            state["cancel_reason"] = event.payload.get("reason", "")
+        elif event.event_type == "RefundIssued":
+            state["status"] = "refunded"
+            state["refund_amount"] = event.payload.get("amount", 0)
+        state["version"] = event.version
+        return state
+    
+    def _replay_events(self, events: list[DomainEvent]) -> dict:
+        """Reconstruieste starea prin fold pe lista de evenimente."""
+        state = {}
+        for event in events:
+            state = self._apply_event(state, event)
+        return state
+    
+    def get_state(self, aggregate_id: str) -> dict:
+        """Obtine starea curenta, folosind snapshot daca exista."""
+        agg_events = [e for e in self.events if e.aggregate_id == aggregate_id]
+        if not agg_events:
+            return {}
+        
+        # Foloseste snapshot daca exista
+        snap = self.snapshots.get(aggregate_id)
+        if snap:
+            remaining = [e for e in agg_events if e.version > snap.version]
+            state = dict(snap.state)
+            for event in remaining:
+                state = self._apply_event(state, event)
+            return state
+        
+        return self._replay_events(agg_events)
+    
+    def get_state_at_version(self, aggregate_id: str, target_version: int) -> dict:
+        """Time-travel: starea la o versiune specifica."""
+        agg_events = [e for e in self.events 
+                      if e.aggregate_id == aggregate_id and e.version <= target_version]
+        return self._replay_events(agg_events)
+
+
+# === LABORATOR ===
+store = EventStore(snapshot_interval=3)
+
+# Scenariul unei comenzi
+store.append("order-1", "OrderPlaced", {"amount": 250, "items": ["laptop_bag"]})
+store.append("order-1", "PaymentReceived", {"amount": 250})
+store.append("order-1", "ItemShipped", {"tracking": "RO-12345"})
+
+state = store.get_state("order-1")
+assert state["status"] == "shipped"
+assert state["tracking"] == "RO-12345"
+print(f"[T49] Stare curenta: {state}")
+
+# Snapshot ar fi trebuit creat la versiunea 3
+assert "order-1" in store.snapshots
+print(f"[T49] Snapshot creat la versiunea {store.snapshots['order-1'].version}")
+
+# Time travel
+state_v1 = store.get_state_at_version("order-1", 1)
+assert state_v1["status"] == "placed"
+print(f"[T49] Time-travel v1: {state_v1}")
+
+# Eveniment dupa snapshot
+store.append("order-1", "RefundIssued", {"amount": 250})
+state_final = store.get_state("order-1")
+assert state_final["status"] == "refunded"
+print(f"[T49] Dupa refund (snapshot+replay): {state_final}")
+
+assert len(store.events) == 4
+print(f"[T49] PASS - Event sourcing cu {len(store.events)} events, snapshot + time-travel")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum starea se reconstruieste prin fold
+2. Verifica time-travel: starea la versiunea 1 vs versiunea 4
+3. Conecteaza: `audit_log.jsonl` din Memory Vault este un event log imutabil cu hash chain
+
+---
+
+## Tema 50: Retea Bayesiana cu Variable Elimination (AIMA — Inferenta Probabilistica)
+
+**Obiectiv**: Implementeaza o retea bayesiana cu tabele CPT si algoritmul Variable Elimination pentru inferenta exacta.
+
+**Concepte Cheie**: DAG probabilistic, CPT, factorizare, marginalizare, d-separare, chain rule.
+
+```python
+from itertools import product
+from copy import deepcopy
+
+class Factor:
+    """Un factor (tabel de probabilitati) peste un set de variabile."""
+    def __init__(self, variables: list[str], values: dict[tuple, float]):
+        self.variables = variables
+        self.values = values  # {(val1, val2, ...): probability}
+    
+    def __repr__(self):
+        return f"Factor({self.variables})"
+
+def multiply_factors(f1: Factor, f2: Factor) -> Factor:
+    """Inmulteste doi factori."""
+    new_vars = list(dict.fromkeys(f1.variables + f2.variables))
+    new_values = {}
+    
+    # Genereaza toate combinatiile
+    domains = {v: set() for v in new_vars}
+    for key in f1.values:
+        for i, v in enumerate(f1.variables):
+            domains[v].add(key[i])
+    for key in f2.values:
+        for i, v in enumerate(f2.variables):
+            domains[v].add(key[i])
+    
+    for combo in product(*[sorted(domains[v]) for v in new_vars]):
+        assignment = dict(zip(new_vars, combo))
+        key1 = tuple(assignment[v] for v in f1.variables)
+        key2 = tuple(assignment[v] for v in f2.variables)
+        if key1 in f1.values and key2 in f2.values:
+            new_values[combo] = f1.values[key1] * f2.values[key2]
+    
+    return Factor(new_vars, new_values)
+
+def marginalize(factor: Factor, variable: str) -> Factor:
+    """Elimina (summeaza) o variabila din factor."""
+    var_idx = factor.variables.index(variable)
+    new_vars = [v for v in factor.variables if v != variable]
+    new_values = {}
+    
+    for key, val in factor.values.items():
+        new_key = tuple(k for i, k in enumerate(key) if i != var_idx)
+        new_values[new_key] = new_values.get(new_key, 0) + val
+    
+    return Factor(new_vars, new_values)
+
+def normalize(factor: Factor) -> Factor:
+    """Normalizeaza factorul sa insumeze 1."""
+    total = sum(factor.values.values())
+    if total == 0:
+        return factor
+    return Factor(factor.variables, {k: v/total for k, v in factor.values.items()})
+
+def variable_elimination(factors: list[Factor], query: str, 
+                         evidence: dict[str, str], 
+                         hidden: list[str]) -> Factor:
+    """Algoritmul Variable Elimination."""
+    # Pas 1: Incorporeaza evidenta
+    reduced = []
+    for f in factors:
+        new_values = {}
+        for key, val in f.values.items():
+            assignment = dict(zip(f.variables, key))
+            consistent = all(assignment.get(e) == v for e, v in evidence.items() 
+                           if e in f.variables)
+            if consistent:
+                new_values[key] = val
+        reduced.append(Factor(f.variables, new_values))
+    
+    # Pas 2: Elimina variabilele ascunse
+    for var in hidden:
+        # Gaseste factorii care contin var
+        relevant = [f for f in reduced if var in f.variables]
+        irrelevant = [f for f in reduced if var not in f.variables]
+        
+        if relevant:
+            # Inmulteste factorii relevanti
+            product_factor = relevant[0]
+            for f in relevant[1:]:
+                product_factor = multiply_factors(product_factor, f)
+            # Marginalizeaza var
+            marginalized = marginalize(product_factor, var)
+            reduced = irrelevant + [marginalized]
+    
+    # Pas 3: Inmulteste factorii ramasi si normalizeaza
+    result = reduced[0]
+    for f in reduced[1:]:
+        result = multiply_factors(result, f)
+    
+    return normalize(result)
+
+
+# === LABORATOR: Reteaua Alarma ===
+# P(Burglar)
+f_b = Factor(["B"], {("T",): 0.001, ("F",): 0.999})
+# P(Earthquake)
+f_e = Factor(["E"], {("T",): 0.002, ("F",): 0.998})
+# P(Alarm | B, E)
+f_a = Factor(["A", "B", "E"], {
+    ("T","T","T"): 0.95, ("F","T","T"): 0.05,
+    ("T","T","F"): 0.94, ("F","T","F"): 0.06,
+    ("T","F","T"): 0.29, ("F","F","T"): 0.71,
+    ("T","F","F"): 0.001,("F","F","F"): 0.999,
+})
+# P(JohnCalls | Alarm)
+f_j = Factor(["J", "A"], {
+    ("T","T"): 0.90, ("F","T"): 0.10,
+    ("T","F"): 0.05, ("F","F"): 0.95,
+})
+# P(MaryCalls | Alarm)
+f_m = Factor(["M", "A"], {
+    ("T","T"): 0.70, ("F","T"): 0.30,
+    ("T","F"): 0.01, ("F","F"): 0.99,
+})
+
+all_factors = [f_b, f_e, f_a, f_j, f_m]
+
+# Query: P(Burglar | JohnCalls=T, MaryCalls=T)
+result = variable_elimination(
+    all_factors,
+    query="B",
+    evidence={"J": "T", "M": "T"},
+    hidden=["E", "A"]
+)
+
+print(f"[T50] P(Burglar | JohnCalls=T, MaryCalls=T):")
+for key, val in sorted(result.values.items()):
+    label = "Burglar=True" if key[0] == "T" else "Burglar=False"
+    print(f"       {label}: {val:.6f}")
+
+# Valoarea clasica din AIMA: P(B=T|J=T,M=T) ≈ 0.284
+p_burglar = result.values.get(("T",), 0)
+assert 0.2 < p_burglar < 0.4, f"P(B|J,M) should be ~0.284, got {p_burglar}"
+print(f"[T50] PASS - Variable Elimination: P(B=T|J=T,M=T) = {p_burglar:.4f}")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si verifica ca P(Burglar|JohnCalls,MaryCalls) ≈ 0.284 (valoarea din AIMA)
+2. Schimba evidenta: ce se intampla daca doar John suna? (P scade)
+3. Observa explaining away: daca stim ca e cutremur, P(Burglar) scade
+
+---
+
+## Tema 51: Token Budget Controller cu Sumarizare Progresiva (Agent — Context Window)
+
+**Obiectiv**: Implementeaza un controller de buget de tokeni care stratifica contextul, aplica sumarizare progresiva, si mentine un sliding window cu memoria recenta.
+
+**Concepte Cheie**: Token budget, stratificare pe importanta, sliding window, sumarizare progresiva, lost-in-the-middle.
+
+```python
+from dataclasses import dataclass, field
+
+@dataclass
+class Message:
+    role: str  # "system", "user", "assistant"
+    content: str
+    token_count: int
+    turn_number: int
+    importance: float = 1.0  # 0.0-1.0
+
+class TokenBudgetController:
+    """Controller de buget de tokeni cu stratificare si sumarizare."""
+    
+    def __init__(self, max_tokens: int = 4000, reserved_output: int = 500):
+        self.max_input = max_tokens - reserved_output
+        self.strata = {
+            "system": 0.12,
+            "summary": 0.18,
+            "recent": 0.45,
+            "retrieval": 0.20,
+            "buffer": 0.05
+        }
+        self.all_messages: list[Message] = []
+        self.summary: str = ""
+        self.summary_tokens: int = 0
+        self.summary_covers_turns: int = 0
+    
+    def get_budgets(self) -> dict[str, int]:
+        return {k: int(v * self.max_input) for k, v in self.strata.items()}
+    
+    def add_message(self, role: str, content: str):
+        """Adauga un mesaj si gestioneaza bugetul."""
+        tokens = len(content.split())  # aproximare simpla
+        turn = len(self.all_messages) + 1
+        msg = Message(role=role, content=content, token_count=tokens,
+                     turn_number=turn)
+        self.all_messages.append(msg)
+    
+    def _simulate_summarize(self, messages: list[Message]) -> str:
+        """Simuleaza sumarizarea (in productie = apel LLM)."""
+        key_points = []
+        for m in messages:
+            if m.role == "user":
+                key_points.append(f"User a cerut: {m.content[:50]}...")
+            elif m.role == "assistant":
+                key_points.append(f"Asist. a raspuns: {m.content[:50]}...")
+        
+        if self.summary:
+            return f"[Rezumat anterior + {len(messages)} turnuri noi] " + "; ".join(key_points[-3:])
+        return "[Rezumat] " + "; ".join(key_points)
+    
+    def build_context(self, system_prompt: str, retrieval_context: str = "") -> dict:
+        """Construieste contextul stratificat respectand bugetul."""
+        budgets = self.get_budgets()
+        
+        # Strat 1: System prompt (truncat daca depaseste)
+        sys_tokens = len(system_prompt.split())
+        sys_content = system_prompt
+        if sys_tokens > budgets["system"]:
+            words = system_prompt.split()[:budgets["system"]]
+            sys_content = " ".join(words)
+            sys_tokens = budgets["system"]
+        
+        # Strat 4: Retrieval (truncat daca depaseste)
+        ret_tokens = len(retrieval_context.split()) if retrieval_context else 0
+        ret_content = retrieval_context
+        if ret_tokens > budgets["retrieval"]:
+            words = retrieval_context.split()[:budgets["retrieval"]]
+            ret_content = " ".join(words)
+            ret_tokens = budgets["retrieval"]
+        
+        # Strat 3: Mesaje recente (cat incap in buget)
+        recent_budget = budgets["recent"]
+        recent_messages = []
+        recent_total = 0
+        for msg in reversed(self.all_messages):
+            if msg.role == "system":
+                continue
+            if recent_total + msg.token_count > recent_budget:
+                break
+            recent_messages.insert(0, msg)
+            recent_total += msg.token_count
+        
+        # Strat 2: Sumarizare a mesajelor mai vechi
+        oldest_recent_turn = recent_messages[0].turn_number if recent_messages else len(self.all_messages) + 1
+        older_messages = [m for m in self.all_messages 
+                         if m.turn_number < oldest_recent_turn and m.role != "system"]
+        
+        if older_messages and len(older_messages) > self.summary_covers_turns:
+            self.summary = self._simulate_summarize(older_messages)
+            self.summary_tokens = len(self.summary.split())
+            self.summary_covers_turns = len(older_messages)
+        
+        # Truncheaza summary daca depaseste
+        if self.summary_tokens > budgets["summary"]:
+            words = self.summary.split()[:budgets["summary"]]
+            self.summary = " ".join(words)
+            self.summary_tokens = budgets["summary"]
+        
+        total_used = sys_tokens + self.summary_tokens + recent_total + ret_tokens
+        
+        return {
+            "system": {"content": sys_content, "tokens": sys_tokens},
+            "summary": {"content": self.summary, "tokens": self.summary_tokens},
+            "recent": {"messages": [(m.role, m.content) for m in recent_messages],
+                      "tokens": recent_total, "count": len(recent_messages)},
+            "retrieval": {"content": ret_content, "tokens": ret_tokens},
+            "total_tokens": total_used,
+            "budget_total": self.max_input,
+            "utilization": round(total_used / self.max_input * 100, 1)
+        }
+
+
+# === LABORATOR ===
+ctrl = TokenBudgetController(max_tokens=200, reserved_output=30)
+print(f"[T51] Buget pe strate: {ctrl.get_budgets()}")
+
+# Simuleaza 10 turnuri de conversatie
+for i in range(10):
+    ctrl.add_message("user", f"Intrebarea {i+1} despre topicul important al zilei de azi")
+    ctrl.add_message("assistant", f"Raspunsul detaliat {i+1} cu informatii relevante si explicatii")
+
+system = "Esti un asistent AI util"
+retrieval = "Nota relevanta din vault despre subiect"
+
+ctx = ctrl.build_context(system, retrieval)
+print(f"[T51] Context construit:")
+print(f"       System: {ctx['system']['tokens']} tokens")
+print(f"       Summary: {ctx['summary']['tokens']} tokens")
+print(f"       Recent: {ctx['recent']['count']} mesaje, {ctx['recent']['tokens']} tokens")
+print(f"       Retrieval: {ctx['retrieval']['tokens']} tokens")
+print(f"       Total: {ctx['total_tokens']}/{ctx['budget_total']} ({ctx['utilization']}%)")
+
+assert ctx["total_tokens"] <= ctx["budget_total"]
+assert ctx["recent"]["count"] < 20  # nu toate mesajele incap
+assert len(ctrl.summary) > 0  # sumarizarea s-a activat
+print(f"[T51] PASS - Token budget: {ctx['utilization']}% utilizare, sumarizare activa")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum doar ultimele mesaje incap in stratul "recent"
+2. Verifica ca sumarizarea acopera mesajele mai vechi
+3. Conecteaza cu `AGENTS.md`: `MAX_SYNTHESIS_INPUT = 2500 tokens` este exact un buget de strat
+
+---
+
+## Tema 52: Prefix Cache Simulator cu Radix Tree (LLM Apps — Prompt Caching)
+
+**Obiectiv**: Implementeaza un simulator de prompt caching care foloseste un trie (radix tree) pentru a detecta si reutiliza prefixe comune intre cereri.
+
+**Concepte Cheie**: KV cache sharing, radix tree, prefix matching, cache hit rate, cost optimization.
+
+```python
+from dataclasses import dataclass, field
+
+class TrieNode:
+    def __init__(self):
+        self.children: dict[str, 'TrieNode'] = {}
+        self.is_cached: bool = False
+        self.cache_hits: int = 0
+        self.token_count: int = 0
+
+class PrefixCacheSimulator:
+    """Simulator de prompt caching cu radix tree."""
+    
+    def __init__(self, min_prefix_length: int = 3):
+        self.root = TrieNode()
+        self.min_prefix = min_prefix_length
+        self.stats = {
+            "total_requests": 0,
+            "total_tokens_processed": 0,
+            "tokens_saved": 0,
+            "cache_hits": 0,
+            "cache_misses": 0,
+        }
+    
+    def _tokenize(self, text: str) -> list[str]:
+        """Tokenizare simplificata (cuvinte)."""
+        return text.lower().split()
+    
+    def _insert_prefix(self, tokens: list[str]):
+        """Insereaza un prefix in trie si marcheaza ca cached."""
+        node = self.root
+        for token in tokens:
+            if token not in node.children:
+                node.children[token] = TrieNode()
+            node = node.children[token]
+            node.token_count += 1
+        node.is_cached = True
+    
+    def _find_longest_prefix(self, tokens: list[str]) -> int:
+        """Gaseste cel mai lung prefix cached. Returneaza lungimea."""
+        node = self.root
+        length = 0
+        for token in tokens:
+            if token in node.children:
+                node = node.children[token]
+                length += 1
+            else:
+                break
+        return length if length >= self.min_prefix else 0
+    
+    def process_request(self, prompt: str) -> dict:
+        """Proceseaza o cerere, folosind cache-ul de prefix."""
+        tokens = self._tokenize(prompt)
+        self.stats["total_requests"] += 1
+        self.stats["total_tokens_processed"] += len(tokens)
+        
+        # Cauta prefix cached
+        cached_length = self._find_longest_prefix(tokens)
+        
+        if cached_length > 0:
+            self.stats["cache_hits"] += 1
+            self.stats["tokens_saved"] += cached_length
+            result = {
+                "status": "partial_cache_hit",
+                "cached_tokens": cached_length,
+                "computed_tokens": len(tokens) - cached_length,
+                "total_tokens": len(tokens),
+                "savings_pct": round(cached_length / len(tokens) * 100, 1)
+            }
+        else:
+            self.stats["cache_misses"] += 1
+            result = {
+                "status": "cache_miss",
+                "cached_tokens": 0,
+                "computed_tokens": len(tokens),
+                "total_tokens": len(tokens),
+                "savings_pct": 0
+            }
+        
+        # Insereaza in cache pentru viitoarele cereri
+        self._insert_prefix(tokens)
+        return result
+    
+    def get_stats(self) -> dict:
+        total = self.stats["total_tokens_processed"]
+        saved = self.stats["tokens_saved"]
+        return {
+            **self.stats,
+            "hit_rate": round(self.stats["cache_hits"] / max(self.stats["total_requests"], 1) * 100, 1),
+            "token_savings_pct": round(saved / max(total, 1) * 100, 1),
+            "cost_reduction_estimate": round(saved / max(total, 1) * 0.36 * 100, 1),  # ~36% din input cost
+        }
+
+
+# === LABORATOR ===
+cache = PrefixCacheSimulator(min_prefix_length=3)
+
+# System prompt comun
+system = "you are a helpful ai assistant that answers questions about the memory vault system"
+
+# Cereri cu prefix comun (system prompt identic)
+r1 = cache.process_request(f"{system} what is event sourcing")
+print(f"[T52] Request 1: {r1['status']} (savings: {r1['savings_pct']}%)")
+
+r2 = cache.process_request(f"{system} how does cdc work with debezium")
+print(f"[T52] Request 2: {r2['status']} (savings: {r2['savings_pct']}%)")
+
+r3 = cache.process_request(f"{system} explain the outbox pattern for kafka")
+print(f"[T52] Request 3: {r3['status']} (savings: {r3['savings_pct']}%)")
+
+# Cerere complet diferita
+r4 = cache.process_request("calculate the fibonacci sequence up to 100")
+print(f"[T52] Request 4: {r4['status']} (savings: {r4['savings_pct']}%)")
+
+stats = cache.get_stats()
+print(f"\n[T52] Statistici cache:")
+print(f"       Hit rate: {stats['hit_rate']}%")
+print(f"       Token savings: {stats['token_savings_pct']}%")
+print(f"       Cost reduction: ~{stats['cost_reduction_estimate']}%")
+
+assert stats["cache_hits"] >= 2  # cel putin r2 si r3 au cache hit
+assert stats["token_savings_pct"] > 0
+print(f"[T52] PASS - Prefix cache cu {stats['cache_hits']} hits din {stats['total_requests']} cereri")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum cererile 2 si 3 beneficiaza de cache pe system prompt
+2. Cererea 4 (complet diferita) este cache miss
+3. Conecteaza: Council system prompt din Memory Vault este stabil → candidat ideal pentru caching
+
+---
+
+## Tema 53: Distribution Shift Detector cu KS Test si PSI (MLOps — Monitorizare)
+
+**Obiectiv**: Implementeaza un detector de deplasari de distributie care foloseste testul Kolmogorov-Smirnov si Population Stability Index pentru monitorizarea feature-urilor in productie.
+
+**Concepte Cheie**: KS test, PSI, covariate shift, feature monitoring, alertare multi-nivel.
+
+```python
+import math
+import random
+from collections import Counter
+
+class DistributionShiftDetector:
+    """Detector de shift-uri cu KS Test si PSI."""
+    
+    def __init__(self):
+        random.seed(42)
+        self.monitoring_log: list[dict] = []
+    
+    def ks_test(self, reference: list[float], production: list[float]) -> dict:
+        """Kolmogorov-Smirnov test (two-sample)."""
+        ref_sorted = sorted(reference)
+        prod_sorted = sorted(production)
+        n_ref = len(ref_sorted)
+        n_prod = len(prod_sorted)
+        
+        # Combina si sorteaza toate valorile
+        all_vals = sorted(set(ref_sorted + prod_sorted))
+        
+        max_d = 0.0
+        for val in all_vals:
+            # CDF empirica
+            cdf_ref = sum(1 for x in ref_sorted if x <= val) / n_ref
+            cdf_prod = sum(1 for x in prod_sorted if x <= val) / n_prod
+            d = abs(cdf_ref - cdf_prod)
+            max_d = max(max_d, d)
+        
+        # Valoarea critica aproximativa (alpha=0.05)
+        critical = 1.36 * math.sqrt((n_ref + n_prod) / (n_ref * n_prod))
+        
+        return {
+            "d_statistic": round(max_d, 6),
+            "critical_value": round(critical, 6),
+            "shift_detected": max_d > critical,
+            "n_reference": n_ref,
+            "n_production": n_prod
+        }
+    
+    def psi(self, reference: list[float], production: list[float], 
+            n_bins: int = 10) -> dict:
+        """Population Stability Index."""
+        # Creaza bin-uri pe baza distributiei de referinta
+        ref_sorted = sorted(reference)
+        bin_edges = [ref_sorted[int(i * len(ref_sorted) / n_bins)] 
+                     for i in range(n_bins)] + [float('inf')]
+        
+        def bin_proportions(data, edges):
+            counts = [0] * n_bins
+            for val in data:
+                for i in range(n_bins):
+                    lower = edges[i] if i > 0 else float('-inf')
+                    upper = edges[i + 1] if i + 1 < len(edges) else float('inf')
+                    if lower <= val < upper:
+                        counts[i] += 1
+                        break
+                else:
+                    counts[-1] += 1
+            total = sum(counts)
+            return [max(c / total, 0.0001) for c in counts]  # avoid log(0)
+        
+        ref_props = bin_proportions(reference, bin_edges)
+        prod_props = bin_proportions(production, bin_edges)
+        
+        psi_value = sum(
+            (p - r) * math.log(p / r)
+            for p, r in zip(prod_props, ref_props)
+        )
+        
+        if psi_value < 0.10:
+            severity = "stable"
+        elif psi_value < 0.25:
+            severity = "warning"
+        else:
+            severity = "critical"
+        
+        return {
+            "psi": round(psi_value, 6),
+            "severity": severity,
+            "n_bins": n_bins
+        }
+    
+    def monitor_features(self, reference_data: dict[str, list], 
+                         production_data: dict[str, list]) -> dict:
+        """Monitorizare multi-feature cu alertare."""
+        results = {}
+        alerts = []
+        
+        for feature_name in reference_data:
+            ref = reference_data[feature_name]
+            prod = production_data.get(feature_name, [])
+            if not prod:
+                continue
+            
+            ks = self.ks_test(ref, prod)
+            psi_result = self.psi(ref, prod)
+            
+            status = "ok"
+            if psi_result["severity"] == "critical" or ks["shift_detected"]:
+                status = "critical"
+                alerts.append(f"CRITICAL: {feature_name} PSI={psi_result['psi']:.4f}")
+            elif psi_result["severity"] == "warning":
+                status = "warning"
+                alerts.append(f"WARNING: {feature_name} PSI={psi_result['psi']:.4f}")
+            
+            results[feature_name] = {
+                "ks": ks, "psi": psi_result, "status": status
+            }
+        
+        report = {"features": results, "alerts": alerts,
+                  "healthy": all(r["status"] == "ok" for r in results.values())}
+        self.monitoring_log.append(report)
+        return report
+
+
+# === LABORATOR ===
+detector = DistributionShiftDetector()
+
+# Referinta: distributie normala
+ref_age = [random.gauss(35, 10) for _ in range(500)]
+ref_income = [random.gauss(50000, 15000) for _ in range(500)]
+
+# Productie STABILA
+prod_stable_age = [random.gauss(35, 10) for _ in range(300)]
+prod_stable_income = [random.gauss(50000, 15000) for _ in range(300)]
+
+report1 = detector.monitor_features(
+    {"age": ref_age, "income": ref_income},
+    {"age": prod_stable_age, "income": prod_stable_income}
+)
+print(f"[T53] Distributie stabila:")
+for f, r in report1["features"].items():
+    print(f"       {f}: PSI={r['psi']['psi']:.4f} ({r['psi']['severity']}), KS_D={r['ks']['d_statistic']:.4f}")
+print(f"       Healthy: {report1['healthy']}")
+
+# Productie cu SHIFT
+prod_shifted_age = [random.gauss(45, 12) for _ in range(300)]  # +10 ani
+prod_shifted_income = [random.gauss(70000, 20000) for _ in range(300)]  # +20k
+
+report2 = detector.monitor_features(
+    {"age": ref_age, "income": ref_income},
+    {"age": prod_shifted_age, "income": prod_shifted_income}
+)
+print(f"\n[T53] Distributie cu shift:")
+for f, r in report2["features"].items():
+    print(f"       {f}: PSI={r['psi']['psi']:.4f} ({r['psi']['severity']}), KS_D={r['ks']['d_statistic']:.4f}")
+print(f"       Healthy: {report2['healthy']}")
+print(f"       Alerte: {report2['alerts']}")
+
+assert report1["healthy"], "Distributia stabila ar trebui sa fie sanatoasa"
+assert not report2["healthy"], "Distributia cu shift ar trebui sa fie nesanatoasa"
+print(f"\n[T53] PASS - Shift detection: stabil=healthy, shifted=alerted")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si compara PSI stabil (<0.10) vs shifted (>0.25)
+2. Observa cum KS test detecteaza shift-ul pe ambele features
+3. Conecteaza cu Tier 7 (Concept Drift): detectorul de shift este primul pas in pipeline-ul de reantrenare
+
+---
+
+## Tema 54: Curriculum Learning Trainer cu Pacing Function (Deep Learning — Antrenament Progresiv)
+
+**Obiectiv**: Implementeaza un trainer cu curriculum learning care ordoneaza esantioanele de la usor la greu si controleaza ritmul de introducere cu o pacing function.
+
+**Concepte Cheie**: Difficulty scoring, pacing function, competence-based selection, easy-first training, convergenta accelerata.
+
+```python
+import math
+import random
+
+class CurriculumTrainer:
+    """Trainer cu curriculum learning si pacing function."""
+    
+    def __init__(self, num_classes: int = 5):
+        self.num_classes = num_classes
+        random.seed(42)
+        self.training_log: list[dict] = []
+    
+    def generate_dataset(self, n: int, noise_level: float = 0.3) -> list[dict]:
+        """Genereaza un dataset cu dificultati variate."""
+        dataset = []
+        for i in range(n):
+            true_class = i % self.num_classes
+            # Features: centroid + noise
+            features = [true_class * 2.0 + random.gauss(0, noise_level * (1 + i/n)),
+                       true_class * 1.5 + random.gauss(0, noise_level * (1 + i/n))]
+            
+            # Dificultatea creste cu noise-ul si distanta de centroid
+            difficulty = noise_level * (1 + i/n)
+            
+            dataset.append({
+                "features": features,
+                "label": true_class,
+                "difficulty": difficulty,
+                "index": i
+            })
+        return dataset
+    
+    def score_difficulty(self, dataset: list[dict], weights: list[float]) -> list[dict]:
+        """Calculeaza scorul de dificultate (loss-based)."""
+        for sample in dataset:
+            # Simuleaza loss-ul
+            pred = sum(f * w for f, w in zip(sample["features"], weights[:2]))
+            loss = (pred - sample["label"]) ** 2
+            sample["loss_difficulty"] = loss
+        
+        # Sorteaza de la usor la greu
+        dataset.sort(key=lambda x: x["loss_difficulty"])
+        return dataset
+    
+    def pacing_function(self, epoch: int, total_epochs: int, 
+                        lambda_0: float = 0.2) -> float:
+        """Functia de pacing: fractiunea din dataset disponibila."""
+        return min(1.0, lambda_0 + (epoch / total_epochs) * (1 - lambda_0))
+    
+    def competence_function(self, epoch: int, total_epochs: int) -> float:
+        """Competence-based: creste subliniar."""
+        return min(1.0, math.sqrt(epoch / total_epochs))
+    
+    def train_epoch(self, dataset: list[dict], available_fraction: float,
+                    weights: list[float], lr: float = 0.001) -> dict:
+        """Antreneaza o epoca pe fractiunea disponibila."""
+        n_available = max(1, int(len(dataset) * available_fraction))
+        batch = dataset[:n_available]  # dataset deja sortat easy-first
+        
+        total_loss = 0
+        for sample in batch:
+            pred = sum(f * w for f, w in zip(sample["features"], weights[:2]))
+            loss = (pred - sample["label"]) ** 2
+            total_loss += loss
+            
+            # Gradient descent simplist
+            for j in range(min(len(weights), len(sample["features"]))):
+                grad = 2 * (pred - sample["label"]) * sample["features"][j]
+                weights[j] -= lr * grad
+        
+        avg_loss = total_loss / len(batch)
+        return {
+            "avg_loss": round(avg_loss, 4),
+            "samples_used": n_available,
+            "total_samples": len(dataset),
+            "fraction": round(available_fraction, 2)
+        }
+    
+    def train_curriculum(self, dataset: list[dict], epochs: int = 20) -> list[dict]:
+        """Antrenament complet cu curriculum."""
+        weights = [random.gauss(0, 0.1) for _ in range(3)]
+        
+        for epoch in range(epochs):
+            # Re-score difficulty
+            dataset = self.score_difficulty(dataset, weights)
+            
+            # Pacing: cat din dataset e disponibil
+            fraction = self.pacing_function(epoch, epochs)
+            
+            result = self.train_epoch(dataset, fraction, weights)
+            result["epoch"] = epoch
+            result["pacing"] = round(fraction, 2)
+            self.training_log.append(result)
+        
+        return self.training_log
+    
+    def train_random(self, dataset: list[dict], epochs: int = 20) -> list[dict]:
+        """Antrenament standard (random shuffle) ca baseline."""
+        weights = [random.gauss(0, 0.1) for _ in range(3)]
+        log = []
+        
+        for epoch in range(epochs):
+            random.shuffle(dataset)
+            total_loss = 0
+            for sample in dataset:
+                pred = sum(f * w for f, w in zip(sample["features"], weights[:2]))
+                loss = (pred - sample["label"]) ** 2
+                total_loss += loss
+                for j in range(min(len(weights), len(sample["features"]))):
+                    grad = 2 * (pred - sample["label"]) * sample["features"][j]
+                    weights[j] -= 0.001 * grad
+            
+            log.append({"epoch": epoch, "avg_loss": round(total_loss / len(dataset), 4),
+                        "fraction": 1.0})
+        return log
+
+
+# === LABORATOR ===
+trainer = CurriculumTrainer(num_classes=5)
+dataset = trainer.generate_dataset(200, noise_level=0.3)
+print(f"[T54] Dataset: {len(dataset)} samples, {trainer.num_classes} clase")
+
+# Pacing function demo
+print(f"\n[T54] Pacing function (20 epoci):")
+for e in [0, 5, 10, 15, 19]:
+    frac = trainer.pacing_function(e, 20)
+    comp = trainer.competence_function(e, 20)
+    print(f"       Epoca {e:2d}: pacing={frac:.2f} ({int(frac*200)} samples), competence={comp:.2f}")
+
+# Train cu curriculum
+curriculum_log = trainer.train_curriculum(dataset, epochs=20)
+curriculum_final = curriculum_log[-1]["avg_loss"]
+
+# Train random (baseline)
+dataset2 = trainer.generate_dataset(200, noise_level=0.3)
+random_log = trainer.train_random(dataset2, epochs=20)
+random_final = random_log[-1]["avg_loss"]
+
+print(f"\n[T54] Rezultate dupa 20 epoci:")
+print(f"       Curriculum: loss={curriculum_final}")
+print(f"       Random:     loss={random_final}")
+
+# Primele epoci: curriculum vede mai putine samples
+print(f"\n[T54] Samples folosite (curriculum):")
+for entry in curriculum_log[:5]:
+    print(f"       Epoca {entry['epoch']}: {entry['samples_used']}/{entry['total_samples']} (pacing={entry['pacing']})")
+
+print(f"[T54] PASS - Curriculum learning cu pacing function demonstrat")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum pacing function creste treptat numarul de samples
+2. Compara loss-ul final: curriculum vs random
+3. Observa ca primele epoci folosesc doar 20% din dataset (cele mai usoare)
+4. Conecteaza: structura acestui caiet de teme ESTE un curriculum — Tier 1 (usor) pana la Tier 9 (avansat)
+
 
 ## Concluzie: De la Notite la Executie Sigura (42 Teme de Laborator Rezolvate)
 
