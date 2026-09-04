@@ -73,8 +73,8 @@ def matched_context(memory_lesson: str) -> str:
     return f"MEMORY_LESSON:{memory_lesson[:64]}"
 
 def compile_memory(scenario: Scenario, applicability: str, memory_id: str) -> MemoryInfluenceState:
-    # Critically, this compiler never reads scenario.optimal. The recommendation
-    # is an independently frozen memory input, preventing oracle leakage.
+    # The compiler never reads scenario.optimal. The recommendation is an
+    # independently frozen memory input, preventing oracle leakage.
     recommended = scenario.memory_recommended
     if applicability == "APPLICABLE":
         priors = {branch: (0.65 if branch == recommended else 0.35 / 3) for branch in scenario.branches}
@@ -91,7 +91,13 @@ def normalize(priors: Dict[str, float], branches: Sequence[str]) -> Dict[str, fl
 def puct_score(q: float, visits: int, parent_visits: int, prior: float, exploration: float) -> float:
     return q + exploration * prior * math.sqrt(max(1, parent_visits)) / (1 + visits)
 
-def run_planner(scenario: Scenario, priors: Dict[str, float], *, rollouts: int = 16, exploration: float = 1.414) -> PlannerTrace:
+def run_planner(
+    scenario: Scenario,
+    priors: Dict[str, float],
+    *,
+    rollouts: int = 16,
+    exploration: float = 1.414,
+) -> PlannerTrace:
     branches = scenario.branches
     priors = normalize(priors, branches)
     visits = {branch: 0 for branch in branches}
@@ -100,50 +106,110 @@ def run_planner(scenario: Scenario, priors: Dict[str, float], *, rollouts: int =
     for _ in range(rollouts):
         parent_visits = sum(visits.values())
         branch = max(branches, key=lambda candidate: (
-            puct_score(values[candidate] / visits[candidate] if visits[candidate] else 0.0,
-                       visits[candidate], parent_visits, priors[candidate], exploration),
-            -branches.index(candidate)))
+            puct_score(
+                values[candidate] / visits[candidate] if visits[candidate] else 0.0,
+                visits[candidate], parent_visits, priors[candidate], exploration,
+            ),
+            -branches.index(candidate),
+        ))
         selected.append(branch)
         visits[branch] += 1
         _, reward = scenario.oracle(branch)
         values[branch] += reward
         if branch == scenario.optimal:
-            return PlannerTrace(tuple(selected), len(selected), sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected), True)
-    return PlannerTrace(tuple(selected), len(selected), sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected), False)
+            return PlannerTrace(
+                tuple(selected), len(selected),
+                sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected),
+                True,
+            )
+    return PlannerTrace(
+        tuple(selected), len(selected),
+        sum(item in (scenario.fatal_a, scenario.fatal_b) for item in selected),
+        False,
+    )
 
 def run_experiment(count: int = 30) -> Dict[str, object]:
     scenarios = build_scenarios(count)
-    aggregate: Dict[str, Dict[str, float]] = {arm: {"success": 0, "nodes": 0, "fatal": 0} for arm in ("arm1_baseline", "arm2_advisory", "arm3_treatment", "arm4_stale")}
+    aggregate: Dict[str, Dict[str, float]] = {
+        arm: {"success": 0, "nodes": 0, "fatal": 0}
+        for arm in ("arm1_baseline", "arm2_advisory", "arm3_treatment", "arm4_stale")
+    }
     traces: List[Dict[str, object]] = []
     for scenario in scenarios:
         uniform = {branch: 0.25 for branch in scenario.branches}
         memory = compile_memory(scenario, "APPLICABLE", f"memory-{scenario.scenario_id}")
         stale = compile_memory(scenario, "NOT_APPLICABLE", f"stale-{scenario.scenario_id}")
-        arms = {"arm1_baseline": uniform, "arm2_advisory": uniform, "arm3_treatment": memory.priors, "arm4_stale": stale.priors}
+        arms = {
+            "arm1_baseline": uniform,
+            "arm2_advisory": uniform,
+            "arm3_treatment": memory.priors,
+            "arm4_stale": stale.priors,
+        }
         for arm, priors in arms.items():
             trace = run_planner(scenario, priors)
             aggregate[arm]["success"] += int(trace.success)
             aggregate[arm]["nodes"] += trace.node_visits
             aggregate[arm]["fatal"] += trace.fatal_visits
-            traces.append({"scenario_id": scenario.scenario_id, "arm": arm,
-                           "memory_id": memory.memory_id if arm == "arm3_treatment" else stale.memory_id if arm == "arm4_stale" else None,
-                           "applicability": memory.applicability if arm == "arm3_treatment" else stale.applicability if arm == "arm4_stale" else "NONE",
-                           "memory_recommended": scenario.memory_recommended,
-                           "planner_prior": priors, "selected_branches": list(trace.selected_branches),
-                           "node_visits": trace.node_visits, "fatal_visits": trace.fatal_visits, "success": trace.success,
-                           "recommendation_matches_optimal": scenario.memory_recommended == scenario.optimal})
+            traces.append({
+                "scenario_id": scenario.scenario_id,
+                "arm": arm,
+                "memory_id": memory.memory_id if arm == "arm3_treatment" else stale.memory_id if arm == "arm4_stale" else None,
+                "applicability": memory.applicability if arm == "arm3_treatment" else stale.applicability if arm == "arm4_stale" else "NONE",
+                "memory_recommended": scenario.memory_recommended,
+                "planner_prior": priors,
+                "selected_branches": list(trace.selected_branches),
+                "node_visits": trace.node_visits,
+                "fatal_visits": trace.fatal_visits,
+                "success": trace.success,
+                "recommendation_matches_optimal": scenario.memory_recommended == scenario.optimal,
+            })
     return {"scenario_count": count, "aggregate": aggregate, "traces": traces}
+
+def summarize_treatment_by_memory_quality(results: Dict[str, object]) -> Dict[str, Dict[str, int]]:
+    """Post-hoc diagnostic: separate treatment outcomes by memory quality.
+
+    This classification is analysis-only and never changes planner priors.
+    """
+    summary = {
+        "match": {"count": 0, "success": 0, "nodes": 0, "fatal": 0},
+        "mismatch": {"count": 0, "success": 0, "nodes": 0, "fatal": 0},
+    }
+    for trace in results["traces"]:
+        if trace["arm"] != "arm3_treatment":
+            continue
+        group = "match" if trace["recommendation_matches_optimal"] else "mismatch"
+        summary[group]["count"] += 1
+        summary[group]["success"] += int(trace["success"])
+        summary[group]["nodes"] += int(trace["node_visits"])
+        summary[group]["fatal"] += int(trace["fatal_visits"])
+    return summary
 
 def render_report(results: Dict[str, object]) -> str:
     aggregate = results["aggregate"]
     count = int(results["scenario_count"])
-    lines = ["Planning Influence MVE V2 — deterministic mechanics pilot", "EVIDENCE_LEVEL=UNVERIFIED_UNTIL_CI_EXECUTION", f"scenario_count={count}", ""]
+    quality = summarize_treatment_by_memory_quality(results)
+    lines = [
+        "Planning Influence MVE V2 — deterministic mechanics pilot",
+        "EVIDENCE_LEVEL=UNVERIFIED_UNTIL_CI_EXECUTION",
+        f"scenario_count={count}",
+        "",
+    ]
     for arm, metrics in aggregate.items():
-        lines.append(f"{arm}: success={int(metrics['success'])}/{count} nodes={int(metrics['nodes'])} fatal={int(metrics['fatal'])}")
+        lines.append(
+            f"{arm}: success={int(metrics['success'])}/{count} nodes={int(metrics['nodes'])} fatal={int(metrics['fatal'])}"
+        )
     control_nodes = max(1, int(aggregate["arm2_advisory"]["nodes"]))
-    reduction = 1.0 - (int(aggregate["arm3_treatment"]["nodes"]) / control_nodes)
+    treatment_nodes = int(aggregate["arm3_treatment"]["nodes"])
+    reduction = 1.0 - (treatment_nodes / control_nodes)
     lines.append(f"treatment_vs_advisory_node_reduction={reduction:.4f}")
-    lines.append(f"memory_recommendation_matches_optimal_count={sum(int(t['recommendation_matches_optimal']) for t in results['traces'] if t['arm'] == 'arm3_treatment')}")
+    lines.append(f"memory_recommendation_matches_optimal_count={quality['match']['count']}")
+    lines.append(f"memory_recommendation_mismatches_optimal_count={quality['mismatch']['count']}")
+    lines.append(
+        f"treatment_match_nodes={quality['match']['nodes']} fatal={quality['match']['fatal']}"
+    )
+    lines.append(
+        f"treatment_mismatch_nodes={quality['mismatch']['nodes']} fatal={quality['mismatch']['fatal']}"
+    )
     lines.append("oracle_leakage_guard=compiler_does_not_read_scenario.optimal")
     return "\n".join(lines)
 
