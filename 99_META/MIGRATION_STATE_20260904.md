@@ -2,7 +2,7 @@
 
 ## State provenance
 
-Latest structural commit: `28c2ebd184d196cbcfebad82993c43f3707a58b5`.
+Latest structural commit: `6b53832d890a3ad66f35d9cc85203693703a2696`.
 
 ## Completed structural batches
 
