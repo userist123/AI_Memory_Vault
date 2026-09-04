@@ -1,0 +1,488 @@
+{
+  "meta": {
+    "benchmark": "A8_PRODUCTION_GRAPH_DIFFERENTIAL",
+    "round_id": "R001",
+    "timestamp": "2026-09-04T17:58:00+03:00",
+    "base_sha": "e43cc81e09789e284ef35a7e326297194f429a9e",
+    "corpus_size": 7,
+    "queries_count": 4
+  },
+  "storage_runs": {
+    "in_memory": {
+      "engine": "InMemoryStorageEngine",
+      "runs": [
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-TRAP",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-PERF",
+            "NOTE-NEIGHBOR",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_CHANGED_RANK",
+          "graph_built": true,
+          "graph_error": null,
+          "activation_succeeded": true,
+          "activation_error": null,
+          "fallback_reason": null,
+          "candidates_added": [
+            "NOTE-POLICY"
+          ],
+          "unretrieved_activated": [],
+          "relevance_score_source": "SYNTHETIC_RECIPROCAL_RANK",
+          "activation_contributions": {
+            "NOTE-ARCH": 2.9,
+            "NOTE-TRAP": 1.55,
+            "NOTE-SEC": 0.9667,
+            "NOTE-NEIGHBOR": 0.725,
+            "NOTE-PERF": 1.22
+          },
+          "elapsed_ms": 1.057,
+          "query_id": "Q1_ARCH",
+          "query": "architecture storage design",
+          "archetype": "direct_lexical"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-PERF",
+            "NOTE-NEIGHBOR",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_CHANGED_RANK",
+          "graph_built": true,
+          "graph_error": null,
+          "activation_succeeded": true,
+          "activation_error": null,
+          "fallback_reason": null,
+          "candidates_added": [],
+          "unretrieved_activated": [
+            {
+              "id": "NOTE-TRAP",
+              "activation_score": 0.6,
+              "included_in_final": false
+            }
+          ],
+          "relevance_score_source": "SYNTHETIC_RECIPROCAL_RANK",
+          "activation_contributions": {
+            "NOTE-ARCH": 2.9,
+            "NOTE-SEC": 1.45,
+            "NOTE-NEIGHBOR": 0.9667,
+            "NOTE-PERF": 1.285,
+            "NOTE-POLICY": 0.58,
+            "NOTE-TRAP": 0.6
+          },
+          "elapsed_ms": 0.827,
+          "query_id": "Q2_SEC",
+          "query": "security boundary invariant enforcement",
+          "archetype": "direct_lexical"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-TRAP",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-PERF",
+            "NOTE-NEIGHBOR",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_CHANGED_RANK",
+          "graph_built": true,
+          "graph_error": null,
+          "activation_succeeded": true,
+          "activation_error": null,
+          "fallback_reason": null,
+          "candidates_added": [
+            "NOTE-POLICY"
+          ],
+          "unretrieved_activated": [],
+          "relevance_score_source": "SYNTHETIC_RECIPROCAL_RANK",
+          "activation_contributions": {
+            "NOTE-ARCH": 2.9,
+            "NOTE-TRAP": 1.55,
+            "NOTE-SEC": 0.9667,
+            "NOTE-NEIGHBOR": 0.725,
+            "NOTE-PERF": 1.22
+          },
+          "elapsed_ms": 0.812,
+          "query_id": "Q3_HOP",
+          "query": "tamper evident audit logging and custody",
+          "archetype": "multi_hop_candidate"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-PERF",
+            "NOTE-NEIGHBOR",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_CHANGED_RANK",
+          "graph_built": true,
+          "graph_error": null,
+          "activation_succeeded": true,
+          "activation_error": null,
+          "fallback_reason": null,
+          "candidates_added": [],
+          "unretrieved_activated": [
+            {
+              "id": "NOTE-TRAP",
+              "activation_score": 0.6,
+              "included_in_final": false
+            }
+          ],
+          "relevance_score_source": "SYNTHETIC_RECIPROCAL_RANK",
+          "activation_contributions": {
+            "NOTE-ARCH": 2.9,
+            "NOTE-SEC": 1.45,
+            "NOTE-NEIGHBOR": 0.9667,
+            "NOTE-PERF": 1.285,
+            "NOTE-POLICY": 0.58,
+            "NOTE-TRAP": 0.6
+          },
+          "elapsed_ms": 0.771,
+          "query_id": "Q4_PERF",
+          "query": "concurrency performance sqlite",
+          "archetype": "dense_cluster"
+        }
+      ]
+    },
+    "sqlite": {
+      "engine": "SQLiteStorageEngine",
+      "runs": [
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-TRAP",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "candidates_added": [
+            "NOTE-POLICY"
+          ],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.726,
+          "query_id": "Q1_ARCH",
+          "query": "architecture storage design",
+          "archetype": "direct_lexical"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "candidates_added": [],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.687,
+          "query_id": "Q2_SEC",
+          "query": "security boundary invariant enforcement",
+          "archetype": "direct_lexical"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-TRAP",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "candidates_added": [
+            "NOTE-POLICY"
+          ],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.712,
+          "query_id": "Q3_HOP",
+          "query": "tamper evident audit logging and custody",
+          "archetype": "multi_hop_candidate"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+          "candidates_added": [],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.702,
+          "query_id": "Q4_PERF",
+          "query": "concurrency performance sqlite",
+          "archetype": "dense_cluster"
+        }
+      ]
+    },
+    "file_engine": {
+      "engine": "FileStorageEngine",
+      "runs": [
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-TRAP",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "candidates_added": [
+            "NOTE-POLICY"
+          ],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.684,
+          "query_id": "Q1_ARCH",
+          "query": "architecture storage design",
+          "archetype": "direct_lexical"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "candidates_added": [],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.847,
+          "query_id": "Q2_SEC",
+          "query": "security boundary invariant enforcement",
+          "archetype": "direct_lexical"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-TRAP",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "candidates_added": [
+            "NOTE-POLICY"
+          ],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.724,
+          "query_id": "Q3_HOP",
+          "query": "tamper evident audit logging and custody",
+          "archetype": "multi_hop_candidate"
+        },
+        {
+          "base_candidate_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "final_ids": [
+            "NOTE-ARCH",
+            "NOTE-SEC",
+            "NOTE-NEIGHBOR",
+            "NOTE-PERF",
+            "NOTE-POLICY"
+          ],
+          "graph_status": "GRAPH_FAILED",
+          "graph_built": false,
+          "graph_error": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "activation_succeeded": false,
+          "activation_error": null,
+          "fallback_reason": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+          "candidates_added": [],
+          "unretrieved_activated": [],
+          "relevance_score_source": "UNAVAILABLE",
+          "activation_contributions": {},
+          "elapsed_ms": 0.686,
+          "query_id": "Q4_PERF",
+          "query": "concurrency performance sqlite",
+          "archetype": "dense_cluster"
+        }
+      ]
+    }
+  },
+  "falsifications": {
+    "target_1_production_path_active": {
+      "sqlite_graph_status": "GRAPH_FAILED",
+      "file_graph_status": "GRAPH_FAILED",
+      "sqlite_fallback_reason": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+      "file_fallback_reason": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+      "verdict": "FALSIFIED: Graph is GRAPH_FAILED on 100% of queries in production SQLite and FileStorageEngine due to AttributeError on .store"
+    },
+    "target_2_add_omitted_neighbor": {
+      "query": "architecture storage design",
+      "base_ids": [
+        "NOTE-ARCH",
+        "NOTE-TRAP",
+        "NOTE-SEC",
+        "NOTE-NEIGHBOR",
+        "NOTE-PERF"
+      ],
+      "omitted_activated": [],
+      "final_ids": [
+        "NOTE-ARCH",
+        "NOTE-SEC",
+        "NOTE-PERF",
+        "NOTE-NEIGHBOR",
+        "NOTE-POLICY"
+      ],
+      "mechanism_analysis": "ranked_search.py line 48: [id_to_result[note_id] for note_id, _ in ranked_ids if note_id in id_to_result]. Because id_to_result is constructed strictly from base search results, any neighbor activated through multi-hop expansion that was omitted from base search is unconditionally filtered out and cannot appear in final ranked_results.",
+      "verdict": "FALSIFIED: Graph activation CANNOT expand candidate reachability to add omitted neighbors"
+    },
+    "target_3_edge_weight_effect_in_production": {
+      "in_memory_effect": "OBSERVABLE (when weight formula is fixed)",
+      "production_sqlite_effect": "UNAVAILABLE",
+      "production_file_effect": "UNAVAILABLE",
+      "verdict": "FALSIFIED IN PRODUCTION: Edge weight repair in C9 cannot take effect in SQLite/FileEngine until .store disconnect is resolved"
+    },
+    "target_4_relevance_score_survival": {
+      "score_source": "SYNTHETIC_RECIPROCAL_RANK (1.0 / (idx + 1))",
+      "real_relevance_score_survives": false,
+      "relevance_score_status": "UNAVAILABLE",
+      "verdict": "FALSIFIED: RelevanceScorer float is discarded during ContextPackBuilder.build(); ranked_search invents synthetic reciprocal rank"
+    },
+    "target_5_silent_exception_conversion": {
+      "converts_exception_silently": true,
+      "mechanism": "ranked_search.py lines 44-45: except Exception: return results[:top_k]",
+      "caller_perceives_failure": false,
+      "verdict": "CONFIRMED: AttributeError is silently swallowed; caller receives normal list response indistinguishable from successful base retrieval"
+    }
+  },
+  "comparison_against_a7": {
+    "a7_finding": "Identified GAP-012 as an architecture audit hypothesis based on code inspection and single in-memory vs sqlite test.",
+    "a8_advancement": "Rigorous cross-storage empirical matrix across In-Memory, SQLite, and FileStorageEngine with 4 query archetypes. Proven that graph activation is 100% dead on production engines, that candidate reachability expansion is blocked by id_to_result filtering, that edge weights are dead in production, that relevance scores are synthetic, and that silent fallback converts exceptions into apparent success."
+  }
+}

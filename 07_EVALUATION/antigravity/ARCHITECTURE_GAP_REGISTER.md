@@ -147,3 +147,24 @@
 * **Proposed Interface**: Query notes via public storage method `controller.storage.query(intent="all")` or pass candidate notes directly into graph builder.
 * **Codex Acceptance Criterion**: `build_multi_graph(controller)` succeeds without error on `SQLiteStorageEngine` and `FileStorageEngine`.
 * **Luna Attack Verification**: Call `ranked_search(sqlite_controller, Principal.AI_AGENT, "wal")`; verify graph activation ranking executes without falling back to unranked slice.
+
+---
+
+### GAP-013: Candidate Reachability Expansion Blocked by `id_to_result` Filter in `ranked_search.py`
+* **Affected Component**: [`cognitive_core/ranked_search.py:ranked_search()`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/cognitive_core/ranked_search.py#L47-L52)
+* **Current Behavior**: Line 48 explicitly filters `[id_to_result[note_id] for note_id, _ in ranked_ids if note_id in id_to_result]`.
+* **Opacity Hazard**: The foundational promise of spreading activation—associative recall of unretrieved multi-hop neighbors—is completely negated. Even when a 1-hop or 2-hop neighbor without lexical match receives high activation, it is discarded before returning to the caller. Spreading activation acts exclusively as a candidate re-sorter, never an expander.
+* **Proposed Interface**: For top-ranked IDs not present in `id_to_result`, retrieve the note object via `controller.get(principal, note_id)` and append to results subject to authorization and lifecycle checks.
+* **Codex Acceptance Criterion**: An unretrieved 1-hop neighbor with high activation is fetched and included in `ranked_search()` output.
+* **Luna Attack Verification**: Query a note connected to a zero-lexical-overlap neighbor; verify the neighbor appears in `ranked_search()` output.
+
+---
+
+### GAP-014: Silent Exception Swallowing in `ranked_search.py` Masquerades Complete Crash as Successful Retrieval
+* **Affected Component**: [`cognitive_core/ranked_search.py:ranked_search()`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/cognitive_core/ranked_search.py#L39-L45)
+* **Current Behavior**: A broad `except Exception: return results[:top_k]` surrounds graph construction and ranking.
+* **Opacity Hazard**: Fatal integration crashes (e.g. `AttributeError` on `.store`, missing graph dependencies, or activation divide-by-zero) are silently suppressed without audit logging, console warnings, or error metadata. Callers and test suites receive a standard 200 OK list response and cannot distinguish between a successful graph reranking and a total internal crash.
+* **Proposed Interface**: Log graph failures via `audit_event()` and attach diagnostic metadata (`graph_status: "FAILED"`, `fallback_reason: str(e)`) to the returned container.
+* **Codex Acceptance Criterion**: `ranked_search()` annotates response or logs an audit event when fallback occurs.
+* **Luna Attack Verification**: Inject a mock crashing graph engine; verify the failure is observable and distinguishable from successful base retrieval.
+

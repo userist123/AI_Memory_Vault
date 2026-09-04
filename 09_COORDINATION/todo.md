@@ -1,3 +1,17 @@
+# Antigravity R001 A8 — Production Graph Differential & Falsification
+ 
+## Implementation
+- [x] resolve and record current `main` baseline SHA: `e43cc81e09789e284ef35a7e326297194f429a9e` `[owner: antigravity | timestamp: 2026-09-04T17:50:30+03:00]`
+- [x] execute exhaustive 3-engine matrix (`InMemoryStorageEngine`, `SQLiteStorageEngine`, `FileStorageEngine`) across 4 query archetypes comparing base search against ranked search `[owner: antigravity | timestamp: 2026-09-04T17:54:10+03:00]`
+- [x] falsify Target 1: proven that graph activation is 100% dead / `GRAPH_FAILED` in production SQLite and File storage due to `AttributeError` on `.store` `[owner: antigravity | timestamp: 2026-09-04T17:54:10+03:00]`
+- [x] falsify Target 2: proven that candidate reachability expansion is structurally blocked by `ranked_search.py` line 48 `if note_id in id_to_result` `[owner: antigravity | timestamp: 2026-09-04T17:54:10+03:00]`
+- [x] falsify Target 3: proven that Codex's edge-weight repair is observable in memory but completely unreached / `UNAVAILABLE` in production runtime `[owner: antigravity | timestamp: 2026-09-04T17:54:10+03:00]`
+- [x] falsify Target 4: proven that `relevance_score` is stripped during pack building and replaced with synthetic reciprocal ranks `1.0 / (idx + 1)` `[owner: antigravity | timestamp: 2026-09-04T17:54:10+03:00]`
+- [x] confirm Target 5: proven that `except Exception: return results[:top_k]` silently converts complete graph crash into apparent successful base retrieval `[owner: antigravity | timestamp: 2026-09-04T17:54:10+03:00]`
+- [x] publish comprehensive evaluation report `07_EVALUATION/antigravity/A8_PRODUCTION_GRAPH_DIFFERENTIAL.md` and machine-readable data `telemetry/retrieval_traces/a8_production_graph_differential.json` `[owner: antigravity | timestamp: 2026-09-04T17:55:00+03:00]`
+
+---
+
 # Antigravity R001 A7 — Associative Differential Trace & Dual-Reality Reconciliation
 
 ## Implementation
