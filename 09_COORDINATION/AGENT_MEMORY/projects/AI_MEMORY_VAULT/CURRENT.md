@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T19:10:00Z
-current_main_sha: 024b516eb99e467bccbc9af641dceb1ba7643f5c
+last_updated_utc: 2026-09-04T22:00:00+03:00
+current_main_sha: 140dfc818f1181e53f24d281011b89a6f6e1a73d
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -30,8 +30,10 @@ recent_state:
   - main is the only canonical working branch for ongoing development
   - agent execution is sequential; the active agent must leave a resumable handoff for the next agent
   - consolidated C2/C4/C6/C8/C9/C10/C11/C12/C13/C14/C15 forensic evidence plus Wacatac security report onto main
+  - preserved Antigravity A7/A8 associative and production-graph forensic evidence on main
   - restored weighted graph propagation regression and production graph storage contract on main
   - restored compressed context payload and progressive disclosure fixes on main
+  - added branch consolidation manifest on main
 open_requirements:
   - no feature-branch development for normal work
   - no parallel agent work on the same project task chain
@@ -41,11 +43,11 @@ open_requirements:
   - legacy branches receive no new work and are administrative/archive references only
 blockers:
   - remote branch deletion cannot be completed with the currently available GitHub connector because no branch-delete operation is exposed
-  - the large Antigravity legacy branch contains 111 changed files and cannot be merged safely as a whole because it conflicts with current main; its verified/additive pieces still require selective consolidation
+  - the large Antigravity legacy branch contains 111 changed files and is not safe to merge wholesale because it conflicts with current main; verified/additive pieces are being selectively preserved
   - full legacy branch inventory/deletion remains an administrative cleanup task after content preservation
 next_actions:
   - continue all substantive work directly on main
-  - selectively preserve remaining verified legacy branch evidence on main, prioritizing additive artifacts and tested fixes
+  - selectively preserve any remaining unique verified legacy evidence needed by the project
   - do not merge the Antigravity legacy branch wholesale
   - delete legacy remote branches through GitHub branch administration when available
-  - keep all four agent CURRENT records aligned to main
+  - keep all agent CURRENT records aligned to main
