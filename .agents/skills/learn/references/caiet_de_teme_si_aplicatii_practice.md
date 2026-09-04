@@ -1172,13 +1172,313 @@ def grouped_query_attention(q_heads: list[list[float]],
 
 ---
 
-## Concluzie: De la Notițe la Execuție Sigură (24 Teme de Laborator Rezolvate)
+## Tema 25 (DDIA Expert — Martin Kleppmann): Simulator LSM-Tree cu MemTable, SSTables & Filtru Bloom
 
-Cu aceste 24 de teme rezolvate:
+### 1. Enunțul Problemei
+Implementează un motor simplificat de stocare LSM-Tree cu:
+1. Un `MemTable` în memorie cu prag de evacuare (*flush threshold*).
+2. Evacuare atomică în fișiere imutabile de tip `SSTable` sortate după cheie.
+3. Un filtru probabilistic Bloom Filter asociat fiecărui SSTable pentru a elimina citirile inutile de pe disc când cheia nu există.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+class BloomFilter:
+    """Filtru Bloom probabilistic minimalist cu 2 funcții hash (Kleppmann Ch 3)."""
+    def __init__(self, size: int = 128):
+        self.size = size
+        self.bit_array = [0] * size
+
+    def add(self, key: str):
+        h1 = hash(key) % self.size
+        h2 = (hash(key) * 31 + 17) % self.size
+        self.bit_array[h1] = 1
+        self.bit_array[h2] = 1
+
+    def contains(self, key: str) -> bool:
+        h1 = hash(key) % self.size
+        h2 = (hash(key) * 31 + 17) % self.size
+        return self.bit_array[h1] == 1 and self.bit_array[h2] == 1
+
+class MiniLSMTree:
+    """Motor LSM-Tree cu MemTable și SSTables imutabile."""
+    def __init__(self, flush_threshold: int = 4):
+        self.memtable = {}
+        self.flush_threshold = flush_threshold
+        self.sstables = []  # Listă de tuple: (sorted_dict, bloom_filter)
+
+    def put(self, key: str, value: str):
+        self.memtable[key] = value
+        if len(self.memtable) >= self.flush_threshold:
+            self.flush()
+
+    def flush(self):
+        if not self.memtable:
+            return
+        bf = BloomFilter()
+        for k in self.memtable:
+            bf.add(k)
+        # Salvare imutabilă sortată (SSTable)
+        sorted_sstable = dict(sorted(self.memtable.items()))
+        self.sstables.insert(0, (sorted_sstable, bf))  # Cel mai recent la început
+        self.memtable = {}
+
+    def get(self, key: str) -> str | None:
+        # 1. Căutare în MemTable activ
+        if key in self.memtable:
+            return self.memtable[key]
+        # 2. Căutare în SSTables de la nou la vechi folosind filtrul Bloom
+        for sstable, bf in self.sstables:
+            if bf.contains(key) and key in sstable:
+                return sstable[key]
+        return None
+```
+
+### 3. Playbook Operațional: Ce fac când am volum imens de scriere?
+1. **Folosesc motoare LSM (RocksDB / LevelDB)**: Elimină blocajele I/O aleatoare ale B-Tree-urilor clasice.
+2. **Configurez Filtre Bloom per fișier**: Previn penalizarea la citire pentru chei inexistente.
+
+---
+
+## Tema 26 (AIMA Expert — Russell & Norvig): Algoritmul Minimax cu Tăiere Alfa-Beta (Alpha-Beta Pruning)
+
+### 1. Enunțul Problemei
+Construiește algoritmul Minimax cu tăiere Alfa-Beta ($\alpha$-$\beta$ pruning) pentru un arbore de joc general, demonstrând eliminarea subarborilor irelevanți și reducerea spațiului de explorare de la $\mathcal{O}(b^m)$ la $\mathcal{O}(b^{m/2})$.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def alpha_beta_search(node, depth: int, alpha: float, beta: float, 
+                      is_maximizing: bool, game_tree: dict) -> float:
+    """Căutare adversarială optimizată cu tăiere Alfa-Beta (Russell & Norvig Ch 5)."""
+    # Condiție de terminare la frunză sau adâncime maximă
+    if depth == 0 or node not in game_tree:
+        return float(node) if isinstance(node, (int, float)) else 0.0
+
+    if is_maximizing:
+        max_eval = -float('inf')
+        for child in game_tree[node]:
+            eval_score = alpha_beta_search(child, depth - 1, alpha, beta, False, game_tree)
+            max_eval = max(max_eval, eval_score)
+            alpha = max(alpha, eval_score)
+            if beta <= alpha:
+                break  # Tăiere Beta (Pruning)
+        return max_eval
+    else:
+        min_eval = float('inf')
+        for child in game_tree[node]:
+            eval_score = alpha_beta_search(child, depth - 1, alpha, beta, True, game_tree)
+            min_eval = min(min_eval, eval_score)
+            beta = min(beta, eval_score)
+            if beta <= alpha:
+                break  # Tăiere Alfa (Pruning)
+        return min_eval
+```
+
+### 3. Playbook Operațional: Cum evaluez agenți în scenarii concurente/adversariale?
+1. **Mențin borne stricte $\alpha$ și $\beta$**: Imediat ce o acțiune a oponentului garantează un rezultat mai slab decât o ramură deja cunoscută, opresc explorarea.
+2. **Folosesc Tabele de Transpoziție**: Salvez evaluările configurațiilor frecvente pentru a reutiliza calculul.
+
+---
+
+## Tema 27 (Arhitectura Agenților Expert — Harrison Chase / LangGraph): Puncte de Control & Human-in-the-Loop (HITL)
+
+### 1. Enunțul Problemei
+Implementează un manager de stare persistent cu puncte de control (*State Checkpointer*) care suportă suspendarea automată la acțiuni critice (Human-in-the-Loop Interrupt) și funcționalitate de "Time-Travel" pentru derularea înapoi a stării și reluarea pe o ramură nouă.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+from dataclasses import dataclass, field
+from typing import Any
+
+@dataclass
+class CheckpointRecord:
+    step_id: int
+    state_payload: dict[str, Any]
+    status: str  # 'COMMITTED', 'SUSPENDED_AWAITING_HUMAN', 'ABORTED'
+
+class StatefulAgentCheckpointer:
+    """Manager de stare durabilă cu puncte de control și porți HITL."""
+    def __init__(self):
+        self.checkpoint_history = []
+        self.clock = 0
+
+    def save_step(self, state: dict[str, Any], requires_human_approval: bool = False) -> CheckpointRecord:
+        self.clock += 1
+        status = "SUSPENDED_AWAITING_HUMAN" if requires_human_approval else "COMMITTED"
+        rec = CheckpointRecord(
+            step_id=self.clock,
+            state_payload=dict(state),
+            status=status
+        )
+        self.checkpoint_history.append(rec)
+        return rec
+
+    def approve_and_resume(self, step_id: int, human_override_state: dict[str, Any] = None) -> dict[str, Any]:
+        """Atestare umană (conform I-004) și deblocare pas suspendat."""
+        for rec in self.checkpoint_history:
+            if rec.step_id == step_id and rec.status == "SUSPENDED_AWAITING_HUMAN":
+                rec.status = "COMMITTED"
+                if human_override_state:
+                    rec.state_payload.update(human_override_state)
+                return rec.state_payload
+        raise ValueError(f"Pasul {step_id} nu se află în așteptarea aprobării umane!")
+
+    def time_travel_rollback(self, target_step_id: int) -> dict[str, Any]:
+        """Recuperează instantaneul istoric exact de la pasul target_step_id."""
+        for rec in self.checkpoint_history:
+            if rec.step_id == target_step_id:
+                return dict(rec.state_payload)
+        raise KeyError(f"Punctul de control {target_step_id} nu a fost găsit!")
+```
+
+### 3. Playbook Operațional: Ce fac când un agent intenționează să șteargă resurse?
+1. **Activez flag-ul `requires_human_approval`**: Trec agentul în starea `SUSPENDED_AWAITING_HUMAN`.
+2. **Validez prin invariantul `I-004`**: Deblocarea este permisă strict de către `Principal.HUMAN` sau `Principal.ADMIN`.
+
+---
+
+## Tema 28 (RAG Expert — Chip Huyen / Leviathan et al.): Motor de Decodare Speculativă
+
+### 1. Enunțul Problemei
+Simulează pasul de acceptare/respingere prin *Rejection Sampling* al decodării speculative: un model propunător mic sugerează $K$ tokeni, iar modelul țintă mare îi validează în paralel, asigurând accelerarea inferenței fără pierderea distribuției originale.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def speculative_decoding_step(draft_tokens: list[str], 
+                              draft_probs: dict[str, float], 
+                              target_probs: dict[str, float], 
+                              random_threshold: float = 0.5) -> tuple[list[str], str | None]:
+    """Pasul de eșantionare de respingere în decodarea speculativă (Chip Huyen Ch 7)."""
+    accepted_sequence = []
+    correction_token = None
+
+    for token in draft_tokens:
+        p_draft = draft_probs.get(token, 1e-6)
+        p_target = target_probs.get(token, 1e-6)
+        acceptance_ratio = min(1.0, p_target / p_draft)
+
+        if random_threshold <= acceptance_ratio:
+            accepted_sequence.append(token)
+        else:
+            # Primul token respins oprește speculația și generează un token de corecție
+            correction_token = token + "_corrected"
+            break
+
+    return accepted_sequence, correction_token
+```
+
+### 3. Playbook Operațional: Cum reduc latența de servire la conducte mari de RAG?
+1. **Asociez un model mic de 1B-3B ca Draft**: Generează speculații de 3-5 tokeni aproape instantaneu.
+2. **Evaluez paralel pe modelul 70B**: Obțin un factor de accelerare de $2\times - 3\times$ pe text predictibil (cod, JSON, citate din context).
+
+---
+
+## Tema 29 (MLOps Expert — Chip Huyen): Agregator de Flux pe Ferestre Glisante & Watermarking
+
+### 1. Enunțul Problemei
+Construiește un agregator de fluxuri de evenimente care calculează ferestre temporale fixe (*Tumbling Windows*) și ferestre glisante (*Sliding Windows*), filtrând automat evenimentele sosite cu întârziere peste pragul de *Watermark*.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+class StreamingWindowAggregator:
+    """Procesare de flux cu ferestre temporale și watermark (Chip Huyen Ch 8)."""
+    def __init__(self, window_size_sec: int = 60, max_lateness_sec: int = 15):
+        self.window_size = window_size_sec
+        self.max_lateness = max_lateness_sec
+        self.current_watermark = 0
+        self.tumbling_windows = {}  # window_start -> list[float]
+        self.late_events = []
+
+    def ingest_event(self, event_timestamp: int, value: float):
+        # Actualizare dinamică a watermark-ului
+        if event_timestamp > self.current_watermark + self.max_lateness:
+            self.current_watermark = event_timestamp - self.max_lateness
+
+        # Verificare late data
+        if event_timestamp < self.current_watermark:
+            self.late_events.append((event_timestamp, value))
+            return False
+
+        # Alocare în fereastra Tumbling corespunzătoare
+        w_start = (event_timestamp // self.window_size) * self.window_size
+        self.tumbling_windows.setdefault(w_start, []).append(value)
+        return True
+
+    def get_window_aggregates(self) -> dict[int, dict[str, float]]:
+        aggregates = {}
+        for w_start, vals in self.tumbling_windows.items():
+            aggregates[w_start] = {
+                "count": len(vals),
+                "sum": sum(vals),
+                "mean": sum(vals) / max(1, len(vals))
+            }
+        return aggregates
+```
+
+### 3. Playbook Operațional: Ce fac cu datele care sosesc asincron în producție?
+1. **Calibrez pragul de Watermarking**: Accept întârzieri rezonabile de rețea (ex: 15-30s) înainte de a închide fereastra.
+2. **Redirecționez `late_events` în coada de erori (DLQ)**: Previn coruperea metricilor de inferență în timp real.
+
+---
+
+## Tema 30 (Deep Learning Expert — Magnus Ekman / Shazeer): Strat Spars Mixture of Experts (MoE) & Rutare Top-2
+
+### 1. Enunțul Problemei
+Implementează un strat sparse Mixture of Experts (MoE) cu 4 experți independenți, o rețea de rutare liniară cu selecție Top-2 Softmax și calculează componenta de pierdere auxiliară de echilibrare a încărcării (*Load Balancing Loss*).
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+
+def moe_sparse_forward(token_repr: list[float], 
+                       router_weights: list[list[float]], 
+                       experts_fn: list) -> tuple[list[float], list[tuple[int, float]], float]:
+    """Rutare Top-2 Softmax și calcul MoE (Ekman Ch 14 & Shazeer)."""
+    # 1. Calcul logit ruter: dot product între token_repr și ponderile fiecărui expert
+    logits = [
+        sum(token_repr[i] * router_weights[exp_id][i] for i in range(len(token_repr)))
+        for exp_id in range(len(router_weights))
+    ]
+
+    # 2. Softmax complet
+    max_l = max(logits)
+    exp_l = [math.exp(l - max_l) for l in logits]
+    sum_exp = sum(exp_l)
+    full_probs = [e / sum_exp for e in exp_l]
+
+    # 3. Selecție Top-2 experți
+    ranked = sorted(enumerate(full_probs), key=lambda x: x[1], reverse=True)[:2]
+    norm_top2 = sum(p for _, p in ranked)
+    gates = [(exp_id, p / norm_top2) for exp_id, p in ranked]
+
+    # 4. Combinarea ieșirilor celor 2 experți selectați
+    dim = len(token_repr)
+    combined_output = [0.0] * dim
+    for exp_id, gate_weight in gates:
+        exp_out = experts_fn[exp_id](token_repr)
+        for i in range(dim):
+            combined_output[i] += gate_weight * exp_out[i]
+
+    # 5. Calcul auxiliar simplificat de load balancing (entropia distribuției ruterului)
+    balance_loss = sum(p * math.log(max(1e-6, p)) for p in full_probs)
+
+    return combined_output, gates, balance_loss
+```
+
+### 3. Playbook Operațional: Cum scalez capacitatea de parametri la buget fix de inferență?
+1. **Înlocuiesc FFN-urile dense cu MoE**: Multiplic capacitatea de memorare de $8\times$ activând doar 2 experți per token.
+2. **Monitorizez distribuția tokenilor per expert**: Adaug penalizarea de balansare pentru a evita suprasolicitarea unui singur GPU.
+
+---
+
+## Concluzie: De la Notițe la Execuție Sigură (30 Teme de Laborator Rezolvate)
+
+Cu aceste 30 de teme rezolvate pe 5 niveluri:
 - **T1-T6 (Fundamente)**: Stocare WAL, căutare $A^*$, scoping de agenți, demarcare XML, monitorizare PSI și atenție cu LoRA.
 - **T7-T12 (Avansat)**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fișiere cu limită ermetică, fuziune RRF cu MRR, point-in-time join fără scurgere de date și eșantionare Min-p.
 - **T13-T18 (Specializat)**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodică, GraphRAG cu Leiden, Weak Supervision Snorkel și optimizatorul AdamW cu Cosine Annealing.
 - **T19-T24 (Măiestrie)**: Simulator Snapshot Isolation & detecție Write Skew (SSI), Algoritmul Viterbi pentru HMM, ciclul de somn și decăderea Ebbinghaus, Triada RAG cu entropie semantică, Cuantizare simetrică INT8 și dimensionare KV-cache, și mecanismul Grouped-Query Attention (GQA).
+- **T25-T30 (Expert)**: LSM-Tree cu Bloom Filter, Căutare Minimax cu Alfa-Beta, State Checkpointer cu porți HITL și Time-Travel, Decodare Speculativă cu Rejection Sampling, Agregare Streaming pe Ferestre cu Watermark, și Mixture of Experts (MoE) cu rutare Top-2 și balansare.
+
 
 
 

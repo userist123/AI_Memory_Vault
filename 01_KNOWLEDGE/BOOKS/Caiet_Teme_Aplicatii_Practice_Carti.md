@@ -74,16 +74,28 @@ relations:
   target: 01_KNOWLEDGE/BOOKS/MASTERY_MLOps_Model_Quantization_and_KV_Cache.md
 - relation: references
   target: 01_KNOWLEDGE/BOOKS/MASTERY_Transformer_GQA_MQA_and_Sequence_Dynamics.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/EXPERT_DDIA_LSM_Trees_SSTables_and_Compaction.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/EXPERT_AIMA_Game_Theory_and_Adversarial_Search.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/EXPERT_Agent_State_Checkpoints_and_Human_in_the_Loop.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/EXPERT_RAG_Speculative_Decoding_and_Prefix_Caching.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/EXPERT_MLOps_RealTime_Streaming_Features_and_Windows.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/EXPERT_Transformer_Mixture_of_Experts_and_Routing.md
 ---
 
-# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (24 Teme Rezolvate)
+# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (30 Teme Rezolvate)
 
 **Rol**: Manual operațional de laborator și exerciții rezolvate pentru transpunerea teoriei în sarcini practice de producție.  
 **Metodologie**: Învățare activă $\to$ Notițe sintetice $\to$ Teme rezolvate pas cu pas $\to$ Playbook de execuție imediată.
 
 ---
 
-## Cele 24 de Teme de Laborator & Decizii Operaționale
+## Cele 30 de Teme de Laborator & Decizii Operaționale
 
 ### Nivelul 1: Fundamente (Teme 1–6)
 | Nr. | Carte Sursă | Tema Aplicată | Cod / Algoritm Cheie | Decizia la primirea unei sarcini |
@@ -125,6 +137,16 @@ relations:
 | **23** | **Designing ML Systems** (Huyen) | Cuantizare INT8 & Calcul KV-Cache | `quantize_symmetric_int8()`, formulă VRAM | Cuantizez greutățile și KV-cache; dimensionez memoria pentru secvențe lungi |
 | **24** | **Learning Deep Learning** (Ekman) | Grouped-Query Attention (GQA) | `grouped_query_attention(Q, K, V)` | Partajez grupuri KV între capetele Query; reduc latența fără pierdere de precizie |
 
+### Nivelul 5: Expert (Teme 25–30)
+| Nr. | Carte Sursă | Tema Aplicată | Cod / Algoritm Cheie | Decizia la primirea unei sarcini |
+|---|---|---|---|---|
+| **25** | **DDIA** (Kleppmann) | LSM-Tree, SSTables & Filtru Bloom | `MiniLSMTree`, `BloomFilter` | Optimizez debitul masiv de scriere secvențială și elimin I/O-ul inutil |
+| **26** | **AIMA 4e** (Russell & Norvig) | Căutare Minimax cu Alfa-Beta | `alpha_beta_search(depth, alpha, beta)` | Explorez decizii multi-agent competitive tăind subarborii suboptimali garantat |
+| **27** | **Agent Architecture** (LangGraph) | Checkpointer HITL & Time-Travel | `StatefulAgentCheckpointer` | Suspend execuția la acțiuni critice (`I-004`) și permit derularea istorică |
+| **28** | **Designing LLM Apps** (Huyen) | Decodare Speculativă (Rejection) | `speculative_decoding_step()` | Accelerez RAG de $2\times - 3\times$ validând speculațiile modelului mic |
+| **29** | **Designing ML Systems** (Huyen) | Agregare Flux & Watermarking | `StreamingWindowAggregator` | Calculez caracteristici pe ferestre glisante și izolez datele întârziate |
+| **30** | **Learning Deep Learning** (Ekman) | Mixture of Experts (MoE) & Rutare | `moe_sparse_forward()` Top-2 | Activez doar experții relevanți per token și penalizez dezechilibrul hardware |
+
 Ghidul complet cu implementările în cod este documentat în:
 - [`.agents/skills/learn/references/caiet_de_teme_si_aplicatii_practice.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/learn/references/caiet_de_teme_si_aplicatii_practice.md)
 
@@ -135,25 +157,31 @@ Ghidul complet cu implementările în cod este documentat în:
 - [[01_KNOWLEDGE/BOOKS/ADVANCED_DDIA_Replication_Consensus_Streaming]]
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_DDIA_Batch_Joins_and_Unbundled_Databases]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_DDIA_Serializability_SSI_and_Locking]]
+- [[01_KNOWLEDGE/BOOKS/EXPERT_DDIA_LSM_Trees_SSTables_and_Compaction]]
 - [[01_KNOWLEDGE/BOOKS/AIMA_Rational_Agents_and_Search]]
 - [[01_KNOWLEDGE/BOOKS/ADVANCED_AIMA_Probabilistic_Reasoning_Planning_RL]]
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_AIMA_Automated_Planning_and_HTN]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_AIMA_HMM_Kalman_and_Particle_Filtering]]
+- [[01_KNOWLEDGE/BOOKS/EXPERT_AIMA_Game_Theory_and_Adversarial_Search]]
 - [[01_KNOWLEDGE/BOOKS/Agent_Architecture_and_Tool_Orchestration]]
 - [[01_KNOWLEDGE/BOOKS/ADVANCED_Agent_Tool_Protocols_and_FastMCP]]
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_Agent_Reflexion_and_MultiAgent_Debate]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_Agent_Memory_Consolidation_and_Sleep]]
+- [[01_KNOWLEDGE/BOOKS/EXPERT_Agent_State_Checkpoints_and_Human_in_the_Loop]]
 - [[01_KNOWLEDGE/BOOKS/LLM_Application_Design_and_RAG_Pipelines]]
 - [[01_KNOWLEDGE/BOOKS/ADVANCED_RAG_Hybrid_Reranking_Vector_Indexing]]
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_RAG_GraphRAG_and_Community_Summaries]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_RAG_Triad_and_Hallucination_Diagnostics]]
+- [[01_KNOWLEDGE/BOOKS/EXPERT_RAG_Speculative_Decoding_and_Prefix_Caching]]
 - [[01_KNOWLEDGE/BOOKS/Production_ML_Systems_and_Continual_Learning]]
 - [[01_KNOWLEDGE/BOOKS/ADVANCED_MLOps_Feature_Stores_Continual_Learning]]
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_MLOps_Weak_Supervision_and_Snorkel]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_MLOps_Model_Quantization_and_KV_Cache]]
+- [[01_KNOWLEDGE/BOOKS/EXPERT_MLOps_RealTime_Streaming_Features_and_Windows]]
 - [[01_KNOWLEDGE/BOOKS/Deep_Learning_Representations_and_Attention]]
 - [[01_KNOWLEDGE/BOOKS/ADVANCED_Transformer_RoPE_Attention_Sampling]]
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_Transformer_Optimization_AdamW_Dynamics]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_Transformer_GQA_MQA_and_Sequence_Dynamics]]
+- [[01_KNOWLEDGE/BOOKS/EXPERT_Transformer_Mixture_of_Experts_and_Routing]]
 - [[Knowledge Graph Home]]
 
