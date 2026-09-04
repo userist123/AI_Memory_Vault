@@ -2,6 +2,7 @@
 
 ## Implementation
 - [x] restored canonical Romanian master `README.md`, eliminated Perplexity AI boilerplate and citation artifacts, fully aligned with v6.0.0, 10 Tiers of Foundation Books / 60 Teme, P0-P18 invariants, 21-agent council, 251 local skills, and 518 passing tests `[owner: antigravity | timestamp: 2026-09-04T22:32:00+03:00]`
+- [x] redesigned `README.md` with modern typography, for-the-badge SVG shields, collapsible cards for progressive disclosure, complete 8-stage Cognitive Evolution Development Plan, and 10 design principles per user direction `[owner: antigravity | timestamp: 2026-09-04T22:38:00+03:00]`
 
 ---
 
