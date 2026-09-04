@@ -297,11 +297,24 @@ trl sft --config sft_config.yaml --accelerate_config zero3
 - Adjust `--temperature` and `--top_p` for generation
 - Verify the reward function (for GRPO/RLOO)
 
+## Book-Derived Post-Training Foundations
+
+For deep theoretical grounding and architectural decision trees, consult:
+- [`references/book_derived_post_training_guide.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/trl-training/references/book_derived_post_training_guide.md)
+
+### Key Decision Matrix (Pai, Zvarydchuk, Huyen)
+- **Prompting / RAG**: Use when data changes rapidly or context length is sufficient without behavioral changes.
+- **SFT**: Use when teaching specific syntax, JSON schemas, or tool-calling protocols.
+- **DPO**: Use for pairwise preference alignment without training an auxiliary reward model.
+- **GRPO**: Use for verifiable reasoning tasks (math, code execution) via group-relative reward normalization.
+
 ## Additional Resources
 
 - **Documentation**: https://huggingface.co/docs/trl
 - **GitHub**: https://github.com/huggingface/trl
 - **Examples**: https://github.com/huggingface/trl/tree/main/examples
+- **Reference Guide**: `references/book_derived_post_training_guide.md`
+
 
 ## Best Practices
 

@@ -148,6 +148,10 @@ Before finishing, check that:
 - The next step is clear.
 - Any generated files or code are actually usable in the target environment.
 
+## Canonical Foundation Curricula
+
+For deep, multi-session study of core AI systems and software engineering, consult:
+- [`references/book_foundations_curriculum.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/learn/references/book_foundations_curriculum.md): 6-pillar curriculum covering Martin Kleppmann (*DDIA*), Stuart Russell & Peter Norvig (*AIMA 4e*), Vasyl Zvarydchuk (*Building Agent-Powered Applications*), Suhas Pai (*Designing LLM Applications*), Chip Huyen (*Designing ML Systems*), and Magnus Ekman (*Learning Deep Learning*).
 
 ## Limitations
 

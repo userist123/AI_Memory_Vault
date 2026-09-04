@@ -17,7 +17,7 @@ created: '2026-09-04'
 updated: '2026-09-04'
 provenance:
   source_type: ai
-  source_ref: 06_INBOX/RAW_IMPORTS/BOOKS/Martin-Kleppmann---Designing-Data-Intensive-Applications_-O’Reilly-Media-(2017).pdf
+  source_ref: "06_INBOX/RAW_IMPORTS/BOOKS/Martin-Kleppmann-Designing-Data-Intensive-Applications.pdf"
 confidence: high
 verification: unverified
 relations:

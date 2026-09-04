@@ -6,7 +6,12 @@
 - [x] created 6 canonical knowledge notes in `01_KNOWLEDGE/BOOKS/` validated against Draft-07 JSON Schema (`validate_frontmatter`), `lifecycle: REVIEW`, `verification: unverified`, `source_type: ai` `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
 - [x] updated `AGENTS.md` with 3 book-derived operational invariants (Production Reality Invariant, Prompt Data/Instruction Isolation, Bounded Associative Expansion) `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
 - [x] registered book notes in `00_CORE/GRAPH/07 Knowledge Domains Map.md` `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
-- [x] appended cryptographic audit record to `audit_log.jsonl` `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
+- [x] created post-training alignment guide `.agents/skills/trl-training/references/book_derived_post_training_guide.md` and updated `trl-training/SKILL.md` `[owner: antigravity | timestamp: 2026-09-04T18:26:00+03:00]`
+- [x] created Module 9 `.agents/skills/cli-mastery/references/module-9-vault-and-trl-cli.md`, added Scenario 9 to `scenarios.md`, and updated `cli-mastery/SKILL.md` `[owner: antigravity | timestamp: 2026-09-04T18:26:10+03:00]`
+- [x] created 6-pillar foundation curriculum `.agents/skills/learn/references/book_foundations_curriculum.md` and updated `learn/SKILL.md` `[owner: antigravity | timestamp: 2026-09-04T18:26:20+03:00]`
+- [x] executed full regression test suite `python -m pytest cognitive_core/tests/ -q` (516 passed, 2 skipped, 0 failures) `[owner: antigravity | timestamp: 2026-09-04T18:26:30+03:00]`
+- [x] validated Draft-07 schema compliance on all 6 book notes (6/6 `valid=True`) `[owner: antigravity | timestamp: 2026-09-04T18:27:01+03:00]`
+- [x] appended cryptographic audit record to `audit_log.jsonl` linking SHA-256 hash chain `[owner: antigravity | timestamp: 2026-09-04T18:27:29+03:00]`
 
 ---
 

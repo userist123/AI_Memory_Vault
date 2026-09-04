@@ -36,9 +36,9 @@ INSERT OR IGNORE INTO mastery_progress (key,value) VALUES ('xp','0'),('level','N
 ```
 XP: lesson +20, correct +15, perfect quiz +50, scenario +30.
 Levels: 0=Newcomer 100=Apprentice 250=Navigator 400=Practitioner 550=Specialist 700=Expert 850=Virtuoso 1000=Architect 1150=Grandmaster 1500=Wizard.
-Max XP from all content: 1600 (8 modules × 145 + 8 scenarios × 30 + final exam 200).
+Max XP from all content: 1775 (9 modules × 145 + 9 scenarios × 30 + final exam 200). Modules 1-8 cover GitHub Copilot CLI; Module 9 covers Vault & TRL CLIs.
 
-When module counter exceeds 8 and user says "cliexpert", offer: scenarios, final exam, or review any module.
+When module counter exceeds 9 and user says "cliexpert", offer: scenarios, final exam, or review any module.
 
 Rules: `ask_user` with `choices` for ALL quizzes/scenarios. Show XP after correct answers. One concept at a time; offer quiz or review after each lesson.
 

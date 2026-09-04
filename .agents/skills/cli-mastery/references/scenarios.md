@@ -43,9 +43,15 @@ Use `ask_user` with choices for each step.
 
 **Answer:** `/reset-allowed-tools` → Plan mode → `/review` before every commit
 
+## Scenario 9: Offline Vault Retrieval & TRL Alignment Pipeline
+> The local REST API server is offline. You need to perform an authorized memory query without violating trust boundaries, then run LoRA SFT on curated traces.
+
+**Answer:** `python -m cognitive_core.recall_cli --query "task"` → verify schema/provenance → `trl sft --model_name_or_path <M> --dataset_name <D> --use_peft`
+
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[10 Imports and Sources Map]]
 - [[Master_Skills_Catalog_251]]
 - [[Knowledge Graph Home]]
+
