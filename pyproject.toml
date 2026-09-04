@@ -10,4 +10,18 @@ requires-python = ">=3.11"
 
 [tool.setuptools.packages.find]
 where = ["03_IMPLEMENTATION/packages"]
-include = ["memory_vault*", "cognitive_core", "memory_controller", "xau_kinetic"]
+include = [
+  "memory_vault*",
+  "cognitive_core",
+  "memory_controller",
+  "graph*",
+  "interfaces*",
+  "learning*",
+  "lifecycle*",
+  "memory*",
+  "observability*",
+  "providers*",
+  "retrieval*",
+  "security*",
+  "xau_kinetic*",
+]
