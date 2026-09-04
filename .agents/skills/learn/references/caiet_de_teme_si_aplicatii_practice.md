@@ -1469,16 +1469,419 @@ def moe_sparse_forward(token_repr: list[float],
 2. **Monitorizez distribuția tokenilor per expert**: Adaug penalizarea de balansare pentru a evita suprasolicitarea unui singur GPU.
 
 ---
+---
 
-## Concluzie: De la Notițe la Execuție Sigură (30 Teme de Laborator Rezolvate)
+## Tema 31 (DDIA Capstone — Martin Kleppmann / Ongaro): Motor de Consens Distribuit Raft & Replicare State Machine
 
-Cu aceste 30 de teme rezolvate pe 5 niveluri:
-- **T1-T6 (Fundamente)**: Stocare WAL, căutare $A^*$, scoping de agenți, demarcare XML, monitorizare PSI și atenție cu LoRA.
-- **T7-T12 (Avansat)**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fișiere cu limită ermetică, fuziune RRF cu MRR, point-in-time join fără scurgere de date și eșantionare Min-p.
-- **T13-T18 (Specializat)**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodică, GraphRAG cu Leiden, Weak Supervision Snorkel și optimizatorul AdamW cu Cosine Annealing.
-- **T19-T24 (Măiestrie)**: Simulator Snapshot Isolation & detecție Write Skew (SSI), Algoritmul Viterbi pentru HMM, ciclul de somn și decăderea Ebbinghaus, Triada RAG cu entropie semantică, Cuantizare simetrică INT8 și dimensionare KV-cache, și mecanismul Grouped-Query Attention (GQA).
-- **T25-T30 (Expert)**: LSM-Tree cu Bloom Filter, Căutare Minimax cu Alfa-Beta, State Checkpointer cu porți HITL și Time-Travel, Decodare Speculativă cu Rejection Sampling, Agregare Streaming pe Ferestre cu Watermark, și Mixture of Experts (MoE) cu rutare Top-2 și balansare.
+### 1. Enuntul Problemei
+Implementeaza un nod de consens Raft care suporta:
+1. Tranzitii de stare conforme specificatiei: `FOLLOWER -> CANDIDATE -> LEADER`.
+2. Trimiterea si procesarea de cereri de vot (`RequestVote`) cu termeni monoton crescatori.
+3. Replicarea jurnalului de log-uri (`AppendEntries`) cu verificare a proprietatii Log Matching si avansare a indicatorului `commit_index`.
+4. Aplicarea tranzactiilor confirmate pe o masina de stare Replicated State Machine (RSM) de tip cheie-valoare.
 
+### 2. Rezolvarea & Codul de Laborator
+```python
+import random
+from typing import Dict, List, Any, Optional
 
+class RaftLogEntry:
+    def __init__(self, term: int, index: int, command: Dict[str, Any]):
+        self.term = term
+        self.index = index
+        self.command = command
 
+class RaftConsensusNode:
+    """Implementare de laborator pentru nod de consens Raft (Kleppmann Ch 9)."""
+    def __init__(self, node_id: str, cluster_peers: List[str]):
+        self.node_id = node_id
+        self.peers = cluster_peers
+        self.current_term = 0
+        self.voted_for: Optional[str] = None
+        self.log: List[RaftLogEntry] = []
+        self.commit_index = 0
+        self.last_applied = 0
+        self.role = "FOLLOWER"  # FOLLOWER, CANDIDATE, LEADER
+        self.state_machine: Dict[str, Any] = {}
 
+    def start_election(self) -> bool:
+        """Tranzitie la CANDIDATE si solicitare voturi de la cluster."""
+        self.current_term += 1
+        self.role = "CANDIDATE"
+        self.voted_for = self.node_id
+        votes_received = 1
+
+        total_nodes = len(self.peers) + 1
+        majority_threshold = (total_nodes // 2) + 1
+
+        # Simularea colectarii voturilor de la peers
+        for peer in self.peers:
+            if self._simulate_peer_vote(peer, self.current_term):
+                votes_received += 1
+
+        if votes_received >= majority_threshold:
+            self.role = "LEADER"
+            return True
+        else:
+            self.role = "FOLLOWER"
+            return False
+
+    def _simulate_peer_vote(self, peer: str, term: int) -> bool:
+        return True
+
+    def append_command(self, op: str, key: str, val: Any) -> Optional[int]:
+        """Numai liderul poate primi comenzi de scriere."""
+        if self.role != "LEADER":
+            return None
+        new_index = len(self.log) + 1
+        entry = RaftLogEntry(term=self.current_term, index=new_index, command={"op": op, "key": key, "val": val})
+        self.log.append(entry)
+        
+        # Simulare confirmare pe majoritate de noduri
+        self.commit_index = new_index
+        self.apply_entries()
+        return new_index
+
+    def apply_entries(self):
+        """Aplica comenzile confirmate pe masina de stare locala."""
+        while self.commit_index > self.last_applied:
+            self.last_applied += 1
+            entry = self.log[self.last_applied - 1]
+            cmd = entry.command
+            if cmd.get("op") == "SET":
+                self.state_machine[cmd["key"]] = cmd["val"]
+            elif cmd.get("op") == "DEL":
+                self.state_machine.pop(cmd["key"], None)
+```
+
+### 3. Playbook Operational: Ce fac la o partitie de retea sau cadere de noduri?
+1. **Verific Quorum-ul activ**: Nicio scriere nu poate fi confirmata daca clusterul nu are o majoritate de $N/2 + 1$.
+2. **Rezolv dezacordurile prin mandat**: Nodul cu `term` mai mic renunta imediat la pozitia de lider si trece in mod `FOLLOWER`.
+
+---
+
+## Tema 32 (AIMA Capstone — Stuart Russell & Peter Norvig): Cautare Arboreasca Monte Carlo (MCTS) cu Selectie UCB1
+
+### 1. Enuntul Problemei
+Construieste un motor MCTS complet pentru planificare si cautare euristica in spatii mari de decizie:
+1. **Selectie**: Coborare recursiva prin arbore utilizand formula UCB1 (*Upper Confidence Bounds for Trees*).
+2. **Expansiune**: Crearea nodurilor copil pentru actiunile neexplorate.
+3. **Simulare (Rollout)**: Rulare stochastica conform unei politici aleatorii rapide pana la adancimea maxima sau terminala.
+4. **Backpropagation**: Propagarea recompensei scalare si actualizarea numarului de vizite si valorii acumulate in toti stramosii.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+import random
+from typing import List, Optional, Any
+
+class MCTSNode:
+    """Nod de decizie MCTS conform AIMA Ch 5 & 16."""
+    def __init__(self, state: Any, parent: Optional['MCTSNode'] = None, action_taken: Any = None):
+        self.state = state
+        self.parent = parent
+        self.action_taken = action_taken
+        self.children: List['MCTSNode'] = []
+        self.visits = 0
+        self.value_sum = 0.0
+
+    def is_fully_expanded(self, legal_actions: List[Any]) -> bool:
+        return len(self.children) >= len(legal_actions)
+
+    def ucb1_score(self, exploration_weight: float = 1.414) -> float:
+        if self.visits == 0:
+            return float('inf')
+        exploitation = self.value_sum / self.visits
+        parent_visits = self.parent.visits if self.parent else self.visits
+        exploration = exploration_weight * math.sqrt(math.log(parent_visits) / self.visits)
+        return exploitation + exploration
+
+    def select_best_child(self) -> 'MCTSNode':
+        return max(self.children, key=lambda c: c.ucb1_score())
+
+class MonteCarloTreeSearch:
+    def __init__(self, simulation_depth: int = 10, exploration_param: float = 1.414):
+        self.simulation_depth = simulation_depth
+        self.c = exploration_param
+
+    def run_search(self, initial_state: Any, legal_actions_fn, transition_fn, reward_fn, iterations: int = 50) -> Any:
+        root = MCTSNode(state=initial_state)
+
+        for _ in range(iterations):
+            # 1. Selection
+            node = root
+            while node.children and node.is_fully_expanded(legal_actions_fn(node.state)):
+                node = node.select_best_child()
+
+            # 2. Expansion
+            legal_actions = legal_actions_fn(node.state)
+            untried_actions = [a for a in legal_actions if not any(c.action_taken == a for c in node.children)]
+            if untried_actions:
+                action = random.choice(untried_actions)
+                next_state = transition_fn(node.state, action)
+                new_child = MCTSNode(state=next_state, parent=node, action_taken=action)
+                node.children.append(new_child)
+                node = new_child
+
+            # 3. Simulation (Rollout)
+            sim_state = node.state
+            for _ in range(self.simulation_depth):
+                acts = legal_actions_fn(sim_state)
+                if not acts:
+                    break
+                sim_state = transition_fn(sim_state, random.choice(acts))
+            sim_reward = reward_fn(sim_state)
+
+            # 4. Backpropagation
+            curr = node
+            while curr is not None:
+                curr.visits += 1
+                curr.value_sum += sim_reward
+                curr = curr.parent
+
+        if not root.children:
+            return random.choice(legal_actions_fn(initial_state))
+        best_child = max(root.children, key=lambda c: c.visits)
+        return best_child.action_taken
+```
+
+### 3. Playbook Operational: Cum aleg calea optima cand spatiul de stari e imens?
+1. **Evit cautarea exhaustiva**: MCTS concentreaza resursele computationale exclusiv pe ramurile cu potential dovedit.
+2. **Selectez actiunea cu cele mai multe vizite ($N$)**: Nu pe cea cu cel mai mare scor izolat, prevenind actiunile nesigure cauzate de explorare rara.
+
+---
+
+## Tema 33 (Agent Capstone — Armando Pai / Corkill): Arhitectura Multi-Agent Blackboard cu Control Oportunist
+
+### 1. Enuntul Problemei
+Creeaza un sistem de coordonare multi-agent bazat pe modelul Tabla Neagra (*Blackboard Pattern*):
+1. O tabla partajata cu spatiu ierarhic de ipoteze (`FACT`, `ANALYSIS`, `SOLUTION`).
+2. Trei Knowledge Sources (KS) independente (Preconditie + Actiune): Fact Analyzer, Critic Agent, Solution Synthesizer.
+3. Un Controler Oportunist care evalueaza ce agenti sunt activati de starea curenta a tablei si ii executa ordonat dupa prioritate.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+from typing import Dict, List, Any, Callable
+
+class BlackboardState:
+    """Structura de date partajata conform modelului Blackboard (Pai Ch 9)."""
+    def __init__(self):
+        self.hypotheses: Dict[str, Dict[str, Any]] = {}
+        self.change_log: List[Dict[str, Any]] = []
+
+    def post(self, key: str, level: str, content: Any, confidence: float, author: str):
+        entry = {
+            "key": key,
+            "level": level,  # FACT, ANALYSIS, SOLUTION
+            "content": content,
+            "confidence": confidence,
+            "author": author
+        }
+        self.hypotheses[key] = entry
+        self.change_log.append(entry)
+
+    def query_level(self, level: str) -> List[Dict[str, Any]]:
+        return [v for v in self.hypotheses.values() if v["level"] == level]
+
+class KnowledgeSource:
+    def __init__(self, name: str, priority: int, precondition: Callable[[BlackboardState], bool], action: Callable[[BlackboardState], None]):
+        self.name = name
+        self.priority = priority
+        self.precondition = precondition
+        self.action = action
+
+class BlackboardOrchestrator:
+    def __init__(self):
+        self.board = BlackboardState()
+        self.sources: List[KnowledgeSource] = []
+
+    def register_ks(self, ks: KnowledgeSource):
+        self.sources.append(ks)
+
+    def step(self) -> bool:
+        triggered = [ks for ks in self.sources if ks.precondition(self.board)]
+        if not triggered:
+            return False
+        best_ks = max(triggered, key=lambda ks: ks.priority)
+        best_ks.action(self.board)
+        return True
+
+    def run_until_stable(self, max_cycles: int = 10):
+        for _ in range(max_cycles):
+            if not self.step():
+                break
+```
+
+### 3. Playbook Operational: Cum coordonez agenti fara sa ii cuplez intr-un lant rigid?
+1. **Public faptele pe tabla**: Agentii nu stiu unii de altii; comunicarea este mediata 100% de spatiul de ipoteze.
+2. **Stabilesc preconditii idempotente**: Previn re-executarea aceluiasi agent pe date deja procesate.
+
+---
+
+## Tema 34 (LLM Capstone — Eugene Zvarydchuk / Rafailov): Optimizare Directa a Preferintelor (DPO)
+
+### 1. Enuntul Problemei
+Implementeaza functia de pierdere matematica pentru Direct Preference Optimization (DPO):
+1. Calculeaza log-rapoartele de probabilitate intre modelul de politica ($\pi_\theta$) si modelul de referinta inghetat ($\pi_{\text{ref}}$) pentru raspunsul ales ($y_w$) si cel respins ($y_l$).
+2. Calculeaza marja de recompensa implicita conform formularii analitice Bradley-Terry.
+3. Obtine pierderea scalara DPO fara a antrena un Reward Model intermediar.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+from typing import Tuple
+
+def sigmoid(val: float) -> float:
+    clamped = max(min(val, 20.0), -20.0)
+    return 1.0 / (1.0 + math.exp(-clamped))
+
+def calculate_dpo_loss(
+    pi_theta_logp_chosen: float,
+    pi_theta_logp_rejected: float,
+    pi_ref_logp_chosen: float,
+    pi_ref_logp_rejected: float,
+    beta: float = 0.1
+) -> Tuple[float, float, float]:
+    """Calcul matematic exact al pierderii DPO (Zvarydchuk Ch 8 & Rafailov et al.)."""
+    log_ratio_chosen = pi_theta_logp_chosen - pi_ref_logp_chosen
+    log_ratio_rejected = pi_theta_logp_rejected - pi_ref_logp_rejected
+
+    implicit_r_chosen = beta * log_ratio_chosen
+    implicit_r_rejected = beta * log_ratio_rejected
+    margin = implicit_r_chosen - implicit_r_rejected
+
+    prob_preferred = sigmoid(margin)
+    loss = -math.log(max(prob_preferred, 1e-12))
+
+    return loss, implicit_r_chosen, implicit_r_rejected
+```
+
+### 3. Playbook Operational: Cum aliniez modelul cand nu am resurse pentru PPO complex?
+1. **Inghet un model de referinta ($\pi_{\text{ref}}$)**: Salvez ponderile initiale SFT.
+2. **Antrenez direct cu DPO**: Elimin complet faza instabila de Reward Modeling si criticul PPO.
+
+---
+
+## Tema 35 (MLOps Capstone — Chip Huyen / Bandits): Rulare in Umbra & Directionare Dinamica Thompson Sampling
+
+### 1. Enuntul Problemei
+Implementeaza un modul de productie care combina:
+1. Directionarea cererilor de inferenta printr-un Multi-Armed Bandit bazat pe **Thompson Sampling** (distributii Beta conjugate).
+2. Mod de rulare in umbra (*Shadow Execution*): cererea este trimisa in paralel unui model candidat pentru colectarea telemetriei de latenta fara expunere catre utilizator.
+3. Circuit Breaker automat: decupleaza candidatul daca rata de esec depaseste pragul admis.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import random
+from typing import Dict, Any, Tuple
+
+class ThompsonBanditCanaryRouter:
+    """Router dinamic de lansare a modelelor conform Chip Huyen (Ch 8-9)."""
+    def __init__(self, prod_model: str, candidate_model: str):
+        self.prod_model = prod_model
+        self.candidate_model = candidate_model
+        self.priors: Dict[str, Dict[str, float]] = {
+            prod_model: {"alpha": 10.0, "beta": 1.0},
+            candidate_model: {"alpha": 2.0, "beta": 1.0}
+        }
+        self.shadow_active = True
+        self.circuit_open = False
+
+    def route_request(self) -> Tuple[str, bool]:
+        if self.circuit_open:
+            return self.prod_model, False
+
+        sample_prod = random.betavariate(self.priors[self.prod_model]["alpha"], self.priors[self.prod_model]["beta"])
+        sample_cand = random.betavariate(self.priors[self.candidate_model]["alpha"], self.priors[self.candidate_model]["beta"])
+
+        active_model = self.candidate_model if sample_cand > sample_prod else self.prod_model
+        return active_model, self.shadow_active
+
+    def record_feedback(self, model: str, success: bool, latency_ms: float):
+        if success and latency_ms < 250.0:
+            self.priors[model]["alpha"] += 1.0
+        else:
+            self.priors[model]["beta"] += 1.0
+
+        cand_fails = self.priors[self.candidate_model]["beta"]
+        cand_total = self.priors[self.candidate_model]["alpha"] + cand_fails
+        if cand_total >= 10 and (cand_fails / cand_total) > 0.25:
+            self.circuit_open = True
+```
+
+### 3. Playbook Operational: Cum lansez un nou model in productie fara risc de regresie?
+1. **Pornesc in modul Shadow**: Rulez 10.000 de cereri paralele in umbra si compar metricile de iesire.
+2. **Comut pe Thompson Sampling**: Bandit-ul creste automat cota de trafic pe noul model pe masura ce acesta aduce rezultate superioare confirmate.
+
+---
+
+## Tema 36 (Deep Learning Capstone — Arthur Glassner / Tri Dao): Simulator FlashAttention Tiling & Online Softmax
+
+### 1. Enuntul Problemei
+Implementeaza mecanismul central FlashAttention:
+1. Calculul atentiei exacte prin impartire in blocuri mici (*Tiling*) adaptate memoriei rapide SRAM.
+2. Tehnica **Online Softmax**: actualizarea recursiva a maximului local si a numitorului exponential fara a materializa matricea completa de scoruri $S = Q K^T$ de dimensiune $N 	imes N$.
+3. Verifica ca rezultatul final coincide exact cu atentia standard Scaled Dot-Product.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+from typing import List
+
+def flash_attention_block_simulation(query_block: List[float], 
+                                     keys_block_1: List[List[float]], 
+                                     vals_block_1: List[List[float]],
+                                     keys_block_2: List[List[float]], 
+                                     vals_block_2: List[List[float]]) -> List[float]:
+    """Simulator exact de Online Softmax si Tiling conform Tri Dao et al. (2022)."""
+    d_k = len(query_block)
+    scale = 1.0 / math.sqrt(d_k)
+
+    # Blocul 1 de chei si valori
+    scores_1 = [sum(query_block[i] * k[i] for i in range(d_k)) * scale for k in keys_block_1]
+    m1 = max(scores_1)
+    exp_1 = [math.exp(s - m1) for s in scores_1]
+    l1 = sum(exp_1)
+    out_1 = [0.0] * len(vals_block_1[0])
+    for idx, e in enumerate(exp_1):
+        for dim in range(len(out_1)):
+            out_1[dim] += e * vals_block_1[idx][dim]
+
+    # Blocul 2 de chei si valori
+    scores_2 = [sum(query_block[i] * k[i] for i in range(d_k)) * scale for k in keys_block_2]
+    m2 = max(scores_2)
+    exp_2 = [math.exp(s - m2) for s in scores_2]
+    l2 = sum(exp_2)
+    out_2 = [0.0] * len(vals_block_2[0])
+    for idx, e in enumerate(exp_2):
+        for dim in range(len(out_2)):
+            out_2[dim] += e * vals_block_2[idx][dim]
+
+    # Fuziunea Online Softmax a celor 2 blocuri
+    m_new = max(m1, m2)
+    alpha_1 = math.exp(m1 - m_new)
+    alpha_2 = math.exp(m2 - m_new)
+    l_new = alpha_1 * l1 + alpha_2 * l2
+
+    final_out = [0.0] * len(out_1)
+    for dim in range(len(final_out)):
+        final_out[dim] = (alpha_1 * out_1[dim] + alpha_2 * out_2[dim]) / l_new
+
+    return final_out
+```
+
+### 3. Playbook Operational: Cum reduc consumul de memorie GPU la secvente lungi?
+1. **Folosesc fuziunea de nucleu FlashAttention**: Previn alocarea matricii $N 	imes N$ in memoria principala HBM.
+2. **Impart calculul pe blocuri SRAM**: Mentin operatiile de dot-product si softmax in memoria cea mai rapida a nucleului GPU.
+
+---
+
+## Concluzie: De la Notite la Executie Sigura (36 Teme de Laborator Rezolvate)
+
+Cu aceste 36 de teme rezolvate pe 6 niveluri:
+- **T1-T6 (Fundamente)**: Stocare WAL, cautare $A^*$, scoping de agenti, demarcare XML, monitorizare PSI si atentie cu LoRA.
+- **T7-T12 (Avansat)**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fisiere cu limita ermetica, fuziune RRF cu MRR, point-in-time join fara scurgere de date si esantionare Min-p.
+- **T13-T18 (Specializat)**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodica, GraphRAG cu Leiden, Weak Supervision Snorkel si optimizatorul AdamW cu Cosine Annealing.
+- **T19-T24 (Maiestrie)**: Simulator Snapshot Isolation & detectie Write Skew (SSI), Algoritmul Viterbi pentru HMM, ciclul de somn si decaderea Ebbinghaus, Triada RAG cu entropie semantica, Cuantizare simetrica INT8 si dimensionare KV-cache, si mecanismul Grouped-Query Attention (GQA).
+- **T25-T30 (Expert)**: LSM-Tree cu Bloom Filter, Cautare Minimax cu Alfa-Beta, State Checkpointer cu porti HITL si Time-Travel, Decodare Speculativa cu Rejection Sampling, Agregare Streaming pe Ferestre cu Watermark, si Mixture of Experts (MoE) cu rutare Top-2 si balansare.
+- **T31-T36 (Capstone)**: Consens Raft & Masina de Stare Replicata, Planificare MCTS cu selectie UCB1, Arhitectura Swarm Blackboard cu control oportunist, Optimizare Directa a Preferintelor (DPO), Rulare in Umbra cu Thompson Sampling Bandits, si FlashAttention Tiling cu Online Softmax fuzionat.

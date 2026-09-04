@@ -22,7 +22,7 @@ created: '2026-09-04'
 updated: '2026-09-04'
 provenance:
   source_type: ai
-  source_ref: "06_INBOX/RAW_IMPORTS/BOOKS/Foundation_Books_Applied_Drills"
+  source_ref: 06_INBOX/RAW_IMPORTS/BOOKS/Foundation_Books_Applied_Drills
 confidence: high
 verification: unverified
 relations:
@@ -86,16 +86,29 @@ relations:
   target: 01_KNOWLEDGE/BOOKS/EXPERT_MLOps_RealTime_Streaming_Features_and_Windows.md
 - relation: references
   target: 01_KNOWLEDGE/BOOKS/EXPERT_Transformer_Mixture_of_Experts_and_Routing.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/CAPSTONE_DDIA_Raft_Consensus_and_Replicated_State_Machines.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/CAPSTONE_AIMA_POMDP_and_Monte_Carlo_Tree_Search.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/CAPSTONE_Agent_Swarm_Blackboard_and_Dynamic_Orchestration.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/CAPSTONE_RAG_DPO_Alignment_and_Contrastive_Reasoning.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/CAPSTONE_MLOps_Shadow_Deployments_and_Bandit_Routing.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/CAPSTONE_Transformer_FlashAttention_Tiling_and_IO_Awareness.md
 ---
 
-# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (30 Teme Rezolvate)
+
+# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (36 Teme Rezolvate)
 
 **Rol**: Manual operațional de laborator și exerciții rezolvate pentru transpunerea teoriei în sarcini practice de producție.  
 **Metodologie**: Învățare activă $\to$ Notițe sintetice $\to$ Teme rezolvate pas cu pas $\to$ Playbook de execuție imediată.
 
 ---
 
-## Cele 30 de Teme de Laborator & Decizii Operaționale
+## Cele 36 de Teme de Laborator & Decizii Operaționale
 
 ### Nivelul 1: Fundamente (Teme 1–6)
 | Nr. | Carte Sursă | Tema Aplicată | Cod / Algoritm Cheie | Decizia la primirea unei sarcini |
@@ -147,6 +160,17 @@ relations:
 | **29** | **Designing ML Systems** (Huyen) | Agregare Flux & Watermarking | `StreamingWindowAggregator` | Calculez caracteristici pe ferestre glisante și izolez datele întârziate |
 | **30** | **Learning Deep Learning** (Ekman) | Mixture of Experts (MoE) & Rutare | `moe_sparse_forward()` Top-2 | Activez doar experții relevanți per token și penalizez dezechilibrul hardware |
 
+
+### Nivelul 6: Capstone (Teme 31–36)
+| Nr. | Carte Sursă | Tema Aplicată | Cod / Algoritm Cheie | Decizia la primirea unei sarcini |
+|---|---|---|---|---|
+| **31** | **DDIA** (Kleppmann) | Consens Raft & Replicare Mașină de Stare | `RaftConsensusNode(FOLLOWER, CANDIDATE, LEADER)` | Asigur consens tolerant la căderi cu verificarea invariantelor de mandat și log matching |
+| **32** | **AIMA 4e** (Russell & Norvig) | Arbore Monte Carlo (MCTS) cu UCB1 | `MonteCarloTreeSearch(UCB1)` | Ghidez planificarea în spații mari prin explorare stochastică și exploatare a celor mai vizitate noduri |
+| **33** | **Agent Architecture** (Pai) | Sistem Swarm Blackboard Oportunist | `BlackboardOrchestrator(KS, hypotheses)` | Coordonez roiuri autonome prin spațiu partajat de ipoteze decuplate fără lanțuri rigide |
+| **34** | **Designing LLM Apps** (Zvarydchuk) | Optimizare Directă a Preferințelor (DPO) | `calculate_dpo_loss(chosen, rejected, beta)` | Aliniez modelul direct pe baza log-rapoartelor Bradley-Terry fără costul unui reward model |
+| **35** | **Designing ML Systems** (Huyen) | Rulare în Umbră & Thompson Sampling | `ThompsonBanditCanaryRouter(Beta, circuit_open)` | Lansez noile versiuni în umbră și cresc traficul prin bandiți cu rollback automat |
+| **36** | **Learning Deep Learning** (Glassner) | FlashAttention Tiling & Online Softmax | `flash_attention_block_simulation(SRAM)` | Reduc memoria de la $O(N^2)$ la $O(N)$ calculând atenția exactă fără salvare intermediară |
+
 Ghidul complet cu implementările în cod este documentat în:
 - [`.agents/skills/learn/references/caiet_de_teme_si_aplicatii_practice.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/learn/references/caiet_de_teme_si_aplicatii_practice.md)
 
@@ -183,5 +207,11 @@ Ghidul complet cu implementările în cod este documentat în:
 - [[01_KNOWLEDGE/BOOKS/SPECIALIZED_Transformer_Optimization_AdamW_Dynamics]]
 - [[01_KNOWLEDGE/BOOKS/MASTERY_Transformer_GQA_MQA_and_Sequence_Dynamics]]
 - [[01_KNOWLEDGE/BOOKS/EXPERT_Transformer_Mixture_of_Experts_and_Routing]]
+- [[01_KNOWLEDGE/BOOKS/CAPSTONE_DDIA_Raft_Consensus_and_Replicated_State_Machines]]
+- [[01_KNOWLEDGE/BOOKS/CAPSTONE_AIMA_POMDP_and_Monte_Carlo_Tree_Search]]
+- [[01_KNOWLEDGE/BOOKS/CAPSTONE_Agent_Swarm_Blackboard_and_Dynamic_Orchestration]]
+- [[01_KNOWLEDGE/BOOKS/CAPSTONE_RAG_DPO_Alignment_and_Contrastive_Reasoning]]
+- [[01_KNOWLEDGE/BOOKS/CAPSTONE_MLOps_Shadow_Deployments_and_Bandit_Routing]]
+- [[01_KNOWLEDGE/BOOKS/CAPSTONE_Transformer_FlashAttention_Tiling_and_IO_Awareness]]
 - [[Knowledge Graph Home]]
 
