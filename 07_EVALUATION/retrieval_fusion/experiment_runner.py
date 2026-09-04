@@ -27,9 +27,9 @@ from memory_controller.authorizer import Principal
 from memory_controller.context.pack_builder import ContextPackBuilder
 from memory_controller.context.progressive_disclosure import ProgressiveDisclosure
 from memory_controller.context.budget import ContextBudget
-from evaluation.retrieval_diagnostic_runner import build_real_vault_storage, check_facts_in_context
-from evaluation.full_context_baseline import evaluate_response_accuracy
-from evaluation.retrieval_fusion.adapters import RetrievalAdapter, RetrievalSignalStatus
+from retrieval_diagnostic_runner import build_real_vault_storage, check_facts_in_context
+from full_context_baseline import evaluate_response_accuracy
+from retrieval_fusion.adapters import RetrievalAdapter, RetrievalSignalStatus
 
 
 def load_gold_evidence() -> List[Dict[str, Any]]:
