@@ -2,8 +2,7 @@
 
 ## State provenance
 
-Base `main` before this state record: `e4e037cc1fb2c2c983a69f37da83bbb8069e0c50`.
-State record commit: `6b48e95c11617b5a0327de9ca0255e15b286c7c4`.
+Base `main` before this state record: `92ec5118cf16c72bca31449b08e16aa2961b53a5`.
 
 ## Completed structural batches
 
@@ -38,13 +37,17 @@ State record commit: `6b48e95c11617b5a0327de9ca0255e15b286c7c4`.
    - `skills` → `00_GOVERNANCE/skills`
    - `scratch` → `80_ARCHIVE/scratch`
 
+5. Moved standalone configuration root:
+   - `config/agent_budgets.json` → `04_CONFIG/agent_budgets.json`
+   - `config/model_tiers.json` → `04_CONFIG/model_tiers.json`
+   - `config/model_tiers.local.example.json` → `04_CONFIG/model_tiers.local.example.json`
+
 ## Remaining non-spine roots requiring compatibility-aware treatment
 
 - `cognitive_core`
 - `memory_controller`
 - `tests`
 - `scripts`
-- `config`
 - `xau_kinetic`
 - `XAU_Kinetic.Desktop`
 - `XAU_Kinetic_Standalone`
@@ -54,6 +57,12 @@ State record commit: `6b48e95c11617b5a0327de9ca0255e15b286c7c4`.
 - `.obsidian`
 
 The runtime/package roots are intentionally not moved blindly. They require import/path compatibility inspection before relocation into `03_IMPLEMENTATION`, `20_TESTS`, `30_SCRIPTS`, `60_DEPLOYMENT`, or `70_INTEGRATIONS`.
+
+## Root files requiring explicit policy review
+
+- `audit_log.jsonl` — large generated audit state; do not move/delete until retention and reproducibility policy is verified.
+- `Fără titlu*.base` — duplicate Obsidian artifacts; retain until provenance/reference check is complete.
+- `.env.example`, `pytest.ini`, `AGENTS.md`, `CLAUDE.md`, `README.md` — remain at root for tooling/discoverability until path references are normalized.
 
 ## Do not repeat
 
