@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T19:14:00Z
-current_main_sha: d5033490dd85dc2412629560ebf0a6686232e603
+last_updated_utc: 2026-09-04T19:26:00Z
+current_main_sha: 3cb8d6392ecdb8c28754e42427fd2eaa9ada170a3
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -39,11 +39,12 @@ recent_state:
   - closed consolidation PR #14 instead of merging the 111-file divergent Antigravity branch wholesale
   - froze an isolated Planning Influence MVE V2 design
   - added a deterministic four-arm MVE mechanics harness with soft priors and stale-memory applicability control
+  - detected and removed an oracle-leak flaw: treatment priors are now derived from an independently frozen memory recommendation, never scenario.optimal
   - added deterministic unit tests for MVE planner mechanics
   - added CI workflow that executes the MVE and uploads runtime stdout as evidence
 open_requirements:
   - await CI verification of the GAP-011 change on main
-  - await CI execution of Planning Influence MVE workflow
+  - await CI execution of the corrected Planning Influence MVE workflow
   - do not promote the deterministic mechanics pilot to evidence of model-level cognitive planning without the stronger causal experiment
   - no feature-branch development for normal work
   - no parallel agent work on the same project task chain
@@ -54,8 +55,9 @@ open_requirements:
 blockers:
   - remote branch deletion must be handled only through an explicit delete-ref capability; do not fabricate deletion
   - Codex is unavailable this week
+  - GitHub Actions runs observed for the MVE, CodeQL and Fortify were still queued during this session; no runtime evidence is declared yet
 next_actions:
-  - verify Planning Influence MVE CI completion and inspect runtime artifact/log output
+  - verify a fresh Planning Influence MVE run for the corrected harness and inspect runtime artifact/log output
   - verify Memory V6 CI completion and inspect test results
   - if deterministic pilot passes, preserve its actual output as pilot evidence and then design the model-backed paired MVE without changing production Vault contracts
   - preserve any remaining unique verified legacy artifacts only when they add evidence not already on main
