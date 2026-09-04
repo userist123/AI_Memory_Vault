@@ -1,3 +1,17 @@
+# Antigravity Parallel Observability V1 — Developer Observability & Pipeline Architecture Inspection
+
+## Implementation
+- [x] baseline main SHA established: `2b90e897a3e0537aba0f88b286988f180d0d6236` on branch `antigravity/observability-v1` `[owner: antigravity | timestamp: 2026-09-04T17:01:00+03:00]`
+- [x] execute Track A retrieval trace and candidate scoring walkthrough (`07_EVALUATION/antigravity/RETRIEVAL_TRACE_V1.md`) documenting all 11 stages of the dual-pipeline reality `[owner: antigravity | timestamp: 2026-09-04T17:02:40+03:00]`
+- [x] execute Track B score distribution and discrimination benchmark across 7 query archetypes (`07_EVALUATION/antigravity/SCORE_DISTRIBUTION_V1.md`) validating separation classes and floor margins `[owner: antigravity | timestamp: 2026-09-04T17:02:40+03:00]`
+- [x] execute Track C lifecycle census across 905 canonical Markdown notes and 49 SQLite notes (`07_EVALUATION/antigravity/LIFECYCLE_VISUALIZATION_V1.md`) documenting provenance distribution and state machines `[owner: antigravity | timestamp: 2026-09-04T17:02:40+03:00]`
+- [x] execute Track D book knowledge audit on 10 synthesis atoms in `06_INBOX/DERIVED/BOOKS/` (`07_EVALUATION/antigravity/BOOK_KNOWLEDGE_MAP_V1.md`) identifying identical template cloning across metrics and validity `[owner: antigravity | timestamp: 2026-09-04T17:02:40+03:00]`
+- [x] execute Track E associative memory audit (`07_EVALUATION/antigravity/ASSOCIATIVE_MEMORY_AUDIT_V1.md`) delivering 5 architectural determinations on multi-graph, spreading activation, and multi-hop isolation `[owner: antigravity | timestamp: 2026-09-04T17:02:40+03:00]`
+- [x] execute Track F observability gap analysis (`07_EVALUATION/antigravity/OBSERVABILITY_GAPS_V1.md`) formulating 6 instrumentation designs for rejection reasons, score breakdowns, and lineage attribution `[owner: antigravity | timestamp: 2026-09-04T17:02:40+03:00]`
+- [x] commit artifacts to branch `antigravity/observability-v1` (SHA `7add68cb61fd3e7a3dc33b4a7ca032f6eb78204a`) and push to origin `[owner: antigravity | timestamp: 2026-09-04T17:04:06+03:00]`
+
+---
+
 # Memory Ablation 01 — Controlled Memory Ablation Benchmark
 
 ## Implementation

@@ -1,5 +1,11 @@
 # Lessons Learned
 
+## Antigravity Parallel Observability V1 — Developer Observability & Pipeline Architecture Inspection
+- Component Island vs Integrated Engine: Modules can have high test coverage (`test_multi_graph.py`) while being completely detached from the production query flow (`MemoryController.search()`). Code existence must never be equated to runtime execution without empirical trace verification.
+- Lexical Scorer Failure Modes: Keyword/token-overlap scorers (`RelevanceScorer`) excel at verbatim match (+0.2025 margin) but degrade rapidly on paraphrases (+0.0470), completely fail on synonyms (collapsing to abstention floor), and remain vulnerable to lexical traps (ranking false positives +0.0290 over unrelated notes).
+- Template Clone Detection in Synthetic Ingestion: Large batch imports of synthetic knowledge atoms often copy identical statistical priors (`confidence=0.78`, `reliability=0.72`, `stability=0.84`, `utility=0.88`, `relations=[]`). These must be flagged as unverified template clones until attested by human authority under `I-001` and `I-004`.
+- Bounded Abstention Drift: On lengthy technical notes, stopword and common particle overlaps can push unrelated queries to $0.2083$, surpassing fixed $0.2000$ abstention thresholds. Abstention gates must either normalize by length or incorporate minimum semantic similarity margins.
+
 ## Memory Ablation 01 — Controlled Memory Ablation Benchmark
 - Paired Alternating Experimental Design: Running benchmark trials in counterbalanced alternating order (Control $\to$ Treatment vs. Treatment $\to$ Control) across independent fresh workspaces eliminates workspace contamination and mitigates temporal or sequence drift.
 - Deterministic Benchmark Suite Fingerprinting: Calculating a canonical SHA-256 hash over the task suite (target files, test code, instructions, memory queries) ensures full experimental replication and verifies the benchmark definition was not altered between runs.
