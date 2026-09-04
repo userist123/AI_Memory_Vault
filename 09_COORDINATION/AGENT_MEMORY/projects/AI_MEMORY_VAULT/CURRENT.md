@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T19:47:00Z
-current_main_sha: f52e7f405e8f58448c8dd0dc14e74673106c7b76
+last_updated_utc: 2026-09-04T19:55:00Z
+current_main_sha: 1969a7566fe33c8ef7f6e4f2feec0f1f9f02fb9c
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -15,6 +15,7 @@ active_work:
 recent_state:
   - Perplexity adversarial validation: ACCEPT WITH CHANGES / GO WITH MANDATORY MVE CHANGES
   - main is the only canonical working branch for ongoing development
+  - README was restored atomically to the verified Owner-authored canonical version from 19537264; no production or MVE code changed in the restore
   - GAP-011 lifecycle classifier substring matching fixed with whole-word matching
   - deterministic Planning Influence MVE contains four arms and soft priors
   - oracle-leak flaw removed: treatment priors derive from independent frozen memory recommendations
@@ -36,12 +37,12 @@ open_requirements:
   - no parallel agent work on the same project task chain
   - preserve resumable handoff state every session
 blockers:
-  - GitHub Actions runs observed during this session remained queued; no CI runtime artifact was available
+  - GitHub Actions runs observed during this session may still be queued; no CI runtime artifact is accepted until verified
   - local environment cannot clone GitHub directly
   - remote branch deletion requires explicit delete-ref capability and must not be fabricated
   - Codex unavailable this week
 next_actions:
-  - verify the newest MVE CI run and inspect artifact/stdout
+  - verify the newest applicability-aware MVE CI run and inspect artifact/stdout
   - verify Memory V6 CI and inspect test results
   - do not add further calibration changes until latest applicability-aware harness is verified
   - proceed to model-backed paired MVE only after deterministic calibration is successful or explicitly falsified
