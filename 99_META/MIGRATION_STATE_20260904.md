@@ -2,7 +2,7 @@
 
 ## State provenance
 
-Current `main` includes structural commit `509ea7ab7c06dd4ff5179fb96cf5b8c4b74091a9`.
+Current structural baseline commit: `509ea7ab7c06dd4ff5179fb96cf5b8c4b74091a9`.
 
 ## Completed structural batches
 
