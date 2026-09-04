@@ -1,13 +1,13 @@
-"""DEPRECATED compatibility namespace for legacy ``cognitive_core`` imports.
+"""Compatibility namespace for legacy ``cognitive_core`` imports.
 
-Canonical implementations now live under ``memory_vault``. This shim contains
-no runtime logic and only exposes the classified package directories to legacy
-imports while downstream callers migrate.
+The runtime was structurally decomposed into responsibility-focused sibling
+packages under ``03_IMPLEMENTATION/packages``. This shim keeps the historical
+import namespace without duplicating implementation files.
 """
 from __future__ import annotations
 from pathlib import Path
 
-_BASE = Path(__file__).resolve().parents[1] / "memory_vault"
+_BASE = Path(__file__).resolve().parents[1]
 __path__ = [
     str(_BASE / "graph"),
     str(_BASE / "memory"),
