@@ -21,6 +21,11 @@ from .memory_outcome_tracer import (
     MemoryOutcomeLinkage,
     MemoryUtilityTier
 )
+from .benchmark_evaluator import (
+    RetrievalBenchmarkEvaluator,
+    QueryBenchmarkCase,
+    BenchmarkSummary
+)
 
 __all__ = [
     "RetrievalTracer",
@@ -31,5 +36,8 @@ __all__ = [
     "ABComparisonResult",
     "MemoryOutcomeTracer",
     "MemoryOutcomeLinkage",
-    "MemoryUtilityTier"
+    "MemoryUtilityTier",
+    "RetrievalBenchmarkEvaluator",
+    "QueryBenchmarkCase",
+    "BenchmarkSummary"
 ]

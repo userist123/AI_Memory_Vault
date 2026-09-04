@@ -19,6 +19,7 @@
 | `GAP-006` | `RecallEngine` | **MEDIUM** | Coarse-grained abstention (empty list return) | C1 / C7 | L6 |
 | `GAP-007` | `learning_loop` | **CRITICAL** | Execution outcomes are telemetry-only | C6 | L7 |
 | `GAP-008` | `RelevanceScorer` | **HIGH** | Token-overlap failure on synonyms & lexical traps | C2 | L2 / L3 |
+| `GAP-009` | `FileStorageEngine` | **HIGH** | Synthesis atoms in `06_INBOX/` invisible to `search()` | C1 / C3 | L1 / L5 |
 
 ---
 
@@ -101,3 +102,14 @@
 * **Proposed Interface**: Integrate dense local embedding / hybrid scoring (`sim = 0.5 * bm25 + 0.5 * dense`).
 * **Codex Acceptance Criterion**: Synonym queries achieve score $> 0.30$ and avoid abstention.
 * **Luna Attack Verification**: Run Hard-Negative lexical trap suite; verify hybrid scorer discriminates semantic intent from surface keywords.
+
+---
+
+### GAP-009: Inaccessible Ingestion Buffer in Storage Engine
+* **Affected Component**: [`memory_controller/storage/file_engine.py:FileStorageEngine`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/storage/file_engine.py#L20)
+* **Current Behavior**: `FileStorageEngine` explicitly excludes `06_INBOX` from indexing. Unpromoted synthesis atoms in `06_INBOX/DERIVED/BOOKS/` are completely invisible to `MemoryController.search()`.
+* **Opacity Hazard**: Unpromoted candidate knowledge cannot be retrieved, tested, or benchmarked via the standard API without custom candidate injection bypasses.
+* **Proposed Interface**: Support a read-only staging search scope (`include_review_staging: bool = False`) for authorized evaluation principals (`Principal.ADMIN`).
+* **Codex Acceptance Criterion**: Authorized evaluation queries can inspect `REVIEW` candidate atoms without violating trust boundary `I-003`.
+* **Luna Attack Verification**: Verify `Principal.AI_AGENT` is strictly rejected from searching `06_INBOX` without explicit staging flag.
+

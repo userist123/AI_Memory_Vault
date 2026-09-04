@@ -87,3 +87,20 @@ def test_memory_outcome_tracer_structure():
     assert len(linkages) == 1
     assert linkages[0].utility_tier == MemoryUtilityTier.RETRIEVED_AND_FUNCTIONAL
     assert linkages[0].task_success is True
+
+def test_retrieval_benchmark_evaluator():
+    from cognitive_core.observability.benchmark_evaluator import RetrievalBenchmarkEvaluator, QueryBenchmarkCase
+    storage = FileStorageEngine(vault_root=str(BASE_DIR))
+    controller = MemoryController(storage=storage)
+    evaluator = RetrievalBenchmarkEvaluator()
+
+    test_cases = [
+        QueryBenchmarkCase("test_1", "Architecture decision record", "exact", ["spec-mcp-server-0001"], should_abstain=False),
+        QueryBenchmarkCase("test_2", "Random unrelated query 12345", "unrelated", [], should_abstain=True)
+    ]
+    summary = evaluator.evaluate_suite(test_cases, controller, principal=Principal.AI_AGENT)
+    assert summary.total_queries == 2
+    assert "exact" in summary.archetype_breakdown
+    assert "unrelated" in summary.archetype_breakdown
+    assert len(summary.results) == 2
+
