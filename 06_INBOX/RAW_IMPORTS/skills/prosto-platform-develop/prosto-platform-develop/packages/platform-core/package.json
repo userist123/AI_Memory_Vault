@@ -30,7 +30,7 @@
   "dependencies": {
     "@prosto/platform-sdk": "0.0.0",
     "adm-zip": "^0.6.0",
-    "fastify": "^5.10.0",
+    "fastify": "^5.12.1",
     "tar": "^7.5.19",
     "zod": "^4.3.6"
   },

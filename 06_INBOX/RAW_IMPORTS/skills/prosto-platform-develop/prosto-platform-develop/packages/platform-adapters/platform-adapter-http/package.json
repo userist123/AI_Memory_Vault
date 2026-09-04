@@ -24,7 +24,7 @@
     "@prosto/platform-sdk": "0.0.0",
     "@fastify/cors": "^11.2.0",
     "@fastify/helmet": "^13.0.2",
-    "fastify": "^5.10.0"
+    "fastify": "^5.12.1"
   },
   "devDependencies": {
     "@internal/tsconfig": "*",
