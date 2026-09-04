@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T19:26:00Z
-current_main_sha: 3cb8d6392ecdb8c28754e42427fd2eaa9ada170a3
+last_updated_utc: 2026-09-04T19:28:00Z
+current_main_sha: 28b3414b3f19ba458db8f33a60fab3d85693be6f
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -40,7 +40,7 @@ recent_state:
   - froze an isolated Planning Influence MVE V2 design
   - added a deterministic four-arm MVE mechanics harness with soft priors and stale-memory applicability control
   - detected and removed an oracle-leak flaw: treatment priors are now derived from an independently frozen memory recommendation, never scenario.optimal
-  - added deterministic unit tests for MVE planner mechanics
+  - corrected MVE tests so they assert independence and do not demand success from intentionally stale/wrong memory
   - added CI workflow that executes the MVE and uploads runtime stdout as evidence
 open_requirements:
   - await CI verification of the GAP-011 change on main
@@ -57,7 +57,7 @@ blockers:
   - Codex is unavailable this week
   - GitHub Actions runs observed for the MVE, CodeQL and Fortify were still queued during this session; no runtime evidence is declared yet
 next_actions:
-  - verify a fresh Planning Influence MVE run for the corrected harness and inspect runtime artifact/log output
+  - verify fresh Planning Influence MVE CI for corrected harness and inspect runtime artifact/log output
   - verify Memory V6 CI completion and inspect test results
   - if deterministic pilot passes, preserve its actual output as pilot evidence and then design the model-backed paired MVE without changing production Vault contracts
   - preserve any remaining unique verified legacy artifacts only when they add evidence not already on main
