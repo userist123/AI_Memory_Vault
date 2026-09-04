@@ -2,11 +2,13 @@
 
 Isolated mechanics experiment. It does not claim hidden-state change. It measures
 whether an external-memory-derived soft prior changes planner node selection
-under otherwise matched conditions.
+under otherwise matched conditions, and now models bounded verification plus a
+terminal task result explicitly.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 import math
 from typing import Dict, List, Sequence, Tuple
 
@@ -37,6 +39,30 @@ VALID_CONTRADICTION_STATES = {
     "NONE", "POSSIBLE_CONTRADICTION", "CONFIRMED_CONTRADICTION",
 }
 
+
+class TerminalStatus(str, Enum):
+    """Terminal outcomes for the current task resolution."""
+
+    RESOLVED = "RESOLVED"
+    ABSTAINED = "ABSTAINED"
+    HUMAN_CONFIRMATION_REQUIRED = "HUMAN_CONFIRMATION_REQUIRED"
+
+
+class ResolutionStage(str, Enum):
+    """Observable semantic stages; verification is the only repeatable sub-loop."""
+
+    TASK = "TASK"
+    EXPERIENCE = "EXPERIENCE"
+    PATTERN = "MODEL_PATTERN"
+    APPLICABILITY = "APPLICABILITY"
+    INFLUENCE = "INFLUENCE"
+    DECISION_CANDIDATE = "DECISION_CANDIDATE"
+    VERIFYING = "VERIFYING"
+    REORGANIZING = "REORGANIZING"
+    TERMINAL = "TERMINAL"
+    FINAL_RESPONSE = "FINAL_RESPONSE"
+
+
 @dataclass(frozen=True)
 class Scenario:
     scenario_id: str
@@ -58,6 +84,7 @@ class Scenario:
             return True, 0.25
         return False, -1.0
 
+
 @dataclass(frozen=True)
 class MemoryInfluenceState:
     memory_id: str
@@ -70,12 +97,49 @@ class MemoryInfluenceState:
     verification_required: bool
     verification_cost: float
 
+
 @dataclass(frozen=True)
 class PlannerTrace:
     selected_branches: Tuple[str, ...]
     node_visits: int
     fatal_visits: int
     success: bool
+
+
+@dataclass(frozen=True)
+class VerificationTrace:
+    attempted_branches: Tuple[str, ...]
+    successful_branch: str | None
+    steps: int
+    exhausted: bool
+    contradiction_detected: bool
+    cost: float
+
+
+@dataclass(frozen=True)
+class ReorganizationTrace:
+    applied: bool
+    reason: str
+    verified_branch: str | None
+
+
+@dataclass(frozen=True)
+class TerminalResolution:
+    status: TerminalStatus
+    decision: str | None
+    evidence_refs: Tuple[str, ...]
+    verification: VerificationTrace
+    reorganization: ReorganizationTrace
+    stages: Tuple[ResolutionStage, ...]
+
+    @property
+    def terminal(self) -> bool:
+        return self.status in {
+            TerminalStatus.RESOLVED,
+            TerminalStatus.ABSTAINED,
+            TerminalStatus.HUMAN_CONFIRMATION_REQUIRED,
+        }
+
 
 def build_scenarios(count: int = 30) -> List[Scenario]:
     scenarios: List[Scenario] = []
@@ -94,13 +158,16 @@ def build_scenarios(count: int = 30) -> List[Scenario]:
         ))
     return scenarios
 
+
 def matched_context(memory_lesson: str) -> str:
     return f"MEMORY_LESSON:{memory_lesson[:64]}"
+
 
 def _verification_cost(applicability: str, evidence_strength: float) -> float:
     if applicability != "APPLICABLE_WITH_VERIFICATION":
         return 0.0
     return round(1.0 + (1.0 - evidence_strength), 6)
+
 
 def compile_memory(
     scenario: Scenario,
@@ -150,6 +217,7 @@ def compile_memory(
         verification_cost=verification_cost,
     )
 
+
 def normalize(priors: Dict[str, float], branches: Sequence[str]) -> Dict[str, float]:
     values = {branch: max(0.0, float(priors.get(branch, 0.0))) for branch in branches}
     total = sum(values.values())
@@ -157,8 +225,10 @@ def normalize(priors: Dict[str, float], branches: Sequence[str]) -> Dict[str, fl
         return {branch: 1.0 / len(branches) for branch in branches}
     return {branch: values[branch] / total for branch in branches}
 
+
 def puct_score(q: float, visits: int, parent_visits: int, prior: float, exploration: float) -> float:
     return q + exploration * prior * math.sqrt(max(1, parent_visits)) / (1 + visits)
+
 
 def run_planner(
     scenario: Scenario,
@@ -197,6 +267,122 @@ def run_planner(
         False,
     )
 
+
+def verify_candidate_sequence(
+    scenario: Scenario,
+    candidates: Sequence[str],
+    *,
+    verification_budget: int = 3,
+    verification_cost_per_step: float = 1.0,
+) -> VerificationTrace:
+    """Verify planner candidates without changing their order or querying memory again.
+
+    The scenario oracle is an explicit verification instrument for this isolated harness,
+    not a source for memory compilation or planner-prior generation.
+    """
+    if verification_budget < 1:
+        raise ValueError("verification_budget must be >= 1")
+
+    attempted: List[str] = []
+    contradiction_detected = False
+    for branch in candidates[:verification_budget]:
+        attempted.append(branch)
+        valid, _ = scenario.oracle(branch)
+        if valid and branch == scenario.optimal:
+            return VerificationTrace(
+                tuple(attempted), branch, len(attempted), False,
+                contradiction_detected, round(len(attempted) * verification_cost_per_step, 6),
+            )
+        if branch in (scenario.fatal_a, scenario.fatal_b):
+            contradiction_detected = True
+
+    return VerificationTrace(
+        tuple(attempted), None, len(attempted), True,
+        contradiction_detected, round(len(attempted) * verification_cost_per_step, 6),
+    )
+
+
+def resolve_task(
+    scenario: Scenario,
+    planner_trace: PlannerTrace,
+    memory: MemoryInfluenceState,
+    *,
+    verification_budget: int = 3,
+    human_confirmation_required: bool = False,
+) -> TerminalResolution:
+    """Resolve one task to an explicit terminal result.
+
+    Semantic pipeline:
+        TASK -> EXPERIENCE -> PATTERN -> APPLICABILITY -> INFLUENCE ->
+        DECISION_CANDIDATE -> bounded VERIFYING sub-loop -> REORGANIZING ->
+        TERMINAL -> FINAL_RESPONSE.
+
+    Reorganization records future-memory work only. It never re-enters the current task.
+    """
+    stages = [
+        ResolutionStage.TASK,
+        ResolutionStage.EXPERIENCE,
+        ResolutionStage.PATTERN,
+        ResolutionStage.APPLICABILITY,
+        ResolutionStage.INFLUENCE,
+        ResolutionStage.DECISION_CANDIDATE,
+    ]
+
+    if human_confirmation_required:
+        verification = VerificationTrace((), None, 0, False, False, 0.0)
+        reorganization = ReorganizationTrace(False, "human_confirmation_required", None)
+        stages.extend([ResolutionStage.TERMINAL, ResolutionStage.FINAL_RESPONSE])
+        return TerminalResolution(
+            status=TerminalStatus.HUMAN_CONFIRMATION_REQUIRED,
+            decision=None,
+            evidence_refs=(f"verification:{scenario.scenario_id}:human_confirmation",),
+            verification=verification,
+            reorganization=reorganization,
+            stages=tuple(stages),
+        )
+
+    stages.append(ResolutionStage.VERIFYING)
+    verification = verify_candidate_sequence(
+        scenario,
+        planner_trace.selected_branches,
+        verification_budget=verification_budget,
+    )
+
+    if verification.successful_branch is not None:
+        status = TerminalStatus.RESOLVED
+        decision = verification.successful_branch
+        reorganization = ReorganizationTrace(
+            True,
+            "verified_outcome_available",
+            verification.successful_branch,
+        )
+    else:
+        status = TerminalStatus.ABSTAINED
+        decision = None
+        reason = "verification_budget_exhausted"
+        if memory.contradiction_state == "CONFIRMED_CONTRADICTION":
+            reason = "confirmed_memory_contradiction"
+        reorganization = ReorganizationTrace(False, reason, None)
+
+    # Reorganization happens after verification and cannot return control to the current task.
+    stages.extend([ResolutionStage.REORGANIZING, ResolutionStage.TERMINAL, ResolutionStage.FINAL_RESPONSE])
+    evidence_refs = (
+        f"scenario:{scenario.scenario_id}",
+        f"verified_steps:{verification.steps}",
+    )
+    if verification.successful_branch is not None:
+        evidence_refs = evidence_refs + (f"verified_branch:{verification.successful_branch}",)
+
+    return TerminalResolution(
+        status=status,
+        decision=decision,
+        evidence_refs=evidence_refs,
+        verification=verification,
+        reorganization=reorganization,
+        stages=tuple(stages),
+    )
+
+
 def run_experiment(count: int = 30) -> Dict[str, object]:
     scenarios = build_scenarios(count)
     aggregate: Dict[str, Dict[str, float]] = {
@@ -230,6 +416,14 @@ def run_experiment(count: int = 30) -> Dict[str, object]:
         }
         for arm, priors in arms.items():
             trace = run_planner(scenario, priors)
+            resolution = resolve_task(
+                scenario,
+                trace,
+                memory if arm == "arm3_treatment" else stale if arm == "arm4_stale" else compile_memory(
+                    scenario, "NOT_APPLICABLE", f"control-{scenario.scenario_id}", evidence_strength=0.0
+                ),
+                verification_budget=3,
+            )
             aggregate[arm]["success"] += int(trace.success)
             aggregate[arm]["nodes"] += trace.node_visits
             aggregate[arm]["fatal"] += trace.fatal_visits
@@ -252,8 +446,19 @@ def run_experiment(count: int = 30) -> Dict[str, object]:
                 "fatal_visits": trace.fatal_visits,
                 "success": trace.success,
                 "recommendation_matches_optimal": scenario.memory_recommended == scenario.optimal,
+                "terminal_status": resolution.status.value,
+                "terminal_decision": resolution.decision,
+                "verification_steps": resolution.verification.steps,
+                "verification_cost": resolution.verification.cost,
+                "verification_exhausted": resolution.verification.exhausted,
+                "verification_contradiction_detected": resolution.verification.contradiction_detected,
+                "reorganization_applied": resolution.reorganization.applied,
+                "reorganization_reason": resolution.reorganization.reason,
+                "final_response_terminal": resolution.stages[-1] == ResolutionStage.FINAL_RESPONSE,
+                "stages": [stage.value for stage in resolution.stages],
             })
     return {"scenario_count": count, "aggregate": aggregate, "traces": traces}
+
 
 def summarize_treatment_by_memory_quality(results: Dict[str, object]) -> Dict[str, Dict[str, int]]:
     summary = {
@@ -269,6 +474,7 @@ def summarize_treatment_by_memory_quality(results: Dict[str, object]) -> Dict[st
         summary[group]["nodes"] += int(trace["node_visits"])
         summary[group]["fatal"] += int(trace["fatal_visits"])
     return summary
+
 
 def render_report(results: Dict[str, object]) -> str:
     aggregate = results["aggregate"]
@@ -293,8 +499,19 @@ def render_report(results: Dict[str, object]) -> str:
     lines.append(f"memory_recommendation_mismatches_optimal_count={quality['mismatch']['count']}")
     lines.append(f"treatment_match_nodes={quality['match']['nodes']} fatal={quality['match']['fatal']}")
     lines.append(f"treatment_mismatch_nodes={quality['mismatch']['nodes']} fatal={quality['mismatch']['fatal']}")
+    terminal_counts = {
+        status.value: sum(
+            1 for trace in results["traces"]
+            if trace["arm"] == "arm3_treatment" and trace["terminal_status"] == status.value
+        )
+        for status in TerminalStatus
+    }
+    lines.append(f"treatment_terminal_status_counts={terminal_counts}")
+    lines.append("bounded_verification_budget=3")
     lines.append("oracle_leakage_guard=compiler_does_not_read_scenario.optimal")
+    lines.append("terminality_guard=final_response_is_last_stage_and_never_reenters_current_task")
     return "\n".join(lines)
+
 
 if __name__ == "__main__":
     print(render_report(run_experiment()))
