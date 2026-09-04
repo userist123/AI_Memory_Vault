@@ -31,7 +31,6 @@ class RecallEngine:
             raise ValueError("abstention_threshold must be between 0 and 1")
         self.abstention_threshold = abstention_threshold
 
-        # Configurable scoring weights
         self.weights = {
             "semantic": 0.35,
             "wm_relevance": 0.15,
@@ -51,23 +50,18 @@ class RecallEngine:
     def _score_confidence(self, node: Dict[str, Any]) -> float:
         conf = node.get("confidence", "unknown")
         conf_score = self.confidence_map.get(conf, 0.0)
-        # Authority score is derived at runtime
         authority = get_authority_score(node)
-        # Combine confidence and authority (both 0-1) by averaging
         return (conf_score + authority) / 2.0
 
     def _matches_requested_version(self, node: Dict[str, Any], query: str) -> bool:
-        # Try parsing technology and version range from query
         q_tech, q_vr = parse_technology_version(query)
         n_tech, n_vr = extract_tech_and_version(node)
 
         if q_tech.name != "unknown" and not q_vr.unknown:
-            # If node has a known technology, it must match query technology
             if n_tech.name != "unknown" and n_tech.name != q_tech.name:
                 return False
             return q_vr.matches(n_vr)
 
-        # Fallback to plain version pattern r"\b\d+\.\d+\b" in query
         m = re.search(r"\b(?P<major>\d+)\.(?P<minor>\d+)\b", query)
         if m:
             major = int(m.group("major"))
@@ -99,12 +93,11 @@ class RecallEngine:
         """
         Scores activated nodes against the query and working memory context.
         REVIEW-gated nodes are added as read-only candidates with zero activation.
-        Returns only candidates at or above the abstention threshold.
+        Abstention is applied only after lineage resolution so low-scoring
+        superseded nodes can still surface their active successor.
         """
         wm_context = " ".join([n.get("content", "") for n in working_memory.get_active_context()])
 
-        # REVIEW is an explicit read-only namespace. It participates in recall
-        # scoring but is never promoted to ACTIVE and remains unverified.
         activated_ids = {node.get("id") for node, _ in activated_nodes if node.get("id")}
         review_candidates = [
             (node, 0.0) for node in self._review_nodes()
@@ -112,11 +105,9 @@ class RecallEngine:
         ]
         candidate_nodes = list(activated_nodes) + review_candidates
 
-        # Check if version is requested in the query
         q_tech, q_vr = parse_technology_version(query)
         version_detected = (q_tech.name != "unknown" and not q_vr.unknown) or bool(re.search(r"\b\d+\.\d+\b", query))
 
-        # Check for historical/legacy query indicators
         lowered_query = query.lower()
         is_historical_query = any(w in lowered_query for w in ["legacy", "deprecated", "historical", "old", "superseded"])
 
@@ -124,22 +115,15 @@ class RecallEngine:
         pre_lifecycle_scores = {}
 
         for raw_node, activation in candidate_nodes:
-            # Never mutate controller/storage-owned objects during recall.
             node = raw_node.copy()
             if node.get('lifecycle') == 'REVIEW':
                 node['_cognitive_unverified'] = True
 
             content = node.get("content", "")
-
-            # 1. Semantic Similarity to query
             sim_query = self.semantic_provider.compute_similarity(query, content)
-
-            # 2. Semantic Similarity to active working memory
             sim_wm = self.semantic_provider.compute_similarity(wm_context, content)
 
-            # 3. Temporal decay based on valid_from / valid_until (if present)
             temporal_factor = 1.0
-
             valid_from = node.get('valid_from')
             if valid_from:
                 try:
@@ -156,27 +140,21 @@ class RecallEngine:
                     expiry = datetime.strptime(valid_until, "%Y-%m-%d")
                     now = datetime.now(timezone.utc).replace(tzinfo=None)
                     if expiry < now:
-                        # Expired notes get a penalty factor (less penalty if historical query)
                         factor = 0.8 if is_historical_query else 0.5
                         temporal_factor = min(temporal_factor, factor)
                 except Exception:
                     pass
 
-            # 4. Confidence & authority combined score (handled in _score_confidence)
             conf_auth_score = self._score_confidence(node)
 
-            # 5. Version-aware boost
             if version_detected:
                 if self._matches_requested_version(node, query):
-                    # Boost confidence score by 0.3 if matching version range
                     conf_auth_score = min(1.0, conf_auth_score + 0.3)
                 else:
                     n_tech, n_vr = extract_tech_and_version(node)
                     if n_tech.name != "unknown" and not n_vr.unknown:
-                        # Penalty if mismatched version range
                         conf_auth_score = max(0.0, conf_auth_score - 0.3)
 
-            # 6. Activation score from ActivationEngine
             final_score = (
                 (sim_query * self.weights["semantic"]) +
                 (sim_wm * self.weights["wm_relevance"]) +
@@ -185,15 +163,12 @@ class RecallEngine:
                 (temporal_factor * self.weights["authority"])
             )
 
-            pre_lifecycle_score = final_score
             node_id = node.get("id")
             if node_id:
-                pre_lifecycle_scores[node_id] = pre_lifecycle_score
+                pre_lifecycle_scores[node_id] = final_score
 
-            # 7. Lifecycle down-ranking for historical/superseded notes
             lifecycle = node.get("lifecycle")
             if lifecycle == "SUPERSEDED":
-                # Only minimal penalty if explicitly querying history, otherwise heavy penalty
                 lifecycle_factor = 0.8 if is_historical_query else 0.3
                 final_score *= lifecycle_factor
             elif lifecycle == "ARCHIVED":
@@ -202,7 +177,8 @@ class RecallEngine:
 
             scored_nodes.append((node, final_score))
 
-        # Lineage resolution: if a superseded note scored well, ensure active successor is present
+        # Resolve supersession before applying abstention. This preserves the
+        # lineage signal even when the historical node itself is below threshold.
         from memory_controller.validation.supersession import resolve_active_lineage
         active_candidates = {}
         for node, score in list(scored_nodes):
@@ -211,7 +187,6 @@ class RecallEngine:
                 if active_id and active_id != node.get("id"):
                     active_note = self.controller.storage.get(active_id)
                     if active_note and active_note.get("lifecycle") == "ACTIVE":
-                        # Inherit unpenalized score with a 10% freshness boost
                         pre_score = pre_lifecycle_scores.get(node.get("id"), score)
                         inherited_score = min(1.0, pre_score * 1.1)
                         if active_id not in active_candidates or inherited_score > active_candidates[active_id][1]:
@@ -225,17 +200,14 @@ class RecallEngine:
             else:
                 scored_nodes.append((active_note.copy(), inherited_score))
 
-        # Sort descending by score, tie-break by ID
         scored_nodes.sort(key=lambda x: (x[1], x[0].get("id", "")), reverse=True)
 
-        # Explicit abstention: an irrelevant query must be allowed to return no
-        # memories instead of arbitrary top-k candidates from a non-empty store.
-        scored_nodes = [
-            (node, score) for node, score in scored_nodes
-            if score >= self.abstention_threshold
-        ]
+        # Global abstention: only abstain when the best candidate is below the
+        # threshold. Do not discard individual low-scoring lineage/history nodes
+        # after the lineage resolver has done its work.
+        if not scored_nodes or scored_nodes[0][1] < self.abstention_threshold:
+            scored_nodes = []
 
-        # ACT-R Activation Decay hook: Record successful access for top recalled nodes
         from .activation import ActivationTracker
         tracker = ActivationTracker.get_instance()
         for node, score in scored_nodes:
