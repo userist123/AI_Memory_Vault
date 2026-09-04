@@ -4,25 +4,37 @@ Executes 20 paired tasks (40 total trials) comparing:
   CONTROL: No retrieved memory (empty context)
   TREATMENT: Secure memory retrieval via MemoryController.search()
 Using real Ollama local model (qwen2.5-coder:3b).
-Exports results to 07_EVALUATION/memory_ablation_2026-09.{json,md}.
+
+Results are exported to a unique run directory so historical benchmark artifacts
+are never overwritten.
 """
 from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
-# Add project root to sys.path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-sys.path.insert(0, ".")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+os.chdir(REPO_ROOT)
 
-# Setup environment
+# Test-only secret required by the secure memory gateway. Production credentials
+# must come from the environment and are never written by this harness.
 os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = os.getenv(
     "MEMORY_CONTROLLER_HMAC_SECRET", "test_secret_for_ablation_harness_32chars"
 )
-os.environ["GIT_COMMIT_SHA"] = "8a72389491dfe02fe3e48f2753e55378ce3ab85b"
+
+try:
+    os.environ["GIT_COMMIT_SHA"] = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, text=True
+    ).strip()
+except (OSError, subprocess.CalledProcessError) as exc:
+    raise SystemExit(f"Cannot determine canonical git commit: {exc}") from exc
 
 from cognitive_core.local_provider import LocalProvider
 from cognitive_core.memory_ablation_benchmark import (
@@ -37,12 +49,12 @@ from cognitive_core.real_execution_harness import (
 from cognitive_core.recall_cli import get_memory_controller
 
 
-def main():
+def main() -> None:
     print("=" * 70)
     print("STARTING CONTROLLED MEMORY ABLATION EXPERIMENT (TASK: MEMORY_ABLATION_01)")
     print("=" * 70)
+    print(f"Git Commit: {os.environ['GIT_COMMIT_SHA']}")
 
-    # 1. Initialize local Ollama provider
     model_name = os.getenv("REAL_PROVIDER_MODEL", "qwen2.5-coder:3b")
     base_url = os.getenv("REAL_PROVIDER_BASE_URL", "http://127.0.0.1:11434")
 
@@ -59,18 +71,18 @@ def main():
         model_name=model_name,
     )
 
-    # 2. Initialize MemoryController and Harness
     controller = get_memory_controller()
-    trace_dir = Path("telemetry")
+    run_id = os.getenv("NIGHTLY_RUN_ID") or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    trace_dir = Path("07_EVALUATION") / "nightly_master_task_v1_runs" / run_id / "traces"
+    trace_dir.mkdir(parents=True, exist_ok=True)
     harness = RealAgentExecutionHarness(
         memory_controller=controller,
         trace_dir=trace_dir,
         model_executor=model_executor,
     )
 
-    # 3. Setup Experiment Runner
     tasks = get_ablation_benchmark_tasks()
-    ws_base = Path("telemetry/ablation_trials_ws")
+    ws_base = Path("07_EVALUATION") / "nightly_master_task_v1_runs" / run_id / "ablation_workspaces"
     if ws_base.exists():
         shutil.rmtree(ws_base, ignore_errors=True)
     ws_base.mkdir(parents=True, exist_ok=True)
@@ -78,7 +90,7 @@ def main():
     runner = MemoryAblationExperimentRunner(
         harness=harness,
         model_executor=model_executor,
-        experiment_id="exp_ablation_202609_01",
+        experiment_id=f"exp_ablation_{run_id}",
         base_workspace_dir=ws_base,
         tasks=tasks,
     )
@@ -92,16 +104,15 @@ def main():
     summary, paired_results = runner.run_benchmark()
     elapsed_total = round(time.perf_counter() - t_start, 2)
 
-    # 4. Clean up temporary trial workspaces
     if ws_base.exists():
         shutil.rmtree(ws_base, ignore_errors=True)
 
-    # 5. Export Artifacts
+    output_dir = Path("07_EVALUATION") / "nightly_master_task_v1_runs" / run_id / "ablation"
     json_path, md_path = export_ablation_artifacts(
         summary=summary,
         paired_results=paired_results,
-        output_dir="07_EVALUATION",
-        date_slug="2026-09",
+        output_dir=output_dir,
+        date_slug=run_id,
     )
 
     print("\n" + "=" * 70)

@@ -1,0 +1,110 @@
+name: Nightly Master Task V1
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-master-task-v1
+  cancel-in-progress: false
+
+jobs:
+  deterministic-gates:
+    name: Deterministic regression + MVE + safety discovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Memory V6 dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements-memory-v6.txt
+
+      - name: Run master deterministic gates
+        run: |
+          set -o pipefail
+          python 30_SCRIPTS/nightly_master_task_v1.py --mode deterministic | tee nightly_master_task_v1.stdout.txt
+
+      - name: Upload deterministic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-master-task-v1-deterministic
+          path: |
+            nightly_master_task_v1.stdout.txt
+            07_EVALUATION/nightly_master_task_v1_runs/
+          if-no-files-found: error
+
+  real-provider-ablation:
+    name: Real-provider 20-task paired memory ablation
+    needs: deterministic-gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout exact main revision
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Memory V6 dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements-memory-v6.txt
+
+      - name: Install Ollama
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama service
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup ollama serve > ollama-server.log 2>&1 &
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:11434/api/tags > /dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:11434/api/tags > /dev/null
+
+      - name: Pull pinned benchmark model
+        run: ollama pull qwen2.5-coder:3b
+
+      - name: Run real paired ablation with exact commit identity
+        env:
+          RUN_REAL_ABLATION: '1'
+          REAL_PROVIDER_MODEL: qwen2.5-coder:3b
+          REAL_PROVIDER_BASE_URL: http://127.0.0.1:11434
+          MEMORY_CONTROLLER_HMAC_SECRET: nightly-master-task-v1-test-secret-32chars-minimum
+        run: |
+          set -o pipefail
+          python 30_SCRIPTS/nightly_master_task_v1.py --mode real-ablation | tee nightly_master_task_v1.real.stdout.txt
+
+      - name: Upload real-provider evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-master-task-v1-real-provider
+          path: |
+            nightly_master_task_v1.real.stdout.txt
+            ollama-server.log
+            07_EVALUATION/nightly_master_task_v1_runs/
+            07_EVALUATION/memory_ablation_2026-09.*
+          if-no-files-found: error
