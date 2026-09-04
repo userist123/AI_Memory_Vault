@@ -8,6 +8,8 @@ Tests:
 5. Zero monkeypatching / protected core invariants
 """
 from pathlib import Path
+import subprocess
+import sys
 import pytest
 
 from evaluation.retrieval_diagnostic_runner import build_real_vault_storage
@@ -31,6 +33,24 @@ def test_gold_evidence_integrity():
         assert "gold_required_facts" in q
         assert len(q["gold_relevant_notes"]) >= 1
         assert len(q["gold_required_facts"]) >= 1
+
+
+def test_runner_imports_from_repository_root_without_package_alias():
+    """Guard the direct-script import path used by the real benchmark."""
+    evaluation_dir = Path(__file__).resolve().parents[1]
+    code = (
+        "import sys; "
+        f"sys.path.insert(0, {str(evaluation_dir)!r}); "
+        "import retrieval_fusion.experiment_runner"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=evaluation_dir.parent,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_experiment_config_validity():
