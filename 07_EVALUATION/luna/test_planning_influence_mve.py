@@ -1,5 +1,6 @@
 from planning_influence_mve import (
     APPLICABILITY_STRENGTH,
+    MEMORY_APPLICABILITY,
     build_scenarios,
     compile_memory,
     normalize,
@@ -58,6 +59,22 @@ def test_memory_recommendation_is_independent_of_oracle_outcome():
         memory = compile_memory(scenario, "APPLICABLE", f"m-{scenario.scenario_id}")
         assert memory.source_branch == scenario.memory_recommended
         assert memory.source_branch in scenario.branches
+
+
+def test_frozen_applicability_sequence_is_oracle_independent():
+    assert set(MEMORY_APPLICABILITY) == set(APPLICABILITY_STRENGTH)
+    for state in MEMORY_APPLICABILITY:
+        assert state in APPLICABILITY_STRENGTH
+
+
+def test_experiment_routes_all_applicability_states_into_treatment():
+    result = run_experiment(30)
+    treatment_states = {
+        trace["applicability"]
+        for trace in result["traces"]
+        if trace["arm"] == "arm3_treatment"
+    }
+    assert treatment_states == set(APPLICABILITY_STRENGTH)
 
 
 def test_treatment_changes_search_behavior_against_advisory_control():
