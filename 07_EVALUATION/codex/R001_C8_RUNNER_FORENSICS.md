@@ -43,6 +43,26 @@ that the real search returns at least one result fails with `len(results) == 0`
 for the SQLite PRAGMA query. This is a runtime retrieval/corpus blocker, not
 an import failure, and remains unresolved.
 
+## Follow-up repair on this branch
+
+The zero-result failure was reproduced as a context-budget serialization bug:
+large notes were compressed to `bytes`, then converted to an oversized `str`
+by JSON serialization. The context boundary now decodes compressed UTF-8
+payloads (or uses base64 for non-text bytes), and full disclosure skips an
+oversized candidate rather than discarding later candidates.
+
+After the repair:
+
+```text
+python -m pytest -q 07_EVALUATION/tests/test_retrieval_fusion_lab.py 07_EVALUATION/tests/test_retrieval_diagnostic.py
+...........                                                              [100%]
+11 passed in 2.71s
+```
+
+Additional budget regression tests pass in the targeted run (`16 passed in
+1.31s`). This is `TEST_VERIFIED` for the local diagnostic suite, not evidence
+of real-provider effectiveness.
+
 ## Limitations
 
 No C8 metrics are reported from this branch: the test suite is not green and
