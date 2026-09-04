@@ -78,8 +78,14 @@ class ProgressiveDisclosure:
             content = note.get("content", "")
             size = len(content.encode("utf-8"))
             if not self._within_budget(usage + size):
-                break
-            result.append({"id": note.get("id"), "content": content})
+                # A single oversized high-ranked note must not prevent smaller
+                # later candidates from being disclosed.
+                continue
+            candidate = {"id": note.get("id"), "content": content}
+            if hasattr(self.budget, "estimate_tokens"):
+                if self.budget.estimate_tokens(result + [candidate]) > self.budget.hard_token_budget:
+                    continue
+            result.append(candidate)
             usage += size
         return result
 
