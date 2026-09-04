@@ -1,14 +1,14 @@
 """HTTP API compatibility entrypoint for the Memory Vault.
 
-The original FastAPI gateway is retained under this canonical implementation
-path so callers can migrate without keeping executable code at repository root.
+The original gateway remains under the canonical implementation tree so
+callers can migrate without keeping executable code at repository root.
 """
 from __future__ import annotations
 
 from pathlib import Path
 import runpy
 
-_LEGACY = Path(__file__).resolve().parents[4] / "interfaces" / "api_server.py"
+_LEGACY = Path(__file__).resolve().parents[3] / "interfaces" / "api_server.py"
 if not _LEGACY.exists():
     raise ImportError(f"API gateway source not found: {_LEGACY}")
 
