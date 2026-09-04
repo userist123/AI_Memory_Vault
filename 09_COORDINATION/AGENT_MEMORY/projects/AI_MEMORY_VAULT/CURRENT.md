@@ -2,8 +2,8 @@
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 repository: userist123/AI_Memory_Vault_CODEX_READY
-last_updated_utc: 2026-09-04T22:02:00+03:00
-current_main_sha: 821927a9ad3b2a23d11e5e6caf784bb3b9c970c3
+last_updated_utc: 2026-09-04T19:08:00Z
+current_main_sha: ae00890951cc37dfb1c6427e35bafb8a2c75e397
 status: ACTIVE
 working_branch_policy: MAIN_ONLY
 agent_execution_policy: SEQUENTIAL_HANDOFF
@@ -30,12 +30,15 @@ recent_state:
   - main is the only canonical working branch for ongoing development
   - agent execution is sequential; the active agent must leave a resumable handoff for the next agent
   - consolidated CODEX C2/C4/C6/C8/C9/C10/C11/C12/C13/C14/C15 forensic evidence plus Wacatac security report onto main
-  - preserved Antigravity A7/A8 associative and production-graph forensic evidence on main
+  - preserved Antigravity A7/A8/A9/A10 forensic evidence on main
   - restored weighted graph propagation regression and production graph storage contract on main
   - restored compressed context payload and progressive disclosure fixes on main
+  - fixed GAP-011 lifecycle classifier substring matching using whole-word matching
+  - added regression coverage for classifier lifecycle/intent boundaries
   - added branch consolidation manifest on main
   - closed consolidation PR #14 instead of merging the 111-file divergent Antigravity branch wholesale
 open_requirements:
+  - await CI verification of the GAP-011 change on main
   - no feature-branch development for normal work
   - no parallel agent work on the same project task chain
   - every substantive session must persist state before handoff
@@ -46,7 +49,8 @@ blockers:
   - remote branch deletion cannot be completed with the currently available GitHub connector because no branch-delete operation is exposed
   - historical branch refs remain until GitHub branch administration deletes them
 next_actions:
-  - continue all substantive work directly on main
+  - verify Memory V6 CI run for commit ae00890951cc37dfb1c6427e35bafb8a2c75e397
+  - after CI, continue cognitive-memory Planning Influence MVE readiness work directly on main
   - preserve any remaining unique verified legacy artifacts only when they add evidence not already on main
   - do not merge legacy branches wholesale
   - delete legacy remote branches and _consolidation_tmp through GitHub branch administration when available
