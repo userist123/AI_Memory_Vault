@@ -222,6 +222,12 @@ class SQLiteStorageEngine:
         cursor = conn.execute(query_sql, params)
         return [json.loads(row["raw_json"]) for row in cursor.fetchall()]
 
+    def all_notes(self) -> List[Dict[str, Any]]:
+        """Return all non-RAW notes for read-only indexing consumers."""
+        conn = self._get_connection()
+        cursor = conn.execute("SELECT raw_json FROM notes WHERE lifecycle != 'RAW'")
+        return [json.loads(row["raw_json"]) for row in cursor.fetchall()]
+
     def resolve_active_lineage(self, note_id: str) -> str:
         """Recursive CTE to traverse superseded_by chain until the final active node is reached."""
         conn = self._get_connection()
