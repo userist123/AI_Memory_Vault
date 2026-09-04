@@ -45,7 +45,7 @@ from memory_controller.authorizer import Principal
 from memory_controller.context.budget import ContextBudget
 from memory_controller.context.pack_builder import ContextPackBuilder
 from memory_controller.controller import Lifecycle, MemoryController, StorageEngine
-from evaluation.full_context_baseline import EVAL_CASES, evaluate_response_accuracy
+from full_context_baseline import EVAL_CASES, evaluate_response_accuracy
 
 
 def build_real_vault_storage() -> StorageEngine:
