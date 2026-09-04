@@ -1,3 +1,5 @@
+import base64
+import zlib
 from typing import List, Dict, Any, Optional
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
@@ -51,7 +53,7 @@ class ContextPackBuilder:
         audit_ref: Optional[str],
     ) -> Dict[str, Any]:
         pack = self._base_pack(request_id, agent_id, resolved, disclosure_level)
-        pack["results"] = results
+        pack["results"] = [self._json_safe(dict(item)) for item in results]
         if minimal_provenance:
             for res, prov in zip(pack["results"], minimal_provenance):
                 res.setdefault("provenance", {})
@@ -62,6 +64,20 @@ class ContextPackBuilder:
         if audit_ref:
             pack["auditRef"] = audit_ref
         return pack
+
+    @staticmethod
+    def _json_safe(value: Any) -> Any:
+        """Convert compressed note payloads into transport-safe JSON values."""
+        if isinstance(value, bytes):
+            try:
+                return zlib.decompress(value).decode("utf-8")
+            except (OSError, UnicodeDecodeError, zlib.error):
+                return base64.b64encode(value).decode("ascii")
+        if isinstance(value, dict):
+            return {key: ContextPackBuilder._json_safe(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [ContextPackBuilder._json_safe(item) for item in value]
+        return value
 
     def build(
         self,
