@@ -1,3 +1,16 @@
+# Antigravity R001 A7 — Associative Differential Trace & Dual-Reality Reconciliation
+
+## Implementation
+- [x] resolve and record current `main` SHA: `2c3126876cbe579afb227615b4b6c4d4048b6d42` `[owner: antigravity | timestamp: 2026-09-04T17:20:00+03:00]`
+- [x] execute production storage connectivity audit across SQLite, FileEngine, and InMemory engines, discovering fatal `AttributeError` on `.store` in `ranked_search.py` `[owner: antigravity | timestamp: 2026-09-04T17:21:30+03:00]`
+- [x] execute controlled A/B differential evaluation across 6 query archetypes (Base vs Baseline Activation vs Weight-Preserved Activation) `[owner: antigravity | timestamp: 2026-09-04T17:23:20+03:00]`
+- [x] measure exact rank shifts (Kendall tau 0.80-1.00, Spearman rho 0.50-0.90, mean delta 0.40-0.80) and edge-weight preservation impact (tau 0.7778-0.9111) `[owner: antigravity | timestamp: 2026-09-04T17:23:25+03:00]`
+- [x] document signal availability matrix declaring 8 Active signals and 5 Unavailable signals `[owner: antigravity | timestamp: 2026-09-04T17:24:00+03:00]`
+- [x] discover and register `GAP-010` (edge weight overwrite), `GAP-011` (QueryClassifier substring trap on 'unverified'), and `GAP-012` (production `.store` disconnect) `[owner: antigravity | timestamp: 2026-09-04T17:24:30+03:00]`
+- [x] publish comprehensive evaluation report `07_EVALUATION/antigravity/A7_ASSOCIATIVE_DIFFERENTIAL_TRACE.md` and machine-readable data `telemetry/retrieval_traces/a7_differential_trace.json` `[owner: antigravity | timestamp: 2026-09-04T17:24:40+03:00]`
+
+---
+
 # Antigravity R001 Traceability Suite — Retrieval Observability, Controlled A/B & Gap Register
 
 ## Implementation

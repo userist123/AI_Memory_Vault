@@ -1,0 +1,951 @@
+{
+  "storage_connectivity": {
+    "in_memory": {
+      "supported": true,
+      "error": null,
+      "nodes": 1
+    },
+    "file_engine": {
+      "supported": false,
+      "error": "AttributeError: 'FileStorageEngine' object has no attribute 'store'",
+      "nodes": 0
+    },
+    "sqlite_engine": {
+      "supported": false,
+      "error": "AttributeError: 'SQLiteStorageEngine' object has no attribute 'store'",
+      "nodes": 0
+    }
+  },
+  "signals_status": {
+    "lexical_token_overlap": "ACTIVE",
+    "reciprocal_rank_seed": "ACTIVE",
+    "spreading_activation_hop_decay": "ACTIVE",
+    "semantic_graph_propagation": "ACTIVE",
+    "temporal_graph_propagation": "ACTIVE",
+    "causal_graph_propagation": "ACTIVE",
+    "entity_graph_propagation": "ACTIVE",
+    "production_sqlite_graph_construction": "UNAVAILABLE",
+    "production_file_engine_graph_construction": "UNAVAILABLE",
+    "dense_vector_similarity": "UNAVAILABLE",
+    "relevance_score_in_context_pack": "UNAVAILABLE",
+    "edge_weight_in_baseline_activation": "UNAVAILABLE"
+  },
+  "queries": [
+    {
+      "query_id": "Q1_exact_durability",
+      "query_text": "sqlite wal transaction durability",
+      "base": {
+        "ids": [
+          "SEC-001",
+          "PROC-001",
+          "SEC-005",
+          "KNOW-002",
+          "SEC-004"
+        ],
+        "relevance_scores": {
+          "SEC-001": 0.725,
+          "PROC-001": 0.495,
+          "SEC-005": 0.49,
+          "KNOW-002": 0.47,
+          "SEC-004": 0.46
+        },
+        "top_1": "SEC-001"
+      },
+      "baseline_activation": {
+        "ids": [
+          "SEC-001",
+          "PROC-001",
+          "SEC-002",
+          "KNOW-002",
+          "SEC-005",
+          "SEC-003",
+          "SEC-004",
+          "KNOW-003",
+          "KNOW-001",
+          "PROC-002"
+        ],
+        "scores": {
+          "SEC-001": 3.9,
+          "PROC-001": 1.95,
+          "SEC-002": 1.38,
+          "KNOW-002": 1.365,
+          "SEC-005": 1.3,
+          "SEC-003": 1.0728,
+          "SEC-004": 0.88,
+          "KNOW-003": 0.795,
+          "KNOW-001": 0.6,
+          "PROC-002": 0.54
+        },
+        "top_1": "SEC-001",
+        "tau_vs_base": 0.8,
+        "rho_vs_base": 0.6,
+        "mean_delta_vs_base": 0.8,
+        "top_1_inversion": false
+      },
+      "weight_preserved_activation": {
+        "ids": [
+          "SEC-001",
+          "PROC-001",
+          "SEC-005",
+          "SEC-002",
+          "KNOW-002",
+          "SEC-003",
+          "SEC-004",
+          "KNOW-003",
+          "KNOW-001",
+          "PROC-002"
+        ],
+        "scores": {
+          "SEC-001": 3.9,
+          "PROC-001": 1.95,
+          "SEC-005": 1.3,
+          "SEC-002": 1.28,
+          "KNOW-002": 1.065,
+          "SEC-003": 0.9728,
+          "SEC-004": 0.88,
+          "KNOW-003": 0.495,
+          "KNOW-001": 0.4,
+          "PROC-002": 0.39
+        },
+        "top_1": "SEC-001",
+        "tau_vs_base": 1.0,
+        "rho_vs_base": 0.75,
+        "mean_delta_vs_base": 0.6,
+        "top_1_inversion": false,
+        "tau_vs_baseline": 0.9111,
+        "rho_vs_baseline": 0.9636
+      },
+      "graph_ablation_top1": {
+        "semantic": "SEC-001",
+        "temporal": "SEC-001",
+        "causal": "SEC-001",
+        "entity": "SEC-001"
+      },
+      "per_item_differential": [
+        {
+          "id": "SEC-001",
+          "title": "SQLite WAL Mode Configuration and Durability",
+          "lifecycle": "ACTIVE",
+          "base_rank": 1,
+          "true_relevance_score": 0.725,
+          "reciprocal_seed": 1.0,
+          "baseline_rank": 1,
+          "baseline_combined_score": 3.9,
+          "baseline_activation_boost": 2.9,
+          "preserved_rank": 1,
+          "preserved_combined_score": 3.9,
+          "preserved_activation_boost": 2.9,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "PROC-001",
+          "title": "Memory Trust Boundary Attestation Protocol",
+          "lifecycle": "ACTIVE",
+          "base_rank": 2,
+          "true_relevance_score": 0.495,
+          "reciprocal_seed": 0.5,
+          "baseline_rank": 2,
+          "baseline_combined_score": 1.95,
+          "baseline_activation_boost": 1.45,
+          "preserved_rank": 2,
+          "preserved_combined_score": 1.95,
+          "preserved_activation_boost": 1.45,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "SEC-005",
+          "title": "Audit Log Cryptographic Hash Chaining P18",
+          "lifecycle": "ACTIVE",
+          "base_rank": 3,
+          "true_relevance_score": 0.49,
+          "reciprocal_seed": 0.3333,
+          "baseline_rank": 5,
+          "baseline_combined_score": 1.3,
+          "baseline_activation_boost": 0.9667,
+          "preserved_rank": 3,
+          "preserved_combined_score": 1.3,
+          "preserved_activation_boost": 0.9667,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "KNOW-002",
+          "title": "MemoryController Search Architecture and Routing",
+          "lifecycle": "ACTIVE",
+          "base_rank": 4,
+          "true_relevance_score": 0.47,
+          "reciprocal_seed": 0.25,
+          "baseline_rank": 4,
+          "baseline_combined_score": 1.365,
+          "baseline_activation_boost": 1.115,
+          "preserved_rank": 5,
+          "preserved_combined_score": 1.065,
+          "preserved_activation_boost": 0.815,
+          "weight_delta": -0.3
+        },
+        {
+          "id": "SEC-004",
+          "title": "Hardware Telemetry Forensics and Device Serial Number",
+          "lifecycle": "ACTIVE",
+          "base_rank": 5,
+          "true_relevance_score": 0.46,
+          "reciprocal_seed": 0.2,
+          "baseline_rank": 7,
+          "baseline_combined_score": 0.88,
+          "baseline_activation_boost": 0.68,
+          "preserved_rank": 7,
+          "preserved_combined_score": 0.88,
+          "preserved_activation_boost": 0.68,
+          "weight_delta": 0.0
+        }
+      ]
+    },
+    {
+      "query_id": "Q2_multihop_relations",
+      "query_text": "MemoryController architecture and attestation dependencies",
+      "base": {
+        "ids": [
+          "KNOW-002",
+          "SEC-001",
+          "SEC-004",
+          "KNOW-003",
+          "PROC-002"
+        ],
+        "relevance_scores": {
+          "KNOW-002": 0.67,
+          "SEC-001": 0.575,
+          "SEC-004": 0.56,
+          "KNOW-003": 0.555,
+          "PROC-002": 0.54
+        },
+        "top_1": "KNOW-002"
+      },
+      "baseline_activation": {
+        "ids": [
+          "KNOW-002",
+          "SEC-001",
+          "KNOW-003",
+          "SEC-004",
+          "SEC-002",
+          "PROC-002",
+          "SEC-003",
+          "PROC-001",
+          "SEC-005",
+          "SEC-006"
+        ],
+        "scores": {
+          "KNOW-002": 3.9,
+          "SEC-001": 2.05,
+          "KNOW-003": 1.78,
+          "SEC-004": 1.3,
+          "SEC-002": 1.14,
+          "PROC-002": 1.02,
+          "SEC-003": 0.8364,
+          "PROC-001": 0.74,
+          "SEC-005": 0.4728,
+          "SEC-006": 0.356
+        },
+        "top_1": "KNOW-002",
+        "tau_vs_base": 0.8,
+        "rho_vs_base": 0.85,
+        "mean_delta_vs_base": 0.6,
+        "top_1_inversion": false
+      },
+      "weight_preserved_activation": {
+        "ids": [
+          "KNOW-002",
+          "SEC-001",
+          "KNOW-003",
+          "SEC-004",
+          "PROC-002",
+          "SEC-002",
+          "PROC-001",
+          "SEC-003",
+          "SEC-005",
+          "SEC-006"
+        ],
+        "scores": {
+          "KNOW-002": 3.9,
+          "SEC-001": 1.95,
+          "KNOW-003": 1.48,
+          "SEC-004": 1.3,
+          "PROC-002": 1.02,
+          "SEC-002": 0.84,
+          "PROC-001": 0.74,
+          "SEC-003": 0.5364,
+          "SEC-005": 0.4395,
+          "SEC-006": 0.3227
+        },
+        "top_1": "KNOW-002",
+        "tau_vs_base": 0.8,
+        "rho_vs_base": 0.9,
+        "mean_delta_vs_base": 0.4,
+        "top_1_inversion": false,
+        "tau_vs_baseline": 0.9111,
+        "rho_vs_baseline": 0.9758
+      },
+      "graph_ablation_top1": {
+        "semantic": "KNOW-002",
+        "temporal": "KNOW-002",
+        "causal": "KNOW-002",
+        "entity": "KNOW-002"
+      },
+      "per_item_differential": [
+        {
+          "id": "KNOW-002",
+          "title": "MemoryController Search Architecture and Routing",
+          "lifecycle": "ACTIVE",
+          "base_rank": 1,
+          "true_relevance_score": 0.67,
+          "reciprocal_seed": 1.0,
+          "baseline_rank": 1,
+          "baseline_combined_score": 3.9,
+          "baseline_activation_boost": 2.9,
+          "preserved_rank": 1,
+          "preserved_combined_score": 3.9,
+          "preserved_activation_boost": 2.9,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "SEC-001",
+          "title": "SQLite WAL Mode Configuration and Durability",
+          "lifecycle": "ACTIVE",
+          "base_rank": 2,
+          "true_relevance_score": 0.575,
+          "reciprocal_seed": 0.5,
+          "baseline_rank": 2,
+          "baseline_combined_score": 2.05,
+          "baseline_activation_boost": 1.55,
+          "preserved_rank": 2,
+          "preserved_combined_score": 1.95,
+          "preserved_activation_boost": 1.45,
+          "weight_delta": -0.1
+        },
+        {
+          "id": "SEC-004",
+          "title": "Hardware Telemetry Forensics and Device Serial Number",
+          "lifecycle": "ACTIVE",
+          "base_rank": 3,
+          "true_relevance_score": 0.56,
+          "reciprocal_seed": 0.3333,
+          "baseline_rank": 4,
+          "baseline_combined_score": 1.3,
+          "baseline_activation_boost": 0.9667,
+          "preserved_rank": 4,
+          "preserved_combined_score": 1.3,
+          "preserved_activation_boost": 0.9667,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "KNOW-003",
+          "title": "Spreading Activation Graph Memory Dynamics",
+          "lifecycle": "ACTIVE",
+          "base_rank": 4,
+          "true_relevance_score": 0.555,
+          "reciprocal_seed": 0.25,
+          "baseline_rank": 3,
+          "baseline_combined_score": 1.78,
+          "baseline_activation_boost": 1.53,
+          "preserved_rank": 3,
+          "preserved_combined_score": 1.48,
+          "preserved_activation_boost": 1.23,
+          "weight_delta": -0.3
+        },
+        {
+          "id": "PROC-002",
+          "title": "Progressive Disclosure and Token Budget Management",
+          "lifecycle": "ACTIVE",
+          "base_rank": 5,
+          "true_relevance_score": 0.54,
+          "reciprocal_seed": 0.2,
+          "baseline_rank": 6,
+          "baseline_combined_score": 1.02,
+          "baseline_activation_boost": 0.82,
+          "preserved_rank": 5,
+          "preserved_combined_score": 1.02,
+          "preserved_activation_boost": 0.82,
+          "weight_delta": 0.0
+        }
+      ]
+    },
+    {
+      "query_id": "Q3_entity_forensics",
+      "query_text": "Hardware telemetry device serial and SHA-256 audit",
+      "base": {
+        "ids": [
+          "SEC-004",
+          "SEC-005",
+          "SEC-001",
+          "KNOW-002",
+          "KNOW-003"
+        ],
+        "relevance_scores": {
+          "SEC-004": 0.8171,
+          "SEC-005": 0.7757,
+          "SEC-001": 0.5464,
+          "KNOW-002": 0.5414,
+          "KNOW-003": 0.5264
+        },
+        "top_1": "SEC-004"
+      },
+      "baseline_activation": {
+        "ids": [
+          "SEC-004",
+          "SEC-005",
+          "SEC-001",
+          "SEC-006",
+          "KNOW-002",
+          "PROC-001",
+          "KNOW-003",
+          "SEC-002",
+          "SEC-003",
+          "PROC-002"
+        ],
+        "scores": {
+          "SEC-004": 3.9,
+          "SEC-005": 2.18,
+          "SEC-001": 1.3,
+          "SEC-006": 1.11,
+          "KNOW-002": 0.975,
+          "PROC-001": 0.84,
+          "KNOW-003": 0.78,
+          "SEC-002": 0.46,
+          "SEC-003": 0.3576,
+          "PROC-002": 0.306
+        },
+        "top_1": "SEC-004",
+        "tau_vs_base": 1.0,
+        "rho_vs_base": 0.75,
+        "mean_delta_vs_base": 0.6,
+        "top_1_inversion": false
+      },
+      "weight_preserved_activation": {
+        "ids": [
+          "SEC-004",
+          "SEC-005",
+          "SEC-001",
+          "SEC-006",
+          "KNOW-002",
+          "PROC-001",
+          "KNOW-003",
+          "SEC-002",
+          "SEC-003",
+          "PROC-002"
+        ],
+        "scores": {
+          "SEC-004": 3.9,
+          "SEC-005": 2.08,
+          "SEC-001": 1.3,
+          "SEC-006": 1.01,
+          "KNOW-002": 0.975,
+          "PROC-001": 0.84,
+          "KNOW-003": 0.78,
+          "SEC-002": 0.4267,
+          "SEC-003": 0.3243,
+          "PROC-002": 0.198
+        },
+        "top_1": "SEC-004",
+        "tau_vs_base": 1.0,
+        "rho_vs_base": 0.75,
+        "mean_delta_vs_base": 0.6,
+        "top_1_inversion": false,
+        "tau_vs_baseline": 1.0,
+        "rho_vs_baseline": 1.0
+      },
+      "graph_ablation_top1": {
+        "semantic": "SEC-004",
+        "temporal": "SEC-004",
+        "causal": "SEC-004",
+        "entity": "SEC-004"
+      },
+      "per_item_differential": [
+        {
+          "id": "SEC-004",
+          "title": "Hardware Telemetry Forensics and Device Serial Number",
+          "lifecycle": "ACTIVE",
+          "base_rank": 1,
+          "true_relevance_score": 0.8171,
+          "reciprocal_seed": 1.0,
+          "baseline_rank": 1,
+          "baseline_combined_score": 3.9,
+          "baseline_activation_boost": 2.9,
+          "preserved_rank": 1,
+          "preserved_combined_score": 3.9,
+          "preserved_activation_boost": 2.9,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "SEC-005",
+          "title": "Audit Log Cryptographic Hash Chaining P18",
+          "lifecycle": "ACTIVE",
+          "base_rank": 2,
+          "true_relevance_score": 0.7757,
+          "reciprocal_seed": 0.5,
+          "baseline_rank": 2,
+          "baseline_combined_score": 2.18,
+          "baseline_activation_boost": 1.68,
+          "preserved_rank": 2,
+          "preserved_combined_score": 2.08,
+          "preserved_activation_boost": 1.58,
+          "weight_delta": -0.1
+        },
+        {
+          "id": "SEC-001",
+          "title": "SQLite WAL Mode Configuration and Durability",
+          "lifecycle": "ACTIVE",
+          "base_rank": 3,
+          "true_relevance_score": 0.5464,
+          "reciprocal_seed": 0.3333,
+          "baseline_rank": 3,
+          "baseline_combined_score": 1.3,
+          "baseline_activation_boost": 0.9667,
+          "preserved_rank": 3,
+          "preserved_combined_score": 1.3,
+          "preserved_activation_boost": 0.9667,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "KNOW-002",
+          "title": "MemoryController Search Architecture and Routing",
+          "lifecycle": "ACTIVE",
+          "base_rank": 4,
+          "true_relevance_score": 0.5414,
+          "reciprocal_seed": 0.25,
+          "baseline_rank": 5,
+          "baseline_combined_score": 0.975,
+          "baseline_activation_boost": 0.725,
+          "preserved_rank": 5,
+          "preserved_combined_score": 0.975,
+          "preserved_activation_boost": 0.725,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "KNOW-003",
+          "title": "Spreading Activation Graph Memory Dynamics",
+          "lifecycle": "ACTIVE",
+          "base_rank": 5,
+          "true_relevance_score": 0.5264,
+          "reciprocal_seed": 0.2,
+          "baseline_rank": 7,
+          "baseline_combined_score": 0.78,
+          "baseline_activation_boost": 0.58,
+          "preserved_rank": 7,
+          "preserved_combined_score": 0.78,
+          "preserved_activation_boost": 0.58,
+          "weight_delta": 0.0
+        }
+      ]
+    },
+    {
+      "query_id": "Q4_lexical_trap",
+      "query_text": "sqlite python database testing",
+      "base": {
+        "ids": [
+          "SEC-001",
+          "KNOW-001",
+          "PROC-001",
+          "SEC-005",
+          "KNOW-002"
+        ],
+        "relevance_scores": {
+          "SEC-001": 0.6,
+          "KNOW-001": 0.525,
+          "PROC-001": 0.495,
+          "SEC-005": 0.49,
+          "KNOW-002": 0.47
+        },
+        "top_1": "SEC-001"
+      },
+      "baseline_activation": {
+        "ids": [
+          "SEC-001",
+          "KNOW-001",
+          "SEC-002",
+          "PROC-001",
+          "KNOW-002",
+          "SEC-003",
+          "SEC-005",
+          "KNOW-003",
+          "KNOW-004",
+          "SEC-004"
+        ],
+        "scores": {
+          "SEC-001": 3.9,
+          "KNOW-001": 2.05,
+          "SEC-002": 1.38,
+          "PROC-001": 1.3,
+          "KNOW-002": 1.188,
+          "SEC-003": 1.0728,
+          "SEC-005": 0.975,
+          "KNOW-003": 0.756,
+          "KNOW-004": 0.45,
+          "SEC-004": 0.395
+        },
+        "top_1": "SEC-001",
+        "tau_vs_base": 0.8,
+        "rho_vs_base": 0.5,
+        "mean_delta_vs_base": 0.8,
+        "top_1_inversion": false
+      },
+      "weight_preserved_activation": {
+        "ids": [
+          "SEC-001",
+          "KNOW-001",
+          "PROC-001",
+          "SEC-002",
+          "SEC-005",
+          "SEC-003",
+          "KNOW-002",
+          "KNOW-003",
+          "SEC-004",
+          "KNOW-004"
+        ],
+        "scores": {
+          "SEC-001": 3.9,
+          "KNOW-001": 1.95,
+          "PROC-001": 1.3,
+          "SEC-002": 1.28,
+          "SEC-005": 0.975,
+          "SEC-003": 0.9728,
+          "KNOW-002": 0.888,
+          "KNOW-003": 0.456,
+          "SEC-004": 0.395,
+          "KNOW-004": 0.3
+        },
+        "top_1": "SEC-001",
+        "tau_vs_base": 1.0,
+        "rho_vs_base": 0.75,
+        "mean_delta_vs_base": 0.6,
+        "top_1_inversion": false,
+        "tau_vs_baseline": 0.7778,
+        "rho_vs_baseline": 0.9273
+      },
+      "graph_ablation_top1": {
+        "semantic": "SEC-001",
+        "temporal": "SEC-001",
+        "causal": "SEC-001",
+        "entity": "SEC-001"
+      },
+      "per_item_differential": [
+        {
+          "id": "SEC-001",
+          "title": "SQLite WAL Mode Configuration and Durability",
+          "lifecycle": "ACTIVE",
+          "base_rank": 1,
+          "true_relevance_score": 0.6,
+          "reciprocal_seed": 1.0,
+          "baseline_rank": 1,
+          "baseline_combined_score": 3.9,
+          "baseline_activation_boost": 2.9,
+          "preserved_rank": 1,
+          "preserved_combined_score": 3.9,
+          "preserved_activation_boost": 2.9,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "KNOW-001",
+          "title": "Lexical Trap: Python Database Drivers and Test Frameworks",
+          "lifecycle": "ACTIVE",
+          "base_rank": 2,
+          "true_relevance_score": 0.525,
+          "reciprocal_seed": 0.5,
+          "baseline_rank": 2,
+          "baseline_combined_score": 2.05,
+          "baseline_activation_boost": 1.55,
+          "preserved_rank": 2,
+          "preserved_combined_score": 1.95,
+          "preserved_activation_boost": 1.45,
+          "weight_delta": -0.1
+        },
+        {
+          "id": "PROC-001",
+          "title": "Memory Trust Boundary Attestation Protocol",
+          "lifecycle": "ACTIVE",
+          "base_rank": 3,
+          "true_relevance_score": 0.495,
+          "reciprocal_seed": 0.3333,
+          "baseline_rank": 4,
+          "baseline_combined_score": 1.3,
+          "baseline_activation_boost": 0.9667,
+          "preserved_rank": 3,
+          "preserved_combined_score": 1.3,
+          "preserved_activation_boost": 0.9667,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "SEC-005",
+          "title": "Audit Log Cryptographic Hash Chaining P18",
+          "lifecycle": "ACTIVE",
+          "base_rank": 4,
+          "true_relevance_score": 0.49,
+          "reciprocal_seed": 0.25,
+          "baseline_rank": 7,
+          "baseline_combined_score": 0.975,
+          "baseline_activation_boost": 0.725,
+          "preserved_rank": 5,
+          "preserved_combined_score": 0.975,
+          "preserved_activation_boost": 0.725,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "KNOW-002",
+          "title": "MemoryController Search Architecture and Routing",
+          "lifecycle": "ACTIVE",
+          "base_rank": 5,
+          "true_relevance_score": 0.47,
+          "reciprocal_seed": 0.2,
+          "baseline_rank": 5,
+          "baseline_combined_score": 1.188,
+          "baseline_activation_boost": 0.988,
+          "preserved_rank": 7,
+          "preserved_combined_score": 0.888,
+          "preserved_activation_boost": 0.688,
+          "weight_delta": -0.3
+        }
+      ]
+    },
+    {
+      "query_id": "Q5_lifecycle_review",
+      "query_text": "speculative hardware serial review draft",
+      "base": {
+        "ids": [
+          "SEC-006"
+        ],
+        "relevance_scores": {
+          "SEC-006": 0.675
+        },
+        "top_1": "SEC-006"
+      },
+      "baseline_activation": {
+        "ids": [
+          "SEC-006",
+          "SEC-004",
+          "SEC-005",
+          "PROC-001"
+        ],
+        "scores": {
+          "SEC-006": 3.9,
+          "SEC-004": 1.068,
+          "SEC-005": 0.9,
+          "PROC-001": 0.216
+        },
+        "top_1": "SEC-006",
+        "tau_vs_base": 1.0,
+        "rho_vs_base": 1.0,
+        "mean_delta_vs_base": 0.0,
+        "top_1_inversion": false
+      },
+      "weight_preserved_activation": {
+        "ids": [
+          "SEC-006",
+          "SEC-004",
+          "SEC-005",
+          "PROC-001"
+        ],
+        "scores": {
+          "SEC-006": 3.9,
+          "SEC-004": 0.968,
+          "SEC-005": 0.6,
+          "PROC-001": 0.18
+        },
+        "top_1": "SEC-006",
+        "tau_vs_base": 1.0,
+        "rho_vs_base": 1.0,
+        "mean_delta_vs_base": 0.0,
+        "top_1_inversion": false,
+        "tau_vs_baseline": 1.0,
+        "rho_vs_baseline": 1.0
+      },
+      "graph_ablation_top1": {
+        "semantic": "SEC-006",
+        "temporal": "SEC-006",
+        "causal": "SEC-006",
+        "entity": "SEC-006"
+      },
+      "per_item_differential": [
+        {
+          "id": "SEC-006",
+          "title": "Unverified Hardware Import Speculation",
+          "lifecycle": "REVIEW",
+          "base_rank": 1,
+          "true_relevance_score": 0.675,
+          "reciprocal_seed": 1.0,
+          "baseline_rank": 1,
+          "baseline_combined_score": 3.9,
+          "baseline_activation_boost": 2.9,
+          "preserved_rank": 1,
+          "preserved_combined_score": 3.9,
+          "preserved_activation_boost": 2.9,
+          "weight_delta": 0.0
+        }
+      ]
+    },
+    {
+      "query_id": "Q6_historical_superseded",
+      "query_text": "legacy autocommit database operations rollback",
+      "base": {
+        "ids": [
+          "SEC-003",
+          "PROC-001",
+          "SEC-005",
+          "SEC-001",
+          "KNOW-002"
+        ],
+        "relevance_scores": {
+          "SEC-003": 0.6,
+          "PROC-001": 0.495,
+          "SEC-005": 0.49,
+          "SEC-001": 0.475,
+          "KNOW-002": 0.47
+        },
+        "top_1": "SEC-003"
+      },
+      "baseline_activation": {
+        "ids": [
+          "SEC-003",
+          "PROC-001",
+          "SEC-001",
+          "SEC-005",
+          "KNOW-002",
+          "SEC-002",
+          "KNOW-003",
+          "KNOW-001",
+          "SEC-004",
+          "PROC-002"
+        ],
+        "scores": {
+          "SEC-003": 3.9,
+          "PROC-001": 1.95,
+          "SEC-001": 1.5,
+          "SEC-005": 1.3,
+          "KNOW-002": 1.26,
+          "SEC-002": 1.188,
+          "KNOW-003": 0.756,
+          "KNOW-001": 0.6,
+          "SEC-004": 0.56,
+          "PROC-002": 0.522
+        },
+        "top_1": "SEC-003",
+        "tau_vs_base": 0.8,
+        "rho_vs_base": 0.9,
+        "mean_delta_vs_base": 0.4,
+        "top_1_inversion": false
+      },
+      "weight_preserved_activation": {
+        "ids": [
+          "SEC-003",
+          "PROC-001",
+          "SEC-001",
+          "SEC-005",
+          "SEC-002",
+          "KNOW-002",
+          "SEC-004",
+          "KNOW-003",
+          "KNOW-001",
+          "PROC-002"
+        ],
+        "scores": {
+          "SEC-003": 3.9,
+          "PROC-001": 1.95,
+          "SEC-001": 1.4,
+          "SEC-005": 1.3,
+          "SEC-002": 1.088,
+          "KNOW-002": 0.96,
+          "SEC-004": 0.56,
+          "KNOW-003": 0.456,
+          "KNOW-001": 0.4,
+          "PROC-002": 0.372
+        },
+        "top_1": "SEC-003",
+        "tau_vs_base": 0.8,
+        "rho_vs_base": 0.85,
+        "mean_delta_vs_base": 0.6,
+        "top_1_inversion": false,
+        "tau_vs_baseline": 0.8667,
+        "rho_vs_baseline": 0.9515
+      },
+      "graph_ablation_top1": {
+        "semantic": "SEC-003",
+        "temporal": "SEC-003",
+        "causal": "SEC-003",
+        "entity": "SEC-003"
+      },
+      "per_item_differential": [
+        {
+          "id": "SEC-003",
+          "title": "Legacy Autocommit Database Operations",
+          "lifecycle": "DEPRECATED",
+          "base_rank": 1,
+          "true_relevance_score": 0.6,
+          "reciprocal_seed": 1.0,
+          "baseline_rank": 1,
+          "baseline_combined_score": 3.9,
+          "baseline_activation_boost": 2.9,
+          "preserved_rank": 1,
+          "preserved_combined_score": 3.9,
+          "preserved_activation_boost": 2.9,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "PROC-001",
+          "title": "Memory Trust Boundary Attestation Protocol",
+          "lifecycle": "ACTIVE",
+          "base_rank": 2,
+          "true_relevance_score": 0.495,
+          "reciprocal_seed": 0.5,
+          "baseline_rank": 2,
+          "baseline_combined_score": 1.95,
+          "baseline_activation_boost": 1.45,
+          "preserved_rank": 2,
+          "preserved_combined_score": 1.95,
+          "preserved_activation_boost": 1.45,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "SEC-005",
+          "title": "Audit Log Cryptographic Hash Chaining P18",
+          "lifecycle": "ACTIVE",
+          "base_rank": 3,
+          "true_relevance_score": 0.49,
+          "reciprocal_seed": 0.3333,
+          "baseline_rank": 4,
+          "baseline_combined_score": 1.3,
+          "baseline_activation_boost": 0.9667,
+          "preserved_rank": 4,
+          "preserved_combined_score": 1.3,
+          "preserved_activation_boost": 0.9667,
+          "weight_delta": 0.0
+        },
+        {
+          "id": "SEC-001",
+          "title": "SQLite WAL Mode Configuration and Durability",
+          "lifecycle": "ACTIVE",
+          "base_rank": 4,
+          "true_relevance_score": 0.475,
+          "reciprocal_seed": 0.25,
+          "baseline_rank": 3,
+          "baseline_combined_score": 1.5,
+          "baseline_activation_boost": 1.25,
+          "preserved_rank": 3,
+          "preserved_combined_score": 1.4,
+          "preserved_activation_boost": 1.15,
+          "weight_delta": -0.1
+        },
+        {
+          "id": "KNOW-002",
+          "title": "MemoryController Search Architecture and Routing",
+          "lifecycle": "ACTIVE",
+          "base_rank": 5,
+          "true_relevance_score": 0.47,
+          "reciprocal_seed": 0.2,
+          "baseline_rank": 5,
+          "baseline_combined_score": 1.26,
+          "baseline_activation_boost": 1.06,
+          "preserved_rank": 6,
+          "preserved_combined_score": 0.96,
+          "preserved_activation_boost": 0.76,
+          "weight_delta": -0.3
+        }
+      ]
+    }
+  ]
+}
