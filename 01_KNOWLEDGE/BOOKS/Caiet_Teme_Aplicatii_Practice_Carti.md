@@ -110,11 +110,23 @@ relations:
   target: 01_KNOWLEDGE/BOOKS/HARDENING_MLOps_Feedback_Loops_and_Concept_Drift.md
 - relation: references
   target: 01_KNOWLEDGE/BOOKS/HARDENING_Transformer_Numerical_Stability_and_Catastrophic_Forgetting.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/PRODUCTION_DDIA_Exactly_Once_Semantics_and_Idempotency.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/PRODUCTION_AIMA_Constraint_Satisfaction_and_Arc_Consistency.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/PRODUCTION_Agent_Tool_Grounding_and_Verification_Chains.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/PRODUCTION_RAG_Structured_Output_and_JSON_Constrained_Decoding.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/PRODUCTION_MLOps_AB_Testing_and_Statistical_Significance.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/PRODUCTION_Transformer_Knowledge_Distillation_and_Model_Compression.md
 ---
 
 
 
-# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (42 Teme Rezolvate)
+# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (48 Teme Rezolvate)
 
 **Rol**: Manual operațional de laborator și exerciții rezolvate pentru transpunerea teoriei în sarcini practice de producție.  
 **Metodologie**: Învățare activă $\to$ Notițe sintetice $\to$ Teme rezolvate pas cu pas $\to$ Playbook de execuție imediată.
@@ -245,3 +257,13 @@ Ghidul complet cu implementările în cod este documentat în:
 - [[01_KNOWLEDGE/BOOKS/HARDENING_Transformer_Numerical_Stability_and_Catastrophic_Forgetting]]
 - [[Knowledge Graph Home]]
 
+### Nivelul 8 — Sisteme de Productie si Decizie Statistica (Teme 43-48)
+
+| # | Carte | Tema | Concepte |
+| :--- | :--- | :--- | :--- |
+| T43 | DDIA | Idempotent Request Processor cu Dedup Table | Exactly-once, idempotency key, Outbox Pattern, CDC |
+| T44 | AIMA | AC-3 Arc Consistency Solver pentru Sudoku | CSP, arc consistency, REVISE, backtracking MRV |
+| T45 | Agent | Chain-of-Verification (CoVe) Simulator | Evidence attribution, schema validation gate, confidence gating |
+| T46 | LLM Apps | JSON Schema Constrained Validator cu Retry | Pydantic model, constrained decoding, retry cu feedback |
+| T47 | ML Systems | A/B Test Simulator cu Sequential Testing | Hypothesis testing, peeking, SPRT, Bonferroni correction |
+| T48 | Deep Learning | Knowledge Distillation Teacher-Student Trainer | Soft targets, temperatura, KL divergence, dark knowledge |

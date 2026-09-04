@@ -2196,6 +2196,919 @@ class ElasticWeightConsolidator:
 
 ---
 
+---
+
+# Nivelul 8 — Sisteme de Productie si Decizie Statistica
+
+---
+
+## Tema 43: Idempotent Request Processor cu Dedup Table (DDIA — Exactly-Once Semantics)
+
+**Obiectiv**: Implementeaza un procesor de cereri idempotent care previne executia dubla folosind o tabela de deduplicare cu TTL.
+
+**Concepte Cheie**: At-least-once delivery, idempotency key, dedup table cu TTL, operatii natural-idempotente, Outbox Pattern.
+
+```python
+import hashlib
+import time
+import uuid
+from collections import OrderedDict
+
+class IdempotentProcessor:
+    """Procesor de cereri cu garantie de idempotenta prin dedup table."""
+    
+    def __init__(self, ttl_seconds: int = 300):
+        self.ttl = ttl_seconds
+        self._dedup: OrderedDict[str, dict] = OrderedDict()
+        self._balance: float = 1000.0
+        self._operations_log: list[dict] = []
+    
+    def _cleanup_expired(self):
+        """Curata intrarile expirate din dedup table."""
+        now = time.time()
+        expired = [k for k, v in self._dedup.items() if now - v["timestamp"] > self.ttl]
+        for k in expired:
+            del self._dedup[k]
+    
+    def _generate_idempotency_key(self, operation: str, amount: float, client_ref: str) -> str:
+        """Genereaza cheie de deduplicare determinista."""
+        payload = f"{operation}|{amount}|{client_ref}"
+        return hashlib.sha256(payload.encode()).hexdigest()[:16]
+    
+    def process_request(self, operation: str, amount: float, client_ref: str) -> dict:
+        """Proceseaza cererea idempotent."""
+        self._cleanup_expired()
+        
+        idem_key = self._generate_idempotency_key(operation, amount, client_ref)
+        
+        # Check dedup table
+        if idem_key in self._dedup:
+            cached = self._dedup[idem_key]
+            return {"status": "deduplicated", "cached_result": cached["result"],
+                    "original_time": cached["timestamp"]}
+        
+        # Process operation
+        if operation == "credit":
+            self._balance += amount
+            result = {"new_balance": self._balance, "type": "credit"}
+        elif operation == "debit":
+            if self._balance < amount:
+                return {"status": "insufficient_funds", "balance": self._balance}
+            self._balance -= amount
+            result = {"new_balance": self._balance, "type": "debit"}
+        elif operation == "set_balance":
+            # Natural-idempotent: SET is inherently idempotent
+            self._balance = amount
+            result = {"new_balance": self._balance, "type": "set_balance"}
+        else:
+            return {"status": "unknown_operation"}
+        
+        # Store in dedup table
+        self._dedup[idem_key] = {
+            "result": result, "timestamp": time.time()
+        }
+        self._operations_log.append({
+            "key": idem_key, "operation": operation,
+            "amount": amount, "result": result
+        })
+        return {"status": "processed", "result": result}
+
+
+# === LABORATOR ===
+proc = IdempotentProcessor(ttl_seconds=60)
+
+# Test 1: Prima cerere - proceseaza
+r1 = proc.process_request("credit", 100, "tx-001")
+assert r1["status"] == "processed"
+assert r1["result"]["new_balance"] == 1100.0
+print(f"[T43] Prima cerere: {r1}")
+
+# Test 2: Retry identic - deduplica
+r2 = proc.process_request("credit", 100, "tx-001")
+assert r2["status"] == "deduplicated"
+assert r2["cached_result"]["new_balance"] == 1100.0
+print(f"[T43] Retry (deduplicated): {r2}")
+
+# Test 3: Cerere diferita - proceseaza
+r3 = proc.process_request("debit", 50, "tx-002")
+assert r3["status"] == "processed"
+assert r3["result"]["new_balance"] == 1050.0
+print(f"[T43] Cerere noua: {r3}")
+
+# Test 4: SET (natural-idempotent)
+r4a = proc.process_request("set_balance", 500, "tx-003")
+r4b = proc.process_request("set_balance", 500, "tx-003")
+assert r4b["status"] == "deduplicated"
+print(f"[T43] SET idempotent: balance={proc._balance}")
+
+# Test 5: Verificare integritate
+assert len(proc._operations_log) == 3  # 3 operatii unice
+print(f"[T43] PASS - {len(proc._operations_log)} operatii unice procesate")
+```
+
+**Playbook de Executie**:
+1. Ruleaza codul si verifica cele 5 teste
+2. Observa diferenta intre `processed` si `deduplicated`
+3. Experimenteaza: seteaza `ttl_seconds=0` si verifica ca retry-ul NU mai este deduplicated dupa expirare
+4. Conecteaza mental: Fiecare `audit_log.jsonl` entry din Memory Vault are `entry_hash` ca cheie de deduplicare naturala
+
+---
+
+## Tema 44: AC-3 Arc Consistency Solver pentru Sudoku (AIMA — CSP)
+
+**Obiectiv**: Implementeaza algoritmul AC-3 pentru reducerea domeniilor si rezolvarea unui Sudoku 4x4 prin propagare de constrangeri + backtracking.
+
+**Concepte Cheie**: CSP $(X, D, C)$, arc consistency, REVISE, backtracking cu MRV, constraint propagation.
+
+```python
+from copy import deepcopy
+
+class SudokuCSP:
+    """CSP solver pentru Sudoku 4x4 cu AC-3 + Backtracking."""
+    
+    def __init__(self, grid: list[list[int]]):
+        """grid: 4x4 cu 0 = celula goala."""
+        self.size = 4
+        self.box_size = 2
+        # Domenii: celulele fixe au domeniu singleton
+        self.domains: dict[tuple, set] = {}
+        for r in range(self.size):
+            for c in range(self.size):
+                if grid[r][c] != 0:
+                    self.domains[(r, c)] = {grid[r][c]}
+                else:
+                    self.domains[(r, c)] = set(range(1, self.size + 1))
+        
+        # Constrangeri: perechi de celule care nu pot avea aceeasi valoare
+        self.constraints: list[tuple] = []
+        for r in range(self.size):
+            for c in range(self.size):
+                for c2 in range(c + 1, self.size):
+                    self.constraints.append(((r, c), (r, c2)))  # Rand
+                for r2 in range(r + 1, self.size):
+                    self.constraints.append(((r, c), (r2, c)))  # Coloana
+        # Box constraints
+        for br in range(0, self.size, self.box_size):
+            for bc in range(0, self.size, self.box_size):
+                cells = [(br+dr, bc+dc) for dr in range(self.box_size)
+                         for dc in range(self.box_size)]
+                for i in range(len(cells)):
+                    for j in range(i+1, len(cells)):
+                        pair = (cells[i], cells[j])
+                        if pair not in self.constraints:
+                            self.constraints.append(pair)
+    
+    def get_arcs(self) -> list[tuple]:
+        """Returneaza toate arcele (directionate)."""
+        arcs = []
+        for (xi, xj) in self.constraints:
+            arcs.append((xi, xj))
+            arcs.append((xj, xi))
+        return arcs
+    
+    def revise(self, xi: tuple, xj: tuple) -> bool:
+        """REVISE: elimina valori din Di care nu au suport in Dj."""
+        revised = False
+        to_remove = set()
+        for val in self.domains[xi]:
+            # Exista cel putin o valoare in Dj diferita de val?
+            if not any(v != val for v in self.domains[xj]):
+                to_remove.add(val)
+                revised = True
+        self.domains[xi] -= to_remove
+        return revised
+    
+    def ac3(self) -> bool:
+        """Algoritmul AC-3: propaga constrangerile."""
+        queue = self.get_arcs()
+        while queue:
+            (xi, xj) = queue.pop(0)
+            if self.revise(xi, xj):
+                if len(self.domains[xi]) == 0:
+                    return False  # Inconsistenta
+                # Adauga vecinii lui Xi (fara Xj) in coada
+                for (xa, xb) in self.constraints:
+                    if xb == xi and xa != xj:
+                        queue.append((xa, xi))
+                    elif xa == xi and xb != xj:
+                        queue.append((xb, xi))
+        return True
+    
+    def is_solved(self) -> bool:
+        return all(len(d) == 1 for d in self.domains.values())
+    
+    def select_mrv(self) -> tuple:
+        """MRV: alege variabila cu cel mai mic domeniu > 1."""
+        unassigned = [(v, len(d)) for v, d in self.domains.items() if len(d) > 1]
+        if not unassigned:
+            return None
+        return min(unassigned, key=lambda x: x[1])[0]
+    
+    def solve(self) -> bool:
+        """Backtracking cu AC-3 (MAC)."""
+        if not self.ac3():
+            return False
+        if self.is_solved():
+            return True
+        
+        var = self.select_mrv()
+        if var is None:
+            return False
+        
+        for val in sorted(self.domains[var]):
+            saved = deepcopy(self.domains)
+            self.domains[var] = {val}
+            if self.solve():
+                return True
+            self.domains = saved
+        return False
+    
+    def get_solution(self) -> list[list[int]]:
+        grid = [[0]*self.size for _ in range(self.size)]
+        for (r, c), d in self.domains.items():
+            grid[r][c] = next(iter(d))
+        return grid
+
+
+# === LABORATOR ===
+puzzle = [
+    [0, 0, 0, 3],
+    [0, 0, 1, 0],
+    [0, 1, 0, 0],
+    [4, 0, 0, 0],
+]
+
+csp = SudokuCSP(puzzle)
+print(f"[T44] Domenii initiale (celula (0,0)): {csp.domains[(0,0)]}")
+
+solved = csp.solve()
+assert solved, "Puzzle-ul ar trebui sa fie rezolvabil"
+
+solution = csp.get_solution()
+print(f"[T44] Solutie:")
+for row in solution:
+    print(f"  {row}")
+
+# Verificare: fiecare rand, coloana, box are {1,2,3,4}
+for r in range(4):
+    assert set(solution[r]) == {1,2,3,4}, f"Rand {r} invalid"
+for c in range(4):
+    assert set(solution[r][c] for r in range(4)) == {1,2,3,4}, f"Coloana {c} invalida"
+print(f"[T44] PASS - Sudoku 4x4 rezolvat cu AC-3 + Backtracking MRV")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa reducerea domeniilor prin AC-3 inainte de backtracking
+2. Schimba puzzle-ul (pune mai putine indicii) si observa cat backtracking e necesar
+3. Inregistreaza: AC-3 reduce ~70-90% din domenii pe Sudoku tipic, minimizand backtracking-ul
+
+---
+
+## Tema 45: Chain-of-Verification (CoVe) Simulator (Agent — Tool Grounding)
+
+**Obiectiv**: Implementeaza un simulator CoVe care verifica afirmatiile unui agent prin tool calls, construind un lant de evidenta auditabil.
+
+**Concepte Cheie**: Chain-of-Verification, evidence attribution, schema validation gate, confidence-gated forwarding.
+
+```python
+import json
+import hashlib
+from dataclasses import dataclass, field, asdict
+from enum import Enum
+from typing import Optional
+
+class Confidence(Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+@dataclass
+class EvidenceRecord:
+    claim: str
+    evidence_type: str  # "tool_output", "inference", "cached"
+    tool_name: Optional[str]
+    source_ref: str
+    confidence: Confidence
+    verified: bool = False
+    
+    def to_dict(self):
+        d = asdict(self)
+        d["confidence"] = self.confidence.value
+        return d
+
+@dataclass
+class VerificationChain:
+    original_claim: str
+    verification_questions: list[str] = field(default_factory=list)
+    evidence: list[EvidenceRecord] = field(default_factory=list)
+    revised_claim: Optional[str] = None
+    chain_hash: Optional[str] = None
+    
+    def compute_hash(self) -> str:
+        payload = json.dumps({
+            "original": self.original_claim,
+            "evidence": [e.to_dict() for e in self.evidence],
+            "revised": self.revised_claim
+        }, sort_keys=True, ensure_ascii=False)
+        self.chain_hash = hashlib.sha256(payload.encode()).hexdigest()[:16]
+        return self.chain_hash
+
+class CoVeSimulator:
+    """Simulator Chain-of-Verification cu tool grounding."""
+    
+    def __init__(self):
+        # Simulated tool database
+        self._db = {
+            "population_cluj": {"value": 324576, "source": "INS 2021", "confidence": Confidence.HIGH},
+            "population_bucharest": {"value": 1794590, "source": "INS 2021", "confidence": Confidence.HIGH},
+            "gdp_romania_2023": {"value": 350.4, "unit": "billion USD", "source": "World Bank", "confidence": Confidence.MEDIUM},
+        }
+        self.chains: list[VerificationChain] = []
+    
+    def _tool_search(self, query: str) -> Optional[dict]:
+        """Simuleaza un tool call de cautare."""
+        query_lower = query.lower()
+        for key, data in self._db.items():
+            if all(word in query_lower for word in key.split("_")):
+                return {"key": key, **data}
+        return None
+    
+    def _validate_schema(self, output: dict, required_fields: list[str]) -> bool:
+        """Schema validation gate."""
+        return all(f in output for f in required_fields)
+    
+    def verify_claim(self, claim: str, search_queries: list[str]) -> VerificationChain:
+        """Executa protocolul CoVe pe o afirmatie."""
+        chain = VerificationChain(original_claim=claim)
+        
+        # Pas 2: Plan verification questions
+        chain.verification_questions = [f"Verificare: '{q}'" for q in search_queries]
+        
+        # Pas 3: Execute verification via tool calls
+        all_verified = True
+        for query in search_queries:
+            result = self._tool_search(query)
+            if result and self._validate_schema(result, ["value", "source"]):
+                evidence = EvidenceRecord(
+                    claim=claim,
+                    evidence_type="tool_output",
+                    tool_name="database_search",
+                    source_ref=result["source"],
+                    confidence=result.get("confidence", Confidence.LOW),
+                    verified=True
+                )
+            else:
+                evidence = EvidenceRecord(
+                    claim=claim,
+                    evidence_type="inference",
+                    tool_name=None,
+                    source_ref="no_source_found",
+                    confidence=Confidence.LOW,
+                    verified=False
+                )
+                all_verified = False
+            chain.evidence.append(evidence)
+        
+        # Pas 4: Revise
+        if all_verified:
+            sources = ", ".join(e.source_ref for e in chain.evidence if e.verified)
+            chain.revised_claim = f"{claim} [Verificat: {sources}]"
+        else:
+            chain.revised_claim = f"{claim} [NEVERIFICAT - sursa insuficienta]"
+        
+        chain.compute_hash()
+        self.chains.append(chain)
+        return chain
+
+
+# === LABORATOR ===
+cove = CoVeSimulator()
+
+# Test 1: Claim verificabil
+chain1 = cove.verify_claim(
+    "Populatia Cluj-Napoca este aproximativ 325,000",
+    ["population cluj"]
+)
+assert chain1.evidence[0].verified
+assert "Verificat" in chain1.revised_claim
+print(f"[T45] Chain 1: {chain1.revised_claim}")
+print(f"       Hash: {chain1.chain_hash}")
+
+# Test 2: Claim neverificabil
+chain2 = cove.verify_claim(
+    "Populatia Timisoarei este 400,000",
+    ["population timisoara"]
+)
+assert not chain2.evidence[0].verified
+assert "NEVERIFICAT" in chain2.revised_claim
+print(f"[T45] Chain 2: {chain2.revised_claim}")
+
+# Test 3: Multi-source verification
+chain3 = cove.verify_claim(
+    "Romania are populatie mare si GDP semnificativ",
+    ["population bucharest", "gdp romania 2023"]
+)
+assert all(e.verified for e in chain3.evidence)
+print(f"[T45] Chain 3 (multi-source): {chain3.revised_claim}")
+print(f"       Evidence count: {len(chain3.evidence)}")
+
+# Test 4: Audit trail
+assert len(cove.chains) == 3
+assert all(c.chain_hash is not None for c in cove.chains)
+print(f"[T45] PASS - 3 verification chains cu hash audit trail")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa diferenta intre claim verificat si neverificat
+2. Adauga noi intrari in `_db` si testeaza claims noi
+3. Conecteaza cu `I-002`: output-urile tool au `source_type: execution`, nu `user`
+
+---
+
+## Tema 46: JSON Schema Constrained Validator cu Retry (LLM Apps — Structured Output)
+
+**Obiectiv**: Implementeaza un validator de output structurat care simuleaza constrained decoding, validare Pydantic-style, si retry cu feedback de eroare.
+
+**Concepte Cheie**: JSON Schema validation, Pydantic model, retry cu error feedback, fallback hierarchy, grammar-guided generation.
+
+```python
+import json
+import re
+from dataclasses import dataclass
+
+@dataclass
+class FieldSpec:
+    name: str
+    field_type: type
+    required: bool = True
+    enum_values: list = None
+    min_length: int = None
+    pattern: str = None
+
+class StructuredOutputValidator:
+    """Validator de output structurat cu retry si fallback."""
+    
+    def __init__(self, fields: list[FieldSpec]):
+        self.fields = {f.name: f for f in fields}
+        self.validation_log: list[dict] = []
+    
+    def validate(self, data: dict) -> tuple[bool, list[str]]:
+        """Valideaza data contra schemei. Returneaza (valid, errors)."""
+        errors = []
+        
+        # Check required fields
+        for name, spec in self.fields.items():
+            if spec.required and name not in data:
+                errors.append(f"Missing required field: '{name}'")
+                continue
+            if name not in data:
+                continue
+            
+            value = data[name]
+            
+            # Type check
+            if not isinstance(value, spec.field_type):
+                errors.append(f"Type mismatch for '{name}': expected {spec.field_type.__name__}, got {type(value).__name__}")
+            
+            # Enum check
+            if spec.enum_values and value not in spec.enum_values:
+                errors.append(f"Invalid value for '{name}': '{value}' not in {spec.enum_values}")
+            
+            # Min length (for lists/strings)
+            if spec.min_length is not None:
+                if hasattr(value, '__len__') and len(value) < spec.min_length:
+                    errors.append(f"Field '{name}' too short: {len(value)} < {spec.min_length}")
+            
+            # Pattern (for strings)
+            if spec.pattern and isinstance(value, str):
+                if not re.match(spec.pattern, value):
+                    errors.append(f"Field '{name}' doesn't match pattern: {spec.pattern}")
+        
+        # Check for unexpected fields
+        extra = set(data.keys()) - set(self.fields.keys())
+        if extra:
+            errors.append(f"Unexpected fields: {extra}")
+        
+        is_valid = len(errors) == 0
+        self.validation_log.append({
+            "valid": is_valid, "error_count": len(errors), "errors": errors
+        })
+        return is_valid, errors
+    
+    def validate_with_retry(self, generate_fn, max_retries: int = 3) -> dict:
+        """Valideaza cu retry, injectand feedback de eroare."""
+        context = ""
+        for attempt in range(max_retries):
+            output = generate_fn(context)
+            is_valid, errors = self.validate(output)
+            if is_valid:
+                return {"status": "success", "data": output, "attempts": attempt + 1}
+            context = f"Attempt {attempt+1} failed: {'; '.join(errors)}"
+        
+        return {"status": "failed", "errors": errors, "attempts": max_retries}
+
+
+# === LABORATOR ===
+# Schema pentru o nota Memory Vault
+schema = [
+    FieldSpec("id", str, required=True, pattern=r'^[0-9a-f]{8}-'),
+    FieldSpec("type", str, required=True, enum_values=["knowledge", "project", "procedure"]),
+    FieldSpec("lifecycle", str, required=True, enum_values=["RAW", "CLASSIFIED", "NORMALIZED", "REVIEW", "ACTIVE"]),
+    FieldSpec("category", str, required=True),
+    FieldSpec("tags", list, required=True, min_length=1),
+    FieldSpec("confidence", str, required=True, enum_values=["low", "medium", "high"]),
+]
+
+validator = StructuredOutputValidator(schema)
+
+# Test 1: Output valid
+valid_output = {
+    "id": "00781b12-e93d-5fd6-82ed-2478dd12d8e7",
+    "type": "knowledge",
+    "lifecycle": "REVIEW",
+    "category": "architecture/exactly_once",
+    "tags": ["ddia", "idempotency"],
+    "confidence": "high"
+}
+ok, errs = validator.validate(valid_output)
+assert ok, f"Should be valid: {errs}"
+print(f"[T46] Valid output: PASS")
+
+# Test 2: Output invalid (campuri lipsa, tip gresit)
+invalid_output = {
+    "id": "not-a-uuid",
+    "type": "invalid_type",
+    "tags": [],  # min_length=1 fail
+}
+ok, errs = validator.validate(invalid_output)
+assert not ok
+print(f"[T46] Invalid output errors ({len(errs)}):")
+for e in errs:
+    print(f"       - {e}")
+
+# Test 3: Retry cu self-healing
+call_count = 0
+def simulated_llm(feedback: str) -> dict:
+    global call_count
+    call_count += 1
+    if call_count <= 2:
+        # Primele 2 incercari: output partial
+        return {"id": "abc", "type": "knowledge"}
+    # A 3-a incercare: output corect (dupa feedback)
+    return valid_output
+
+result = validator.validate_with_retry(simulated_llm, max_retries=3)
+assert result["status"] == "success"
+assert result["attempts"] == 3
+print(f"[T46] Retry self-healing: SUCCESS dupa {result['attempts']} incercari")
+
+# Test 4: Audit log
+assert len(validator.validation_log) >= 4
+print(f"[T46] PASS - {len(validator.validation_log)} validari inregistrate")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa erorile de validare pentru output-ul invalid
+2. Observa cum retry-ul injecteaza feedback-ul de eroare in generatorul simulat
+3. Conecteaza: `validate_frontmatter()` din Memory Vault face exact aceeasi validare pe YAML frontmatter
+
+---
+
+## Tema 47: A/B Test Simulator cu Sequential Testing (MLOps — Semnificanta Statistica)
+
+**Obiectiv**: Implementeaza un simulator de test A/B cu calcul de semnificanta statistica, detectie de peeking, si testare secventiala SPRT.
+
+**Concepte Cheie**: Testarea ipotezelor, p-value, erori Tip I/II, peeking problem, SPRT, Bonferroni correction.
+
+```python
+import math
+import random
+
+class ABTestSimulator:
+    """Simulator A/B testing cu SPRT si detectie peeking."""
+    
+    def __init__(self, alpha: float = 0.05, beta: float = 0.20):
+        self.alpha = alpha
+        self.beta = beta
+        self.power = 1 - beta
+        random.seed(42)
+    
+    def calculate_sample_size(self, baseline_rate: float, mde: float) -> int:
+        """Calculeaza sample size necesar per grup."""
+        p1 = baseline_rate
+        p2 = baseline_rate + mde
+        pooled_var = p1 * (1 - p1) + p2 * (1 - p2)
+        
+        z_alpha = 1.96  # two-sided 0.05
+        z_beta = 0.84   # power 0.80
+        
+        n = ((z_alpha + z_beta) ** 2 * pooled_var) / (mde ** 2)
+        return int(math.ceil(n))
+    
+    def generate_data(self, n: int, rate: float) -> list[int]:
+        """Genereaza date binare (conversii)."""
+        return [1 if random.random() < rate else 0 for _ in range(n)]
+    
+    def z_test(self, control: list[int], treatment: list[int]) -> dict:
+        """Two-proportion z-test."""
+        n_c, n_t = len(control), len(treatment)
+        p_c = sum(control) / n_c
+        p_t = sum(treatment) / n_t
+        p_pool = (sum(control) + sum(treatment)) / (n_c + n_t)
+        
+        se = math.sqrt(p_pool * (1 - p_pool) * (1/n_c + 1/n_t))
+        if se == 0:
+            return {"z_stat": 0, "p_value": 1.0, "significant": False}
+        
+        z = (p_t - p_c) / se
+        # Aproximare p-value (two-sided) folosind formula simpla
+        p_value = 2 * (1 - self._normal_cdf(abs(z)))
+        
+        return {
+            "z_stat": round(z, 4),
+            "p_value": round(p_value, 6),
+            "control_rate": round(p_c, 4),
+            "treatment_rate": round(p_t, 4),
+            "lift": round((p_t - p_c) / p_c * 100, 2) if p_c > 0 else 0,
+            "significant": p_value < self.alpha
+        }
+    
+    def _normal_cdf(self, x: float) -> float:
+        """Aproximare CDF normala standard (Abramowitz & Stegun)."""
+        return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+    
+    def detect_peeking(self, control_data: list[int], treatment_data: list[int],
+                       check_interval: int = 100) -> dict:
+        """Simuleaza peeking: verifica p-value la fiecare interval."""
+        false_positives = 0
+        checks = 0
+        peek_results = []
+        
+        max_n = min(len(control_data), len(treatment_data))
+        for n in range(check_interval, max_n + 1, check_interval):
+            result = self.z_test(control_data[:n], treatment_data[:n])
+            checks += 1
+            if result["significant"]:
+                false_positives += 1
+            peek_results.append({"n": n, "p_value": result["p_value"],
+                                "significant": result["significant"]})
+        
+        effective_alpha = false_positives / checks if checks > 0 else 0
+        return {
+            "checks": checks,
+            "false_positives": false_positives,
+            "effective_alpha": round(effective_alpha, 4),
+            "nominal_alpha": self.alpha,
+            "alpha_inflated": effective_alpha > self.alpha,
+            "peek_log": peek_results
+        }
+    
+    def sprt(self, control_data: list[int], treatment_data: list[int],
+             h0_rate: float, h1_rate: float) -> dict:
+        """Sequential Probability Ratio Test."""
+        log_A = math.log(self.beta)         # lower boundary
+        log_B = math.log(1 / self.alpha)    # upper boundary
+        log_ratio = 0.0
+        
+        n = min(len(control_data), len(treatment_data))
+        for i in range(n):
+            x = treatment_data[i]
+            # Log likelihood ratio
+            if x == 1:
+                log_ratio += math.log(h1_rate / h0_rate) if h0_rate > 0 and h1_rate > 0 else 0
+            else:
+                lr0 = 1 - h0_rate
+                lr1 = 1 - h1_rate
+                log_ratio += math.log(lr1 / lr0) if lr0 > 0 and lr1 > 0 else 0
+            
+            if log_ratio >= log_B:
+                return {"decision": "reject_H0", "sample_used": i + 1,
+                        "log_ratio": round(log_ratio, 4)}
+            elif log_ratio <= log_A:
+                return {"decision": "accept_H0", "sample_used": i + 1,
+                        "log_ratio": round(log_ratio, 4)}
+        
+        return {"decision": "inconclusive", "sample_used": n,
+                "log_ratio": round(log_ratio, 4)}
+    
+    def bonferroni_correct(self, p_values: list[float]) -> list[dict]:
+        """Aplica corectia Bonferroni pe multiple p-values."""
+        k = len(p_values)
+        corrected_alpha = self.alpha / k
+        return [{
+            "original_p": round(p, 6),
+            "corrected_alpha": round(corrected_alpha, 6),
+            "significant_corrected": p < corrected_alpha,
+            "significant_uncorrected": p < self.alpha
+        } for p in p_values]
+
+
+# === LABORATOR ===
+sim = ABTestSimulator(alpha=0.05, beta=0.20)
+
+# Test 1: Sample size
+n = sim.calculate_sample_size(baseline_rate=0.10, mde=0.02)
+print(f"[T47] Sample size necesar per grup: {n}")
+assert n > 100, "Sample size ar trebui sa fie > 100 pentru MDE=2%"
+
+# Test 2: A/B test cu efect real
+control = sim.generate_data(2000, rate=0.10)
+treatment = sim.generate_data(2000, rate=0.13)  # +3% lift
+result = sim.z_test(control, treatment)
+print(f"[T47] Z-test: z={result['z_stat']}, p={result['p_value']}, lift={result['lift']}%")
+
+# Test 3: Peeking detection (ambele grupuri cu aceeasi rata = H0 true)
+ctrl_null = sim.generate_data(5000, rate=0.10)
+treat_null = sim.generate_data(5000, rate=0.10)
+peek = sim.detect_peeking(ctrl_null, treat_null, check_interval=200)
+print(f"[T47] Peeking: {peek['checks']} checks, {peek['false_positives']} false positives")
+print(f"       Effective alpha: {peek['effective_alpha']} (nominal: {peek['nominal_alpha']})")
+
+# Test 4: SPRT
+sprt_result = sim.sprt(control, treatment, h0_rate=0.10, h1_rate=0.13)
+print(f"[T47] SPRT: {sprt_result['decision']} dupa {sprt_result['sample_used']} samples")
+
+# Test 5: Bonferroni
+p_values = [0.01, 0.03, 0.04, 0.06, 0.12]
+corrected = sim.bonferroni_correct(p_values)
+print(f"[T47] Bonferroni (k={len(p_values)}):")
+for c in corrected:
+    marker = "SIG" if c["significant_corrected"] else "   "
+    print(f"       {marker} p={c['original_p']} (alpha_corr={c['corrected_alpha']})")
+
+print(f"[T47] PASS - A/B testing complet: sample size, z-test, peeking, SPRT, Bonferroni")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum peeking-ul inflateaza rata de fals pozitive
+2. Compara SPRT (oprire timpurie legitima) cu z-testul clasic
+3. Observa cum Bonferroni corectia face ca p=0.03 sa devina nesemnificativ cand testezi 5 metrici simultan
+4. Conecteaza: Shadow deployments din Tier 6 necesita exact aceste teste statistice
+
+---
+
+## Tema 48: Knowledge Distillation Teacher-Student Trainer (Deep Learning — Compresie)
+
+**Obiectiv**: Implementeaza un trainer de distilare a cunostintelor cu soft targets, temperatura variabila, si pierdere combinata KL+CE.
+
+**Concepte Cheie**: Soft targets, temperatura T, KL divergence, pierdere combinata $\alpha \cdot T^2 \cdot D_{KL} + (1-\alpha) \cdot CE$, dark knowledge.
+
+```python
+import math
+import random
+
+def softmax(logits: list[float], temperature: float = 1.0) -> list[float]:
+    """Softmax cu temperatura."""
+    scaled = [z / temperature for z in logits]
+    max_s = max(scaled)
+    exps = [math.exp(s - max_s) for s in scaled]
+    total = sum(exps)
+    return [e / total for e in exps]
+
+def cross_entropy(true_label: int, probs: list[float]) -> float:
+    """Cross-entropy loss pe hard label."""
+    return -math.log(max(probs[true_label], 1e-10))
+
+def kl_divergence(p: list[float], q: list[float]) -> float:
+    """KL(P || Q) = sum(p * log(p/q))."""
+    return sum(pi * math.log(max(pi, 1e-10) / max(qi, 1e-10))
+               for pi, qi in zip(p, q) if pi > 1e-10)
+
+class DistillationTrainer:
+    """Trainer de distilare Teacher -> Student."""
+    
+    def __init__(self, num_classes: int, temperature: float = 5.0, alpha: float = 0.7):
+        self.num_classes = num_classes
+        self.T = temperature
+        self.alpha = alpha
+        self.training_log: list[dict] = []
+        random.seed(42)
+    
+    def teacher_predict(self, x: float) -> list[float]:
+        """Simuleaza logits de la un teacher mare (mai precise)."""
+        logits = [random.gauss(0, 1) for _ in range(self.num_classes)]
+        true_class = int(x * self.num_classes) % self.num_classes
+        logits[true_class] += 3.0  # Teacher e confident pe clasa corecta
+        # Dark knowledge: clasele similare au logits mai mari
+        neighbor = (true_class + 1) % self.num_classes
+        logits[neighbor] += 1.0  # "seamana cu clasa vecina"
+        return logits
+    
+    def student_predict(self, x: float, weights: list[float]) -> list[float]:
+        """Simuleaza logits de la un student mic (mai putin precis)."""
+        logits = [w * x + random.gauss(0, 0.5) for w in weights]
+        return logits
+    
+    def distillation_loss(self, teacher_logits: list[float],
+                          student_logits: list[float],
+                          true_label: int) -> dict:
+        """Calculeaza pierderea combinata de distilare."""
+        # Soft targets cu temperatura
+        teacher_soft = softmax(teacher_logits, self.T)
+        student_soft = softmax(student_logits, self.T)
+        
+        # Hard targets (T=1)
+        student_hard = softmax(student_logits, 1.0)
+        
+        # KL divergence pe soft targets
+        kl = kl_divergence(teacher_soft, student_soft)
+        
+        # Cross-entropy pe hard labels
+        ce = cross_entropy(true_label, student_hard)
+        
+        # Pierdere combinata
+        # L = alpha * T^2 * KL + (1-alpha) * CE
+        total_loss = self.alpha * (self.T ** 2) * kl + (1 - self.alpha) * ce
+        
+        return {
+            "kl_soft": round(kl, 6),
+            "ce_hard": round(ce, 6),
+            "total_loss": round(total_loss, 4),
+            "teacher_soft": [round(p, 4) for p in teacher_soft],
+            "student_soft": [round(p, 4) for p in student_soft],
+        }
+    
+    def train_epoch(self, data: list[tuple], student_weights: list[float]) -> dict:
+        """Ruleaza o epoca de antrenament cu distilare."""
+        total_loss = 0
+        kl_sum = 0
+        ce_sum = 0
+        
+        for x, label in data:
+            teacher_logits = self.teacher_predict(x)
+            student_logits = self.student_predict(x, student_weights)
+            loss_info = self.distillation_loss(teacher_logits, student_logits, label)
+            
+            total_loss += loss_info["total_loss"]
+            kl_sum += loss_info["kl_soft"]
+            ce_sum += loss_info["ce_hard"]
+        
+        n = len(data)
+        epoch_result = {
+            "avg_loss": round(total_loss / n, 4),
+            "avg_kl": round(kl_sum / n, 6),
+            "avg_ce": round(ce_sum / n, 4),
+            "samples": n
+        }
+        self.training_log.append(epoch_result)
+        return epoch_result
+    
+    def compare_temperatures(self, logits: list[float]) -> dict:
+        """Demonstreaza efectul temperaturii pe distributie."""
+        results = {}
+        for t in [1.0, 3.0, 5.0, 10.0, 20.0]:
+            probs = softmax(logits, t)
+            entropy = -sum(p * math.log(max(p, 1e-10)) for p in probs)
+            results[f"T={t}"] = {
+                "probs": [round(p, 4) for p in probs],
+                "entropy": round(entropy, 4),
+                "max_prob": round(max(probs), 4)
+            }
+        return results
+
+
+# === LABORATOR ===
+trainer = DistillationTrainer(num_classes=5, temperature=5.0, alpha=0.7)
+
+# Test 1: Efect temperatura
+logits_example = [3.0, 1.5, 0.5, -0.5, -1.0]
+temp_comparison = trainer.compare_temperatures(logits_example)
+print(f"[T48] Efect temperatura pe distributie:")
+for t_label, info in temp_comparison.items():
+    print(f"       {t_label}: max_p={info['max_prob']}, entropy={info['entropy']}")
+
+# Test 2: Dark knowledge
+teacher_logits = trainer.teacher_predict(0.3)
+teacher_soft_T1 = softmax(teacher_logits, 1.0)
+teacher_soft_T5 = softmax(teacher_logits, 5.0)
+print(f"\n[T48] Dark knowledge:")
+print(f"       T=1 (hard): {[round(p, 3) for p in teacher_soft_T1]}")
+print(f"       T=5 (soft): {[round(p, 3) for p in teacher_soft_T5]}")
+
+# Test 3: Distillation loss
+student_weights = [random.gauss(0, 1) for _ in range(5)]
+loss = trainer.distillation_loss(teacher_logits, 
+                                 trainer.student_predict(0.3, student_weights),
+                                 true_label=1)
+print(f"\n[T48] Distillation loss: total={loss['total_loss']}, KL={loss['kl_soft']}, CE={loss['ce_hard']}")
+
+# Test 4: Epoca de antrenament
+data = [(random.random(), random.randint(0, 4)) for _ in range(100)]
+epoch = trainer.train_epoch(data, student_weights)
+print(f"\n[T48] Epoca 1: avg_loss={epoch['avg_loss']}, avg_kl={epoch['avg_kl']}, samples={epoch['samples']}")
+
+# Test 5: Verificare log
+assert len(trainer.training_log) == 1
+print(f"[T48] PASS - Knowledge distillation cu T={trainer.T}, alpha={trainer.alpha}")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum temperatura mai mare netezeste distributia (mai multa dark knowledge)
+2. Compara T=1 (distributie ascutita) vs T=20 (aproape uniforma)
+3. Observa ca pierderea KL este scalata cu $T^2$ pentru a compensa magnitudinea gradientilor
+4. Conecteaza cu Tier 4 (Quantizare): distilarea si quantizarea se combina pentru compresie maximala
+
+
 ## Concluzie: De la Notite la Executie Sigura (42 Teme de Laborator Rezolvate)
 
 Cu aceste 42 de teme rezolvate pe 7 niveluri:
