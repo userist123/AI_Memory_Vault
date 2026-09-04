@@ -8,7 +8,14 @@ When information conflicts, prefer: user-confirmed facts, direct execution/test 
 
 ## Runtime Context Contract
 
-The runtime MUST use sparse context. The machine-readable defaults are in `99_SYSTEM/Council_Runtime_Profile.yaml`. The detailed policy is `99_SYSTEM/Council_Context_Budget.md`; the mandatory execution protocol is `99_SYSTEM/Council_Context_Protocol.md`; skill loading rules are in `99_SYSTEM/Skill_Runtime_Manifest.md`.
+The runtime MUST use sparse context. Current configuration and governance are organized under the numbered repository spine:
+- `00_GOVERNANCE/` — operating rules, agent coordination, review and protocol policy;
+- `01_ARCHITECTURE/` — architecture, durable knowledge, graphs and memory design;
+- `02_PRODUCT/` — product/project specifications and requirements;
+- `04_CONFIG/` — machine-readable runtime configuration;
+- `06_INBOX/RAW_IMPORTS/` — untrusted external input.
+
+The previous `99_SYSTEM/` paths are retired and must not be used as canonical locations.
 
 ```text
 MAX_COUNCIL_AGENTS = 3
@@ -37,7 +44,7 @@ CLASSIFY
 
 1. Select agents before loading skills.
 2. Agent profiles are identity/persona manifests only.
-3. Capability mappings are authoritative in `99_SYSTEM/Agent_Capability_Registry.md`.
+3. Capability mappings are authoritative in the current governance/agent configuration; do not rely on retired `99_SYSTEM/*` paths.
 4. Assigned capabilities MUST NOT be loaded wholesale.
 5. Load full `SKILL.md` only after selecting the skill for the current task.
 6. Select at most two skills per agent and four skills across the council unless the task is explicitly staged.
@@ -47,7 +54,7 @@ CLASSIFY
 10. Raw imports, audit reports, progress, handoff, briefing, dispatch and generated artifacts are excluded by default.
 11. Specialists return compact evidence; the lead performs one synthesis.
 12. No recursive council unless explicitly required; use staged execution for exceptional cases.
-13. A proposed council context SHOULD be validated against `99_SYSTEM/Council_Context_Validator.py` before execution when a runtime can execute local validation.
+13. A proposed council context SHOULD be validated against the current repository validation tooling before execution when a runtime can execute local validation.
 
 ## Memory Rules
 
@@ -77,10 +84,10 @@ Direct unauthenticated filesystem scans, raw `os.walk` traversals, or any attemp
 ## Multi-Agent Development Coordination
 
 When multiple AI development environments/agents (Antigravity, Claude Code, ChatGPT, Perplexity, etc.) operate on this repository:
-1. **Single Source of Truth**: `09_COORDINATION/todo.md` and `09_COORDINATION/lessons.md` are the canonical coordination layer for active and completed work.
-2. **Pre-flight Check**: Before touching any code or files, inspect `09_COORDINATION/todo.md` to ensure another AI session is not actively executing or has not already resolved the task.
-3. **Execution Ownership**: When starting a task, claim it or check for an active owner. When completing a task, mark it in `09_COORDINATION/todo.md` with `owner: <tool_name>` and an ISO 8601 timestamp.
-4. **Protected Core Invariant**: Never modify frozen cognitive core modules (`Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`) unless explicitly required by an audited specification. All core contracts are validated against `cognitive_core/tests/test_protected_core_boundaries.py`.
+1. **Single Source of Truth**: `00_GOVERNANCE/coordination/` is the canonical coordination layer for active and completed work.
+2. **Pre-flight Check**: Before touching any code or files, inspect the current coordination state to ensure another AI session is not actively executing or has not already resolved the task.
+3. **Execution Ownership**: When starting a task, claim it or check for an active owner. When completing a task, record ownership and timestamp in the current coordination state.
+4. **Protected Core Invariant**: Never modify frozen cognitive core modules (`Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`) unless explicitly required by an audited specification. All core contracts are validated against the cognitive-core protected-boundary tests.
 5. **No Speculation**: Never mark tasks done without attaching empirical execution proof (passing `pytest` suite output).
 
 ## Prime Directive
