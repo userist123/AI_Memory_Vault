@@ -6,7 +6,7 @@ with base relevance scores; this module never mutates canonical memory.
 """
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 
 from .multi_graph import MultiGraphMemory
 
@@ -34,8 +34,11 @@ class SpreadingActivationEngine:
                 continue
             for neighbor, attrs in graph.neighbors(node_id):
                 weight = float(attrs.get("weight", 1.0))
-                propagated = score * self.decay * min(weight, 3.0) / 3.0 if weight > 3 else score * self.decay * (weight if weight <= 1 else 1.0)
-                propagated = score * (self.decay ** (hop + 1))
+                # Keep edge strength in the propagation signal. Values above
+                # one are capped to avoid a single high-cardinality edge
+                # dominating the graph; values in (0, 1] retain their weight.
+                edge_factor = min(weight, 1.0) if weight > 0 else 0.0
+                propagated = score * (self.decay ** (hop + 1)) * edge_factor
                 if propagated <= 1e-6:
                     continue
                 if propagated > activation.get(neighbor, 0.0):
