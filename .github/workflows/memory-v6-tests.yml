@@ -39,6 +39,9 @@ jobs:
       - name: Run Memory V6 test suite
         run: pytest cognitive_core/tests memory_controller/tests tests/ -v
 
+      - name: Check generated artifact hygiene
+        run: python scripts/check_generated_artifact_hygiene.py
+
   regenerate-skill-catalog:
     name: Regenerate canonical skill catalog
     if: github.ref == 'refs/heads/main'

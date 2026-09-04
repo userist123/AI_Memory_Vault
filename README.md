@@ -486,9 +486,9 @@ sha256
 status
 ```
 
-The external ingestion pipeline computes hashes, classifies imported `SKILL.md` material and keeps it within the RAW boundary until explicit promotion. fileciteturn581file0L2-L6
+The external ingestion pipeline computes hashes, classifies imported `SKILL.md` material and keeps it within the RAW boundary until explicit promotion.
 
-The dedicated external-skill workflow is manual and avoids executing arbitrary imported dependencies during ingestion. fileciteturn590file0L2-L6
+The dedicated external-skill workflow is manual and avoids executing arbitrary imported dependencies during ingestion.
 
 ---
 
@@ -522,7 +522,7 @@ Operational skill
 
 A repository can contain code, documentation, examples or full applications that should remain reference material rather than being copied wholesale into the skill library.
 
-The project also maintains a validation report for the imported raw skill corpus and its safety invariants. fileciteturn586file0L2-L6
+The project also maintains a validation report for the imported raw skill corpus and its safety invariants.
 
 ---
 
