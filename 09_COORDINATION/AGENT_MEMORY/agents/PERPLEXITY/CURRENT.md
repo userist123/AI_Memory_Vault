@@ -1,31 +1,34 @@
 ---
 agent: PERPLEXITY
-last_updated_utc: 2026-09-04T16:00:00Z
+last_updated_utc: 2026-09-04T19:20:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: perplexity/*
-base_main_sha: 965430b6a2c6fa94e54174cb0f6b981a62e1e483
-current_commit_sha: 8d5f0f05a85e01fbe1f26016b6f9c201c17762d1
+working_branch: main
+base_main_sha: ec9a16f674e65febae3fe4f986b15d6c79e01857
+current_commit_sha: ec9a16f674e65febae3fe4f986b15d6c79e01857
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 working_folder: repository root; 07_EVALUATION/perplexity/, 09_COORDINATION/
-current_task: external research and evidence-to-test synthesis
-status: ACTIVE
+current_task: external research and evidence synthesis; sequential continuation from main
+status: READY_FOR_REVIEW
 completed:
   - memory-engine research synthesis
   - book-learning guidance imported into Vault
-  - R001 P8 evidence-to-test dispatch issued
+  - R001 cognitive-memory adversarial validation delivered
 in_progress:
-  - evidence-to-test matrix and source register
+  - none until next research dispatch
 next_actions:
+  - when activated, fetch main and read project CURRENT plus latest task/session
   - preserve source identifiers and dates
   - distinguish research from repository evidence
-  - update persistent task/session state after substantive work
+  - persist task/session state before handoff
 blockers: []
 risks:
   - external research is not repository proof
   - do not invent experimental results
-evidence_refs:
+  - do not work from legacy feature branches
+Evidence_refs:
   - 07_EVALUATION/perplexity/
   - 07_EVALUATION/perplexity/PERPLEXITY_BOOK_LEARNING_GUIDANCE_20260904.md
+  - 07_EVALUATION/luna/ (for cognitive-memory validation handoff)
 related_agents: CODEX, ANTIGRAVITY, LUNA
-NEXT: continue P8 research deliverables and persist handoff state
+NEXT: read project CURRENT and take the next research task on main
