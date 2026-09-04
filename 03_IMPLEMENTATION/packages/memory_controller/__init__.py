@@ -1,12 +1,13 @@
-"""DEPRECATED compatibility namespace for legacy ``memory_controller`` imports.
+"""Compatibility namespace for legacy ``memory_controller`` imports.
 
-Canonical implementations now live under ``memory_vault``. The shim only
-exposes classified package directories and contains no duplicated logic.
+The runtime was structurally decomposed into responsibility-focused sibling
+packages under ``03_IMPLEMENTATION/packages``. This shim keeps the historical
+import namespace without duplicating implementation files.
 """
 from __future__ import annotations
 from pathlib import Path
 
-_BASE = Path(__file__).resolve().parents[1] / "memory_vault"
+_BASE = Path(__file__).resolve().parents[1]
 __path__ = [
     str(_BASE / "retrieval"),
     str(_BASE / "memory"),
