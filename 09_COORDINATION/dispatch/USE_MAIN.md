@@ -1,1 +1,0 @@
-Use `main` as the canonical working branch for the current cognitive-memory cycle.
