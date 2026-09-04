@@ -147,3 +147,7 @@ class FileStorageEngine:
             except Exception:
                 continue
         return results
+
+    def all_notes(self) -> List[Dict[str, Any]]:
+        """Return all non-RAW notes for read-only indexing consumers."""
+        return self.query("graph")
