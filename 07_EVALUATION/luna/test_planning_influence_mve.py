@@ -1,4 +1,11 @@
-from planning_influence_mve import build_scenarios, compile_memory, normalize, run_planner, run_experiment
+from planning_influence_mve import (
+    build_scenarios,
+    compile_memory,
+    normalize,
+    run_planner,
+    run_experiment,
+    summarize_treatment_by_memory_quality,
+)
 
 
 def test_scenarios_have_four_distinct_branches():
@@ -40,6 +47,15 @@ def test_treatment_changes_search_behavior_against_advisory_control():
     control_trace = run_planner(scenario, uniform)
     treatment_trace = run_planner(scenario, treatment)
     assert control_trace.selected_branches != treatment_trace.selected_branches
+
+
+def test_memory_quality_summary_separates_match_and_mismatch():
+    result = run_experiment(30)
+    quality = summarize_treatment_by_memory_quality(result)
+    assert quality["match"]["count"] > 0
+    assert quality["mismatch"]["count"] > 0
+    assert quality["match"]["count"] + quality["mismatch"]["count"] == 30
+    assert quality["mismatch"]["fatal"] >= 0
 
 
 def test_experiment_has_thirty_scenarios_and_four_arms():
