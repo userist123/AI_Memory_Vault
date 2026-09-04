@@ -66,10 +66,11 @@ generated/
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
 
-# RAW_IMPORTS are permanent evidence and must always be versioned.
-!/06_INBOX/RAW_IMPORTS/
-!/06_INBOX/RAW_IMPORTS/**
-06_INBOX/RAW_IMPORTS/**/*.zip
+# Operational inbox is local-only. Keep only its contract file versioned.
+/06_INBOX/*
+!/06_INBOX/README.md
+!/06_INBOX/.gitkeep
+/06_INBOX/local_only/
 
 .vs/
 *.zip
