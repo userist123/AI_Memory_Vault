@@ -120,7 +120,7 @@ def test_probe_in_memory_engine(sample_notes):
     assert report.status in [GraphExecutionStatus.APPLIED, GraphExecutionStatus.FALLBACK_NO_GRAPH_CHANGES]
 
 
-def test_probe_sqlite_engine_silent_exception(sample_notes):
+def test_probe_sqlite_engine(sample_notes):
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
         db_path = tmp.name
 
@@ -137,11 +137,7 @@ def test_probe_sqlite_engine_silent_exception(sample_notes):
 
         assert report.storage_engine == "SQLiteStorageEngine"
         assert report.has_store_attribute is False
-        assert report.status == GraphExecutionStatus.FALLBACK_SILENT_EXCEPTION
-        assert report.exception_type == "AttributeError"
-        assert "has no attribute 'store'" in (report.exception_message or "")
-        assert report.exception_traceback is not None
-        # Proves that ranked_search returned base results despite exception
+        assert report.status in [GraphExecutionStatus.APPLIED, GraphExecutionStatus.FALLBACK_NO_GRAPH_CHANGES]
         assert report.ranked_count == report.base_count
     finally:
         if storage is not None:
@@ -153,7 +149,7 @@ def test_probe_sqlite_engine_silent_exception(sample_notes):
                 pass
 
 
-def test_probe_file_engine_silent_exception(sample_notes):
+def test_probe_file_engine(sample_notes):
     with tempfile.TemporaryDirectory() as tmp_dir:
         storage = FileStorageEngine(vault_root=tmp_dir)
         for note in sample_notes:
@@ -166,9 +162,27 @@ def test_probe_file_engine_silent_exception(sample_notes):
 
         assert report.storage_engine == "FileStorageEngine"
         assert report.has_store_attribute is False
-        assert report.status == GraphExecutionStatus.FALLBACK_SILENT_EXCEPTION
-        assert report.exception_type == "AttributeError"
-        assert "has no attribute 'store'" in (report.exception_message or "")
+        assert report.status in [GraphExecutionStatus.APPLIED, GraphExecutionStatus.FALLBACK_NO_GRAPH_CHANGES]
+
+
+def test_probe_silent_exception_handling(sample_notes, monkeypatch):
+    """Verifies that if graph construction raises an exception, the probe catches it as FALLBACK_SILENT_EXCEPTION."""
+    storage = StorageEngine()
+    for note in sample_notes:
+        storage.set(note["id"], note)
+    controller = MemoryController(storage=storage)
+
+    def mock_build_fail(ctrl):
+        raise RuntimeError("Simulated graph builder explosion")
+    monkeypatch.setattr("cognitive_core.observability.graph_diagnostics_probe.build_multi_graph", mock_build_fail)
+
+    report = GraphDiagnosticsProbe.probe_ranked_search(
+        controller, Principal.AI_AGENT, "python asyncio concurrency"
+    )
+    assert report.status == GraphExecutionStatus.FALLBACK_SILENT_EXCEPTION
+    assert report.exception_type == "RuntimeError"
+    assert "Simulated graph builder explosion" in (report.exception_message or "")
+    assert report.exception_traceback is not None
 
 
 def test_probe_candidate_rejections(sample_notes, monkeypatch):

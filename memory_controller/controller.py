@@ -53,6 +53,10 @@ class StorageEngine:
             results = [n for n in results if n.get('type') in types]
         return results
 
+    def all_notes(self) -> List[Dict[str, Any]]:
+        """Return all non-RAW notes for read-only indexing consumers."""
+        return [n for n in self.store.values() if n.get('lifecycle') != Lifecycle.RAW.value]
+
 class Lifecycle(str, enum.Enum):
     RAW = "RAW"
     CLASSIFIED = "CLASSIFIED"

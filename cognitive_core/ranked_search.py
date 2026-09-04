@@ -14,9 +14,12 @@ from .spreading_activation import SpreadingActivationEngine
 
 def build_multi_graph(controller) -> MultiGraphMemory:
     all_notes = getattr(controller.storage, "all_notes", None)
-    if not callable(all_notes):
+    if callable(all_notes):
+        notes = list(all_notes())
+    elif hasattr(controller.storage, "store") and isinstance(controller.storage.store, dict):
+        notes = list(controller.storage.store.values())
+    else:
         raise TypeError("storage does not expose all_notes() for graph indexing")
-    notes = list(all_notes())
     return MultiGraphMemory().build_from_notes(notes)
 
 
