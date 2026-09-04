@@ -3,11 +3,14 @@ from planning_influence_mve import (
     MEMORY_APPLICABILITY,
     MEMORY_CONTRADICTION_STATE,
     MEMORY_EVIDENCE_STRENGTH,
+    ResolutionStage,
+    TerminalStatus,
     build_scenarios,
     compile_memory,
     normalize,
-    run_planner,
+    resolve_task,
     run_experiment,
+    run_planner,
     summarize_treatment_by_memory_quality,
 )
 
@@ -164,3 +167,64 @@ def test_experiment_has_thirty_scenarios_and_four_arms():
         "arm4_stale",
     }
     assert len(result["traces"]) == 120
+
+
+def test_resolver_reaches_terminal_final_response_after_verification():
+    scenario = build_scenarios(1)[0]
+    memory = compile_memory(scenario, "APPLICABLE", "m1")
+    planner = run_planner(scenario, {branch: 0.25 for branch in scenario.branches})
+    result = resolve_task(scenario, planner, memory, verification_budget=3)
+
+    assert result.status is TerminalStatus.RESOLVED
+    assert result.terminal is True
+    assert result.decision == scenario.optimal
+    assert result.stages[-1] is ResolutionStage.FINAL_RESPONSE
+    assert result.stages.index(ResolutionStage.VERIFYING) < result.stages.index(ResolutionStage.REORGANIZING)
+    assert result.stages.index(ResolutionStage.REORGANIZING) < result.stages.index(ResolutionStage.FINAL_RESPONSE)
+
+
+def test_verification_is_bounded_and_does_not_reenter_after_terminal():
+    scenario = build_scenarios(1)[0]
+    memory = compile_memory(scenario, "APPLICABLE", "m1")
+    planner = run_planner(scenario, {scenario.suboptimal: 1.0, **{branch: 0.0 for branch in scenario.branches if branch != scenario.suboptimal}})
+    result = resolve_task(scenario, planner, memory, verification_budget=1)
+
+    assert result.status is TerminalStatus.ABSTAINED
+    assert result.verification.steps <= 1
+    assert result.stages.count(ResolutionStage.FINAL_RESPONSE) == 1
+    assert result.stages[-1] is ResolutionStage.FINAL_RESPONSE
+    assert ResolutionStage.VERIFYING in result.stages
+    assert result.stages[-1] != ResolutionStage.REORGANIZING
+
+
+def test_human_confirmation_is_a_terminal_path_without_verification_loop():
+    scenario = build_scenarios(1)[0]
+    memory = compile_memory(scenario, "APPLICABLE", "m1")
+    planner = run_planner(scenario, {branch: 0.25 for branch in scenario.branches})
+    result = resolve_task(
+        scenario,
+        planner,
+        memory,
+        verification_budget=3,
+        human_confirmation_required=True,
+    )
+
+    assert result.status is TerminalStatus.HUMAN_CONFIRMATION_REQUIRED
+    assert result.verification.steps == 0
+    assert ResolutionStage.VERIFYING not in result.stages
+    assert result.stages[-1] is ResolutionStage.FINAL_RESPONSE
+    assert result.reorganization.applied is False
+
+
+def test_reorganization_does_not_reenter_current_task():
+    scenario = build_scenarios(1)[0]
+    memory = compile_memory(scenario, "APPLICABLE", "m1")
+    planner = run_planner(scenario, {branch: 0.25 for branch in scenario.branches})
+    result = resolve_task(scenario, planner, memory, verification_budget=3)
+
+    reorg_index = result.stages.index(ResolutionStage.REORGANIZING)
+    terminal_index = result.stages.index(ResolutionStage.TERMINAL)
+    final_index = result.stages.index(ResolutionStage.FINAL_RESPONSE)
+    assert reorg_index < terminal_index < final_index
+    assert all(stage not in {ResolutionStage.TASK, ResolutionStage.EXPERIENCE} for stage in result.stages[reorg_index + 1:])
+    assert result.reorganization.verified_branch == scenario.optimal
