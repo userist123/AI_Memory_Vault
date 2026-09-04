@@ -13,7 +13,8 @@
 - [x] validated Draft-07 schema compliance on all 6 book notes (6/6 `valid=True`) `[owner: antigravity | timestamp: 2026-09-04T18:27:01+03:00]`
 - [x] created and validated Caiet de Teme & Aplicatii Practice (`caiet_de_teme_si_aplicatii_practice.md` & `Caiet_Teme_Aplicatii_Practice_Carti.md`) with concrete Python drills across all 6 books, registered in graph and audit log `[owner: antigravity | timestamp: 2026-09-04T18:34:00+03:00]`
 - [x] created 6 advanced chapter knowledge notes (`ADVANCED_DDIA`, `ADVANCED_AIMA`, `ADVANCED_Agent_Tool_Protocols`, `ADVANCED_RAG_Hybrid`, `ADVANCED_MLOps`, `ADVANCED_Transformer_RoPE`), validated schema Draft-07 (6/6 `valid=True`), added Teme 7-12 to workbook, registered in graph map and audit log `[owner: antigravity | timestamp: 2026-09-04T18:50:00+03:00]`
-- [x] appended cryptographic audit record to `audit_log.jsonl` linking SHA-256 hash chain `[owner: antigravity | timestamp: 2026-09-04T18:50:10+03:00]`
+- [x] created 6 specialized canonical knowledge notes (`SPECIALIZED_DDIA_Batch_Joins`, `SPECIALIZED_AIMA_HTN`, `SPECIALIZED_Agent_Reflexion`, `SPECIALIZED_RAG_GraphRAG`, `SPECIALIZED_MLOps_Weak_Supervision`, `SPECIALIZED_Transformer_Optimization_AdamW`), validated schema Draft-07 (6/6 `valid=True`), added Teme 13-18 to workbook, registered in graph map and audit log `[owner: antigravity | timestamp: 2026-09-04T18:55:00+03:00]`
+- [x] appended cryptographic audit record to `audit_log.jsonl` linking SHA-256 hash chain `[owner: antigravity | timestamp: 2026-09-04T18:55:10+03:00]`
 
 ---
 

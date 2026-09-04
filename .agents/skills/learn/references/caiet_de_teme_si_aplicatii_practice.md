@@ -600,9 +600,276 @@ def min_p_sampling(logits: list[float], min_p: float = 0.05, temperature: float 
 
 ---
 
-## Concluzie: De la Notițe la Execuție Sigură (12 Teme Rezolvate)
+## Tema 13 (DDIA Specializat — Martin Kleppmann): Algoritmi de Jointură Batch (Broadcast Hash Join)
 
-Cu aceste 12 teme rezolvate:
+### 1. Enunțul Problemei
+Ai de corelat 100,000 de urme de execuție din loguri cu un tabel mic de 50 de definiții de agenți. Trebuie să realizezi o corelare de mare viteză fără a citi de mai multe ori tabela mare și fără a încărca totul în memorie.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def broadcast_hash_join(large_stream: list[dict], small_table: list[dict], join_key: str) -> list[dict]:
+    """Broadcast Hash Join conform Kleppmann Ch 10.
+    Incarca tabela mica intr-un hash map in memorie O(S) si scaneaza liniar fluxul mare O(L).
+    """
+    # 1. Construim indexul hash in memorie pentru tabela mica
+    hash_index = {}
+    for record in small_table:
+        k = record.get(join_key)
+        if k is not None:
+            hash_index.setdefault(k, []).append(record)
+            
+    # 2. Scanare liniara unica peste fluxul mare
+    joined_records = []
+    for large_row in large_stream:
+        k = large_row.get(join_key)
+        if k in hash_index:
+            for small_row in hash_index[k]:
+                merged = {**large_row, **{f"agent_{sk}": sv for sk, sv in small_row.items()}}
+                joined_records.append(merged)
+                
+    return joined_records
+```
+
+### 3. Playbook Operațional: Ce fac când corelez seturi de date de dimensiuni inegale?
+1. **Dacă un set încape în RAM**: Folosesc întotdeauna **Broadcast Hash Join**; elimin sortarea pe disc.
+2. **Dacă ambele depășesc memoria**: Folosesc **Sort-Merge Join** cu partiționare externă pe disc.
+
+---
+
+## Tema 14 (AIMA Specializat — Russell & Norvig): Planificare Ierarhică prin HTN
+
+### 1. Enunțul Problemei
+Un agent primește sarcina compusă `ResolveSecurityIncident`. Trebuie să descompună acest scop de nivel înalt în acțiuni primitive ordonate valid pe baza stării curente a sistemului.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+class HTNPlanner:
+    """Planificator ierarhic minimal (Russell & Norvig Ch 11)."""
+    def __init__(self):
+        self.methods = {}
+
+    def register_method(self, compound_task: str, precondition_fn, subtasks: list[str]):
+        self.methods.setdefault(compound_task, []).append((precondition_fn, subtasks))
+
+    def decompose(self, task_queue: list[str], state: dict) -> list[str]:
+        plan = []
+        queue = list(task_queue)
+        
+        while queue:
+            current_task = queue.pop(0)
+            if current_task in self.methods:
+                # Sarcina compusa: cautam o metoda a carei preconditie este satisfacuta
+                decomposed = False
+                for precond, subtasks in self.methods[current_task]:
+                    if precond(state):
+                        queue = subtasks + queue  # Inlocuim cu subsarcinile ordonate
+                        decomposed = True
+                        break
+                if not decomposed:
+                    raise RuntimeError(f"Nicio metoda aplicabila pentru sarcina compusa '{current_task}'")
+            else:
+                # Sarcina primitiva: adaugam direct in planul final
+                plan.append(current_task)
+                
+        return plan
+```
+
+### 3. Playbook Operațional: Ce fac când primesc un obiectiv complex?
+1. **Declar metode de descompunere**: Separi obiectivele mari de pașii de shell/fișier.
+2. **Verific precondițiile de stare**: Nu trec la execuția acțiunilor dacă etapa anterioară a eșuat.
+
+---
+
+## Tema 15 (Agent Specializat — Vasyl Zvarydchuk): Ciclul Formal Reflexion
+
+### 1. Enunțul Problemei
+Un agent a generat un patch de cod care a picat un test de regresie. Trebuie să ruleze o etapă de reflecție lingvistică care extrage cauza eșecului și injectează instrucțiunea corectivă în următoarea încercare.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+class ReflexionEngine:
+    """Motor de autocritica si recuperare episodica (Zvarydchuk & Shinn et al.)."""
+    def __init__(self):
+        self.reflections = []
+
+    def critique(self, action: str, test_output: str, exit_code: int) -> str:
+        if exit_code == 0:
+            return "SUCCESS"
+            
+        # Extragem tipul de eroare si formulam reflectia verbala
+        if "AssertionError" in test_output:
+            reflection = f"Esec la actiunea '{action}': Aserțiunea a fost încălcată. Verifică valorile așteptate și corectează logica internă."
+        elif "ImportError" in test_output or "ModuleNotFoundError" in test_output:
+            reflection = f"Esec la actiunea '{action}': Modul lipsă sau import circular. Verifică căile modulului înainte de execuție."
+        else:
+            reflection = f"Esec la actiunea '{action}': Eroare generală ({test_output[:100]}). Schimbă abordarea."
+            
+        self.reflections.append(reflection)
+        return reflection
+
+    def get_context_prefix(self) -> str:
+        if not self.reflections:
+            return ""
+        items = "\n".join(f"- {r}" for r in self.reflections[-3:])
+        return f"=== LECTII EPISODICE DIN INCERCARI ANTERIOARE ===\n{items}\n================================================="
+```
+
+### 3. Playbook Operațional: Ce fac când un test automat dă eroare?
+1. **Nu repet orbește**: Rulez `critique` pe output-ul testului.
+2. **Injectez lecția în prompt**: Forțez modelul să recunoască explicit ce a greșit anterior.
+
+---
+
+## Tema 16 (RAG Specializat — Suhas Pai): GraphRAG & Rezumat Comunitar Leiden
+
+### 1. Enunțul Problemei
+Ai un graf cu sute de entități legate prin muchii ponderate. Trebuie să grupezi entitățile în comunități coerente pentru a putea genera rezumate globale de nivel înalt.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def simple_community_partition(graph_edges: list[tuple[str, str, float]], threshold: float = 0.5) -> dict[str, list[str]]:
+    """Partitionare simplificata de laborator pe baza componentelor conexe ponderate (Pai Ch 7)."""
+    adj = {}
+    for u, v, w in graph_edges:
+        if w >= threshold:
+            adj.setdefault(u, set()).add(v)
+            adj.setdefault(v, set()).add(u)
+            
+    visited = set()
+    communities = {}
+    comm_id = 0
+    
+    for node in adj:
+        if node not in visited:
+            # Componenta conexa
+            comm_members = []
+            queue = [node]
+            visited.add(node)
+            while queue:
+                curr = queue.pop(0)
+                comm_members.append(curr)
+                for neighbor in adj.get(curr, []):
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(neighbor)
+            communities[f"community_{comm_id}"] = comm_members
+            comm_id += 1
+            
+    return communities
+```
+
+### 3. Playbook Operațional: Ce fac când răspund la întrebări de sinteză globală?
+1. **Împart graful în comunități**: Rezum fiecare comunitate independent.
+2. **Agreg rezumatele L1**: Răspund la întrebarea de ansamblu folosind doar rezumatele comunităților, respectând bugetul de context.
+
+---
+
+## Tema 17 (MLOps Specializat — Chip Huyen): Supraveghere Slabă cu Funcții de Etichetare Snorkel
+
+### 1. Enunțul Problemei
+Ai 1,000 de fragmente de text neetichetate și vrei să le clasifici automat în `SECURITY` (+1) sau `GENERAL` (-1) fără să le citești manual, folosind reguli euristice de vot ponderat cu abținere.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+ABSTAIN = 0
+SECURITY = 1
+GENERAL = -1
+
+def lf_contains_security_keywords(text: str) -> int:
+    keywords = ["vulnerability", "exploit", "cve", "injection", "wal", "tamper", "sha256"]
+    return SECURITY if any(k in text.lower() for k in keywords) else ABSTAIN
+
+def lf_contains_general_keywords(text: str) -> int:
+    keywords = ["welcome", "hello", "tutorial", "readme", "introduction"]
+    return GENERAL if any(k in text.lower() for k in keywords) else ABSTAIN
+
+def snorkel_majority_vote(text: str, lfs: list) -> tuple[int, float]:
+    """Model de vot majoritar ponderat cu abstention (Chip Huyen Ch 4)."""
+    votes = [lf(text) for lf in lfs]
+    sec_votes = sum(1 for v in votes if v == SECURITY)
+    gen_votes = sum(1 for v in votes if v == GENERAL)
+    
+    total_active = sec_votes + gen_votes
+    if total_active == 0:
+        return ABSTAIN, 0.0
+        
+    if sec_votes > gen_votes:
+        confidence = sec_votes / total_active
+        return SECURITY, confidence
+    elif gen_votes > sec_votes:
+        confidence = gen_votes / total_active
+        return GENERAL, confidence
+    return ABSTAIN, 0.5
+```
+
+### 3. Playbook Operațional: Ce fac când am fișiere neclasificate în inbox?
+1. **Creez funcții de etichetare deterministe**: Aplic regex-uri și cuvinte cheie.
+2. **Filtrez prin vot cu încredere**: Dacă `confidence >= 0.80`, promovez automat; dacă e `ABSTAIN` sau egalitate, trimit la revizuire umană.
+
+---
+
+## Tema 18 (Deep Learning Specializat — Magnus Ekman): Optimizatorul AdamW & Planificator Cosine Annealing
+
+### 1. Enunțul Problemei
+Implementează pasul de optimizare AdamW cu weight decay decuplat și calculează rata de învățare la fiecare pas conform programării Cosine Annealing cu Warmup.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+
+class AdamWOptimizer:
+    """Implementare de laborator pentru AdamW cu Weight Decay decuplat (Ekman Ch 6)."""
+    def __init__(self, params: list[float], lr: float = 1e-3, beta1: float = 0.9, beta2: float = 0.999, weight_decay: float = 0.01, eps: float = 1e-8):
+        self.params = list(params)
+        self.lr = lr
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.weight_decay = weight_decay
+        self.eps = eps
+        self.m = [0.0] * len(params)
+        self.v = [0.0] * len(params)
+        self.t = 0
+
+    def step(self, grads: list[float], current_lr: float = None):
+        self.t += 1
+        lr = current_lr if current_lr is not None else self.lr
+        
+        for i in range(len(self.params)):
+            g = grads[i]
+            # 1. Decoupled weight decay: theta = theta - lr * lambda * theta
+            self.params[i] -= lr * self.weight_decay * self.params[i]
+            
+            # 2. Momentele gradiente
+            self.m[i] = self.beta1 * self.m[i] + (1.0 - self.beta1) * g
+            self.v[i] = self.beta2 * self.v[i] + (1.0 - self.beta2) * (g ** 2)
+            
+            # 3. Corectia de bias
+            m_hat = self.m[i] / (1.0 - (self.beta1 ** self.t))
+            v_hat = self.v[i] / (1.0 - (self.beta2 ** self.t))
+            
+            # 4. Actualizarea adaptiva
+            self.params[i] -= lr * m_hat / (math.sqrt(v_hat) + self.eps)
+
+def compute_cosine_lr(step: int, total_steps: int, warmup_steps: int, lr_max: float, lr_min: float = 1e-6) -> float:
+    """Calcul rata de invatare cu Warmup liniar si Cosine Annealing."""
+    if step < warmup_steps:
+        return lr_max * (step / max(1, warmup_steps))
+    decay_ratio = (step - warmup_steps) / max(1, total_steps - warmup_steps)
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    return lr_min + coeff * (lr_max - lr_min)
+```
+
+### 3. Playbook Operațional: Ce fac când antrenez modele de producție?
+1. **Decuplez penalizarea de gradient**: Folosesc întotdeauna AdamW pentru a asigura regularizarea corectă a tuturor straturilor.
+2. **Aplic Cosine Annealing**: Salvez punctele de control (checkpoints) în faza descrescătoare finală, unde loss-ul este cel mai stabil.
+
+---
+
+## Concluzie: De la Notițe la Execuție Sigură (18 Teme de Laborator Rezolvate)
+
+Cu aceste 18 teme rezolvate:
 - **T1-T6**: Stocare WAL, căutare $A^*$, scoping de agenți, demarcare XML, monitorizare PSI și atenție cu LoRA.
 - **T7-T12**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fișiere cu limită ermetică, fuziune RRF cu MRR, point-in-time join fără scurgere de date și eșantionare Min-p.
+- **T13-T18**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodică, GraphRAG cu Leiden, Weak Supervision Snorkel și optimizatorul AdamW cu Cosine Annealing.
+
 
