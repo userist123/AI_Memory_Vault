@@ -11,11 +11,51 @@ Determine whether memory can causally influence agent planning at computation le
 
 The experiment isolates one channel: Planning Influence.
 
+The experiment also requires a **bounded verification-and-resolution boundary**. Planning influence is not considered complete merely because a branch was selected; the system must verify the resulting trajectory and produce a terminal task result.
+
 ## 2. Causal Question
 
-Given the same task, model and search harness, does converting a memory-derived lesson into planner priors/penalties change the search trajectory and improve outcome compared with the same lesson delivered only as natural-language context?
+Given the same task, model and search harness, does converting a memory-derived lesson into planner priors/penalties change the search trajectory and improve verified outcome compared with the same lesson delivered only as natural-language context?
 
-## 3. Critical Distinction
+## 3. Resolution Semantics
+
+The experiment follows a bounded pipeline:
+
+```text
+TASK
+  ↓
+EXPERIENCE / MEMORY EVIDENCE
+  ↓
+MODEL / PATTERN
+  ↓
+APPLICABILITY
+  ↓
+PLANNING INFLUENCE
+  ↓
+VERIFICATION LOOP
+  ↺ observe → test → challenge → re-evaluate
+  ↓
+VERIFIED OUTCOME
+  ↓
+REORGANIZATION
+  ↓
+TERMINAL TASK RESULT
+```
+
+The verification loop is internal and bounded. It exists to establish evidence for the current task.
+
+The terminal result is one of:
+
+```text
+FINAL ANSWER
+FINAL DECISION
+FINAL ABSTENTION
+FINAL REQUEST FOR HUMAN CONFIRMATION
+```
+
+There is no implicit re-entry into the same task after terminal resolution.
+
+## 4. Critical Distinction
 
 ```text
 ARM A
@@ -29,7 +69,7 @@ memory influence -> planner priors/penalties
 
 The informational content should be matched as closely as practical. The treatment variable is the computational use of memory inside the search harness.
 
-## 4. Environment
+## 5. Environment
 
 Target implementation:
 
@@ -41,7 +81,7 @@ Target implementation:
 
 Initial proposed scale from adversarial review: 50 tasks.
 
-## 5. Planner
+## 6. Planner
 
 Use a minimal Python search harness. MCTS/PUCT is the first concrete implementation because it gives explicit measurable branch visitation and prior/value channels.
 
@@ -54,7 +94,7 @@ rollouts = 8
 
 These are experiment parameters, not architecture constants.
 
-## 6. Arms
+## 7. Arms
 
 ### Arm A — Advisory Context Control
 
@@ -83,7 +123,7 @@ P(strategy_3 | state) = 0.8
 
 Exact prior values must be fixed before outcome inspection and recorded as experimental configuration.
 
-## 7. Measurements
+## 8. Measurements
 
 ### Primary
 
@@ -91,13 +131,15 @@ Exact prior values must be fixed before outcome inspection and recorded as exper
 2. Number of explored nodes.
 3. Visits to known-fatal branches.
 4. Verified task success rate.
+5. Terminal result class: answer / decision / abstention / human confirmation.
 
 ### Secondary
 
-5. Search-order divergence between arms.
-6. Repeated failure rate.
-7. Token/inference cost, where reliably measurable.
-8. Wall-clock runtime, reported separately from cognitive efficiency.
+6. Search-order divergence between arms.
+7. Repeated failure rate.
+8. Token/inference cost, where reliably measurable.
+9. Wall-clock runtime, reported separately from cognitive efficiency.
+10. Verification-loop iterations and verification cost.
 
 ### Attribution
 
@@ -110,10 +152,13 @@ memory record
  -> planner prior/penalty
  -> node-selection trace
  -> action
- -> outcome
+ -> verification
+ -> verified outcome
+ -> reorganization
+ -> terminal result
 ```
 
-## 8. Counterfactual Controls
+## 9. Counterfactual Controls
 
 To prevent false attribution:
 
@@ -123,11 +168,11 @@ To prevent false attribution:
 - include contradiction cases where memory should not dominate the current environment;
 - keep model, temperature, planner configuration and task ordering fixed or randomized under a declared protocol.
 
-## 9. Success Criteria
+## 10. Success Criteria
 
 The experiment supports Planning Influence only if repeated controlled runs show that Treatment changes search behavior in the expected direction and the change is mechanically attributable to planner-consumed memory priors/penalties.
 
-A better outcome alone is insufficient.
+A better intermediate branch choice alone is insufficient.
 
 A single run where Treatment chooses a better branch is insufficient.
 
@@ -138,13 +183,14 @@ same task + same model + same planner
 only computational memory influence differs
         -> systematic search divergence
         -> fewer known-fatal explorations / lower search cost
-        -> reproducible outcome improvement
+        -> reproducible verified outcome improvement
         -> traceable attribution
+        -> terminal resolution
 ```
 
 No numerical target is a required acceptance threshold until a baseline pilot establishes variance.
 
-## 10. Falsifiers
+## 11. Falsifiers
 
 Planning Influence is falsified or weakened if:
 
@@ -153,9 +199,11 @@ Planning Influence is falsified or weakened if:
 - improvements disappear under matched informational controls;
 - priors cause systematic over-pruning of valid branches;
 - gains are not reproducible across held-out tasks;
-- trace cannot distinguish memory influence from model stochasticity or planner implementation effects.
+- trace cannot distinguish memory influence from model stochasticity or planner implementation effects;
+- a final answer/decision is emitted before required verification completes;
+- the same task silently re-enters its own cognitive loop after terminal resolution.
 
-## 11. Deliverables
+## 12. Deliverables
 
 The executed experiment must produce:
 
@@ -168,8 +216,30 @@ The executed experiment must produce:
 
 If code is added, it belongs under the implementation/evaluation area selected by the implementation agent and must be committed with reproducible test/runtime output.
 
-## 12. Evidence Discipline
+## 13. Evidence Discipline
 
 No benchmark result may be marked TEST_VERIFIED or RUNTIME_VERIFIED without actual execution output.
 
 Design assumptions, literature claims and predicted effects remain UNVERIFIED until the repository contains executable evidence.
+
+## 14. Architectural Principle
+
+The five semantic layers are a **bounded task-resolution architecture**:
+
+```text
+Experience
+    ↓
+Model / Pattern
+    ↓
+Applicability
+    ↓
+Influence
+    ↓
+Verification
+    ↓
+Reorganization
+    ↓
+FINAL RESPONSE
+```
+
+Reorganization modifies memory for future tasks. It does not turn the current task into an infinite memory-update cycle.
