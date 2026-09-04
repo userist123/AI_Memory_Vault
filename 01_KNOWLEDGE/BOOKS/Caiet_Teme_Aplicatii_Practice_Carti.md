@@ -134,11 +134,23 @@ relations:
   target: 01_KNOWLEDGE/BOOKS/SCALING_MLOps_Distribution_Shift_and_Monitoring.md
 - relation: references
   target: 01_KNOWLEDGE/BOOKS/SCALING_Transformer_Curriculum_Learning_and_Self_Paced_Training.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/FRONTIER_DDIA_CRDTs_and_Local_First_Replication.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/FRONTIER_AIMA_Markov_Logic_Networks_and_Relational_Inference.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/FRONTIER_Agent_Tree_of_Thoughts_and_Graph_Reasoning.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/FRONTIER_RAG_Semantic_Caching_and_Vector_Quantization.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/FRONTIER_MLOps_Continual_Learning_and_Experience_Replay.md
+- relation: references
+  target: 01_KNOWLEDGE/BOOKS/FRONTIER_Transformer_State_Space_Models_and_Mamba.md
 ---
 
 
 
-# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (54 Teme Rezolvate)
+# Caiet de Teme & Aplicații Practice: Laboratorul Celor 6 Cărți (60 Teme Rezolvate)
 
 **Rol**: Manual operațional de laborator și exerciții rezolvate pentru transpunerea teoriei în sarcini practice de producție.  
 **Metodologie**: Învățare activă $\to$ Notițe sintetice $\to$ Teme rezolvate pas cu pas $\to$ Playbook de execuție imediată.
@@ -290,3 +302,14 @@ Ghidul complet cu implementările în cod este documentat în:
 | T52 | LLM Apps | Prefix Cache Simulator cu Radix Tree | KV cache sharing, radix tree, prefix matching, token savings |
 | T53 | ML Systems | Distribution Shift Detector cu KS Test si PSI | KS test, PSI, covariate shift, alertare multi-nivel |
 | T54 | Deep Learning | Curriculum Learning Trainer cu Pacing Function | Difficulty scoring, pacing function, competence selection |
+
+### Nivelul 10 — Arhitecturi Frontier si Rationament Avansat (Teme 55-60)
+
+| # | Carte | Tema | Concepte |
+| :--- | :--- | :--- | :--- |
+| T55 | DDIA | CvRDT Distributed State Engine | PN-Counter, LWW-Element-Set, strong eventual consistency |
+| T56 | AIMA | Markov Logic Network & MaxWalkSAT MAP Solver | Logica de Ordinul I ponderata, Ground Formulas, MaxWalkSAT |
+| T57 | Agent | Tree-of-Thoughts (ToT) Search Planner | Thought decomposition, state evaluation, beam search, pruning |
+| T58 | LLM Apps | Semantic Caching & ANN Search Engine | Semantic cache, cosine similarity thresholding, mock embeddings |
+| T59 | ML Systems | Experience Replay & Reservoir Streaming Sampler | Reservoir sampling (Algoritmul R), prequential evaluation |
+| T60 | Deep Learning | Selective State Space Model & Discretization | Continuous SSM, ZOH discretization, Mamba selective recurrence |

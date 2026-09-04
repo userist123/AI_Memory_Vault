@@ -4042,6 +4042,646 @@ print(f"[T54] PASS - Curriculum learning cu pacing function demonstrat")
 3. Observa ca primele epoci folosesc doar 20% din dataset (cele mai usoare)
 4. Conecteaza: structura acestui caiet de teme ESTE un curriculum — Tier 1 (usor) pana la Tier 9 (avansat)
 
+---
+
+# Nivelul 10 — Arhitecturi Frontier si Rationament Avansat
+
+---
+
+## Tema 55: CvRDT Distributed State Engine (DDIA — CRDTs & Local-First)
+
+**Obiectiv**: Implementeaza un motor de date convergent fara coordonare centralizata bazat pe PN-Counter si LWW-Element-Set (State-based CRDTs).
+
+**Concepte Cheie**: Join-semilattice, asociativitate, comutativitate, idempotență, PN-Counter, Last-Write-Wins Element Set, strong eventual consistency.
+
+```python
+import time
+from copy import deepcopy
+
+class PNCounter:
+    """Positive-Negative Counter CvRDT suportand incrementari si decrementari."""
+    
+    def __init__(self, node_id: str):
+        self.node_id = node_id
+        self.P: dict[str, int] = {}
+        self.N: dict[str, int] = {}
+    
+    def increment(self, amount: int = 1):
+        self.P[self.node_id] = self.P.get(self.node_id, 0) + amount
+    
+    def decrement(self, amount: int = 1):
+        self.N[self.node_id] = self.N.get(self.node_id, 0) + amount
+    
+    def value(self) -> int:
+        return sum(self.P.values()) - sum(self.N.values())
+    
+    def merge(self, other: 'PNCounter'):
+        """Unire comutativa, asociativa si幂potenta (join semilattice)."""
+        all_p_nodes = set(self.P.keys()).union(other.P.keys())
+        for n in all_p_nodes:
+            self.P[n] = max(self.P.get(n, 0), other.P.get(n, 0))
+        
+        all_n_nodes = set(self.N.keys()).union(other.N.keys())
+        for n in all_n_nodes:
+            self.N[n] = max(self.N.get(n, 0), other.N.get(n, 0))
+
+class LWWElementSet:
+    """Last-Write-Wins Element Set CvRDT suportand adaugari si stergeri cu timestamp."""
+    
+    def __init__(self):
+        self.add_set: dict[str, float] = {}    # element -> timestamp
+        self.remove_set: dict[str, float] = {} # element -> timestamp
+    
+    def add(self, element: str, timestamp: float = None):
+        ts = timestamp if timestamp is not None else time.time()
+        self.add_set[element] = max(self.add_set.get(element, 0.0), ts)
+    
+    def remove(self, element: str, timestamp: float = None):
+        ts = timestamp if timestamp is not None else time.time()
+        self.remove_set[element] = max(self.remove_set.get(element, 0.0), ts)
+    
+    def lookup(self, element: str) -> bool:
+        if element not in self.add_set:
+            return False
+        add_ts = self.add_set[element]
+        rem_ts = self.remove_set.get(element, 0.0)
+        return add_ts > rem_ts
+    
+    def read(self) -> set[str]:
+        return {e for e in self.add_set if self.lookup(e)}
+    
+    def merge(self, other: 'LWWElementSet'):
+        for e, ts in other.add_set.items():
+            self.add_set[e] = max(self.add_set.get(e, 0.0), ts)
+        for e, ts in other.remove_set.items():
+            self.remove_set[e] = max(self.remove_set.get(e, 0.0), ts)
+
+
+# === LABORATOR ===
+# Scenariu: 3 Replicas (Node A, Node B, Node C) in split-brain/offline
+
+# 1. PN-Counter Test
+counter_A = PNCounter("A")
+counter_B = PNCounter("B")
+counter_C = PNCounter("C")
+
+counter_A.increment(10)
+counter_B.increment(5)
+counter_B.decrement(2)
+counter_C.increment(20)
+counter_C.decrement(7)
+
+# Sincronizare mesh (A primeste de la B si C)
+counter_A.merge(counter_B)
+counter_A.merge(counter_C)
+
+# B primeste de la A
+counter_B.merge(counter_A)
+
+print(f"[T55] PN-Counter Node A Value: {counter_A.value()}")
+print(f"[T55] PN-Counter Node B Value: {counter_B.value()}")
+assert counter_A.value() == (10 + 5 - 2 + 20 - 7) == 26
+assert counter_A.value() == counter_B.value()
+
+# 2. LWW-Element-Set Test
+set_A = LWWElementSet()
+set_B = LWWElementSet()
+
+t0 = 100.0
+set_A.add("doc1.md", timestamp=t0)
+set_A.add("doc2.md", timestamp=t0 + 1.0)
+
+set_B.add("doc3.md", timestamp=t0 + 2.0)
+set_B.remove("doc1.md", timestamp=t0 + 3.0) # Sters concurent mai tarziu
+
+# Merge bidirectional
+set_A.merge(set_B)
+set_B.merge(set_A)
+
+print(f"[T55] LWW-Set Node A: {set_A.read()}")
+print(f"[T55] LWW-Set Node B: {set_B.read()}")
+assert set_A.read() == {"doc2.md", "doc3.md"}
+assert set_A.read() == set_B.read()
+print("[T55] PASS - CvRDT strong eventual consistency demonstrat.")
+```
+
+**Playbook de Executie**:
+1. Ruleaza codul si urmareste cum nodurile converg la aceeasi stare fara un coordonator central.
+2. Observa cum ordinea unificarii (`merge`) nu altereaza rezultatul final.
+3. Conecteaza mental: Aceasta este baza pentru sincronizarea offline a fisierelor Markdown in aplicatii Local-First.
+
+---
+
+## Tema 56: Markov Logic Network & MaxWalkSAT MAP Solver (AIMA — Raționament Relațional)
+
+**Obiectiv**: Construieste un mic motor de Rețele Markov Logic care efectuează *grounding* peste constante și rezolvă starea de probabilitate maximă (MAP) prin MaxWalkSAT.
+
+**Concepte Cheie**: Logica de Ordinul I ponderata, Ground Atoms, functii de potential, MaxWalkSAT, Gibbs distribution.
+
+```python
+import random
+from itertools import product
+
+class GroundFormula:
+    """O instanta a unei formule FOL ponderate peste constante specifice."""
+    def __init__(self, weight: float, clause: list[tuple[str, bool]]):
+        # clause: [(atom_name, expected_truth_val)] - e.g. [("Smokes(Alice)", True), ("Cancer(Alice)", False)]
+        self.weight = weight
+        self.clause = clause
+    
+    def is_satisfied(self, world: dict[str, bool]) -> bool:
+        """Clauza este disjunctie: cel putin un literal trebuie sa fie satisfacut."""
+        for atom, sign in self.clause:
+            if world.get(atom, False) == sign:
+                return True
+        return False
+
+class MarkovLogicNetwork:
+    def __init__(self):
+        self.ground_formulas: list[GroundFormula] = []
+        self.atoms: set[str] = set()
+    
+    def add_ground_rule(self, weight: float, clause: list[tuple[str, bool]]):
+        self.ground_formulas.append(GroundFormula(weight, clause))
+        for atom, _ in clause:
+            self.atoms.add(atom)
+    
+    def score_world(self, world: dict[str, bool]) -> float:
+        """Suma ponderilor formulelor satisfacute in lumea data."""
+        return sum(gf.weight for gf in self.ground_formulas if gf.is_satisfied(world))
+    
+    def max_walk_sat(self, max_tries: int = 50, max_flips: int = 100, p_random: float = 0.3) -> tuple[dict[str, bool], float]:
+        """MaxWalkSAT pentru optimizarea lumii MAP."""
+        best_world = None
+        best_score = float('-inf')
+        atom_list = list(self.atoms)
+        
+        for _ in range(max_tries):
+            # Lume initiala aleatorie
+            current_world = {a: random.choice([True, False]) for a in atom_list}
+            current_score = self.score_world(current_world)
+            
+            for _ in range(max_flips):
+                if current_score > best_score:
+                    best_score = current_score
+                    best_world = dict(current_world)
+                
+                # Gaseste formulele nesatisfacute
+                unsat = [gf for gf in self.ground_formulas if not gf.is_satisfied(current_world)]
+                if not unsat:
+                    return current_world, current_score
+                
+                selected_clause = random.choice(unsat)
+                
+                if random.random() < p_random:
+                    # Random walk: alege un atom aleatoriu din clauza
+                    flip_atom = random.choice(selected_clause.clause)[0]
+                else:
+                    # Greedy: alege atomul care maximizeaza scorul
+                    best_flip = None
+                    max_gain = float('-inf')
+                    for atom, _ in selected_clause.clause:
+                        current_world[atom] = not current_world[atom]
+                        sc = self.score_world(current_world)
+                        if sc > max_gain:
+                            max_gain = sc
+                            best_flip = atom
+                        current_world[atom] = not current_world[atom] # revert
+                    flip_atom = best_flip
+                
+                current_world[flip_atom] = not current_world[flip_atom]
+                current_score = self.score_world(current_world)
+                
+        return best_world, best_score
+
+
+# === LABORATOR ===
+mln = MarkovLogicNetwork()
+
+# Reguli:
+# 1. Smokes(x) => Cancer(x) (w = 2.0) <=> (!Smokes(x) v Cancer(x))
+# 2. Friends(x, y) ^ Smokes(x) => Smokes(y) (w = 1.5) <=> (!Friends(x,y) v !Smokes(x) v Smokes(y))
+# 3. Evidenta fixa (w mare): Friends(A, B)=True, Smokes(A)=True
+
+# Formule instantiante pentru A si B:
+mln.add_ground_rule(2.0, [("Smokes(A)", False), ("Cancer(A)", True)])
+mln.add_ground_rule(2.0, [("Smokes(B)", False), ("Cancer(B)", True)])
+mln.add_ground_rule(1.5, [("Friends(A,B)", False), ("Smokes(A)", False), ("Smokes(B)", True)])
+# Evidenta:
+mln.add_ground_rule(10.0, [("Friends(A,B)", True)])
+mln.add_ground_rule(10.0, [("Smokes(A)", True)])
+
+best_world, best_score = mln.max_walk_sat()
+print(f"[T56] MaxWalkSAT MAP World Score: {best_score}")
+print(f"[T56] Best World Atoms:")
+for atom, val in sorted(best_world.items()):
+    print(f"       {atom}: {val}")
+
+# Verificare ca relatiile au propagat fumatul si riscul de cancer la prietenul B
+assert best_world["Smokes(A)"] == True
+assert best_world["Friends(A,B)"] == True
+assert best_world["Smokes(B)"] == True
+assert best_world["Cancer(A)"] == True
+print("[T56] PASS - Inferenta relationala probabilistica validata.")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum MaxWalkSAT echilibreaza constrangerile rigide si cele probabilistice.
+2. Modifica ponderea regulii `Friends(A,B) => Smokes(B)` la `0.1` si observa cum B nu mai este constrans sa fumeze.
+3. Conecteaza cu `01_KNOWLEDGE/`: Teoria MLN permite construirea de reguli soft peste relatiile din Obsidian Vault.
+
+---
+
+## Tema 57: Tree-of-Thoughts (ToT) Search Planner (Agent — Raționament Deliberativ)
+
+**Obiectiv**: Implementează un planificator Tree-of-Thoughts cu explorare Beam Search și autoevaluare a stărilor intermediare.
+
+**Concepte Cheie**: Thought decomposition, state evaluation, beam search, branch pruning, backtracking deliberativ.
+
+```python
+from dataclasses import dataclass, field
+from typing import Optional
+
+@dataclass
+class ThoughtState:
+    path: list[str]
+    current_value: float
+    score: float = 0.0
+    depth: int = 0
+    is_terminal: bool = False
+
+class TreeOfThoughtsPlanner:
+    """Motor de planificare ToT bazat pe Beam Search cu evaluare euristică."""
+    
+    def __init__(self, target: float = 24.0, beam_width: int = 3, max_depth: int = 4):
+        self.target = target
+        self.beam_width = beam_width
+        self.max_depth = max_depth
+        self.pruned_branches = 0
+        self.explored_nodes = 0
+    
+    def generate_thoughts(self, state: ThoughtState, available_ops: list[str]) -> list[ThoughtState]:
+        """Genereaza actiuni candidate posibile din starea curenta."""
+        next_states = []
+        for op in available_ops:
+            val = state.current_value
+            if op == "+3": new_val = val + 3
+            elif op == "*2": new_val = val * 2
+            elif op == "-1": new_val = val - 1
+            elif op == "/2": new_val = val / 2
+            else: continue
+            
+            new_path = state.path + [op]
+            next_states.append(ThoughtState(
+                path=new_path,
+                current_value=new_val,
+                depth=state.depth + 1,
+                is_terminal=(new_val == self.target)
+            ))
+        return next_states
+    
+    def evaluate_thought(self, state: ThoughtState) -> float:
+        """Autoevaluare (State Evaluator): scor bazat pe apropierea de tinta si penalizare la depasire."""
+        diff = abs(state.current_value - self.target)
+        if state.is_terminal:
+            return 100.0
+        # Euristic: mai aproape = scor mai mare, dar evitam valori negative/imposibile
+        if state.current_value <= 0:
+            return 0.0 # Prune instant
+        return 1.0 / (1.0 + diff)
+    
+    def solve(self, initial_value: float) -> Optional[ThoughtState]:
+        """Ruleaza Beam Search peste arborele de ganduri."""
+        root = ThoughtState(path=[f"start({initial_value})"], current_value=initial_value, depth=0)
+        frontier = [root]
+        operations = ["+3", "*2", "-1", "/2"]
+        
+        for d in range(self.max_depth):
+            candidates = []
+            for s in frontier:
+                if s.is_terminal:
+                    return s
+                self.explored_nodes += 1
+                children = self.generate_thoughts(s, operations)
+                for child in children:
+                    child.score = self.evaluate_thought(child)
+                    if child.score <= 0.0:
+                        self.pruned_branches += 1
+                    else:
+                        candidates.append(child)
+            
+            if not candidates:
+                break
+                
+            # Beam selection: pastram top-k
+            candidates.sort(key=lambda x: x.score, reverse=True)
+            frontier = candidates[:self.beam_width]
+            
+            # Verificam daca am gasit solutia
+            for s in frontier:
+                if s.is_terminal:
+                    return s
+                    
+        return frontier[0] if frontier else None
+
+
+# === LABORATOR ===
+planner = TreeOfThoughtsPlanner(target=24.0, beam_width=3, max_depth=5)
+solution = planner.solve(initial_value=5.0)
+
+print(f"[T57] Solutie gasita: {' -> '.join(solution.path)}")
+print(f"[T57] Valoare finala: {solution.current_value}")
+print(f"[T57] Noduri explorate: {planner.explored_nodes}, Ramuri taiate (Pruned): {planner.pruned_branches}")
+
+assert solution.current_value == 24.0
+print("[T57] PASS - Planificare Tree-of-Thoughts cu Beam Search si Pruning validata.")
+```
+
+**Playbook de Executie**:
+1. Ruleaza codul si urmareste cum ToT atinge exact targetul `24.0` din `5.0`.
+2. Observa cum ramurile care produc valori invalide sunt eliminate (*pruned*) fara explorare inutila.
+3. Conecteaza cu `AGENTS.md`: Algoritmul permite consiliului de sub-agenti sa delibereze arhitecturi inainte de executie.
+
+---
+
+## Tema 58: Semantic Caching & Approximate Nearest Neighbors Engine (LLM Apps — Optimizare RAG)
+
+**Obiectiv**: Implementează un cache semantic bazat pe cosine similarity și indexare spațială pentru a reduce latența cererilor repetitive la <2ms.
+
+**Concepte Cheie**: Semantic cache, cosine similarity, threshold gating, embedding representation, cache hit/miss semantics.
+
+```python
+import math
+import time
+
+def cosine_similarity(v1: list[float], v2: list[float]) -> float:
+    dot = sum(a * b for a, b in zip(v1, v2))
+    norm1 = math.sqrt(sum(a * a for a in v1))
+    norm2 = math.sqrt(sum(b * b for b in v2))
+    if norm1 == 0 or norm2 == 0: return 0.0
+    return dot / (norm1 * norm2)
+
+class MockEmbedder:
+    """Genereaza vectori deterministi bazati pe bag-of-words pentru testare pura in Python."""
+    def __init__(self, vocab_size: int = 16):
+        self.vocab = ["wal", "sqlite", "ddia", "crdt", "raft", "storage", "engine", "consensus",
+                      "kafka", "cache", "vector", "memory", "agent", "planning", "mamba", "audit"]
+        self.idx = {w: i for i, w in enumerate(self.vocab)}
+    
+    def embed(self, text: str) -> list[float]:
+        vec = [0.0] * len(self.vocab)
+        words = text.lower().split()
+        for w in words:
+            if w in self.idx:
+                vec[self.idx[w]] += 1.0
+        # Normalizare L2
+        norm = math.sqrt(sum(x * x for x in vec))
+        if norm > 0:
+            vec = [x / norm for x in vec]
+        return vec
+
+class SemanticCache:
+    def __init__(self, threshold: float = 0.85):
+        self.threshold = threshold
+        self.embedder = MockEmbedder()
+        self.cache_entries: list[dict] = []
+        self.stats = {"hits": 0, "misses": 0}
+    
+    def query(self, prompt: str) -> tuple[bool, str, float]:
+        q_vec = self.embedder.embed(prompt)
+        best_score = 0.0
+        best_entry = None
+        
+        for entry in self.cache_entries:
+            sim = cosine_similarity(q_vec, entry["vector"])
+            if sim > best_score:
+                best_score = sim
+                best_entry = entry
+                
+        if best_entry and best_score >= self.threshold:
+            self.stats["hits"] += 1
+            return True, best_entry["response"], best_score
+        
+        self.stats["misses"] += 1
+        return False, "", best_score
+    
+    def store(self, prompt: str, response: str):
+        vec = self.embedder.embed(prompt)
+        self.cache_entries.append({
+            "prompt": prompt,
+            "vector": vec,
+            "response": response,
+            "timestamp": time.time()
+        })
+
+
+# === LABORATOR ===
+cache = SemanticCache(threshold=0.80)
+
+# 1. Populare initiala
+cache.store("Cum configurez WAL pe SQLite storage engine?", "Modul WAL se activeaza prin PRAGMA journal_mode=WAL;")
+
+# 2. Interogare exact similar semantic
+hit, resp, sim = cache.query("Cum se activeaza modul WAL in baza de date SQLite storage?")
+print(f"[T58] Query 1 Result -> Hit: {hit}, Sim: {sim:.3f}, Response: {resp}")
+assert hit == True
+assert "PRAGMA journal_mode=WAL" in resp
+
+# 3. Interogare complet diferita
+hit, resp, sim = cache.query("Cum functioneaza consensul Raft in clustere distribuite?")
+print(f"[T58] Query 2 Result -> Hit: {hit}, Sim: {sim:.3f}")
+assert hit == False
+
+print(f"[T58] Cache Stats: {cache.stats}")
+print("[T58] PASS - Semantic cache cu threshold similarity functional.")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum expresii diferite semantic dar similare ca vector genereaza un `Cache Hit`.
+2. Modifica threshold-ul la `0.95` si observa cum matchingul devine mai strict.
+3. Conecteaza cu `memory_controller`: Cachingul semantic permite servirea instantanee a raspunsurilor la interogari similare.
+
+---
+
+## Tema 59: Experience Replay & Reservoir Streaming Sampler (MLOps — Învățare Continuă)
+
+**Obiectiv**: Implementează un buffer de *Experience Replay* utilizând *Reservoir Sampling (Algoritmul R)* și bucla de evaluare *Prequential (Test-Then-Train)*.
+
+**Concepte Cheie**: Reservoir sampling, continual learning, experience replay buffer, prequential evaluation, combaterea catastrophic forgetting.
+
+```python
+import random
+
+class ReservoirReplayBuffer:
+    """Buffer de replay de capacitate fixa K utilizand Reservoir Sampling peste flux infinit."""
+    
+    def __init__(self, capacity: int = 50):
+        self.capacity = capacity
+        self.buffer: list[dict] = []
+        self.total_seen = 0
+        random.seed(42)
+    
+    def add(self, sample: dict):
+        self.total_seen += 1
+        if len(self.buffer) < self.capacity:
+            self.buffer.append(sample)
+        else:
+            # Algoritmul R: inlocuire cu probabilitate capacity / total_seen
+            j = random.randint(0, self.total_seen - 1)
+            if j < self.capacity:
+                self.buffer[j] = sample
+    
+    def sample_batch(self, batch_size: int) -> list[dict]:
+        k = min(batch_size, len(self.buffer))
+        return random.sample(self.buffer, k)
+
+class StreamingLinearClassifier:
+    """Model simplu online care invata incremental cu protectie prin Replay."""
+    
+    def __init__(self, n_features: int = 2, lr: float = 0.05):
+        self.weights = [0.0] * n_features
+        self.bias = 0.0
+        self.lr = lr
+    
+    def predict_proba(self, x: list[float]) -> float:
+        z = sum(w * xi for w, xi in zip(self.weights, x)) + self.bias
+        # Sigmoid
+        return 1.0 / (1.0 + (2.718281828459045 ** (-z)))
+    
+    def update(self, x: list[float], y: int):
+        p = self.predict_proba(x)
+        err = y - p
+        for i in range(len(self.weights)):
+            self.weights[i] += self.lr * err * x[i]
+        self.bias += self.lr * err
+
+
+# === LABORATOR: Prequential Loop ===
+buffer = ReservoirReplayBuffer(capacity=20)
+model = StreamingLinearClassifier(n_features=2, lr=0.1)
+
+# Generam un flux de 100 de date cu o schimbare usoara de distributie (Drift)
+stream_data = []
+for i in range(100):
+    if i < 50:
+        x = [random.gauss(1.0, 0.5), random.gauss(1.0, 0.5)]
+        y = 1 if (x[0] + x[1]) > 2.0 else 0
+    else: # Drift: relatia se schimba usor
+        x = [random.gauss(-1.0, 0.5), random.gauss(-1.0, 0.5)]
+        y = 1 if (x[0] - x[1]) > 0.0 else 0
+    stream_data.append((x, y))
+
+prequential_errors = []
+
+for t, (x_t, y_t) in enumerate(stream_data):
+    # 1. TEST (Predictie pe date noi inainte de antrenare)
+    pred = 1 if model.predict_proba(x_t) >= 0.5 else 0
+    prequential_errors.append(1 if pred != y_t else 0)
+    
+    # 2. TRAIN pe esantionul curent
+    model.update(x_t, y_t)
+    
+    # 3. REPLAY: Antrenament pe un mic batch din memoria istorica
+    if len(buffer.buffer) > 0:
+        replay_batch = buffer.sample_batch(4)
+        for old_sample in replay_batch:
+            model.update(old_sample["x"], old_sample["y"])
+            
+    # 4. BUFFER UPDATE cu Reservoir Sampling
+    buffer.add({"x": x_t, "y": y_t, "t": t})
+
+# Evaluam acuratetea cumulativa pe a doua jumatate a fluxului
+err_second_half = sum(prequential_errors[50:]) / 50.0
+print(f"[T59] Total stream processed: {buffer.total_seen}, Buffer size: {len(buffer.buffer)}")
+print(f"[T59] Prequential Error Rate (A doua jumatate): {err_second_half:.3f}")
+
+assert len(buffer.buffer) == 20
+assert err_second_half < 0.40
+print("[T59] PASS - Experience replay buffer & streaming continual learning validate.")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum Reservoir Sampling mentine o distributie uniforma peste cele 100 de elemente.
+2. Compara rata de eroare in timp pe masura ce modelul se adapteaza prin repetare din memorie.
+3. Conecteaza cu `01_KNOWLEDGE/`: Păstrarea exemplelor cheie în memoria de lucru previne degradarea deciziilor autonome.
+
+---
+
+## Tema 60: Selective State Space Model & Discretization (Deep Learning — Mamba SSM)
+
+**Obiectiv**: Implementează un model de spațiu de stări continuu (SSM) discretizat prin Zero-Order Hold (ZOH) cu recurență selectivă dependentă de intrare.
+
+**Concepte Cheie**: Continuous state space equations, ZOH discretization, input-dependent selection $\Delta(x), B(x), C(x)$, $\mathcal{O}(1)$ inferență recurentă.
+
+```python
+import math
+
+class SelectiveSSMCell:
+    """Implementare pura a unei celule Selective State Space (Mamba-style)."""
+    
+    def __init__(self, state_dim: int = 4):
+        self.state_dim = state_dim
+        # Matricea A structurata continuu (HiPPO-like diagonal)
+        self.A = [-0.5 * (i + 1) for i in range(state_dim)]
+        # Ponderi pentru proiectiile dinamice ale lui Delta, B, C
+        self.w_delta = [0.1 * (i + 1) for i in range(state_dim)]
+        self.w_b = [0.2 * (i + 1) for i in range(state_dim)]
+        self.w_c = [0.3 * (i + 1) for i in range(state_dim)]
+        self.D = 1.0 # Conexiune reziduala
+    
+    def forward_step(self, x_t: float, h_prev: list[float]) -> tuple[float, list[float]]:
+        """Un pas de inferenta recurenta O(1) in timp si spatiu."""
+        # 1. Calculul parametrilor dependenti de intrare (Selection Mechanism)
+        delta_t = [math.log(1.0 + math.exp(w * x_t)) for w in self.w_delta] # Softplus
+        b_t = [w * x_t for w in self.w_b]
+        c_t = [w * x_t for w in self.w_c]
+        
+        # 2. Discretizarea ZOH (Zero-Order Hold)
+        # A_bar = exp(Delta * A)
+        # B_bar = Delta * B
+        a_bar = [math.exp(d * a) for d, a in zip(delta_t, self.A)]
+        b_bar = [d * b for d, b in zip(delta_t, b_t)]
+        
+        # 3. Recurenta de stare: h_t = A_bar * h_{t-1} + B_bar * x_t
+        h_t = [a * h + b * x_t for a, h, b in zip(a_bar, h_prev, b_bar)]
+        
+        # 4. Proiectia de iesire: y_t = C_t * h_t + D * x_t
+        y_t = sum(c * h for c, h in zip(c_t, h_t)) + self.D * x_t
+        
+        return y_t, h_t
+    
+    def process_sequence(self, sequence: list[float]) -> list[float]:
+        """Proceseaza o secventa completa secvential."""
+        h = [0.0] * self.state_dim
+        outputs = []
+        for x in sequence:
+            y, h = self.forward_step(x, h)
+            outputs.append(y)
+        return outputs
+
+
+# === LABORATOR ===
+ssm = SelectiveSSMCell(state_dim=4)
+
+input_signal = [1.0, 0.0, 0.0, 2.0, -1.0, 0.5, 0.0, 0.0]
+output_signal = ssm.process_sequence(input_signal)
+
+print(f"[T60] Input Signal:  {input_signal}")
+print(f"[T60] Output Signal: {[round(y, 4) for y in output_signal]}")
+
+# Verificari de proprietati fundamentale
+assert len(output_signal) == len(input_signal)
+# Efectul memoriei: la pasul 2 (input 0.0 dupa 1.0), iesirea nu este zero datorita starii ascunse h
+assert output_signal[1] != 0.0
+print(f"[T60] Persistent Memory Response at step 1: {output_signal[1]:.4f}")
+print("[T60] PASS - Selective State Space Model discretizat cu ZOH validat.")
+```
+
+**Playbook de Executie**:
+1. Ruleaza si observa cum starea ascunsa $h_t$ retine impulsurile trecute chiar si atunci cand semnalul de intrare devine `0.0`.
+2. Observa ca fiecare pas are complexitate $\mathcal{O}(1)$ fara a stoca un KV cache crescator.
+3. Conecteaza cu `01_KNOWLEDGE/`: Arhitectura Mamba permite procesarea eficienta a fisierelor masive de log si conversatii lungi.
+
 
 ## Concluzie: De la Notite la Executie Sigura (42 Teme de Laborator Rezolvate)
 
