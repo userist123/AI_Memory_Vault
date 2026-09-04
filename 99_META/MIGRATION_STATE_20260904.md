@@ -2,7 +2,7 @@
 
 ## State provenance
 
-Current structural baseline commit: `509ea7ab7c06dd4ff5179fb96cf5b8c4b74091a9`.
+Current structural main commit: `bb5ef877222d1bbbdbdccd1a2ff6441e0871ff64`.
 
 ## Completed structural batches
 
@@ -49,6 +49,23 @@ Current structural baseline commit: `509ea7ab7c06dd4ff5179fb96cf5b8c4b74091a9`.
    - `scripts/label_council_outcome.py` → `30_SCRIPTS/observability/label_council_outcome.py`
    - `scripts/generate_b4_baseline.py` → `40_EXPERIMENTS/harnesses/generate_b4_baseline.py`
    - `scripts/run_ablation_experiment.py` → `40_EXPERIMENTS/harnesses/run_ablation_experiment.py`
+
+7. Consolidated root project workspaces:
+   - project workspace tree → `02_PRODUCT/projects/workspaces/`
+   - generated programs → `50_ARTIFACTS/generated_programs/`
+   - standalone design HTML → `02_PRODUCT/projects/workspaces/arhitectura_asistent_ai_jarvis.html`
+   - `proiect.pdf` → `50_ARTIFACTS/proiect.pdf`
+
+8. Consolidated root evaluation reports:
+   - `reports/b4` → `07_EVALUATION/reports/b4`
+   - `reports/b5_baseline` → `07_EVALUATION/reports/b5_baseline`
+   - `reports/baseline_ab` → `07_EVALUATION/reports/baseline_ab`
+   - `reports/total_system_reality_test_01` → `07_EVALUATION/reports/total_system_reality_test_01`
+
+9. Updated root operating contracts to use the numbered spine:
+   - `AGENTS.md` now points coordination to `00_GOVERNANCE/coordination/` and retired `99_SYSTEM` paths are explicitly marked non-canonical.
+   - `CLAUDE.md` now points memory/procedure/project/script paths at their consolidated locations.
+   - `30_SCRIPTS/skills/skill_ingestion.py` provenance strings now use its current path.
 
 ## Remaining non-spine roots requiring compatibility-aware treatment
 
