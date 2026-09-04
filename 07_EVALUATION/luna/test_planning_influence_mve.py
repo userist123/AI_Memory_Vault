@@ -23,14 +23,23 @@ def test_non_applicable_memory_neutralizes_to_uniform():
     assert stale.priors == {branch: 0.25 for branch in scenario.branches}
 
 
+def test_memory_recommendation_is_independent_of_oracle_outcome():
+    scenarios = build_scenarios(30)
+    assert any(s.memory_recommended != s.optimal for s in scenarios)
+    assert any(s.memory_recommended == s.optimal for s in scenarios)
+    for scenario in scenarios:
+        memory = compile_memory(scenario, "APPLICABLE", f"m-{scenario.scenario_id}")
+        assert memory.source_branch == scenario.memory_recommended
+        assert memory.source_branch in scenario.branches
+
+
 def test_treatment_changes_search_behavior_against_advisory_control():
-    scenario = build_scenarios(1)[0]
+    scenario = next(s for s in build_scenarios(30) if s.memory_recommended != s.optimal)
     uniform = {branch: 0.25 for branch in scenario.branches}
     treatment = compile_memory(scenario, "APPLICABLE", "m1").priors
     control_trace = run_planner(scenario, uniform)
     treatment_trace = run_planner(scenario, treatment)
     assert control_trace.selected_branches != treatment_trace.selected_branches
-    assert treatment_trace.success is True
 
 
 def test_experiment_has_thirty_scenarios_and_four_arms():
