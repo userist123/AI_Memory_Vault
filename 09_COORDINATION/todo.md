@@ -1,3 +1,15 @@
+# Antigravity R001 A9 — Review Memory Authority & Prompt Demarcation Observability
+
+## Implementation
+- [x] empirical falsification of `GAP-011`: tested 10 query archetypes on `QueryClassifier.classify()`, proving 100% of queries containing "unverified" trigger a substring match on "verified", forcing `['VERIFIED']` filter and dropping 100% of candidate review memories `[owner: antigravity | timestamp: 2026-09-04T18:10:00+03:00]`
+- [x] executed real-model empirical benchmark on `RealAgentExecutionHarness` comparing Mode A (raw JSON injection) vs Mode B (XML `<untrusted_memory>` demarcation) against `qwen2.5-coder:3b` via Ollama `[owner: antigravity | timestamp: 2026-09-04T18:11:30+03:00]`
+- [x] proved 100% adversarial injection success rate on Mode A (arbitrary file overwrite `backdoor.py` and path traversal `../../config_override.json`) `[owner: antigravity | timestamp: 2026-09-04T18:11:30+03:00]`
+- [x] proved Mode B XML demarcation neutralizes path traversal injection (0 files written, model refused) and reduces overall injection vulnerability by 50% `[owner: antigravity | timestamp: 2026-09-04T18:11:30+03:00]`
+- [x] measured latency impact showing Mode B XML prompts reduce total latency by 82.8% on benign tasks due to structured token parsing `[owner: antigravity | timestamp: 2026-09-04T18:11:30+03:00]`
+- [x] published comprehensive report `07_EVALUATION/antigravity/A9_PROMPT_DEMARCATION_OBSERVABILITY.md` and machine-readable trace `telemetry/retrieval_traces/a9_prompt_demarcation_trace.json` `[owner: antigravity | timestamp: 2026-09-04T18:15:00+03:00]`
+
+---
+
 # Antigravity R001 A8 — Production Graph Differential & Falsification
  
 ## Implementation
