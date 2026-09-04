@@ -865,11 +865,320 @@ def compute_cosine_lr(step: int, total_steps: int, warmup_steps: int, lr_max: fl
 
 ---
 
-## Concluzie: De la Notițe la Execuție Sigură (18 Teme de Laborator Rezolvate)
+## Tema 19 (DDIA Măiestrie — Martin Kleppmann): Simulator Snapshot Isolation & Detecție Write Skew (SSI)
 
-Cu aceste 18 teme rezolvate:
-- **T1-T6**: Stocare WAL, căutare $A^*$, scoping de agenți, demarcare XML, monitorizare PSI și atenție cu LoRA.
-- **T7-T12**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fișiere cu limită ermetică, fuziune RRF cu MRR, point-in-time join fără scurgere de date și eșantionare Min-p.
-- **T13-T18**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodică, GraphRAG cu Leiden, Weak Supervision Snorkel și optimizatorul AdamW cu Cosine Annealing.
+### 1. Enunțul Problemei
+Simulează un motor de tranzacții în memorie cu Snapshot Isolation care urmărește citirile (`si_read_locks`) și scrierile concurente. Când două tranzacții concurente citesc starea comună a gărzilor medicale și încearcă să modifice rânduri diferite (alice_shift și bob_shift) violând invariantul global, motorul trebuie să detecteze ciclul de anti-dependențe ($T_1 \xrightarrow{rw} T_2 \xrightarrow{rw} T_1$) și să avorteze tranzacția la `commit()`.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+class SerializationFailureError(Exception):
+    """Eroare ridicată la detecția unui conflict de serializabilitate în SSI."""
+    pass
+
+class SerializableSnapshotIsolationEngine:
+    """Simulator minimalist SSI cu detecție de cicluri rw (Kleppmann Ch 7)."""
+    def __init__(self):
+        self.store = {}  # key -> (value, version)
+        self.clock = 0
+        self.active_txs = {}
+        self.si_reads = []  # tuple: (tx_id, key, read_version)
+
+    def begin(self, tx_id: str) -> int:
+        self.clock += 1
+        self.active_txs[tx_id] = {
+            "start": self.clock,
+            "reads": set(),
+            "writes": {}
+        }
+        return self.clock
+
+    def read(self, tx_id: str, key: str) -> int:
+        tx = self.active_txs[tx_id]
+        if key in tx["writes"]:
+            return tx["writes"][key]
+        val, ver = self.store.get(key, (0, 0))
+        tx["reads"].add(key)
+        self.si_reads.append((tx_id, key, ver))
+        return val
+
+    def write(self, tx_id: str, key: str, val: int):
+        self.active_txs[tx_id]["writes"][key] = val
+
+    def commit(self, tx_id: str):
+        tx = self.active_txs[tx_id]
+        # Verificare anti-dependențe concurente (Write Skew cycle)
+        for other_id, k, r_ver in self.si_reads:
+            if other_id != tx_id and other_id in self.active_txs:
+                if k in tx["writes"]:
+                    # other_id a citit cheia k pe care tx_id o scrie
+                    other_writes = self.active_txs[other_id]["writes"]
+                    if any(other_k in tx["reads"] for other_k in other_writes):
+                        raise SerializationFailureError(
+                            f"Write Skew detectat între {tx_id} și {other_id} pe cheile {list(tx['writes'].keys())}"
+                        )
+        self.clock += 1
+        for k, v in tx["writes"].items():
+            self.store[k] = (v, self.clock)
+        del self.active_txs[tx_id]
+        return True
+```
+
+### 3. Playbook Operațional: Ce fac când am concurență pe premise de stare?
+1. **Folosesc `BEGIN IMMEDIATE` în SQLite WAL**: Previne interleaving-ul necontrolat al tranzacțiilor scriitoare concurente.
+2. **Reîncercare cu backoff exponențial**: La apariția `SerializationFailureError`, tranzacția avortată este reluată automat după o pauză scurtă stocastică.
+
+---
+
+## Tema 20 (AIMA Măiestrie — Russell & Norvig): Algoritmul Viterbi pentru Estimarea Stărilor Ascunse (HMM)
+
+### 1. Enunțul Problemei
+Dat fiind un Model Markov Ascuns cu stări meteo ascunse (`Sunny`, `Rainy`) și observații comportamentale (`Walk`, `Shop`, `Clean`), implementează algoritmul Viterbi prin programare dinamică pentru a descoperi secvența optimă de stări reale care maximizează verosimilitatea secvenței de observații.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def viterbi_hmm(states: list[str], observations: list[str], 
+                start_p: dict[str, float], trans_p: dict[str, dict[str, float]], 
+                emit_p: dict[str, dict[str, float]]) -> tuple[list[str], float]:
+    """Algoritmul Viterbi de programare dinamică (Russell & Norvig AIMA Ch 14)."""
+    V = [{}]
+    path = {}
+
+    # Pasul de bază: t = 0
+    for s in states:
+        V[0][s] = start_p[s] * emit_p[s].get(observations[0], 1e-8)
+        path[s] = [s]
+
+    # Pasul inductiv: t > 0
+    for t in range(1, len(observations)):
+        V.append({})
+        new_path = {}
+        for s in states:
+            prob, prev_state = max(
+                (V[t - 1][s_prev] * trans_p[s_prev].get(s, 1e-8) * emit_p[s].get(observations[t], 1e-8), s_prev)
+                for s_prev in states
+            )
+            V[t][s] = prob
+            new_path[s] = path[prev_state] + [s]
+        path = new_path
+
+    # Backtracking: extragerea stării finale cu probabilitate maximă
+    opt_prob, opt_state = max((V[len(observations) - 1][s], s) for s in states)
+    return path[opt_state], opt_prob
+```
+
+### 3. Playbook Operațional: Ce fac la analiza logurilor de telemetrie zgomotoase?
+1. **Modelez logurile ca emisii senzoriale**: Semnalele primite de la agenți pot fi parțiale sau zgomotoase.
+2. **Reconstruiesc starea internă reală prin Viterbi**: Determin succesiunea reală de pași de raționament a agentului înainte de un crash.
+
+---
+
+## Tema 21 (Arhitectura Agenților Măiestrie — Park et al.): Consolidarea Memoriei & Decăderea Ebbinghaus
+
+### 1. Enunțul Problemei
+Implementează funcția de evaluare a accesibilității memoriei bazată pe curba uitării Ebbinghaus ($R = e^{-\lambda \Delta t}$) și un ciclu autonom de noapte (*Sleep Consolidation*) care extrage notițele vechi, le clusterizează după tag-uri și generează o propunere canonică de sinteză cu relații de succesiune (`supersedes`).
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+from dataclasses import dataclass, field
+
+@dataclass
+class EpisodicNote:
+    id: str
+    content: str
+    created_hour: float
+    last_accessed_hour: float
+    importance: int  # 1 la 10
+    tags: list[str]
+
+def compute_ebbinghaus_retention(last_accessed: float, current_hour: float, 
+                                 importance: int, relevance_similarity: float, 
+                                 decay_rate: float = 0.05) -> float:
+    """Scorul de accesibilitate a memoriei cognitive (Park et al. Generative Agents)."""
+    delta_t = max(0.0, current_hour - last_accessed)
+    recency = math.exp(-decay_rate * delta_t)
+    norm_importance = min(1.0, max(0.1, importance / 10.0))
+    return 0.3 * recency + 0.3 * norm_importance + 0.4 * relevance_similarity
+
+def run_agent_sleep_cycle(notes: list[EpisodicNote], current_hour: float, threshold: float = 0.4) -> list[dict]:
+    """Rutina de somn: identifică notițe episodice decăzute și generează sinteze."""
+    stale_notes = [
+        n for n in notes 
+        if compute_ebbinghaus_retention(n.last_accessed_hour, current_hour, n.importance, 0.5) < threshold
+    ]
+    
+    # Grupare pe tematică
+    clusters = {}
+    for n in stale_notes:
+        main_tag = n.tags[0] if n.tags else "general"
+        clusters.setdefault(main_tag, []).append(n)
+        
+    proposals = []
+    for tag, group in clusters.items():
+        if len(group) >= 2:
+            summary = f"Sinteză consolidată pentru tema '{tag}': combină {len(group)} observații episodice."
+            proposals.append({
+                "proposed_title": f"Consolidated Lesson: {tag.capitalize()}",
+                "supersedes": [n.id for n in group],
+                "summary": summary,
+                "lifecycle": "REVIEW"
+            })
+    return proposals
+```
+
+### 3. Playbook Operațional: Ce fac când memoria de lucru depășește pragul de context?
+1. **Rulez ciclul de consolidare în pauzele dintre sarcini**: Previne saturarea contextului cu pași efemeri.
+2. **Promovez doar în starea REVIEW**: Păstrez invariantul `I-003` — agentul propune, dar validarea canonică necesită atestare.
+
+---
+
+## Tema 22 (RAG Măiestrie — Chip Huyen / TruLens): Evaluatorul Triadei RAG & Entropie Semantică
+
+### 1. Enunțul Problemei
+Construiește un evaluator complet pentru Triada RAG (Context Relevance, Faithfulness/Groundedness, Answer Relevance), calculând media armonică a scorurilor și entropia semantică Shannon peste eșantioane multiple pentru detectarea halucinațiilor.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+from collections import Counter
+
+def evaluate_rag_triad(query: str, context: str, response: str) -> dict[str, float]:
+    """Evaluarea chirurgicală a performanței conductei RAG (Chip Huyen Ch 6)."""
+    q_words = set(query.lower().split())
+    c_words = set(context.lower().split())
+    r_words = set(response.lower().split())
+
+    # 1. Context Relevance: fracțiunea de termeni cheie din întrebare prezenți în context
+    ctx_rel = len(q_words & c_words) / max(1, len(q_words))
+
+    # 2. Faithfulness / Groundedness: fracțiunea de afirmații din răspuns susținute de context
+    faith = len(r_words & c_words) / max(1, len(r_words))
+
+    # 3. Answer Relevance: fracțiunea de termeni din interogare direct adresați în răspuns
+    ans_rel = len(q_words & r_words) / max(1, len(q_words))
+
+    # Medie armonică a triadei (penalizează drastic dacă oricare componentă se prăbușește)
+    triad_score = 3.0 / (1.0 / max(1e-4, ctx_rel) + 1.0 / max(1e-4, faith) + 1.0 / max(1e-4, ans_rel))
+
+    return {
+        "context_relevance": ctx_rel,
+        "faithfulness": faith,
+        "answer_relevance": ans_rel,
+        "triad_score": triad_score
+    }
+
+def compute_semantic_entropy(cluster_assignments: list[int]) -> float:
+    """Entropia semantică pe clase de echivalență logică (Farquhar et al. Nature 2024)."""
+    total = len(cluster_assignments)
+    if total <= 0:
+        return 0.0
+    counts = Counter(cluster_assignments)
+    entropy = 0.0
+    for count in counts.values():
+        p = count / total
+        if p > 0:
+            entropy -= p * math.log2(p)
+    return entropy
+```
+
+### 3. Playbook Operațional: Ce fac dacă răspunsul generează scor mic de Faithfulness?
+1. **Nu livrez răspunsul utilizatorului**: Un scor de fidelitate $< 0.70$ indică halucinație probabilă.
+2. **Re-extrag context cu prag de reranking mai ridicat**: Folosesc căutarea hibridă Reciprocal Rank Fusion.
+
+---
+
+## Tema 23 (MLOps Măiestrie — Chip Huyen): Cuantizare Simetrică INT8 & Calculator Memorie KV-Cache
+
+### 1. Enunțul Problemei
+Implementează cuantizarea uniformă simetrică a tensorilor din FP32 în INT8 ($q = \text{round}(r / S)$), funcția inversă de de-cuantizare și un calculator de capacitate VRAM pentru dinamica memoriei KV-cache în generarea autoregresivă pe secvențe lungi.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+def quantize_symmetric_int8(tensor: list[float]) -> tuple[list[int], float]:
+    """Cuantizare simetrică INT8 fără termen zero-point (Chip Huyen Ch 7 & 9)."""
+    max_abs = max(abs(x) for x in tensor) if tensor else 1.0
+    scale = max_abs / 127.0 if max_abs > 0 else 1.0
+    quantized = [max(-127, min(127, round(x / scale))) for x in tensor]
+    return quantized, scale
+
+def dequantize_symmetric_int8(quantized: list[int], scale: float) -> list[float]:
+    """Reconstrucția aproximativă a valorilor reale din INT8."""
+    return [q * scale for q in quantized]
+
+def calculate_kv_cache_memory_mb(n_layers: int, n_kv_heads: int, d_head: int, 
+                                 seq_len: int, batch_size: int = 1, 
+                                 bytes_per_elem: int = 2) -> float:
+    """Calculează memoria VRAM necesară stocării KV-Cache în decodare autoregresivă."""
+    # Key + Value = 2 matrici
+    total_bytes = 2 * n_layers * n_kv_heads * d_head * seq_len * batch_size * bytes_per_elem
+    return total_bytes / (1024.0 * 1024.0)
+```
+
+### 3. Playbook Operațional: Ce fac când contextul depășește memoria GPU?
+1. **Folosesc cuantizarea KV-cache**: Trecerea de la FP16 (2 bytes) la INT8 (1 byte) reduce instantaneu memoria la jumătate.
+2. **Adopt Grouped-Query Attention (GQA)**: Cu $G = 8$ în loc de 64 de capete, amprenta KV scade cu 87.5%.
+
+---
+
+## Tema 24 (Deep Learning Măiestrie — Magnus Ekman / Ainslie et al.): Grouped-Query Attention (GQA)
+
+### 1. Enunțul Problemei
+Implementează mecanismul Grouped-Query Attention (GQA) în pur Python, demonstrând cum $H$ capete de interogare partajează $G$ grupuri de chei și valori fără pierderea capacității de proiecție a fiecărui cap.
+
+### 2. Rezolvarea & Codul de Laborator
+```python
+import math
+
+def softmax_1d(scores: list[float]) -> list[float]:
+    """Calcul softmax stabil numeric."""
+    max_val = max(scores) if scores else 0.0
+    exp_vals = [math.exp(s - max_val) for s in scores]
+    total = sum(exp_vals)
+    return [e / total for e in exp_vals]
+
+def grouped_query_attention(q_heads: list[list[float]], 
+                            k_groups: list[list[float]], 
+                            v_groups: list[list[float]], 
+                            d_head: int) -> list[list[float]]:
+    """Mecanismul Grouped-Query Attention (Ekman Ch 13 & Ainslie et al. 2023)."""
+    num_q = len(q_heads)
+    num_kv = len(k_groups)
+    assert num_q % num_kv == 0, "Numărul de capete Q trebuie să fie divizibil cu grupurile KV!"
+    heads_per_group = num_q // num_kv
+    scale = 1.0 / math.sqrt(d_head)
+
+    head_outputs = []
+    for q_idx, q in enumerate(q_heads):
+        # Determinarea grupului KV asociat
+        g_idx = q_idx // heads_per_group
+        k = k_groups[g_idx]
+        v = v_groups[g_idx]
+
+        # Produs scalar Q . K
+        raw_score = sum(q[i] * k[i] for i in range(d_head)) * scale
+        attn_weight = softmax_1d([raw_score])[0]
+
+        # Ponderarea valorii V
+        out = [attn_weight * v[i] for i in range(d_head)]
+        head_outputs.append(out)
+
+    return head_outputs
+```
+
+### 3. Playbook Operațional: Cum configurez inferența modelelor de generație curentă?
+1. **Aleg arhitecturi GQA pentru servire**: LLaMA-3 și Mistral folosesc implicit GQA pentru a reduce latența la primul token (TTFT).
+2. **Protejez 'Attention Sink'**: Păstrez permanent primii 4 tokeni de start în cache pentru a preveni devierea atenției la secvențe lungi.
+
+---
+
+## Concluzie: De la Notițe la Execuție Sigură (24 Teme de Laborator Rezolvate)
+
+Cu aceste 24 de teme rezolvate:
+- **T1-T6 (Fundamente)**: Stocare WAL, căutare $A^*$, scoping de agenți, demarcare XML, monitorizare PSI și atenție cu LoRA.
+- **T7-T12 (Avansat)**: Replicare Quorum Dynamo cu Read Repair, planificare MCTS cu UCB1, sandbox de fișiere cu limită ermetică, fuziune RRF cu MRR, point-in-time join fără scurgere de date și eșantionare Min-p.
+- **T13-T18 (Specializat)**: Broadcast Hash Join, planificare HTN, ciclul Reflexion cu memorie episodică, GraphRAG cu Leiden, Weak Supervision Snorkel și optimizatorul AdamW cu Cosine Annealing.
+- **T19-T24 (Măiestrie)**: Simulator Snapshot Isolation & detecție Write Skew (SSI), Algoritmul Viterbi pentru HMM, ciclul de somn și decăderea Ebbinghaus, Triada RAG cu entropie semantică, Cuantizare simetrică INT8 și dimensionare KV-cache, și mecanismul Grouped-Query Attention (GQA).
+
 
 
