@@ -7,6 +7,16 @@ description: Use the AI Memory Vault as Claude Code's external canonical memory 
 
 The repository root is the canonical Memory Vault.
 
+## Multi-Agent Execution Protocol
+
+Before making or claiming substantive changes to the Vault, read and follow:
+
+`00_CORE/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md`
+
+This protocol is mandatory for participating agents and defines source-of-truth precedence, evidence levels, non-negotiable integrity/security rules, lifecycle boundaries, delegation responsibilities and completion evidence.
+
+No agent may declare its own work independently verified.
+
 ## Core rule
 
 Do not load the entire Vault into context. Treat it as an indexed external memory system and retrieve only material relevant to the current task.
