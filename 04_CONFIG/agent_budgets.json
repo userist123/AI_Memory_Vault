@@ -1,0 +1,47 @@
+{
+  "default": {
+    "max_notes": 5,
+    "max_full_documents": 3,
+    "soft_limit_bytes": 16384,
+    "hard_limit_bytes": 32768,
+    "soft_limit_tokens": 1800,
+    "hard_limit_tokens": 3000,
+    "chars_per_token": 3.0
+  },
+  "backend_systems_engineer": {
+    "max_notes": 5,
+    "max_full_documents": 2,
+    "soft_limit_bytes": 12288,
+    "hard_limit_bytes": 24576,
+    "soft_limit_tokens": 1800,
+    "hard_limit_tokens": 3000,
+    "chars_per_token": 3.0
+  },
+  "secops_auditor": {
+    "max_notes": 5,
+    "max_full_documents": 2,
+    "soft_limit_bytes": 12288,
+    "hard_limit_bytes": 24576,
+    "soft_limit_tokens": 1800,
+    "hard_limit_tokens": 3000,
+    "chars_per_token": 3.0
+  },
+  "system_architecture_agent": {
+    "max_notes": 5,
+    "max_full_documents": 2,
+    "soft_limit_bytes": 12288,
+    "hard_limit_bytes": 24576,
+    "soft_limit_tokens": 1800,
+    "hard_limit_tokens": 3000,
+    "chars_per_token": 3.0
+  },
+  "agentic_workflow_orchestrator": {
+    "max_notes": 5,
+    "max_full_documents": 2,
+    "soft_limit_bytes": 12288,
+    "hard_limit_bytes": 24576,
+    "soft_limit_tokens": 1800,
+    "hard_limit_tokens": 3000,
+    "chars_per_token": 3.0
+  }
+}
