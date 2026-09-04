@@ -1,1 +1,0 @@
-Internal execution notes are maintained in GitHub commits. This file is temporary and will be removed during cleanup.
