@@ -75,7 +75,7 @@ class RecallEngine:
     def _review_nodes(self) -> List[Dict[str, Any]]:
         """Return REVIEW nodes as detached, read-only candidates."""
         try:
-            review_notes = self.controller.storage.query(lifecycle=['REVIEW'])
+            review_notes = self.controller.storage.query("cognitive_recall", lifecycle=["REVIEW"])
         except Exception:
             return []
 
