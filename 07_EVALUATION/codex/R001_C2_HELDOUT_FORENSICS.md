@@ -28,9 +28,19 @@ R3 P5=0.1733 R5=0.7667 MRR=0.6333
 R4 P5=0.1333 R5=0.6333 MRR=0.5278
 ```
 
-These are corpus-level deterministic adapter results. Precision@1/3,
-Recall@1/3, false-positive rate, and held-out paraphrase/synonym/lexical-trap
-subsets were not separately reported by this run and remain `UNVERIFIED`.
+Full metric output from the same run:
+
+```text
+R1 P1=0.4667 P3=0.2000 P5=0.1333 R1=0.4667 R3=0.5667 R5=0.6000 MRR=0.5500
+R2 P1=0.4667 P3=0.2000 P5=0.1333 R1=0.4667 R3=0.5667 R5=0.6333 MRR=0.5356
+R3 P1=0.4667 P3=0.2889 P5=0.1733 R1=0.4333 R3=0.7667 R5=0.7667 MRR=0.6333
+R4 P1=0.4000 P3=0.2000 P5=0.1333 R1=0.4000 R3=0.6000 R5=0.6333 MRR=0.5056
+```
+
+These are corpus-level deterministic adapter results. The gold file contains
+positive cases only, so false-positive rate is not estimable. The corpus is
+repository-authored rather than independently held out; paraphrase, synonym,
+lexical-trap, and hard-negative subsets remain `UNVERIFIED`.
 
 This is a reproducibility defect in the evaluation entrypoint, not evidence
 that any retrieval strategy is effective or ineffective. The existing
