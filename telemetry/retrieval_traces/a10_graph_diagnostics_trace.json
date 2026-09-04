@@ -1,0 +1,467 @@
+{
+  "metadata": {
+    "task_id": "A10",
+    "agent": "ANTIGRAVITY",
+    "baseline_sha": "e43cc81e09789e284ef35a7e326297194f429a9e",
+    "timestamp_utc": "2026-09-04T15:15:50Z",
+    "probe_version": "1.0.0"
+  },
+  "engine_matrix": [
+    {
+      "storage_engine": "StorageEngine",
+      "query": "python asyncio concurrency",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_NO_GRAPH_CHANGES",
+      "has_store_attribute": true,
+      "exception_type": null,
+      "exception_message": null,
+      "exception_traceback": null,
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.9953999435529113
+    },
+    {
+      "storage_engine": "StorageEngine",
+      "query": "deterministic memory state machine",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_NO_GRAPH_CHANGES",
+      "has_store_attribute": true,
+      "exception_type": null,
+      "exception_message": null,
+      "exception_traceback": null,
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-002",
+        "NOTE-001",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-002",
+        "NOTE-001",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.7639000434428453
+    },
+    {
+      "storage_engine": "StorageEngine",
+      "query": "foreign keys pragma wal timeout",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_NO_GRAPH_CHANGES",
+      "has_store_attribute": true,
+      "exception_type": null,
+      "exception_message": null,
+      "exception_traceback": null,
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-003",
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-003",
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.5381999546661973
+    },
+    {
+      "storage_engine": "StorageEngine",
+      "query": "retrieve unverified review lessons",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_NO_RESULTS",
+      "has_store_attribute": true,
+      "exception_type": null,
+      "exception_message": null,
+      "exception_traceback": null,
+      "base_count": 0,
+      "ranked_count": 0,
+      "pre_ranking": [],
+      "post_ranking": [],
+      "rank_shifted": false,
+      "relevance_scores_survived": true,
+      "duration_ms": 0.6046000635251403
+    },
+    {
+      "storage_engine": "SQLiteStorageEngine",
+      "query": "python asyncio concurrency",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_SILENT_EXCEPTION",
+      "has_store_attribute": false,
+      "exception_type": "AttributeError",
+      "exception_message": "'SQLiteStorageEngine' object has no attribute 'store'",
+      "exception_traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\observability\\graph_diagnostics_probe.py\", line 160, in probe_ranked_search\n    _ = build_multi_graph(controller)\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\ranked_search.py\", line 16, in build_multi_graph\n    notes = list(controller.storage.store.values())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SQLiteStorageEngine' object has no attribute 'store'\n",
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 2.4034000234678388
+    },
+    {
+      "storage_engine": "SQLiteStorageEngine",
+      "query": "deterministic memory state machine",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_SILENT_EXCEPTION",
+      "has_store_attribute": false,
+      "exception_type": "AttributeError",
+      "exception_message": "'SQLiteStorageEngine' object has no attribute 'store'",
+      "exception_traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\observability\\graph_diagnostics_probe.py\", line 160, in probe_ranked_search\n    _ = build_multi_graph(controller)\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\ranked_search.py\", line 16, in build_multi_graph\n    notes = list(controller.storage.store.values())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SQLiteStorageEngine' object has no attribute 'store'\n",
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-002",
+        "NOTE-001",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-002",
+        "NOTE-001",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.8239000346511602
+    },
+    {
+      "storage_engine": "SQLiteStorageEngine",
+      "query": "foreign keys pragma wal timeout",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_SILENT_EXCEPTION",
+      "has_store_attribute": false,
+      "exception_type": "AttributeError",
+      "exception_message": "'SQLiteStorageEngine' object has no attribute 'store'",
+      "exception_traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\observability\\graph_diagnostics_probe.py\", line 160, in probe_ranked_search\n    _ = build_multi_graph(controller)\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\ranked_search.py\", line 16, in build_multi_graph\n    notes = list(controller.storage.store.values())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SQLiteStorageEngine' object has no attribute 'store'\n",
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-003",
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-003",
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.6397000290453434
+    },
+    {
+      "storage_engine": "SQLiteStorageEngine",
+      "query": "retrieve unverified review lessons",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_NO_RESULTS",
+      "has_store_attribute": false,
+      "exception_type": null,
+      "exception_message": null,
+      "exception_traceback": null,
+      "base_count": 0,
+      "ranked_count": 0,
+      "pre_ranking": [],
+      "post_ranking": [],
+      "rank_shifted": false,
+      "relevance_scores_survived": true,
+      "duration_ms": 0.6409999914467335
+    },
+    {
+      "storage_engine": "FileStorageEngine",
+      "query": "python asyncio concurrency",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_SILENT_EXCEPTION",
+      "has_store_attribute": false,
+      "exception_type": "AttributeError",
+      "exception_message": "'FileStorageEngine' object has no attribute 'store'",
+      "exception_traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\observability\\graph_diagnostics_probe.py\", line 160, in probe_ranked_search\n    _ = build_multi_graph(controller)\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\ranked_search.py\", line 16, in build_multi_graph\n    notes = list(controller.storage.store.values())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'FileStorageEngine' object has no attribute 'store'\n",
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.5676000621169806
+    },
+    {
+      "storage_engine": "FileStorageEngine",
+      "query": "deterministic memory state machine",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_SILENT_EXCEPTION",
+      "has_store_attribute": false,
+      "exception_type": "AttributeError",
+      "exception_message": "'FileStorageEngine' object has no attribute 'store'",
+      "exception_traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\observability\\graph_diagnostics_probe.py\", line 160, in probe_ranked_search\n    _ = build_multi_graph(controller)\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\ranked_search.py\", line 16, in build_multi_graph\n    notes = list(controller.storage.store.values())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'FileStorageEngine' object has no attribute 'store'\n",
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-002",
+        "NOTE-001",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-002",
+        "NOTE-001",
+        "NOTE-003",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 1.6371000092476606
+    },
+    {
+      "storage_engine": "FileStorageEngine",
+      "query": "foreign keys pragma wal timeout",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_SILENT_EXCEPTION",
+      "has_store_attribute": false,
+      "exception_type": "AttributeError",
+      "exception_message": "'FileStorageEngine' object has no attribute 'store'",
+      "exception_traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\observability\\graph_diagnostics_probe.py\", line 160, in probe_ranked_search\n    _ = build_multi_graph(controller)\n  File \"C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\cognitive_core\\ranked_search.py\", line 16, in build_multi_graph\n    notes = list(controller.storage.store.values())\n                 ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'FileStorageEngine' object has no attribute 'store'\n",
+      "base_count": 4,
+      "ranked_count": 4,
+      "pre_ranking": [
+        "NOTE-003",
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-REV-001"
+      ],
+      "post_ranking": [
+        "NOTE-003",
+        "NOTE-001",
+        "NOTE-002",
+        "NOTE-REV-001"
+      ],
+      "rank_shifted": false,
+      "relevance_scores_survived": false,
+      "duration_ms": 2.0029000006616116
+    },
+    {
+      "storage_engine": "FileStorageEngine",
+      "query": "retrieve unverified review lessons",
+      "principal": "Principal.AI_AGENT",
+      "status": "FALLBACK_NO_RESULTS",
+      "has_store_attribute": false,
+      "exception_type": null,
+      "exception_message": null,
+      "exception_traceback": null,
+      "base_count": 0,
+      "ranked_count": 0,
+      "pre_ranking": [],
+      "post_ranking": [],
+      "rank_shifted": false,
+      "relevance_scores_survived": true,
+      "duration_ms": 0.8940000552684069
+    }
+  ],
+  "rejection_diagnostics": [
+    {
+      "query": "python asyncio concurrency",
+      "principal": "Principal.AI_AGENT",
+      "total_scanned": 5,
+      "admitted_count": 2,
+      "rejected_count": 3,
+      "rejections": [
+        {
+          "note_id": "NOTE-003",
+          "lifecycle": "ACTIVE",
+          "source_type": "execution",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        },
+        {
+          "note_id": "NOTE-RAW-001",
+          "lifecycle": "RAW",
+          "source_type": "unknown",
+          "rejection_reason": "LIFECYCLE_RAW_EXCLUDED",
+          "detail": "RAW lifecycle notes strictly excluded from active search per I-003"
+        },
+        {
+          "note_id": "NOTE-REV-001",
+          "lifecycle": "REVIEW",
+          "source_type": "ai",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        }
+      ],
+      "counts_by_reason": {
+        "SCORE_BELOW_THRESHOLD": 2,
+        "LIFECYCLE_RAW_EXCLUDED": 1
+      }
+    },
+    {
+      "query": "deterministic memory state machine",
+      "principal": "Principal.AI_AGENT",
+      "total_scanned": 5,
+      "admitted_count": 2,
+      "rejected_count": 3,
+      "rejections": [
+        {
+          "note_id": "NOTE-003",
+          "lifecycle": "ACTIVE",
+          "source_type": "execution",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        },
+        {
+          "note_id": "NOTE-RAW-001",
+          "lifecycle": "RAW",
+          "source_type": "unknown",
+          "rejection_reason": "LIFECYCLE_RAW_EXCLUDED",
+          "detail": "RAW lifecycle notes strictly excluded from active search per I-003"
+        },
+        {
+          "note_id": "NOTE-REV-001",
+          "lifecycle": "REVIEW",
+          "source_type": "ai",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        }
+      ],
+      "counts_by_reason": {
+        "SCORE_BELOW_THRESHOLD": 2,
+        "LIFECYCLE_RAW_EXCLUDED": 1
+      }
+    },
+    {
+      "query": "foreign keys pragma wal timeout",
+      "principal": "Principal.AI_AGENT",
+      "total_scanned": 5,
+      "admitted_count": 2,
+      "rejected_count": 3,
+      "rejections": [
+        {
+          "note_id": "NOTE-002",
+          "lifecycle": "ACTIVE",
+          "source_type": "execution",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        },
+        {
+          "note_id": "NOTE-RAW-001",
+          "lifecycle": "RAW",
+          "source_type": "unknown",
+          "rejection_reason": "LIFECYCLE_RAW_EXCLUDED",
+          "detail": "RAW lifecycle notes strictly excluded from active search per I-003"
+        },
+        {
+          "note_id": "NOTE-REV-001",
+          "lifecycle": "REVIEW",
+          "source_type": "ai",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        }
+      ],
+      "counts_by_reason": {
+        "SCORE_BELOW_THRESHOLD": 2,
+        "LIFECYCLE_RAW_EXCLUDED": 1
+      }
+    },
+    {
+      "query": "retrieve unverified review lessons",
+      "principal": "Principal.AI_AGENT",
+      "total_scanned": 5,
+      "admitted_count": 0,
+      "rejected_count": 5,
+      "rejections": [
+        {
+          "note_id": "NOTE-001",
+          "lifecycle": "ACTIVE",
+          "source_type": "execution",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        },
+        {
+          "note_id": "NOTE-002",
+          "lifecycle": "ACTIVE",
+          "source_type": "execution",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        },
+        {
+          "note_id": "NOTE-003",
+          "lifecycle": "ACTIVE",
+          "source_type": "execution",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        },
+        {
+          "note_id": "NOTE-RAW-001",
+          "lifecycle": "RAW",
+          "source_type": "unknown",
+          "rejection_reason": "LIFECYCLE_RAW_EXCLUDED",
+          "detail": "RAW lifecycle notes strictly excluded from active search per I-003"
+        },
+        {
+          "note_id": "NOTE-REV-001",
+          "lifecycle": "REVIEW",
+          "source_type": "ai",
+          "rejection_reason": "SCORE_BELOW_THRESHOLD",
+          "detail": "Note score failed to reach admission threshold or was cut off by page_size"
+        }
+      ],
+      "counts_by_reason": {
+        "SCORE_BELOW_THRESHOLD": 4,
+        "LIFECYCLE_RAW_EXCLUDED": 1
+      }
+    }
+  ],
+  "summary_statistics": {
+    "total_engine_probes": 12,
+    "silent_fallbacks_detected": 6,
+    "applied_graphs": 0,
+    "no_results": 3,
+    "silent_fallback_percentage_sqlite": 100.0,
+    "silent_fallback_percentage_file_engine": 100.0,
+    "silent_fallback_percentage_in_memory": 0.0,
+    "score_survival_rate": 0.0
+  }
+}

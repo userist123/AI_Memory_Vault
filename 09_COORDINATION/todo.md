@@ -1,3 +1,15 @@
+# Antigravity R001 A10 — Production Graph Diagnostics & Candidate Attribution Probe
+
+## Implementation
+- [x] implemented `GraphDiagnosticsProbe` (`cognitive_core/observability/graph_diagnostics_probe.py`) providing non-invasive runtime inspection of graph execution states and candidate rejection attribution `[owner: antigravity | timestamp: 2026-09-04T18:18:00+03:00]`
+- [x] executed 12-probe matrix across 3 storage engines (`InMemoryStorageEngine`, `SQLiteStorageEngine`, `FileStorageEngine`) and 4 query archetypes `[owner: antigravity | timestamp: 2026-09-04T18:19:00+03:00]`
+- [x] neutralized silent masquerade (`GAP-014`): successfully intercepted and recorded `AttributeError: '...StorageEngine' object has no attribute 'store'` with full traceback across 100% of SQLite/File queries `[owner: antigravity | timestamp: 2026-09-04T18:19:00+03:00]`
+- [x] validated candidate rejection attribution (`GAP-001`), segmenting exclusions by `LIFECYCLE_RAW_EXCLUDED`, `SUPERSEDED_INACTIVE`, and `SCORE_BELOW_THRESHOLD` `[owner: antigravity | timestamp: 2026-09-04T18:19:00+03:00]`
+- [x] implemented 4 unit tests in `cognitive_core/tests/test_graph_diagnostics_probe.py` (4/4 passed) `[owner: antigravity | timestamp: 2026-09-04T18:18:30+03:00]`
+- [x] published report `07_EVALUATION/antigravity/A10_GRAPH_DIAGNOSTICS_OBSERVABILITY.md` and machine-readable telemetry `telemetry/retrieval_traces/a10_graph_diagnostics_trace.json` `[owner: antigravity | timestamp: 2026-09-04T18:20:00+03:00]`
+
+---
+
 # Antigravity R001 A9 — Review Memory Authority & Prompt Demarcation Observability
 
 ## Implementation
