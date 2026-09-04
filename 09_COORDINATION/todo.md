@@ -1,3 +1,15 @@
+# Learn Workflow — Foundation Books Synthesis & Knowledge Ingestion
+
+## Implementation
+- [x] ingested 6 canonical foundation books (`DDIA`, `AIMA 4e`, `Building Agent-Powered Applications`, `Designing LLM Applications`, `Designing ML Systems`, `Learning Deep Learning`) per `/learn` slash command `[owner: antigravity | timestamp: 2026-09-04T18:21:00+03:00]`
+- [x] generated and approved learning proposal `learning_proposal.md` under human-gated `/learn` protocol `[owner: antigravity | timestamp: 2026-09-04T18:21:00+03:00]`
+- [x] created 6 canonical knowledge notes in `01_KNOWLEDGE/BOOKS/` validated against Draft-07 JSON Schema (`validate_frontmatter`), `lifecycle: REVIEW`, `verification: unverified`, `source_type: ai` `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
+- [x] updated `AGENTS.md` with 3 book-derived operational invariants (Production Reality Invariant, Prompt Data/Instruction Isolation, Bounded Associative Expansion) `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
+- [x] registered book notes in `00_CORE/GRAPH/07 Knowledge Domains Map.md` `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
+- [x] appended cryptographic audit record to `audit_log.jsonl` `[owner: antigravity | timestamp: 2026-09-04T18:21:30+03:00]`
+
+---
+
 # Antigravity R001 A10 — Production Graph Diagnostics & Candidate Attribution Probe
 
 ## Implementation
