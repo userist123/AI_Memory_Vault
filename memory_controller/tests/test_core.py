@@ -77,6 +77,32 @@ def test_progressive_disclosure_limits():
     # usage limited by hard budget (bytes). 1000 bytes allows all three notes (each ~200 bytes)
     assert len(full) == 3
 
+
+def test_full_document_skips_oversized_note_and_keeps_later_candidate():
+    from memory_controller.context.budget import ContextBudget
+    budget = ContextBudget({"soft_context_budget": 10, "hard_context_budget": 500})
+    pd = ProgressiveDisclosure(budget)
+    notes = [
+        {"id": "oversized", "content": "x" * 600},
+        {"id": "small", "content": "relevant evidence"},
+    ]
+
+    full = pd.full_document(notes)
+
+    assert [note["id"] for note in full] == ["small"]
+
+
+def test_full_document_respects_token_budget():
+    from memory_controller.context.budget import ContextBudget
+    budget = ContextBudget({"soft_context_budget": 10000, "hard_context_budget": 10000,
+                            "hard_limit_tokens": 10, "chars_per_token": 4})
+    pd = ProgressiveDisclosure(budget)
+    notes = [{"id": "a", "content": "word " * 30}, {"id": "b", "content": "ok"}]
+
+    full = pd.full_document(notes)
+
+    assert [note["id"] for note in full] == ["b"]
+
 def test_audit_logger_writes_and_reads(tmp_path):
     log_file = tmp_path / "audit.log"
     logger = AuditLogger(str(log_file))
