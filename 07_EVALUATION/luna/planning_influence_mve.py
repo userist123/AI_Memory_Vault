@@ -16,6 +16,12 @@ MEMORY_RECOMMENDATIONS: Tuple[str, ...] = (
     "strategy_c", "strategy_a", "strategy_d", "strategy_b",
 )
 
+# Frozen independently of task outcomes. This is an experiment input, not an oracle-derived label.
+MEMORY_APPLICABILITY: Tuple[str, ...] = (
+    "APPLICABLE", "APPLICABLE_WITH_VERIFICATION", "INSUFFICIENTLY_KNOWN", "NOT_APPLICABLE",
+    "APPLICABLE_WITH_VERIFICATION", "APPLICABLE", "INSUFFICIENTLY_KNOWN", "NOT_APPLICABLE",
+)
+
 APPLICABILITY_STRENGTH: Dict[str, float] = {
     "APPLICABLE": 1.0,
     "APPLICABLE_WITH_VERIFICATION": 0.35,
@@ -92,17 +98,14 @@ def compile_memory(scenario: Scenario, applicability: str, memory_id: str) -> Me
         loser_prior = 0.35 / 3
         priors = {branch: (winner_prior if branch == recommended else loser_prior) for branch in scenario.branches}
     elif applicability == "APPLICABLE_WITH_VERIFICATION":
-        # Verification-needed memory remains directional but weak.
         winner_prior = 0.25 + (0.40 * strength)
         loser_mass = 1.0 - winner_prior
         priors = {branch: (winner_prior if branch == recommended else loser_mass / 3) for branch in scenario.branches}
     elif applicability == "INSUFFICIENTLY_KNOWN":
-        # Unknown memory is only a faint search preference.
         winner_prior = 0.25 + (0.40 * strength)
         loser_mass = 1.0 - winner_prior
         priors = {branch: (winner_prior if branch == recommended else loser_mass / 3) for branch in scenario.branches}
     else:
-        # NOT_APPLICABLE carries no planner influence.
         priors = {branch: 0.25 for branch in scenario.branches}
     return MemoryInfluenceState(memory_id, applicability, priors, recommended, strength)
 
@@ -140,9 +143,10 @@ def run_experiment(count: int = 30) -> Dict[str, object]:
     scenarios = build_scenarios(count)
     aggregate: Dict[str, Dict[str, float]] = {arm: {"success": 0, "nodes": 0, "fatal": 0} for arm in ("arm1_baseline", "arm2_advisory", "arm3_treatment", "arm4_stale")}
     traces: List[Dict[str, object]] = []
-    for scenario in scenarios:
+    for idx, scenario in enumerate(scenarios):
         uniform = {branch: 0.25 for branch in scenario.branches}
-        memory = compile_memory(scenario, "APPLICABLE", f"memory-{scenario.scenario_id}")
+        applicability = MEMORY_APPLICABILITY[idx % len(MEMORY_APPLICABILITY)]
+        memory = compile_memory(scenario, applicability, f"memory-{scenario.scenario_id}")
         stale = compile_memory(scenario, "NOT_APPLICABLE", f"stale-{scenario.scenario_id}")
         arms = {"arm1_baseline": uniform, "arm2_advisory": uniform, "arm3_treatment": memory.priors, "arm4_stale": stale.priors}
         for arm, priors in arms.items():
