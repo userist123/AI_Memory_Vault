@@ -9,6 +9,7 @@ This document records runtime trust-boundary gaps identified during the security
 - Reconsolidation challenge/resolve authorization with explicit principal enforcement.
 - Reconsolidation lifecycle transitions checked through the canonical lifecycle policy.
 - Direct financial-ingestion authorization and lifecycle/verification canonicalization.
+- Financial search now authorizes the caller up front and exposes only `ACTIVE + verified` records as defense-in-depth read filtering.
 - SQLite `RECONSOLIDATING` schema support and migration coverage.
 - Canonical lifecycle policy introduced for mutation semantics.
 - Legacy pipeline transition types are now explicitly represented in the canonical policy (`CLASSIFY`, `NORMALIZE`, `VERIFY`, `PROMOTE`).
@@ -28,7 +29,7 @@ The guarded controller paths are not, by themselves, proof that every repository
 
 ### 3. Read-path lifecycle/verification semantics need end-to-end validation
 
-Public `read()` is ACTIVE-only while `cognitive_read()` permits ACTIVE and REVIEW and marks REVIEW as unverified. Standard search and financial search have additional retrieval/filtering behavior. These contracts need one end-to-end acceptance matrix so lifecycle and verification exposure is consistent across every read path.
+Public `read()` is ACTIVE-only while `cognitive_read()` permits ACTIVE and REVIEW and marks REVIEW as unverified. Standard search still needs one end-to-end acceptance matrix across all public read surfaces. Financial search now has an explicit `ACTIVE + verified` ceiling and regression coverage.
 
 ### 4. Retrieval production integration remains deferred
 
