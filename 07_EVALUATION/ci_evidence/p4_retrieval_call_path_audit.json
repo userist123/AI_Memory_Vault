@@ -1,0 +1,123 @@
+{
+  "commit": "0e9390c0c624b57cfdedaa4247ab7316b5be7dc7",
+  "timestamp_utc": "2026-09-05T14:00:00Z",
+  "retrieval_entrypoints": [
+    "memory_controller.controller.MemoryController.search",
+    "memory_controller.controller.MemoryController.search_financial",
+    "memory_controller.controller.MemoryController.query",
+    "cognitive_core.recall_cli.main",
+    "cognitive_core.integration_adapter.RetrievalIntegrationAdapter.search",
+    "cognitive_core.retrieval_facade.ProductionRetrievalFacade.retrieve",
+    "cognitive_core.retrieval_boundary.RetrievalBoundaryAdapter.retrieve",
+    "cognitive_core.hybrid_retrieval.HybridRetriever.search",
+    "memory_controller.context.retrieval.RetrievalEngine.retrieve"
+  ],
+  "controller_entrypoints": [
+    {
+      "path": "memory_controller/controller.py:MemoryController.search",
+      "status": "LEGACY_UNWIRED",
+      "calls": "RetrievalEngine.retrieve",
+      "bypasses_adapter": true,
+      "note": "Target for Phase 5 safe wiring via RetrievalIntegrationAdapter"
+    },
+    {
+      "path": "memory_controller/controller.py:MemoryController.search_financial",
+      "status": "ISOLATED_FINANCIAL_ENGINE",
+      "calls": "MultiLayeredFinancialSearchEngine.execute_search",
+      "bypasses_adapter": true,
+      "note": "Separate financial asset domain search"
+    },
+    {
+      "path": "memory_controller/controller.py:MemoryController.query",
+      "status": "DIRECT_STORAGE_QUERY",
+      "calls": "StorageEngine.query",
+      "bypasses_adapter": true,
+      "note": "Direct administrative/audit query; excludes RAW at storage layer"
+    }
+  ],
+  "adapter_entrypoints": [
+    {
+      "path": "cognitive_core/integration_adapter.py:RetrievalIntegrationAdapter.search",
+      "status": "PRODUCTION_READY_ISOLATED",
+      "calls": "ProductionRetrievalFacade.retrieve",
+      "enforces_ceiling": "ACTIVE + verified",
+      "bypasses_adapter": false
+    }
+  ],
+  "facade_entrypoints": [
+    {
+      "path": "cognitive_core/retrieval_facade.py:ProductionRetrievalFacade.retrieve",
+      "status": "FACADE_READY",
+      "calls": "RetrievalBoundaryAdapter.retrieve",
+      "enforces_ceiling": "ACTIVE + verified",
+      "bypasses_adapter": false
+    }
+  ],
+  "boundary_entrypoints": [
+    {
+      "path": "cognitive_core/retrieval_boundary.py:RetrievalBoundaryAdapter.retrieve",
+      "status": "BOUNDARY_ENFORCED",
+      "calls": "HybridRetriever.search",
+      "enforces_ceiling": "ACTIVE + verified",
+      "bypasses_adapter": false
+    }
+  ],
+  "direct_retriever_calls": [
+    {
+      "caller": "20_TESTS/regression/test_retrieval_foundation.py",
+      "target": "HybridRetriever.search",
+      "scope": "TEST_ONLY",
+      "is_production_leak": false
+    },
+    {
+      "caller": "20_TESTS/regression/test_multi_hop_evidence.py",
+      "target": "HybridRetriever.search",
+      "scope": "TEST_ONLY",
+      "is_production_leak": false
+    },
+    {
+      "caller": "cognitive_core/retrieval_boundary.py:RetrievalBoundaryAdapter",
+      "target": "HybridRetriever.search",
+      "scope": "AUTHORIZED_BOUNDARY",
+      "is_production_leak": false
+    }
+  ],
+  "potential_bypasses": [
+    {
+      "id": "BYPASS-01",
+      "name": "MemoryController.search legacy call path",
+      "description": "MemoryController.search currently calls RetrievalEngine directly rather than RetrievalIntegrationAdapter.",
+      "remediation": "Wire MemoryController.search to RetrievalIntegrationAdapter via P4 harness in Phase 5.",
+      "risk_level": "HIGH",
+      "actively_exploitable_in_p4": true
+    },
+    {
+      "id": "BYPASS-02",
+      "name": "MemoryController.query direct storage access",
+      "description": "MemoryController.query executes storage.query directly without verified ceiling validation.",
+      "remediation": "Constrain query callers to administrative read operations only.",
+      "risk_level": "MEDIUM",
+      "actively_exploitable_in_p4": true
+    },
+    {
+      "id": "BYPASS-03",
+      "name": "cognitive_read review access",
+      "description": "cognitive_read permits reading notes with lifecycle=REVIEW when _cognitive_unverified is set.",
+      "remediation": "Governed by ChatGPT lifecycle workstream.",
+      "risk_level": "LOW",
+      "actively_exploitable_in_p4": false
+    },
+    {
+      "id": "BYPASS-04",
+      "name": "Direct HybridRetriever construction",
+      "description": "External scripts could instantiate HybridRetriever directly if imports are not audited.",
+      "remediation": "Enforce unified secure retrieval invariant (I-RETRIEVAL).",
+      "risk_level": "MEDIUM",
+      "actively_exploitable_in_p4": true
+    }
+  ],
+  "security_bypass_count": 4,
+  "adapter_coverage": 0.6,
+  "verdict": "CONDITIONAL_PASS",
+  "verdict_rationale": "Adapter architecture is complete, verified, and ready; production wiring intentionally deferred per P4 contract to prevent breaking unmerged runtime work."
+}

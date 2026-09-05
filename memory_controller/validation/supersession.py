@@ -22,15 +22,15 @@ class SupersessionEnforcer:
             raise ValueError(f"Successor note {new_id} does not exist")
 
         # Canonical lifecycle policy permits SUPERSEDE only for ACTIVE notes.
-        # Check SUPERSEDED explicitly first so the error remains deterministic
-        # if lifecycle validation is ever broadened in a future policy revision.
-        if old_note.get("lifecycle") == "SUPERSEDED":
-            raise ValueError(f"Predecessor note {old_id} is already SUPERSEDED")
         if old_note.get("lifecycle") != "ACTIVE":
             raise ValueError(
                 f"Predecessor note {old_id} must be ACTIVE for supersession "
                 f"(current lifecycle={old_note.get('lifecycle')!r})"
             )
+
+        # Do not allow superseding if already superseded.
+        if old_note.get("lifecycle") == "SUPERSEDED":
+            raise ValueError(f"Predecessor note {old_id} is already SUPERSEDED")
 
         # Invariant: human-verified memory cannot be automatically superseded.
         is_human_verified = (
