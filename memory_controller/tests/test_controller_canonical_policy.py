@@ -14,11 +14,6 @@ class _Storage:
         return self.old_note
 
 
-class _DenyAuthorizer:
-    def is_allowed(self, principal, operation):
-        return False
-
-
 @pytest.fixture
 def validation_bypass(monkeypatch):
     monkeypatch.setattr(controller_module, "validate_frontmatter", lambda note: None)
@@ -86,6 +81,10 @@ def test_validate_note_fails_closed_for_transition_without_canonical_mutation(
 
 
 def test_search_authorizes_before_any_retrieval_work():
+    class _DenyAuthorizer:
+        def is_allowed(self, principal, operation):
+            return False
+
     controller = MemoryController.__new__(MemoryController)
     controller.authorizer = _DenyAuthorizer()
 
