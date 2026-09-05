@@ -1,12 +1,11 @@
 import importlib.util
 from pathlib import Path
 
-EXAMPLE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "05_RESOURCES"
-    / "Examples"
-    / "enterprise_memory_client.py"
-)
+_candidates = [
+    Path(__file__).resolve().parents[2] / "10_DOCUMENTATION" / "resources" / "Examples" / "enterprise_memory_client.py",
+    Path(__file__).resolve().parents[2] / "05_RESOURCES" / "Examples" / "enterprise_memory_client.py",
+]
+EXAMPLE_PATH = next((p for p in _candidates if p.exists()), _candidates[0])
 
 spec = importlib.util.spec_from_file_location("enterprise_memory_client", EXAMPLE_PATH)
 if spec is None or spec.loader is None:

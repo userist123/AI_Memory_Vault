@@ -5,7 +5,10 @@ from cognitive_core.tool_router import ToolRouter, ApprovalRequiredError
 
 def test_reconciliation_boundary_blocks_verified():
     mock_controller = MagicMock()
-    # Mock reading a verified node
+    # Mock storage retrieval for verified node
+    mock_controller.storage.get.return_value = {
+        "id": "node-1", "verification": "verified"
+    }
     mock_controller.read.return_value = {
         "results": [{"id": "node-1", "verification": "verified"}]
     }
@@ -21,7 +24,10 @@ def test_reconciliation_boundary_blocks_verified():
 def test_reconciliation_boundary_allows_unverified():
     mock_controller = MagicMock()
     mock_controller.update = MagicMock(return_value=True)
-    # Mock reading an unverified node
+    # Mock storage retrieval for unverified node
+    mock_controller.storage.get.return_value = {
+        "id": "node-2", "verification": "unverified"
+    }
     mock_controller.read.return_value = {
         "results": [{"id": "node-2", "verification": "unverified"}]
     }

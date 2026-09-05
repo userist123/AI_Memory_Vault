@@ -5,6 +5,9 @@ class _FakeStorage:
     def __init__(self, notes):
         self.store = {n["id"]: n for n in notes}
 
+    def all_notes(self):
+        return list(self.store.values())
+
 
 class _FakeController:
     def __init__(self, notes):
