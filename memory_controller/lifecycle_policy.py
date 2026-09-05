@@ -22,9 +22,6 @@ class Mutation(str, Enum):
     SUPERSEDE = "supersede"
 
 
-# The policy reflects the mutation semantics currently implemented in
-# production. Verification remains a separate trust field; PROMOTE is the one
-# lifecycle transition that requires a verified note.
 _TRANSITIONS = {
     Mutation.REVIEW: {
         "RAW": {"REVIEW"},
@@ -54,7 +51,6 @@ _TRANSITIONS = {
 
 def _value(value: object) -> str:
     """Normalize enums and plain strings to lifecycle/operation values."""
-
     raw = getattr(value, "value", value)
     return str(raw)
 
@@ -73,7 +69,6 @@ def is_transition_allowed(
     conditionally allowed only for a note whose verification is ``verified``.
     Unknown values fail closed.
     """
-
     old_state = _value(old)
     new_state = _value(new)
     operation_value = _value(mutation)
@@ -93,7 +88,6 @@ def is_transition_allowed(
 
 def allowed_targets(old: object, *, mutation: Mutation | str) -> frozenset[str]:
     """Return canonical lifecycle target values for a mutation from ``old``."""
-
     old_state = _value(old)
     operation_value = _value(mutation)
     try:
@@ -101,3 +95,8 @@ def allowed_targets(old: object, *, mutation: Mutation | str) -> frozenset[str]:
     except ValueError:
         return frozenset()
     return frozenset(_TRANSITIONS.get(operation, {}).get(old_state, set()))
+
+
+# Compatibility alias for callers that imported the policy under the earlier
+# ``evaluate`` spelling. It preserves the pure, fail-closed contract.
+evaluate = is_transition_allowed
