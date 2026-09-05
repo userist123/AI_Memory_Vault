@@ -64,19 +64,20 @@ def test_all_non_identity_transitions_not_explicitly_allowed_fail_closed(
         assert not is_transition_allowed(mutation, source, target)
 
 
-@pytest.mark.parametrize(
-    "mutation,source,target",
-    [
-        ("unknown", "ACTIVE", "REVIEW"),
-        (Mutation.PROMOTE, "UNKNOWN", "ACTIVE"),
-        (Mutation.PROMOTE, "REVIEW", "UNKNOWN"),
-        (Mutation.ARCHIVE, "", "ARCHIVED"),
-        (Mutation.SUPERSEDE, None, "SUPERSEDED"),
-    ],
-)
-def test_unknown_inputs_fail_closed(mutation, source, target):
+@pytest.mark.parametrize("mutation,source,target", [
+    ("unknown", "ACTIVE", "REVIEW"),
+    (Mutation.PROMOTE, "UNKNOWN", "ACTIVE"),
+    (Mutation.ARCHIVE, "", "ARCHIVED"),
+    (Mutation.SUPERSEDE, None, "SUPERSEDED"),
+])
+def test_unknown_mutation_or_source_fails_closed(mutation, source, target):
     assert allowed_targets(mutation, source) == []
     assert not is_transition_allowed(mutation, source, target)
+
+
+def test_unknown_target_fails_closed_without_corrupting_known_policy():
+    assert set(allowed_targets(Mutation.PROMOTE, "REVIEW")) == {"ACTIVE"}
+    assert not is_transition_allowed(Mutation.PROMOTE, "REVIEW", "UNKNOWN")
 
 
 @pytest.mark.parametrize(
