@@ -12,7 +12,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 START_SHA = "814ec77485a0621c388dac5f61cf0bb091707c0a"
-OUT = ROOT / "99_META" / "repository_map" / "R001_RUNTIME_MIGRATION_INVENTORY.json"
+OUT = ROOT / "03_IMPLEMENTATION" / "products" / "xau_kinetic" / "repository_map" / "R001_RUNTIME_MIGRATION_INVENTORY.json"
 
 
 def git(*args: str) -> str:
@@ -22,28 +22,29 @@ def git(*args: str) -> str:
 def classify(path: str) -> tuple[str, str, str, str]:
     parts = path.split("/")
     top = parts[0]
-    if top in {"cognitive_core", "memory_controller", "vault_api.py"}:
-        return "runtime", "03_IMPLEMENTATION/packages/memory_vault/", "MOVE", "legacy-root-runtime"
-    if top in {"XAU_Kinetic.Desktop", "XAU_Kinetic_Standalone", "xau_kinetic"}:
-        return "XAU", "03_IMPLEMENTATION/products/xau_kinetic/", "MOVE", "product-runtime"
-    if top == "AI_Memory_Vault_OBSIDIAN":
-        return "Obsidian", "04_CONFIG/obsidian/", "MOVE", "gitlink-boundary"
-    if top == "06_INBOX":
+
+    if path.startswith("03_IMPLEMENTATION/packages/"):
+        return "implementation", "03_IMPLEMENTATION/packages/", "KEEP", "runtime-classification"
+    if path.startswith("03_IMPLEMENTATION/products/xau_kinetic/"):
+        return "XAU", "03_IMPLEMENTATION/products/xau_kinetic/", "KEEP", "product-runtime"
+    if path.startswith("04_CONFIG/"):
+        return "configuration", "04_CONFIG/", "KEEP", "configuration-boundary"
+    if path.startswith("06_INBOX/"):
         return "import brut", "09_SECURITY/quarantine/manifests/", "DELETE", "raw-import-boundary"
-    if top == "tests" or "/tests/" in path:
-        return "test", "20_TESTS/", "MOVE", "test-suite"
-    if top == "benchmarks" or "/benchmarks/" in path or path.endswith(".ipynb"):
-        return "benchmark", "40_EXPERIMENTS/", "MOVE", "experiment-only"
-    if top == "reports" or "/reports/" in path:
-        return "report", "07_EVALUATION/reports/", "MOVE", "evaluation-artifact"
-    if top in {"audit_log.jsonl", "test_audit_log.jsonl"}:
-        return "observability", "08_OBSERVABILITY/", "MOVE", "evidence-log"
-    if top.startswith("migration_") or top.startswith("MIGRATION") or top == "99_META":
-        return "archive", "99_META/migration_logs/", "ARCHIVE", "migration-history"
-    if top in {".env.example", ".gitignore", ".gitleaks.toml", ".pre-commit-config.yaml", "pytest.ini", "requirements-memory-v6.txt"}:
-        return "configuration", top, "KEEP", "root-config-allowlist"
-    if top.startswith("00_") or top.startswith("01_") or top.startswith("02_") or top.startswith("03_") or top.startswith("04_") or top.startswith("05_") or top.startswith("06_") or top.startswith("07_") or top.startswith("08_") or top.startswith("09_") or top.startswith("10_") or top.startswith("20_") or top.startswith("30_") or top.startswith("40_") or top.startswith("50_") or top.startswith("60_") or top.startswith("70_") or top.startswith("80_") or top.startswith("90_") or top.startswith("99_"):
+    if path.startswith("20_TESTS/") or "/tests/" in path:
+        return "test", "20_TESTS/", "KEEP", "test-suite"
+    if path.startswith("40_EXPERIMENTS/") or path.endswith(".ipynb"):
+        return "benchmark", "40_EXPERIMENTS/", "KEEP", "experiment-only"
+    if path.startswith("07_EVALUATION/reports/") or "/reports/" in path:
+        return "report", "07_EVALUATION/reports/", "KEEP", "evaluation-artifact"
+    if path.startswith("08_OBSERVABILITY/"):
+        return "observability", "08_OBSERVABILITY/", "KEEP", "evidence-log"
+    if top == "99_META" or path.startswith("99_META/"):
+        return "archive", "99_META/", "KEEP", "migration-history"
+    if top.startswith(("00_", "01_", "02_", "03_", "04_", "05_", "06_", "07_", "08_", "09_", "10_", "20_", "30_", "40_", "50_", "60_", "70_", "80_", "90_", "99_")):
         return "repository-structure", top + "/", "KEEP", "numbered-spine"
+    if top in {".env.example", ".gitignore", ".gitleaks.toml", ".pre-commit-config.yaml", "pytest.ini", "requirements-memory-v6.txt", "pyproject.toml"}:
+        return "configuration", top, "KEEP", "root-config-allowlist"
     return "docs", "review", "IGNORE", "root-allowlist-review"
 
 
@@ -53,7 +54,7 @@ def main() -> int:
     head = git("rev-parse", "HEAD")
     rows: list[dict[str, Any]] = []
     for path in sorted(tracked):
-        sha = git("rev-parse", f"HEAD:{path}") if not path.startswith(".") or path in {".gitignore", ".gitleaks.toml", ".pre-commit-config.yaml", ".env.example"} else git("rev-parse", f"HEAD:{path}")
+        sha = git("rev-parse", f"HEAD:{path}")
         category, target, status, owner = classify(path)
         rows.append({
             "path": path,
@@ -63,7 +64,7 @@ def main() -> int:
             "owner_logic": owner,
             "status": status,
             "import_reference_impact": "REVIEW_REQUIRED" if status in {"MOVE", "DELETE", "ARCHIVE"} else "NONE",
-            "test_impact": "RECHECK_ON_R001_BRANCH" if status in {"MOVE", "DELETE", "ARCHIVE"} else "NONE",
+            "test_impact": "RECHECK_ON_MAIN" if status in {"MOVE", "DELETE", "ARCHIVE"} else "NONE",
         })
     payload = {
         "schema_version": "R001.v1",
