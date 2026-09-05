@@ -16,5 +16,7 @@ __path__ = [
     str(_BASE / "providers"),
     str(_BASE / "interfaces"),
     str(_BASE / "security"),
+    str(_BASE / "retrieval"),
+    str(_BASE / "lifecycle"),
 ]
 __all__ = []

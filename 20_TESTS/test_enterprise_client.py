@@ -2,6 +2,8 @@ import importlib.util
 from pathlib import Path
 
 _candidates = [
+    Path(__file__).resolve().parents[1] / "10_DOCUMENTATION" / "resources" / "Examples" / "enterprise_memory_client.py",
+    Path(__file__).resolve().parents[1] / "05_RESOURCES" / "Examples" / "enterprise_memory_client.py",
     Path(__file__).resolve().parents[2] / "10_DOCUMENTATION" / "resources" / "Examples" / "enterprise_memory_client.py",
     Path(__file__).resolve().parents[2] / "05_RESOURCES" / "Examples" / "enterprise_memory_client.py",
 ]
