@@ -49,11 +49,13 @@ class SpreadingActivationEngine:
     def activate(self, seed_scores: Dict[str, float]) -> Dict[str, float]:
         """Propagate seed activation across all four graphs and fuse results."""
         fused: Dict[str, float] = {}
+        total_weight = sum(self.graph_weights.values()) or 1.0
         for graph_name, weight in self.graph_weights.items():
             graph = getattr(self.multi_graph, graph_name)
             propagated = self._propagate_on_graph(graph, seed_scores)
+            scale = weight / total_weight if total_weight > 1.0 else weight
             for node_id, score in propagated.items():
-                fused[node_id] = fused.get(node_id, 0.0) + score * weight
+                fused[node_id] = fused.get(node_id, 0.0) + score * scale
         return fused
 
     def rank(self, base_scores: Dict[str, float], top_k: int = None) -> List[Tuple[str, float]]:
