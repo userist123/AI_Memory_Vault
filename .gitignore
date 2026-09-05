@@ -74,3 +74,22 @@ generated/
 *.zip
 [Bb]in/
 [Oo]bj/
+
+# Runtime audit logs and telemetry
+audit_log.jsonl
+test_audit_log.jsonl
+telemetry/
+ci-evidence/
+
+# Runtime test notes from FileStorageEngine
+/01_KNOWLEDGE/
+/04_MEMORY/
+03_IMPLEMENTATION/packages/01_KNOWLEDGE/
+10_DOCUMENTATION/06_INBOX/
+
+# Forensic pre-R001 snapshot (preserved on disk, ignored by git)
+AI_Memory_Vault_OBSIDIAN/
+
+# Obsidian canvas drafts and backups
+*.canvas
+.obsidian/*.backup*
