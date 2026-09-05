@@ -7,6 +7,8 @@ import jsonschema
 from .financial_schema import FINANCIAL_NOTE_SCHEMA
 from .storage.sqlite_engine import SQLiteStorageEngine
 from .financial_search import MultiLayeredFinancialSearchEngine
+from .authorizer import DefaultAuthorizer, Operation, Principal
+from .audit.logger import audit_event
 
 # Configuration: vector search disabled by default
 ENABLE_VECTOR_SEARCH = False
@@ -21,9 +23,10 @@ class FinancialQueryEngine:
       is enabled.
     """
 
-    def __init__(self, storage: SQLiteStorageEngine):
+    def __init__(self, storage: SQLiteStorageEngine, authorizer=None):
         self.storage = storage
         self.search_engine = MultiLayeredFinancialSearchEngine(storage)
+        self.authorizer = authorizer or DefaultAuthorizer()
 
     def _generate_id(self) -> str:
         return str(uuid.uuid4())
@@ -33,38 +36,65 @@ class FinancialQueryEngine:
         canonical = json.dumps(note, sort_keys=True).encode("utf-8")
         return hashlib.sha256(canonical).hexdigest()
 
-    def ingest_financial_note(self, note: dict) -> str:
-        """Validate, enrich and store a financial note.
+    def ingest_financial_note(self, note: dict, principal: Principal = Principal.AI_AGENT) -> str:
+        """Validate, authorize and store a financial note.
 
+        Lifecycle is controlled by the ingestion boundary and is always REVIEW;
+        callers cannot create ACTIVE/VERIFIED records through this adapter.
         Returns the generated UUID of the stored note.
         """
-        # 1. Validate against schema (AI may call this with is_ai_agent=False)
-        jsonschema.validate(instance=note, schema=FINANCIAL_NOTE_SCHEMA)
+        note_id = "unknown"
+        try:
+            self.authorizer.is_allowed(principal, Operation.PROPOSE)
+            if not self.authorizer.is_allowed(principal, Operation.PROPOSE):
+                raise PermissionError(f"{principal.value} not allowed to ingest financial notes")
 
-        # 2. Enrich with required front‑matter fields
-        note_id = self._generate_id()
-        now = "{{NOW}}"  # placeholder – the controller will replace at write time
-        provenance = {
-            "source_type": "execution",  # per trust‑boundary invariants
-            "source_ref": "ingest_financial_note",
-            "timestamp": now,
-        }
-        frontmatter = {
-            "id": note_id,
-            "type": "knowledge",
-            "lifecycle": "REVIEW",
-            "category": "financial",
-            "tags": note.get("tags", []),
-            "created": note.get("date") or now,
-            "updated": note.get("date") or now,
-            "provenance": provenance,
-            "confidence": note.get("confidence", "unknown"),
-            "verification": note.get("verification", "unverified"),
-        }
-        stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
-        self.storage.set(note_id, stored_note)
-        self.search_engine.index_note(stored_note)
-        return note_id
+            if not isinstance(note, dict):
+                raise ValueError("Financial note payload must be a mapping")
+
+            # 1. Validate caller payload against the financial input schema.
+            jsonschema.validate(instance=note, schema=FINANCIAL_NOTE_SCHEMA)
+
+            # 2. Enrich with controller-owned front-matter fields.
+            note_id = self._generate_id()
+            now = "{{NOW}}"  # placeholder – retained for compatibility
+            provenance = {
+                "source_type": "execution",
+                "source_ref": "ingest_financial_note",
+                "timestamp": now,
+            }
+            frontmatter = {
+                "id": note_id,
+                "type": "knowledge",
+                "lifecycle": "REVIEW",
+                "category": "financial",
+                "tags": note.get("tags", []),
+                "created": note.get("date") or now,
+                "updated": note.get("date") or now,
+                "provenance": provenance,
+                "confidence": note.get("confidence", "unknown"),
+                "verification": note.get("verification", "unverified"),
+            }
+            stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
+            self.storage.set(note_id, stored_note)
+            self.search_engine.index_note(stored_note)
+            audit_event(
+                "financial_ingest",
+                principal,
+                note_id,
+                success=True,
+                details={"lifecycle": frontmatter["lifecycle"]},
+            )
+            return note_id
+        except Exception as e:
+            audit_event(
+                "financial_ingest",
+                principal,
+                note_id,
+                success=False,
+                details={"error": str(e)},
+            )
+            raise
 
     def search(
         self,
