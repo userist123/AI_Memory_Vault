@@ -12,7 +12,7 @@ Authority: owner-approved.
 
 Base `main` SHA: `b42dd9a97d4620849426916aed11df478b3076d0`
 
-Current working-branch revision at handoff preparation: `8aba44665a98dae520c8240a271865240478437a8`
+Current working-branch revision: `ad8b54d256b52ccf0cdcc000dc1ff8ce165b636e` (source-register update; subsequent cleanup commits are also on the same isolated branch).
 
 Draft PR: #33, targeting `main`. It is draft/open and must not be merged without owner and legal review.
 
@@ -20,7 +20,7 @@ Draft PR: #33, targeting `main`. It is draft/open and must not be merged without
 
 - isolated branch created from the promoted main SHA;
 - source/interpretation/policy/test artifacts separated;
-- source register created;
+- source register created and aligned to the owner-authorized private/local capture mechanism;
 - complete-article index created for OUG 155/2024;
 - OUG 155/2024 → Law 124/2025 amendment map created for all 23 amendment items;
 - atomic REVIEW notes created with act/article/alineat provenance;
@@ -28,28 +28,34 @@ Draft PR: #33, targeting `main`. It is draft/open and must not be merged without
 - candidate tests/evidence register created;
 - `LEGAL_REVIEW_REQUIRED` register created;
 - `NOT_APPLICABLE_OR_NOT_YET_DETERMINED` register created;
-- official-source capture workflow added to the branch.
+- the public GitHub Actions source-capture workflow and trigger marker were removed because the owner explicitly authorized private/local capture and prohibited committing full legal source files to the public repository.
 
-## Blocking gap
+## Owner-authorized capture mechanism
 
-The available GitHub Actions environment cannot execute the new source-capture workflow from this isolated branch because the workflow itself is not present on `main`; the branch must not modify `main` merely to bootstrap the workflow.
+The owner has authorized complete official snapshots to be captured and retained privately/locally, outside the public repository, for:
 
-Consequently the branch does **not yet contain verified byte-preserved primary-source snapshots** (`source.html`), extracted complete source text, or exact SHA-256 content hashes produced by the capture workflow.
+1. OUG nr. 155/2024;
+2. Legea nr. 124/2025.
 
-Web verification confirms the two requested official Portal Legislativ records and their printable source URLs, but that web evidence is not substituted for the required repository source snapshot/hash evidence.
+The public repository may contain only manifests, hashes, source register metadata, derived REVIEW notes, legal-review questions, and consolidation mapping. Full legal source files must remain private/local.
 
-## CI status
+For each private/local snapshot the manifest must record official URL, authority, publication date, access timestamp, format, exact byte size, SHA-256, and a source-completeness result. The source body must remain unaltered.
 
-CI for the final exact branch SHA is not yet a complete acceptance record. Existing repository workflows may run on the PR, but no source-capture exact-SHA evidence is accepted as complete until the primary source files and hashes are present on the branch.
+## Current blocking gap
+
+The current execution environment does not have the two complete private/local official snapshots available as files. Direct outbound retrieval from `legislatie.just.ro` is unavailable from the execution container, and web verification cannot be substituted for byte-level private capture/hash evidence.
+
+Therefore no SHA-256 value, file size, access timestamp, or completeness result is fabricated. The public branch contains no full legal source body.
 
 ## Acceptance gaps
 
-- [ ] complete OUG 155/2024 source snapshot committed;
-- [ ] complete Legea 124/2025 source snapshot committed;
-- [ ] SHA-256 content hashes verified;
-- [ ] exact-source capture CI evidence recorded;
-- [ ] URL resolution test recorded;
-- [ ] source/interpretation separation validated against captured files;
+- [ ] private/local complete OUG 155/2024 snapshot available to the validation step;
+- [ ] private/local complete Legea 124/2025 snapshot available to the validation step;
+- [ ] access timestamps, formats, exact byte sizes and SHA-256 values recorded in the manifest;
+- [ ] source completeness independently checked for both acts;
+- [ ] hash/manifest validation completed;
+- [ ] URL resolution evidence recorded;
+- [ ] source/interpretation separation validated against the private snapshots;
 - [ ] final owner/legal review.
 
 ## Safety status
@@ -59,9 +65,14 @@ CI for the final exact branch SHA is not yet a complete acceptance record. Exist
 - No legal compliance claim was made.
 - No sensitive/classified/operational information was added.
 - No interpretation was promoted to ACTIVE.
+- Full legal source files are not committed to the public repository.
 
-## Required final status
+## Required final status after capture + manifest validation
+
+`READY_FOR_SOURCE_INGESTION`
+
+## Current status
 
 `BLOCKED_SOURCE_OR_VERSION_GAP`
 
-The branch is ready for continuation once the owner authorizes a source-capture mechanism that does not violate the protected-main constraint, or supplies the complete public source snapshots with provenance/hash evidence.
+The owner authorization is now recorded in the branch. The remaining blocker is strictly evidentiary: the two complete private/local source snapshots must be made available to the validation step so the manifest can be populated and validated without publishing the source bodies.
