@@ -1,0 +1,93 @@
+name: WP4 off-by-one repair
+
+on:
+  push:
+    branches:
+      - luna/wp4-off-by-one-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ github.ref_name == 'luna/wp4-off-by-one-20260905' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Repair production boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('xau_kinetic/financial_ingestion/indicators.py')
+          text = path.read_text(encoding='utf-8')
+          old = 'if len(closes) > abs(idx):'
+          new = 'if len(closes) >= abs(idx):'
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one WP-4 boundary, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+      - name: Add exact-length regression coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > xau_kinetic/tests/test_indicators_series_boundaries.py <<'PY'
+          import pandas as pd
+          import pytest
+
+          from xau_kinetic.financial_ingestion.indicators import compute_all_indicators
+
+
+          def _frame(length: int) -> pd.DataFrame:
+              closes = [100.0 + i for i in range(length)]
+              return pd.DataFrame(
+                  {
+                      'Open': closes,
+                      'High': [v + 1.0 for v in closes],
+                      'Low': [v - 1.0 for v in closes],
+                      'Close': closes,
+                      'Volume': [1_000] * length,
+                  }
+              )
+
+
+          @pytest.mark.parametrize(
+              ('length', 'field', 'expected'),
+              [
+                  (5, 'var_sapt_pct', 0.0),
+                  (6, 'var_sapt_pct', 5.0),
+                  (7, 'var_sapt_pct', 5.0),
+                  (8, 'var_sapt_pct', 5.0),
+                  (9, 'var_sapt_pct', 5.0),
+                  (10, 'var_sapt_pct', 5.0),
+                  (20, 'var_luna_pct', 0.0),
+                  (21, 'var_luna_pct', 20.0),
+                  (22, 'var_luna_pct', 20.0),
+                  (23, 'var_luna_pct', 20.0),
+                  (24, 'var_luna_pct', 20.0),
+                  (25, 'var_luna_pct', 20.0),
+              ],
+          )
+          def test_indicator_series_boundary_lengths(length: int, field: str, expected: float) -> None:
+              result = compute_all_indicators(_frame(length), name='boundary', ticker='TEST')
+              assert result[field] == expected
+          PY
+
+      - name: Run focused regression
+        run: python -m pytest xau_kinetic/tests/test_indicators_series_boundaries.py -q
+
+      - name: Commit repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add xau_kinetic/financial_ingestion/indicators.py xau_kinetic/tests/test_indicators_series_boundaries.py
+          git commit -m 'fix: correct indicator percentage series boundary'
+          git rm .wp4-trigger .github/workflows/wp4-off-by-one-fix-once.yml
+          git commit -m 'chore: remove one-shot WP4 repair workflow'
+          git push
