@@ -56,6 +56,18 @@ CLASSIFY
 12. No recursive council unless explicitly required; use staged execution for exceptional cases.
 13. A proposed council context SHOULD be validated against the current repository validation tooling before execution when a runtime can execute local validation.
 
+## Production Consumer Gate
+
+Before building, expanding, or replacing any architectural layer, verify that a real production consumer exists in the current repository.
+
+Use a repository search equivalent to:
+
+```bash
+grep -rl "<module>" --include='*.py' . | grep -vE '/tests/|(^|/)test_|benchmarks'
+```
+
+If the result is empty, the component is not integrated. **Wire the production consumer first; build the new layer second.** Tests, benchmarks, documentation and dead-code references do not count as production consumers.
+
 ## Memory Rules
 
 Do not automatically convert conversations into permanent memory. Preserve useful, reusable, verifiable knowledge and provenance. Prefer small relevant retrieval sets over broad context. Never load the whole Vault.
@@ -83,7 +95,7 @@ Direct unauthenticated filesystem scans, raw `os.walk` traversals, or any attemp
 
 ## Multi-Agent Development Coordination
 
-When multiple AI development environments/agents (Antigravity, Claude Code, ChatGPT, Perplexity, etc.) operate on this repository:
+When multiple AI development environments/agents (Antigravity, Claude Code, Codex, Perplexity, etc.) operate on this repository:
 1. **Single Source of Truth**: `00_GOVERNANCE/coordination/` is the canonical coordination layer for active and completed work.
 2. **Pre-flight Check**: Before touching any code or files, inspect the current coordination state to ensure another AI session is not actively executing or has not already resolved the task.
 3. **Execution Ownership**: When starting a task, claim it or check for an active owner. When completing a task, record ownership and timestamp in the current coordination state.
