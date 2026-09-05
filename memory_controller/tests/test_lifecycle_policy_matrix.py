@@ -43,15 +43,18 @@ ALL_LIFECYCLES = {
     ],
 )
 def test_allowed_targets_matches_canonical_matrix(mutation, source, targets):
-    assert set(allowed_targets(mutation, source)) == targets
+    assert set(allowed_targets(source, mutation=mutation)) == targets
     for target in targets:
-        assert is_transition_allowed(mutation, source, target)
+        if mutation is Mutation.PROMOTE:
+            assert is_transition_allowed(source, target, mutation=mutation, verification="verified")
+        else:
+            assert is_transition_allowed(source, target, mutation=mutation)
 
 
 @pytest.mark.parametrize("mutation", list(Mutation))
 @pytest.mark.parametrize("source", sorted(ALL_LIFECYCLES))
 def test_every_policy_entry_is_subset_of_known_lifecycles(mutation, source):
-    assert set(allowed_targets(mutation, source)) <= ALL_LIFECYCLES
+    assert set(allowed_targets(source, mutation=mutation)) <= ALL_LIFECYCLES
 
 
 @pytest.mark.parametrize("mutation", list(Mutation))
@@ -59,9 +62,9 @@ def test_every_policy_entry_is_subset_of_known_lifecycles(mutation, source):
 def test_all_non_identity_transitions_not_explicitly_allowed_fail_closed(
     mutation, source
 ):
-    allowed = set(allowed_targets(mutation, source))
+    allowed = set(allowed_targets(source, mutation=mutation))
     for target in sorted(ALL_LIFECYCLES - {source} - allowed):
-        assert not is_transition_allowed(mutation, source, target)
+        assert not is_transition_allowed(source, target, mutation=mutation, verification="verified")
 
 
 @pytest.mark.parametrize("mutation,source,target", [
@@ -71,13 +74,13 @@ def test_all_non_identity_transitions_not_explicitly_allowed_fail_closed(
     (Mutation.SUPERSEDE, None, "SUPERSEDED"),
 ])
 def test_unknown_mutation_or_source_fails_closed(mutation, source, target):
-    assert allowed_targets(mutation, source) == []
-    assert not is_transition_allowed(mutation, source, target)
+    assert allowed_targets(source, mutation=mutation) == frozenset()
+    assert not is_transition_allowed(source, target, mutation=mutation, verification="verified")
 
 
 def test_unknown_target_fails_closed_without_corrupting_known_policy():
-    assert set(allowed_targets(Mutation.PROMOTE, "REVIEW")) == {"ACTIVE"}
-    assert not is_transition_allowed(Mutation.PROMOTE, "REVIEW", "UNKNOWN")
+    assert set(allowed_targets("REVIEW", mutation=Mutation.PROMOTE)) == {"ACTIVE"}
+    assert not is_transition_allowed("REVIEW", "UNKNOWN", mutation=Mutation.PROMOTE, verification="verified")
 
 
 @pytest.mark.parametrize(
@@ -90,13 +93,12 @@ def test_unknown_target_fails_closed_without_corrupting_known_policy():
     ],
 )
 def test_no_implicit_reactivation_or_noop_transition(source, target):
-    assert not is_transition_allowed(Mutation.PROMOTE, source, target)
-    assert not is_transition_allowed(Mutation.RECONSOLIDATE_RESOLVE, source, target)
+    assert not is_transition_allowed(source, target, mutation=Mutation.PROMOTE, verification="verified")
+    assert not is_transition_allowed(source, target, mutation=Mutation.RECONSOLIDATE_RESOLVE)
 
 
 def test_promotion_policy_does_not_conflate_verification_with_lifecycle():
-    """The policy permits REVIEW->ACTIVE structurally; verification remains a
-    separate runtime precondition enforced by promotion/attestation logic.
-    """
-    assert is_transition_allowed(Mutation.PROMOTE, "REVIEW", "ACTIVE")
-    assert not is_transition_allowed(Mutation.PROMOTE, "ACTIVE", "VERIFIED")
+    """The policy permits REVIEW->ACTIVE only when the verification precondition is met."""
+    assert is_transition_allowed("REVIEW", "ACTIVE", mutation=Mutation.PROMOTE, verification="verified")
+    assert not is_transition_allowed("REVIEW", "ACTIVE", mutation=Mutation.PROMOTE, verification="unverified")
+    assert not is_transition_allowed("ACTIVE", "VERIFIED", mutation=Mutation.PROMOTE, verification="verified")
