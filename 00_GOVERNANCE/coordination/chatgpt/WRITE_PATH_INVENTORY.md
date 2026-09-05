@@ -23,14 +23,19 @@ Machine-readable form:
 python 30_SCRIPTS/verification/write_path_audit.py --root . --json
 ```
 
-## Interpretation
+## Detection coverage
 
 The scanner identifies:
 
 - `*.storage.set` / `*.storage.delete` calls;
 - `*.store.set` / `*.store.delete` calls;
 - generic `.set()` / `.delete()` calls;
-- file `.write()` / `.writelines()` calls.
+- file `.write()` / `.writelines()` calls;
+- `open()` file creation/access that may write;
+- `Path.write_text()` / `Path.write_bytes()`;
+- `Path.unlink()` / `Path.rmdir()`;
+- `os.remove()` / `os.unlink()` / `os.rmdir()`;
+- common `shutil.copy*()` / `shutil.move()` / `shutil.rmtree()` mutations.
 
 Known canonical boundaries are classified separately for review. A finding is
 not automatically a vulnerability: each result must be classified as canonical,
