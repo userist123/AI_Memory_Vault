@@ -9,17 +9,11 @@ from __future__ import annotations
 from pathlib import Path
 
 _BASE = Path(__file__).resolve().parents[1]
-__path__ = [
-    str(_BASE / "graph"),
-    str(_BASE / "interfaces"),
-    str(_BASE / "learning"),
-    str(_BASE / "lifecycle"),
-    str(_BASE / "memory"),
-    str(_BASE / "observability"),
-    str(_BASE / "providers"),
-    str(_BASE / "retrieval"),
-    str(_BASE / "security"),
-]
+# ``memory_vault`` is a namespace facade over the sibling implementation
+# packages. Its import path must point at the package root so that
+# ``memory_vault.memory``, ``memory_vault.graph``, etc. resolve to the actual
+# classified packages rather than looking for nested modules inside each one.
+__path__ = [str(_BASE)]
 __all__ = [
     "graph",
     "interfaces",
