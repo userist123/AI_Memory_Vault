@@ -11,6 +11,9 @@ paths = [
   '''(^|/)\.agents/''',
   '''(^|/)50_ARTIFACTS/''',
   '''(^|/)07_EVALUATION/''',
+  '''(^|/)06_INBOX/RAW_IMPORTS/''',
+  '''(^|/)04_RAW_SKILLS_PART_[123]\.txt$''',
+  '''(^|/)NOTEBOOKLM_PART3_[12]_RAW_SKILLS\.txt$''',
 ]
 
 # Generated/test-only material is not part of the production runtime trust boundary.
@@ -22,6 +25,8 @@ paths = [
   '''(^|/)20_TESTS/''',
   '''(^|/)40_EXPERIMENTS/''',
   '''(^|/)02_PRODUCT/.*/tests/''',
+  '''(^|/)tests/''',
+  '''(^|/)projects/.*/tests/''',
 ]
 
 # Python bytecode is generated during the test run and is not source material.
