@@ -158,6 +158,37 @@ class Hit:
     signals: Dict[str, int]  # retriever name -> rank (1-based); for the observed trace
 
 
+# ---------------------------------------------------------------------------
+# P1.2 Secure retrieval boundary constants
+# ---------------------------------------------------------------------------
+# The only lifecycles a secure caller is ever allowed to receive.
+# Callers may RESTRICT to a subset but may NEVER ADD states beyond this set.
+ALLOWED_SECURE_LIFECYCLES: frozenset = frozenset({"ACTIVE"})
+# RAW, ARCHIVED, RECONSOLIDATING, REVIEW, NONE are all excluded.
+# REVIEW is intentionally excluded: notes in REVIEW are in-flight, not yet
+# human-attested, and must not leak into a production retrieval path.
+
+# The only verification values a secure caller is ever allowed to receive.
+ALLOWED_SECURE_VERIFICATION: frozenset = frozenset({"verified"})
+# "unverified", "ai_generated", "unknown" are all outside the trust boundary.
+
+_KNOWN_LIFECYCLES: frozenset = frozenset(
+    {"ACTIVE", "REVIEW", "ARCHIVED", "RAW", "RECONSOLIDATING", "NONE"}
+)
+_KNOWN_VERIFICATION: frozenset = frozenset(
+    {"verified", "unverified", "ai_generated", "unknown"}
+)
+
+
+class SecureFilterViolation(ValueError):
+    """Raised when a caller attempts to widen the secure_search() trust boundary.
+
+    secure_search() enforces a fail-closed policy: callers may restrict the
+    result set but may never expand it beyond ACTIVE+verified.
+    """
+    pass
+
+
 class HybridRetriever:
     DEFAULT_WEIGHTS = {"bm25": 1.0, "entity": 0.8, "dense": 1.2}
     RRF_K = 60
@@ -268,13 +299,80 @@ class HybridRetriever:
         allowed_types: Optional[Iterable[str]] = None,
         allowed_verification: Optional[Iterable[str]] = None,
     ) -> List[Hit]:
-        """Convenience method enforcing security boundary (ACTIVE + verified by default)."""
+        """Enforce the security boundary (fail-closed). P1.2 policy.
+
+        - Default: ACTIVE lifecycle + verified verification only.
+        - Caller MAY RESTRICT to a strict subset of those values.
+        - Caller MAY NEVER WIDEN the boundary (raises SecureFilterViolation).
+        - Unknown lifecycle/verification values → SecureFilterViolation.
+        - Empty allowed_lifecycles or allowed_verification → SecureFilterViolation.
+
+        Examples::
+
+            secure_search(q)                          # OK → ACTIVE+verified
+            secure_search(q, allowed_lifecycles=["ACTIVE"])   # OK → same
+            secure_search(q, allowed_lifecycles=["REVIEW"])   # RAISES
+            secure_search(q, allowed_lifecycles=["ACTIVE","REVIEW"])  # RAISES
+            secure_search(q, allowed_lifecycles=["ARCHIVED"]) # RAISES
+            secure_search(q, allowed_verification=["unverified"]) # RAISES
+            secure_search(q, allowed_verification=["admin"]) # RAISES (unknown)
+        """
+        # ---- Lifecycle boundary enforcement ----
+        if allowed_lifecycles is not None:
+            caller_lc = {str(lc).upper() for lc in allowed_lifecycles}
+            if not caller_lc:
+                raise SecureFilterViolation(
+                    "secure_search: allowed_lifecycles must not be empty — "
+                    "an empty set would admit all lifecycles (bypass)."
+                )
+            unknown_lc = caller_lc - _KNOWN_LIFECYCLES
+            if unknown_lc:
+                raise SecureFilterViolation(
+                    f"secure_search: unknown lifecycle values {sorted(unknown_lc)!r}; "
+                    f"known: {sorted(_KNOWN_LIFECYCLES)!r}"
+                )
+            excess_lc = caller_lc - ALLOWED_SECURE_LIFECYCLES
+            if excess_lc:
+                raise SecureFilterViolation(
+                    f"secure_search: caller requested {sorted(excess_lc)!r} which are "
+                    f"outside the secure boundary {sorted(ALLOWED_SECURE_LIFECYCLES)!r}. "
+                    f"Callers may only restrict to a subset of the boundary set."
+                )
+            eff_lc: frozenset = frozenset(caller_lc)
+        else:
+            eff_lc = ALLOWED_SECURE_LIFECYCLES
+
+        # ---- Verification boundary enforcement ----
+        if allowed_verification is not None:
+            caller_v = {str(v).lower() for v in allowed_verification}
+            if not caller_v:
+                raise SecureFilterViolation(
+                    "secure_search: allowed_verification must not be empty — "
+                    "an empty set would admit all verification states (bypass)."
+                )
+            unknown_v = caller_v - _KNOWN_VERIFICATION
+            if unknown_v:
+                raise SecureFilterViolation(
+                    f"secure_search: unknown verification values {sorted(unknown_v)!r}; "
+                    f"known: {sorted(_KNOWN_VERIFICATION)!r}"
+                )
+            excess_v = caller_v - ALLOWED_SECURE_VERIFICATION
+            if excess_v:
+                raise SecureFilterViolation(
+                    f"secure_search: caller requested verification {sorted(excess_v)!r} "
+                    f"which is outside the secure boundary {sorted(ALLOWED_SECURE_VERIFICATION)!r}. "
+                    f"Callers may only restrict to a subset of the boundary set."
+                )
+            eff_v: frozenset = frozenset(caller_v)
+        else:
+            eff_v = ALLOWED_SECURE_VERIFICATION
+
         return self.search(
             query=query,
             top_k=top_k,
-            allowed_lifecycles=allowed_lifecycles or {"ACTIVE"},
+            allowed_lifecycles=eff_lc,
             allowed_types=allowed_types,
-            allowed_verification=allowed_verification or {"verified"},
+            allowed_verification=eff_v,
             secure=True,
         )
 

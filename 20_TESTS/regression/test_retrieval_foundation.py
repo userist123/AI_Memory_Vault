@@ -378,3 +378,143 @@ def test_17_ablation_rules_properly_flag_dense_not_justified():
     res_justified = evaluate_dense_ablation(lexical, {"mrr": 0.87, "recall@10": 0.95})
     assert res_justified["verdict"] == "DENSE JUSTIFIED"
     assert res_justified["delta_mrr"] == 0.07
+
+
+# ===========================================================================
+# P1.2 Security Regression Tests — secure_search() filter boundary
+# ===========================================================================
+from cognitive_core.hybrid_retrieval import (
+    SecureFilterViolation,
+    ALLOWED_SECURE_LIFECYCLES,
+    ALLOWED_SECURE_VERIFICATION,
+)
+
+
+def _make_secure_retriever(tmp_path):
+    """Build a minimal retriever with notes of various lifecycle/verification combos."""
+    notes_spec = [
+        ("a1", "AAAAAAAA-0001-0001-0001-000000000001", "ACTIVE",          "verified",   "Note Alpha active verified"),
+        ("a2", "AAAAAAAA-0002-0002-0002-000000000002", "ACTIVE",          "unverified", "Note Beta active unverified"),
+        ("a3", "AAAAAAAA-0003-0003-0003-000000000003", "REVIEW",          "verified",   "Note Gamma review verified"),
+        ("a4", "AAAAAAAA-0004-0004-0004-000000000004", "ARCHIVED",        "verified",   "Note Delta archived verified"),
+        ("a5", "AAAAAAAA-0005-0005-0005-000000000005", "RAW",             "unverified", "Note Epsilon raw unverified"),
+        ("a6", "AAAAAAAA-0006-0006-0006-000000000006", "RECONSOLIDATING", "unverified", "Note Zeta reconsolidating"),
+    ]
+    for slug, nid, lc, verif, body in notes_spec:
+        _write_note(
+            tmp_path, f"01_ARCHITECTURE/{slug}.md",
+            f"id: {nid}\ntype: knowledge\nlifecycle: {lc}\nverification: {verif}",
+            f"# {body}\n" + f"{body} " * 20,
+        )
+    # Load ALL lifecycle states so the retriever index contains everything,
+    # letting secure_search() filter enforce the boundary at query time.
+    idx = VaultIndex.load(
+        tmp_path,
+        lifecycles=["ACTIVE", "REVIEW", "ARCHIVED", "RAW", "RECONSOLIDATING", "NONE"],
+        include_raw=True,
+        include_archived=True,
+    )
+    return HybridRetriever(idx), {slug: nid for slug, nid, *_ in notes_spec}
+
+
+
+# ---------------------------------------------------------------------------
+# 18. secure_search() default returns only ACTIVE+verified notes
+# ---------------------------------------------------------------------------
+def test_18_secure_search_default_active_verified_only(tmp_path):
+    ret, ids = _make_secure_retriever(tmp_path)
+    hits = ret.secure_search("Note", top_k=20)
+    hit_ids = {h.note.id for h in hits}
+    # Only a1 qualifies: ACTIVE+verified
+    assert ids["a1"] in hit_ids, "ACTIVE+verified note must be returned"
+    assert ids["a2"] not in hit_ids, "ACTIVE+unverified must be excluded"
+    assert ids["a3"] not in hit_ids, "REVIEW+verified must be excluded"
+    assert ids["a4"] not in hit_ids, "ARCHIVED+verified must be excluded"
+    assert ids["a5"] not in hit_ids, "RAW+unverified must be excluded"
+    assert ids["a6"] not in hit_ids, "RECONSOLIDATING+unverified must be excluded"
+
+
+# ---------------------------------------------------------------------------
+# 19. secure_search() restricting to subset of ACTIVE is permitted
+# ---------------------------------------------------------------------------
+def test_19_secure_search_explicit_active_subset_permitted(tmp_path):
+    ret, ids = _make_secure_retriever(tmp_path)
+    # Passing allowed_lifecycles=["ACTIVE"] is a no-op restriction (same as default)
+    hits = ret.secure_search("Note", top_k=20, allowed_lifecycles=["ACTIVE"])
+    hit_ids = {h.note.id for h in hits}
+    assert ids["a1"] in hit_ids
+    assert ids["a3"] not in hit_ids
+
+
+# ---------------------------------------------------------------------------
+# 20. secure_search() with REVIEW lifecycle raises SecureFilterViolation
+# ---------------------------------------------------------------------------
+def test_20_secure_search_review_lifecycle_raises(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="secure_search"):
+        ret.secure_search("Note", allowed_lifecycles=["REVIEW"])
+
+
+# ---------------------------------------------------------------------------
+# 21. secure_search() with ACTIVE+REVIEW combo raises SecureFilterViolation
+# ---------------------------------------------------------------------------
+def test_21_secure_search_active_plus_review_raises(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="secure_search"):
+        ret.secure_search("Note", allowed_lifecycles=["ACTIVE", "REVIEW"])
+
+
+# ---------------------------------------------------------------------------
+# 22. secure_search() with ARCHIVED/RAW/RECONSOLIDATING raises
+# ---------------------------------------------------------------------------
+@pytest.mark.parametrize("lc", ["ARCHIVED", "RAW", "RECONSOLIDATING", "NONE"])
+def test_22_secure_search_forbidden_lifecycle_raises(tmp_path, lc):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="secure_search"):
+        ret.secure_search("Note", allowed_lifecycles=[lc])
+
+
+# ---------------------------------------------------------------------------
+# 23. secure_search() with unverified verification raises
+# ---------------------------------------------------------------------------
+def test_23_secure_search_unverified_raises(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="secure_search"):
+        ret.secure_search("Note", allowed_verification=["unverified"])
+
+
+# ---------------------------------------------------------------------------
+# 24. secure_search() with unknown verification value raises
+# ---------------------------------------------------------------------------
+def test_24_secure_search_unknown_verification_raises(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="unknown verification"):
+        ret.secure_search("Note", allowed_verification=["admin"])
+
+
+# ---------------------------------------------------------------------------
+# 25. secure_search() with unknown lifecycle value raises
+# ---------------------------------------------------------------------------
+def test_25_secure_search_unknown_lifecycle_raises(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="unknown lifecycle"):
+        ret.secure_search("Note", allowed_lifecycles=["XYZZY"])
+
+
+# ---------------------------------------------------------------------------
+# 26. secure_search() with empty allowed_lifecycles raises (bypass prevention)
+# ---------------------------------------------------------------------------
+def test_26_secure_search_empty_lifecycles_raises(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    with pytest.raises(SecureFilterViolation, match="must not be empty"):
+        ret.secure_search("Note", allowed_lifecycles=[])
+
+
+# ---------------------------------------------------------------------------
+# 27. secure_search() results are deterministic (same query → same order)
+# ---------------------------------------------------------------------------
+def test_27_secure_search_results_are_deterministic(tmp_path):
+    ret, _ = _make_secure_retriever(tmp_path)
+    hits_a = [h.note.id for h in ret.secure_search("Note active verified knowledge", top_k=5)]
+    hits_b = [h.note.id for h in ret.secure_search("Note active verified knowledge", top_k=5)]
+    assert hits_a == hits_b, "secure_search must produce identical ordered results on repeated calls"
