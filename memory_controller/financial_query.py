@@ -39,8 +39,8 @@ class FinancialQueryEngine:
     def ingest_financial_note(self, note: dict, principal: Principal = Principal.AI_AGENT) -> str:
         """Validate, authorize and store a financial note.
 
-        Lifecycle is controlled by the ingestion boundary and is always REVIEW;
-        callers cannot create ACTIVE/VERIFIED records through this adapter.
+        Lifecycle and verification are controller-owned trust-boundary fields.
+        Callers cannot create ACTIVE/VERIFIED records through this adapter.
         Returns the generated UUID of the stored note.
         """
         note_id = "unknown"
@@ -50,6 +50,9 @@ class FinancialQueryEngine:
 
             if not isinstance(note, dict):
                 raise ValueError("Financial note payload must be a mapping")
+
+            if note.get("verification") == "verified":
+                raise ValueError("Verification status 'verified' cannot be set via direct financial ingest. Use attest() instead.")
 
             # 1. Validate caller payload against the financial input schema.
             jsonschema.validate(instance=note, schema=FINANCIAL_NOTE_SCHEMA)
@@ -72,7 +75,7 @@ class FinancialQueryEngine:
                 "updated": note.get("date") or now,
                 "provenance": provenance,
                 "confidence": note.get("confidence", "unknown"),
-                "verification": note.get("verification", "unverified"),
+                "verification": "unverified",
             }
             stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
             self.storage.set(note_id, stored_note)
@@ -82,7 +85,7 @@ class FinancialQueryEngine:
                 principal,
                 note_id,
                 success=True,
-                details={"lifecycle": frontmatter["lifecycle"]},
+                details={"lifecycle": frontmatter["lifecycle"], "verification": frontmatter["verification"]},
             )
             return note_id
         except Exception as e:
