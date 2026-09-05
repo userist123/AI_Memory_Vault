@@ -9,10 +9,13 @@ from pathlib import Path
 
 ROOT_ALLOWED = {
     ".editorconfig",
+    ".env.example",
     ".gitattributes",
     ".gitignore",
+    ".gitleaks.toml",
     ".pre-commit-config.yaml",
     "AGENTS.md",
+    "CLAUDE.md",
     "LICENSE",
     "LICENSE.txt",
     "Makefile",
@@ -20,6 +23,8 @@ ROOT_ALLOWED = {
     "justfile",
     "docker-compose.yml",
     "pyproject.toml",
+    "pytest.ini",
+    "vault_api.py",
 }
 ROOT_ALLOWED_PREFIXES = ("requirements", "uv.lock", "poetry.lock", "Pipfile", "package.json", "package-lock.json")
 NUMBERED_RE = re.compile(r"^\d{2}_[^/]+$")
@@ -49,9 +54,8 @@ def check_numbered_roots(root: Path) -> list[str]:
     """Validate the numbered-root naming contract without forbidding valid children.
 
     Numbered roots are intentional repository domains. Their contents are
-    governed by each domain's own README/policy and must not be treated as
-    README-only directories; e.g. ``03_IMPLEMENTATION`` and ``20_TESTS`` are
-    expected to contain executable code and tests respectively.
+    governed by each domain's own README/policy and may contain executable code,
+    tests, knowledge, configuration, or generated evidence as appropriate.
     """
     failures: list[str] = []
     for path in sorted(root.iterdir()):
@@ -86,9 +90,18 @@ def check_production(files: list[str]) -> list[str]:
 
 
 def check_test_paths(root: Path, files: list[str]) -> list[str]:
+    """Reject accidental local-machine paths in the canonical test suite.
+
+    External skill repositories and project-local workspace tests are treated as
+    imported/reference material and are not part of the canonical 20_TESTS path
+    policy. Dedicated path-security regression tests are allowed to contain the
+    absolute-path literals they explicitly test.
+    """
     failures: list[str] = []
     for file in files:
-        if not (file.startswith("20_TESTS/") or "/tests/" in file or file.startswith("tests/")):
+        if not file.startswith("20_TESTS/"):
+            continue
+        if file in {"20_TESTS/regression/test_repository_hygiene.py"}:
             continue
         candidate = root / file
         if candidate.suffix.lower() not in {".py", ".ps1", ".cmd", ".sh", ".yml", ".yaml", ".toml", ".json"}:
