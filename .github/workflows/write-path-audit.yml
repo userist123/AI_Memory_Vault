@@ -22,22 +22,19 @@ jobs:
         run: python3 30_SCRIPTS/verification/write_path_audit.py --root . --json > write-path-audit.json
 
       - name: Publish summary
+        env:
+          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
         run: |
           python3 - <<'PY'
           import json
-          from collections import Counter
+          import os
+                   from collections import Counter
 
-          findings = json.load(open("write-path-audit.json", encoding="utf-8"))
+          with open("write-path-audit.json", encoding="utf-8") as src:
+              findings = json.load(src)
           by_class = Counter(item["classification"] for item in findings)
-          print("## Write-path audit")
-          print()
-          print(f"Total findings: **{len(findings)}**")
-          print()
-          for key in sorted(by_class):
-              print(f"- `{key}`: {by_class[key]}")
-          print()
-          print("The inventory is advisory: each finding still requires architectural classification.")
-          with open("$GITHUB_STEP_SUMMARY", "a", encoding="utf-8") as out:
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as out:
               out.write("## Write-path audit\n\n")
               out.write(f"Total findings: **{len(findings)}**\n\n")
               for key in sorted(by_class):
