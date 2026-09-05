@@ -1,0 +1,131 @@
+name: R002-C Official Legal Source Capture
+
+on:
+  push:
+    branches:
+      - 'r002-c/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Capture official source pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p 05_DATA/legal_sources/r002-c/primary/oug-155-2024
+          mkdir -p 05_DATA/legal_sources/r002-c/primary/lege-124-2025
+
+          curl --fail --location --retry 3 \
+            -A 'AI_Memory_Vault_R002-C_SourceCapture/1.0' \
+            'https://legislatie.just.ro/Public/FormaPrintabila/00000G05B60NOFIK4N33DGK9DPP0RCH7' \
+            -o 05_DATA/legal_sources/r002-c/primary/oug-155-2024/source.html
+
+          curl --fail --location --retry 3 \
+            -A 'AI_Memory_Vault_R002-C_SourceCapture/1.0' \
+            'https://legislatie.just.ro/Public/FormaPrintabila/00000G2IZOYAC9O6E601LNTHNRVOGBVA' \
+            -o 05_DATA/legal_sources/r002-c/primary/lege-124-2025/source.html
+
+      - name: Extract complete text without rewriting source HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import re
+
+          class TextExtractor(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.parts=[]
+                  self.skip=0
+              def handle_starttag(self, tag, attrs):
+                  if tag in {'script','style','noscript'}:
+                      self.skip += 1
+                  if tag in {'p','div','br','li','tr','h1','h2','h3','h4','h5','h6'} and self.skip == 0:
+                      self.parts.append('\n')
+              def handle_endtag(self, tag):
+                  if tag in {'script','style','noscript'} and self.skip:
+                      self.skip -= 1
+                  if tag in {'p','div','br','li','tr','h1','h2','h3','h4','h5','h6'} and self.skip == 0:
+                      self.parts.append('\n')
+              def handle_data(self, data):
+                  if self.skip == 0:
+                      self.parts.append(data)
+
+          def extract(src, dst):
+              raw=Path(src).read_text(encoding='utf-8', errors='replace')
+              p=TextExtractor(); p.feed(raw)
+              text=''.join(p.parts)
+              text=re.sub(r'[ \t]+', ' ', text)
+              text=re.sub(r'\n[ \t]+\n', '\n\n', text)
+              text=re.sub(r'\n{3,}', '\n\n', text).strip()+'\n'
+              Path(dst).write_text(text, encoding='utf-8')
+
+          extract('05_DATA/legal_sources/r002-c/primary/oug-155-2024/source.html', '05_DATA/legal_sources/r002-c/primary/oug-155-2024/source.txt')
+          extract('05_DATA/legal_sources/r002-c/primary/lege-124-2025/source.html', '05_DATA/legal_sources/r002-c/primary/lege-124-2025/source.txt')
+          PY
+
+      - name: Generate source hashes and capture manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          base=Path('05_DATA/legal_sources/r002-c/primary')
+          acts={
+            'oug-155-2024': {
+              'title':'OUG nr. 155/2024',
+              'official_url':'https://legislatie.just.ro/Public/DetaliiDocument/293121',
+              'printable_url':'https://legislatie.just.ro/Public/FormaPrintabila/00000G05B60NOFIK4N33DGK9DPP0RCH7',
+              'publication':'Monitorul Oficial nr. 1332 din 31 decembrie 2024',
+              'publication_date':'2024-12-31',
+              'version_date':'2024-12-30',
+            },
+            'lege-124-2025': {
+              'title':'Legea nr. 124/2025',
+              'official_url':'https://legislatie.just.ro/Public/DetaliiDocumentAfis/299675',
+              'printable_url':'https://legislatie.just.ro/Public/FormaPrintabila/00000G2IZOYAC9O6E601LNTHNRVOGBVA',
+              'publication':'Monitorul Oficial nr. 638 din 7 iulie 2025',
+              'publication_date':'2025-07-07',
+              'version_date':'2025-07-07',
+            },
+          }
+          captured=datetime.now(timezone.utc).isoformat()
+          lines=['# R002-C Source Register','',f'Capture timestamp (UTC): `{captured}`','',
+                 'Primary-source rule: official Portal Legislativ URLs are authoritative references; the captured HTML is preserved byte-for-byte and extracted text is a derived textual rendering of that same capture.','']
+          for key,m in acts.items():
+              d=base/key
+              h=sha256((d/'source.html').read_bytes()).hexdigest()
+              th=sha256((d/'source.txt').read_bytes()).hexdigest()
+              (d/'HASHES.sha256').write_text(f'{h}  source.html\n{th}  source.txt\n',encoding='utf-8')
+              lines += [f'## {m["title"]}','',f'- Official URL: {m["official_url"]}',f'- Printable source URL: {m["printable_url"]}',f'- Publication: {m["publication"]}',f'- Source version date: {m["version_date"]}',f'- Capture SHA-256 (HTML): `{h}`',f'- Extracted-text SHA-256: `{th}`', '- lifecycle: `REVIEW`', '- verification: `verified_source`', '- instruction_trust: `NONE`', '- requires_legal_review: `true`', '- Source text must remain unchanged; all interpretation belongs in separate derived artifacts.', '']
+          Path('05_DATA/legal_sources/r002-c/source_register.md').write_text('\n'.join(lines),encoding='utf-8')
+          PY
+
+      - name: Commit captured primary sources to the working branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add 05_DATA/legal_sources/r002-c
+          if git diff --cached --quiet; then
+            echo 'No source changes to commit.'
+            exit 0
+          fi
+          git commit -m 'data(r002-c): capture official legal source snapshots [skip ci]'
+          git push origin HEAD:${GITHUB_REF_NAME}
