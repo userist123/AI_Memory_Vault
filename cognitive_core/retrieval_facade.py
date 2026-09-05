@@ -157,28 +157,37 @@ class ProductionRetrievalFacade:
         if not isinstance(request.query, str):
             raise FilterValidationError("Query must be a string.")
 
-        if request.page_size <= 0:
+        if not isinstance(request.page_size, int) or isinstance(request.page_size, bool) or request.page_size <= 0:
             raise FilterValidationError(
-                f"page_size must be a positive integer, got {request.page_size}."
+                f"page_size must be a positive integer, got {request.page_size!r}."
             )
 
         # 2. Parse pagination token (offset parsing or default 0)
         offset = 0
-        if request.page_token:
-            token_str = str(request.page_token).strip()
-            if token_str.startswith("offset:"):
-                try:
-                    offset = max(0, int(token_str.split(":", 1)[1]))
-                except ValueError:
-                    offset = 0
-            elif token_str.isdigit():
-                offset = max(0, int(token_str))
-            else:
-                # Opaque token — default offset 0 for transport
+        if request.page_token is not None:
+            if not isinstance(request.page_token, str):
+                raise FilterValidationError(
+                    f"page_token must be a string, got {type(request.page_token).__name__}."
+                )
+            token_str = request.page_token.strip()
+            if not token_str:
                 offset = 0
+            elif token_str.startswith("offset:"):
+                val_str = token_str.split(":", 1)[1].strip()
+                if not val_str.isdigit():
+                    raise FilterValidationError(
+                        f"Invalid page_token offset value: {val_str!r}. Must be a non-negative integer."
+                    )
+                offset = int(val_str)
+            elif token_str.isdigit():
+                offset = int(token_str)
+            else:
+                raise FilterValidationError(
+                    f"Invalid page_token format: {token_str!r}. Expected 'offset:<non-negative int>'."
+                )
 
         # Calculate retrieval depth needed to serve this page
-        fetch_k = max(offset + request.page_size, 10)
+        fetch_k = max(offset + request.page_size + 1, 10)
 
         # Query fingerprint
         query_fp = hashlib.sha256(request.query.encode("utf-8")).hexdigest()

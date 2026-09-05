@@ -1,0 +1,116 @@
+{
+  "evaluation_name": "P1.7 Retrieval Evaluation & Integration Readiness Benchmark",
+  "timestamp_utc": "2026-09-05T13:12:05.862892+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "total_indexed_notes": 836,
+  "active_verified_notes": 72,
+  "execution_duration_sec": 5.723,
+  "infrastructure": {
+    "synapse_store_external": {
+      "status": "BLOCKED",
+      "synapses_json_exists": false,
+      "synapse_store_module_exists": false,
+      "missing_dependencies": [
+        "05_DATA\\synapses.json",
+        "cognitive_core\\synapse_store.py"
+      ],
+      "blocker_summary": "Synapse graph evidence is BLOCKED because 05_DATA/synapses.json and/or cognitive_core/synapse_store.py (owned by Claude Code) are not materialized on this branch. This explains edge_pairs_probed=0 in P1.1-B."
+    },
+    "dense_embedder": {
+      "status": "AVAILABLE",
+      "available": true,
+      "model": "nomic-embed-text"
+    }
+  },
+  "known_item_facade": {
+    "sampled_notes": 50,
+    "total_queries": 100,
+    "recall@1": 0.46,
+    "recall@5": 0.79,
+    "recall@10": 0.91,
+    "mrr": 0.5995,
+    "misses": 9,
+    "median_latency_ms": 0.96,
+    "p95_latency_ms": 1.134,
+    "deterministic": true
+  },
+  "paraphrase_facade": {
+    "status": "OK",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:3b",
+    "queries_requested": 15,
+    "queries_executed": 15,
+    "recall@1": 0.3333,
+    "recall@5": 0.6667,
+    "recall@10": 0.6667,
+    "mrr": 0.4889,
+    "misses": 5,
+    "median_latency_ms": 1.69
+  },
+  "multi_hop_structural_graph": {
+    "status": "AVAILABLE",
+    "total_probed": 593,
+    "direct_hits": 136,
+    "direct_recall": 0.2293,
+    "multi_hop_hits": 274,
+    "multi_hop_recall": 0.4621,
+    "rescued_count": 185,
+    "rescue_rate": 0.312,
+    "false_expansions_count": 2344,
+    "net_gain": 138,
+    "mean_latency_direct_ms": 1.389,
+    "mean_latency_multi_hop_ms": 1.053,
+    "deterministic": true,
+    "modality_breakdown": {
+      "1-hop": {
+        "total": 61,
+        "direct_hits": 12,
+        "direct_recall": 0.1967,
+        "multi_hop_hits": 41,
+        "multi_hop_recall": 0.6721,
+        "rescued": 37,
+        "rescue_rate": 0.6066,
+        "net_gain": 29
+      },
+      "2-hop": {
+        "total": 58,
+        "direct_hits": 5,
+        "direct_recall": 0.0862,
+        "multi_hop_hits": 39,
+        "multi_hop_recall": 0.6724,
+        "rescued": 35,
+        "rescue_rate": 0.6034,
+        "net_gain": 34
+      },
+      "entity": {
+        "total": 474,
+        "direct_hits": 119,
+        "direct_recall": 0.2511,
+        "multi_hop_hits": 194,
+        "multi_hop_recall": 0.4093,
+        "rescued": 113,
+        "rescue_rate": 0.2384,
+        "net_gain": 75
+      }
+    }
+  },
+  "integration_readiness": {
+    "facade_status": "PRODUCTION-FACADE-READY",
+    "production_wiring": "NOT DONE",
+    "contract_enforced": [
+      "BoundaryAdapter pre-invocation validation",
+      "Caller may narrow, never broaden",
+      "ACTIVE + verified security ceiling",
+      "Mandatory principal propagation",
+      "Defense-in-depth note sanitization",
+      "Deterministic sort: (-score, note.id)",
+      "Offset pagination transport with next_page_token",
+      "Strict read-only storage guarantee"
+    ],
+    "blockers_for_full_graph_production": [
+      "05_DATA/synapses.json is not materialized on this branch",
+      "cognitive_core/synapse_store.py is not merged on this branch",
+      "Integration wiring in MemoryController.search() is intentionally gated for P2"
+    ]
+  }
+}
