@@ -462,7 +462,7 @@ def compute_all_indicators(
 
     def _pct(idx: int) -> float:
         try:
-            if len(closes) > abs(idx):
+            if len(closes) >= abs(idx):
                 prev = float(closes.iloc[idx])
                 return round((price - prev) / prev * 100, 4) if prev else 0.0
             return 0.0
