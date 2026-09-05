@@ -44,6 +44,13 @@ class SQLiteStorageEngine:
     CREATE INDEX IF NOT EXISTS idx_notes_superseded_by ON notes(superseded_by);
     """
 
+    _NOTE_COLUMNS = (
+        "id, type, lifecycle, category, tags, created, updated, "
+        "source_type, source_ref, confidence, verification, valid_from, valid_until, "
+        "version_range, applies_to, supersedes, superseded_by, conflicts_with, "
+        "last_verified, verification_source, relations, provenance, content, raw_json"
+    )
+
     def __init__(self, db_path: str = ":memory:", timeout: float = 5.0, wal_mode: bool = True):
         self.db_path = db_path
         self.timeout = timeout
@@ -56,6 +63,36 @@ class SQLiteStorageEngine:
         conn = self._get_connection()
         with conn:
             conn.executescript(self.SCHEMA)
+        self._migrate_legacy_lifecycle_constraint(conn)
+
+    def _migrate_legacy_lifecycle_constraint(self, conn: sqlite3.Connection) -> None:
+        """Rebuild legacy notes tables whose CHECK constraint predates RECONSOLIDATING."""
+        row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='notes'"
+        ).fetchone()
+        schema_sql = row[0] if row and row[0] else ""
+        if "RECONSOLIDATING" in schema_sql:
+            return
+
+        conn.execute("PRAGMA foreign_keys=OFF;")
+        try:
+            conn.execute("BEGIN IMMEDIATE;")
+            conn.execute("ALTER TABLE notes RENAME TO notes_legacy_lifecycle;")
+            conn.executescript(self.SCHEMA)
+            conn.execute(
+                f"INSERT INTO notes ({self._NOTE_COLUMNS}) "
+                f"SELECT {self._NOTE_COLUMNS} FROM notes_legacy_lifecycle"
+            )
+            conn.execute("DROP TABLE notes_legacy_lifecycle;")
+            conn.execute("COMMIT;")
+        except Exception:
+            try:
+                conn.execute("ROLLBACK;")
+            except Exception:
+                pass
+            raise
+        finally:
+            conn.execute("PRAGMA foreign_keys=ON;")
 
     def _get_connection(self) -> sqlite3.Connection:
         """Returns a thread-local SQLite connection configured with required PRAGMAs."""
