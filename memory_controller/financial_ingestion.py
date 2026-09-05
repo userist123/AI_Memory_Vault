@@ -34,7 +34,6 @@ from xau_kinetic.financial_ingestion.catalog import (
     get_macro_tickers, get_fred_series, get_competitors_for_category,
     get_risks_for_category, get_calendar_events,
 )
-
 from xau_kinetic.financial_ingestion.indicators import (
     calc_rsi, map_rsi_status, calc_macd, calc_ma, calc_bollinger, calc_atr,
     calc_stochastic, calc_momentum, calc_rvol, calc_support_resistance,
@@ -42,12 +41,10 @@ from xau_kinetic.financial_ingestion.indicators import (
     explica_miscare, identifica_oportunitate, extrage_lectie, fmt_price,
     fmt_pct, rr_value, rr_text,
 )
-
 from xau_kinetic.financial_ingestion.pipeline import (
     FinancialIngestionPipeline, MarketDataFetcher, FREDDataFetcher,
     SentimentFetcher, MarketCache, generate_synthetic_ohlcv,
 )
-
 from xau_kinetic.financial_ingestion.adapter import (
     FinancialMemoryAdapter, MemoryDeduplicator, calculate_content_hash,
     generate_asset_profile_note, generate_macro_regime_note,
@@ -55,7 +52,6 @@ from xau_kinetic.financial_ingestion.adapter import (
     generate_trade_error_note, generate_trading_lesson_note,
     generate_catalog_resource_note, render_markdown_note,
 )
-
 from memory_controller.financial_schema import FINANCIAL_NOTE_SCHEMA, validate_financial_note
 from memory_controller.validation.schema import validate_frontmatter
 from memory_controller.financial_ingestion_security import canonicalize_financial_ingest_frontmatter
@@ -210,23 +206,27 @@ class FinancialSourceIngestionManager:
         return notes
 
     def _persist_note(self, note: Dict[str, Any], relative_path: str) -> None:
-        """Atomically persist only a canonical REVIEW/unverified financial candidate."""
+        """Atomically persist a financial note only after trust-boundary canonicalization."""
         fm = note.get("frontmatter", {})
         safe_fm = canonicalize_financial_ingest_frontmatter(fm)
         note_id = safe_fm.get("id") or note.get("id") or str(uuid.uuid4())
 
-        # The source note is untrusted input. Canonicalization above is the sole
-        # source of lifecycle/verification for the persisted representation.
         safe_note = dict(note)
         safe_note["frontmatter"] = safe_fm
         safe_note["id"] = note_id
+        # Never persist caller-supplied markdown frontmatter. Re-render from the
+        # canonicalized frontmatter so privileged lifecycle/verification values
+        # cannot survive in the filesystem representation.
+        safe_note["markdown"] = (
+            f"---\n{json.dumps(safe_fm, indent=2)}\n---\n\n"
+            f"{safe_note.get('content', '')}"
+        )
 
-        is_new, prev_id = self.deduplicator.register_note(safe_note)
+        self.deduplicator.register_note(safe_note)
 
         target_path = self.vault_root / relative_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
-        md_text = safe_note.get("markdown") or f"---\n{json.dumps(safe_fm, indent=2)}\n---\n\n{safe_note.get('content', '')}"
-        md_text = self.scrubber.scrub_text(md_text)
+        md_text = self.scrubber.scrub_text(safe_note["markdown"])
 
         temp_path = target_path.with_suffix(".tmp")
         with open(temp_path, "w", encoding="utf-8") as f:
@@ -246,7 +246,7 @@ class FinancialSourceIngestionManager:
                 "confidence": safe_fm.get("confidence", "high"),
                 "verification": safe_fm["verification"],
                 "relations": safe_fm.get("relations", []),
-                "content": safe_note.get("content", md_text),
+                "content": safe_note.get("content", ""),
                 "raw_payload": safe_note,
             }
             self.storage.set(note_id, canonical_record)
