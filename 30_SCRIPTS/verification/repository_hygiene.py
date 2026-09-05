@@ -58,7 +58,7 @@ def check_numbered_roots(root: Path) -> list[str]:
     """Validate numbered-root naming without forbidding governed children."""
     failures: list[str] = []
     for path in sorted(root.iterdir()):
-        if path.is_dir() and path.name != ".git" and path.name[:2].isdigit():
+        if path.is_dir() and path.name != ".git" and path.name[:1].isdigit():
             if not NUMBERED_RE.match(path.name):
                 failures.append(f"NUMBERED_ROOT_NAME:{path.name}")
     return failures
