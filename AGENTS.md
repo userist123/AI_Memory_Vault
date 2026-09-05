@@ -90,6 +90,14 @@ When multiple AI development environments/agents (Antigravity, Claude Code, Chat
 4. **Protected Core Invariant**: Never modify frozen cognitive core modules (`Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`) unless explicitly required by an audited specification. All core contracts are validated against the cognitive-core protected-boundary tests.
 5. **No Speculation**: Never mark tasks done without attaching empirical execution proof (passing `pytest` suite output).
 
+## Global Production-Consumer Rule
+
+Before constructing a new layer over a component, verify who consumes that component in the production path:
+
+    grep -rl "<module>" --include='*.py' . | grep -v "/tests/\|test_\|benchmarks"
+
+If the result is empty, the component is not integrated. Do not build another layer over it. Cable it into production first, or work on another front.
+
 ## Prime Directive
 
 Better memory beats more memory. Better routing beats more agents. Capability is cheap; loaded context is expensive.

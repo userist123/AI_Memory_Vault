@@ -98,6 +98,14 @@ When multiple AI systems (Claude Code, Antigravity, ChatGPT, Perplexity) collabo
 3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by the cognitive-core protected-boundary tests.
 4. **Empirical Verification**: Run the relevant `pytest` suites and verify zero regressions before closing any task.
 
+## Global Production-Consumer Rule
+
+Before constructing a new layer over a component, verify who consumes that component in the production path:
+
+    grep -rl "<module>" --include='*.py' . | grep -v "/tests/\|test_\|benchmarks"
+
+If the result is empty, the component is not integrated. Do not build another layer over it. Cable it into production first, or work on another front.
+
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
