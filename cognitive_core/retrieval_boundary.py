@@ -20,6 +20,7 @@ The adapter enforces:
 """
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -306,3 +307,112 @@ class RetrievalBoundaryAdapter:
             audit_ref=request.audit_ref,
             request_id=request.request_id,
         )
+
+
+# ---------------------------------------------------------------------------
+# Simulated Runtime Caller (TEST MODE ONLY)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class SimulatedAuditEvent:
+    """Simulates an audit event record emitted to the tamper-evident audit log."""
+    operation: str
+    principal: str
+    target_id: str
+    success: bool
+    details: Dict[str, Any]
+    timestamp_utc: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class StubMemoryControllerConsumer:
+    """Simulates the future runtime caller (MemoryController) interfacing with RetrievalBoundaryAdapter.
+
+    TEST MODE ONLY.
+    Demonstrates end-to-end compatibility without modifying production controller code:
+    1. Accepts standard MemoryController search arguments.
+    2. Builds a structured, immutable RetrievalRequest.
+    3. Traverses the boundary validation, normalization, and sanitization pipeline.
+    4. Intercepts security violations and captures them in the simulated audit log.
+    5. Formats the output payload into the MemoryController pack/result wire format.
+    """
+
+    def __init__(self, adapter: RetrievalBoundaryAdapter):
+        self.adapter = adapter
+        self.audit_log: List[SimulatedAuditEvent] = []
+
+    def search(
+        self,
+        principal: Any,
+        query: str,
+        page_size: int = 10,
+        lifecycles: Optional[Iterable[str]] = None,
+        types: Optional[Iterable[str]] = None,
+        verification: Optional[Iterable[str]] = None,
+        request_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Simulates MemoryController.search() delegating to RetrievalBoundaryAdapter."""
+        query_fp = hashlib.sha256(str(query).encode("utf-8")).hexdigest()
+        req_id = request_id or f"search-{query_fp[:8]}"
+        princ_str = str(getattr(principal, "value", principal) or "unknown")
+
+        req = RetrievalRequest(
+            query=query,
+            principal=principal,
+            top_k=page_size,
+            lifecycles=lifecycles,
+            types=types,
+            verification=verification,
+            audit_ref=query_fp,
+            request_id=req_id,
+        )
+
+        try:
+            resp = self.adapter.execute(req)
+            self.audit_log.append(SimulatedAuditEvent(
+                operation="search",
+                principal=resp.principal,
+                target_id=query_fp,
+                success=True,
+                details={
+                    "page_size": page_size,
+                    "total_hits": resp.total_hits,
+                    "effective_lifecycles": resp.effective_lifecycles,
+                    "effective_verification": resp.effective_verification,
+                    "effective_types": resp.effective_types,
+                    "trace": resp.trace,
+                }
+            ))
+            return {
+                "requestId": resp.request_id,
+                "agentId": resp.principal,
+                "totalHits": resp.total_hits,
+                "effectiveFilters": {
+                    "lifecycles": resp.effective_lifecycles,
+                    "verification": resp.effective_verification,
+                    "types": resp.effective_types,
+                },
+                "results": [
+                    {
+                        "id": h.note.id,
+                        "title": h.note.title,
+                        "score": h.score,
+                        "lifecycle": h.note.lifecycle,
+                        "verification": h.note.verification,
+                        "type": h.note.type,
+                        "signals": h.signals,
+                    }
+                    for h in resp.hits
+                ],
+                "trace": resp.trace,
+                "auditRef": resp.audit_ref,
+                "timestamp": resp.timestamp_utc,
+            }
+        except RetrievalBoundaryError as e:
+            self.audit_log.append(SimulatedAuditEvent(
+                operation="search",
+                principal=princ_str,
+                target_id=query_fp,
+                success=False,
+                details={"error": str(e), "error_type": type(e).__name__}
+            ))
+            raise
