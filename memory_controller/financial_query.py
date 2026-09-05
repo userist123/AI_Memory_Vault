@@ -13,6 +13,7 @@ from .audit.logger import audit_event
 # Configuration: vector search disabled by default
 ENABLE_VECTOR_SEARCH = False
 
+
 class FinancialQueryEngine:
     """Engine for ingesting financial notes and performing layered search.
 
@@ -106,15 +107,41 @@ class FinancialQueryEngine:
         limit: Optional[int] = None,
         **kwargs
     ) -> List[Dict]:
-        """Run layered search.
+        """Run layered financial search through the secure read boundary.
+
+        The search operation is authorized up front and only ACTIVE + verified
+        records are exposed to callers. Internal retrieval may inspect broader
+        indexed state, but non-active or unverified records are filtered before
+        returning any result to the caller.
 
         * Base BM25 lexical search via ``MultiLayeredFinancialSearchEngine``.
         * Optional filtering on ``symbol``, ``date`` range, and ``tags``.
         * Optional vector fallback (currently disabled).
         """
+        principal = kwargs.pop("principal", Principal.AI_AGENT)
+        if not isinstance(principal, Principal):
+            try:
+                principal = Principal(str(principal).strip().lower())
+            except ValueError as exc:
+                raise PermissionError("Invalid financial search principal") from exc
+
+        if not self.authorizer.is_allowed(principal, Operation.SEARCH):
+            raise PermissionError(f"{principal.value} not allowed to search financial notes")
+
         effective_limit = limit if limit is not None else top_k
         effective_limit = max(0, min(int(effective_limit), 10000))
         results = self.search_engine.search(query, top_k=effective_limit, **kwargs)
+
+        def is_secure_read(note: Dict) -> bool:
+            full_note = self.storage.get(note.get("id")) or note
+            fm = full_note.get("frontmatter", {}) if isinstance(full_note.get("frontmatter"), dict) else {}
+            lifecycle = str(full_note.get("lifecycle") or fm.get("lifecycle") or "").strip().upper()
+            verification = str(full_note.get("verification") or fm.get("verification") or "").strip().lower()
+            return lifecycle == "ACTIVE" and verification == "verified"
+
+        # Defense-in-depth: never expose REVIEW/RAW/unverified financial records.
+        results = [r for r in results if is_secure_read(r)]
+
         if filters:
             def match(note: Dict) -> bool:
                 full_note = self.storage.get(note.get("id")) or note
@@ -147,6 +174,7 @@ class FinancialQueryEngine:
                         return False
                 return True
             results = [r for r in results if match(r)]
+
         enriched_results = []
         for r in results[:top_k]:
             full = self.storage.get(r.get("id")) or {}
