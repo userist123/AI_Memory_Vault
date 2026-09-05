@@ -1,5 +1,0 @@
-[
-  {{ range _, x := $ }}
-   {{ x.eyeColor }}
-  {{ end }}
-]

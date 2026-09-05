@@ -1,7 +1,0 @@
-[
-  {{ range _, x := $ }}
-    {{ range i, friend := x.friends }}
-      [{{ friend.name }}]
-    {{ end }}
-  {{ end }}
-]

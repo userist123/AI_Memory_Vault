@@ -1,8 +1,0 @@
-{
-  "name": "ai-memory-vault",
-  "description": "Claude Code integration for AI_Memory_Vault_CODEX_READY: skills, agents, knowledge, procedures, provenance, and Obsidian-aware memory retrieval.",
-  "version": "1.0.0",
-  "author": {
-    "name": "userist123"
-  }
-}

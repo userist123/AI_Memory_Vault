@@ -1,3 +1,0 @@
-Update all necessary documentation to reflect the completed {phase} work
-(including technical docs and any plan/status references that should now change),
-and ensure the repository is left in a clean, consistent, review-ready state.
