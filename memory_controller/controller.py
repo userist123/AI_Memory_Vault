@@ -45,7 +45,6 @@ class StorageEngine:
         The `intent` argument is currently unused but kept for future extensibility.
         """
         results = list(self.store.values())
-        # Exclude RAW notes from normal queries
         results = [n for n in results if n.get('lifecycle') != Lifecycle.RAW.value]
         if lifecycle:
             results = [n for n in results if n.get('lifecycle') in lifecycle]
@@ -85,13 +84,11 @@ class MemoryController:
         self.cache = Cache()
         self.supersession_enforcer = SupersessionEnforcer(self.storage)
         self._mutation_lock = threading.RLock()
-        # Initialize pipeline components
         self.query_classifier = QueryClassifier()
         self.retrieval_engine = RetrievalEngine(storage, cache=self.cache)
         self.scorer = RelevanceScorer()
         self.pack_builder = ContextPackBuilder()
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
-        # Counter for generating review note IDs (r2, r3, ...)
         self._review_counter = 2
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
         if not self.authorizer.is_allowed(principal, operation):
@@ -108,15 +105,12 @@ class MemoryController:
     def _validate_note(self, note: Dict[str, Any]) -> None:
         validation_note = {k: v for k, v in note.items() if k != "content"}
         validate_frontmatter(validation_note)
-        # Only validate provenance if present to allow notes without provenance in tests
         validate_provenance(validation_note['provenance'])
-        # Transition validation
         old_note = self.storage.get(note.get('id', ''))
         if old_note:
             old_lifecycle = Lifecycle(old_note.get('lifecycle'))
             new_lifecycle = Lifecycle(note.get('lifecycle'))
             if old_lifecycle != new_lifecycle:
-                # Basic transition rules
                 allowed = {
                     Lifecycle.RAW: [Lifecycle.CLASSIFIED],
                     Lifecycle.CLASSIFIED: [Lifecycle.NORMALIZED],
@@ -132,21 +126,17 @@ class MemoryController:
         try:
             self._check_auth(principal, Operation.READ)
             check_path_traversal(note_id)
-            # Retrieve note (use storage directly; cache is for search results)
             note = self.storage.get(note_id)
             if not note:
                 raise ValueError(f"Note {note_id} not found")
             if note.get('lifecycle') != Lifecycle.ACTIVE:
                 raise ValueError("Only ACTIVE notes are readable via public API")
-            # Apply progressive disclosure based on requested level (default metadata)
             budget = ContextBudget({})
             pd = ProgressiveDisclosure(budget)
             disclosure_level = 'metadata' if not hasattr(self, 'default_disclosure') else self.default_disclosure
-            # Define hierarchy of disclosure levels for degradation
             hierarchy = ['full', 'sections', 'snippet', 'metadata']
             if disclosure_level not in hierarchy:
                 disclosure_level = 'metadata'
-            # Helper to perform disclosure based on level
             def _disclose(level):
                 if level == 'metadata':
                     return pd.metadata_only([note])
@@ -156,22 +146,15 @@ class MemoryController:
                     return pd.sections([note], "")
                 elif level == 'full':
                     return pd.full_document([note])
-                else:
-                    return pd.metadata_only([note])
-    
+                return pd.metadata_only([note])
             disclosed = _disclose(disclosure_level)
-            import json
             usage = sum(len(json.dumps(item, default=str)) for item in disclosed)
-            # Enforce hard budget
             budget.check_budget(usage)
-            # Soft budget graceful degradation
             while usage > budget.soft_context_budget and disclosure_level != 'metadata':
-                # downgrade to next lower level
                 current_index = hierarchy.index(disclosure_level)
                 disclosure_level = hierarchy[current_index + 1]
                 disclosed = _disclose(disclosure_level)
                 usage = sum(len(json.dumps(item, default=str)) for item in disclosed)
-            # If still exceeds soft after reaching metadata, apply compression on content if present
             if usage > budget.soft_context_budget:
                 from .context.compression import summarize_note
                 compressed = []
@@ -181,14 +164,11 @@ class MemoryController:
                         item['content'] = summarize_note(item, max_chars=budget.soft_context_budget // 2)
                     compressed.append(item)
                 disclosed = compressed
-                usage = sum(len(json.dumps(item, default=str)) for item in disclosed)
-            # Ensure minimal provenance retained for each result
             for res in disclosed:
                 prov = note.get('provenance', {})
                 res.setdefault('provenance', {})
                 res['provenance'].setdefault('source_type', prov.get('source_type'))
                 res['provenance'].setdefault('source_ref', prov.get('source_ref'))
-            # Build context pack
             pack = self.pack_builder.build(
                 request_id="read", agent_id=principal.value, budget={}, results=disclosed,
                 disclosure_level=disclosure_level, minimal_provenance=None, next_page_token=None, audit_ref=None
@@ -199,15 +179,9 @@ class MemoryController:
             audit_event('read', principal, note_id, success=False, details={'error': str(e)})
             raise
 
-    # Cognitive Core retrieval — extends read() to include REVIEW notes.
-    # Does NOT modify the existing read() contract (P0 preserved).
     _COGNITIVE_ELIGIBLE = {Lifecycle.ACTIVE, Lifecycle.REVIEW}
 
     def cognitive_read(self, principal: Principal, note_id: str) -> Dict[str, Any]:
-        """Read a note for cognitive operations. Returns ACTIVE and REVIEW notes.
-        REVIEW notes are tagged with _cognitive_unverified=True.
-        RAW and other restricted lifecycle states are excluded.
-        """
         try:
             self._check_auth(principal, Operation.READ)
             check_path_traversal(note_id)
@@ -232,28 +206,19 @@ class MemoryController:
             raise
 
     def search(self, principal: Principal, query: str, page_size: int = 10, page_token: Optional[str] = None, lifecycles: Optional[List[Lifecycle]] = None, types: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
         try:
-            # Determine disclosure level early for token validation
             disclosure_level = getattr(self, 'default_disclosure', 'metadata')
-            # Check query size (hard boundary)
             check_query_size(query)
-            # Sanitize query
             sanitized = sanitize_query(query)
-            # Compute fingerprint of current sanitized query
             query_fp = hashlib.sha256(sanitized.encode()).hexdigest()
             target_id = query_fp
-            # Load budget for this agent
             budget = load_agent_budget(principal.value)
-            disclosure_level = getattr(self, 'default_disclosure', 'metadata')
-            # Classify query
             classified = self.query_classifier.classify(sanitized)
             if lifecycles is not None:
                 classified['lifecycle_filters'] = [l.value if isinstance(l, Lifecycle) else l for l in lifecycles]
             if types is not None:
                 classified['target_types'] = types
-            # Handle pagination token decoding if provided
             offset = 0
             if page_token:
                 payload = PaginationToken.decode(page_token)
@@ -261,32 +226,23 @@ class MemoryController:
                     raise InvalidPaginationTokenError('Token query fingerprint does not match current request')
                 if payload.get('agent_id') != principal.value:
                     raise InvalidPaginationTokenError('Token principal does not match current request')
-                # Validate lifecycle filters binding
                 token_lifecycles = payload.get('lifecycles', [])
                 req_lifecycles = [l.value if isinstance(l, Lifecycle) else l for l in (lifecycles or [])]
                 if token_lifecycles != req_lifecycles:
                     raise InvalidPaginationTokenError('Token lifecycle filters do not match current request')
-                # Validate type filters binding
                 token_types = payload.get('types', [])
                 req_types = types or []
                 if token_types != req_types:
                     raise InvalidPaginationTokenError('Token type filters do not match current request')
-                # Validate disclosure binding
                 if payload.get('disclosure') != disclosure_level:
                     raise InvalidPaginationTokenError('Token disclosure level does not match current request')
-                # Validate page size binding
                 if payload.get('page_size') != page_size:
                     raise InvalidPaginationTokenError('Token page size does not match current request')
                 offset = payload.get('offset', 0)
-            
-            # Retrieval
             notes = self.retrieval_engine.retrieve(classified, principal, query_fp, disclosure_level, budget, offset=offset)
-    
-            # Score relevance (correct argument order)
             scored = self.scorer.score(sanitized, notes)
             score_map = {s['id']: s['score'] for s in scored}
             notes = sorted(notes, key=lambda n: score_map.get(n.get('id'), 0), reverse=True)
-            # Apply progressive disclosure
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata':
                 disclosed = pd.metadata_only(notes)
@@ -296,7 +252,6 @@ class MemoryController:
                 disclosed = pd.sections(notes, sanitized)
             else:
                 disclosed = pd.full_document(notes)
-            # Pagination slicing
             total = len(disclosed)
             end = min(offset + page_size, total)
             page_results = disclosed[offset:end]
@@ -307,39 +262,25 @@ class MemoryController:
                     'query_fp': hashlib.sha256(sanitized.encode()).hexdigest(),
                     'agent_id': principal.value,
                     'page_size': page_size,
-                    # Bind lifecycle filters (as list of values)
                     'lifecycles': [l.value if isinstance(l, Lifecycle) else l for l in (lifecycles or [])],
-                    # Bind type filters
                     'types': types or [],
-                    # Bind disclosure level
                     'disclosure': disclosure_level,
                     'expiration': int((datetime.now(timezone.utc) + timedelta(minutes=10)).timestamp())
                 }
                 secret = os.getenv('MEMORY_CONTROLLER_HMAC_SECRET')
                 if not secret:
                     raise MissingHMACSecretError('HMAC secret not configured')
-                token_obj = PaginationToken(payload, secret.encode())
-                next_token = token_obj.encode()
-            # Build context pack
+                next_token = PaginationToken(payload, secret.encode()).encode()
             try:
                 pack = self.pack_builder.build(
-                    request_id='search',
-                    agent_id=principal.value,
+                    request_id='search', agent_id=principal.value,
                     budget={'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
-                    results=page_results,
-                    disclosure_level=disclosure_level,
-                    minimal_provenance=None,
-                    next_page_token=next_token,
-                    audit_ref=None
-                )
+                    results=page_results, disclosure_level=disclosure_level,
+                    minimal_provenance=None, next_page_token=next_token, audit_ref=None)
             except BudgetExceededError:
-                pack = {
-                    'requestId': 'search',
-                    'agentId': principal.value,
-                    'budget': {'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
-                    'disclosureLevel': disclosure_level,
-                    'results': [],
-                }
+                pack = {'requestId': 'search', 'agentId': principal.value,
+                        'budget': {'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
+                        'disclosureLevel': disclosure_level, 'results': []}
             pack['next_page_token'] = next_token
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
@@ -347,55 +288,10 @@ class MemoryController:
             audit_event('search', principal, target_id, success=False, details={'error': str(e)})
             raise
 
-    def search_financial(
-        self,
-        principal: Principal = Principal.AI_AGENT,
-        query: str = "",
-        symbol: Optional[str] = None,
-        symbols: Optional[List[str]] = None,
-        asset_symbol: Optional[str] = None,
-        category: Optional[str] = None,
-        asset_classes: Optional[List[str]] = None,
-        min_confidence: Optional[str] = None,
-        confidence_min: Optional[str] = None,
-        verification_state: Optional[str] = None,
-        verification_states: Optional[List[str]] = None,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
-        types: Optional[List[str]] = None,
-        lifecycles: Optional[List[Lifecycle]] = None,
-        page_size: int = 10,
-        limit: Optional[int] = None,
-        page_token: Optional[str] = None,
-        disclosure_level: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Execute high-precision multi-layered financial search pipeline.
-        
-        Preserves all P0-P18 invariants, context budgets, and HMAC pagination security.
-        """
+    def search_financial(self, principal: Principal = Principal.AI_AGENT, query: str = "", symbol: Optional[str] = None, symbols: Optional[List[str]] = None, asset_symbol: Optional[str] = None, category: Optional[str] = None, asset_classes: Optional[List[str]] = None, min_confidence: Optional[str] = None, confidence_min: Optional[str] = None, verification_state: Optional[str] = None, verification_states: Optional[List[str]] = None, date_from: Optional[str] = None, date_to: Optional[str] = None, types: Optional[List[str]] = None, lifecycles: Optional[List[Lifecycle]] = None, page_size: int = 10, limit: Optional[int] = None, page_token: Optional[str] = None, disclosure_level: Optional[str] = None) -> Dict[str, Any]:
         self._check_auth(principal, Operation.SEARCH)
         effective_disclosure = disclosure_level or getattr(self, 'default_disclosure', 'metadata')
-        return self.financial_search_engine.execute_search(
-            principal=principal,
-            query=query,
-            symbol=symbol,
-            symbols=symbols,
-            asset_symbol=asset_symbol,
-            category=category,
-            asset_classes=asset_classes,
-            min_confidence=min_confidence,
-            confidence_min=confidence_min,
-            verification_state=verification_state,
-            verification_states=verification_states,
-            date_from=date_from,
-            date_to=date_to,
-            types=types,
-            lifecycles=lifecycles,
-            page_size=page_size,
-            limit=limit,
-            page_token=page_token,
-            disclosure_level=effective_disclosure,
-        )
+        return self.financial_search_engine.execute_search(principal=principal, query=query, symbol=symbol, symbols=symbols, asset_symbol=asset_symbol, category=category, asset_classes=asset_classes, min_confidence=min_confidence, confidence_min=confidence_min, verification_state=verification_state, verification_states=verification_states, date_from=date_from, date_to=date_to, types=types, lifecycles=lifecycles, page_size=page_size, limit=limit, page_token=page_token, disclosure_level=effective_disclosure)
 
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
         with self._mutation_lock:
@@ -405,63 +301,37 @@ class MemoryController:
                 if not note_data.get('id'):
                     raise ValueError('Note must include an id')
                 check_path_traversal(note_id)
-
                 if note_data.get('verification') == 'verified':
                     raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
-
-                # Build note using canonical defaults and overlay caller data
                 now_date = datetime.now(timezone.utc).date().isoformat()
                 defaults = {
-                    'type': 'knowledge',
-                    'category': 'test',  # free‑text allowed
-                    'tags': [],
-                    'created': now_date,
-                    'updated': now_date,
-                    'provenance': {
-                        'source_type': 'user' if principal in {Principal.HUMAN, Principal.ADMIN} else 'inference',
-                        'source_ref': 'generated',
-                    },
-                    'confidence': 'high',
-                    'verification': 'unverified',
-                    'relations': [],
-                    'lifecycle': Lifecycle.RAW.value,
+                    'type': 'knowledge', 'category': 'test', 'tags': [],
+                    'created': now_date, 'updated': now_date,
+                    'provenance': {'source_type': 'user' if principal in {Principal.HUMAN, Principal.ADMIN} else 'inference', 'source_ref': 'generated'},
+                    'confidence': 'high', 'verification': 'unverified', 'relations': [], 'lifecycle': Lifecycle.RAW.value,
                 }
-                # Start with defaults
                 note = defaults.copy()
-                # Overlay all provided fields
                 note.update(note_data)
-                # Merge provenance specially to allow partial overrides
                 prov = defaults['provenance'].copy()
                 prov.update(note_data.get('provenance', {}))
                 note['provenance'] = prov
-                # Ensure id remains note_id
                 note['id'] = note_id
-
                 if note.get('verification') == 'verified':
                     raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
-
-                # Validate provenance source_type against principal allowlist
                 source_type = note['provenance'].get('source_type', 'unknown')
                 allowed_sources = _ALLOWED_PROVENANCE_SOURCE_TYPES.get(principal, {"unknown"})
                 if source_type not in allowed_sources:
                     raise ValueError(f"Principal '{principal.value}' is not permitted to claim provenance source_type '{source_type}'")
-
-                # Validate lifecycle at creation (AI_AGENT cannot inject escalated lifecycles like ACTIVE)
                 lifecycle_val = note.get('lifecycle')
                 if isinstance(lifecycle_val, Lifecycle):
                     lifecycle_val = lifecycle_val.value
                     note['lifecycle'] = lifecycle_val
                 if principal == Principal.AI_AGENT and lifecycle_val not in _PERMITTED_CREATION_LIFECYCLES:
                     raise ValueError(f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW.")
-
-                # Force server timestamps if not explicitly provided
                 note['created'] = note_data.get('created', now_date)
                 note['updated'] = note_data.get('updated', now_date)
-
-                # Build a copy without extra fields for validation
                 validation_note = {k: v for k, v in note.items() if k != "content"}
                 self._validate_note(validation_note)
-                # Store the full note (including possible extra fields like content)
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
                 if hasattr(self, 'financial_search_engine') and self.financial_search_engine is not None:
@@ -483,19 +353,12 @@ class MemoryController:
                 if note['lifecycle'] not in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED, Lifecycle.REVIEW}:
                     raise ValueError('Only RAW/CLASSIFIED/NORMALIZED/REVIEW notes can be reviewed')
                 if decision not in {'agree', 'approve', 'reject'}:
-                    # Keep original strict set but allow 'agree' for compatibility
                     raise ValueError('Decision must be approve or reject')
-                # Update original note lifecycle to REVIEW (if not already)
                 note['lifecycle'] = Lifecycle.REVIEW
                 self.storage.set(note_id, note)
-                # Create a separate review record note
                 review_id = f"r{MemoryController._global_review_counter}"
                 MemoryController._global_review_counter += 1
-                review_note = {
-                    'id': review_id,
-                    'review': {'by': principal.value, 'decision': decision, 'comments': comments}
-                }
-                self.storage.set(review_id, review_note)
+                self.storage.set(review_id, {'id': review_id, 'review': {'by': principal.value, 'decision': decision, 'comments': comments}})
                 self.cache.invalidate_by_event('memory_updated')
                 audit_event('review', principal, note_id, success=True, details={'decision': decision})
             except Exception as e:
@@ -512,6 +375,8 @@ class MemoryController:
                     raise ValueError('Note not found')
                 if note['lifecycle'] != Lifecycle.REVIEW:
                     raise ValueError('Only REVIEW notes can be promoted')
+                if note.get('verification') != 'verified':
+                    raise ValueError('Only VERIFIED notes can be promoted to ACTIVE')
                 note['lifecycle'] = Lifecycle.ACTIVE
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
@@ -541,37 +406,25 @@ class MemoryController:
                 for k in immutable:
                     if k in updates and updates[k] != note.get(k):
                         raise ValueError(f'Field {k} is immutable')
-
-                # Reject verification='verified' via update for all principals
                 if updates.get('verification') == 'verified':
                     raise ValueError("Verification status 'verified' cannot be escalated via update. Use attest() instead.")
-
-                # Reject changes to provenance.source_type (immutable post-creation for all principals)
-                if 'provenance' in updates and isinstance(updates['provenance'], dict):
-                    if 'source_type' in updates['provenance']:
-                        new_st = updates['provenance']['source_type']
-                        old_st = note.get('provenance', {}).get('source_type')
-                        if new_st != old_st:
-                            raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
-
+                if 'provenance' in updates and isinstance(updates['provenance'], dict) and 'source_type' in updates['provenance']:
+                    new_st = updates['provenance']['source_type']
+                    old_st = note.get('provenance', {}).get('source_type')
+                    if new_st != old_st:
+                        raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
                 old_valid_until = note.get('valid_until')
                 new_valid_until = updates.get('valid_until')
                 has_valid_until_changed = 'valid_until' in updates and old_valid_until != new_valid_until
-
                 note.update(updates)
-                # Force server updated timestamp
-                now_date = datetime.now(timezone.utc).date().isoformat()
-                note['updated'] = now_date
-
+                note['updated'] = datetime.now(timezone.utc).date().isoformat()
                 self._validate_note(note)
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
                 if hasattr(self, 'financial_search_engine') and self.financial_search_engine is not None:
                     self.financial_search_engine.index_note(note)
-
                 if has_valid_until_changed:
-                    audit_event('valid_until_update', principal, note_id, success=True, 
-                                details={'old_valid_until': old_valid_until, 'new_valid_until': new_valid_until})
+                    audit_event('valid_until_update', principal, note_id, success=True, details={'old_valid_until': old_valid_until, 'new_valid_until': new_valid_until})
                 else:
                     audit_event('update', principal, note_id, success=True)
             except Exception as e:
@@ -587,40 +440,24 @@ class MemoryController:
                     raise ValueError("Attestation requires a non-empty verification_reason")
                 if not evidence_reference or not evidence_reference.strip():
                     raise ValueError("Attestation requires a non-empty evidence_reference")
-
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
-
                 previous_state = note.get('verification', 'unverified')
                 if previous_state == verification_state:
                     return
-
                 now_date = datetime.now(timezone.utc).date().isoformat()
                 note['verification'] = verification_state
                 note['verification_source'] = principal.value
                 note['last_verified'] = now_date
                 note['updated'] = now_date
-
                 validation_note = {k: v for k, v in note.items() if k != "content"}
                 self._validate_note(validation_note)
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
-
-                audit_event('attest', principal, note_id, success=True, details={
-                    'attested_by': principal.value,
-                    'reason': verification_reason,
-                    'evidence_reference': evidence_reference,
-                    'previous_verification_state': previous_state,
-                    'new_verification_state': verification_state
-                })
+                audit_event('attest', principal, note_id, success=True, details={'attested_by': principal.value, 'reason': verification_reason, 'evidence_reference': evidence_reference, 'previous_verification_state': previous_state, 'new_verification_state': verification_state})
             except Exception as e:
-                audit_event('attest', principal, note_id, success=False, details={
-                    'attested_by': principal.value,
-                    'reason': verification_reason if 'verification_reason' in locals() else '',
-                    'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '',
-                    'error': str(e)
-                })
+                audit_event('attest', principal, note_id, success=False, details={'attested_by': principal.value, 'reason': verification_reason if 'verification_reason' in locals() else '', 'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '', 'error': str(e)})
                 raise
 
     def archive(self, principal: Principal, note_id: str, reason: str) -> None:
@@ -646,69 +483,38 @@ class MemoryController:
                 self._check_auth(principal, Operation.SUPERSEDE)
                 check_path_traversal(old_id)
                 check_path_traversal(new_id)
-                
-                # 1. Validate invariants
                 self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
-                
                 old_note = self.storage.get(old_id)
                 new_note = self.storage.get(new_id)
-                
-                # Keep original state for atomic rollback on failure
                 old_note_orig = old_note.copy()
                 new_note_orig = new_note.copy()
-                
                 now_date = datetime.now(timezone.utc).date().isoformat()
-                
-                # Prepare updates for OLD note (only allowed field modifications to keep content intact)
                 old_note["lifecycle"] = Lifecycle.SUPERSEDED.value
                 old_note["superseded_by"] = new_id
                 old_note["updated"] = now_date
-                
-                # Add reciprocal relation in OLD note
                 if not any(r.get("target_id") == new_id and r.get("relation") == "replaced_by" for r in old_note.get("relations", [])):
-                    old_note.setdefault("relations", []).append({
-                        "relation": "replaced_by",
-                        "target": new_note.get("type", "knowledge"),
-                        "target_id": new_id
-                    })
-                    
-                # Prepare updates for NEW note
+                    old_note.setdefault("relations", []).append({"relation": "replaced_by", "target": new_note.get("type", "knowledge"), "target_id": new_id})
                 new_note["supersedes"] = old_id
                 new_note["updated"] = now_date
-                
-                # Add reciprocal relation in NEW note
                 if not any(r.get("target_id") == old_id and r.get("relation") == "replaces" for r in new_note.get("relations", [])):
-                    new_note.setdefault("relations", []).append({
-                        "relation": "replaces",
-                        "target": old_note.get("type", "knowledge"),
-                        "target_id": old_id
-                    })
-                    
-                # Transactional atomic persistence
+                    new_note.setdefault("relations", []).append({"relation": "replaces", "target": old_note.get("type", "knowledge"), "target_id": old_id})
                 try:
                     self.storage.set(old_id, old_note)
                     try:
                         self.storage.set(new_id, new_note)
                     except Exception as e:
-                        # Rollback first set operation on failure
                         self.storage.set(old_id, old_note_orig)
                         raise e
                 except Exception as e:
                     raise ValueError(f"Atomic supersession write failed: {str(e)}")
-                    
                 self.cache.invalidate_by_event('memory_updated')
-                
-                # Audit logging: supersede operation and archive_superseded
                 audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence})
                 audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
             except Exception as e:
                 audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
                 raise
 
-
-# Export singleton
 from .storage.file_engine import FileStorageEngine
 _vault_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _storage_engine = FileStorageEngine(_vault_root)
-
 controller = MemoryController(_storage_engine)
