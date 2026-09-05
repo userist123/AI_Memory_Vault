@@ -1,4 +1,3 @@
-# authorizer.py
 """Pluggable authorizer for Memory Controller.
 Defines an abstract interface and a default implementation based on the
 policy matrix required by the specification.
@@ -22,6 +21,8 @@ class Operation(Enum):
     UPDATE = "update"
     SUPERSEDE = "supersede"
     ATTEST = "attest"
+    RECONSOLIDATE_CHALLENGE = "reconsolidate_challenge"
+    RECONSOLIDATE_RESOLVE = "reconsolidate_resolve"
 
 class Authorizer(Protocol):
     """Authorizer protocol – objects must implement `is_allowed`.
@@ -42,6 +43,9 @@ class DefaultAuthorizer:
       is granted to Human and Admin for ACTIVE notes; AI can update
       non‑ACTIVE drafts.
     * ATTEST – Human and Admin only
+    * RECONSOLIDATE_CHALLENGE – Human, AI Agent, Admin
+    * RECONSOLIDATE_RESOLVE – Human and Admin only; resolution must
+      re-enter the verification pipeline before returning to ACTIVE.
     """
 
     _policy = {
@@ -54,6 +58,8 @@ class DefaultAuthorizer:
         Operation.UPDATE: {Principal.HUMAN, Principal.ADMIN, Principal.AI_AGENT},
         Operation.SUPERSEDE: {Principal.HUMAN, Principal.ADMIN, Principal.AI_AGENT},
         Operation.ATTEST: {Principal.HUMAN, Principal.ADMIN},
+        Operation.RECONSOLIDATE_CHALLENGE: {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN},
+        Operation.RECONSOLIDATE_RESOLVE: {Principal.HUMAN, Principal.ADMIN},
     }
 
     def is_allowed(self, principal: Principal, operation: Operation) -> bool:

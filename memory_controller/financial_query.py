@@ -7,9 +7,12 @@ import jsonschema
 from .financial_schema import FINANCIAL_NOTE_SCHEMA
 from .storage.sqlite_engine import SQLiteStorageEngine
 from .financial_search import MultiLayeredFinancialSearchEngine
+from .authorizer import DefaultAuthorizer, Operation, Principal
+from .audit.logger import audit_event
 
 # Configuration: vector search disabled by default
 ENABLE_VECTOR_SEARCH = False
+
 
 class FinancialQueryEngine:
     """Engine for ingesting financial notes and performing layered search.
@@ -21,9 +24,10 @@ class FinancialQueryEngine:
       is enabled.
     """
 
-    def __init__(self, storage: SQLiteStorageEngine):
+    def __init__(self, storage: SQLiteStorageEngine, authorizer=None):
         self.storage = storage
         self.search_engine = MultiLayeredFinancialSearchEngine(storage)
+        self.authorizer = authorizer or DefaultAuthorizer()
 
     def _generate_id(self) -> str:
         return str(uuid.uuid4())
@@ -33,38 +37,67 @@ class FinancialQueryEngine:
         canonical = json.dumps(note, sort_keys=True).encode("utf-8")
         return hashlib.sha256(canonical).hexdigest()
 
-    def ingest_financial_note(self, note: dict) -> str:
-        """Validate, enrich and store a financial note.
+    def ingest_financial_note(self, note: dict, principal: Principal = Principal.AI_AGENT) -> str:
+        """Validate, authorize and store a financial note.
 
+        Lifecycle and verification are controller-owned trust-boundary fields.
+        Callers cannot create ACTIVE/VERIFIED records through this adapter.
         Returns the generated UUID of the stored note.
         """
-        # 1. Validate against schema (AI may call this with is_ai_agent=False)
-        jsonschema.validate(instance=note, schema=FINANCIAL_NOTE_SCHEMA)
+        note_id = "unknown"
+        try:
+            if not self.authorizer.is_allowed(principal, Operation.PROPOSE):
+                raise PermissionError(f"{principal.value} not allowed to ingest financial notes")
 
-        # 2. Enrich with required front‑matter fields
-        note_id = self._generate_id()
-        now = "{{NOW}}"  # placeholder – the controller will replace at write time
-        provenance = {
-            "source_type": "execution",  # per trust‑boundary invariants
-            "source_ref": "ingest_financial_note",
-            "timestamp": now,
-        }
-        frontmatter = {
-            "id": note_id,
-            "type": "knowledge",
-            "lifecycle": "REVIEW",
-            "category": "financial",
-            "tags": note.get("tags", []),
-            "created": note.get("date") or now,
-            "updated": note.get("date") or now,
-            "provenance": provenance,
-            "confidence": note.get("confidence", "unknown"),
-            "verification": note.get("verification", "unverified"),
-        }
-        stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
-        self.storage.set(note_id, stored_note)
-        self.search_engine.index_note(stored_note)
-        return note_id
+            if not isinstance(note, dict):
+                raise ValueError("Financial note payload must be a mapping")
+
+            if note.get("verification") == "verified":
+                raise ValueError("Verification status 'verified' cannot be set via direct financial ingest. Use attest() instead.")
+
+            # 1. Validate caller payload against the financial input schema.
+            jsonschema.validate(instance=note, schema=FINANCIAL_NOTE_SCHEMA)
+
+            # 2. Enrich with controller-owned front-matter fields.
+            note_id = self._generate_id()
+            now = "{{NOW}}"  # placeholder – retained for compatibility
+            provenance = {
+                "source_type": "execution",
+                "source_ref": "ingest_financial_note",
+                "timestamp": now,
+            }
+            frontmatter = {
+                "id": note_id,
+                "type": "knowledge",
+                "lifecycle": "REVIEW",
+                "category": "financial",
+                "tags": note.get("tags", []),
+                "created": note.get("date") or now,
+                "updated": note.get("date") or now,
+                "provenance": provenance,
+                "confidence": note.get("confidence", "unknown"),
+                "verification": "unverified",
+            }
+            stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
+            self.storage.set(note_id, stored_note)
+            self.search_engine.index_note(stored_note)
+            audit_event(
+                "financial_ingest",
+                principal,
+                note_id,
+                success=True,
+                details={"lifecycle": frontmatter["lifecycle"], "verification": frontmatter["verification"]},
+            )
+            return note_id
+        except Exception as e:
+            audit_event(
+                "financial_ingest",
+                principal,
+                note_id,
+                success=False,
+                details={"error": str(e)},
+            )
+            raise
 
     def search(
         self,
@@ -74,15 +107,41 @@ class FinancialQueryEngine:
         limit: Optional[int] = None,
         **kwargs
     ) -> List[Dict]:
-        """Run layered search.
+        """Run layered financial search through the secure read boundary.
+
+        The search operation is authorized up front and only ACTIVE + verified
+        records are exposed to callers. Internal retrieval may inspect broader
+        indexed state, but non-active or unverified records are filtered before
+        returning any result to the caller.
 
         * Base BM25 lexical search via ``MultiLayeredFinancialSearchEngine``.
         * Optional filtering on ``symbol``, ``date`` range, and ``tags``.
         * Optional vector fallback (currently disabled).
         """
+        principal = kwargs.pop("principal", Principal.AI_AGENT)
+        if not isinstance(principal, Principal):
+            try:
+                principal = Principal(str(principal).strip().lower())
+            except ValueError as exc:
+                raise PermissionError("Invalid financial search principal") from exc
+
+        if not self.authorizer.is_allowed(principal, Operation.SEARCH):
+            raise PermissionError(f"{principal.value} not allowed to search financial notes")
+
         effective_limit = limit if limit is not None else top_k
         effective_limit = max(0, min(int(effective_limit), 10000))
         results = self.search_engine.search(query, top_k=effective_limit, **kwargs)
+
+        def is_secure_read(note: Dict) -> bool:
+            full_note = self.storage.get(note.get("id")) or note
+            fm = full_note.get("frontmatter", {}) if isinstance(full_note.get("frontmatter"), dict) else {}
+            lifecycle = str(full_note.get("lifecycle") or fm.get("lifecycle") or "").strip().upper()
+            verification = str(full_note.get("verification") or fm.get("verification") or "").strip().lower()
+            return lifecycle == "ACTIVE" and verification == "verified"
+
+        # Defense-in-depth: never expose REVIEW/RAW/unverified financial records.
+        results = [r for r in results if is_secure_read(r)]
+
         if filters:
             def match(note: Dict) -> bool:
                 full_note = self.storage.get(note.get("id")) or note
@@ -115,6 +174,7 @@ class FinancialQueryEngine:
                         return False
                 return True
             results = [r for r in results if match(r)]
+
         enriched_results = []
         for r in results[:top_k]:
             full = self.storage.get(r.get("id")) or {}

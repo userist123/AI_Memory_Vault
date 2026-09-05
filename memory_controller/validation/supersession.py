@@ -11,28 +11,35 @@ class SupersessionEnforcer:
     def validate_supersession(self, principal: Principal, old_id: str, new_id: str) -> None:
         if old_id == new_id:
             raise ValueError("Self-supersession is not allowed")
-            
+
         old_note = self.storage.get(old_id)
         if not old_note:
             raise ValueError(f"Predecessor note {old_id} does not exist")
-            
+
         new_note = self.storage.get(new_id)
         if not new_note:
             raise ValueError(f"Successor note {new_id} does not exist")
-            
-        # Do not allow superseding if already superseded
+
+        # Canonical lifecycle policy permits SUPERSEDE only for ACTIVE notes.
+        if old_note.get("lifecycle") != "ACTIVE":
+            raise ValueError(
+                f"Predecessor note {old_id} must be ACTIVE for supersession "
+                f"(current lifecycle={old_note.get('lifecycle')!r})"
+            )
+
+        # Do not allow superseding if already superseded.
         if old_note.get("lifecycle") == "SUPERSEDED":
             raise ValueError(f"Predecessor note {old_id} is already SUPERSEDED")
-            
-        # Invariant: human-verified memory cannot be automatically superseded
+
+        # Invariant: human-verified memory cannot be automatically superseded.
         is_human_verified = (
-            old_note.get("verification") == "verified" or 
-            old_note.get("provenance", {}).get("source_type") == "user"
+            old_note.get("verification") == "verified"
+            or old_note.get("provenance", {}).get("source_type") == "user"
         )
         if is_human_verified and principal == Principal.AI_AGENT:
             raise PermissionError("Human-verified memory cannot be automatically superseded by an AI Agent")
-            
-        # Check for cycles
+
+        # Check for cycles.
         if self._has_cycle(old_id, new_id):
             raise ValueError("Supersession would create a cycle")
 
@@ -46,13 +53,13 @@ class SupersessionEnforcer:
             note = self.storage.get(start)
             if not note:
                 return False
-            
-            # Check direct supersedes field
+
+            # Check direct supersedes field.
             pred = note.get("supersedes")
             if pred and has_path(pred, target, visited):
                 return True
-                
-            # Check relations of type "replaces"
+
+            # Check relations of type "replaces".
             for rel in note.get("relations", []):
                 r_type = rel.get("relation") or rel.get("type")
                 if r_type == "replaces":
@@ -62,6 +69,7 @@ class SupersessionEnforcer:
             return False
 
         return has_path(old_id, new_id, set())
+
 
 def resolve_active_lineage(storage, note_id: str, max_depth: int = 50) -> str:
     """Traverse the superseded_by chain until the active successor note is reached."""
