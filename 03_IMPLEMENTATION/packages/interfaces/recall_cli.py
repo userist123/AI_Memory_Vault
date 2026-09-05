@@ -55,6 +55,7 @@ from memory_controller.storage.sqlite_engine import SQLiteStorageEngine
 from memory_controller.storage.file_engine import FileStorageEngine
 
 _CACHED_CONTROLLER: Optional[MemoryController] = None
+_CACHED_CONTROLLER_ROOT: Optional[str] = None
 
 
 def _effective_vault_root() -> str:
@@ -66,11 +67,11 @@ def _effective_vault_root() -> str:
 
 def get_memory_controller() -> MemoryController:
     """Initializeaza si returneaza instanta securizata de MemoryController."""
-    global _CACHED_CONTROLLER
-    if _CACHED_CONTROLLER is not None:
+    global _CACHED_CONTROLLER, _CACHED_CONTROLLER_ROOT
+    vault_root = _effective_vault_root()
+    if _CACHED_CONTROLLER is not None and _CACHED_CONTROLLER_ROOT == vault_root:
         return _CACHED_CONTROLLER
 
-    vault_root = _effective_vault_root()
     db_path = os.path.join(vault_root, "vault_memory.sqlite3")
     if os.path.exists(db_path):
         try:
@@ -81,6 +82,7 @@ def get_memory_controller() -> MemoryController:
                 count = cur.fetchone()[0]
             if count > 0:
                 _CACHED_CONTROLLER = MemoryController(storage)
+                _CACHED_CONTROLLER_ROOT = vault_root
                 return _CACHED_CONTROLLER
         except Exception:
             pass
@@ -89,6 +91,7 @@ def get_memory_controller() -> MemoryController:
     # MEMORY_VAULT_ROOT permite rularea in alt vault fara a modifica codul.
     storage = FileStorageEngine(vault_root)
     _CACHED_CONTROLLER = MemoryController(storage)
+    _CACHED_CONTROLLER_ROOT = vault_root
     return _CACHED_CONTROLLER
 
 
@@ -107,12 +110,8 @@ def search_markdown_vault(
     - Calculul relevantei si filtrarea prin bugetul de context (ContextBudget)
     - Jurnalizare criptografica tamper-evidenta SHA-256 (audit logging)
     """
-    # Enforce strict HMAC secret validation (fails closed if missing or invalid)
     validate_hmac_secret()
-
     ctrl = controller or get_memory_controller()
-
-    # Delegare directa catre pipeline-ul protejat MemoryController.search()
     pack = ctrl.search(principal=principal, query=query, page_size=max_results)
 
     raw_results = pack.get("results", [])
@@ -138,7 +137,6 @@ def search_markdown_vault(
             content = "\n".join(meta_parts)
 
         score = item.get("relevance_score") or item.get("score") or 1.0
-
         formatted_results.append({
             "id": item.get("id", "unknown"),
             "file": source_file,
@@ -156,7 +154,6 @@ def main():
     parser = argparse.ArgumentParser(description="Cautare Securizata si Extragere Memorie din Vault (P0-P15 Gated)")
     parser.add_argument("--query", required=True, help="Termenul sau intrebarea pentru cautare in memorie")
     parser.add_argument("--max", type=int, default=3, help="Numar maxim de notite returnate")
-
     args = parser.parse_args()
 
     try:
@@ -169,9 +166,9 @@ def main():
         print(f"[*] Nu s-au gasit notite relevante in Vault pentru interogarea: '{args.query}'")
         return
 
-    print("="*60)
+    print("=" * 60)
     print(f"[*] MEMORIE VAULT SECURIZATA PENTRU: '{args.query}' ({len(matches)} rezultate)")
-    print("="*60)
+    print("=" * 60)
 
     for i, m in enumerate(matches, 1):
         print(f"\n--- [Notita {i}: {m['file']} (Relevanta: {m['score']}, Tip: {m['type']}, Lifecycle: {m['lifecycle']})] ---")
