@@ -28,9 +28,9 @@ ROOT_ALLOWED = {
 }
 ROOT_ALLOWED_PREFIXES = ("requirements", "uv.lock", "poetry.lock", "Pipfile", "package.json", "package-lock.json")
 NUMBERED_RE = re.compile(r"^\d{2}_[^/]+$")
-# Match actual absolute filesystem paths, not ordinary Python escape sequences.
+# Match actual absolute filesystem paths, not URI schemes such as http://.
 ABSOLUTE_PATH_RE = re.compile(
-    r"(?:[A-Za-z]:[\\/]|\\\\[^\\/]|(?<![A-Za-z0-9])/(?:home|Users|mnt|tmp|var|opt)/)"
+    r"(?:(?<![A-Za-z0-9_])[A-Za-z]:[\\/]|\\\\[^\\/]|(?<![A-Za-z0-9_])/(?:home|Users|mnt|tmp|var|opt)/)"
 )
 FORBIDDEN_PRODUCTION_SUFFIXES = {
     ".ipynb",
