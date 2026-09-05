@@ -28,7 +28,10 @@ ROOT_ALLOWED = {
 }
 ROOT_ALLOWED_PREFIXES = ("requirements", "uv.lock", "poetry.lock", "Pipfile", "package.json", "package-lock.json")
 NUMBERED_RE = re.compile(r"^\d{2}_[^/]+$")
-ABSOLUTE_PATH_RE = re.compile(r"(?:[A-Za-z]:[\\/]|\\\\|(?<![A-Za-z0-9])/(?:home|Users|mnt|tmp|var|opt)/)")
+# Match actual absolute filesystem paths, not ordinary Python escape sequences.
+ABSOLUTE_PATH_RE = re.compile(
+    r"(?:[A-Za-z]:[\\/]|\\\\[^\\/]|(?<![A-Za-z0-9])/(?:home|Users|mnt|tmp|var|opt)/)"
+)
 FORBIDDEN_PRODUCTION_SUFFIXES = {
     ".ipynb",
     ".jpg",
@@ -51,12 +54,7 @@ def git_files(root: Path) -> list[str]:
 
 
 def check_numbered_roots(root: Path) -> list[str]:
-    """Validate the numbered-root naming contract without forbidding valid children.
-
-    Numbered roots are intentional repository domains. Their contents are
-    governed by each domain's own README/policy and may contain executable code,
-    tests, knowledge, configuration, or generated evidence as appropriate.
-    """
+    """Validate numbered-root naming without forbidding governed children."""
     failures: list[str] = []
     for path in sorted(root.iterdir()):
         if path.is_dir() and path.name != ".git" and path.name[:2].isdigit():
@@ -92,16 +90,15 @@ def check_production(files: list[str]) -> list[str]:
 def check_test_paths(root: Path, files: list[str]) -> list[str]:
     """Reject accidental local-machine paths in the canonical test suite.
 
-    External skill repositories and project-local workspace tests are treated as
-    imported/reference material and are not part of the canonical 20_TESTS path
-    policy. Dedicated path-security regression tests are allowed to contain the
-    absolute-path literals they explicitly test.
+    Imported project/skill test trees are outside the canonical hygiene scope.
+    The repository-hygiene regression test itself deliberately contains an
+    absolute path literal, so that test is exempt from this content scan.
     """
     failures: list[str] = []
     for file in files:
         if not file.startswith("20_TESTS/"):
             continue
-        if file in {"20_TESTS/regression/test_repository_hygiene.py"}:
+        if file == "20_TESTS/regression/test_repository_hygiene.py":
             continue
         candidate = root / file
         if candidate.suffix.lower() not in {".py", ".ps1", ".cmd", ".sh", ".yml", ".yaml", ".toml", ".json"}:
