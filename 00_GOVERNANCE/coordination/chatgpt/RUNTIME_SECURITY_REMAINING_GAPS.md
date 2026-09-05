@@ -4,23 +4,38 @@
 
 This document records runtime trust-boundary gaps identified during the security/lifecycle closure work on `runtime-security-lifecycle-closure`.
 
-## Confirmed gaps
+## Closed in current branch
 
-### 1. Direct financial ingestion persistence is not yet wired to the canonicalizer
+- Reconsolidation challenge/resolve authorization with explicit principal enforcement.
+- Reconsolidation lifecycle transitions checked through the canonical lifecycle policy.
+- Direct financial-ingestion authorization and lifecycle/verification canonicalization.
+- SQLite `RECONSOLIDATING` schema support and migration coverage.
+- Canonical lifecycle policy introduced for mutation semantics.
+- Controller mutation paths route `review`, `promote`, `archive`, and `supersede` through the canonical policy.
+- Supersession boundary requires an `ACTIVE` predecessor.
+- Frontmatter schema accepts `RECONSOLIDATING` with regression coverage.
 
-`memory_controller/financial_ingestion_security.py` defines `canonicalize_financial_ingest_frontmatter()` and correctly rejects privileged lifecycle/verification values while normalizing accepted input to `REVIEW` + `unverified`.
+## Remaining architecture work
 
-However, `FinancialSourceIngestionManager._persist_note()` currently reads lifecycle and verification directly from the source frontmatter when constructing the SQLite canonical record. The canonicalizer must be invoked before file and storage persistence so caller-supplied privileged state cannot survive into either representation.
+### 1. Legacy pipeline transitions are still compatibility-only
 
-### 2. `MemoryController.propose()` currently restricts creation lifecycle only for AI_AGENT
+The canonical policy currently governs specialized mutation operations. Historical pipeline transitions such as `RAW -> CLASSIFIED`, `CLASSIFIED -> NORMALIZED`, `REVIEW -> VERIFIED`, and `VERIFIED -> ACTIVE` remain compatibility transitions in the controller. A separate architecture change is required to represent these transitions as first-class canonical mutations without breaking existing callers.
 
-The controller contains `_PERMITTED_CREATION_LIFECYCLES = {RAW, CLASSIFIED, NORMALIZED, REVIEW}` and checks it for `Principal.AI_AGENT`. HUMAN and ADMIN proposals are not subjected to the same creation-state boundary by this check.
+### 2. Repository-wide write-path inventory is still required
 
-The intended invariant is that `propose()` creates an unverified proposal and must not establish privileged lifecycle state regardless of principal. Verification must continue through `attest()`, and promotion to ACTIVE must continue through `promote()`.
+The guarded controller paths are not, by themselves, proof that every repository write path obeys the same authority. Direct storage writes in importers, scripts, helpers, background code, or other components must be inventoried and either routed through canonical boundaries or explicitly classified as trusted infrastructure.
 
-### 3. Lifecycle single-source-of-truth remains a separate integration step
+### 3. Read-path lifecycle/verification semantics need end-to-end validation
 
-`memory_controller/lifecycle_policy.py` provides a pure lifecycle transition policy, but not every mutating controller/persistence path is wired to it yet. Wiring must preserve existing operation authorization and fail-closed behavior.
+Public `read()` is ACTIVE-only while `cognitive_read()` permits ACTIVE and REVIEW and marks REVIEW as unverified. Standard search and financial search have additional retrieval/filtering behavior. These contracts need one end-to-end acceptance matrix so lifecycle and verification exposure is consistent across every read path.
+
+### 4. Retrieval production integration remains deferred
+
+Antigravity's retrieval facade is intentionally production-unwired. Its integration must remain a separate phase after retrieval readiness, corpus-quality evidence, and runtime security acceptance are stable.
+
+### 5. Final CI evidence is still pending
+
+Queued/pending workflows are not evidence of a green build. The latest branch head requires complete CI results before PR merge readiness can be declared.
 
 ## Non-goals for this document
 
@@ -28,7 +43,3 @@ The intended invariant is that `propose()` creates an unverified proposal and mu
 - No graph/synapse changes.
 - No `PROJECT_BRAIN/PROJECT_STATE.md` changes.
 - No direct merge into `main`.
-
-## Evidence
-
-P1.3 retrieval boundary is intentionally separate from these runtime gaps. The Antigravity P1.3 contract establishes `ACTIVE` + `verified` as the standard retrieval trust boundary and enforces caller narrowing only; it is not the mechanism that closes write-path lifecycle bypasses.
