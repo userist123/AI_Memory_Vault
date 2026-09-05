@@ -1,1 +1,0 @@
-This marker intentionally triggers the R002-C official source capture workflow after the workflow file is present on the working branch. It is not a legal source and carries no derived interpretation.
