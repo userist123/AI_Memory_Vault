@@ -33,6 +33,25 @@ from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntity
 # Canonical lifecycle policy
 from .lifecycle_policy import Mutation as LifecycleMutation, evaluate as evaluate_lifecycle_mutation
 
+from pathlib import Path
+from cognitive_core.vault_index import Note, VaultIndex
+from cognitive_core.hybrid_retrieval import HybridRetriever
+from cognitive_core.retrieval_boundary import RetrievalBoundaryAdapter
+from cognitive_core.retrieval_facade import ProductionRetrievalFacade
+from cognitive_core.integration_adapter import (
+    CursorSecurityError,
+    IntegrationRequestValidationError,
+    IntegrationSearchRequest,
+    IntegrationSearchResponse,
+    IntegrationSecurityError,
+    RetrievalIntegrationAdapter,
+)
+from cognitive_core.p4_runtime_wiring_harness import (
+    request_from_controller,
+    response_to_controller,
+)
+
+
 class StorageEngine:
     def __init__(self):
         self.store: Dict[str, Dict[str, Any]] = {}
@@ -81,7 +100,12 @@ _PERMITTED_CREATION_LIFECYCLES = {
 
 class MemoryController:
     _global_review_counter = 2
-    def __init__(self, storage: StorageEngine, authorizer: Authorizer = None):
+    def __init__(
+        self,
+        storage: StorageEngine,
+        authorizer: Authorizer = None,
+        retrieval_adapter: Optional[RetrievalIntegrationAdapter] = None,
+    ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
         self.cache = Cache()
@@ -93,6 +117,63 @@ class MemoryController:
         self.pack_builder = ContextPackBuilder()
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
         self._review_counter = 2
+        self._custom_retrieval_adapter = retrieval_adapter
+        self._cached_retrieval_adapter: Optional[RetrievalIntegrationAdapter] = None
+
+    def _build_retrieval_adapter(self) -> RetrievalIntegrationAdapter:
+        notes_dict: Dict[str, Note] = {}
+
+        vault_root = getattr(self.storage, "vault_root", None) or getattr(self.storage, "root_dir", None)
+        if vault_root and Path(vault_root).exists() and Path(vault_root).is_dir():
+            base_index = VaultIndex.load(vault_root, include_raw=True, include_archived=True, drop_navigation=False)
+            for n in base_index.notes:
+                notes_dict[n.id] = n
+
+        storage_notes: List[Dict[str, Any]] = []
+        if hasattr(self.storage, "all_notes") and callable(self.storage.all_notes):
+            storage_notes = self.storage.all_notes()
+        elif hasattr(self.storage, "store") and isinstance(self.storage.store, dict):
+            storage_notes = list(self.storage.store.values())
+        elif hasattr(self.storage, "query") and callable(self.storage.query):
+            try:
+                storage_notes = self.storage.query(intent="", lifecycle=None, types=None)
+            except Exception:
+                storage_notes = []
+
+        for item in storage_notes:
+            if not isinstance(item, dict):
+                continue
+            nid = str(item.get("id") or "").strip()
+            if not nid:
+                continue
+            body = str(item.get("content") or item.get("body") or "")
+            title = str(item.get("title") or item.get("name") or "").strip()
+            if not title:
+                heading = re.search(r"^#\s+(.+)$", body, re.M)
+                title = heading.group(1).strip() if heading else nid
+            meta = {k: v for k, v in item.items() if k not in ("content", "body")}
+            path_val = item.get("path") or f"virtual/{nid}.md"
+            notes_dict[nid] = Note(
+                id=nid,
+                path=Path(path_val),
+                title=title,
+                body=body,
+                meta=meta,
+            )
+
+        vault = VaultIndex(list(notes_dict.values()))
+        retriever = HybridRetriever(vault)
+        boundary = RetrievalBoundaryAdapter(retriever)
+        facade = ProductionRetrievalFacade(adapter=boundary)
+        return RetrievalIntegrationAdapter(facade=facade)
+
+    def _get_retrieval_adapter(self) -> RetrievalIntegrationAdapter:
+        if self._custom_retrieval_adapter is not None:
+            return self._custom_retrieval_adapter
+        if self._cached_retrieval_adapter is None:
+            self._cached_retrieval_adapter = self._build_retrieval_adapter()
+        return self._cached_retrieval_adapter
+
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
         if not self.authorizer.is_allowed(principal, operation):
             raise PermissionError(f"{principal.value} not allowed to perform {operation.value}")
@@ -207,47 +288,77 @@ class MemoryController:
     def search(self, principal: Principal, query: str, page_size: int = 10, page_token: Optional[str] = None, lifecycles: Optional[List[Lifecycle]] = None, types: Optional[List[str]] = None) -> Dict[str, Any]:
         target_id = "unknown_query"
         try:
-            disclosure_level = getattr(self, 'default_disclosure', 'metadata')
-            check_query_size(query); sanitized = sanitize_query(query)
-            query_fp = hashlib.sha256(sanitized.encode()).hexdigest(); target_id = query_fp
-            budget = load_agent_budget(principal.value); classified = self.query_classifier.classify(sanitized)
-            if lifecycles is not None: classified['lifecycle_filters'] = [l.value if isinstance(l, Lifecycle) else l for l in lifecycles]
-            if types is not None: classified['target_types'] = types
-            offset = 0
-            if page_token:
-                payload = PaginationToken.decode(page_token)
-                if payload.get('query_fp') != query_fp: raise InvalidPaginationTokenError('Token query fingerprint does not match current request')
-                if payload.get('agent_id') != principal.value: raise InvalidPaginationTokenError('Token principal does not match current request')
-                token_lifecycles = payload.get('lifecycles', []); req_lifecycles = [l.value if isinstance(l, Lifecycle) else l for l in (lifecycles or [])]
-                if token_lifecycles != req_lifecycles: raise InvalidPaginationTokenError('Token lifecycle filters do not match current request')
-                token_types = payload.get('types', []); req_types = types or []
-                if token_types != req_types: raise InvalidPaginationTokenError('Token type filters do not match current request')
-                if payload.get('disclosure') != disclosure_level: raise InvalidPaginationTokenError('Token disclosure level does not match current request')
-                if payload.get('page_size') != page_size: raise InvalidPaginationTokenError('Token page size does not match current request')
-                offset = payload.get('offset', 0)
-            notes = self.retrieval_engine.retrieve(classified, principal, query_fp, disclosure_level, budget, offset=offset)
-            scored = self.scorer.score(sanitized, notes); score_map = {s['id']: s['score'] for s in scored}
-            notes = sorted(notes, key=lambda n: score_map.get(n.get('id'), 0), reverse=True)
-            pd = ProgressiveDisclosure(budget)
-            if disclosure_level == 'metadata': disclosed = pd.metadata_only(notes)
-            elif disclosure_level == 'snippet': disclosed = pd.snippet(notes)
-            elif disclosure_level == 'sections': disclosed = pd.sections(notes, sanitized)
-            else: disclosed = pd.full_document(notes)
-            total = len(disclosed); end = min(offset + page_size, total); page_results = disclosed[offset:end]; next_token = None
-            if end < total:
-                payload = {'offset': end, 'query_fp': hashlib.sha256(sanitized.encode()).hexdigest(), 'agent_id': principal.value, 'page_size': page_size, 'lifecycles': [l.value if isinstance(l, Lifecycle) else l for l in (lifecycles or [])], 'types': types or [], 'disclosure': disclosure_level, 'expiration': int((datetime.now(timezone.utc) + timedelta(minutes=10)).timestamp())}
-                secret = os.getenv('MEMORY_CONTROLLER_HMAC_SECRET')
-                if not secret: raise MissingHMACSecretError('HMAC secret not configured')
-                next_token = PaginationToken(payload, secret.encode()).encode()
+            self._check_auth(principal, Operation.SEARCH)
+            effective_disclosure = getattr(self, "default_disclosure", "metadata")
+            query_fp = hashlib.sha256(str(query).encode()).hexdigest()
+            target_id = query_fp
+
+            req = request_from_controller(
+                principal=principal,
+                query=query,
+                page_size=page_size,
+                page_token=page_token,
+                lifecycles=lifecycles,
+                types=types,
+                disclosure_level=effective_disclosure,
+                request_id="search",
+            )
+
+            adapter = self._get_retrieval_adapter()
             try:
-                pack = self.pack_builder.build(request_id='search', agent_id=principal.value, budget={'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget}, results=page_results, disclosure_level=disclosure_level, minimal_provenance=None, next_page_token=next_token, audit_ref=None)
+                adapter_resp = adapter.search(req)
+            except CursorSecurityError as err:
+                raise InvalidPaginationTokenError(f"Invalid pagination token: {err}") from err
+            except IntegrationSecurityError as err:
+                raise PermissionError(f"Security Boundary Violation: {err}") from err
+            except IntegrationRequestValidationError as err:
+                raise ValueError(f"Invalid search request: {err}") from err
+
+            budget = load_agent_budget(principal.value if hasattr(principal, "value") else str(principal))
+
+            results_list = []
+            for hit in adapter_resp.results:
+                results_list.append({
+                    "id": hit.id,
+                    "title": hit.title,
+                    "score": hit.score,
+                    "lifecycle": hit.lifecycle,
+                    "verification": hit.verification,
+                    "type": hit.type,
+                    "summary": hit.summary,
+                    "content": hit.summary,
+                    "citation": hit.citation,
+                    "signals": hit.signals,
+                })
+
+            try:
+                pack = self.pack_builder.build(
+                    request_id="search",
+                    agent_id=principal.value if hasattr(principal, "value") else str(principal),
+                    budget={"soft": budget.soft_context_budget, "hard": budget.hard_context_budget},
+                    results=results_list,
+                    disclosure_level=effective_disclosure,
+                    minimal_provenance=None,
+                    next_page_token=adapter_resp.next_page_token,
+                    audit_ref=None,
+                )
             except BudgetExceededError:
-                pack = {'requestId': 'search', 'agentId': principal.value, 'budget': {'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget}, 'disclosureLevel': disclosure_level, 'results': []}
-            pack['next_page_token'] = next_token
-            audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
+                pack = {
+                    "requestId": "search",
+                    "agentId": principal.value if hasattr(principal, "value") else str(principal),
+                    "budget": {"soft": budget.soft_context_budget, "hard": budget.hard_context_budget},
+                    "disclosureLevel": effective_disclosure,
+                    "results": [],
+                }
+            pack["next_page_token"] = adapter_resp.next_page_token
+            pack["total_hits"] = adapter_resp.total_hits
+            pack["trace"] = adapter_resp.trace
+            audit_event("search", principal, target_id, success=True, details={"page_size": page_size})
             return pack
         except Exception as e:
-            audit_event('search', principal, target_id, success=False, details={'error': str(e)}); raise
+            audit_event("search", principal, target_id, success=False, details={"error": str(e)})
+            raise
+
 
     def search_financial(self, principal: Principal = Principal.AI_AGENT, query: str = "", symbol: Optional[str] = None, symbols: Optional[List[str]] = None, asset_symbol: Optional[str] = None, category: Optional[str] = None, asset_classes: Optional[List[str]] = None, min_confidence: Optional[str] = None, confidence_min: Optional[str] = None, verification_state: Optional[str] = None, verification_states: Optional[List[str]] = None, date_from: Optional[str] = None, date_to: Optional[str] = None, types: Optional[List[str]] = None, lifecycles: Optional[List[Lifecycle]] = None, page_size: int = 10, limit: Optional[int] = None, page_token: Optional[str] = None, disclosure_level: Optional[str] = None) -> Dict[str, Any]:
         self._check_auth(principal, Operation.SEARCH)
@@ -276,7 +387,7 @@ class MemoryController:
                     raise ValueError(f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW.")
                 note['created'] = note_data.get('created', now_date); note['updated'] = note_data.get('updated', now_date)
                 validation_note = {k: v for k, v in note.items() if k != 'content'}
-                self._validate_note(validation_note); self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated')
+                self._validate_note(validation_note); self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None
                 if hasattr(self, 'financial_search_engine') and self.financial_search_engine is not None: self.financial_search_engine.index_note(note)
                 audit_event('propose', principal, note_id, success=True); return note_id
             except Exception as e:
@@ -292,7 +403,7 @@ class MemoryController:
                 if not evaluate_lifecycle_mutation(note['lifecycle'], Lifecycle.REVIEW.value, mutation=LifecycleMutation.REVIEW, verification=note.get('verification')):
                     raise ValueError(f"Invalid lifecycle transition from {note['lifecycle']} to {Lifecycle.REVIEW.value} for {LifecycleMutation.REVIEW.value}")
                 note['lifecycle'] = Lifecycle.REVIEW; self.storage.set(note_id, note); review_id = f"r{MemoryController._global_review_counter}"; MemoryController._global_review_counter += 1
-                self.storage.set(review_id, {'id': review_id, 'review': {'by': principal.value, 'decision': decision, 'comments': comments}}); self.cache.invalidate_by_event('memory_updated'); audit_event('review', principal, note_id, success=True, details={'decision': decision})
+                self.storage.set(review_id, {'id': review_id, 'review': {'by': principal.value, 'decision': decision, 'comments': comments}}); self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None; audit_event('review', principal, note_id, success=True, details={'decision': decision})
             except Exception as e: audit_event('review', principal, note_id, success=False, details={'decision': decision, 'error': str(e)}); raise
 
     def promote(self, principal: Principal, note_id: str) -> None:
@@ -303,7 +414,7 @@ class MemoryController:
                 if note['lifecycle'] != Lifecycle.REVIEW: raise ValueError('Only REVIEW notes can be promoted')
                 if not evaluate_lifecycle_mutation(note['lifecycle'], Lifecycle.ACTIVE.value, mutation=LifecycleMutation.PROMOTE, verification=note.get('verification')):
                     raise ValueError('Only VERIFIED notes can be promoted to ACTIVE')
-                note['lifecycle'] = Lifecycle.ACTIVE; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); audit_event('promote', principal, note_id, success=True)
+                note['lifecycle'] = Lifecycle.ACTIVE; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None; audit_event('promote', principal, note_id, success=True)
             except Exception as e: audit_event('promote', principal, note_id, success=False, details={'error': str(e)}); raise
 
     def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
@@ -322,7 +433,7 @@ class MemoryController:
                     new_st = updates['provenance']['source_type']; old_st = note.get('provenance', {}).get('source_type')
                     if new_st != old_st: raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
                 old_valid_until = note.get('valid_until'); new_valid_until = updates.get('valid_until'); has_valid_until_changed = 'valid_until' in updates and old_valid_until != new_valid_until
-                note.update(updates); note['updated'] = datetime.now(timezone.utc).date().isoformat(); self._validate_note(note); self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated')
+                note.update(updates); note['updated'] = datetime.now(timezone.utc).date().isoformat(); self._validate_note(note); self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None
                 if hasattr(self, 'financial_search_engine') and self.financial_search_engine is not None: self.financial_search_engine.index_note(note)
                 if has_valid_until_changed: audit_event('valid_until_update', principal, note_id, success=True, details={'old_valid_until': old_valid_until, 'new_valid_until': new_valid_until})
                 else: audit_event('update', principal, note_id, success=True)
@@ -339,7 +450,7 @@ class MemoryController:
                 previous_state = note.get('verification', 'unverified')
                 if previous_state == verification_state: return
                 now_date = datetime.now(timezone.utc).date().isoformat(); note['verification'] = verification_state; note['verification_source'] = principal.value; note['last_verified'] = now_date; note['updated'] = now_date
-                validation_note = {k: v for k, v in note.items() if k != 'content'}; self._validate_note(validation_note); self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated')
+                validation_note = {k: v for k, v in note.items() if k != 'content'}; self._validate_note(validation_note); self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None
                 audit_event('attest', principal, note_id, success=True, details={'attested_by': principal.value, 'reason': verification_reason, 'evidence_reference': evidence_reference, 'previous_verification_state': previous_state, 'new_verification_state': verification_state})
             except Exception as e: audit_event('attest', principal, note_id, success=False, details={'attested_by': principal.value, 'reason': verification_reason if 'verification_reason' in locals() else '', 'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '', 'error': str(e)}); raise
 
@@ -352,7 +463,7 @@ class MemoryController:
                 if note.get('lifecycle') not in {Lifecycle.REVIEW.value, Lifecycle.ACTIVE.value}: raise ValueError('Only REVIEW or ACTIVE notes can be archived')
                 if not evaluate_lifecycle_mutation(note['lifecycle'], Lifecycle.ARCHIVED.value, mutation=LifecycleMutation.ARCHIVE, verification=note.get('verification')):
                     raise ValueError(f"Invalid lifecycle transition from {note['lifecycle']} to {Lifecycle.ARCHIVED.value} for {LifecycleMutation.ARCHIVE.value}")
-                note['lifecycle'] = Lifecycle.ARCHIVED; note['archive_reason'] = reason; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); audit_event('archive', principal, note_id, success=True, details={'reason': reason})
+                note['lifecycle'] = Lifecycle.ARCHIVED; note['archive_reason'] = reason; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None; audit_event('archive', principal, note_id, success=True, details={'reason': reason})
             except Exception as e: audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)}); raise
 
     def supersede(self, principal: Principal, old_id: str, new_id: str, evidence: str = "") -> None:
@@ -371,7 +482,7 @@ class MemoryController:
                     try: self.storage.set(new_id, new_note)
                     except Exception as e: self.storage.set(old_id, old_note_orig); raise e
                 except Exception as e: raise ValueError(f"Atomic supersession write failed: {str(e)}")
-                self.cache.invalidate_by_event('memory_updated'); audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence}); audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
+                self.cache.invalidate_by_event('memory_updated'); self._cached_retrieval_adapter = None; audit_event('supersede', principal, new_id, success=True, details={'old_id': old_id, 'evidence': evidence}); audit_event('archive_superseded', principal, old_id, success=True, details={'new_id': new_id})
             except Exception as e: audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)}); raise
 
 from .storage.file_engine import FileStorageEngine
