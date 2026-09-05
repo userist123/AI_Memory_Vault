@@ -27,7 +27,15 @@ from .model_provider import ModelProvider
 
 REQUIRED_TIERS = ("light", "standard", "heavy")
 
-DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "model_tiers.json"
+def _resolve_default_config_path() -> Path:
+    candidates = [
+        Path(__file__).resolve().parents[3] / "04_CONFIG" / "model_tiers.json",
+        Path(__file__).resolve().parents[3] / "config" / "model_tiers.json",
+        Path(__file__).resolve().parent.parent / "config" / "model_tiers.json",
+    ]
+    return next((p for p in candidates if p.exists()), candidates[0])
+
+DEFAULT_CONFIG_PATH = _resolve_default_config_path()
 
 
 @dataclass(frozen=True)

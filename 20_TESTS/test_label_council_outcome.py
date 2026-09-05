@@ -74,6 +74,7 @@ def test_invalid_confidence_is_rejected(tmp_path: Path) -> None:
 def test_cli_writes_manual_label_and_json_output(tmp_path: Path) -> None:
     ledger = tmp_path / "outcomes.jsonl"
 
+    repo_root = next((p for p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parents[2]) if (p / "scripts" / "label_council_outcome.py").exists()), Path(__file__).resolve().parents[1])
     completed = subprocess.run(
         [
             sys.executable,
@@ -93,7 +94,7 @@ def test_cli_writes_manual_label_and_json_output(tmp_path: Path) -> None:
             "--ledger",
             str(ledger),
         ],
-        cwd=Path(__file__).resolve().parents[2],
+        cwd=repo_root,
         text=True,
         capture_output=True,
         check=False,
@@ -111,6 +112,7 @@ def test_cli_writes_manual_label_and_json_output(tmp_path: Path) -> None:
 def test_cli_invalid_outcome_fails(tmp_path: Path) -> None:
     ledger = tmp_path / "outcomes.jsonl"
 
+    repo_root = next((p for p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parents[2]) if (p / "scripts" / "label_council_outcome.py").exists()), Path(__file__).resolve().parents[1])
     completed = subprocess.run(
         [
             sys.executable,
@@ -122,7 +124,7 @@ def test_cli_invalid_outcome_fails(tmp_path: Path) -> None:
             "--ledger",
             str(ledger),
         ],
-        cwd=Path(__file__).resolve().parents[2],
+        cwd=repo_root,
         text=True,
         capture_output=True,
         check=False,
