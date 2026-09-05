@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source=/repo --no-banner --redact --exit-code 1 2>&1 | tee r001_gitleaks_current.txt
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source=/repo --no-git --no-banner --redact --exit-code 1 2>&1 | tee r001_gitleaks_current.txt
 
       - name: Git-history gitleaks (fail closed)
         shell: bash
