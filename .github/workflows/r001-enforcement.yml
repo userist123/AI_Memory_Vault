@@ -95,7 +95,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
+          docker run --rm -w /repo -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
 
       - name: Dependency audit
         shell: bash
