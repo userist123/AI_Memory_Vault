@@ -87,6 +87,15 @@ def test_concurrent_attest_and_update_race_sqlite(temp_db_path, test_audit_log):
     note_id = str(uuid.uuid4())
     initial_note = make_note(note_id, lifecycle="REVIEW", verification="unverified", provenance={"source_type": "inference", "source_ref": "obs-1"})
     controller.propose(Principal.AI_AGENT, initial_note)
+    # Lifecycle canon (see 00_GOVERNANCE/coordination/claude-code/ ADR
+    # response): promote() requires verification == 'verified'; REVIEW ->
+    # ACTIVE without attestation is rejected. The note is attested here as
+    # setup so the race-condition stress below still starts from the
+    # documented "ACTIVE" state; the concurrent human_attester/admin_attester
+    # threads then race further (idempotent) re-attestations against the
+    # illegal-escalation/provenance-forgery threads, which is what this test
+    # actually stresses -- not the unverified->verified transition itself.
+    controller.attest(Principal.ADMIN, note_id, "Initial setup attestation for concurrency stress", "setup-evidence")
     controller.promote(Principal.HUMAN, note_id)
     assert storage.get(note_id)["lifecycle"] == "ACTIVE"
 

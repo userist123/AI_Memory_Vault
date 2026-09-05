@@ -1072,15 +1072,25 @@ class MultiLayeredFinancialSearchEngine:
         self.graph.invalidate()
 
     def _extract_all_storage_notes(self) -> List[Dict[str, Any]]:
-        """Safely extracts all stored notes from SQLiteStorageEngine or FileStorageEngine."""
-        if hasattr(self.storage, "store") and isinstance(self.storage.store, dict):
-            return list(self.storage.store.values())
-        elif hasattr(self.storage, "query"):
+        """Safely extracts all stored notes from SQLiteStorageEngine or FileStorageEngine.
+
+        SECURITY: must always go through storage.query(), never reach into
+        the in-memory StorageEngine's `.store` dict directly. Every storage
+        engine's `.query()` hardcodes exclusion of RAW notes; `.store` does
+        not. The previous `.store` fast-path bypassed that exclusion for the
+        in-memory engine, so RAW notes could be indexed into the BM25/vector
+        caches (a downstream lifecycle filter in execute_search() still kept
+        them out of returned results today, but that made RAW exposure
+        dependent on exactly one filter surviving future refactors, not on
+        the storage boundary itself -- see runtime-security brief section 6:
+        "not enough for a single path to be safe").
+        """
+        if hasattr(self.storage, "query"):
             try:
-                return self.storage.query(lifecycles=None, types=None)
+                return self.storage.query(lifecycle=None, types=None)
             except TypeError:
                 try:
-                    return self.storage.query(lifecycle=None, types=None)
+                    return self.storage.query(lifecycles=None, types=None)
                 except Exception:
                     return self.storage.query()
         return []

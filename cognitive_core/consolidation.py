@@ -1,6 +1,5 @@
 import copy
 import uuid
-import datetime
 from typing import List, Dict, Any, Optional
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal, Operation
@@ -9,7 +8,12 @@ from memory_controller.lifecycle_policy import Mutation as LifecycleMutation, ev
 from memory_controller.audit.logger import audit_event
 from .tool_router import ToolRouter
 
+
 class Consolidator:
+    """BRAIN-10: Memory Consolidation & Reconsolidation Routine.
+
+    Consolidation remains an orchestrator. All reconsolidation mutations are
+    delegated to the canonical memory_controller security boundary.
     """
     BRAIN-10: Memory Consolidation & Reconsolidation Routine.
     Periodically scans ephemeral REVIEW lessons and synthesizes them into concrete knowledge.
@@ -20,6 +24,7 @@ class Consolidator:
     def __init__(self, memory_controller: MemoryController, tool_router: ToolRouter):
         self.controller = memory_controller
         self.router = tool_router
+        self.reconsolidation = ReconsolidationService(memory_controller)
 
     def challenge(
         self,
@@ -233,7 +238,6 @@ class Consolidator:
         if not passed:
             return None
 
-        # Propose through ToolRouter
         self.router.execute(principal, "propose", {"note_data": refined_node})
 
         # Archive old lessons through ToolRouter

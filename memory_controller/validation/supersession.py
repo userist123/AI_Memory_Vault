@@ -4,6 +4,7 @@
 from typing import Dict, Any
 from memory_controller.authorizer import Principal
 
+
 class SupersessionEnforcer:
     def __init__(self, storage):
         self.storage = storage

@@ -88,9 +88,15 @@ def test_query_raw_boundary_holds_for_sqlite_storage():
         assert {note["id"] for note in result} == {active_id}
         assert controller.query(Principal.HUMAN, lifecycles=[Lifecycle.RAW]) == []
     finally:
+        # Windows keeps the sqlite3 file handle open until the connection is
+        # explicitly closed; without this, os.remove() below intermittently
+        # raises PermissionError (WinError 32) instead of just FileNotFoundError.
+        try:
+            storage.close()
+        except Exception:
+            pass
         for suffix in ("", "-wal", "-shm"):
             try:
                 os.remove(path + suffix)
-            except FileNotFoundError:
+            except (FileNotFoundError, PermissionError):
                 pass
-        shutil.rmtree(path, ignore_errors=True)

@@ -9,6 +9,7 @@ import json
 from datetime import datetime, timezone, timedelta
 
 # Core imports
+import copy
 import hashlib
 import threading
 from .authorizer import Authorizer, DefaultAuthorizer, Principal, Operation
@@ -54,12 +55,31 @@ from cognitive_core.p4_runtime_wiring_harness import (
 
 
 class StorageEngine:
+    """In-memory reference storage engine (used heavily by the test suite).
+
+    SECURITY/INTEGRITY NOTE (mutation atomicity / storage aliasing): both
+    `get()` and `set()` return/store deep copies, never the caller's or the
+    engine's own internal object by reference. A shallow copy (`dict(x)` or
+    `x.copy()`) only copies the TOP-LEVEL keys -- nested structures like
+    `provenance` (dict) and `relations` (list) would still be the SAME
+    object shared between the caller and this engine's internal `self.store`.
+    A caller that reads a note, mutates a nested field in place (e.g.
+    `note['relations'].append(...)`), and then fails validation before
+    calling `set()` would otherwise have already corrupted this engine's
+    canonical copy with no write ever having occurred and no way to roll
+    back, because the "old" and "new" versions were never actually
+    independent objects. Every mutation method in MemoryController
+    (`update`, `review`, `attest`, `archive`, `supersede`) relies on this
+    engine returning genuinely independent copies for its
+    get-mutate-validate-or-abort pattern to be safe.
+    """
     def __init__(self):
         self.store: Dict[str, Dict[str, Any]] = {}
     def get(self, note_id: str) -> Optional[Dict[str, Any]]:
-        return self.store.get(note_id)
+        note = self.store.get(note_id)
+        return copy.deepcopy(note) if note is not None else None
     def set(self, note_id: str, data: Dict[str, Any]) -> None:
-        self.store[note_id] = data.copy()
+        self.store[note_id] = copy.deepcopy(data)
     def delete(self, note_id: str) -> None:
         self.store.pop(note_id, None)
     def query(self, intent: str, lifecycle: List[str] = None, types: List[str] = None) -> List[Dict[str, Any]]:
@@ -373,7 +393,7 @@ class MemoryController:
     def search_financial(self, principal: Principal = Principal.AI_AGENT, query: str = "", symbol: Optional[str] = None, symbols: Optional[List[str]] = None, asset_symbol: Optional[str] = None, category: Optional[str] = None, asset_classes: Optional[List[str]] = None, min_confidence: Optional[str] = None, confidence_min: Optional[str] = None, verification_state: Optional[str] = None, verification_states: Optional[List[str]] = None, date_from: Optional[str] = None, date_to: Optional[str] = None, types: Optional[List[str]] = None, lifecycles: Optional[List[Lifecycle]] = None, page_size: int = 10, limit: Optional[int] = None, page_token: Optional[str] = None, disclosure_level: Optional[str] = None) -> Dict[str, Any]:
         self._check_auth(principal, Operation.SEARCH)
         effective_disclosure = disclosure_level or getattr(self, 'default_disclosure', 'metadata')
-        return self.financial_search_engine.execute_search(principal=principal, query=query, symbol=symbol, symbols=symbols, asset_symbol=asset_symbol, category=category, asset_classes=asset_classes, min_confidence=min_confidence, confidence_min=confidence_min, verification_state=verification_state, verification_states=verification_states, date_from=date_from, date_to=date_to, types=types, lifecycles=lifecycles, page_size=page_size, limit=limit, page_token=page_token, disclosure_level=effective_disclosure)
+        return self.financial_search_engine.execute_search(principal=principal, query=query, symbol=symbol, symbols=symbols, asset_symbol=asset_symbol, category=category, asset_classes=asset_classes, min_confidence=min_confidence, confidence_min=confidence_min, date_from=date_from, date_to=date_to, types=types, lifecycles=lifecycles, page_size=page_size, limit=limit, page_token=page_token, disclosure_level=effective_disclosure)
 
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
         with self._mutation_lock:

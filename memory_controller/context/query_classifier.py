@@ -14,11 +14,7 @@ class Intent(Enum):
 
 
 class QueryClassifier:
-    """Classify a raw query string into intent and target memory types.
-
-    This is a rule-based lightweight classifier; can be extended with
-    LLM-based intent detection later.
-    """
+    """Classify a raw query string into intent and target memory types."""
 
     def __init__(self, intent_map: Dict[str, Intent] | None = None):
         self.intent_map = intent_map or {
@@ -32,11 +28,7 @@ class QueryClassifier:
         }
 
     def classify(self, query: str) -> Dict[str, Any]:
-        """Return intent, target types, lifecycle filters, and confidence.
-
-        Lifecycle stages are matched as whole words so terms such as
-        ``unverified`` do not accidentally imply the ``VERIFIED`` stage.
-        """
+        """Return the original query plus classified retrieval constraints."""
         lowered = query.lower()
 
         intent = Intent.READ
@@ -57,7 +49,11 @@ class QueryClassifier:
             "resource",
             "hypothesis",
         ]:
-            if re.search(rf"\b{re.escape(target_type)}\b", lowered):
+            # Optional trailing "s" so a natural plural ("procedures",
+            # "lessons") still matches its singular type name, while the
+            # \b...\b word-boundary discipline is preserved (so "unverified"
+            # still cannot accidentally match "verified", etc.).
+            if re.search(rf"\b{re.escape(target_type)}s?\b", lowered):
                 target_types.append(target_type)
 
         lifecycle_filters = []
@@ -76,6 +72,7 @@ class QueryClassifier:
 
         confidence = 0.9 if intent != Intent.READ else 0.5
         return {
+            "query": query,
             "intent": intent,
             "target_types": target_types,
             "lifecycle_filters": lifecycle_filters,
