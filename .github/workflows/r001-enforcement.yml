@@ -86,14 +86,17 @@ jobs:
       - name: Current-tree gitleaks (fail closed)
         shell: bash
         run: |
-          set -euo pipefail
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect --source=/repo --no-git --no-banner --redact --exit-code 1 2>&1 | tee r001_gitleaks_current.txt
+          set +e
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source=/repo --no-git --no-banner --redact --verbose --report-format json --report-path /repo/r001_gitleaks_current.json 2>&1 | tee r001_gitleaks_current.txt
+          status=${PIPESTATUS[0]}
+          set -e
+          test "$status" -eq 0
 
       - name: Git-history gitleaks (fail closed)
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest git --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
 
       - name: Dependency audit
         shell: bash
@@ -129,6 +132,7 @@ jobs:
           name: r001-enforcement-evidence-${{ github.sha }}
           path: |
             r001_*.txt
+            r001_gitleaks_current.json
             r001_gitleaks_history.json
             03_IMPLEMENTATION/products/xau_kinetic/repository_map/R001_RUNTIME_MIGRATION_INVENTORY.json
           if-no-files-found: warn
