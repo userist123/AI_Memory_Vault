@@ -461,8 +461,16 @@ def compute_all_indicators(
     l_price = round(safe_float(hist["Low"].iloc[-1], price), 6) if "Low" in hist.columns else price
 
     def _pct(idx: int) -> float:
+        """Percentage change of the latest close against the close at negative
+        position `idx`.
+
+        Boundary contract: `closes.iloc[idx]` is valid as soon as
+        `len(closes) >= abs(idx)` -- for a series of exactly `abs(idx)` bars,
+        `iloc[idx]` addresses the FIRST element. The guard below must therefore
+        be `>=`, not `>`.
+        """
         try:
-            if len(closes) > abs(idx):
+            if len(closes) >= abs(idx):
                 prev = float(closes.iloc[idx])
                 return round((price - prev) / prev * 100, 4) if prev else 0.0
             return 0.0

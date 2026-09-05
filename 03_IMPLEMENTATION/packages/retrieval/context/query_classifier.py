@@ -57,7 +57,7 @@ class QueryClassifier:
             "resource",
             "hypothesis",
         ]:
-            if re.search(rf"\b{re.escape(target_type)}\b", lowered):
+            if re.search(rf"\b{re.escape(target_type)}s?\b", lowered):
                 target_types.append(target_type)
 
         lifecycle_filters = []
