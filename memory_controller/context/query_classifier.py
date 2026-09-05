@@ -57,7 +57,11 @@ class QueryClassifier:
             "resource",
             "hypothesis",
         ]:
-            if re.search(rf"\b{re.escape(target_type)}\b", lowered):
+            # Optional trailing "s" so a natural plural ("procedures",
+            # "lessons") still matches its singular type name, while the
+            # \b...\b word-boundary discipline is preserved (so "unverified"
+            # still cannot accidentally match "verified", etc.).
+            if re.search(rf"\b{re.escape(target_type)}s?\b", lowered):
                 target_types.append(target_type)
 
         lifecycle_filters = []

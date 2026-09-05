@@ -1,0 +1,112 @@
+{
+  "generated": "2026-09-05T10:16:56+00:00",
+  "corpus_label": "CORPUS_MURDAR",
+  "corpus_label_note": "self-declared by the caller via --corpus-label; this script does not verify P0.3 hygiene status itself",
+  "notes_indexed": 871,
+  "sampled_notes": 25,
+  "synapse_stats": {
+    "edges": 18,
+    "edges_strong": 0,
+    "edges_weak": 18,
+    "nodes_with_edges": 12,
+    "mean_out_degree": 1.5
+  },
+  "known_item": {
+    "jaccard": {
+      "recall@1": 0.48,
+      "recall@5": 0.52,
+      "recall@10": 0.54,
+      "mrr": 0.4995,
+      "misses": 23,
+      "queries": 50
+    },
+    "bm25": {
+      "recall@1": 0.6,
+      "recall@5": 0.62,
+      "recall@10": 0.62,
+      "mrr": 0.61,
+      "misses": 19,
+      "queries": 50
+    },
+    "entity": {
+      "recall@1": 0.06,
+      "recall@5": 0.1,
+      "recall@10": 0.14,
+      "mrr": 0.0802,
+      "misses": 43,
+      "queries": 50
+    },
+    "lexical_rrf": {
+      "recall@1": 0.54,
+      "recall@5": 0.58,
+      "recall@10": 0.58,
+      "mrr": 0.5567,
+      "misses": 21,
+      "queries": 50
+    },
+    "graph": {
+      "recall@1": 0.54,
+      "recall@5": 0.58,
+      "recall@10": 0.58,
+      "mrr": 0.5567,
+      "misses": 21,
+      "queries": 50
+    }
+  },
+  "paraphrase": {
+    "status": "OK",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:3b",
+    "queries_generated": 25,
+    "queries_requested": 25,
+    "arms": {
+      "jaccard": {
+        "recall@1": 0.28,
+        "recall@5": 0.28,
+        "recall@10": 0.32,
+        "mrr": 0.2867,
+        "misses": 17,
+        "queries": 25
+      },
+      "bm25": {
+        "recall@1": 0.16,
+        "recall@5": 0.16,
+        "recall@10": 0.16,
+        "mrr": 0.16,
+        "misses": 21,
+        "queries": 25
+      },
+      "entity": {
+        "recall@1": 0.08,
+        "recall@5": 0.12,
+        "recall@10": 0.16,
+        "mrr": 0.1044,
+        "misses": 21,
+        "queries": 25
+      },
+      "lexical_rrf": {
+        "recall@1": 0.12,
+        "recall@5": 0.2,
+        "recall@10": 0.24,
+        "mrr": 0.1583,
+        "misses": 19,
+        "queries": 25
+      },
+      "graph": {
+        "recall@1": 0.12,
+        "recall@5": 0.2,
+        "recall@10": 0.24,
+        "mrr": 0.1583,
+        "misses": 19,
+        "queries": 25
+      }
+    }
+  },
+  "multi_hop": {
+    "edge_pairs_probed": 18,
+    "reachable_lexically": 8,
+    "reachable_only_via_graph": 5,
+    "unreachable": 5,
+    "graph_added_value_rate": 0.2778
+  }
+}

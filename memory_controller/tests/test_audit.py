@@ -181,9 +181,14 @@ def test_audit_review_success_and_fail():
     assert logs[1]["outcome"] == "error"
 
 def test_audit_promote_success_and_fail():
-    # Set up a REVIEW note
-    controller.storage.set("44444444-4444-4444-4444-444444444444", {"id": "44444444-4444-4444-4444-444444444444", "lifecycle": "REVIEW", "type": "knowledge", "provenance": {"source_type": "user"}})
-    
+    # Set up a REVIEW note. Lifecycle canon (see
+    # 00_GOVERNANCE/coordination/claude-code/ ADR response): promote() to
+    # ACTIVE requires verification == 'verified' -- REVIEW -> ACTIVE without
+    # verification is rejected. This test exercises promote()'s own audit
+    # logging, not the attest() workflow itself, so the note is seeded as
+    # already verified rather than routed through a real attest() call.
+    controller.storage.set("44444444-4444-4444-4444-444444444444", {"id": "44444444-4444-4444-4444-444444444444", "lifecycle": "REVIEW", "type": "knowledge", "provenance": {"source_type": "user"}, "verification": "verified"})
+
     # Success
     controller.promote(Principal.ADMIN, "44444444-4444-4444-4444-444444444444")
     logs = read_logs()

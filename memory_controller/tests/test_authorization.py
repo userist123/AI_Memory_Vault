@@ -86,13 +86,28 @@ def test_ai_cannot_promote(controller):
         controller.promote(Principal.AI_AGENT, "p1")
 
 def test_human_promote_allowed(controller):
-    note = {"id": "p2", "lifecycle": Lifecycle.REVIEW}
+    # Lifecycle canon (see 00_GOVERNANCE/coordination/claude-code/ ADR
+    # response): promote() requires verification == 'verified'. This test
+    # targets PROMOTE authorization specifically (can HUMAN call promote()
+    # at all), not the attest() workflow, so the note is seeded as already
+    # verified.
+    note = {"id": "p2", "lifecycle": Lifecycle.REVIEW, "verification": "verified"}
     controller.storage.set("p2", note)
     controller.promote(Principal.HUMAN, "p2")
     assert controller.storage.get("p2")["lifecycle"] == Lifecycle.ACTIVE
 
 def test_admin_promote_allowed(controller):
-    note = {"id": "p3", "lifecycle": Lifecycle.REVIEW}
+    note = {"id": "p3", "lifecycle": Lifecycle.REVIEW, "verification": "verified"}
     controller.storage.set("p3", note)
     controller.promote(Principal.ADMIN, "p3")
     assert controller.storage.get("p3")["lifecycle"] == Lifecycle.ACTIVE
+
+def test_human_promote_rejected_without_verification(controller):
+    """Lifecycle canon: REVIEW -> ACTIVE without prior attestation must be
+    rejected, even for an authorized HUMAN principal. promote() must never
+    silently attest on the caller's behalf."""
+    note = {"id": "p2b", "lifecycle": Lifecycle.REVIEW, "verification": "unverified"}
+    controller.storage.set("p2b", note)
+    with pytest.raises(ValueError, match="Only VERIFIED notes can be promoted"):
+        controller.promote(Principal.HUMAN, "p2b")
+    assert controller.storage.get("p2b")["lifecycle"] == Lifecycle.REVIEW

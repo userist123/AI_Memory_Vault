@@ -8,6 +8,7 @@ import json
 from datetime import datetime, timezone, timedelta
 
 # Core imports
+import copy
 import hashlib
 import threading
 from .authorizer import Authorizer, DefaultAuthorizer, Principal, Operation
@@ -31,12 +32,31 @@ from .context.pack_builder import ContextPackBuilder
 from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntityResolver
 
 class StorageEngine:
+    """In-memory reference storage engine (used heavily by the test suite).
+
+    SECURITY/INTEGRITY NOTE (mutation atomicity / storage aliasing): both
+    `get()` and `set()` return/store deep copies, never the caller's or the
+    engine's own internal object by reference. A shallow copy (`dict(x)` or
+    `x.copy()`) only copies the TOP-LEVEL keys -- nested structures like
+    `provenance` (dict) and `relations` (list) would still be the SAME
+    object shared between the caller and this engine's internal `self.store`.
+    A caller that reads a note, mutates a nested field in place (e.g.
+    `note['relations'].append(...)`), and then fails validation before
+    calling `set()` would otherwise have already corrupted this engine's
+    canonical copy with no write ever having occurred and no way to roll
+    back, because the "old" and "new" versions were never actually
+    independent objects. Every mutation method in MemoryController
+    (`update`, `review`, `attest`, `archive`, `supersede`) relies on this
+    engine returning genuinely independent copies for its
+    get-mutate-validate-or-abort pattern to be safe.
+    """
     def __init__(self):
         self.store: Dict[str, Dict[str, Any]] = {}
     def get(self, note_id: str) -> Optional[Dict[str, Any]]:
-        return self.store.get(note_id)
+        note = self.store.get(note_id)
+        return copy.deepcopy(note) if note is not None else None
     def set(self, note_id: str, data: Dict[str, Any]) -> None:
-        self.store[note_id] = data.copy()
+        self.store[note_id] = copy.deepcopy(data)
     def delete(self, note_id: str) -> None:
         self.store.pop(note_id, None)
     def query(self, intent: str, lifecycle: List[str] = None, types: List[str] = None) -> List[Dict[str, Any]]:
@@ -432,11 +452,24 @@ class MemoryController:
                 audit_event('update', principal, note_id, success=False, details={'error': str(e)})
                 raise
 
+    # Closed whitelist for attest()'s verification_state parameter. Relying
+    # solely on the shared jsonschema enum (validation/schema.py) to reject
+    # arbitrary values is fragile -- if that schema is ever relaxed for an
+    # unrelated reason, this security-critical gate would silently reopen.
+    # This explicit, local check is defense-in-depth, not a replacement for
+    # the schema validation that still runs afterwards.
+    _ALLOWED_VERIFICATION_STATES = {"verified", "partially_verified", "unverified", "inferred"}
+
     def attest(self, principal: Principal, note_id: str, verification_reason: str, evidence_reference: str, verification_state: str = "verified") -> None:
         with self._mutation_lock:
             try:
                 self._check_auth(principal, Operation.ATTEST)
                 check_path_traversal(note_id)
+                if verification_state not in self._ALLOWED_VERIFICATION_STATES:
+                    raise ValueError(
+                        f"Invalid verification_state '{verification_state}'; must be one of "
+                        f"{sorted(self._ALLOWED_VERIFICATION_STATES)} (no fuzzy matching, no auto-correct)"
+                    )
                 if not verification_reason or not verification_reason.strip():
                     raise ValueError("Attestation requires a non-empty verification_reason")
                 if not evidence_reference or not evidence_reference.strip():
@@ -461,19 +494,50 @@ class MemoryController:
                 audit_event('attest', principal, note_id, success=False, details={'attested_by': principal.value, 'reason': verification_reason if 'verification_reason' in locals() else '', 'evidence_reference': evidence_reference if 'evidence_reference' in locals() else '', 'error': str(e)})
                 raise
 
+    # Lifecycle canon (see 00_GOVERNANCE/coordination/claude-code/ for the ADR
+    # response): ARCHIVED is only reachable from ACTIVE or REVIEW, matching
+    # the same set of lifecycles that MAY carry `verification: verified`
+    # already-attested trust. RAW/CLASSIFIED/NORMALIZED notes are still
+    # in-flight (not yet reviewed at all) and must not be archivable
+    # directly -- they should be rejected in review() instead, or simply
+    # never promoted. VERIFIED is not itself a distinct lifecycle value ever
+    # assigned by this controller (see the ADR response); it is intentionally
+    # excluded from this set for that reason. SUPERSEDED/ARCHIVED notes
+    # cannot be archived again (idempotent no-op is explicitly rejected, not
+    # silently accepted, so a caller cannot use archive() to erase the
+    # `superseded_by` trail by re-archiving with a different reason).
+    _ARCHIVABLE_LIFECYCLES = {Lifecycle.ACTIVE, Lifecycle.REVIEW}
+
     def archive(self, principal: Principal, note_id: str, reason: str) -> None:
         with self._mutation_lock:
             try:
                 self._check_auth(principal, Operation.ARCHIVE)
                 check_path_traversal(note_id)
+                if not reason or not reason.strip():
+                    raise ValueError('Archive requires a non-empty reason')
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
+                current_lifecycle = Lifecycle(note.get('lifecycle'))
+                if current_lifecycle not in self._ARCHIVABLE_LIFECYCLES:
+                    raise ValueError(
+                        f"Cannot archive a note in lifecycle '{current_lifecycle.value}'; "
+                        f"only {sorted(lc.value for lc in self._ARCHIVABLE_LIFECYCLES)} may be archived"
+                    )
+                if current_lifecycle == Lifecycle.ACTIVE and note.get('verification') == 'verified' \
+                        and principal != Principal.ADMIN:
+                    raise PermissionError(
+                        'Archiving a human-verified ACTIVE note requires ADMIN authorization'
+                    )
+                previous_lifecycle = current_lifecycle.value
                 note['lifecycle'] = Lifecycle.ARCHIVED
                 note['archive_reason'] = reason
+                note['updated'] = datetime.now(timezone.utc).date().isoformat()
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
-                audit_event('archive', principal, note_id, success=True, details={'reason': reason})
+                audit_event('archive', principal, note_id, success=True,
+                            details={'reason': reason, 'previous_lifecycle': previous_lifecycle,
+                                     'new_lifecycle': Lifecycle.ARCHIVED.value})
             except Exception as e:
                 audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)})
                 raise
@@ -487,8 +551,13 @@ class MemoryController:
                 self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
                 old_note = self.storage.get(old_id)
                 new_note = self.storage.get(new_id)
-                old_note_orig = old_note.copy()
-                new_note_orig = new_note.copy()
+                # Deep copies: a shallow .copy() would still share nested
+                # objects (e.g. 'relations') with old_note/new_note, so the
+                # in-place .append() calls below would corrupt this rollback
+                # snapshot too, making the except-branch rollback a no-op for
+                # those fields. See StorageEngine docstring.
+                old_note_orig = copy.deepcopy(old_note)
+                new_note_orig = copy.deepcopy(new_note)
                 now_date = datetime.now(timezone.utc).date().isoformat()
                 old_note["lifecycle"] = Lifecycle.SUPERSEDED.value
                 old_note["superseded_by"] = new_id

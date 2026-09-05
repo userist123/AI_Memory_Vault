@@ -16,6 +16,46 @@ class InvalidPaginationTokenError(RuntimeError):
     pass
 
 
+def _validate_payload_shape(payload: dict) -> None:
+    """Defense-in-depth schema/bounds check run AFTER HMAC verification.
+
+    The HMAC check already guarantees the payload was produced by this same
+    server (nothing forged can pass it), but this still bounds every field's
+    type and range explicitly rather than trusting "valid JSON object" alone
+    -- protecting against a legacy/mismatched-schema token (e.g. from a
+    future or rolled-back server version sharing the same secret) carrying a
+    field of an unexpected type or an out-of-range value that a consumer
+    might use unsafely (e.g. a negative or absurdly large `offset`).
+    """
+    offset = payload.get("offset", 0)
+    if not isinstance(offset, int) or isinstance(offset, bool) or offset < 0:
+        raise InvalidPaginationTokenError("Token offset must be a non-negative integer")
+    if offset > 10_000_000:
+        raise InvalidPaginationTokenError("Token offset exceeds maximum allowed value")
+
+    page_size = payload.get("page_size")
+    if page_size is not None and (
+        not isinstance(page_size, int) or isinstance(page_size, bool) or not (0 < page_size <= 1000)
+    ):
+        raise InvalidPaginationTokenError("Token page_size must be an integer in (0, 1000]")
+
+    for str_field in ("query_fp", "agent_id", "disclosure"):
+        val = payload.get(str_field)
+        if val is not None and not isinstance(val, str):
+            raise InvalidPaginationTokenError(f"Token field '{str_field}' must be a string")
+
+    for list_field in ("lifecycles", "types"):
+        val = payload.get(list_field)
+        if val is not None and (
+            not isinstance(val, list) or not all(isinstance(v, str) for v in val)
+        ):
+            raise InvalidPaginationTokenError(f"Token field '{list_field}' must be a list of strings")
+
+    exp = payload.get("expiration")
+    if exp is not None and (not isinstance(exp, (int, float)) or isinstance(exp, bool)):
+        raise InvalidPaginationTokenError("Token expiration must be numeric")
+
+
 class PaginationToken:
     """Opaque, tamper-evident pagination token."""
 
@@ -86,4 +126,5 @@ class PaginationToken:
                 ) from exc
             if datetime.now(tz=timezone.utc) > exp:
                 raise InvalidPaginationTokenError("Token has expired")
+        _validate_payload_shape(payload)
         return payload
