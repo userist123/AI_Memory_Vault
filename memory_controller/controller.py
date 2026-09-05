@@ -183,6 +183,8 @@ class MemoryController:
         return self._cached_retrieval_adapter
 
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
+        if not isinstance(principal, Principal):
+            raise PermissionError("Invalid principal")
         if not self.authorizer.is_allowed(principal, operation):
             raise PermissionError(f"{principal.value} not allowed to perform {operation.value}")
     def query(self, principal: Principal, lifecycles: Optional[List[Lifecycle]] = None, types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
@@ -230,8 +232,8 @@ class MemoryController:
             note = self.storage.get(note_id)
             if not note:
                 raise ValueError(f"Note {note_id} not found")
-            if note.get('lifecycle') != Lifecycle.ACTIVE:
-                raise ValueError("Only ACTIVE notes are readable via public API")
+            if note.get('lifecycle') != Lifecycle.ACTIVE or str(note.get('verification', '')).strip().lower() != 'verified':
+                raise ValueError("Only ACTIVE and verified notes are readable via public API")
             budget = ContextBudget({})
             pd = ProgressiveDisclosure(budget)
             disclosure_level = 'metadata' if not hasattr(self, 'default_disclosure') else self.default_disclosure

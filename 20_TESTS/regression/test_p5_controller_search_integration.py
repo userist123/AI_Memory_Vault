@@ -293,3 +293,39 @@ def test_custom_retrieval_adapter_injection():
     pack = ctrl.search(Principal.HUMAN, query="injected")
     assert len(pack["results"]) == 1
     assert pack["results"][0]["id"] == "knw-injected"
+
+
+def test_no_direct_legacy_retrieval_engine_invocation():
+    """Asserts that self.retrieval_engine.retrieve() is NEVER called by MemoryController.search()."""
+    storage = StorageEngine()
+    ctrl = MemoryController(storage)
+    storage.set("knw-01", _create_note("knw-01", "Title", "Body content regarding architecture."))
+
+    def forbidden_retrieve(*args, **kwargs):
+        raise AssertionError("Legacy RetrievalEngine.retrieve() was called!")
+
+    ctrl.retrieval_engine.retrieve = forbidden_retrieve
+    pack = ctrl.search(Principal.HUMAN, query="content")
+    assert pack is not None
+    assert len(pack["results"]) == 1
+
+
+def test_adapter_facade_error_translations():
+    """Verifies that adapter/cursor/security errors are translated to controller exceptions."""
+    storage = StorageEngine()
+    ctrl = MemoryController(storage)
+
+    # 1. Invalid pagination token -> InvalidPaginationTokenError
+    with pytest.raises(InvalidPaginationTokenError):
+        ctrl.search(Principal.HUMAN, query="test", page_token="malformed_cursor")
+
+    # 2. Non-ACTIVE lifecycles -> PermissionError (security boundary violation)
+    with pytest.raises(PermissionError, match="Security Boundary Violation"):
+        ctrl.search(Principal.HUMAN, query="test", lifecycles=[Lifecycle.REVIEW])
+
+    # 3. Invalid principal -> PermissionError
+    class NotAPrincipal:
+        pass
+    with pytest.raises(PermissionError, match="Invalid principal"):
+        ctrl.search(NotAPrincipal, query="test")
+

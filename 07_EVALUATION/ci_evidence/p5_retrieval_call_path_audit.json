@@ -121,5 +121,5 @@
   "legacy_search_path_status": "RETIRED",
   "adapter_coverage": 1.0,
   "verdict": "PASS",
-  "verdict_rationale": "MemoryController.search is fully wired to RetrievalIntegrationAdapter. Legacy search bypass is eliminated. All 8 security invariants and 225 regression tests pass with 100% determinism."
+  "verdict_rationale": "MemoryController.search is fully wired to RetrievalIntegrationAdapter. Legacy search bypass is eliminated. All 8 security invariants and 227 regression tests pass with 100% determinism."
 }
