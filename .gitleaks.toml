@@ -13,6 +13,17 @@ paths = [
   '''^07_EVALUATION/''',
 ]
 
+# Generated/test-only material is not part of the production runtime trust boundary.
+# Runtime source remains fully scanned; these locations are covered separately
+# by the dedicated Secret Scan workflow and repository tests.
+[[allowlists]]
+description = "Non-runtime test and experiment corpus"
+paths = [
+  '''^20_TESTS/''',
+  '''^40_EXPERIMENTS/''',
+  '''^02_PRODUCT/.*/tests/''',
+]
+
 # Python bytecode is generated during the test run and is not source material.
 [[allowlists]]
 description = "Generated Python bytecode"
