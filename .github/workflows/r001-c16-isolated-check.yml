@@ -1,0 +1,15 @@
+name: R001 C16 isolated syntax check
+on:
+  push:
+    branches:
+      - r001/verify-c15-c16-c8-20260905
+jobs:
+  c16:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fail on SyntaxWarning in canonical activation module
+        run: python -W error::SyntaxWarning -m py_compile 03_IMPLEMENTATION/packages/graph/activation.py
