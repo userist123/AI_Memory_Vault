@@ -651,7 +651,7 @@ Use the repository's environment files / requirements for the exact runtime depe
 - [`cognitive_core/`](cognitive_core/)
 - [`memory_controller/`](memory_controller/)
 - [`cognitive_core/recall_cli.py`](cognitive_core/recall_cli.py)
-- [GitHub Actions](../../actions)
+- [`GitHub Actions`](.github/workflows)
 
 ---
 

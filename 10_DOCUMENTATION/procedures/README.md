@@ -28,4 +28,3 @@ O procedura trebuie sa contina:
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[12 Projects and Procedures Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

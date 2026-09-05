@@ -14,7 +14,7 @@ confidence: high
 verification: partially_verified
 relations:
   - relation: implements
-    target: "[[Provenance and Redaction]]"
+    target: "[[Provenance_and_Redaction|Provenance and Redaction]]"
 ---
 
 # Import Sanitization
@@ -29,9 +29,9 @@ Prepare an external-memory derivative without changing the original evidence.
 2. Create a derivative outside `RAW_IMPORTS/`; record its source in `provenance.source_ref` and `provenance.original_path`.
 3. Remove conversational noise, separate atomic concepts, classify the candidate, and assign provisional confidence and verification.
 4. Redact credentials, secrets, and unnecessary personal data from the derivative only; record `provenance.redaction: applied` when used.
-5. Check duplicates, contradictions, frontmatter, and links using [[Integrity Check]].
+5. Check duplicates, contradictions, frontmatter, and links using [[Integrity_Check|Integrity Check]].
 6. Move only the derivative through `RAW -> CLASSIFIED -> NORMALIZED -> REVIEW -> VERIFIED -> ACTIVE -> SUPERSEDED/ARCHIVED`.
-7. Require human review for the classes defined in [[Promotion and Human Review]].
+7. Require human review for the classes defined in [[Promotion_and_Human_Review|Promotion and Human Review]].
 
 ## Prohibitions
 
@@ -47,13 +47,12 @@ Prepare an external-memory derivative without changing the original evidence.
 
 ## Related
 
-- [[Storage Conventions]]
-- [[Memory Lifecycle]]
-- [[Provenance and Redaction]]
+- [[Storage_Conventions|Storage Conventions]]
+- [[Memory_Lifecycle|Memory Lifecycle]]
+- [[Provenance_and_Redaction|Provenance and Redaction]]
 
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[12 Projects and Procedures Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

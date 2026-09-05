@@ -16,9 +16,9 @@ Security, trust boundaries, provenance, audit and integrity navigation.
 - [[Formal_System_Design_Review_PhaseOmega]]
 
 ## Connected groups
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[03_Agents_Operations_Map]]
-- [[05_Projects_Continuity_Map]]
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[03 Agents Operations Map]]
+- [[05 Projects Continuity Map]]
 
 #group/security #obsidian #moc

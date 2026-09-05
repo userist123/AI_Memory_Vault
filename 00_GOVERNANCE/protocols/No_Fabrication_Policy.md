@@ -9,11 +9,11 @@ document_status: active
 provenance_status: complete
 relations:
   - relation: related_to
-    target: "[[Memory Protocol]]"
+    target: "[[Memory_Protocol]]"
   - relation: related_to
-    target: "[[Confidence Model]]"
+    target: "[[Confidence_Model]]"
   - relation: related_to
-    target: "[[AI Operating Protocol]]"
+    target: "[[AI_Operating_Protocol]]"
 policy_scope: vault-governance
 ---
 
@@ -45,8 +45,8 @@ dar fabricat.
    prezentate ambiguu ca fiind rezultate reale de producție.
 3. **Dacă o afirmație nu a fost verificată prin execuție reală** (rulare de cod, citire directă de
    fișier, apel de tool confirmat) → trebuie etichetată cu nivelul de încredere corect, conform
-   [[Confidence Model]] (`low`/`medium`/`high`/`very_high`) și stării de verificare din
-   [[Memory Protocol]] (`unverified`/`partially_verified`/`verified`).
+   [[Confidence_Model|Confidence Model]] (`low`/`medium`/`high`/`very_high`) și stării de verificare din
+   [[Memory_Protocol|Memory Protocol]] (`unverified`/`partially_verified`/`verified`).
 4. **Dacă o unealtă/tool nu a putut fi accesată complet** (ex: fișier trunchiat, conținut
    inaccesibil) → agentul trebuie să spună asta direct, nu să reconstruiască "pe ghicite" și să
    prezinte reconstrucția ca fiind identică cu originalul.

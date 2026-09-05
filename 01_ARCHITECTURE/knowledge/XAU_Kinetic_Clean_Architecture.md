@@ -53,5 +53,5 @@ Every transaction step (`SIGNAL_GENERATED`, `SIGNAL_VETOED`, `ORDER_PROPOSED`, `
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Elite_Quant_Bot]]
 - [[Deploy_XAU_Kinetic_Quant_Bot]]
-- [[01 Knowledge Core Map]]
+- [[00 Core Map]]
 - [[Knowledge Graph Home]]

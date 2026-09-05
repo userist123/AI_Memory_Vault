@@ -77,4 +77,3 @@ This confirms the vault's cognitive design already follows current best practice
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

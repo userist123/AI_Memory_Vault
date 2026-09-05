@@ -54,7 +54,7 @@ Most AI-generated UI defaults to the same handful of safe patterns because the a
 8. **Generates**, applying gate corrections and the lens if flagged.
 9. **Persists and verifies the write** — asks whether to save the decision, writes to `.ui-sensei/` at the project root, and confirms only after reading the file back.
 
-Full logic: [`SKILL.md`](SKILL.md). Complete worked example: [`examples/card-walkthrough.md`](examples/card-walkthrough.md).
+Full logic: [`SKILL.md`](../../.agents/skills/ui-sensei/SKILL.md). Complete worked example: [`examples/card-walkthrough.md`](https://github.com/gbrasil720/ui-sensei/blob/main/examples/card-walkthrough.md).
 
 ## Install
 
@@ -131,7 +131,7 @@ Persistence writes to `.ui-sensei/` at the project root, deliberately outside `.
 | [`emilkowalski/skills`](https://github.com/emilkowalski/skills) (emil-design-eng) | Motion/interaction craft, punctual contributions | MIT |
 | [`heliocosta-dev/revenue-centric-design`](https://github.com/heliocosta-dev/revenue-centric-design) | Conversion/behavioral-science lens, applied post-selection | Source-available, attribution required, no gambling use |
 
-Full origin table, license detail, and what was deliberately excluded (`facebook/astryx` — wrong category; `pbakaus/impeccable` — avoided an install-time dependency): [`PROVENANCE.md`](PROVENANCE.md).
+Full origin table, license detail, and what was deliberately excluded (`facebook/astryx` — wrong category; `pbakaus/impeccable` — avoided an install-time dependency): [`PROVENANCE.md`](https://github.com/gbrasil720/ui-sensei/blob/main/PROVENANCE.md).
 
 ## Validation
 
@@ -154,7 +154,7 @@ Not yet validated: installation via `.agents/skills/` specifically, the `revenue
 
 ## License
 
-MIT for the orchestration layer — **with one carve-out**: the `revenue-centric-design` lens is adapted from a source-available project with its own attribution requirement and an explicit no-gambling-use restriction that this repo's MIT license does not override. See [`LICENSE`](LICENSE) and [`PROVENANCE.md`](PROVENANCE.md) before redistributing.
+MIT for the orchestration layer — **with one carve-out**: the `revenue-centric-design` lens is adapted from a source-available project with its own attribution requirement and an explicit no-gambling-use restriction that this repo's MIT license does not override. See [`LICENSE`](https://github.com/gbrasil720/ui-sensei/blob/main/LICENSE) and [`PROVENANCE.md`](https://github.com/gbrasil720/ui-sensei/blob/main/PROVENANCE.md) before redistributing.
 
 ## Acknowledgments
 
@@ -173,12 +173,11 @@ Early personal project, not yet built out for external contribution workflows �
 
 ## Known open items
 
-- Commit hashes not yet pinned for several sources — run `scripts/sync_check.sh --update` to record baselines. See [`PROVENANCE.md`](PROVENANCE.md).
+- Commit hashes not yet pinned for several sources — run `scripts/sync_check.sh --update` to record baselines. See [`PROVENANCE.md`](https://github.com/gbrasil720/ui-sensei/blob/main/PROVENANCE.md).
 - See [Validation](#validation) above for what hasn't been tested yet.
 
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

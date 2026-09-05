@@ -60,4 +60,3 @@ Conversatie din 2026-06-13 in care utilizatorul cere explicit "scrie-mi promptul
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

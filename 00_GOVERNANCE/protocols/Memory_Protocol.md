@@ -70,7 +70,7 @@ Every imported memory should retain, when possible:
 - confidence;
 - verification state.
 
-Use the canonical schema in [[Canonical Frontmatter]]. Any normalized or redacted derivative must reference its original raw path. Promotion to `ACTIVE` follows [[Promotion and Human Review]].
+Use the canonical schema in [[Canonical_Frontmatter|Canonical Frontmatter]]. Any normalized or redacted derivative must reference its original raw path. Promotion to `ACTIVE` follows [[Promotion_and_Human_Review|Promotion and Human Review]].
 
 ## Technology and Version Handling
 
@@ -109,4 +109,3 @@ Critical memory updates and transitions emit structured log entries to `audit_lo
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

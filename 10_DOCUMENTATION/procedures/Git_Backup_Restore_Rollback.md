@@ -13,7 +13,7 @@ confidence: very_high
 verification: verified
 relations:
   - relation: implements
-    target: "[[Integrity Check]]"
+    target: "[[Integrity_Check|Integrity Check]]"
 ---
 
 # Git, Backup, Restore, and Rollback
@@ -37,12 +37,11 @@ If Git is unavailable, record that limitation and create a timestamped filesyste
 
 ## Related
 
-- [[Storage Conventions]]
-- [[Integrity Check]]
+- [[Storage_Conventions|Storage Conventions]]
+- [[Integrity_Check|Integrity Check]]
 
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[12 Projects and Procedures Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

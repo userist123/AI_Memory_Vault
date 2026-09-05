@@ -9,12 +9,12 @@ Obsidian-facing map. Use this as the visual entry point for the knowledge graph.
 
 ## Groups
 - [[Knowledge Graph Home]]
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
 
 ## Graph semantics
 - [[Knowledge_Graph_Schema]]

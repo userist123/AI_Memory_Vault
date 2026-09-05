@@ -17,9 +17,9 @@ Core identity, goals, rules and architecture.
 - [[Tag_Taxonomy]]
 
 ## Cross-group links
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[04_Security_Integrity_Map]]
-- [[05_Projects_Continuity_Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[04 Security Integrity Map]]
+- [[05 Projects Continuity Map]]
 
 #group/core #obsidian #moc

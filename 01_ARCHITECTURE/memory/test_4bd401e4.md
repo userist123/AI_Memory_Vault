@@ -23,4 +23,3 @@ Lesson: High-risk actions require explicit user approval before execution.
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

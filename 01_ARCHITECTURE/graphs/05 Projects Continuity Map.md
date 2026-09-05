@@ -13,11 +13,11 @@ Project state, continuity and handoff navigation.
 - [[02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN]]
 
 ## Connected groups
-- [[00_Core_Map]]
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
-- [[04_Security_Integrity_Map]]
-- [[06_Obsidian_Graph_Map]]
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
+- [[04 Security Integrity Map]]
+- [[06 Obsidian Graph Map]]
 
 #group/projects #obsidian #moc

@@ -27,4 +27,3 @@ id: a28a2afb-24ce-4b2c-aa9e-6dac524ae5df
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

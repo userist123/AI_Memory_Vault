@@ -45,4 +45,3 @@ This note documents the core rules used to correlate offline security artifacts 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

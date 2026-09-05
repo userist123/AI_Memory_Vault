@@ -37,4 +37,3 @@ Prefer the smallest set of relevant skills that covers the task. Combine skills 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

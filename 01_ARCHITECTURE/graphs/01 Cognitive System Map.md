@@ -13,9 +13,9 @@ Map of the executable cognitive architecture and its agent layer.
 - [[AI_Memory_System]]
 
 ## Cognitive components
-- [[01_Cognitive_System_Map]]
-- [[02_Memory_Knowledge_Map]]
-- [[03_Agents_Operations_Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[03 Agents Operations Map]]
 
 ## Operational concepts
 - [[Continuity_Handoff]]
@@ -23,6 +23,6 @@ Map of the executable cognitive architecture and its agent layer.
 - [[Knowledge_Graph_Relations]]
 
 ## Security boundary
-- [[04_Security_Integrity_Map]]
+- [[04 Security Integrity Map]]
 
 #group/cognitive #obsidian #moc

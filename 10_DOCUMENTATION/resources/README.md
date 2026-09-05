@@ -39,4 +39,3 @@ O resursa = o sursa externa, cu relevanta explicita catre o nota de knowledge sa
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

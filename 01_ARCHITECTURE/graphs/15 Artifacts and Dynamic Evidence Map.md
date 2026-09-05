@@ -28,4 +28,4 @@ Mapă canonică de navigare Obsidian pentru toate artefactele, rapoartele de exe
 - [[Agents_Skill_Matrix]] — Matricea completă de skill-uri
 - [[Master_Skills_Catalog_251]] — Catalogul celor 251 SKILL-uri stocate fizic pe disc
 - [[Global_50K_Skill_Registries_Index]] — Router-ul global de 50.000+ skill-uri
-- [[Graph Health Report]] — Raportul de integritate graf
+- [[Integrity_Check|Integrity Check]] — Raportul de integritate graf

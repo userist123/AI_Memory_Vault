@@ -8,4 +8,3 @@ License: Apache-2.0
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

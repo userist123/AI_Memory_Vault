@@ -19,7 +19,7 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[UI_UX_Design_Patterns]]"
+  - target: "[[MOC_Frontend_UI_UX_Standards]]"
     type: related_to
   - target: "[[UI_UX_Heuristic_Review]]"
     type: supports
@@ -64,5 +64,4 @@ Un sistem de design robust impune definirea strictă a tokenilor vizuali (culori
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

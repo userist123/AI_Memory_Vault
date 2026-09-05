@@ -12,8 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - related_to: "[[Memory Protocol]]"
-  - implements: "[[Confidence Model]]"
+  - related_to: "[[Memory_Protocol]]"
+  - implements: "[[Confidence_Model]]"
 ---
 
 # LogAnalyzer DFIR Enterprise — Arhitectura Sistemului Forenzic de Ultimă Generație
@@ -53,5 +53,4 @@ Platforma LogAnalyzer DFIR Enterprise este o suită completă, air-gapped și of
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

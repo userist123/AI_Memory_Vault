@@ -14,7 +14,7 @@
 ## Proposed Changes
 ---
 ### Frontend Integration
-#### [MODIFY] [app.js](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/projects/jarvis_web/js/app.js)
+#### [MODIFY] [app.js](workspaces/jarvis_web/js/app.js)
 - Add `import OllamaClient from './ollama_client.js';`
 - Instantiate `this.ollama = new OllamaClient();` in initialization code.
 - In `init()` (or after page load) call `this.ollama.detectAndConnect()` and update UI status.
@@ -25,12 +25,12 @@
 - Add helper methods `_appendStreamingMessage`, `_updateStreamingMessage`, `_finalizeStreamingMessage` to manage streaming bubbles (similar to earlier summary).
 - Adjust voice output to use streamed reply text.
 
-#### [NEW] [ollama_client.js](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/projects/jarvis_web/js/ollama_client.js)
+#### [NEW] [ollama_client.js](workspaces/jarvis_web/js/ollama_client.js)
 - Ensure file exists (it was created earlier). Verify its API: `detectAndConnect()`, `chat(userMessage, vaultContext, callbacks)`.
 - If missing, we will add a minimal implementation based on previous summary.
 
 ### UI Styling
-#### [MODIFY] [style.css](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/projects/jarvis_web/style.css)
+#### [MODIFY] [style.css](workspaces/jarvis_web/style.css)
 - Add/adjust CSS rules for `.chat-message.streaming` and cursor animation if not present.
 
 ### Verification Plan

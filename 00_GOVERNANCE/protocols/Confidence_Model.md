@@ -47,7 +47,11 @@ provenance:
   source_ref: "..."
 ```
 
-Confidence measures evidence strength; verification records the verification state. Neither is inferred from a note's filename, lifecycle, or source platform. Imported AI content starts as `low`/`medium` with `unverified`/`inferred` unless independently checked.`r`n`r`nThe controlled schema and enums are defined in [[Canonical Frontmatter]].`r`n`r`n## Conflict Rule
+Confidence measures evidence strength; verification records the verification state. Neither is inferred from a note's filename, lifecycle, or source platform. Imported AI content starts as `low`/`medium` with `unverified`/`inferred` unless independently checked.
+
+The controlled schema and enums are defined in [[Canonical_Frontmatter|Canonical Frontmatter]].
+
+## Conflict Rule
 
 When two notes conflict:
 
@@ -65,4 +69,3 @@ Never silently overwrite a high-confidence note with a low-confidence import.
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

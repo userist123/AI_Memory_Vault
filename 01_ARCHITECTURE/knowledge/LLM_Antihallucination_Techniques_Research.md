@@ -50,4 +50,3 @@ Directly grounds design choices already implemented: `ReflectionPipeline` mirror
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

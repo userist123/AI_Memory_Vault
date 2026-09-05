@@ -27,11 +27,11 @@ Welcome, Successor Agent (Perplexity). Do not guess or assume what the previous 
 
 1. **Read this Document First**: This handoff details the entire system architecture, runtime call graphs, and historical context.
 2. **Read the Core Operating Protocols**:
-   - Inspect [00_GOVERNANCE/rules/Rules.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_GOVERNANCE/rules/Rules.md) (Core rules).
-   - Inspect [00_GOVERNANCE/protocols/Memory_Protocol.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_GOVERNANCE/protocols/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
+   - Inspect [00_GOVERNANCE/rules/Rules.md](../../00_GOVERNANCE/rules/Rules.md) (Core rules).
+   - Inspect [00_GOVERNANCE/protocols/Memory_Protocol.md](../../00_GOVERNANCE/protocols/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
 3. **Verify the Environment State**:
    - Run the pytest suite immediately: `python -m pytest -q`
-   - Run the multi-process restart verification: `python C:\Users\user\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\scratch\run_multi_process_test.py`
+   - Run the multi-process restart verification: `python scratch/run_multi_process_test.py`
 4. **Respect the Autonomy Gates**: Never attempt a `HIGH` risk action (e.g. modifying human-verified nodes or raw imports) without human approval.
 5. **Do Not Overwrite Canonical Knowledge**: Verify any assumptions against the actual codebase files before modifying memory notes. Code is the source of truth.
 6. **Proceed to the Next Task**: Read the **Next-Task Contract (AG-CONT-01)** in Section 11 and execute only that task.
@@ -62,7 +62,7 @@ The runtime cognitive loop operates sequentially:
 ### Component Directory & Interface Tracing
 
 #### 1. Executive
-- **FILE**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py)
+- **FILE**: [`cognitive_core/executive.py`](../../cognitive_core/executive.py)
 - **CLASS/FUNCTION**: `Executive`
 - **CALLED BY**: Task orchestrator scripts, test suites.
 - **CALLS**: `ToolRouter`, `ActivationEngine`, `RecallEngine`, `WorkingMemory`, `ReasoningEngine`, `Planner`, `ReflectionPipeline`, `Consolidator`, `Deduplicator`, `LearningEngine`.
@@ -73,7 +73,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_executive.py`, `test_cognitive_loop.py`
 
 #### 2. WorkingMemory
-- **FILE**: [`cognitive_core/working_memory.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/working_memory.py)
+- **FILE**: [`cognitive_core/working_memory.py`](../../cognitive_core/working_memory.py)
 - **CLASS/FUNCTION**: `WorkingMemory`
 - **CALLED BY**: `Executive`, `RecallEngine`
 - **CALLS**: `AttentionModel.calculate_score`
@@ -84,7 +84,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_working_memory.py`, `test_working_memory_persistence.py`
 
 #### 3. RecallEngine
-- **FILE**: [`cognitive_core/recall.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py)
+- **FILE**: [`cognitive_core/recall.py`](../../cognitive_core/recall.py)
 - **CLASS/FUNCTION**: `RecallEngine`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `parse_technology_version`
@@ -95,7 +95,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_recall.py`, `memory_controller/tests/test_supersession_phase43.py`
 
 #### 4. Deduplicator
-- **FILE**: [`cognitive_core/deduplication.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py)
+- **FILE**: [`cognitive_core/deduplication.py`](../../cognitive_core/deduplication.py)
 - **CLASS/FUNCTION**: `Deduplicator`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `ToolRouter.execute`
@@ -106,7 +106,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_deduplication.py`
 
 #### 5. ReflectionPipeline
-- **FILE**: [`cognitive_core/reflection.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/reflection.py)
+- **FILE**: [`cognitive_core/reflection.py`](../../cognitive_core/reflection.py)
 - **CLASS/FUNCTION**: `ReflectionPipeline`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.propose`, `MemoryController.update`
@@ -117,7 +117,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_reflection.py`, `test_dynamic_synapses.py`
 
 #### 6. ToolRouter
-- **FILE**: [`cognitive_core/tool_router.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/tool_router.py)
+- **FILE**: [`cognitive_core/tool_router.py`](../../cognitive_core/tool_router.py)
 - **CLASS/FUNCTION**: `ToolRouter`
 - **CALLED BY**: `Executive`, `Deduplicator`, `Consolidator`, `LearningEngine`
 - **CALLS**: `MemoryController` CRUD interfaces.
@@ -128,7 +128,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_executive.py` (indirect), `test_cognitive_loop.py`
 
 #### 7. Consolidator
-- **FILE**: [`cognitive_core/consolidation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py)
+- **FILE**: [`cognitive_core/consolidation.py`](../../cognitive_core/consolidation.py)
 - **CLASS/FUNCTION**: `Consolidator`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `ToolRouter.execute`
@@ -139,7 +139,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_consolidation.py`
 
 #### 8. LearningEngine
-- **FILE**: [`cognitive_core/learning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py)
+- **FILE**: [`cognitive_core/learning.py`](../../cognitive_core/learning.py)
 - **CLASS/FUNCTION**: `LearningEngine`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `ToolRouter.execute`
@@ -150,7 +150,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_learning.py`
 
 #### 9. ActivationEngine
-- **FILE**: [`cognitive_core/activation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/activation.py)
+- **FILE**: [`cognitive_core/activation.py`](../../cognitive_core/activation.py)
 - **CLASS/FUNCTION**: `ActivationEngine`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `MemoryController.read`
@@ -161,7 +161,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_activation.py`
 
 #### 10. Planner
-- **FILE**: [`cognitive_core/planning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py)
+- **FILE**: [`cognitive_core/planning.py`](../../cognitive_core/planning.py)
 - **CLASS/FUNCTION**: `Planner`, `ActivePlan`
 - **CALLED BY**: `Executive`
 - **CALLS**: None.
@@ -291,7 +291,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **ROOT CAUSE**: Circular imports between `controller.py`, `core.py`, and `supersession.py`.
 - **FAILED APPROACH**: Re-importing inside methods.
 - **FINAL SOLUTION**: Checked enum states using string literals (`"SUPERSEDED"`) inside `supersession.py`, completely avoiding importing `Lifecycle`.
-- **AFFECTED FILES**: [`memory_controller/validation/supersession.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/validation/supersession.py).
+- **AFFECTED FILES**: [`memory_controller/validation/supersession.py`](../../memory_controller/validation/supersession.py).
 - **LESSON**: Enums in cross-module boundary validators should be checked as string values when they represent serialization attributes.
 
 ### 2. Propose Method Field Dropping
@@ -299,7 +299,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **ROOT CAUSE**: `MemoryController.propose` originally populated note dictionaries by copy-indexing only a static default parameters list.
 - **FAILED APPROACH**: Manually defining each new parameter in `propose`.
 - **FINAL SOLUTION**: Restructured `propose` to initialize defaults and overlay the incoming `note_data` dictionary comprehensively.
-- **AFFECTED FILES**: [`memory_controller/controller.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py).
+- **AFFECTED FILES**: [`memory_controller/controller.py`](../../memory_controller/controller.py).
 - **LESSON**: Controller proposal handlers must dynamically merge complete incoming payloads to support version upgrades.
 
 ### 3. Jaccard Tokenization Overlap
@@ -307,7 +307,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **ROOT CAUSE**: Tokenizer split words directly on whitespace without casing normalization.
 - **FAILED APPROACH**: Regex splitting without normalization.
 - **FINAL SOLUTION**: Normalizing alphanumeric tokens via lowercase casts.
-- **AFFECTED FILES**: [`cognitive_core/semantic.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/semantic.py).
+- **AFFECTED FILES**: [`cognitive_core/semantic.py`](../../cognitive_core/semantic.py).
 - **LESSON**: Semantic mock metrics must normalise text content before scoring.
 
 ---
@@ -328,7 +328,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **TASK ID**: `AG-CONT-01`
 - **OBJECTIVE**: Integrate the Agent Handoff / Continuity layer as a core automation feature of the loop. Specifically, update the `Executive` to automatically compile a task summary, verified test results, and next actions to `02_PRODUCT/projects/Continuity_Handoff.md` upon loop termination or task exit.
 - **WHY IT IS NEXT**: Handing off projects must be a programmatic, tool-driven event native to the loop, instead of manual write-ups.
-- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PRODUCT/projects/Continuity_Handoff.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PRODUCT/projects/Continuity_Handoff.md).
+- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](../../cognitive_core/executive.py), [`02_PRODUCT/projects/Continuity_Handoff.md`](../../02_PRODUCT/projects/Continuity_Handoff.md).
 - **DEPENDENCIES**: Completed Phase 4.3 architecture.
 - **INVARIANTS**: Writing continuity state must never alter human-verified files or bypass path traversal checkers.
 - **ACCEPTANCE CRITERIA**:
@@ -400,5 +400,4 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[12 Projects and Procedures Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

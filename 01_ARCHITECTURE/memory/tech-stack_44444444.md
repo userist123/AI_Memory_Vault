@@ -12,7 +12,7 @@ confidence: unknown
 verification: unverified
 relations:
 - relation: related_to
-  target: '[[System Tech Stack Overview]]'
+  target: '[[tech-stack_22222222|System Tech Stack Overview]]'
   target_id: 22222222-2222-4222-a222-222222222222
 lifecycle: ACTIVE
 provenance:
@@ -26,5 +26,4 @@ provenance:
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[08 Memory Subsystems Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

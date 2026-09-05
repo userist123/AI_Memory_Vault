@@ -54,4 +54,3 @@ Modelele locale (Ollama: Qwen, DeepSeek, LLaMA, Gemma) garantează confidențial
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

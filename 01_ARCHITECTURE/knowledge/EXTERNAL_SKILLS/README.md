@@ -24,4 +24,3 @@ Generated/normalized indexes may be added later without replacing the original s
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

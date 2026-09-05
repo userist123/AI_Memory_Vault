@@ -59,4 +59,3 @@ This note should be superseded or updated once actual prompt content is obtained
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

@@ -117,4 +117,3 @@ Modelul AI nu este sursa unica de adevar. Vault-ul furnizeaza context, iar valid
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

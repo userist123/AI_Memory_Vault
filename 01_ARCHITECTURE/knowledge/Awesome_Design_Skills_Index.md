@@ -533,7 +533,7 @@ Please ensure your skill file includes all required sections: mission, brand, st
 
 ## License
 
-[MIT License](LICENSE) &copy; Built and maintained by [Bergside](https://github.com/bergside).
+[MIT License](https://github.com/bergside/awesome-design-skills/blob/main/LICENSE) &copy; Built and maintained by [Bergside](https://github.com/bergside).
 
 ## Sponsors
 
@@ -556,5 +556,4 @@ Want to see your logo here? [Become a sponsor](https://www.typeui.sh/sponsor).
 
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

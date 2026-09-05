@@ -10,21 +10,20 @@ purpose: Obsidian map for skills, agents, references and memory
 
 ## Core maps
 
-- [[Obsidian_Skill_Agent_Memory_Sync]]
-- [[README]]
-- [[README]]
-- [[02_MEMORY/README]]
-- [[03_COGNITIVE_CORE/README]]
-- [[README]]
+- [[00 Core Map]]
+- [[01 Cognitive System Map]]
+- [[02 Memory Knowledge Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]
 
 ## External skill ingestion
 
-- [[06_INBOX/RAW_IMPORTS/skills/_REGISTRY.json]]
-- [[06_INBOX/RAW_IMPORTS/skills/_SOURCE_REGISTRY.json]]
-- [[06_INBOX/RAW_IMPORTS/skills/_DISCOVERY_GRAPH.json]]
-- [[06_INBOX/RAW_IMPORTS/skills/_DEDUPLICATION.json]]
-- [[06_INBOX/RAW_IMPORTS/skills/_LICENSES.json]]
-- [[06_INBOX/RAW_IMPORTS/skills/_VALIDATION_REPORT.md]]
+- `06_INBOX/RAW_IMPORTS/skills/_REGISTRY.json`
+- `06_INBOX/RAW_IMPORTS/skills/_SOURCE_REGISTRY.json`
+- `06_INBOX/RAW_IMPORTS/skills/_DISCOVERY_GRAPH.json`
+- `06_INBOX/RAW_IMPORTS/skills/_DEDUPLICATION.json`
+- `06_INBOX/RAW_IMPORTS/skills/_LICENSES.json`
+- `06_INBOX/RAW_IMPORTS/skills/_VALIDATION_REPORT.md`
 
 ## Relationship model
 
@@ -90,4 +89,3 @@ Use this MOC as the starting point for manual inspection of:
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

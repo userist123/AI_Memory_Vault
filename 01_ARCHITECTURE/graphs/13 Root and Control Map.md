@@ -15,7 +15,7 @@ Root-level control and project orientation documents.
 - [[TEST_READY]]
 
 ## Graph governance
-- [[Graph Health Report]]
+- [[Integrity_Check|Integrity Check]]
 - [[Knowledge_Graph_Schema]]
 - [[Knowledge_Graph_Relations]]
 - [[Quality_Control]]

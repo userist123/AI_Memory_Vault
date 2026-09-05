@@ -43,4 +43,3 @@ Skill-urile și workflow-urile definite local (`.agents/skills/`, `.agents/workf
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

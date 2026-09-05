@@ -45,4 +45,3 @@ Repo privat/personal al utilizatorului; acces direct prin GitHub MCP pentru citi
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[Knowledge Graph Home]]
 - [[00 Core Map]]
-- [[Knowledge Graph Home]]

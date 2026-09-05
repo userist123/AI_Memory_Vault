@@ -21,4 +21,3 @@ GitHub topic/collection URLs are discovery sources, not skill payloads.
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

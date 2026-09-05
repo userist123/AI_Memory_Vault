@@ -84,4 +84,3 @@ Decizie luata; dezvoltarea a continuat pe stack Python + MT5 + Tkinter.
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]

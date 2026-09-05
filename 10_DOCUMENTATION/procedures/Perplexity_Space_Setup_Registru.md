@@ -56,4 +56,3 @@ Perplexity nu are fișier auto-încărcat per repo (ca AGENTS.md/CLAUDE.md/GEMIN
 ## 🔗 Legături de Memorie & Graf Obsidian
 - [[12 Projects and Procedures Map]]
 - [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
