@@ -461,6 +461,19 @@ def compute_all_indicators(
     l_price = round(safe_float(hist["Low"].iloc[-1], price), 6) if "Low" in hist.columns else price
 
     def _pct(idx: int) -> float:
+        """Percentage change of the latest close against the close at negative
+        position `idx`.
+
+        Boundary contract: `closes.iloc[idx]` is valid as soon as
+        `len(closes) >= abs(idx)` -- for a series of exactly `abs(idx)` bars,
+        `iloc[idx]` addresses the FIRST element. The guard below must therefore
+        be `>=`, not `>`. With the previous `>` the series was required to be
+        one bar longer than the lookback actually needs, so at exactly 6 bars
+        var_sapt (_pct(-6)) and at exactly 21 bars var_luna (_pct(-21))
+        silently returned 0.0 -- a wrong indicator value indistinguishable from
+        a genuine flat market, not a missing one. See
+        xau_kinetic/tests/test_indicators_series_length.py.
+        """
         try:
             if len(closes) >= abs(idx):
                 prev = float(closes.iloc[idx])

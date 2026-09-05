@@ -1,0 +1,64 @@
+{
+  "pack_id": "bp_649cfe243c81",
+  "task_sha256": "2a8e6f952d081d18e083796e891ecebef9e9601f13cf3a9eb06b7674e53e9e41",
+  "generated": "2026-09-05T10:16:26+00:00",
+  "budget_tokens": 4000,
+  "used_tokens": 1753,
+  "memory_ids": [
+    "89105d0b-9fd8-4037-906f-ed2325a9f1bc",
+    "27f72d97-a5f0-4217-beb8-279cd5930b5c",
+    "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+    "8f068f3d-cbc5-4912-b3ec-f15c3518d5ab",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+  ],
+  "memory_paths": [
+    "10_DOCUMENTATION/resources/Obsidian/Artifacts/Memory_Lifecycle.md",
+    "10_DOCUMENTATION/resources/Obsidian/Artifacts/Promotion_and_Human_Review.md",
+    "10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_01_DOCUMENTATION.md",
+    "10_DOCUMENTATION/resources/Obsidian/Artifacts/Import_Pipeline.md",
+    "10_DOCUMENTATION/procedures/Import_Sanitization.md"
+  ],
+  "memory_lifecycle": {
+    "89105d0b-9fd8-4037-906f-ed2325a9f1bc": "ACTIVE",
+    "27f72d97-a5f0-4217-beb8-279cd5930b5c": "ACTIVE",
+    "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46": "ACTIVE",
+    "8f068f3d-cbc5-4912-b3ec-f15c3518d5ab": "ACTIVE",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010": "ACTIVE"
+  },
+  "memory_verification": {
+    "89105d0b-9fd8-4037-906f-ed2325a9f1bc": "verified",
+    "27f72d97-a5f0-4217-beb8-279cd5930b5c": "verified",
+    "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46": "verified",
+    "8f068f3d-cbc5-4912-b3ec-f15c3518d5ab": "verified",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010": "partially_verified"
+  },
+  "seed_ids": [
+    "89105d0b-9fd8-4037-906f-ed2325a9f1bc",
+    "27f72d97-a5f0-4217-beb8-279cd5930b5c",
+    "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+    "8f068f3d-cbc5-4912-b3ec-f15c3518d5ab",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+  ],
+  "hop_ids": [],
+  "observed_edges": [],
+  "excluded_due_to_budget": [
+    {
+      "id": "ab6867cb-1ac1-4595-88df-18b0efdaf128",
+      "section": "procedures",
+      "reason": "section_quota"
+    },
+    {
+      "id": "317339ca-1ee5-47eb-9571-6f1517232d89",
+      "section": "procedures",
+      "reason": "section_quota"
+    },
+    {
+      "id": "c754b481-44a2-4e2f-9cb2-0be36aebb498",
+      "section": "facts",
+      "reason": "section_quota"
+    }
+  ],
+  "dense_provider_active": false,
+  "warnings": [],
+  "contract": "observed retrieval != proven causal influence"
+}

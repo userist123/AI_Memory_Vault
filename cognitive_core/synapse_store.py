@@ -1,0 +1,334 @@
+"""SynapseStore — P1.2 derived synaptic substrate (owner: claude-code).
+
+Status: EXPERIMENTAL, NOT wired into MemoryController.search(),
+cognitive_core/tool_router.py or cognitive_core/activation.py. It is a
+deliberately separate offline layer; see the "Relationship to existing
+runtime code" note below before touching this file.
+
+A synapse = (source_id, target_id, relation, weight, evidence[]).
+
+Design rules:
+- This is NOT a source of truth. It is reconstructible from `relations:` in
+  Markdown frontmatter plus promoted proposals. It can be deleted and
+  regenerated at any time.
+- Weight starts at the relation type's base value and is changed ONLY by
+  externally-verified outcomes (pytest/CI/outcome ledger/human) — never by an
+  agent's self-report. This is the system's actual STDP. See
+  30_SCRIPTS/knowledge/plasticity_update.py.
+- Edges that are never activated atrophy and get pruned at consolidation.
+
+Weight contract (single, coherent — do not reintroduce a [0,1] assumption
+anywhere downstream): 0 <= weight <= MAX_WEIGHT, where MAX_WEIGHT is the
+explicit constant below (1.5, i.e. weight is a multiplicative gain that can
+exceed 1.0 for a strongly-reinforced edge, not a probability). Anything that
+needs a [0,1]-normalized value for propagation should normalize at the point
+of use (see `normalize_for_propagation`) — never rescale or clamp values in
+storage/persistence to fit [0,1].
+
+Relation vocabulary (fixed, closed set — reject everything else, no fuzzy
+matching, no auto-correct; enforced in `add()` and on `load()`):
+  STRONG_RELATIONS = depends_on, contradicts, supersedes, caused, verified_by,
+                      applies_to
+  WEAK_RELATIONS    = related_to, part_of
+Weak relations are allowed in the proposal layer (see
+30_SCRIPTS/knowledge/edge_proposer.py) but never auto-promote and always carry
+a reduced initial weight and `origin="proposed_weak"` — strictness lives at
+the PROMOTION boundary, not at the PROPOSAL boundary.
+
+Relationship to existing runtime code: `cognitive_core/synapse.py`
+(SynapticGraph) is a separate, ephemeral, zero-persistence extractor of
+*declared* relations only, already wired into
+`cognitive_core/activation.py` -> `MemoryController`. This module is a
+superset in scope (adds weights, plasticity, proposed/inferred edges,
+persistence, spreading activation) but intentionally does not touch, import,
+or replace that runtime path. Do not merge the two without an explicit
+architecture decision from the runtime/security owner.
+"""
+from __future__ import annotations
+
+import json
+import math
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, Iterable, List, Optional, Tuple
+
+STRONG_RELATIONS = frozenset({
+    "depends_on", "contradicts", "supersedes", "caused", "verified_by", "applies_to",
+})
+WEAK_RELATIONS = frozenset({"related_to", "part_of"})
+ALLOWED_RELATIONS = STRONG_RELATIONS | WEAK_RELATIONS
+
+# Signed indication of the direction of influence in recall. Only relations in
+# ALLOWED_RELATIONS are accepted; this table simply supplies a base weight.
+RELATION_BASE_WEIGHT = {
+    "depends_on": 0.9,
+    "supersedes": 0.9,
+    "contradicts": 0.8,       # important to surface as an alert, not to hide
+    "verified_by": 1.0,
+    "caused": 0.8,
+    "applies_to": 0.7,
+    "part_of": 0.7,
+    "related_to": 0.4,
+}
+DEFAULT_WEIGHT = 0.4
+MIN_WEIGHT = 0.0
+MAX_WEIGHT = 1.5
+PRUNE_THRESHOLD = 0.12
+# Weak relations (related_to, part_of) always start at a reduced fraction of
+# whatever their computed/base weight would otherwise be.
+WEAK_WEIGHT_FACTOR = 0.5
+
+
+def normalize_for_propagation(weight: float, max_weight: float = MAX_WEIGHT) -> float:
+    """Map a stored [0, MAX_WEIGHT] weight into [0, 1] for callers that need a
+    probability-like scale. Storage itself is NEVER rescaled — call this only
+    at the point of use."""
+    if max_weight <= 0:
+        return 0.0
+    return max(0.0, min(1.0, weight / max_weight))
+
+
+class InvalidSynapseError(ValueError):
+    """Raised when a synapse violates the relation/weight/self-loop contract."""
+
+
+@dataclass
+class Synapse:
+    source_id: str
+    target_id: str
+    relation: str = "related_to"
+    weight: float = DEFAULT_WEIGHT
+    origin: str = "declared"          # declared | inferred | proposed | proposed_weak | proposed_llm
+    activations: int = 0
+    reinforcements: int = 0
+    depressions: int = 0
+    evidence: List[str] = field(default_factory=list)   # verified run_ids
+    updated: str = ""
+
+    @property
+    def key(self) -> Tuple[str, str, str]:
+        return (self.source_id, self.target_id, self.relation)
+
+    def validate(self) -> None:
+        if not self.source_id or not self.target_id:
+            raise InvalidSynapseError("synapse requires both source_id and target_id")
+        if self.source_id == self.target_id:
+            raise InvalidSynapseError(f"self-loop rejected: {self.source_id}")
+        if self.relation not in ALLOWED_RELATIONS:
+            raise InvalidSynapseError(f"relation not in allowed enum: {self.relation!r}")
+        if not isinstance(self.weight, (int, float)) or isinstance(self.weight, bool):
+            raise InvalidSynapseError(f"weight must be numeric, got {self.weight!r}")
+        if not (MIN_WEIGHT <= float(self.weight) <= MAX_WEIGHT):
+            raise InvalidSynapseError(
+                f"weight {self.weight} out of bounds [{MIN_WEIGHT}, {MAX_WEIGHT}]"
+            )
+
+
+class SynapseStore:
+    def __init__(self, synapses: Optional[List[Synapse]] = None):
+        self._by_key: Dict[Tuple[str, str, str], Synapse] = {}
+        self._rejected_on_load: List[Dict[str, object]] = []
+        for s in synapses or []:
+            self.add(s)
+        self._rebuild_adjacency()
+
+    def _rebuild_adjacency(self) -> None:
+        self._out: Dict[str, List[Synapse]] = {}
+        for s in self._by_key.values():
+            self._out.setdefault(s.source_id, []).append(s)
+
+    # ---------- construction ----------
+
+    def add(self, syn: Synapse) -> None:
+        """Validates and inserts/merges a synapse. Raises InvalidSynapseError
+        for a self-loop, an unknown relation, or an out-of-bounds weight —
+        this store never silently stores an invalid edge.
+
+        Unlike the original implementation, this does NOT treat weight==0.0
+        as "unset and replace with the relation's base weight" — 0.0 is now a
+        legal in-bounds value (MIN_WEIGHT==0.0) and callers must pass the
+        weight they actually mean. Use RELATION_BASE_WEIGHT.get(relation,
+        DEFAULT_WEIGHT) explicitly at the call site if you want the default."""
+        syn.validate()
+        existing = self._by_key.get(syn.key)
+        if existing:
+            existing.weight = max(existing.weight, syn.weight)
+            existing.evidence = sorted(set(existing.evidence) | set(syn.evidence))
+        else:
+            self._by_key[syn.key] = syn
+        self._rebuild_adjacency()
+
+    @classmethod
+    def from_index(cls, index, symmetric_weak: bool = True) -> "SynapseStore":
+        """Builds from `relations:` declared in notes. Ignores unresolvable
+        targets and self-loops (defensively — a note listing itself as its own
+        relation target is dropped, not stored)."""
+        store = cls()
+        for note in index.notes:
+            for rel in note.relations():
+                target = rel.get("target_id")
+                if not target:
+                    continue
+                target = str(target)
+                if target not in index.by_id or target == note.id:
+                    continue
+                relation = str(rel.get("type") or "related_to").lower()
+                if relation not in ALLOWED_RELATIONS:
+                    relation = "related_to"
+                try:
+                    store.add(Synapse(
+                        source_id=note.id, target_id=target, relation=relation,
+                        weight=RELATION_BASE_WEIGHT.get(relation, DEFAULT_WEIGHT),
+                        origin="declared",
+                        updated=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                    ))
+                except InvalidSynapseError:
+                    continue
+                if symmetric_weak and target != note.id:
+                    try:
+                        store.add(Synapse(
+                            source_id=target, target_id=note.id, relation="related_to",
+                            weight=0.25, origin="inferred",
+                        ))
+                    except InvalidSynapseError:
+                        continue
+        store._rebuild_adjacency()
+        return store
+
+    # ---------- persistence ----------
+
+    def save(self, path: Path | str) -> Path:
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "version": 1,
+            "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "synapses": [asdict(s) for s in self._by_key.values()],
+        }
+        path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    @classmethod
+    def load(cls, path: Path | str) -> "SynapseStore":
+        """Loads a persisted store. Malformed or invalid records (bad
+        relation, out-of-bounds weight, self-loop, missing fields) are
+        skipped, not fatal — the store must survive corrupted/hand-edited
+        persistence. Skipped records are recorded in `.rejected_on_load()`."""
+        path = Path(path)
+        store = cls()
+        if not path.exists():
+            return store
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            store._rejected_on_load.append({"reason": "unreadable_file", "detail": str(exc)})
+            return store
+        for raw in data.get("synapses", []):
+            try:
+                known_fields = {f.name for f in Synapse.__dataclass_fields__.values()}
+                filtered = {k: v for k, v in raw.items() if k in known_fields}
+                syn = Synapse(**filtered)
+                store.add(syn)
+            except (TypeError, InvalidSynapseError) as exc:
+                store._rejected_on_load.append({"record": raw, "reason": str(exc)})
+        store._rebuild_adjacency()
+        return store
+
+    def rejected_on_load(self) -> List[Dict[str, object]]:
+        return list(self._rejected_on_load)
+
+    # ---------- query ----------
+
+    def neighbors(self, node_id: str) -> List[Synapse]:
+        return self._out.get(node_id, [])
+
+    def all(self) -> List[Synapse]:
+        return list(self._by_key.values())
+
+    def degree_stats(self) -> Dict[str, float]:
+        degrees = [len(v) for v in self._out.values()]
+        strong = sum(1 for s in self._by_key.values() if s.relation in STRONG_RELATIONS)
+        weak = sum(1 for s in self._by_key.values() if s.relation in WEAK_RELATIONS)
+        return {
+            "edges": len(self._by_key),
+            "edges_strong": strong,
+            "edges_weak": weak,
+            "nodes_with_edges": len(self._out),
+            "mean_out_degree": round(sum(degrees) / max(len(degrees), 1), 2),
+        }
+
+    # ---------- activation ----------
+
+    def spread(self, seeds: Dict[str, float], decay: float = 0.6,
+               max_hops: int = 2, record: bool = False) -> Dict[str, float]:
+        """Weighted spreading activation with per-hop exponential decay.
+        Deterministic: frontier is processed as a stack (LIFO) in insertion
+        order, and a target's activation is only updated (and re-queued) when
+        strictly improved, so repeated runs on the same seeds/graph always
+        converge to the same activation map."""
+        activation: Dict[str, float] = dict(seeds)
+        frontier: List[Tuple[str, float, int]] = [(n, s, 0) for n, s in seeds.items()]
+        while frontier:
+            node, score, hop = frontier.pop()
+            if hop >= max_hops:
+                continue
+            for syn in self.neighbors(node):
+                w = max(min(syn.weight, MAX_WEIGHT), 0.0)
+                propagated = score * (decay ** (hop + 1)) * w
+                if propagated <= 1e-6:
+                    continue
+                if propagated > activation.get(syn.target_id, 0.0):
+                    activation[syn.target_id] = propagated
+                    if record:
+                        syn.activations += 1
+                    frontier.append((syn.target_id, propagated, hop + 1))
+        return activation
+
+    # ---------- plasticity ----------
+
+    def reinforce(self, edges: Iterable[Tuple[str, str]], run_id: str,
+                  success: bool, rate: float = 0.15) -> int:
+        """Updates weights from an EXTERNALLY VERIFIED outcome.
+
+        `edges` are the pairs actually present in the OBSERVED trace of the
+        run (what entered context), never what the agent claims it used.
+        Success moves weight asymptotically toward MAX_WEIGHT (so a 2nd
+        confirmation and a 20th confirmation remain numerically distinct
+        until saturation); failure moves it proportionally toward MIN_WEIGHT.
+        """
+        touched = 0
+        pairs = {(str(a), str(b)) for a, b in edges}
+        for syn in self._by_key.values():
+            if (syn.source_id, syn.target_id) not in pairs:
+                continue
+            touched += 1
+            if success:
+                syn.weight = min(MAX_WEIGHT, syn.weight + rate * (MAX_WEIGHT - syn.weight))
+                syn.reinforcements += 1
+                if run_id not in syn.evidence:
+                    syn.evidence.append(run_id)
+            else:
+                syn.weight = max(MIN_WEIGHT, syn.weight - rate * syn.weight)
+                syn.depressions += 1
+            syn.updated = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        return touched
+
+    def decay_unused(self, factor: float = 0.98) -> None:
+        """Atrophy: edges with no recent activation slowly lose weight."""
+        for syn in self._by_key.values():
+            if syn.activations == 0 and syn.origin != "declared":
+                syn.weight = max(MIN_WEIGHT, syn.weight * factor)
+
+    def prune(self, threshold: float = PRUNE_THRESHOLD, keep_declared: bool = True) -> int:
+        """Cuts atrophied edges. Declared (Markdown-sourced) edges are never
+        auto-pruned by default."""
+        removed = 0
+        for key, syn in list(self._by_key.items()):
+            if keep_declared and syn.origin == "declared":
+                continue
+            if syn.weight < threshold and syn.reinforcements == 0:
+                del self._by_key[key]
+                removed += 1
+        self._rebuild_adjacency()
+        return removed

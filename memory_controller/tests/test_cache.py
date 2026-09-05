@@ -208,7 +208,13 @@ def test_mutation_invalidation_review_promote(controller):
     controller.review(Principal.ADMIN, nid, "approve", "ok")
     controller.search(Principal.HUMAN, "review query")
     assert cache.hit_count == hits
-    
+
+    # Lifecycle canon (see 00_GOVERNANCE/coordination/claude-code/ ADR
+    # response): promote() requires prior attestation. Attest before
+    # promoting so this cache-invalidation test still exercises the real
+    # REVIEW -> VERIFIED -> ACTIVE contract rather than bypassing it.
+    controller.attest(Principal.ADMIN, nid, "Attested for cache invalidation test", "test-evidence")
+
     # Promote
     controller.search(Principal.HUMAN, "promote query")
     hits = cache.hit_count

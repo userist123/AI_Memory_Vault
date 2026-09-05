@@ -1,3 +1,4 @@
+import copy
 import os
 import glob
 import tempfile
@@ -54,6 +55,14 @@ class FileStorageEngine:
                     continue
 
     def get(self, note_id: str) -> Optional[Dict[str, Any]]:
+        """Returns a deep copy. A shallow `dict(data)` would still share
+        nested objects (provenance dict, relations list) with this engine's
+        internal `_cache`, so a caller mutating a nested field in place
+        (e.g. `note['relations'].append(...)`) before validation fails would
+        silently corrupt the cache without ever writing to disk, and any
+        "rollback" built from such a shared copy would be a no-op for that
+        field. See MemoryController.supersede() for the exact pattern this
+        protects."""
         filepath = self.id_to_path.get(note_id)
         if not filepath or not os.path.exists(filepath):
             self._cache.pop(note_id, None)
@@ -62,12 +71,12 @@ class FileStorageEngine:
             mtime = os.path.getmtime(filepath)
             cached = self._cache.get(note_id)
             if cached and cached[0] == mtime:
-                return dict(cached[1])
+                return copy.deepcopy(cached[1])
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
             data = deserialize(content)
-            self._cache[note_id] = (mtime, dict(data))
-            return dict(data)
+            self._cache[note_id] = (mtime, copy.deepcopy(data))
+            return copy.deepcopy(data)
         except Exception:
             return None
 
@@ -75,6 +84,11 @@ class FileStorageEngine:
         yaml_id = data.get("id")
         if str(note_id) != str(yaml_id):
             raise ValueError(f"ID mismatch: storage key '{note_id}' must equal YAML id '{yaml_id}'")
+        # Defensive deep copy: never let the caller's own dict object become
+        # the engine's cached representation. If the caller mutates `data`
+        # after this call returns, the cache must not silently drift out of
+        # sync with what was actually written to disk.
+        data = copy.deepcopy(data)
         target_path = resolve_path(self.vault_root, data)
         serialized_content = serialize(data)
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
