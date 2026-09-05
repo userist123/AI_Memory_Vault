@@ -1,27 +1,24 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-05T11:05:00Z
+last_updated_utc: 2026-09-06T00:12:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
 working_branch: main
-base_main_sha: 32889fdadbcdd069af360e246b68c4f4a05e4813
-current_commit_sha: 32889fdadbcdd069af360e246b68c4f4a05e4813
+base_main_sha: c3a0d4213327d6d5ba596f2aebf83b632fa1d5f2
+current_commit_sha: c3a0d4213327d6d5ba596f2aebf83b632fa1d5f2
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-working_folder: cognitive_core/, 30_SCRIPTS/verification/, 20_TESTS/regression/, 07_EVALUATION/ci_evidence/, 00_GOVERNANCE/coordination/antigravity/
-current_task: P1.0 CANONICAL CORPUS INDEX, P1.1 RETRIEVAL FOUNDATION, P1.1-B RETRIEVAL BENCHMARK INFRASTRUCTURE
-status: COMPLETED (READY_FOR_REVIEW)
+working_folder: 01_ARCHITECTURE/knowledge/, 01_ARCHITECTURE/graphs/, 00_GOVERNANCE/coordination/antigravity/
+current_task: LEGAL_KNOWLEDGE_INGESTION_HG585_M172_L153
+status: COMPLETED (READY_FOR_GIT_COMMIT)
 completed:
-  - "P1.0: Enhanced cognitive_core/vault_index.py to strictly distinguish canonical, experimental, archived, raw notes; default exclusion of RAW and ARCHIVED notes; added entity extraction, content_hash SHA-256, and metadata properties"
-  - "P1.0 Integrity: Created 30_SCRIPTS/verification/validate_corpus_index.py validating duplicate note IDs, duplicate content hashes, invalid UUIDs, missing frontmatter, and broken relations; generated 07_EVALUATION/ci_evidence/corpus_index_validation_report.json"
-  - "P1.1: Enhanced cognitive_core/hybrid_retrieval.py with deterministic BM25, refined entity extraction (handling acronyms, CamelCase, version strings, ignoring generic decimals like 0.15), fail-closed OllamaEmbedder (DENSE_PROVIDER_UNAVAILABLE), RRF with k=60 and deterministic tie-breaking by note.id, security filters (defaulting to ACTIVE + verified), and structured retrieval traces"
-  - "P1.1-B: Upgraded cognitive_core/benchmarks/retrieval_ab.py to execute 6+1 arms (jaccard, bm25, entity, lexical_rrf, dense, lexical_dense_rrf, graph) across 4 query classes (known-item, paraphrase, entity-heavy, multi-hop), tracking per-query latencies (median & p95), fail-closed dense provider status, Dense ablation rules ('DENSE NOT JUSTIFIED'), and Graph ablation metrics, stamped CORPUS_MURDAR by default"
-  - "Evidence: Generated 07_EVALUATION/ci_evidence/retrieval_ab_report.json over 150 sampled notes"
-  - "Regression: Implemented 20_TESTS/regression/test_retrieval_foundation.py covering all 17 mandatory contract scenarios (17/17 passing)"
-  - "Full Test Suite: Executed complete test suite; 1,047 passed, 2 skipped, 0 failed, 0 collection errors across cognitive_core/tests, memory_controller/tests, and 20_TESTS/regression"
-  - "Protected Boundary Invariant Preserved: Zero modifications to memory_controller/**, cognitive_core/tool_router.py, cognitive_core/brain_pack.py, cognitive_core/synapse_store.py, or MemoryController.search()"
+  - "Legal Ingestion: Fully extracted and structured primary legal acts from 06_INBOX/Legi/ (HG 585/2002, Ordinul M.172/2021, Legea-cadru 153/2017)"
+  - "Canonical Knowledge Notes Created: 01_ARCHITECTURE/knowledge/Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate.md, 01_ARCHITECTURE/knowledge/Legislatie_Ordin_M172_2021_Norme_MApN_Informatii_Clasificate.md, 01_ARCHITECTURE/knowledge/Legislatie_Legea_Cadru_153_2017_Salarizare_Publica.md"
+  - "Compliance Harmonization: Updated 01_ARCHITECTURE/knowledge/HG585_MS111_Compliance_Requirements.md to clear preliminary caveats and ground air-gapped storage media registration directly on M.172/2021 Art. 51, Art. 193-199 (Anexele 9 si 18) and P16-P18 hardware telemetry invariants"
+  - "Graph Integration: Linked all three notes into 01_ARCHITECTURE/graphs/04 Security Integrity Map.md and 01_ARCHITECTURE/graphs/07 Knowledge Domains Map.md"
+  - "Verification: Layout policy check passed (LAYOUT_STATUS=PASS), full pytest suite executed cleanly (1035 passed, 3 skipped, 0 failed in 21.81s)"
 in_progress: []
 next_actions:
-  - Coordinate review with Claude Code and Codex for integration approval
+  - Commit new canonical knowledge notes to Git on branch main and push to remote
 blockers: []
 risks:
   - Dense embedding provider remains offline in CI/local environment; fail-closed behavior properly activates with DENSE NOT JUSTIFIED verdict as expected

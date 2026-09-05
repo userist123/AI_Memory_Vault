@@ -14,6 +14,10 @@ Security, trust boundaries, provenance, audit and integrity navigation.
 - [[Phase43_Forensic_Validation]]
 - [[Phase43_P0_Implementation_Contract]]
 - [[Formal_System_Design_Review_PhaseOmega]]
+- [[HG585_MS111_Compliance_Requirements]]
+- [[Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate]]
+- [[Legislatie_Ordin_M172_2021_Norme_MApN_Informatii_Clasificate]]
+- [[Legislatie_Legea_Cadru_153_2017_Salarizare_Publica]]
 
 ## Connected groups
 - [[00_Core_Map]]
