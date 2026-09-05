@@ -1,17 +1,14 @@
 """Canonical lifecycle transition policy for Memory Controller mutations.
 
-This module is intentionally independent from storage and authorization. It
-captures the transitions that the public mutation operations actually permit,
-including conditional gates that are not represented by the lifecycle enum
-alone (notably verification for promotion).
+The module is intentionally independent from storage, authorization, and the
+controller implementation. It describes lifecycle values as strings so it can
+be imported by the controller later without circular dependencies.
 """
 
 from __future__ import annotations
 
 from enum import Enum
 from typing import Optional
-
-from .controller import Lifecycle
 
 
 class Mutation(str, Enum):
@@ -25,59 +22,67 @@ class Mutation(str, Enum):
     SUPERSEDE = "supersede"
 
 
-# The policy reflects the currently supported production mutation semantics.
-# Verification is deliberately separate from lifecycle; PROMOTE is the one
-# mutation whose lifecycle transition is conditional on verification state.
+# The policy reflects the mutation semantics currently implemented in
+# production. Verification remains a separate trust field; PROMOTE is the one
+# lifecycle transition that requires a verified note.
 _TRANSITIONS = {
     Mutation.REVIEW: {
-        Lifecycle.RAW: {Lifecycle.REVIEW},
-        Lifecycle.CLASSIFIED: {Lifecycle.REVIEW},
-        Lifecycle.NORMALIZED: {Lifecycle.REVIEW},
-        Lifecycle.REVIEW: {Lifecycle.REVIEW},
+        "RAW": {"REVIEW"},
+        "CLASSIFIED": {"REVIEW"},
+        "NORMALIZED": {"REVIEW"},
+        "REVIEW": {"REVIEW"},
     },
     Mutation.PROMOTE: {
-        Lifecycle.REVIEW: {Lifecycle.ACTIVE},
+        "REVIEW": {"ACTIVE"},
     },
     Mutation.RECONSOLIDATE_CHALLENGE: {
-        Lifecycle.ACTIVE: {Lifecycle.RECONSOLIDATING},
-        Lifecycle.VERIFIED: {Lifecycle.RECONSOLIDATING},
+        "ACTIVE": {"RECONSOLIDATING"},
+        "VERIFIED": {"RECONSOLIDATING"},
     },
     Mutation.RECONSOLIDATE_RESOLVE: {
-        Lifecycle.RECONSOLIDATING: {Lifecycle.REVIEW},
+        "RECONSOLIDATING": {"REVIEW"},
     },
     Mutation.ARCHIVE: {
-        Lifecycle.REVIEW: {Lifecycle.ARCHIVED},
-        Lifecycle.ACTIVE: {Lifecycle.ARCHIVED},
+        "REVIEW": {"ARCHIVED"},
+        "ACTIVE": {"ARCHIVED"},
     },
     Mutation.SUPERSEDE: {
-        Lifecycle.ACTIVE: {Lifecycle.SUPERSEDED},
+        "ACTIVE": {"SUPERSEDED"},
     },
 }
 
 
+def _value(value: object) -> str:
+    """Normalize enums and plain strings to lifecycle/operation values."""
+
+    raw = getattr(value, "value", value)
+    return str(raw)
+
+
 def is_transition_allowed(
-    old: Lifecycle | str,
-    new: Lifecycle | str,
+    old: object,
+    new: object,
     *,
     mutation: Mutation | str,
     verification: Optional[str] = None,
 ) -> bool:
     """Return whether a lifecycle transition is valid for a named mutation.
 
-    The function is intentionally a pure predicate. Authorization remains the
-    caller's responsibility, while verification remains a separate field.
-    Promotion additionally requires ``verification == "verified"``.
+    Authorization is deliberately outside this pure policy function.
+    Verification is also separate from lifecycle, except that promotion is
+    conditionally allowed only for a note whose verification is ``verified``.
+    Unknown values fail closed.
     """
 
+    old_state = _value(old)
+    new_state = _value(new)
+    operation_value = _value(mutation)
     try:
-        old_state = old if isinstance(old, Lifecycle) else Lifecycle(str(old))
-        new_state = new if isinstance(new, Lifecycle) else Lifecycle(str(new))
-        operation = mutation if isinstance(mutation, Mutation) else Mutation(str(mutation))
+        operation = Mutation(operation_value)
     except ValueError:
         return False
 
-    allowed_targets = _TRANSITIONS.get(operation, {}).get(old_state, set())
-    if new_state not in allowed_targets:
+    if new_state not in _TRANSITIONS.get(operation, {}).get(old_state, set()):
         return False
 
     if operation is Mutation.PROMOTE and verification != "verified":
@@ -86,12 +91,13 @@ def is_transition_allowed(
     return True
 
 
-def allowed_targets(old: Lifecycle | str, *, mutation: Mutation | str) -> frozenset[Lifecycle]:
-    """Return the canonical target states for a mutation from ``old``."""
+def allowed_targets(old: object, *, mutation: Mutation | str) -> frozenset[str]:
+    """Return canonical lifecycle target values for a mutation from ``old``."""
 
+    old_state = _value(old)
+    operation_value = _value(mutation)
     try:
-        old_state = old if isinstance(old, Lifecycle) else Lifecycle(str(old))
-        operation = mutation if isinstance(mutation, Mutation) else Mutation(str(mutation))
+        operation = Mutation(operation_value)
     except ValueError:
         return frozenset()
     return frozenset(_TRANSITIONS.get(operation, {}).get(old_state, set()))
