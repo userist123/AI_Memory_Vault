@@ -1,0 +1,107 @@
+{
+  "description": "P3-B.6 Golden Corpus Regression Dataset for future benchmarks",
+  "created_at_utc": "2026-09-05T13:42:15.120177+00:00",
+  "total_corpus_notes": 838,
+  "golden_samples": {
+    "canonical_active_verified": [
+      "knw-benchmarks-2026-0001",
+      "c1a01101-7291-49fa-9481-22904c10d010",
+      "c1a01101-7291-49fa-9481-22904c10d050",
+      "c1a01101-7291-49fa-9481-22904c10d070",
+      "c1a01101-7291-49fa-9481-22904c10d090",
+      "b492d001-c841-4e12-b5e1-8890471b8991",
+      "c1a01101-7291-49fa-9481-22904c10d080",
+      "cat-skills-251-master",
+      "c1a01101-7291-49fa-9481-22904c10d060",
+      "A"
+    ],
+    "review_unverified_sample": [
+      "knw-agent-memory-trace-protocol-0001",
+      "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+      "knw-context-packing-p1-0001",
+      "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+      "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+      "4c5884fe-f24e-426e-a012-1414dbddae23",
+      "knw-memory-usage-audit-principles-0001",
+      "60a9210f-eb13-4b64-9347-605ce4792ae2",
+      "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+      "e4eca2b5-20e0-4082-aeb3-588d598f10c9"
+    ],
+    "orphan_notes_sample": [
+      "knw-benchmarks-2026-0001",
+      "knw-agent-memory-trace-protocol-0001",
+      "c1a01101-7291-49fa-9481-22904c10d010",
+      "path:01_ARCHITECTURE/knowledge/Awesome_Design_Skills_Index.md",
+      "c1a01101-7291-49fa-9481-22904c10b006",
+      "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+      "knw-context-packing-p1-0001",
+      "c1a01101-7291-49fa-9481-22904c10b001",
+      "c1a01101-7291-49fa-9481-22904c10b005",
+      "b4e88f21-7291-49fa-9481-22904c10a002"
+    ],
+    "dangling_relations_sample": [
+      {
+        "source_id": "c1a01101-7291-49fa-9481-22904c10d010",
+        "missing_target": "02 Memory Knowledge Map"
+      },
+      {
+        "source_id": "b4e88f21-7291-49fa-9481-22904c10a002",
+        "missing_target": "Design_System_Foundation"
+      },
+      {
+        "source_id": "b4e88f21-7291-49fa-9481-22904c10a001",
+        "missing_target": "UI_UX_Heuristic_Review"
+      },
+      {
+        "source_id": "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+        "missing_target": "14 External and UI Resources Map"
+      },
+      {
+        "source_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+        "missing_target": "Security_Practices"
+      }
+    ],
+    "exact_duplicate_cluster": {
+      "cluster_id": "exact-e3b0c44298fc",
+      "cluster_type": "exact_duplicate",
+      "members": [
+        "11111111-1111-4111-a111-111111111111",
+        "22222222-2222-4222-a222-222222222222",
+        "ca940601-808d-4632-9c7c-5c3052776a56",
+        "r2",
+        "r3",
+        "r4",
+        "r5",
+        "r6",
+        "33333333-3333-4333-a333-333333333333",
+        "44444444-4444-4444-a444-444444444444",
+        "55555555-5555-4555-a555-555555555555",
+        "43a1cd72-a97c-4ff2-a75d-3bffbe529a4e",
+        "77569a01-2412-42d7-a46a-8064cff7498d",
+        "c77673a3-047c-4073-acd8-251399e641e8",
+        "d9d51728-e1eb-4b8f-b96c-5a7567ae9f89",
+        "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+        "c756201a-2e4b-4471-bada-3d7ddd1f7b71",
+        "04e86b85-4346-4c5f-a495-c5a43231b61e",
+        "eb0af74c-f4f3-47d6-9a5a-7d60fabcded2"
+      ],
+      "representative": "11111111-1111-4111-a111-111111111111",
+      "selection_reason": "Selected by ACTIVE lifecycle, provenance import, length 0 chars, ID '11111111-1111-4111-a111-111111111111'",
+      "classification": "duplicate",
+      "confidence": 1.0
+    },
+    "template_cluster": {},
+    "near_duplicate_cluster": {
+      "cluster_id": "near-9e03e601-8f40-43",
+      "cluster_type": "near_duplicate",
+      "members": [
+        "9e03e601-8f40-43ad-ba7e-a7c1a1f24da0",
+        "d0f3ac43-9b23-4152-999b-8dee06b43c71"
+      ],
+      "representative": "9e03e601-8f40-43ad-ba7e-a7c1a1f24da0",
+      "selection_reason": "Selected by provenance unknown, length 559 chars, ID '9e03e601-8f40-43ad-ba7e-a7c1a1f24da0'",
+      "classification": "near duplicate",
+      "confidence": 0.88
+    }
+  }
+}
