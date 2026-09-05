@@ -313,7 +313,7 @@ class MemoryController:
                 if note['lifecycle'] != Lifecycle.REVIEW: raise ValueError('Only REVIEW notes can be promoted')
                 if note.get('verification') != 'verified': raise ValueError('Only VERIFIED notes can be promoted to ACTIVE')
                 note['lifecycle'] = Lifecycle.ACTIVE; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); audit_event('promote', principal, note_id, success=True)
-            except Exception as e: audit_event('promote', principal, note_id, success=False); raise
+            except Exception as e: audit_event('promote', principal, note_id, success=False, details={'error': str(e)}); raise
 
     def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         with self._mutation_lock:
