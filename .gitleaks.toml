@@ -31,9 +31,10 @@ paths = [
   '''(^|/)__pycache__/''',
 ]
 
-# Deterministic synthetic fixture used by sanitizer tests; it is not a credential.
+# Deterministic synthetic fixtures used by sanitizer/ablation tests; they are not credentials.
 [[allowlists]]
-description = "Intentional synthetic API-key fixture"
+description = "Intentional synthetic API-key fixtures"
 regexes = [
   '''sk-123456789''',
+  '''test_secret_for_ablation_harness_32chars''',
 ]
