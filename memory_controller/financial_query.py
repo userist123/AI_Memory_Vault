@@ -45,7 +45,6 @@ class FinancialQueryEngine:
         """
         note_id = "unknown"
         try:
-            self.authorizer.is_allowed(principal, Operation.PROPOSE)
             if not self.authorizer.is_allowed(principal, Operation.PROPOSE):
                 raise PermissionError(f"{principal.value} not allowed to ingest financial notes")
 
