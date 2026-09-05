@@ -41,6 +41,14 @@ Known canonical boundaries are classified separately for review. A finding is
 not automatically a vulnerability: each result must be classified as canonical,
 trusted infrastructure, test-only, or an unintended direct mutation path.
 
+## Coverage limitations
+
+This AST inventory is intentionally conservative but is not a proof of semantic
+write freedom. Dynamic dispatch, aliases, imported wrappers, native extensions,
+SQL executed through indirect helpers, and filesystem/network side effects that
+do not use the recognized call shapes may evade detection. Such cases require
+manual review or runtime instrumentation.
+
 ## Current architectural boundary
 
 Canonical runtime mutation paths currently include the Memory Controller and the
