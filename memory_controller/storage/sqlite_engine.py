@@ -37,7 +37,6 @@ class SQLiteStorageEngine:
         content TEXT NOT NULL,
         raw_json TEXT NOT NULL
     );
-
     CREATE INDEX IF NOT EXISTS idx_notes_lifecycle ON notes(lifecycle);
     CREATE INDEX IF NOT EXISTS idx_notes_type ON notes(type);
     CREATE INDEX IF NOT EXISTS idx_notes_source_type ON notes(source_type);
@@ -49,6 +48,12 @@ class SQLiteStorageEngine:
         "source_type, source_ref, confidence, verification, valid_from, valid_until, "
         "version_range, applies_to, supersedes, superseded_by, conflicts_with, "
         "last_verified, verification_source, relations, provenance, content, raw_json"
+    )
+    _NOTE_INDEXES = (
+        "CREATE INDEX IF NOT EXISTS idx_notes_lifecycle ON notes(lifecycle)",
+        "CREATE INDEX IF NOT EXISTS idx_notes_type ON notes(type)",
+        "CREATE INDEX IF NOT EXISTS idx_notes_source_type ON notes(source_type)",
+        "CREATE INDEX IF NOT EXISTS idx_notes_superseded_by ON notes(superseded_by)",
     )
 
     def __init__(self, db_path: str = ":memory:", timeout: float = 5.0, wal_mode: bool = True):
@@ -66,7 +71,7 @@ class SQLiteStorageEngine:
         self._migrate_legacy_lifecycle_constraint(conn)
 
     def _migrate_legacy_lifecycle_constraint(self, conn: sqlite3.Connection) -> None:
-        """Rebuild legacy notes tables whose CHECK constraint predates RECONSOLIDATING."""
+        """Rebuild a legacy notes table whose lifecycle CHECK predates RECONSOLIDATING."""
         row = conn.execute(
             "SELECT sql FROM sqlite_master WHERE type='table' AND name='notes'"
         ).fetchone()
@@ -74,16 +79,51 @@ class SQLiteStorageEngine:
         if "RECONSOLIDATING" in schema_sql:
             return
 
-        conn.execute("PRAGMA foreign_keys=OFF;")
         try:
+            conn.execute("PRAGMA foreign_keys=OFF;")
             conn.execute("BEGIN IMMEDIATE;")
+            for index_name in (
+                "idx_notes_lifecycle",
+                "idx_notes_type",
+                "idx_notes_source_type",
+                "idx_notes_superseded_by",
+            ):
+                conn.execute(f"DROP INDEX IF EXISTS {index_name}")
             conn.execute("ALTER TABLE notes RENAME TO notes_legacy_lifecycle;")
-            conn.executescript(self.SCHEMA)
             conn.execute(
-                f"INSERT INTO notes ({self._NOTE_COLUMNS}) "
-                f"SELECT {self._NOTE_COLUMNS} FROM notes_legacy_lifecycle"
+                """CREATE TABLE notes (
+                    id TEXT PRIMARY KEY,
+                    type TEXT NOT NULL CHECK(type IN ('knowledge', 'project', 'procedure', 'decision', 'experience', 'error', 'lesson', 'preference', 'resource', 'hypothesis', 'system', 'core', 'index')),
+                    lifecycle TEXT NOT NULL CHECK(lifecycle IN ('RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW', 'VERIFIED', 'ACTIVE', 'RECONSOLIDATING', 'SUPERSEDED', 'ARCHIVED')),
+                    category TEXT NOT NULL,
+                    tags TEXT NOT NULL,
+                    created TEXT NOT NULL,
+                    updated TEXT NOT NULL,
+                    source_type TEXT NOT NULL CHECK(source_type IN ('user', 'official', 'execution', 'experience', 'ai', 'inference', 'import', 'unknown')),
+                    source_ref TEXT NOT NULL,
+                    confidence TEXT NOT NULL CHECK(confidence IN ('very_high', 'high', 'medium', 'low', 'unknown')),
+                    verification TEXT NOT NULL CHECK(verification IN ('verified', 'partially_verified', 'unverified', 'inferred')),
+                    valid_from TEXT,
+                    valid_until TEXT,
+                    version_range TEXT,
+                    applies_to TEXT,
+                    supersedes TEXT,
+                    superseded_by TEXT,
+                    conflicts_with TEXT,
+                    last_verified TEXT,
+                    verification_source TEXT,
+                    relations TEXT NOT NULL,
+                    provenance TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    raw_json TEXT NOT NULL
+                )"""
+            )
+            conn.execute(
+                f"INSERT INTO notes ({self._NOTE_COLUMNS}) SELECT {self._NOTE_COLUMNS} FROM notes_legacy_lifecycle"
             )
             conn.execute("DROP TABLE notes_legacy_lifecycle;")
+            for index_sql in self._NOTE_INDEXES:
+                conn.execute(index_sql)
             conn.execute("COMMIT;")
         except Exception:
             try:
