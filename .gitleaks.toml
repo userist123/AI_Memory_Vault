@@ -2,3 +2,10 @@ title = "AI Memory Vault secret scanning"
 
 [extend]
 useDefault = true
+
+# This exact value is an intentionally synthetic API-key fixture embedded in
+# the sanitization unit-test payload; it is not a credential.
+[[allowlists]]
+description = "Intentional fake API-key fixture in sanitization test"
+paths = ['03_IMPLEMENTATION/packages/retrieval/memory_ablation_benchmark\.py$']
+regexes = ['sk-123456789']
