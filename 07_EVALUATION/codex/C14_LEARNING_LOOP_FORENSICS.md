@@ -28,7 +28,8 @@ Evidence level: `CODE_VERIFIED` + `TEST_VERIFIED`. No closed-loop runtime claim 
 | LearningEngine update → future retrieval behavior | UNVERIFIED | no closed-loop runtime test or wiring observed |
 | review candidate → canonical promotion without gate | BLOCKED | promotion code requires authorized flow; tests pass |
 
-Overall classification: **PARTIAL / DEAD-END for closed continual learning**. Telemetry and gated update primitives are real, but the inspected path does not prove that a verified outcome changes what a later retrieval returns.
+Overall classification: **PARTIAL / DEAD-END for closed continual learning**.
+Telemetry and gated update primitives are real, but the inspected path does not prove that a verified outcome changes what a later retrieval returns.
 
 ## Tests actually run
 
