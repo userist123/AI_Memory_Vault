@@ -1,9 +1,0 @@
-{
-  "schema_version": "R001.v1",
-  "start_sha": "814ec77485a0621c388dac5f61cf0bb091707c0a",
-  "status": "PENDING_BRANCH_GENERATION",
-  "generated_by": "30_SCRIPTS/verification/build_r001_inventory.py",
-  "source_of_truth": "git ls-files + git rev-parse HEAD:<path>",
-  "note": "This file is a bootstrap manifest. CI must regenerate it for the exact R001 branch SHA before the final execution report is accepted.",
-  "entries": []
-}
