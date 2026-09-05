@@ -46,15 +46,18 @@ def git_files(root: Path) -> list[str]:
 
 
 def check_numbered_roots(root: Path) -> list[str]:
+    """Validate the numbered-root naming contract without forbidding valid children.
+
+    Numbered roots are intentional repository domains. Their contents are
+    governed by each domain's own README/policy and must not be treated as
+    README-only directories; e.g. ``03_IMPLEMENTATION`` and ``20_TESTS`` are
+    expected to contain executable code and tests respectively.
+    """
     failures: list[str] = []
     for path in sorted(root.iterdir()):
-        if not path.is_dir() or not NUMBERED_RE.match(path.name):
-            continue
-        children = sorted(child.name for child in path.iterdir())
-        allowed = {"README.md", ".gitkeep"}
-        extras = [name for name in children if name not in allowed]
-        if extras:
-            failures.append(f"NUMBERED_ROOT:{path.name}:unexpected={extras}")
+        if path.is_dir() and path.name != ".git" and path.name[:2].isdigit():
+            if not NUMBERED_RE.match(path.name):
+                failures.append(f"NUMBERED_ROOT_NAME:{path.name}")
     return failures
 
 
