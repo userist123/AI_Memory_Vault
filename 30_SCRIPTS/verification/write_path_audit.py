@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static inventory of direct memory-storage write paths.
+"""Static inventory of direct memory-storage and filesystem write paths.
 
 This audit is intentionally read-only. It scans Python source with the AST and
 reports calls that may mutate storage outside canonical controller boundaries.
@@ -56,11 +56,33 @@ def classify(path: Path, name: str) -> str:
         return "CANONICAL_CONTROLLER"
     if text.endswith("cognitive_core/consolidation.py"):
         return "CANONICAL_RECONSOLIDATION_BOUNDARY"
+    if _is_file_mutator(name):
+        return "FILE_WRITE"
     if name.endswith(".set") or name.endswith(".delete"):
         return "DIRECT_STORAGE_MUTATION"
-    if name.endswith(".write") or name.endswith(".writelines"):
-        return "FILE_WRITE"
     return "OTHER_MUTATION"
+
+
+def _is_file_mutator(name: str) -> bool:
+    """Return True for common Python filesystem mutation APIs."""
+    direct = {
+        "open",
+        "os.remove",
+        "os.unlink",
+        "os.rmdir",
+        "Path.write_text",
+        "Path.write_bytes",
+        "Path.unlink",
+        "Path.rmdir",
+        "shutil.copy",
+        "shutil.copy2",
+        "shutil.copyfile",
+        "shutil.move",
+        "shutil.rmtree",
+    }
+    if name in direct:
+        return True
+    return name.endswith(".write") or name.endswith(".writelines")
 
 
 def audit(root: Path) -> list[Finding]:
@@ -82,8 +104,7 @@ def audit(root: Path) -> list[Finding]:
                 or name.endswith(".store.delete")
                 or name.endswith(".set")
                 or name.endswith(".delete")
-                or name.endswith(".write")
-                or name.endswith(".writelines")
+                or _is_file_mutator(name)
             )
             if not interesting:
                 continue
