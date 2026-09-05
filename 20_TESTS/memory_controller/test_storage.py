@@ -52,7 +52,7 @@ def test_frontmatter_roundtrip():
     assert deserialized["custom_field"] == "preserved"
 
 def test_path_resolution():
-    base = "C:\\Vault" if os.name == 'nt' else "/Vault"
+    base = "C:\\Vault" if os.name == 'nt' else "/Vault"  # hygiene: intentional-absolute-path
     assert "01_KNOWLEDGE" in resolve_path(base, {"type": "knowledge", "category": "sec", "id": "123"})
     assert "02_PROJECTS" in resolve_path(base, {"type": "project", "category": "dev", "id": "123"})
     
@@ -68,8 +68,8 @@ def test_path_traversal_storage(temp_vault):
     bad_inputs = [
         {"id": "../../../malicious", "category": "safe"},
         {"id": "safe", "category": "../../../malicious"},
-        {"id": "safe", "category": "C:\\Windows\\System32"},
-        {"id": "safe", "category": "/etc/passwd"},
+        {"id": "safe", "category": "C:\\Windows\\System32"},  # hygiene: intentional-absolute-path
+        {"id": "safe", "category": "/etc/passwd"},  # hygiene: intentional-absolute-path
     ]
     
     for bad in bad_inputs:
