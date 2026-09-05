@@ -32,6 +32,7 @@ NUMBERED_RE = re.compile(r"^\d{2}_[^/]+$")
 ABSOLUTE_PATH_RE = re.compile(
     r"(?:(?<![A-Za-z0-9_])[A-Za-z]:[\\/]|(?<![A-Za-z0-9._-])\\\\[A-Za-z0-9._-]+[\\/]|(?<![A-Za-z0-9_])/(?:home|Users|mnt|tmp|var|opt)/)"
 )
+INTENTIONAL_PATH_MARKER = "# hygiene: intentional-absolute-path"
 FORBIDDEN_PRODUCTION_SUFFIXES = {
     ".ipynb",
     ".jpg",
@@ -93,6 +94,8 @@ def check_test_paths(root: Path, files: list[str]) -> list[str]:
     Imported project/skill test trees are outside the canonical hygiene scope.
     The repository-hygiene regression test itself deliberately contains an
     absolute path literal, so that test is exempt from this content scan.
+    Intentional security fixtures can opt out on the exact source line by
+    adding the explicit marker ``# hygiene: intentional-absolute-path``.
     """
     failures: list[str] = []
     for file in files:
@@ -104,12 +107,16 @@ def check_test_paths(root: Path, files: list[str]) -> list[str]:
         if candidate.suffix.lower() not in {".py", ".ps1", ".cmd", ".sh", ".yml", ".yaml", ".toml", ".json"}:
             continue
         try:
-            text = candidate.read_text(encoding="utf-8", errors="replace")
+            lines = candidate.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError as exc:
             failures.append(f"TEST_READ_ERROR:{file}:{exc}")
             continue
-        if ABSOLUTE_PATH_RE.search(text):
-            failures.append(f"TEST_ABSOLUTE_PATH:{file}")
+        for line in lines:
+            if INTENTIONAL_PATH_MARKER in line:
+                continue
+            if ABSOLUTE_PATH_RE.search(line):
+                failures.append(f"TEST_ABSOLUTE_PATH:{file}")
+                break
     return failures
 
 
