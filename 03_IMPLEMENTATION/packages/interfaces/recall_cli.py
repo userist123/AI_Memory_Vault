@@ -3,8 +3,15 @@ import sys
 import argparse
 from typing import List, Dict, Any, Optional
 
-# Asiguram ca radacina proiectului este in PYTHONPATH
-VAULT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+from pathlib import Path
+
+# Asiguram ca radacina proiectului este corect detectata si in PYTHONPATH
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+if (_REPO_ROOT / "AGENTS.md").exists():
+    VAULT_ROOT = str(_REPO_ROOT)
+else:
+    VAULT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 if VAULT_ROOT not in sys.path:
     sys.path.insert(0, VAULT_ROOT)
 

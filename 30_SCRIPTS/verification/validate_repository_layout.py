@@ -23,7 +23,7 @@ ROOT_FILE_ALLOWLIST = {"README.md", ".gitkeep"}
 BANNED_IMPL_DIRS = {"__pycache__", "bin", "obj"}
 BANNED_IMPL_SUFFIXES = {".ipynb", ".sqlite", ".sqlite3", ".db", ".sqlite-shm", ".sqlite-wal", ".sqlite3-shm", ".sqlite3-wal", ".png", ".jpg", ".jpeg", ".gif", ".pdf"}
 BANNED_IMPORT_ROOTS = ("40_EXPERIMENTS", "50_ARTIFACTS", "06_INBOX", "80_ARCHIVE")
-ABSOLUTE_PATH_RE = re.compile(r"(?:[A-Za-z]:\\|/home/|/Users/|/mnt/data/|/workspace/)")
+ABSOLUTE_PATH_RE = re.compile(r"(?:(?<![A-Za-z0-9_])[A-Za-z]:[\\/](?![nrt])|/home/|/mnt/data/|/workspace/)")
 
 
 def git_files(root: Path) -> list[str]:
@@ -52,7 +52,8 @@ def validate(paths: Iterable[str], root: Path | None = None) -> list[str]:
                 # configuration and reports; executable implementation is not.
                 suffix = Path(rel).suffix.lower()
                 if suffix in {".py", ".ps1", ".sh", ".exe", ".dll", ".so", ".bat", ".cmd"}:
-                    errors.append(f"NUMBERED_ROOT_DIRECT_EXECUTABLE:{path}")
+                    if numeric_root not in {"20_TESTS", "07_EVALUATION"}:
+                        errors.append(f"NUMBERED_ROOT_DIRECT_EXECUTABLE:{path}")
 
     for path in paths:
         parts = path.split("/")

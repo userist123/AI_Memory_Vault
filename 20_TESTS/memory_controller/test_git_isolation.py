@@ -31,6 +31,8 @@ def _init_git_repo(repo_path: Path) -> None:
 
 def _copy_memory_controller(src_root: Path, dest_root: Path) -> Path:
     src_pkg = src_root / "memory_controller"
+    if not src_pkg.exists():
+        src_pkg = src_root / "03_IMPLEMENTATION" / "packages" / "memory"
     dst_pkg = dest_root / "memory_controller"
     shutil.copytree(src_pkg, dst_pkg)
     return dst_pkg

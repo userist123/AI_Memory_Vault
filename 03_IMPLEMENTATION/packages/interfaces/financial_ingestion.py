@@ -180,8 +180,8 @@ class FinancialSourceIngestionManager:
     generating validated canonical notes with strict trust boundary invariants.
     """
 
-    DEFAULT_GHID_PATH = r"C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py"
-    DEFAULT_EXCEL_PATH = r"C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx"
+    DEFAULT_GHID_PATH = "ghid.py"
+    DEFAULT_EXCEL_PATH = "Analiza_Piata_Profesionala.xlsx"
 
     def __init__(
         self,
