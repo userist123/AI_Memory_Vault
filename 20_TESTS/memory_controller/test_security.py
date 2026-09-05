@@ -50,11 +50,11 @@ def test_query_size_boundary():
 
 def test_path_traversal_controller_operations():
     bad_paths = [
-        "../etc/passwd",
+        "../etc/passwd",  # hygiene: intentional-absolute-path
         "../../secrets.txt",
         "..\\windows\\system32",
-        "C:\\Windows\\system32\\cmd.exe",
-        "/etc/passwd"
+        "C:\\Windows\\system32\\cmd.exe",  # hygiene: intentional-absolute-path
+        "/etc/passwd"  # hygiene: intentional-absolute-path
     ]
     
     for bad in bad_paths:
