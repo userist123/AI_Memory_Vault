@@ -2,40 +2,39 @@ name: R001 Repository Enforcement
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
     paths:
-      - "03_IMPLEMENTATION/**"
-      - "04_CONFIG/**"
-      - "06_INBOX/**"
-      - "09_SECURITY/**"
-      - "20_TESTS/**"
-      - "30_SCRIPTS/verification/**"
-      - "40_EXPERIMENTS/**"
-      - "99_META/**"
-      - "pyproject.toml"
-      - "pytest.ini"
-      - "requirements-memory-v6.txt"
-      - ".gitleaks.toml"
-      - ".pre-commit-config.yaml"
-      - ".github/workflows/r001-enforcement.yml"
+      - '03_IMPLEMENTATION/**'
+      - '04_CONFIG/**'
+      - '06_INBOX/**'
+      - '09_SECURITY/**'
+      - '20_TESTS/**'
+      - '30_SCRIPTS/verification/**'
+      - '40_EXPERIMENTS/**'
+      - '99_META/**'
+      - 'pyproject.toml'
+      - 'pytest.ini'
+      - 'requirements-memory-v6.txt'
+      - '.gitleaks.toml'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/r001-enforcement.yml'
   pull_request:
-    branches: ["main"]
+    branches: [main]
     paths:
-      - "03_IMPLEMENTATION/**"
-      - "04_CONFIG/**"
-      - "06_INBOX/**"
-      - "09_SECURITY/**"
-      - "20_TESTS/**"
-      - "30_SCRIPTS/verification/**"
-      - "40_EXPERIMENTS/**"
-      - "99_META/**"
-      - "pyproject.toml"
-      - "pytest.ini"
-      - "requirements-memory-v6.txt"
-      - ".gitleaks.toml"
-      - ".pre-commit-config.yaml"
-      - ".github/workflows/r001-enforcement.yml"
-  workflow_dispatch:
+      - '03_IMPLEMENTATION/**'
+      - '04_CONFIG/**'
+      - '06_INBOX/**'
+      - '09_SECURITY/**'
+      - '20_TESTS/**'
+      - '30_SCRIPTS/verification/**'
+      - '40_EXPERIMENTS/**'
+      - '99_META/**'
+      - 'pyproject.toml'
+      - 'pytest.ini'
+      - 'requirements-memory-v6.txt'
+      - '.gitleaks.toml'
+      - '.pre-commit-config.yaml'
+      - '.github/workflows/r001-enforcement.yml'
 
 permissions:
   contents: read
@@ -87,7 +86,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source=/repo --no-git --no-banner --redact --verbose --report-format json --report-path /repo/r001_gitleaks_current.json 2>&1 | tee r001_gitleaks_current.txt
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source=/repo --config=/repo/.gitleaks.toml --no-git --no-banner --redact --verbose --report-format json --report-path /repo/r001_gitleaks_current.json 2>&1 | tee r001_gitleaks_current.txt
           status=${PIPESTATUS[0]}
           set -e
           test "$status" -eq 0
@@ -96,7 +95,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
+          docker run --rm -w /repo -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --config=/repo/.gitleaks.toml --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
 
       - name: Dependency audit
         shell: bash
@@ -118,12 +117,8 @@ jobs:
             echo "timestamp_utc=$(date -u +%FT%TZ)"
             echo "python=$(python --version 2>&1)"
             echo "platform=$(uname -a)"
-            echo "layout_command=python 30_SCRIPTS/verification/validate_repository_layout.py"
-            echo "targeted_command=pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py 20_TESTS/regression/test_repository_hygiene.py"
-            echo "full_test_command=pytest -q"
-            echo "dataset=repository tracked tree at commit $(git rev-parse HEAD)"
-            echo "status=SEE_STEP_LOGS"
-          } > r001_evidence_manifest.txt
+            echo "tracked_files=$(git ls-files | wc -l)"
+          } | tee r001_evidence_manifest.txt
 
       - name: Upload R001 evidence
         if: always()

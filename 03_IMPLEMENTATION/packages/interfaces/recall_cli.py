@@ -2,7 +2,6 @@ import os
 import sys
 import argparse
 from typing import List, Dict, Any, Optional
-
 from pathlib import Path
 
 # Asiguram ca radacina proiectului este corect detectata si in PYTHONPATH
@@ -17,13 +16,16 @@ if VAULT_ROOT not in sys.path:
 
 MIN_HMAC_SECRET_LENGTH = 32
 
+
 class MissingHMACSecretError(ValueError):
     """Raised when MEMORY_CONTROLLER_HMAC_SECRET is missing from the environment."""
     pass
 
+
 class InvalidHMACSecretError(ValueError):
     """Raised when MEMORY_CONTROLLER_HMAC_SECRET is present but invalid or too short."""
     pass
+
 
 def validate_hmac_secret() -> str:
     """Validates that MEMORY_CONTROLLER_HMAC_SECRET is present in the environment and valid.
@@ -46,20 +48,31 @@ def validate_hmac_secret() -> str:
         )
     return secret
 
+
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
 from memory_controller.storage.sqlite_engine import SQLiteStorageEngine
 from memory_controller.storage.file_engine import FileStorageEngine
 
 _CACHED_CONTROLLER: Optional[MemoryController] = None
+_CACHED_CONTROLLER_ROOT: Optional[str] = None
+
+
+def _effective_vault_root() -> str:
+    """Resolve the runtime vault root, allowing deterministic test/embedded deployments."""
+    configured = os.getenv("MEMORY_VAULT_ROOT")
+    root = Path(configured).expanduser() if configured else Path(VAULT_ROOT)
+    return str(root.resolve())
+
 
 def get_memory_controller() -> MemoryController:
     """Initializeaza si returneaza instanta securizata de MemoryController."""
-    global _CACHED_CONTROLLER
-    if _CACHED_CONTROLLER is not None:
+    global _CACHED_CONTROLLER, _CACHED_CONTROLLER_ROOT
+    vault_root = _effective_vault_root()
+    if _CACHED_CONTROLLER is not None and _CACHED_CONTROLLER_ROOT == vault_root:
         return _CACHED_CONTROLLER
 
-    db_path = os.path.join(VAULT_ROOT, "vault_memory.sqlite3")
+    db_path = os.path.join(vault_root, "vault_memory.sqlite3")
     if os.path.exists(db_path):
         try:
             storage = SQLiteStorageEngine(db_path, wal_mode=True)
@@ -69,14 +82,18 @@ def get_memory_controller() -> MemoryController:
                 count = cur.fetchone()[0]
             if count > 0:
                 _CACHED_CONTROLLER = MemoryController(storage)
+                _CACHED_CONTROLLER_ROOT = vault_root
                 return _CACHED_CONTROLLER
         except Exception:
             pass
 
-    # Fallback catre FileStorageEngine care scaneaza folderele canonice
-    storage = FileStorageEngine(VAULT_ROOT)
+    # Fallback catre FileStorageEngine care scaneaza folderele canonice.
+    # MEMORY_VAULT_ROOT permite rularea in alt vault fara a modifica codul.
+    storage = FileStorageEngine(vault_root)
     _CACHED_CONTROLLER = MemoryController(storage)
+    _CACHED_CONTROLLER_ROOT = vault_root
     return _CACHED_CONTROLLER
+
 
 def search_markdown_vault(
     query: str,
@@ -85,7 +102,7 @@ def search_markdown_vault(
     controller: Optional[MemoryController] = None
 ) -> List[Dict[str, Any]]:
     """Cautare securizata in memoria Vault delegand catre MemoryController.search().
-    
+
     Aplica automat verificările si granițele de încredere P0-P15:
     - Verificarea permisiunilor Principal.AI_AGENT (Least Privilege)
     - Sanitizarea interogarii si limitarea dimensiunii (check_query_size / sanitize_query)
@@ -93,23 +110,19 @@ def search_markdown_vault(
     - Calculul relevantei si filtrarea prin bugetul de context (ContextBudget)
     - Jurnalizare criptografica tamper-evidenta SHA-256 (audit logging)
     """
-    # Enforce strict HMAC secret validation (fails closed if missing or invalid)
     validate_hmac_secret()
-
     ctrl = controller or get_memory_controller()
-
-    
-    # Delegare directa catre pipeline-ul protejat MemoryController.search()
     pack = ctrl.search(principal=principal, query=query, page_size=max_results)
 
     raw_results = pack.get("results", [])
     formatted_results = []
-    
+    runtime_root = _effective_vault_root()
+
     for item in raw_results:
         source_file = item.get("source_ref") or item.get("id") or "unknown"
-        if os.path.isabs(source_file) and source_file.startswith(VAULT_ROOT):
-            source_file = os.path.relpath(source_file, VAULT_ROOT)
-            
+        if os.path.isabs(source_file) and source_file.startswith(runtime_root):
+            source_file = os.path.relpath(source_file, runtime_root)
+
         content = item.get("content", "")
         if not content:
             meta_parts = []
@@ -122,9 +135,8 @@ def search_markdown_vault(
             if item.get("tags"):
                 meta_parts.append(f"Tags: {', '.join(item['tags'])}")
             content = "\n".join(meta_parts)
-            
+
         score = item.get("relevance_score") or item.get("score") or 1.0
-        
         formatted_results.append({
             "id": item.get("id", "unknown"),
             "file": source_file,
@@ -134,14 +146,14 @@ def search_markdown_vault(
             "verification": item.get("verification", "unverified"),
             "content": content[:1500]
         })
-        
+
     return formatted_results[:max_results]
+
 
 def main():
     parser = argparse.ArgumentParser(description="Cautare Securizata si Extragere Memorie din Vault (P0-P15 Gated)")
     parser.add_argument("--query", required=True, help="Termenul sau intrebarea pentru cautare in memorie")
     parser.add_argument("--max", type=int, default=3, help="Numar maxim de notite returnate")
-
     args = parser.parse_args()
 
     try:
@@ -154,14 +166,15 @@ def main():
         print(f"[*] Nu s-au gasit notite relevante in Vault pentru interogarea: '{args.query}'")
         return
 
-    print("="*60)
+    print("=" * 60)
     print(f"[*] MEMORIE VAULT SECURIZATA PENTRU: '{args.query}' ({len(matches)} rezultate)")
-    print("="*60)
+    print("=" * 60)
 
     for i, m in enumerate(matches, 1):
         print(f"\n--- [Notita {i}: {m['file']} (Relevanta: {m['score']}, Tip: {m['type']}, Lifecycle: {m['lifecycle']})] ---")
         print(m['content'])
         print("-" * 50)
+
 
 if __name__ == "__main__":
     main()
