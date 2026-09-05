@@ -16,7 +16,8 @@ NUMBERED_ROOTS = {
 ROOT_ALLOWLIST = {
     "README.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", "pytest.ini",
-    "requirements-memory-v6.txt", ".github", ".agents", ".claude-plugin", ".obsidian",
+    "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts",
+    ".github", ".agents", ".claude-plugin", ".obsidian",
     *NUMBERED_ROOTS,
 }
 ROOT_FILE_ALLOWLIST = {"README.md", ".gitkeep"}
