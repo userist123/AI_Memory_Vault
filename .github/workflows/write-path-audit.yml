@@ -22,13 +22,11 @@ jobs:
         run: python3 30_SCRIPTS/verification/write_path_audit.py --root . --json > write-path-audit.json
 
       - name: Publish summary
-        env:
-          GITHUB_STEP_SUMMARY: ${{ env.GITHUB_STEP_SUMMARY }}
         run: |
           python3 - <<'PY'
           import json
           import os
-                   from collections import Counter
+          from collections import Counter
 
           with open("write-path-audit.json", encoding="utf-8") as src:
               findings = json.load(src)
