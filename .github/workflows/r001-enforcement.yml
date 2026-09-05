@@ -45,10 +45,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - name: Checkout exact commit
+      - name: Checkout exact evaluated revision
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - name: Runtime evidence header
@@ -61,26 +61,36 @@ jobs:
           uname -a | tee r001_platform.txt
 
       - name: Install project
+        shell: bash
         run: |
+          set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install -e .
           python -m pip install -r requirements-memory-v6.txt
           python -m pip check
 
       - name: Validate repository layout
+        shell: bash
         run: |
+          set -euo pipefail
           python 30_SCRIPTS/verification/validate_repository_layout.py | tee r001_layout.txt
 
       - name: Clean import smoke
+        shell: bash
         run: |
+          set -euo pipefail
           python -c "import memory_vault; import memory_vault.memory; import memory_vault.graph"
 
       - name: Targeted graph and trust tests
+        shell: bash
         run: |
+          set -euo pipefail
           pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py 20_TESTS/regression/test_repository_hygiene.py | tee r001_targeted_tests.txt
 
       - name: Full test suite
+        shell: bash
         run: |
+          set -euo pipefail
           pytest -q | tee r001_full_pytest.txt
 
       - name: Current-tree gitleaks (fail closed)
@@ -106,7 +116,9 @@ jobs:
           pip-audit -r requirements-memory-v6.txt | tee r001_pip_audit.txt
 
       - name: Build machine-readable inventory
+        shell: bash
         run: |
+          set -euo pipefail
           python 30_SCRIPTS/verification/build_r001_inventory.py | tee r001_inventory.txt
 
       - name: Evidence manifest
@@ -129,7 +141,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: r001-enforcement-evidence-${{ github.sha }}
+          name: r001-enforcement-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             r001_*.txt
             r001_gitleaks_current.json
