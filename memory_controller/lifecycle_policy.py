@@ -2,7 +2,7 @@
 
 The module is intentionally independent from storage, authorization, and the
 controller implementation. It describes lifecycle values as strings so it can
-be imported by the controller later without circular dependencies.
+be imported by the controller without circular dependencies.
 """
 
 from __future__ import annotations
@@ -14,7 +14,10 @@ from typing import Optional
 class Mutation(str, Enum):
     """Lifecycle-changing mutation operations."""
 
+    CLASSIFY = "classify"
+    NORMALIZE = "normalize"
     REVIEW = "review"
+    VERIFY = "verify"
     PROMOTE = "promote"
     RECONSOLIDATE_CHALLENGE = "reconsolidate_challenge"
     RECONSOLIDATE_RESOLVE = "reconsolidate_resolve"
@@ -23,14 +26,24 @@ class Mutation(str, Enum):
 
 
 _TRANSITIONS = {
+    Mutation.CLASSIFY: {
+        "RAW": {"CLASSIFIED"},
+    },
+    Mutation.NORMALIZE: {
+        "CLASSIFIED": {"NORMALIZED"},
+    },
     Mutation.REVIEW: {
         "RAW": {"REVIEW"},
         "CLASSIFIED": {"REVIEW"},
         "NORMALIZED": {"REVIEW"},
         "REVIEW": {"REVIEW"},
     },
+    Mutation.VERIFY: {
+        "REVIEW": {"VERIFIED"},
+    },
     Mutation.PROMOTE: {
         "REVIEW": {"ACTIVE"},
+        "VERIFIED": {"ACTIVE"},
     },
     Mutation.RECONSOLIDATE_CHALLENGE: {
         "ACTIVE": {"RECONSOLIDATING"},
@@ -65,9 +78,8 @@ def is_transition_allowed(
     """Return whether a lifecycle transition is valid for a named mutation.
 
     Authorization is deliberately outside this pure policy function.
-    Verification is also separate from lifecycle, except that promotion is
-    conditionally allowed only for a note whose verification is ``verified``.
-    Unknown values fail closed.
+    Verification is separate from lifecycle, except that promotion requires
+    an already verified note. Unknown values fail closed.
     """
     old_state = _value(old)
     new_state = _value(new)
