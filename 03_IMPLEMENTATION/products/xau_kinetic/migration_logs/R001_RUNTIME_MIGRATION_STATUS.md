@@ -3,7 +3,7 @@
 Branch: `main` (R001 promoted from `r001/night-runtime-migration-and-enforcement`)
 Start SHA: `814ec77485a0621c388dac5f61cf0bb091707c0a`
 Promotion SHA: `00c05a7446e28d097a453008d64a5e1f3b0838a9`
-Current reconciliation commit: `ddbe13d54d984332d5338c5b0b3ceee087d7eaf0`
+Current reconciliation commit: `653dcb27957101a33b2567e0b6f0afab34e3fb24`
 Mode: structural/runtime/security enforcement
 
 ## Current target
@@ -30,12 +30,15 @@ Move all production runtime out of repository root; classify implementation by r
 - `memory_vault` compatibility namespace: present and points at classified sibling packages.
 - Repository hygiene validator: corrected so numbered domain roots may contain governed children.
 - Repository hygiene regression test: restored under `20_TESTS/regression/test_repository_hygiene.py` because the workflow referenced a missing test file.
+- R001 enforcement workflow: now targets `main` and checks out the exact triggering SHA.
+- R001 inventory generator: aligned with the current canonical tree and current inventory location.
+- Repository map: reconciled to current canonical paths.
 - Remote `main` verification: confirmed at the promotion SHA before reconciliation.
 - Dependabot graph update on the promotion SHA: completed successfully.
 
 ## Remaining gates
 
-1. Confirm the post-reconciliation `main` CI runs on `ddbe13d54d984332d5338c5b0b3ceee087d7eaf0`.
+1. Confirm the post-reconciliation `main` CI run and capture its result on the final reconciliation SHA.
 2. Verify graph edge-weight regression and review-memory trust-boundary regression with captured test output.
-3. Generate the final machine-readable inventory from the current committed `main` SHA.
+3. Generate and preserve the final machine-readable inventory from the current committed `main` SHA.
 4. Produce the final R001 execution report only after the evidence is captured.
