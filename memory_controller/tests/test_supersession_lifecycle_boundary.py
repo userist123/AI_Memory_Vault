@@ -30,6 +30,14 @@ def test_supersession_requires_active_predecessor():
         enforcer.validate_supersession(Principal.HUMAN, "old", "new")
 
 
+def test_superseded_predecessor_reports_terminal_state_explicitly():
+    storage = DictStorage({"old": _note("SUPERSEDED"), "new": _note("REVIEW")})
+    enforcer = SupersessionEnforcer(storage)
+
+    with pytest.raises(ValueError, match="already SUPERSEDED"):
+        enforcer.validate_supersession(Principal.HUMAN, "old", "new")
+
+
 def test_supersession_accepts_active_predecessor_when_other_guards_pass():
     storage = DictStorage({"old": _note("ACTIVE"), "new": _note("REVIEW")})
     enforcer = SupersessionEnforcer(storage)
