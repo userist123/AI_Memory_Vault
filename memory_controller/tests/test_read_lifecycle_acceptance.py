@@ -29,7 +29,7 @@ def _controller_with(note):
     return MemoryController(storage), storage
 
 
-def test_public_read_allows_only_active_notes():
+def test_public_read_allows_active_verified_notes():
     active = _note(Lifecycle.ACTIVE.value, "verified")
     controller, _ = _controller_with(active)
 
@@ -37,6 +37,14 @@ def test_public_read_allows_only_active_notes():
 
     assert result["results"]
     assert result["results"][0]["id"] == active["id"]
+
+
+def test_public_read_rejects_active_unverified_notes():
+    active = _note(Lifecycle.ACTIVE.value, "unverified")
+    controller, _ = _controller_with(active)
+
+    with pytest.raises(ValueError, match="Only ACTIVE and verified notes are readable via public API"):
+        controller.read(Principal.HUMAN, active["id"])
 
 
 @pytest.mark.parametrize("lifecycle", [
@@ -53,7 +61,7 @@ def test_public_read_rejects_every_non_active_lifecycle(lifecycle):
     note = _note(lifecycle, "verified" if lifecycle == Lifecycle.VERIFIED.value else "unverified")
     controller, _ = _controller_with(note)
 
-    with pytest.raises(ValueError, match="Only ACTIVE notes are readable via public API"):
+    with pytest.raises(ValueError, match="Only ACTIVE and verified notes are readable via public API"):
         controller.read(Principal.HUMAN, note["id"])
 
 
