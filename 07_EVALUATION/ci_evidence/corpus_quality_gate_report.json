@@ -1,0 +1,94 @@
+{
+  "timestamp_utc": "2026-09-05T13:30:29.782181+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "total_notes": 837,
+  "active_verified_notes": 72,
+  "gate_summary": {
+    "PASS": 4,
+    "WARN": 3,
+    "FAIL": 1
+  },
+  "overall_verdict": "CONDITIONAL_PASS",
+  "metrics": [
+    {
+      "metric": "Duplicate Rate (Verified Boundary)",
+      "dimension": "Data Hygiene",
+      "justification": "Duplicate notes consume top-k slots, skew RRF rank fusion, and degrade candidate diversity.",
+      "retrieval_impact": "Causes redundant results in top-5 and displaces distinct relevant notes.",
+      "measured_value": 0.0,
+      "target_threshold": "<= 0.0500 (<= 5%)",
+      "status": "PASS",
+      "context": "RETRIEVAL_BOUNDARY"
+    },
+    {
+      "metric": "Provenance Completeness (Verified Boundary)",
+      "dimension": "Trust & Lineage",
+      "justification": "Every note returned to an agent must trace its origin (author, session, source).",
+      "retrieval_impact": "Unprovenanced notes allow unverified assertions to masquerade as ground truth.",
+      "measured_value": 1.0,
+      "target_threshold": ">= 0.8500 (>= 85%)",
+      "status": "PASS",
+      "context": "RETRIEVAL_BOUNDARY"
+    },
+    {
+      "metric": "Relation Density (Verified Boundary)",
+      "dimension": "Graph Connectivity",
+      "justification": "Graph-assisted retrieval requires minimum edge density to execute spreading activation.",
+      "retrieval_impact": "Low edge density reduces multi-hop rescue rate from 60% to near 0%.",
+      "measured_value": 0.5139,
+      "target_threshold": ">= 0.4000 edges/note",
+      "status": "PASS",
+      "context": "RETRIEVAL_BOUNDARY"
+    },
+    {
+      "metric": "Dangling Edges (Verified Boundary)",
+      "dimension": "Graph Integrity",
+      "justification": "Links pointing outside the verified boundary fail resolution and waste expansion budget.",
+      "retrieval_impact": "Generates false graph expansions and increases multi-hop latency without recall gain.",
+      "measured_value": 230,
+      "target_threshold": "<= 50 dangling links",
+      "status": "WARN",
+      "context": "RETRIEVAL_BOUNDARY"
+    },
+    {
+      "metric": "Orphan Rate (Verified Boundary)",
+      "dimension": "Graph Connectivity",
+      "justification": "Notes with zero incoming or outgoing structural links cannot participate in multi-hop rescue.",
+      "retrieval_impact": "Orphan notes rely 100% on direct lexical match and receive 0 graph assistance.",
+      "measured_value": 0.7778,
+      "target_threshold": "<= 0.8000 (<= 80%)",
+      "status": "PASS",
+      "context": "RETRIEVAL_BOUNDARY"
+    },
+    {
+      "metric": "Duplicate Rate (Full Corpus)",
+      "dimension": "Storage Hygiene",
+      "justification": "Mass-generated template stubs inflate BM25 document frequencies and distort IDF scores.",
+      "retrieval_impact": "High duplicate count degrades term discrimination across the lexical index.",
+      "measured_value": 0.693,
+      "target_threshold": "<= 0.2000 (<= 20%)",
+      "status": "FAIL",
+      "context": "FULL_CORPUS"
+    },
+    {
+      "metric": "Review Backlog Ratio",
+      "dimension": "Lifecycle Governance",
+      "justification": "Notes in REVIEW cannot be served under security invariants I-001..I-012 until attested.",
+      "retrieval_impact": "633 notes are inaccessible to retrieval until human review is completed.",
+      "measured_value": 0.7563,
+      "target_threshold": "<= 0.5000 (<= 50%)",
+      "status": "WARN",
+      "context": "FULL_CORPUS"
+    },
+    {
+      "metric": "Unverified Ratio (Full Corpus)",
+      "dimension": "Security & Attestation",
+      "justification": "Unverified notes must not leak into production context packs.",
+      "retrieval_impact": "Protected boundary correctly drops these, but high ratio limits knowledge availability.",
+      "measured_value": 0.908,
+      "target_threshold": "<= 0.7000 (<= 70%)",
+      "status": "WARN",
+      "context": "FULL_CORPUS"
+    }
+  ]
+}

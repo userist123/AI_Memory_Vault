@@ -1,0 +1,178 @@
+{
+  "evaluation_name": "P1.7 Retrieval Evaluation & Integration Readiness Benchmark",
+  "timestamp_utc": "2026-09-05T13:24:08.636645+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "total_indexed_notes": 837,
+  "active_verified_notes": 72,
+  "execution_duration_sec": 9.191,
+  "infrastructure": {
+    "synapse_store_external": {
+      "status": "BLOCKED",
+      "synapses_json_exists": false,
+      "synapse_store_module_exists": false,
+      "missing_dependencies": [
+        "05_DATA\\synapses.json",
+        "cognitive_core\\synapse_store.py"
+      ],
+      "blocker_summary": "Synapse graph evidence is BLOCKED because 05_DATA/synapses.json and/or cognitive_core/synapse_store.py (owned by Claude Code) are not materialized on this branch. This explains edge_pairs_probed=0 in P1.1-B."
+    },
+    "dense_embedder": {
+      "status": "AVAILABLE",
+      "available": true,
+      "model": "nomic-embed-text"
+    }
+  },
+  "known_item_facade": {
+    "sampled_notes": 50,
+    "total_queries": 100,
+    "recall@1": 0.46,
+    "recall@5": 0.79,
+    "recall@10": 0.91,
+    "mrr": 0.6,
+    "misses": 9,
+    "median_latency_ms": 1.043,
+    "p95_latency_ms": 1.312,
+    "deterministic": true
+  },
+  "paraphrase_facade": {
+    "status": "OK",
+    "provider": "ollama",
+    "model": "qwen2.5-coder:3b",
+    "queries_requested": 15,
+    "queries_executed": 15,
+    "recall@1": 0.3333,
+    "recall@5": 0.6,
+    "recall@10": 0.6,
+    "mrr": 0.4556,
+    "misses": 6,
+    "median_latency_ms": 2.184
+  },
+  "multi_hop_structural_graph": {
+    "status": "AVAILABLE",
+    "total_probed": 600,
+    "direct_hits": 137,
+    "direct_recall": 0.2283,
+    "multi_hop_hits": 275,
+    "multi_hop_recall": 0.4583,
+    "rescued_count": 185,
+    "rescue_rate": 0.3083,
+    "false_expansions_count": 2375,
+    "net_gain": 138,
+    "mean_latency_direct_ms": 1.585,
+    "mean_latency_multi_hop_ms": 1.065,
+    "deterministic": true,
+    "modality_breakdown": {
+      "1-hop": {
+        "total": 61,
+        "direct_hits": 12,
+        "direct_recall": 0.1967,
+        "multi_hop_hits": 41,
+        "multi_hop_recall": 0.6721,
+        "rescued": 37,
+        "rescue_rate": 0.6066,
+        "net_gain": 29
+      },
+      "2-hop": {
+        "total": 58,
+        "direct_hits": 5,
+        "direct_recall": 0.0862,
+        "multi_hop_hits": 39,
+        "multi_hop_recall": 0.6724,
+        "rescued": 35,
+        "rescue_rate": 0.6034,
+        "net_gain": 34
+      },
+      "entity": {
+        "total": 481,
+        "direct_hits": 120,
+        "direct_recall": 0.2495,
+        "multi_hop_hits": 195,
+        "multi_hop_recall": 0.4054,
+        "rescued": 113,
+        "rescue_rate": 0.2349,
+        "net_gain": 75
+      }
+    }
+  },
+  "corpus_quality": {
+    "total_notes": 837,
+    "lifecycle_distribution": {
+      "ACTIVE": 79,
+      "REVIEW": 633,
+      "NONE": 125
+    },
+    "verification_distribution": {
+      "verified": 77,
+      "unverified": 740,
+      "inferred": 18,
+      "partially_verified": 2
+    },
+    "provenance_completeness": {
+      "notes_with_provenance": 712,
+      "total_notes": 837,
+      "completeness_ratio": 0.8507
+    },
+    "duplicates": {
+      "exact_duplicate_clusters": 11,
+      "exact_duplicate_notes": 591,
+      "exact_redundant_notes": 580,
+      "near_duplicate_pairs_jaccard_85": 89344,
+      "duplicate_rate": 0.693
+    },
+    "graph": {
+      "total_raw_wikilinks": 380,
+      "total_raw_relations": 70,
+      "resolvable_edges": 79,
+      "unresolvable_edges": 355,
+      "resolvable_edges_per_note": 0.0944,
+      "orphan_nodes": 797,
+      "orphan_ratio": 0.9522,
+      "connected_components_total": 799,
+      "giant_component_size": 36
+    }
+  },
+  "safe_cleanup_experiment": {
+    "baseline_notes": 837,
+    "clean_candidate_notes": 168,
+    "removed_redundant_notes": 669,
+    "queries_evaluated": 60,
+    "baseline_metrics": {
+      "recall@1": 0.65,
+      "recall@5": 0.85,
+      "recall@10": 0.9,
+      "mrr": 0.7203
+    },
+    "clean_candidate_metrics": {
+      "recall@1": 0.6333,
+      "recall@5": 0.8833,
+      "recall@10": 0.9333,
+      "mrr": 0.7241
+    },
+    "delta": {
+      "delta_recall@1": -0.0167,
+      "delta_recall@5": 0.0333,
+      "delta_recall@10": 0.0333,
+      "delta_mrr": 0.0038
+    },
+    "conclusion": "Removing unverified duplicate template clusters improves ranking precision (positive delta_mrr and delta_recall@10) without modifying canonical disk storage."
+  },
+  "integration_readiness": {
+    "facade_status": "PRODUCTION-FACADE-READY",
+    "production_wiring": "NOT DONE",
+    "contract_enforced": [
+      "BoundaryAdapter pre-invocation validation",
+      "Caller may narrow, never broaden",
+      "ACTIVE + verified security ceiling",
+      "Mandatory principal propagation",
+      "Defense-in-depth note sanitization",
+      "Deterministic sort: (-score, note.id)",
+      "Offset pagination transport with next_page_token",
+      "Strict read-only storage guarantee"
+    ],
+    "blockers_for_full_graph_production": [
+      "05_DATA/synapses.json is not materialized on this branch",
+      "cognitive_core/synapse_store.py is not merged on this branch",
+      "Integration wiring in MemoryController.search() is intentionally gated for P2"
+    ]
+  }
+}

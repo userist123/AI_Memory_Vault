@@ -1,0 +1,68 @@
+{
+  "timestamp_utc": "2026-09-05T13:33:22.426231+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "total_notes_indexed": 837,
+  "active_verified_notes": 60,
+  "modalities": [
+    {
+      "modality": "LEXICAL",
+      "sample_queries": 50,
+      "mean_latency_ms": 0.841,
+      "median_latency_ms": 0.745,
+      "p95_latency_ms": 1.256,
+      "p99_latency_ms": 1.446,
+      "avg_candidates_returned": 10.0
+    },
+    {
+      "modality": "GRAPH_1HOP",
+      "sample_queries": 50,
+      "mean_latency_ms": 0.763,
+      "median_latency_ms": 0.719,
+      "p95_latency_ms": 1.088,
+      "p99_latency_ms": 1.212,
+      "avg_candidates_returned": 11.06
+    },
+    {
+      "modality": "MULTI_HOP_2HOP_ENTITY",
+      "sample_queries": 50,
+      "mean_latency_ms": 1.213,
+      "median_latency_ms": 1.025,
+      "p95_latency_ms": 1.774,
+      "p99_latency_ms": 8.262,
+      "avg_candidates_returned": 17.54
+    },
+    {
+      "modality": "PARAPHRASE",
+      "sample_queries": 25,
+      "mean_latency_ms": 0.819,
+      "median_latency_ms": 0.779,
+      "p95_latency_ms": 1.03,
+      "p99_latency_ms": 1.055,
+      "avg_candidates_returned": 10.0
+    }
+  ],
+  "expansion_costs": {
+    "base_lexical_latency_ms": 0.745,
+    "one_hop_latency_ms": 0.719,
+    "one_hop_overhead_ms": -0.026,
+    "two_hop_latency_ms": 1.025,
+    "two_hop_overhead_ms": 0.28,
+    "entity_expansion_latency_ms": 1.025,
+    "entity_expansion_overhead_ms": 0.28,
+    "avg_candidates_added_1hop": 1.06,
+    "avg_candidates_added_2hop": 7.54
+  },
+  "pagination": {
+    "page_1_median_ms": 1.007,
+    "page_2_median_ms": 0.938,
+    "page_3_median_ms": 0.953,
+    "cursor_overhead_ms": -0.069
+  },
+  "observations": [
+    "Lexical median latency is sub-millisecond (0.745 ms), comfortably within the <5ms SLA.",
+    "Graph 1-hop expansion adds only -0.026 ms overhead while discovering +1.1 candidate notes.",
+    "Multi-hop (2-hop + entity) adds +0.280 ms overhead with P95 under 1.774 ms.",
+    "Cursor-based pagination validation is virtually zero-cost (-0.069 ms delta).",
+    "All 4 retrieval modes operate well within the real-time cognitive budget of the Council orchestrator."
+  ]
+}
