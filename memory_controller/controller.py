@@ -301,6 +301,8 @@ class MemoryController:
                 if not note: raise ValueError('Note not found')
                 if note['lifecycle'] not in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED, Lifecycle.REVIEW}: raise ValueError('Only RAW/CLASSIFIED/NORMALIZED/REVIEW notes can be reviewed')
                 if decision not in {'agree', 'approve', 'reject'}: raise ValueError('Decision must be approve or reject')
+                if not evaluate_lifecycle_mutation(note['lifecycle'], Lifecycle.REVIEW.value, mutation=LifecycleMutation.REVIEW, verification=note.get('verification')):
+                    raise ValueError(f"Invalid lifecycle transition from {note['lifecycle']} to {Lifecycle.REVIEW.value} for {LifecycleMutation.REVIEW.value}")
                 note['lifecycle'] = Lifecycle.REVIEW; self.storage.set(note_id, note); review_id = f"r{MemoryController._global_review_counter}"; MemoryController._global_review_counter += 1
                 self.storage.set(review_id, {'id': review_id, 'review': {'by': principal.value, 'decision': decision, 'comments': comments}}); self.cache.invalidate_by_event('memory_updated'); audit_event('review', principal, note_id, success=True, details={'decision': decision})
             except Exception as e: audit_event('review', principal, note_id, success=False, details={'decision': decision, 'error': str(e)}); raise
@@ -311,7 +313,8 @@ class MemoryController:
                 self._check_auth(principal, Operation.PROMOTE); check_path_traversal(note_id); note = self.storage.get(note_id)
                 if not note: raise ValueError('Note not found')
                 if note['lifecycle'] != Lifecycle.REVIEW: raise ValueError('Only REVIEW notes can be promoted')
-                if note.get('verification') != 'verified': raise ValueError('Only VERIFIED notes can be promoted to ACTIVE')
+                if not evaluate_lifecycle_mutation(note['lifecycle'], Lifecycle.ACTIVE.value, mutation=LifecycleMutation.PROMOTE, verification=note.get('verification')):
+                    raise ValueError('Only VERIFIED notes can be promoted to ACTIVE')
                 note['lifecycle'] = Lifecycle.ACTIVE; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); audit_event('promote', principal, note_id, success=True)
             except Exception as e: audit_event('promote', principal, note_id, success=False, details={'error': str(e)}); raise
 
@@ -359,6 +362,8 @@ class MemoryController:
                 if not note: raise ValueError('Note not found')
                 if not reason or not reason.strip(): raise ValueError('Archive requires a non-empty reason')
                 if note.get('lifecycle') not in {Lifecycle.REVIEW.value, Lifecycle.ACTIVE.value}: raise ValueError('Only REVIEW or ACTIVE notes can be archived')
+                if not evaluate_lifecycle_mutation(note['lifecycle'], Lifecycle.ARCHIVED.value, mutation=LifecycleMutation.ARCHIVE, verification=note.get('verification')):
+                    raise ValueError(f"Invalid lifecycle transition from {note['lifecycle']} to {Lifecycle.ARCHIVED.value} for {LifecycleMutation.ARCHIVE.value}")
                 note['lifecycle'] = Lifecycle.ARCHIVED; note['archive_reason'] = reason; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); audit_event('archive', principal, note_id, success=True, details={'reason': reason})
             except Exception as e: audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)}); raise
 
@@ -367,6 +372,8 @@ class MemoryController:
             try:
                 self._check_auth(principal, Operation.SUPERSEDE); check_path_traversal(old_id); check_path_traversal(new_id); self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
                 old_note = self.storage.get(old_id); new_note = self.storage.get(new_id); old_note_orig = old_note.copy(); new_note_orig = new_note.copy(); now_date = datetime.now(timezone.utc).date().isoformat()
+                if not evaluate_lifecycle_mutation(old_note['lifecycle'], Lifecycle.SUPERSEDED.value, mutation=LifecycleMutation.SUPERSEDE, verification=old_note.get('verification')):
+                    raise ValueError(f"Invalid lifecycle transition from {old_note['lifecycle']} to {Lifecycle.SUPERSEDED.value} for {LifecycleMutation.SUPERSEDE.value}")
                 old_note["lifecycle"] = Lifecycle.SUPERSEDED.value; old_note["superseded_by"] = new_id; old_note["updated"] = now_date
                 if not any(r.get("target_id") == new_id and r.get("relation") == "replaced_by" for r in old_note.get("relations", [])): old_note.setdefault("relations", []).append({"relation": "replaced_by", "target": new_note.get("type", "knowledge"), "target_id": new_id})
                 new_note["supersedes"] = old_id; new_note["updated"] = now_date
