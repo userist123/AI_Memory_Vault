@@ -8,8 +8,8 @@ mutations.
 """
 from __future__ import annotations
 
-import ast
 import argparse
+import ast
 from pathlib import Path
 
 from memory_controller.lifecycle_policy import Mutation, allowed_targets
@@ -23,6 +23,7 @@ POLICY_TRANSITIONS = {
         "ACTIVE", "RECONSOLIDATING", "SUPERSEDED", "ARCHIVED",
     }
     for target in allowed_targets(source, mutation=mutation)
+    if source != target
 }
 
 COMPATIBILITY_TRANSITIONS = {
@@ -44,9 +45,13 @@ def extract_controller_transitions(controller_text: str) -> set[tuple[str, str]]
     found: set[tuple[str, str]] = set()
     for node in ast.walk(tree):
         if isinstance(node, ast.Set):
-            values = [_lifecycle_name(item) for item in node.elts]
-            if len(values) == 2 and all(values):
-                found.add((values[0], values[1]))
+            for item in node.elts:
+                if not isinstance(item, ast.Tuple) or len(item.elts) != 2:
+                    continue
+                source = _lifecycle_name(item.elts[0])
+                target = _lifecycle_name(item.elts[1])
+                if source and target:
+                    found.add((source, target))
         if isinstance(node, ast.Dict):
             for key in node.keys:
                 if not isinstance(key, ast.Tuple) or len(key.elts) != 2:
