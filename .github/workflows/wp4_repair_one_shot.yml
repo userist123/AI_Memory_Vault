@@ -1,0 +1,45 @@
+name: WP4 indicator repair
+on:
+  push:
+    branches:
+      - luna/wp4-off-by-one-clean-20260905
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: ${{ github.event.head_commit.message != 'fix: correct indicator percentage boundary' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply minimal production fix
+        run: python - <<'PY'
+          from pathlib import Path
+          p=Path('xau_kinetic/financial_ingestion/indicators.py')
+          t=p.read_text(encoding='utf-8')
+          old='if len(closes) > abs(idx):'
+          new='if len(closes) >= abs(idx):'
+          if t.count(old)!=1: raise SystemExit(t.count(old))
+          p.write_text(t.replace(old,new),encoding='utf-8')
+          PY
+      - name: Add regression coverage
+        run: |
+          cat > xau_kinetic/tests/test_indicators_series_boundaries.py <<'PY'
+          import pandas as pd
+          import pytest
+          from xau_kinetic.financial_ingestion.indicators import compute_all_indicators
+          def _frame(length):
+              closes=[100.0+i for i in range(length)]
+              return pd.DataFrame({'Open':closes,'High':[x+1 for x in closes],'Low':[x-1 for x in closes],'Close':closes,'Volume':[1000]*length})
+          @pytest.mark.parametrize(('length','field','expected'),[(5,'var_sapt_pct',0.0),(6,'var_sapt_pct',5.0),(7,'var_sapt_pct',5.0),(8,'var_sapt_pct',5.0),(9,'var_sapt_pct',5.0),(10,'var_sapt_pct',5.0),(20,'var_luna_pct',0.0),(21,'var_luna_pct',20.0),(22,'var_luna_pct',20.0),(23,'var_luna_pct',20.0),(24,'var_luna_pct',20.0),(25,'var_luna_pct',20.0)])
+          def test_indicator_series_boundary_lengths(length,field,expected):
+              assert compute_all_indicators(_frame(length),name='boundary',ticker='TEST')[field]==expected
+          PY
+      - name: Run regression
+        run: python -m pytest xau_kinetic/tests/test_indicators_series_boundaries.py -q
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add xau_kinetic/financial_ingestion/indicators.py xau_kinetic/tests/test_indicators_series_boundaries.py
+          git commit -m 'fix: correct indicator percentage boundary'
+          git push
