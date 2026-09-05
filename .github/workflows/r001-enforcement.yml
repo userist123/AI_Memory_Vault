@@ -33,7 +33,7 @@ on:
       - 'pytest.ini'
       - 'requirements-memory-v6.txt'
       - '.gitleaks.toml'
-      - '.pre-commit-config.yml'
+      - '.pre-commit-config.yaml'
       - '.github/workflows/r001-enforcement.yml'
 
 permissions:
