@@ -7,6 +7,7 @@ import jsonschema
 from .financial_schema import FINANCIAL_NOTE_SCHEMA
 from .storage.sqlite_engine import SQLiteStorageEngine
 from .financial_search import MultiLayeredFinancialSearchEngine
+from lifecycle import policy as lifecycle_policy
 
 # Configuration: vector search disabled by default
 ENABLE_VECTOR_SEARCH = False
@@ -61,6 +62,23 @@ class FinancialQueryEngine:
             "confidence": note.get("confidence", "unknown"),
             "verification": note.get("verification", "unverified"),
         }
+        # This is a direct-to-storage creation path, so the canonical authority
+        # is consulted here rather than relying on MemoryController.propose().
+        # The lifecycle above is fixed at REVIEW; the gate exists so that value
+        # can never be widened without the policy agreeing.
+        _create_decision = lifecycle_policy.evaluate(
+            lifecycle_policy.TransitionRequest(
+                mutation=lifecycle_policy.Mutation.CREATE,
+                to_state=frontmatter["lifecycle"],
+                principal=lifecycle_policy.PrincipalRole.AI_AGENT,
+            )
+        )
+        if not _create_decision.allowed:
+            raise lifecycle_policy.LifecycleViolation(
+                f"Financial note ingestion cannot create lifecycle "
+                f"'{frontmatter['lifecycle']}' [policy: {_create_decision.reason}]"
+            )
+
         stored_note = {"id": note_id, "frontmatter": frontmatter, "content": note, **frontmatter}
         self.storage.set(note_id, stored_note)
         self.search_engine.index_note(stored_note)
