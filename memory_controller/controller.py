@@ -111,8 +111,12 @@ class MemoryController:
             new_lifecycle = Lifecycle(note.get('lifecycle'))
             if old_lifecycle != new_lifecycle:
                 transition_mutations = {
+                    (Lifecycle.RAW, Lifecycle.CLASSIFIED): LifecycleMutation.CLASSIFY,
+                    (Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED): LifecycleMutation.NORMALIZE,
                     (Lifecycle.NORMALIZED, Lifecycle.REVIEW): LifecycleMutation.REVIEW,
+                    (Lifecycle.REVIEW, Lifecycle.VERIFIED): LifecycleMutation.VERIFY,
                     (Lifecycle.REVIEW, Lifecycle.ACTIVE): LifecycleMutation.PROMOTE,
+                    (Lifecycle.VERIFIED, Lifecycle.ACTIVE): LifecycleMutation.PROMOTE,
                     (Lifecycle.ACTIVE, Lifecycle.RECONSOLIDATING): LifecycleMutation.RECONSOLIDATE_CHALLENGE,
                     (Lifecycle.VERIFIED, Lifecycle.RECONSOLIDATING): LifecycleMutation.RECONSOLIDATE_CHALLENGE,
                     (Lifecycle.RECONSOLIDATING, Lifecycle.REVIEW): LifecycleMutation.RECONSOLIDATE_RESOLVE,
@@ -121,30 +125,15 @@ class MemoryController:
                     (Lifecycle.ACTIVE, Lifecycle.SUPERSEDED): LifecycleMutation.SUPERSEDE,
                 }
                 mutation = transition_mutations.get((old_lifecycle, new_lifecycle))
-                if mutation is not None:
-                    if not evaluate_lifecycle_mutation(
-                        old_lifecycle,
-                        new_lifecycle,
-                        mutation=mutation,
-                        verification=note.get('verification'),
-                    ):
-                        raise ValueError(f"Invalid lifecycle transition from {old_lifecycle} to {new_lifecycle} for {mutation.value}")
-                    return
-
-                # Backward-compatible pipeline transitions are not represented
-                # by lifecycle mutation operations; preserve their existing
-                # validation semantics until they are promoted into the
-                # canonical policy in a separate architecture change.
-                compatibility_transitions = {
-                    (Lifecycle.RAW, Lifecycle.CLASSIFIED),
-                    (Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED),
-                    (Lifecycle.REVIEW, Lifecycle.VERIFIED),
-                    (Lifecycle.VERIFIED, Lifecycle.ACTIVE),
-                }
-                if (old_lifecycle, new_lifecycle) in compatibility_transitions:
-                    return
-
-                raise ValueError(f"Invalid transition from {old_lifecycle} to {new_lifecycle}")
+                if mutation is None:
+                    raise ValueError(f"Invalid transition from {old_lifecycle} to {new_lifecycle}")
+                if not evaluate_lifecycle_mutation(
+                    old_lifecycle,
+                    new_lifecycle,
+                    mutation=mutation,
+                    verification=note.get('verification'),
+                ):
+                    raise ValueError(f"Invalid lifecycle transition from {old_lifecycle} to {new_lifecycle} for {mutation.value}")
 
     def read(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
         try:
@@ -219,6 +208,7 @@ class MemoryController:
     def search(self, principal: Principal, query: str, page_size: int = 10, page_token: Optional[str] = None, lifecycles: Optional[List[Lifecycle]] = None, types: Optional[List[str]] = None) -> Dict[str, Any]:
         target_id = "unknown_query"
         try:
+            self._check_auth(principal, Operation.SEARCH)
             disclosure_level = getattr(self, 'default_disclosure', 'metadata')
             check_query_size(query); sanitized = sanitize_query(query)
             query_fp = hashlib.sha256(sanitized.encode()).hexdigest(); target_id = query_fp
@@ -242,7 +232,7 @@ class MemoryController:
             notes = sorted(notes, key=lambda n: score_map.get(n.get('id'), 0), reverse=True)
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata': disclosed = pd.metadata_only(notes)
-            elif disclosure_level == 'snippet': disclosed = pd.snippet(notes)
+            elif disclosure_level == 'snippet': disclosed = pd.snippet(notes, sanitized)
             elif disclosure_level == 'sections': disclosed = pd.sections(notes, sanitized)
             else: disclosed = pd.full_document(notes)
             total = len(disclosed); end = min(offset + page_size, total); page_results = disclosed[offset:end]; next_token = None
