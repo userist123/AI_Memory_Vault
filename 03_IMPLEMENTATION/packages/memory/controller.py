@@ -14,6 +14,10 @@ from .authorizer import Authorizer, DefaultAuthorizer, Principal, Operation
 from .validation.schema import validate_frontmatter
 from .validation.provenance import validate_provenance
 from .validation.supersession import SupersessionEnforcer
+
+# Canonical lifecycle authority -- the single source of truth for every
+# lifecycle transition in the runtime. See lifecycle/policy.py.
+from . import policy as lifecycle_policy
 from .audit.logger import audit_event
 from .cache import Cache
 
@@ -116,17 +120,20 @@ class MemoryController:
             old_lifecycle = Lifecycle(old_note.get('lifecycle'))
             new_lifecycle = Lifecycle(note.get('lifecycle'))
             if old_lifecycle != new_lifecycle:
-                # Basic transition rules
-                allowed = {
-                    Lifecycle.RAW: [Lifecycle.CLASSIFIED],
-                    Lifecycle.CLASSIFIED: [Lifecycle.NORMALIZED],
-                    Lifecycle.NORMALIZED: [Lifecycle.REVIEW],
-                    Lifecycle.REVIEW: [Lifecycle.VERIFIED],
-                    Lifecycle.VERIFIED: [Lifecycle.ACTIVE],
-                    Lifecycle.ACTIVE: [Lifecycle.SUPERSEDED, Lifecycle.ARCHIVED]
-                }
-                if new_lifecycle not in allowed.get(old_lifecycle, []):
-                    raise ValueError(f"Invalid transition from {old_lifecycle} to {new_lifecycle}")
+                # Structural rewrite of the lifecycle field with no owning
+                # operation. The transition table lives in the canonical
+                # authority (lifecycle/policy.py), never here.
+                _structural = lifecycle_policy.evaluate(
+                    lifecycle_policy.TransitionRequest(
+                        mutation=lifecycle_policy.Mutation.STRUCTURAL_REWRITE,
+                        from_state=old_lifecycle,
+                        to_state=new_lifecycle,
+                        principal=lifecycle_policy.PrincipalRole.ADMIN,
+                        verification=note.get('verification'),
+                    )
+                )
+                if not _structural.allowed:
+                    raise ValueError(_structural.reason)
 
     def read(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
         try:
@@ -451,8 +458,22 @@ class MemoryController:
                 if isinstance(lifecycle_val, Lifecycle):
                     lifecycle_val = lifecycle_val.value
                     note['lifecycle'] = lifecycle_val
-                if principal == Principal.AI_AGENT and lifecycle_val not in _PERMITTED_CREATION_LIFECYCLES:
-                    raise ValueError(f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW.")
+                # Canonical lifecycle authority (lifecycle/policy.py) is the single
+                # source of truth for creation states. The legacy message text is
+                # preserved so existing callers/tests keep matching on it.
+                _creation_decision = lifecycle_policy.evaluate(
+                    lifecycle_policy.TransitionRequest(
+                        mutation=lifecycle_policy.Mutation.CREATE,
+                        to_state=lifecycle_val,
+                        principal=principal,
+                    )
+                )
+                if not _creation_decision.allowed:
+                    raise ValueError(
+                        f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. "
+                        f"Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW. "
+                        f"[policy: {_creation_decision.reason}]"
+                    )
 
                 # Force server timestamps if not explicitly provided
                 note['created'] = note_data.get('created', now_date)
@@ -480,8 +501,20 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
-                if note['lifecycle'] not in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED, Lifecycle.REVIEW}:
-                    raise ValueError('Only RAW/CLASSIFIED/NORMALIZED/REVIEW notes can be reviewed')
+                _review_decision = lifecycle_policy.evaluate(
+                    lifecycle_policy.TransitionRequest(
+                        mutation=lifecycle_policy.Mutation.REVIEW,
+                        from_state=note['lifecycle'],
+                        to_state=Lifecycle.REVIEW,
+                        principal=principal,
+                        verification=note.get('verification'),
+                    )
+                )
+                if not _review_decision.allowed:
+                    raise ValueError(
+                        f'Only RAW/CLASSIFIED/NORMALIZED/REVIEW notes can be reviewed '
+                        f'[policy: {_review_decision.reason}]'
+                    )
                 if decision not in {'agree', 'approve', 'reject'}:
                     # Keep original strict set but allow 'agree' for compatibility
                     raise ValueError('Decision must be approve or reject')
@@ -510,8 +543,19 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
-                if note['lifecycle'] != Lifecycle.REVIEW:
-                    raise ValueError('Only REVIEW notes can be promoted')
+                _promote_decision = lifecycle_policy.evaluate(
+                    lifecycle_policy.TransitionRequest(
+                        mutation=lifecycle_policy.Mutation.PROMOTE,
+                        from_state=note['lifecycle'],
+                        to_state=Lifecycle.ACTIVE,
+                        principal=principal,
+                        verification=note.get('verification'),
+                    )
+                )
+                if not _promote_decision.allowed:
+                    raise ValueError(
+                        f'Only REVIEW notes can be promoted [policy: {_promote_decision.reason}]'
+                    )
                 note['lifecycle'] = Lifecycle.ACTIVE
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
@@ -631,11 +675,28 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
+                _archive_decision = lifecycle_policy.evaluate(
+                    lifecycle_policy.TransitionRequest(
+                        mutation=lifecycle_policy.Mutation.ARCHIVE,
+                        from_state=note.get('lifecycle'),
+                        to_state=Lifecycle.ARCHIVED,
+                        principal=principal,
+                        verification=note.get('verification'),
+                    )
+                )
+                if not _archive_decision.allowed:
+                    raise ValueError(f'Archive denied [policy: {_archive_decision.reason}]')
+                previous_lifecycle = note.get('lifecycle')
+                previous_lifecycle = getattr(previous_lifecycle, 'value', previous_lifecycle)
                 note['lifecycle'] = Lifecycle.ARCHIVED
                 note['archive_reason'] = reason
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
-                audit_event('archive', principal, note_id, success=True, details={'reason': reason})
+                audit_event('archive', principal, note_id, success=True, details={
+                    'reason': reason,
+                    'previous_lifecycle': previous_lifecycle,
+                    'new_lifecycle': Lifecycle.ARCHIVED.value,
+                })
             except Exception as e:
                 audit_event('archive', principal, note_id, success=False, details={'reason': reason, 'error': str(e)})
                 raise
@@ -652,11 +713,24 @@ class MemoryController:
                 
                 old_note = self.storage.get(old_id)
                 new_note = self.storage.get(new_id)
-                
+
+                # Canonical lifecycle authority gates the predecessor's retirement.
+                _supersede_decision = lifecycle_policy.evaluate(
+                    lifecycle_policy.TransitionRequest(
+                        mutation=lifecycle_policy.Mutation.SUPERSEDE,
+                        from_state=old_note.get("lifecycle"),
+                        to_state=Lifecycle.SUPERSEDED,
+                        principal=principal,
+                        verification=old_note.get("verification"),
+                    )
+                )
+                if not _supersede_decision.allowed:
+                    raise ValueError(f"Supersession denied [policy: {_supersede_decision.reason}]")
+
                 # Keep original state for atomic rollback on failure
                 old_note_orig = old_note.copy()
                 new_note_orig = new_note.copy()
-                
+
                 now_date = datetime.now(timezone.utc).date().isoformat()
                 
                 # Prepare updates for OLD note (only allowed field modifications to keep content intact)
