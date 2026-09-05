@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+  "commit_sha": "32889fdadbcdd069af360e246b68c4f4a05e4813",
+  "release_status": "BLOCKED",
+  "corpus_state": "CORPUS_MURDAR",
+  "benchmark_state": {
+    "corpus_label": "CORPUS_MURDAR",
+    "retrieval_ab_demo": "07_EVALUATION/retrieval_ab_p12_demo.json",
+    "clean_clone_benchmark": "ci-evidence/clean_clone_benchmark.json",
+    "note": "All retrieval benchmarks are stamped CORPUS_MURDAR because canonical corpus deduplication/archival has only been executed in dry-run mode (572 duplicate candidates remain on disk)."
+  },
+  "test_baseline": {
+    "total_collected": 989,
+    "passed": 987,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 2,
+    "working_tree_drift": "48 uncommitted test cases + promote verification fix from Codex"
+  },
+  "security_suite": {
+    "manifest_ref": "07_EVALUATION/ci_evidence/security-test-manifest.json",
+    "total_invariants": 15,
+    "verified_invariants": [
+      "I-001",
+      "I-002",
+      "I-003",
+      "I-004",
+      "I-005",
+      "I-006",
+      "I-007",
+      "I-008",
+      "I-009",
+      "I-010",
+      "I-011",
+      "I-012",
+      "I-RETRIEVAL",
+      "I-PAGINATION",
+      "P16-P18"
+    ],
+    "total_tests": 49,
+    "status": "PASS"
+  },
+  "known_blockers": [
+    {
+      "id": "BLOCK-001",
+      "name": "Uncommitted Codex Runtime & Test Fixes",
+      "owner": "CODEX",
+      "description": "Codex patched promote verification contract (test_authorization.py, test_audit.py, test_cache.py, test_milestone3_empirical_challenge.py), SQLite teardown close in test_query_raw_boundary.py, and added 4 security test modules, but these remain uncommitted in the working tree.",
+      "status": "BLOCKED \u2014 CODEX"
+    },
+    {
+      "id": "BLOCK-002",
+      "name": "Corpus Hygiene Pending Human Approval",
+      "owner": "ANTIGRAVITY / HUMAN",
+      "description": "P0.3 vault hygiene has only been run in dry-run report mode (CORPUS_MURDAR). Actual note archival requires user/owner approval before committing changes to canonical vault.",
+      "status": "READY FOR REVIEW (DRY-RUN COMPLETE)"
+    }
+  ],
+  "experimental_components": [
+    {
+      "component": "cognitive_core/brain_pack.py",
+      "owner": "CLAUDE_CODE",
+      "status": "EXPERIMENTAL",
+      "description": "Prototype compiled-context artifact builder, evaluated offline with synthetic traces, not wired into MemoryController.search()."
+    },
+    {
+      "component": "cognitive_core/synapse_store.py",
+      "owner": "CLAUDE_CODE",
+      "status": "EXPERIMENTAL",
+      "description": "Prototype synapse graph weight engine (0..1.5 weight contract, closed relation enum)."
+    },
+    {
+      "component": "cognitive_core/hybrid_retrieval.py",
+      "owner": "CLAUDE_CODE",
+      "status": "EXPERIMENTAL",
+      "description": "RRF fusion of BM25, Jaccard, entity matching, and graph expansion."
+    },
+    {
+      "component": "30_SCRIPTS/knowledge/plasticity_update.py",
+      "owner": "CLAUDE_CODE",
+      "status": "EXPERIMENTAL",
+      "description": "Plasticity adapter prototype requiring verified execution provenance."
+    },
+    {
+      "component": "30_SCRIPTS/knowledge/edge_proposer.py",
+      "owner": "CLAUDE_CODE",
+      "status": "EXPERIMENTAL",
+      "description": "Fail-closed relation proposer with 8-item enum validation."
+    }
+  ],
+  "ci_evidence": {
+    "summary_json": "ci-evidence/summary.json",
+    "summary_md": "ci-evidence/summary.md",
+    "collection_txt": "ci-evidence/collection.txt",
+    "security_manifest": "07_EVALUATION/ci_evidence/security-test-manifest.json",
+    "clean_clone_benchmark": "ci-evidence/clean_clone_benchmark.json"
+  }
+}

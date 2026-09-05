@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0.0",
+  "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+  "title": "Canonical Memory Security Test Manifest (P0-001..P0-015, I-001..I-012, I-RETRIEVAL, P16-P18)",
+  "invariants": [
+    {
+      "invariant": "I-001",
+      "designation": "P0-001 / P0-005",
+      "name": "AI Self-Verification Gated",
+      "purpose": "Prohibits Principal.AI_AGENT from proposing notes with verification='verified' or escalating verification via update()",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_001_ai_cannot_propose_verified",
+        "memory_controller/tests/test_security_hardening.py::test_p0_005_ai_cannot_update_verification_to_verified",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_propose_verified_strict_rejection_and_zero_writes",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_update_escalate_verification_strict_rejection"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-002",
+      "designation": "P0-002 / P0-003",
+      "name": "Privileged Provenance Gated",
+      "purpose": "Prohibits Principal.AI_AGENT from forging privileged source_types (user, official, experience, import)",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_002_ai_cannot_claim_official_provenance",
+        "memory_controller/tests/test_security_hardening.py::test_p0_003_ai_cannot_claim_user_provenance",
+        "memory_controller/tests/test_security_hardening.py::test_p0_additional_ai_prohibited_provenance_types",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_forge_privileged_provenance_types"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-003",
+      "designation": "P0-004",
+      "name": "Creation Lifecycle Restricted",
+      "purpose": "Restricts Principal.AI_AGENT creation lifecycles to {RAW, REVIEW, NORMALIZED, CLASSIFIED}; direct creation into ACTIVE/VERIFIED/SUPERSEDED/ARCHIVED is rejected",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_004_ai_cannot_inject_active_lifecycle_at_creation",
+        "memory_controller/tests/test_security_hardening.py::test_p0_ai_prohibited_creation_lifecycles",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_propose_active_lifecycle_strict_rejection"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-004",
+      "designation": "P0-010 / P0-011",
+      "name": "Attestation Authorization",
+      "purpose": "Restricts controller.attest() to Principal.HUMAN and Principal.ADMIN; AI_AGENT receives PermissionError",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_010_human_attestation",
+        "memory_controller/tests/test_security_hardening.py::test_p0_011_admin_attestation_and_ai_agent_denied",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_ai_attest_unauthorized_permission_error",
+        "memory_controller/tests/test_attest_security.py::test_ai_agent_cannot_call_attest_at_all"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-005",
+      "designation": "P0-006",
+      "name": "Provenance Immutability",
+      "purpose": "Guarantees provenance.source_type is immutable across all principals post-creation",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_006_provenance_source_type_immutable",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_provenance_source_type_post_creation_immutability"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-006",
+      "designation": "P0-007",
+      "name": "Lifecycle Immutability on Update",
+      "purpose": "Prohibits direct mutation of the lifecycle field via controller.update(); state transitions require dedicated verbs",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_007_lifecycle_immutable_on_update",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_lifecycle_field_immutability_on_update"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-007",
+      "designation": "P0-008",
+      "name": "Direct Controller Bypass Blocked",
+      "purpose": "Blocks unauthenticated controller attribute mutation and prevents execution of raw bypass attempts",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_008_direct_controller_attack_blocked"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-008",
+      "designation": "P0-009 / BRAIN-13",
+      "name": "Reconciliation Boundary Protection",
+      "purpose": "Guards human-verified notes against automated modification, archival, or supersession without human approval",
+      "required": true,
+      "owner": "COGNITIVE_CORE",
+      "test_paths": [
+        "cognitive_core/tests/test_reconciliation_boundary.py::test_reconciliation_boundary_blocks_verified",
+        "cognitive_core/tests/test_reconciliation_boundary.py::test_reconciliation_boundary_allows_unverified",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_tool_router_reconciliation_boundary_blocks_unauthorized_mutations",
+        "memory_controller/tests/test_tool_router_reconciliation_boundary.py::test_admin_cannot_archive_verified_review_memory"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-009",
+      "designation": "P0-012 / AUDIT",
+      "name": "Tamper-Evident SHA-256 Chaining",
+      "purpose": "Verifies cryptographic hash chaining and corruption/tamper detection in the audit logger",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_audit.py::test_audit_hash_chaining_and_tamper_detection",
+        "memory_controller/tests/test_audit.py::test_audit_tamper_prev_hash_and_deletion",
+        "memory_controller/tests/test_milestone3_empirical_challenge.py::test_audit_log_sha256_chain_integrity_under_attack_barrage"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-010",
+      "designation": "P0-013 / P0-014",
+      "name": "Storage Persistence & Atomic Rollback",
+      "purpose": "Guarantees 0 disk/database artifacts on rejected operations, atomic rollbacks on failure, and SQLite WAL consistency",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_013_atomic_non_persistence",
+        "memory_controller/tests/test_security_hardening.py::test_p0_014_restart_preserves_attestation",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_file_storage_zero_disk_artifacts_on_rejected_proposals",
+        "memory_controller/tests/test_adversarial_p0_p15_invariants.py::test_attack_multi_threaded_adversarial_barrage_zero_partial_writes",
+        "memory_controller/tests/test_sqlite_storage.py::test_sqlite_wal_pragmas_and_checkpoint",
+        "memory_controller/tests/test_sqlite_storage.py::test_sqlite_atomic_rollback_on_failure"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-011",
+      "designation": "P0-015",
+      "name": "Supersession Does Not Transfer Trust",
+      "purpose": "Ensures superseding a verified note does not automatically transfer verified status to new note",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_security_hardening.py::test_p0_015_supersession_does_not_transfer_trust",
+        "memory_controller/tests/test_supersession_phase43.py::test_supersession_self_and_cycles_rejected"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-012",
+      "designation": "CACHE / MUTATION",
+      "name": "Review Boundary Invalidation",
+      "purpose": "Ensures mutation of drafts invalidates cached queries and prior reviews",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_cache.py::test_mutation_invalidation_review_promote",
+        "memory_controller/tests/test_cache.py::test_mutation_invalidation_propose",
+        "memory_controller/tests/test_cache.py::test_mutation_invalidation_update"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-RETRIEVAL",
+      "designation": "RETRIEVAL_BOUNDARY",
+      "name": "Unified Secure Retrieval Invariant",
+      "purpose": "All memory access routes through MemoryController.search() / authorized recall CLI; RAW notes and direct unauthenticated scans strictly prohibited",
+      "required": true,
+      "owner": "COGNITIVE_CORE / CODEX",
+      "test_paths": [
+        "cognitive_core/tests/test_secure_recall_cli.py::test_search_markdown_vault_p0_p15_raw_lifecycle_excluded",
+        "cognitive_core/tests/test_secure_recall_cli.py::test_recall_cli_cli_subprocess",
+        "memory_controller/tests/test_query_raw_boundary.py::test_query_never_exposes_raw_notes_from_in_memory_storage",
+        "memory_controller/tests/test_query_raw_boundary.py::test_query_raw_boundary_holds_for_sqlite_storage",
+        "memory_controller/tests/test_raw_imports.py::test_raw_note_excluded_from_search"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "I-PAGINATION",
+      "designation": "TOKEN_SECURITY",
+      "name": "Signed Pagination Token Boundaries",
+      "purpose": "HMAC-SHA256 signed pagination tokens cannot be tampered with, reused across queries/principals, or forged",
+      "required": true,
+      "owner": "CODEX",
+      "test_paths": [
+        "memory_controller/tests/test_pagination_token_bounds.py::test_decode_rejects_oversized_token_before_parsing",
+        "memory_controller/tests/test_pagination_token_bounds.py::test_decode_requires_string_token",
+        "memory_controller/tests/test_pagination_token_bounds.py::test_decode_still_requires_hmac_secret",
+        "memory_controller/tests/test_security_matrix_gaps.py::TestPaginationTokenMalformedInput::test_tampered_signature_rejected"
+      ],
+      "status": "PASS"
+    },
+    {
+      "invariant": "P16-P18",
+      "designation": "HARDWARE_FORENSICS",
+      "name": "Hardware Telemetry & Forensics Invariants",
+      "purpose": "P16 hardware telemetry immutability (VID/PID/Serial/Timestamp), P17 friendly name isolation, P18 audit chain linking",
+      "required": true,
+      "owner": "CODEX / FORENSICS",
+      "test_paths": [
+        "cognitive_core/tests/test_protected_core_boundaries.py::test_ast_actual_usage_telemetry_structure",
+        "cognitive_core/tests/test_protected_core_boundaries.py::test_actual_usage_telemetry_signatures"
+      ],
+      "status": "PASS"
+    }
+  ]
+}

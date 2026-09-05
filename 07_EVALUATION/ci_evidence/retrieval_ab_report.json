@@ -1,0 +1,158 @@
+{
+  "generated": "2026-09-05T11:02:52+00:00",
+  "corpus_label": "CORPUS_MURDAR",
+  "corpus_label_note": "self-declared by the caller via --corpus-label; this script does not verify P0.3 hygiene status itself",
+  "notes_indexed": 839,
+  "sampled_notes": 150,
+  "synapse_stats": {
+    "edges": 18,
+    "edges_strong": 0,
+    "edges_weak": 18,
+    "nodes_with_edges": 12,
+    "mean_out_degree": 1.5
+  },
+  "dense_status": "DENSE_PROVIDER_UNAVAILABLE",
+  "dense_ablation": {
+    "verdict": "DENSE NOT JUSTIFIED",
+    "reason": "Dense provider unavailable (fail-closed, no synthetic fallback)",
+    "delta_mrr": 0.0,
+    "delta_recall@10": 0.0
+  },
+  "graph_ablation": {
+    "retrieval_only": 186,
+    "graph_rescue": 0,
+    "graph_induced": 0,
+    "false_expansions": 114,
+    "net_gain": 0
+  },
+  "known_item": {
+    "jaccard": {
+      "recall@1": 0.5167,
+      "recall@5": 0.6167,
+      "recall@10": 0.6433,
+      "mrr": 0.5589,
+      "misses": 107,
+      "queries": 300,
+      "median_latency_ms": 117.201,
+      "p95_latency_ms": 129.685
+    },
+    "bm25": {
+      "recall@1": 0.61,
+      "recall@5": 0.65,
+      "recall@10": 0.6667,
+      "mrr": 0.6297,
+      "misses": 100,
+      "queries": 300,
+      "median_latency_ms": 1.4,
+      "p95_latency_ms": 3.68
+    },
+    "entity": {
+      "recall@1": 0.0767,
+      "recall@5": 0.14,
+      "recall@10": 0.16,
+      "mrr": 0.1039,
+      "misses": 252,
+      "queries": 300,
+      "median_latency_ms": 0.541,
+      "p95_latency_ms": 0.613
+    },
+    "lexical_rrf": {
+      "recall@1": 0.51,
+      "recall@5": 0.59,
+      "recall@10": 0.62,
+      "mrr": 0.5417,
+      "misses": 114,
+      "queries": 300,
+      "median_latency_ms": 2.112,
+      "p95_latency_ms": 5.223
+    },
+    "dense": {
+      "status": "DENSE_PROVIDER_UNAVAILABLE",
+      "note": "Dense provider offline; fail-closed."
+    },
+    "lexical_dense_rrf": {
+      "status": "DENSE_PROVIDER_UNAVAILABLE",
+      "note": "Dense provider offline; fail-closed."
+    },
+    "graph": {
+      "recall@1": 0.51,
+      "recall@5": 0.59,
+      "recall@10": 0.62,
+      "mrr": 0.5417,
+      "misses": 114,
+      "queries": 300,
+      "median_latency_ms": 2.177,
+      "p95_latency_ms": 5.502
+    }
+  },
+  "entity_heavy": {
+    "jaccard": {
+      "recall@1": 0.1074,
+      "recall@5": 0.2349,
+      "recall@10": 0.2953,
+      "mrr": 0.1699,
+      "misses": 105,
+      "queries": 149,
+      "median_latency_ms": 114.987,
+      "p95_latency_ms": 130.352
+    },
+    "bm25": {
+      "recall@1": 0.2148,
+      "recall@5": 0.2886,
+      "recall@10": 0.2953,
+      "mrr": 0.2451,
+      "misses": 105,
+      "queries": 149,
+      "median_latency_ms": 0.634,
+      "p95_latency_ms": 0.824
+    },
+    "entity": {
+      "recall@1": 0.255,
+      "recall@5": 0.302,
+      "recall@10": 0.302,
+      "mrr": 0.2746,
+      "misses": 104,
+      "queries": 149,
+      "median_latency_ms": 0.328,
+      "p95_latency_ms": 0.399
+    },
+    "lexical_rrf": {
+      "recall@1": 0.2282,
+      "recall@5": 0.2886,
+      "recall@10": 0.2953,
+      "mrr": 0.2582,
+      "misses": 105,
+      "queries": 149,
+      "median_latency_ms": 1.138,
+      "p95_latency_ms": 1.826
+    },
+    "dense": {
+      "status": "DENSE_PROVIDER_UNAVAILABLE",
+      "note": "Dense provider offline; fail-closed."
+    },
+    "lexical_dense_rrf": {
+      "status": "DENSE_PROVIDER_UNAVAILABLE",
+      "note": "Dense provider offline; fail-closed."
+    },
+    "graph": {
+      "recall@1": 0.2282,
+      "recall@5": 0.2886,
+      "recall@10": 0.2953,
+      "mrr": 0.2582,
+      "misses": 105,
+      "queries": 149,
+      "median_latency_ms": 1.077,
+      "p95_latency_ms": 1.344
+    }
+  },
+  "paraphrase": {
+    "status": "NOT_REQUESTED"
+  },
+  "multi_hop": {
+    "edge_pairs_probed": 8,
+    "reachable_lexically": 8,
+    "reachable_only_via_graph": 0,
+    "unreachable": 0,
+    "graph_added_value_rate": 0.0
+  }
+}

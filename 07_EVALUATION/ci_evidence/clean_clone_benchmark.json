@@ -1,0 +1,20 @@
+{
+  "clone_duration_seconds": 22.69,
+  "install_check_duration_seconds": 0.48,
+  "collection_duration_seconds": 3.3,
+  "test_duration_seconds": 53.72,
+  "total_duration_seconds": 80.19,
+  "tests_collected": 813,
+  "collection_errors": 9,
+  "passed": 795,
+  "failed": 16,
+  "skipped": 2,
+  "errors": 4,
+  "status": "FAIL",
+  "manifest_hash": "ecfd4cc44e2f7b5ee2f8340651fbc25a0457aeff5d99b4117855d396c4afe654",
+  "evidence_artifacts": [
+    "collection.txt",
+    "summary.json",
+    "summary.md"
+  ]
+}
