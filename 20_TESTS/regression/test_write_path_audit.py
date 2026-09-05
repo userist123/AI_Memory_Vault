@@ -45,9 +45,15 @@ def test_write_path_audit_finds_common_filesystem_mutators(tmp_path):
         "    Path(path).write_text('x')\n"
         "    Path(path).write_bytes(b'x')\n"
         "    Path(path).unlink()\n"
+        "    Path(path).rmdir()\n"
         "    os.remove(path)\n"
         "    os.unlink(path)\n"
-        "    shutil.move(path, path)\n",
+        "    os.rmdir(path)\n"
+        "    shutil.copy(path, path)\n"
+        "    shutil.copy2(path, path)\n"
+        "    shutil.copyfile(path, path)\n"
+        "    shutil.move(path, path)\n"
+        "    shutil.rmtree(path)\n",
         encoding="utf-8",
     )
 
@@ -57,10 +63,32 @@ def test_write_path_audit_finds_common_filesystem_mutators(tmp_path):
         "Path.write_text",
         "Path.write_bytes",
         "Path.unlink",
+        "Path.rmdir",
         "os.remove",
         "os.unlink",
+        "os.rmdir",
+        "shutil.copy",
+        "shutil.copy2",
+        "shutil.copyfile",
         "shutil.move",
+        "shutil.rmtree",
     ]
+    assert all(item.classification == "FILE_WRITE" for item in findings)
+
+
+def test_write_path_audit_finds_generic_file_writes(tmp_path):
+    module = _load_module()
+    source = tmp_path / "candidate.py"
+    source.write_text(
+        "def f(stream, lines):\n"
+        "    stream.write('x')\n"
+        "    stream.writelines(lines)\n",
+        encoding="utf-8",
+    )
+
+    findings = module.audit(tmp_path)
+
+    assert [item.expression for item in findings] == ["stream.write", "stream.writelines"]
     assert all(item.classification == "FILE_WRITE" for item in findings)
 
 
