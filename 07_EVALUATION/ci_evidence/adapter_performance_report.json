@@ -1,0 +1,28 @@
+{
+  "timestamp_utc": "2026-09-05T13:39:48.521558+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "facade_direct": {
+    "arm": "Facade Direct",
+    "sample_queries": 50,
+    "mean_ms": 0.816,
+    "median_ms": 0.789,
+    "p95_ms": 1.138,
+    "p99_ms": 1.384
+  },
+  "adapter_layered": {
+    "arm": "Adapter + Facade",
+    "sample_queries": 50,
+    "mean_ms": 0.848,
+    "median_ms": 0.793,
+    "p95_ms": 1.196,
+    "p99_ms": 1.701
+  },
+  "overhead": {
+    "absolute_overhead_ms": 0.004,
+    "percentage_overhead": 0.51,
+    "target_threshold": "<= 10.0%",
+    "status": "PASS"
+  },
+  "queries_evaluated": 50,
+  "verdict": "PASS"
+}

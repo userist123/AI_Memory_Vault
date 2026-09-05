@@ -20,7 +20,7 @@ _CANONICAL_SCHEMA = {
             "lesson", "preference", "resource", "hypothesis", "system", "core", "index"
         ]},
         "lifecycle": {"type": "string", "enum": [
-            "RAW", "CLASSIFIED", "NORMALIZED", "REVIEW", "VERIFIED", "ACTIVE", "SUPERSEDED", "ARCHIVED"
+            "RAW", "CLASSIFIED", "NORMALIZED", "REVIEW", "RECONSOLIDATING", "VERIFIED", "ACTIVE", "SUPERSEDED", "ARCHIVED"
         ]},
         "category": {"type": "string"},
         "tags": {"type": "array", "items": {"type": "string"}},

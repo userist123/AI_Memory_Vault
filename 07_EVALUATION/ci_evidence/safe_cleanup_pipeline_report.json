@@ -1,0 +1,105 @@
+{
+  "timestamp_utc": "2026-09-05T13:32:03.390878+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "baseline_metrics": {
+    "total_notes": 837,
+    "active_verified_notes": 72,
+    "exact_duplicate_redundant": 580,
+    "near_duplicate_pairs": 89344,
+    "template_stub_count": 52,
+    "dangling_links_count": 442,
+    "orphan_count": 804,
+    "edge_density": 0.0944,
+    "known_item_recall_at_1": 0.5333,
+    "known_item_recall_at_10": 0.9667,
+    "known_item_mrr": 0.7048,
+    "graph_rescue_rate": 0.2808,
+    "median_latency_ms": 0.927,
+    "p95_latency_ms": 1.264
+  },
+  "post_cleanup_metrics": {
+    "total_notes": 224,
+    "active_verified_notes": 60,
+    "exact_duplicate_redundant": 0,
+    "near_duplicate_pairs": 7,
+    "template_stub_count": 0,
+    "dangling_links_count": 379,
+    "orphan_count": 195,
+    "edge_density": 0.3259,
+    "known_item_recall_at_1": 0.5667,
+    "known_item_recall_at_10": 1.0,
+    "known_item_mrr": 0.7428,
+    "graph_rescue_rate": 0.2852,
+    "median_latency_ms": 0.392,
+    "p95_latency_ms": 0.762
+  },
+  "delta_metrics": {
+    "delta_total_notes": -613,
+    "delta_redundant_duplicates": -580,
+    "delta_template_stubs": -52,
+    "delta_dangling_links": -63,
+    "delta_edge_density": 0.2315,
+    "delta_recall_at_10": 0.0333,
+    "delta_mrr": 0.038,
+    "delta_rescue_rate": 0.0044,
+    "delta_median_latency_ms": -0.535
+  },
+  "cleanup_actions": [
+    {
+      "action_name": "Duplicate Suppression",
+      "description": "Suppresses redundant identical body notes, retaining canonical primary instance.",
+      "candidates_identified": 580,
+      "candidate_sample_ids": [
+        "22222222-2222-4222-a222-222222222222",
+        "ca940601-808d-4632-9c7c-5c3052776a56",
+        "r2",
+        "r3",
+        "r4"
+      ],
+      "notes_removed": 580,
+      "notes_modified": 0
+    },
+    {
+      "action_name": "Template Stub Filtering",
+      "description": "Removes unhydrated policy lesson stubs and blank template fixtures.",
+      "candidates_identified": 52,
+      "candidate_sample_ids": [
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        "11111111-1111-4111-a111-111111111111",
+        "22222222-2222-4222-a222-222222222222",
+        "6105b902-608d-42d1-b08e-d081d5dd3b87",
+        "7a0b3d7c-365c-4946-9211-e24e380ba1b1"
+      ],
+      "notes_removed": 33,
+      "notes_modified": 0
+    },
+    {
+      "action_name": "Dangling Relation Pruning",
+      "description": "Prunes invalid wikilinks and relations pointing to non-existent notes in surviving set.",
+      "candidates_identified": 60,
+      "candidate_sample_ids": [],
+      "notes_removed": 0,
+      "notes_modified": 61
+    },
+    {
+      "action_name": "Orphan Note Isolation",
+      "description": "Identifies disconnected zero-degree notes to mark for secondary fallback indexing.",
+      "candidates_identified": 195,
+      "candidate_sample_ids": [
+        "knw-benchmarks-2026-0001",
+        "knw-agent-memory-trace-protocol-0001",
+        "c1a01101-7291-49fa-9481-22904c10d010",
+        "path:01_ARCHITECTURE/knowledge/Awesome_Design_Skills_Index.md",
+        "c1a01101-7291-49fa-9481-22904c10b006"
+      ],
+      "notes_removed": 0,
+      "notes_modified": 0
+    }
+  ],
+  "recommendations": [
+    "1. Duplicate Suppression: Clean 580 redundant notes in REVIEW state during consolidation.",
+    "2. Template Stubs: Archive or unindex low-information stubs (<10 tokens) from the search space.",
+    "3. Dangling Links: Prune 230 unresolvable link targets in frontmatter to prevent wasteful graph expansions.",
+    "4. Safe Boundary Guarantee: Existing ACTIVE+verified security boundary already protects search results from 100% of these stubs."
+  ]
+}

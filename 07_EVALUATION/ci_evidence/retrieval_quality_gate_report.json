@@ -1,0 +1,101 @@
+{
+  "timestamp_utc": "2026-09-05T13:33:03.914074+00:00",
+  "vault_root": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_P1",
+  "overall_verdict": "PASS",
+  "summary": {
+    "PASS": 9
+  },
+  "metrics": [
+    {
+      "metric_id": "QG-KI-01",
+      "dimension": "Known-Item Retrieval",
+      "description": "Recall@10 for title and body snippet queries on canonical notes",
+      "justification": "Agents must find relevant canonical memories when querying with explicit terminology.",
+      "retrieval_impact": "Low recall causes agents to hallucinate or miss stored procedures and facts.",
+      "measured_value": 0.91,
+      "target_threshold": ">= 0.8500 (>= 85%)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-KI-02",
+      "dimension": "Known-Item Retrieval",
+      "description": "MRR (Mean Reciprocal Rank) on known-item queries",
+      "justification": "Canonical target note should rank as close to rank 1 as possible.",
+      "retrieval_impact": "Low MRR forces agents to process unnecessary context tokens from lower-ranked items.",
+      "measured_value": 0.6,
+      "target_threshold": ">= 0.5500 (>= 55%)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-PARA-01",
+      "dimension": "Paraphrase Retrieval",
+      "description": "Semantic recall under linguistic variation and reformulation",
+      "justification": "Conversational queries rarely match exact note titles verbatim.",
+      "retrieval_impact": "Vocabulary mismatch degrades lexical recall without semantic or associative support.",
+      "measured_value": "Recall@10=0.6, MRR=0.4556",
+      "target_threshold": "Recall@10 >= 0.60, MRR >= 0.40 (or WARN if LLM offline)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-MH-01",
+      "dimension": "Multi-Hop Retrieval",
+      "description": "Graph Rescue Rate (cases where direct search missed but graph expansion succeeded)",
+      "justification": "Graph expansion must rescue relevant notes disconnected from surface query keywords.",
+      "retrieval_impact": "Low rescue rate indicates graph expansion adds latency without discovering new answers.",
+      "measured_value": 0.2977,
+      "target_threshold": ">= 0.2500 (>= 25%)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-MH-02",
+      "dimension": "Multi-Hop Retrieval",
+      "description": "Net Gain (rescued relevant items minus false positive expansions)",
+      "justification": "Expansion must produce more rescued relevant items than irrelevant clutter.",
+      "retrieval_impact": "Negative net gain floods council context window with noise.",
+      "measured_value": 125,
+      "target_threshold": "> 0 (positive net gain)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-ENT-01",
+      "dimension": "Entity-Mediated Retrieval",
+      "description": "Multi-hop recall over shared technical entity / tag bridges",
+      "justification": "Cross-domain knowledge items often connect via shared architectural entities.",
+      "retrieval_impact": "Failure to follow entity bridges leaves associated components isolated.",
+      "measured_value": 0.4104,
+      "target_threshold": ">= 0.3500 (>= 35%)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-SEC-01",
+      "dimension": "Security Trust Boundary",
+      "description": "Strict compliance with ACTIVE + verified ceiling (0 leaks allowed)",
+      "justification": "Invariants I-001..I-012 prohibit unverified or in-review notes from entering council runtime.",
+      "retrieval_impact": "Security leak allows untrusted external imports or prompt injections into agent context.",
+      "measured_value": 0,
+      "target_threshold": "== 0 leaks (100% compliance)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-DET-01",
+      "dimension": "Retrieval Determinism",
+      "description": "100% identical ranking and score parity across repeated queries",
+      "justification": "Reproducibility is essential for cognitive debugging, test suites, and audit logs.",
+      "retrieval_impact": "Non-deterministic results produce flaky agent decisions and unreproducible failures.",
+      "measured_value": true,
+      "target_threshold": "== True (100% deterministic)",
+      "status": "PASS"
+    },
+    {
+      "metric_id": "QG-PERF-01",
+      "dimension": "Execution Performance",
+      "description": "Median retrieval latency through ProductionRetrievalFacade",
+      "justification": "Context assembly runs in the critical cognitive path before council agent execution.",
+      "retrieval_impact": "High latency slows multi-agent turn cycles and creates UI sluggishness.",
+      "measured_value": 0.991,
+      "target_threshold": "< 5.000 ms",
+      "status": "PASS"
+    }
+  ],
+  "synapse_infrastructure_status": "BLOCKED"
+}
