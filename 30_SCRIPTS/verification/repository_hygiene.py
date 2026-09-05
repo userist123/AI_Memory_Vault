@@ -143,7 +143,6 @@ def main() -> int:
     failures = run(root)
     print(f"REPOSITORY_HYGIENE_ROOT={root}")
     print(f"TRACKED_FILES={len(git_files(root))}")
-    failures = run(root)
     print(f"FAILURES={len(failures)}")
     for failure in failures:
         print(failure)
