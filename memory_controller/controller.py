@@ -4,6 +4,7 @@
 import enum
 from typing import Any, Dict, Optional, List
 import os
+import re
 import json
 from datetime import datetime, timezone, timedelta
 
@@ -151,7 +152,14 @@ class MemoryController:
             if not title:
                 heading = re.search(r"^#\s+(.+)$", body, re.M)
                 title = heading.group(1).strip() if heading else nid
-            meta = {k: v for k, v in item.items() if k not in ("content", "body")}
+            meta = {}
+            for k, v in item.items():
+                if k in ("content", "body"):
+                    continue
+                if hasattr(v, "value"):
+                    meta[k] = v.value
+                else:
+                    meta[k] = v
             path_val = item.get("path") or f"virtual/{nid}.md"
             notes_dict[nid] = Note(
                 id=nid,
