@@ -61,6 +61,6 @@ def test_unknown_values_fail_closed():
 
 
 def test_allowed_targets_match_policy():
-    assert allowed_targets(Lifecycle.ACTIVE, mutation=Mutation.ARCHIVE) == frozenset({Lifecycle.ARCHIVED})
-    assert allowed_targets(Lifecycle.REVIEW, mutation=Mutation.PROMOTE) == frozenset({Lifecycle.ACTIVE})
-    assert allowed_targets(Lifecycle.RECONSOLIDATING, mutation=Mutation.RECONSOLIDATE_RESOLVE) == frozenset({Lifecycle.REVIEW})
+    assert allowed_targets(Lifecycle.ACTIVE, mutation=Mutation.ARCHIVE) == frozenset({"ARCHIVED"})
+    assert allowed_targets(Lifecycle.REVIEW, mutation=Mutation.PROMOTE) == frozenset({"ACTIVE"})
+    assert allowed_targets(Lifecycle.RECONSOLIDATING, mutation=Mutation.RECONSOLIDATE_RESOLVE) == frozenset({"REVIEW"})
