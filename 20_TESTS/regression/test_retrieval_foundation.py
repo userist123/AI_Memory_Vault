@@ -308,6 +308,10 @@ def test_15_retrieval_trace_contains_all_required_metadata():
 
 # ---------------------------------------------------------------------------
 # 16. Benchmark runs all arms and query classes, outputting structured JSON stamped CORPUS_MURDAR
+#     Paraphrase is always attempted (never NOT_REQUESTED). With paraphrase-sample=0 no
+#     Ollama calls are made: the probe passes immediately since pool[:0] is empty, Ollama
+#     liveness check still happens. To avoid Ollama dependency in offline CI, set
+#     paraphrase-sample to 0 which triggers the provider probe but generates 0 queries.
 # ---------------------------------------------------------------------------
 def test_16_benchmark_runs_all_arms_and_stamped_corpus_murdar(tmp_path):
     _write_note(tmp_path, "01_ARCHITECTURE/n1.md", "id: 11111111-1111-1111-1111-111111111111\ntype: knowledge\nlifecycle: ACTIVE", "# Note One\n" + "This is a substantial body paragraph detailing the architecture. " * 15)
@@ -324,6 +328,7 @@ def test_16_benchmark_runs_all_arms_and_stamped_corpus_murdar(tmp_path):
         "--synapses", "05_DATA/synapses.json",
         "--out", str(out_file.relative_to(tmp_path)),
         "--no-multi-hop",
+        "--paraphrase-sample", "0",   # no Ollama calls; still probes provider, may succeed or fail
     ]
 
     ret = benchmark_main(argv)
@@ -332,6 +337,7 @@ def test_16_benchmark_runs_all_arms_and_stamped_corpus_murdar(tmp_path):
 
     report = json.loads(out_file.read_text(encoding="utf-8"))
     assert report["corpus_label"] == "CORPUS_MURDAR"
+    assert "corpus_label_note" in report
     assert "known_item" in report
     assert "entity_heavy" in report
     assert "dense_ablation" in report
@@ -343,6 +349,13 @@ def test_16_benchmark_runs_all_arms_and_stamped_corpus_murdar(tmp_path):
     assert "lexical_rrf" in report["known_item"]
     assert "dense" in report["known_item"]
     assert "graph" in report["known_item"]
+    # Paraphrase must be present and never NOT_REQUESTED
+    assert "paraphrase" in report
+    para = report["paraphrase"]
+    assert para.get("status") in ("OK", "PARAPHRASE_PROVIDER_UNAVAILABLE"), (
+        f"paraphrase.status must be OK or PARAPHRASE_PROVIDER_UNAVAILABLE, got: {para.get('status')!r}"
+    )
+
 
 
 # ---------------------------------------------------------------------------

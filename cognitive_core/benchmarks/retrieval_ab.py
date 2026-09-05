@@ -27,17 +27,23 @@ Five arms, reported SEPARATELY, never averaged into one number:
                       when the exact note isn't already in the lexical_rrf
                       top-k
 
-A sixth, separately-reported PARAPHRASE arm re-runs the same protocol on
-locally-generated paraphrased queries (via Ollama, no external API) that
-deliberately avoid the source note's own vocabulary where possible. If Ollama
-is unavailable, this is reported as PARAPHRASE_PROVIDER=UNAVAILABLE -- it is
-never silently omitted or presented as a zero/skip without saying why
-(NO SILENT FALLBACK: provider unavailable != provider succeeded).
+PARAPHRASE arm is always attempted (no flag required). Paraphrased queries
+are generated via local Ollama (no external API) and deliberately avoid the
+source note's own vocabulary where possible. If Ollama is unavailable this is
+reported as PARAPHRASE_PROVIDER_UNAVAILABLE — it is never silently omitted or
+presented as zero/skip without saying why (NO SILENT FALLBACK).
 
-A best-effort MULTI_HOP section separately measures whether `graph` recovers
-a note that is NOT lexically reachable from a *different*, synapse-connected
-note's query (i.e. the note can only be found by traversing a real edge from
-declared/inferred/promoted synapses -- never a fabricated pair).
+MULTI_HOP probe: for each real synapse edge (a→b), query a's title lexically.
+If b is NOT in lexical top-10 but IS in graph top-10, that is a "graph_rescue"
+case. The probe reports separately:
+  - graph_rescue       : b NOT in lexical top-10, IS in graph top-10
+  - reachable_lexically: b IS in lexical top-10 (no graph needed)
+  - graph_induced      : b NOT in lexical top-10, NOT in graph top-10 even
+                         though graph was used (graph found other notes instead)
+  - false_expansions   : both lexical and graph missed b entirely
+  - net_gain           : graph_rescue - graph_induced
+Only real, already-materialized edges (declared/inferred/promoted) are used —
+never fabricated pairs.
 
 Corpus labeling: every report is stamped CORPUS_MURDAR by default. Pass
 --corpus-label CORPUS_CURAT ONLY once P0.3 hygiene (Antigravity's front) is
@@ -50,8 +56,9 @@ Fixed thresholds/constants used by this script are declared once at import
 time and are not tuned after inspecting a given run's results.
 
     python -m cognitive_core.benchmarks.retrieval_ab --vault . --sample 150
-    python -m cognitive_core.benchmarks.retrieval_ab --vault . --sample 150 --paraphrase --corpus-label CORPUS_MURDAR
+    python -m cognitive_core.benchmarks.retrieval_ab --vault . --sample 150 --corpus-label CORPUS_MURDAR
 """
+
 from __future__ import annotations
 
 import argparse
@@ -252,10 +259,21 @@ def build_paraphrase(note: Note, model: str, host: str) -> Optional[str]:
 
 def multi_hop_probe(index: VaultIndex, retriever: HybridRetriever, synapses: SynapseStore,
                      max_pairs: int = 60) -> Dict[str, object]:
-    """For each real synapse edge (a -> b), builds a's exact-title query and
-    checks whether b is reachable: (1) directly via lexical_rrf, (2) only via
-    graph expansion, or (3) neither. Uses only real, already-materialized
-    edges (declared/inferred/promoted) -- never a fabricated pair."""
+    """Probe real synapse edges (a→b) and classify each case:
+
+    For each edge (a, b), issue a's exact-title query lexically and via graph:
+    - reachable_lexically : b IS in lexical top-10 (graph not needed)
+    - graph_rescue        : b NOT in lexical top-10, IS in graph top-10
+    - graph_induced       : b NOT in lexical top-10, NOT in graph top-10 despite
+                            graph expansion (graph picked other notes instead)
+    - false_expansions    : b absent from both lexical and graph top-10
+
+    graph_rescue and graph_induced are computed ONLY from the subset of cases
+    where b was NOT lexically reachable (the only meaningful probe space for
+    graph added-value). net_gain = graph_rescue - graph_induced.
+
+    Uses only real, already-materialized edges — never a fabricated pair.
+    """
     pairs = []
     for syn in synapses.all():
         a, b = index.by_id.get(syn.source_id), index.by_id.get(syn.target_id)
@@ -264,25 +282,46 @@ def multi_hop_probe(index: VaultIndex, retriever: HybridRetriever, synapses: Syn
         pairs.append((a, b))
         if len(pairs) >= max_pairs:
             break
-    lexical_hit = graph_only_hit = miss = 0
+
+    reachable_lexically = 0
+    graph_rescue = 0
+    graph_induced = 0
+    false_expansions = 0
+
     for a, b in pairs:
-        lex = [h.note.id for h in retriever.search(a.title, top_k=10)]
-        if b.id in lex:
-            lexical_hit += 1
+        lex_ids = [h.note.id for h in retriever.search(a.title, top_k=10)]
+        if b.id in lex_ids:
+            reachable_lexically += 1
             continue
-        grp = graph_search(retriever, synapses, a.title, 10)
-        if b.id in grp:
-            graph_only_hit += 1
+        # b is NOT lexically reachable — this is the meaningful probe space
+        grp_ids = graph_search(retriever, synapses, a.title, 10)
+        if b.id in grp_ids:
+            graph_rescue += 1
         else:
-            miss += 1
+            # graph expanded but still missed b
+            if len(grp_ids) > len(lex_ids):
+                graph_induced += 1
+            else:
+                false_expansions += 1
+
     total = max(len(pairs), 1)
+    non_lexical = graph_rescue + graph_induced + false_expansions
     return {
         "edge_pairs_probed": len(pairs),
-        "reachable_lexically": lexical_hit,
-        "reachable_only_via_graph": graph_only_hit,
-        "unreachable": miss,
-        "graph_added_value_rate": round(graph_only_hit / total, 4),
+        "reachable_lexically": reachable_lexically,
+        "not_lexically_reachable": non_lexical,
+        "graph_rescue": graph_rescue,
+        "graph_induced": graph_induced,
+        "false_expansions": false_expansions,
+        "net_gain": graph_rescue - graph_induced,
+        "graph_added_value_rate": round(graph_rescue / total, 4),
+        "note": (
+            "graph_rescue/graph_induced/false_expansions computed only from pairs "
+            "where target was NOT in lexical top-10 (the only meaningful probe space)."
+        ),
     }
+
+
 
 
 def main(argv=None) -> int:
@@ -295,7 +334,7 @@ def main(argv=None) -> int:
     ap.add_argument("--synapses", default="05_DATA/synapses.json")
     ap.add_argument("--out", default="07_EVALUATION/retrieval_ab_report.json")
     ap.add_argument("--corpus-label", choices=sorted(CORPUS_LABELS), default="CORPUS_MURDAR")
-    ap.add_argument("--paraphrase", action="store_true", help="Also run the paraphrase arm (needs Ollama)")
+    # --paraphrase is REMOVED: paraphrase is always executed.
     ap.add_argument("--dense", action="store_true", help="Also run dense embedding arms (needs Ollama)")
     ap.add_argument("--entity-heavy", action="store_true", default=True)
     ap.add_argument("--no-entity-heavy", dest="entity_heavy", action="store_false")
@@ -304,6 +343,8 @@ def main(argv=None) -> int:
     ap.add_argument("--ollama-model", default="qwen2.5-coder:3b")
     ap.add_argument("--ollama-embed-model", default="nomic-embed-text")
     ap.add_argument("--ollama-host", default="http://localhost:11434")
+    ap.add_argument("--paraphrase-sample", type=int, default=30,
+                    help="Max notes to paraphrase (subset of --sample; paraphrase always runs)")
     args = ap.parse_args(argv)
 
     vault = Path(args.vault)
@@ -394,6 +435,35 @@ def main(argv=None) -> int:
         known_item_arms.get("graph", []),
     )
 
+    # 3. Paraphrase Queries — ALWAYS executed; reports PARAPHRASE_PROVIDER_UNAVAILABLE if Ollama is down
+    para_pool = pool[: args.paraphrase_sample]
+    probe = _ollama_generate("Say OK.", args.ollama_model, args.ollama_host, timeout=10.0)
+    if probe is None:
+        paraphrase_result: Dict[str, Any] = {
+            "status": "PARAPHRASE_PROVIDER_UNAVAILABLE",
+            "note": (
+                "Ollama did not respond; arm was NOT run. "
+                "This is not a zero/pass — it is an explicit provider failure."
+            ),
+            "queries_requested": len(para_pool),
+            "queries_executed": 0,
+        }
+    else:
+        para_pairs = []
+        for note in para_pool:
+            para_q = build_paraphrase(note, args.ollama_model, args.ollama_host)
+            if para_q:
+                para_pairs.append((note, para_q))
+        para_report, _ = run_arms_on_pairs(para_pairs)
+        paraphrase_result = {
+            "status": "OK",
+            "provider": "ollama",
+            "model": args.ollama_model,
+            "queries_requested": len(para_pool),
+            "queries_executed": len(para_pairs),
+            "arms": para_report,
+        }
+
     report: Dict[str, object] = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "corpus_label": args.corpus_label,
@@ -407,33 +477,9 @@ def main(argv=None) -> int:
         "graph_ablation": graph_ablation,
         "known_item": known_item_report,
         "entity_heavy": entity_heavy_report,
-        "paraphrase": {"status": "NOT_REQUESTED"},
+        "paraphrase": paraphrase_result,
         "multi_hop": {"status": "NOT_REQUESTED"},
     }
-
-    # 3. Paraphrase Queries
-    if args.paraphrase:
-        probe = _ollama_generate("Say OK.", args.ollama_model, args.ollama_host, timeout=10.0)
-        if probe is None:
-            report["paraphrase"] = {
-                "status": "PARAPHRASE_PROVIDER_UNAVAILABLE",
-                "note": "Ollama did not respond; arm was NOT run, not silently skipped as a zero/pass."
-            }
-        else:
-            para_pairs = []
-            for note in pool:
-                para_q = build_paraphrase(note, args.ollama_model, args.ollama_host)
-                if para_q:
-                    para_pairs.append((note, para_q))
-            para_report, _ = run_arms_on_pairs(para_pairs)
-            report["paraphrase"] = {
-                "status": "OK",
-                "provider": "ollama",
-                "model": args.ollama_model,
-                "queries_generated": len(para_pairs),
-                "queries_requested": len(pool),
-                "arms": para_report,
-            }
 
     # 4. Multi-hop Probe
     if args.multi_hop:
@@ -467,20 +513,30 @@ def main(argv=None) -> int:
     print("\n-- dense_ablation --", json.dumps(dense_ablation))
     print("-- graph_ablation --", json.dumps(graph_ablation))
 
-    if report["paraphrase"].get("status") == "OK":
-        print("\n-- paraphrase --")
-        for name, m in report["paraphrase"]["arms"].items():
+    para_status = paraphrase_result.get("status")
+    if para_status == "OK":
+        print(f"\n-- paraphrase [executed={paraphrase_result['queries_executed']}/"
+              f"{paraphrase_result['queries_requested']}] --")
+        print(hdr)
+        for name, m in paraphrase_result["arms"].items():
             if isinstance(m, dict) and "recall@1" in m:
                 print(f"{name:18s} {m['recall@1']:7.3f} {m['recall@5']:7.3f} "
                       f"{m['recall@10']:7.3f} {m['mrr']:7.3f} {m['misses']:7d}")
     else:
-        print(f"\n-- paraphrase: {report['paraphrase']['status']} --")
+        print(f"\n-- paraphrase: {para_status} --")
 
-    if isinstance(report["multi_hop"], dict) and "edge_pairs_probed" in report["multi_hop"]:
-        print("-- multi_hop --", json.dumps(report["multi_hop"]))
+    mh = report["multi_hop"]
+    if isinstance(mh, dict) and "edge_pairs_probed" in mh:
+        print(f"-- multi_hop [probed={mh['edge_pairs_probed']} "
+              f"lex={mh['reachable_lexically']} "
+              f"rescue={mh['graph_rescue']} "
+              f"induced={mh['graph_induced']} "
+              f"miss={mh['false_expansions']} "
+              f"net={mh['net_gain']}] --")
     print(f"\n-> {out}")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
