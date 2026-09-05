@@ -99,14 +99,12 @@ class Consolidator:
         Finds multiple 'lesson' nodes in REVIEW lifecycle and attempts to consolidate them.
         Returns the ID of the new consolidated knowledge node, if any.
         """
-        pack = self.controller.search(principal, "lesson", page_size=20)
-        results = pack.get("results", [])
-        
-        lessons_to_consolidate = []
-        for node in results:
-            if node.get("type") == "lesson" and node.get("lifecycle") == Lifecycle.REVIEW.value:
-                lessons_to_consolidate.append(node)
-                
+        results = self.controller.query(principal, lifecycles=[Lifecycle.REVIEW], types=["lesson"])
+        lessons_to_consolidate = [
+            node for node in results
+            if node.get("type") == "lesson" and node.get("lifecycle") == Lifecycle.REVIEW.value
+        ]
+
         if len(lessons_to_consolidate) < 2:
             return None
             
@@ -153,10 +151,8 @@ class Consolidator:
         if not passed:
             return None
 
-        # Propose through ToolRouter
         self.router.execute(principal, "propose", {"note_data": refined_node})
         
-        # Archive old lessons through ToolRouter
         for lesson in lessons_to_consolidate:
             try:
                 self.router.execute(principal, "archive", {
