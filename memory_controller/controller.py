@@ -94,6 +94,8 @@ class MemoryController:
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
         self._review_counter = 2
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
+        if not isinstance(principal, Principal):
+            raise PermissionError("Invalid principal")
         if not self.authorizer.is_allowed(principal, operation):
             raise PermissionError(f"{principal.value} not allowed to perform {operation.value}")
     def query(self, principal: Principal, lifecycles: Optional[List[Lifecycle]] = None, types: Optional[List[str]] = None) -> List[Dict[str, Any]]:
@@ -361,7 +363,7 @@ class MemoryController:
         with self._mutation_lock:
             try:
                 self._check_auth(principal, Operation.SUPERSEDE); check_path_traversal(old_id); check_path_traversal(new_id); self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
-                old_note = self.storage.get(old_id); new_note = self.storage.get(new_id); old_note_orig = old_note.copy(); new_note_orig = new_note.copy(); now_date = datetime.now(timezone.utc).date().isoformat()
+                old_note = self.storage.get(old_id); new_note = self.storage.get(new_id); old_note_orig = old_note.copy(); now_date = datetime.now(timezone.utc).date().isoformat()
                 if not evaluate_lifecycle_mutation(old_note['lifecycle'], Lifecycle.SUPERSEDED.value, mutation=LifecycleMutation.SUPERSEDE, verification=old_note.get('verification')):
                     raise ValueError(f"Invalid lifecycle transition from {old_note['lifecycle']} to {Lifecycle.SUPERSEDED.value} for {LifecycleMutation.SUPERSEDE.value}")
                 old_note["lifecycle"] = Lifecycle.SUPERSEDED.value; old_note["superseded_by"] = new_id; old_note["updated"] = now_date
