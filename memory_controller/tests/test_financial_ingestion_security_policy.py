@@ -1,5 +1,7 @@
 """Regression tests for direct financial-ingestion trust-boundary state."""
 
+import pytest
+
 from memory_controller.financial_ingestion_security import (
     canonicalize_financial_ingest_frontmatter,
 )
@@ -21,40 +23,39 @@ def test_ingestion_always_creates_unverified_review_candidate():
     assert payload["verification"] == "partially_verified"
 
 
-def test_ingestion_rejects_active_lifecycle_injection():
-    payload = {"lifecycle": "ACTIVE", "verification": "unverified"}
+@pytest.mark.parametrize("lifecycle", [
+    "ACTIVE",
+    "VERIFIED",
+    "ARCHIVED",
+    "SUPERSEDED",
+    "RECONSOLIDATING",
+    "active",
+    "verified",
+])
+def test_ingestion_rejects_privileged_lifecycle_injection(lifecycle):
+    payload = {"lifecycle": lifecycle, "verification": "unverified"}
 
-    try:
+    with pytest.raises(ValueError) as exc:
         canonicalize_financial_ingest_frontmatter(payload)
-    except ValueError as exc:
-        assert "ACTIVE" in str(exc)
-    else:
-        raise AssertionError("ACTIVE lifecycle injection was not rejected")
+
+    assert lifecycle.upper() in str(exc.value)
 
 
-def test_ingestion_rejects_all_privileged_lifecycle_states():
-    for lifecycle in ("ARCHIVED", "SUPERSEDED", "RECONSOLIDATING"):
-        try:
-            canonicalize_financial_ingest_frontmatter(
-                {"lifecycle": lifecycle, "verification": "unverified"}
-            )
-        except ValueError as exc:
-            assert lifecycle in str(exc)
-        else:
-            raise AssertionError(
-                f"{lifecycle} lifecycle injection was not rejected"
-            )
-
-
-def test_ingestion_rejects_verified_injection():
-    try:
+@pytest.mark.parametrize("verification", ["verified", "VERIFIED", " Verified "])
+def test_ingestion_rejects_verified_injection_case_insensitively(verification):
+    with pytest.raises(ValueError, match="verified"):
         canonicalize_financial_ingest_frontmatter(
-            {"lifecycle": "REVIEW", "verification": "verified"}
+            {"lifecycle": "REVIEW", "verification": verification}
         )
-    except ValueError as exc:
-        assert "verified" in str(exc)
-    else:
-        raise AssertionError("verified state injection was not rejected")
+
+
+def test_ingestion_normalizes_benign_unverified_states():
+    for verification in ("unverified", "partially_verified", "UNVERIFIED"):
+        safe = canonicalize_financial_ingest_frontmatter(
+            {"lifecycle": "review", "verification": verification}
+        )
+        assert safe["lifecycle"] == "REVIEW"
+        assert safe["verification"] == "unverified"
 
 
 def test_ingestion_uses_a_deep_copy_before_normalization():
