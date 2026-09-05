@@ -12,32 +12,33 @@ This document records runtime trust-boundary gaps identified during the security
 - Financial search now authorizes the caller up front and exposes only `ACTIVE + verified` records as defense-in-depth read filtering.
 - SQLite `RECONSOLIDATING` schema support and migration coverage.
 - Canonical lifecycle policy introduced for mutation semantics.
-- Legacy pipeline transition types are now explicitly represented in the canonical policy (`CLASSIFY`, `NORMALIZE`, `VERIFY`, `PROMOTE`).
+- Legacy pipeline transitions now route through the canonical policy (`CLASSIFY`, `NORMALIZE`, `VERIFY`, `PROMOTE`) from `MemoryController._validate_note()`.
 - Controller mutation paths route `review`, `promote`, `archive`, and `supersede` through the canonical policy.
+- `MemoryController.search()` authorizes `Operation.SEARCH` before any query/retrieval work.
 - Supersession boundary requires an `ACTIVE` predecessor.
 - Frontmatter schema accepts `RECONSOLIDATING` with regression coverage.
 
 ## Remaining architecture work
 
-### 1. Wire legacy pipeline transitions to the canonical policy
+### 1. Repository-wide write-path inventory
 
-The canonical policy now defines the historical pipeline transitions `RAW -> CLASSIFIED`, `CLASSIFIED -> NORMALIZED`, `REVIEW -> VERIFIED`, and `VERIFIED -> ACTIVE`. The remaining step is to replace the controller's compatibility-only transition branch with the corresponding named mutations, while preserving existing callers and verification semantics.
+The guarded controller paths are not, by themselves, proof that every repository write path obeys the same authority. Direct storage writes in importers, scripts, helpers, background code, or other components must be inventoried and either routed through canonical boundaries or explicitly classified as trusted infrastructure. The repository scanner now also detects common filesystem mutation APIs; exact-commit execution evidence is still required.
 
-### 2. Repository-wide write-path inventory is still required
+### 2. Read-path lifecycle/verification semantics need end-to-end validation
 
-The guarded controller paths are not, by themselves, proof that every repository write path obeys the same authority. Direct storage writes in importers, scripts, helpers, background code, or other components must be inventoried and either routed through canonical boundaries or explicitly classified as trusted infrastructure.
+Public `read()` is ACTIVE-only while `cognitive_read()` permits ACTIVE and REVIEW and marks REVIEW as unverified. Standard search still needs one end-to-end acceptance matrix across all public read surfaces. Financial search has an explicit `ACTIVE + verified` ceiling and regression coverage.
 
-### 3. Read-path lifecycle/verification semantics need end-to-end validation
+### 3. Retrieval production integration remains deferred
 
-Public `read()` is ACTIVE-only while `cognitive_read()` permits ACTIVE and REVIEW and marks REVIEW as unverified. Standard search still needs one end-to-end acceptance matrix across all public read surfaces. Financial search now has an explicit `ACTIVE + verified` ceiling and regression coverage.
+Antigravity's retrieval facade is intentionally production-unwired on its own branch until the controller wiring change is integrated. Phase 5 is now authorized after P4 readiness, but merge order and compatibility evidence must remain explicit.
 
-### 4. Retrieval production integration remains deferred
-
-Antigravity's retrieval facade is intentionally production-unwired. Its integration must remain a separate phase after retrieval readiness, corpus-quality evidence, and runtime security acceptance are stable.
-
-### 5. Final CI evidence is still pending
+### 4. Final CI evidence is still pending
 
 Queued/pending workflows are not evidence of a green build. The latest branch head requires complete CI results before PR merge readiness can be declared.
+
+### 5. External SynapseStore dependency
+
+`05_DATA/synapses.json` and `cognitive_core/synapse_store.py` remain an external dependency according to Antigravity P4. Native corpus-graph fallback remains the verified path; no mock SynapseStore data is introduced by this security branch.
 
 ## Non-goals for this document
 
