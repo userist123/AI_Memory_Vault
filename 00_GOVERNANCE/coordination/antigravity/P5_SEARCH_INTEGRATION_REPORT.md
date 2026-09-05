@@ -101,7 +101,7 @@ MemoryController.search(principal, query, lifecycles, ...)
 
 ```text
 P5 STATUS: COMPLETED
-COMMIT: 1f14bb4d45fd3a7d9c3eac0436264a129bdff082
+COMMIT: ef70a81ea5e6784b4d82346e7040b63b39000dfb
 BRANCH: antigravity/p1-retrieval-foundation
 LEGACY SEARCH PATH: RETIRED
 ADAPTER WIRING: ACTIVE
