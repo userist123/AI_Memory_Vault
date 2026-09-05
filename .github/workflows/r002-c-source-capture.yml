@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - 'r002-c/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '05_DATA/legal_sources/r002-c/**'
+      - '.github/workflows/r002-c-source-capture.yml'
   workflow_dispatch:
 
 permissions:
@@ -92,7 +98,6 @@ jobs:
               'official_url':'https://legislatie.just.ro/Public/DetaliiDocument/293121',
               'printable_url':'https://legislatie.just.ro/Public/FormaPrintabila/00000G05B60NOFIK4N33DGK9DPP0RCH7',
               'publication':'Monitorul Oficial nr. 1332 din 31 decembrie 2024',
-              'publication_date':'2024-12-31',
               'version_date':'2024-12-30',
             },
             'lege-124-2025': {
@@ -100,23 +105,22 @@ jobs:
               'official_url':'https://legislatie.just.ro/Public/DetaliiDocumentAfis/299675',
               'printable_url':'https://legislatie.just.ro/Public/FormaPrintabila/00000G2IZOYAC9O6E601LNTHNRVOGBVA',
               'publication':'Monitorul Oficial nr. 638 din 7 iulie 2025',
-              'publication_date':'2025-07-07',
               'version_date':'2025-07-07',
             },
           }
           captured=datetime.now(timezone.utc).isoformat()
-          lines=['# R002-C Source Register','',f'Capture timestamp (UTC): `{captured}`','',
-                 'Primary-source rule: official Portal Legislativ URLs are authoritative references; the captured HTML is preserved byte-for-byte and extracted text is a derived textual rendering of that same capture.','']
+          lines=['# R002-C Source Register','',f'Capture timestamp (UTC): `{captured}`','']
           for key,m in acts.items():
               d=base/key
               h=sha256((d/'source.html').read_bytes()).hexdigest()
               th=sha256((d/'source.txt').read_bytes()).hexdigest()
               (d/'HASHES.sha256').write_text(f'{h}  source.html\n{th}  source.txt\n',encoding='utf-8')
-              lines += [f'## {m["title"]}','',f'- Official URL: {m["official_url"]}',f'- Printable source URL: {m["printable_url"]}',f'- Publication: {m["publication"]}',f'- Source version date: {m["version_date"]}',f'- Capture SHA-256 (HTML): `{h}`',f'- Extracted-text SHA-256: `{th}`', '- lifecycle: `REVIEW`', '- verification: `verified_source`', '- instruction_trust: `NONE`', '- requires_legal_review: `true`', '- Source text must remain unchanged; all interpretation belongs in separate derived artifacts.', '']
+              lines += [f'## {m["title"]}','',f'- Official URL: {m["official_url"]}',f'- Printable source URL: {m["printable_url"]}',f'- Publication: {m["publication"]}',f'- Source version date: {m["version_date"]}',f'- Capture SHA-256 (HTML): `{h}`',f'- Extracted-text SHA-256: `{th}`', '- lifecycle: `REVIEW`', '- verification: `verified_source`', '- instruction_trust: `NONE`', '- requires_legal_review: `true`', '']
           Path('05_DATA/legal_sources/r002-c/source_register.md').write_text('\n'.join(lines),encoding='utf-8')
           PY
 
       - name: Commit captured primary sources to the working branch
+        if: github.event_name == 'push'
         shell: bash
         run: |
           set -euo pipefail
@@ -129,3 +133,10 @@ jobs:
           fi
           git commit -m 'data(r002-c): capture official legal source snapshots [skip ci]'
           git push origin HEAD:${GITHUB_REF_NAME}
+
+      - name: Upload source snapshot evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: r002-c-legal-source-snapshots
+          path: 05_DATA/legal_sources/r002-c/primary
+          if-no-files-found: error
