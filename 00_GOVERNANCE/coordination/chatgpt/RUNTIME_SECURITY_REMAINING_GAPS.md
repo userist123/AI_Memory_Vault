@@ -11,15 +11,16 @@ This document records runtime trust-boundary gaps identified during the security
 - Direct financial-ingestion authorization and lifecycle/verification canonicalization.
 - SQLite `RECONSOLIDATING` schema support and migration coverage.
 - Canonical lifecycle policy introduced for mutation semantics.
+- Legacy pipeline transition types are now explicitly represented in the canonical policy (`CLASSIFY`, `NORMALIZE`, `VERIFY`, `PROMOTE`).
 - Controller mutation paths route `review`, `promote`, `archive`, and `supersede` through the canonical policy.
 - Supersession boundary requires an `ACTIVE` predecessor.
 - Frontmatter schema accepts `RECONSOLIDATING` with regression coverage.
 
 ## Remaining architecture work
 
-### 1. Legacy pipeline transitions are still compatibility-only
+### 1. Wire legacy pipeline transitions to the canonical policy
 
-The canonical policy currently governs specialized mutation operations. Historical pipeline transitions such as `RAW -> CLASSIFIED`, `CLASSIFIED -> NORMALIZED`, `REVIEW -> VERIFIED`, and `VERIFIED -> ACTIVE` remain compatibility transitions in the controller. A separate architecture change is required to represent these transitions as first-class canonical mutations without breaking existing callers.
+The canonical policy now defines the historical pipeline transitions `RAW -> CLASSIFIED`, `CLASSIFIED -> NORMALIZED`, `REVIEW -> VERIFIED`, and `VERIFIED -> ACTIVE`. The remaining step is to replace the controller's compatibility-only transition branch with the corresponding named mutations, while preserving existing callers and verification semantics.
 
 ### 2. Repository-wide write-path inventory is still required
 
