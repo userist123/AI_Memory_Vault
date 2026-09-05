@@ -96,9 +96,9 @@ Eight external GitHub repositories submitted by the user for reference. Descript
 | gh-web-ui | Active (prototype) | JS/C# | Low (niche domain) |
 
 ## Related
-- [[00_CORE/GRAPH/14 External and UI Resources Map]]
-- [[01_KNOWLEDGE/TypeUI_Prompt_Categories_Reference]]
-- [[01_KNOWLEDGE/UI_UX_Resources_Directory_Reference]]
+- [[14 External and UI Resources Map]]
+- [[TypeUI_Prompt_Categories_Reference]]
+- [[UI_UX_Resources_Directory_Reference]]
 
 ---
 

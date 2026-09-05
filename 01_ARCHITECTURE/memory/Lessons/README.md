@@ -16,11 +16,11 @@ index_scope: vault-navigation
 
 # Lessons
 
-Pattern-uri generalizabile extrase din Errors/corecții. Acestea sunt regulile pe care AI-ul trebuie să le recitească la începutul unei sesiuni pe un proiect relevant (vezi `00_CORE/Rules.md`, secțiunea Self-Improvement Loop).
+Pattern-uri generalizabile extrase din Errors/corecții. Acestea sunt regulile pe care AI-ul trebuie să le recitească la începutul unei sesiuni pe un proiect relevant (vezi `00_GOVERNANCE/rules/Rules.md`, secțiunea Self-Improvement Loop).
 
 ```dataview
 TABLE created
-FROM "04_MEMORY/Lessons"
+FROM "01_ARCHITECTURE/memory/Lessons"
 WHERE file.name != "README"
 SORT created DESC
 ```

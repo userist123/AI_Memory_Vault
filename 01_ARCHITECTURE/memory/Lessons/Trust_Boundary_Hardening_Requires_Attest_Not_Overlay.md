@@ -36,8 +36,8 @@ Root cause in all three: `propose()`/`update()` merged the caller's raw payload 
 
 ## Evidence
 
-- `99_SYSTEM/Phase43_P0_Implementation_Contract.md` -- full implementation contract.
-- `99_SYSTEM/Phase43_Forensic_Validation.md` -- original vulnerability confirmation.
+- `Phase43_P0_Implementation_Contract.md` -- full implementation contract.
+- `Phase43_Forensic_Validation.md` -- original vulnerability confirmation.
 - `memory_controller/tests/test_security_hardening.py` -- adversarial tests (P0-001 through P0-015).
 
 ## When To Reapply This Pattern
@@ -45,8 +45,8 @@ Root cause in all three: `propose()`/`update()` merged the caller's raw payload 
 Any time a new write path is added to `MemoryController` (or an equivalent trust boundary elsewhere in this project) that accepts a caller-supplied payload dict: check whether any field in that payload can escalate trust (verification, provenance tier, lifecycle, authority-affecting fields), and if so, gate that field explicitly and test the exact caller populations (AI_AGENT, HUMAN, ADMIN) against both the attack and the legitimate-use regression.
 
 ## Related
-- [[00_CORE/GRAPH/Memory - Lessons Map]]
-- [[00_CORE/Rules.md]]
+- [[Memory - Lessons Map]]
+- [[Rules.md]]
 
 ---
 

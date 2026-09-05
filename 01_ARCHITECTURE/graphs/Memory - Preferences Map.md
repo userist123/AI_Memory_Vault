@@ -7,7 +7,7 @@ tags: [obsidian, graph, memory, preferences]
 
 Focused navigation for durable user/project preferences and constraints.
 
-- [[04_MEMORY/Preferences/README]]
+- [[01_ARCHITECTURE/memory/Preferences/README|Preferences README]]
 - [[08 Memory Subsystems Map]]
 - [[00 Core Map]]
 - [[Knowledge Graph Home]]

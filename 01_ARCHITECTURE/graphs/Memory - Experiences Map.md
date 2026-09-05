@@ -7,7 +7,7 @@ tags: [obsidian, graph, memory, experiences]
 
 Focused navigation for experiences and execution-derived observations.
 
-- [[04_MEMORY/Experiences/README]]
+- [[01_ARCHITECTURE/memory/Experiences/README|Experiences README]]
 - [[08 Memory Subsystems Map]]
 - [[12 Projects and Procedures Map]]
 - [[Knowledge Graph Home]]

@@ -8,7 +8,7 @@ created: 2026-09-02T19:20:00Z
 updated: 2026-09-02T19:20:00Z
 provenance:
   source_type: execution
-  source_ref: "01_KNOWLEDGE/Vault_Memory_Mesh_Architecture.md"
+  source_ref: "01_ARCHITECTURE/knowledge/Vault_Memory_Mesh_Architecture.md"
 confidence: high
 verification: verified
 enriched_by: ai
@@ -30,11 +30,11 @@ The mesh defines a strict, non-overlapping 11-type taxonomy:
 
 | Object Type | Description | Primary Location | Allowed Outgoing Relations |
 |---|---|---|---|
-| `KNOWLEDGE` | Canonical, verified domain facts and architectural blueprints | `01_KNOWLEDGE/`, `00_CORE/`, `02_PROJECTS/` | `supported_by`, `tested_by`, `references`, `supersedes` |
-| `MEMORY` | Episodic memory items (Decisions, Errors, Experiences, Lessons, Preferences) | `04_MEMORY/` | `derived_from`, `references`, `superseded_by` |
+| `KNOWLEDGE` | Canonical, verified domain facts and architectural blueprints | `01_ARCHITECTURE/knowledge/`, `00_GOVERNANCE/`, `02_PRODUCT/projects/` | `supported_by`, `tested_by`, `references`, `supersedes` |
+| `MEMORY` | Episodic memory items (Decisions, Errors, Experiences, Lessons, Preferences) | `01_ARCHITECTURE/memory/` | `derived_from`, `references`, `superseded_by` |
 | `SKILL` | Reusable procedural capabilities and execution runbooks | `.agents/skills/` | `requires`, `tested_by`, `implements` |
-| `PROCEDURE` | Operational runbooks and step-by-step standards | `03_PROCEDURES/` | `requires`, `implements`, `references` |
-| `AGENT` | Specialized persona manifests and capability boundaries | `99_SYSTEM/Agent_Capability_Registry.md` | `uses`, `implements`, `observed_by` |
+| `PROCEDURE` | Operational runbooks and step-by-step standards | `10_DOCUMENTATION/procedures/` | `requires`, `implements`, `references` |
+| `AGENT` | Specialized persona manifests and capability boundaries | `00_GOVERNANCE/agents/` | `uses`, `implements`, `observed_by` |
 | `EXPERIMENT` | Empirical evaluation harnesses and diagnostic labs | `evaluation/` | `produced_by`, `tested_by`, `references` |
 | `EVIDENCE` | Measured benchmark outputs, audit reports, and logs | `evaluation/reports/` | `supports`, `derived_from` |
 | `OUTCOME` | Ground-truth labels and verified post-execution results | `evaluation/` | `supports`, `contradicts`, `derived_from` |

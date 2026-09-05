@@ -50,9 +50,9 @@ To obtain the actual prompt text (not just descriptions), one of the following i
 This note should be superseded or updated once actual prompt content is obtained and verified.
 
 ## Related
-- [[00_CORE/GRAPH/14 External and UI Resources Map]]
-- [[01_KNOWLEDGE/UI_UX_Resources_Directory_Reference]]
-- [[01_KNOWLEDGE/External_Repository_References_Aug2026]]
+- [[14 External and UI Resources Map]]
+- [[UI_UX_Resources_Directory_Reference]]
+- [[External_Repository_References_Aug2026]]
 
 ---
 

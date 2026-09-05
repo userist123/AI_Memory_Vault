@@ -7,18 +7,18 @@ tags: [obsidian, graph, memory]
 
 Exhaustive index of the memory corpus. This map creates an incoming graph edge for every memory note without altering the note content.
 
-- [[04_MEMORY/README]]
-- [[04_MEMORY/Decisions/README]]
-- [[04_MEMORY/Errors/README]]
-- [[04_MEMORY/Experiences/README]]
-- [[04_MEMORY/Lessons/README]]
-- [[04_MEMORY/Preferences/README]]
+- [[01_ARCHITECTURE/memory/README|README]]
+- [[01_ARCHITECTURE/memory/Decisions/README|Decisions README]]
+- [[01_ARCHITECTURE/memory/Errors/README|Errors README]]
+- [[01_ARCHITECTURE/memory/Experiences/README|Experiences README]]
+- [[01_ARCHITECTURE/memory/Lessons/README|Lessons README]]
+- [[01_ARCHITECTURE/memory/Preferences/README|Preferences README]]
 
-- [[04_MEMORY/Lessons/Modularize_Prompts_For_Token_Limited_Models]]
-- [[04_MEMORY/Experiences/AI_Trading_Journal_Zero_Dollar_Stack]]
-- [[04_MEMORY/Decisions]]
-- [[04_MEMORY/Errors]]
-- [[04_MEMORY/Preferences]]
+- [[Modularize_Prompts_For_Token_Limited_Models]]
+- [[AI_Trading_Journal_Zero_Dollar_Stack]]
+- [[01_ARCHITECTURE/memory/Decisions]]
+- [[01_ARCHITECTURE/memory/Errors]]
+- [[01_ARCHITECTURE/memory/Preferences]]
 
 ## Graph hubs
 - [[Knowledge Graph Home]]

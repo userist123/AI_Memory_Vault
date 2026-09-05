@@ -12,8 +12,7 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "99_SYSTEM/MCP_Memory_Server_Specification.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
 ---
 
 # 🌐 Runbook Canonic: Sincronizarea și Conectarea Agenților AI din Browser

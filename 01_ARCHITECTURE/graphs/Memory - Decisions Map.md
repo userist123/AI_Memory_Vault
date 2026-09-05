@@ -7,7 +7,7 @@ tags: [obsidian, graph, memory, decisions]
 
 Focused navigation for durable architectural and workflow decisions.
 
-- [[04_MEMORY/Decisions/README]]
+- [[01_ARCHITECTURE/memory/Decisions/README|Decisions README]]
 - [[08 Memory Subsystems Map]]
 - [[05 Projects Continuity Map]]
 - [[Knowledge Graph Home]]

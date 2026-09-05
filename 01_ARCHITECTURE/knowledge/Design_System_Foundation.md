@@ -19,11 +19,11 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/UI_UX_Design_Patterns]]"
+  - target: "[[UI_UX_Design_Patterns]]"
     type: related_to
-  - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+  - target: "[[UI_UX_Heuristic_Review]]"
     type: supports
-  - target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
+  - target: "[[Data_Visualization_Standards]]"
     type: related_to
 ---
 
@@ -57,8 +57,8 @@ Un sistem de design robust impune definirea strictă a tokenilor vizuali (culori
 ---
 
 ## 2. Relații și Sinapse Cognitive
-- `supports`: [[03_PROCEDURES/UI_UX_Heuristic_Review]] — Furnizează standardele de bază evaluate în timpul auditului de utilizabilitate.
-- `related_to`: [[01_KNOWLEDGE/Data_Visualization_Standards]] — Determină paleta de culori și spațierea folosite în tablourile de bord și grafice.
+- `supports`: [[UI_UX_Heuristic_Review]] — Furnizează standardele de bază evaluate în timpul auditului de utilizabilitate.
+- `related_to`: [[Data_Visualization_Standards]] — Determină paleta de culori și spațierea folosite în tablourile de bord și grafice.
 
 ---
 

@@ -7,7 +7,7 @@ tags: [obsidian, graph, memory, errors]
 
 Focused navigation for failures, regressions and diagnosed problems.
 
-- [[04_MEMORY/Errors/README]]
+- [[01_ARCHITECTURE/memory/Errors/README|Errors README]]
 - [[08 Memory Subsystems Map]]
 - [[04 Security Integrity Map]]
 - [[03 Agents Operations Map]]

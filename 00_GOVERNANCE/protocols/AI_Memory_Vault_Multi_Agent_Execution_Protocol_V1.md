@@ -9,9 +9,9 @@ document_status: active
 provenance_status: maintained
 policy_scope: vault-governance
 relations:
-  - "00_CORE/Rules.md"
-  - "00_CORE/Memory_Protocol.md"
-  - "skills/ai-memory-vault/SKILL.md"
+  - "00_GOVERNANCE/rules/Rules.md"
+  - "00_GOVERNANCE/protocols/Memory_Protocol.md"
+  - "00_GOVERNANCE/skills/ai-memory-vault/SKILL.md"
 ---
 
 # AI Memory Vault — Multi-Agent Execution Protocol V1

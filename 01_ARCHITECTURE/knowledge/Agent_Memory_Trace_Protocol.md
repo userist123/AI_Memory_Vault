@@ -12,9 +12,9 @@ provenance:
 confidence: very_high
 verification: unverified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "00_CORE/Memory_Protocol.md"
-  - "01_KNOWLEDGE/Memory_Usage_Audit_Principles.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
+  - "00_GOVERNANCE/protocols/Memory_Protocol.md"
+  - "01_ARCHITECTURE/knowledge/Memory_Usage_Audit_Principles.md"
   - "AGENTS.md"
 ---
 
@@ -58,12 +58,12 @@ declared:
 observed:
   retrieval_events:
     - event_id: "evt-ret-01"
-      memory_id: "00_CORE/Storage_Architecture.md"
+      memory_id: "01_ARCHITECTURE/System_Architecture.md"
       source: "filesystem_read"
       evidence_ref: "tool_calls[0]: view_file(...)"
   memory_load_events:
     - event_id: "evt-load-01"
-      memory_id: "00_CORE/Storage_Architecture.md"
+      memory_id: "01_ARCHITECTURE/System_Architecture.md"
       evidence_ref: "context_pack: bytes=2450"
   skill_load_events:
     - event_id: "evt-sk-01"
@@ -78,7 +78,7 @@ observed:
   decision_events:
     - event_id: "evt-dec-01"
       decision: "Configured PRAGMA busy_timeout=5000"
-      governing_memory_id: "00_CORE/Storage_Architecture.md"
+      governing_memory_id: "01_ARCHITECTURE/System_Architecture.md"
   tool_events:
     - event_id: "evt-tool-01"
       tool: "run_command"

@@ -9,7 +9,7 @@ relations: []
 index_scope: vault-navigation
 ---
 
-# 03_PROCEDURES
+# 10 — Procedures
 
 Proceduri verificabile.
 

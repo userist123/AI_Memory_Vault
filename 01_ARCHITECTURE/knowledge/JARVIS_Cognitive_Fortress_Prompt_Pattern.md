@@ -12,15 +12,15 @@ confidence: high
 verification: unverified
 relations:
   - relation: relates_to
-    target: 00_CORE/Cognitive_Core
+    target: 01_ARCHITECTURE/System_Architecture
   - relation: relates_to
-    target: 01_KNOWLEDGE/LLM_Antihallucination_Techniques_Research
+    target: 01_ARCHITECTURE/knowledge/LLM_Antihallucination_Techniques_Research
 lifecycle: raw
 ---
 
 # JARVIS Cognitive Fortress — Autonomous Agent Prompt Pattern
 
-**Graph links:** [[LLM_Antihallucination_Techniques_Research]] · [[Romania_Classified_Information_Digital_Security_Reform]] · [[00_CORE/GRAPH/01 Cognitive System Map]] · [[00_CORE/GRAPH/04 Security Integrity Map]] · [[00_CORE/GRAPH/07 Knowledge Domains Map]]
+**Graph links:** [[LLM_Antihallucination_Techniques_Research]] · [[Romania_Classified_Information_Digital_Security_Reform]] · [[01 Cognitive System Map]] · [[04 Security Integrity Map]] · [[07 Knowledge Domains Map]]
 
 Design pattern for a personal autonomous agent, synthesized from academic research (ReAct, Metacognitive Prompting, Chain-of-Verification, Anthropic Constitutional AI) into a concrete, reusable prompt architecture.
 

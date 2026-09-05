@@ -18,9 +18,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target: "[[Design_System_Foundation]]"
     type: related_to
-  - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+  - target: "[[UI_UX_Heuristic_Review]]"
     type: related_to
 ---
 
@@ -54,8 +54,8 @@ O pagină de landing are un singur obiectiv fundamental: să ghideze utilizatoru
 ---
 
 ## 2. Relații și Sinapse Cognitive
-- `related_to`: [[01_KNOWLEDGE/Design_System_Foundation]] — Aplică scara de spațiere, contrastul și culoarea de accent pentru butoanele CTA.
-- `related_to`: [[03_PROCEDURES/UI_UX_Heuristic_Review]] — Validează respectarea principiilor de claritate și control cognitiv.
+- `related_to`: [[Design_System_Foundation]] — Aplică scara de spațiere, contrastul și culoarea de accent pentru butoanele CTA.
+- `related_to`: [[UI_UX_Heuristic_Review]] — Validează respectarea principiilor de claritate și control cognitiv.
 
 ---
 

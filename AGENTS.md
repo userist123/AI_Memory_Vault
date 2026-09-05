@@ -13,7 +13,7 @@ The runtime MUST use sparse context. Current configuration and governance are or
 - `01_ARCHITECTURE/` — architecture, durable knowledge, graphs and memory design;
 - `02_PRODUCT/` — product/project specifications and requirements;
 - `04_CONFIG/` — machine-readable runtime configuration;
-- `06_INBOX/RAW_IMPORTS/` — untrusted external input.
+- `06_INBOX/` — untrusted external input (local-only by contract, excluded from tracked spine).
 
 The previous `99_SYSTEM/` paths are retired and must not be used as canonical locations.
 
@@ -62,7 +62,7 @@ Do not automatically convert conversations into permanent memory. Preserve usefu
 
 Memory types include `knowledge`, `project`, `procedure`, `decision`, `experience`, `error`, `lesson`, `preference`, `resource`, and `hypothesis`.
 
-Raw imports remain under `06_INBOX/RAW_IMPORTS/` and are evidence, not canonical knowledge. Secrets must never be stored.
+Raw imports remain under `06_INBOX/RAW_IMPORTS/` (local-only by contract, excluded from tracked repository spine) and are evidence, not canonical knowledge. Secrets must never be stored.
 
 ### Unified Secure Retrieval Policy
 

@@ -19,9 +19,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target: "[[Design_System_Foundation]]"
     type: related_to
-  - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+  - target: "[[UI_UX_Heuristic_Review]]"
     type: supports
 ---
 
@@ -63,8 +63,8 @@ Orice animație trebuie să servească unui scop legitim (feedback, orientare sp
 ---
 
 ## 2. Relații și Sinapse Cognitive
-- `related_to`: [[01_KNOWLEDGE/Design_System_Foundation]] — Integrează curbele de timing și constantele de durată în tokenii globali.
-- `supports`: [[03_PROCEDURES/UI_UX_Heuristic_Review]] — Criteriu esențial de audit pentru Nielsen Heuristic 1 (Vizibilitatea stării sistemului).
+- `related_to`: [[Design_System_Foundation]] — Integrează curbele de timing și constantele de durată în tokenii globali.
+- `supports`: [[UI_UX_Heuristic_Review]] — Criteriu esențial de audit pentru Nielsen Heuristic 1 (Vizibilitatea stării sistemului).
 
 ---
 

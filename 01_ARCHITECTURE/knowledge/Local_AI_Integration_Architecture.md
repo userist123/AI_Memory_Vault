@@ -19,9 +19,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[00_CORE/Confidence_Model]]"
+  - target: "[[Confidence_Model]]"
     type: supports
-  - target: "[[00_CORE/Rules]]"
+  - target: "[[Rules]]"
     type: implements
 ---
 

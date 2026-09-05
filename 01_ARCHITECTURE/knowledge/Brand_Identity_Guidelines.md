@@ -18,9 +18,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target: "[[Design_System_Foundation]]"
     type: supports
-  - target: "[[01_KNOWLEDGE/Landing_Page_Architecture]]"
+  - target: "[[Landing_Page_Architecture]]"
     type: related_to
 ---
 

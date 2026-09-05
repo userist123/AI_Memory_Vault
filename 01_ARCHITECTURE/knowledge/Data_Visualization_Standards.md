@@ -19,11 +19,11 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target: "[[Design_System_Foundation]]"
     type: related_to
-  - target: "[[01_KNOWLEDGE/Motion_Design_Principles]]"
+  - target: "[[Motion_Design_Principles]]"
     type: related_to
-  - target: "[[02_PROJECTS/FinScope]]"
+  - target: "[[FinScope]]"
     type: implements
 ---
 
@@ -62,8 +62,8 @@ Principiul călăuzitor este maximizarea raportului data-to-ink: orice pixel car
 ---
 
 ## 2. Relații și Sinapse Cognitive
-- `related_to`: [[01_KNOWLEDGE/Design_System_Foundation]] — Preia tokenii de culoare și tipografie din fundația generală.
-- `implements`: [[02_PROJECTS/FinScope]] — Furnizează regulile de randare pentru componentele Recharts din FinScope.
+- `related_to`: [[Design_System_Foundation]] — Preia tokenii de culoare și tipografie din fundația generală.
+- `implements`: [[FinScope]] — Furnizează regulile de randare pentru componentele Recharts din FinScope.
 
 ---
 

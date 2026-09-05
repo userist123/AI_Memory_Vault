@@ -19,9 +19,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - target: "[[LogAnalyzer_DFIR_Enterprise_Architecture]]"
     type: implements
-  - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+  - target: "[[UI_UX_Heuristic_Review]]"
     type: supports
 ---
 

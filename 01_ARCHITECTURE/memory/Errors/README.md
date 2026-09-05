@@ -19,7 +19,7 @@ Ce a mers greșit + cauză + fix. Sursă directă pentru `Lessons/`.
 
 ```dataview
 TABLE created
-FROM "04_MEMORY/Errors"
+FROM "01_ARCHITECTURE/memory/Errors"
 WHERE file.name != "README"
 SORT created DESC
 ```

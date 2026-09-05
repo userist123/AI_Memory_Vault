@@ -51,43 +51,58 @@ ROUTER
               WATCHDOG
 ```
 
-## Layers
+## Layers (Numbered Semantic Spine)
 
-### 00_CORE
+### 00_GOVERNANCE
+Regulile, identitatea sistemului, protocoalele de execuție multi-agent, revizuirea și coordonarea agenților.
 
-Regulile si identitatea sistemului.
+### 01_ARCHITECTURE
+Arhitectura de sistem, cunoștințe canonice durabile (`01_ARCHITECTURE/knowledge/`), grafuri și hărți MOC (`01_ARCHITECTURE/graphs/`), și memoria structurată (`01_ARCHITECTURE/memory/`).
 
-### 01_KNOWLEDGE
+### 02_PRODUCT
+Specificații de produs, obiective globale (`Goals.md`) și starea de continuitate a proiectelor (`02_PRODUCT/projects/`).
 
-Cunostinte stabile si reutilizabile.
+### 03_IMPLEMENTATION
+Cod de producție, componente și servicii aplicație.
 
-### 02_PROJECTS
+### 04_CONFIG
+Configurații runtime mașină, bugete agenți și mapări de modele.
 
-Starea proiectelor.
-
-### 03_PROCEDURES
-
-Proceduri verificabile.
-
-### 04_MEMORY
-
-Experiente, erori, lectii, decizii, preferinte.
-
-### 05_RESOURCES
-
-Surse si materiale de referinta.
+### 05_DATA
+Stocare locală, baze de date SQLite WAL și persistență.
 
 ### 06_INBOX
+Captură și import brut (izolat, local-only conform contractului).
 
-Captura si import brut.
+### 07_EVALUATION
+Rapoarte de evaluare, benchmark-uri, scoruri de realitate și evidențe empirice.
 
-### 90_TEMPLATES
+### 08_OBSERVABILITY
+Telemetrie, trasabilitate și probe de monitorizare.
 
-Modele pentru note noi.
+### 09_SECURITY
+Invarianți de securitate, audituri de graniță de încredere și conformitate.
 
-### 99_SYSTEM
+### 10_DOCUMENTATION
+Proceduri operaționale verificabile (`10_DOCUMENTATION/procedures/`), resurse externe și documentații (`10_DOCUMENTATION/resources/`).
 
-Specificatii pentru clasificare, RAG, graph si control.
+### 20_TESTS
+Infrastructură și suite de testare automată.
+
+### 30_SCRIPTS
+Unelte operaționale, mentenanță și scripturi de ingestie.
+
+### 40_EXPERIMENTS
+Harness-uri experimentale și validări empirice.
+
+### 50_ARTIFACTS
+Pachete generate, programe construite și exporturi.
+
+### 80_ARCHIVE
+Duplicate moștenite, snapshot-uri și fișiere istorice arhivate.
+
+### 99_META
+Jurnale de migrare, template-uri canonice și inventare de metadate.
 
 ## Data Flow
 

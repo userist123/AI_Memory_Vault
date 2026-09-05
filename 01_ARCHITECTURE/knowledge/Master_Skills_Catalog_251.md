@@ -11,8 +11,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
-  - "00_CORE/GRAPH/14 Subagents Council Map.md"
+  - "01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md"
+  - "01_ARCHITECTURE/graphs/14 Subagents Council Map.md"
 ---
 
 # 📦 Catalog Canonic: Skills reale din `.agents/skills/`

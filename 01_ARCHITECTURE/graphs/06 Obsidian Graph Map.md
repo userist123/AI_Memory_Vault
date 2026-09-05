@@ -24,8 +24,8 @@ Obsidian-facing map. Use this as the visual entry point for the knowledge graph.
 
 ## Operational entry points
 - [[AGENTS]]
-- [[PROJECT]]
+- [[02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN]]
 - [[Rules]]
-- [[02_PROJECTS/Continuity_Handoff]]
+- [[02_PRODUCT/projects/Continuity_Handoff]]
 
 #group/obsidian #graph #moc

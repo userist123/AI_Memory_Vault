@@ -12,9 +12,9 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md"
-  - "01_KNOWLEDGE/Retrieval_Hypothesis_Registry.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
+  - "01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md"
+  - "01_ARCHITECTURE/knowledge/Retrieval_Hypothesis_Registry.md"
   - "AGENTS.md"
 ---
 

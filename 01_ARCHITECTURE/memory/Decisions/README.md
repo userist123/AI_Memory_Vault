@@ -15,11 +15,11 @@ index_scope: vault-navigation
 
 # Decisions
 
-Alegeri concrete + motivul. Format scurt, folosește `90_TEMPLATES/Template_Decision.md`.
+Alegeri concrete + motivul. Format scurt, folosește `Template_Decision.md`.
 
 ```dataview
 TABLE context, created
-FROM "04_MEMORY/Decisions"
+FROM "01_ARCHITECTURE/memory/Decisions"
 WHERE file.name != "README"
 SORT created DESC
 ```

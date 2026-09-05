@@ -5,9 +5,9 @@ This file is the startup contract for every agent working on this Vault.
 ## On every start, regardless of PC, IDE, chat, or runtime
 
 1. Pull/read `main` and record its SHA.
-2. Read `09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`.
-3. Read `09_COORDINATION/AGENT_MEMORY/agents/<AGENT>/CURRENT.md`.
-4. Identify the active `project_id` and read `09_COORDINATION/AGENT_MEMORY/projects/<project-id>/CURRENT.md`.
+2. Read `00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`.
+3. Read `00_GOVERNANCE/coordination/agents/<AGENT>/CURRENT.md`.
+4. Identify the active `project_id` and read `00_GOVERNANCE/coordination/projects/<project-id>/CURRENT.md`.
 5. Open the latest task/session records referenced by those files.
 6. Verify the working branch and current commit in Git.
 7. Check whether another agent has changed the same area since the saved state.

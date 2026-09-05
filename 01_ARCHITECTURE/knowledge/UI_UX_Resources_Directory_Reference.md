@@ -61,9 +61,9 @@ UI Graphics, Fonts, Colors, Icons, Favicons, Icon Fonts, Stock Photos, Stock Vid
 - This is a link directory, not a code library -- no direct dependency or integration risk, purely a reference/discovery resource.
 
 ## Related
-- [[00_CORE/GRAPH/14 External and UI Resources Map]]
-- [[01_KNOWLEDGE/TypeUI_Prompt_Categories_Reference]]
-- [[01_KNOWLEDGE/External_Repository_References_Aug2026]]
+- [[14 External and UI Resources Map]]
+- [[TypeUI_Prompt_Categories_Reference]]
+- [[External_Repository_References_Aug2026]]
 
 ---
 

@@ -12,9 +12,7 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "99_SYSTEM/Memory_V6_Architecture.md"
-  - "99_SYSTEM/MCP_Memory_Server_Specification.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
 ---
 
 # 🏢 Ghid Canonic: Integrarea AI Memory Vault într-un Proiect de Anvergură (Enterprise Blueprint v6.0.0)
@@ -58,7 +56,7 @@ Acest document specifică arhitectura de integrare a sistemului **AI Memory Vaul
                         |                                   |
                         v                                   v
               [Canonical Markdown Vault]            [Obsidian Graph View]
-              (00_CORE ... 99_SYSTEM)               (Live Human Visual Audit)
+              (00_GOVERNANCE ... 99_META)           (Live Human Visual Audit)
 ```
 
 ---

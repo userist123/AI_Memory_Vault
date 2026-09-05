@@ -19,7 +19,7 @@ Rezultate concrete din acțiuni luate — ce a funcționat, ce nu, în ce condi�
 
 ```dataview
 TABLE created
-FROM "04_MEMORY/Experiences"
+FROM "01_ARCHITECTURE/memory/Experiences"
 WHERE file.name != "README"
 SORT created DESC
 ```

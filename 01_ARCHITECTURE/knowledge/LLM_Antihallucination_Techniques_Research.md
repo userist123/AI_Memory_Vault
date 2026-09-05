@@ -12,13 +12,13 @@ confidence: high
 verification: unverified
 relations:
   - relation: relates_to
-    target: 00_CORE/Cognitive_Core
+    target: 01_ARCHITECTURE/System_Architecture
 lifecycle: raw
 ---
 
 # LLM Anti-Hallucination Techniques (2024-2026 Research Synthesis)
 
-**Graph links:** [[JARVIS_Cognitive_Fortress_Prompt_Pattern]] · [[Romania_Classified_Information_Digital_Security_Reform]] · [[00_CORE/GRAPH/01 Cognitive System Map]] · [[00_CORE/GRAPH/04 Security Integrity Map]] · [[00_CORE/GRAPH/07 Knowledge Domains Map]]
+**Graph links:** [[JARVIS_Cognitive_Fortress_Prompt_Pattern]] · [[Romania_Classified_Information_Digital_Security_Reform]] · [[01 Cognitive System Map]] · [[04 Security Integrity Map]] · [[07 Knowledge Domains Map]]
 
 ## Core finding
 Hallucination is mathematically inevitable for general-purpose LLMs (Xu et al. 2024, formal learning theory) but practically reducible by 50-96% through layered prompt/context engineering. No single technique is sufficient alone.

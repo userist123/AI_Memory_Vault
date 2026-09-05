@@ -12,8 +12,8 @@ provenance:
 confidence: very_high
 verification: unverified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "00_CORE/Memory_Protocol.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
+  - "00_GOVERNANCE/protocols/Memory_Protocol.md"
   - "AGENTS.md"
 ---
 

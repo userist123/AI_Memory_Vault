@@ -12,7 +12,7 @@ provenance:
 confidence: "high"
 verification: "verified"
 relations:
-  - target: "00_CORE/Identity.md"
+  - target: "00_GOVERNANCE/identity/Identity.md"
     relation: "related_to"
 ---
 

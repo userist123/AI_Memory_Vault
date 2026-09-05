@@ -12,9 +12,9 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "00_CORE/GRAPH/02 Memory Knowledge Map.md"
-  - "01_KNOWLEDGE/2026_AI_Memory_Benchmarks_and_Evaluation.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
+  - "01_ARCHITECTURE/graphs/02 Memory Knowledge Map.md"
+  - "01_ARCHITECTURE/knowledge/2026_AI_Memory_Benchmarks_and_Evaluation.md"
   - "AGENTS.md"
   - ".agents/rules/vault_cognitive_rules.md"
 ---

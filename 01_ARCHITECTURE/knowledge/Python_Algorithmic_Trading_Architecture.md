@@ -19,7 +19,7 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[02_PROJECTS/Elite_Quant_Bot]]"
+  - target: "[[Elite_Quant_Bot]]"
     type: implements
 ---
 

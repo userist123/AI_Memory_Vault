@@ -19,7 +19,7 @@ Preferințe de stil de lucru — comunicare, format, workflow. Nu fapte tehnice.
 
 ```dataview
 TABLE created
-FROM "04_MEMORY/Preferences"
+FROM "01_ARCHITECTURE/memory/Preferences"
 WHERE file.name != "README"
 SORT created DESC
 ```

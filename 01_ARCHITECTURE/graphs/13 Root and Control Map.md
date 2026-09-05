@@ -15,11 +15,11 @@ Root-level control and project orientation documents.
 - [[TEST_READY]]
 
 ## Graph governance
-- [[99_SYSTEM/Graph Health Report]]
-- [[99_SYSTEM/Knowledge_Graph_Schema]]
-- [[99_SYSTEM/Knowledge_Graph_Relations]]
-- [[99_SYSTEM/Quality_Control]]
-- [[99_SYSTEM/Integrity_Check]]
+- [[Graph Health Report]]
+- [[Knowledge_Graph_Schema]]
+- [[Knowledge_Graph_Relations]]
+- [[Quality_Control]]
+- [[Integrity_Check]]
 
 ## Graph hubs
 - [[Knowledge Graph Home]]

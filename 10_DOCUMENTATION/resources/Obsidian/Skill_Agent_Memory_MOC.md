@@ -10,12 +10,12 @@ purpose: Obsidian map for skills, agents, references and memory
 
 ## Core maps
 
-- [[99_SYSTEM/Obsidian_Skill_Agent_Memory_Sync]]
+- [[Obsidian_Skill_Agent_Memory_Sync]]
 - [[README]]
-- [[01_KNOWLEDGE/README]]
+- [[README]]
 - [[02_MEMORY/README]]
 - [[03_COGNITIVE_CORE/README]]
-- [[99_SYSTEM/README]]
+- [[README]]
 
 ## External skill ingestion
 

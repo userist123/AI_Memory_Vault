@@ -22,13 +22,13 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:15:00Z
 relations:
-  - target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target: "[[Registru_de_transferuri]]"
     type: implements
-  - target: "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - target: "[[CSharp_WPF_Enterprise_Desktop]]"
     type: depends_on
-  - target: "[[03_PROCEDURES/PowerShell_SecOps_Forensic_Standard]]"
+  - target: "[[PowerShell_SecOps_Forensic_Standard]]"
     type: related_to
-  - target: "[[01_KNOWLEDGE/Local_AI_Integration_Architecture]]"
+  - target: "[[Local_AI_Integration_Architecture]]"
     type: supports
 ---
 
@@ -105,10 +105,10 @@ python vault_api.py
 | Invariante P0–P18 | Controlul trasabilității și integrității interne |
 
 ## 6. Relații și Sinapse Cognitive
-- `implements`: [[02_PROJECTS/Registru_de_transferuri]] — Proiectul activ care aplică aceste standarde.
-- `depends_on`: [[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]] — Baza MVVM, async și audit trail.
-- `related_to`: [[03_PROCEDURES/PowerShell_SecOps_Forensic_Standard]] — Procedurile de colectare forensic compatibile.
-- `supports`: [[01_KNOWLEDGE/Local_AI_Integration_Architecture]] — Protocolul de comunicare cu Ollama pe 127.0.0.1.
+- `implements`: [[Registru_de_transferuri]] — Proiectul activ care aplică aceste standarde.
+- `depends_on`: [[CSharp_WPF_Enterprise_Desktop]] — Baza MVVM, async și audit trail.
+- `related_to`: [[PowerShell_SecOps_Forensic_Standard]] — Procedurile de colectare forensic compatibile.
+- `supports`: [[Local_AI_Integration_Architecture]] — Protocolul de comunicare cu Ollama pe 127.0.0.1.
 
 ---
 

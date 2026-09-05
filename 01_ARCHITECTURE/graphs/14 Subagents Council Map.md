@@ -12,8 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
-  - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
+  - "01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md"
+  - "01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md"
 ---
 
 # 🏛️ Mapă MOC: Consiliul celor 21 de Agenți Specializați & 251 SKILL-uri

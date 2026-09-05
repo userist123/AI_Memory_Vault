@@ -7,7 +7,7 @@ tags: [obsidian, graph, memory, lessons]
 
 Focused navigation for durable lessons.
 
-- [[04_MEMORY/Lessons/README]]
+- [[01_ARCHITECTURE/memory/Lessons/README|Lessons README]]
 - [[08 Memory Subsystems Map]]
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]

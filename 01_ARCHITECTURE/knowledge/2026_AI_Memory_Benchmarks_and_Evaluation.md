@@ -12,9 +12,9 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "00_CORE/Confidence_Model.md"
-  - "00_CORE/GRAPH/02 Memory Knowledge Map.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
+  - "00_GOVERNANCE/protocols/Confidence_Model.md"
+  - "01_ARCHITECTURE/graphs/02 Memory Knowledge Map.md"
 ---
 
 # 📊 Ghid Canonic: Benchmark-uri & Metrici de Evaluare Memorie AI (2026 Standards)

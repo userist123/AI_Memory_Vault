@@ -12,9 +12,9 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
-  - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
+  - "01_ARCHITECTURE/System_Architecture.md"
+  - "01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md"
+  - "01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md"
 ---
 
 # 🧠 Specificație Canonică: Arhitectura Cognitivă Bio-Inspirată (v4.5.0 Brain Core)

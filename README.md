@@ -10,7 +10,7 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions"><img alt="GitHub Actions" src="https://img.shields.io/badge/CI-GitHub%20Actions-181717?logo=githubactions&logoColor=white"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-Plugin-7C3AED"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/07_EVALUATION"><img alt="Evidence Gated" src="https://img.shields.io/badge/Evidence-Gated-0F766E"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/09_COORDINATION/AGENT_MEMORY"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Agent%20Memory-Persistent-2563EB"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/00_GOVERNANCE/coordination"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Agent%20Memory-Persistent-2563EB"></a>
   <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Synced-7C3AED"></a>
 </p>
 
@@ -28,7 +28,7 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 | Memory Controller | storage boundary, read/write policy, context packs, progressive disclosure, lifecycle gating | **IMPLEMENTED** |
 | Model execution | fake, local/Ollama, OpenAI provider abstractions, tier routing, usage telemetry | **IMPLEMENTED** |
 | External skill ingestion | discovery, provenance, classification, validation, controlled promotion | **IMPLEMENTED** |
-| Persistent agent memory | resumable `CURRENT.md` state under `09_COORDINATION/AGENT_MEMORY/` | **IMPLEMENTED** |
+| Persistent agent memory | resumable `CURRENT.md` state under `00_GOVERNANCE/coordination/` | **IMPLEMENTED** |
 | Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
 | Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
 | Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
@@ -113,7 +113,7 @@ flowchart TB
     INBOX --> HG[Human / Policy Gate]
     HG --> M
 
-    P[09_COORDINATION / Persistent Agent Memory] <--> R
+    P[00_GOVERNANCE/coordination / Persistent Agent Memory] <--> R
 ```
 
 ### The core boundary
@@ -143,25 +143,27 @@ These runtime interfaces are the target architecture. Some are present as isolat
 
 | Path | Role |
 |---|---|
-| `00_CORE/` | identity, rules, memory protocol, system invariants |
-| `01_KNOWLEDGE/` | knowledge notes, registries, agent/skill maps, external research |
-| `02_PROJECTS/` | project continuity |
-| `03_PROCEDURES/` | repeatable operational procedures |
-| `04_MEMORY/` | canonical memory records |
-| `05_RESOURCES/` | references and Obsidian navigation |
-| `06_INBOX/` | raw/imported/review-stage material |
+| `00_GOVERNANCE/` | rules, agent coordination, execution protocols, identity, review queue |
+| `01_ARCHITECTURE/` | system architecture, durable knowledge (`knowledge/`), graphs (`graphs/`), memory (`memory/`) |
+| `02_PRODUCT/` | product goals, specifications, project continuity records (`projects/`), workspaces |
+| `03_IMPLEMENTATION/` | production implementation code and application modules |
+| `04_CONFIG/` | machine-readable runtime configuration, agent budgets, model tiers |
+| `05_DATA/` | local storage, database boundaries and persistent data |
+| `06_INBOX/` | raw intake and review staging (local-only by contract) |
 | `07_EVALUATION/` | audits, experiments, benchmarks, MVE, forensic evidence |
-| `08_EXPORTS/` | generated/export artifacts |
-| `09_COORDINATION/` | agent dispatch, persistent memory, project handoffs |
-| `10_ARCHIVE/` | historical material |
-| `90_TEMPLATES/` | templates |
-| `99_SYSTEM/` | system contracts and architecture |
+| `08_OBSERVABILITY/` | telemetry, traces, and metrics |
+| `09_SECURITY/` | security audits, trust boundaries, invariants |
+| `10_DOCUMENTATION/` | repeatable operational procedures (`procedures/`), resources (`resources/`) |
+| `20_TESTS/` | repository-level validation, test suites and test infrastructure |
+| `30_SCRIPTS/` | operational tooling, maintenance and ingestion scripts |
+| `40_EXPERIMENTS/` | experimental harnesses and research runs |
+| `50_ARTIFACTS/` | generated programs, exports and packages |
+| `80_ARCHIVE/` | historical material, legacy duplicates and snapshots |
+| `99_META/` | migration tracking, metadata inventories and templates |
 | `.agents/` | agent profiles, rules, operational skills |
 | `.claude-plugin/` | Claude Code plugin surface |
-| `cognitive_core/` | cognitive runtime primitives |
-| `memory_controller/` | canonical memory boundary and context control |
-| `scripts/` | operational tooling |
-| `tests/` | repository-level validation |
+| `cognitive_core/` | cognitive runtime primitives (root pending executable migration) |
+| `memory_controller/` | canonical memory boundary and context control (root pending executable migration) |
 | `.github/workflows/` | CI, security, ingestion, maintenance, evaluation |
 
 ---
@@ -399,7 +401,7 @@ That restraint is deliberate: a result that happened once is evidence about an e
 Persistent execution state lives under:
 
 ```text
-09_COORDINATION/AGENT_MEMORY/
+00_GOVERNANCE/coordination/
 ├── README.md
 ├── UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
 ├── BOOTSTRAP_ALL_AGENTS_V1.md
@@ -462,11 +464,11 @@ Relevant surfaces:
 
 - `.agents/skills/`
 - `.agents/agents/`
-- `01_KNOWLEDGE/Agents_Skill_Matrix.md`
-- `01_KNOWLEDGE/Master_Skills_Catalog_251.md`
-- `skills/ai-memory-vault/SKILL.md`
-- `scripts/skill_ingestion.py`
-- `06_INBOX/RAW_IMPORTS/`
+- `01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md`
+- `01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md`
+- `00_GOVERNANCE/skills/ai-memory-vault/SKILL.md`
+- `30_SCRIPTS/skills/skill_ingestion.py`
+- `06_INBOX/RAW_IMPORTS/` (local-only by contract)
 
 The repository deliberately preserves source attribution, commit/path metadata, hashing and lifecycle state for imported material.
 
@@ -616,11 +618,12 @@ Use the repository's environment files / requirements for the exact runtime depe
 
 ### Architecture & contracts
 
-- [`99_SYSTEM/Memory_V6_Architecture.md`](99_SYSTEM/Memory_V6_Architecture.md)
+- [`01_ARCHITECTURE/System_Architecture.md`](01_ARCHITECTURE/System_Architecture.md)
 - [`07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md)
 - [`07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md)
-- [`00_CORE/Rules.md`](00_CORE/Rules.md)
-- [`00_CORE/Memory_Protocol.md`](00_CORE/Memory_Protocol.md)
+- [`00_GOVERNANCE/rules/Rules.md`](00_GOVERNANCE/rules/Rules.md)
+- [`00_GOVERNANCE/protocols/Memory_Protocol.md`](00_GOVERNANCE/protocols/Memory_Protocol.md)
+- [`00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md`](00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md)
 
 ### MVE / research
 
@@ -632,16 +635,16 @@ Use the repository's environment files / requirements for the exact runtime depe
 
 ### Agent continuity
 
-- [`09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md`](09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md`](09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md)
+- [`00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
+- [`00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md`](00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md)
+- [`00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md`](00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md)
 
 ### Skills / ingestion
 
-- [`01_KNOWLEDGE/Agents_Skill_Matrix.md`](01_KNOWLEDGE/Agents_Skill_Matrix.md)
-- [`01_KNOWLEDGE/Master_Skills_Catalog_251.md`](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
-- [`skills/ai-memory-vault/SKILL.md`](skills/ai-memory-vault/SKILL.md)
-- [`scripts/skill_ingestion.py`](scripts/skill_ingestion.py)
+- [`01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md`](01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md)
+- [`01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md`](01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md)
+- [`00_GOVERNANCE/skills/ai-memory-vault/SKILL.md`](00_GOVERNANCE/skills/ai-memory-vault/SKILL.md)
+- [`30_SCRIPTS/skills/skill_ingestion.py`](30_SCRIPTS/skills/skill_ingestion.py)
 
 ### Runtime
 

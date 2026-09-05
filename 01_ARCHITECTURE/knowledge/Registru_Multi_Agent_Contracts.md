@@ -20,11 +20,11 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:20:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]]"
+  - target: "[[Registru_Transferuri_Development_Standards]]"
     type: depends_on
-  - target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target: "[[Registru_de_transferuri]]"
     type: implements
-  - target: "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - target: "[[CSharp_WPF_Enterprise_Desktop]]"
     type: related_to
 ---
 
@@ -87,9 +87,9 @@ Proiectul Registru de Transferuri folosește trei agenți AI de cod în paralel 
 ---
 
 ## 4. Relații și Sinapse Cognitive
-- `depends_on`: [[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]] — Standardele de bază ale proiectului.
-- `implements`: [[02_PROJECTS/Registru_de_transferuri]] — Proiectul activ care consumă aceste contracte.
-- `related_to`: [[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]] — Fundamentele MVVM și async.
+- `depends_on`: [[Registru_Transferuri_Development_Standards]] — Standardele de bază ale proiectului.
+- `implements`: [[Registru_de_transferuri]] — Proiectul activ care consumă aceste contracte.
+- `related_to`: [[CSharp_WPF_Enterprise_Desktop]] — Fundamentele MVVM și async.
 
 ---
 

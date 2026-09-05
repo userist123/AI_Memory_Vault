@@ -19,10 +19,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - "[[01_KNOWLEDGE/MOC_Frontend_UI_UX_Standards]]"
-  - "[[01_KNOWLEDGE/Motion_Design_Principles]]"
-  - "[[01_KNOWLEDGE/UI_UX_Resources_Directory_Reference]]"
-  - "[[01_KNOWLEDGE/Landing_Page_Architecture]]"
+  - "[[MOC_Frontend_UI_UX_Standards]]"
+  - "[[Motion_Design_Principles]]"
+  - "[[UI_UX_Resources_Directory_Reference]]"
+  - "[[Landing_Page_Architecture]]"
 ---
 
 # MengTo Agent Skills Catalog (130 Multi-Modal Agent Skills)

@@ -19,11 +19,11 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target: "[[Design_System_Foundation]]"
     type: depends_on
-  - target: "[[01_KNOWLEDGE/Motion_Design_Principles]]"
+  - target: "[[Motion_Design_Principles]]"
     type: depends_on
-  - target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
+  - target: "[[Data_Visualization_Standards]]"
     type: related_to
 ---
 
@@ -83,8 +83,8 @@ Generează matricea structurată:
 ---
 
 ## 2. Relații și Sinapse Cognitive
-- `depends_on`: [[01_KNOWLEDGE/Design_System_Foundation]] — Standardele de tokeni, contrast și ierarhie.
-- `depends_on`: [[01_KNOWLEDGE/Motion_Design_Principles]] — Criteriile de timing și accesibilitate a mișcării.
+- `depends_on`: [[Design_System_Foundation]] — Standardele de tokeni, contrast și ierarhie.
+- `depends_on`: [[Motion_Design_Principles]] — Criteriile de timing și accesibilitate a mișcării.
 
 ---
 

@@ -29,7 +29,7 @@
 ## 3. Provenance & Safety Compliance
 
 - **Memory Vault Safety**: Zero overwrites of `MemoryController`, `Cognitive Core`, `ToolRouter`, or P0-P18 Authorization invariants.
-- **Source Preservation**: All raw source structures preserved in `01_KNOWLEDGE/EXTERNAL_SKILLS/_RAW/`.
+- **Source Preservation**: All raw source structures preserved in `01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/_RAW/`.
 - **License Integrity**: All 29 repositories cataloged in `LICENSE_MAP.json`.
 
 ---

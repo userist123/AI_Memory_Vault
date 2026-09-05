@@ -25,13 +25,13 @@ A chat transcript is NOT the canonical execution memory.
 
 All persistent agent memory goes under:
 
-`09_COORDINATION/AGENT_MEMORY/`
+`00_GOVERNANCE/coordination/`
 
 Required structure:
 
 ```text
-09_COORDINATION/
-  AGENT_MEMORY/
+00_GOVERNANCE/
+  coordination/
     README.md
     UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
     agents/
@@ -169,7 +169,7 @@ Memory must never upgrade evidence level merely because another agent wrote it.
 When an agent starts in a new environment it MUST, before substantive work:
 
 1. fetch `main`;
-2. read `09_COORDINATION/AGENT_MEMORY/README.md`;
+2. read `00_GOVERNANCE/coordination/README.md`;
 3. read its own `agents/<AGENT>/CURRENT.md`;
 4. read the relevant `projects/<project-id>/CURRENT.md`;
 5. inspect the latest session/task record referenced there;

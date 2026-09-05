@@ -8,9 +8,9 @@ tags: [obsidian, graph, projects, continuity]
 Project state, continuity and handoff navigation.
 
 - [[Knowledge Graph Home]]
-- [[02_PROJECTS/AI_Memory_System]]
-- [[02_PROJECTS/Continuity_Handoff]]
-- [[PROJECT]]
+- [[02_PRODUCT/projects/AI_Memory_System]]
+- [[02_PRODUCT/projects/Continuity_Handoff]]
+- [[02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN]]
 
 ## Connected groups
 - [[00_Core_Map]]

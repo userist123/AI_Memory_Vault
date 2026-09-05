@@ -12,8 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
-  - "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - "[[LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - "[[CSharp_WPF_Enterprise_Desktop]]"
 ---
 
 # LogAnalyzer DFIR Enterprise (AirGapped & Network Editions)

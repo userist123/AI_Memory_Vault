@@ -12,13 +12,13 @@ confidence: medium
 verification: unverified
 relations:
   - relation: relates_to
-    target: 01_KNOWLEDGE/JARVIS_Cognitive_Fortress_Prompt_Pattern
+    target: 01_ARCHITECTURE/knowledge/JARVIS_Cognitive_Fortress_Prompt_Pattern
 lifecycle: raw
 ---
 
 # Romanian Classified-Information Digital Security Reform — Research Summary
 
-**Graph links:** [[JARVIS_Cognitive_Fortress_Prompt_Pattern]] · [[LLM_Antihallucination_Techniques_Research]] · [[00_CORE/GRAPH/01 Cognitive System Map]] · [[00_CORE/GRAPH/04 Security Integrity Map]] · [[00_CORE/GRAPH/07 Knowledge Domains Map]]
+**Graph links:** [[JARVIS_Cognitive_Fortress_Prompt_Pattern]] · [[LLM_Antihallucination_Techniques_Research]] · [[01 Cognitive System Map]] · [[04 Security Integrity Map]] · [[07 Knowledge Domains Map]]
 
 > **Status:** Research/proposal document, not a statement of verified current law. All legal references, proposal status, technical directives, and institutional claims require verification against official Romanian, NATO, EU, and ORNISS sources before operational or legal use.
 

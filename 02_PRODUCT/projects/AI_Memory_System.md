@@ -38,9 +38,9 @@ Foundation + historical memory import.
 
 ## Architecture
 
-[[00_CORE/System_Architecture]]
-[[99_SYSTEM/RAG_Structure]]
-[[99_SYSTEM/Knowledge_Graph_Schema]]
+[[System_Architecture]]
+[[RAG_Structure]]
+[[Knowledge_Graph_Schema]]
 
 ## Next Steps
 

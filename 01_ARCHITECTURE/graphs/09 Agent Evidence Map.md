@@ -63,6 +63,6 @@ Operational index for agent-generated briefings, dispatches, progress, reports, 
 - [[Knowledge Graph Home]]
 - [[03 Agents Operations Map]]
 - [[04 Security Integrity Map]]
-- [[99_SYSTEM/Graph Health Report]]
+- [[Graph Health Report]]
 
 #group/agents #obsidian #moc

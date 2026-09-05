@@ -19,11 +19,11 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
+  - target: "[[Data_Visualization_Standards]]"
     type: related_to
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target: "[[Design_System_Foundation]]"
     type: depends_on
-  - target: "[[02_PROJECTS/FinScope]]"
+  - target: "[[FinScope]]"
     type: implements
 ---
 

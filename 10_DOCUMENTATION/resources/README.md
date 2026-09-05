@@ -10,7 +10,7 @@ provenance_status: not_applicable
 relations: []
 ---
 
-# 05_RESOURCES
+# 10 — Resources
 
 Surse externe si referinte reutilizabile: documentatie oficiala, repo-uri, linkuri, resurse de invatare.
 
@@ -22,8 +22,8 @@ Surse externe si referinte reutilizabile: documentatie oficiala, repo-uri, linku
 
 ## Nu intra aici
 
-- cunostinte sintetizate (acelea merg in `01_KNOWLEDGE`);
-- stare de proiect (merge in `02_PROJECTS`).
+- cunostinte sintetizate (acelea merg in `01_ARCHITECTURE/knowledge/`);
+- stare de proiect (merge in `02_PRODUCT/projects/`).
 
 ## Continut curent
 

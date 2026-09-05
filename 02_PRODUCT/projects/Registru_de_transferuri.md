@@ -18,8 +18,8 @@ verification: unverified
 relations:
   - "[[HG585_MS111_Compliance_Requirements]]"
   - "[[Local_PIN_Auth_And_SQLCipher_Pattern]]"
-  - "[[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]]"
-  - "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - "[[Registru_Transferuri_Development_Standards]]"
+  - "[[CSharp_WPF_Enterprise_Desktop]]"
 ---
 
 # Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)

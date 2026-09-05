@@ -8,11 +8,11 @@ created: 2026-09-01T21:56:00Z
 updated: 2026-09-01T21:56:00Z
 provenance:
   source_type: execution
-  source_ref: "01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md"
+  source_ref: "01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md"
 confidence: high
 verification: unverified
 relations:
-  - "01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md"
+  - "01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md"
   - "evaluation/retrieval_fusion_experiment_spec.md"
   - "AGENTS.md"
 ---

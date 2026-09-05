@@ -18,9 +18,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:20:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Registru_Multi_Agent_Contracts]]"
+  - target: "[[Registru_Multi_Agent_Contracts]]"
     type: related_to
-  - target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target: "[[Registru_de_transferuri]]"
     type: supports
 ---
 

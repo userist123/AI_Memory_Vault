@@ -11,7 +11,7 @@ The repository root is the canonical Memory Vault.
 
 Before making or claiming substantive changes to the Vault, read and follow:
 
-`00_CORE/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md`
+`00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md`
 
 This protocol is mandatory for participating agents and defines source-of-truth precedence, evidence levels, non-negotiable integrity/security rules, lifecycle boundaries, delegation responsibilities and completion evidence.
 
@@ -23,13 +23,13 @@ Do not load the entire Vault into context. Treat it as an indexed external memor
 
 ## Retrieval order
 
-1. `99_SYSTEM/` — architecture, lifecycle, policies and canonical rules.
-2. `01_KNOWLEDGE/` — durable technical knowledge and source registries.
-3. `03_PROCEDURES/` — established workflows.
-4. `02_PROJECTS/` — project-specific context.
+1. `00_GOVERNANCE/` & `01_ARCHITECTURE/` — architecture, lifecycle, policies and canonical rules.
+2. `01_ARCHITECTURE/knowledge/` — durable technical knowledge and source registries.
+3. `10_DOCUMENTATION/procedures/` — established workflows.
+4. `02_PRODUCT/projects/` — project-specific context.
 5. `.agents/skills/` — validated operational skills.
-6. `06_INBOX/RAW_IMPORTS/skills/` — untrusted external material.
-7. Obsidian metadata/MOCs when navigation or vault structure matters.
+6. `06_INBOX/RAW_IMPORTS/skills/` — untrusted external material (local-only by contract).
+7. Obsidian metadata/MOCs (`01_ARCHITECTURE/graphs/`) when navigation or vault structure matters.
 
 ## Skill ingestion and promotion
 
@@ -60,9 +60,9 @@ Agent Council / orchestration
 Use the repository pipeline:
 
 ```powershell
-python scripts/skill_ingestion.py scan
-python scripts/skill_ingestion.py match
-python scripts/skill_ingestion.py promote --skill <skill-id> --verified
+python 30_SCRIPTS/skills/skill_ingestion.py scan
+python 30_SCRIPTS/skills/skill_ingestion.py match
+python 30_SCRIPTS/skills/skill_ingestion.py promote --skill <skill-id> --verified
 ```
 
 Promotion is intentionally explicit. `SKILL.md` presence alone is not proof that content is safe, correct or operational.

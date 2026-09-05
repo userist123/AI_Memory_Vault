@@ -8,7 +8,7 @@ created: 2026-09-02T00:39:00Z
 updated: 2026-09-02T00:39:00Z
 provenance:
   source_type: execution
-  source_ref: "01_KNOWLEDGE/VAULT_AVCHITECTURE_MAP.md"
+  source_ref: "01_ARCHITECTURE/knowledge/VAULT_AVCHITECTURE_MAP.md"
 confidence: high
 verification: verified
 enriched_by: ai
@@ -44,21 +44,21 @@ The I Memory Vault strictly separates research, evidence, evaluation, canonical 
 
 ## 2. Semantic Responsibility Boundaries
 
-### Layer 1: Governance & Core Invariants (`00_CORE/`)
+### Layer 1: Governance & Core Invariants (`00_GOVERNANCE/`)
 * **Role**: Foundational identity, security trust boundaries P0-P18, and confidence models.
 * **Mutability**: Strict human/admin attestation required.
 
-### Layer 2: Canonical Knowledge (`01_KNOWLEDGE/`)
+### Layer 2: Canonical Knowledge (`01_ARCHITECTURE/knowledge/`)
 * **Role**: Verified domain architectures, research findings, and protocols.
 * **Mutability**: AI proposed into REVIEW; human promotes to ACTIVE.
 
-### Layer 3: System Blueprints & Projects (`02_PROJECTS/`)
+### Layer 3: System Blueprints & Projects (`02_PRODUCT/projects/`)
 * **Role**: Engineering project architectures (LogAnalyzer, Registru, XAU Kinetic).
 
-### Layer 4: Standard Procedures (`03_PROCEDURES/`)
+### Layer 4: Standard Procedures (`10_DOCUMENTATION/procedures/`)
 * **Role**: Execution runbooks, PowerShell scripts, and coding workflows.
 
-### Layer 5: Dunamic Episodic Memory (`04_MEMORY/`)
+### Layer 5: Dunamic Episodic Memory (`01_ARCHITECTURE/memory/`)
 * **Role**: Structured decisions, errors, experiences, preferences, and lessons.
 
 ### Layer 6: Isolated Empirical Labs (`evaluation/`)

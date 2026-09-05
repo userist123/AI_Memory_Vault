@@ -15,7 +15,7 @@ relations: []
 ---
 
 # Agent Transfer & Continuity Handoff Package
-**Vault Path**: `02_PROJECTS/Continuity_Handoff.md`  
+**Vault Path**: `02_PRODUCT/projects/Continuity_Handoff.md`  
 **Version**: `1.0.0`  
 **Target Agent**: Perplexity Desktop
 
@@ -27,8 +27,8 @@ Welcome, Successor Agent (Perplexity). Do not guess or assume what the previous 
 
 1. **Read this Document First**: This handoff details the entire system architecture, runtime call graphs, and historical context.
 2. **Read the Core Operating Protocols**:
-   - Inspect [00_CORE/Rules.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Rules.md) (Core rules).
-   - Inspect [00_CORE/Memory_Protocol.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
+   - Inspect [00_GOVERNANCE/rules/Rules.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_GOVERNANCE/rules/Rules.md) (Core rules).
+   - Inspect [00_GOVERNANCE/protocols/Memory_Protocol.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_GOVERNANCE/protocols/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
 3. **Verify the Environment State**:
    - Run the pytest suite immediately: `python -m pytest -q`
    - Run the multi-process restart verification: `python C:\Users\user\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\scratch\run_multi_process_test.py`
@@ -239,7 +239,7 @@ The runtime cognitive loop operates sequentially:
 | **Human-Verified Protection** | **PASS** | Enforces enforcer checks blocking AI agents from mutating user-sourced nodes. | `memory_controller/validation/supersession.py` |
 | **Reciprocal Links** | **PASS** | Bidirectional relations and properties updated atomically. | `memory_controller/controller.py` |
 | **Cycle Detection** | **PASS** | Performs Graph DFS check to prevent cycles before writing notes. | `memory_controller/validation/supersession.py` |
-| **Memory Protocol** | **PASS** | Updated specification details inside `00_CORE/Memory_Protocol.md`. | Checked manually. |
+| **Memory Protocol** | **PASS** | Updated specification details inside `00_GOVERNANCE/protocols/Memory_Protocol.md`. | Checked manually. |
 
 ---
 
@@ -326,9 +326,9 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 ## 11. Next-Task Contract
 
 - **TASK ID**: `AG-CONT-01`
-- **OBJECTIVE**: Integrate the Agent Handoff / Continuity layer as a core automation feature of the loop. Specifically, update the `Executive` to automatically compile a task summary, verified test results, and next actions to `02_PROJECTS/Continuity_Handoff.md` upon loop termination or task exit.
+- **OBJECTIVE**: Integrate the Agent Handoff / Continuity layer as a core automation feature of the loop. Specifically, update the `Executive` to automatically compile a task summary, verified test results, and next actions to `02_PRODUCT/projects/Continuity_Handoff.md` upon loop termination or task exit.
 - **WHY IT IS NEXT**: Handing off projects must be a programmatic, tool-driven event native to the loop, instead of manual write-ups.
-- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PROJECTS/Continuity_Handoff.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PROJECTS/Continuity_Handoff.md).
+- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PRODUCT/projects/Continuity_Handoff.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PRODUCT/projects/Continuity_Handoff.md).
 - **DEPENDENCIES**: Completed Phase 4.3 architecture.
 - **INVARIANTS**: Writing continuity state must never alter human-verified files or bypass path traversal checkers.
 - **ACCEPTANCE CRITERIA**:

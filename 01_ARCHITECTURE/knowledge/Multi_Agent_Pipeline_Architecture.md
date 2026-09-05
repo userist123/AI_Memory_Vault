@@ -20,7 +20,7 @@ This note exists specifically to bridge a gap: the five specialized worker agent
 
 ## The Five Worker Agents
 
-All five live in `cognitive_core/agents/`, all inherit from `BaseWorkerAgent`, and all are instantiated by `MultiAgentOrchestrator` (`cognitive_core/orchestrator.py`) against the same shared `MemoryController` and `ToolRouter` instances -- so none of them can bypass the canonical trust boundary (see [[04_MEMORY/Lessons/Trust_Boundary_Hardening_Requires_Attest_Not_Overlay]]).
+All five live in `cognitive_core/agents/`, all inherit from `BaseWorkerAgent`, and all are instantiated by `MultiAgentOrchestrator` (`cognitive_core/orchestrator.py`) against the same shared `MemoryController` and `ToolRouter` instances -- so none of them can bypass the canonical trust boundary (see [[Trust_Boundary_Hardening_Requires_Attest_Not_Overlay]]).
 
 | Agent | permitted_actions | Role |
 |---|---|---|
@@ -57,9 +57,9 @@ No agent in this pipeline can escalate trust on its own:
 - The only path to `verification="verified"` remains `MemoryController.attest()`, restricted to `HUMAN`/`ADMIN` -- no worker agent has `attest` in its `permitted_actions`.
 
 ## Related
-- [[00_CORE/GRAPH/09 Agent Evidence Map]]
-- [[00_CORE/GRAPH/01 Cognitive System Map]]
-- [[04_MEMORY/Lessons/Trust_Boundary_Hardening_Requires_Attest_Not_Overlay]]
+- [[09 Agent Evidence Map]]
+- [[01 Cognitive System Map]]
+- [[Trust_Boundary_Hardening_Requires_Attest_Not_Overlay]]
 
 ---
 
