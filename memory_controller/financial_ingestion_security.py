@@ -11,8 +11,6 @@ from copy import deepcopy
 from typing import Any, Dict, FrozenSet
 
 
-# States whose presence in an ingestion payload could grant or imply a trust
-# level that the direct-ingestion path is not allowed to establish.
 _PRIVILEGED_LIFECYCLES: FrozenSet[str] = frozenset(
     {
         "VERIFIED",
@@ -23,11 +21,7 @@ _PRIVILEGED_LIFECYCLES: FrozenSet[str] = frozenset(
     }
 )
 
-_PRIVILEGED_VERIFICATIONS: FrozenSet[str] = frozenset(
-    {
-        "verified",
-    }
-)
+_PRIVILEGED_VERIFICATIONS: FrozenSet[str] = frozenset({"VERIFIED"})
 
 
 def canonicalize_financial_ingest_frontmatter(
@@ -35,12 +29,9 @@ def canonicalize_financial_ingest_frontmatter(
 ) -> Dict[str, Any]:
     """Return a safe persistence copy for direct financial ingestion.
 
-    The source payload is treated as untrusted. Ingestion can create a review
-    candidate, but it cannot establish any privileged lifecycle or a ``verified``
-    verification state.
-
-    A deep copy is returned so callers cannot mutate the original payload after
-    the security decision and accidentally change the persisted record.
+    Direct ingestion can create a review candidate, but it cannot establish
+    any privileged lifecycle or a verified verification state. The input is
+    deep-copied before normalization so the caller retains its original data.
     """
 
     if not isinstance(frontmatter, dict):
@@ -48,11 +39,9 @@ def canonicalize_financial_ingest_frontmatter(
 
     safe = deepcopy(frontmatter)
     requested_lifecycle = str(safe.get("lifecycle", "REVIEW")).strip().upper()
-    requested_verification = str(safe.get("verification", "unverified")).strip().lower()
+    requested_verification = str(safe.get("verification", "unverified")).strip().upper()
 
     if requested_lifecycle in _PRIVILEGED_LIFECYCLES:
-        # Fail closed rather than silently elevating or preserving a privileged
-        # caller-controlled state.
         raise ValueError(
             f"direct financial ingestion cannot establish lifecycle={requested_lifecycle!r}"
         )
@@ -60,9 +49,6 @@ def canonicalize_financial_ingest_frontmatter(
     if requested_verification in _PRIVILEGED_VERIFICATIONS:
         raise ValueError("direct financial ingestion cannot establish verification='verified'")
 
-    # Controller-owned canonical creation state. This also normalizes benign
-    # caller values such as partially_verified so persistence cannot accidentally
-    # become a verification source of truth.
     safe["lifecycle"] = "REVIEW"
     safe["verification"] = "unverified"
     return safe
