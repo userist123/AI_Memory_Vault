@@ -30,7 +30,7 @@ ROOT_ALLOWED_PREFIXES = ("requirements", "uv.lock", "poetry.lock", "Pipfile", "p
 NUMBERED_RE = re.compile(r"^\d{2}_[^/]+$")
 # Match actual absolute filesystem paths, not URI schemes or ordinary escaped strings.
 ABSOLUTE_PATH_RE = re.compile(
-    r"(?:(?<![A-Za-z0-9_])[A-Za-z]:[\\/]|\\\\[A-Za-z0-9._-]+[\\/]|(?<![A-Za-z0-9_])/(?:home|Users|mnt|tmp|var|opt)/)"
+    r"(?:(?<![A-Za-z0-9_])[A-Za-z]:[\\/]|(?<![A-Za-z0-9._-])\\\\[A-Za-z0-9._-]+[\\/]|(?<![A-Za-z0-9_])/(?:home|Users|mnt|tmp|var|opt)/)"
 )
 FORBIDDEN_PRODUCTION_SUFFIXES = {
     ".ipynb",
@@ -143,6 +143,7 @@ def main() -> int:
     failures = run(root)
     print(f"REPOSITORY_HYGIENE_ROOT={root}")
     print(f"TRACKED_FILES={len(git_files(root))}")
+    failures = run(root)
     print(f"FAILURES={len(failures)}")
     for failure in failures:
         print(failure)
