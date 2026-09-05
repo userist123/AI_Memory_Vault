@@ -11,100 +11,36 @@ import cognitive_core.executive_model_execution_bridge as emeb
 CORE_DIR = Path(__file__).resolve().parent.parent
 
 def test_ast_model_provider_structure():
-    tree = ast.parse((CORE_DIR / 'model_provider.py').read_text(encoding='utf-8'))
+    tree = ast.parse(Path(mp.__file__).read_text(encoding='utf-8'))
     classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert {'TokenUsage', 'ModelRequest', 'ModelResponse', 'ModelProvider'}.issubset(classes)
 
 def test_ast_fake_model_provider_structure():
-    tree = ast.parse((CORE_DIR / 'fake_model_provider.py').read_text(encoding='utf-8'))
+    tree = ast.parse(Path(fmp.__file__).read_text(encoding='utf-8'))
     classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert 'FakeModelProvider' in classes
 
 def test_ast_model_tier_router_structure():
-    tree = ast.parse((CORE_DIR / 'model_tier_router.py').read_text(encoding='utf-8'))
+    tree = ast.parse(Path(mtr.__file__).read_text(encoding='utf-8'))
     classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert {'TierConfig', 'ModelTierRouter', 'ModelTierConfigError'}.issubset(classes)
     funcs = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
     assert 'load_model_tier_config' in funcs
 
 def test_ast_actual_usage_telemetry_structure():
-    tree = ast.parse((CORE_DIR / 'actual_usage_telemetry.py').read_text(encoding='utf-8'))
+    tree = ast.parse(Path(aut.__file__).read_text(encoding='utf-8'))
     classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert {'UsageEvent', 'ActualUsageTelemetry'}.issubset(classes)
 
 def test_ast_council_model_execution_structure():
-    tree = ast.parse((CORE_DIR / 'council_model_execution.py').read_text(encoding='utf-8'))
+    tree = ast.parse(Path(cme.__file__).read_text(encoding='utf-8'))
     classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
     assert 'CouncilRunWithExecution' in classes
     funcs = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
     assert 'run_council_with_model_execution' in funcs
 
 def test_ast_executive_bridge_structure():
-    tree = ast.parse((CORE_DIR / 'executive_model_execution_bridge.py').read_text(encoding='utf-8'))
-    funcs = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
-    assert {'derive_agent_model_tiers', 'build_model_tier_router', 'execute_council_models'}.issubset(funcs)
-
-def test_model_provider_signatures_and_fields():
-    assert is_dataclass(mp.TokenUsage)
-    tf = {f.name for f in fields(mp.TokenUsage)}
-    assert {'estimated_input', 'estimated_output', 'actual_input', 'actual_output', 'cached_input', 'reasoning_tokens', 'total'}.issubset(tf)
-    assert hasattr(mp.TokenUsage, 'effective_total')
-    assert is_dataclass(mp.ModelRequest)
-    rf = {f.name for f in fields(mp.ModelRequest)}
-    assert {'prompt', 'model_tier', 'system_prompt', 'tools', 'metadata'}.issubset(rf)
-    assert is_dataclass(mp.ModelResponse)
-    rsf = {f.name for f in fields(mp.ModelResponse)}
-    assert {'content', 'provider', 'model', 'model_tier', 'usage', 'metadata'}.issubset(rsf)
-    assert 'request' in inspect.signature(mp.ModelProvider.generate).parameters
-    assert len(inspect.signature(mp.ModelProvider.health).parameters) >= 1
-
-def test_fake_model_provider_signatures():
-    assert hasattr(fmp.FakeModelProvider, 'generate')
-    assert hasattr(fmp.FakeModelProvider, 'health')
-    assert 'request' in inspect.signature(fmp.FakeModelProvider.generate).parameters
-import ast, inspect, pytest
-from dataclasses import is_dataclass, fields
-from pathlib import Path
-import cognitive_core.model_provider as mp
-import cognitive_core.fake_model_provider as fmp
-import cognitive_core.model_tier_router as mtr
-import cognitive_core.actual_usage_telemetry as aut
-import cognitive_core.council_model_execution as cme
-import cognitive_core.executive_model_execution_bridge as emeb
-
-CORE_DIR = Path(__file__).resolve().parent.parent
-
-def test_ast_model_provider_structure():
-    tree = ast.parse((CORE_DIR / 'model_provider.py').read_text(encoding='utf-8'))
-    classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
-    assert {'TokenUsage', 'ModelRequest', 'ModelResponse', 'ModelProvider'}.issubset(classes)
-
-def test_ast_fake_model_provider_structure():
-    tree = ast.parse((CORE_DIR / 'fake_model_provider.py').read_text(encoding='utf-8'))
-    classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
-    assert 'FakeModelProvider' in classes
-
-def test_ast_model_tier_router_structure():
-    tree = ast.parse((CORE_DIR / 'model_tier_router.py').read_text(encoding='utf-8'))
-    classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
-    assert {'TierConfig', 'ModelTierRouter', 'ModelTierConfigError'}.issubset(classes)
-    funcs = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
-    assert 'load_model_tier_config' in funcs
-
-def test_ast_actual_usage_telemetry_structure():
-    tree = ast.parse((CORE_DIR / 'actual_usage_telemetry.py').read_text(encoding='utf-8'))
-    classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
-    assert {'UsageEvent', 'ActualUsageTelemetry'}.issubset(classes)
-
-def test_ast_council_model_execution_structure():
-    tree = ast.parse((CORE_DIR / 'council_model_execution.py').read_text(encoding='utf-8'))
-    classes = {n.name for n in ast.walk(tree) if isinstance(n, ast.ClassDef)}
-    assert 'CouncilRunWithExecution' in classes
-    funcs = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
-    assert 'run_council_with_model_execution' in funcs
-
-def test_ast_executive_bridge_structure():
-    tree = ast.parse((CORE_DIR / 'executive_model_execution_bridge.py').read_text(encoding='utf-8'))
+    tree = ast.parse(Path(emeb.__file__).read_text(encoding='utf-8'))
     funcs = {n.name for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
     assert {'derive_agent_model_tiers', 'build_model_tier_router', 'execute_council_models'}.issubset(funcs)
 
