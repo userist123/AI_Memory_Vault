@@ -104,6 +104,7 @@ from memory_controller.financial_schema import (
     validate_financial_note,
 )
 from memory_controller.validation.schema import validate_frontmatter
+from lifecycle import policy as lifecycle_policy
 
 logger = logging.getLogger("memory_controller.financial_ingestion")
 
@@ -373,10 +374,30 @@ class FinancialSourceIngestionManager:
 
         # 3. SQLite Storage Engine write if available
         if self.storage:
+            # Ingestion is an automated (AI_AGENT) creation path, and the
+            # lifecycle here comes from externally supplied front-matter. Route
+            # it through the canonical authority so an imported document cannot
+            # self-declare a trusted lifecycle such as VERIFIED or ACTIVE.
+            # Fail closed: reject rather than silently downgrading, so the
+            # attempted escalation stays visible instead of being absorbed.
+            _ingest_lifecycle = fm.get("lifecycle", "REVIEW")
+            _ingest_decision = lifecycle_policy.evaluate(
+                lifecycle_policy.TransitionRequest(
+                    mutation=lifecycle_policy.Mutation.CREATE,
+                    to_state=_ingest_lifecycle,
+                    principal=lifecycle_policy.PrincipalRole.AI_AGENT,
+                )
+            )
+            if not _ingest_decision.allowed:
+                raise lifecycle_policy.LifecycleViolation(
+                    f"Financial ingestion cannot create note '{note_id}' with lifecycle "
+                    f"'{_ingest_lifecycle}' [policy: {_ingest_decision.reason}]"
+                )
+
             canonical_record = {
                 "id": note_id,
                 "type": fm.get("type", "knowledge"),
-                "lifecycle": fm.get("lifecycle", "REVIEW"),
+                "lifecycle": _ingest_lifecycle,
                 "category": fm.get("category", "financial"),
                 "tags": fm.get("tags", ["finance"]),
                 "created": fm.get("created", datetime.now(timezone.utc).strftime("%Y-%m-%d")),

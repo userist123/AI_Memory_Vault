@@ -469,9 +469,14 @@ class MemoryController:
                     )
                 )
                 if not _creation_decision.allowed:
+                    # The permitted list is derived from the authority rather than
+                    # restated here, so this message can never drift from the policy.
+                    _permitted = ", ".join(
+                        sorted(s.value for s in lifecycle_policy.permitted_creation_states(principal))
+                    ) or "none"
                     raise ValueError(
                         f"Principal '{principal.value}' cannot set lifecycle to '{lifecycle_val}' at creation. "
-                        f"Permitted creation states: RAW, CLASSIFIED, NORMALIZED, REVIEW. "
+                        f"Permitted creation states: {_permitted}. "
                         f"[policy: {_creation_decision.reason}]"
                     )
 
