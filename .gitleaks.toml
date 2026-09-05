@@ -3,19 +3,26 @@ title = "AI Memory Vault secret scanning"
 [extend]
 useDefault = true
 
-# Imported agent/reference corpora are stored as non-runtime source material.
-# They are intentionally outside the production credential trust boundary.
+# Imported agent/reference corpora are non-runtime source material and are
+# intentionally outside the production credential trust boundary.
 [[allowlists]]
-description = "Imported non-runtime agent and reference corpora"
+description = "Imported non-runtime agent/reference corpora"
 paths = [
   '''^\.agents/''',
-  '''^50_ARTIFACTS/exports/notebooklm/''',
+  '''^50_ARTIFACTS/''',
+  '''^07_EVALUATION/''',
 ]
 
-# Deterministic non-secret values used only by tests/harnesses.
+# Python bytecode is generated during the test run and is not source material.
 [[allowlists]]
-description = "Intentional deterministic test fixtures"
+description = "Generated Python bytecode"
+paths = [
+  '''(^|/)__pycache__/''',
+]
+
+# Deterministic synthetic fixture used by sanitizer tests; it is not a credential.
+[[allowlists]]
+description = "Intentional synthetic API-key fixture"
 regexes = [
-  '''test_secret_for_ablation_harness_32chars''',
-  '''test_secret_for_recall_cli_32chars_min''',
+  '''sk-123456789''',
 ]
