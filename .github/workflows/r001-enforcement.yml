@@ -2,7 +2,24 @@ name: R001 Repository Enforcement
 
 on:
   push:
-    branches: ["r001/night-runtime-migration-and-enforcement"]
+    branches: ["main"]
+    paths:
+      - "03_IMPLEMENTATION/**"
+      - "04_CONFIG/**"
+      - "06_INBOX/**"
+      - "09_SECURITY/**"
+      - "20_TESTS/**"
+      - "30_SCRIPTS/verification/**"
+      - "40_EXPERIMENTS/**"
+      - "99_META/**"
+      - "pyproject.toml"
+      - "pytest.ini"
+      - "requirements-memory-v6.txt"
+      - ".gitleaks.toml"
+      - ".pre-commit-config.yaml"
+      - ".github/workflows/r001-enforcement.yml"
+  pull_request:
+    branches: ["main"]
     paths:
       - "03_IMPLEMENTATION/**"
       - "04_CONFIG/**"
@@ -31,7 +48,7 @@ jobs:
       - name: Checkout exact commit
         uses: actions/checkout@v4
         with:
-          ref: r001/night-runtime-migration-and-enforcement
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - name: Runtime evidence header
@@ -60,7 +77,7 @@ jobs:
 
       - name: Targeted graph and trust tests
         run: |
-          pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py | tee r001_targeted_tests.txt
+          pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py 20_TESTS/regression/test_repository_hygiene.py | tee r001_targeted_tests.txt
 
       - name: Full test suite
         run: |
@@ -99,7 +116,7 @@ jobs:
             echo "python=$(python --version 2>&1)"
             echo "platform=$(uname -a)"
             echo "layout_command=python 30_SCRIPTS/verification/validate_repository_layout.py"
-            echo "targeted_command=pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py"
+            echo "targeted_command=pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py 20_TESTS/regression/test_repository_hygiene.py"
             echo "full_test_command=pytest -q"
             echo "dataset=repository tracked tree at commit $(git rev-parse HEAD)"
             echo "status=SEE_STEP_LOGS"
@@ -113,5 +130,5 @@ jobs:
           path: |
             r001_*.txt
             r001_gitleaks_history.json
-            99_META/repository_map/R001_RUNTIME_MIGRATION_INVENTORY.json
+            03_IMPLEMENTATION/products/xau_kinetic/repository_map/R001_RUNTIME_MIGRATION_INVENTORY.json
           if-no-files-found: warn
