@@ -232,7 +232,7 @@ class MemoryController:
             notes = sorted(notes, key=lambda n: score_map.get(n.get('id'), 0), reverse=True)
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata': disclosed = pd.metadata_only(notes)
-            elif disclosure_level == 'snippet': disclosed = pd.snippet(notes, sanitized)
+            elif disclosure_level == 'snippet': disclosed = pd.snippet(notes)
             elif disclosure_level == 'sections': disclosed = pd.sections(notes, sanitized)
             else: disclosed = pd.full_document(notes)
             total = len(disclosed); end = min(offset + page_size, total); page_results = disclosed[offset:end]; next_token = None
