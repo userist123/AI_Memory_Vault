@@ -353,7 +353,6 @@ def calc_signal(
     score = 0
     r = safe_float(rsi, 50.0)
 
-    # 1. RSI Score
     if r < 35:
         score += 2
     elif r < 45:
@@ -363,7 +362,6 @@ def calc_signal(
     elif r > 65:
         score -= 1
 
-    # 2. MACD Cross Score
     mc = str(macd_cross).lower()
     if "impuls pozitiv nou" in mc:
         score += 2
@@ -374,14 +372,12 @@ def calc_signal(
     elif "impuls negativ activ" in mc:
         score -= 1
 
-    # 3. MA Cross Score
     mx = str(ma_cross).lower()
     if "golden cross" in mx:
         score += 2
     elif "death cross" in mx:
         score -= 2
 
-    # 4. RVOL Confirmation
     rv = safe_float(rvol, 1.0)
     if rv > 1.5:
         score += 1
@@ -462,7 +458,7 @@ def compute_all_indicators(
 
     def _pct(idx: int) -> float:
         try:
-            if len(closes) > abs(idx):
+            if len(closes) >= abs(idx):
                 prev = float(closes.iloc[idx])
                 return round((price - prev) / prev * 100, 4) if prev else 0.0
             return 0.0
@@ -529,116 +525,14 @@ def compute_all_indicators(
         "atr": atr,
         "stoch_k": stoch["stoch_k"],
         "stoch_d": stoch["stoch_d"],
-        "momentum_10z": mom10,
-        "semnal": semnal,
-        "score": score,
-        "confluente": confluente,
-        "sl": sl,
-        "tp": tp,
-        "rr_ratio": rr,
-        "probabilitate": prob,
+        "momentum_10": mom10,
         "support": sr_res["support"],
         "resistance": sr_res["resistance"],
+        "signal": semnal,
+        "confluences": confluente,
+        "raw_score": score,
+        "stop_loss": sl,
+        "take_profit": tp,
+        "rr_ratio": rr,
+        "probability": prob,
     }
-
-
-# ============================================================================
-# 4. INSTITUTIONAL NARRATIVE & HEURISTIC ENGINE
-# ============================================================================
-
-def explica_miscare(d: Dict[str, object]) -> str:
-    """Generates an institutional narrative explaining price movement and technical structure."""
-    name = str(d.get("name", d.get("ticker", "Activul")))
-    vz = safe_float(d.get("var_zi_pct"), 0.0)
-    rvol = safe_float(d.get("rvol"), 1.0)
-    rsi = safe_float(d.get("rsi"), 50.0)
-    macd_c = str(d.get("macd_cross", ""))
-    macross = str(d.get("macross", ""))
-    bb_sup = d.get("bb_sup")
-    bb_inf = d.get("bb_inf")
-    price = safe_float(d.get("inchidere"), 0.0)
-    ma50 = d.get("ma50")
-    ma200 = d.get("ma200")
-    sl_v = d.get("sl")
-    tp_v = d.get("tp")
-    semnal = str(d.get("semnal", "WAIT"))
-
-    dir_txt = "crescut" if vz > 0 else "scazut"
-    intens = "semnificativ" if abs(vz) > 2 else "moderat" if abs(vz) > 0.5 else "marginal"
-    vol_txt = "exceptionale" if rvol > 1.5 else "normale" if rvol > 0.7 else "scazute"
-    rsi_txt = (
-        "supravandut — potential rebound" if rsi < 30
-        else "zona neutra" if rsi < 60
-        else "zona supracumparare — prudenta recomandata"
-    )
-
-    bb_txt = ""
-    if bb_sup is not None and bb_inf is not None and price > 0:
-        bb_sup_f = float(bb_sup)
-        bb_inf_f = float(bb_inf)
-        if price > bb_sup_f * 0.99:
-            bb_txt = "Pretul testeaza banda superioara Bollinger (potentiala rezistenta)."
-        elif price < bb_inf_f * 1.01:
-            bb_txt = "Pretul testeaza banda inferioara Bollinger (potential suport)."
-        else:
-            bb_txt = "Pretul se afla in interiorul benzilor Bollinger."
-
-    ma_txt = ""
-    if ma50 is not None and ma200 is not None:
-        ma_txt = f"Raport MA50/MA200: {macross}."
-
-    sl_tp_txt = ""
-    if sl_v is not None and tp_v is not None:
-        sl_tp_txt = f"SL recomandat: {fmt_price(float(sl_v))} | TP: {fmt_price(float(tp_v))}."
-
-    return (
-        f"{name} a {dir_txt} {intens} cu {abs(vz):.2f}% in sedinta curenta. "
-        f"Volumele sunt {vol_txt} (RVOL={rvol:.1f}x). "
-        f"RSI({rsi:.1f}): {rsi_txt}. "
-        f"MACD: {macd_c}. "
-        f"{ma_txt} {bb_txt} "
-        f"Semnal tehnic: {semnal}. {sl_tp_txt}"
-    ).strip()
-
-
-def identifica_oportunitate(d: Dict[str, object]) -> str:
-    """Synthesizes high-probability market opportunities or risk warnings."""
-    semnal = str(d.get("semnal", "WAIT"))
-    rsi = safe_float(d.get("rsi"), 50.0)
-    rvol = safe_float(d.get("rvol"), 1.0)
-    macross = str(d.get("macross", ""))
-    name = str(d.get("name", d.get("ticker", "Activul")))
-
-    if semnal == "BUY" and rsi < 45:
-        return f"✅ OPORTUNITATE: {name} prezinta semnal BUY cu RSI scazut ({rsi:.0f}) — potential entry atractiv."
-    elif semnal == "BUY" and "golden" in macross.lower():
-        return f"✅ OPORTUNITATE: Golden Cross confirmat pe {name} cu semnal BUY activ."
-    elif semnal == "SELL" and rsi > 70:
-        return f"⚠️ RISC: {name} supraevaluat (RSI={rsi:.0f}) cu semnal SELL — potential short sau exit long."
-    elif rvol > 2.0:
-        return f"🔥 ATENTIE: Volum exceptional pe {name} (RVOL={rvol:.1f}x) — miscare semnificativa posibila."
-    else:
-        return f"⏸ {name} in zona de asteptare (WAIT) — se monitorizeaza confirmare semnal."
-
-
-def extrage_lectie(d: Dict[str, object]) -> str:
-    """Distills actionable, repeatable trading heuristics from the asset state."""
-    rsi = safe_float(d.get("rsi"), 50.0)
-    macross = str(d.get("macross", ""))
-    macd_c = str(d.get("macd_cross", ""))
-    rvol = safe_float(d.get("rvol"), 1.0)
-
-    if "golden" in macross.lower():
-        return "Lectie: Golden Cross (MA50>MA200) este un semnal bullish pe termen lung, confirmat de MACD."
-    elif "death" in macross.lower():
-        return "Lectie: Death Cross (MA50<MA200) semnaleaza potentiala tendinta descendenta — fii prudent cu pozitiile long."
-    elif rsi < 30:
-        return "Lectie: RSI sub 30 indica supravanzare — pretul poate reveni, dar asteapta confirmare MACD."
-    elif rsi > 70:
-        return "Lectie: RSI peste 70 indica supracumparare — risc de corectie. NU intra in long la extrema RSI."
-    elif "pozitiv nou" in macd_c.lower():
-        return "Lectie: Crossover MACD pozitiv nou = potential inceput de tendinta ascendenta — oportunitate entry."
-    elif rvol > 1.5:
-        return "Lectie: Volum ridicat confirma miscarile de pret — un breakout cu volum este mai credibil."
-    else:
-        return "Lectie: In absenta unui semnal clar, cash-ul este o pozitie valida. Rabdarea este o virtute in trading."
