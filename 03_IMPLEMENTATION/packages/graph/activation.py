@@ -1,4 +1,4 @@
-"""
+r"""
 ACT-R Base-Level Activation Engine for Cognitive Core.
 
 Theoretical Foundation:
