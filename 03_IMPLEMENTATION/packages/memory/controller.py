@@ -57,6 +57,11 @@ class StorageEngine:
             results = [n for n in results if n.get('type') in types]
         return results
 
+    def all_notes(self) -> List[Dict[str, Any]]:
+        """Return graph-readable notes through the storage abstraction."""
+        return [n.copy() for n in self.store.values()
+                if n.get('lifecycle') != Lifecycle.RAW.value]
+
 class Lifecycle(str, enum.Enum):
     RAW = "RAW"
     CLASSIFIED = "CLASSIFIED"
