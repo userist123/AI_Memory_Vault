@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal, Operation
 from memory_controller.core import Lifecycle
+from memory_controller.lifecycle_policy import Mutation as LifecycleMutation, evaluate as evaluate_lifecycle_mutation
 from memory_controller.audit.logger import audit_event
 from .tool_router import ToolRouter
 
@@ -40,6 +41,17 @@ class Consolidator:
             }
             if current_lifecycle not in allowed_source_states:
                 return None
+            if not evaluate_lifecycle_mutation(
+                current_lifecycle,
+                Lifecycle.RECONSOLIDATING.value,
+                mutation=LifecycleMutation.RECONSOLIDATE_CHALLENGE,
+                verification=note.get("verification"),
+            ):
+                raise ValueError(
+                    f"Invalid lifecycle transition from {current_lifecycle} "
+                    f"to {Lifecycle.RECONSOLIDATING.value} for "
+                    f"{LifecycleMutation.RECONSOLIDATE_CHALLENGE.value}"
+                )
 
             previous_version = {
                 "content": copy.deepcopy(note.get("content")),
@@ -102,6 +114,17 @@ class Consolidator:
 
             if note.get("lifecycle") != Lifecycle.RECONSOLIDATING.value:
                 return note
+            if not evaluate_lifecycle_mutation(
+                Lifecycle.RECONSOLIDATING.value,
+                Lifecycle.REVIEW.value,
+                mutation=LifecycleMutation.RECONSOLIDATE_RESOLVE,
+                verification=note.get("verification"),
+            ):
+                raise ValueError(
+                    f"Invalid lifecycle transition from {Lifecycle.RECONSOLIDATING.value} "
+                    f"to {Lifecycle.REVIEW.value} for "
+                    f"{LifecycleMutation.RECONSOLIDATE_RESOLVE.value}"
+                )
 
             updated_note = copy.deepcopy(note)
             if resolved_node:
