@@ -110,29 +110,40 @@ class MemoryController:
             old_lifecycle = Lifecycle(old_note.get('lifecycle'))
             new_lifecycle = Lifecycle(note.get('lifecycle'))
             if old_lifecycle != new_lifecycle:
-                try:
-                    mutation = LifecycleMutation(str(new_lifecycle.value))
-                except ValueError:
-                    raise ValueError(f"Unknown lifecycle mutation target: {new_lifecycle}")
-                allowed = {
-                    Lifecycle.CLASSIFIED: LifecycleMutation.REVIEW,
-                    Lifecycle.NORMALIZED: LifecycleMutation.REVIEW,
-                    Lifecycle.REVIEW: LifecycleMutation.PROMOTE,
-                    Lifecycle.ACTIVE: LifecycleMutation.SUPERSEDE,
+                transition_mutations = {
+                    (Lifecycle.NORMALIZED, Lifecycle.REVIEW): LifecycleMutation.REVIEW,
+                    (Lifecycle.REVIEW, Lifecycle.ACTIVE): LifecycleMutation.PROMOTE,
+                    (Lifecycle.ACTIVE, Lifecycle.RECONSOLIDATING): LifecycleMutation.RECONSOLIDATE_CHALLENGE,
+                    (Lifecycle.VERIFIED, Lifecycle.RECONSOLIDATING): LifecycleMutation.RECONSOLIDATE_CHALLENGE,
+                    (Lifecycle.RECONSOLIDATING, Lifecycle.REVIEW): LifecycleMutation.RECONSOLIDATE_RESOLVE,
+                    (Lifecycle.REVIEW, Lifecycle.ARCHIVED): LifecycleMutation.ARCHIVE,
+                    (Lifecycle.ACTIVE, Lifecycle.ARCHIVED): LifecycleMutation.ARCHIVE,
+                    (Lifecycle.ACTIVE, Lifecycle.SUPERSEDED): LifecycleMutation.SUPERSEDE,
                 }
-                # Storage validation remains backward-compatible for non-specialized update paths.
-                if old_lifecycle == Lifecycle.RAW and new_lifecycle == Lifecycle.CLASSIFIED:
+                mutation = transition_mutations.get((old_lifecycle, new_lifecycle))
+                if mutation is not None:
+                    if not evaluate_lifecycle_mutation(
+                        old_lifecycle,
+                        new_lifecycle,
+                        mutation=mutation,
+                        verification=note.get('verification'),
+                    ):
+                        raise ValueError(f"Invalid lifecycle transition from {old_lifecycle} to {new_lifecycle} for {mutation.value}")
                     return
-                if old_lifecycle == Lifecycle.CLASSIFIED and new_lifecycle == Lifecycle.NORMALIZED:
+
+                # Backward-compatible pipeline transitions are not represented
+                # by lifecycle mutation operations; preserve their existing
+                # validation semantics until they are promoted into the
+                # canonical policy in a separate architecture change.
+                compatibility_transitions = {
+                    (Lifecycle.RAW, Lifecycle.CLASSIFIED),
+                    (Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED),
+                    (Lifecycle.REVIEW, Lifecycle.VERIFIED),
+                    (Lifecycle.VERIFIED, Lifecycle.ACTIVE),
+                }
+                if (old_lifecycle, new_lifecycle) in compatibility_transitions:
                     return
-                if old_lifecycle == Lifecycle.NORMALIZED and new_lifecycle == Lifecycle.REVIEW:
-                    return
-                if old_lifecycle == Lifecycle.REVIEW and new_lifecycle == Lifecycle.VERIFIED:
-                    return
-                if old_lifecycle == Lifecycle.VERIFIED and new_lifecycle == Lifecycle.ACTIVE:
-                    return
-                if old_lifecycle == Lifecycle.ACTIVE and new_lifecycle in {Lifecycle.SUPERSEDED, Lifecycle.ARCHIVED}:
-                    return
+
                 raise ValueError(f"Invalid transition from {old_lifecycle} to {new_lifecycle}")
 
     def read(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
@@ -302,7 +313,7 @@ class MemoryController:
                 if note['lifecycle'] != Lifecycle.REVIEW: raise ValueError('Only REVIEW notes can be promoted')
                 if note.get('verification') != 'verified': raise ValueError('Only VERIFIED notes can be promoted to ACTIVE')
                 note['lifecycle'] = Lifecycle.ACTIVE; self.storage.set(note_id, note); self.cache.invalidate_by_event('memory_updated'); audit_event('promote', principal, note_id, success=True)
-            except Exception as e: audit_event('promote', principal, note_id, success=False, details={'error': str(e)}); raise
+            except Exception as e: audit_event('promote', principal, note_id, success=False); raise
 
     def update(self, principal: Principal, note_id: str, updates: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         with self._mutation_lock:
