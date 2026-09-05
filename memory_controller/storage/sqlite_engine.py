@@ -14,7 +14,7 @@ class SQLiteStorageEngine:
     CREATE TABLE IF NOT EXISTS notes (
         id TEXT PRIMARY KEY,
         type TEXT NOT NULL CHECK(type IN ('knowledge', 'project', 'procedure', 'decision', 'experience', 'error', 'lesson', 'preference', 'resource', 'hypothesis', 'system', 'core', 'index')),
-        lifecycle TEXT NOT NULL CHECK(lifecycle IN ('RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW', 'VERIFIED', 'ACTIVE', 'SUPERSEDED', 'ARCHIVED')),
+        lifecycle TEXT NOT NULL CHECK(lifecycle IN ('RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW', 'VERIFIED', 'ACTIVE', 'RECONSOLIDATING', 'SUPERSEDED', 'ARCHIVED')),
         category TEXT NOT NULL,
         tags TEXT NOT NULL,
         created TEXT NOT NULL,
