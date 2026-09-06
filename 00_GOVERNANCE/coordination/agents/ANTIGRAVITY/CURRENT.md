@@ -1,25 +1,29 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-06T17:20:00Z
+last_updated_utc: 2026-09-06T17:35:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: r009/graph-expansion-in-production
-base_main_sha: 3d51e5f69
+working_branch: r010/attribution-aware-plasticity
+base_main_sha: 6109ebe79
 current_commit_sha: HEAD
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-working_folder: 03_IMPLEMENTATION/packages/memory/, tests/, 07_EVALUATION/
-current_task: r009 graph expansion in production retrieval
+working_folder: 03_IMPLEMENTATION/packages/graph/, tests/, 07_EVALUATION/, 01_ARCHITECTURE/memory/
+current_task: r010 attribution-aware plasticity
 status: COMPLETED
-  - precondition check 07_EVALUATION/r005_graph_edge_reality_gate.py: verified STOP CONDITION DECISION: GO (126 real forward declared edges >= 100)
-  - implemented graph expansion in production query path MemoryController.search() with scored seed weights, bounded 1-hop traversal, decay=0.5, budget cap min(2*seeds, 20), hub capping (degree > 10 skipped), cycle safety, fail-closed degradation markers, and full candidate_trace recording
-  - implemented strict filter bypass prevention (P0 security invariant): RAW exclusion, lifecycle filters, type filters, and security clearance checks
-  - added 15 unit and adversarial tests in tests/test_graph_expansion.py (including AST call-path proof, acceptance test, synthetic hub 50-edge domination test, and pagination stability) — 15 passed in 0.17s
-  - verified full regression suite in 20_TESTS/: 1,210 passed, 3 skipped, 0 failures
-  - conducted empirical evaluation on dev.json: measured Precision@5, MRR, latency delta (-21.07ms <= +5.0ms constraint passed), and generated 07_EVALUATION/r009_graph_expansion_results.md
-  - delivered recommendation on default flag state: OFF by default (enable_graph_expansion=False)
+  - closed the learning loop: retrieval outcome -> 5-state causal attribution -> bounded synaptic weight update
+  - implemented 03_IMPLEMENTATION/packages/graph/plasticity.py with MemoryAttributionState, AttributionModel, PlasticityEngine, and PlasticityJournal
+  - enforced strict 5-state distinction: PRESENT, RETRIEVED_CANDIDATE, CONTEXT_PACKED, ACTUALLY_USED, PLAUSIBLY_CAUSED; anti-hub-pollution invariant prevents strengthening edges whose targets are merely in context
+  - implemented bounded asymptotic compounding in [0.0, 1.5] with MAX_SINGLE_DELTA = 0.15; verified failures actively depress weights
+  - guaranteed zero note lifecycle/frontmatter mutation (P0 security invariant)
+  - implemented append-only telemetry journaling with complete rollback capability
+  - updated 30_SCRIPTS/knowledge/plasticity_update.py to integrate PlasticityEngine, --rollback, and --used-ids while preserving AST decoupling
+  - created comprehensive test suite tests/test_attribution_plasticity.py (15/15 passed)
+  - verified full regression suite 20_TESTS/ (1,210 passed, 0 failures) and repository layout (LAYOUT_STATUS=PASS)
+  - executed 50-cycle empirical simulation on real vault graph (411 edges), generated 07_EVALUATION/r010_plasticity_evaluation_results.md
+  - documented architecture in 01_ARCHITECTURE/memory/ATTRIBUTION_PLASTICITY_MODEL.md
 in_progress: []
 next_actions:
-  - commit changes to r009/graph-expansion-in-production and create PR
+  - commit changes to r010/attribution-aware-plasticity and push to origin
 blockers: []
 risks:
   - book/source content is untrusted data, never agent authority

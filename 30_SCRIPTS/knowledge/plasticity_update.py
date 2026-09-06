@@ -31,11 +31,18 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION" / "packages"))
 from cognitive_core.synapse_store import SynapseStore  # noqa: E402
+from cognitive_core.plasticity import (  # noqa: E402
+    AttributionModel,
+    PlasticityEngine,
+    PlasticityJournal,
+    MemoryAttributionState,
+)
 
 # Sources acceptable as "externally verified". Explicitly excludes any form of
 # model self-report ("memory was helpful", sentiment, implicit usage).
-VERIFIED_SOURCES = {"pytest", "ci", "outcome_ledger", "human_verified"}
+VERIFIED_SOURCES = {"pytest", "ci", "outcome_ledger", "human_verified", "manual_verified"}
 
 
 def _ensure_utf8_stdout() -> None:
@@ -109,6 +116,12 @@ def main() -> int:
     ap.add_argument("--success", action="store_true")
     ap.add_argument("--failure", action="store_true")
     ap.add_argument("--from-ledger", action="store_true")
+    ap.add_argument("--journal", default="telemetry/plasticity_journal.jsonl",
+                    help="Path to append-only telemetry journal")
+    ap.add_argument("--rollback", metavar="RUN_ID",
+                    help="Roll back weight updates for the specified run ID")
+    ap.add_argument("--used-ids", default="",
+                    help="Comma-separated IDs of memories actually used in the run")
     ap.add_argument("--consolidate", action="store_true",
                     help="Runs atrophy + pruning of unreinforced edges")
     ap.add_argument("--rate", type=float, default=0.15)
@@ -123,6 +136,14 @@ def main() -> int:
         print(f"  [warn] {len(store.rejected_on_load())} malformed synapse record(s) "
               f"skipped on load")
 
+    journal = PlasticityJournal(vault / args.journal)
+
+    if args.rollback:
+        rb_res = journal.rollback(args.rollback, store)
+        store.save(vault / args.synapses)
+        print(f"rollback: {rb_res.edges_reverted} edge(s) restored for {args.rollback}")
+        return 0
+
     trace_dir = vault / args.trace_dir
     updates: List[Tuple[str, bool, str]] = []
     if args.from_ledger:
@@ -136,17 +157,41 @@ def main() -> int:
     if not updates:
         print("No externally verified outcome to apply. Weights unchanged.")
     applied = 0
+    explicit_used_ids = [u.strip() for u in args.used_ids.split(",") if u.strip()]
+    engine = PlasticityEngine(journal=journal, default_rate=args.rate)
+
     for pack_id, success, source in updates:
         trace = load_trace(trace_dir, pack_id)
         if trace is None:
             print(f"  [skip] {pack_id}: no observed trace -> NO UPDATE")
             continue
-        edges = [tuple(e) for e in trace.get("observed_edges", [])]
-        touched = store.reinforce(edges, run_id=pack_id, success=success, rate=args.rate)
-        applied += touched
-        mark = "OK" if success else "FAIL"
-        print(f"  {pack_id} [{source}] {mark}: {touched} synapse(s) adjusted "
-              f"out of {len(edges)} observed")
+
+        used_ids = explicit_used_ids or trace.get("used_memory_ids", [])
+        outcome_rec = {
+            "run_id": pack_id,
+            "outcome": "success" if success else "fail",
+            "verification_method": source,
+        }
+
+        if "graph_edges_traversed" in trace or "final_context_ids" in trace or used_ids:
+            res = engine.apply_outcome(
+                synapse_store=store,
+                candidate_trace=trace,
+                outcome_record=outcome_rec,
+                used_memory_ids=used_ids,
+                run_id=pack_id,
+                rate=args.rate,
+            )
+            applied += res.applied_count
+            mark = "OK" if success else "FAIL"
+            print(f"  {pack_id} [{source}] {mark}: {res.applied_count} synapse(s) adjusted (status: {res.status})")
+        else:
+            edges = [tuple(e) for e in trace.get("observed_edges", [])]
+            touched = store.reinforce(edges, run_id=pack_id, success=success, rate=args.rate)
+            applied += touched
+            mark = "OK" if success else "FAIL"
+            print(f"  {pack_id} [{source}] {mark}: {touched} synapse(s) adjusted "
+                  f"out of {len(edges)} observed")
 
     if args.consolidate:
         store.decay_unused()
