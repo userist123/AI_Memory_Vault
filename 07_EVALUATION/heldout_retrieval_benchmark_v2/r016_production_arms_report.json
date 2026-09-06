@@ -1,0 +1,152 @@
+{
+  "corpus_notes": 843,
+  "storage_notes": 738,
+  "arms": {
+    "graph_off": {
+      "summary": {
+        "exact_identifier_lookup": {
+          "n": 5,
+          "candidate_recall": 0.6,
+          "context_recall": 0.4,
+          "answer_correctness": 0.4
+        },
+        "lexical_trap": {
+          "n": 4,
+          "candidate_recall": 0.5,
+          "context_recall": 0.0,
+          "answer_correctness": 0.0
+        },
+        "one_hop_graph_expansion": {
+          "n": 10,
+          "candidate_recall": 0.8,
+          "context_recall": 0.2,
+          "answer_correctness": 0.2
+        },
+        "paraphrase": {
+          "n": 4,
+          "candidate_recall": 0.75,
+          "context_recall": 0.0,
+          "answer_correctness": 0.0
+        },
+        "synonym_substitution": {
+          "n": 4,
+          "candidate_recall": 1.0,
+          "context_recall": 0.0,
+          "answer_correctness": 0.0
+        },
+        "unanswerable": {
+          "n": 3,
+          "candidate_recall": 1.0,
+          "context_recall": 1.0,
+          "answer_correctness": 1.0
+        },
+        "ALL": {
+          "n": 30,
+          "candidate_recall": 0.7666666666666667,
+          "context_recall": 0.23333333333333334,
+          "answer_correctness": 0.23333333333333334
+        }
+      },
+      "errors": [],
+      "graph_status": {
+        "disabled": 30
+      }
+    },
+    "graph_on": {
+      "summary": {
+        "exact_identifier_lookup": {
+          "n": 3,
+          "candidate_recall": 1.0,
+          "context_recall": 0.3333333333333333,
+          "answer_correctness": 0.3333333333333333
+        },
+        "lexical_trap": {
+          "n": 2,
+          "candidate_recall": 1.0,
+          "context_recall": 0.0,
+          "answer_correctness": 0.0
+        },
+        "one_hop_graph_expansion": {
+          "n": 8,
+          "candidate_recall": 1.0,
+          "context_recall": 0.125,
+          "answer_correctness": 0.125
+        },
+        "paraphrase": {
+          "n": 3,
+          "candidate_recall": 1.0,
+          "context_recall": 0.0,
+          "answer_correctness": 0.0
+        },
+        "synonym_substitution": {
+          "n": 4,
+          "candidate_recall": 1.0,
+          "context_recall": 0.0,
+          "answer_correctness": 0.0
+        },
+        "unanswerable": {
+          "n": 3,
+          "candidate_recall": 1.0,
+          "context_recall": 1.0,
+          "answer_correctness": 1.0
+        },
+        "ALL": {
+          "n": 23,
+          "candidate_recall": 1.0,
+          "context_recall": 0.21739130434782608,
+          "answer_correctness": 0.21739130434782608
+        }
+      },
+      "errors": [
+        {
+          "id": "H02",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=0, so this arm is identical to the baseline"
+        },
+        {
+          "id": "H04",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=0, so this arm is identical to the baseline"
+        },
+        {
+          "id": "H06",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=9, so this arm is identical to the baseline"
+        },
+        {
+          "id": "H14",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=0, so this arm is identical to the baseline"
+        },
+        {
+          "id": "H15",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=0, so this arm is identical to the baseline"
+        },
+        {
+          "id": "H22",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=0, so this arm is identical to the baseline"
+        },
+        {
+          "id": "H24",
+          "error": "GraphExpansionDegraded: graph expansion reported ok but expanded no nodes; seeds=9, so this arm is identical to the baseline"
+        }
+      ],
+      "graph_status": {
+        "ok": 23
+      }
+    }
+  },
+  "mcnemar": {
+    "candidate_recall": {
+      "off_only": 0,
+      "on_only": 0,
+      "discordant": 0
+    },
+    "context_recall": {
+      "off_only": 2,
+      "on_only": 0,
+      "discordant": 2
+    },
+    "answer_correctness": {
+      "off_only": 2,
+      "on_only": 0,
+      "discordant": 2
+    }
+  }
+}

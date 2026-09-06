@@ -86,6 +86,33 @@ _PERMITTED_CREATION_LIFECYCLES = {
     Lifecycle.REVIEW.value,
 }
 
+#: Optional override for how many NEW nodes a query may gain from expansion.
+#:
+#: `None` keeps the shipped contract: total candidates capped at
+#: min(2*seeds, 20), asserted by test_graph_expansion.py as a context-budget
+#: guarantee. That contract is now unreachable in production — r004 raised the
+#: lexical candidate limit to 200, so min(400, 20) - 200 is negative and every
+#: query expands exactly nothing while reporting "ok". Two independently
+#: correct changes cancelling each other.
+#:
+#: Resolving that is an owner decision between two real constraints, not a
+#: constant to flip in passing, so the default is unchanged and the override
+#: exists for measurement.
+GRAPH_EXPANSION_BUDGET = None
+
+
+class GraphExpansionDegraded(RuntimeError):
+    """Graph expansion was requested but did not actually run.
+
+    `search()` degrades gracefully by design: a missing store, an empty graph
+    or a traversal error leaves a status in the trace and returns the
+    unexpanded ranking. That is right for production and wrong for an
+    experiment, where it makes the graph-on arm silently identical to
+    graph-off and turns "no significant difference" into a statement about
+    nothing. Pass `strict_graph_expansion=True` to make it fail loudly.
+    """
+
+
 class MemoryController:
     _global_review_counter = 2
     def __init__(
@@ -95,6 +122,8 @@ class MemoryController:
         index: Optional[Any] = None,
         enable_graph_expansion: bool = False,
         synapse_store: Optional[Any] = None,
+        strict_graph_expansion: bool = False,
+        graph_expansion_budget: Optional[int] = None,
     ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
@@ -112,6 +141,11 @@ class MemoryController:
         # Graph expansion configuration (r009)
         self.index = index
         self.enable_graph_expansion = bool(enable_graph_expansion)
+        #: When true, a degraded expansion raises instead of falling back to
+        #: the unexpanded ranking. Off in production, mandatory for any
+        #: measurement that compares a graph arm against a baseline.
+        self.strict_graph_expansion = bool(strict_graph_expansion)
+        self.graph_expansion_budget = graph_expansion_budget
         self.synapse_store = synapse_store
         if self.synapse_store is None and self.index is not None:
             try:
@@ -280,6 +314,8 @@ class MemoryController:
         lifecycles: Optional[List[Lifecycle]] = None,
         types: Optional[List[str]] = None,
         enable_graph_expansion: Optional[bool] = None,
+        strict_graph_expansion: Optional[bool] = None,
+        graph_expansion_budget: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
@@ -385,8 +421,23 @@ class MemoryController:
                 else:
                     try:
                         seen_ids = set(seed_ids)
-                        max_total_candidates = min(2 * len(notes), 20)
-                        max_new_expansions = max(0, max_total_candidates - len(notes))
+                        # Budget for NEW nodes, not a cap on the total. The
+                        # previous form was min(2*len(notes), 20) - len(notes),
+                        # which r004 silently zeroed: once the candidate limit
+                        # rose to 200, min(400, 20) - 200 is negative, so every
+                        # query expanded exactly nothing while reporting "ok".
+                        # Two independently correct changes cancelling each
+                        # other, visible only by running the thing.
+                        _budget = graph_expansion_budget
+                        if _budget is None:
+                            _budget = getattr(self, 'graph_expansion_budget', None)
+                        if _budget is None:
+                            _budget = GRAPH_EXPANSION_BUDGET
+                        if _budget is None:
+                            max_total_candidates = min(2 * len(notes), 20)
+                            max_new_expansions = max(0, max_total_candidates - len(notes))
+                        else:
+                            max_new_expansions = int(_budget)
                         decay = 0.5
                         max_per_seed_contrib = 1.0
 
@@ -477,10 +528,34 @@ class MemoryController:
                         candidate_trace['graph_expansion_status'] = 'degraded_corrupt_data'
                         expanded_notes = []
 
+                _strict = (
+                    strict_graph_expansion
+                    if strict_graph_expansion is not None
+                    else getattr(self, 'strict_graph_expansion', False)
+                )
+                _status = candidate_trace.get('graph_expansion_status', '')
+                if _strict and str(_status).startswith('degraded'):
+                    raise GraphExpansionDegraded(
+                        f"graph expansion requested but degraded: {_status}. "
+                        "The unexpanded ranking would have been returned, making "
+                        "this arm indistinguishable from the baseline."
+                    )
+
                 candidate_trace['graph_edges_traversed'] = edges_traversed
                 candidate_trace['graph_activation'] = activation
                 candidate_trace['graph_survived_filters_ids'] = survived_filter_ids
                 candidate_trace['graph_expanded_ids'] = [n.get('id') for n in expanded_notes if n.get('id')]
+
+                # Checked AFTER the field is populated. A first attempt placed
+                # this before the assignment and read the empty initialiser, so
+                # it fired on every query — a false alarm in the very guard
+                # meant to catch false results.
+                if _strict and _status == 'ok' and not candidate_trace['graph_expanded_ids']:
+                    raise GraphExpansionDegraded(
+                        "graph expansion reported ok but expanded no nodes; "
+                        f"seeds={len(candidate_trace.get('graph_seed_ids') or [])}, "
+                        "so this arm is identical to the baseline"
+                    )
                 candidate_trace['graph_hub_nodes_skipped'] = hub_nodes_skipped
 
                 if expanded_notes:
