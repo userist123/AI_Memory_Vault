@@ -1,0 +1,141 @@
+{
+  "corpus_edges_initial": 314,
+  "corpus_edges_initial_by_origin": {
+    "declared": 69,
+    "inferred": 69,
+    "wikilink": 176
+  },
+  "note": "BEFORE reproduces the pre-r009a origin=='declared' predicate inline (not imported from production); AFTER calls the current SynapseStore.decay_unused()/prune(). A single cycle (cycle=1) removes 0 under either semantics -- wikilink/inferred weights start above PRUNE_THRESHOLD -- the divergence only appears once decay has run enough cycles to cross it, which is exactly what a periodic consolidation loop (r010) would do.",
+  "timeline": [
+    {
+      "cycle": 0,
+      "before_total": 314,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 1,
+      "before_total": 314,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 5,
+      "before_total": 314,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 10,
+      "before_total": 314,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 20,
+      "before_total": 314,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 26,
+      "before_total": 138,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 30,
+      "before_total": 138,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 69
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 50,
+      "before_total": 76,
+      "before_by_origin": {
+        "declared": 69,
+        "inferred": 7
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    },
+    {
+      "cycle": 100,
+      "before_total": 69,
+      "before_by_origin": {
+        "declared": 69
+      },
+      "after_total": 314,
+      "after_by_origin": {
+        "declared": 69,
+        "inferred": 69,
+        "wikilink": 176
+      }
+    }
+  ]
+}
