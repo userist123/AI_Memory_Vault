@@ -22,7 +22,7 @@ Lecții generate automat de ciclul de reflexie cognitivă la blocarea acțiunilo
 - [[00_GOVERNANCE/protocols/Confidence_Model|Confidence Model]]
 
 ## Conexiuni Sinaptice
-- [[01_ARCHITECTURE/memory/Lessons/README|Index Director Lessons]]
+- [[Architectural_Lessons_Registry|Index Director Lessons]]
 - [[08 Memory Subsystems Map]]
 - [[02 Memory Knowledge Map]]
 - [[04 Security Integrity Map]]

@@ -1,12 +1,10 @@
-# Raw Source Preservation: mehdihadeli/awesome-software-architecture
-Source URL: https://github.com/mehdihadeli/awesome-software-architecture
-Discovered from: https://github.com/topics/backend-webdevelopment
-Depth: 2
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Software Architecture Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Software Architecture
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Software_Architecture]].

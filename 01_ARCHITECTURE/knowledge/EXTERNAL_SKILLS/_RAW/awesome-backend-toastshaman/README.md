@@ -1,12 +1,10 @@
-# Raw Source Preservation: ToastShaman/awesome-backend-toastshaman
-Source URL: https://github.com/ToastShaman/awesome-backend
-Discovered from: https://github.com/topics/backend?o=asc&s=forks
-Depth: 1
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Backend Toastshaman Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Backend Toastshaman
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Backend_Toastshaman]].

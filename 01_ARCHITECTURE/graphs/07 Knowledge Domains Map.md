@@ -103,7 +103,7 @@ Exhaustive index of canonical domain Markdown notes in the supplied snapshot.
 
 
 ## Corpus Juridic & Securitate Normativă (EU & România)
-- [[01_ARCHITECTURE/knowledge/legal/README|Depozit Normativ Extern]]
+- [[Legal_Corpus_Depozit_Normativ_Manifest|Depozit Normativ Extern]]
 - [[05_DATA/legal_sources/r002-c/README|NIS2 România (OUG 155/2024 & Legea 124/2025)]]
 - [[Regulament_UE_2016_679_GDPR]] — Protecția Datelor cu Caracter Personal
 - [[Regulament_UE_2022_2554_DORA]] — Reziliență Operațională Digitală Financiară

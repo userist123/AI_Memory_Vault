@@ -1,12 +1,10 @@
-# Raw Source Preservation: github/awesome-copilot
-Source URL: https://github.com/github/awesome-copilot
-Discovered from: https://github.com/github/awesome-copilot/
-Depth: 0
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Copilot Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Copilot
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Copilot]].

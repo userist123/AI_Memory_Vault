@@ -1,11 +1,10 @@
-# Raw Source Preservation: avelino/awesome-go
-Source URL: https://github.com/avelino/awesome-go
-Depth: 3
-License: CC0-1.0
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Go Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Go
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Go]].

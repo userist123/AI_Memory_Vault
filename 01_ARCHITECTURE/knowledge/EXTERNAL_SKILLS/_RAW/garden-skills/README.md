@@ -1,12 +1,10 @@
-# Raw Source Preservation: ConardLi/garden-skills
-Source URL: https://github.com/ConardLi/garden-skills
-Discovered from: https://github.com/ConardLi/garden-skills/tree/main/skills/web-design-engineer
-Depth: 0
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Garden Skills Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Garden Skills
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Garden_Skills]].

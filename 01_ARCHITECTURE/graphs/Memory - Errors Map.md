@@ -12,7 +12,7 @@ Navigare concentrată pentru eșecuri diagnosticate, erori de logică și regres
 - Conexiune la rezoluție: [[Define_MultiEntry_Requirements_Before_Backtest]]
 
 ## Hub-uri Corelate
-- [[01_ARCHITECTURE/memory/Errors/README|Index Director Errors]]
+- [[Architectural_Errors_Registry|Index Director Errors]]
 - [[08 Memory Subsystems Map]]
 - [[04 Security Integrity Map]]
 - [[03 Agents Operations Map]]

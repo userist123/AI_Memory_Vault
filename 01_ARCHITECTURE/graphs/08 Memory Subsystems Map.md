@@ -9,12 +9,12 @@ Index canonic exhaustiv al subsistemelor de memorie și cunoștințe durabile.
 Această hartă realizează conectarea sinaptică bidirecțională între toate componentele de memorie episodică, procedurală și decizională.
 
 ## Subsisteme Fundamentale de Memorie
-- [[01_ARCHITECTURE/memory/README|04_MEMORY]] — Depozit canonic de memorie persistentă
-- [[01_ARCHITECTURE/memory/Decisions/README|Decisions]] — Decizii arhitecturale și alegeri tehnologice
-- [[01_ARCHITECTURE/memory/Errors/README|Errors]] — Analize post-mortem și erori diagnosticate
-- [[01_ARCHITECTURE/memory/Experiences/README|Experiences]] — Observații empirice și fluxuri operaționale
-- [[01_ARCHITECTURE/memory/Lessons/README|Lessons]] — Reguli de prevenire, reflexii și lecții consolidate
-- [[01_ARCHITECTURE/memory/Preferences/README|Preferences]] — Constrângeri și preferințe durabile ale utilizatorului
+- [[Memory_Subsystem_Architecture_Manifest|04_MEMORY]] — Depozit canonic de memorie persistentă
+- [[Architectural_Decisions_Registry|Decisions]] — Decizii arhitecturale și alegeri tehnologice
+- [[Architectural_Errors_Registry|Errors]] — Analize post-mortem și erori diagnosticate
+- [[Architectural_Experiences_Registry|Experiences]] — Observații empirice și fluxuri operaționale
+- [[Architectural_Lessons_Registry|Lessons]] — Reguli de prevenire, reflexii și lecții consolidate
+- [[Architectural_Preferences_Registry|Preferences]] — Constrângeri și preferințe durabile ale utilizatorului
 
 ## Hărți Specializate de Memorie (Sub-MOCs)
 - [[Memory - Decisions Map]] — Navigare axată pe decizii

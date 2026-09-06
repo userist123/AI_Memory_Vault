@@ -1,12 +1,10 @@
-# Raw Source Preservation: bergside/awesome-design-skills
-Source URL: https://github.com/bergside/awesome-design-skills
-Discovered from: https://github.com/bergside/awesome-design-skills
-Depth: 0
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Design Skills Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Design Skills
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Design_Skills]].

@@ -1,12 +1,10 @@
-# Raw Source Preservation: Eldar1205/awesome-python-backend
-Source URL: https://github.com/Eldar1205/awesome-python-backend
-Discovered from: https://github.com/topics/backend-webdevelopment
-Depth: 1
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Python Backend Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Python Backend
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Python_Backend]].

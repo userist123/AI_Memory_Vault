@@ -1,11 +1,10 @@
-# Raw Source Preservation: ramitsurana/awesome-kubernetes
-Source URL: https://github.com/ramitsurana/awesome-kubernetes
-Depth: 3
-License: CC0-1.0
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Kubernetes Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Kubernetes
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Kubernetes]].

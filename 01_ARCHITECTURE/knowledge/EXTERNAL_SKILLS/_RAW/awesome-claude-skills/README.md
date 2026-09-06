@@ -1,12 +1,10 @@
-# Raw Source Preservation: ComposioHQ/awesome-claude-skills
-Source URL: https://github.com/ComposioHQ/awesome-claude-skills
-Discovered from: https://github.com/github/awesome-copilot/
-Depth: 1
-License: Apache-2.0
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Claude Skills Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Claude Skills
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Claude_Skills]].

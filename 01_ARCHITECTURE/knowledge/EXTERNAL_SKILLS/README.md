@@ -1,27 +1,10 @@
-# External Skills Registry
-
-This directory contains curated external agent skills imported from public GitHub repositories.
-
-## Sources
-
-- github/awesome-copilot
-- addyosmani/web-quality-skills
-- gbrasil720/ui-sensei
-- ConardLi/garden-skills (web-design-engineer)
-- xiaopu-ai/web-design
-- bergside/awesome-design-skills
-
-## Import policy
-
-Only skill/agent/reference material relevant to agent capabilities is imported. Repository infrastructure, unrelated application code, build artifacts, and duplicated source material are excluded.
-
-Each imported skill should preserve source attribution and, where practical, the original relative path.
-
-Generated/normalized indexes may be added later without replacing the original source material.
-
+---
+type: index
+category: navigation
+status: active
+title: External Skills Ingestion Registry Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# External Skills Ingestion Registry
+
+Canonical documentation has moved to [[External_Skills_Ingestion_Registry]].

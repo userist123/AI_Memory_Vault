@@ -56,7 +56,7 @@ Derived interpretations never become ACTIVE automatically. No artifact in this d
 - [[not_applicable_or_not_yet_determined]] — Regimuri exceptate și neaplicabile
 
 ### Sinapse Juridice Transversale (EU & RO Normative Bridge)
-- [[01_ARCHITECTURE/knowledge/legal/README|Depozitul Național și European de Date Normative Externe]]
+- [[Legal_Corpus_Depozit_Normativ_Manifest|Depozitul Național și European de Date Normative Externe]]
 - [[Regulament_UE_2022_2554_DORA]] & [[ATOMIC_DORA_Art6_16_Cadrul_Management_Risc_TIC]] — Art. 2(3) OUG 155/2024 (Exceptare/coordonare entități financiare DORA)
 - [[Regulament_UE_2016_679_GDPR]] & [[ATOMIC_GDPR_Art32_Securitatea_Prelucrarii]] — Notificare incidente și protecția datelor cu caracter personal
 - [[Regulament_UE_2024_1689_AI_Act]] & [[ATOMIC_AIACT_Art12_Inregistrare_Automata_Evenimente]] — Cerințe de securitate cibernetică pentru sisteme AI de mare risc

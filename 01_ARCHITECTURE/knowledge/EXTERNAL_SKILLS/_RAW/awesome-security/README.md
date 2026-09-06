@@ -1,11 +1,10 @@
-# Raw Source Preservation: sbilly/awesome-security
-Source URL: https://github.com/sbilly/awesome-security
-Depth: 3
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Security Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Security
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Security]].

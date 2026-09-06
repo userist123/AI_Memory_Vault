@@ -1,12 +1,10 @@
-# Raw Source Preservation: gbrasil720/ui-sensei
-Source URL: https://github.com/gbrasil720/ui-sensei
-Discovered from: https://github.com/gbrasil720/ui-sensei
-Depth: 0
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Ui Sensei Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Ui Sensei
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Ui_Sensei]].

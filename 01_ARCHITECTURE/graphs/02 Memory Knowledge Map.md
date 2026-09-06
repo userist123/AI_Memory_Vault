@@ -11,7 +11,7 @@ tags: [moc, knowledge, durable-facts]
 Navigare structurată prin arhitectura durabilă a cunoștințelor tehnice, schemelor de date și bibliotecilor normative.
 
 ## 🏛️ Corpus Juridic și Date Normative Externe
-- [[01_ARCHITECTURE/knowledge/legal/README|Depozitul Național și European de Date Normative]]
+- [[Legal_Corpus_Depozit_Normativ_Manifest|Depozitul Național și European de Date Normative]]
 - [[05_DATA/legal_sources/r002-c/README|Corpus NIS2 România (OUG 155/2024 & Legea 124/2025)]]
 - [[Regulament_UE_2016_679_GDPR]] & [[Index_Regulament_UE_2016_679_GDPR]]
 - [[Regulament_UE_2022_2554_DORA]] & [[Index_Regulament_UE_2022_2554_DORA]]
@@ -36,7 +36,7 @@ Navigare structurată prin arhitectura durabilă a cunoștințelor tehnice, sche
 ## 🧠 Indexuri și Cataloage de Abilități (Skills)
 - [[Master_Skills_Catalog_251]] — Catalogul complet al celor 251 de abilități locale
 - [[Global_50K_Skill_Registries_Index]] — Indexul global al registrelor de abilități externe
-- [[01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/README|External Skills Ingestion Framework]]
+- [[External_Skills_Ingestion_Registry|External Skills Ingestion Framework]]
 - [[MOC_Frontend_UI_UX_Standards]] — Standarde UI/UX frontend
 
 ## Hub-uri Corelate în Graful Vault

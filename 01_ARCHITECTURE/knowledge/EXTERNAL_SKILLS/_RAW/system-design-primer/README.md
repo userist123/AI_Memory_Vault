@@ -1,12 +1,10 @@
-# Raw Source Preservation: donnemartin/system-design-primer
-Source URL: https://github.com/donnemartin/system-design-primer
-Discovered from: https://github.com/topics/backend-app
-Depth: 1
-License: CC-BY-4.0
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation System Design Primer Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation System Design Primer
+
+Canonical documentation has moved to [[Raw_Source_Preservation_System_Design_Primer]].

@@ -11,7 +11,7 @@ Navigare concentrată pentru experiențe operaționale, prototipuri validate și
 - [[AI_Trading_Journal_Zero_Dollar_Stack]] — Construirea unei infrastructuri de jurnalizare trading cu costuri zero
 
 ## Hub-uri Corelate
-- [[01_ARCHITECTURE/memory/Experiences/README|Index Director Experiences]]
+- [[Architectural_Experiences_Registry|Index Director Experiences]]
 - [[08 Memory Subsystems Map]]
 - [[12 Projects and Procedures Map]]
 - [[02 Memory Knowledge Map]]

@@ -1,12 +1,10 @@
-# Raw Source Preservation: sickn33/agentic-awesome-skills
-Source URL: https://github.com/sickn33/agentic-awesome-skills
-Discovered from: https://github.com/github/awesome-copilot/
-Depth: 1
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Agentic Awesome Skills Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Agentic Awesome Skills
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Agentic_Awesome_Skills]].

@@ -1,12 +1,10 @@
-# Raw Source Preservation: gothinkster/realworld
-Source URL: https://github.com/gothinkster/realworld
-Discovered from: https://github.com/topics/backend-app
-Depth: 2
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Realworld Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Realworld
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Realworld]].

@@ -1,12 +1,10 @@
-# Raw Source Preservation: Sairyss/domain-driven-hexagon
-Source URL: https://github.com/Sairyss/domain-driven-hexagon
-Discovered from: https://github.com/topics/backend-webdevelopment
-Depth: 1
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Domain Driven Hexagon Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Domain Driven Hexagon
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Domain_Driven_Hexagon]].

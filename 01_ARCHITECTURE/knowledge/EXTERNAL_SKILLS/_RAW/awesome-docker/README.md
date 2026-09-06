@@ -1,11 +1,10 @@
-# Raw Source Preservation: veggiemonk/awesome-docker
-Source URL: https://github.com/veggiemonk/awesome-docker
-Depth: 3
-License: Apache-2.0
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Awesome Docker Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Awesome Docker
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Awesome_Docker]].

@@ -1,12 +1,10 @@
-# Raw Source Preservation: xiaopu-ai/web-design
-Source URL: https://github.com/xiaopu-ai/web-design
-Discovered from: https://github.com/xiaopu-ai/web-design/blob/main/SKILL.md
-Depth: 0
-License: MIT
-
+---
+type: index
+category: navigation
+status: active
+title: Raw Source Preservation Web Design Stub
 ---
 
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[02 Memory Knowledge Map]]
-- [[Knowledge Graph Home]]
-- [[Knowledge Graph Home]]
+# Raw Source Preservation Web Design
+
+Canonical documentation has moved to [[Raw_Source_Preservation_Web_Design]].

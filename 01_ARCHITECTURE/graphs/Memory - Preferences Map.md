@@ -12,7 +12,7 @@ Navigare concentrată pentru preferințele declarate ale utilizatorului, conven�
 - [[Trading_Bot_Prompt_Language_English]] — Utilizarea limbii engleze în cadrul prompturilor sistem pentru precizie
 
 ## Hub-uri Corelate
-- [[01_ARCHITECTURE/memory/Preferences/README|Index Director Preferences]]
+- [[Architectural_Preferences_Registry|Index Director Preferences]]
 - [[08 Memory Subsystems Map]]
 - [[00 Core Map]]
 - [[Knowledge Graph Home]]
