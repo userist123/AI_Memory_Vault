@@ -1,0 +1,11 @@
+{
+  "candidate_pairs": 3772,
+  "raw_proposals": 199,
+  "accepted_strong": 0,
+  "accepted_weak": 199,
+  "accepted_total": 199,
+  "rejected_total": 0,
+  "reject_reasons": {},
+  "valid_target_ratio": 1.0,
+  "edges_per_node": 0.491
+}

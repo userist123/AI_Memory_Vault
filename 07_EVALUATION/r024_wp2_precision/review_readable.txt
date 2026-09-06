@@ -1,0 +1,2173 @@
+================================================================================
+REVIEW 1 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/Trading_Bot_V2_Broker_Execution_System.md
+TGT: 02_PRODUCT/projects/imported/tradingbot/TradingBot/Trading_Bot_Standalone_V2_Execution_System.md
+entities: ['aapl', 'ada', 'adx', 'aes-256', 'ai_panel', 'amzn']
+--SRC SNIPPET--
+---
+title: Trading Bot V2 Broker Execution System
+type: application
+status: active
+category: product
+---
+
+# Trading Bot v2.0
+
+Sistem complet de trading cu AI Advisor, executie ordine pe broker real, portofoliu live si management de risc.
+
+## Instalare
+
+```bash
+# 1. Instaleaza dependentele
+pip install -r requirements.txt
+
+# 2. Porneste aplicatia
+python main.py
+```
+
+**Windows:** Dublu-click pe `INSTALL.bat` apoi `START_BOT.bat`
+
+## Ce contine
+
+### Motor AI (25+ indicatori)
+- **Trend:** EMA 9/20/50
+--TGT SNIPPET--
+---
+title: Trading Bot Standalone V2 Execution System
+type: application
+status: active
+category: product
+---
+
+# Trading Bot v2.0
+
+Sistem complet de trading cu AI Advisor, executie ordine pe broker real, portofoliu live si management de risc.
+
+## Instalare
+
+```bash
+# 1. Instaleaza dependentele
+pip install -r requirements.txt
+
+# 2. Porneste aplicatia
+python main.py
+```
+
+**Windows:** Dublu-click pe `INSTALL.bat` apoi `START_BOT.bat`
+
+## Ce contine
+
+### Motor AI (25+ indicatori)
+- **Trend:** EMA 9/2
+================================================================================
+REVIEW 2 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md
+TGT: 01_ARCHITECTURE/knowledge/legal/primary/Ordinul_M172_2021.md
+entities: ['acces', 'angajament', 'aprob', 'cerere', 'clasificare', 'clasificate']
+--SRC SNIPPET--
+---
+id: "leg-ro-hg-585-2002"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "România (RO)"
+language: "ro"
+official_url: "http://legislatie.just.ro/Public/DetaliiDocument/36886"
+publication_date: "2002-07-05"
+consolidated_version: "Actualizată"
+source_file: "06_INBOX/Legi/HOTARARE nr 585.pdf"
+sha256_hash: "c3ed40986a96863536d25350b33de79249b87aa15218d6242ce662229b2112a4"
+legal_status: "normative_external_d
+--TGT SNIPPET--
+---
+id: "leg-ro-mapn-m172-2021"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "România (RO - MApN)"
+language: "ro"
+official_url: "http://legislatie.just.ro/Public/DetaliiDocument/245842"
+publication_date: "2021-09-02"
+consolidated_version: "Oficială"
+source_file: "06_INBOX/Legi/M 172-2021.docx"
+sha256_hash: "07b12390ec65e76722919e5a8fbbdb4d48b7b568d0b609ce9ee7a8f3e4db4702"
+legal_status: "normative_extern
+================================================================================
+REVIEW 3 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/bot/trade/AUDIT_v1.md
+TGT: 02_PRODUCT/projects/imported/bot/trade/cerebras-agent/ELITE_QUANT_BOT_COMPLETE_PROMPT.md
+entities: ['_evaluate_and_trade', 'apply_overrides', 'auditlogger', 'auto_prune_from_report', 'buy', 'close']
+--SRC SNIPPET--
+# ELITE_QUANT_BOT — Audit v1 față de ELITE_QUANT_ARCHITECT System Prompt
+
+**Generated:** 2026-06-13
+**Codebase scanned:** 4404 LoC Python (config.py, core/, ml/, strategies/, ui/, main.py)
+**Snapshot:** `/mnt/documents/elite_quant_bot/v2.0/v1_snapshot.zip`
+
+Severitate: **P0** = blochează v2.0 release; **P1** = corectabil în v2.0 fără break; **P2** = polish/UX.
+
+---
+
+## 1. Sumar executiv
+
+| Domeniu | Status | Severitate dominantă |
+|---|---|---|
+| Risk management | parțial — formulă OK, lipsește 
+--TGT SNIPPET--
+# ELITE QUANT BOT — PROMPT COMPLET DE RECONSTRUCȚIE
+## XAUUSD Algorithmic Trading System — MT5 + Python
+
+> **Scop**: Acest document conține INTEGRAL aplicația. Orice AI / dezvoltator
+> poate reconstrui sistemul bit-cu-bit doar din acest fișier. Nu se inventează
+> nimic. Fiecare fișier este redat verbatim din codul sursă.
+
+---
+
+## 0. PHILOSOPHY & MENTAL MODEL
+
+### Pentru un junior
+Botul este o **mașină de decizie** care, la fiecare ~30 secunde:
+1. Cere prețul curent la MT5 (broker).
+2. Întreabă *
+================================================================================
+REVIEW 4 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/Registru_Militar_Transferuri_Desktop_Application.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md
+entities: ['blockall', 'csv', 'device', 'dfir', 'dlp', 'dvd']
+--SRC SNIPPET--
+---
+title: Registru Militar Transferuri Desktop Application
+type: application
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliu
+--TGT SNIPPET--
+---
+title: Registru Transferuri Workspace Specification
+type: specification
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliulu
+================================================================================
+REVIEW 5 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/DEPLOYMENT.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/docs/DEPLOYMENT.md
+entities: ['air-gapped', 'applocker', 'applockerpolicy', 'currentcontrolset', 'deployment', 'enforcementmode']
+--SRC SNIPPET--
+# GHID DE DEPLOYMENT & HARDENING STAȚIE AIR-GAPPED
+
+## 1. Compilare & Publicare Self-Contained pe .NET 10 LTS
+
+Pentru o stație militară strict deconectată de la rețea (Air-Gapped), aplicația trebuie publicată self-contained pe arhitectura x64:
+
+```powershell
+dotnet publish src/RegistruTransferuri/RegistruTransferuri.csproj `
+  -c Release `
+  -r win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -o bin/Publish/
+```
+
+---
+
+## 2. Semn
+--TGT SNIPPET--
+# GHID DE DEPLOYMENT & HARDENING STAȚIE AIR-GAPPED
+
+## 1. Compilare & Publicare Self-Contained pe .NET 10 LTS
+
+Pentru o stație militară strict deconectată de la rețea (Air-Gapped), aplicația trebuie publicată self-contained pe arhitectura x64:
+
+```powershell
+dotnet publish src/RegistruTransferuri/RegistruTransferuri.csproj `
+  -c Release `
+  -r win-x64 `
+  --self-contained true `
+  -p:PublishSingleFile=true `
+  -p:IncludeNativeLibrariesForSelfExtract=true `
+  -o bin/Publish/
+```
+
+---
+
+## 2. Semn
+================================================================================
+REVIEW 6 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md
+TGT: 01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md
+entities: ['abe', 'aes', 'bce', 'dpo', 'eiopa', 'esma']
+--SRC SNIPPET--
+---
+id: "leg-eu-dora-2022-2554"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "Uniunea Europeană (UE)"
+language: "ro"
+official_url: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32022R2554"
+publication_date: "2022-12-27"
+consolidated_version: "Consolidată (aplicabil 17.01.2025)"
+source_file: "06_INBOX/Legi/CELEX_32022R2554_RO_TXT.pdf"
+sha256_hash: "2534be7a2e47429f681128ded1fa2e1aa2a279e4439
+--TGT SNIPPET--
+---
+id: "leg-eu-mica-2023-1114"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "Uniunea Europeană (UE)"
+language: "ro"
+official_url: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32023R1114"
+publication_date: "2023-06-09"
+consolidated_version: "Consolidată"
+source_file: "06_INBOX/Legi/CELEX_32023R1114_RO_TXT.pdf"
+sha256_hash: "fc5fe1e3b5b7d796071c644ebf8ec7b73d842e84556462eb539c99da316ba4a2"
+
+================================================================================
+REVIEW 7 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2024_1689_AI_Act.md
+TGT: 01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md
+entities: ['dpo', 'furnizorii', 'imm', 'metsola', 'parlamentului', 'prezentul']
+--SRC SNIPPET--
+---
+id: "leg-eu-aiact-2024-1689"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "Uniunea Europeană (UE)"
+language: "ro"
+official_url: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=OJ:L_202401689"
+publication_date: "2024-07-12"
+consolidated_version: "Oficială (în vigoare 01.08.2024)"
+source_file: "06_INBOX/Legi/OJ_L_202401689_RO_TXT.pdf"
+sha256_hash: "60889fce0abc54501fff8d8d48004e4d0171dbedac193cdb
+--TGT SNIPPET--
+---
+id: "leg-eu-mica-2023-1114"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "Uniunea Europeană (UE)"
+language: "ro"
+official_url: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32023R1114"
+publication_date: "2023-06-09"
+consolidated_version: "Consolidată"
+source_file: "06_INBOX/Legi/CELEX_32023R1114_RO_TXT.pdf"
+sha256_hash: "fc5fe1e3b5b7d796071c644ebf8ec7b73d842e84556462eb539c99da316ba4a2"
+
+================================================================================
+REVIEW 8 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/bot/trade/cerebras-agent/ELITE_QUANT_BOT_COMPLETE_PROMPT.md
+TGT: 02_PRODUCT/projects/imported/bot/trade/elite_quant_bot_v10/Elite_Quant_Bot_MT5_Python_V10_Application.md
+entities: ['atr', 'bitmask', 'buy', 'deal_entry_out', 'filling_mode', 'kill']
+--SRC SNIPPET--
+# ELITE QUANT BOT — PROMPT COMPLET DE RECONSTRUCȚIE
+## XAUUSD Algorithmic Trading System — MT5 + Python
+
+> **Scop**: Acest document conține INTEGRAL aplicația. Orice AI / dezvoltator
+> poate reconstrui sistemul bit-cu-bit doar din acest fișier. Nu se inventează
+> nimic. Fiecare fișier este redat verbatim din codul sursă.
+
+---
+
+## 0. PHILOSOPHY & MENTAL MODEL
+
+### Pentru un junior
+Botul este o **mașină de decizie** care, la fiecare ~30 secunde:
+1. Cere prețul curent la MT5 (broker).
+2. Întreabă *
+--TGT SNIPPET--
+---
+title: Elite Quant Bot MT5 Python V10 Application
+type: application
+status: active
+category: product
+---
+
+# Elite Quant Bot — MT5 + Python
+
+Prop-firm compliant MT5 trading bot. Python 3.12, Tkinter UI, 300+ strategy
+instances generated via factory, weighted ensemble voting, and an online
+logistic-regression "intuition" model trained on the bot's own closed trades.
+
+## Requirements
+- Windows
+- MetaTrader 5 terminal installed AND logged in to your broker account
+- Python 3.12
+
+## Install
+```
+p
+================================================================================
+REVIEW 9 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/bot/trade/cerebras-agent/ELITE_QUANT_BOT_COMPLETE_PROMPT.md
+TGT: 02_PRODUCT/projects/imported/bot/trade/elite_quant_bot_v11/Elite_Quant_Bot_MT5_Python_V11_Application.md
+entities: ['atr', 'bitmask', 'buy', 'deal_entry_out', 'filling_mode', 'kill']
+--SRC SNIPPET--
+# ELITE QUANT BOT — PROMPT COMPLET DE RECONSTRUCȚIE
+## XAUUSD Algorithmic Trading System — MT5 + Python
+
+> **Scop**: Acest document conține INTEGRAL aplicația. Orice AI / dezvoltator
+> poate reconstrui sistemul bit-cu-bit doar din acest fișier. Nu se inventează
+> nimic. Fiecare fișier este redat verbatim din codul sursă.
+
+---
+
+## 0. PHILOSOPHY & MENTAL MODEL
+
+### Pentru un junior
+Botul este o **mașină de decizie** care, la fiecare ~30 secunde:
+1. Cere prețul curent la MT5 (broker).
+2. Întreabă *
+--TGT SNIPPET--
+---
+title: Elite Quant Bot MT5 Python V11 Application
+type: application
+status: active
+category: product
+---
+
+# Elite Quant Bot — MT5 + Python
+
+Prop-firm compliant MT5 trading bot. Python 3.12, Tkinter UI, 300+ strategy
+instances generated via factory, weighted ensemble voting, and an online
+logistic-regression "intuition" model trained on the bot's own closed trades.
+
+## Requirements
+- Windows
+- MetaTrader 5 terminal installed AND logged in to your broker account
+- Python 3.12
+
+## Install
+```
+p
+================================================================================
+REVIEW 10 relation=part_of conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Registru_Transferuri_Development_Standards.md
+TGT: 02_PRODUCT/projects/Registru_de_transferuri.md
+entities: ['air-gapped', 'cognitivevaultclient', 'datagrid', 'dotnet10', 'euci', 'infosec']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10c001"
+type: knowledge
+lifecycle: REVIEW
+category: project-standards
+tags:
+  - registru-transferuri
+  - wpf
+  - dotnet10
+  - air-gapped
+  - obsidian-tactical
+  - infosec
+  - mvvm
+  - p0-p18
+created: 2026-08-17T23:15:00Z
+updated: 2026-08-17T23:15:00Z
+provenance:
+  source_type: import
+  source_ref: "06_INBOX/RAW_IMPORTS/AGENTS.md"
+confidence: very_high
+verification: inferred
+enriched_by: ai
+enrichment_date: 2026-08-17T23:15:00Z
+relations:
+  - target_id: "d2c
+--TGT SNIPPET--
+---
+id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+type: project
+lifecycle: REVIEW
+category: projects.compliance_desktop_app
+tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
+created: 2026-08-14
+updated: 2026-09-02
+provenance:
+  source_type: ai_conversation
+  source_ref: github.com/userist123/Registru-de-transferuri
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
+  redaction: not_appli
+================================================================================
+REVIEW 11 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/SECURITY.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md
+entities: ['euci', 'hmac-sha256', 'ieee', 'nato', 'nist', 'pid']
+--SRC SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+--TGT SNIPPET--
+---
+title: Registru Transferuri Workspace Specification
+type: specification
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliulu
+================================================================================
+REVIEW 12 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/docs/SECURITY.md
+entities: ['euci', 'hmac-sha256', 'ieee', 'nato', 'nist', 'pid']
+--SRC SNIPPET--
+---
+title: Registru Transferuri Workspace Specification
+type: specification
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliulu
+--TGT SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+================================================================================
+REVIEW 13 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md
+TGT: 01_ARCHITECTURE/knowledge/Retrieval_Hypothesis_Registry.md
+entities: ['candidate-generation', 'contradiction_guardrail', 'llm', 'q02_p16_hardware_telemetry', 'q09_temporal_superseded_policy', 'retrieval']
+--SRC SNIPPET--
+---
+id: "knw-retrieval-bottleneck-p0-0001"
+type: knowledge
+lifecycle: REVIEW
+category: retrieval-architecture
+tags: [retrieval, diagnostic, p0, empirical-evidence, candidate-generation, multi-signal, context-pack, locomo]
+created: 2026-09-01T21:55:00Z
+updated: 2026-09-01T21:55:00Z
+provenance:
+  source_type: execution
+  source_ref: "evaluation/retrieval_diagnostic_runner.py"
+confidence: high
+verification: unverified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29
+--TGT SNIPPET--
+---
+id: "reg-retrieval-hypotheses-0001"
+type: knowledge
+lifecycle: REVIEW
+category: retrieval-architecture
+tags: [hypotheses, retrieval, experimental-registry, p0-evidence, candidate-generation, fusion]
+created: 2026-09-01T21:56:00Z
+updated: 2026-09-01T21:56:00Z
+provenance:
+  source_type: execution
+  source_ref: "01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md"
+confidence: high
+verification: unverified
+relations:
+  - type: related_to
+    target_id: knw-retrieval-bottleneck-p0-0001
+  -
+================================================================================
+REVIEW 14 relation=part_of conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Local_PIN_Auth_And_SQLCipher_Pattern.md
+TGT: 02_PRODUCT/projects/Registru_de_transferuri.md
+entities: ['deviceiocontrol', 'dpapi', 'lta', 'pin', 'pkcs11interop', 'qscd']
+--SRC SNIPPET--
+---
+id: "4c5884fe-f24e-426e-a012-1414dbddae23"
+type: knowledge
+category: security.desktop_apps
+tags: [sqlcipher, dpapi, pin-auth, csharp, python]
+created: 2026-08-14
+updated: 2026-08-14
+status: review
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: medium
+verification: unverified
+lifecycle: REVIEW
+provenance_status: incomplete
+--TGT SNIPPET--
+---
+id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+type: project
+lifecycle: REVIEW
+category: projects.compliance_desktop_app
+tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
+created: 2026-08-14
+updated: 2026-09-02
+provenance:
+  source_type: ai_conversation
+  source_ref: github.com/userist123/Registru-de-transferuri
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
+  redaction: not_appli
+================================================================================
+REVIEW 15 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Legislatie_Ordin_M172_2021_Norme_MApN_Informatii_Clasificate.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md
+entities: ['dvd', 'hdd', 'infosec', 'nato', 'pid', 'sha-256']
+--SRC SNIPPET--
+---
+id: "knw-leg-m172-2021-0001"
+type: knowledge
+category: legal.defense.classified_information
+tags:
+  - mapn
+  - ordin-m172-2021
+  - informatii-clasificate
+  - medii-de-stocare
+  - cdc
+  - csnr
+  - dcism
+  - infosec
+  - air-gap
+created: 2026-09-06
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai
+  source_ref: "06_INBOX/Legi/M 172-2021.docx (Ordinul M.172/2021 al Ministrului Apararii Nationale)"
+  source_date: 2026-09-06
+  original_path: "06_INBOX/Legi/M 172-2021.docx"
+  ext
+--TGT SNIPPET--
+---
+title: Registru Transferuri Workspace Specification
+type: specification
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliulu
+================================================================================
+REVIEW 16 relation=part_of conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/Registru_UI_Remodel_Workflow.md
+TGT: 02_PRODUCT/projects/Registru_de_transferuri.md
+entities: ['auditchainverifier', 'cognitivevaultclient', 'datagrid', 'infosec', 'kpi', 'obsidian-tactical']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10d002"
+type: procedure
+lifecycle: REVIEW
+category: ui-remodel
+tags:
+  - registru-transferuri
+  - obsidian-tactical
+  - wpf
+  - ui-remodel
+  - workflow
+created: 2026-08-17T23:20:00Z
+updated: 2026-08-17T23:20:00Z
+provenance:
+  source_type: import
+  source_ref: "06_INBOX/RAW_IMPORTS/markdawn/workflow_remodel_ui.md"
+confidence: high
+verification: inferred
+enriched_by: ai
+enrichment_date: 2026-08-17T23:20:00Z
+relations:
+  - target_id: "d2c10cab-0028-44c7-8f9e-a
+--TGT SNIPPET--
+---
+id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+type: project
+lifecycle: REVIEW
+category: projects.compliance_desktop_app
+tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
+created: 2026-08-14
+updated: 2026-09-02
+provenance:
+  source_type: ai_conversation
+  source_ref: github.com/userist123/Registru-de-transferuri
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
+  redaction: not_appli
+================================================================================
+REVIEW 17 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/Registru_de_transferuri.md
+TGT: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/SECURITY.md
+entities: ['devicepolicyenforcer', 'dpapi', 'euci', 'hmac-sha256', 'ieee', 'nato']
+--SRC SNIPPET--
+---
+id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+type: project
+lifecycle: REVIEW
+category: projects.compliance_desktop_app
+tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
+created: 2026-08-14
+updated: 2026-09-02
+provenance:
+  source_type: ai_conversation
+  source_ref: github.com/userist123/Registru-de-transferuri
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
+  redaction: not_appli
+--TGT SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+================================================================================
+REVIEW 18 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/Registru_de_transferuri.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/docs/SECURITY.md
+entities: ['devicepolicyenforcer', 'dpapi', 'euci', 'hmac-sha256', 'ieee', 'nato']
+--SRC SNIPPET--
+---
+id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+type: project
+lifecycle: REVIEW
+category: projects.compliance_desktop_app
+tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
+created: 2026-08-14
+updated: 2026-09-02
+provenance:
+  source_type: ai_conversation
+  source_ref: github.com/userist123/Registru-de-transferuri
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
+  redaction: not_appli
+--TGT SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+================================================================================
+REVIEW 19 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Local_PIN_Auth_And_SQLCipher_Pattern.md
+TGT: 01_ARCHITECTURE/knowledge/HG585_MS111_Compliance_Requirements.md
+entities: ['aes-256-cbc', 'dpapi', 'jwt', 'localmachine', 'lta', 'pin']
+--SRC SNIPPET--
+---
+id: "4c5884fe-f24e-426e-a012-1414dbddae23"
+type: knowledge
+category: security.desktop_apps
+tags: [sqlcipher, dpapi, pin-auth, csharp, python]
+created: 2026-08-14
+updated: 2026-08-14
+status: review
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: medium
+verification: unverified
+lifecycle: REVIEW
+provenance_status: incomplete
+--TGT SNIPPET--
+---
+id: "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+type: knowledge
+category: security.compliance
+tags: [hg585, ms111, ms172, compliance, air-gapped]
+created: 2026-08-14
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-06-11_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: high
+verification: unverified
+lifecycle: NORMALIZED
+provenance_st
+================================================================================
+REVIEW 20 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md
+TGT: 02_PRODUCT/projects/workspaces/jarvis_cognitive_brain/Jarvis_Cognitive_Brain_Workspace_Specification.md
+entities: ['hud', 'jarviscontrols', 'onnx', 'stt', 'tts', 'vad']
+--SRC SNIPPET--
+# Project: Jarvis Cognitive Brain ("Creier Vorbitor")
+
+## Architecture
+Autonomous, local, self-improving Cognitive Brain system integrating real-time streaming audio I/O with barge-in interruption, a stateful OODA cognitive loop, persistent SQLite WAL + Markdown memory, multi-agent least-privilege background workers, FastMCP IoT Home Assistant integration, and an ultra-modern 3D WebGL HUD dashboard.
+
+```
++-------------------------------------------------------------------------------------------
+--TGT SNIPPET--
+---
+title: Jarvis Cognitive Brain Workspace Specification
+type: specification
+status: active
+category: product
+---
+
+# Jarvis Cognitive Brain
+
+Runtime-ul implementează arhitectura din `arhitectura_asistent_ai_jarvis.html` și `proiect.pdf` fără să mute fișierele sursă:
+
+- orchestrare `Observe -> Retrieve -> Reason/Plan -> Act -> Reflect -> Consolidate`;
+- supervisor multi-agent cu worker pool prioritar, dispatch background și council review paralel pentru Retrieval/Verifier/Critic;
+- gateway FastA
+================================================================================
+REVIEW 21 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Context_Packing_P1_Empirical_Findings.md
+TGT: 01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md
+entities: ['contextpackbuilder', 'contradiction_guardrail', 'empirical-evidence', 'llm', 'locomo', 'partial']
+--SRC SNIPPET--
+---
+id: "knw-context-packing-p1-0001"
+type: knowledge
+lifecycle: REVIEW
+category: retrieval-architecture
+tags: [context-packing, p1, empirical-evidence, section-extraction, progressive-disclosure, packing-loss]
+created: 2026-09-01T23:45:00Z
+updated: 2026-09-01T23:45:00Z
+provenance:
+  source_type: execution
+  source_ref: "evaluation/context_packing/experiment_runner.py"
+confidence: high
+verification: unverified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  
+--TGT SNIPPET--
+---
+id: "knw-retrieval-bottleneck-p0-0001"
+type: knowledge
+lifecycle: REVIEW
+category: retrieval-architecture
+tags: [retrieval, diagnostic, p0, empirical-evidence, candidate-generation, multi-signal, context-pack, locomo]
+created: 2026-09-01T21:55:00Z
+updated: 2026-09-01T21:55:00Z
+provenance:
+  source_type: execution
+  source_ref: "evaluation/retrieval_diagnostic_runner.py"
+confidence: high
+verification: unverified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29
+================================================================================
+REVIEW 22 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md
+TGT: 00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
+entities: ['agent', 'agent_memory', 'ide', 'project_id', 'universal', 'universal_agent_memory_protocol_v1']
+--SRC SNIPPET--
+# UNIVERSAL AGENT COLD-START BOOTSTRAP V1
+
+This file is the startup contract for every agent working on this Vault.
+
+## On every start, regardless of PC, IDE, chat, or runtime
+
+1. Pull/read `main` and record its SHA.
+2. Read `09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`.
+3. Read `09_COORDINATION/AGENT_MEMORY/agents/<AGENT>/CURRENT.md`.
+4. Identify the active `project_id` and read `09_COORDINATION/AGENT_MEMORY/projects/<project-id>/CURRENT.md`.
+5. Open the latest task/sessi
+--TGT SNIPPET--
+# UNIVERSAL AGENT MEMORY PROTOCOL V1
+
+Status: ACTIVE POLICY
+Scope: CODEX, ANTIGRAVITY, PERPLEXITY, LUNA and any future agent
+Purpose: every agent must leave persistent, portable, resumable execution memory in the Vault.
+
+## 1. Non-negotiable rule
+
+Every substantive work session MUST leave a persistent memory trail in Git. A future session started on another PC, workspace, IDE or agent runtime must be able to reconstruct:
+
+- who worked;
+- what repository/application/project was worked on;
+- exact
+================================================================================
+REVIEW 23 relation=part_of conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/HG585_MS111_Compliance_Requirements.md
+TGT: 02_PRODUCT/projects/Registru_de_transferuri.md
+entities: ['air-gapped', 'dpapi', 'hg585', 'infosec', 'lta', 'pin']
+--SRC SNIPPET--
+---
+id: "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+type: knowledge
+category: security.compliance
+tags: [hg585, ms111, ms172, compliance, air-gapped]
+created: 2026-08-14
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-06-11_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: high
+verification: unverified
+lifecycle: NORMALIZED
+provenance_st
+--TGT SNIPPET--
+---
+id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+type: project
+lifecycle: REVIEW
+category: projects.compliance_desktop_app
+tags: [hg585, sqlcipher, wpf, dotnet10, air-gapped, obsidian-tactical, nato, infosec, p0-p18, cognitive-vault]
+created: 2026-08-14
+updated: 2026-09-02
+provenance:
+  source_type: ai_conversation
+  source_ref: github.com/userist123/Registru-de-transferuri
+  source_date: 2026-09-02
+  original_path: projects/registru-transferuri
+  extraction_date: 2026-09-02
+  redaction: not_appli
+================================================================================
+REVIEW 24 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md
+entities: ['dvd', 'hdd', 'infosec', 'sha-256', 'ssd', 'ssid']
+--SRC SNIPPET--
+---
+id: "knw-leg-hg585-2002-0001"
+type: knowledge
+category: legal.security.classified_information
+tags:
+  - hg585
+  - informatii-clasificate
+  - standarde-nationale
+  - infosec
+  - protectie-fizica
+  - securitate-industriala
+  - orniss
+created: 2026-09-06
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai
+  source_ref: "06_INBOX/Legi/HOTARARE nr 585.pdf (HG 585/2002 actualizata)"
+  source_date: 2026-09-06
+  original_path: "06_INBOX/Legi/HOTARARE nr 585.pdf"
+  extraction_date: 2
+--TGT SNIPPET--
+---
+title: Registru Transferuri Workspace Specification
+type: specification
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliulu
+================================================================================
+REVIEW 25 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Ordinul_M172_2021.md
+TGT: 01_ARCHITECTURE/knowledge/Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate.md
+entities: ['dvd', 'hdd', 'infosec', 'sic', 'ssd', 'usb']
+--SRC SNIPPET--
+---
+id: "idx-leg-ro-mapn-m172-2021"
+type: legal_index
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_index
+jurisdiction: "România (RO - MApN)"
+source_act: "[[Ordinul_M172_2021]]"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+---
+
+# Index Structurat: Ordinul Ministrului Apărării Naționale nr. M.172/2021
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:
+> Acest index este un instrument analitic structurat derivat di
+--TGT SNIPPET--
+---
+id: "knw-leg-hg585-2002-0001"
+type: knowledge
+category: legal.security.classified_information
+tags:
+  - hg585
+  - informatii-clasificate
+  - standarde-nationale
+  - infosec
+  - protectie-fizica
+  - securitate-industriala
+  - orniss
+created: 2026-09-06
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai
+  source_ref: "06_INBOX/Legi/HOTARARE nr 585.pdf (HG 585/2002 actualizata)"
+  source_date: 2026-09-06
+  original_path: "06_INBOX/Legi/HOTARARE nr 585.pdf"
+  extraction_date: 2
+================================================================================
+REVIEW 26 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/Trading_Bot_V2_Broker_Execution_System.md
+TGT: 02_PRODUCT/projects/imported/bot/trading-journal-COMPLET-v2/trading-journal/Trading_Journal_AI_Platform_Complet_V2_Application.md
+entities: ['atr', 'ema', 'macd', 'rsi', 'sma', 'xtb']
+--SRC SNIPPET--
+---
+title: Trading Bot V2 Broker Execution System
+type: application
+status: active
+category: product
+---
+
+# Trading Bot v2.0
+
+Sistem complet de trading cu AI Advisor, executie ordine pe broker real, portofoliu live si management de risc.
+
+## Instalare
+
+```bash
+# 1. Instaleaza dependentele
+pip install -r requirements.txt
+
+# 2. Porneste aplicatia
+python main.py
+```
+
+**Windows:** Dublu-click pe `INSTALL.bat` apoi `START_BOT.bat`
+
+## Ce contine
+
+### Motor AI (25+ indicatori)
+- **Trend:** EMA 9/20/50
+--TGT SNIPPET--
+---
+title: Trading Journal AI Platform Complet V2 Application
+type: application
+status: active
+category: product
+---
+
+# Trading Journal — AI-Powered Trading Platform + Semi-Automatic Execution + Fiscal Consulting
+
+**Status: PAS 1-10 LIVRATE** — Aplicația e completă funcțional: jurnal + AI coach + import broker + fiscal România + **execuție semi-automată + consultanță fiscală AI & umană**.
+
+---
+
+## 🎯 Ce face aplicația
+
+**Core (Pas 1-8):**
+- Jurnal bilingv RO/EN cu voice recording + AI analysis (G
+================================================================================
+REVIEW 27 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/Trading_Bot_V2_Broker_Execution_System.md
+TGT: 02_PRODUCT/projects/imported/nu-sterge/trading-journal-COMPLET-v2/trading-journal/Trading_Journal_Archive_Complet_V2_Application.md
+entities: ['atr', 'ema', 'macd', 'rsi', 'sma', 'xtb']
+--SRC SNIPPET--
+---
+title: Trading Bot V2 Broker Execution System
+type: application
+status: active
+category: product
+---
+
+# Trading Bot v2.0
+
+Sistem complet de trading cu AI Advisor, executie ordine pe broker real, portofoliu live si management de risc.
+
+## Instalare
+
+```bash
+# 1. Instaleaza dependentele
+pip install -r requirements.txt
+
+# 2. Porneste aplicatia
+python main.py
+```
+
+**Windows:** Dublu-click pe `INSTALL.bat` apoi `START_BOT.bat`
+
+## Ce contine
+
+### Motor AI (25+ indicatori)
+- **Trend:** EMA 9/20/50
+--TGT SNIPPET--
+---
+title: Trading Journal Archive Complet V2 Application
+type: application
+status: active
+category: product
+---
+
+# Trading Journal — AI-Powered Trading Platform + Semi-Automatic Execution + Fiscal Consulting
+
+**Status: PAS 1-10 LIVRATE** — Aplicația e completă funcțional: jurnal + AI coach + import broker + fiscal România + **execuție semi-automată + consultanță fiscală AI & umană**.
+
+---
+
+## 🎯 Ce face aplicația
+
+**Core (Pas 1-8):**
+- Jurnal bilingv RO/EN cu voice recording + AI analysis (Groq 
+================================================================================
+REVIEW 28 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/nu-sterge/trading-journal-COMPLET-v2/trading-journal/Trading_Journal_Archive_Complet_V2_Application.md
+TGT: 02_PRODUCT/projects/imported/tradingbot/TradingBot/Trading_Bot_Standalone_V2_Execution_System.md
+entities: ['atr', 'ema', 'macd', 'rsi', 'sma', 'xtb']
+--SRC SNIPPET--
+---
+title: Trading Journal Archive Complet V2 Application
+type: application
+status: active
+category: product
+---
+
+# Trading Journal — AI-Powered Trading Platform + Semi-Automatic Execution + Fiscal Consulting
+
+**Status: PAS 1-10 LIVRATE** — Aplicația e completă funcțional: jurnal + AI coach + import broker + fiscal România + **execuție semi-automată + consultanță fiscală AI & umană**.
+
+---
+
+## 🎯 Ce face aplicația
+
+**Core (Pas 1-8):**
+- Jurnal bilingv RO/EN cu voice recording + AI analysis (Groq 
+--TGT SNIPPET--
+---
+title: Trading Bot Standalone V2 Execution System
+type: application
+status: active
+category: product
+---
+
+# Trading Bot v2.0
+
+Sistem complet de trading cu AI Advisor, executie ordine pe broker real, portofoliu live si management de risc.
+
+## Instalare
+
+```bash
+# 1. Instaleaza dependentele
+pip install -r requirements.txt
+
+# 2. Porneste aplicatia
+python main.py
+```
+
+**Windows:** Dublu-click pe `INSTALL.bat` apoi `START_BOT.bat`
+
+## Ce contine
+
+### Motor AI (25+ indicatori)
+- **Trend:** EMA 9/2
+================================================================================
+REVIEW 29 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Ordinul_M172_2021.md
+TGT: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/Registru_Militar_Transferuri_Desktop_Application.md
+entities: ['dvd', 'hdd', 'infosec', 'nato', 'ssd', 'usb']
+--SRC SNIPPET--
+---
+id: "idx-leg-ro-mapn-m172-2021"
+type: legal_index
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_index
+jurisdiction: "România (RO - MApN)"
+source_act: "[[Ordinul_M172_2021]]"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+---
+
+# Index Structurat: Ordinul Ministrului Apărării Naționale nr. M.172/2021
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:
+> Acest index este un instrument analitic structurat derivat di
+--TGT SNIPPET--
+---
+title: Registru Militar Transferuri Desktop Application
+type: application
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliu
+================================================================================
+REVIEW 30 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 00_GOVERNANCE/coordination/antigravity/ADR_DRAFT_lifecycle_transition.md
+TGT: 00_GOVERNANCE/review/REVIEW_QUEUE.md
+entities: ['i-001', 'i-004', 'i-012', 'p0-001', 'p0-015']
+--SRC SNIPPET--
+﻿# ADR DRAFT — Lifecycle Transition: REVIEW → ACTIVE vs REVIEW → VERIFIED → ACTIVE
+
+**STATUS**: PROPOSAL — DECISION OWNER: CODEX  
+**DATE**: 2026-09-05  
+**AUTHOR**: ANTIGRAVITY (P0.2 Test Suite Stabilization Analysis)  
+**TARGET MODULE**: memory_controller/controller.py  
+**REFERENCE COMMITS**: 54e85f20a, 4fbc35dd9  
+
+---
+
+## 1. Context & Problem Statement
+
+In recent security hardening commits (54e85f20a, 4fbc35dd9), a check was introduced into MemoryController.promote() (memory_controller/cont
+--TGT SNIPPET--
+# Coada de Atestare Umană (Human Review & Attestation Queue)
+
+Acest document înregistrează toate activele cognitive noi sau modificate, plasate în ciclul de viață `REVIEW`, conform contractului operațional `AGENTS.md` și a invariantelor canonice de securitate `I-001..I-012` (validate prin testele adversariale `P0-001..P0-015`).
+
+Operatorul Uman (`Principal.HUMAN` / `Principal.ADMIN`) poate aproba (`Operation.ATTEST`), respinge sau solicita editări pentru fiecare element de mai jos.
+
+---
+
+| # | F
+================================================================================
+REVIEW 31 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/Autonomous_Program_Construction_Protocol.md
+TGT: 00_GOVERNANCE/coordination/antigravity/ADR_DRAFT_lifecycle_transition.md
+entities: ['antigravity', 'i-001', 'i-012', 'p0-001', 'p0-015']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10d020"
+type: procedure
+lifecycle: ACTIVE
+category: multi-agent-orchestration
+tags:
+  - autonomous-construction
+  - agent-council
+  - vault-protocol
+created: 2026-08-24T18:06:00Z
+updated: 2026-08-24T18:06:00Z
+provenance:
+  source_type: ai
+  source_ref: "github-agentic-patterns-ingestion"
+confidence: very_high
+verification: verified
+---
+
+# Protocol Executiv: Construcția Autonomă de Programe și Aplicații (Consiliul Extins de 14 Agenți)
+
+Acest protocol stabile
+--TGT SNIPPET--
+﻿# ADR DRAFT — Lifecycle Transition: REVIEW → ACTIVE vs REVIEW → VERIFIED → ACTIVE
+
+**STATUS**: PROPOSAL — DECISION OWNER: CODEX  
+**DATE**: 2026-09-05  
+**AUTHOR**: ANTIGRAVITY (P0.2 Test Suite Stabilization Analysis)  
+**TARGET MODULE**: memory_controller/controller.py  
+**REFERENCE COMMITS**: 54e85f20a, 4fbc35dd9  
+
+---
+
+## 1. Context & Problem Statement
+
+In recent security hardening commits (54e85f20a, 4fbc35dd9), a check was introduced into MemoryController.promote() (memory_controller/cont
+================================================================================
+REVIEW 32 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/Autonomous_Program_Construction_Protocol.md
+TGT: 01_ARCHITECTURE/knowledge/VAULT_INDEX.md
+entities: ['dfir', 'evtx', 'p0-p18', 'secops', 'selfrefine']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10d020"
+type: procedure
+lifecycle: ACTIVE
+category: multi-agent-orchestration
+tags:
+  - autonomous-construction
+  - agent-council
+  - vault-protocol
+created: 2026-08-24T18:06:00Z
+updated: 2026-08-24T18:06:00Z
+provenance:
+  source_type: ai
+  source_ref: "github-agentic-patterns-ingestion"
+confidence: very_high
+verification: verified
+---
+
+# Protocol Executiv: Construcția Autonomă de Programe și Aplicații (Consiliul Extins de 14 Agenți)
+
+Acest protocol stabile
+--TGT SNIPPET--
+---
+id: "vault-master-index-0001"
+type: knowledge
+lifecycle: ACTIVE
+category: meta
+tags: [index, navigation, architecture, vault]
+created: 2026-09-02T00:39:00Z
+updated: 2026-09-02T00:39:00Z
+provenance:
+  source_type: execution
+  source_ref: "01_KNOWLEDGE/VAULT_INDEX.md"
+confidence: high
+verification: verified
+enriched_by: ai
+---
+
+# Master Vault Navigational Index
+
+This index provides canonical, structured navigation across all verified knowledge domains, project architectures, standard procedure
+================================================================================
+REVIEW 33 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_M172_Art193_199_Hardware_Serial_Medii_Stocare.md
+TGT: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/SECURITY.md
+entities: ['pid', 'sha-256', 'usb', 'vid', 'wmi']
+--SRC SNIPPET--
+---
+id: "atm-m172-art193-199-medii-stocare"
+type: legal_atomic_obligation
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: technical_obligation_analysis
+source_act: "[[Ordinul_M172_2021]]"
+legal_article: "Articolele 193–199, Anexa nr. 9 și Anexa nr. 18"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+human_approval_required: true
+---
+
+# Notă Derivată Atomică: Evidența Mediilor Fizice de Stocare și Marcarea cu Seria Hardware Unică
+
+> [!IMPORT
+--TGT SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+================================================================================
+REVIEW 34 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_M172_Art193_199_Hardware_Serial_Medii_Stocare.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/docs/SECURITY.md
+entities: ['pid', 'sha-256', 'usb', 'vid', 'wmi']
+--SRC SNIPPET--
+---
+id: "atm-m172-art193-199-medii-stocare"
+type: legal_atomic_obligation
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: technical_obligation_analysis
+source_act: "[[Ordinul_M172_2021]]"
+legal_article: "Articolele 193–199, Anexa nr. 9 și Anexa nr. 18"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+human_approval_required: true
+---
+
+# Notă Derivată Atomică: Evidența Mediilor Fizice de Stocare și Marcarea cu Seria Hardware Unică
+
+> [!IMPORT
+--TGT SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+================================================================================
+REVIEW 35 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 00_GOVERNANCE/coordination/agents/CLAUDE_OPUS/R001_LIFECYCLE_AUTHORITY.md
+TGT: 00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md
+entities: ['_validate_note', 'ai_agent', 'promote', 'reconsolidating']
+--SRC SNIPPET--
+# R001 — Canonical Lifecycle Policy Authority
+
+- **Owner:** CLAUDE OPUS
+- **Branch:** `r001/opus-lifecycle-authority`
+- **Baseline:** `0449dafee` (`ci(r001): make enforcement fail-closed`)
+- **Commits:** `2a72b16e9` (implementation), `0143b4d98` (tests + creation-bypass closure)
+- **Merged to main:** NO — explicitly out of scope.
+- **Evidence level:** `CODE_VERIFIED` + `TEST_VERIFIED`. `RUNTIME_VERIFIED` is **not** claimed: no production workload was executed against this branch.
+
+---
+
+## 1. Wha
+--TGT SNIPPET--
+# Runtime Security — Remaining Gaps
+
+## Scope
+
+This document records runtime trust-boundary gaps identified during the security/lifecycle closure work on `runtime-security-lifecycle-closure`.
+
+## Closed in current branch
+
+- Reconsolidation challenge/resolve authorization with explicit principal enforcement.
+- Reconsolidation lifecycle transitions checked through the canonical lifecycle policy.
+- Direct financial-ingestion authorization and lifecycle/verification canonicalization.
+- Financial sea
+================================================================================
+REVIEW 36 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md
+TGT: 02_PRODUCT/projects/workspaces/jarvis_web/Jarvis_Web_Command_Center_Specification.md
+entities: ['jarvis', 'web_creative_developer', 'web_design_engineer_agent', 'web_quality_engineer']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10d010"
+type: knowledge
+lifecycle: ACTIVE
+category: multi-agent-orchestration
+tags:
+  - agent-skills
+  - vault-core
+  - orchestration
+  - 21-agents-council
+  - jarvis-command-center
+created: 2026-08-24T18:00:00Z
+updated: 2026-08-25T22:00:00Z
+provenance:
+  source_type: execution
+  source_ref: "master-raw-skills-agent-integration"
+confidence: high
+verification: verified
+---
+
+# Matricea Totală a Consiliului extins la 21 de Agenți Specializați
+
+Consiliul de Mem
+--TGT SNIPPET--
+---
+title: Jarvis Web Command Center Specification
+type: specification
+status: active
+category: product
+---
+
+# JARVIS AI Memory Vault Command Center
+
+JARVIS este control plane-ul vizual si operational peste AI Memory Vault V6.
+
+## Arhitectura
+
+```text
+Browser
+  ↓
+JARVIS Command Center :3000
+  ↓
+Memory Vault API :8000
+  ├── /status
+  ├── /metrics
+  ├── /agents
+  ├── /skills
+  ├── /proposals
+  ├── /search
+  ├── /route
+  └── /propose
+  ↓
+MemoryController / Cognitive Core / Agent Registry / Operatio
+================================================================================
+REVIEW 37 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 02_PRODUCT/ORIGINAL_REQUEST.md
+TGT: 10_DOCUMENTATION/procedures/Enterprise_Large_Scale_Project_Integration.md
+entities: ['begin', 'immediate', 'sdk', 'sha-256', 'wal']
+--SRC SNIPPET--
+# Original User Request
+
+## 2026-08-14T22:58:52+03:00
+
+Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance.
+
+Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
+
+## Requirements
+
+### R1. Cognitive Loop Self-Execution & Autonomous Task Processing
+The cognitive core must autonomously process user goals through the full OODA sequence: Observe (
+--TGT SNIPPET--
+---
+id: "proc-enterprise-integration-0001"
+type: procedure
+lifecycle: ACTIVE
+category: enterprise-architecture
+tags: [enterprise, integration-blueprint, large-scale, memory-v6, microservices, multi-agent]
+created: 2026-08-25T19:15:00Z
+updated: 2026-08-25T19:15:00Z
+provenance:
+  source_type: official
+  source_ref: "enterprise-large-scale-integration-blueprint"
+confidence: very_high
+verification: verified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - "99_S
+================================================================================
+REVIEW 38 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/HG585_MS111_Compliance_Requirements.md
+TGT: 01_ARCHITECTURE/knowledge/Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate.md
+entities: ['dpapi', 'hg585', 'infosec', 'sha-256', 'tic']
+--SRC SNIPPET--
+---
+id: "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+type: knowledge
+category: security.compliance
+tags: [hg585, ms111, ms172, compliance, air-gapped]
+created: 2026-08-14
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-06-11_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: high
+verification: unverified
+lifecycle: NORMALIZED
+provenance_st
+--TGT SNIPPET--
+---
+id: "knw-leg-hg585-2002-0001"
+type: knowledge
+category: legal.security.classified_information
+tags:
+  - hg585
+  - informatii-clasificate
+  - standarde-nationale
+  - infosec
+  - protectie-fizica
+  - securitate-industriala
+  - orniss
+created: 2026-09-06
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai
+  source_ref: "06_INBOX/Legi/HOTARARE nr 585.pdf (HG 585/2002 actualizata)"
+  source_date: 2026-09-06
+  original_path: "06_INBOX/Legi/HOTARARE nr 585.pdf"
+  extraction_date: 2
+================================================================================
+REVIEW 39 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/Cognitive_Brain_Architecture_Specification.md
+TGT: 10_DOCUMENTATION/procedures/Enterprise_Large_Scale_Project_Integration.md
+entities: ['act-r', 'cognitive_core', 'gwt', 'snn']
+--SRC SNIPPET--
+---
+id: "proc-brain-arch-0001"
+type: procedure
+lifecycle: ACTIVE
+category: system-architecture
+tags: [cognitive-brain, act-r, gwt, reconsolidation, neuromorphic, sNN, 21-agents]
+created: 2026-08-24T23:18:00Z
+updated: 2026-08-24T23:18:00Z
+provenance:
+  source_type: official
+  source_ref: "codex-brain-upgrade"
+confidence: very_high
+verification: verified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-2
+--TGT SNIPPET--
+---
+id: "proc-enterprise-integration-0001"
+type: procedure
+lifecycle: ACTIVE
+category: enterprise-architecture
+tags: [enterprise, integration-blueprint, large-scale, memory-v6, microservices, multi-agent]
+created: 2026-08-25T19:15:00Z
+updated: 2026-08-25T19:15:00Z
+provenance:
+  source_type: official
+  source_ref: "enterprise-large-scale-integration-blueprint"
+confidence: very_high
+verification: verified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - "99_S
+================================================================================
+REVIEW 40 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Multi_Agent_Pipeline_Architecture.md
+TGT: 10_DOCUMENTATION/procedures/Closed_Loop_Reflexion_Pipeline.md
+entities: ['cognitive_core', 'criticagent', 'selfrefine', 'verifieragent']
+--SRC SNIPPET--
+---
+id: "e4eca2b5-20e0-4082-aeb3-588d598f10c9"
+type: knowledge
+lifecycle: REVIEW
+category: cognitive_core.architecture
+tags: [multi-agent, orchestrator, router-agent, retrieval-agent, critic-agent, verifier-agent, consolidator-agent, architecture]
+created: 2026-08-15
+updated: 2026-08-15
+provenance:
+  source_type: ai
+  source_ref: "Direct source verification of cognitive_core/orchestrator.py and cognitive_core/agents/*.py"
+confidence: high
+verification: unverified
+relations: []
+---
+
+# Multi-Agent
+--TGT SNIPPET--
+---
+id: "proc-reflexion-0001"
+type: procedure
+lifecycle: ACTIVE
+category: memory-lifecycle
+tags: [reflexion, self-refine, closed-loop, error-resolution, lesson-capture]
+created: 2026-08-24T23:20:00Z
+updated: 2026-08-24T23:20:00Z
+provenance:
+  source_type: official
+  source_ref: "reflexion-pipeline-spec"
+confidence: very_high
+verification: verified
+relations:
+  - type: related_to
+    target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
+  - type: related_to
+    target_id: path:C:/Users/user/Documents
+================================================================================
+REVIEW 41 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_HG585_Art236_258_Acreditare_Securitate_SIC.md
+TGT: 01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_HG_585_2002.md
+entities: ['ads', 'das', 'orniss', 'sic']
+--SRC SNIPPET--
+---
+id: "atm-hg585-art236-258-acreditare-sic"
+type: legal_atomic_obligation
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: technical_obligation_analysis
+source_act: "[[HG_585_2002]]"
+legal_article: "Capitolul 8, Articolele 236–258"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+human_approval_required: true
+---
+
+# Notă Derivată Atomică: Acreditarea de Securitate a Sistemelor Informatice și de Comunicații (SIC)
+
+> [!IMPORTANT]
+> **REGIM DE
+--TGT SNIPPET--
+---
+id: "idx-leg-ro-hg-585-2002"
+type: legal_index
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_index
+jurisdiction: "România (RO)"
+source_act: "[[HG_585_2002]]"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+---
+
+# Index Structurat: Hotărârea Guvernului nr. 585/2002 (Standardele Naționale)
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:
+> Acest index este un instrument analitic structurat derivat din date norma
+================================================================================
+REVIEW 42 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/Autonomous_Program_Construction_Protocol.md
+TGT: 02_PRODUCT/ORIGINAL_REQUEST.md
+entities: ['ooda', 'selfrefine', 'sha-256', 'wal']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10d020"
+type: procedure
+lifecycle: ACTIVE
+category: multi-agent-orchestration
+tags:
+  - autonomous-construction
+  - agent-council
+  - vault-protocol
+created: 2026-08-24T18:06:00Z
+updated: 2026-08-24T18:06:00Z
+provenance:
+  source_type: ai
+  source_ref: "github-agentic-patterns-ingestion"
+confidence: very_high
+verification: verified
+---
+
+# Protocol Executiv: Construcția Autonomă de Programe și Aplicații (Consiliul Extins de 14 Agenți)
+
+Acest protocol stabile
+--TGT SNIPPET--
+# Original User Request
+
+## 2026-08-14T22:58:52+03:00
+
+Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance.
+
+Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
+
+## Requirements
+
+### R1. Cognitive Loop Self-Execution & Autonomous Task Processing
+The cognitive core must autonomously process user goals through the full OODA sequence: Observe (
+================================================================================
+REVIEW 43 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/HG585_MS111_Compliance_Requirements.md
+TGT: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/Registru_Militar_Transferuri_Desktop_Application.md
+entities: ['infosec', 'lta', 'pin', 'sha-256']
+--SRC SNIPPET--
+---
+id: "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+type: knowledge
+category: security.compliance
+tags: [hg585, ms111, ms172, compliance, air-gapped]
+created: 2026-08-14
+updated: 2026-09-06
+status: normalized
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-06-11_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: high
+verification: unverified
+lifecycle: NORMALIZED
+provenance_st
+--TGT SNIPPET--
+---
+title: Registru Militar Transferuri Desktop Application
+type: application
+status: active
+category: product
+---
+
+# 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Controlul Mediilor de Stocare
+**Stack Tehnologic:** C# WPF, .NET 10 LTS, Clean Architecture, SQLite WAL / SQLCipher, QuestPDF, YARA/DFIR Engine.  
+**Conformitate Normativă:** HG 585/2002, Legea 182/2002, NATO AC/35-D/1022, Decizia Consiliu
+================================================================================
+REVIEW 44 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_DORA_Art6_16_Cadrul_Management_Risc_TIC.md
+TGT: 01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Regulament_UE_2022_2554_DORA.md
+entities: ['bcp', 'drp', 'tic']
+--SRC SNIPPET--
+---
+id: "atm-dora-art6-16-risc-tic"
+type: legal_atomic_obligation
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: technical_obligation_analysis
+source_act: "[[Regulament_UE_2022_2554_DORA]]"
+legal_article: "Articolele 6–16"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+human_approval_required: true
+---
+
+# Notă Derivată Atomică: Cadrul de Management al Riscului TIC și Reziliența Operațională Digitală
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ
+--TGT SNIPPET--
+---
+id: "idx-leg-eu-dora-2022-2554"
+type: legal_index
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_index
+jurisdiction: "Uniunea Europeană (UE)"
+source_act: "[[Regulament_UE_2022_2554_DORA]]"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+---
+
+# Index Structurat: Regulamentul (UE) 2022/2554 (DORA)
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:
+> Acest index este un instrument analitic structurat derivat din dat
+================================================================================
+REVIEW 45 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/memory/Lessons/WPF_Splash_Screen_And_EventLogReader_DFIR.md
+TGT: 02_PRODUCT/projects/imported/eventloganalyzer/EventLog_Analyzer_Windows_Forensics_Tool.md
+entities: ['dfir', 'eventlogreader', 'eventrecord']
+--SRC SNIPPET--
+---
+id: "b45781a9-30bc-4389-aeb0-5e8c14828bc4"
+type: lesson
+lifecycle: REVIEW
+category: DFIR_Development
+tags: [wpf, evtx, dfir, eventlogreader]
+created: 2026-08-11
+updated: 2026-08-11
+provenance:
+  source_type: experience
+  source_ref: 7ac31289-580c-4134-9fd8-62e86ceba1f3
+confidence: very_high
+verification: verified
+relations: []
+---
+
+# WPF Splash Screens and EventLogReader Exception Handling in DFIR Apps
+
+## 1. WPF Splash Screen Premature Shutdown
+When implementing a custom `SplashWindow` at a
+--TGT SNIPPET--
+---
+title: EventLog Analyzer Windows Forensics Tool
+type: application
+status: active
+category: product
+---
+
+# EventLog Analyzer — Offline Windows Forensics / IR Triage Tool (MVP)
+
+A fully offline desktop application for security administrators and incident
+responders that ingests exported `.evtx` logs, `NTUSER.DAT` hives, and
+`HKLM` registry hives from a backup folder, explains what's in them in plain
+language, flags suspicious/error patterns, and offers reviewable
+(never auto-run) PowerShell re
+================================================================================
+REVIEW 46 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Context_Packing_P1_Empirical_Findings.md
+TGT: 01_ARCHITECTURE/knowledge/Retrieval_Hypothesis_Registry.md
+entities: ['contradiction_guardrail', 'llm', 'packing_failure']
+--SRC SNIPPET--
+---
+id: "knw-context-packing-p1-0001"
+type: knowledge
+lifecycle: REVIEW
+category: retrieval-architecture
+tags: [context-packing, p1, empirical-evidence, section-extraction, progressive-disclosure, packing-loss]
+created: 2026-09-01T23:45:00Z
+updated: 2026-09-01T23:45:00Z
+provenance:
+  source_type: execution
+  source_ref: "evaluation/context_packing/experiment_runner.py"
+confidence: high
+verification: unverified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  
+--TGT SNIPPET--
+---
+id: "reg-retrieval-hypotheses-0001"
+type: knowledge
+lifecycle: REVIEW
+category: retrieval-architecture
+tags: [hypotheses, retrieval, experimental-registry, p0-evidence, candidate-generation, fusion]
+created: 2026-09-01T21:56:00Z
+updated: 2026-09-01T21:56:00Z
+provenance:
+  source_type: execution
+  source_ref: "01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md"
+confidence: high
+verification: unverified
+relations:
+  - type: related_to
+    target_id: knw-retrieval-bottleneck-p0-0001
+  -
+================================================================================
+REVIEW 47 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Regulament_UE_2022_2554_DORA.md
+TGT: 01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md
+entities: ['eiopa', 'esma', 'tic']
+--SRC SNIPPET--
+---
+id: "idx-leg-eu-dora-2022-2554"
+type: legal_index
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_index
+jurisdiction: "Uniunea Europeană (UE)"
+source_act: "[[Regulament_UE_2022_2554_DORA]]"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+---
+
+# Index Structurat: Regulamentul (UE) 2022/2554 (DORA)
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:
+> Acest index este un instrument analitic structurat derivat din dat
+--TGT SNIPPET--
+---
+id: "leg-eu-mica-2023-1114"
+type: legal_source
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: normative_external_data
+jurisdiction: "Uniunea Europeană (UE)"
+language: "ro"
+official_url: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32023R1114"
+publication_date: "2023-06-09"
+consolidated_version: "Consolidată"
+source_file: "06_INBOX/Legi/CELEX_32023R1114_RO_TXT.pdf"
+sha256_hash: "fc5fe1e3b5b7d796071c644ebf8ec7b73d842e84556462eb539c99da316ba4a2"
+
+================================================================================
+REVIEW 48 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Deep_Visual_Web_Engineering_Master_Report.md
+TGT: 01_ARCHITECTURE/knowledge/UI_Sensei_Design_Philosophy.md
+entities: ['css', 'cta', 'master']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10d050"
+type: knowledge
+lifecycle: ACTIVE
+category: visual-web-engineering
+tags:
+  - web-design
+  - core-web-vitals
+  - ui-sensei
+  - addy-osmani
+  - xiaopu-ai
+  - conardli-garden
+  - bergside
+created: 2026-08-24T18:20:00Z
+updated: 2026-08-24T18:20:00Z
+provenance:
+  source_type: execution
+  source_ref: "github-deep-crawl-subagent-report"
+confidence: very_high
+verification: verified
+---
+
+# Raport Canonic: Deep Visual Web Engineering & Quality Benchmark
+
+Rapo
+--TGT SNIPPET--
+<img src="assets/cover.png" alt="ui-sensei — different philosophies, your choice, lasting clarity" width="100%"/>
+
+# ui-sensei
+
+**Different philosophies. Your choice. Lasting clarity.**
+Not just design — intentional design. An orchestration skill for Claude Code — and, increasingly, any Agent-Skills-compatible client. Instead of picking one design aesthetic and applying it silently, `/ui-sensei` previews how several curated, independent design philosophies would approach your request, lets you c
+================================================================================
+REVIEW 49 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Multi_Agent_Pipeline_Architecture.md
+TGT: 10_DOCUMENTATION/procedures/Cognitive_Brain_Architecture_Specification.md
+entities: ['cognitive_core', 'criticagent', 'verifieragent']
+--SRC SNIPPET--
+---
+id: "e4eca2b5-20e0-4082-aeb3-588d598f10c9"
+type: knowledge
+lifecycle: REVIEW
+category: cognitive_core.architecture
+tags: [multi-agent, orchestrator, router-agent, retrieval-agent, critic-agent, verifier-agent, consolidator-agent, architecture]
+created: 2026-08-15
+updated: 2026-08-15
+provenance:
+  source_type: ai
+  source_ref: "Direct source verification of cognitive_core/orchestrator.py and cognitive_core/agents/*.py"
+confidence: high
+verification: unverified
+relations: []
+---
+
+# Multi-Agent
+--TGT SNIPPET--
+---
+id: "proc-brain-arch-0001"
+type: procedure
+lifecycle: ACTIVE
+category: system-architecture
+tags: [cognitive-brain, act-r, gwt, reconsolidation, neuromorphic, sNN, 21-agents]
+created: 2026-08-24T23:18:00Z
+updated: 2026-08-24T23:18:00Z
+provenance:
+  source_type: official
+  source_ref: "codex-brain-upgrade"
+confidence: very_high
+verification: verified
+relations:
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-2
+================================================================================
+REVIEW 50 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Awesome_Design_Skills_Index.md
+TGT: 01_ARCHITECTURE/knowledge/UI_Sensei_Design_Philosophy.md
+entities: ['license', 'mit', 'skill']
+--SRC SNIPPET--
+# Awesome Design Skills [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
+
+<img width="1200" height="630" alt="awesome-design-skills" src="https://github.com/user-attachments/assets/1691b85b-d920-46dd-af28-068c5f90f304" />
+
+<br>
+
+> A curated registry of 67 design system skill files for AI-powered agentic tools like [Claude Code](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/overview), [Cursor](https://www.cursor.com/), [Codex](https://openai.com/index/codex/), and 
+--TGT SNIPPET--
+<img src="assets/cover.png" alt="ui-sensei — different philosophies, your choice, lasting clarity" width="100%"/>
+
+# ui-sensei
+
+**Different philosophies. Your choice. Lasting clarity.**
+Not just design — intentional design. An orchestration skill for Claude Code — and, increasingly, any Agent-Skills-compatible client. Instead of picking one design aesthetic and applying it silently, `/ui-sensei` previews how several curated, independent design philosophies would approach your request, lets you c
+================================================================================
+REVIEW 51 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/Compiling_A_Request_Into_A_Brief.md
+TGT: 00_GOVERNANCE/VAULT_STATE.md
+entities: ['compile_task_prompt', 'memorycontroller', 'todo']
+--SRC SNIPPET--
+---
+id: "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19"
+type: procedure
+lifecycle: REVIEW
+category: governance.prompting
+tags: ['prompting', 'handoff', 'intent', 'method']
+created: "2026-09-06"
+updated: "2026-09-06"
+provenance:
+  source_type: "execution"
+  source_ref: "session 2026-09-06: the r007-r016 briefs and what each one had to contain"
+confidence: high
+verification: unverified
+relations: []
+---
+
+# Compiling an informal request into a brief another agent can execute
+
+## Purpose
+
+A request arrives a
+--TGT SNIPPET--
+# VAULT STATE — read this first
+
+**This file records what is verified true right now, not what the architecture
+intends.** README, CLAUDE.md and AGENTS.md describe the design. This file
+describes the measured state. Where they disagree, this file wins and the other
+document is the one that needs fixing.
+
+Every number below was produced by running code against the real vault, and
+every claim is re-checked on each test run by
+`20_TESTS/test_vault_state_accuracy.py`. If a claim here drifts from rea
+================================================================================
+REVIEW 52 relation=related_to conf=1.0 origin=proposed_weak
+SRC: 10_DOCUMENTATION/procedures/PowerShell_SecOps_Forensic_Standard.md
+TGT: 01_ARCHITECTURE/knowledge/VAULT_INDEX.md
+entities: ['evtx', 'powershell', 'secops']
+--SRC SNIPPET--
+---
+id: "c1a01101-7291-49fa-9481-22904c10b003"
+type: procedure
+lifecycle: REVIEW
+category: secops
+tags:
+  - powershell
+  - secops
+  - forensic
+  - evtx
+  - infosec
+created: 2026-08-17T23:00:00Z
+updated: 2026-08-17T23:00:00Z
+provenance:
+  source_type: import
+  source_ref: "06_INBOX/RAW_IMPORTS/skills/coding/powershell-secops/SKILL.md"
+confidence: very_high
+verification: inferred
+enriched_by: ai
+enrichment_date: 2026-08-17T23:00:00Z
+relations:
+  - target_id: "b492d001-c841-4e12-b5e1-8890471b8991"
+
+--TGT SNIPPET--
+---
+id: "vault-master-index-0001"
+type: knowledge
+lifecycle: ACTIVE
+category: meta
+tags: [index, navigation, architecture, vault]
+created: 2026-09-02T00:39:00Z
+updated: 2026-09-02T00:39:00Z
+provenance:
+  source_type: execution
+  source_ref: "01_KNOWLEDGE/VAULT_INDEX.md"
+confidence: high
+verification: verified
+enriched_by: ai
+---
+
+# Master Vault Navigational Index
+
+This index provides canonical, structured navigation across all verified knowledge domains, project architectures, standard procedure
+================================================================================
+REVIEW 53 relation=related_to conf=0.9893 origin=proposed_weak
+SRC: 01_ARCHITECTURE/knowledge/Local_PIN_Auth_And_SQLCipher_Pattern.md
+TGT: 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_GDPR_Art32_Securitatea_Prelucrarii.md
+entities: ['aes-256-cbc', 'dpapi', 'sha-256']
+--SRC SNIPPET--
+---
+id: "4c5884fe-f24e-426e-a012-1414dbddae23"
+type: knowledge
+category: security.desktop_apps
+tags: [sqlcipher, dpapi, pin-auth, csharp, python]
+created: 2026-08-14
+updated: 2026-08-14
+status: review
+provenance:
+  source_type: ai_conversation
+  source_ref: perplexity_conversation_2026-08-14
+  source_date: 2026-08-14
+  original_path: not_applicable
+  extraction_date: 2026-08-14
+  redaction: not_applicable
+confidence: medium
+verification: unverified
+lifecycle: REVIEW
+provenance_status: incomplete
+--TGT SNIPPET--
+---
+id: "atm-gdpr-art32-securitate"
+type: legal_atomic_obligation
+lifecycle: REVIEW
+verification: verified_source
+instruction_trust: NONE
+category: technical_obligation_analysis
+source_act: "[[Regulament_UE_2016_679_GDPR]]"
+legal_article: "Articolul 32 alineatul (1)"
+created: 2026-09-06
+updated: 2026-09-06
+status: requires_legal_review
+human_approval_required: true
+---
+
+# Notă Derivată Atomică: Securitatea Prelucrării Datelor și Reziliența Sistemelor
+
+> [!IMPORTANT]
+> **REGIM DE GUVERNANȚĂ & DIS
+================================================================================
+REVIEW 54 relation=related_to conf=0.9678 origin=proposed_weak
+SRC: 02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/SECURITY.md
+TGT: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md
+entities: ['dpapi', 'sha-256', 'wmi']
+--SRC SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
+--TGT SNIPPET--
+# Faza 1 — Secure Foundation
+
+## Implementat până acum
+
+- Hardware identity deterministă bazată pe identificatori disponibili fără WMI (`HardwareIdentityService`).
+- Validarea offline a unei licențe semnate RSA-PSS cu cheie publică (`LicenseService`).
+- Calcul SHA-256 pentru fișiere de probă (`SecurePathService`).
+- Jurnal de custodie append-only cu hash-chain și verificare integrală (`ChainOfCustodyService`).
+- Verificare de bază pentru fișiere reparse-point înainte de import.
+- Flux de import 
+================================================================================
+REVIEW 55 relation=related_to conf=0.9678 origin=proposed_weak
+SRC: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md
+TGT: 02_PRODUCT/projects/workspaces/registru-transferuri/docs/SECURITY.md
+entities: ['dpapi', 'sha-256', 'wmi']
+--SRC SNIPPET--
+# Faza 1 — Secure Foundation
+
+## Implementat până acum
+
+- Hardware identity deterministă bazată pe identificatori disponibili fără WMI (`HardwareIdentityService`).
+- Validarea offline a unei licențe semnate RSA-PSS cu cheie publică (`LicenseService`).
+- Calcul SHA-256 pentru fișiere de probă (`SecurePathService`).
+- Jurnal de custodie append-only cu hash-chain și verificare integrală (`ChainOfCustodyService`).
+- Verificare de bază pentru fișiere reparse-point înainte de import.
+- Flux de import 
+--TGT SNIPPET--
+# MODEL DE SECURITATE & THREAT MODELING — REGISTRU DE TRANSFERURI v5.3
+
+**Standarde de conformitate:** HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2, IEEE 2883-2022.
+
+---
+
+## 1. Constrângeri & Concepte de Bază (Air-Gap)
+- **Zero Rețea**: Aplicația nu inițiază niciun apel de rețea extern și nu include telemetrie.
+- **Bază de date locală criptată**: Baza SQLite funcționează în modul WAL cu tranzacții atomice `BEGIN IMMEDIATE`, fiind protejată la nivel de cheie prin DPAPI (Data
