@@ -1,10 +1,12 @@
 ---
 type: inbox
 category: index
-tags: [inbox]
+tags:
+- inbox
 created: 2026-08-09
 updated: 2026-08-09
 status: active
+title: Inbox Capture Index Artifact Snapshot
 ---
 
 # 06_INBOX — Capture Zone

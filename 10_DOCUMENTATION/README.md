@@ -1,5 +1,10 @@
-# 10 — Documentation
+---
+type: index
+category: navigation
+status: active
+title: Documentation Index
+---
 
-Purpose: developer, operational, API and user-facing documentation.
-Allowed: documentation and stable usage guides.
-Forbidden: production modules, secrets, raw imports and generated runtime output.
+# Documentation Index
+
+Canonical documentation has moved to [[Documentation_Repository_Spine_Specification]].

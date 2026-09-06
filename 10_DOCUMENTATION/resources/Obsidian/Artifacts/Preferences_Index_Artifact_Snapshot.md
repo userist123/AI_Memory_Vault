@@ -1,19 +1,22 @@
 ---
 type: memory
-category: errors
-tags: [memory, errors]
+category: preferences
+tags:
+- memory
+- preferences
 created: 2026-08-09
 updated: 2026-08-09
 status: active
+title: Preferences Index Artifact Snapshot
 ---
 
-# Errors
+# Preferences
 
-Ce a mers greșit + cauză + fix. Sursă directă pentru `Lessons/`.
+Preferințe de stil de lucru — comunicare, format, workflow. Nu fapte tehnice.
 
 ```dataview
 TABLE created
-FROM "04_MEMORY/Errors"
+FROM "04_MEMORY/Preferences"
 WHERE file.name != "README"
 SORT created DESC
 ```

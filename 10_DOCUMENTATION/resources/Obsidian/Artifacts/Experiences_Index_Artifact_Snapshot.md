@@ -1,19 +1,22 @@
 ---
 type: memory
-category: decisions
-tags: [memory, decisions]
+category: experiences
+tags:
+- memory
+- experiences
 created: 2026-08-09
 updated: 2026-08-09
 status: active
+title: Experiences Index Artifact Snapshot
 ---
 
-# Decisions
+# Experiences
 
-Alegeri concrete + motivul. Format scurt, folosește `90_TEMPLATES/Template_Decision.md`.
+Rezultate concrete din acțiuni luate — ce a funcționat, ce nu, în ce condiții.
 
 ```dataview
-TABLE context, created
-FROM "04_MEMORY/Decisions"
+TABLE created
+FROM "04_MEMORY/Experiences"
 WHERE file.name != "README"
 SORT created DESC
 ```

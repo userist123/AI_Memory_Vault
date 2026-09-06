@@ -83,10 +83,10 @@
 - [[Agent_Memory_Trace_Protocol]]
 - [[Memory_Retrieval_Protocol]]
 - [[AI_Operating_Protocol]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
 - [[Classification_Protocol]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
 
 ## 00_CORE\No_Fabrication_Policy.md
@@ -236,7 +236,7 @@
 ## 00_CORE\GRAPH\12 Projects and Procedures Map.md
 - [[05 Projects Continuity Map]]
 - [[02_PROJECTS___Projects_Index]]
-- [[03_PROCEDURES__README]]
+- [[Procedures_Index_Artifact_Snapshot]]
 - [[07 Knowledge Domains Map]]
 - [[03 Agents Operations Map]]
 - [[14 Subagents Council Map]]
@@ -838,7 +838,7 @@
 
 ## 01_KNOWLEDGE\UI_UX_Resources_Directory_Reference.md
 - [[TypeUI_Prompt_Categories_Reference]]
-- [[05_RESOURCES__README]]
+- [[Resources_Index_Artifact_Snapshot]]
 - [[14 External and UI Resources Map]]
 - [[External_Repository_References_Aug2026]]
 
@@ -1037,14 +1037,14 @@
 - [[Multi_Agent_Pipeline_Architecture]]
 - [[XAU_Kinetic_Clean_Architecture]]
 - [[02_PROJECTS___Projects_Index]]
-- [[05_RESOURCES__README]]
+- [[Resources_Index_Artifact_Snapshot]]
 - [[Multi_File_Project_Structure]]
 - [[Vault_Memory_Mesh_Architecture]]
-- [[04_MEMORY__README]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 
 ## 01_KNOWLEDGE\Vault_Memory_Mesh_Architecture.md
 - [[Agent_Memory_Trace_Protocol]]
-- [[04_MEMORY__README]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[VAULT_ARCHITECTURE_MAP]]
 - [[vault_numeric_architecture_redesign_2026-09]]
 - [[vault_numeric_architecture_v2_2026-09]]
@@ -1156,11 +1156,11 @@
 - [[_EXTRACTION_REPORT_2026-09]]
 
 ## 02_PROJECTS\AI_Memory_System.md
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 - [[Memory_Lifecycle]]
 - [[Template_Memory_Entry]]
 - [[2026_AI_Memory_Benchmarks_and_Evaluation]]
@@ -1288,10 +1288,10 @@
 - [[Import_Pipeline]]
 - [[Deploy_XAU_Kinetic_Quant_Bot]]
 - [[Git_Backup_Restore_Rollback]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Errors__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
 
 ## 03_PROCEDURES\Perplexity_Space_Setup_Registru.md
 - [[Registru_UI_Remodel_Workflow]]
@@ -7037,13 +7037,13 @@
 
 ## 04_MEMORY\Decisions\README.md
 - [[Memory - Decisions Map]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
-- [[04_MEMORY__Experiences__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 
 ## 04_MEMORY\Errors\Backtest_Single_Entry_Logic_Flaw.md
 - [[Trading_Bot_Prompt_Language_English]]
@@ -7054,12 +7054,12 @@
 - [[Template_Memory_Entry]]
 
 ## 04_MEMORY\Errors\README.md
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 - [[Memory - Errors Map]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Memory - Experiences Map]]
 - [[02 Memory Knowledge Map]]
 
@@ -7075,12 +7075,12 @@
 
 ## 04_MEMORY\Experiences\README.md
 - [[Memory - Experiences Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Memory - Errors Map]]
 
 ## 04_MEMORY\Lessons\Define_MultiEntry_Requirements_Before_Backtest.md
@@ -7096,14 +7096,14 @@
 - [[B5_TOKEN_EFFICIENCY_REPORT]]
 
 ## 04_MEMORY\Lessons\README.md
-- [[04_MEMORY__Lessons__README]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Lessons Map]]
 - [[Memory - Preferences Map]]
 - [[Memory - Decisions Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 
 ## 04_MEMORY\Lessons\Trust_Boundary_Hardening_Requires_Attest_Not_Overlay.md
 - [[Security_Practices]]
@@ -7144,12 +7144,12 @@
 - [[VAULT_INDEX]]
 
 ## 04_MEMORY\Preferences\README.md
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__README]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Memory - Experiences Map]]
 - [[Memory - Errors Map]]
 
@@ -7232,14 +7232,14 @@
 - [[02 Memory Knowledge Map]]
 - [[02_PROJECTS___Projects_Index]]
 - [[Security_Practices]]
-- [[04_MEMORY__README]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Tech_Stack]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\01_KNOWLEDGE__Security_Practices.md
 - [[Security_Practices]]
 - [[01_KNOWLEDGE__Tech_Stack]]
 - [[90_TEMPLATES__Template_Knowledge]]
-- [[01_KNOWLEDGE__README]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[Windows_Security_Audit_Log_And_Registry_Forensics_Correlation]]
 - [[02 Memory Knowledge Map]]
 - [[04 Security Integrity Map]]
@@ -7248,7 +7248,7 @@
 ## 05_RESOURCES\Obsidian\Artifacts\01_KNOWLEDGE__Tech_Stack.md
 - [[Tech_Stack]]
 - [[90_TEMPLATES__Template_Knowledge]]
-- [[01_KNOWLEDGE__README]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[01_KNOWLEDGE__Security_Practices]]
 - [[02 Memory Knowledge Map]]
 - [[Security_Practices]]
@@ -7288,98 +7288,98 @@
 ## 05_RESOURCES\Obsidian\Artifacts\02_PROJECTS___Projects_Index.md
 - [[12 Projects and Procedures Map]]
 - [[05 Projects Continuity Map]]
-- [[05_RESOURCES__README]]
-- [[04_MEMORY__README]]
-- [[03_PROCEDURES__README]]
-- [[01_KNOWLEDGE__README]]
+- [[Resources_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Procedures_Index_Artifact_Snapshot]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[02_PROJECTS__Elite_Quant_Bot]]
 - [[VAULT_INDEX]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\03_PROCEDURES__Import_Sanitization.md
 - [[Import_Sanitization]]
 - [[Import_Pipeline]]
-- [[04_MEMORY__Experiences__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
 - [[Git_Backup_Restore_Rollback]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Decision]]
 - [[90_TEMPLATES__Template_Procedure]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\03_PROCEDURES__README.md
 - [[12 Projects and Procedures Map]]
 - [[02_PROJECTS___Projects_Index]]
-- [[05_RESOURCES__README]]
-- [[04_MEMORY__README]]
-- [[01_KNOWLEDGE__README]]
+- [[Resources_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[03_PROCEDURES__Import_Sanitization]]
 - [[VAULT_INDEX]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\04_MEMORY__Decisions__README.md
 - [[Memory - Decisions Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\04_MEMORY__Errors__README.md
 - [[Memory - Errors Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Lessons__README]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\04_MEMORY__Experiences__README.md
 - [[Memory - Experiences Map]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\04_MEMORY__Lessons__README.md
 - [[Memory - Lessons Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\04_MEMORY__Preferences__README.md
 - [[Memory - Preferences Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Decisions Map]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\04_MEMORY__README.md
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
 - [[Memory - Decisions Map]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\05_RESOURCES__README.md
 - [[UI_UX_Resources_Directory_Reference]]
 - [[02_PROJECTS___Projects_Index]]
-- [[04_MEMORY__README]]
-- [[03_PROCEDURES__README]]
-- [[01_KNOWLEDGE__README]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
+- [[Procedures_Index_Artifact_Snapshot]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[VAULT_INDEX]]
 - [[14 External and UI Resources Map]]
 
@@ -7393,7 +7393,7 @@
 - [[90_TEMPLATES__Template_Procedure]]
 - [[90_TEMPLATES__Template_Project]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[06_INBOX__README]]
+- [[Inbox_Capture_Index_Artifact_Snapshot]]
 - [[Template_Hypothesis]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\90_TEMPLATES__Template_Decision.md
@@ -7403,12 +7403,12 @@
 - [[Template_Decision]]
 - [[90_TEMPLATES__Template_Project]]
 - [[90_TEMPLATES__Template_Daily_Capture]]
-- [[04_MEMORY__Experiences__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
 - [[Import_Sanitization]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\90_TEMPLATES__Template_Knowledge.md
 - [[01_KNOWLEDGE__Tech_Stack]]
-- [[01_KNOWLEDGE__README]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[01_KNOWLEDGE__Security_Practices]]
 - [[02 Memory Knowledge Map]]
 - [[90_TEMPLATES__Template_Decision]]
@@ -7418,13 +7418,13 @@
 
 ## 05_RESOURCES\Obsidian\Artifacts\90_TEMPLATES__Template_Memory_Entry.md
 - [[90_TEMPLATES__Template_Decision]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Template_Memory_Entry]]
-- [[04_MEMORY__Decisions__README]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\90_TEMPLATES__Template_Procedure.md
 - [[Template_Procedure]]
@@ -7478,13 +7478,13 @@
 
 ## 05_RESOURCES\Obsidian\Artifacts\AI_Memory_System.md
 - [[System_Architecture]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Memory_Lifecycle]]
 - [[00_CORE__System_Architecture]]
 - [[PERPLEXITY_TAKEOVER_03_MEMORY_CONTROLLER]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\AI_Operating_Protocol.md
 - [[Memory_Protocol]]
@@ -7664,10 +7664,10 @@
 ## 05_RESOURCES\Obsidian\Artifacts\Import_Sanitization.md
 - [[03_PROCEDURES__Import_Sanitization]]
 - [[Import_Pipeline]]
-- [[04_MEMORY__Experiences__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
 - [[Git_Backup_Restore_Rollback]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Decision]]
 - [[90_TEMPLATES__Template_Procedure]]
 
@@ -7707,7 +7707,7 @@
 - [[01_KNOWLEDGE__Tech_Stack]]
 - [[Template_Knowledge]]
 - [[90_TEMPLATES__Template_Knowledge]]
-- [[01_KNOWLEDGE__README]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[Graph Health Report]]
 - [[02 Memory Knowledge Map]]
 
@@ -7734,10 +7734,10 @@
 ## 05_RESOURCES\Obsidian\Artifacts\Memory_Protocol.md
 - [[Agent_Memory_Trace_Protocol]]
 - [[Memory_Retrieval_Protocol]]
-- [[04_MEMORY__Experiences__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
 - [[AI_Memory_System]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Classification_Protocol]]
 - [[Memory_Lifecycle]]
 
@@ -7918,7 +7918,7 @@
 - [[01_KNOWLEDGE__Tech_Stack]]
 - [[90_TEMPLATES__Template_Knowledge]]
 - [[Provenance_and_Redaction]]
-- [[01_KNOWLEDGE__README]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 
 ## 05_RESOURCES\Obsidian\Artifacts\Storage_Conventions.md
 - [[Import_Pipeline]]
@@ -7944,7 +7944,7 @@
 - [[Knowledge_Graph_Relations]]
 - [[Import_Pipeline]]
 - [[Storage_Conventions]]
-- [[04_MEMORY__README]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Integrity_Check]]
 - [[Provenance_and_Redaction]]
 - [[Canonical_Frontmatter]]
@@ -7966,7 +7966,7 @@
 - [[tech-stack_55555555]]
 - [[tech-stack_33333333]]
 - [[90_TEMPLATES__Template_Knowledge]]
-- [[01_KNOWLEDGE__README]]
+- [[Knowledge_Index_Artifact_Snapshot]]
 - [[tech-stack_44444444]]
 - [[tech-stack_22222222]]
 
@@ -8245,9 +8245,9 @@
 - [[temporal_memory_report]]
 - [[raw_external_skills_audit_2026-09]]
 - [[cognitive_core_audit]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 
 ## 07_EVALUATION\reports\raw_external_skills_audit_2026-09.md
 - [[raw_external_skills_audit_reconciliation_2026-09]]
@@ -8430,7 +8430,7 @@
 - [[implementation_plan_p0_8_security]]
 
 ## 09_COORDINATION\lessons.md
-- [[04_MEMORY__Lessons__README]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Lessons Map]]
 
 ## 90_TEMPLATES\Template_Daily_Capture.md
@@ -8885,11 +8885,11 @@
 
 ## agents\memory-librarian.md
 - [[memory-skill-router]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 - [[Memory_Lifecycle]]
 - [[Template_Memory_Entry]]
 
@@ -8899,9 +8899,9 @@
 - [[Obsidian_Skill_Agent_Memory_Sync]]
 - [[memory-librarian]]
 - [[SKILL]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 
 ## AI_Memory_Vault_OBSIDIAN\AGENTS.md
 - [[Agents_Skill_Matrix]]
@@ -8975,10 +8975,10 @@
 - [[Agent_Memory_Trace_Protocol]]
 - [[Memory_Retrieval_Protocol]]
 - [[AI_Operating_Protocol]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
 - [[Classification_Protocol]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
 
 ## AI_Memory_Vault_OBSIDIAN\00_CORE\Rules.md
@@ -9517,11 +9517,11 @@
 - [[SECURITY]]
 
 ## AI_Memory_Vault_OBSIDIAN\02_PROJECTS\AI_Memory_System.md
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 - [[Memory_Lifecycle]]
 - [[Template_Memory_Entry]]
 - [[2026_AI_Memory_Benchmarks_and_Evaluation]]
@@ -9597,11 +9597,11 @@
 - [[03_PROCEDURES__Import_Sanitization]]
 - [[Import_Pipeline]]
 - [[Git_Backup_Restore_Rollback]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 
 ## AI_Memory_Vault_OBSIDIAN\03_PROCEDURES\test_04e86b85.md
 - [[test_21aa2b81]]
@@ -15262,13 +15262,13 @@
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Decisions\README.md
 - [[Memory - Decisions Map]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
-- [[04_MEMORY__Experiences__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__Lessons__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Lessons_Index_Artifact_Snapshot]]
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Errors\Backtest_Single_Entry_Logic_Flaw.md
 - [[Trading_Bot_Prompt_Language_English]]
@@ -15279,12 +15279,12 @@
 - [[Template_Memory_Entry]]
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Errors\README.md
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 - [[Memory - Errors Map]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Memory - Experiences Map]]
 - [[08 Memory Subsystems Map]]
 
@@ -15300,12 +15300,12 @@
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Experiences\README.md
 - [[Memory - Experiences Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[08 Memory Subsystems Map]]
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Lessons\Define_MultiEntry_Requirements_Before_Backtest.md
@@ -15321,14 +15321,14 @@
 - [[B5_TOKEN_EFFICIENCY_REPORT]]
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Lessons\README.md
-- [[04_MEMORY__Lessons__README]]
+- [[Lessons_Index_Artifact_Snapshot]]
 - [[Memory - Lessons Map]]
 - [[Memory - Preferences Map]]
 - [[Memory - Decisions Map]]
-- [[04_MEMORY__Experiences__README]]
-- [[04_MEMORY__Decisions__README]]
+- [[Experiences_Index_Artifact_Snapshot]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Lessons\Windows_Security_Audit_Log_And_Registry_Forensics_Correlation.md
 - [[Security_Practices]]
@@ -15361,12 +15361,12 @@
 - [[VAULT_INDEX]]
 
 ## AI_Memory_Vault_OBSIDIAN\04_MEMORY\Preferences\README.md
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory - Preferences Map]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Errors__README]]
-- [[04_MEMORY__README]]
+- [[Errors_Index_Artifact_Snapshot]]
+- [[Memory_Taxonomy_Index_Artifact_Snapshot]]
 - [[Memory - Experiences Map]]
 - [[08 Memory Subsystems Map]]
 
@@ -15722,37 +15722,37 @@
 - [[memory-status]]
 - [[memory]]
 - [[SKILL]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 
 ## commands\memory-status.md
 - [[memory-sync]]
 - [[memory-skill-ingest]]
 - [[memory]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 
 ## commands\memory-sync.md
 - [[Obsidian_Skill_Agent_Memory_Sync]]
 - [[memory-status]]
 - [[memory-skill-ingest]]
 - [[memory]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
 
 ## commands\memory.md
 - [[memory-sync]]
 - [[memory-status]]
 - [[memory-skill-ingest]]
-- [[04_MEMORY__Decisions__README]]
+- [[Decisions_Index_Artifact_Snapshot]]
 - [[90_TEMPLATES__Template_Memory_Entry]]
-- [[04_MEMORY__Preferences__README]]
+- [[Preferences_Index_Artifact_Snapshot]]
 - [[Memory_Usage_Audit_Principles]]
-- [[04_MEMORY__Errors__README]]
+- [[Errors_Index_Artifact_Snapshot]]
 
 ## projects\generated_programs\jarvis_package_20260829_235943\VERIFY_REPORT.md
 - [[migration_report]]

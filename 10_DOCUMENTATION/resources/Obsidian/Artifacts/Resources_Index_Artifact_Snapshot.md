@@ -1,25 +1,25 @@
 ---
-type: procedure
+type: resource
 category: index
-tags: [procedures, index]
+tags:
+- resources
+- index
 created: 2026-08-09
 updated: 2026-08-09
 status: active
+title: Resources Index Artifact Snapshot
 ---
 
-# 03_PROCEDURES — Index
+# 05_RESOURCES — Index
 
-Proceduri repetabile, pas-cu-pas. Dacă se face o singură dată → nu e procedură, e o notă de proiect sau o Experience.
+Linkuri, tool-uri, materiale externe — fără interpretare/context, doar referință.
 
 ```dataview
 TABLE category, updated
-FROM "03_PROCEDURES"
+FROM "05_RESOURCES"
 WHERE file.name != "README"
 SORT updated DESC
 ```
-
-## Proceduri disponibile
-- [[Import_Sanitization]]
 
 ---
 

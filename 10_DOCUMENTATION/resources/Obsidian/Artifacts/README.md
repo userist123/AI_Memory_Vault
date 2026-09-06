@@ -1,29 +1,10 @@
 ---
-type: system
-category: raw-import
+type: index
+category: navigation
 status: active
+title: Obsidian Artifacts Index
 ---
 
-# Raw Imports
+# Obsidian Artifacts Index
 
-Aici se pastreaza copiile originale ale importurilor pentru trasabilitate.
-
-Continutul brut nu este considerat knowledge verificat.
-
-Surse initiale:
-
-- Claude
-- Perplexity
-
-Urmatoarele surse pot fi adaugate ulterior:
-
-- ChatGPT
-- Gemini
-- alte modele / aplicatii
-
----
-
-## 🔗 Legături de Memorie & Graf Obsidian
-- [[Knowledge Graph Home]]
-- [[00 Core Map]]
-- [[Knowledge Graph Home]]
+Canonical documentation has moved to [[Obsidian_Artifacts_Raw_Imports_Manifest]].

@@ -1,21 +1,24 @@
 ---
-type: resource
-category: index
-tags: [resources, index]
+type: memory
+category: errors
+tags:
+- memory
+- errors
 created: 2026-08-09
 updated: 2026-08-09
 status: active
+title: Errors Index Artifact Snapshot
 ---
 
-# 05_RESOURCES — Index
+# Errors
 
-Linkuri, tool-uri, materiale externe — fără interpretare/context, doar referință.
+Ce a mers greșit + cauză + fix. Sursă directă pentru `Lessons/`.
 
 ```dataview
-TABLE category, updated
-FROM "05_RESOURCES"
+TABLE created
+FROM "04_MEMORY/Errors"
 WHERE file.name != "README"
-SORT updated DESC
+SORT created DESC
 ```
 
 ---

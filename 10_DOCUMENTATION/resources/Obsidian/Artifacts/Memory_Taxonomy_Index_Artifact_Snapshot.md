@@ -1,11 +1,15 @@
 ---
 type: memory
 category: index
-tags: [memory, index, taxonomy]
+tags:
+- memory
+- index
+- taxonomy
 created: 2026-08-09
 updated: 2026-08-09
 status: active
 priority: critical
+title: Memory Taxonomy Index Artifact Snapshot
 ---
 
 # 04_MEMORY — Index & Taxonomie

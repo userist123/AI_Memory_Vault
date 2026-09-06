@@ -1,10 +1,13 @@
 ---
 type: knowledge
 category: index
-tags: [knowledge, index]
+tags:
+- knowledge
+- index
 created: 2026-08-09
 updated: 2026-08-09
 status: active
+title: Knowledge Index Artifact Snapshot
 ---
 
 # 01_KNOWLEDGE — Index
