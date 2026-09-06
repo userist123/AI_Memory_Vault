@@ -46,18 +46,38 @@ from itertools import combinations
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from cognitive_core.hybrid_retrieval import entities, tokenize  # noqa: E402
-from cognitive_core.synapse_store import (  # noqa: E402
-    ALLOWED_RELATIONS,
-    STRONG_RELATIONS,
-    WEAK_RELATIONS,
-    MAX_WEIGHT,
-    MIN_WEIGHT,
-    WEAK_WEIGHT_FACTOR,
-    RELATION_BASE_WEIGHT,
-)
-from cognitive_core.vault_index import VaultIndex  # noqa: E402
+ROOT = Path(__file__).resolve().parents[2]
+PACKAGES = ROOT / "03_IMPLEMENTATION" / "packages"
+for p in (str(ROOT), str(PACKAGES)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+try:
+    from retrieval.hybrid_retrieval import entities, tokenize  # noqa: E402
+    from graph.synapse_store import (  # noqa: E402
+        ALLOWED_RELATIONS,
+        STRONG_RELATIONS,
+        WEAK_RELATIONS,
+        MAX_WEIGHT,
+        MIN_WEIGHT,
+        WEAK_WEIGHT_FACTOR,
+        RELATION_BASE_WEIGHT,
+        HUB_IN_DEGREE_THRESHOLD,
+    )
+    from retrieval.vault_index import VaultIndex  # noqa: E402
+except ImportError:
+    from cognitive_core.hybrid_retrieval import entities, tokenize  # noqa: E402
+    from cognitive_core.synapse_store import (  # noqa: E402
+        ALLOWED_RELATIONS,
+        STRONG_RELATIONS,
+        WEAK_RELATIONS,
+        MAX_WEIGHT,
+        MIN_WEIGHT,
+        WEAK_WEIGHT_FACTOR,
+        RELATION_BASE_WEIGHT,
+        HUB_IN_DEGREE_THRESHOLD,
+    )
+    from cognitive_core.vault_index import VaultIndex  # noqa: E402
 
 MIN_RARE_ENTITY_DF = 1
 MAX_COMMON_ENTITY_DF_RATIO = 0.15   # entities present in >15% of notes don't discriminate
@@ -100,11 +120,38 @@ def _sanitize_untrusted(text: str, max_len: int = 300) -> str:
     return cleaned[:max_len]
 
 
+# Entities that cause spurious vocabulary co-occurrence without query-time semantic value
+SPURIOUS_ENTITIES = frozenset({
+    # Dunders & python internals
+    "__init__", "__file__", "__code__", "__name__", "__doc__",
+    # Generic versions & IPs
+    "1.0.0", "2.0.0", "3.0.0", "3.14.2", "9.0.2", "127.0.0",
+    # Dataview query keywords
+    "desc", "sort", "table", "where", "from",
+    # Common English & metadata tokens that slip through entity regex
+    "can", "must", "not", "for", "id", "it", "head", "net", "cause", "crud",
+    "current", "task", "next", "status", "action", "agents", "api", "artifact",
+    "conversation-evidence", "obsidian-sync", "review", "yaml", "json", "sha",
+    "source_type", "original_path", "source_ref", "security", "unknown", "confirmed",
+    "rfc", "aa", "ac", "dr", "tl", "ci", "mve", "end", "file_engine", "admin",
+    "memory", "raw", "verification", "approval", "human", "claude_original", "perplexity_original",
+})
+
+FORBIDDEN_HUBS = frozenset({
+    "Knowledge Graph Home", "08 Memory Subsystems Map", "00 Core Map", "02 Memory Knowledge Map",
+    "Skill Agent Memory MOC", "00_CORE__Knowledge_Graph_Home", "00_CORE__Core_Map",
+})
+
+
 def build_entity_df(index: VaultIndex) -> Tuple[Dict[str, set], Counter]:
     ent_by_note: Dict[str, set] = {}
     df: Counter = Counter()
     for note in index.notes:
-        ents = entities(note.text) | set(note.tags)
+        ents = {
+            e.lower()
+            for e in (entities(note.text) | set(note.tags))
+            if e.lower() not in SPURIOUS_ENTITIES and len(e) > 2
+        }
         ent_by_note[note.id] = ents
         df.update(ents)
     return ent_by_note, df
@@ -168,6 +215,9 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
     for (a, b), raw in sorted(pair_scores.items(), key=lambda p: -p[1])[:limit * 3]:
         na, nb = index.by_id.get(a), index.by_id.get(b)
         if na is None or nb is None or a == b:
+            continue
+        if (na.title in FORBIDDEN_HUBS or nb.title in FORBIDDEN_HUBS or
+            na.path.stem in FORBIDDEN_HUBS or nb.path.stem in FORBIDDEN_HUBS):
             continue
         if len(pair_shared[(a, b)]) < MIN_SHARED_ENTITIES:
             continue

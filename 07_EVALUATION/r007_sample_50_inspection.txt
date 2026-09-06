@@ -1,0 +1,595 @@
+=== Proposal 01 (Original Index 6) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_01_DOCUMENTATION.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_PACKAGE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['1.0.0', '3.14.2', '9.0.2', '_cognitive_unverified', 'acceptance', 'action']
+Source Excerpt: id: "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "d001ebae-19e6-43d6-95f6-3188123f9d77"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 02 (Original Index 25) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_04_TESTS.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_05_EVIDENCE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['__init__', 'artifact', 'cognitive_core', 'conversation-evidence', 'end', 'file_engine']
+Source Excerpt: id: "23d98699-7c5f-48c0-be63-ac87bbeaf504"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "96703fac-d4c1-489e-aa28-5a3d54b0b499"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 03 (Original Index 27) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_01_DOCUMENTATION.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_03_MEMORY_CONTROLLER.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['_cognitive_unverified', 'api', 'applies_to', 'archive_superseded', 'archived', 'artifact']
+Source Excerpt: id: "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "2da34064-52c2-487d-b6fa-fe172b7215c4"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 04 (Original Index 30) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_CURRENT_AUDIT_SOURCE.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/AGENTS.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['action', 'agents', 'api', 'archive_memory', 'archived', 'artifact']
+Source Excerpt: id: "c067b857-f4ac-45a9-b030-0a926a77b443"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "c754b481-44a2-4e2f-9cb2-0be36aebb498"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 05 (Original Index 32) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/implementation_plan_p0_7_cache.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_CURRENT_AUDIT_SOURCE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['__init__', '_enforce_limits', 'admin', 'agent_id', 'ai_agent', 'api']
+Source Excerpt: id: "1c28c9be-1fb3-41c3-851e-819a7be6549d"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "c067b857-f4ac-45a9-b030-0a926a77b443"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 06 (Original Index 89) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/cognitive_core_audit.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_PACKAGE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['api', 'approvalrequirederror', 'artifact', 'attentionmodel', 'conversation-evidence', 'evaluate_outcome']
+Source Excerpt: id: "abe4949e-81bf-4f98-9f73-9b99f982470c"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "d001ebae-19e6-43d6-95f6-3188123f9d77"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 07 (Original Index 94) ===
+Source: 00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
+Target: 00_GOVERNANCE/coordination/agents/PERPLEXITY/CURRENT.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['antigravity', 'base_main_sha', 'codex', 'current', 'current_commit_sha', 'current_task']
+Source Excerpt: # UNIVERSAL AGENT MEMORY PROTOCOL V1
+Status: ACTIVE POLICY
+Scope: CODEX, ANTIGRAVITY, PERPLEXITY, LUNA and any future agent
+Target Excerpt: agent: PERPLEXITY
+last_updated_utc: 2026-09-04T19:20:00Z
+repository: userist123/AI_Memory_Vault_CODEX_READY
+
+=== Proposal 08 (Original Index 95) ===
+Source: 00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
+Target: 00_GOVERNANCE/coordination/agents/ANTIGRAVITY/CURRENT.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['antigravity', 'base_main_sha', 'blocked', 'codex', 'current', 'current_commit_sha']
+Source Excerpt: # UNIVERSAL AGENT MEMORY PROTOCOL V1
+Status: ACTIVE POLICY
+Scope: CODEX, ANTIGRAVITY, PERPLEXITY, LUNA and any future agent
+Target Excerpt: agent: ANTIGRAVITY
+last_updated_utc: 2026-09-06T14:35:00Z
+repository: userist123/AI_Memory_Vault_CODEX_READY
+
+=== Proposal 09 (Original Index 104) ===
+Source: 01_ARCHITECTURE/knowledge/Registru_Multi_Agent_Contracts.md
+Target: 01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['127.0.0', 'aa', 'agents', 'claude', 'cli', 'controltemplate']
+Source Excerpt: id: "c1a01101-7291-49fa-9481-22904c10d001"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: id: "cat-skills-251-master"
+type: knowledge
+lifecycle: ACTIVE
+
+=== Proposal 10 (Original Index 114) ===
+Source: 02_PRODUCT/projects/Continuity_Handoff.md
+Target: 01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['cause', 'crud', 'for', 'github', 'id', 'it']
+Source Excerpt: id: "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+type: project
+lifecycle: ACTIVE
+Target Excerpt: id: "cat-skills-251-master"
+type: knowledge
+lifecycle: ACTIVE
+
+=== Proposal 11 (Original Index 142) ===
+Source: 01_ARCHITECTURE/knowledge/Registru_Transferuri_Development_Standards.md
+Target: 02_PRODUCT/projects/workspaces/registru-transferuri/README.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['127.0.0', 'aa', 'ac', 'euci', 'hg', 'infosec']
+Source Excerpt: id: "c1a01101-7291-49fa-9481-22904c10c001"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: # 🛡️ Registru Militar de Transferuri & Device Control v5.4
+### Aplicație Desktop Air-Gapped pentru Evidența Transferurilor de Date Clasificate & Contr
+
+=== Proposal 12 (Original Index 159) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_04_TESTS.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/cognitive_core_architecture.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['ai_agent', 'artifact', 'conversation-evidence', 'filestorageengine', 'memorycontroller', 'must']
+Source Excerpt: id: "23d98699-7c5f-48c0-be63-ac87bbeaf504"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "7424d260-4f88-4114-b117-67af0795b8f4"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 13 (Original Index 163) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_04_TESTS.md
+Target: 01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['cognitive_core', 'id', 'memory_controller', 'memorycontroller', 'missing', 'page_size']
+Source Excerpt: id: "23d98699-7c5f-48c0-be63-ac87bbeaf504"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "knw-retrieval-bottleneck-p0-0001"
+type: knowledge
+lifecycle: REVIEW
+
+=== Proposal 14 (Original Index 203) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_04_TESTS.md
+Target: 01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['can', 'head', 'id', 'must', 'net', 'not']
+Source Excerpt: id: "23d98699-7c5f-48c0-be63-ac87bbeaf504"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "cat-skills-251-master"
+type: knowledge
+lifecycle: ACTIVE
+
+=== Proposal 15 (Original Index 220) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_PACKAGE.md
+Target: 00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['_cognitive_unverified', 'approval', 'current', 'github', 'human', 'memory']
+Source Excerpt: id: "d001ebae-19e6-43d6-95f6-3188123f9d77"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: type: core
+category: governance
+status: active
+
+=== Proposal 16 (Original Index 223) ===
+Source: 02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md
+Target: 02_PRODUCT/projects/workspaces/jarvis_cognitive_brain/README.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['hud', 'jarviscontrols', 'onnx', 'rest', 'stt', 'tts']
+Source Excerpt: # Project: Jarvis Cognitive Brain ("Creier Vorbitor")
+## Architecture
+Autonomous, local, self-improving Cognitive Brain system integrating real-time s
+Target Excerpt: # Jarvis Cognitive Brain
+Runtime-ul implementează arhitectura din `arhitectura_asistent_ai_jarvis.html` și `proiect.pdf` fără să mute fișierele sursă:
+
+=== Proposal 17 (Original Index 225) ===
+Source: 00_GOVERNANCE/coordination/agents/ANTIGRAVITY/CURRENT.md
+Target: 00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/STATUS_SNAPSHOT_20260904_LUNA.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['antigravity', 'codex', 'current', 'luna', 'next', 'perplexity']
+Source Excerpt: agent: ANTIGRAVITY
+last_updated_utc: 2026-09-06T14:35:00Z
+repository: userist123/AI_Memory_Vault_CODEX_READY
+Target Excerpt: # AI MEMORY VAULT — LUNA STATUS SNAPSHOT
+Timestamp: 2026-09-04
+Observer: LUNA / independent verifier
+
+=== Proposal 18 (Original Index 228) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_04_TESTS.md
+Target: 01_ARCHITECTURE/knowledge/Multi_Agent_Pipeline_Architecture.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['activationengine', 'admin', 'cognitive_core', 'consolidate_lessons', 'human', 'memorycontroller']
+Source Excerpt: id: "23d98699-7c5f-48c0-be63-ac87bbeaf504"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "e4eca2b5-20e0-4082-aeb3-588d598f10c9"
+type: knowledge
+lifecycle: REVIEW
+
+=== Proposal 19 (Original Index 238) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/walkthrough.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/implementation_plan.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['agents', 'archived', 'artifact', 'claude_original', 'conversation-evidence', 'obsidian-sync']
+Source Excerpt: id: "5758d7ab-83b9-46f4-bb39-f5aca6d698b9"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "9186d6f1-c376-40ee-b88e-3ddc05f7c3f9"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 20 (Original Index 250) ===
+Source: 02_PRODUCT/projects/GPO_Baseline_Deployment.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/02_PROJECTS__GPO_Baseline_Deployment.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['gpo', 'ise', 'lgpo', 'mycommand', 'myinvocation', 'powershell']
+Source Excerpt: type: project
+category: sysadmin
+tags: [project, gpo, powershell, active]
+Target Excerpt: type: project
+category: sysadmin
+tags: [project, gpo, powershell, active]
+
+=== Proposal 21 (Original Index 281) ===
+Source: 00_GOVERNANCE/coordination/agents/ANTIGRAVITY/CURRENT.md
+Target: 00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['ai_memory_vault', 'cognitive_core', 'current', 'gap-011', 'last_updated_utc', 'memory_controller']
+Source Excerpt: agent: ANTIGRAVITY
+last_updated_utc: 2026-09-06T14:35:00Z
+repository: userist123/AI_Memory_Vault_CODEX_READY
+Target Excerpt: project_id: AI_MEMORY_VAULT
+application: AI Memory Vault / Memory Engine
+repository: userist123/AI_Memory_Vault_CODEX_READY
+
+=== Proposal 22 (Original Index 284) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/Continuity_Handoff.md
+Target: 01_ARCHITECTURE/knowledge/Temporal_Memory_P2_Empirical_Findings.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['audit_log', 'json', 'must', 'not', 'review', 'rfc']
+Source Excerpt: id: "0aa8ad68-a4ca-462e-a468-97eb78449684"
+type: project
+lifecycle: ACTIVE
+Target Excerpt: id: "knw-temporal-memory-p2-0001"
+type: knowledge
+lifecycle: REVIEW
+
+=== Proposal 23 (Original Index 344) ===
+Source: 01_ARCHITECTURE/knowledge/UI_UX_Resources_Directory_Reference.md
+Target: 01_ARCHITECTURE/knowledge/External_Repository_References_Aug2026.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['css', 'github', 'html', 'js', 'mcp', 'ui-design']
+Source Excerpt: id: "78fe5b4d-0822-4616-8437-fa8a84cedf55"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: id: "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc"
+type: knowledge
+lifecycle: REVIEW
+
+=== Proposal 24 (Original Index 348) ===
+Source: 01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md
+Target: 01_ARCHITECTURE/knowledge/Temporal_Memory_P2_Empirical_Findings.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['confirmed', 'json', 'must', 'not', 'rfc', 'unknown']
+Source Excerpt: id: "cat-skills-251-master"
+type: knowledge
+lifecycle: ACTIVE
+Target Excerpt: id: "knw-temporal-memory-p2-0001"
+type: knowledge
+lifecycle: REVIEW
+
+=== Proposal 25 (Original Index 389) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_02_COGNITIVE_CORE.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/implementation_plan_p0_7_cache.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['__init__', 'admin', 'api', 'artifact', 'conversation-evidence', 'memory_controller']
+Source Excerpt: id: "18db186c-11da-4200-b90b-147db92daa95"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "1c28c9be-1fb3-41c3-851e-819a7be6549d"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 26 (Original Index 429) ===
+Source: 02_PRODUCT/projects/Continuity_Handoff.md
+Target: 00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['_cognitive_unverified', 'approval', 'github', 'human', 'perplexity', 'retrieval']
+Source Excerpt: id: "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+type: project
+lifecycle: ACTIVE
+Target Excerpt: type: core
+category: governance
+status: active
+
+=== Proposal 27 (Original Index 432) ===
+Source: 01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md
+Target: 00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/RESOLUTION_IMPLEMENTATION_PROMPT_V1.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['candidate', 'cognitive_core', 'execution', 'llm', 'model', 'verification']
+Source Excerpt: id: "knw-retrieval-bottleneck-p0-0001"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: # Bounded Terminal Resolution — Implementation Prompt V1
+## Mission
+Implement the cognitive-memory architecture as a bounded task-resolution pipeline 
+
+=== Proposal 28 (Original Index 459) ===
+Source: 10_DOCUMENTATION/procedures/Import_Sanitization.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/Memory_Protocol.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['archived', 'classified', 'normalized', 'raw', 'review', 'superseded']
+Source Excerpt: id: "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+type: procedure
+lifecycle: ACTIVE
+Target Excerpt: type: core
+category: memory
+status: active
+
+=== Proposal 29 (Original Index 517) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/03_PROCEDURES__README.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/04_MEMORY__Lessons__README.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['desc', 'from', 'readme', 'sort', 'table', 'where']
+Source Excerpt: type: procedure
+category: index
+tags: [procedures, index]
+Target Excerpt: type: memory
+category: lessons
+tags: [memory, lessons]
+
+=== Proposal 30 (Original Index 558) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/implementation_plan.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_05_EVIDENCE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['agents', 'artifact', 'claude_original', 'conversation-evidence', 'obsidian-sync', 'perplexity_original']
+Source Excerpt: id: "9186d6f1-c376-40ee-b88e-3ddc05f7c3f9"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "96703fac-d4c1-489e-aa28-5a3d54b0b499"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 31 (Original Index 574) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_PACKAGE.md
+Target: 02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['__init__', 'activeplan', 'api', 'llm', 'ooda', 'readme']
+Source Excerpt: id: "d001ebae-19e6-43d6-95f6-3188123f9d77"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: # Project: Jarvis Cognitive Brain ("Creier Vorbitor")
+## Architecture
+Autonomous, local, self-improving Cognitive Brain system integrating real-time s
+
+=== Proposal 32 (Original Index 603) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/prompt_draft.md
+Target: 02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['begin', 'immediate', 'ooda', 'sha-256', 'wal']
+Source Excerpt: id: "67204224-2ea1-4217-83ad-0b15ef3100a5"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: # Project: Jarvis Cognitive Brain ("Creier Vorbitor")
+## Architecture
+Autonomous, local, self-improving Cognitive Brain system integrating real-time s
+
+=== Proposal 33 (Original Index 604) ===
+Source: 01_ARCHITECTURE/knowledge/Design_System_Foundation.md
+Target: 10_DOCUMENTATION/procedures/UI_UX_Heuristic_Review.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['aa', 'accessibility', 'dr', 'tl', 'wcag']
+Source Excerpt: id: "b4e88f21-7291-49fa-9481-22904c10a001"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: id: "b4e88f21-7291-49fa-9481-22904c10a005"
+type: procedure
+lifecycle: REVIEW
+
+=== Proposal 34 (Original Index 616) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/02_PROJECTS___Projects_Index.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/04_MEMORY__Lessons__README.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['desc', 'from', 'sort', 'table', 'where']
+Source Excerpt: type: project
+category: index
+tags: [projects, index]
+Target Excerpt: type: memory
+category: lessons
+tags: [memory, lessons]
+
+=== Proposal 35 (Original Index 654) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/walkthrough.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/AGENTS.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['agents', 'archived', 'artifact', 'conversation-evidence', 'obsidian-sync', 'review']
+Source Excerpt: id: "5758d7ab-83b9-46f4-bb39-f5aca6d698b9"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "c754b481-44a2-4e2f-9cb2-0be36aebb498"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 36 (Original Index 665) ===
+Source: 10_DOCUMENTATION/procedures/Autonomous_Program_Construction_Protocol.md
+Target: 10_DOCUMENTATION/procedures/Enterprise_Large_Scale_Project_Integration.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['127.0.0', 'dfir', 'pragma', 'sha-256', 'wal']
+Source Excerpt: id: "c1a01101-7291-49fa-9481-22904c10d020"
+type: procedure
+lifecycle: ACTIVE
+Target Excerpt: id: "proc-enterprise-integration-0001"
+type: procedure
+lifecycle: ACTIVE
+
+=== Proposal 37 (Original Index 692) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_03_MEMORY_CONTROLLER.md
+Target: 10_DOCUMENTATION/procedures/Enterprise_Large_Scale_Project_Integration.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['api', 'controller', 'memory', 'memory_controller', 'raw']
+Source Excerpt: id: "2da34064-52c2-487d-b6fa-fe172b7215c4"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "proc-enterprise-integration-0001"
+type: procedure
+lifecycle: ACTIVE
+
+=== Proposal 38 (Original Index 714) ===
+Source: 01_ARCHITECTURE/memory/Decisions/MT5_Python_Tkinter_Stack_For_Trading_App.md
+Target: 01_ARCHITECTURE/memory/Preferences/Trading_Bot_Prompt_Language_English.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['mt5', 'python', 'sl', 'tp']
+Source Excerpt: id: "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+type: decision
+lifecycle: REVIEW
+Target Excerpt: id: "1328c5fb-3316-4c02-ae53-511eb3d3f96b"
+type: preference
+lifecycle: REVIEW
+
+=== Proposal 39 (Original Index 718) ===
+Source: 00_GOVERNANCE/agents/memory-skill-router.md
+Target: 00_GOVERNANCE/skills/ai-memory-vault/SKILL.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['raw_external', 'sha-256', 'skill', 'skill_ingestion']
+Source Excerpt: name: memory-skill-router
+description: Resolve validated operational skills to the most compatible Vault agents and keep agent-skill routing synchroni
+Target Excerpt: name: ai-memory-vault
+description: Use the AI Memory Vault as Claude Code's external canonical memory layer, including safe skill ingestion, operation
+
+=== Proposal 40 (Original Index 733) ===
+Source: 00_GOVERNANCE/coordination/agents/LUNA/CURRENT.md
+Target: 00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/RESOLUTION_IMPLEMENTATION_PROMPT_V1.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['ci', 'current', 'mve', 'next']
+Source Excerpt: agent: LUNA
+last_updated_utc: 2026-09-04T19:29:00Z
+repository: userist123/AI_Memory_Vault_CODEX_READY
+Target Excerpt: # Bounded Terminal Resolution — Implementation Prompt V1
+## Mission
+Implement the cognitive-memory architecture as a bounded task-resolution pipeline 
+
+=== Proposal 41 (Original Index 754) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/cognitive_core_audit.md
+Target: 02_PRODUCT/ORIGINAL_REQUEST.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['api', 'llm', 'ooda', 'review', 'toolrouter']
+Source Excerpt: id: "abe4949e-81bf-4f98-9f73-9b99f982470c"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: # Original User Request
+## 2026-08-14T22:58:52+03:00
+Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integr
+
+=== Proposal 42 (Original Index 758) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/cognitive_core_architecture.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/implementation_plan.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['artifact', 'conversation-evidence', 'obsidian-sync', 'review', 'yaml']
+Source Excerpt: id: "7424d260-4f88-4114-b117-67af0795b8f4"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "9186d6f1-c376-40ee-b88e-3ddc05f7c3f9"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 43 (Original Index 759) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/implementation_plan.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/phase3_readiness.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['artifact', 'conversation-evidence', 'obsidian-sync', 'review', 'yaml']
+Source Excerpt: id: "9186d6f1-c376-40ee-b88e-3ddc05f7c3f9"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "d6e0f28d-c084-489b-9203-564220f5226b"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 44 (Original Index 777) ===
+Source: 01_ARCHITECTURE/knowledge/Design_System_Foundation.md
+Target: 01_ARCHITECTURE/knowledge/Motion_Design_Principles.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['accessibility', 'dr', 'related_to', 'tl']
+Source Excerpt: id: "b4e88f21-7291-49fa-9481-22904c10a001"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: id: "b4e88f21-7291-49fa-9481-22904c10a003"
+type: knowledge
+lifecycle: REVIEW
+
+=== Proposal 45 (Original Index 781) ===
+Source: 00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
+Target: 00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/RESOLUTION_IMPLEMENTATION_PROMPT_V1.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['current', 'next', 'sha', 'task']
+Source Excerpt: # UNIVERSAL AGENT MEMORY PROTOCOL V1
+Status: ACTIVE POLICY
+Scope: CODEX, ANTIGRAVITY, PERPLEXITY, LUNA and any future agent
+Target Excerpt: # Bounded Terminal Resolution — Implementation Prompt V1
+## Mission
+Implement the cognitive-memory architecture as a bounded task-resolution pipeline 
+
+=== Proposal 46 (Original Index 825) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/Provenance_and_Redaction.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_CURRENT_AUDIT_SOURCE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['original_path', 'security', 'source_ref', 'source_type']
+Source Excerpt: id: "35ed1c6d-dd41-42e9-a9c9-1e5e3c6a4ad2"
+type: procedure
+lifecycle: ACTIVE
+Target Excerpt: id: "c067b857-f4ac-45a9-b030-0a926a77b443"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 47 (Original Index 828) ===
+Source: 01_ARCHITECTURE/knowledge/UI_UX_Resources_Directory_Reference.md
+Target: 01_ARCHITECTURE/knowledge/Deep_Visual_Web_Engineering_Master_Report.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['aa', 'css', 'github', 'wcag']
+Source Excerpt: id: "78fe5b4d-0822-4616-8437-fa8a84cedf55"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: id: "c1a01101-7291-49fa-9481-22904c10d050"
+type: knowledge
+lifecycle: ACTIVE
+
+=== Proposal 48 (Original Index 890) ===
+Source: 01_ARCHITECTURE/knowledge/Registru_Multi_Agent_Contracts.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_PACKAGE.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['agents', 'depends_on', 'net', 'related_to']
+Source Excerpt: id: "c1a01101-7291-49fa-9481-22904c10d001"
+type: knowledge
+lifecycle: REVIEW
+Target Excerpt: id: "d001ebae-19e6-43d6-95f6-3188123f9d77"
+type: artifact
+lifecycle: ACTIVE
+
+=== Proposal 49 (Original Index 913) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_TAKEOVER_01_DOCUMENTATION.md
+Target: 10_DOCUMENTATION/resources/Obsidian/Skill_Agent_Memory_MOC.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['agents', 'memory', 'raw', 'verification']
+Source Excerpt: id: "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: title: Skill Agent Memory MOC
+status: navigation
+purpose: Obsidian map for skills, agents, references and memory
+
+=== Proposal 50 (Original Index 980) ===
+Source: 10_DOCUMENTATION/resources/Obsidian/Artifacts/PERPLEXITY_CURRENT_AUDIT_SOURCE.md
+Target: 10_DOCUMENTATION/procedures/Perplexity_Space_Setup_Registru.md
+Relation: related_to (origin: proposed_weak, score/weight: 0.5)
+Shared Entities: ['agents', 'net', 'perplexity', 'readme']
+Source Excerpt: id: "c067b857-f4ac-45a9-b030-0a926a77b443"
+type: artifact
+lifecycle: ACTIVE
+Target Excerpt: id: "c1a01101-7291-49fa-9481-22904c10d003"
+type: procedure
+lifecycle: REVIEW
