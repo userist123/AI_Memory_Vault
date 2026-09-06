@@ -1,0 +1,366 @@
+{
+  "cases": [
+    {
+      "abstain": false,
+      "class": "exact_identifier_lookup",
+      "expected_answer": "MAX_COUNCIL_AGENTS is 3.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H01",
+      "query": "What is the exact value of MAX_COUNCIL_AGENTS?",
+      "required_facts": ["3"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "exact_identifier_lookup",
+      "expected_answer": "MAX_PRIMARY_AGENTS is 1.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H02",
+      "query": "What is the exact value of MAX_PRIMARY_AGENTS?",
+      "required_facts": ["1"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "exact_identifier_lookup",
+      "expected_answer": "synthesis_presence.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H03",
+      "query": "Which source label is reserved for synthesized model completion: synthesis_presence or exit_code?",
+      "required_facts": ["synthesis_presence"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "exact_identifier_lookup",
+      "expected_answer": "The cap is 2000 notes.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H04",
+      "query": "What hard max_notes cap does conflict_detector enforce?",
+      "required_facts": ["2000"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "exact_identifier_lookup",
+      "expected_answer": "BEGIN IMMEDIATE.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H05",
+      "query": "Which transaction mode is required for atomic SQLite writes?",
+      "required_facts": ["immediate"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "exact_identifier_lookup",
+      "expected_answer": "600 tokens.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H06",
+      "query": "What is the MAX_SPECIALIST_OUTPUT token limit?",
+      "required_facts": ["600"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "paraphrase",
+      "expected_answer": "At most three council agents.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H07",
+      "query": "How many members may the council runtime contain at most?",
+      "required_facts": ["3"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "paraphrase",
+      "expected_answer": "One primary agent.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H08",
+      "query": "How many primary agents are permitted simultaneously?",
+      "required_facts": ["1"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "paraphrase",
+      "expected_answer": "synthesis_presence.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H09",
+      "query": "Which bookkeeping label identifies a successful synthesized model run rather than a process return code?",
+      "required_facts": ["synthesis_presence"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "paraphrase",
+      "expected_answer": "2000 notes.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H10",
+      "query": "What ceiling prevents conflict analysis from comparing an oversized note collection?",
+      "required_facts": ["2000"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "paraphrase",
+      "expected_answer": "BEGIN IMMEDIATE.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H11",
+      "query": "Which atomic transaction begins the protected SQLite write section?",
+      "required_facts": ["immediate"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "paraphrase",
+      "expected_answer": "600 tokens.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H12",
+      "query": "What output budget is allocated to each specialist response?",
+      "required_facts": ["600"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "synonym_substitution",
+      "expected_answer": "3.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H13",
+      "query": "State the council agent maximum using the equivalent term upper bound.",
+      "required_facts": ["3"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "synonym_substitution",
+      "expected_answer": "1.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H14",
+      "query": "State the primary-agent ceiling using the equivalent term limit.",
+      "required_facts": ["1"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "synonym_substitution",
+      "expected_answer": "synthesis_presence.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H15",
+      "query": "Which completion marker is used for synthesized output, rather than the process-status field?",
+      "required_facts": ["synthesis_presence"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "synonym_substitution",
+      "expected_answer": "2000.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H16",
+      "query": "Give the conflict-detector hard threshold for the number of notes it will process.",
+      "required_facts": ["2000"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "synonym_substitution",
+      "expected_answer": "IMMEDIATE.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H17",
+      "query": "Which transaction keyword denotes the required immediate-start mode?",
+      "required_facts": ["immediate"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "synonym_substitution",
+      "expected_answer": "600.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H18",
+      "query": "What is the per-specialist response allowance in tokens?",
+      "required_facts": ["600"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "lexical_trap",
+      "expected_answer": "synthesis_presence.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H19",
+      "query": "For the council's synthesis path, which completion source is authoritative: synthesis_presence or the process exit_code?",
+      "required_facts": ["synthesis_presence"],
+      "wrong_note_ids": ["note_vault_cognitive_rules"]
+    },
+    {
+      "abstain": false,
+      "class": "lexical_trap",
+      "expected_answer": "600.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H20",
+      "query": "The vault uses both token budgets and human verification. What is the council specialist token budget?",
+      "required_facts": ["600"],
+      "wrong_note_ids": ["note_vault_cognitive_rules"]
+    },
+    {
+      "abstain": false,
+      "class": "lexical_trap",
+      "expected_answer": "5000.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H21",
+      "query": "The documents discuss transactions and agent contracts. Which timeout number is required by the storage rule?",
+      "required_facts": ["5000"],
+      "wrong_note_ids": ["note_agents_contract"]
+    },
+    {
+      "abstain": false,
+      "class": "lexical_trap",
+      "expected_answer": "3.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H22",
+      "query": "The operating contract names several agent limits. What is the council-agent maximum?",
+      "required_facts": ["3"],
+      "wrong_note_ids": ["note_vault_cognitive_rules"]
+    },
+    {
+      "abstain": false,
+      "class": "lexical_trap",
+      "expected_answer": "2000.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules"],
+      "id": "H23",
+      "query": "The graph and conflict rules mention hard limits. What exact max_notes threshold applies to conflict detection?",
+      "required_facts": ["2000"],
+      "wrong_note_ids": ["note_agents_contract"]
+    },
+    {
+      "abstain": false,
+      "class": "lexical_trap",
+      "expected_answer": "synthesis_presence.",
+      "gold_relevant_notes": ["note_agents_contract"],
+      "id": "H24",
+      "query": "The council contract names both synthesis and process completion labels. Which one belongs to automatic model-run synthesis?",
+      "required_facts": ["synthesis_presence"],
+      "wrong_note_ids": ["note_vault_cognitive_rules"]
+    },
+    {
+      "abstain": false,
+      "class": "cross_cluster_multihop",
+      "expected_answer": "It remains in a non-active proposal/review stage until human attestation promotes it to ACTIVE verified status.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules", "note_agents_contract"],
+      "id": "H25",
+      "query": "How does an AI agent move a proposed memory from its permitted creation stage to verified active status?",
+      "required_facts": ["raw", "review", "human", "attest"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "cross_cluster_multihop",
+      "expected_answer": "The synthesizer receives compact specialist summaries; human/admin authority performs attestation.",
+      "gold_relevant_notes": ["note_agents_contract", "note_vault_cognitive_rules"],
+      "id": "H26",
+      "query": "Connect the council output contract with the verification boundary: who receives specialist summaries, and who may attest a memory?",
+      "required_facts": ["compact", "summary", "human"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "cross_cluster_multihop",
+      "expected_answer": "AI may use permitted AI provenance classes, but verified ACTIVE promotion requires human attestation.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules", "note_agents_contract"],
+      "id": "H27",
+      "query": "Relate the provenance restriction to memory promotion: what can the AI agent claim, and what still requires a human gate?",
+      "required_facts": ["execution", "ai", "inference", "unknown", "human", "attest"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "cross_cluster_multihop",
+      "expected_answer": "Conflict detection caps inputs at 2000, while maintenance uses deterministic timestamp ordering for budgeted consolidation.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules", "note_agents_contract"],
+      "id": "H28",
+      "query": "What links the conflict detector's 2000-note ceiling with deterministic maintenance policy?",
+      "required_facts": ["2000", "oldest", "updated", "created"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "cross_cluster_multihop",
+      "expected_answer": "Provenance is immutable and the AI agent cannot self-verify; human/admin attestation is required.",
+      "gold_relevant_notes": ["note_vault_cognitive_rules", "note_agents_contract"],
+      "id": "H29",
+      "query": "How do the storage trust rule and agent verification rule jointly prevent self-certification?",
+      "required_facts": ["immutable", "cannot", "human"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": false,
+      "class": "cross_cluster_multihop",
+      "expected_answer": "Specialists return compact summaries which the synthesizer combines, rather than receiving wholesale raw specialist context.",
+      "gold_relevant_notes": ["note_agents_contract", "note_vault_cognitive_rules"],
+      "id": "H30",
+      "query": "Trace the chain from specialist work to a final synthesized result without exposing raw specialist context wholesale.",
+      "required_facts": ["compact", "summary", "synthes"],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": true,
+      "class": "unanswerable",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "id": "H31",
+      "query": "What RGB hex color is mandated for the Memory Vault application background?",
+      "required_facts": [],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": true,
+      "class": "unanswerable",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "id": "H32",
+      "query": "What exact office street address is assigned to the Vault engineering team?",
+      "required_facts": [],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": true,
+      "class": "unanswerable",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "id": "H33",
+      "query": "Which airline and flight number are booked for the project's next trip?",
+      "required_facts": [],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": true,
+      "class": "unanswerable",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "id": "H34",
+      "query": "What is the personal mobile telephone number of the lead agent author?",
+      "required_facts": [],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": true,
+      "class": "unanswerable",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "id": "H35",
+      "query": "What exact salary figure is stored for the primary agent operator?",
+      "required_facts": [],
+      "wrong_note_ids": []
+    },
+    {
+      "abstain": true,
+      "class": "unanswerable",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "id": "H36",
+      "query": "Which restaurant is reserved for the next team dinner, and at what time?",
+      "required_facts": [],
+      "wrong_note_ids": []
+    }
+  ],
+  "schema_version": 1,
+  "set_name": "heldout_retrieval_v1"
+}
