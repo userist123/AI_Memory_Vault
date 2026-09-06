@@ -6,8 +6,8 @@ from cognitive_core.activation import (
     ActivationTracker,
     DORMANT_THRESHOLD
 )
-from packages.graph.multi_graph import Graph, MultiGraphMemory
-from packages.graph.spreading_activation import SpreadingActivationEngine
+from graph.multi_graph import Graph, MultiGraphMemory
+from graph.spreading_activation import SpreadingActivationEngine
 
 def test_base_level_activation_decay_monotonicity():
     now = time.time()

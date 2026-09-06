@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .multi_graph import MultiGraphMemory
-from .spreading_activation import SpreadingActivationEngine
+from graph.multi_graph import MultiGraphMemory
+from graph.spreading_activation import SpreadingActivationEngine
 
 
 def build_multi_graph(controller) -> MultiGraphMemory:
