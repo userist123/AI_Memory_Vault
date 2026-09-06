@@ -17,3 +17,9 @@ python -m pytest -q tests/test_codex_review_memory_injection.py cognitive_core/t
 The warning is the existing invalid `\\s` escape in `cognitive_core/activation.py`.
 
 This proves the tested REVIEW-to-retrieval and high-risk authorization boundary, not that every possible model-mediated instruction path is safe. Model authority escalation and real tool execution require separate end-to-end runtime tests.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

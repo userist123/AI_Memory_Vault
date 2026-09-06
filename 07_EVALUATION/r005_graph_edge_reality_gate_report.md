@@ -231,3 +231,9 @@ per the task's stop condition.
   *for whenever the graph substrate justifies Phase 2* — they should be
   revisited against real numbers at that time, not implemented speculatively
   now against a graph too sparse to exercise them meaningfully.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

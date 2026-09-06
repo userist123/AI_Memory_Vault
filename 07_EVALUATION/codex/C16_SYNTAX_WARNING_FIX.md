@@ -30,3 +30,9 @@ Observed output:
 This record documents the warning and narrow historical repair. It does not
 claim that the old-layout implementation itself belongs on the current runtime
 path.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

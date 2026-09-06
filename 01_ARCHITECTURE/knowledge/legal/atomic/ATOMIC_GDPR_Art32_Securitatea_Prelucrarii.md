@@ -60,5 +60,6 @@ Test adversarial de penetrare a depozitului brut (confirmarea că fișierul `.db
 
 ## 🔗 Legături Conexe în Graf
 - [[Regulament_UE_2016_679_GDPR]]
+- [[atomic_review_notes]] (Sinapsă Raportare Incidente & Securitate NIS2/GDPR)
 - [[04 Security Integrity Map]]
 - [[07 Knowledge Domains Map]]

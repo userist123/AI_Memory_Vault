@@ -26,7 +26,12 @@ SORT created DESC
 
 ---
 
+
+## Index Canonic Erori
+- [[Backtest_Single_Entry_Logic_Flaw]] — Defecțiune poziție unică în backtest
+
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Errors Map]]
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

@@ -98,3 +98,8 @@ A direct query of `Get-MpThreatDetection` on the host system revealed that all h
 2. **Raw Corpus Invariant**: `06_INBOX/RAW_IMPORTS/skills/` remains 100% immutable and unedited.
 3. **Historical Audit Preservation**: `07_EVALUATION/skills_quality_v1/`, `skills_semantic_v1/`, and `runtime_v1/` remain untouched as historical baselines.
 4. **Full Traceability**: All removed active files, their exact hashes, and raw paths are logged in `security_removal_ledger.jsonl` and `quarantine_manifest.json`.
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

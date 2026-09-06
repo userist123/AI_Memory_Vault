@@ -31,3 +31,9 @@ An item may move from `PENDING` to `REVOKED`, `ROTATED`, or `INVALIDATED` only a
 Repository history cleanup remains a separate change-control action. The intended procedure is a complete-history rewrite using `git filter-repo` or an equivalent approved mechanism, followed by a force-push only after explicit owner approval. Before approval, no force-push is performed.
 
 After an approved rewrite, scan all branches/tags/refs again and attach exact-SHA scan evidence to the final R001 report.
+
+
+## 🔗 Legături Sinaptice
+- [[04 Security Integrity Map]]
+- [[Security_Practices]]
+- [[Knowledge Graph Home]]

@@ -26,7 +26,13 @@ SORT created DESC
 
 ---
 
+
+## Index Canonic Preferințe
+- [[Multi_File_Project_Structure]] — Structură multi-fișier modulară
+- [[Trading_Bot_Prompt_Language_English]] — Limbaj prompturi engleză
+
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Preferences Map]]
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

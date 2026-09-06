@@ -9,7 +9,7 @@ provenance:
   source_ref: generated
 confidence: high
 verification: unverified
-relations: []
+relations: ["07_EVALUATION/README", "01_ARCHITECTURE/graphs/08 Memory Subsystems Map"]
 lifecycle: REVIEW
 id: c8316dd1-a0ff-47bc-8bfb-64fa97e1b713
 ---
@@ -24,3 +24,7 @@ Lesson: High-risk actions require explicit user approval before execution.
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Harness]]
+- [[08 Memory Subsystems Map]]

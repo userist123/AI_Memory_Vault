@@ -42,3 +42,8 @@
 | **P2** | 0 | 0 | 0 | 0 | 9 | 6 |
 | **P3** | 1 | 0 | 0 | 0 | 10 | 4 |
 | **P4** | 1 | 0 | 0 | 0 | 9 | 5 |
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -46,3 +46,9 @@ Future associative-memory evaluation should retain:
 - explicit diagnostics instead of silent fallback.
 
 No canonical-memory promotion was performed from this report.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

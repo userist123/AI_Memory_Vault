@@ -358,3 +358,9 @@ The target crosses from "memory as retrieved context" toward "memory as active c
 The first acceptance target is Planning Influence. Subsequent targets are Epistemic Influence, Representation Influence, Execution Influence and the full verification-to-reorganization pipeline.
 
 Until runtime evidence exists, this file remains a design hypothesis.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

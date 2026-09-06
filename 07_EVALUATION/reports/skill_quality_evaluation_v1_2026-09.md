@@ -165,3 +165,8 @@ RAW_CORPUS_MODIFIED = NO
 INSTALLED_SKILLS_MODIFIED = NO
 NATIVE_SKILLS_MODIFIED = NO
 ```
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

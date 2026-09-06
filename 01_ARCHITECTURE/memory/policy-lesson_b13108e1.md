@@ -9,7 +9,7 @@ provenance:
   source_ref: autonomy-policy
 confidence: high
 verification: unverified
-relations: []
+relations: ["00_GOVERNANCE/rules/Rules", "01_ARCHITECTURE/graphs/Memory - Lessons Map", "01_ARCHITECTURE/graphs/08 Memory Subsystems Map"]
 lifecycle: REVIEW
 id: b13108e1-b8b5-435f-82be-87acf052cd1f
 ---
@@ -28,3 +28,8 @@ id: b13108e1-b8b5-435f-82be-87acf052cd1f
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]
+
+## 🔗 Legături Sinaptice
+- [[Rules|Operating Rules]]
+- [[Memory - Lessons Map]]
+- [[08 Memory Subsystems Map]]

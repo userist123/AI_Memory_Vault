@@ -137,3 +137,9 @@ Authorization for the future extraction phase is sealed in `07_EVALUATION/raw_ex
 - **Canonical Skill Bundles Authorized**: **3,545**
 - **Canonical Sub-Agents Authorized**: **712**
 - **Canonical Prompts & Instructions Authorized**: **10**
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

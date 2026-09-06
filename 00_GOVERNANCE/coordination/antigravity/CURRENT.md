@@ -28,3 +28,10 @@ Evidence_refs:
   - 01_ARCHITECTURE/graphs/Master_Cognitive_Brain_Synthesis.md
 related_agents: CODEX, CLAUDE_CODE, LUNA
 ---
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

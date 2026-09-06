@@ -348,3 +348,9 @@ trace proves the memory intervention caused the difference
 ```
 
 Until that experiment exists, "cognitive memory" remains a design hypothesis, not an established repository capability.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

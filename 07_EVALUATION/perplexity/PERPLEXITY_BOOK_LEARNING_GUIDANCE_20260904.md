@@ -145,3 +145,9 @@ Fișierul `efdd4d1d4c2087fe1cbe03d9ced67f34.pdf` trebuie identificat prin metada
 Începe cu DDIA, capitolele despre Storage & Retrieval, Replication, Transactions și System Evolution. După aceea: Designing Machine Learning Systems, apoi o carte serioasă de Information Retrieval. Abia apoi: Building Agent-Powered Applications.
 
 **Status:** import de research / guidance; nu reprezintă dovadă de implementare și nu autorizează promovare în memoria activă.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

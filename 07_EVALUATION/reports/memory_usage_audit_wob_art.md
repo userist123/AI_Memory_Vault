@@ -100,3 +100,9 @@ Under the **Anti-Fabrication Principle**, verbal assertions without tool executi
 1. **Enforce Mandatory Tool Traces**: Prohibit agents from self-reporting memory usage without emitting an inspectable `Memory Trace`.
 2. **Pre-flight Tool Gating**: Require subagent routing or `SKILL.md` file reads before an agent claims compliance with specialized design systems.
 3. **Automated Handoff Verification**: Any handoff claiming "verified" must attach empirical execution proof (terminal exit code 0 or test runner log).
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

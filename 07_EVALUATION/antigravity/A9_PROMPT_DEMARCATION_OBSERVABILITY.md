@@ -57,3 +57,9 @@ This file preserves the historical A9 evidence on `main`. It does **not** assert
 - Add regression tests covering `unverified`, `verified`, `review`, and combinations such as `unverified review`.
 - Evaluate demarcation on larger models and adversarial encodings only after deterministic action authorization/containment is independently verified.
 - Preserve runtime telemetry with provenance when such experiments are repeated.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

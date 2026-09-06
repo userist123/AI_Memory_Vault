@@ -93,3 +93,9 @@ Auditing the 9,735 marker files detected in Phase 0 reveals the following breakd
 **Status**: `READY_FOR_CONTROLLED_EXTRACTION`
 
 All 66,673 physical files are mapped deterministically in `canonical_extraction_decisions.json`. The next automated migration phase can safely extract all `KEEP` files while excluding `EXCLUDE` files, holding all `REVIEW` files for human gating.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

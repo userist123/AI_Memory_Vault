@@ -85,3 +85,8 @@ All 57 candidate external instances were routed to final action `REVIEW` without
 07_EVALUATION/reports/
 └── raw_external_skills_post_extraction_gate_2026-09.md (This gate report)
 ```
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -44,3 +44,9 @@ The exact `git filter-repo` invocation is intentionally filled only after the in
 ## Abort conditions
 
 Abort without force-push when external rotation evidence is missing, scan results are non-zero, protected refs cannot be inventoried, or the rewrite would remove required forensic evidence.
+
+
+## 🔗 Legături Sinaptice
+- [[04 Security Integrity Map]]
+- [[Security_Practices]]
+- [[Knowledge Graph Home]]

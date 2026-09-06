@@ -454,3 +454,9 @@ Forensic breakdown across the four XAU Kinetic locations: `projects/xau_kinetic/
 - [x] **Zero Structural Mutations**: No files moved, renamed, or deleted.
 - [x] **Empirical Evidence Completeness**: All 10,351 files, SHA hashes, and duplicates accounted for.
 - [x] **Git Provenance Linked**: Anchored to `29ae9dd`.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

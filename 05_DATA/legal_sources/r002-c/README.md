@@ -39,3 +39,31 @@ requires_legal_review: true
 ```
 
 Derived interpretations never become ACTIVE automatically. No artifact in this directory is a legal compliance declaration or legal advice.
+
+---
+
+## 🔗 Legături Sinaptice & Navigare Graf
+
+### R002-C Corpus Navigation
+- [[R002-C_HANDOFF]] — Status și evidență predare R002-C
+- [[source_register]] — Registrul surselor oficiale OUG 155/2024 și Legea 124/2025
+- [[atomic_review_notes]] — Note atomice de revizuire juridică (R002C-N001..N010)
+- [[candidate_technical_controls]] — Controale tehnice propuse (AI Memory Vault, LogAnalyzer, Trading)
+- [[candidate_tests_and_evidence]] — Evidențe și teste de verificare tehnică
+- [[full_article_index]] — Index integral articole OUG 155/2024
+- [[amendment_consolidation_map]] — Harta modificărilor Legea 124/2025 vs OUG 155/2024
+- [[legal_review_required]] — Registru articole supuse avizării juridice umane
+- [[not_applicable_or_not_yet_determined]] — Regimuri exceptate și neaplicabile
+
+### Sinapse Juridice Transversale (EU & RO Normative Bridge)
+- [[01_ARCHITECTURE/knowledge/legal/README|Depozitul Național și European de Date Normative Externe]]
+- [[Regulament_UE_2022_2554_DORA]] & [[ATOMIC_DORA_Art6_16_Cadrul_Management_Risc_TIC]] — Art. 2(3) OUG 155/2024 (Exceptare/coordonare entități financiare DORA)
+- [[Regulament_UE_2016_679_GDPR]] & [[ATOMIC_GDPR_Art32_Securitatea_Prelucrarii]] — Notificare incidente și protecția datelor cu caracter personal
+- [[Regulament_UE_2024_1689_AI_Act]] & [[ATOMIC_AIACT_Art12_Inregistrare_Automata_Evenimente]] — Cerințe de securitate cibernetică pentru sisteme AI de mare risc
+- [[HG_585_2002]] & [[ATOMIC_HG585_Art236_258_Acreditare_Securitate_SIC]] — Art. 2(4) OUG 155/2024 (Sisteme de procesare a informațiilor clasificate)
+- [[Ordinul_M172_2021]] & [[ATOMIC_M172_Art193_199_Hardware_Serial_Medii_Stocare]] — Norme tehnice MApN pentru medii de stocare și sisteme naționale
+
+### MOC Hubs
+- [[04 Security Integrity Map]]
+- [[07 Knowledge Domains Map]]
+- [[Knowledge Graph Home]]

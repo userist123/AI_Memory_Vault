@@ -101,3 +101,9 @@ Dedicated poisoning and realistic harmful-memory suites were not run and are
 not counted as blocked. Temporal and provenance regression tests passed, but
 that is not equivalent to the requested new six/five-case end-to-end suites.
 The separate current 20-task ablation was also not run.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

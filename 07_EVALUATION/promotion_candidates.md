@@ -80,3 +80,9 @@ If $\text{Project Share} > 40\%$, the cell is flagged `PROJECT_DOMINANCE` and ca
 > [!CAUTION]
 > **Empirical Association $\neq$ Causal Proof**:
 > A promotion recommendation indicates strong historical co-occurrence with successful outcomes when the capability was loaded into context. It does **not** prove that the capability alone caused the success. Human review must evaluate code quality, relevance, and semantic utility.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

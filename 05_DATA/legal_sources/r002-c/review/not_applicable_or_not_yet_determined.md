@@ -20,3 +20,10 @@
 - Which evidence is legally sufficient in a concrete supervisory/audit context.
 - Current-law consolidation beyond the two requested source acts.
 - Legal effect of any future amendment not included in the two-source scope.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[legal_review_required]]
+- [[atomic_review_notes]]
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]

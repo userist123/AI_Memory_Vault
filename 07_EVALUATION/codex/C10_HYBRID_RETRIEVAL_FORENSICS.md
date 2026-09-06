@@ -33,3 +33,9 @@ The default scorer ties the unrelated note `c` with the near-match `b` because c
 No speculative hybrid implementation was added. Introducing BM25 or dense embeddings into the default path would change ranking semantics and requires a held-out benchmark, hard negatives, lifecycle filtering, provenance checks, and abstention acceptance criteria first.
 
 Remaining gap: implement or explicitly expose an opt-in hybrid adapter with fixed candidate sets and traceable lexical/semantic component scores, then validate it independently against paraphrases, synonyms, lexical traps, and domain-near negatives.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

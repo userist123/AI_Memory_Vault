@@ -118,3 +118,9 @@ Inspection of the codebase confirms that while retrieval entry points are now se
    - Automated reflection (`Reflexion`) can propose candidate notes into `06_INBOX/memory_proposals.jsonl`, but automated calibration that updates confidence scores or supersedes obsolete notes based on empirical production results is not closed.
 5. **Storage Layer Synchronization**:
    - The Obsidian markdown wikilinks graph and the SQLite WAL database (`vault_memory.sqlite3`) operate as dual indexing layers, requiring consistent bidirectional reconciliation.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

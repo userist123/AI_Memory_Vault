@@ -47,3 +47,10 @@ Run and record the complete regression suite, including `20_TESTS`. Valul 2 rema
 3. Exact commands and observed test results.
 4. Exact current branch head SHA.
 5. Explicit statement whether the Valul 2 barrier is open or blocked.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

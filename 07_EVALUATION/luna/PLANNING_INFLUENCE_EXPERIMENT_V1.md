@@ -243,3 +243,9 @@ FINAL RESPONSE
 ```
 
 Reorganization modifies memory for future tasks. It does not turn the current task into an infinite memory-update cycle.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

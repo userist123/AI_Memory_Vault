@@ -7,7 +7,7 @@ created: '2026-08-09'
 updated: '2026-08-09'
 confidence: high
 verification: unverified
-relations: []
+relations: ["07_EVALUATION/README", "01_ARCHITECTURE/graphs/08 Memory Subsystems Map"]
 lifecycle: REVIEW
 provenance:
   source_type: inference
@@ -20,3 +20,7 @@ provenance:
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Harness]]
+- [[08 Memory Subsystems Map]]

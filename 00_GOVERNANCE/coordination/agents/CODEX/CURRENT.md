@@ -31,3 +31,10 @@ Evidence_refs:
 related_sessions: []
 related_agents: ANTIGRAVITY, PERPLEXITY, LUNA
 NEXT: read project CURRENT and take the next implementation task on main when activated
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

@@ -29,6 +29,9 @@ When reading offline EVTX files using `System.Diagnostics.Eventing.Reader.EventL
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Lessons Map]]
 - [[08 Memory Subsystems Map]]
+- [[CSharp_WPF_Enterprise_Desktop]]
+- [[LogAnalyzer_DFIR_Enterprise_Architecture]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

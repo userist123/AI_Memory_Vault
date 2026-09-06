@@ -51,3 +51,10 @@ Queued/pending workflows are not evidence of a green build. The security branch 
 - No graph/synapse changes.
 - No `PROJECT_BRAIN/PROJECT_STATE.md` changes.
 - No direct merge of the historical security branch.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

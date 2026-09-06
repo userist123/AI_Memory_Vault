@@ -129,3 +129,9 @@ $$\text{Experience} \longrightarrow \text{Outcome Event} \longrightarrow \text{E
 - **Zero Production Modification**: The execution of this experiment must not alter production files ([`Council_Runtime_Profile.yaml`](file:///Council_Runtime_Profile.yaml), [`ContextPackBuilder`](file:///memory_controller/context/pack_builder.py), [`model_tiers.json`](file:///config/model_tiers.json)).
 - **Review Boundary**: All experimental logs and artifacts must be written strictly to `evaluation/` and `04_MEMORY/`.
 - **Fail-Closed Validation**: If a required signal module cannot be cleanly instantiated, the runner must report `STATUS = MISSING` rather than generating simulated synthetic outputs.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

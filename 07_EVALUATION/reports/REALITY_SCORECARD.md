@@ -141,3 +141,9 @@ retrieval, learning, and reflection are not all proven. A defensible overall
 percentage is therefore not reported: the component count above measures
 implementation evidence, while runtime reality and causal effectiveness are
 separate dimensions.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

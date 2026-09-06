@@ -42,6 +42,9 @@
 
 ---
 
+| `leg-ro-oug-155-2024` | Ordonanța de Urgență nr. 155/2024 (NIS2 RO) | România | [[05_DATA/legal_sources/r002-c/source_register]] | [[full_article_index]] | `portal-just-293121` |
+| `leg-ro-legea-124-2025` | Legea nr. 124/2025 (Modificări OUG 155/2024) | România | [[05_DATA/legal_sources/r002-c/source_register]] | [[amendment_consolidation_map]] | `portal-just-299675` |
+
 ## 3. Note Atomice Derivate pentru Arhitectura Sistemului
 
 - [[ATOMIC_GDPR_Art25_Data_Protection_by_Design]]
@@ -54,10 +57,15 @@
 - [[ATOMIC_M172_Art193_199_Hardware_Serial_Medii_Stocare]]
 - [[ATOMIC_L190_Art4_Garantii_Prelucrare_CNP]]
 - [[ATOMIC_L153_AnexaVI_Spor_Informatii_Clasificate]]
+- [[atomic_review_notes]] (R002C-N001..N010 — Transpunere NIS2 OUG 155/2024)
+- [[candidate_technical_controls]] (Controale Tehnice Propuse NIS2)
+- [[candidate_tests_and_evidence]] (Verificări și Teste Tehnice NIS2)
+
 
 ---
 
 ## 🔗 Legături în Graful Vault
+- [[05_DATA/legal_sources/r002-c/README|Corpus NIS2 România (Opus R002-C)]]
 - [[04 Security Integrity Map]]
 - [[07 Knowledge Domains Map]]
 - [[Knowledge Graph Home]]

@@ -26,7 +26,12 @@ SORT created DESC
 
 ---
 
+
+## Index Canonic Experiențe
+- [[AI_Trading_Journal_Zero_Dollar_Stack]] — Jurnalizare trading cost-zero
+
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Experiences Map]]
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

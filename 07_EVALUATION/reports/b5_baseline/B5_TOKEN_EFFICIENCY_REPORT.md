@@ -58,3 +58,9 @@ None detected.
 **Top optimization candidate:** CRITIC / light
 
 **Reason:** 19.8% of total tokens; tier 'light' accounts for 57.3% of total tokens
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

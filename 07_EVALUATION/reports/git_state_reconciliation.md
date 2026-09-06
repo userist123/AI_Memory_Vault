@@ -76,3 +76,9 @@ Local `main` contains 5 commits on top of `b7fba17` (`fbc1847`, `47d559e`, `5e4d
    - `memory_controller/capability_effectiveness.py` (full capability effectiveness matrix across agents, skills, knowledge).
    - `memory_controller/promotion_candidates.py` (evidence-based promotion / review flagging).
    - CLI commands & Obsidian markdown report exporters.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

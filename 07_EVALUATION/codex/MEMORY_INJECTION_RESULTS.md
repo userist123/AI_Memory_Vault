@@ -7,3 +7,9 @@ These tests establish a data/authority boundary at retrieval and authorization. 
 Evidence: `python -m pytest -q cognitive_core/tests/test_recall_review_safe.py tests/test_review_retrieval_challenge_v1.py` → `5 passed in 0.70s`; combined learning/reflection/security command → `20 passed in 0.38s` (TEST_VERIFIED).
 
 Status: containment at tested boundaries TEST_VERIFIED; end-to-end poisoning resistance UNVERIFIED.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -97,3 +97,8 @@ Phase 0.3.2 resolves these deterministically through the distinct `bundle_instan
 07_EVALUATION/reports/
 └── raw_external_skills_phase0_3_2_identity_gate_2026-09.md (This certification report)
 ```
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

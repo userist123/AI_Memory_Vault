@@ -38,3 +38,10 @@ A fresh machine must be able to determine without the old chat:
 `agent → project → application → folder → branch → commit → task → changes → evidence → blockers → next action`
 
 This is mandatory for all future projects too. For a new application, create a new `projects/<project-id>/CURRENT.md` and continue using the same protocol.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

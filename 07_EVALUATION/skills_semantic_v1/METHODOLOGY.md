@@ -68,3 +68,9 @@ $$\text{SEMANTIC\_SCORE} = \sum (\text{Score}_i \times \text{Weight}_i) \in [0, 
 - Dual independent evaluation executed on 30 sample skills across cohorts.
 - **Disagreement Threshold**: $|\text{Score}_A - \text{Score}_B| \ge 10$ or $\text{Class}_A \ne \text{Class}_B$.
 - Any skill meeting the threshold is flagged with `review_required: true`.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

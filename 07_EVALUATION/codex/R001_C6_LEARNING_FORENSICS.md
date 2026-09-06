@@ -18,3 +18,9 @@ There is no observed path in these components from an appended Council outcome l
 - gated learning update: `TEST_VERIFIED`;
 - outcome → evidence → memory → future retrieval closed loop: `UNVERIFIED`;
 - autonomous self-improvement: `NOT_IMPLEMENTED` in the inspected path.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -338,3 +338,9 @@ The following critical paths are locked from modification:
 ```text
 MIGRATION_DESIGN = READY_FOR_PHASE_EXECUTION
 ```
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

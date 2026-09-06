@@ -248,3 +248,9 @@ M1_GATE = GO
 
 ## 17. Evidence Gaps
 - **Zero Evidence Gaps**: All 34 file hashes, sizes, references, and destination directory paths have been empirically verified on `origin/main`.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

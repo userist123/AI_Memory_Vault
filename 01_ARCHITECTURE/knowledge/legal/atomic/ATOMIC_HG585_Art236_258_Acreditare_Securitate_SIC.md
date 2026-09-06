@@ -60,5 +60,7 @@ Script automat de audit `validate_repository_layout.py` și suita de autotestare
 
 ## 🔗 Legături Conexe în Graf
 - [[HG_585_2002]]
+- [[atomic_review_notes]] (Sinapsă OUG 155/2024 Art. 2(4) Sisteme Informații Clasificate)
+- [[candidate_technical_controls]]
 - [[04 Security Integrity Map]]
 - [[07 Knowledge Domains Map]]

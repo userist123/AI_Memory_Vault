@@ -264,3 +264,10 @@ A cold-start agent with no prior chat context should be able to reconstruct, fro
 `project → application → main → commit → task → what changed → evidence → blockers → next action`.
 
 That is the minimum continuity guarantee for every agent.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

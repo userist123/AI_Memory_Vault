@@ -56,3 +56,9 @@ Do not freeze the current numerical attenuation as a successful calibration. Bef
 5. execution outcome.
 
 The next change must be pre-registered before execution and must not use the task oracle to set applicability, priors, or verification state.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

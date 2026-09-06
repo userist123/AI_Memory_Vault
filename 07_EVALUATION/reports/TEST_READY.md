@@ -93,3 +93,9 @@ python -m pytest
 | `tests/financial/test_challenger2_adversarial.py` | Tier 4 Adversarial Security | 31 |
 | `tests/financial/test_vulnerabilities_poc.py` | Remediation Verification Suite | 6 |
 | **Total** | **All 4 Tiers** | **644 Passed** |
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

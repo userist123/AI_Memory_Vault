@@ -108,3 +108,10 @@ ote['verification'] = 'verified' upon authorized promotion.
 ## 6. Recommendation
 
 Antigravity recommends **Option 1** or **Option 2** for maximum security posture consistency with the Prime Directive, but defers the formal decision and code update to **CODEX** as the canonical runtime owner.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

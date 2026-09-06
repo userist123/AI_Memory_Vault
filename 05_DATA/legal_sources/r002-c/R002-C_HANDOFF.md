@@ -76,3 +76,13 @@ Therefore no SHA-256 value, file size, access timestamp, or completeness result 
 `BLOCKED_SOURCE_OR_VERSION_GAP`
 
 The owner authorization is now recorded in the branch. The remaining blocker is strictly evidentiary: the two complete private/local source snapshots must be made available to the validation step so the manifest can be populated and validated without publishing the source bodies.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]
+- [[source_register]]
+- [[atomic_review_notes]]
+- [[candidate_technical_controls]]
+- [[00_GOVERNANCE/coordination/agents/CLAUDE_OPUS/R001_LIFECYCLE_AUTHORITY|Claude Opus Lifecycle Authority]]
+- [[Knowledge Graph Home]]

@@ -55,3 +55,10 @@ No chat history is required to reconstruct project state. A fresh machine reads 
 2. Reconcile Antigravity observability results with production retrieval code paths.
 3. Verify that persistent agent memory remains synchronized with actual branch/commit state.
 4. Record an explicit acceptance decision only after reproducible evidence is available.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

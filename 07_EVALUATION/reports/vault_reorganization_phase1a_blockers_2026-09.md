@@ -280,3 +280,9 @@ The following core cognitive invariants MUST NOT be touched or modified without 
 ## 12. Final Recommendation
 
 Phase 1A forensic evidence gathering is 100% COMPLETE. The repository structure is fully mapped, and all blockers are resolved with empirical proof. **No physical moves or code modifications should occur until Phase 2 is formally scheduled.**
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

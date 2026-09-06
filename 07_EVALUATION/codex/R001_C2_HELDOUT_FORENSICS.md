@@ -35,3 +35,9 @@ These are corpus-level deterministic adapter results. The gold file contains pos
 This is a reproducibility defect in the evaluation entrypoint, not evidence that any retrieval strategy is effective or ineffective. The existing retrieval adapters and metric functions were inspected but not promoted to a production retrieval path.
 
 Evidence classification: entrypoint failure and repaired run `RUNTIME_VERIFIED`; strategy and metric presence `CODE_VERIFIED`; reported P5/R5/MRR values `RUNTIME_VERIFIED`; broader effectiveness claims `UNVERIFIED`.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

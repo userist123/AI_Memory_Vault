@@ -52,3 +52,9 @@ The benchmark runner uses the existing `MemoryController`,
 subprocess verification. No canonical memory promotion occurs.
 
 Current full regression: `802 passed, 2 skipped in 18.53s`.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

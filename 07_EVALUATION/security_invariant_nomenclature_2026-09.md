@@ -163,3 +163,9 @@ Per repository rules and the task contract, historical audit records and raw imp
 - `cognitive_core/*`: **UNTOUCHED** (zero bytes modified).
 - `memory_controller/financial_schema.py`: Only module docstring and a section comment were updated to reference `I-001..I-003`; all validation logic, schema constants, and error strings remain 100% byte-identical.
 - All 37 security-specific unit and adversarial integration tests continue passing with zero failures (`37/37 passed in 1.98s`).
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

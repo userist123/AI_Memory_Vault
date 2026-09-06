@@ -217,3 +217,9 @@ No production code was modified by this Luna audit.
 No REVIEW note was promoted.
 No security control was weakened.
 No test was fabricated or locally reported as passed.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -101,6 +101,21 @@ Exhaustive index of canonical domain Markdown notes in the supplied snapshot.
 - [[99_SYSTEM/system-architecture_87689ea3]]
 - [[99_SYSTEM/test_61b68376]]
 
+
+## Corpus Juridic & Securitate Normativă (EU & România)
+- [[01_ARCHITECTURE/knowledge/legal/README|Depozit Normativ Extern]]
+- [[05_DATA/legal_sources/r002-c/README|NIS2 România (OUG 155/2024 & Legea 124/2025)]]
+- [[Regulament_UE_2016_679_GDPR]] — Protecția Datelor cu Caracter Personal
+- [[Regulament_UE_2022_2554_DORA]] — Reziliență Operațională Digitală Financiară
+- [[Regulament_UE_2023_1114_MiCA]] — Piețe de Criptoactive
+- [[Regulament_UE_2024_1689_AI_Act]] — Cadrul European pentru Inteligență Artificială
+- [[HG_585_2002]] — Standarde Naționale de Protecție a Informațiilor Clasificate
+- [[Ordinul_M172_2021]] — Norme MApN pentru Medii de Stocare și Sisteme IT
+- [[Legea_190_2018]] — Măsuri Naționale GDPR
+- [[Legea_Cadru_153_2017]] — Salarizare și Condiții de Muncă
+- [[atomic_review_notes]] — Note Tehnice Atomice NIS2
+- [[candidate_technical_controls]] — Controale Tehnice Propuse
+
 ## Graph hubs
 - [[Knowledge Graph Home]]
 - [[02 Memory Knowledge Map]]

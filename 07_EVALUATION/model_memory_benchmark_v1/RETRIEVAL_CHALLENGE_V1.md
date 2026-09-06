@@ -68,3 +68,9 @@ This does not mean the knowledge should be auto-promoted. The correct fix is a c
 4. Add an explicit relevance threshold or abstention behavior for unrelated queries.
 5. Re-run this challenge with actual top-5 IDs and compute Precision@5, Recall@5, MRR and false-positive rate.
 6. Do not promote any atom automatically as part of this fix.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

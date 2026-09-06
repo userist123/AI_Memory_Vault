@@ -30,3 +30,11 @@ These are candidate verification tests for the corpus implementation. They are n
 - `review/legal_review_required.md`.
 - `review/not_applicable_or_not_yet_determined.md`.
 - final `R002-C_HANDOFF.md`.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[candidate_technical_controls]]
+- [[atomic_review_notes]]
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]
+- [[07_EVALUATION/README|Evaluation Evidence]]

@@ -53,3 +53,9 @@ Do **not** solve this by moving all book atoms into `ACTIVE`. The correct fix is
 ## Next implementation target
 
 Implement a dedicated `REVIEW` retrieval namespace or equivalent read-only index over human-gated knowledge, integrate it with the cognitive retrieval path, add abstention/threshold behavior, and then execute the 30-case challenge set in a real local test environment.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

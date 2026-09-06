@@ -60,3 +60,8 @@
 | `Q13_CONTRADICTION_STORAGE_MUTABILITY` | contradiction_guardrail | 0.00 | 0.00 | 0.00 | 0.00 | 0.33 | 0.33 |
 | `Q14_MULTIHOP_GRAPH_NODE_SCHEMA` | multihop | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 0.00 |
 | `Q15_SIMPLE_PRIME_DIRECTIVE` | simple_fact | 0.00 | 0.00 | 0.00 | 0.00 | 1.00 | 1.00 |
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

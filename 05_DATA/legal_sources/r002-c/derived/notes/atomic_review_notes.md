@@ -211,3 +211,20 @@ source_refs:
 ```
 Claim: The act addresses confidentiality/security-commercial interests in information handling and Law 124 adds explicit DNSC confidentiality/public-interest treatment.
 Interpretation: R002-C must not ingest operational, classified, confidential or incident-specific information; only public legal text and derived non-sensitive knowledge are permitted.
+
+---
+
+## 🔗 Legături Sinaptice Transversale
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]
+- [[candidate_technical_controls]] — Controale tehnice propuse
+- [[candidate_tests_and_evidence]] — Verificări tehnice propuse
+- [[full_article_index]] — Index articole OUG 155/2024
+- [[amendment_consolidation_map]] — Mutații Legea 124/2025
+- [[legal_review_required]] — Registru articole supuse avizării juridice
+- [[Regulament_UE_2022_2554_DORA]] & [[ATOMIC_DORA_Art6_16_Cadrul_Management_Risc_TIC]] — Sinapsă Art. 2(3) Coordonare DORA
+- [[HG_585_2002]] & [[ATOMIC_HG585_Art236_258_Acreditare_Securitate_SIC]] — Sinapsă Art. 2(4) Sisteme Informații Clasificate
+- [[Ordinul_M172_2021]] & [[ATOMIC_M172_Art193_199_Hardware_Serial_Medii_Stocare]] — Sinapsă Cerințe Medii de Stocare
+- [[Regulament_UE_2016_679_GDPR]] & [[ATOMIC_GDPR_Art32_Securitatea_Prelucrarii]] — Sinapsă Raportare Incidente & Date Personale
+- [[Regulament_UE_2024_1689_AI_Act]] & [[ATOMIC_AIACT_Art12_Inregistrare_Automata_Evenimente]] — Sinapsă Înregistrare Evenimente AI
+- [[04 Security Integrity Map]]
+- [[07 Knowledge Domains Map]]

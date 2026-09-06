@@ -32,3 +32,8 @@ complete historical recall beyond the base candidate window = UNVERIFIED
 ```
 
 No speculative changes were made. A future C12 benchmark should include current, superseded, expired, future, unknown, and contradictory records with fixed candidate sets and explicit provenance authority assertions.
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

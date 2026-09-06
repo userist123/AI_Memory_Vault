@@ -43,6 +43,10 @@ This note documents the core rules used to correlate offline security artifacts 
 ---
 
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Lessons Map]]
 - [[08 Memory Subsystems Map]]
+- [[04 Security Integrity Map]]
+- [[Security_Practices]]
+- [[Windows11_Hardener]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

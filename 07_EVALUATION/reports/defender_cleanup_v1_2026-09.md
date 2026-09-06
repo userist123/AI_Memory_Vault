@@ -83,3 +83,9 @@ The active skills directory `.agents/skills/` was audited to verify compliance:
 1. **Defender Telemetry**: Post-cleanup execution of `Get-MpThreatDetection` confirmed `0` remaining active detections referencing existing files in `06_INBOX/RAW_IMPORTS/`.
 2. **Exclusion Check**: `(Get-MpPreference).DisableRealtimeMonitoring` is `False`. Zero folder, file, or extension exclusions were added.
 3. **Non-Destructive Boundary**: All non-detected files in `src-hunter` (such as dictionaries, attack methodologies, and documentation templates) were preserved intact.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

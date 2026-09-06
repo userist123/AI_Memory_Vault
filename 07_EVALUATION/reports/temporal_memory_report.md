@@ -51,3 +51,8 @@
 | **T2** | 0 | 0 | 0 | 6 | 1 |
 | **T3** | 1 | 0 | 0 | 5 | 1 |
 | **T4** | 1 | 0 | 0 | 5 | 1 |
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

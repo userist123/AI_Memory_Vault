@@ -49,3 +49,8 @@ Output:
 These tests verify telemetry, gating, and local learning behavior. They do not constitute proof of outcome-caused future retrieval improvement.
 
 No source code or canonical memory was changed in this lane.
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

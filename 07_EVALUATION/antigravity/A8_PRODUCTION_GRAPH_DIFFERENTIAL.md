@@ -27,3 +27,9 @@ This report is retained as historical evidence only. The production storage cont
 Keep production and in-memory backends in the same graph diagnostics suite. Assert explicit graph status, preserve real retrieval scores through ranking, and test candidate reachability independently from base-search result truncation.
 
 No canonical-memory promotion was performed from this report.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -167,3 +167,9 @@ The comprehensive extraction plan is codified in `07_EVALUATION/raw_external_ski
 1. **Static Analysis Only**: Zero external code was executed during analysis.
 2. **Cryptographic Grounding**: Every physical file is uniquely identified by its SHA-256 hash.
 3. **Zero Data Loss Invariant**: No files in `06_INBOX/RAW_IMPORTS/skills/` were modified, moved, or deleted.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

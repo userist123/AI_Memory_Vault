@@ -179,3 +179,10 @@ RETRIEVAL BYPASSES: 3 residual (isolated/non-primary)
 LIFECYCLE POLICY: CANONICAL
 SYNAPSE: BLOCKED_BY_EXTERNAL_SYNAPSESTORE
 ```
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

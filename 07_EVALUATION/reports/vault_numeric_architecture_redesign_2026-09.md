@@ -302,3 +302,9 @@ AI_Memory_Vault_CODEX_READY/
 ## 16. Final Architectural Recommendation
 
 The Numeric Semantic Vault architecture (`00` to `99`) provides an authoritative, human-navigable Obsidian knowledge structure while strictly preserving executable Python software roots (`cognitive_core`, `memory_controller`), multi-language project solutions (`projects/`), and system agent manifests (`.agents/`).
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -42,3 +42,9 @@ and full-context comparison for both local models. Raw results are in
 ## Interpretation
 
 The run is evidence that the configured code path executed against a real local provider and produced measurable differences. It does not prove causal memory usefulness: the corpus is repository-authored, the strategies differ in more than one signal, and no randomized paired treatment/control design is implemented here. Full-context wins both model accuracy aggregates against R1–R3 and M2 against R4; R4 has the best M1 selective-retrieval accuracy but the highest selective-retrieval latency.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -35,3 +35,11 @@ For a working consolidated reading of an OUG article affected by Law 124/2025, u
 `OUG original article + exact Law 124 amendment item(s) = working post-10-Jul-2025 reading`
 
 Do not silently merge later amendments into this map. A later law affecting OUG 155/2024 is outside the two-source scope and must remain a version-gap record until separately authorized.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[full_article_index]]
+- [[source_register]]
+- [[atomic_review_notes]]
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]

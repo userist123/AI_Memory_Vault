@@ -39,3 +39,12 @@ Status of every item: `CANDIDATE_ONLY`, not a legal compliance assertion.
 ## Explicit limitation
 
 None of these controls establish that a product, operator or entity is an “essential” or “important” entity, satisfies NIS2, or complies with Romanian law. Such determinations remain `LEGAL_REVIEW_REQUIRED`.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[atomic_review_notes]]
+- [[candidate_tests_and_evidence]]
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]
+- [[04 Security Integrity Map]]
+- [[01_ARCHITECTURE/System_Architecture]]

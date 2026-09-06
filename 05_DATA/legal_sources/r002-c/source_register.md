@@ -51,3 +51,12 @@ All derived legal interpretations in this branch remain:
 - `instruction_trust: NONE`
 
 No legal compliance declaration is made.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]
+- [[full_article_index]]
+- [[amendment_consolidation_map]]
+- [[atomic_review_notes]]
+- [[01_ARCHITECTURE/knowledge/legal/README|Legal Knowledge Base]]

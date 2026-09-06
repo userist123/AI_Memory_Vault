@@ -5,9 +5,14 @@ tags: [obsidian, graph, memory, errors]
 ---
 # Memory - Errors Map
 
-Focused navigation for failures, regressions and diagnosed problems.
+Navigare concentrată pentru eșecuri diagnosticate, erori de logică și regresiuni verificate empiric.
 
-- [[04_MEMORY/Errors/README]]
+## Erori Diagnosticate
+- [[Backtest_Single_Entry_Logic_Flaw]] — Eroare în calculul pozițiilor multiple în algoritmi de backtest
+- Conexiune la rezoluție: [[Define_MultiEntry_Requirements_Before_Backtest]]
+
+## Hub-uri Corelate
+- [[01_ARCHITECTURE/memory/Errors/README|Index Director Errors]]
 - [[08 Memory Subsystems Map]]
 - [[04 Security Integrity Map]]
 - [[03 Agents Operations Map]]

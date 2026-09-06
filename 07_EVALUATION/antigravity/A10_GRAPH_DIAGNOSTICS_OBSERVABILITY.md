@@ -38,3 +38,9 @@ and required the diagnostic trace to show zero silent fallbacks after the corres
 ## Preservation Decision
 
 Kept as forensic evidence only. No automatic promotion from this historical report into canonical memory was performed.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

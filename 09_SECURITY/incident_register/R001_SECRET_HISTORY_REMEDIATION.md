@@ -19,3 +19,9 @@ This repository has historical secret-scanning findings. No Git history rewrite 
 ## Closure criteria
 
 No historical finding is considered closed merely because a current tree is clean. Closure requires credential rotation/revocation evidence, rewrite evidence when approved, complete-ref scanning, and post-remediation verification.
+
+
+## 🔗 Legături Sinaptice
+- [[04 Security Integrity Map]]
+- [[Security_Practices]]
+- [[Knowledge Graph Home]]

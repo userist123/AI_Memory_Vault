@@ -32,3 +32,10 @@ Evidence_refs:
   - 07_EVALUATION/luna/ (for cognitive-memory validation handoff)
 related_agents: CODEX, ANTIGRAVITY, LUNA
 NEXT: read project CURRENT and take the next research task on main
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

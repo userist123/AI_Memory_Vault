@@ -92,3 +92,8 @@ Conclusion: the inspected writer is not proof of a closed `OUTCOME -> EVIDENCE -
 `CODE_VERIFIED` findings are limited to the exact source inspected on baseline SHA `4764ee4615760a0480abd76ff2633aac25840e03`.
 
 Runtime-dependent conclusions remain `UNVERIFIED` or `BLOCKED`.
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

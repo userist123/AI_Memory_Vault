@@ -29,3 +29,9 @@ citation syntax currently present in the README.
 
 No source PDFs, raw imports, canonical memory, security controls, or other
 agent evaluation lanes were modified. No content was executed.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

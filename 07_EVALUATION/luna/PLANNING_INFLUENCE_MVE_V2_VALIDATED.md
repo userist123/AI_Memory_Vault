@@ -109,3 +109,9 @@ The MVE remains isolated under evaluation code. Do not modify the production Vau
 ## 12. Evidence rule
 
 This file records design only. It must not be cited as runtime evidence. Executed configuration and actual stdout/stderr belong in separate run/result artifacts after execution.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

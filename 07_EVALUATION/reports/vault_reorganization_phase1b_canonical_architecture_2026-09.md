@@ -361,3 +361,9 @@ The following critical components are locked from un-audited modification:
 ```text
 CANONICAL_ARCHITECTURE = READY_FOR_MIGRATION_DESIGN
 ```
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

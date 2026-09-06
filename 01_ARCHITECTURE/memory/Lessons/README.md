@@ -27,7 +27,16 @@ SORT created DESC
 
 ---
 
+
+## Index Canonic Note de Lecții
+- [[Modularize_Prompts_For_Token_Limited_Models]] — Tehnici de sparsificare context pentru modele LLM
+- [[Define_MultiEntry_Requirements_Before_Backtest]] — Cerințe de execuție multi-entry înainte de testare
+- [[Trust_Boundary_Hardening_Requires_Attest_Not_Overlay]] — Întărirea barierelor de încredere prin atestare
+- [[Windows_Security_Audit_Log_And_Registry_Forensics_Correlation]] — Corelare Event Log și Registry în analize criminalistice
+- [[WPF_Splash_Screen_And_EventLogReader_DFIR]] — Decuplarea UI WPF de analiza evenimentelor sistem
+
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Lessons Map]]
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

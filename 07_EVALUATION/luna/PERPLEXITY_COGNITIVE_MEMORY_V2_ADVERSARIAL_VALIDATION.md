@@ -246,3 +246,9 @@ Target Model V2 is conceptually sound, provided it is treated as an external epi
 2. Implement the revised 4-Arm MVE under `07_EVALUATION/luna/experiments/planning_mve/`.
 3. Use a Python-based MCTS runner (`rollouts=16`, `depth=3`) and test against local `qwen2.5-coder:7b`.
 4. Fix the dead-code weight overwrite bug in `cognitive_core/spreading_activation.py` before running graph-conditioned prior tests.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

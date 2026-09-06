@@ -55,3 +55,9 @@ The frozen uncertainty policy is **mechanically implemented and safety-routed, b
 The result is nevertheless useful: the policy now distinguishes applicability, evidence strength, verification requirement, contradiction, influence, and outcome in one traceable state. The next experiment should model verification as an explicit planner action/cost rather than only metadata attached to the selected branch.
 
 Do not advance to the model-backed paired MVE solely from this result.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

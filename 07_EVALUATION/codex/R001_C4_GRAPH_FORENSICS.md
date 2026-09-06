@@ -34,3 +34,9 @@ Observed result:
 ## Remaining limitation
 
 This proves edge-weight sensitivity in the activation unit, not end-to-end retrieval usefulness or causal memory benefit. Those require a fixed candidate set and runtime evaluation traces.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

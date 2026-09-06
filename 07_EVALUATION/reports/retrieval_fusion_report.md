@@ -39,3 +39,8 @@
 | **R2** | 5 | 1 | 8 | 1 | 0 |
 | **R3** | 3 | 1 | 10 | 1 | 0 |
 | **R4** | 4 | 1 | 9 | 1 | 0 |
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

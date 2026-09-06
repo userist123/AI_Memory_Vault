@@ -85,3 +85,8 @@ Each trace independently documents:
 - `stdout` / `stderr` / `exit_code`: verifiable execution outcomes
 - `verification`: automated schema assertions and outcome validation
 - `redactions`: complete protection of secrets and environment credentials
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -86,3 +86,9 @@ Naive success rates (e.g. $1/1 = 100\%$) are notoriously deceptive. The capabili
 >
 > - **Empirically Proven**: *"When `skill-A` was loaded in `frontend_motion` tasks, the run concluded with `success` in 10 out of 12 instances."*
 > - **NOT Proven**: *"Loading `skill-A` caused the run to succeed."* (The agent may have succeeded due to another factor, base model capability, or prompt structure).
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

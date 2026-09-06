@@ -20,3 +20,11 @@ The following items must remain unresolved or REVIEW until a qualified legal rev
 ## Rule
 
 No item in this register may be silently changed from REVIEW/UNKNOWN to ACTIVE/canonical without a separate owner/legal-review decision and provenance record.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[atomic_review_notes]]
+- [[not_applicable_or_not_yet_determined]]
+- [[00_GOVERNANCE/review/REVIEW_QUEUE|Review Queue]]
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]

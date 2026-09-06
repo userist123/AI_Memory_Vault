@@ -26,3 +26,11 @@ Primary act: OUG nr. 155/2024. The act contains Articles 1–68 plus Annexes 1�
 ## Source integrity rule
 
 The complete source snapshot, not this index, is authoritative for wording. No index entry substitutes for source text.
+
+---
+
+## 🔗 Legături Sinaptice
+- [[amendment_consolidation_map]]
+- [[atomic_review_notes]]
+- [[source_register]]
+- [[05_DATA/legal_sources/r002-c/README|R002-C Overview]]

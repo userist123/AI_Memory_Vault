@@ -60,5 +60,7 @@ Suite de teste automate de anduranță și injectare de erori (fault injection) 
 
 ## 🔗 Legături Conexe în Graf
 - [[Regulament_UE_2022_2554_DORA]]
+- [[atomic_review_notes]] (Sinapsă OUG 155/2024 Art. 2(3) Coordonare NIS2/DORA)
+- [[candidate_technical_controls]]
 - [[04 Security Integrity Map]]
 - [[07 Knowledge Domains Map]]

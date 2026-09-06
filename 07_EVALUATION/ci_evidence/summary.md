@@ -32,3 +32,9 @@
 - memory_controller/tests/test_milestone3_empirical_challenge.py::test_concurrent_attest_and_update_race_sqlite
 - memory_controller/tests/test_query_classifier.py::test_verified_is_still_detected_as_whole_word
 - memory_controller/tests/test_query_raw_boundary.py::test_query_raw_boundary_holds_for_sqlite_storage
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

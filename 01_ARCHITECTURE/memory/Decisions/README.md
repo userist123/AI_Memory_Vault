@@ -26,7 +26,12 @@ SORT created DESC
 
 ---
 
+
+## Index Canonic Decizii
+- [[MT5_Python_Tkinter_Stack_For_Trading_App]] — Arhitectură Python + Tkinter + MT5
+
 ## 🔗 Legături de Memorie & Graf Obsidian
+- [[Memory - Decisions Map]]
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]

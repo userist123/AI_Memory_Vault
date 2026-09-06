@@ -160,3 +160,9 @@ The deterministic harness must first demonstrate that the uncertainty policy is 
 - produces a clear falsification result that motivates a new pre-registered policy.
 
 This document itself is design evidence only and must not be cited as runtime proof.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

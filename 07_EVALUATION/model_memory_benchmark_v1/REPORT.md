@@ -173,3 +173,9 @@ Priority order:
 This benchmark is an evaluator inspection of repository artifacts. It is **not** a substitute for real provider execution, causal ablation, or end-to-end poisoning tests. Those require runtime evidence.
 
 The existing nightly report itself records that its 90-run treatment/control matrix had equal aggregate success (19/30 each) and McNemar p=1.0, and that the dedicated poisoning, harmful-memory, current-ablation, temporal and provenance harnesses were not executed in that run. Therefore this report deliberately does not claim those properties were empirically proven.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

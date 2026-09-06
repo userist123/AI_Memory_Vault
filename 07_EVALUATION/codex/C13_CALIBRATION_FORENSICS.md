@@ -41,3 +41,8 @@ No scoring implementation was changed in this lane. The observed issue is a cali
 Finding: `PARTIALLY_PROVEN` — numeric metadata is structurally present and sample-size safeguards exist, but evidence-sensitive calibration is not demonstrated. Repeated template values and tied review priorities are `CODE_VERIFIED` observations, not proof that every atom is incorrect.
 
 No automatic canonical-memory promotion was performed.
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

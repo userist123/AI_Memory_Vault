@@ -188,3 +188,10 @@ Stated as gaps, not as completed work:
   in the authority.
 - Legacy error message text preserved verbatim so existing assertions keep
   matching; policy detail is appended as a `[policy: ...]` suffix.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

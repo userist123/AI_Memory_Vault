@@ -3,12 +3,62 @@
   "search": "",
   "showTags": true,
   "showAttachments": true,
-  "hideUnresolved": false,
-  "showOrphans": false,
+  "hideUnresolved": true,
+  "showOrphans": true,
   "collapse-color-groups": false,
-  "colorGroups": [],
+  "colorGroups": [
+    {
+      "query": "path:00_GOVERNANCE",
+      "color": {
+        "a": 1,
+        "rgb": 2278942
+      }
+    },
+    {
+      "query": "path:01_ARCHITECTURE/graphs OR tag:moc",
+      "color": {
+        "a": 1,
+        "rgb": 440020
+      }
+    },
+    {
+      "query": "path:01_ARCHITECTURE/knowledge/legal OR path:05_DATA/legal_sources",
+      "color": {
+        "a": 1,
+        "rgb": 11032055
+      }
+    },
+    {
+      "query": "path:01_ARCHITECTURE/memory OR path:04_MEMORY OR tag:memory",
+      "color": {
+        "a": 1,
+        "rgb": 16096779
+      }
+    },
+    {
+      "query": "path:09_SECURITY OR path:Forensics",
+      "color": {
+        "a": 1,
+        "rgb": 15680580
+      }
+    },
+    {
+      "query": "path:07_EVALUATION",
+      "color": {
+        "a": 1,
+        "rgb": 15485081
+      }
+    },
+    {
+      "query": "path:01_ARCHITECTURE/knowledge",
+      "color": {
+        "a": 1,
+        "rgb": 3900150
+      }
+    }
+  ],
   "collapse-display": false,
-  "showArrow": false,
+  "showArrow": true,
   "textFadeMultiplier": 0,
   "nodeSizeMultiplier": 1,
   "lineSizeMultiplier": 1,
@@ -17,6 +67,6 @@
   "repelStrength": 10,
   "linkStrength": 1,
   "linkDistance": 250,
-  "scale": 0.05932617187499971,
-  "close": true
+  "scale": 0.03018289506732411,
+  "close": false
 }

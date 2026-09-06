@@ -39,3 +39,10 @@ Evidence_refs:
   - .github/workflows/planning-influence-mve.yml
 related_agents: CODEX, ANTIGRAVITY, PERPLEXITY
 NEXT: verify CI for corrected MVE and GAP-011, then proceed to model-backed causal MVE design
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

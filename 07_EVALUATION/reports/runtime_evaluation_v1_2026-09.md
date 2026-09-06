@@ -94,3 +94,8 @@ INSTALLED_SKILLS_MODIFIED = NO
 QUALITY_LEDGER_MODIFIED = NO
 SEMANTIC_LEDGER_MODIFIED = NO
 ```
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

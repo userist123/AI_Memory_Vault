@@ -17,3 +17,9 @@ python -m pytest -q cognitive_core/tests/test_recall.py cognitive_core/tests/tes
 ```
 
 Conclusion: lexical/deterministic retrieval and review-safe recall are proven by code and tests. A production hybrid semantic retrieval path is only PARTIAL/UNVERIFIED.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

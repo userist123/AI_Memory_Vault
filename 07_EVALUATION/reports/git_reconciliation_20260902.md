@@ -79,3 +79,9 @@ Total: **117 fișiere modificate/adăugate**, 61,045 inserții (+), 3,834 șterg
 * **Ordinea Recomandată de Publicare**:
   1. Validare teste locale (287 teste trecute).
   2. `git push origin main` direct pentru aducerea `origin/main` la nivelul `local main`.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

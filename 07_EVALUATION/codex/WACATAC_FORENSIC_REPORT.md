@@ -63,3 +63,9 @@ At recheck time, six surviving local files were readable as Markdown but had dif
 - RAW `系统命令.md`: `A463E1D15DC807F48CB9D0B372E55894CF793A5FF6ADD13DE14535EEF5B2FE85`.
 
 The two canonical copies of each xss family had identical current hashes. All six had MIME `text/markdown`, no `MZ` signature at offset zero, and no embedded byte sequence `MZ`. This filesystem recheck was read-only.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

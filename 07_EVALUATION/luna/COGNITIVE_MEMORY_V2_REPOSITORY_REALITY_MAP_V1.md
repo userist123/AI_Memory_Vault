@@ -333,3 +333,9 @@ Before implementation:
 ```
 
 NEXT: use this map as the implementation handoff and experimental boundary for the first Planning Influence MVE.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -16,3 +16,9 @@ For the current cognitive-memory research cycle, `main` is the canonical shared 
 - Preserve evidence levels and provenance.
 - Do not claim runtime/test/CI evidence without actual execution.
 - Experimental implementation remains deferred until the design/MVE is finalized.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

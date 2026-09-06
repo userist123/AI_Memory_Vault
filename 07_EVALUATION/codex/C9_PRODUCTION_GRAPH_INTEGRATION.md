@@ -51,3 +51,9 @@ This proves the graph integration contract and failure observability at the rera
 ```text
 REMOTE_COMMIT=8b42ae4622396ea63bea292bbf9ac32446f9a91b
 ```
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

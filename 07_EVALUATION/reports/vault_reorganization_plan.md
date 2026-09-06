@@ -13,7 +13,7 @@ AI_Memory_Vault_CODEX_READY/
 │   └━ GRAPH/              # Maps of Content (MOCs) and Knowledge Graph entrypoints
 ┚━ 01_KNOWLEDGE/            # Canonical verified domain knowledge notes
 ─  ┚━ VAULT_INDEX.md      # Single master navigation index
-�   └━ VAULT_AVCHITECTURE_MAP.md  # Architectural layer & dataflow map
+   └━ VAULT_AVCHITECTURE_MAP.md  # Architectural layer & dataflow map
 ┚━ 02_PROJECTS/             # Canonical project architectures & blueprints
 ┘━ 03_PROCEDURES/           # Operational runbooks & standard operating procedures
 ┘━ 04_MEMORY/               # Dynamic memory store (Decisions, Errors, Experiences, Lessons, Preferences)
@@ -27,3 +27,9 @@ AI_Memory_Vault_CODEX_READY/
 ┚━telemetry/               # Machine-generated runtime telemetry (observed_memory_traces.jsonl)
 └━ tasks/                  # Development coordination logs (todo.md, lessons.md)
 ```
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

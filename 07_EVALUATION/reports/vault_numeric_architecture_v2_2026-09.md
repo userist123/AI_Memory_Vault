@@ -174,3 +174,9 @@ AI_Memory_Vault_CODEX_READY/
 ```text
 NUMERIC_ARCHITECTURE_V2 = READY_FOR_INCREMENTAL_EXECUTION
 ```
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

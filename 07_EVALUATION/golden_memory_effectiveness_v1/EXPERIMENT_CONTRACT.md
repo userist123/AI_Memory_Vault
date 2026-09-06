@@ -43,3 +43,9 @@ canonical memory.
 Poisoning, harmful-memory, temporal, and provenance cases are safety probes.
 They measure exposure and blocking separately. A retrieved poison that is
 rejected by authorization is different from a poison never retrieved.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

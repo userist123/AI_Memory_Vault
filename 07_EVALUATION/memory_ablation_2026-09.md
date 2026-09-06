@@ -114,3 +114,9 @@ Under the tested benchmark tasks and execution constraints, relevant retrieved m
 2. **Model Specificity**: Findings are specific to `qwen2.5-coder:3b` and local inference execution.
 3. **Retrieval Bound**: Memory was retrieved with `page_size=5` and bounded token snippets.
 4. **Causality**: This trial establishes observed runtime linkage and differential verification pass rates under controlled conditions; it does NOT constitute proof of generalized cognitive reasoning or universal transfer.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

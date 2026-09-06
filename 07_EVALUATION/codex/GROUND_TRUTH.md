@@ -13,3 +13,9 @@ Evidence scope: CODEX execution on branch `codex/memory-engine-reality-v1`, base
 | CI | workflow definitions inspected; no new remote run in this branch | CODE_VERIFIED / UNVERIFIED |
 
 Pre-existing untracked files were left untouched. No canonical-memory file was intentionally changed.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

@@ -116,3 +116,10 @@ An implementation may reject a proposed design when it can demonstrate a concret
 - changing experiment inputs after observing results.
 
 When disagreeing, record the reason, implement the safer alternative, and preserve the original proposal in the audit trail.
+
+
+## 🔗 Legături Sinaptice
+- [[00_GOVERNANCE/README|Governance]]
+- [[00 Core Map]]
+- [[14 Subagents Council Map]]
+- [[Knowledge Graph Home]]

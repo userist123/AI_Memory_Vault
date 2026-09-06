@@ -50,3 +50,9 @@ This negative result is retained as evidence rather than tuned away. It separate
 - Preserve the negative result as a calibration/quality warning.
 - Add uncertainty-aware prior attenuation and explicit applicability/verification states before the model-backed causal experiment.
 - GitHub Actions remains the authoritative CI source; its runs were still queued during this session and therefore provide no CI evidence yet.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]

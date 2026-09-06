@@ -45,8 +45,8 @@ Root cause in all three: `propose()`/`update()` merged the caller's raw payload 
 Any time a new write path is added to `MemoryController` (or an equivalent trust boundary elsewhere in this project) that accepts a caller-supplied payload dict: check whether any field in that payload can escalate trust (verification, provenance tier, lifecycle, authority-affecting fields), and if so, gate that field explicitly and test the exact caller populations (AI_AGENT, HUMAN, ADMIN) against both the attack and the legitimate-use regression.
 
 ## Related
-- [[00_CORE/GRAPH/Memory - Lessons Map]]
-- [[00_CORE/Rules.md]]
+- [[Memory - Lessons Map]]
+- [[Rules]]
 
 ---
 
@@ -54,3 +54,10 @@ Any time a new write path is added to `MemoryController` (or an equivalent trust
 - [[08 Memory Subsystems Map]]
 - [[Knowledge Graph Home]]
 - [[Knowledge Graph Home]]
+
+## 🔗 Legături Sinaptice
+- [[Memory - Lessons Map]]
+- [[08 Memory Subsystems Map]]
+- [[04 Security Integrity Map]]
+- [[Rules]]
+- [[AGENTS]]

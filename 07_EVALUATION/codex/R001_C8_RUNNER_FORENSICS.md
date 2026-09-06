@@ -78,3 +78,9 @@ The forensic evidence does not independently reproduce or validate the local
 provider metrics. The corpus is repository-authored, the selective strategies
 differ in more than one signal, and no randomized paired treatment/control
 design is established by this record.
+
+
+## 🔗 Legături Sinaptice
+- [[07_EVALUATION/README|Evaluation Hub]]
+- [[15 Artifacts and Dynamic Evidence Map]]
+- [[Knowledge Graph Home]]
