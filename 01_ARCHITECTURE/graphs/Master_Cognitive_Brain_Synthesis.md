@@ -74,7 +74,7 @@ Acest document reprezintă sinteza unificată a **Creierului Cognitiv AI** din `
 | `polyglot_systems_architect` 🛠️ | Arhitectură multi-limbaj (C#, Python, Go, Rust, C++) | `skill-dotnet10-minimal-api-aot`, `skill-go-worker-pool-concurrency` |
 | `cybersecurity_secops_hardener` 🛡️ | Hardening OWASP, prevenire leak-uri, P0-P18 Invariants | `owasp-top-10-audit`, `secret-leak-prevention`, `skill-oauth2-jwt-security` |
 | `ai_cognitive_systems_engineer` 🧠 | Arhitectură cognitivă, RAG, GraphRAG bi-temporal | `llamaindex-rag-pipeline`, `pgvector-embeddings`, `qdrant-vector-database` |
-| `dfir_forensics_responder` 🔍 | Investigare criminalistică, analiză YARA/Sigma | `dfir-operations`, `penetration-testing-playbook`, `dast-dynamic-testing` |
+| `dfir_forensics_responder` 🔍 | Investigare criminalistică, analiză YARA/Sigma | `dfir-operations`, `digital-forensics`, `dast-dynamic-testing` |
 | `data_engineer_analytics_architect` 📊 | Time-series analytics, CDC pipelines, OLAP queries | `clickhouse-time-series`, `duckdb-analytical-queries`, `debezium-cdc-pipeline` |
 | `cloud_infrastructure_architect` ☁️ | AWS, Azure, GCP, Terraform infrastructure | `aws-cloud-architecture`, `azure-cloud-architecture`, `terraform-infrastructure` |
 | `kubernetes_gitops_architect` ☸️ | Orchestrare K8s, GitOps, Istio service mesh | `kubernetes-orchestration`, `argocd-gitops`, `istio-service-mesh`, `helm-chart-management` |
