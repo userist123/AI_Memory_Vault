@@ -50,7 +50,7 @@ Run and record the complete regression suite, including `20_TESTS`. Valul 2 rema
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]

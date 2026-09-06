@@ -111,7 +111,7 @@ Antigravity recommends **Option 1** or **Option 2** for maximum security posture
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]

@@ -41,7 +41,7 @@ This is mandatory for all future projects too. For a new application, create a n
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]

@@ -31,7 +31,7 @@ related_agents: CODEX, CLAUDE_CODE, LUNA
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]

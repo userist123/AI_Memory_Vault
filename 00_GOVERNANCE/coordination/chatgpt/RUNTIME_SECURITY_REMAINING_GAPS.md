@@ -54,7 +54,7 @@ Queued/pending workflows are not evidence of a green build. The security branch 
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]

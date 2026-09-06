@@ -42,7 +42,7 @@ NEXT: verify CI for corrected MVE and GAP-011, then proceed to model-backed caus
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]

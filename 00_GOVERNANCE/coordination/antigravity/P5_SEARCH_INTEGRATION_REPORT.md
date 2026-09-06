@@ -182,7 +182,7 @@ SYNAPSE: BLOCKED_BY_EXTERNAL_SYNAPSESTORE
 
 
 ## 🔗 Legături Sinaptice
-- [[00_GOVERNANCE/README|Governance]]
+- [[Governance_Repository_Spine_Specification|Governance]]
 - [[00 Core Map]]
 - [[14 Subagents Council Map]]
 - [[Knowledge Graph Home]]
