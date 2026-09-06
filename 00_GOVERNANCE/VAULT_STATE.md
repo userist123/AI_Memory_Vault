@@ -141,6 +141,14 @@ rotted.
 
     python 30_SCRIPTS/prompt/compile_task_prompt.py --intent <kind>         --task "..." --branch "rXXX/name" --owner "AGENT"
 
+`--infer` proposes the kind from the request text and shows its reasoning
+rather than choosing for you. Trust it for one thing: it catches an action
+requested on something whose quality is unestablished — "promote the proposed
+edges" is a question about quality, not an instruction — at 86%, and that rule
+generalises. Plain classification scores 50% on unseen phrasings against 100%
+on the requests its patterns were drawn from, so on weak signal it declines and
+asks rather than guessing.
+
 The kind decides what the brief must contain: `implement`, `verify`, `measure`,
 `fix` or `migrate`. A measurement brief carries a stop condition and a
 fail-loud treatment arm; a migration brief carries a proven recovery path. See

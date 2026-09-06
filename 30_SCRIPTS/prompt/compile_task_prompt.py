@@ -323,11 +323,29 @@ def main() -> int:
     ap.add_argument("--branch", default="rXXX/describe-the-work")
     ap.add_argument("--owner", default="TBD")
     ap.add_argument(
+        "--infer", action="store_true",
+        help="propose the kind from the request text and print the reasoning "
+             "instead of compiling; the sender still chooses",
+    )
+    ap.add_argument(
         "--intent", default="implement", choices=sorted(INTENTS),
         help="what kind of work this is; selects the mandatory requirements",
     )
     ap.add_argument("--out", help="write here instead of stdout")
     args = ap.parse_args()
+
+    if args.infer:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from infer_intent import infer
+
+        result = infer(args.task)
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        print(result.render())
+        if result.intent is None:
+            print("\nNo brief compiled. Re-run with an explicit --intent.")
+            return 1
+        print(f"\nRe-run with --intent {result.intent} to compile the brief.")
+        return 0
 
     text = compile_prompt(args.task, args.branch, args.owner, args.intent)
     if args.out:
