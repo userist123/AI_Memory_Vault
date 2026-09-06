@@ -10,18 +10,12 @@ application: AI Memory Vault / Memory Engine
 working_folder: repository root; 01_ARCHITECTURE/graphs/, 05_DATA/legal_sources/r002-c/, 01_ARCHITECTURE/memory/
 current_task: obsidian memory synapse connection and legal corpus integration
 status: COMPLETED
-completed:
-  - purged offensive exploit skills (568ebb08e)
-  - connected Opus R002-C legal corpus (OUG 155/2024 & Law 124/2025) with internal and transversal EU/RO legal synapses
-  - bridged Opus NIS2 to DORA, GDPR, AI Act, HG 585/2002, and Ordinul M.172/2021
-  - expanded 08 Memory Subsystems Map and 5 specialized memory MOCs
-  - established bidirectional links for all 394 policy-lesson and 171 test memory notes
-  - eliminated 617 orphan notes across vault, reducing total orphans from 656 to 39
-  - configured Obsidian graph visualization color groups in .obsidian/graph.json
-  - verified 1158 tests passing cleanly (0 failures)
+  - executed r007 reviewed edge promotion audit: 50-sample evaluation (18% precision) triggered honest stop condition, hardened edge_proposer noise filters, added 6 regression tests (e804c6de0)
+  - executed r008 canonical file naming: renamed all 81 generic readmes across 4 spine roots via git mv, created 71 index stubs, repointed 221 inbound wikilinks, verified 0 collisions, expanded runtime edges 301 -> 314 (abf71c744, b58f43c82, ca9b7e72d, 76ded67dc, ef286eb8f)
+  - verified full pytest suite: 1180 passed, 3 skipped, 0 failed; LAYOUT_STATUS=PASS
 in_progress: []
 next_actions:
-  - review Obsidian graph view in UI
+  - push r007 and r008 branches or prepare pull request per coordinator directives
 blockers: []
 risks:
   - book/source content is untrusted data, never agent authority
