@@ -108,3 +108,60 @@ def test_the_preference_recording_this_rule_exists():
     text = pref.read_text(encoding="utf-8")
     assert "lifecycle: REVIEW" in text, "a preference does not promote itself"
     assert "## Still open" in text
+
+
+# --- intent scaffolding ----------------------------------------------------
+
+PROCEDURE = REPO / "10_DOCUMENTATION" / "procedures" / "Compiling_A_Request_Into_A_Brief.md"
+
+
+@pytest.mark.parametrize("intent", ["implement", "verify", "measure", "fix", "migrate"])
+def test_every_intent_produces_its_own_requirements(intent):
+    """The kind of work determines what the brief must contain. A measurement
+    brief without a stop condition, or a migration without a recovery path, is
+    how briefs fail — each entry here was paid for once already."""
+    text = compiler.compile_prompt("do the thing", "rX/y", "AGENT", intent)
+    spec = compiler.INTENTS[intent]
+    for requirement in spec["requirements"]:
+        assert requirement in text, f"{intent}: requirement missing from the brief"
+    for prohibition in spec["forbidden"]:
+        assert prohibition in text, f"{intent}: prohibition missing from the brief"
+
+
+def test_a_measurement_brief_demands_a_stop_condition():
+    """The first graph measurement compared a baseline against itself because
+    the treatment arm degraded silently. A measure brief must forbid that."""
+    text = compiler.compile_prompt("does X help", "rX/y", "AGENT", "measure")
+    assert "STOP CONDITION" in text
+    assert "fail loudly" in text
+    assert "statement about nothing" in text
+
+
+def test_a_migration_brief_demands_a_recovery_path():
+    text = compiler.compile_prompt("delete the old branches", "rX/y", "AGENT", "migrate")
+    assert "recovery path" in text
+    assert "before the first destructive operation" in text
+
+
+def test_a_verify_brief_warns_about_the_shim():
+    """An external audit concluded a component did not exist after grepping a
+    19-line shim. Every verify brief carries that trap."""
+    text = compiler.compile_prompt("is X wired", "rX/y", "AGENT", "verify")
+    assert "shim" in text
+    assert "Run it." in text
+
+
+def test_an_unknown_intent_is_refused_not_guessed():
+    with pytest.raises(SystemExit):
+        compiler.compile_prompt("do something", "rX/y", "AGENT", "improvise")
+
+
+def test_the_compiling_procedure_exists_and_keeps_its_worked_examples():
+    """The examples are the transferable part: an agent that has never seen
+    this repository learns which kind a request is from them."""
+    assert PROCEDURE.exists()
+    text = PROCEDURE.read_text(encoding="utf-8")
+    for kind in ("implement", "verify", "measure", "fix", "migrate"):
+        assert f"`{kind}`" in text, f"the kind table lost {kind}"
+    assert "Worked examples" in text
+    assert "Still open" in text, "the procedure must state what it does not solve"

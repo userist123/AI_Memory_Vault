@@ -108,6 +108,120 @@ def standing_traps() -> list[str]:
     ]
 
 
+
+#: What kind of work is being asked for, and what a brief of that kind must
+#: contain to be honest.
+#:
+#: This is the part that used to live only in the head of whoever wrote the
+#: brief. Each entry was paid for: an experiment without a stop condition
+#: reported a comparison of a baseline against itself; a migration without a
+#: recovery path deleted 63 branches before anyone asked whether the work was
+#: recoverable; a verification that trusted a commit message concluded a
+#: component was wired when it was not.
+INTENTS: dict[str, dict[str, object]] = {
+    "implement": {
+        "summary": "Build or change behaviour.",
+        "requirements": [
+            "Every new or changed behaviour carries a test that would fail if the "
+            "change were wrong.",
+            "Nothing is promoted past REVIEW on your own authority.",
+            "Preserve existing valid behaviour; legacy error text stays byte-identical "
+            "where callers assert on it.",
+        ],
+        "forbidden": [
+            "Do not widen a policy, threshold or allowlist as a side effect of making "
+            "something work.",
+            "Do not add a compatibility bypass around a gate. Being more restrictive is "
+            "allowed; being less is not.",
+        ],
+        "deliverables": ["Implementation.", "Regression tests.", "Call-path proof that no gate is bypassed."],
+    },
+    "verify": {
+        "summary": "Establish whether a claim about the system is true.",
+        "requirements": [
+            "Resolve the symbol you actually import before concluding anything about a "
+            "module; `memory_controller/` is a shim and grepping it proves nothing.",
+            "A commit message, a file name and a docstring are not evidence. Run it.",
+            "Report what you could NOT verify as unverified, rather than omitting it.",
+        ],
+        "forbidden": [
+            "Do not conclude absence from an empty search without stating what the "
+            "search covered.",
+            "Do not repair what you are auditing in the same pass; findings first.",
+        ],
+        "deliverables": ["Findings with the evidence for each.", "What remains unverified, and why."],
+    },
+    "measure": {
+        "summary": "Determine whether a change actually helps.",
+        "requirements": [
+            "Two arms, identical in everything but the variable under test, on the same "
+            "corpus, filters and principal.",
+            "The treatment arm must fail loudly when it cannot actually run. A silent "
+            "fallback makes it identical to the baseline and turns 'no significant "
+            "difference' into a statement about nothing.",
+            "A pre-registered threshold, and a STOP CONDITION stated before running.",
+            "Report n, and report a population that is too small as too small.",
+        ],
+        "forbidden": [
+            "Do not modify the benchmark, its threshold or its frozen set to obtain a "
+            "result. If a gate blocks the work, report it blocked.",
+            "Do not tune against the held-out set.",
+            "Do not pool populations that differ. Graph results describe the connected "
+            "subset, not the corpus.",
+        ],
+        "deliverables": [
+            "Measurement with n, per class, both arms.",
+            "The stop-condition decision, including a NO-GO if that is the answer.",
+            "A recommendation, which may be to leave the change disabled.",
+        ],
+    },
+    "fix": {
+        "summary": "Repair a defect.",
+        "requirements": [
+            "Reproduce it first. A fix without a reproduction is a guess.",
+            "The test must fail before the fix and pass after.",
+            "Enumerate what the fix makes newly reachable — repairing a read path can arm "
+            "a destructive write path.",
+        ],
+        "forbidden": [
+            "Do not fix the symptom the test asserts while leaving the cause.",
+            "Do not weaken a guard to stop it firing; establish why it fires.",
+        ],
+        "deliverables": ["The reproduction.", "The fix.", "What the fix newly exposes."],
+    },
+    "migrate": {
+        "summary": "Move, rename or delete existing material.",
+        "requirements": [
+            "A recovery path before the first destructive operation, verified to work.",
+            "Ids are stable across the move; only location changes.",
+            "Inbound references are repointed, and any that cannot be resolved are listed "
+            "rather than guessed.",
+        ],
+        "forbidden": [
+            "Do not delete anything whose content you have not confirmed exists elsewhere.",
+            "Do not treat an empty search as proof that nothing references the target.",
+        ],
+        "deliverables": [
+            "The recovery mechanism, with proof it covers every affected item.",
+            "The mapping, old to new.",
+            "What was left unresolved.",
+        ],
+    },
+}
+
+
+def intent_block(intent: str) -> tuple[str, str, str]:
+    """Requirements, forbidden and deliverables for a kind of work."""
+    spec = INTENTS.get(intent)
+    if spec is None:
+        known = ", ".join(sorted(INTENTS))
+        raise SystemExit(f"unknown intent {intent!r}; known: {known}")
+    req = "\n".join(f"{i}. {r}" for i, r in enumerate(spec["requirements"], start=1))
+    forb = "\n".join(f"- {f}" for f in spec["forbidden"])
+    deliv = "\n".join(f"{i}. {d}" for i, d in enumerate(spec["deliverables"], start=1))
+    return req, forb, deliv
+
+
 TEMPLATE = """Repository: https://github.com/userist123/AI_Memory_Vault_CODEX_READY
 Base: current main ({head})
 Create: {branch}
@@ -125,20 +239,19 @@ they disagree.
 
 {task}
 
-## Requirements
+## Requirements — {intent_name}
 
-1. TODO — state each requirement so that it can be checked, not interpreted.
-2. Zero regression against the stated baseline. Any deviation is explained
-   commit by commit.
-3. Every new or changed behaviour carries a test that would fail if the change
-   were wrong.
+{requirements}
+{n_plus_one}. Zero regression against the stated baseline. Any deviation is
+   explained commit by commit.
+{n_plus_two}. TODO — anything specific to this task that the kind alone does not cover.
 
 ## Forbidden
 
+{forbidden}
 - Do not modify a benchmark, threshold or gate to make a result pass. If a gate
   blocks the work, report it blocked.
-- Do not promote anything past `REVIEW` on your own authority.
-- TODO — name what is out of scope for this task specifically.
+- TODO — anything out of scope for this task specifically.
 
 ## Methods already recorded — read before diagnosing
 
@@ -165,10 +278,9 @@ run the suite in both, and diff the FAILED name sets:
 
 ## Deliverables
 
-1. Implementation.
-2. Regression tests for every new behaviour.
-3. Measurement against the baseline, reported as numbers with an n.
-4. Remaining gaps, stated as gaps.
+{deliverables}
+{d_plus_one}. Measurement against the baseline, reported as numbers with an n.
+{d_plus_two}. Remaining gaps, stated as gaps.
 
 ## Acceptance — a task is finished when all five hold
 
@@ -185,16 +297,23 @@ remainder named.
 """
 
 
-def compile_prompt(task: str, branch: str, owner: str) -> str:
+def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement") -> str:
     state = "\n".join(f"- {k}: {v}" for k, v in measured_state().items())
     methods = "\n".join(f"- `{p}` — {t}" for p, t in recorded_methods()) or "- none recorded yet"
     traps = "\n".join(f"- {t}" for t in standing_traps())
     skills = "\n".join(
         f"- `{c}`" for c in SKILL_CATALOGUES if (REPO / c).exists()
     ) or "- no skill catalogue found in the indexed roots"
+    requirements, forbidden, deliverables = intent_block(intent)
+    n_req = len(INTENTS[intent]["requirements"])
+    n_del = len(INTENTS[intent]["deliverables"])
     return TEMPLATE.format(
         head=head(), branch=branch, owner=owner, task=task.strip(),
         state=state, methods=methods, traps=traps, skills=skills,
+        intent_name=INTENTS[intent]["summary"], requirements=requirements,
+        forbidden=forbidden, deliverables=deliverables,
+        n_plus_one=n_req + 1, n_plus_two=n_req + 2,
+        d_plus_one=n_del + 1, d_plus_two=n_del + 2,
     )
 
 
@@ -203,10 +322,14 @@ def main() -> int:
     ap.add_argument("--task", required=True, help="what must be achieved, in English")
     ap.add_argument("--branch", default="rXXX/describe-the-work")
     ap.add_argument("--owner", default="TBD")
+    ap.add_argument(
+        "--intent", default="implement", choices=sorted(INTENTS),
+        help="what kind of work this is; selects the mandatory requirements",
+    )
     ap.add_argument("--out", help="write here instead of stdout")
     args = ap.parse_args()
 
-    text = compile_prompt(args.task, args.branch, args.owner)
+    text = compile_prompt(args.task, args.branch, args.owner, args.intent)
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8", newline="\n")
         print(f"written to {args.out}")

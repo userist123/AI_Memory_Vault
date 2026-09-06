@@ -139,7 +139,13 @@ methods, the standing traps, and the definition of finished — so no handoff
 starts from a blank page or from figures copied out of a document that may have
 rotted.
 
-    python 30_SCRIPTS/prompt/compile_task_prompt.py         --task "..." --branch "rXXX/name" --owner "AGENT"
+    python 30_SCRIPTS/prompt/compile_task_prompt.py --intent <kind>         --task "..." --branch "rXXX/name" --owner "AGENT"
+
+The kind decides what the brief must contain: `implement`, `verify`, `measure`,
+`fix` or `migrate`. A measurement brief carries a stop condition and a
+fail-loud treatment arm; a migration brief carries a proven recovery path. See
+`10_DOCUMENTATION/procedures/Compiling_A_Request_Into_A_Brief.md`, which holds
+the worked examples of turning a one-line request into one of these.
 
 Task, requirements and forbidden are left as `TODO`: they need the sender's
 judgement. A brief shipped with `TODO` still in it is unfinished.
