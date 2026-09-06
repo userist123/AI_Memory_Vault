@@ -135,7 +135,70 @@ SPURIOUS_ENTITIES = frozenset({
     "source_type", "original_path", "source_ref", "security", "unknown", "confirmed",
     "rfc", "aa", "ac", "dr", "tl", "ci", "mve", "end", "file_engine", "admin",
     "memory", "raw", "verification", "approval", "human", "claude_original", "perplexity_original",
+    # Second hardening round. Each of these was observed joining two unrelated
+    # notes in a hand-verified sample.
+    # Generic English/code tokens the entity regex admits as acronyms:
+    "and", "get", "set", "exists", "model", "real", "fail", "http", "https",
+    "none", "important", "strict", "control", "true", "false", "null", "type",
+    # Document boilerplate shared by every note carrying a legal header:
+    "avertisment", "capitolul", "cee", "celex", "conformitate",
+    "detaliidocument", "disclaimer", "instruction_trust", "juridic", "iii",
+    # Framework/stack names. Two notes sharing a UI toolkit are not topically
+    # related: WPF joined a military transfer register to a forensics tool.
+    "wpf", "mvvm", "httpclient", "textbox", "mainwindow", "rest", "cli",
+    # Third round. Romanian legal-document furniture: every act published in
+    # Monitorul Oficial carries these, so they joined MiCA to a military order.
+    "consiliul", "consiliului", "european", "europene", "eur", "parlamentul",
+    "monitorul", "oficial", "emitent", "anexa", "lista", "regim", "finale",
+    "care", "pentru", "din", "sau", "prin", "asupra", "autorizarea",
+    "requires_legal_review", "verified_source", "url", "knowledge",
 })
+
+#: Runs of underscores and similar rules used as visual separators in legal
+#: documents are matched as entities and joined two unrelated acts.
+FILLER_RE = re.compile(r"^[_=.\-\s]+$")
+
+#: Dates and CELEX-style numerics leak in as entities and tie unrelated EU
+#: regulations together purely by their citation headers.
+DATE_LIKE_RE = re.compile(r"^\d{1,2}\.\d{1,2}\.\d{4}$|^\d{4}$")
+
+# Notes that are session dumps or transient agent scratchpads rather than
+# durable knowledge. Measured on the r007 sample, these accounted for 37% of
+# proposals and were judged FALSE in every case a human reviewed: takeover
+# packages and implementation plans share large volumes of internal system
+# vocabulary with each other, and CURRENT.md files change hourly, so any edge
+# to one is stale before it is reviewed.
+EPHEMERAL_PATH_MARKERS = (
+    "/Artifacts/", "\\Artifacts\\",
+    "CURRENT.md", "STATUS_SNAPSHOT", "Continuity_Handoff",
+    "walkthrough", "implementation_plan", "prompt_draft", "phase3_readiness",
+    "TAKEOVER",
+)
+
+#: A pair must share at least one entity this rare. Summed IDF alone is not
+#: enough: six entities at DF=19 sum past the normalizer and saturate the
+#: score at 1.0, so six mediocre matches score exactly like one precise one.
+#: Requiring a rare hook is what separates "both notes mention infosec and
+#: disclaimer" from "both notes are about MT5 trading bots".
+RARE_ENTITY_DF_MAX = 5
+
+#: Minimum normalised overlap between two notes' entity sets, as the geometric
+#: mean of |shared|/|A| and |shared|/|B|.
+#:
+#: The pair score is a sum of IDF divided by a CONSTANT, so it never accounted
+#: for document length. Entity counts in this vault run from a median of 3 to
+#: 1079 (Master_Skills_Catalog_251), and that one note appeared in 7 of 25
+#: sampled proposals, judged wrong in 6: a note listing a thousand entities
+#: shares some with everything. Six shared entities mean something different
+#: for a 20-entity note than for a 1000-entity catalogue, and the geometric
+#: mean separates the two — 0.30 versus 0.04 in that exact case.
+MIN_OVERLAP_COVERAGE = 0.10
+
+
+def _is_ephemeral(note) -> bool:
+    path = str(getattr(note, "path", ""))
+    return any(marker in path for marker in EPHEMERAL_PATH_MARKERS)
+
 
 FORBIDDEN_HUBS = frozenset({
     "Knowledge Graph Home", "08 Memory Subsystems Map", "00 Core Map", "02 Memory Knowledge Map",
@@ -151,6 +214,8 @@ def build_entity_df(index: VaultIndex) -> Tuple[Dict[str, set], Counter]:
             e.lower()
             for e in (entities(note.text) | set(note.tags))
             if e.lower() not in SPURIOUS_ENTITIES and len(e) > 2
+            and not DATE_LIKE_RE.match(e)
+            and not FILLER_RE.match(e)
         }
         ent_by_note[note.id] = ents
         df.update(ents)
@@ -220,6 +285,18 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
             na.path.stem in FORBIDDEN_HUBS or nb.path.stem in FORBIDDEN_HUBS):
             continue
         if len(pair_shared[(a, b)]) < MIN_SHARED_ENTITIES:
+            continue
+        if _is_ephemeral(na) or _is_ephemeral(nb):
+            continue
+        # At least one shared entity must be genuinely rare.
+        if min(df[e] for e in pair_shared[(a, b)]) > RARE_ENTITY_DF_MAX:
+            continue
+        n_shared = len(pair_shared[(a, b)])
+        size_a, size_b = len(ent_by_note.get(a, ())), len(ent_by_note.get(b, ()))
+        if not size_a or not size_b:
+            continue
+        coverage = math.sqrt((n_shared / size_a) * (n_shared / size_b))
+        if coverage < MIN_OVERLAP_COVERAGE:
             continue
         score = min(1.0, raw / norm)
         if score < MIN_SCORE:
