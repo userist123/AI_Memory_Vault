@@ -1,0 +1,301 @@
+{
+  "total_queries": 10,
+  "mean_baseline_p5": 0.0,
+  "mean_attention_p5": 0.0,
+  "delta_p5": 0.0,
+  "mean_baseline_mrr": 0.0,
+  "mean_attention_mrr": 0.0,
+  "delta_mrr": 0.0,
+  "queries_reordered": 5,
+  "details": [
+    {
+      "id": "D01",
+      "class": "exact_identifier_lookup",
+      "query": "What is MAX_SYNTHESIS_INPUT?",
+      "gold_ids": [
+        "note_agents_contract"
+      ],
+      "baseline_ids": [
+        "knw-agent-memory-trace-protocol-0001",
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "attention_ids": [
+        "knw-agent-memory-trace-protocol-0001",
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": false,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D02",
+      "class": "exact_identifier_lookup",
+      "query": "What is the SQLite busy timeout value?",
+      "gold_ids": [
+        "note_vault_cognitive_rules"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-temporal-memory-p2-0001"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-temporal-memory-p2-0001"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": false,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D03",
+      "class": "paraphrase",
+      "query": "How large may the synthesizer's incoming token budget be?",
+      "gold_ids": [
+        "note_agents_contract"
+      ],
+      "baseline_ids": [
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "cat-skills-251-master",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": true,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D04",
+      "class": "paraphrase",
+      "query": "Who is allowed to certify a memory as verified?",
+      "gold_ids": [
+        "note_vault_cognitive_rules"
+      ],
+      "baseline_ids": [],
+      "attention_ids": [],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": false,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 2
+    },
+    {
+      "id": "D05",
+      "class": "synonym_substitution",
+      "query": "What ceiling is placed on the lead synthesis input allowance?",
+      "gold_ids": [
+        "note_agents_contract"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "7424d260-4f88-4114-b117-67af0795b8f4",
+        "knw-memory-usage-audit-principles-0001",
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "knw-memory-usage-audit-principles-0001",
+        "knw-agent-memory-trace-protocol-0001",
+        "knw-retrieval-bottleneck-p0-0001",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": true,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D06",
+      "class": "synonym_substitution",
+      "query": "What is the mandated contention wait duration for SQLite?",
+      "gold_ids": [
+        "note_vault_cognitive_rules"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": false,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D07",
+      "class": "lexical_trap",
+      "query": "The vault mentions synthesis, context, and process outcomes. Which token cap belongs to synthesis input?",
+      "gold_ids": [
+        "note_agents_contract"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": true,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D08",
+      "class": "lexical_trap",
+      "query": "The documents discuss transactions and agent contracts. Which timeout number is required by the storage rule?",
+      "gold_ids": [
+        "note_vault_cognitive_rules"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "2da34064-52c2-487d-b6fa-fe172b7215c4",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "2da34064-52c2-487d-b6fa-fe172b7215c4"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": true,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 1
+    },
+    {
+      "id": "D09",
+      "class": "cross_cluster_multihop",
+      "query": "How do provenance immutability and human attestation combine to prevent an AI agent from self-certifying memory?",
+      "gold_ids": [
+        "note_agents_contract",
+        "note_vault_cognitive_rules"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": true,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 3
+    },
+    {
+      "id": "D10",
+      "class": "cross_cluster_multihop",
+      "query": "How are specialist summaries bounded before synthesis, and what council input ceiling is imposed?",
+      "gold_ids": [
+        "note_agents_contract"
+      ],
+      "baseline_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "attention_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "baseline_p5": 0.0,
+      "attention_p5": 0.0,
+      "baseline_mrr": 0.0,
+      "attention_mrr": 0.0,
+      "order_changed": false,
+      "base_facts_found": 0,
+      "att_facts_found": 0,
+      "total_facts": 3
+    }
+  ]
+}

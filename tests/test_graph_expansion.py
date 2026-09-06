@@ -527,10 +527,11 @@ def test_fail_closed_zero_edges_explicit_marker():
 # 12. Determinism and Pagination Stability
 # ---------------------------------------------------------------------------
 
-def test_determinism_and_pagination_stability():
+def test_determinism_and_pagination_stability(monkeypatch):
     """Requirement 4: Stable total ordering, deterministic results across runs,
     and stable pagination across pages.
     """
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", "test_hmac_secret_for_eval_harness_32bytes_long")
     notes = [
         {"id": f"note_{i:02d}", "type": "knowledge", "lifecycle": "ACTIVE", "content": f"Database index search optimization {i}"}
         for i in range(6)
