@@ -12,7 +12,8 @@ provenance:
 confidence: high
 verification: verified
 relations:
-  - relation: derived_from
+  - target_id: "ae0206df-b0cb-4810-b2a2-cea462600561"
+    type: derived_from
     target: "[[Elite_Quant_Bot]]"
 ---
 

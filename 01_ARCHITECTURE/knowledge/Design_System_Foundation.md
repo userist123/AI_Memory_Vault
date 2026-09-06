@@ -19,12 +19,14 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/UI_UX_Design_Patterns]]"
-    type: related_to
-  - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+  - type: related_to
+    target: "[[01_KNOWLEDGE/UI_UX_Design_Patterns]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a005"
     type: supports
-  - target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
+    target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a002"
     type: related_to
+    target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
 ---
 
 # Fundamentele Sistemelor de Design (Design Tokens & Ierarhie Vizuală)

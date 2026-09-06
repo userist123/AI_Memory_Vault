@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: supports
+  - target_id: "00b606ec-9dda-4a8f-a797-73de0f22a025"
+    type: supports
     target: "[[Integrity Check]]"
 ---
 

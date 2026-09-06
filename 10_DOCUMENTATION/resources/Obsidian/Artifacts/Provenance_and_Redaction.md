@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: implements
+  - target_id: "5a663b4a-2873-48ce-9808-e4da671434ba"
+    type: implements
     target: "[[Storage Conventions]]"
 ---
 

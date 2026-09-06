@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: implements
+  - target_id: "54b48919-d58a-4502-a20f-2717b022d375"
+    type: implements
     target: "[[Memory Protocol]]"
 ---
 

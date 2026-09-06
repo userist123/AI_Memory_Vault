@@ -12,9 +12,11 @@ provenance:
 confidence: high
 verification: verified
 relations:
-  - relation: implements
+  - target_id: "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+    type: implements
     target: "[[XAU_Kinetic_Clean_Architecture]]"
-  - relation: depends_on
+  - target_id: "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+    type: depends_on
     target: "[[Deploy_XAU_Kinetic_Quant_Bot]]"
 ---
 

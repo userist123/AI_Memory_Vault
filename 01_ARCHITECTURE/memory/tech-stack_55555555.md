@@ -12,11 +12,12 @@ updated: '2026-08-09'
 confidence: unknown
 verification: unverified
 relations:
-- relation: related_to
-  target: '[[System Tech Stack Overview]]'
-  target_id: 22222222-2222-4222-a222-222222222222
-- relation: derived_from
-  target: '[[LogAnalyzer_MVP]]'
+  - target_id: "22222222-2222-4222-a222-222222222222"
+    target: "[[System Tech Stack Overview]]"
+    relation: related_to
+  - target_id: "5d7b785f-221c-48ba-9e7e-557998c9fefa"
+    type: derived_from
+    target: "[[LogAnalyzer_MVP]]"
 lifecycle: ACTIVE
 provenance:
   source_type: import

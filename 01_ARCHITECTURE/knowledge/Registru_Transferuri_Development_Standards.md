@@ -22,14 +22,18 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:15:00Z
 relations:
-  - target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target_id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
     type: implements
-  - target: "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+    target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target_id: "c1a01101-7291-49fa-9481-22904c10b001"
     type: depends_on
-  - target: "[[03_PROCEDURES/PowerShell_SecOps_Forensic_Standard]]"
+    target: "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - target_id: "c1a01101-7291-49fa-9481-22904c10b003"
     type: related_to
-  - target: "[[01_KNOWLEDGE/Local_AI_Integration_Architecture]]"
+    target: "[[03_PROCEDURES/PowerShell_SecOps_Forensic_Standard]]"
+  - target_id: "c1a01101-7291-49fa-9481-22904c10b002"
     type: supports
+    target: "[[01_KNOWLEDGE/Local_AI_Integration_Architecture]]"
 ---
 
 # Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)

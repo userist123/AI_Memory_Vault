@@ -12,8 +12,12 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - related_to: "[[Memory Protocol]]"
-  - implements: "[[Confidence Model]]"
+  - target_id: "54b48919-d58a-4502-a20f-2717b022d375"
+    type: related_to
+    target: "[[Memory Protocol]]"
+  - target_id: "3452fafe-8b80-445e-a742-9ceb68662e69"
+    type: implements
+    target: "[[Confidence Model]]"
 ---
 
 # LogAnalyzer DFIR Enterprise — Arhitectura Sistemului Forenzic de Ultimă Generație

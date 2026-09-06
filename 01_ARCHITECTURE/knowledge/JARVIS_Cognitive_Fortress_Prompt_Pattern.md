@@ -11,9 +11,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - relation: relates_to
-    target: 00_CORE/Cognitive_Core
-  - relation: relates_to
+  - target: 00_CORE/Cognitive_Core
+    relation: relates_to
+  - target_id: "llm-antihallucination-techniques"
+    type: relates_to
     target: 01_KNOWLEDGE/LLM_Antihallucination_Techniques_Research
 lifecycle: raw
 ---

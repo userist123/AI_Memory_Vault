@@ -13,7 +13,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: implements
+  - target_id: "89105d0b-9fd8-4037-906f-ed2325a9f1bc"
+    type: implements
     target: "[[Memory Lifecycle]]"
 ---
 

@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: supports
+  - target_id: "ab6867cb-1ac1-4595-88df-18b0efdaf128"
+    type: supports
     target: "[[Canonical Frontmatter]]"
 ---
 

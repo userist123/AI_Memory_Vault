@@ -1,34 +1,30 @@
 {
   "corpus": {
-    "canonical_notes": 865,
-    "all_notes_incl_raw_archived": 905,
+    "canonical_notes": 899,
+    "all_notes_incl_raw_archived": 938,
     "lifecycle_breakdown_canonical": {
+      "NONE": 157,
       "ACTIVE": 79,
-      "REVIEW": 658,
-      "NONE": 124,
+      "REVIEW": 659,
       "NORMALIZED": 4
     }
   },
   "declared_relations_raw_census": {
-    "total_relation_dicts_in_frontmatter": 74,
-    "with_target_id_field": 9,
-    "without_target_id_field_wikilink_style": 65,
+    "total_relation_dicts_in_frontmatter": 143,
+    "with_target_id_field": 140,
+    "without_target_id_field_wikilink_style": 3,
     "with_any_provenance_field": 0,
     "relation_type_distribution": {
-      "related_to": 21,
-      "implements": 21,
+      "related_to": 91,
+      "implements": 22,
       "supports": 10,
       "derived_from": 7,
       "depends_on": 7,
       "relates_to": 4,
-      "bare_key:related_to": 1,
-      "bare_key:implements": 1,
       "bare_key:target_id": 1,
       "refines": 1
     },
     "declared_relation_types_not_in_synapsestore_vocabulary": [
-      "bare_key:implements",
-      "bare_key:related_to",
       "bare_key:target_id",
       "derived_from",
       "implements",
@@ -38,61 +34,61 @@
     ]
   },
   "synapsestore_from_index_result": {
-    "total_edges_incl_mirrors_and_fixture": 18,
-    "fixture_edges_excluded": 2,
-    "real_edges_incl_mirrors": 16,
-    "real_forward_declared_edges": 8,
+    "total_edges_incl_mirrors_and_fixture": 411,
+    "fixture_edges_excluded": 4,
+    "real_edges_incl_mirrors": 407,
+    "real_forward_declared_edges": 126,
     "rejected_on_load": [],
-    "distinct_nodes_touched_by_real_edges": 10,
-    "total_nodes_in_corpus": 905,
+    "distinct_nodes_touched_by_real_edges": 158,
+    "total_nodes_in_corpus": 938,
     "in_degree_top5": [
       [
-        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
-        5
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        17
       ],
       [
-        "22222222-2222-4222-a222-222222222222",
-        3
+        "path:C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/00_GOVERNANCE/Governance_Repository_Spine_Specification.md",
+        15
       ],
       [
-        "00ac0842-2c43-4a9d-a579-a83bfa271995",
-        1
+        "ab6867cb-1ac1-4595-88df-18b0efdaf128",
+        14
       ],
       [
-        "01948766-0019-45b6-bbd6-c3df9020feae",
-        1
+        "89105d0b-9fd8-4037-906f-ed2325a9f1bc",
+        13
       ],
       [
-        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
-        1
+        "27f72d97-a5f0-4217-beb8-279cd5930b5c",
+        12
       ]
     ],
     "out_degree_top5": [
       [
-        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
-        5
+        "path:C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_ARCHITECTURE/knowledge/legal/Legal_Corpus_Depozit_Normativ_Manifest.md",
+        26
       ],
       [
-        "22222222-2222-4222-a222-222222222222",
-        3
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        9
       ],
       [
-        "00ac0842-2c43-4a9d-a579-a83bfa271995",
-        1
+        "c754b481-44a2-4e2f-9cb2-0be36aebb498",
+        8
       ],
       [
-        "01948766-0019-45b6-bbd6-c3df9020feae",
-        1
+        "cf43a9fa-d0a0-4658-9dc0-ff9dac4cdfb9",
+        8
       ],
       [
-        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
-        1
+        "b4e88f21-7291-49fa-9481-22904c10a005",
+        7
       ]
     ]
   },
   "stop_condition": {
     "threshold": 100,
-    "real_dual_resolvable_non_fixture_edges": 8,
-    "go_decision": false
+    "real_dual_resolvable_non_fixture_edges": 126,
+    "go_decision": true
   }
 }

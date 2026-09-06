@@ -19,8 +19,9 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[02_PROJECTS/Elite_Quant_Bot]]"
+  - target_id: "ae0206df-b0cb-4810-b2a2-cea462600561"
     type: implements
+    target: "[[02_PROJECTS/Elite_Quant_Bot]]"
 ---
 
 # Arhitectura Sistemelor de Tranzacționare Algoritmică în Python (MT5 & Risc)

@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: refines
+  - target_id: "976d88c1-8f9b-4f8b-a15d-15a7f59266af"
+    type: refines
     target: "[[Knowledge Graph Schema]]"
 ---
 

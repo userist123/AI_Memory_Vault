@@ -19,12 +19,15 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:20:00Z
 relations:
-  - target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target_id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
     type: implements
-  - target: "[[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]]"
+    target: "[[02_PROJECTS/Registru_de_transferuri]]"
+  - target_id: "c1a01101-7291-49fa-9481-22904c10c001"
     type: depends_on
-  - target: "[[01_KNOWLEDGE/Registru_Multi_Agent_Contracts]]"
+    target: "[[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]]"
+  - target_id: "c1a01101-7291-49fa-9481-22904c10d001"
     type: related_to
+    target: "[[01_KNOWLEDGE/Registru_Multi_Agent_Contracts]]"
 ---
 
 # Procedură: Workflow Remodelare UI „Obsidian Tactical Command" (/remodelUI)

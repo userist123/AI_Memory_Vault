@@ -8,11 +8,14 @@ document_kind: policy
 document_status: active
 provenance_status: complete
 relations:
-  - relation: related_to
+  - target_id: "54b48919-d58a-4502-a20f-2717b022d375"
+    type: related_to
     target: "[[Memory Protocol]]"
-  - relation: related_to
+  - target_id: "3452fafe-8b80-445e-a742-9ceb68662e69"
+    type: related_to
     target: "[[Confidence Model]]"
-  - relation: related_to
+  - target_id: "657bc77b-6305-4343-af51-b1e82a062a21"
+    type: related_to
     target: "[[AI Operating Protocol]]"
 policy_scope: vault-governance
 ---

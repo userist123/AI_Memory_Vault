@@ -19,12 +19,15 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a001"
     type: related_to
-  - target: "[[01_KNOWLEDGE/Motion_Design_Principles]]"
+    target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a003"
     type: related_to
-  - target: "[[02_PROJECTS/FinScope]]"
+    target: "[[01_KNOWLEDGE/Motion_Design_Principles]]"
+  - target_id: "finscope-project-core"
     type: implements
+    target: "[[02_PROJECTS/FinScope]]"
 ---
 
 # Standarde de Vizualizare a Datelor (Data Viz & KPI Engineering)

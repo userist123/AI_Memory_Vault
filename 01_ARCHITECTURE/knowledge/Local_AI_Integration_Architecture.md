@@ -19,10 +19,12 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[00_CORE/Confidence_Model]]"
+  - target_id: "05445a6e-9a72-463c-a1a2-c25df9ed0cc1"
     type: supports
-  - target: "[[00_CORE/Rules]]"
+    target: "[[00_CORE/Confidence_Model]]"
+  - target_id: "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
     type: implements
+    target: "[[00_CORE/Rules]]"
 ---
 
 # Integrarea Modelelor AI Locale (Ollama & Securitate la Nivel de Client)

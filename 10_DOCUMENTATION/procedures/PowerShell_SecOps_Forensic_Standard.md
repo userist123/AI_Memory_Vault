@@ -19,10 +19,12 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - target_id: "b492d001-c841-4e12-b5e1-8890471b8991"
     type: implements
-  - target: "[[00_CORE/Rules]]"
+    target: "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - target_id: "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
     type: supports
+    target: "[[00_CORE/Rules]]"
 ---
 
 # Procedură Operațională: PowerShell SecOps, Colectare Forensic și Audit INFOSEC

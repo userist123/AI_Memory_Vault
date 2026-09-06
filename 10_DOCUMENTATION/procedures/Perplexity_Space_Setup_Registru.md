@@ -18,10 +18,12 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:20:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Registru_Multi_Agent_Contracts]]"
+  - target_id: "c1a01101-7291-49fa-9481-22904c10d001"
     type: related_to
-  - target: "[[02_PROJECTS/Registru_de_transferuri]]"
+    target: "[[01_KNOWLEDGE/Registru_Multi_Agent_Contracts]]"
+  - target_id: "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
     type: supports
+    target: "[[02_PROJECTS/Registru_de_transferuri]]"
 ---
 
 # Procedură: Configurare Perplexity Space pentru Research — Registru de Transferuri

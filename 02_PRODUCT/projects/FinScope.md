@@ -12,8 +12,9 @@ provenance:
 confidence: "high"
 verification: "verified"
 relations:
-  - target: "00_CORE/Identity.md"
-    relation: "related_to"
+  - target_id: "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+    type: related_to
+    target: 00_CORE/Identity.md
 ---
 
 # Project: FinScope

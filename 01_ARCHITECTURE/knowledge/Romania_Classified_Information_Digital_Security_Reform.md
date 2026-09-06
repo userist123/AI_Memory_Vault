@@ -11,7 +11,8 @@ provenance:
 confidence: medium
 verification: unverified
 relations:
-  - relation: relates_to
+  - target_id: "jarvis-cognitive-fortress-pattern"
+    type: relates_to
     target: 01_KNOWLEDGE/JARVIS_Cognitive_Fortress_Prompt_Pattern
 lifecycle: raw
 ---

@@ -18,10 +18,12 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a001"
     type: supports
-  - target: "[[01_KNOWLEDGE/Landing_Page_Architecture]]"
+    target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a004"
     type: related_to
+    target: "[[01_KNOWLEDGE/Landing_Page_Architecture]]"
 ---
 
 # Ghid de Identitate de Brand și Verbal Identity (Mini Brand Book Standard)

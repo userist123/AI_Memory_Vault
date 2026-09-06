@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - relation: implements
+  - target_id: "4940167c-cc01-4314-82f7-cece152799b1"
+    type: implements
     target: "[[Quality Control]]"
 ---
 

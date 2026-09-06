@@ -19,10 +19,12 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target: "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - target_id: "b492d001-c841-4e12-b5e1-8890471b8991"
     type: implements
-  - target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
+    target: "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
+  - target_id: "b4e88f21-7291-49fa-9481-22904c10a005"
     type: supports
+    target: "[[03_PROCEDURES/UI_UX_Heuristic_Review]]"
 ---
 
 # Dezvoltare Aplicații Desktop C# / .NET WPF (Enterprise & Guvernamental)
