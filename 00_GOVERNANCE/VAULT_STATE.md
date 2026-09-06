@@ -130,7 +130,21 @@ from zero. Four are recorded so far:
 missing a required section, promotes itself past REVIEW, or leaves "Still open"
 unanswered.
 
-## 8. How to update this file
+## 8. Handing work to another agent
+
+Replies to the user are Romanian; everything transmitted to an agent is English
+and complete. `30_SCRIPTS/prompt/compile_task_prompt.py` emits the deterministic
+half of a brief — current commit, live corpus and graph numbers, the recorded
+methods, the standing traps, and the definition of finished — so no handoff
+starts from a blank page or from figures copied out of a document that may have
+rotted.
+
+    python 30_SCRIPTS/prompt/compile_task_prompt.py         --task "..." --branch "rXXX/name" --owner "AGENT"
+
+Task, requirements and forbidden are left as `TODO`: they need the sender's
+judgement. A brief shipped with `TODO` still in it is unfinished.
+
+## 9. How to update this file
 
 Any session that empirically demonstrates a row here has changed must update
 it in the same commit as the change. Not afterwards, not in a follow-up. The

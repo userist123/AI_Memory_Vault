@@ -129,12 +129,18 @@ def test_no_note_promotes_itself(path):
 
 @pytest.mark.parametrize("path", _method_notes(), ids=lambda p: p.stem)
 def test_provenance_distinguishes_measurement_from_opinion(path):
-    """`execution` means it came from running something; `inference` means it
-    did not. Collapsing the two is how an opinion becomes evidence."""
+    """`execution` means it came from running something, `inference` means it
+    did not, `user` means it was stated by the user. Collapsing them is how an
+    opinion becomes evidence.
+
+    `user` was added after this test rejected a preference the user had stated
+    directly. AGENTS.md ranks user-confirmed facts at the top of the epistemic
+    hierarchy, so excluding it was the test being wrong, not the note.
+    """
     prov = _frontmatter(path).get("provenance") or {}
-    assert prov.get("source_type") in {"execution", "inference", "experience"}, (
+    assert prov.get("source_type") in {"execution", "inference", "experience", "user"}, (
         f"{path.name}: provenance.source_type is {prov.get('source_type')!r}; "
-        "a method note must say whether it was measured or reasoned"
+        "a method note must say whether it was measured, reasoned or stated"
     )
     assert prov.get("source_ref"), f"{path.name}: provenance.source_ref is empty"
 
