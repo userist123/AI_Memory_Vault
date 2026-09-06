@@ -12,12 +12,18 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/Identity.md"
-  - "00_CORE/Rules.md"
-  - "00_CORE/Memory_Protocol.md"
-  - "00_CORE/System_Architecture.md"
-  - "01_KNOWLEDGE/Agents_Skill_Matrix.md"
-  - "01_KNOWLEDGE/Master_Skills_Catalog_251.md"
+  - type: related_to
+    target_id: 1bc7f563-35da-4c5e-91cb-9bb789bb28a2
+  - type: related_to
+    target_id: e08b0d08-8527-4ddf-a260-09f5f6f7c499
+  - type: related_to
+    target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-22904c10d010
+  - type: related_to
+    target_id: cat-skills-251-master
 ---
 
 # 🧠 Sinteza Canonică: Creierul Cognitiv AI Perfect (v5.0.0 Architecture)

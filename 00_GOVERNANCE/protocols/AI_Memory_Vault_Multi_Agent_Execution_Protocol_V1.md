@@ -9,9 +9,12 @@ document_status: active
 provenance_status: maintained
 policy_scope: vault-governance
 relations:
-  - "00_CORE/Rules.md"
-  - "00_CORE/Memory_Protocol.md"
-  - "skills/ai-memory-vault/SKILL.md"
+  - type: related_to
+    target_id: e08b0d08-8527-4ddf-a260-09f5f6f7c499
+  - type: related_to
+    target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
+  - type: related_to
+    target_id: path:C:/Users/user/Documents/Codex/r006/00_GOVERNANCE/skills/agent-orchestration/SKILL.md
 ---
 
 # AI Memory Vault — Multi-Agent Execution Protocol V1

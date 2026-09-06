@@ -79,6 +79,13 @@ PRUNE_THRESHOLD = 0.12
 # whatever their computed/base weight would otherwise be.
 WEAK_WEIGHT_FACTOR = 0.5
 
+# A wikilink is human-authored but untyped, so it is weaker evidence than a
+# declared typed relation and starts below DEFAULT_WEIGHT.
+WIKILINK_WEIGHT = 0.2
+# In-degree at which a wikilink target is treated as a navigation hub and
+# dropped. Measured against this vault: 8 targets absorbed 64% of all links.
+HUB_IN_DEGREE_THRESHOLD = 50
+
 
 def normalize_for_propagation(weight: float, max_weight: float = MAX_WEIGHT) -> float:
     """Map a stored [0, MAX_WEIGHT] weight into [0, 1] for callers that need a
@@ -160,10 +167,35 @@ class SynapseStore:
         self._rebuild_adjacency()
 
     @classmethod
-    def from_index(cls, index, symmetric_weak: bool = True) -> "SynapseStore":
+    def from_index(
+        cls,
+        index,
+        symmetric_weak: bool = True,
+        include_wikilinks: bool = True,
+        hub_in_degree: int = HUB_IN_DEGREE_THRESHOLD,
+    ) -> "SynapseStore":
         """Builds from `relations:` declared in notes. Ignores unresolvable
         targets and self-loops (defensively — a note listing itself as its own
-        relation target is dropped, not stored)."""
+        relation target is dropped, not stored).
+
+        With `include_wikilinks=True`, Obsidian `[[wikilinks]]` in note bodies
+        are ingested as a second, weaker edge source (`origin="wikilink"`).
+        This matters because the two representations had diverged: the vault
+        carries thousands of resolvable wikilinks while `relations:` yields
+        single-digit edge counts, so the runtime graph was effectively empty
+        while the Obsidian graph looked dense.
+
+        Navigation hubs are excluded. A note that everything links to (a map
+        of content, an index) carries almost no retrieval signal: activation
+        reaches the hub from any seed and from the hub reaches everything, so
+        such edges connect all-to-all without distinguishing anything. Any
+        target whose wikilink in-degree reaches `hub_in_degree` is dropped as
+        both source and target. Set `hub_in_degree=0` to disable the cut.
+
+        Wikilink edges are directional and are NOT mirrored, unlike declared
+        relations: mirroring them would double an already large edge set and
+        assert a reciprocity the author never wrote.
+        """
         store = cls()
         for note in index.notes:
             for rel in note.relations():
@@ -193,6 +225,39 @@ class SynapseStore:
                         ))
                     except InvalidSynapseError:
                         continue
+
+        if include_wikilinks:
+            resolve = getattr(index, "resolve", None)
+            if callable(resolve):
+                # Pass 1: in-degree, to identify navigation hubs.
+                in_degree: Dict[str, int] = {}
+                resolved: List[Tuple[str, str]] = []
+                for note in index.notes:
+                    for raw in note.wikilinks():
+                        target_note = resolve(raw)
+                        if target_note is None or target_note.id == note.id:
+                            continue
+                        in_degree[target_note.id] = in_degree.get(target_note.id, 0) + 1
+                        resolved.append((note.id, target_note.id))
+                hubs = (
+                    {nid for nid, deg in in_degree.items() if deg >= hub_in_degree}
+                    if hub_in_degree > 0
+                    else set()
+                )
+                # Pass 2: emit, skipping hubs on either end. Sorted for determinism.
+                for source_id, target_id in sorted(set(resolved)):
+                    if source_id in hubs or target_id in hubs:
+                        continue
+                    try:
+                        store.add(Synapse(
+                            source_id=source_id, target_id=target_id,
+                            relation="related_to", weight=WIKILINK_WEIGHT,
+                            origin="wikilink",
+                            updated=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                        ))
+                    except InvalidSynapseError:
+                        continue
+
         store._rebuild_adjacency()
         return store
 

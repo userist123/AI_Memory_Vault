@@ -12,7 +12,8 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/System_Architecture.md"
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
   - "99_SYSTEM/MCP_Memory_Server_Specification.md"
 ---
 

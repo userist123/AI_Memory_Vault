@@ -18,11 +18,16 @@ verification: unverified
 lifecycle: NORMALIZED
 provenance_status: complete
 relations:
-  - "[[Security_Practices]]"
-  - "[[Registru_de_transferuri]]"
-  - "[[Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate]]"
-  - "[[Legislatie_Ordin_M172_2021_Norme_MApN_Informatii_Clasificate]]"
-  - "[[Legislatie_Legea_Cadru_153_2017_Salarizare_Publica]]"
+  - type: related_to
+    target_id: aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e
+  - type: related_to
+    target_id: d2c10cab-0028-44c7-8f9e-a1d3d963c526
+  - type: related_to
+    target_id: knw-leg-hg585-2002-0001
+  - type: related_to
+    target_id: knw-leg-m172-2021-0001
+  - type: related_to
+    target_id: knw-leg-l153-2017-0001
 ---
 
 # HG 585/2002, MS 111/2024, MS 172/191 — Cerinte de Conformitate

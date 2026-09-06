@@ -15,7 +15,8 @@ sha256_hash: "fc5fe1e3b5b7d796071c644ebf8ec7b73d842e84556462eb539c99da316ba4a2"
 legal_status: "normative_external_data"
 legal_compliance_declared: false
 relations:
-  - "[[Index_Regulament_UE_2023_1114_MiCA]]"
+  - type: related_to
+    target_id: idx-leg-eu-mica-2023-1114
 ---
 
 # Regulamentul (UE) 2023/1114 privind Piețele Criptoactivelor (MiCA)

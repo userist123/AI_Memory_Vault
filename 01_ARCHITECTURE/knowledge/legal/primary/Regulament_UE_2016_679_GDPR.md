@@ -15,7 +15,8 @@ sha256_hash: "a78355b04e8d47cea307f7b88c6b340a17a11a9922031b312c7409537d504353"
 legal_status: "normative_external_data"
 legal_compliance_declared: false
 relations:
-  - "[[Index_Regulament_UE_2016_679_GDPR]]"
+  - type: related_to
+    target_id: idx-leg-eu-gdpr-2016-679
 ---
 
 # Regulamentul (UE) 2016/679 privind Protecția Datelor cu Caracter Personal (GDPR)

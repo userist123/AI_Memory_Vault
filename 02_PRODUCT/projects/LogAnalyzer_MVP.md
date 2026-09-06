@@ -12,8 +12,10 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "[[01_KNOWLEDGE/LogAnalyzer_DFIR_Enterprise_Architecture]]"
-  - "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - type: related_to
+    target_id: b492d001-c841-4e12-b5e1-8890471b8991
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-22904c10b001
 ---
 
 # LogAnalyzer DFIR Enterprise (AirGapped & Network Editions)

@@ -12,9 +12,11 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - "01_KNOWLEDGE/Retrieval_Bottleneck_P0_Empirical_Findings.md"
+  - type: related_to
+    target_id: knw-retrieval-bottleneck-p0-0001
   - "evaluation/retrieval_fusion_experiment_spec.md"
-  - "AGENTS.md"
+  - type: related_to
+    target_id: c754b481-44a2-4e2f-9cb2-0be36aebb498
 ---
 
 # Retrieval Hypothesis Registry

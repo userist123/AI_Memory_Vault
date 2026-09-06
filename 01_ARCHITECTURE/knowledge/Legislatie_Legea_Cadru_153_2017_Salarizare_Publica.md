@@ -25,9 +25,12 @@ verification: unverified
 lifecycle: NORMALIZED
 provenance_status: complete
 relations:
-  - "[[Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate]]"
-  - "[[Legislatie_Ordin_M172_2021_Norme_MApN_Informatii_Clasificate]]"
-  - "[[HG585_MS111_Compliance_Requirements]]"
+  - type: related_to
+    target_id: knw-leg-hg585-2002-0001
+  - type: related_to
+    target_id: knw-leg-m172-2021-0001
+  - type: related_to
+    target_id: 99522c1a-b212-4571-b4d8-7dbbba2a3462
 ---
 
 # Legea-cadru nr. 153/2017 privind Salarizarea Personalului Plătit din Fonduri Publice

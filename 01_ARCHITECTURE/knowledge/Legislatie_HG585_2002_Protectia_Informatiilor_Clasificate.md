@@ -25,11 +25,16 @@ verification: unverified
 lifecycle: NORMALIZED
 provenance_status: complete
 relations:
-  - "[[Legislatie_Ordin_M172_2021_Norme_MApN_Informatii_Clasificate]]"
-  - "[[Legislatie_Legea_Cadru_153_2017_Salarizare_Publica]]"
-  - "[[HG585_MS111_Compliance_Requirements]]"
-  - "[[Romania_Classified_Information_Digital_Security_Reform]]"
-  - "[[Security_Practices]]"
+  - type: related_to
+    target_id: knw-leg-m172-2021-0001
+  - type: related_to
+    target_id: knw-leg-l153-2017-0001
+  - type: related_to
+    target_id: 99522c1a-b212-4571-b4d8-7dbbba2a3462
+  - type: related_to
+    target_id: romania-classified-information-digital-security-reform
+  - type: related_to
+    target_id: aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e
 ---
 
 # Hotărârea Guvernului nr. 585/2002 — Standardele Naționale de Protecție a Informațiilor Clasificate în România

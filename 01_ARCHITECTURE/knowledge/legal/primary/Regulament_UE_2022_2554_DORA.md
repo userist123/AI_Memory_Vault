@@ -15,7 +15,8 @@ sha256_hash: "2534be7a2e47429f681128ded1fa2e1aa2a279e443965be7d46c3d16006d621d"
 legal_status: "normative_external_data"
 legal_compliance_declared: false
 relations:
-  - "[[Index_Regulament_UE_2022_2554_DORA]]"
+  - type: related_to
+    target_id: idx-leg-eu-dora-2022-2554
 ---
 
 # Regulamentul (UE) 2022/2554 privind Reziliența Operațională Digitală a Sectorului Financiar (DORA)

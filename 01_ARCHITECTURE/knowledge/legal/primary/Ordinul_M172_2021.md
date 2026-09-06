@@ -15,7 +15,8 @@ sha256_hash: "07b12390ec65e76722919e5a8fbbdb4d48b7b568d0b609ce9ee7a8f3e4db4702"
 legal_status: "normative_external_data"
 legal_compliance_declared: false
 relations:
-  - "[[Index_Ordinul_M172_2021]]"
+  - type: related_to
+    target_id: idx-leg-ro-mapn-m172-2021
 ---
 
 # Ordinul Ministrului Apărării Naționale nr. M.172/2021 pentru Aprobarea Normelor privind Protecția Informațiilor Clasificate în MApN

@@ -12,10 +12,13 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - "00_CORE/System_Architecture.md"
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
   - "00_CORE/GRAPH/02 Memory Knowledge Map.md"
-  - "01_KNOWLEDGE/2026_AI_Memory_Benchmarks_and_Evaluation.md"
-  - "AGENTS.md"
+  - type: related_to
+    target_id: knw-benchmarks-2026-0001
+  - type: related_to
+    target_id: c754b481-44a2-4e2f-9cb2-0be36aebb498
   - ".agents/rules/vault_cognitive_rules.md"
 ---
 

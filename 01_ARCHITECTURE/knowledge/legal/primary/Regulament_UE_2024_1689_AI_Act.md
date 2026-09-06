@@ -15,7 +15,8 @@ sha256_hash: "60889fce0abc54501fff8d8d48004e4d0171dbedac193cdb27db68c7e57c65c5"
 legal_status: "normative_external_data"
 legal_compliance_declared: false
 relations:
-  - "[[Index_Regulament_UE_2024_1689_AI_Act]]"
+  - type: related_to
+    target_id: idx-leg-eu-aiact-2024-1689
 ---
 
 # Regulamentul (UE) 2024/1689 de Stabilire a Unor Norme Armonizate privind Inteligența Artificială (AI Act)

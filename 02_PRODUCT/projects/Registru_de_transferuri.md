@@ -16,10 +16,14 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - "[[HG585_MS111_Compliance_Requirements]]"
-  - "[[Local_PIN_Auth_And_SQLCipher_Pattern]]"
-  - "[[01_KNOWLEDGE/Registru_Transferuri_Development_Standards]]"
-  - "[[01_KNOWLEDGE/CSharp_WPF_Enterprise_Desktop]]"
+  - type: related_to
+    target_id: 99522c1a-b212-4571-b4d8-7dbbba2a3462
+  - type: related_to
+    target_id: 4c5884fe-f24e-426e-a012-1414dbddae23
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-22904c10c001
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-22904c10b001
 ---
 
 # Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)

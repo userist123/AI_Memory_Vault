@@ -190,6 +190,17 @@ class VaultIndex:
         self.notes = notes
         self.by_id: Dict[str, Note] = {n.id: n for n in notes}
         self.by_title: Dict[str, Note] = {n.title.lower(): n for n in notes}
+        # Obsidian wikilinks reference the FILE NAME, not the note title, and
+        # the two frequently differ (a note's title comes from frontmatter or
+        # its first heading). Without a filename index, `[[08 Memory
+        # Subsystems Map]]` fails to resolve even though the file exists.
+        # First writer wins, so a title match is never shadowed by a stem.
+        self.by_slug: Dict[str, Note] = {}
+        for n in notes:
+            stem = n.path.stem.strip().lower()
+            self.by_slug.setdefault(stem, n)
+            self.by_slug.setdefault(stem.replace("_", " "), n)
+            self.by_slug.setdefault(stem.replace("-", " "), n)
 
     @classmethod
     def load(
@@ -224,7 +235,19 @@ class VaultIndex:
         return cls(notes)
 
     def resolve(self, ref: str) -> Optional[Note]:
-        return self.by_id.get(ref) or self.by_title.get(ref.lower())
+        """Resolve a reference by id, then title, then file name.
+
+        The filename fallback is what makes Obsidian `[[wikilinks]]`
+        resolvable; id and title lookups keep their previous precedence.
+        """
+        if not ref:
+            return None
+        key = ref.strip().lower()
+        return (
+            self.by_id.get(ref)
+            or self.by_title.get(key)
+            or self.by_slug.get(key)
+        )
 
     def __len__(self) -> int:
         return len(self.notes)

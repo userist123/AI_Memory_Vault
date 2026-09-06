@@ -12,8 +12,10 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "00_CORE/Confidence_Model.md"
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - type: related_to
+    target_id: 05445a6e-9a72-463c-a1a2-c25df9ed0cc1
   - "00_CORE/GRAPH/02 Memory Knowledge Map.md"
 ---
 

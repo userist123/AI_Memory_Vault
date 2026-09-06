@@ -15,7 +15,8 @@ sha256_hash: "a4496c504340a2b43a84f4d2ce441e7d093a53d6f2467fb90e2d337bcc8ba716"
 legal_status: "normative_external_data"
 legal_compliance_declared: false
 relations:
-  - "[[Index_Legea_Cadru_153_2017]]"
+  - type: related_to
+    target_id: idx-leg-ro-legea-153-2017
 ---
 
 # Legea-cadru nr. 153/2017 privind Salarizarea Personalului Plătit din Fonduri Publice

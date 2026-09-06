@@ -12,10 +12,14 @@ provenance:
 confidence: very_high
 verification: unverified
 relations:
-  - "00_CORE/System_Architecture.md"
-  - "00_CORE/Memory_Protocol.md"
-  - "01_KNOWLEDGE/Memory_Usage_Audit_Principles.md"
-  - "AGENTS.md"
+  - type: related_to
+    target_id: 330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9
+  - type: related_to
+    target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
+  - type: related_to
+    target_id: knw-memory-usage-audit-principles-0001
+  - type: related_to
+    target_id: c754b481-44a2-4e2f-9cb2-0be36aebb498
 ---
 
 # Agent Memory Trace Emitter Protocol Specification

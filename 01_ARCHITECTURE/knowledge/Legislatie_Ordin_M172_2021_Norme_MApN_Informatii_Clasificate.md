@@ -27,11 +27,16 @@ verification: unverified
 lifecycle: NORMALIZED
 provenance_status: complete
 relations:
-  - "[[Legislatie_HG585_2002_Protectia_Informatiilor_Clasificate]]"
-  - "[[Legislatie_Legea_Cadru_153_2017_Salarizare_Publica]]"
-  - "[[HG585_MS111_Compliance_Requirements]]"
-  - "[[Registru_Transferuri_Development_Standards]]"
-  - "[[Local_PIN_Auth_And_SQLCipher_Pattern]]"
+  - type: related_to
+    target_id: knw-leg-hg585-2002-0001
+  - type: related_to
+    target_id: knw-leg-l153-2017-0001
+  - type: related_to
+    target_id: 99522c1a-b212-4571-b4d8-7dbbba2a3462
+  - type: related_to
+    target_id: c1a01101-7291-49fa-9481-22904c10c001
+  - type: related_to
+    target_id: 4c5884fe-f24e-426e-a012-1414dbddae23
 ---
 
 # Ordinul Ministrului Apărării Naționale nr. M.172/2021 — Normele privind Protecția Informațiilor Clasificate în MApN
