@@ -1,0 +1,7 @@
+# Frozen benchmark artefacts are hashed over canonical LF bytes.
+# Without this, a Windows checkout converts LF to CRLF and the freeze guard
+# fails on content that was never modified — which is exactly what happened
+# to v1 and hid a far larger defect behind a false alarm.
+*.json text eol=lf
+*.txt text eol=lf
+*.md text eol=lf

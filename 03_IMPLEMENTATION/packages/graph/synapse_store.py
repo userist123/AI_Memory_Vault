@@ -1,6 +1,7 @@
 """SynapseStore — P1.2 derived synaptic substrate (owner: claude-code).
 
-Status: EXPERIMENTAL, NOT wired into MemoryController.search(),
+Status: wired into MemoryController.search() since r009, behind the
+`enable_graph_expansion` flag (default off). Previously experimental,
 cognitive_core/tool_router.py or cognitive_core/activation.py. It is a
 deliberately separate offline layer; see the "Relationship to existing
 runtime code" note below before touching this file.

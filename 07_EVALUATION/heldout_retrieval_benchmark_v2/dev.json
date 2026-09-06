@@ -1,0 +1,166 @@
+{
+  "schema_version": 2,
+  "set_name": "r009b-v2-dev",
+  "cases": [
+    {
+      "id": "D01",
+      "class": "exact_identifier_lookup",
+      "query": "How many specialised agents does the AI memory council contain?",
+      "expected_answer": "21 specialised agents.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d010"
+      ],
+      "required_facts": [
+        "21"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D02",
+      "class": "exact_identifier_lookup",
+      "query": "Which confidence level is assigned to AI-generated or weakly supported material?",
+      "expected_answer": "Low.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "low"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D03",
+      "class": "paraphrase",
+      "query": "What does this repository serve as for the AI system across sessions and models?",
+      "expected_answer": "External memory and continuity layer.",
+      "gold_relevant_notes": [
+        "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+      ],
+      "required_facts": [
+        "memoria externa"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D04",
+      "class": "paraphrase",
+      "query": "Which language is used for MetaTrader5 expert advisors?",
+      "expected_answer": "MQL5.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "mql5"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D05",
+      "class": "synonym_substitution",
+      "query": "Which scripting language handles Active Directory and group policy automation?",
+      "expected_answer": "PowerShell.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "powershell"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D06",
+      "class": "synonym_substitution",
+      "query": "What category name covers a rule learned from experience?",
+      "expected_answer": "lesson.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "lesson"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D07",
+      "class": "lexical_trap",
+      "query": "Which memory class stores verified steps rather than a rationale for a choice?",
+      "expected_answer": "procedure.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "procedure"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D08",
+      "class": "lexical_trap",
+      "query": "Which government decision approves the Romanian national standards for classified information protection?",
+      "expected_answer": "HG 585/2002.",
+      "gold_relevant_notes": [
+        "leg-ro-hg-585-2002"
+      ],
+      "required_facts": [
+        "585/2002"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D09",
+      "class": "one_hop_graph_expansion",
+      "query": "Which document defines the confidence levels referenced by the LogAnalyzer DFIR enterprise architecture?",
+      "expected_answer": "The Confidence Model.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "very high"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D10",
+      "class": "one_hop_graph_expansion",
+      "query": "Which catalogue lists the real skills backing the bio-inspired cognitive brain specification?",
+      "expected_answer": "Master Skills Catalog 251.",
+      "gold_relevant_notes": [
+        "cat-skills-251-master"
+      ],
+      "required_facts": [
+        "skill.md"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "D11",
+      "class": "unanswerable",
+      "query": "What is the maximum supported torque of the hydraulic subsystem described in this repository?",
+      "expected_answer": "No such information exists in the vault.",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "wrong_note_ids": [],
+      "abstain": true
+    },
+    {
+      "id": "D12",
+      "class": "unanswerable",
+      "query": "Which airport gate is assigned to the quarterly shareholder meeting described in this repository?",
+      "expected_answer": "No such information exists in the vault.",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "wrong_note_ids": [],
+      "abstain": true
+    }
+  ]
+}

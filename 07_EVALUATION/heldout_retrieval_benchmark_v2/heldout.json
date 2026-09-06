@@ -1,0 +1,414 @@
+{
+  "schema_version": 2,
+  "set_name": "r009b-v2-heldout",
+  "cases": [
+    {
+      "id": "H01",
+      "class": "exact_identifier_lookup",
+      "query": "Which agent role in the council matrix covers compilers, AST parsers and tooling?",
+      "expected_answer": "compiler_and_tooling_engineer.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d010"
+      ],
+      "required_facts": [
+        "compiler_and_tooling_engineer"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H02",
+      "class": "exact_identifier_lookup",
+      "query": "Which confidence level means directly verified by execution, test or an authoritative primary source?",
+      "expected_answer": "Very High.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "very high"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H03",
+      "class": "exact_identifier_lookup",
+      "query": "Which file name marks a directory as a real skill in the skills catalogue?",
+      "expected_answer": "SKILL.md.",
+      "gold_relevant_notes": [
+        "cat-skills-251-master"
+      ],
+      "required_facts": [
+        "skill.md"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H04",
+      "class": "exact_identifier_lookup",
+      "query": "Which Romanian government decision number governs classified information standards?",
+      "expected_answer": "585/2002.",
+      "gold_relevant_notes": [
+        "leg-ro-hg-585-2002"
+      ],
+      "required_facts": [
+        "585/2002"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H05",
+      "class": "exact_identifier_lookup",
+      "query": "Which memory class records an analysed failure?",
+      "expected_answer": "error.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "error"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H06",
+      "class": "paraphrase",
+      "query": "What role does this repository play between sessions, models and projects?",
+      "expected_answer": "It is the external memory and continuity layer.",
+      "gold_relevant_notes": [
+        "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+      ],
+      "required_facts": [
+        "memoria externa"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H07",
+      "class": "paraphrase",
+      "query": "Which runtime is listed for automation, algorithmic trading and security tooling?",
+      "expected_answer": "Python.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "python"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H08",
+      "class": "paraphrase",
+      "query": "How is a plausible but independently unverified claim rated?",
+      "expected_answer": "Medium confidence.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "medium"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H09",
+      "class": "paraphrase",
+      "query": "What is the single objective a conversion page is built around?",
+      "expected_answer": "Guiding the user to one action.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a004"
+      ],
+      "required_facts": [
+        "landing page"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H10",
+      "class": "synonym_substitution",
+      "query": "Which shell is used for directory administration and policy automation?",
+      "expected_answer": "PowerShell.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "powershell"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H11",
+      "class": "synonym_substitution",
+      "query": "What label applies when there is insufficient basis to judge reliability?",
+      "expected_answer": "Unknown.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "unknown"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H12",
+      "class": "synonym_substitution",
+      "query": "Which note type captures a reusable fact or concept?",
+      "expected_answer": "knowledge.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "knowledge"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H13",
+      "class": "synonym_substitution",
+      "query": "What kind of practices does the security reference restrict itself to?",
+      "expected_answer": "General, non-operational practices.",
+      "gold_relevant_notes": [
+        "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+      ],
+      "required_facts": [
+        "non-opera"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H14",
+      "class": "lexical_trap",
+      "query": "Which memory class records the reasoning behind a choice rather than the verified steps to perform one?",
+      "expected_answer": "decision.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "decision"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H15",
+      "class": "lexical_trap",
+      "query": "Which document is the research summary on Romanian classified-information digital security reform rather than the government decision itself?",
+      "expected_answer": "The reform research summary.",
+      "gold_relevant_notes": [
+        "romania-classified-information-digital-security-reform"
+      ],
+      "required_facts": [
+        "research summary"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H16",
+      "class": "lexical_trap",
+      "query": "Which catalogue enumerates council agents rather than the contents of the skills directory?",
+      "expected_answer": "The agents skill matrix.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d010"
+      ],
+      "required_facts": [
+        "21"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H17",
+      "class": "lexical_trap",
+      "query": "Which reference lists languages and runtimes rather than security practices?",
+      "expected_answer": "Tech Stack.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "mql5"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H18",
+      "class": "one_hop_graph_expansion",
+      "query": "Which document defines the confidence levels referenced by the LogAnalyzer DFIR enterprise architecture?",
+      "expected_answer": "The Confidence Model.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "very high"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H19",
+      "class": "one_hop_graph_expansion",
+      "query": "Which memory protocol governs the note classes used by the LogAnalyzer DFIR architecture?",
+      "expected_answer": "The Memory Protocol.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "knowledge"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H20",
+      "class": "one_hop_graph_expansion",
+      "query": "Which conversion-page design document is linked from the MengTo agent skills catalogue?",
+      "expected_answer": "Landing Page Architecture.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a004"
+      ],
+      "required_facts": [
+        "landing page"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H21",
+      "class": "one_hop_graph_expansion",
+      "query": "Which technology reference is linked from the note about splitting prompts for token-limited models?",
+      "expected_answer": "Tech Stack.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "mql5"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H22",
+      "class": "one_hop_graph_expansion",
+      "query": "Which research summary is linked from the HG 585/2002 classified-information legislation note?",
+      "expected_answer": "The Romanian classified-information digital security reform summary.",
+      "gold_relevant_notes": [
+        "romania-classified-information-digital-security-reform"
+      ],
+      "required_facts": [
+        "research summary"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H23",
+      "class": "one_hop_graph_expansion",
+      "query": "Which security reference is linked from the PaperCut Xerox secure print setup note?",
+      "expected_answer": "Security Practices.",
+      "gold_relevant_notes": [
+        "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+      ],
+      "required_facts": [
+        "non-opera"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H24",
+      "class": "one_hop_graph_expansion",
+      "query": "Which identity document is linked from the FinScope project note?",
+      "expected_answer": "Identity.",
+      "gold_relevant_notes": [
+        "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+      ],
+      "required_facts": [
+        "memoria externa"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H25",
+      "class": "one_hop_graph_expansion",
+      "query": "Which full legislative text is linked from the atomic note on SIC security accreditation?",
+      "expected_answer": "HG 585/2002.",
+      "gold_relevant_notes": [
+        "leg-ro-hg-585-2002"
+      ],
+      "required_facts": [
+        "585/2002"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H26",
+      "class": "one_hop_graph_expansion",
+      "query": "Which agent matrix is linked from the master skills catalogue?",
+      "expected_answer": "The agents skill matrix.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d010"
+      ],
+      "required_facts": [
+        "compiler_and_tooling_engineer"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H27",
+      "class": "one_hop_graph_expansion",
+      "query": "Which skills catalogue is linked from the bio-inspired cognitive brain architecture specification?",
+      "expected_answer": "Master Skills Catalog 251.",
+      "gold_relevant_notes": [
+        "cat-skills-251-master"
+      ],
+      "required_facts": [
+        "skill.md"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H28",
+      "class": "unanswerable",
+      "query": "What is the certified maximum operating altitude in metres recorded in this repository?",
+      "expected_answer": "No such information exists in the vault.",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "wrong_note_ids": [],
+      "abstain": true
+    },
+    {
+      "id": "H29",
+      "class": "unanswerable",
+      "query": "Which veterinary clinic is contracted for on-site animal care in this repository?",
+      "expected_answer": "No such information exists in the vault.",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "wrong_note_ids": [],
+      "abstain": true
+    },
+    {
+      "id": "H30",
+      "class": "unanswerable",
+      "query": "What is the ISBN of the printed annual cookbook described in this repository?",
+      "expected_answer": "No such information exists in the vault.",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "wrong_note_ids": [],
+      "abstain": true
+    }
+  ]
+}
