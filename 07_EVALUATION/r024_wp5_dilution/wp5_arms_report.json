@@ -1,0 +1,149 @@
+{
+  "corpus_notes_storage_visible_unfiltered": 743,
+  "policy_lesson_notes": 394,
+  "policy_lesson_share_of_corpus": 0.53,
+  "policy_lesson_cap": 40,
+  "page_size": 10,
+  "n_cases": 8,
+  "case_ids": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08"
+  ],
+  "summary": {
+    "B1_baseline": {
+      "candidate_recall": 0.5,
+      "context_recall": 0.0,
+      "mean_policy_lesson_candidate_share": 0.22875
+    },
+    "B2_excluded": {
+      "candidate_recall": 0.5,
+      "context_recall": 0.0,
+      "mean_policy_lesson_candidate_share": 0.0
+    },
+    "B3_capped": {
+      "candidate_recall": 0.5,
+      "context_recall": 0.0,
+      "mean_policy_lesson_candidate_share": 0.1
+    }
+  },
+  "rows": [
+    {
+      "id": "D01",
+      "class": "exact_identifier_lookup",
+      "gated_pool_size": 743,
+      "B1_baseline_candidate_recall": 1,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.51,
+      "B2_excluded_candidate_recall": 1,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 1,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.2
+    },
+    {
+      "id": "D02",
+      "class": "exact_identifier_lookup",
+      "gated_pool_size": 743,
+      "B1_baseline_candidate_recall": 1,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.395,
+      "B2_excluded_candidate_recall": 1,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 1,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.2
+    },
+    {
+      "id": "D03",
+      "class": "paraphrase",
+      "gated_pool_size": 743,
+      "B1_baseline_candidate_recall": 1,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.375,
+      "B2_excluded_candidate_recall": 1,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 1,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.2
+    },
+    {
+      "id": "D04",
+      "class": "paraphrase",
+      "gated_pool_size": 743,
+      "B1_baseline_candidate_recall": 1,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.55,
+      "B2_excluded_candidate_recall": 1,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 1,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.2
+    },
+    {
+      "id": "D05",
+      "class": "synonym_substitution",
+      "gated_pool_size": 46,
+      "B1_baseline_candidate_recall": 0,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.0,
+      "B2_excluded_candidate_recall": 0,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 0,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.0
+    },
+    {
+      "id": "D06",
+      "class": "synonym_substitution",
+      "gated_pool_size": 1,
+      "B1_baseline_candidate_recall": 0,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.0,
+      "B2_excluded_candidate_recall": 0,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 0,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.0
+    },
+    {
+      "id": "D07",
+      "class": "lexical_trap",
+      "gated_pool_size": 0,
+      "B1_baseline_candidate_recall": 0,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.0,
+      "B2_excluded_candidate_recall": 0,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 0,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.0
+    },
+    {
+      "id": "D08",
+      "class": "lexical_trap",
+      "gated_pool_size": 0,
+      "B1_baseline_candidate_recall": 0,
+      "B1_baseline_context_recall": 0,
+      "B1_baseline_policy_lesson_candidate_share": 0.0,
+      "B2_excluded_candidate_recall": 0,
+      "B2_excluded_context_recall": 0,
+      "B2_excluded_policy_lesson_candidate_share": 0.0,
+      "B3_capped_candidate_recall": 0,
+      "B3_capped_context_recall": 0,
+      "B3_capped_policy_lesson_candidate_share": 0.0
+    }
+  ]
+}
