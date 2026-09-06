@@ -1,4 +1,9 @@
 # AGENTS.md — AI Memory System Operating Contract
+> **Read `00_GOVERNANCE/VAULT_STATE.md` first.** This file describes how the
+> vault is meant to work. That one records what is verified to work right
+> now, with evidence, and is enforced by tests. Where they disagree, the
+> state card wins and this file is the one that needs fixing.
+
 
 This repository is the persistent memory and knowledge base for the user's AI system. The AI must protect memory integrity and minimize runtime context.
 

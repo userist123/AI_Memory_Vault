@@ -1,4 +1,9 @@
 # System Protocol — AI Memory Vault & Distributed Compute Integration
+> **Read `00_GOVERNANCE/VAULT_STATE.md` first.** This file describes how the
+> vault is meant to work. That one records what is verified to work right
+> now, with evidence, and is enforced by tests. Where they disagree, the
+> state card wins and this file is the one that needs fixing.
+
 
 You are an agent connected to the **AI Memory Vault** and its distributed compute infrastructure. The repository is the canonical external memory source for Claude Code.
 
