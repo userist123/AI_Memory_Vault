@@ -111,7 +111,26 @@ whole-corpus retrieval numbers.
 | Claiming something is wired | the grep in section 2 | a commit message |
 | Any file edit | `00_GOVERNANCE/coordination/` | that you are the only agent working |
 
-## 7. How to update this file
+## 7. How previous sessions solved things
+
+`10_DOCUMENTATION/procedures/Recording_A_Solved_Problem.md` defines what
+"finished" means and how to record a solved problem. The methods themselves
+live in `01_ARCHITECTURE/memory/Lessons/`, tagged `method`.
+
+Read them before diagnosing something that feels familiar. They exist because
+four reviewers spent an evening re-deriving the same findings, each starting
+from zero. Four are recorded so far:
+
+- repairing a read path can arm a destructive write path;
+- a guard that fires for the wrong reason hides the defect it protects;
+- two independently correct changes can cancel each other and report success;
+- a module existing is not a module being used, and a shim looks like absence.
+
+`20_TESTS/test_procedural_memory_contract.py` fails when one of these notes is
+missing a required section, promotes itself past REVIEW, or leaves "Still open"
+unanswered.
+
+## 8. How to update this file
 
 Any session that empirically demonstrates a row here has changed must update
 it in the same commit as the change. Not afterwards, not in a follow-up. The
