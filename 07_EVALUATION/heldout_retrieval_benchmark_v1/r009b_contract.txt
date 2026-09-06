@@ -1,0 +1,11 @@
+R009b contract: heldout_retrieval_v1
+
+Heldout set: immutable and SHA-256 enforced at runtime.
+Dev set: tuning only; never used to select heldout queries or inspect heldout failures.
+Each heldout candidate fingerprint may execute at most once; a duplicate candidate execution fails closed.
+Reported stages: candidate_recall, context_recall, answer_correctness.
+Reported classes: exact_identifier_lookup, paraphrase, synonym_substitution, lexical_trap, cross_cluster_multihop, unanswerable.
+Offline/deterministic default. Optional components fail closed with explicit markers.
+Minimum effect size: 10 percentage points.
+Corpus note count expected by this benchmark: 935.
+Baseline regression gate: 1174 passed, 3 skipped.
