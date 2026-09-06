@@ -291,9 +291,15 @@ class MemoryController:
                     raise InvalidPaginationTokenError('Token page size does not match current request')
                 offset = payload.get('offset', 0)
             
-            # Retrieval
-            notes = self.retrieval_engine.retrieve(classified, principal, query_fp, disclosure_level, budget, offset=offset)
-    
+            # Retrieval -- `sanitized` drives candidate selection (BM25 + entity
+            # overlap over notes already filtered by lifecycle/type/RAW; see
+            # RetrievalEngine.retrieve() / candidate_generation.py).
+            candidate_trace: Dict[str, Any] = {}
+            notes = self.retrieval_engine.retrieve(
+                classified, principal, query_fp, disclosure_level, budget,
+                offset=offset, query=sanitized, trace_sink=candidate_trace,
+            )
+
             # Score relevance (correct argument order)
             scored = self.scorer.score(sanitized, notes)
             score_map = {s['id']: s['score'] for s in scored}
@@ -353,6 +359,13 @@ class MemoryController:
                     'results': [],
                 }
             pack['next_page_token'] = next_token
+            # Structured per-query candidate-generation trace (requirement:
+            # query -> candidates considered -> per-generator scores -> fused
+            # score -> what actually entered the final context). IDs and
+            # scores only -- no note content -- matching the data-minimization
+            # convention already used by observability/memory_trace.py.
+            candidate_trace['final_context_ids'] = [r.get('id') for r in pack.get('results', [])]
+            pack['candidate_trace'] = candidate_trace
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
         except Exception as e:
