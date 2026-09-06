@@ -1,26 +1,10 @@
-# Rizz Coach — MVP Local
+---
+type: index
+category: navigation
+status: active
+title: Rizz Coach Local Dating AI Application Stub
+---
 
-Coach AI de conversații dating. Rulează local pe PC și mobil (same network).
+# Rizz Coach Local Dating AI Application
 
-## Stack
-- Backend: Node.js + Express
-- Frontend: Vanilla HTML/JS (funcționează pe orice browser/mobil)
-- AI: OpenAI API (GPT-4o-mini — ieftin și rapid)
-
-## Setup
-
-```bash
-npm install
-cp .env.example .env
-# Adaugă OPENAI_API_KEY în .env
-npm start
-```
-
-Accesează:
-- PC: http://localhost:3000
-- Mobil (aceeași rețea): http://IP_PC_TAU:3000
-
-## Utilizare
-1. Scrii mesajul primit sau trimis
-2. Alegi contextul (mesaj primit / mesaj trimis)
-3. Primești 2-3 variante de răspuns + recomandare
+Canonical documentation has moved to [[Rizz_Coach_Local_Dating_AI_Application]].
