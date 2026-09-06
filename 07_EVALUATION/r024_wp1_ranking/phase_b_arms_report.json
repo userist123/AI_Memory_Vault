@@ -1,0 +1,359 @@
+{
+  "n_cases": 8,
+  "case_ids": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08"
+  ],
+  "arms": {
+    "baseline": {
+      "rows": [
+        {
+          "id": "D01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D03",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D04",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D05",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D06",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D07",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        },
+        {
+          "id": "D08",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "baseline"
+        }
+      ],
+      "summary": {
+        "n": 8,
+        "candidate_recall": 0.5,
+        "context_recall": 0.0,
+        "context_recall_hits": []
+      }
+    },
+    "A1_fused_score": {
+      "rows": [
+        {
+          "id": "D01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D03",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D04",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D05",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D06",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D07",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D08",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        }
+      ],
+      "summary": {
+        "n": 8,
+        "candidate_recall": 0.5,
+        "context_recall": 0.375,
+        "context_recall_hits": [
+          "D02",
+          "D03",
+          "D04"
+        ]
+      }
+    },
+    "A2_no_confidence": {
+      "rows": [
+        {
+          "id": "D01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D03",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D04",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D05",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D06",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D07",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        },
+        {
+          "id": "D08",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "no_confidence"
+        }
+      ],
+      "summary": {
+        "n": 8,
+        "candidate_recall": 0.5,
+        "context_recall": 0.125,
+        "context_recall_hits": [
+          "D02"
+        ]
+      }
+    },
+    "A3_confidence_tiebreak": {
+      "rows": [
+        {
+          "id": "D01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D03",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D04",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D05",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D06",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D07",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        },
+        {
+          "id": "D08",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "confidence_tiebreak"
+        }
+      ],
+      "summary": {
+        "n": 8,
+        "candidate_recall": 0.5,
+        "context_recall": 0.125,
+        "context_recall_hits": [
+          "D02"
+        ]
+      }
+    },
+    "A4_fused_plus_best_confidence_strategy": {
+      "rows": [
+        {
+          "id": "D01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D03",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D04",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D05",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D06",
+          "class": "synonym_substitution",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D07",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        },
+        {
+          "id": "D08",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "resolved_ranking_arm": "fused_score"
+        }
+      ],
+      "summary": {
+        "n": 8,
+        "candidate_recall": 0.5,
+        "context_recall": 0.375,
+        "context_recall_hits": [
+          "D02",
+          "D03",
+          "D04"
+        ]
+      },
+      "resolved_as": "fused_score alone (== A1)",
+      "reason": "A2 (0.125) >= A3 (0.125) on context_recall: confidence adds nothing even as a tiebreak, so A1+A2/A3 collapses to A1 itself"
+    }
+  }
+}

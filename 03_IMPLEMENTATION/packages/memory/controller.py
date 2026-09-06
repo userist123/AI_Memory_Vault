@@ -113,6 +113,64 @@ class GraphExpansionDegraded(RuntimeError):
     """
 
 
+# r024 WP-1 Phase B — ranking arms over the graph-off path.
+#
+# Phase A (07_EVALUATION/r024_wp1_ranking/PHASE_A_ATTRIBUTION.md) found 100%
+# of held-out losses were `ranked_out`: candidate_generation.py's fused_score
+# (BM25 + entity RRF) is computed and recorded in the trace, then never read
+# again -- RelevanceScorer re-scores from scratch with a formula that is 50%
+# `confidence`, an epistemic metadata field carrying no relation to the
+# query. Each arm changes exactly one thing about how the already-computed
+# signals are combined into a ranking key; none recomputes overlap or
+# confidence a second time (see RelevanceScorer.score_components()), and none
+# removes confidence from the returned note or the trace -- only from the
+# sort key.
+RANKING_ARM_BASELINE = "baseline"          # production default: unchanged
+RANKING_ARM_FUSED_SCORE = "fused_score"    # A1: rank by fused_score, not RelevanceScorer
+RANKING_ARM_NO_CONFIDENCE = "no_confidence"          # A2: overlap_ratio only
+RANKING_ARM_CONFIDENCE_TIEBREAK = "confidence_tiebreak"  # A3: confidence breaks ties only
+RANKING_ARM_FUSED_PLUS_TIEBREAK = "fused_plus_tiebreak"  # A4: A1 + confidence as tie-break
+RANKING_ARMS = frozenset({
+    RANKING_ARM_BASELINE,
+    RANKING_ARM_FUSED_SCORE,
+    RANKING_ARM_NO_CONFIDENCE,
+    RANKING_ARM_CONFIDENCE_TIEBREAK,
+    RANKING_ARM_FUSED_PLUS_TIEBREAK,
+})
+
+
+def _ranking_key_fn(arm, initial_score_map, fused_score_map, components_map):
+    """Returns a sort key function for `sorted(notes, key=..., reverse=True)`.
+
+    Every key ends in the note id so ties break deterministically and
+    identically across arms -- only the leading component(s) differ, which
+    is what "two arms identical in everything but the variable under test"
+    requires.
+    """
+    if arm == RANKING_ARM_FUSED_SCORE:
+        return lambda n: (fused_score_map.get(n.get('id'), 0.0), n.get('id', ''))
+    if arm == RANKING_ARM_NO_CONFIDENCE:
+        return lambda n: (
+            components_map.get(n.get('id'), {}).get('overlap_ratio', 0.0),
+            n.get('id', ''),
+        )
+    if arm == RANKING_ARM_CONFIDENCE_TIEBREAK:
+        return lambda n: (
+            components_map.get(n.get('id'), {}).get('overlap_ratio', 0.0),
+            components_map.get(n.get('id'), {}).get('confidence', 0.0),
+            n.get('id', ''),
+        )
+    if arm == RANKING_ARM_FUSED_PLUS_TIEBREAK:
+        return lambda n: (
+            fused_score_map.get(n.get('id'), 0.0),
+            components_map.get(n.get('id'), {}).get('confidence', 0.0),
+            n.get('id', ''),
+        )
+    # RANKING_ARM_BASELINE or anything unrecognized: the production default,
+    # byte-for-byte the pre-r024 sort key.
+    return lambda n: (initial_score_map.get(n.get('id'), 0), n.get('id', ''))
+
+
 class MemoryController:
     _global_review_counter = 2
     def __init__(
@@ -124,6 +182,7 @@ class MemoryController:
         synapse_store: Optional[Any] = None,
         strict_graph_expansion: bool = False,
         graph_expansion_budget: Optional[int] = None,
+        ranking_arm: Optional[str] = None,
     ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
@@ -153,6 +212,15 @@ class MemoryController:
                 self.synapse_store = SynapseStore.from_index(self.index)
             except Exception:
                 self.synapse_store = None
+        #: r024 WP-1 Phase B ranking arm (None/'baseline' = production
+        #: default, unchanged). See RANKING_ARMS and _ranking_key() below.
+        #: Off by default, per the brief's requirement that every Phase B
+        #: change stays behind a flag until measurement justifies flipping
+        #: it -- this constructor default and search()'s per-call default
+        #: are the flag. Only affects the graph-OFF ranking branch; graph
+        #: expansion's own scoring (lines ~563, ~575) is untouched, per
+        #: "do not touch graph expansion. It is measured and off."
+        self.ranking_arm = ranking_arm
 
     def _is_hub_node(self, node_id: str) -> bool:
         """Return True if node degree > 10 (hub cap constraint)."""
@@ -316,6 +384,7 @@ class MemoryController:
         enable_graph_expansion: Optional[bool] = None,
         strict_graph_expansion: Optional[bool] = None,
         graph_expansion_budget: Optional[int] = None,
+        ranking_arm: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
@@ -373,7 +442,11 @@ class MemoryController:
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
             )
 
-            # Score relevance of initial retrieved notes
+            # Score relevance of initial retrieved notes. Confidence stays in
+            # the returned note/trace regardless of ranking arm (r024 WP-1
+            # requirement 3) -- score() is unchanged and still runs; only the
+            # SORT KEY below may use a different combination of the same
+            # components (see RelevanceScorer.score_components()).
             initial_scored = self.scorer.score(sanitized, notes)
             initial_score_map = {s['id']: float(s['score']) for s in initial_scored if s.get('id')}
 
@@ -385,6 +458,14 @@ class MemoryController:
             )
             candidate_trace['graph_expansion_enabled'] = bool(is_expansion_enabled)
 
+            # r024 WP-1 Phase B ranking arm. Off by default (None resolves to
+            # the instance default, itself None/'baseline' unless a caller
+            # opts in) -- only affects the graph-OFF branch immediately
+            # below; graph expansion's own scoring is untouched.
+            active_ranking_arm = ranking_arm if ranking_arm is not None else getattr(self, 'ranking_arm', None)
+            active_ranking_arm = active_ranking_arm or RANKING_ARM_BASELINE
+            candidate_trace['ranking_arm'] = active_ranking_arm
+
             if not is_expansion_enabled:
                 candidate_trace['graph_expansion_status'] = 'disabled'
                 candidate_trace['graph_seed_ids'] = []
@@ -394,8 +475,22 @@ class MemoryController:
                 candidate_trace['graph_survived_filters_ids'] = []
                 candidate_trace['graph_expanded_ids'] = []
                 candidate_trace['graph_hub_nodes_skipped'] = []
-                # Rank notes deterministically by score
-                notes = sorted(notes, key=lambda n: (initial_score_map.get(n.get('id'), 0), n.get('id', '')), reverse=True)
+                # Rank notes deterministically by score (or, under a Phase B
+                # arm, by a different combination of the same components --
+                # see _ranking_key_fn()).
+                if active_ranking_arm == RANKING_ARM_BASELINE:
+                    key_fn = _ranking_key_fn(active_ranking_arm, initial_score_map, {}, {})
+                else:
+                    fused_score_map = {
+                        e.get('id'): float(e.get('fused_score', 0.0))
+                        for e in (candidate_trace.get('fused_ranking') or [])
+                        if isinstance(e, dict) and e.get('id')
+                    }
+                    components_map = {
+                        c['id']: c for c in self.scorer.score_components(sanitized, notes) if c.get('id')
+                    }
+                    key_fn = _ranking_key_fn(active_ranking_arm, initial_score_map, fused_score_map, components_map)
+                notes = sorted(notes, key=key_fn, reverse=True)
             else:
                 seed_ids = [n.get('id') for n in notes if n.get('id')]
                 seed_weights = {s_id: initial_score_map.get(s_id, 0.0) for s_id in seed_ids}
