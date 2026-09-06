@@ -11,7 +11,7 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from packages.retrieval.ranked_search import build_multi_graph, ranked_search
+from retrieval.ranked_search import build_multi_graph, ranked_search
 
 
 class GraphExecutionStatus(str, Enum):
@@ -101,13 +101,15 @@ class GraphDiagnosticsProbe:
                 duration_ms=(time.perf_counter() - started) * 1000)
 
         pre_ids = [x.get("id") for x in base_results if isinstance(x, dict) and x.get("id")]
-        scores_survived = all("relevance_score" in x for x in base_results if isinstance(x, dict))
         if not base_results:
             return GraphDiagnosticReport(engine_name, query, str(principal),
                 GraphExecutionStatus.FALLBACK_NO_RESULTS, has_store,
-                base_count=0, relevance_scores_survived=scores_survived,
+                base_count=0, relevance_scores_survived=False,
                 duration_ms=(time.perf_counter() - started) * 1000)
 
+        scores_survived = all(
+            "relevance_score" in x for x in base_results if isinstance(x, dict)
+        )
         graph_exc = None
         graph_tb = None
         try:
@@ -117,6 +119,9 @@ class GraphDiagnosticsProbe:
 
         ranked_results = ranked_search(controller, principal, query, top_k=top_k)
         post_ids = [x.get("id") for x in ranked_results if isinstance(x, dict) and x.get("id")]
+        ranked_scores_survived = all(
+            "relevance_score" in x for x in ranked_results if isinstance(x, dict)
+        )
         status = (GraphExecutionStatus.FALLBACK_SILENT_EXCEPTION if graph_exc
                   else GraphExecutionStatus.FALLBACK_NO_GRAPH_CHANGES if pre_ids == post_ids
                   else GraphExecutionStatus.APPLIED)
@@ -129,7 +134,7 @@ class GraphDiagnosticsProbe:
             base_count=len(base_results), ranked_count=len(ranked_results),
             pre_ranking=pre_ids, post_ranking=post_ids,
             rank_shifted=pre_ids != post_ids,
-            relevance_scores_survived=scores_survived,
+            relevance_scores_survived=scores_survived and ranked_scores_survived,
             duration_ms=(time.perf_counter() - started) * 1000,
         )
 
