@@ -1,6 +1,6 @@
 import pytest
 
-from packages.observability.graph_diagnostics import (
+from observability.graph_diagnostics import (
     GraphDiagnosticsProbe,
     GraphExecutionStatus,
 )
