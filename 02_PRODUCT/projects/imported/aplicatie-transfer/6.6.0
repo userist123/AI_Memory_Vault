@@ -1,0 +1,14 @@
+Defaulting to user installation because normal site-packages is not writeable
+Collecting PyQt6-Charts
+  Downloading pyqt6_charts-6.11.0-cp310-abi3-win_amd64.whl.metadata (1.7 kB)
+Requirement already satisfied: PyQt6-sip<14,>=13.8 in C:\Users\user\AppData\Roaming\Python\Python314\site-packages (from PyQt6-Charts) (13.8.0)
+Collecting PyQt6-Charts-Qt6<6.12.0,>=6.11.0 (from PyQt6-Charts)
+  Downloading pyqt6_charts_qt6-6.11.0-py3-none-win_amd64.whl.metadata (578 bytes)
+Requirement already satisfied: PyQt6>=6.2.0 in C:\Users\user\AppData\Roaming\Python\Python314\site-packages (from PyQt6-Charts) (6.7.1)
+Requirement already satisfied: PyQt6-Qt6<6.8.0,>=6.7.0 in C:\Users\user\AppData\Roaming\Python\Python314\site-packages (from PyQt6>=6.2.0->PyQt6-Charts) (6.7.3)
+Downloading pyqt6_charts-6.11.0-cp310-abi3-win_amd64.whl (290 kB)
+Downloading pyqt6_charts_qt6-6.11.0-py3-none-win_amd64.whl (897 kB)
+   ---------------------------------------- 897.4/897.4 kB 4.8 MB/s  0:00:00
+Installing collected packages: PyQt6-Charts-Qt6, PyQt6-Charts
+
+Successfully installed PyQt6-Charts-6.11.0 PyQt6-Charts-Qt6-6.11.0

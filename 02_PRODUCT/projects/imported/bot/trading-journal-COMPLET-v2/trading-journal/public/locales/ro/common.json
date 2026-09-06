@@ -1,0 +1,380 @@
+{
+  "app": {
+    "name": "Jurnal Trading",
+    "tagline": "Jurnal de trading cu AI pentru traderi români și internaționali",
+    "description": "Singura platformă de jurnal de trading disponibilă în limba română, cu analiză AI, jurnal vocal și modul fiscal pentru Declarația Unică."
+  },
+  "nav": {
+    "dashboard": "Panou principal",
+    "trades": "Tranzacții",
+    "journal": "Jurnal",
+    "analytics": "Analiză",
+    "calendar": "Calendar",
+    "calculators": "Calculatoare",
+    "settings": "Setări",
+    "pricing": "Prețuri",
+    "login": "Autentificare",
+    "signup": "Înregistrare",
+    "logout": "Deconectare",
+    "account": "Cont",
+    "help": "Ajutor",
+    "docs": "Documentație",
+    "fiscal": "Fiscal",
+    "signals": "Semnale",
+    "backtest": "Backtest",
+    "fiscalChat": "Chat Fiscal",
+    "consulting": "Consultanță"
+  },
+  "common": {
+    "save": "Salvează",
+    "cancel": "Anulează",
+    "delete": "Șterge",
+    "edit": "Editează",
+    "add": "Adaugă",
+    "search": "Caută",
+    "filter": "Filtrează",
+    "export": "Exportă",
+    "import": "Importă",
+    "loading": "Se încarcă...",
+    "error": "Eroare",
+    "success": "Succes",
+    "confirm": "Confirmă",
+    "back": "Înapoi",
+    "next": "Următorul",
+    "previous": "Anterior",
+    "close": "Închide",
+    "open": "Deschide",
+    "view": "Vezi",
+    "download": "Descarcă",
+    "upload": "Încarcă",
+    "yes": "Da",
+    "no": "Nu",
+    "all": "Toate",
+    "none": "Niciuna",
+    "today": "Astăzi",
+    "yesterday": "Ieri",
+    "thisWeek": "Săptămâna aceasta",
+    "thisMonth": "Luna aceasta",
+    "thisYear": "Anul acesta",
+    "custom": "Personalizat",
+    "total": "Total",
+    "average": "Medie",
+    "min": "Minim",
+    "max": "Maxim"
+  },
+  "auth": {
+    "signIn": "Autentifică-te",
+    "signUp": "Creează cont",
+    "signOut": "Deconectează-te",
+    "email": "Email",
+    "password": "Parolă",
+    "confirmPassword": "Confirmă parola",
+    "forgotPassword": "Ai uitat parola?",
+    "rememberMe": "Ține-mă minte",
+    "alreadyHaveAccount": "Ai deja cont?",
+    "dontHaveAccount": "Nu ai cont?",
+    "signInWithGoogle": "Autentifică-te cu Google",
+    "orContinueWith": "Sau continuă cu",
+    "passwordTooShort": "Parola trebuie să aibă minim 8 caractere",
+    "passwordsDontMatch": "Parolele nu se potrivesc",
+    "invalidEmail": "Email invalid",
+    "accountCreated": "Cont creat cu succes",
+    "welcomeBack": "Bine ai revenit",
+    "getStarted": "Începe acum"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Lansare în limba română",
+      "title": "Gândește ca un profesionist. Tranzacționează ca un profesionist.",
+      "subtitle": "Primul jurnal de trading cu AI disponibil în limba română. Jurnal vocal, analiză automată, coach săptămânal. Totul adaptat la piețele românești și internaționale.",
+      "ctaPrimary": "Începe gratuit",
+      "ctaSecondary": "Vezi demo",
+      "noCreditCard": "Fără card necesar • Plan gratuit pe viață"
+    },
+    "features": {
+      "title": "Tot ce ai nevoie ca să devii profitabil",
+      "subtitle": "Funcționalități pe care competiția le vinde cu 29-80$ pe lună. La noi începi gratuit.",
+      "voiceJournal": {
+        "title": "Jurnal vocal cu AI",
+        "description": "Vorbești după tranzacție, AI-ul transcrie automat în română și extrage setup-ul, emoția și lecția învățată."
+      },
+      "aiCoach": {
+        "title": "Coach AI săptămânal",
+        "description": "În fiecare duminică primești o analiză completă: unde greșești, ce pattern-uri ai, ce să corectezi săptămâna viitoare."
+      },
+      "marketScanner": {
+        "title": "Scanner de piață AI",
+        "description": "Găsește automat top 10 setup-uri valide pe piețele internaționale, cu explicații în română."
+      },
+      "brokerSync": {
+        "title": "Sincronizare cu brokerii",
+        "description": "Importă automat tranzacții din XTB, Trading 212, eToro, IBKR, Binance, Interactive Brokers, cTrader, MT5."
+      },
+      "fiscalModule": {
+        "title": "Modul fiscal România",
+        "description": "Generează automat datele pentru Declarația Unică. Regula de 365 zile, pragul CASS, conversii RON/EUR/USD."
+      },
+      "analytics": {
+        "title": "Analiză avansată",
+        "description": "Expectancy, profit factor, Sharpe ratio, drawdown maxim, R-multiple. Metrici pe care le folosesc profesioniștii."
+      }
+    },
+    "pricing": {
+      "title": "Prețuri corecte pentru piața românească",
+      "subtitle": "Începe gratuit. Plătește doar când aplicația îți aduce rezultate.",
+      "monthly": "Lunar",
+      "yearly": "Anual",
+      "save": "Economisește {percent}%",
+      "free": {
+        "name": "Gratuit",
+        "price": "0",
+        "description": "Perfect pentru început",
+        "features": [
+          "50 de tranzacții pe lună",
+          "1 broker conectat",
+          "3 jurnale vocale pe zi",
+          "1 analiză AI pe zi",
+          "Dashboard complet",
+          "Modul fiscal (doar vizualizare)"
+        ],
+        "cta": "Începe gratuit"
+      },
+      "pro": {
+        "name": "Pro",
+        "price": "35",
+        "period": "RON/lună",
+        "yearlyPrice": "299 RON/an",
+        "description": "Pentru traderi activi",
+        "badge": "Recomandat",
+        "features": [
+          "Tranzacții nelimitate",
+          "3 brokeri conectați",
+          "Jurnal vocal nelimitat",
+          "Coach AI săptămânal",
+          "100 analize AI pe lună",
+          "Căutare semantică în jurnal",
+          "Modul fiscal complet",
+          "Export Declarația Unică"
+        ],
+        "cta": "Alege Pro"
+      },
+      "elite": {
+        "name": "Elite",
+        "price": "69",
+        "period": "RON/lună",
+        "yearlyPrice": "599 RON/an",
+        "description": "Pentru traderi profesioniști",
+        "features": [
+          "Totul din Pro",
+          "Brokeri nelimitați",
+          "MT5 Desktop Bridge",
+          "Scanner piață AI",
+          "Prioritate AI (Groq + Gemini)",
+          "Acces API",
+          "Onboarding personalizat",
+          "Support prioritar"
+        ],
+        "cta": "Alege Elite"
+      }
+    },
+    "faq": {
+      "title": "Întrebări frecvente",
+      "q1": "Trebuie să plătesc ceva ca să încep?",
+      "a1": "Nu. Planul gratuit îți oferă 50 de tranzacții pe lună, jurnal vocal și analiză AI. Poți rămâne pe gratuit pe viață.",
+      "q2": "Cu ce brokeri pot să mă conectez?",
+      "a2": "XTB (prin CSV), Trading 212 (API), Interactive Brokers (Flex), Binance (API), Alpaca (API), cTrader (OAuth), eToro (CSV), MT4/MT5 (HTML/Desktop Bridge), Tradeville și BT Capital (CSV).",
+      "q3": "Cum funcționează jurnalul vocal?",
+      "a3": "Apeși pe butonul de înregistrare, vorbești 1-3 minute despre tranzacție. AI-ul transcrie automat în română și extrage: ce setup ai folosit, ce emoție ai avut, ce greșeală ai făcut, ce ai învățat.",
+      "q4": "Datele mele sunt în siguranță?",
+      "a4": "Da. Folosim criptare end-to-end, autentificare multi-factor și niciodată nu cerem parolele de la brokeri. Integrarea se face doar prin API keys read-only sau OAuth.",
+      "q5": "Pot să-mi exportez datele oricând?",
+      "a5": "Da. Toate datele tale rămân ale tale. Export complet în CSV, JSON, sau PDF. Dacă reziliezi contul, primești arhiva completă.",
+      "q6": "Cum ajută la Declarația Unică?",
+      "a6": "Aplicația calculează automat câștigurile impozabile conform legislației românești: regula de 365 zile (3% vs 1%), pragul CASS (pentru venituri peste 6/12/24 salarii minime), conversie automată RON/EUR/USD la cursul BNR din ziua tranzacției."
+    }
+  },
+  "dashboard": {
+    "title": "Panou principal",
+    "welcome": "Bun venit, {name}",
+    "lastUpdate": "Ultima actualizare: {time}",
+    "stats": {
+      "totalPnL": "Profit/Pierdere total",
+      "winRate": "Rata de succes",
+      "profitFactor": "Factor profit",
+      "expectancy": "Expectancy",
+      "totalTrades": "Tranzacții totale",
+      "avgWin": "Câștig mediu",
+      "avgLoss": "Pierdere medie",
+      "maxDrawdown": "Drawdown maxim",
+      "sharpeRatio": "Raport Sharpe",
+      "bestDay": "Cea mai bună zi",
+      "worstDay": "Cea mai slabă zi",
+      "avgRMultiple": "R-multiplu mediu"
+    },
+    "charts": {
+      "equityCurve": "Curba capitalului",
+      "monthlyPnL": "Profit/pierdere lunară",
+      "winLossRatio": "Raport câștiguri/pierderi",
+      "pairBreakdown": "Distribuție pe instrumente",
+      "strategyPerformance": "Performanță strategii",
+      "timeOfDay": "Performanță pe ore"
+    },
+    "recentTrades": "Tranzacții recente",
+    "noTrades": "Nu ai tranzacții încă. Adaugă prima ta tranzacție sau importă din broker."
+  },
+  "trades": {
+    "title": "Tranzacții",
+    "addTrade": "Adaugă tranzacție",
+    "importTrades": "Importă tranzacții",
+    "exportTrades": "Exportă tranzacții",
+    "columns": {
+      "date": "Data",
+      "symbol": "Simbol",
+      "direction": "Direcție",
+      "entry": "Intrare",
+      "exit": "Ieșire",
+      "stopLoss": "Stop Loss",
+      "takeProfit": "Take Profit",
+      "size": "Mărime",
+      "pnl": "Profit/Pierdere",
+      "pnlPercent": "P/P %",
+      "rMultiple": "R-multiplu",
+      "duration": "Durată",
+      "commission": "Comision",
+      "swap": "Swap",
+      "strategy": "Strategie",
+      "tags": "Etichete",
+      "notes": "Note"
+    },
+    "direction": {
+      "long": "Long (cumpărare)",
+      "short": "Short (vânzare)",
+      "buy": "Cumpărare",
+      "sell": "Vânzare"
+    },
+    "status": {
+      "open": "Deschisă",
+      "closed": "Închisă",
+      "pending": "În așteptare",
+      "cancelled": "Anulată"
+    },
+    "filters": {
+      "dateRange": "Interval de date",
+      "symbol": "Instrument",
+      "strategy": "Strategie",
+      "direction": "Direcție",
+      "result": "Rezultat",
+      "winners": "Câștigătoare",
+      "losers": "Pierzătoare",
+      "breakeven": "La zero"
+    },
+    "form": {
+      "basicInfo": "Informații de bază",
+      "pricesAndSize": "Prețuri și mărime",
+      "riskManagement": "Management risc",
+      "strategyAndNotes": "Strategie și note",
+      "screenshots": "Capturi de ecran",
+      "uploadImage": "Încarcă imagine",
+      "dragDropImage": "Trage imaginea aici sau dă click pentru a selecta"
+    }
+  },
+  "journal": {
+    "title": "Jurnal",
+    "newEntry": "Intrare nouă",
+    "voiceJournal": "Jurnal vocal",
+    "recordVoice": "Înregistrează",
+    "stopRecording": "Oprește înregistrarea",
+    "recording": "Se înregistrează...",
+    "transcribing": "Se transcrie...",
+    "analyzing": "AI analizează...",
+    "playback": "Redare",
+    "emotions": {
+      "confident": "Încrezător",
+      "fearful": "Temător",
+      "greedy": "Lacom",
+      "calm": "Calm",
+      "frustrated": "Frustrat",
+      "excited": "Entuziasmat",
+      "patient": "Răbdător",
+      "impulsive": "Impulsiv",
+      "disciplined": "Disciplinat",
+      "tilted": "Tiltat"
+    },
+    "mistakes": {
+      "revengeTrade": "Tranzacție de răzbunare",
+      "oversized": "Mărime prea mare",
+      "noStopLoss": "Fără Stop Loss",
+      "movedStopLoss": "Am mutat SL-ul",
+      "fomo": "FOMO",
+      "overTrading": "Tranzacționare excesivă",
+      "againstTrend": "Contra trendului",
+      "ignoredPlan": "Am ignorat planul",
+      "tookProfitsEarly": "Am luat profitul prea devreme",
+      "heldTooLong": "Am ținut prea mult"
+    },
+    "setup": "Setup",
+    "lesson": "Lecție învățată",
+    "aiInsights": "Insight-uri AI",
+    "weeklyCoach": "Coach Săptămânal"
+  },
+  "calculators": {
+    "title": "Calculatoare",
+    "positionSize": {
+      "title": "Calculator mărime poziție",
+      "description": "Calculează mărimea poziției în funcție de riscul pe care ți-l asumi",
+      "accountBalance": "Sold cont",
+      "riskPercent": "Risc pe tranzacție (%)",
+      "entryPrice": "Preț intrare",
+      "stopLoss": "Preț Stop Loss",
+      "positionSize": "Mărime poziție",
+      "riskAmount": "Sumă risc"
+    },
+    "riskReward": {
+      "title": "Calculator Risc/Recompensă",
+      "description": "Verifică dacă tranzacția merită raportat la risc",
+      "takeProfit": "Preț Take Profit",
+      "ratio": "Raport R/R",
+      "breakEvenWinRate": "Rată de succes la zero"
+    },
+    "compound": {
+      "title": "Calculator capitalizare",
+      "description": "Simulează creșterea contului tău în timp",
+      "initialCapital": "Capital inițial",
+      "avgReturn": "Randament mediu (%)",
+      "period": "Perioadă (luni)",
+      "finalCapital": "Capital final"
+    },
+    "pipValue": {
+      "title": "Calculator valoare pip",
+      "description": "Calculează valoarea unui pip pentru forex",
+      "pair": "Pereche valutară",
+      "lotSize": "Mărime lot",
+      "pipValue": "Valoare pip"
+    }
+  },
+  "fiscal": {
+    "title": "Modul fiscal România",
+    "description": "Pregătește-ți automat datele pentru Declarația Unică la ANAF.",
+    "year": "An fiscal",
+    "shortTerm": "Câștiguri sub 365 zile (impozit 3%)",
+    "longTerm": "Câștiguri peste 365 zile (impozit 1%)",
+    "totalGains": "Câștiguri totale",
+    "totalLosses": "Pierderi totale",
+    "netProfit": "Profit net",
+    "taxOwed": "Impozit datorat",
+    "cassThreshold": "Prag CASS",
+    "cassOwed": "CASS datorat",
+    "exportDeclaration": "Exportă pentru Declarația Unică",
+    "disclaimer": "Aceste calcule sunt informative. Consultă-ți contabilul pentru depunerea finală."
+  },
+  "errors": {
+    "generic": "A apărut o eroare. Încearcă din nou.",
+    "network": "Eroare de rețea. Verifică conexiunea la internet.",
+    "unauthorized": "Nu ești autentificat.",
+    "forbidden": "Nu ai permisiunea să accesezi această resursă.",
+    "notFound": "Pagina nu a fost găsită.",
+    "serverError": "Eroare de server. Echipa a fost notificată.",
+    "rateLimited": "Prea multe cereri. Încearcă din nou într-un minut.",
+    "validation": "Date invalide. Verifică câmpurile."
+  }
+}

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Elite Quant Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="light"] {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-10: 2.5rem;
+      --color-bg:#f7f6f2; --color-surface:#f9f8f5; --color-surface-2:#fbfbf9; --color-surface-offset:#f3f0ec; --color-border:#d4d1ca; --color-text:#28251d; --color-text-muted:#7a7974; --color-primary:#01696f; --color-success:#437a22; --color-error:#a12c7b; --color-gold:#d19900;
+      --radius-sm:0.375rem; --radius-md:0.5rem; --radius-lg:0.75rem; --radius-xl:1rem;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.06); --shadow-md:0 4px 12px rgba(0,0,0,.08); --shadow-lg:0 12px 32px rgba(0,0,0,.12);
+      --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',monospace;
+    }
+    [data-theme="dark"] {
+      --color-bg:#111315; --color-surface:#17191c; --color-surface-2:#1d2024; --color-surface-offset:#20242a; --color-border:#2d323a; --color-text:#e6e9ee; --color-text-muted:#9aa3af; --color-primary:#41b6be; --color-success:#6daa45; --color-error:#d163a7; --color-gold:#e8af34;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.2); --shadow-md:0 4px 12px rgba(0,0,0,.3); --shadow-lg:0 12px 32px rgba(0,0,0,.4);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body)}
+    button,input,select,textarea{font:inherit;color:inherit}
+    button{cursor:pointer;border:none}
+    .app{display:grid;grid-template-columns:300px 1fr;grid-template-rows:72px 1fr;height:100dvh}
+    .sidebar{grid-row:1/-1;background:linear-gradient(180deg,var(--color-surface),var(--color-surface-2));border-right:1px solid var(--color-border);overflow-y:auto;overscroll-behavior:contain;padding:var(--space-5)}
+    .header{grid-column:2;display:flex;align-items:center;justify-content:space-between;padding:0 var(--space-5);border-bottom:1px solid var(--color-border);background:rgba(23,25,28,.88);backdrop-filter:blur(12px);position:sticky;top:0;z-index:10}
+    .main{grid-column:2;overflow-y:auto;overscroll-behavior:contain;padding:var(--space-5);display:grid;gap:var(--space-5)}
+    .logo{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-6)}
+    .logo svg{width:32px;height:32px;color:var(--color-gold)}
+    .logo h1{font-size:var(--text-lg);line-height:1.1}
+    .nav-group{margin-bottom:var(--space-6)}
+    .nav-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-muted);margin-bottom:var(--space-3)}
+    .nav-item{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0.85rem 0.9rem;background:transparent;border:1px solid transparent;border-radius:var(--radius-md);margin-bottom:var(--space-2)}
+    .nav-item.active,.nav-item:hover{background:var(--color-surface-offset);border-color:var(--color-border)}
+    .badge{font-size:var(--text-xs);padding:.2rem .5rem;border-radius:999px;background:rgba(65,182,190,.15);color:var(--color-primary)}
+    .header-left,.header-right{display:flex;align-items:center;gap:var(--space-4)}
+    .status-pill{display:flex;align-items:center;gap:.5rem;padding:.55rem .8rem;border-radius:999px;background:var(--color-surface-2);border:1px solid var(--color-border);font-size:var(--text-sm)}
+    .dot{width:8px;height:8px;border-radius:50%}.dot.live{background:var(--color-success)}.dot.warn{background:var(--color-gold)}
+    .header h2{font-size:var(--text-xl)}
+    .btn{padding:.75rem 1rem;border-radius:var(--radius-md);font-size:var(--text-sm);font-weight:600;background:var(--color-surface-2);border:1px solid var(--color-border)}
+    .btn.primary{background:var(--color-primary);color:#072325;border-color:transparent}.btn.danger{background:rgba(209,99,167,.18);color:#f1b7dd}
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-5)}
+    .grid-2{display:grid;grid-template-columns:1.2fr .8fr;gap:var(--space-5)}
+    .panel{background:linear-gradient(180deg,var(--color-surface),var(--color-surface-2));border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-md);padding:var(--space-5)}
+    .panel h3{font-size:var(--text-lg);margin-bottom:var(--space-2)}
+    .panel p{font-size:var(--text-sm);color:var(--color-text-muted);max-width:80ch}
+    .metric-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4);margin-top:var(--space-4)}
+    .metric{padding:var(--space-4);background:var(--color-surface-offset);border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+    .metric .label{font-size:var(--text-xs);color:var(--color-text-muted);text-transform:uppercase;letter-spacing:.06em}
+    .metric .value{font-size:var(--text-lg);font-weight:700;margin-top:.3rem;font-variant-numeric:tabular-nums lining-nums}
+    .metric .sub{font-size:var(--text-xs);color:var(--color-text-muted);margin-top:.35rem}
+    table{width:100%;border-collapse:collapse;margin-top:var(--space-4)}
+    th,td{text-align:left;padding:.8rem;border-bottom:1px solid var(--color-border);font-size:var(--text-sm);vertical-align:top}
+    th{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-muted)}
+    .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums lining-nums}
+    .kpi-up{color:var(--color-success)} .kpi-down{color:#ff8fb4}
+    .config-list{display:grid;gap:var(--space-4);margin-top:var(--space-4)}
+    .config-card{padding:var(--space-4);border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface-offset)}
+    .config-top{display:flex;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-2)}
+    .config-name{font-weight:700}.config-type{font-size:var(--text-xs);color:var(--color-text-muted)}
+    .config-card label{display:block;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-muted);margin-bottom:.35rem}
+    .config-card input,.config-card select{width:100%;padding:.7rem .8rem;border-radius:var(--radius-md);border:1px solid var(--color-border);background:var(--color-surface-2)}
+    .explain{margin-top:var(--space-3);display:grid;gap:.35rem}
+    .explain strong{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--color-gold)}
+    .tp-ladder{margin-top:var(--space-4);padding:var(--space-4);background:var(--color-surface-offset);border-radius:var(--radius-lg);border:1px solid var(--color-border)}
+    .ladder-bar{position:relative;height:10px;border-radius:999px;background:linear-gradient(90deg,#d163a7 0%, #e8af34 32%, #41b6be 100%);margin:var(--space-4) 0}
+    .marker{position:absolute;top:-8px;width:2px;height:26px;background:#fff;opacity:.8}
+    .logs{display:grid;gap:var(--space-2);margin-top:var(--space-4)}
+    .log{padding:.8rem 1rem;border-radius:var(--radius-md);background:var(--color-surface-offset);border:1px solid var(--color-border);font-size:var(--text-sm)}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
+    .small{font-size:var(--text-xs);color:var(--color-text-muted)}
+    @media (max-width: 1180px){.grid-3,.grid-2,.split,.metric-row{grid-template-columns:1fr}.app{grid-template-columns:1fr;grid-template-rows:auto auto 1fr}.sidebar{grid-row:auto;border-right:none;border-bottom:1px solid var(--color-border)}.header,.main{grid-column:1}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" aria-label="Elite Quant logo" fill="none" stroke="currentColor" stroke-width="4">
+          <path d="M10 46L26 18l12 20 6-10 10 18" />
+          <circle cx="26" cy="18" r="4" fill="currentColor" stroke="none" />
+        </svg>
+        <div>
+          <h1>Elite Quant</h1>
+          <p class="small">XAUUSD control terminal</p>
+        </div>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Workspace</div>
+        <button class="nav-item active"><span>Dashboard</span><span class="badge">Live</span></button>
+        <button class="nav-item"><span>Trades</span><span class="small">24</span></button>
+        <button class="nav-item"><span>Strategies</span><span class="small">312</span></button>
+        <button class="nav-item"><span>Risk Center</span><span class="small">Guarded</span></button>
+        <button class="nav-item"><span>ML Calibration</span><span class="small">Warm</span></button>
+        <button class="nav-item"><span>Reports</span><span class="small">7d</span></button>
+      </div>
+
+      <div class="nav-group">
+        <div class="nav-label">Configuration</div>
+        <button class="nav-item"><span>Execution</span></button>
+        <button class="nav-item"><span>Sessions</span></button>
+        <button class="nav-item"><span>TP Ladder</span></button>
+        <button class="nav-item"><span>News Blackout</span></button>
+        <button class="nav-item"><span>UI Explain Mode</span><span class="badge">On</span></button>
+      </div>
+
+      <div class="panel">
+        <h3>Operator note</h3>
+        <p>This interface is a prototype for the control surface only. It does not prove profitability, and it must stay subordinate to the risk and execution rules in the base trading spec.</p>
+      </div>
+    </aside>
+
+    <header class="header">
+      <div class="header-left">
+        <div>
+          <div class="small">Active environment</div>
+          <h2>XAUUSD live engine</h2>
+        </div>
+        <div class="status-pill"><span class="dot live"></span>MT5 connected</div>
+        <div class="status-pill"><span class="dot warn"></span>London-NY overlap</div>
+      </div>
+      <div class="header-right">
+        <button class="btn">Paper mode</button>
+        <button class="btn primary">Start auto</button>
+        <button class="btn danger">Kill switch</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel">
+        <h3>Account and risk snapshot</h3>
+        <p>Top-line controls must show whether the engine is healthy before any trade is allowed: balance, equity, daily drawdown, active risk, and every circuit breaker state.</p>
+        <div class="metric-row">
+          <div class="metric"><div class="label">Balance</div><div class="value mono">$24,840.00</div><div class="sub">Start of day $25,000.00</div></div>
+          <div class="metric"><div class="label">Equity</div><div class="value mono">$25,113.42</div><div class="sub kpi-up">+1.09% today</div></div>
+          <div class="metric"><div class="label">Risk per trade</div><div class="value mono">0.60%</div><div class="sub">Adaptive DD mode active</div></div>
+          <div class="metric"><div class="label">Circuit status</div><div class="value">Protected</div><div class="sub">0/3 breakers triggered</div></div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="panel">
+          <h3>Open trade and TP ladder</h3>
+          <p>The trader needs one place to see the current position, the original thesis, and exactly how the ladder and stop will evolve.</p>
+          <table>
+            <thead>
+              <tr><th>Ticket</th><th>Strategy</th><th>Side</th><th>Volume</th><th>Entry</th><th>SL</th><th>ML</th><th>PnL</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">842911</td>
+                <td>breakout_london_box_h1_07</td>
+                <td>BUY</td>
+                <td class="mono">0.42 → 0.21</td>
+                <td class="mono">2348.20</td>
+                <td class="mono">2343.74</td>
+                <td class="mono">0.68</td>
+                <td class="mono kpi-up">+$182.40</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="tp-ladder">
+            <div class="small">Visual ladder: SL, entry, TP1..TP3, and live price marker.</div>
+            <div class="ladder-bar">
+              <span class="marker" style="left:8%"></span>
+              <span class="marker" style="left:32%"></span>
+              <span class="marker" style="left:54%"></span>
+              <span class="marker" style="left:74%"></span>
+              <span class="marker" style="left:88%"></span>
+            </div>
+            <div class="split small">
+              <div>SL 2343.74 · Entry 2348.20 · TP1 2352.66</div>
+              <div>TP2 2357.12 · TP3 2361.58 · Live 2354.33</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Engine decision trace</h3>
+          <p>The app must explain why it traded or skipped, not just show a signal. This makes debugging possible for both juniors and seniors.</p>
+          <table>
+            <tbody>
+              <tr><th>Consensus</th><td class="mono">0.74 / threshold 0.62</td></tr>
+              <tr><th>ML probability</th><td class="mono">0.68 / trend gate 0.64</td></tr>
+              <tr><th>Session</th><td>Allowed, overlap liquidity confirmed</td></tr>
+              <tr><th>Spread</th><td class="mono">24 pts / max accepted 31 pts</td></tr>
+              <tr><th>Market health</th><td>Alive, ATR14 > 0.5 × ATR49</td></tr>
+              <tr><th>Skip reason</th><td>None</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="grid-3">
+        <div class="panel">
+          <h3>Config panel</h3>
+          <p>Each editable variable needs validation and a human explanation. The UI must prevent dangerous settings, not just accept them.</p>
+          <div class="config-list">
+            <div class="config-card">
+              <div class="config-top"><div><div class="config-name">RISK_PCT</div><div class="config-type">float · allowed 0.001–0.02</div></div><span class="badge">Validated</span></div>
+              <label>Current value</label>
+              <input value="0.0060" />
+              <div class="explain">
+                <strong>Junior meaning</strong><p class="small">This is the fraction of account equity risked if the stop loss is hit.</p>
+                <strong>Senior meaning</strong><p class="small">Used inside lot sizing: lot = (equity × risk_pct) / (sl_ticks × tick_value), then rounded to broker step.</p>
+              </div>
+            </div>
+            <div class="config-card">
+              <div class="config-top"><div><div class="config-name">XAU_SPREAD_MAX_RATIO</div><div class="config-type">float · guard rail</div></div><span class="badge">Context aware</span></div>
+              <label>Current value</label>
+              <input value="1.80" />
+              <div class="explain">
+                <strong>Junior meaning</strong><p class="small">Stops the bot from entering when spread is too wide versus normal market conditions.</p>
+                <strong>Senior meaning</strong><p class="small">Entry blocked when live spread exceeds rolling mean spread × ratio, preventing low-quality fills.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Strategy board</h3>
+          <p>Only the best active families should dominate weight. Failing families must be visible and removable.</p>
+          <table>
+            <thead><tr><th>ID</th><th>Family</th><th>WR</th><th>Exp</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>trend_h1_ema_12_50</td><td>Trend</td><td class="mono">58%</td><td class="mono">0.31R</td><td>ACTIVE</td></tr>
+              <tr><td>asia_mr_rsi_bb_02</td><td>Mean rev</td><td class="mono">41%</td><td class="mono kpi-down">-0.12R</td><td>DISABLED</td></tr>
+              <tr><td>breakout_pdhl_11</td><td>Breakout</td><td class="mono">54%</td><td class="mono">0.44R</td><td>ACTIVE</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Reports and diagnostics</h3>
+          <p>The operator needs the same data that the auto-pruning logic sees: daily reports, per-session breakdown, and ML calibration clues.</p>
+          <table>
+            <tbody>
+              <tr><th>Daily report</th><td>2026-06-12 loaded</td></tr>
+              <tr><th>Best session</th><td>London-NY overlap</td></tr>
+              <tr><th>Worst regime</th><td>Low-volatility mean reversion</td></tr>
+              <tr><th>ML samples</th><td class="mono">1,284</td></tr>
+              <tr><th>Calibration state</th><td>Usable, still monitored</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Logs and operator actions</h3>
+        <p>Every rejection, breaker, fill, partial close, and config change must be visible. This is essential for auditability and for understanding why the engine behaved a certain way.</p>
+        <div class="logs">
+          <div class="log mono">13:27:11 · ALLOW_TRADE · breakout_pdhl_11 · consensus 0.74 · ml 0.68 · spread 24</div>
+          <div class="log mono">13:31:42 · TP1_HIT · ticket 842911 · partial close 0.21 lots · move SL → BE+0.20R</div>
+          <div class="log mono">13:34:05 · CONFIG_PREVIEW · RISK_PCT change requested 0.0060 → 0.0075 · validation warning shown</div>
+        </div>
+        <div style="display:flex;gap:var(--space-3);margin-top:var(--space-4);flex-wrap:wrap">
+          <button class="btn">Apply config</button>
+          <button class="btn">Export daily report</button>
+          <button class="btn">Open strategy detail</button>
+          <button class="btn danger">Flatten all</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

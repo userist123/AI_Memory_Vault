@@ -1,0 +1,1075 @@
+_docs\Global Cognitive Brain Research — AI Memory Vault.pdf
+_docs\JARVIS SISTEM.pdf
+_docs\Putina augumentare - Copy.docx
+aplicatie-transfer\6.6.0
+aplicatie-transfer\Aplicatie transfer\START_APP.bat
+aplicatie-transfer\Aplicatie transfer\START_APP_v2.bat
+aplicatie-transfer\Aplicatie transfer\VERIFICARE_COMPLETA.bat
+aplicatie-transfer\Aplicatie transfer\database\__init__.py
+aplicatie-transfer\Aplicatie transfer\database\db.py
+aplicatie-transfer\Aplicatie transfer\database\init_database.py
+aplicatie-transfer\Aplicatie transfer\database\operators.py
+aplicatie-transfer\Aplicatie transfer\database\pdf_export.py
+aplicatie-transfer\Aplicatie transfer\database\schema.sql
+aplicatie-transfer\Aplicatie transfer\fix_pyqt6.bat
+aplicatie-transfer\Aplicatie transfer\init_database.py
+aplicatie-transfer\Aplicatie transfer\main.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri-v2.0-complet.tar.gz
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\.gitignore
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\Fix-UsbAccess.bat
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\INSTALARE.txt
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\JURNAL_MODIFICARI.txt
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\PORNIRE.bat
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\README.md
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\RegistruTransferuri.sln
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\Unlock-Usb.reg
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\config.ini
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\docs\DEPLOYMENT.md
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\docs\SECURITY.md
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\database\__init__.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\database\db.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\database\schema.sql
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\services\__init__.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\services\backup_service.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\services\cognitive_bridge_service.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\services\device_control_service.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\services\export_service.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\tools\migrate_v30_to_v31.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\__init__.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\login_dialog.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\main_window.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\theme.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\__init__.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\stats_widget.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_admin.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_audit.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_cognitive_vault.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_inregistrare.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_medii.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_medii_amprentate.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\legacy\python\ui\widgets\tab_registru.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\main.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\pornire.sh
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\raport_registru_transferuri.html
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\requirements.txt
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Data\DatabaseContext.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Hardware\DevicePolicyEnforcer.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Hardware\PhysicalDriveSanitizer.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Hardware\SmartCardSession.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Hardware\WmiMediaDetector.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Models\ClassificationLevel.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Models\MediaAsset.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Models\Operator.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Models\TransferRecord.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\RegistruTransferuri.csproj
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\AuditChain.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\DpapiKeyProtector.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\MerkleTree.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\PayloadDlpInspector.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\PinHasher.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\SecureBuffer.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Security\YaraDfirScanner.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\ArchiveMetadataExtractor.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\AuditChainVerifier.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\BackupService.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\CognitiveVaultBridgeService.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\CognitiveVaultClient.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\FileNameRegistryParser.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\PadesExportService.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\PadesSignatureService.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\SanitizationService.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\Services\VaultProcessSupervisor.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\App.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\App.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\DesignPreview\ControlGalleryWindow.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\DesignPreview\ControlGalleryWindow.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\EnrollMediaDialog.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\EnrollMediaDialog.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\FourEyesAuthDialog.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\FourEyesAuthDialog.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\ProcesVerbalDialog.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\ProcesVerbalDialog.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\ReceiverVerifyDialog.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\ReceiverVerifyDialog.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\SanitizationCertDialog.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\SanitizationCertDialog.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\SanitizeProgressDialog.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Dialogs\SanitizeProgressDialog.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\LoginWindow.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\LoginWindow.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\MainWindow.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\MainWindow.xaml.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Themes\Colors.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Themes\ObsidianTactical.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\src\RegistruTransferuri\UI\Themes\Styles.xaml
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\test_aplicatie.py
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\tests\RegistruTransferuri.Tests\RegistruTransferuri.Tests.csproj
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\tests\RegistruTransferuri.Tests\SecurityTests.cs
+aplicatie-transfer\Aplicatie transfer\registru-transferuri\transferuri.db
+aplicatie-transfer\Aplicatie transfer\transferuri.db
+aplicatie-transfer\Aplicatie transfer\transferuri.db.backup
+aplicatie-transfer\Aplicatie transfer\ui\__init__.py
+aplicatie-transfer\Aplicatie transfer\ui\main_window.py
+aplicatie-transfer\Aplicatie transfer\ui\operator_dialog.py
+aplicatie-transfer\Aplicatie transfer\ui\widgets\__init__.py
+aplicatie-transfer\Aplicatie transfer\ui\widgets\form_widget.py
+aplicatie-transfer\Aplicatie transfer\ui\widgets\settings_widget.py
+aplicatie-transfer\Aplicatie transfer\ui\widgets\stats_widget.py
+aplicatie-transfer\Aplicatie transfer\ui\widgets\table_widget.py
+aplicatie-transfer\Aplicatie transfer\utils\__init__.py
+aplicatie-transfer\Aplicatie transfer\utils\backup.py
+aplicatie-transfer\Aplicatie transfer\utils\validators.py
+aplicatie-transfer\Aplicatie transfer\verificare_structura.bat
+aplicatie-transfer\config.ini
+aplicatie-transfer\registru.log
+aplicatie-transfer\registru_hibrid_v2.db
+aplicatie-transfer\registru_transferuri.db
+aplicatie-transfer\registru_transferuri.py
+aplicatie-transfer\schema.sql
+aplicatie-transfer\terminal_transfer.db
+bot\.env
+bot\TradingBot\TradingBot\INSTALL.bat
+bot\TradingBot\TradingBot\README.md
+bot\TradingBot\TradingBot\START_BOT.bat
+bot\TradingBot\TradingBot\ai\__init__.py
+bot\TradingBot\TradingBot\ai\advisor.py
+bot\TradingBot\TradingBot\ai\ghid_practic.py
+bot\TradingBot\TradingBot\broker\__init__.py
+bot\TradingBot\TradingBot\broker\interface.py
+bot\TradingBot\TradingBot\core\__init__.py
+bot\TradingBot\TradingBot\core\config.py
+bot\TradingBot\TradingBot\core\security.py
+bot\TradingBot\TradingBot\data\__init__.py
+bot\TradingBot\TradingBot\data\fetcher.py
+bot\TradingBot\TradingBot\data\world_monitor.py
+bot\TradingBot\TradingBot\main.py
+bot\TradingBot\TradingBot\requirements.txt
+bot\TradingBot\TradingBot\start_bot.sh
+bot\TradingBot\TradingBot\strategies\__init__.py
+bot\TradingBot\TradingBot\strategies\engine.py
+bot\TradingBot\TradingBot\strategies\library.py
+bot\TradingBot\TradingBot\ui\__init__.py
+bot\TradingBot\TradingBot\ui\ai_panel.py
+bot\TradingBot\TradingBot\ui\broker_dialog.py
+bot\TradingBot\TradingBot\ui\chart_widget.py
+bot\TradingBot\TradingBot\ui\ghid_panel.py
+bot\TradingBot\TradingBot\ui\main_window.py
+bot\TradingBot\TradingBot\ui\portfolio_panel.py
+bot\TradingBot\TradingBot\utils\__init__.py
+bot\USB-Cleaner.ps1
+bot\USB-Forensics.ps1
+bot\ZEUS_TradingSystem\trading_app\INSTALL.bat
+bot\ZEUS_TradingSystem\trading_app\README.md
+bot\ZEUS_TradingSystem\trading_app\START_ZEUS.bat
+bot\ZEUS_TradingSystem\trading_app\ai\__init__.py
+bot\ZEUS_TradingSystem\trading_app\ai\advisor.py
+bot\ZEUS_TradingSystem\trading_app\core\__init__.py
+bot\ZEUS_TradingSystem\trading_app\data\__init__.py
+bot\ZEUS_TradingSystem\trading_app\data\fetcher.py
+bot\ZEUS_TradingSystem\trading_app\main.py
+bot\ZEUS_TradingSystem\trading_app\requirements.txt
+bot\ZEUS_TradingSystem\trading_app\start_zeus.sh
+bot\ZEUS_TradingSystem\trading_app\ui\__init__.py
+bot\ZEUS_TradingSystem\trading_app\ui\ai_panel.py
+bot\ZEUS_TradingSystem\trading_app\ui\chart_widget.py
+bot\ZEUS_TradingSystem\trading_app\ui\main_window.py
+bot\ZEUS_TradingSystem\trading_app\utils\__init__.py
+bot\jarvis-trader-ui\.cta.json
+bot\jarvis-trader-ui\.cursorrules
+bot\jarvis-trader-ui\.gitignore
+bot\jarvis-trader-ui\.vscode\settings.json
+bot\jarvis-trader-ui\README.md
+bot\jarvis-trader-ui\ai-streaming-server\README.md
+bot\jarvis-trader-ui\ai-streaming-server\_dot_env.example
+bot\jarvis-trader-ui\ai-streaming-server\package.json
+bot\jarvis-trader-ui\ai-streaming-server\src\index.ts
+bot\jarvis-trader-ui\ai-streaming-server\tsconfig.json
+bot\jarvis-trader-ui\biome.json
+bot\jarvis-trader-ui\jarvis_backend.py
+bot\jarvis-trader-ui\package-lock.json
+bot\jarvis-trader-ui\package.json
+bot\jarvis-trader-ui\public\favicon.ico
+bot\jarvis-trader-ui\public\logo192.png
+bot\jarvis-trader-ui\public\logo512.png
+bot\jarvis-trader-ui\public\manifest.json
+bot\jarvis-trader-ui\public\robots.txt
+bot\jarvis-trader-ui\src\components\Header.tsx
+bot\jarvis-trader-ui\src\components\demo.SettingsDialog.tsx
+bot\jarvis-trader-ui\src\demo.index.css
+bot\jarvis-trader-ui\src\lib\demo-store.ts
+bot\jarvis-trader-ui\src\lib\utils.ts
+bot\jarvis-trader-ui\src\routeTree.gen.ts
+bot\jarvis-trader-ui\src\router.tsx
+bot\jarvis-trader-ui\src\routes\__root.tsx
+bot\jarvis-trader-ui\src\routes\about.tsx
+bot\jarvis-trader-ui\src\routes\demo.store.tsx
+bot\jarvis-trader-ui\src\routes\example.chat.tsx
+bot\jarvis-trader-ui\src\routes\index.tsx
+bot\jarvis-trader-ui\src\store\demo.hooks.ts
+bot\jarvis-trader-ui\src\store\demo.store.ts
+bot\jarvis-trader-ui\src\styles.css
+bot\jarvis-trader-ui\tsconfig.json
+bot\jarvis-trader-ui\ui.config.json
+bot\jarvis-trader-ui\vite.config.ts
+bot\jarvis.html
+bot\jarvis\jarvis.py
+bot\jarvis_backend.py
+bot\rizz-coach-deepseek\rizz-coach\.env.example
+bot\rizz-coach-deepseek\rizz-coach\README.md
+bot\rizz-coach-deepseek\rizz-coach\client\app.js
+bot\rizz-coach-deepseek\rizz-coach\client\index.html
+bot\rizz-coach-deepseek\rizz-coach\client\style.css
+bot\rizz-coach-deepseek\rizz-coach\package-lock.json
+bot\rizz-coach-deepseek\rizz-coach\package.json
+bot\rizz-coach-deepseek\rizz-coach\server\index.js
+bot\rizz-coach-deepseek\rizz-coach\server\prompt\system.js
+bot\rizz-coach-deepseek\rizz-coach\server\routes\chat.js
+bot\terminal_transfer.db
+bot\trade\AUDIT_v1.md
+bot\trade\Buget_Personal_2026_Owner.xlsx
+bot\trade\Buget_Personal_2026_Owner_V2.xlsx
+bot\trade\ELITE_QUANT_ARCHITECT_SYSTEM_PROMPT (1).md
+bot\trade\ELITE_QUANT_ARCHITECT_SYSTEM_PROMPT.md
+bot\trade\ELITE_QUANT_BOT_COMPLETE_PROMPT.md
+bot\trade\Factura-791390337-1781453776800.pdf
+bot\trade\Rutina_FINALA_Owner.ics
+bot\trade\Rutina_Skincare_Owner.ics
+bot\trade\Rutina_Skincare_Owner_v3.ics
+bot\trade\account-statement_2026-01-01_2026-06-14_ro-ro_90e25d.pdf
+bot\trade\b9b278f1-8afe-413e-959e-55f2d0675d53.jpeg
+bot\trade\cerebras-agent\ELITE_QUANT_BOT_COMPLETE_PROMPT.md
+bot\trade\cerebras-agent\README.md
+bot\trade\cerebras-agent\agent.py
+bot\trade\cerebras-agent\my_project\README.md
+bot\trade\cerebras-agent\my_project\src\__init__.py
+bot\trade\cerebras-agent\my_project\src\journal.py
+bot\trade\cerebras-agent\my_project\src\mt5_client.py
+bot\trade\cerebras-agent\my_project\src\strategy.py
+bot\trade\cerebras-agent\requirements.txt
+bot\trade\cerebras-agent\start.bat
+bot\trade\cerebras.ps1
+bot\trade\client_metatrader_5.py
+bot\trade\elite-quant-terminal-functional.html
+bot\trade\elite-quant-terminal.html
+bot\trade\elite_quant_bot_v10\README.md
+bot\trade\elite_quant_bot_v10\config.py
+bot\trade\elite_quant_bot_v10\config_overrides.json
+bot\trade\elite_quant_bot_v10\core\__init__.py
+bot\trade\elite_quant_bot_v10\core\audit.py
+bot\trade\elite_quant_bot_v10\core\execution.py
+bot\trade\elite_quant_bot_v10\core\health.py
+bot\trade\elite_quant_bot_v10\core\journal.py
+bot\trade\elite_quant_bot_v10\core\mt5_client.py
+bot\trade\elite_quant_bot_v10\core\paper_executor.py
+bot\trade\elite_quant_bot_v10\core\risk_manager.py
+bot\trade\elite_quant_bot_v10\core\state_machine.py
+bot\trade\elite_quant_bot_v10\data\__init__.py
+bot\trade\elite_quant_bot_v10\data\feed.py
+bot\trade\elite_quant_bot_v10\data\indicators.py
+bot\trade\elite_quant_bot_v10\main.py
+bot\trade\elite_quant_bot_v10\ml\__init__.py
+bot\trade\elite_quant_bot_v10\ml\features.py
+bot\trade\elite_quant_bot_v10\ml\model.py
+bot\trade\elite_quant_bot_v10\ml\store.py
+bot\trade\elite_quant_bot_v10\ml\trainer.py
+bot\trade\elite_quant_bot_v10\ml\warmup.py
+bot\trade\elite_quant_bot_v10\ml_store\journal.sqlite
+bot\trade\elite_quant_bot_v10\requirements.txt
+bot\trade\elite_quant_bot_v10\strategies\__init__.py
+bot\trade\elite_quant_bot_v10\strategies\base.py
+bot\trade\elite_quant_bot_v10\strategies\ensemble.py
+bot\trade\elite_quant_bot_v10\strategies\factory.py
+bot\trade\elite_quant_bot_v10\strategies\families\__init__.py
+bot\trade\elite_quant_bot_v10\strategies\families\library.py
+bot\trade\elite_quant_bot_v10\tests\__init__.py
+bot\trade\elite_quant_bot_v10\tests\test_strategies.py
+bot\trade\elite_quant_bot_v10\tools\inspect_journal.py
+bot\trade\elite_quant_bot_v10\ui\__init__.py
+bot\trade\elite_quant_bot_v10\ui\app.py
+bot\trade\elite_quant_bot_v10\ui\charts.py
+bot\trade\elite_quant_bot_v10\ui\widgets.py
+bot\trade\elite_quant_bot_v11\README.md
+bot\trade\elite_quant_bot_v11\config.py
+bot\trade\elite_quant_bot_v11\config_overrides.json
+bot\trade\elite_quant_bot_v11\core\__init__.py
+bot\trade\elite_quant_bot_v11\core\audit.py
+bot\trade\elite_quant_bot_v11\core\execution.py
+bot\trade\elite_quant_bot_v11\core\health.py
+bot\trade\elite_quant_bot_v11\core\journal.py
+bot\trade\elite_quant_bot_v11\core\mt5_client.py
+bot\trade\elite_quant_bot_v11\core\paper_executor.py
+bot\trade\elite_quant_bot_v11\core\risk_manager.py
+bot\trade\elite_quant_bot_v11\core\state_machine.py
+bot\trade\elite_quant_bot_v11\data\__init__.py
+bot\trade\elite_quant_bot_v11\data\feed.py
+bot\trade\elite_quant_bot_v11\data\indicators.py
+bot\trade\elite_quant_bot_v11\logs\breakers_20260618.jsonl
+bot\trade\elite_quant_bot_v11\logs\breakers_20260619.jsonl
+bot\trade\elite_quant_bot_v11\logs\fills_20260612.jsonl
+bot\trade\elite_quant_bot_v11\logs\fills_20260618.jsonl
+bot\trade\elite_quant_bot_v11\logs\fills_20260619.jsonl
+bot\trade\elite_quant_bot_v11\logs\orders_20260612.jsonl
+bot\trade\elite_quant_bot_v11\logs\orders_20260618.jsonl
+bot\trade\elite_quant_bot_v11\logs\orders_20260619.jsonl
+bot\trade\elite_quant_bot_v11\logs\partials_20260619.jsonl
+bot\trade\elite_quant_bot_v11\logs\pnl_20260618.jsonl
+bot\trade\elite_quant_bot_v11\logs\pnl_20260619.jsonl
+bot\trade\elite_quant_bot_v11\main.py
+bot\trade\elite_quant_bot_v11\ml\__init__.py
+bot\trade\elite_quant_bot_v11\ml\features.py
+bot\trade\elite_quant_bot_v11\ml\model.py
+bot\trade\elite_quant_bot_v11\ml\store.py
+bot\trade\elite_quant_bot_v11\ml\trainer.py
+bot\trade\elite_quant_bot_v11\ml\warmup.py
+bot\trade\elite_quant_bot_v11\ml_store\journal.sqlite
+bot\trade\elite_quant_bot_v11\ml_store\ml_weights.json
+bot\trade\elite_quant_bot_v11\ml_store\strategy_stats.json
+bot\trade\elite_quant_bot_v11\reports\daily_report_20260619.csv
+bot\trade\elite_quant_bot_v11\reports\daily_report_20260619.json
+bot\trade\elite_quant_bot_v11\requirements.txt
+bot\trade\elite_quant_bot_v11\strategies\__init__.py
+bot\trade\elite_quant_bot_v11\strategies\base.py
+bot\trade\elite_quant_bot_v11\strategies\ensemble.py
+bot\trade\elite_quant_bot_v11\strategies\factory.py
+bot\trade\elite_quant_bot_v11\strategies\families\__init__.py
+bot\trade\elite_quant_bot_v11\strategies\families\library.py
+bot\trade\elite_quant_bot_v11\tests\__init__.py
+bot\trade\elite_quant_bot_v11\tests\test_strategies.py
+bot\trade\elite_quant_bot_v11\tools\inspect_journal.py
+bot\trade\elite_quant_bot_v11\ui\__init__.py
+bot\trade\elite_quant_bot_v11\ui\app.py
+bot\trade\elite_quant_bot_v11\ui\charts.py
+bot\trade\elite_quant_bot_v11\ui\widgets.py
+bot\trade\elite_quant_bot_v12\README.md
+bot\trade\elite_quant_bot_v12\config.py
+bot\trade\elite_quant_bot_v12\config_overrides.json
+bot\trade\elite_quant_bot_v12\core\__init__.py
+bot\trade\elite_quant_bot_v12\core\audit.py
+bot\trade\elite_quant_bot_v12\core\execution.py
+bot\trade\elite_quant_bot_v12\core\health.py
+bot\trade\elite_quant_bot_v12\core\journal.py
+bot\trade\elite_quant_bot_v12\core\mt5_client.py
+bot\trade\elite_quant_bot_v12\core\paper_executor.py
+bot\trade\elite_quant_bot_v12\core\risk_manager.py
+bot\trade\elite_quant_bot_v12\core\state_machine.py
+bot\trade\elite_quant_bot_v12\core\xauusd_profile.py
+bot\trade\elite_quant_bot_v12\data\__init__.py
+bot\trade\elite_quant_bot_v12\data\feed.py
+bot\trade\elite_quant_bot_v12\data\indicators.py
+bot\trade\elite_quant_bot_v12\logs\breakers_20260612.jsonl
+bot\trade\elite_quant_bot_v12\logs\breakers_20260613.jsonl
+bot\trade\elite_quant_bot_v12\logs\fills_20260612.jsonl
+bot\trade\elite_quant_bot_v12\logs\fills_20260613.jsonl
+bot\trade\elite_quant_bot_v12\logs\fills_20260618.jsonl
+bot\trade\elite_quant_bot_v12\logs\orders_20260612.jsonl
+bot\trade\elite_quant_bot_v12\logs\orders_20260613.jsonl
+bot\trade\elite_quant_bot_v12\logs\orders_20260618.jsonl
+bot\trade\elite_quant_bot_v12\logs\partials_20260612.jsonl
+bot\trade\elite_quant_bot_v12\logs\pnl_20260612.jsonl
+bot\trade\elite_quant_bot_v12\logs\pnl_20260613.jsonl
+bot\trade\elite_quant_bot_v12\logs\pnl_20260618.jsonl
+bot\trade\elite_quant_bot_v12\main.py
+bot\trade\elite_quant_bot_v12\ml\__init__.py
+bot\trade\elite_quant_bot_v12\ml\features.py
+bot\trade\elite_quant_bot_v12\ml\model.py
+bot\trade\elite_quant_bot_v12\ml\store.py
+bot\trade\elite_quant_bot_v12\ml\trainer.py
+bot\trade\elite_quant_bot_v12\ml\warmup.py
+bot\trade\elite_quant_bot_v12\ml\xau_features.py
+bot\trade\elite_quant_bot_v12\ml_store\journal.sqlite
+bot\trade\elite_quant_bot_v12\ml_store\ml_weights.json
+bot\trade\elite_quant_bot_v12\ml_store\strategy_stats.json
+bot\trade\elite_quant_bot_v12\reports\daily_report_20260612.csv
+bot\trade\elite_quant_bot_v12\reports\daily_report_20260612.json
+bot\trade\elite_quant_bot_v12\reports\daily_report_20260613.csv
+bot\trade\elite_quant_bot_v12\reports\daily_report_20260613.json
+bot\trade\elite_quant_bot_v12\requirements.txt
+bot\trade\elite_quant_bot_v12\strategies\__init__.py
+bot\trade\elite_quant_bot_v12\strategies\base.py
+bot\trade\elite_quant_bot_v12\strategies\ensemble.py
+bot\trade\elite_quant_bot_v12\strategies\factory.py
+bot\trade\elite_quant_bot_v12\strategies\families\__init__.py
+bot\trade\elite_quant_bot_v12\strategies\families\library.py
+bot\trade\elite_quant_bot_v12\strategies\families\xau_library.py
+bot\trade\elite_quant_bot_v12\tests\__init__.py
+bot\trade\elite_quant_bot_v12\tests\test_strategies.py
+bot\trade\elite_quant_bot_v12\tools\inspect_journal.py
+bot\trade\elite_quant_bot_v12\ui\__init__.py
+bot\trade\elite_quant_bot_v12\ui\app.py
+bot\trade\elite_quant_bot_v12\ui\charts.py
+bot\trade\elite_quant_bot_v12\ui\widgets.py
+bot\trade\factura_0758609314_20_05_2026_5179539392.pdf
+bot\trade\gemini-code-1781459773810.html
+bot\trade\owner-agents\README.md
+bot\trade\owner-agents\base_agent.py
+bot\trade\owner-agents\general_agent.py
+bot\trade\owner-agents\infra_agent.py
+bot\trade\owner-agents\orchestrator.py
+bot\trade\owner-agents\requirements.txt
+bot\trade\owner-agents\start.bat
+bot\trade\owner-agents\trading_agent.py
+bot\trade\owner-agents\webdev_agent.py
+bot\trade\repayment_plan.docx
+bot\trade\repayment_plan.pdf
+bot\trade\v1_snapshot\config.py
+bot\trade\v1_snapshot\core\__init__.py
+bot\trade\v1_snapshot\core\audit.py
+bot\trade\v1_snapshot\core\execution.py
+bot\trade\v1_snapshot\core\health.py
+bot\trade\v1_snapshot\core\journal.py
+bot\trade\v1_snapshot\core\mt5_client.py
+bot\trade\v1_snapshot\core\paper_executor.py
+bot\trade\v1_snapshot\core\risk_manager.py
+bot\trade\v1_snapshot\core\state_machine.py
+bot\trade\v1_snapshot\core\xauusd_profile.py
+bot\trade\v1_snapshot\data\__init__.py
+bot\trade\v1_snapshot\data\feed.py
+bot\trade\v1_snapshot\data\indicators.py
+bot\trade\v1_snapshot\main.py
+bot\trade\v1_snapshot\ml\__init__.py
+bot\trade\v1_snapshot\ml\features.py
+bot\trade\v1_snapshot\ml\model.py
+bot\trade\v1_snapshot\ml\store.py
+bot\trade\v1_snapshot\ml\trainer.py
+bot\trade\v1_snapshot\ml\warmup.py
+bot\trade\v1_snapshot\ml\xau_features.py
+bot\trade\v1_snapshot\ml_store\journal.sqlite
+bot\trade\v1_snapshot\requirements.txt
+bot\trade\v1_snapshot\strategies\__init__.py
+bot\trade\v1_snapshot\strategies\base.py
+bot\trade\v1_snapshot\strategies\ensemble.py
+bot\trade\v1_snapshot\strategies\factory.py
+bot\trade\v1_snapshot\strategies\families\__init__.py
+bot\trade\v1_snapshot\strategies\families\library.py
+bot\trade\v1_snapshot\strategies\families\xau_library.py
+bot\trade\v1_snapshot\tests\__init__.py
+bot\trade\v1_snapshot\tests\test_strategies.py
+bot\trade\v1_snapshot\tools\inspect_journal.py
+bot\trade\v1_snapshot\ui\__init__.py
+bot\trade\v1_snapshot\ui\app.py
+bot\trade\v1_snapshot\ui\charts.py
+bot\trade\v1_snapshot\ui\widgets.py
+bot\trade\venituri si cheltuieli.html
+bot\trade\venituri-si-cheltuieli-completat.html
+bot\trading-journal-COMPLET-v2\trading-journal\.dockerignore
+bot\trading-journal-COMPLET-v2\trading-journal\.env.example
+bot\trading-journal-COMPLET-v2\trading-journal\.github\workflows\ci.yml
+bot\trading-journal-COMPLET-v2\trading-journal\.gitignore
+bot\trading-journal-COMPLET-v2\trading-journal\Dockerfile
+bot\trading-journal-COMPLET-v2\trading-journal\README.md
+bot\trading-journal-COMPLET-v2\trading-journal\deploy\Caddyfile
+bot\trading-journal-COMPLET-v2\trading-journal\docker-compose.yml
+bot\trading-journal-COMPLET-v2\trading-journal\next.config.mjs
+bot\trading-journal-COMPLET-v2\trading-journal\open-next.config.ts
+bot\trading-journal-COMPLET-v2\trading-journal\package.json
+bot\trading-journal-COMPLET-v2\trading-journal\postcss.config.mjs
+bot\trading-journal-COMPLET-v2\trading-journal\public\locales\en\common.json
+bot\trading-journal-COMPLET-v2\trading-journal\public\locales\ro\common.json
+bot\trading-journal-COMPLET-v2\trading-journal\scripts\setup-oracle-a1.sh
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\admin\tickets\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\analytics\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\backtest\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\calculators\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\calendar\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\consulting\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\dashboard\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\fiscal-chat\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\fiscal\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\journal\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\layout.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\pricing\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\brokers\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\notifications\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\risk\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\signals\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\trades\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\layout.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\login\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\pricing\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\signup\page.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\ai\coach\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\ai\review\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\alerts\preferences\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\alerts\telegram-link\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\alerts\telegram-webhook\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\login\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\logout\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\me\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\signup\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\backtest\run\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\billing\checkout\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\billing\usage\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\billing\webhook\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\brokers\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\consulting\tickets\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\cron\scan\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\fiscal\chat\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\fiscal\export\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\fiscal\report\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\journal\entries\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\signals\execute\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\signals\list\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\signals\scan\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\trades\import\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\trades\list\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\voice\analyze\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\api\voice\transcribe\route.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\globals.css
+bot\trading-journal-COMPLET-v2\trading-journal\src\app\layout.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\ai\trade-review-button.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\ai\weekly-coach.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\auth\login-form.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\auth\signup-form.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\backtest\backtest-view.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\billing\pricing-client.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\billing\usage-indicator.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\consulting\consulting-view.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\fiscal\fiscal-chat-view.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\fiscal\fiscal-report-view.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\journal\journal-entries-list.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\journal\voice-journal.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\layout\app-sidebar.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\layout\footer.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\layout\header.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\layout\language-switcher.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\layout\theme-toggle.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\signals\signals-view.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\theme-provider.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\trades\dashboard-client.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\trades\trade-importer.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\trades\trades-client.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\trades\trades-table.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\components\ui\button.tsx
+bot\trading-journal-COMPLET-v2\trading-journal\src\hooks\useAudioRecorder.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\ai\groq.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\ai\llm.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\ai\pattern-detector.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\auth\jwt.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\auth\password.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\auth\session.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\backtest\engine.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\billing\plans.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\billing\polar.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\billing\quota.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\alpaca.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\binance.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\crypto.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\ibkr.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\index.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\types.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\db\alerts.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\db\consulting.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\db\mongo.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\db\usage.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\db\users.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\bnr.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\calculator.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\exporter.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\types.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\i18n\request.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\i18n\routing.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\binance.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\generic.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\index.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\mt5.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\trading212.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\utils.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\xtb.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\market\binance-data.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\notifications\email.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\notifications\telegram.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\detector.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\execution.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\indicators.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\risk-guards.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\scanner.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\lib\utils\index.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\middleware.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\types\ai-review.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\types\journal.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\types\trade.ts
+bot\trading-journal-COMPLET-v2\trading-journal\src\types\user.ts
+bot\trading-journal-COMPLET-v2\trading-journal\tailwind.config.ts
+bot\trading-journal-COMPLET-v2\trading-journal\tsconfig.json
+bot\trading-journal-COMPLET-v2\trading-journal\wrangler.jsonc
+eventloganalyzer\README.md
+eventloganalyzer\data\event-knowledge-base.json
+eventloganalyzer\src\App\.vs\EventLogAnalyzer.App\DesignTimeBuild\.dtbcache.v2
+eventloganalyzer\src\App\.vs\EventLogAnalyzer.App\FileContentIndex\b1b1556a-c118-4765-92d8-32390b9c2daa.vsidx
+eventloganalyzer\src\App\.vs\EventLogAnalyzer.App\v18\.futdcache.v2
+eventloganalyzer\src\App\.vs\EventLogAnalyzer.App\v18\.suo
+eventloganalyzer\src\App\EventLogAnalyzer.App.csproj
+eventloganalyzer\src\App\ViewModels\ViewModels.cs
+eventloganalyzer\src\App\Views\MainWindow.xaml
+eventloganalyzer\src\App\Views\MainWindow.xaml.cs
+eventloganalyzer\src\Core\.vs\EventLogAnalyzer.Core.slnx\DesignTimeBuild\.dtbcache.v2
+eventloganalyzer\src\Core\.vs\EventLogAnalyzer.Core.slnx\FileContentIndex\a6e08408-a6ae-466d-a99f-66be19c84b32.vsidx
+eventloganalyzer\src\Core\.vs\EventLogAnalyzer.Core.slnx\v18\.futdcache.v2
+eventloganalyzer\src\Core\.vs\EventLogAnalyzer.Core.slnx\v18\.suo
+eventloganalyzer\src\Core\AssemblyInfo.cs
+eventloganalyzer\src\Core\Detection\Detectors.cs
+eventloganalyzer\src\Core\EventLogAnalyzer.Core.csproj
+eventloganalyzer\src\Core\KnowledgeBase\EventKnowledgeBase.cs
+eventloganalyzer\src\Core\Models\Domain.cs
+eventloganalyzer\src\Core\Parsers\EvtxParser.cs
+eventloganalyzer\src\Core\Parsers\HklmHiveParser.cs
+eventloganalyzer\src\Core\Parsers\IArtifactParser.cs
+eventloganalyzer\src\Core\Parsers\NtUserHiveParser.cs
+eventloganalyzer\src\Core\Remediation\RemediationScriptBuilder.cs
+eventloganalyzer\tests\CoreTests.cs
+eventloganalyzer\tests\EventLogAnalyzer.Tests.csproj
+market-analysis\actualizare_piata.py
+market-analysis\analiza_piata.py
+market-analysis\analiza_piata1.py
+market-analysis\analiza_piata_complet.py
+market-analysis\ghid_invatare1.py
+nu-sterge\Analiza_Piata_Profesionala.xlsx
+nu-sterge\Analiza_Piata_Profesionala1.xlsx
+nu-sterge\Analiza_Piata_Profesionala11.xlsx
+nu-sterge\Analiza_Piata_Profesionala2.xlsx
+nu-sterge\ExpenseTrackerPro.html
+nu-sterge\actualizare.log
+nu-sterge\actualizare_piata - Copy.py
+nu-sterge\actualizare_piata.py
+nu-sterge\analiza.log
+nu-sterge\app\marketpro\.gitignore
+nu-sterge\app\marketpro\README.md
+nu-sterge\app\marketpro\eslint.config.js
+nu-sterge\app\marketpro\index.html
+nu-sterge\app\marketpro\package-lock.json
+nu-sterge\app\marketpro\package.json
+nu-sterge\app\marketpro\public\favicon.svg
+nu-sterge\app\marketpro\public\icons.svg
+nu-sterge\app\marketpro\src\App.css
+nu-sterge\app\marketpro\src\App.jsx
+nu-sterge\app\marketpro\src\assets\hero.png
+nu-sterge\app\marketpro\src\assets\react.svg
+nu-sterge\app\marketpro\src\assets\vite.svg
+nu-sterge\app\marketpro\src\index.css
+nu-sterge\app\marketpro\src\main.jsx
+nu-sterge\app\marketpro\vite.config.js
+nu-sterge\crearexlsx.py
+nu-sterge\ghid.log
+nu-sterge\ghid_invatare1.py
+nu-sterge\marketpro-analyzer.jsx
+nu-sterge\marketpro-live.jsx
+nu-sterge\nusterge\Analiza_Piata_Profesionala.xlsx
+nu-sterge\nusterge\actualizare_unificat.log
+nu-sterge\nusterge\ghid.py
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\- Copy.env
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\.dockerignore
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\.env
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\.github\workflows\ci.yml
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\.gitignore
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\Dockerfile
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\README.md
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\deploy\Caddyfile
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\docker-compose.yml
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\next-env.d.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\next.config.mjs
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\open-next.config.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\package-lock.json
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\package.json
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\postcss.config.mjs
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\public\locales\en\common.json
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\public\locales\ro\common.json
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\scripts\setup-oracle-a1.sh
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\admin\tickets\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\analytics\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\backtest\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\calculators\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\calendar\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\consulting\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\dashboard\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\fiscal-chat\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\fiscal\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\journal\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\layout.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\pricing\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\brokers\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\notifications\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\settings\risk\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\signals\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\(app)\trades\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\layout.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\login\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\pricing\page1.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\[locale]\signup\page.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\ai\coach\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\ai\review\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\alerts\preferences\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\alerts\telegram-link\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\alerts\telegram-webhook\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\login\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\logout\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\me\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\auth\signup\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\backtest\run\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\billing\checkout\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\billing\usage\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\billing\webhook\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\brokers\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\consulting\tickets\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\cron\scan\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\fiscal\chat\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\fiscal\export\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\fiscal\report\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\journal\entries\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\signals\execute\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\signals\list\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\signals\scan\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\trades\import\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\trades\list\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\voice\analyze\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\api\voice\transcribe\route.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\globals.css
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\app\layout.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\ai\trade-review-button.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\ai\weekly-coach.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\auth\login-form.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\auth\signup-form.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\backtest\backtest-view.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\billing\pricing-client.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\billing\usage-indicator.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\consulting\consulting-view.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\fiscal\fiscal-chat-view.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\fiscal\fiscal-report-view.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\journal\journal-entries-list.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\journal\voice-journal.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\layout\app-sidebar.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\layout\footer.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\layout\header.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\layout\language-switcher.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\layout\theme-toggle.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\signals\signals-view.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\theme-provider.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\trades\dashboard-client.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\trades\trade-importer.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\trades\trades-client.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\trades\trades-table.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\components\ui\button.tsx
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\hooks\useAudioRecorder.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\ai\groq.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\ai\llm.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\ai\pattern-detector.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\auth\jwt.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\auth\password.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\auth\session.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\backtest\engine.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\billing\plans.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\billing\polar.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\billing\quota.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\alpaca.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\binance.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\crypto.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\ibkr.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\index.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\brokers\types.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\db\alerts.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\db\consulting.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\db\mongo.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\db\usage.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\db\users.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\bnr.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\calculator.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\exporter.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\fiscal\types.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\i18n\request.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\i18n\routing.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\binance.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\generic.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\index.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\mt5.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\trading212.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\utils.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\importers\xtb.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\market\binance-data.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\notifications\email.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\notifications\telegram.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\detector.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\execution.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\indicators.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\risk-guards.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\signals\scanner.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\lib\utils\index.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\middleware.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\types\ai-review.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\types\journal.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\types\trade.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\src\types\user.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\tailwind.config.ts
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\tsconfig.json
+nu-sterge\trading-journal-COMPLET-v2\trading-journal\wrangler.jsonc
+nu-sterge\trading1\trading-journal\.dockerignore
+nu-sterge\trading1\trading-journal\.env.example
+nu-sterge\trading1\trading-journal\.github\workflows\ci.yml
+nu-sterge\trading1\trading-journal\.gitignore
+nu-sterge\trading1\trading-journal\Dockerfile
+nu-sterge\trading1\trading-journal\README.md
+nu-sterge\trading1\trading-journal\deploy\Caddyfile
+nu-sterge\trading1\trading-journal\docker-compose.yml
+nu-sterge\trading1\trading-journal\next.config.mjs
+nu-sterge\trading1\trading-journal\open-next.config.ts
+nu-sterge\trading1\trading-journal\package.json
+nu-sterge\trading1\trading-journal\postcss.config.mjs
+nu-sterge\trading1\trading-journal\public\locales\en\common.json
+nu-sterge\trading1\trading-journal\public\locales\ro\common.json
+nu-sterge\trading1\trading-journal\scripts\setup-oracle-a1.sh
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\admin\tickets\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\analytics\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\backtest\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\calculators\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\calendar\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\consulting\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\dashboard\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\fiscal-chat\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\fiscal\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\journal\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\layout.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\pricing\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\settings\brokers\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\settings\notifications\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\settings\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\settings\risk\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\signals\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\(app)\trades\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\layout.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\login\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\pricing\page.tsx
+nu-sterge\trading1\trading-journal\src\app\[locale]\signup\page.tsx
+nu-sterge\trading1\trading-journal\src\app\api\ai\coach\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\ai\review\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\alerts\preferences\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\alerts\telegram-link\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\alerts\telegram-webhook\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\auth\login\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\auth\logout\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\auth\me\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\auth\signup\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\backtest\run\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\billing\checkout\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\billing\usage\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\billing\webhook\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\brokers\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\consulting\tickets\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\cron\scan\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\fiscal\chat\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\fiscal\export\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\fiscal\report\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\journal\entries\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\signals\execute\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\signals\list\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\signals\scan\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\trades\import\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\trades\list\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\voice\analyze\route.ts
+nu-sterge\trading1\trading-journal\src\app\api\voice\transcribe\route.ts
+nu-sterge\trading1\trading-journal\src\app\globals.css
+nu-sterge\trading1\trading-journal\src\app\layout.tsx
+nu-sterge\trading1\trading-journal\src\components\ai\trade-review-button.tsx
+nu-sterge\trading1\trading-journal\src\components\ai\weekly-coach.tsx
+nu-sterge\trading1\trading-journal\src\components\auth\login-form.tsx
+nu-sterge\trading1\trading-journal\src\components\auth\signup-form.tsx
+nu-sterge\trading1\trading-journal\src\components\backtest\backtest-view.tsx
+nu-sterge\trading1\trading-journal\src\components\billing\pricing-client.tsx
+nu-sterge\trading1\trading-journal\src\components\billing\usage-indicator.tsx
+nu-sterge\trading1\trading-journal\src\components\consulting\consulting-view.tsx
+nu-sterge\trading1\trading-journal\src\components\fiscal\fiscal-chat-view.tsx
+nu-sterge\trading1\trading-journal\src\components\fiscal\fiscal-report-view.tsx
+nu-sterge\trading1\trading-journal\src\components\journal\journal-entries-list.tsx
+nu-sterge\trading1\trading-journal\src\components\journal\voice-journal.tsx
+nu-sterge\trading1\trading-journal\src\components\layout\app-sidebar.tsx
+nu-sterge\trading1\trading-journal\src\components\layout\footer.tsx
+nu-sterge\trading1\trading-journal\src\components\layout\header.tsx
+nu-sterge\trading1\trading-journal\src\components\layout\language-switcher.tsx
+nu-sterge\trading1\trading-journal\src\components\layout\theme-toggle.tsx
+nu-sterge\trading1\trading-journal\src\components\signals\signals-view.tsx
+nu-sterge\trading1\trading-journal\src\components\theme-provider.tsx
+nu-sterge\trading1\trading-journal\src\components\trades\dashboard-client.tsx
+nu-sterge\trading1\trading-journal\src\components\trades\trade-importer.tsx
+nu-sterge\trading1\trading-journal\src\components\trades\trades-client.tsx
+nu-sterge\trading1\trading-journal\src\components\trades\trades-table.tsx
+nu-sterge\trading1\trading-journal\src\components\ui\button.tsx
+nu-sterge\trading1\trading-journal\src\hooks\useAudioRecorder.ts
+nu-sterge\trading1\trading-journal\src\lib\ai\groq.ts
+nu-sterge\trading1\trading-journal\src\lib\ai\llm.ts
+nu-sterge\trading1\trading-journal\src\lib\ai\pattern-detector.ts
+nu-sterge\trading1\trading-journal\src\lib\auth\jwt.ts
+nu-sterge\trading1\trading-journal\src\lib\auth\password.ts
+nu-sterge\trading1\trading-journal\src\lib\auth\session.ts
+nu-sterge\trading1\trading-journal\src\lib\backtest\engine.ts
+nu-sterge\trading1\trading-journal\src\lib\billing\plans.ts
+nu-sterge\trading1\trading-journal\src\lib\billing\polar.ts
+nu-sterge\trading1\trading-journal\src\lib\billing\quota.ts
+nu-sterge\trading1\trading-journal\src\lib\brokers\alpaca.ts
+nu-sterge\trading1\trading-journal\src\lib\brokers\binance.ts
+nu-sterge\trading1\trading-journal\src\lib\brokers\crypto.ts
+nu-sterge\trading1\trading-journal\src\lib\brokers\ibkr.ts
+nu-sterge\trading1\trading-journal\src\lib\brokers\index.ts
+nu-sterge\trading1\trading-journal\src\lib\brokers\types.ts
+nu-sterge\trading1\trading-journal\src\lib\db\alerts.ts
+nu-sterge\trading1\trading-journal\src\lib\db\consulting.ts
+nu-sterge\trading1\trading-journal\src\lib\db\mongo.ts
+nu-sterge\trading1\trading-journal\src\lib\db\usage.ts
+nu-sterge\trading1\trading-journal\src\lib\db\users.ts
+nu-sterge\trading1\trading-journal\src\lib\fiscal\bnr.ts
+nu-sterge\trading1\trading-journal\src\lib\fiscal\calculator.ts
+nu-sterge\trading1\trading-journal\src\lib\fiscal\exporter.ts
+nu-sterge\trading1\trading-journal\src\lib\fiscal\types.ts
+nu-sterge\trading1\trading-journal\src\lib\i18n\request.ts
+nu-sterge\trading1\trading-journal\src\lib\i18n\routing.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\binance.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\generic.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\index.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\mt5.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\trading212.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\utils.ts
+nu-sterge\trading1\trading-journal\src\lib\importers\xtb.ts
+nu-sterge\trading1\trading-journal\src\lib\market\binance-data.ts
+nu-sterge\trading1\trading-journal\src\lib\notifications\email.ts
+nu-sterge\trading1\trading-journal\src\lib\notifications\telegram.ts
+nu-sterge\trading1\trading-journal\src\lib\signals\detector.ts
+nu-sterge\trading1\trading-journal\src\lib\signals\execution.ts
+nu-sterge\trading1\trading-journal\src\lib\signals\indicators.ts
+nu-sterge\trading1\trading-journal\src\lib\signals\risk-guards.ts
+nu-sterge\trading1\trading-journal\src\lib\signals\scanner.ts
+nu-sterge\trading1\trading-journal\src\lib\utils\index.ts
+nu-sterge\trading1\trading-journal\src\middleware.ts
+nu-sterge\trading1\trading-journal\src\types\ai-review.ts
+nu-sterge\trading1\trading-journal\src\types\journal.ts
+nu-sterge\trading1\trading-journal\src\types\trade.ts
+nu-sterge\trading1\trading-journal\src\types\user.ts
+nu-sterge\trading1\trading-journal\tailwind.config.ts
+nu-sterge\trading1\trading-journal\tsconfig.json
+nu-sterge\trading1\trading-journal\wrangler.jsonc
+site\.emergent\emergent.yml
+site\.gitconfig
+site\.gitignore
+site\README.md
+site\backend\requirements.txt
+site\backend\server.py
+site\frontend\.gitignore
+site\frontend\README.md
+site\frontend\components.json
+site\frontend\craco.config.js
+site\frontend\jsconfig.json
+site\frontend\package-lock.json
+site\frontend\package.json
+site\frontend\plugins\health-check\health-endpoints.js
+site\frontend\plugins\health-check\webpack-health-plugin.js
+site\frontend\plugins\visual-edits\babel-metadata-plugin.js
+site\frontend\plugins\visual-edits\dev-server-setup.js
+site\frontend\postcss.config.js
+site\frontend\public\index.html
+site\frontend\src\App.css
+site\frontend\src\App.js
+site\frontend\src\components\AboutSection.jsx
+site\frontend\src\components\CarViewer3D.jsx
+site\frontend\src\components\ContactSection.jsx
+site\frontend\src\components\FAQSection.jsx
+site\frontend\src\components\Footer.jsx
+site\frontend\src\components\HeroSection.jsx
+site\frontend\src\components\Navbar.jsx
+site\frontend\src\components\PortfolioSection.jsx
+site\frontend\src\components\PricingSection.jsx
+site\frontend\src\components\ProcessSection.jsx
+site\frontend\src\components\ServicesSection.jsx
+site\frontend\src\components\TestimonialsSection.jsx
+site\frontend\src\components\ui\accordion.jsx
+site\frontend\src\components\ui\alert-dialog.jsx
+site\frontend\src\components\ui\alert.jsx
+site\frontend\src\components\ui\aspect-ratio.jsx
+site\frontend\src\components\ui\avatar.jsx
+site\frontend\src\components\ui\badge.jsx
+site\frontend\src\components\ui\breadcrumb.jsx
+site\frontend\src\components\ui\button.jsx
+site\frontend\src\components\ui\calendar.jsx
+site\frontend\src\components\ui\card.jsx
+site\frontend\src\components\ui\carousel.jsx
+site\frontend\src\components\ui\checkbox.jsx
+site\frontend\src\components\ui\collapsible.jsx
+site\frontend\src\components\ui\command.jsx
+site\frontend\src\components\ui\context-menu.jsx
+site\frontend\src\components\ui\dialog.jsx
+site\frontend\src\components\ui\drawer.jsx
+site\frontend\src\components\ui\dropdown-menu.jsx
+site\frontend\src\components\ui\form.jsx
+site\frontend\src\components\ui\hover-card.jsx
+site\frontend\src\components\ui\input-otp.jsx
+site\frontend\src\components\ui\input.jsx
+site\frontend\src\components\ui\label.jsx
+site\frontend\src\components\ui\menubar.jsx
+site\frontend\src\components\ui\navigation-menu.jsx
+site\frontend\src\components\ui\pagination.jsx
+site\frontend\src\components\ui\popover.jsx
+site\frontend\src\components\ui\progress.jsx
+site\frontend\src\components\ui\radio-group.jsx
+site\frontend\src\components\ui\resizable.jsx
+site\frontend\src\components\ui\scroll-area.jsx
+site\frontend\src\components\ui\select.jsx
+site\frontend\src\components\ui\separator.jsx
+site\frontend\src\components\ui\sheet.jsx
+site\frontend\src\components\ui\skeleton.jsx
+site\frontend\src\components\ui\slider.jsx
+site\frontend\src\components\ui\sonner.jsx
+site\frontend\src\components\ui\switch.jsx
+site\frontend\src\components\ui\table.jsx
+site\frontend\src\components\ui\tabs.jsx
+site\frontend\src\components\ui\textarea.jsx
+site\frontend\src\components\ui\toast.jsx
+site\frontend\src\components\ui\toaster.jsx
+site\frontend\src\components\ui\toggle-group.jsx
+site\frontend\src\components\ui\toggle.jsx
+site\frontend\src\components\ui\tooltip.jsx
+site\frontend\src\contexts\AuthContext.js
+site\frontend\src\hooks\use-toast.js
+site\frontend\src\hooks\useScrollAnimation.js
+site\frontend\src\index.css
+site\frontend\src\index.js
+site\frontend\src\lib\utils.js
+site\frontend\src\pages\AdminPage.jsx
+site\frontend\src\pages\ConfiguratorPage.jsx
+site\frontend\src\pages\DashboardPage.jsx
+site\frontend\src\pages\HomePage.jsx
+site\frontend\src\pages\LoginPage.jsx
+site\frontend\src\pages\RegisterPage.jsx
+site\frontend\tailwind.config.js
+site\memory\.gitkeep
+site\memory\PRD.md
+site\test_reports\.gitkeep
+site\test_reports\pytest\.gitkeep
+site\test_result.md
+site\tests\__init__.py
+tradingbot\TradingBot\INSTALL.bat
+tradingbot\TradingBot\README.md
+tradingbot\TradingBot\START_BOT.bat
+tradingbot\TradingBot\ai\__init__.py
+tradingbot\TradingBot\ai\advisor.py
+tradingbot\TradingBot\ai\ghid_practic.py
+tradingbot\TradingBot\broker\__init__.py
+tradingbot\TradingBot\broker\interface.py
+tradingbot\TradingBot\core\__init__.py
+tradingbot\TradingBot\core\config.py
+tradingbot\TradingBot\core\security.py
+tradingbot\TradingBot\data\__init__.py
+tradingbot\TradingBot\data\fetcher.py
+tradingbot\TradingBot\data\world_monitor.py
+tradingbot\TradingBot\main.py
+tradingbot\TradingBot\requirements.txt
+tradingbot\TradingBot\start_bot.sh
+tradingbot\TradingBot\strategies\__init__.py
+tradingbot\TradingBot\strategies\engine.py
+tradingbot\TradingBot\strategies\library.py
+tradingbot\TradingBot\ui\__init__.py
+tradingbot\TradingBot\ui\ai_panel.py
+tradingbot\TradingBot\ui\broker_dialog.py
+tradingbot\TradingBot\ui\chart_widget.py
+tradingbot\TradingBot\ui\ghid_panel.py
+tradingbot\TradingBot\ui\main_window.py
+tradingbot\TradingBot\ui\portfolio_panel.py
+tradingbot\TradingBot\utils\__init__.py

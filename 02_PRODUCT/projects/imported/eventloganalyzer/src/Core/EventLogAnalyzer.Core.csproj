@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <!-- net8.0-windows only because System.Diagnostics.Eventing.Reader is Windows-only.
+         All classes in this project are otherwise pure .NET and could target net8.0
+         if EvtxParser is later split behind an interface for cross-platform builds. -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EventLogAnalyzer.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Eric Zimmerman's offline registry hive parser (MIT). Parses raw hive
+         bytes directly - no RegLoadKey, no elevation required just to read.
+         This package uses calendar versioning; 2026.5.0 is the version
+         actually resolved as of this writing - pin it explicitly to avoid
+         the NU1603 "nearest version" warning. -->
+    <PackageReference Include="Registry" Version="2026.5.0" />
+
+    <!-- System.Diagnostics.Eventing.Reader (EventLogReader, EventRecord, etc.)
+         is NOT part of the net8.0-windows shared framework by itself - since
+         .NET 5 it ships as this separate package. Required for EvtxParser.cs
+         to resolve EventRecord/EventLogReader/EventLogQuery. -->
+    <PackageReference Include="System.Diagnostics.EventLog" Version="8.0.2" />
+
+    <!-- 8.0.5+ required: 8.0.0-8.0.4 have a known high-severity DoS advisory
+         (CVE-2024-43485 / GHSA-8g4q-xg66-9fp4). -->
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+</Project>

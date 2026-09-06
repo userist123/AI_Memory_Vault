@@ -1,0 +1,29 @@
+/* App-specific styles - keeping minimal as design system handles most */
+
+/* Ensure no centering by default */
+.App {
+  text-align: left;
+}
+
+/* Remove default link styling issues */
+a {
+  text-decoration: none;
+}
+
+/* Smooth image loading */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+  outline: 2px solid hsl(328 100% 54%);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background: hsl(328 100% 54% / 0.3);
+  color: hsl(0 0% 98%);
+}

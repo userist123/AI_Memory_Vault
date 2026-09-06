@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="xunit" Version="2.8.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Only reference the parts of Core that don't require net8.0-windows
+         (Models, KnowledgeBase, Detection, Remediation). EvtxParser/hive
+         parsers are exercised via their pure-logic internals (e.g.
+         EvtxParser.Map) rather than a live EventLogReader in these tests,
+         so this project can run on any OS. -->
+    <ProjectReference Include="..\src\Core\EventLogAnalyzer.Core.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Rizz Coach</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>🔥 Rizz Coach</h1>
+      <p>Coach AI pentru conversații dating</p>
+    </header>
+
+    <main>
+      <div class="form-group">
+        <label>Tipul mesajului</label>
+        <div class="toggle-group">
+          <button class="toggle active" data-type="received">📥 Am primit</button>
+          <button class="toggle" data-type="sent">📤 Am trimis</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="message">Mesajul</label>
+        <textarea id="message" placeholder="Lipește mesajul primit sau trimis..." rows="4"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="context">Context anterior (opțional)</label>
+        <textarea id="context" placeholder="Ex: e din Constanța, stă în București, am vorbit despre ciocolată..." rows="2"></textarea>
+      </div>
+
+      <button id="submit" class="btn-primary">Analizează 🎯</button>
+
+      <div id="result" class="result hidden"></div>
+
+      <div id="history" class="history"></div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

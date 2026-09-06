@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>EventLogAnalyzer.App</RootNamespace>
+    <ApplicationIcon>Resources\app.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\EventLogAnalyzer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Ship the knowledge base next to the exe so it's editable post-deploy
+         without a rebuild (see README "Adding a new event signature"). -->
+    <None Include="..\..\data\event-knowledge-base.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

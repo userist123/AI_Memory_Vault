@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ro" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Budget | Owner 2026</title>
+    
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            /* Light Theme Tokens */
+            --bg-base: #f4f4f5;
+            --bg-panel: #ffffff;
+            --bg-input: #f4f4f5;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --border: #e4e4e7;
+            --sidebar-w: 260px;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Tokens */
+            --bg-base: #09090b;
+            --bg-panel: #18181b;
+            --bg-input: #27272a;
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent: #3b82f6;
+            --accent-hover: #60a5fa;
+            --border: #27272a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Satoshi', sans-serif;
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Typography Fluid */
+        h1 { font-size: clamp(1.5rem, 2vw, 2rem); }
+        h2 { font-size: clamp(1.2rem, 1.5vw, 1.5rem); margin-bottom: 1rem; }
+        p { font-size: 0.95rem; }
+
+        /* Layout */
+        #sidebar {
+            width: var(--sidebar-w);
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 1rem;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header-bar {
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .content-area {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Nav & Menus */
+        .nav-section { margin-bottom: 2rem; }
+        .nav-section h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            padding-left: 0.5rem;
+        }
+        .nav-btn {
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+        }
+        .nav-btn:hover { background-color: var(--bg-input); }
+        .nav-btn.active {
+            background-color: var(--accent);
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* Forms & Inputs */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+        input, select, textarea {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: 'Satoshi', sans-serif;
+            min-height: 46px; /* Touch friendly */
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input.mono { font-family: 'JetBrains Mono', monospace; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; min-height: 100px; }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+            min-height: 46px;
+            transition: background 0.2s;
+        }
+        .btn:hover { background-color: var(--accent-hover); }
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+        .btn-outline:hover { background-color: var(--bg-input); }
+        .btn-danger { background-color: var(--danger); color: white; }
+
+        /* Cards & Panels */
+        .card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .ai-panel {
+            border: 1px solid var(--accent);
+            background: linear-gradient(145deg, var(--bg-panel) 0%, rgba(59, 130, 246, 0.1) 100%);
+        }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-muted); font-weight: 500; font-size: 0.85rem; }
+
+        /* Utilities */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .mt-1 { margin-top: 1rem; }
+        .mt-2 { margin-top: 2rem; }
+        .gap-1 { gap: 1rem; display: flex;}
+        .hidden { display: none !important; }
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-warning { color: var(--warning); }
+
+        /* Progress Bars */
+        .progress-bg { width: 100%; background-color: var(--bg-input); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 0.5rem;}
+        .progress-fill { height: 100%; background-color: var(--accent); transition: width 0.3s ease; }
+
+        /* Mobile */
+        .mobile-toggle { display: none; background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; }
+        
+        @media (max-width: 860px) {
+            #sidebar {
+                position: fixed;
+                height: 100%;
+                transform: translateX(-100%);
+                box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            }
+            #sidebar.open { transform: translateX(0); }
+            .mobile-toggle { display: block; }
+            .header-bar { padding: 1rem; }
+            .content-area { padding: 1rem; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside id="sidebar">
+        <div class="flex-between" style="margin-bottom: 2rem;">
+            <h2>Nexus<span class="text-accent" style="color:var(--accent)">Budget</span></h2>
+            <button id="theme-toggle" class="btn-outline" style="min-height: 36px; padding: 0.2rem 0.5rem; border-radius:4px;">🌞</button>
+        </div>
+
+        <div class="nav-section">
+            <h3>Meniu Principal</h3>
+            <button class="nav-btn active" data-view="overview">Dashboard / AI</button>
+            <button class="nav-btn" data-view="editor">Editor Lunar</button>
+            <button class="nav-btn" data-view="transactions">Jurnal Tranzacții</button>
+            <button class="nav-btn" data-view="goals">Obiective Financiare</button>
+        </div>
+
+        <div class="nav-section" style="flex:1; overflow-y:auto;">
+            <h3>Luni 2026</h3>
+            <div id="months-nav"></div>
+        </div>
+
+        <div class="nav-section mt-1">
+            <h3>Date Sistem</h3>
+            <button class="nav-btn" id="btn-save">💾 Salvează (.json)</button>
+            <button class="nav-btn" onclick="document.getElementById('file-import').click()">📂 Importă (.json)</button>
+            <input type="file" id="file-import" accept=".json" class="hidden">
+            <button class="nav-btn" id="btn-export-csv">📊 Export CSV</button>
+            <button class="nav-btn text-danger mt-1" id="btn-reset">⚠️ Reset Demo</button>
+        </div>
+    </aside>
+
+    <main id="main-content">
+        <header class="header-bar">
+            <div style="display:flex; align-items:center; gap: 1rem;">
+                <button class="mobile-toggle" id="mobile-toggle">☰</button>
+                <h2 id="header-title" style="margin:0;">Dashboard Overview</h2>
+            </div>
+            <div>
+                <select id="global-month-select" class="mono" style="min-height: 36px; padding: 0.2rem 1rem; font-weight:bold;"></select>
+            </div>
+        </header>
+
+        <div class="content-area">
+            
+            <div id="view-overview" class="view-section">
+                <div class="grid-3">
+                    <div class="card">
+                        <p class="text-muted">Total Venituri Anuale</p>
+                        <h2 class="mono" id="kpi-income">0 Lei</h2>
+                    </div>
+                    <div class="card">
+                        <p class="text-muted">Total Cheltuieli Anuale</p>
+                        <h2 class="mono" id="kpi-expense">0 Lei</h2>
+                    </div>
+                    <div class="card">
+                        <p class="text-muted">Procent Economisit Anual</p>
+                        <h2 class="mono text-success" id="kpi-savings">0%</h2>
+                    </div>
+                </div>
+
+                <div class="card ai-panel">
+                    <h2>🧠 AI Nexus Advisor</h2>
+                    <p class="text-muted" style="margin-bottom: 1rem;">Analiză euristică pe datele curente (2026)</p>
+                    <div id="ai-insights" style="line-height: 1.6;"></div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Evoluție Venit vs Cheltuieli (2026)</h3>
+                        <canvas id="chart-line"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3 id="doughnut-title">Structură Cheltuieli - Luna Activă</h3>
+                        <canvas id="chart-doughnut"></canvas>
+                        
+                        <div class="mt-2">
+                            <p class="flex-between"><span>Cheltuieli vs Venit:</span> <span id="prog-exp-val" class="mono">0%</span></p>
+                            <div class

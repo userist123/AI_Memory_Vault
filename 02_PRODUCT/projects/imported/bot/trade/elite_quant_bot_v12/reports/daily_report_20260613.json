@@ -1,0 +1,37 @@
+{
+  "day": "2026-06-13",
+  "generated_at": "2026-06-13T10:10:18+00:00",
+  "closed_trades": 12,
+  "total_pnl": 0.0,
+  "wins": 0,
+  "losses": 12,
+  "max_drawdown_today": 0.0,
+  "avg_spread_pips": 7.6,
+  "avg_slippage_pips": 0.0,
+  "auto_pruned_strategies": [
+    "macd_momentum_fast5_signal5_slow35_M5"
+  ],
+  "per_strategy": [
+    {
+      "strategy_id": "macd_momentum_fast5_signal5_slow35_M5",
+      "trades_today": 12,
+      "wins_today": 0,
+      "losses_today": 12,
+      "win_rate_today": 0.0,
+      "gross_pnl": 0.0,
+      "avg_ml_prob_win": 0.999,
+      "lifetime_trades": 47,
+      "lifetime_wins": 35,
+      "lifetime_win_rate": 0.7447,
+      "avg_R_today": 0.0,
+      "max_drawdown_today": 0.0,
+      "avg_spread_pips": 7.6,
+      "avg_slippage_entry_pips": 0.0,
+      "avg_slippage_exit_pips": 0.0,
+      "avg_slippage_pips": 0.0,
+      "tp1_hit_rate": 0.0,
+      "tp2_hit_rate": 0.0,
+      "tp3_hit_rate": 0.0
+    }
+  ]
+}

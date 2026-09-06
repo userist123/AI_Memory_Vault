@@ -1,0 +1,127 @@
+[
+  {
+    "eventId": 7031,
+    "provider": "Service Control Manager",
+    "title": "Service terminated unexpectedly and is being restarted",
+    "severity": "Error",
+    "explanation": "A Windows service crashed. The Service Control Manager has a recovery action configured and is automatically restarting it.",
+    "commonCauses": [
+      "Unhandled exception in the service binary",
+      "Missing or corrupted dependency (DLL, driver, or config file)",
+      "Resource exhaustion (memory or handle leak) in the service process"
+    ],
+    "recommendedAction": "Check the service's own event source for the underlying exception; run 'sc qc <service>' to confirm binary path and dependencies.",
+    "docsUrl": "https://learn.microsoft.com/windows/win32/services/service-control-manager"
+  },
+  {
+    "eventId": 7034,
+    "provider": "Service Control Manager",
+    "title": "Service terminated unexpectedly (no automatic recovery configured)",
+    "severity": "Error",
+    "explanation": "A Windows service crashed and, unlike 7031, has no recovery action configured, so it will remain stopped until manually restarted or the machine reboots.",
+    "commonCauses": [
+      "Unhandled exception in the service binary",
+      "A dependent service or driver failed to load"
+    ],
+    "recommendedAction": "Restart the service manually after investigating the root cause, then configure a recovery policy with 'sc failure'.",
+    "docsUrl": "https://learn.microsoft.com/windows/win32/services/service-control-manager"
+  },
+  {
+    "eventId": 4625,
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "title": "Failed logon attempt",
+    "severity": "Warning",
+    "explanation": "An account failed to log on. A single occurrence is often just a mistyped password; a burst of these in a short window can indicate brute-force activity or a stale credential in a scheduled task or service.",
+    "commonCauses": [
+      "User mistyped their password",
+      "A scheduled task or service is using an expired/rotated credential",
+      "Brute-force or password-spray attempt against the account"
+    ],
+    "recommendedAction": "Check the Logon Type and source workstation/IP in the event detail. If unexplained and repeated, treat the account as potentially targeted.",
+    "docsUrl": "https://learn.microsoft.com/windows/security/threat-protection/auditing/event-4625"
+  },
+  {
+    "eventId": 41,
+    "provider": "Microsoft-Windows-Kernel-Power",
+    "title": "System rebooted without a clean shutdown",
+    "severity": "Critical",
+    "explanation": "The system restarted without first shutting down cleanly. This usually points to a power loss, a hard hang, or a hardware fault rather than a normal user-initiated restart.",
+    "commonCauses": [
+      "Power failure or the machine was hard-reset",
+      "A kernel-level driver crash (bugcheck) that didn't produce a visible bluescreen log",
+      "Overheating-triggered hardware shutdown"
+    ],
+    "recommendedAction": "Correlate with EventID 1001 (BugCheck) and 6008 around the same timestamp; check PSU/thermal health if this repeats.",
+    "docsUrl": "https://learn.microsoft.com/windows-hardware/drivers/kernel/event-and-error-logging"
+  },
+  {
+    "eventId": 6008,
+    "provider": "EventLog",
+    "title": "Previous system shutdown was unexpected",
+    "severity": "Warning",
+    "explanation": "Logged the first time the Event Log service starts after a shutdown that wasn't clean (no matching orderly-shutdown event was recorded).",
+    "commonCauses": [
+      "Power loss",
+      "User held the power button",
+      "System crash/hang requiring a hard reset"
+    ],
+    "recommendedAction": "Pair with EventID 41 for kernel-level context on the same incident.",
+    "docsUrl": "https://learn.microsoft.com/windows/win32/eventlog/eventlog-key"
+  },
+  {
+    "eventId": 55,
+    "provider": "Ntfs",
+    "title": "File system corruption detected on a volume",
+    "severity": "Critical",
+    "explanation": "NTFS detected internal structure corruption on a volume. This can be caused by unexpected power loss during a write, failing storage hardware, or (rarely) tampering.",
+    "commonCauses": [
+      "Unclean shutdown mid-write",
+      "Failing disk sectors",
+      "Faulty storage controller or cabling"
+    ],
+    "recommendedAction": "Run 'chkdsk <volume> /scan' (read-only) first; check S.M.A.R.T. status before attempting a repair pass.",
+    "docsUrl": "https://learn.microsoft.com/windows-server/storage/file-server/ntfs-overview"
+  },
+  {
+    "eventId": 51,
+    "provider": "disk",
+    "title": "An error was detected on a device during a paging operation",
+    "severity": "Error",
+    "explanation": "The disk driver reported an I/O error during a read/write operation - a common early indicator of a failing physical disk.",
+    "commonCauses": [
+      "Failing or worn-out physical disk",
+      "Loose or faulty SATA/NVMe connection",
+      "Storage controller driver issue"
+    ],
+    "recommendedAction": "Check S.M.A.R.T. attributes immediately; back up data before the drive degrades further.",
+    "docsUrl": "https://learn.microsoft.com/troubleshoot/windows-server/backup-and-storage/event-id-51-appears-in-event-log"
+  },
+  {
+    "eventId": 1014,
+    "provider": "Microsoft-Windows-DNS-Client",
+    "title": "DNS name resolution timed out",
+    "severity": "Warning",
+    "explanation": "A DNS query for a name did not receive a response within the timeout window from any configured DNS server.",
+    "commonCauses": [
+      "DNS server unreachable or overloaded",
+      "Network connectivity issue between the client and DNS server",
+      "Misconfigured DNS server address"
+    ],
+    "recommendedAction": "Verify configured DNS servers respond via 'Resolve-DnsName', and check network path/firewall rules to them.",
+    "docsUrl": "https://learn.microsoft.com/troubleshoot/windows-server/networking/dns-client-events"
+  },
+  {
+    "eventId": 1129,
+    "provider": "Microsoft-Windows-GroupPolicy",
+    "title": "Group Policy processing was slow, or a network problem occurred",
+    "severity": "Warning",
+    "explanation": "Group Policy detected slow link processing or a network issue while contacting a domain controller for policy application.",
+    "commonCauses": [
+      "Slow or unreliable link to the domain controller",
+      "DNS resolution problems for the domain",
+      "Domain controller under heavy load or unreachable"
+    ],
+    "recommendedAction": "Run 'gpresult /h report.html' on the affected machine and check DC connectivity/latency.",
+    "docsUrl": "https://learn.microsoft.com/troubleshoot/windows-server/group-policy/group-policy-basic-troubleshooting-guide"
+  }
+]

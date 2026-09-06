@@ -1,0 +1,2 @@
+strategy_id,trades_today,wins_today,losses_today,win_rate_today,gross_pnl,avg_ml_prob_win,lifetime_trades,lifetime_wins,lifetime_win_rate,avg_R_today,max_drawdown_today,avg_spread_pips,avg_slippage_entry_pips,avg_slippage_exit_pips,avg_slippage_pips,tp1_hit_rate,tp2_hit_rate,tp3_hit_rate
+macd_momentum_fast12_signal9_slow26_H1,50,3,47,0.06,-2373.12,0.999,50,3,0.06,0.0,2502.0,2.17,0.0,0.0,0.0,0.06,0.06,0.0

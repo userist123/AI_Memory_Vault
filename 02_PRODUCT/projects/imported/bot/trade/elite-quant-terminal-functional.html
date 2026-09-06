@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>elite-quant-terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --space-1: .25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem; --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem; --space-10:2.5rem; --space-12:3rem;
+      --radius-sm:.375rem; --radius-md:.5rem; --radius-lg:.75rem; --radius-xl:1rem; --radius-full:999px;
+      --transition-interactive: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+      --color-bg:#111315; --color-surface:#171a1d; --color-surface-2:#1d2126; --color-surface-offset:#20262b; --color-surface-offset-2:#262d34;
+      --color-border:rgba(255,255,255,.08); --color-divider:rgba(255,255,255,.06);
+      --color-text:#edf2f7; --color-text-muted:#9eabb8; --color-text-faint:#758190; --color-text-inverse:#0d1013;
+      --color-primary:#d4a94d; --color-primary-hover:#e6be67; --color-primary-highlight:rgba(212,169,77,.12);
+      --color-success:#45b36b; --color-error:#d35c67; --color-warning:#e09a3b; --color-blue:#59a7ff; --color-purple:#ab7cff;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.18); --shadow-md:0 8px 18px rgba(0,0,0,.22); --shadow-lg:0 18px 40px rgba(0,0,0,.35);
+      --font-body:'Inter',system-ui,sans-serif; --font-display:'Inter',system-ui,sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+    body{min-height:100vh;font-family:var(--font-body);font-size:var(--text-base);background:radial-gradient(circle at top right, rgba(212,169,77,.08), transparent 20%), var(--color-bg);color:var(--color-text)}
+    img,svg,canvas{display:block;max-width:100%}
+    button,input,select,textarea{font:inherit;color:inherit}
+    button{cursor:pointer;border:none;background:none}
+    a{text-decoration:none;color:inherit}
+    :focus-visible{outline:2px solid var(--color-primary);outline-offset:3px;border-radius:var(--radius-sm)}
+    .app{display:grid;grid-template-columns:280px 1fr;min-height:100vh}
+    .sidebar{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border-right:1px solid var(--color-border);padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-6);position:sticky;top:0;height:100vh}
+    .logo{display:flex;align-items:center;gap:var(--space-3)}
+    .logo-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg, rgba(212,169,77,.25), rgba(212,169,77,.07));display:grid;place-items:center;border:1px solid rgba(212,169,77,.22);box-shadow:var(--shadow-sm)}
+    .logo h1{font-size:1rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .logo small{color:var(--color-text-muted);font-size:var(--text-xs)}
+    .nav{display:flex;flex-direction:column;gap:var(--space-2)}
+    .nav button{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem;border-radius:var(--radius-lg);background:transparent;border:1px solid transparent;transition:all var(--transition-interactive);text-align:left}
+    .nav button.active,.nav button:hover{background:var(--color-primary-highlight);border-color:rgba(212,169,77,.18)}
+    .nav .tag{font-size:var(--text-xs);color:var(--color-text-faint)}
+    .side-card{padding:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);display:grid;gap:var(--space-3)}
+    .side-card h3{font-size:var(--text-sm);text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-muted)}
+    .main{display:flex;flex-direction:column;min-width:0}
+    .topbar{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);padding:var(--space-4) var(--space-6);background:rgba(17,19,21,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--color-border)}
+    .topbar-left,.topbar-right{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap}
+    .pill{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .8rem;border-radius:var(--radius-full);background:var(--color-surface);border:1px solid var(--color-border);font-size:var(--text-xs);color:var(--color-text-muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--color-success);box-shadow:0 0 0 4px rgba(69,179,107,.15)}
+    .button{padding:.82rem 1rem;border-radius:var(--radius-lg);background:var(--color-surface);border:1px solid var(--color-border);transition:all var(--transition-interactive);font-weight:600}
+    .button:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.14)}
+    .button.primary{background:linear-gradient(180deg, rgba(212,169,77,.2), rgba(212,169,77,.12));border-color:rgba(212,169,77,.3)}
+    .button.danger{background:rgba(211,92,103,.12);border-color:rgba(211,92,103,.22)}
+    .content{padding:var(--space-6);display:grid;gap:var(--space-6);overflow:auto}
+    .view{display:none;gap:var(--space-6)}
+    .view.active{display:grid}
+    .hero-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-4)}
+    .stat-card,.panel{background:linear-gradient(180deg, rgba(255,255,255,.015), rgba(255,255,255,.005));border:1px solid var(--color-border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm)}
+    .stat-card{padding:var(--space-4);display:grid;gap:.45rem}
+    .stat-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-faint)}
+    .stat-value{font-size:1.7rem;font-weight:800;line-height:1}
+    .positive{color:var(--color-success)} .negative{color:var(--color-error)} .warning{color:var(--color-warning)} .blue{color:var(--color-blue)}
+    .grid-3{display:grid;grid-template-columns:1.15fr 1.15fr .85fr;gap:var(--space-4)}
+    .grid-2{display:grid;grid-template-columns:1.25fr 1fr;gap:var(--space-4)}
+    .panel{padding:var(--space-4);display:grid;gap:var(--space-4)}
+    .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3)}
+    .panel-title{display:grid;gap:.2rem}
+    .panel-title h2{font-size:var(--text-lg);font-weight:700}
+    .panel-title p{font-size:var(--text-sm);color:var(--color-text-muted);max-width:72ch}
+    .mono{font-feature-settings:"tnum" 1,"ss01" 1;font-variant-numeric:tabular-nums}
+    .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+    .kv div{padding:.9rem;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface)}
+    .kv small{display:block;color:var(--color-text-faint);font-size:var(--text-xs);margin-bottom:.3rem}
+    .table-wrap{overflow:auto;border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+    table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+    th,td{padding:.85rem .8rem;text-align:left;border-bottom:1px solid var(--color-divider);white-space:nowrap}
+    th{color:var(--color-text-faint);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;background:rgba(255,255,255,.02)}
+    tr:hover td{background:rgba(255,255,255,.02)}
+    .ladder{display:grid;gap:var(--space-3)}
+    .ladder-bar{position:relative;height:70px;border-radius:18px;background:linear-gradient(90deg, rgba(211,92,103,.12) 0 28%, rgba(255,255,255,.04) 28% 48%, rgba(69,179,107,.09) 48% 100%);border:1px solid var(--color-border);overflow:hidden}
+    .ladder-line{position:absolute;top:10px;bottom:10px;width:2px;background:rgba(255,255,255,.6)}
+    .ladder-line::after{content:attr(data-label);position:absolute;top:-2px;left:8px;font-size:11px;color:var(--color-text-muted);white-space:nowrap}
+    .current-price{position:absolute;top:0;bottom:0;width:3px;background:var(--color-primary);box-shadow:0 0 0 6px rgba(212,169,77,.12)}
+    .current-price::after{content:'NOW';position:absolute;top:45px;left:-10px;background:var(--color-primary);color:var(--color-text-inverse);padding:2px 6px;border-radius:999px;font-size:10px;font-weight:800}
+    .mini-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3)}
+    .chip{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .65rem;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .chip.green{background:rgba(69,179,107,.12);color:var(--color-success)}
+    .chip.red{background:rgba(211,92,103,.12);color:var(--color-error)}
+    .chip.gold{background:rgba(212,169,77,.14);color:var(--color-primary)}
+    .chip.blue{background:rgba(89,167,255,.12);color:var(--color-blue)}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-4)}
+    .field{display:grid;gap:.45rem;padding:var(--space-4);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg)}
+    .field label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.08em;color:var(--color-text-faint)}
+    .field input,.field select,.field textarea{background:var(--color-surface-offset);border:1px solid var(--color-border);padding:.85rem .9rem;border-radius:var(--radius-md)}
+    .field p{font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.5}
+    .field .advanced{color:var(--color-text-faint)}
+    .toggle{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
+    .toggle input{accent-color:var(--color-primary)}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+    .logs{max-height:320px;overflow:auto;display:grid;gap:.55rem;padding-right:.25rem}
+    .log-entry{padding:.75rem .85rem;border-radius:var(--radius-lg);background:var(--color-surface);border:1px solid var(--color-border);font-size:var(--text-sm);display:flex;justify-content:space-between;gap:var(--space-3)}
+    .muted{color:var(--color-text-muted)}
+    .spark{display:flex;gap:4px;align-items:flex-end;height:38px}
+    .spark span{width:8px;border-radius:999px 999px 2px 2px;background:rgba(255,255,255,.08)}
+    .spark span.win{background:rgba(69,179,107,.7)} .spark span.loss{background:rgba(211,92,103,.7)}
+    .report-list{display:grid;gap:var(--space-3)}
+    .report-item{padding:var(--space-4);border-radius:var(--radius-lg);background:var(--color-surface);border:1px solid var(--color-border);display:flex;justify-content:space-between;align-items:center;gap:var(--space-3)}
+    .chart{height:210px;border-radius:var(--radius-lg);background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));border:1px solid var(--color-border);padding:var(--space-3);display:flex;align-items:flex-end;gap:10px;overflow:hidden}
+    .bar{flex:1;background:linear-gradient(180deg, rgba(212,169,77,.8), rgba(212,169,77,.3));border-radius:10px 10px 0 0;position:relative;min-width:18px}
+    .bar.red{background:linear-gradient(180deg, rgba(211,92,103,.82), rgba(211,92,103,.25))}
+    .bar::after{content:attr(data-label);position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--color-text-faint)}
+    .line-chart{height:220px;border-radius:var(--radius-lg);border:1px solid var(--color-border);background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));position:relative;overflow:hidden}
+    .line-chart svg{width:100%;height:100%}
+    .tabs{display:flex;gap:var(--space-2);flex-wrap:wrap}
+    .tabs button{padding:.6rem .8rem;border-radius:999px;border:1px solid var(--color-border);background:var(--color-surface);font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.08em}
+    .tabs button.active{background:var(--color-primary-highlight);border-color:rgba(212,169,77,.25)}
+    .status-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-3)}
+    .status-box{padding:var(--space-3);border-radius:var(--radius-lg);background:var(--color-surface);border:1px solid var(--color-border)}
+    .status-box strong{display:block;margin-top:.45rem;font-size:var(--text-sm)}
+    .footer-actions{display:flex;gap:var(--space-3);flex-wrap:wrap}
+    .small{font-size:var(--text-xs)}
+    .right{text-align:right}
+    .danger-outline{border-color:rgba(211,92,103,.25)!important}
+    @media (max-width: 1200px){.grid-3,.grid-2,.hero-grid,.status-grid,.form-grid,.split{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--color-border)}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-label="Elite Quant logo">
+          <path d="M4 17 10 7l4 6 6-9" />
+          <path d="M4 20h16" />
+        </svg>
+      </div>
+      <div>
+        <h1>Elite Quant</h1>
+        <small>XAUUSD control terminal</small>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav"></nav>
+
+    <div class="side-card">
+      <h3>Engine health</h3>
+      <div class="toggle"><span>Auto trading</span><strong id="autoState">ACTIVE</strong></div>
+      <div class="toggle"><span>Execution mode</span><strong id="modeState">PAPER</strong></div>
+      <div class="toggle"><span>ML authority</span><strong id="mlState">LIMITED</strong></div>
+      <div class="toggle"><span>Global halt</span><strong id="haltState">OFF</strong></div>
+    </div>
+
+    <div class="side-card">
+      <h3>Current thesis</h3>
+      <p class="small muted" id="thesisText">Waiting for spread normalization and fresh consensus around London/NY overlap.</p>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="pill"><span class="dot"></span> MT5 Connected</span>
+        <span class="pill">XAUUSD</span>
+        <span class="pill" id="sessionPill">LONDON_OVERLAP</span>
+        <span class="pill" id="modePill">PAPER MODE</span>
+      </div>
+      <div class="topbar-right footer-actions">
+        <button class="button" id="themeBtn">Theme</button>
+        <button class="button primary" id="startStopBtn">Stop Auto</button>
+        <button class="button" id="toggleModeBtn">Toggle Paper/Live</button>
+        <button class="button danger" id="killBtn">Kill Switch</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <div class="view active" id="view-dashboard"></div>
+      <div class="view" id="view-trades"></div>
+      <div class="view" id="view-strategies"></div>
+      <div class="view" id="view-risk"></div>
+      <div class="view" id="view-ml"></div>
+      <div class="view" id="view-reports"></div>
+      <div class="view" id="view-config"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+const state = {
+  theme: 'dark',
+  autoTrading: true,
+  globalHalt: false,
+  mode: 'PAPER',
+  symbol: 'XAUUSD',
+  session: 'LONDON_OVERLAP',
+  balance: 10000,
+  equity: 10043.7,
+  freeMargin: 9414.4,
+  dayStartBalance: 10000,
+  dailyRealized: 43.7,
+  ordersToday: 3,
+  maxOrdersPerDay: 8,
+  cooldownUntil: null,
+  consecutiveLosses: 0,
+  maxConsecutiveLosses: 3,
+  mlTrainedSamples: 86,
+  mlMinSamples: 120,
+  lastConsensus: 0.74,
+  lastMlProb: 0.62,
+  lastSkipReason: 'spread_normalized_trade_allowed',
+  adaptiveRiskReduced: false,
+  winsSinceReduction: 0,
+  ddRecoveryWinsNeeded: 2,
+  xauPrice: 2354.80,
+  spread: 0.32,
+  spreadMA: 0.29,
+  atrFast: 2.7,
+  atrSlow: 4.9,
+  trendBias: 'bullish_intraday',
+  config: {
+    RISK_PCT: 0.01,
+    DAILY_LOSS_LIMIT_PCT: 0.03,
+    MAX_CONCURRENT_POSITIONS: 2,
+    MAX_ORDERS_PER_DAY: 8,
+    ENSEMBLE_CONSENSUS_THRESHOLD: 0.68,
+    XAU_SPREAD_MAX_RATIO: 1.6,
+    XAU_ML_THRESHOLD_TREND: 0.57,
+    XAU_ML_THRESHOLD_MR: 0.61,
+    TP_RR_MULTIPLIERS: [1.0, 1.8, 2.7],
+    TP_VOLUME_FRACTIONS: [0.4, 0.35, 0.25],
+    BE_PLUS_R: 0.25,
+    SL_TRAILING_MODE: 'staircase',
+    AUTO_PRUNE_FROM_REPORT: true,
+    XAU_DD_REDUCE_PCT: 0.02,
+    XAU_DD_RISK_FACTOR: 0.5,
+    XAU_DD_RECOVERY_WINS: 2,
+    XAU_ALLOWED_WINDOWS_UTC: ['07:00-10:00','12:00-16:30'],
+    XAU_FORBIDDEN_WINDOWS_UTC: ['21:00-23:59'],
+    XAU_NEWS_BLACKOUT_BEFORE_MIN: 20,
+    XAU_NEWS_BLACKOUT_AFTER_MIN: 25
+  },
+  configMeta: {
+    RISK_PCT: { type:'float', min:0.001, max:0.02, junior:'Fraction of balance risked per trade. At 0.01, each trade risks about 1% of the account.', senior:'Used by RiskManager.calc_lot. lot = (balance * RISK_PCT) / (SL_ticks * tick_value). Larger ATR or SL shrinks volume.' },
+    DAILY_LOSS_LIMIT_PCT: { type:'float', min:0.01, max:0.05, junior:'Maximum daily pain allowed before the bot stops opening new trades.', senior:'If realised PnL <= -day_start_balance * DAILY_LOSS_LIMIT_PCT, no new trades are allowed until next day reset.' },
+    MAX_CONCURRENT_POSITIONS: { type:'int', min:1, max:5, junior:'How many positions can be open at the same time.', senior:'Hard concurrency gate that prevents uncontrolled stacking of correlated XAUUSD exposure.' },
+    MAX_ORDERS_PER_DAY: { type:'int', min:1, max:20, junior:'Daily cap on how many trade attempts can be executed.', senior:'Works as a churn limiter. Useful against overtrading in noisy or unstable regimes.' },
+    ENSEMBLE_CONSENSUS_THRESHOLD: { type:'float', min:0.5, max:0.9, junior:'How much strategies need to agree before the bot is allowed to trade.', senior:'Final gating threshold over weighted strategy signals after performance and ML adjustments.' },
+    XAU_SPREAD_MAX_RATIO: { type:'float', min:1.1, max:3.0, junior:'Blocks entries when spread is much wider than usual.', senior:'Reject if current spread > rolling_spread_ma * XAU_SPREAD_MAX_RATIO. Protects against degraded microstructure.' },
+    XAU_ML_THRESHOLD_TREND: { type:'float', min:0.5, max:0.75, junior:'Minimum ML win probability required for trend trades.', senior:'Family-specific gate. Below this probability, trend family trades should be blocked or heavily discounted.' },
+    XAU_ML_THRESHOLD_MR: { type:'float', min:0.5, max:0.8, junior:'Minimum ML win probability required for mean-reversion trades.', senior:'Usually stricter because countertrend entries on gold can get steamrolled during trend acceleration.' },
+    TP_RR_MULTIPLIERS: { type:'list', junior:'Profit targets expressed as multiples of the initial risk distance.', senior:'TP prices are built from SL distance * RR multipliers. Wider ladder = lower hit rate, larger average winner.' },
+    TP_VOLUME_FRACTIONS: { type:'list', junior:'How much volume is closed at each target.', senior:'Fractions should sum to 1.0. Controls realized curve shape and tail retention.' },
+    BE_PLUS_R: { type:'float', min:0.0, max:1.0, junior:'How much profit cushion is added when stop moves to break-even plus.', senior:'After partial take-profit, stop can be shifted past entry by BE_PLUS_R * initial risk.' },
+    SL_TRAILING_MODE: { type:'str', junior:'Defines how the stop-loss follows price after trade moves in your favor.', senior:'Execution logic invariant: always one real SL. Staircase trailing updates after TP hits instead of every tick.' },
+    AUTO_PRUNE_FROM_REPORT: { type:'bool', junior:'Automatically disables strategies that keep underperforming in daily reports.', senior:'Uses report-driven performance pruning to prevent persistent bleeding from weak strategy IDs.' }
+  },
+  strategies: [
+    {id:'trend_london_m5_01', family:'trend', tf:'M5', trades:42, winRate:57.1, expectancy:0.31, status:'ACTIVE', enabled:true, outcomes:[1,1,0,1,1,0,1,1], consensus:0.81},
+    {id:'breakout_overlap_m15_03', family:'breakout', tf:'M15', trades:36, winRate:55.5, expectancy:0.27, status:'ACTIVE', enabled:true, outcomes:[1,0,1,1,0,1,1,1], consensus:0.77},
+    {id:'meanrev_asia_m5_02', family:'mean_reversion', tf:'M5', trades:28, winRate:46.4, expectancy:-0.08, status:'DISABLED', enabled:false, outcomes:[0,0,1,0,1,0,0,1], consensus:0.24},
+    {id:'pullback_trend_m15_04', family:'trend', tf:'M15', trades:51, winRate:60.7, expectancy:0.42, status:'ACTIVE', enabled:true, outcomes:[1,1,1,0,1,1,1,0], consensus:0.85},
+    {id:'range_flip_m5_06', family:'range', tf:'M5', trades:31, winRate:48.3, expectancy:0.05, status:'ACTIVE', enabled:true, outcomes:[1,0,0,1,0,1,1,0], consensus:0.52}
+  ],
+  trades: [
+    {ticket:'#481220', strategy:'pullback_trend_m15_04', side:'BUY', volumeInitial:0.12, volumeRemaining:0.072, entry:2352.40, sl:2348.90, tp:[2355.90,2358.70,2361.85], ml:0.62, pnl:18.4, r:0.74, price:2354.80, tpHit:[true,false,false]},
+    {ticket:'#481221', strategy:'breakout_overlap_m15_03', side:'BUY', volumeInitial:0.09, volumeRemaining:0.09, entry:2354.10, sl:2350.60, tp:[2357.60,2360.35,2363.55], ml:0.59, pnl:6.7, r:0.19, price:2354.80, tpHit:[false,false,false]}
+  ],
+  logs: [],
+  reportDays: [
+    {day:'2026-06-13', pnl:43.7, winRate:58.3, best:'pullback_trend_m15_04', worst:'meanrev_asia_m5_02'},
+    {day:'2026-06-12', pnl:-28.5, winRate:44.4, best:'trend_london_m5_01', worst:'range_flip_m5_06'},
+    {day:'2026-06-11', pnl:69.1, winRate:61.5, best:'breakout_overlap_m15_03', worst:'meanrev_asia_m5_02'},
+    {day:'2026-06-10', pnl:17.9, winRate:53.8, best:'pullback_trend_m15_04', worst:'range_flip_m5_06'},
+    {day:'2026-06-09', pnl:-13.4, winRate:47.0, best:'trend_london_m5_01', worst:'meanrev_asia_m5_02'}
+  ],
+  pendingNews: [
+    {event:'US CPI', startsInMin:48, blackoutBefore:20, blackoutAfter:25},
+    {event:'FOMC Member Speech', startsInMin:176, blackoutBefore:20, blackoutAfter:25}
+  ]
+};
+
+const navItems = [
+  ['dashboard','Overview'],['trades','Live trades'],['strategies','Strategies'],['risk','Risk & sessions'],['ml','ML & features'],['reports','Reports'],['config','Config panel']
+];
+
+function fmt(n, d=2){ return Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function pct(n){ return `${n >= 0 ? '+' : ''}${fmt(n,2)}%`; }
+function usd(n){ return `${n >= 0 ? '+' : ''}$${fmt(n,2)}`; }
+function safeId(v){ return v.replace(/[^a-z0-9_]/gi,'_'); }
+function pushLog(type, msg){
+  state.logs.unshift({time:new Date().toLocaleTimeString('en-GB'), type, msg});
+  state.logs = state.logs.slice(0, 40);
+}
+function riskAmount(){ return state.balance * state.config.RISK_PCT; }
+function drawdownPct(){ return ((state.dailyRealized < 0 ? Math.abs(state.dailyRealized) : 0) / state.dayStartBalance) * 100; }
+function dailyPnLPct(){ return (state.dailyRealized / state.dayStartBalance) * 100; }
+function spreadOk(){ return state.spread <= state.spreadMA * state.config.XAU_SPREAD_MAX_RATIO; }
+function dailyLossHit(){ return state.dailyRealized <= -(state.dayStartBalance * state.config.DAILY_LOSS_LIMIT_PCT); }
+function marketAlive(){ return state.atrFast >= 0.5 * state.atrSlow; }
+function mlAuthority(){ return state.mlTrainedSamples >= state.mlMinSamples ? 'HIGH' : 'LIMITED'; }
+function canTrade(){
+  if(!state.autoTrading || state.globalHalt) return [false, 'global_halt_or_auto_off'];
+  if(dailyLossHit()) return [false, 'daily_loss_limit'];
+  if(state.ordersToday >= state.config.MAX_ORDERS_PER_DAY) return [false, 'max_orders_day'];
+  if(!spreadOk()) return [false, 'spread'];
+  if(!marketAlive()) return [false, 'dead_market'];
+  if(state.lastConsensus < state.config.ENSEMBLE_CONSENSUS_THRESHOLD) return [false, 'consensus'];
+  if(state.lastMlProb < state.config.XAU_ML_THRESHOLD_TREND) return [false, 'ml_gate'];
+  if(state.trades.length >= state.config.MAX_CONCURRENT_POSITIONS) return [false, 'max_positions'];
+  return [true, 'trade_allowed'];
+}
+function updateEngineBadges(){
+  document.getElementById('autoState').textContent = state.autoTrading ? 'ACTIVE' : 'OFF';
+  document.getElementById('modeState').textContent = state.mode;
+  document.getElementById('mlState').textContent = mlAuthority();
+  document.getElementById('haltState').textContent = state.globalHalt ? 'ON' : 'OFF';
+  document.getElementById('sessionPill').textContent = state.session;
+  document.getElementById('modePill').textContent = `${state.mode} MODE`;
+  document.getElementById('thesisText').textContent = `Consensus ${state.lastConsensus.toFixed(2)} | ML ${state.lastMlProb.toFixed(2)} | Spread ${state.spread.toFixed(2)} vs MA ${state.spreadMA.toFixed(2)} | Bias ${state.trendBias}.`;
+}
+
+function renderNav(){
+  const nav = document.getElementById('nav');
+  nav.innerHTML = navItems.map(([key,label],i)=>`
+    <button class="${i===0?'active':''}" data-view="${key}">
+      <span>${label}</span>
+      <span class="tag">${key}</span>
+    </button>`).join('');
+  nav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>showView(btn.dataset.view)));
+}
+function showView(key){
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===key));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(`view-${key}`).classList.add('active');
+}
+
+function ladderBar(trade){
+  const low = trade.sl;
+  const high = trade.tp[trade.tp.length-1];
+  const pos = v => ((v-low)/(high-low))*100;
+  return `
+  <div class="ladder-bar">
+    <div class="ladder-line" style="left:${pos(trade.sl)}%" data-label="SL ${trade.sl.toFixed(2)}"></div>
+    <div class="ladder-line" style="left:${pos(trade.entry)}%" data-label="Entry ${trade.entry.toFixed(2)}"></div>
+    <div class="ladder-line" style="left:${pos(trade.tp[0])}%" data-label="TP1 ${trade.tp[0].toFixed(2)}"></div>
+    <div class="ladder-line" style="left:${pos(trade.tp[1])}%" data-label="TP2 ${trade.tp[1].toFixed(2)}"></div>
+    <div class="ladder-line" style="left:${pos(trade.tp[2])}%" data-label="TP3 ${trade.tp[2].toFixed(2)}"></div>
+    <div class="current-price" style="left:${pos(trade.price)}%"></div>
+  </div>`;
+}
+
+function renderDashboard(){
+  const root = document.getElementById('view-dashboard');
+  const [allowed, reason] = canTrade();
+  root.innerHTML = `
+    <div class="hero-grid">
+      <div class="stat-card"><span class="stat-label">Balance</span><div class="stat-value mono">$${fmt(state.balance)}</div><span class="muted small">Static equity baseline</span></div>
+      <div class="stat-card"><span class="stat-label">Equity</span><div class="stat-value mono ${state.equity>=state.balance?'positive':'negative'}">$${fmt(state.equity)}</div><span class="muted small">Includes floating PnL</span></div>
+      <div class="stat-card"><span class="stat-label">Today PnL</span><div class="stat-value mono ${state.dailyRealized>=0?'positive':'negative'}">${usd(state.dailyRealized)}</div><span class="muted small">${pct(dailyPnLPct())} from day start</span></div>
+      <div class="stat-card"><span class="stat-label">Risk per trade</span><div class="stat-value mono warning">$${fmt(riskAmount())}</div><span class="muted small">RISK_PCT = ${(state.config.RISK_PCT*100).toFixed(2)}%</span></div>
+    </div>
+
+    <div class="grid-3">
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Account and breakers</h2><p>Core capital protection layer. This is the first thing that decides whether the engine is allowed to act.</p></div><span class="chip ${allowed?'green':'red'}">${allowed?'TRADING OK':'BLOCKED'}</span></div>
+        <div class="kv mono">
+          <div><small>Free margin</small><strong>$${fmt(state.freeMargin)}</strong></div>
+          <div><small>Drawdown today</small><strong class="${drawdownPct()>0?'negative':'positive'}">${fmt(drawdownPct())}%</strong></div>
+          <div><small>Orders today</small><strong>${state.ordersToday} / ${state.config.MAX_ORDERS_PER_DAY}</strong></div>
+          <div><small>Concurrent positions</small><strong>${state.trades.length} / ${state.config.MAX_CONCURRENT_POSITIONS}</strong></div>
+          <div><small>Consecutive losses</small><strong>${state.consecutiveLosses} / ${state.maxConsecutiveLosses}</strong></div>
+          <div><small>Last gate result</small><strong>${reason}</strong></div>
+        </div>
+        <div class="status-grid">
+          <div class="status-box"><small class="muted">Daily loss limit</small><strong class="${dailyLossHit()?'negative':'positive'}">${dailyLossHit()?'HIT':'SAFE'}</strong></div>
+          <div class="status-box"><small class="muted">Spread defense</small><strong class="${spreadOk()?'positive':'negative'}">${spreadOk()?'NORMAL':'TOO WIDE'}</strong></div>
+          <div class="status-box"><small class="muted">Market alive</small><strong class="${marketAlive()?'positive':'negative'}">${marketAlive()?'YES':'NO'}</strong></div>
+          <div class="status-box"><small class="muted">Adaptive risk</small><strong class="${state.adaptiveRiskReduced?'warning':'positive'}">${state.adaptiveRiskReduced?'REDUCED':'NORMAL'}</strong></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Active trade ladder</h2><p>Visual TP ladder for the strongest live position. Juniors see the path of the trade. Seniors see execution geometry.</p></div><span class="chip gold">${state.trades[0].strategy}</span></div>
+        ${ladderBar(state.trades[0])}
+        <div class="mini-grid mono">
+          <div class="status-box"><small class="muted">Entry</small><strong>${state.trades[0].entry.toFixed(2)}</strong></div>
+          <div class="status-box"><small class="muted">Stop loss</small><strong>${state.trades[0].sl.toFixed(2)}</strong></div>
+          <div class="status-box"><small class="muted">Current R</small><strong class="positive">${state.trades[0].r.toFixed(2)}R</strong></div>
+        </div>
+        <div class="mini-grid mono">
+          <div class="status-box"><small class="muted">TP1</small><strong class="${state.trades[0].tpHit[0]?'positive':''}">${state.trades[0].tp[0].toFixed(2)}</strong></div>
+          <div class="status-box"><small class="muted">TP2</small><strong>${state.trades[0].tp[1].toFixed(2)}</strong></div>
+          <div class="status-box"><small class="muted">TP3</small><strong>${state.trades[0].tp[2].toFixed(2)}</strong></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Engine trace</h2><p>The exact values the terminal uses to justify an entry or a skip.</p></div><span class="chip blue">${state.session}</span></div>
+        <div class="kv mono">
+          <div><small>Last consensus</small><strong>${state.lastConsensus.toFixed(2)}</strong></div>
+          <div><small>Trend ML prob</small><strong>${state.lastMlProb.toFixed(2)}</strong></div>
+          <div><small>ATR fast</small><strong>${state.atrFast.toFixed(2)}</strong></div>
+          <div><small>ATR slow</small><strong>${state.atrSlow.toFixed(2)}</strong></div>
+          <div><small>Spread</small><strong>${state.spread.toFixed(2)}</strong></div>
+          <div><small>Skip reason</small><strong>${state.lastSkipReason}</strong></div>
+        </div>
+        <div class="footer-actions">
+          <button class="button primary" id="simulateDecisionBtn">Run evaluation loop</button>
+          <button class="button" id="simulateTradeBtn">Force simulated trade</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Live strategies</h2><p>Top strategies by recent performance and current vote strength.</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Family</th><th>TF</th><th>WR</th><th>Exp</th><th>Status</th></tr></thead>
+            <tbody>
+              ${state.strategies.slice(0,5).map(s=>`<tr><td>${s.id}</td><td>${s.family}</td><td>${s.tf}</td><td>${s.winRate.toFixed(1)}%</td><td class="${s.expectancy>=0?'positive':'negative'}">${s.expectancy.toFixed(2)}R</td><td><span class="chip ${s.status==='ACTIVE'?'green':'red'}">${s.status}</span></td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Live log</h2><p>Every simulated state transition is recorded here, exactly so humans can audit why something happened.</p></div></div>
+        <div class="logs" id="dashboardLogs"></div>
+      </section>
+    </div>`;
+  document.getElementById('simulateDecisionBtn').onclick = runEvaluationLoop;
+  document.getElementById('simulateTradeBtn').onclick = simulateTrade;
+  renderLogs('dashboardLogs');
+}
+
+function renderTrades(){
+  const root = document.getElementById('view-trades');
+  root.innerHTML = `
+    <section class="panel">
+      <div class="panel-header"><div class="panel-title"><h2>Active trades table</h2><p>Ticket, strategy, size, ladder progress, ML context and floating performance.</p></div></div>
+      <div class="table-wrap"><table>
+      <thead><tr><th>Ticket</th><th>Strategy</th><th>Side</th><th>Volume</th><th>Entry</th><th>SL</th><th>ML</th><th>PnL</th><th>R</th><th>Action</th></tr></thead>
+      <tbody>
+        ${state.trades.map((t,i)=>`<tr>
+          <td>${t.ticket}</td><td>${t.strategy}</td><td><span class="chip ${t.side==='BUY'?'green':'red'}">${t.side}</span></td><td>${t.volumeRemaining.toFixed(3)} / ${t.volumeInitial.toFixed(3)}</td><td>${t.entry.toFixed(2)}</td><td>${t.sl.toFixed(2)}</td><td>${t.ml.toFixed(2)}</td><td class="${t.pnl>=0?'positive':'negative'}">${usd(t.pnl)}</td><td>${t.r.toFixed(2)}R</td><td><button class="button small" onclick="partialClose(${i})">Partial close</button></td>
+        </tr>`).join('')}
+      </tbody></table></div>
+    </section>
+    <div class="split">
+      ${state.trades.map(t=>`<section class="panel"><div class="panel-header"><div class="panel-title"><h2>${t.ticket}</h2><p>${t.strategy} | ${t.side} | initial ${t.volumeInitial.toFixed(3)} lots</p></div><span class="chip gold">ML ${t.ml.toFixed(2)}</span></div>${ladderBar(t)}<div class="mini-grid mono"><div class="status-box"><small class="muted">Remaining</small><strong>${t.volumeRemaining.toFixed(3)}</strong></div><div class="status-box"><small class="muted">Floating PnL</small><strong class="${t.pnl>=0?'positive':'negative'}">${usd(t.pnl)}</strong></div><div class="status-box"><small class="muted">Ladder hit</small><strong>${t.tpHit.filter(Boolean).length}/${t.tp.length}</strong></div></div></section>`).join('')}
+    </div>`;
+}
+
+function renderStrategies(){
+  const root = document.getElementById('view-strategies');
+  root.innerHTML = `
+    <section class="panel">
+      <div class="panel-header"><div class="panel-title"><h2>Strategy board</h2><p>Manual enable/disable controls plus recent results. This is where persistent bleeding gets contained.</p></div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Enabled</th><th>ID</th><th>Family</th><th>TF</th><th>Trades</th><th>Win rate</th><th>Expectancy</th><th>Vote</th><th>Status</th><th>Recent</th></tr></thead>
+        <tbody>
+          ${state.strategies.map((s,i)=>`<tr>
+            <td><input type="checkbox" ${s.enabled?'checked':''} onchange="toggleStrategy(${i}, this.checked)"></td>
+            <td>${s.id}</td><td>${s.family}</td><td>${s.tf}</td><td>${s.trades}</td><td>${s.winRate.toFixed(1)}%</td><td class="${s.expectancy>=0?'positive':'negative'}">${s.expectancy.toFixed(2)}R</td><td>${s.consensus.toFixed(2)}</td><td><span class="chip ${s.status==='ACTIVE'?'green':'red'}">${s.status}</span></td>
+            <td><div class="spark">${s.outcomes.map(o=>`<span class="${o?'win':'loss'}" style="height:${12 + Math.random()*22}px"></span>`).join('')}</div></td>
+          </tr>`).join('')}
+        </tbody>
+      </table></div>
+    </section>
+    <div class="grid-2">
+      <section class="panel"><div class="panel-header"><div class="panel-title"><h2>Junior explanation</h2><p>Each strategy is a specialist. If one keeps losing in its usual job, the bot should stop trusting it.</p></div></div><p class="muted">Trend strategies work best when gold keeps pressing in one direction. Mean-reversion tries to fade overstretched moves, but that can become dangerous during high momentum news or overlap expansions.</p></section>
+      <section class="panel"><div class="panel-header"><div class="panel-title"><h2>Senior note</h2><p>Strategy status should reflect expectancy drift, drawdown clusters and family-regime mismatch, not just raw win rate.</p></div></div><p class="muted">A 45% win-rate strategy can still be valid if mean winner dominates mean loser. The board should therefore expose expectancy and recent path, not one vanity metric.</p></section>
+    </div>`;
+}
+
+function renderRisk(){
+  const root = document.getElementById('view-risk');
+  root.innerHTML = `
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Risk invariants</h2><p>These values control whether the engine survives bad sequences without spiraling.</p></div></div>
+        <div class="kv mono">
+          <div><small>Risk pct</small><strong>${(state.config.RISK_PCT*100).toFixed(2)}%</strong></div>
+          <div><small>Risk amount</small><strong>$${fmt(riskAmount())}</strong></div>
+          <div><small>Daily loss stop</small><strong>${(state.config.DAILY_LOSS_LIMIT_PCT*100).toFixed(2)}%</strong></div>
+          <div><small>Adaptive DD reduce</small><strong>${(state.config.XAU_DD_REDUCE_PCT*100).toFixed(2)}%</strong></div>
+          <div><small>Risk factor on DD</small><strong>${state.config.XAU_DD_RISK_FACTOR.toFixed(2)}x</strong></div>
+          <div><small>Recovery wins needed</small><strong>${state.config.XAU_DD_RECOVERY_WINS}</strong></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Session and spread defense</h2><p>Gold behaves differently by time window and microstructure quality. This must be visible, not hidden in code.</p></div></div>
+        <div class="kv mono">
+          <div><small>Allowed windows UTC</small><strong>${state.config.XAU_ALLOWED_WINDOWS_UTC.join(', ')}</strong></div>
+          <div><small>Forbidden windows UTC</small><strong>${state.config.XAU_FORBIDDEN_WINDOWS_UTC.join(', ')}</strong></div>
+          <div><small>Current spread</small><strong class="${spreadOk()?'positive':'negative'}">${state.spread.toFixed(2)}</strong></div>
+          <div><small>Spread MA</small><strong>${state.spreadMA.toFixed(2)}</strong></div>
+          <div><small>Spread max ratio</small><strong>${state.config.XAU_SPREAD_MAX_RATIO.toFixed(2)}</strong></div>
+          <div><small>Market alive test</small><strong>${marketAlive()?'PASS':'FAIL'}</strong></div>
+        </div>
+      </section>
+    </div>
+    <section class="panel">
+      <div class="panel-header"><div class="panel-title"><h2>Upcoming news blackout</h2><p>No new trades should be allowed in blackout windows around high-impact events.</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Event</th><th>Starts in</th><th>Block before</th><th>Block after</th><th>Effective status</th></tr></thead><tbody>
+        ${state.pendingNews.map(n=>`<tr><td>${n.event}</td><td>${n.startsInMin} min</td><td>${n.blackoutBefore} min</td><td>${n.blackoutAfter} min</td><td><span class="chip ${n.startsInMin <= n.blackoutBefore ? 'red' : 'green'}">${n.startsInMin <= n.blackoutBefore ? 'ENTRY BLOCKED' : 'CLEAR'}</span></td></tr>`).join('')}
+      </tbody></table></div>
+    </section>`;
+}
+
+function renderML(){
+  const root = document.getElementById('view-ml');
+  const vals = [0.48,0.56,0.61,0.58,0.63,0.66,0.59,0.62,0.68,0.71,0.65,0.69];
+  const poly = vals.map((v,i)=>`${(i/(vals.length-1))*100},${180-(v*160)}`).join(' ');
+  root.innerHTML = `
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Model authority</h2><p>The ML model should assist only after enough tracked samples exist. Before that, it is guidance, not king.</p></div></div>
+        <div class="kv mono">
+          <div><small>Trained samples</small><strong>${state.mlTrainedSamples}</strong></div>
+          <div><small>Min samples</small><strong>${state.mlMinSamples}</strong></div>
+          <div><small>Authority</small><strong class="${mlAuthority()==='HIGH'?'positive':'warning'}">${mlAuthority()}</strong></div>
+          <div><small>Last probability</small><strong>${state.lastMlProb.toFixed(2)}</strong></div>
+          <div><small>Trend threshold</small><strong>${state.config.XAU_ML_THRESHOLD_TREND.toFixed(2)}</strong></div>
+          <div><small>MR threshold</small><strong>${state.config.XAU_ML_THRESHOLD_MR.toFixed(2)}</strong></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Probability trace</h2><p>Simplified rolling output of the online logistic model over recent decisions.</p></div></div>
+        <div class="line-chart"><svg viewBox="0 0 100 200" preserveAspectRatio="none"><polyline fill="none" stroke="rgba(212,169,77,.9)" stroke-width="2" points="${poly}" /><polygon fill="rgba(212,169,77,.12)" points="0,200 ${poly} 100,200"/></svg></div>
+      </section>
+    </div>
+    <section class="panel">
+      <div class="panel-header"><div class="panel-title"><h2>Feature explanation</h2><p>Why these features exist and how they map to XAUUSD reality.</p></div></div>
+      <div class="table-wrap"><table><thead><tr><th>Feature</th><th>Junior meaning</th><th>Senior role</th></tr></thead><tbody>
+        <tr><td>ATR fast / ATR slow</td><td>Shows whether the market is active or sleepy.</td><td>Dead-market filter: skip if ATR_now &lt; 0.5 * ATR_long.</td></tr>
+        <tr><td>Session flags</td><td>Tells the model what time regime gold is in.</td><td>Captures intraday regime transition, especially London open and overlap.</td></tr>
+        <tr><td>Spread</td><td>Checks if trading cost is too ugly right now.</td><td>Microstructure quality feature and hard risk gate.</td></tr>
+        <tr><td>Distance to day high/low</td><td>Tells how stretched price is inside the daily structure.</td><td>Useful for breakout continuation versus fade risk asymmetry.</td></tr>
+      </tbody></table></div>
+      <div class="footer-actions"><button class="button primary" id="trainBtn">Simulate ML update</button></div>
+    </section>`;
+  document.getElementById('trainBtn').onclick = simulateMLUpdate;
+}
+
+function renderReports(){
+  const root = document.getElementById('view-reports');
+  root.innerHTML = `
+    <div class="grid-2">
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Recent daily reports</h2><p>Daily summaries expose which strategies or sessions are bleeding and should be restricted.</p></div></div>
+        <div class="report-list">
+          ${state.reportDays.map((r,i)=>`<div class="report-item"><div><strong>${r.day}</strong><div class="small muted">Best: ${r.best} | Worst: ${r.worst}</div></div><div class="right"><strong class="${r.pnl>=0?'positive':'negative'}">${usd(r.pnl)}</strong><div class="small muted">WR ${r.winRate.toFixed(1)}%</div></div></div>`).join('')}
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-header"><div class="panel-title"><h2>Daily return histogram</h2><p>Simple visual distribution of recent daily outcomes.</p></div></div>
+        <div class="chart">${state.reportDays.map(r=>`<div class="bar ${r.pnl<0?'red':''}" style="height:${40 + Math.min(Math.abs(r.pnl)*1.8, 150)}px" data-label="${r.day.slice(5)}"></div>`).join('')}</div>
+      </section>
+    </div>
+    <section class="panel">
+      <div class="panel-header"><div class="panel-title"><h2>Report export and pruning</h2><p>This area simulates report export and automatic pruning of weak strategies.</p></div></div>
+      <div class="footer-actions"><button class="button" id="exportBtn">Export daily report</button><button class="button primary" id="pruneBtn">Auto prune worst strategy</button></div>
+      <div id="reportFeedback" class="muted small">No report action executed yet.</div>
+    </section>`;
+  document.getElementById('exportBtn').onclick = ()=>{
+    const data = [['day','pnl','winRate','best','worst'], ...state.reportDays.map(r=>[r.day,r.pnl,r.winRate,r.best,r.worst])].map(row=>row.join(',')).join('\n');
+    downloadFile('daily_report_simulated.csv', data, 'text/csv');
+    document.getElementById('reportFeedback').textContent = 'Simulated CSV report exported.';
+    pushLog('report','Exported simulated daily report CSV');
+    refresh();
+  };
+  document.getElementById('pruneBtn').onclick = autoPruneWorst;
+}
+
+function renderConfig(){
+  const root = document.getElementById('view-config');
+  const keys = Object.keys(state.configMeta);
+  root.innerHTML = `
+    <section class="panel">
+      <div class="panel-header"><div class="panel-title"><h2>Config panel</h2><p>Every exposed field is editable, explained for juniors and justified for seniors. Changes are validated before apply.</p></div><div class="footer-actions"><button class="button primary" id="applyConfigBtn">Apply config changes</button></div></div>
+      <div class="form-grid">
+        ${keys.map(k=>{
+          const meta = state.configMeta[k];
+          const v = state.config[k];
+          const value = Array.isArray(v) ? v.join(', ') : v;
+          const hint = meta.min !== undefined ? `${meta.min} - ${meta.max}` : 'See note';
+          const type = meta.type;
+          return `<div class="field ${dangerous(k, v)?'danger-outline':''}">
+            <label for="cfg_${k}">${k}</label>
+            <input id="cfg_${k}" data-key="${k}" data-type="${type}" value="${value}">
+            <p><strong>Type:</strong> ${type} | <strong>Allowed:</strong> ${hint}</p>
+            <p>${meta.junior}</p>
+            <p class="advanced">${meta.senior}</p>
+            <div class="small" id="val_${k}">${validateField(k, value).msg}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>`;
+  root.querySelectorAll('input[data-key]').forEach(inp=>inp.addEventListener('input', ()=>{
+    const key = inp.dataset.key;
+    const res = validateField(key, inp.value);
+    const node = document.getElementById(`val_${key}`);
+    node.textContent = res.msg;
+    node.className = `small ${res.ok ? 'positive' : 'negative'}`;
+    inp.parentElement.classList.toggle('danger-outline', dangerous(key, inp.value));
+  }));
+  document.getElementById('applyConfigBtn').onclick = applyConfigChanges;
+}
+
+function dangerous(key, value){
+  const parsed = parseValue(key, value);
+  if(key === 'RISK_PCT' && parsed > 0.02) return true;
+  if(key === 'DAILY_LOSS_LIMIT_PCT' && parsed > 0.05) return true;
+  if(key === 'MAX_CONCURRENT_POSITIONS' && parsed > 3) return true;
+  return false;
+}
+function parseValue(key, value){
+  const meta = state.configMeta[key];
+  if(!meta) return value;
+  if(meta.type === 'float') return parseFloat(value);
+  if(meta.type === 'int') return parseInt(value,10);
+  if(meta.type === 'bool') return value === true || value === 'true';
+  if(meta.type === 'list') return String(value).split(',').map(v=>v.trim()).filter(Boolean).map(v=> isNaN(Number(v)) ? v : Number(v));
+  return value;
+}
+function validateField(key, value){
+  const meta = state.configMeta[key];
+  if(!meta) return {ok:false,msg:'Unknown field'};
+  const parsed = parseValue(key, value);
+  if(meta.type === 'float' && Number.isNaN(parsed)) return {ok:false,msg:'Invalid float'};
+  if(meta.type === 'int' && Number.isNaN(parsed)) return {ok:false,msg:'Invalid integer'};
+  if((meta.type === 'float' || meta.type === 'int') && meta.min !== undefined && (parsed < meta.min || parsed > meta.max)) return {ok:false,msg:`Out of range. Expected ${meta.min} to ${meta.max}`};
+  if(key === 'TP_VOLUME_FRACTIONS'){
+    const sum = parsed.reduce((a,b)=>a+Number(b),0);
+    if(Math.abs(sum - 1) > 0.001) return {ok:false,msg:'Fractions must sum to 1.0'};
+  }
+  return {ok:true,msg:'Valid and ready to apply'};
+}
+function applyConfigChanges(){
+  const fields = document.querySelectorAll('#view-config input[data-key]');
+  const updates = {};
+  for(const f of fields){
+    const key = f.dataset.key;
+    const res = validateField(key, f.value);
+    if(!res.ok){ pushLog('config', `Rejected ${key}: ${res.msg}`); refresh(); return; }
+    updates[key] = parseValue(key, f.value);
+  }
+  Object.assign(state.config, updates);
+  state.maxOrdersPerDay = state.config.MAX_ORDERS_PER_DAY;
+  pushLog('config', 'Applied validated config overrides');
+  refresh();
+}
+
+function partialClose(i){
+  const t = state.trades[i];
+  if(!t) return;
+  const closeVol = Math.max(0.01, t.volumeRemaining * 0.3);
+  t.volumeRemaining = Math.max(0, +(t.volumeRemaining - closeVol).toFixed(3));
+  t.pnl += 5.4;
+  pushLog('execution', `Partial close executed on ${t.ticket}: ${closeVol.toFixed(3)} lots`);
+  refresh();
+}
+function toggleStrategy(i, enabled){
+  const s = state.strategies[i];
+  s.enabled = enabled;
+  s.status = enabled ? 'ACTIVE' : 'DISABLED';
+  pushLog('strategy', `${s.id} manually ${enabled ? 'enabled' : 'disabled'}`);
+  refresh();
+}
+function simulateMLUpdate(){
+  state.mlTrainedSamples += 1;
+  state.lastMlProb = Math.min(0.82, Math.max(0.48, state.lastMlProb + (Math.random() - 0.35) * 0.06));
+  pushLog('ml', `Online model updated. Samples=${state.mlTrainedSamples}, prob=${state.lastMlProb.toFixed(2)}`);
+  refresh();
+}
+function autoPruneWorst(){
+  const worst = [...state.strategies].sort((a,b)=>a.expectancy-b.expectancy)[0];
+  worst.enabled = false; worst.status = 'DISABLED';
+  document.getElementById('reportFeedback').textContent = `Auto-pruned ${worst.id} based on weakest expectancy.`;
+  pushLog('reports', `Auto-pruned strategy ${worst.id} from daily reports`);
+  refresh();
+}
+function downloadFile(name, content, type){
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+function simulateTrade(){
+  const [allowed, reason] = canTrade();
+  if(!allowed){
+    state.lastSkipReason = reason;
+    pushLog('engine', `Trade blocked: ${reason}`);
+    refresh();
+    return;
+  }
+  const entry = +(state.xauPrice - 0.4).toFixed(2);
+  const sl = +(entry - 3.3).toFixed(2);
+  const tp1 = +(entry + 3.3).toFixed(2);
+  const tp2 = +(entry + 6.1).toFixed(2);
+  const tp3 = +(entry + 9.2).toFixed(2);
+  const trade = {
+    ticket:'#' + Math.floor(481222 + Math.random()*700), strategy:'trend_london_m5_01', side:'BUY', volumeInitial:0.08, volumeRemaining:0.08,
+    entry, sl, tp:[tp1,tp2,tp3], ml:state.lastMlProb, pnl:0, r:0, price:state.xauPrice, tpHit:[false,false,false]
+  };
+  state.trades.unshift(trade);
+  state.ordersToday += 1;
+  pushLog('execution', `Simulated BUY opened at ${entry.toFixed(2)} with SL ${sl.toFixed(2)}`);
+  refresh();
+}
+function runEvaluationLoop(){
+  state.spread = +(Math.max(0.18, Math.min(0.65, state.spread + (Math.random()-0.5)*0.12))).toFixed(2);
+  state.atrFast = +(Math.max(1.5, Math.min(4.4, state.atrFast + (Math.random()-0.5)*0.45))).toFixed(2);
+  state.lastConsensus = +(Math.max(0.48, Math.min(0.87, state.lastConsensus + (Math.random()-0.45)*0.09))).toFixed(2);
+  state.lastMlProb = +(Math.max(0.49, Math.min(0.78, state.lastMlProb + (Math.random()-0.45)*0.07))).toFixed(2);
+  const [allowed, reason] = canTrade();
+  state.lastSkipReason = allowed ? 'all_gates_pass' : reason;
+  state.xauPrice = +(state.xauPrice + (Math.random()-0.47)*1.25).toFixed(2);
+  state.trades.forEach(t=>{
+    t.price = state.xauPrice;
+    t.pnl = +((t.price - t.entry) * 7.4).toFixed(2);
+    t.r = +((t.price - t.entry) / Math.abs(t.entry - t.sl)).toFixed(2);
+    t.tp.forEach((tp, idx)=>{ if(!t.tpHit[idx] && t.price >= tp){ t.tpHit[idx] = true; pushLog('tp', `${t.ticket} hit TP${idx+1}`); } });
+  });
+  pushLog('engine', `Evaluation loop complete: ${allowed ? 'entry allowed' : 'blocked by ' + reason}`);
+  refresh();
+}
+
+function renderLogs(targetId){
+  const node = document.getElementById(targetId);
+  if(!node) return;
+  node.innerHTML = state.logs.map(l=>`<div class="log-entry"><span><strong>${l.type}</strong> — ${l.msg}</span><span class="muted small">${l.time}</span></div>`).join('');
+}
+
+function bindTopbar(){
+  document.getElementById('themeBtn').onclick = ()=>{
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', state.theme);
+    pushLog('ui', `Theme switched to ${state.theme}`);
+    refresh(false);
+  };
+  document.getElementById('startStopBtn').onclick = ()=>{
+    state.autoTrading = !state.autoTrading;
+    pushLog('engine', `Auto trading ${state.autoTrading ? 'enabled' : 'stopped'}`);
+    refresh();
+  };
+  document.getElementById('toggleModeBtn').onclick = ()=>{
+    state.mode = state.mode === 'PAPER' ? 'LIVE' : 'PAPER';
+    pushLog('engine', `Execution mode changed to ${state.mode}`);
+    refresh();
+  };
+  document.getElementById('killBtn').onclick = ()=>{
+    state.globalHalt = !state.globalHalt;
+    pushLog('risk', `Global halt ${state.globalHalt ? 'activated' : 'released'}`);
+    refresh();
+  };
+}
+
+function refresh(withRenders=true){
+  updateEngineBadges();
+  document.getElementById('startStopBtn').textContent = state.autoTrading ? 'Stop Auto' : 'Start Auto';
+  if(withRenders){ renderDashboard(); renderTrades(); renderStrategies(); renderRisk(); renderML(); renderReports(); renderConfig(); }
+}
+
+renderNav();
+bindTopbar();
+pushLog('boot','Elite Quant Terminal initialized in fully interactive demo mode');
+pushLog('session','Session state loaded: London/NY overlap with XAUUSD focus');
+refresh();
+</script>
+</body>
+</html>

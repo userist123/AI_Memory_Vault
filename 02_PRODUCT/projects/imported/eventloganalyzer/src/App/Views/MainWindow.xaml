@@ -1,0 +1,139 @@
+<Window x:Class="EventLogAnalyzer.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="EventLog Analyzer" Height="820" Width="1360"
+        Background="#FF1B1D23"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Dark-mode-first palette. Light mode = swap this ResourceDictionary at
+             runtime; kept as literal colors here for MVP brevity. -->
+        <SolidColorBrush x:Key="PanelBg" Color="#FF23262F"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FF5B8CFF"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#FFE8EAF0"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#FF9AA1B2"/>
+        <SolidColorBrush x:Key="SeverityCritical" Color="#FFE5484D"/>
+        <SolidColorBrush x:Key="SeverityError" Color="#FFF2994A"/>
+        <SolidColorBrush x:Key="SeverityWarning" Color="#FFF2C94A"/>
+        <SolidColorBrush x:Key="SeveritySuspicious" Color="#FFBB86FC"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+        </Style>
+
+        <Style x:Key="NavButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="KpiCard" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBg}"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Margin" Value="0,0,16,0"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left sidebar -->
+        <StackPanel Grid.Column="0" Background="#FF16171C">
+            <TextBlock Text="EventLog Analyzer" FontSize="16" FontWeight="Bold" Margin="16,20,16,24"/>
+            <Button Style="{StaticResource NavButton}" Content="🏠  Dashboard" Click="OnNavigate" Tag="Dashboard"/>
+            <Button Style="{StaticResource NavButton}" Content="🔎  Event Explorer" Click="OnNavigate" Tag="EventExplorer"/>
+            <Button Style="{StaticResource NavButton}" Content="🕓  User Activity" Click="OnNavigate" Tag="UserActivity"/>
+            <Button Style="{StaticResource NavButton}" Content="🗄️  Registry View" Click="OnNavigate" Tag="RegistryView"/>
+            <Button Style="{StaticResource NavButton}" Content="🛠️  Remediation" Click="OnNavigate" Tag="Remediation"/>
+
+            <Button Content="Select backup folder…" Margin="16,32,16,0" Padding="10"
+                    Background="{StaticResource AccentBrush}" Foreground="White" BorderThickness="0"
+                    Click="OnSelectFolder"/>
+        </StackPanel>
+
+        <!-- Main content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top filter bar -->
+            <Border Grid.Row="0" Background="{StaticResource PanelBg}" Padding="16,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Time range:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextSecondary}"/>
+                    <ComboBox Width="140" Margin="0,0,20,0"/>
+                    <TextBlock Text="Severity:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextSecondary}"/>
+                    <ComboBox Width="140" Margin="0,0,20,0"/>
+                    <TextBlock Text="Source:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextSecondary}"/>
+                    <ComboBox Width="160" Margin="0,0,20,0"/>
+                    <TextBox Width="260" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Tag="Search events…" Padding="6"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Content frame: Dashboard shown by default; other views swapped in on nav click -->
+            <ScrollViewer Grid.Row="1" Padding="24">
+                <StackPanel>
+                    <TextBlock Text="Dashboard" FontSize="22" FontWeight="SemiBold" Margin="0,0,0,16"/>
+
+                    <UniformGrid Rows="1" Columns="5">
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding TotalEvents}" FontSize="28" FontWeight="Bold"/>
+                                <TextBlock Text="Total events" Foreground="{StaticResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding ErrorCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource SeverityError}"/>
+                                <TextBlock Text="Errors" Foreground="{StaticResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding WarningCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource SeverityWarning}"/>
+                                <TextBlock Text="Warnings" Foreground="{StaticResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding SuspiciousCount}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource SeveritySuspicious}"/>
+                                <TextBlock Text="Suspicious patterns" Foreground="{StaticResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource KpiCard}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Issues.Count}" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}"/>
+                                <TextBlock Text="Open issues" Foreground="{StaticResource TextSecondary}"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <TextBlock Text="Detected issues" FontSize="18" FontWeight="SemiBold" Margin="0,28,0,10"/>
+                    <ItemsControl ItemsSource="{Binding Issues}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource PanelBg}" CornerRadius="8" Padding="14" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="15"/>
+                                        <TextBlock Text="{Binding Summary}" Foreground="{StaticResource TextSecondary}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</Window>

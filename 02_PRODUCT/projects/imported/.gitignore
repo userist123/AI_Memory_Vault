@@ -1,0 +1,32 @@
+# Build output and dependencies must never re-enter the repo.
+# The original import was 2466 MB; 99% of it was these directories.
+node_modules/
+__pycache__/
+venv/
+.venv/
+bin/
+obj/
+dist/
+build/
+.next/
+target/
+.cache/
+.pytest_cache/
+
+# Binaries and archives: keep source, not artifacts.
+*.zip
+*.exe
+*.dll
+*.node
+*.pdb
+*.msi
+*.7z
+*.rar
+*.so
+*.dylib
+
+# Local secrets. Credentials were scrubbed at import; keep it that way.
+.env
+*.env
+.env.*
+.env.local

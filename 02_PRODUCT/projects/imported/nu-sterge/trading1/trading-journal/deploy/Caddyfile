@@ -1,0 +1,29 @@
+# Caddy config with automatic Let's Encrypt HTTPS
+# Replace 'trading-journal.yourdomain.com' with your actual domain.
+# Caddy handles certificate renewal automatically.
+
+trading-journal.yourdomain.com {
+	# Reverse proxy to Next.js app
+	reverse_proxy app:3000
+
+	# Security headers (in addition to what Next.js sets)
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Compression
+	encode gzip zstd
+
+	# Access log (optional)
+	log {
+		output file /data/access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+		format json
+	}
+}

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. Secure Enclave</title>
+    
+    <!-- React & Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #030712; 
+            color: #cbd5e1;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .cyber-grid {
+            background-image: linear-gradient(to right, #111827 1px, transparent 1px), linear-gradient(to bottom, #111827 1px, transparent 1px);
+            background-size: 4rem 4rem;
+            mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+            -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- ICONS (SVG Inline pentru a nu depinde de pachete externe) ---
+        const Icon = ({ children, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+        );
+        const Shield = ({ className }) => <Icon className={className}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></Icon>;
+        const Lock = ({ className }) => <Icon className={className}><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></Icon>;
+        const Key = ({ className }) => <Icon className={className}><path d="m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4" /><path d="m21 2-9.6 9.6" /><circle cx="7.5" cy="15.5" r="5.5" /></Icon>;
+        const Activity = ({ className }) => <Icon className={className}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></Icon>;
+        const Terminal = ({ className }) => <Icon className={className}><polyline points="4 17 10 11 4 5" /><line x1="12" x2="20" y1="19" y2="19" /></Icon>;
+        const Power = ({ className }) => <Icon className={className}><path d="M18.36 6.64a9 9 0 1 1-12.73 0" /><line x1="12" x2="12" y1="2" y2="12" /></Icon>;
+        const AlertTriangle = ({ className }) => <Icon className={className}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" x2="12" y1="9" y2="13" /><line x1="12" x2="12.01" y1="17" y2="17" /></Icon>;
+        const CheckCircle = ({ className }) => <Icon className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></Icon>;
+        const Database = ({ className }) => <Icon className={className}><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5V19A9 3 0 0 0 21 19V5" /><path d="M3 12A9 3 0 0 0 21 12" /></Icon>;
+        const Server = ({ className }) => <Icon className={className}><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /><rect width="20" height="8" x="2" y="14" rx="2" ry="2" /><line x1="6" x2="6.01" y1="6" y2="6" /><line x1="6" x2="6.01" y1="18" y2="18" /></Icon>;
+        const RefreshCw = ({ className }) => <Icon className={className}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></Icon>;
+        const Cpu = ({ className }) => <Icon className={className}><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></Icon>;
+        const User = ({ className }) => <Icon className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>;
+
+        const API_BASE_URL = 'http://localhost:8000/api';
+
+        function App() {
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [loginForm, setLoginForm] = useState({ user: '', pass: '', twoFactor: '' });
+            const [loginError, setLoginError] = useState('');
+
+            const [botStatus, setBotStatus] = useState('OFFLINE'); 
+            const [isConfigured, setIsConfigured] = useState(false);
+            const [isConnecting, setIsConnecting] = useState(false);
+            const [apiError, setApiError] = useState('');
+            
+            const [config, setConfig] = useState({
+                platform: 'BINANCE',
+                apiKey: '',
+                apiSecret: '',
+                pair: 'BTC/USDT',
+                riskLevel: 'LOW',
+                maxDrawdown: '5'
+            });
+
+            const [logs, setLogs] = useState([]);
+            const logEndRef = useRef(null);
+
+            useEffect(() => {
+                if (logEndRef.current) {
+                logEndRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, [logs]);
+
+            useEffect(() => {
+                if (!isAuthenticated) return;
+
+                const fetchStatus = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/status`);
+                    if (response.ok) {
+                    const data = await response.json();
+                    setBotStatus(data.status);
+                    setLogs(data.logs || []);
+                    setIsConfigured(data.isConfigured);
+                    }
+                } catch (error) {
+                    if(botStatus !== 'OFFLINE') setBotStatus('OFFLINE');
+                }
+                };
+
+                const interval = setInterval(fetchStatus, 2000);
+                return () => clearInterval(interval);
+            }, [isAuthenticated, botStatus]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (loginForm.user === 'admin' && loginForm.pass === 'jarvis' && loginForm.twoFactor.length === 6) {
+                setIsAuthenticated(true);
+                setLoginError('');
+                setLogs([{time: new Date().toLocaleTimeString(), type: 'system', message: 'Conexiune Enclavă stabilită. Așteptare setări API.'}]);
+                } else {
+                setLoginError('Sistem Respins: Credențiale invalide sau token 2FA incorect.');
+                }
+            };
+
+            const handleSaveConfig = async () => {
+                if (!config.apiKey || !config.apiSecret) {
+                setApiError('Cheile API sunt mandatorii.');
+                return;
+                }
+                
+                setApiError('');
+                setIsConnecting(true);
+                
+                try {
+                const response = await fetch(`${API_BASE_URL}/configure`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    setIsConfigured(true);
+                } else {
+                    const errorData = await response.json();
+                    setApiError(errorData.detail || 'Eroare la validarea API.');
+                }
+                } catch (error) {
+                setApiError("Conexiune eșuată. Backend Python oprit (port 8000).");
+                } finally {
+                setIsConnecting(false);
+                }
+            };
+
+            const toggleBot = async () => {
+                if (!isConfigured) return;
+                try {
+                await fetch(`${API_BASE_URL}/toggle`, { method: 'POST' });
+                } catch (error) {
+                console.error("Eroare de comunicare.");
+                }
+            };
+
+            if (!isAuthenticated) {
+                return (
+                <div className="min-h-screen bg-[#030712] flex items-center justify-center font-mono p-4 relative overflow-hidden">
+                    <div className="absolute inset-0 cyber-grid opacity-20"></div>
+                    
+                    <div className="max-w-md w-full relative z-10">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-2xl blur opacity-25"></div>
+                    
+                    <div className="bg-[#0b1121] border border-cyan-900/50 p-10 rounded-xl shadow-2xl relative">
+                        <div className="flex flex-col items-center mb-10">
+                        <div className="p-4 bg-cyan-950/30 rounded-full border border-cyan-800/50 mb-4 relative shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+                            <Cpu className="w-12 h-12 text-cyan-400" />
+                            <div className="absolute top-0 right-0 w-3 h-3 bg-cyan-400 rounded-full animate-ping"></div>
+                        </div>
+                        <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-cyan-200 tracking-[0.3em] text-center">J.A.R.V.I.S.</h1>
+                        <div className="flex items-center gap-2 mt-3">
+                            <span className="h-px w-8 bg-cyan-800"></span>
+                            <p className="text-[10px] text-cyan-500 uppercase tracking-widest font-bold">Secure Enclave v8</p>
+                            <span className="h-px w-8 bg-cyan-800"></span>
+                        </div>
+                        </div>
+
+                        <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">ID Utilizator (admin)</label>
+                            <div className="relative">
+                            <User className="absolute left-3 top-3.5 w-4 h-4 text-slate-600" />
+                            <input type="text" placeholder="admin" value={loginForm.user} onChange={e => setLoginForm({...loginForm, user: e.target.value})} className="w-full bg-[#030712] border border-slate-800 rounded-lg py-3 pl-10 pr-4 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all placeholder:text-slate-800" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1">Parolă Sistem (jarvis)</label>
+                            <div className="relative">
+                            <Key className="absolute left-3 top-3.5 w-4 h-4 text-slate-600" />
+                            <input type="password" placeholder="jarvis" value={loginForm.pass} onChange={e => setLoginForm({...loginForm, pass: e.target.value})} className="w-full bg-[#030712] border border-slate-800 rounded-lg py-3 pl-10 pr-4 text-slate-200 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all placeholder:text-slate-800" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase tracking-widest text-slate-500 font-bold ml-1 text-center block">Hardware Token (000000)</label>
+                            <input type="text" maxLength="6" placeholder="0 0 0 0 0 0" value={loginForm.twoFactor} onChange={e => setLoginForm({...loginForm, twoFactor: e.target.value.replace(/\D/g, '')})} className="w-full bg-[#030712] border border-slate-800 rounded-lg py-4 text-cyan-400 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 outline-none transition-all text-center tracking-[0.5em] text-xl font-bold placeholder:text-slate-800 shadow-inner" />
+                        </div>
+
+                        {loginError && (
+                            <div className="text-red-400 text-xs bg-red-950/20 p-3 rounded border border-red-900/50 flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                            <span>{loginError}</span>
+                            </div>
+                        )}
+
+                        <button type="submit" className="w-full mt-8 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-[#030712] font-black py-4 px-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transform hover:-translate-y-0.5">
+                            <Lock className="w-5 h-5" /> AUTENTIFICARE
+                        </button>
+                        </form>
+                    </div>
+                    </div>
+                </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-[#030712] text-slate-300 font-mono p-4 flex flex-col h-screen overflow-hidden selection:bg-cyan-900 selection:text-cyan-100">
+                
+                {/* HEADER ULTRA MODERN */}
+                <header className="bg-[#0b1121] border border-slate-800 rounded-xl p-4 mb-4 shadow-lg flex justify-between items-center shrink-0 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500 shadow-[0_0_10px_#06b6d4]"></div>
+                    
+                    <div className="flex items-center gap-5 pl-4">
+                    <div className="p-2.5 bg-[#030712] rounded-lg border border-slate-800 shadow-inner">
+                        <Cpu className="text-cyan-400 w-7 h-7" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-black text-slate-100 tracking-widest">J.A.R.V.I.S. <span className="text-cyan-500 font-light">KERNEL</span></h1>
+                        <div className="flex items-center gap-2 mt-1">
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secured Connection Local:8000</p>
+                        </div>
+                    </div>
+                    </div>
+
+                    <div className="flex items-center gap-8 pr-2">
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Stare Sistem</span>
+                        <div className="flex items-center gap-2 bg-[#030712] py-1 px-3 rounded border border-slate-800">
+                        <span className={`w-2 h-2 rounded-full ${botStatus === 'RUNNING' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : (botStatus === 'PAUSED' ? 'bg-yellow-500' : 'bg-red-500')}`}></span>
+                        <span className={`font-black text-xs tracking-widest ${botStatus === 'RUNNING' ? 'text-green-500' : (botStatus === 'PAUSED' ? 'text-yellow-500' : 'text-red-500')}`}>
+                            {botStatus}
+                        </span>
+                        </div>
+                    </div>
+                    <button onClick={() => setIsAuthenticated(false)} title="Deconectare" className="p-3 bg-[#030712] hover:bg-red-950/50 hover:text-red-500 text-slate-500 rounded-lg transition-colors border border-slate-800 group">
+                        <Power className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    </button>
+                    </div>
+                </header>
+
+                {/* ZONA DE CONȚINUT */}
+                <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0">
+                    
+                    {/* PANOU STÂNGA (API & Config) */}
+                    <div className="lg:col-span-4 flex flex-col gap-4 min-h-0">
+                    
+                    <div className="bg-[#0b1121] border border-slate-800 rounded-xl flex flex-col flex-shrink-0">
+                        <div className="p-4 border-b border-slate-800 bg-[#0f172a]/50 flex items-center gap-3 rounded-t-xl">
+                        <Database className="w-4 h-4 text-cyan-500" />
+                        <h2 className="font-bold text-slate-300 uppercase tracking-widest text-[11px]">Infrastructură Exchange</h2>
+                        </div>
+                        
+                        <div className="p-5 space-y-5">
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Platformă</label>
+                            <select value={config.platform} onChange={e => setConfig({...config, platform: e.target.value})} disabled={isConfigured} className="w-full bg-[#030712] border border-slate-800 rounded-lg p-3 text-slate-200 outline-none disabled:opacity-50 appearance-none text-sm font-bold tracking-wide">
+                            <option value="BINANCE">BINANCE API v3</option>
+                            <option value="KRAKEN">KRAKEN REST API</option>
+                            </select>
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">API Key (Public)</label>
+                            <input type={isConfigured ? "password" : "text"} value={config.apiKey} onChange={e => setConfig({...config, apiKey: e.target.value})} disabled={isConfigured} placeholder="******************" className="w-full bg-[#030712] border border-slate-800 rounded-lg p-3 text-slate-200 outline-none focus:border-cyan-500/50 disabled:opacity-50 text-sm font-mono placeholder:text-slate-700" />
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">API Secret (Privat)</label>
+                            <input type="password" value={config.apiSecret} onChange={e => setConfig({...config, apiSecret: e.target.value})} disabled={isConfigured} placeholder="******************" className="w-full bg-[#030712] border border-slate-800 rounded-lg p-3 text-slate-200 outline-none focus:border-cyan-500/50 disabled:opacity-50 text-sm font-mono placeholder:text-slate-700" />
+                        </div>
+
+                        {apiError && (
+                            <div className="p-3 bg-red-950/20 border border-red-900/50 rounded-lg text-xs text-red-400 flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                            <span>{apiError}</span>
+                            </div>
+                        )}
+
+                        {!isConfigured ? (
+                            <button onClick={handleSaveConfig} disabled={isConnecting} className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-cyan-400 font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 text-xs tracking-widest shadow-inner">
+                            {isConnecting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                            {isConnecting ? "VALIDARE ENCLAVĂ..." : "TRIMITE CĂTRE SERVER PYTHON"}
+                            </button>
+                        ) : (
+                            <div className="p-4 bg-[#030712] border border-green-900/30 rounded-lg flex items-center gap-3">
+                            <div className="p-2 bg-green-950/50 rounded-full border border-green-900/50">
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-green-500 font-bold tracking-wide">Infrastructură Izolată</p>
+                                <p className="text-[10px] text-slate-500 mt-0.5">Cheile sunt valide și izolate în RAM.</p>
+                            </div>
+                            </div>
+                        )}
+                        </div>
+                    </div>
+
+                    <div className="bg-[#0b1121] border border-slate-800 rounded-xl flex-1 flex flex-col min-h-0">
+                        <div className="p-4 border-b border-slate-800 bg-[#0f172a]/50 flex items-center gap-3 rounded-t-xl shrink-0">
+                        <Activity className="w-4 h-4 text-cyan-500" />
+                        <h2 className="font-bold text-slate-300 uppercase tracking-widest text-[11px]">Parametri Tactic</h2>
+                        </div>
+                        
+                        <div className="p-5 space-y-6 overflow-y-auto">
+                            <div className="space-y-1.5">
+                            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Activ Monitorizat</label>
+                            <input type="text" value={config.pair} onChange={e => setConfig({...config, pair: e.target.value.toUpperCase()})} disabled={botStatus === 'RUNNING'} className="w-full bg-[#030712] border border-slate-800 rounded-lg p-3 text-cyan-400 disabled:opacity-50 font-black tracking-widest uppercase text-center text-lg outline-none focus:border-cyan-500/50 shadow-inner" placeholder="BTC/USDT" />
+                            </div>
+                            
+                            <div className="space-y-1.5">
+                            <div className="flex justify-between items-end">
+                                <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Limită Drawdown Zilnic</label>
+                                <span className="text-xs font-bold text-red-400">{config.maxDrawdown}%</span>
+                            </div>
+                            <input type="range" min="1" max="20" value={config.maxDrawdown} onChange={e => setConfig({...config, maxDrawdown: e.target.value})} disabled={botStatus === 'RUNNING'} className="w-full accent-red-500 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer disabled:opacity-50" />
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-800 bg-[#030712] rounded-b-xl shrink-0 mt-auto">
+                        <button onClick={toggleBot} disabled={!isConfigured} className={`w-full py-4 rounded-lg font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed shadow-lg ${botStatus === 'RUNNING' ? 'bg-red-950/80 border border-red-500/50 text-red-500 hover:bg-red-900 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'bg-cyan-900/20 border border-cyan-500 text-cyan-400 hover:bg-cyan-900/40 shadow-[0_0_15px_rgba(6,182,212,0.2)]'}`}>
+                            {botStatus === 'RUNNING' ? (
+                                <>
+                                <div className="w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                                OPREȘTE J.A.R.V.I.S.
+                                </>
+                            ) : (
+                                <>
+                                <Server className="w-5 h-5" /> 
+                                INIȚIALIZEAZĂ BOT
+                                </>
+                            )}
+                        </button>
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* PANOU DREAPTA (Terminal Live) */}
+                    <div className="lg:col-span-8 bg-[#030712] border border-slate-800 rounded-xl flex flex-col overflow-hidden relative shadow-2xl">
+                    <div className="px-4 py-3 bg-[#0b1121] border-b border-slate-800 flex justify-between items-center shrink-0 z-10 shadow-md">
+                        <div className="flex items-center gap-3">
+                        <Terminal className="w-4 h-4 text-slate-500" />
+                        <span className="text-[11px] uppercase font-bold text-slate-400 tracking-widest">Jurnal Decizional (Loguri Python)</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                        <span className="text-[9px] text-slate-600 font-mono tracking-widest border border-slate-800 px-2 py-0.5 rounded">AUTO-SCROLL</span>
+                        {botStatus === 'RUNNING' && <RefreshCw className="w-4 h-4 text-cyan-500 animate-spin" />}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 text-[13px] font-mono tracking-tight leading-[1.8] flex flex-col">
+                        {logs.length === 0 ? (
+                        <div className="m-auto flex flex-col items-center justify-center space-y-6 opacity-30">
+                            <Shield className="w-16 h-16 text-slate-600" />
+                            <span className="text-[10px] uppercase tracking-[0.3em] font-bold text-slate-500">Așteptare Telemetrie Python</span>
+                        </div>
+                        ) : (
+                        <div className="space-y-3">
+                            {logs.map((log, index) => {
+                            let textColor = 'text-slate-400';
+                            let prefix = '[LOG]';
+                            let bgClass = 'hover:bg-slate-900/30';
+                            
+                            if (log.type === 'system') { textColor = 'text-cyan-400 font-bold'; prefix = '[SYS]'; bgClass = 'bg-cyan-950/10 border-l border-cyan-500/30 pl-3'; }
+                            if (log.type === 'process') { textColor = 'text-blue-300'; prefix = '[PRC]'; }
+                            if (log.type === 'warning') { textColor = 'text-yellow-400'; prefix = '[WRN]'; }
+                            if (log.type === 'error') { textColor = 'text-red-400 font-bold'; prefix = '[ERR]'; bgClass = 'bg-red-950/10 border-l border-red-500/30 pl-3'; }
+                            if (log.type === 'success') { textColor = 'text-green-400 font-bold'; prefix = '[OK ]'; bgClass = 'bg-green-950/10 border-l border-green-500/30 pl-3'; }
+                            if (log.type === 'info') { textColor = 'text-slate-500'; prefix = '[INF]'; }
+
+                            return (
+                                <div key={index} className={`break-words ${textColor} ${bgClass} py-1 px-2 rounded-r transition-colors flex gap-4`}>
+                                <span className="text-slate-700 shrink-0 text-xs select-none">
+                                    {log.time} <span className="ml-2 font-bold opacity-50">{prefix}</span>
+                                </span>
+                                <span>{log.message}</span>
+                                </div>
+                            );
+                            })}
+                            <div ref={logEndRef} className="h-4" />
+                        </div>
+                        )}
+                    </div>
+                    
+                    <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-[#030712] to-transparent pointer-events-none"></div>
+                    </div>
+                </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
