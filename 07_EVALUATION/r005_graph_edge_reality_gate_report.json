@@ -1,0 +1,98 @@
+{
+  "corpus": {
+    "canonical_notes": 865,
+    "all_notes_incl_raw_archived": 905,
+    "lifecycle_breakdown_canonical": {
+      "ACTIVE": 79,
+      "REVIEW": 658,
+      "NONE": 124,
+      "NORMALIZED": 4
+    }
+  },
+  "declared_relations_raw_census": {
+    "total_relation_dicts_in_frontmatter": 74,
+    "with_target_id_field": 9,
+    "without_target_id_field_wikilink_style": 65,
+    "with_any_provenance_field": 0,
+    "relation_type_distribution": {
+      "related_to": 21,
+      "implements": 21,
+      "supports": 10,
+      "derived_from": 7,
+      "depends_on": 7,
+      "relates_to": 4,
+      "bare_key:related_to": 1,
+      "bare_key:implements": 1,
+      "bare_key:target_id": 1,
+      "refines": 1
+    },
+    "declared_relation_types_not_in_synapsestore_vocabulary": [
+      "bare_key:implements",
+      "bare_key:related_to",
+      "bare_key:target_id",
+      "derived_from",
+      "implements",
+      "refines",
+      "relates_to",
+      "supports"
+    ]
+  },
+  "synapsestore_from_index_result": {
+    "total_edges_incl_mirrors_and_fixture": 18,
+    "fixture_edges_excluded": 2,
+    "real_edges_incl_mirrors": 16,
+    "real_forward_declared_edges": 8,
+    "rejected_on_load": [],
+    "distinct_nodes_touched_by_real_edges": 10,
+    "total_nodes_in_corpus": 905,
+    "in_degree_top5": [
+      [
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        5
+      ],
+      [
+        "22222222-2222-4222-a222-222222222222",
+        3
+      ],
+      [
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        1
+      ],
+      [
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        1
+      ],
+      [
+        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
+        1
+      ]
+    ],
+    "out_degree_top5": [
+      [
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        5
+      ],
+      [
+        "22222222-2222-4222-a222-222222222222",
+        3
+      ],
+      [
+        "00ac0842-2c43-4a9d-a579-a83bfa271995",
+        1
+      ],
+      [
+        "01948766-0019-45b6-bbd6-c3df9020feae",
+        1
+      ],
+      [
+        "01db8d4d-2359-4d1b-bed4-c96f32f9fe5e",
+        1
+      ]
+    ]
+  },
+  "stop_condition": {
+    "threshold": 100,
+    "real_dual_resolvable_non_fixture_edges": 8,
+    "go_decision": false
+  }
+}
