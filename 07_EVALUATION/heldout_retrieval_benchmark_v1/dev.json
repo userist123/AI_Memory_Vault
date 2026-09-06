@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {"abstain": false, "class": "exact_identifier_lookup", "gold_relevant_notes": ["note_agents_contract"], "id": "D01", "query": "What is MAX_SYNTHESIS_INPUT?", "required_facts": ["2500"], "wrong_note_ids": []},
+    {"abstain": false, "class": "exact_identifier_lookup", "gold_relevant_notes": ["note_vault_cognitive_rules"], "id": "D02", "query": "What is the SQLite busy timeout value?", "required_facts": ["5000"], "wrong_note_ids": []},
+    {"abstain": false, "class": "paraphrase", "gold_relevant_notes": ["note_agents_contract"], "id": "D03", "query": "How large may the synthesizer's incoming token budget be?", "required_facts": ["2500"], "wrong_note_ids": []},
+    {"abstain": false, "class": "paraphrase", "gold_relevant_notes": ["note_vault_cognitive_rules"], "id": "D04", "query": "Who is allowed to certify a memory as verified?", "required_facts": ["human", "admin"], "wrong_note_ids": []},
+    {"abstain": false, "class": "synonym_substitution", "gold_relevant_notes": ["note_agents_contract"], "id": "D05", "query": "What ceiling is placed on the lead synthesis input allowance?", "required_facts": ["2500"], "wrong_note_ids": []},
+    {"abstain": false, "class": "synonym_substitution", "gold_relevant_notes": ["note_vault_cognitive_rules"], "id": "D06", "query": "What is the mandated contention wait duration for SQLite?", "required_facts": ["5000"], "wrong_note_ids": []},
+    {"abstain": false, "class": "lexical_trap", "gold_relevant_notes": ["note_agents_contract"], "id": "D07", "query": "The vault mentions synthesis, context, and process outcomes. Which token cap belongs to synthesis input?", "required_facts": ["2500"], "wrong_note_ids": ["note_vault_cognitive_rules"]},
+    {"abstain": false, "class": "lexical_trap", "gold_relevant_notes": ["note_vault_cognitive_rules"], "id": "D08", "query": "The documents discuss transactions and agent contracts. Which timeout number is required by the storage rule?", "required_facts": ["5000"], "wrong_note_ids": ["note_agents_contract"]},
+    {"abstain": false, "class": "cross_cluster_multihop", "gold_relevant_notes": ["note_vault_cognitive_rules", "note_agents_contract"], "id": "D09", "query": "How do provenance immutability and human attestation combine to prevent an AI agent from self-certifying memory?", "required_facts": ["immutable", "human", "attest"], "wrong_note_ids": []},
+    {"abstain": false, "class": "cross_cluster_multihop", "gold_relevant_notes": ["note_agents_contract"], "id": "D10", "query": "How are specialist summaries bounded before synthesis, and what council input ceiling is imposed?", "required_facts": ["compact", "summary", "2500"], "wrong_note_ids": []},
+    {"abstain": true, "class": "unanswerable", "gold_relevant_notes": [], "id": "D11", "query": "What exact Kubernetes cluster name is used by the Vault production deployment?", "required_facts": [], "wrong_note_ids": []},
+    {"abstain": true, "class": "unanswerable", "gold_relevant_notes": [], "id": "D12", "query": "What is the exact passport number of the project owner?", "required_facts": [], "wrong_note_ids": []}
+  ],
+  "schema_version": 1,
+  "set_name": "dev_retrieval_v1"
+}
