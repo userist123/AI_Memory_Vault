@@ -86,6 +86,37 @@ WIKILINK_WEIGHT = 0.2
 # dropped. Measured against this vault: 8 targets absorbed 64% of all links.
 HUB_IN_DEGREE_THRESHOLD = 50
 
+# Origins produced by an algorithm's guess rather than a human action: a
+# candidate proposal (edge_proposer.py TIER 1) or an LLM reclassification of
+# one (TIER 2), sitting in PROPOSED_PENDING_REVIEW until a human promotes it.
+# "Never activated" IS meaningful evidence of low value for these -- nothing
+# has verified they connect anything real, so they are the only origins
+# `decay_unused()`/`prune()` treat as ephemeral by default.
+#
+# Everything else -- `declared` (a typed relation an author wrote),
+# `inferred` (its automatically-generated structural mirror), and
+# `wikilink` (an Obsidian [[link]] an author actually wrote, just untyped)
+# -- is durable: a human is responsible for that edge existing, so its
+# absence from spreading activation so far says nothing about its value.
+# Declared/inferred/wikilink edges currently make up the entire real graph
+# (see 07_EVALUATION/r005_graph_edge_reality_gate_report.md); a consolidation
+# loop that cannot tell "unactivated because untyped" apart from "unactivated
+# because it's a bad guess" would, after ~26 decay_unused() cycles, prune
+# every wikilink and mirror edge -- 77% of the graph -- for the sole reason
+# that nothing has wired activation into the query path yet (r005: NO-GO).
+MACHINE_PROPOSED_ORIGINS = frozenset({"proposed", "proposed_weak", "proposed_llm"})
+
+
+def is_durable(origin: str) -> bool:
+    """True unless `origin` is a machine-generated proposal.
+
+    A closed blocklist (MACHINE_PROPOSED_ORIGINS), not an allowlist: an
+    origin value this module doesn't yet recognize defaults to durable, so a
+    future new origin can't be silently made prunable just by omission --
+    only the enumerated proposal origins ever decay/prune by default.
+    """
+    return origin not in MACHINE_PROPOSED_ORIGINS
+
 
 def normalize_for_propagation(weight: float, max_weight: float = MAX_WEIGHT) -> float:
     """Map a stored [0, MAX_WEIGHT] weight into [0, 1] for callers that need a
@@ -106,7 +137,7 @@ class Synapse:
     target_id: str
     relation: str = "related_to"
     weight: float = DEFAULT_WEIGHT
-    origin: str = "declared"          # declared | inferred | proposed | proposed_weak | proposed_llm
+    origin: str = "declared"          # declared | inferred | wikilink | proposed | proposed_weak | proposed_llm
     activations: int = 0
     reinforcements: int = 0
     depressions: int = 0
@@ -380,17 +411,34 @@ class SynapseStore:
         return touched
 
     def decay_unused(self, factor: float = 0.98) -> None:
-        """Atrophy: edges with no recent activation slowly lose weight."""
+        """Atrophy: edges with no recorded activation slowly lose weight.
+
+        Applies only to non-durable (machine-proposed) edges -- see
+        is_durable(). A declared relation, its structural mirror, or a
+        human-authored wikilink is not evidence-poor merely because
+        spreading activation hasn't reached it yet; only an algorithm's
+        unverified guess is."""
         for syn in self._by_key.values():
-            if syn.activations == 0 and syn.origin != "declared":
+            if syn.activations == 0 and not is_durable(syn.origin):
                 syn.weight = max(MIN_WEIGHT, syn.weight * factor)
 
-    def prune(self, threshold: float = PRUNE_THRESHOLD, keep_declared: bool = True) -> int:
-        """Cuts atrophied edges. Declared (Markdown-sourced) edges are never
-        auto-pruned by default."""
+    def prune(self, threshold: float = PRUNE_THRESHOLD, keep_durable: bool = True) -> int:
+        """Cuts atrophied edges.
+
+        By default (keep_durable=True), only non-durable, machine-proposed
+        edges (see MACHINE_PROPOSED_ORIGINS / is_durable()) are eligible for
+        automatic removal: a declared relation, its structural mirror, and a
+        human-authored wikilink are never auto-pruned, regardless of
+        activation history or current weight -- see is_durable() for why
+        "never activated" isn't evidence against them the way it is for a
+        proposal. Pass keep_durable=False to lift that protection entirely
+        and prune by weight/reinforcement alone (e.g. an explicit,
+        human-invoked cleanup): prune() can still remove anything when
+        asked, only the DEFAULT changed.
+        """
         removed = 0
         for key, syn in list(self._by_key.items()):
-            if keep_declared and syn.origin == "declared":
+            if keep_durable and is_durable(syn.origin):
                 continue
             if syn.weight < threshold and syn.reinforcements == 0:
                 del self._by_key[key]
