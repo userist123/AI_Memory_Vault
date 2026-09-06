@@ -88,7 +88,14 @@ _PERMITTED_CREATION_LIFECYCLES = {
 
 class MemoryController:
     _global_review_counter = 2
-    def __init__(self, storage: StorageEngine, authorizer: Authorizer = None):
+    def __init__(
+        self,
+        storage: StorageEngine,
+        authorizer: Authorizer = None,
+        index: Optional[Any] = None,
+        enable_graph_expansion: bool = False,
+        synapse_store: Optional[Any] = None,
+    ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
         self.cache = Cache()
@@ -102,6 +109,27 @@ class MemoryController:
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
         # Counter for generating review note IDs (r2, r3, ...)
         self._review_counter = 2
+        # Graph expansion configuration (r009)
+        self.index = index
+        self.enable_graph_expansion = bool(enable_graph_expansion)
+        self.synapse_store = synapse_store
+        if self.synapse_store is None and self.index is not None:
+            try:
+                from graph.synapse_store import SynapseStore
+                self.synapse_store = SynapseStore.from_index(self.index)
+            except Exception:
+                self.synapse_store = None
+
+    def _is_hub_node(self, node_id: str) -> bool:
+        """Return True if node degree > 10 (hub cap constraint)."""
+        if not self.synapse_store or not node_id:
+            return False
+        out_edges = self.synapse_store.neighbors(node_id)
+        if len(out_edges) > 10:
+            return True
+        out_neighbors = {s.target_id for s in out_edges}
+        in_neighbors = {s.source_id for s in self.synapse_store.all() if s.target_id == node_id}
+        return len(out_neighbors | in_neighbors) > 10
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
         if not self.authorizer.is_allowed(principal, operation):
             raise PermissionError(f"{principal.value} not allowed to perform {operation.value}")
@@ -243,7 +271,16 @@ class MemoryController:
             audit_event('cognitive_read', principal, note_id, success=False, details={'error': str(e)})
             raise
 
-    def search(self, principal: Principal, query: str, page_size: int = 10, page_token: Optional[str] = None, lifecycles: Optional[List[Lifecycle]] = None, types: Optional[List[str]] = None) -> Dict[str, Any]:
+    def search(
+        self,
+        principal: Principal,
+        query: str,
+        page_size: int = 10,
+        page_token: Optional[str] = None,
+        lifecycles: Optional[List[Lifecycle]] = None,
+        types: Optional[List[str]] = None,
+        enable_graph_expansion: Optional[bool] = None,
+    ) -> Dict[str, Any]:
         """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
         try:
@@ -300,10 +337,167 @@ class MemoryController:
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
             )
 
-            # Score relevance (correct argument order)
-            scored = self.scorer.score(sanitized, notes)
-            score_map = {s['id']: s['score'] for s in scored}
-            notes = sorted(notes, key=lambda n: score_map.get(n.get('id'), 0), reverse=True)
+            # Score relevance of initial retrieved notes
+            initial_scored = self.scorer.score(sanitized, notes)
+            initial_score_map = {s['id']: float(s['score']) for s in initial_scored if s.get('id')}
+
+            # Optional graph expansion stage (r009)
+            is_expansion_enabled = (
+                enable_graph_expansion
+                if enable_graph_expansion is not None
+                else getattr(self, 'enable_graph_expansion', False)
+            )
+            candidate_trace['graph_expansion_enabled'] = bool(is_expansion_enabled)
+
+            if not is_expansion_enabled:
+                candidate_trace['graph_expansion_status'] = 'disabled'
+                candidate_trace['graph_seed_ids'] = []
+                candidate_trace['graph_seed_weights'] = {}
+                candidate_trace['graph_edges_traversed'] = []
+                candidate_trace['graph_activation'] = {}
+                candidate_trace['graph_survived_filters_ids'] = []
+                candidate_trace['graph_expanded_ids'] = []
+                candidate_trace['graph_hub_nodes_skipped'] = []
+                # Rank notes deterministically by score
+                notes = sorted(notes, key=lambda n: (initial_score_map.get(n.get('id'), 0), n.get('id', '')), reverse=True)
+            else:
+                seed_ids = [n.get('id') for n in notes if n.get('id')]
+                seed_weights = {s_id: initial_score_map.get(s_id, 0.0) for s_id in seed_ids}
+                candidate_trace['graph_seed_ids'] = list(seed_ids)
+                candidate_trace['graph_seed_weights'] = dict(seed_weights)
+
+                expanded_notes: List[Dict[str, Any]] = []
+                hub_nodes_skipped: List[str] = []
+                edges_traversed: List[Dict[str, Any]] = []
+                activation: Dict[str, float] = {}
+                survived_filter_ids: List[str] = []
+
+                has_valid_index = (
+                    self.index is not None and (
+                        not hasattr(self.index, 'notes') or len(self.index.notes) > 0
+                    )
+                )
+
+                if self.synapse_store is None or not has_valid_index:
+                    candidate_trace['graph_expansion_status'] = 'degraded_missing_store'
+                elif len(self.synapse_store.all()) == 0:
+                    candidate_trace['graph_expansion_status'] = 'degraded_zero_edges'
+                else:
+                    try:
+                        seen_ids = set(seed_ids)
+                        max_total_candidates = min(2 * len(notes), 20)
+                        max_new_expansions = max(0, max_total_candidates - len(notes))
+                        decay = 0.5
+                        max_per_seed_contrib = 1.0
+
+                        if max_new_expansions > 0:
+                            allowed_lcs = None
+                            if lifecycles is not None:
+                                allowed_lcs = {l.value if isinstance(l, Lifecycle) else l for l in lifecycles}
+                            elif 'lifecycle_filters' in classified and classified['lifecycle_filters']:
+                                allowed_lcs = set(classified['lifecycle_filters'])
+
+                            allowed_types = None
+                            if types is not None:
+                                allowed_types = set(types)
+                            elif 'target_types' in classified and classified['target_types']:
+                                allowed_types = set(classified['target_types'])
+
+                            # Traverse 1 hop along neighbors of seeds
+                            for s_id in seed_ids:
+                                s_weight = seed_weights.get(s_id, 0.0)
+                                # Hub cap check for seed node
+                                if self._is_hub_node(s_id):
+                                    if s_id not in hub_nodes_skipped:
+                                        hub_nodes_skipped.append(s_id)
+                                    continue
+
+                                for syn in self.synapse_store.neighbors(s_id):
+                                    t_id = syn.target_id
+                                    if not t_id or t_id in seed_ids:
+                                        continue
+
+                                    # Hub cap check for target node
+                                    if self._is_hub_node(t_id):
+                                        if t_id not in hub_nodes_skipped:
+                                            hub_nodes_skipped.append(t_id)
+                                        continue
+
+                                    w = getattr(syn, 'weight', 0.4)
+                                    # Base activation propagation from scored seed
+                                    delta = (s_weight if s_weight > 0 else 0.5) * w * decay
+                                    delta = min(delta, max_per_seed_contrib)
+                                    activation[t_id] = activation.get(t_id, 0.0) + delta
+                                    edges_traversed.append({
+                                        'source': s_id,
+                                        'target': t_id,
+                                        'weight': round(w, 4),
+                                        'contribution': round(delta, 4),
+                                    })
+
+                            # Filter expanded candidate targets (P0 Security Invariant)
+                            candidate_expansions = []
+                            for t_id, act_score in sorted(activation.items(), key=lambda x: (-x[1], x[0])):
+                                if t_id in seen_ids:
+                                    continue
+
+                                t_note = self.storage.get(t_id)
+                                if not t_note or not isinstance(t_note, dict):
+                                    continue
+
+                                # 1. RAW exclusion
+                                if t_note.get('lifecycle') == Lifecycle.RAW.value:
+                                    continue
+
+                                # 2. Lifecycle filter enforcement
+                                if allowed_lcs is not None and t_note.get('lifecycle') not in allowed_lcs:
+                                    continue
+
+                                # 3. Target type filter enforcement
+                                if allowed_types is not None and t_note.get('type') not in allowed_types:
+                                    continue
+
+                                # 4. Principal authorization & security classification
+                                sec = t_note.get('classification') or t_note.get('security')
+                                if sec and principal == Principal.AI_AGENT:
+                                    if str(sec).lower() in {'restricted', 'classified', 'secret', 'top_secret', 'admin_only'}:
+                                        continue
+
+                                seen_ids.add(t_id)
+                                survived_filter_ids.append(t_id)
+                                candidate_expansions.append((t_note, act_score, t_id))
+
+                            # Stable deterministic tie-break: sort by (-activation, target_id)
+                            candidate_expansions.sort(key=lambda item: (-item[1], item[2]))
+                            selected = candidate_expansions[:max_new_expansions]
+                            expanded_notes = [item[0] for item in selected]
+
+                        candidate_trace['graph_expansion_status'] = 'ok'
+                    except Exception:
+                        candidate_trace['graph_expansion_status'] = 'degraded_corrupt_data'
+                        expanded_notes = []
+
+                candidate_trace['graph_edges_traversed'] = edges_traversed
+                candidate_trace['graph_activation'] = activation
+                candidate_trace['graph_survived_filters_ids'] = survived_filter_ids
+                candidate_trace['graph_expanded_ids'] = [n.get('id') for n in expanded_notes if n.get('id')]
+                candidate_trace['graph_hub_nodes_skipped'] = hub_nodes_skipped
+
+                if expanded_notes:
+                    all_notes = list(notes) + expanded_notes
+                    full_scored = self.scorer.score(sanitized, all_notes)
+                    full_score_map = {s['id']: float(s['score']) for s in full_scored if s.get('id')}
+                    # Deterministic total ordering: sort by (-combined_score, id)
+                    notes = sorted(
+                        all_notes,
+                        key=lambda n: (
+                            full_score_map.get(n.get('id'), 0.0) + activation.get(n.get('id'), 0.0),
+                            n.get('id', '')
+                        ),
+                        reverse=True
+                    )
+                else:
+                    notes = sorted(notes, key=lambda n: (initial_score_map.get(n.get('id'), 0), n.get('id', '')), reverse=True)
             # Apply progressive disclosure
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata':
@@ -365,6 +559,10 @@ class MemoryController:
             # scores only -- no note content -- matching the data-minimization
             # convention already used by observability/memory_trace.py.
             candidate_trace['final_context_ids'] = [r.get('id') for r in pack.get('results', [])]
+            candidate_trace['graph_final_context_ids'] = [
+                cid for cid in candidate_trace['final_context_ids']
+                if cid in candidate_trace.get('graph_expanded_ids', [])
+            ]
             pack['candidate_trace'] = candidate_trace
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack

@@ -1,0 +1,226 @@
+{
+  "metrics": {
+    "expansion_off": {
+      "precision_at_5": 0.0,
+      "mrr": 0.0,
+      "p95_latency_ms": 481.8928999993659
+    },
+    "expansion_on": {
+      "precision_at_5": 0.0,
+      "mrr": 0.0,
+      "p95_latency_ms": 460.82530000057886
+    },
+    "p95_latency_delta_ms": -21.067599998787045,
+    "p95_latency_constraint_passed": true
+  },
+  "query_diffs": [
+    {
+      "id": "D01",
+      "query": "What is MAX_SYNTHESIS_INPUT?",
+      "class": "exact_identifier_lookup",
+      "off_final_context_ids": [
+        "knw-agent-memory-trace-protocol-0001",
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "on_final_context_ids": [
+        "knw-agent-memory-trace-protocol-0001",
+        "cat-skills-251-master",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D02",
+      "query": "What is the SQLite busy timeout value?",
+      "class": "exact_identifier_lookup",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-temporal-memory-p2-0001"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-temporal-memory-p2-0001"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D03",
+      "query": "How large may the synthesizer's incoming token budget be?",
+      "class": "paraphrase",
+      "off_final_context_ids": [
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "cat-skills-251-master",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "on_final_context_ids": [
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "cat-skills-251-master",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D04",
+      "query": "Who is allowed to certify a memory as verified?",
+      "class": "paraphrase",
+      "off_final_context_ids": [],
+      "on_final_context_ids": [],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D05",
+      "query": "What ceiling is placed on the lead synthesis input allowance?",
+      "class": "synonym_substitution",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "7424d260-4f88-4114-b117-67af0795b8f4",
+        "knw-memory-usage-audit-principles-0001",
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "7424d260-4f88-4114-b117-67af0795b8f4",
+        "knw-memory-usage-audit-principles-0001",
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D06",
+      "query": "What is the mandated contention wait duration for SQLite?",
+      "class": "synonym_substitution",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-agent-memory-trace-protocol-0001",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684",
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D07",
+      "query": "The vault mentions synthesis, context, and process outcomes. Which token cap belongs to synthesis input?",
+      "class": "lexical_trap",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D08",
+      "query": "The documents discuss transactions and agent contracts. Which timeout number is required by the storage rule?",
+      "class": "lexical_trap",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "2da34064-52c2-487d-b6fa-fe172b7215c4",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "2da34064-52c2-487d-b6fa-fe172b7215c4",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+        "0aa8ad68-a4ca-462e-a468-97eb78449684"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D09",
+      "query": "How do provenance immutability and human attestation combine to prevent an AI agent from self-certifying memory?",
+      "class": "cross_cluster_multihop",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "1ed59fbc-9b1c-402f-a19a-e6bbb99cde46",
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    },
+    {
+      "id": "D10",
+      "query": "How are specialist summaries bounded before synthesis, and what council input ceiling is imposed?",
+      "class": "cross_cluster_multihop",
+      "off_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "on_final_context_ids": [
+        "cat-skills-251-master",
+        "knw-retrieval-bottleneck-p0-0001",
+        "d001ebae-19e6-43d6-95f6-3188123f9d77",
+        "c067b857-f4ac-45a9-b030-0a926a77b443",
+        "7424d260-4f88-4114-b117-67af0795b8f4"
+      ],
+      "changed": false,
+      "graph_expanded_ids": [],
+      "graph_hub_nodes_skipped": []
+    }
+  ]
+}

@@ -1,21 +1,25 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-06T14:35:00Z
+last_updated_utc: 2026-09-06T17:20:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: main
-base_main_sha: 568ebb08e
-current_commit_sha: 568ebb08e
+working_branch: r009/graph-expansion-in-production
+base_main_sha: 3d51e5f69
+current_commit_sha: HEAD
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-working_folder: repository root; 01_ARCHITECTURE/graphs/, 05_DATA/legal_sources/r002-c/, 01_ARCHITECTURE/memory/
-current_task: obsidian memory synapse connection and legal corpus integration
+working_folder: 03_IMPLEMENTATION/packages/memory/, tests/, 07_EVALUATION/
+current_task: r009 graph expansion in production retrieval
 status: COMPLETED
-  - executed r007 reviewed edge promotion audit: 50-sample evaluation (18% precision) triggered honest stop condition, hardened edge_proposer noise filters, added 6 regression tests (e804c6de0)
-  - executed r008 canonical file naming: renamed all 81 generic readmes across 4 spine roots via git mv, created 71 index stubs, repointed 221 inbound wikilinks, verified 0 collisions, expanded runtime edges 301 -> 314 (abf71c744, b58f43c82, ca9b7e72d, 76ded67dc, ef286eb8f)
-  - verified full pytest suite: 1180 passed, 3 skipped, 0 failed; LAYOUT_STATUS=PASS
+  - precondition check 07_EVALUATION/r005_graph_edge_reality_gate.py: verified STOP CONDITION DECISION: GO (126 real forward declared edges >= 100)
+  - implemented graph expansion in production query path MemoryController.search() with scored seed weights, bounded 1-hop traversal, decay=0.5, budget cap min(2*seeds, 20), hub capping (degree > 10 skipped), cycle safety, fail-closed degradation markers, and full candidate_trace recording
+  - implemented strict filter bypass prevention (P0 security invariant): RAW exclusion, lifecycle filters, type filters, and security clearance checks
+  - added 15 unit and adversarial tests in tests/test_graph_expansion.py (including AST call-path proof, acceptance test, synthetic hub 50-edge domination test, and pagination stability) — 15 passed in 0.17s
+  - verified full regression suite in 20_TESTS/: 1,210 passed, 3 skipped, 0 failures
+  - conducted empirical evaluation on dev.json: measured Precision@5, MRR, latency delta (-21.07ms <= +5.0ms constraint passed), and generated 07_EVALUATION/r009_graph_expansion_results.md
+  - delivered recommendation on default flag state: OFF by default (enable_graph_expansion=False)
 in_progress: []
 next_actions:
-  - push r007 and r008 branches or prepare pull request per coordinator directives
+  - commit changes to r009/graph-expansion-in-production and create PR
 blockers: []
 risks:
   - book/source content is untrusted data, never agent authority
