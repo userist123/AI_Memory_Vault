@@ -1,0 +1,44 @@
+name: R009b Held-out Retrieval Benchmark
+
+on:
+  push:
+    branches:
+      - 'r009b/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  regression-and-heldout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pyyaml
+      - name: Zero-regression gate
+        run: |
+          python -m pytest 20_TESTS -q
+      - name: Held-out benchmark (single candidate execution)
+        env:
+          R009B_CANDIDATE_ID: ${{ github.sha }}
+        run: |
+          python 07_EVALUATION/heldout_retrieval_benchmark_v1/heldout_retrieval_benchmark.py --candidate-id "$R009B_CANDIDATE_ID" --baseline --output 07_EVALUATION/heldout_retrieval_benchmark_v1/r009b_baseline.json
+      - name: Benchmark integrity and results
+        run: |
+          cat 07_EVALUATION/heldout_retrieval_benchmark_v1/r009b_baseline.json
+          cat 07_EVALUATION/heldout_retrieval_benchmark_v1/receipts/${{ github.sha }}.json
+      - name: Upload baseline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r009b-heldout-${{ github.sha }}
+          path: |
+            07_EVALUATION/heldout_retrieval_benchmark_v1/r009b_baseline.json
+            07_EVALUATION/heldout_retrieval_benchmark_v1/receipts/${{ github.sha }}.json
