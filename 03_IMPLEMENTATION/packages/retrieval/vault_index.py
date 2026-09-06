@@ -45,6 +45,27 @@ DEFAULT_ROOTS = ("01_ARCHITECTURE", "02_PRODUCT", "10_DOCUMENTATION", "00_GOVERN
 # Purely navigational notes: MOCs, indexes, maps. Useful to a human, noise to an agent.
 NAVIGATION_TYPES = {"moc", "index", "map"}
 
+#: Path fragments whose notes are export residue rather than canonical memory.
+#:
+#: CLAUDE.md states that Obsidian is a projection over the canonical vault and
+#: that a second canonical database must not be created inside it. The export
+#: directory had become exactly that: 97 of 939 indexed notes (10.3%) lived
+#: there, 41 of them without an `id:` at all, and several were byte-near copies
+#: of canonical notes carrying a DIFFERENT id — so the same content was indexed
+#: twice under two identities, splitting its edges and letting retrieval return
+#: the same note twice against one context budget.
+#:
+#: Excluding them removes 133 of 411 graph edges. Those edges are not lost
+#: signal; they were connectivity attributed to duplicates.
+EXPORT_RESIDUE_MARKERS = (
+    ("Obsidian", "Artifacts"),
+)
+
+
+def _is_export_residue(path: Path) -> bool:
+    parts = set(path.parts)
+    return any(all(m in parts for m in markers) for markers in EXPORT_RESIDUE_MARKERS)
+
 
 @dataclass
 class Note:
@@ -211,6 +232,7 @@ class VaultIndex:
         drop_navigation: bool = True,
         include_raw: bool = False,
         include_archived: bool = False,
+        exclude_export_residue: bool = True,
     ) -> "VaultIndex":
         vault_root = Path(vault_root)
         allowed = {l.upper() for l in lifecycles} if lifecycles else None
@@ -220,6 +242,8 @@ class VaultIndex:
             if not base.exists():
                 continue
             for path in sorted(base.rglob("*.md")):
+                if exclude_export_residue and _is_export_residue(path):
+                    continue
                 note = _parse(path)
                 if note is None:
                     continue
