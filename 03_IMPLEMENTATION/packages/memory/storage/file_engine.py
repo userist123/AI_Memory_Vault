@@ -112,11 +112,52 @@ class FileStorageEngine:
         except Exception:
             return None
 
+    def _target_path_for(self, note_id: str, data: Dict[str, Any]) -> str:
+        """Where this note should be written.
+
+        `resolve_path()` maps a note TYPE to the legacy tree (knowledge ->
+        01_KNOWLEDGE, procedure -> 03_PROCEDURES) and derives the file name
+        from its category. Applied unconditionally to an existing note living
+        in a content root, it writes a copy into the legacy tree and `set()`
+        then deletes the canonical original as a stale duplicate.
+
+        That path was inert only because the engine used to load zero notes:
+        `id_to_path` never held a canonical note, so the delete never fired.
+        Making the engine see the vault armed it, which is why this is settled
+        here rather than deferred to the pending migration decision.
+
+        An existing note under a content root therefore keeps its exact path,
+        directory and file name both. The file name is not cosmetic there: it
+        is the note's identity in the graph, since Obsidian and
+        `VaultIndex.by_slug` both resolve `[[links]]` by file name. Renaming a
+        canonical note because its category changed would silently break every
+        link pointing at it.
+
+        Notes in the legacy tree keep the previous behaviour, where the file
+        name tracks the category. New notes are placed by `resolve_path()`
+        unchanged; moving the existing corpus remains a separate, explicit
+        migration decision.
+        """
+        resolved = resolve_path(self.vault_root, data)
+        existing_path = self.id_to_path.get(note_id)
+        if not existing_path or not os.path.exists(existing_path):
+            return resolved
+        existing_dir = os.path.dirname(os.path.abspath(existing_path))
+        root = os.path.abspath(self.vault_root)
+        try:
+            rel = os.path.relpath(existing_dir, root)
+        except ValueError:
+            return resolved
+        top = rel.replace("\\", "/").split("/")[0]
+        if top in CONTENT_ROOTS:
+            return existing_path
+        return resolved
+
     def set(self, note_id: str, data: Dict[str, Any]) -> None:
         yaml_id = data.get("id")
         if str(note_id) != str(yaml_id):
             raise ValueError(f"ID mismatch: storage key '{note_id}' must equal YAML id '{yaml_id}'")
-        target_path = resolve_path(self.vault_root, data)
+        target_path = self._target_path_for(note_id, data)
         serialized_content = serialize(data)
         os.makedirs(os.path.dirname(target_path), exist_ok=True)
         dir_name = os.path.dirname(target_path)
