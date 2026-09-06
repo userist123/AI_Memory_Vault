@@ -8,6 +8,50 @@ from memory_controller.audit.logger import audit_event
 from .serializer import serialize, deserialize
 from .path_resolver import resolve_path
 
+#: Folders scanned when indexing notes from disk.
+#:
+#: This is the UNION of two taxonomies that the restructuring left divergent,
+#: and the union is deliberate:
+#:
+#: * The content roots, equal to ``retrieval.vault_index.DEFAULT_ROOTS``. The
+#:   engine did not scan these at all. On a fresh checkout its old list --
+#:   "00_CORE", "02_PROJECTS", "03_PROCEDURES" and friends -- matched 0 files,
+#:   so the production storage layer loaded zero notes while 663 id-bearing
+#:   notes sat in the vault, 633 of them in 01_ARCHITECTURE alone.
+#:
+#: * The legacy write targets, which ``storage/path_resolver.py`` still uses:
+#:   a note of type "knowledge" is written to 01_KNOWLEDGE, "procedure" to
+#:   03_PROCEDURES, and so on. Reads must keep covering them or the engine
+#:   would stop seeing what it itself writes.
+#:
+#: KNOWN GAP: the write path was never migrated to the numbered content roots,
+#: so new notes still land in the legacy tree while the corpus lives in the new
+#: one. Unifying them is a data migration and an architecture decision, not a
+#: constant change; it is deliberately NOT done here.
+#:
+#: Nothing caught the read-side divergence because the suite exercises the
+#: in-memory StorageEngine with fixtures. `test_storage_canonical_roots.py`
+#: now runs against the real vault.
+CONTENT_ROOTS = (
+    "01_ARCHITECTURE",
+    "02_PRODUCT",
+    "10_DOCUMENTATION",
+    "00_GOVERNANCE",
+)
+
+LEGACY_WRITE_ROOTS = (
+    "00_CORE",
+    "01_KNOWLEDGE",
+    "02_PROJECTS",
+    "03_PROCEDURES",
+    "04_MEMORY",
+    "05_RESOURCES",
+    "99_SYSTEM",
+)
+
+CANONICAL_FOLDERS = CONTENT_ROOTS + LEGACY_WRITE_ROOTS
+
+
 class FileStorageEngine:
     def __init__(self, vault_root: str):
         self.vault_root = vault_root
@@ -18,10 +62,7 @@ class FileStorageEngine:
     def _initialize_index(self):
         # Scan canonical folders to build the UUID -> Path index
         # EXPLICIT EXCLUSIONS: "06_INBOX" and "90_TEMPLATES" are NOT included
-        canonical_folders = [
-            "00_CORE", "01_KNOWLEDGE", "02_PROJECTS", "03_PROCEDURES",
-            "04_MEMORY", "05_RESOURCES", "99_SYSTEM"
-        ]
+        canonical_folders = list(CANONICAL_FOLDERS)
         for folder in canonical_folders:
             folder_path = os.path.join(self.vault_root, folder)
             if not os.path.exists(folder_path):
