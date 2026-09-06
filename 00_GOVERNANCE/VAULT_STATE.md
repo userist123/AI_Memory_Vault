@@ -86,11 +86,15 @@ whole-corpus retrieval numbers.
   pinned in place so an update cannot relocate them (`db08b847`), but the
   taxonomy split is unresolved and is an architecture decision, not a constant.
 - **`FileStorageEngine` hard-fails on duplicate UUIDs.** That is deliberate
-  integrity behaviour, but the legacy/content root union makes collisions more
-  likely. A tracked fixture `01_ARCHITECTURE/knowledge/test_00000000.md`
-  carries the all-zeros UUID; if a local copy exists under `01_KNOWLEDGE/`,
-  the engine raises and every storage-backed path is unusable in that working
-  tree until one copy is removed.
+  integrity behaviour, and stays that way — the legacy/content root union
+  still makes collisions possible in general. The specific recurring instance
+  is fixed (r024 WP-0): the tracked fixture that carried the all-zeros UUID
+  moved from `01_ARCHITECTURE/knowledge/test_00000000.md` (a content root) to
+  `20_TESTS/fixtures/test_00000000.md` (same pollution class as `unknown_A.md`,
+  flagged in r005 and not fixed there), so a local untracked note reusing that
+  id under `01_KNOWLEDGE/` no longer collides with anything tracked. The error
+  message now names both paths and which tree (content root vs legacy write
+  root) each belongs to, for the next time two notes genuinely do collide.
 - **86% of notes have no semantic edge.** Many are connected only to
   navigation hubs, which look connected in Obsidian and carry no retrieval
   signal.

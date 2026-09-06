@@ -61,3 +61,48 @@ def test_untrusted_and_projection_paths_stay_excluded():
     for path in engine.id_to_path.values():
         assert "RAW_IMPORTS" not in path, "untrusted inbox material must not load"
         assert "Obsidian" not in path, "the Obsidian projection is not canonical"
+
+
+def test_a_local_untracked_note_reusing_the_test_sentinel_id_does_not_collide(tmp_path):
+    """WP-0 (r024) reproduction of the actual reported crash, not a synthetic
+    one: a local, untracked note under 01_KNOWLEDGE/ (the legacy write root
+    `path_resolver.py` sends `type: knowledge` notes to) reused the same
+    all-zeros sentinel id as the tracked fixture that used to live at
+    01_ARCHITECTURE/knowledge/test_00000000.md -- so every session on that
+    working tree failed to construct FileStorageEngine at all.
+
+    The fix moved that fixture out of the content root entirely (to
+    20_TESTS/fixtures/), which is the only thing that closes the *class* of
+    collision: the sentinel id is clearly one a local test/demo script keeps
+    re-emitting (the reported local copy was dated 4 days after the tracked
+    one), so leaving any tracked copy of it in a content root would just
+    collide again the next time that script runs. This test proves a fresh
+    local note reusing that id no longer collides with anything tracked.
+
+    Writes into the REAL repo's 01_KNOWLEDGE/ (a legacy write root, not
+    canonical content) because the defect is specifically about the real
+    vault's tracked corpus, not a synthetic temp_vault; the file is removed
+    unconditionally in a finally block so a failed run leaves no residue.
+    """
+    sentinel_id = "00000000-0000-0000-0000-000000000000"
+    local_dir = REPO / "01_KNOWLEDGE"
+    local_dir.mkdir(parents=True, exist_ok=True)
+    local_path = local_dir / "test_00000000.md"
+    assert not local_path.exists(), (
+        "a real local file already exists at this path -- refusing to touch "
+        "the user's own untracked file; run this test on a clean working tree"
+    )
+    local_path.write_text(
+        "---\n"
+        "type: knowledge\n"
+        "category: test\n"
+        "lifecycle: RAW\n"
+        f"id: {sentinel_id}\n"
+        "---\n",
+        encoding="utf-8",
+    )
+    try:
+        engine = FileStorageEngine(str(REPO))  # must not raise
+        assert engine.id_to_path.get(sentinel_id) == str(local_path)
+    finally:
+        local_path.unlink(missing_ok=True)
