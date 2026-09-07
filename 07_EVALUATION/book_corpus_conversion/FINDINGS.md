@@ -238,3 +238,49 @@ Neither gate can see structure, only vocabulary. The ceiling is not lowered
 to catch it, because 0.60 is set by the measured 0.68-0.72 defect and
 tightening further would reject genuine definitions that legitimately reuse
 technical terminology.
+
+## r031 follow-up — dedup, slot questions, and a variance finding
+
+Three of the defects reported above were addressed. One of them cannot yet be
+shown to have worked, and that is the most useful result in this section.
+
+**Deduplication.** Repeats of a term collapse into one row, keeping the more
+confident definition. The count of distinct sections defining the term is
+kept as `occurrences`: unlike the model's self-reported confidence it is an
+OBSERVED signal, and a concept a book defines in four places is load-bearing
+in a way one mentioned once is not.
+
+**Slot questions.** The prompt now carries each slot's `## Question`, read
+from the slot files at run time rather than copied into the script — the
+vault stays the authority on its own ontology, and a copy would go stale
+silently. `load_slot_questions()` fails loudly if any canonical slot has lost
+its question, because a slot the model is never offered is a slot it never
+selects.
+
+**An acronym gloss is no longer a rejection.** On a live run the shape check
+threw away the first candidate the model returned, "Continual learning (CL)",
+because of the parenthesis. That is how academic prose introduces a term. The
+gloss is stripped and the term kept.
+
+### The variance finding
+
+Two runs of the identical three chunks produced **13 candidates and then 2**.
+The second run also logged two provider errors and one unknown slot.
+
+That spread is larger than the effect the slot-question change was meant to
+have, so **the drop cannot be attributed to the change** — and neither could
+an improvement have been. A single run of a sampling model is not a
+measurement.
+
+Anything claiming that a prompt change improved extraction on this pipeline
+needs repeated runs at fixed settings, and at roughly four minutes per chunk
+that is expensive enough to plan for rather than assume. Nothing here claims
+slot routing improved; the mechanism is in place and its effect is unmeasured.
+
+### Still open
+
+- Confidence remains uncalibrated. Observed values across runs: 0.9, 0.95,
+  1.0 — and in the second run a single distinct value. Asking for the full
+  range does not produce it.
+- Slot correctness is unverified, per the variance finding above.
+- Cross-book deduplication is not done. Within-book is.

@@ -112,6 +112,39 @@ DANGLING_TAIL = re.compile(
     re.IGNORECASE,
 )
 
+#: Where the slot definitions live. They are read at run time rather than
+#: copied here: the vault is the authority on its own ontology, and a
+#: hardcoded copy is a second definition that silently goes stale.
+SLOT_DIR = _REPO / "01_ARCHITECTURE" / "ontology" / "slots"
+
+
+def load_slot_questions() -> dict[str, str]:
+    """Each canonical slot mapped to the question it answers.
+
+    Slot NAMES alone do not disambiguate — asked to place "synaptic
+    consolidation" against a bare list, the model chose `procedures` over
+    `consolidation`, and "catastrophic forgetting" over `state`. The slot
+    files carry a one-line `## Question` each ("How does experience become
+    knowledge?"), which is the actual selection criterion.
+    """
+    questions: dict[str, str] = {}
+    for path in sorted(SLOT_DIR.glob("*.md")):
+        text = path.read_text(encoding="utf-8", errors="replace")
+        name = re.search(r"(?m)^ontology_slot:\s*(\S+)", text)
+        question = re.search(r"(?m)^##\s+Question\s*\n+(.+)$", text)
+        if name and question:
+            questions[name.group(1).strip()] = question.group(1).strip()
+
+    missing = set(CANONICAL_SLOTS) - set(questions)
+    if missing:
+        #: Loudly, because a silently missing slot becomes a slot the model
+        #: is never offered and therefore never selects.
+        raise SystemExit(
+            f"no ## Question found for slot(s) {sorted(missing)} under {SLOT_DIR}"
+        )
+    return questions
+
+
 SYSTEM_PROMPT = (
     "You extract load-bearing technical concepts from academic text for a "
     "knowledge base. You are precise and you never invent. If a passage "
@@ -135,7 +168,9 @@ Return JSON only — a list of objects, no prose around it. Each object:
                character, that supports the definition. It must be present
                in the passage verbatim.
   "claim_type" One of: definition, mechanism, finding, taxonomy, constraint.
-  "slot"       The single best fit from: {slots}
+  "slot"       The single best fit. Choose by which QUESTION the concept
+               helps answer, not by which name sounds closest:
+{slots}
   "confidence" Your confidence from 0.0 to 1.0 that this is a real, load-
                bearing concept the passage genuinely defines. Use the full
                range. Be honest when you are unsure.
@@ -186,9 +221,19 @@ def parse_model_json(content: str) -> list[dict[str, Any]]:
     return [item for item in parsed if isinstance(item, dict)]
 
 
+def clean_term(raw: Any) -> str:
+    """The term without its acronym gloss.
+
+    "Continual learning (CL)" is how academic prose introduces a term, and
+    rejecting it on the parenthesis threw away real concepts — measured on a
+    live run, where it was the first candidate the model returned.
+    """
+    return re.sub(r"\s*\([^)]*\)\s*$", "", str(raw)).strip()
+
+
 def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     """Whether this candidate may be kept, and if not, why not."""
-    term = str(candidate.get("concept", "")).strip()
+    term = clean_term(candidate.get("concept", ""))
     definition = str(candidate.get("definition", "")).strip()
     evidence = str(candidate.get("evidence", "")).strip()
     slot = str(candidate.get("slot", "")).strip().lower()
@@ -234,20 +279,29 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     return True, ""
 
 
+def format_slot_block(questions: dict[str, str]) -> str:
+    lines = [
+        f"                 {slot:16} {questions[slot]}" for slot in CANONICAL_SLOTS
+    ]
+    return "\n".join(lines)
+
+
 def extract_from_chunk(
     provider: Any,
     chunk: dict[str, str],
     source_book: str,
     model_tier: str,
+    slot_block: str = "",
 ) -> tuple[list[dict[str, Any]], Counter[str]]:
     """One model call for one chunk. Returns accepted rows and reject counts."""
+    slot_block = slot_block or ", ".join(CANONICAL_SLOTS)
     rejects: Counter[str] = Counter()
     content = chunk["content"]
 
     request = ModelRequest(
         prompt=PROMPT.format(
             min_words=MIN_DEFINITION_WORDS,
-            slots=", ".join(CANONICAL_SLOTS),
+            slots=slot_block,
             heading=chunk["heading"][:120],
             content=content,
         ),
@@ -271,7 +325,7 @@ def extract_from_chunk(
         slot = str(candidate["slot"]).strip().lower()
         accepted.append(
             {
-                "concept": str(candidate["concept"]).strip(),
+                "concept": clean_term(candidate["concept"]),
                 "definition": str(candidate["definition"]).strip(),
                 "claim_type": str(candidate.get("claim_type", "definition")).strip(),
                 "maps_to_slot": slot,
@@ -288,6 +342,54 @@ def extract_from_chunk(
             }
         )
     return accepted, rejects
+
+
+def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Collapse repeats of the same term, keeping the best-evidenced one.
+
+    A book returns to its central ideas, so the same concept is defined more
+    than once. Measured on three chunks of one paper: "Synaptic
+    consolidation" three times, "Episodic Memory" twice. Left alone those
+    become three slot rows for one concept and three review decisions.
+
+    The count of distinct sections defining a term is kept as `occurrences`,
+    because unlike the model's self-reported confidence it is an OBSERVED
+    signal: a concept a book defines in four places is load-bearing in a way
+    that a concept mentioned once is not.
+    """
+    best: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    for row in rows:
+        key = " ".join(row["concept"].lower().split())
+        if key not in best:
+            best[key] = dict(row, occurrences=1, also_found_in=[])
+            order.append(key)
+            continue
+
+        kept = best[key]
+        kept["occurrences"] += 1
+        location = row["source_location"]
+        if location != kept["source_location"] and location not in kept["also_found_in"]:
+            kept["also_found_in"].append(location)
+
+        #: Prefer the more confident definition; on a tie, the longer one,
+        #: which in practice is the one that actually explains the term.
+        better = (
+            row["confidence_in_literature"] > kept["confidence_in_literature"]
+            or (
+                row["confidence_in_literature"] == kept["confidence_in_literature"]
+                and len(row["definition"]) > len(kept["definition"])
+            )
+        )
+        if better:
+            carried = {
+                "occurrences": kept["occurrences"],
+                "also_found_in": kept["also_found_in"],
+            }
+            best[key] = dict(row, **carried)
+
+    merged = [best[k] for k in order]
+    return merged, len(rows) - len(merged)
 
 
 def build_provider(kind: str, model: str, timeout: float, num_ctx: int) -> Any:
@@ -348,6 +450,7 @@ def main() -> int:
     provider = build_provider(
         args.provider, args.model, args.timeout, args.num_ctx
     )
+    slot_block = format_slot_block(load_slot_questions())
 
     rows: list[dict[str, Any]] = []
     rejects: Counter[str] = Counter()
@@ -358,7 +461,7 @@ def main() -> int:
             rejects["chunk_too_long"] += 1
             continue
         accepted, chunk_rejects = extract_from_chunk(
-            provider, chunk, args.source_book, args.model_tier
+            provider, chunk, args.source_book, args.model_tier, slot_block
         )
         rows.extend(accepted)
         rejects.update(chunk_rejects)
