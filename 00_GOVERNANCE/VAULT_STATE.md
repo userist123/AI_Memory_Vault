@@ -57,6 +57,9 @@ in its constructor. Corrected 2026-09-06.
 | Held-out benchmark v1 | **INVALID** | gold ids resolve to nothing; recall structurally 0 |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
+| `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030; 18 of 20 books converted, 6.6M chars, 1,107 chunks |
+| `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, **gates work, selectivity does not** | r031; see `07_EVALUATION/book_corpus_conversion/FINDINGS.md` |
+| `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
 
 ## 4. Corpus and graph, measured
 
@@ -102,6 +105,30 @@ whole-corpus retrieval numbers.
   but plasticity is still uncalled, so the interaction is untested in anger.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
+- **Book ingestion has no working selectivity.** Extraction itself works and
+  its gates work — grounding against the source text catches fabricated
+  citations, and the paraphrase floors catch copied definitions. What does
+  not exist is any way to tell a load-bearing concept from experimental
+  furniture. Every mechanism was measured and none ranks anything:
+  model confidence is `1.00` on every candidate including fabricated ones;
+  `claim_type` is constant and is swapped with `slot` by the only model that
+  fits the GPU; `occurrences` is 1 for 47 of 48 concepts in a full paper; and
+  a prompt-level exclusion list is ignored. About half of what the pipeline
+  produces is terms like `validation set`, `SGD optimizer` and `Rot-MNIST`.
+  A corpus run would be ~4,400 candidates. Do not start one without deciding
+  what to do about that first.
+- **Two books cannot be ingested at all.** Ashby's *Introduction to
+  Cybernetics* and Minsky's *Society of Mind* are scans with no text layer,
+  0.0 characters per page. They need OCR, which does not exist here.
+- **`glm-4.7-flash` no longer loads.** 19 GB against an 8 GB GPU; the
+  endpoint returns `llama-server process has terminated`. Only
+  `qwen2.5-coder` 3b and 7b fit. Any speed or quality number attributed to a
+  larger model predates this and was taken while it still spilled to CPU
+  rather than failing.
+- **A client timeout does not cancel the work.** After a request times out,
+  the endpoint keeps generating and a request for another model queues behind
+  it. Retrying a timeout deepens the backlog; only unreachable endpoints are
+  retried.
 
 ## 6. Trigger table
 
