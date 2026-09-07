@@ -154,5 +154,11 @@ def test_candidate_concepts_table_structure():
         data_rows = lines[2:]
         for row in data_rows:
             cols = [c.strip() for c in row.split("|")]
-            assert len(cols) == 8, f"Invalid 6-column row format in {filename}: {row}"
+            # 7 columns plus the empty strings either side of the outer pipes.
+            # The 7th is `evidence`: the source sentence the definition was
+            # derived from, verified present in the book text. Without it the
+            # row carries a term, a book name and a confidence that model-
+            # assisted extraction always reports as 1.00 — nothing a reviewer
+            # can judge.
+            assert len(cols) == 9, f"Invalid 7-column row format in {filename}: {row}"
             assert cols[4] in ["proposed", "unverified_source", "promoted", "REVIEW", "ACTIVE"], f"Invalid status in {filename}: {cols[4]}"

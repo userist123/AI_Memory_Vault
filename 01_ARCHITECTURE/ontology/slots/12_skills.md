@@ -25,5 +25,5 @@ What capabilities exist?
 - `.agents/skills/`
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id |
-|---|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
+|---|---|---|---|---|---|---|

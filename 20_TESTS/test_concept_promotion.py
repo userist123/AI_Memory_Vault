@@ -87,7 +87,7 @@ def test_originating_slot_file_table_updated():
 
     assert row is not None, "Reservoir Sampling row missing in 06_procedures.md!"
     cols = [c.strip() for c in row.split("|")]
-    assert len(cols) == 8  # 6 columns pipe-split into 8 elements
+    assert len(cols) == 9  # 7 columns pipe-split into 9 elements
     assert cols[1] == "Reservoir Sampling"
     assert cols[4] == "promoted"
     assert len(cols[6]) > 10  # Promoted note ID populated

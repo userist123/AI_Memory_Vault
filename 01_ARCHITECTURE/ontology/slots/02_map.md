@@ -26,5 +26,5 @@ Where does each kind of information live?
 - `README.md`
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id |
-|---|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
+|---|---|---|---|---|---|---|

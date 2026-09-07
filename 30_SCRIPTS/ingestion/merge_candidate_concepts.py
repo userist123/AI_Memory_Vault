@@ -89,7 +89,17 @@ def append_candidate_concepts_to_slot(
 
         existing_normalized.add(norm_name)
         conf_str = f"{item.get('confidence_in_literature', 0.90):.2f}"
-        row = f"| {item['concept']} | {item['source_book']} | {conf_str} | proposed | {date_str} | |"
+        # The sentence the definition came from, carried into the row so a
+        # reviewer can judge the candidate without opening the staging file.
+        # This is the grounding check's output: it was verified to be present
+        # in the source text, and it is what makes a fabricated citation
+        # visible. Pipes and newlines would break the table.
+        evidence = str(item.get("evidence_quote", "")).replace("|", "/")
+        evidence = " ".join(evidence.split())[:300]
+        row = (
+            f"| {item['concept']} | {item['source_book']} | {conf_str} "
+            f"| proposed | {date_str} | | {evidence} |"
+        )
         new_rows.append(row)
         added_count += 1
 
@@ -97,7 +107,10 @@ def append_candidate_concepts_to_slot(
         return 0
 
     # Locate Candidate concepts table section
-    table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \| promoted_note_id \|\s*\n\|---\|---\|---\|---\|---\|---\|)', content)
+    # The evidence column is optional in the pattern so that a slot file which
+    # has not been migrated still merges, rather than silently matching
+    # nothing and reporting zero additions.
+    table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \| promoted_note_id \|(?: evidence \|)?\s*\n\|---\|---\|---\|---\|---\|---\|(?:---\|)?)', content)
     if not table_match:
         # Fallback to 5-column header if not yet updated
         table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \|\s*\n\|---\|---\|---\|---\|---\|)', content)
