@@ -365,3 +365,80 @@ r030: a legitimate-looking zero standing in front of no work.
   same passage each time. Worth looking at, now that "the same each time" is
   a statement that can be made.
 - Cross-book deduplication is still not done.
+
+## r031 — a correction, and what the rejections say
+
+### Correction: deduplication was reported working and was not
+
+The previous section and its commit describe deduplication collapsing
+repeated terms. That was false when written. `deduplicate()` shipped with
+passing unit tests and **no caller** — the edits wiring it into `main()`
+failed to apply silently, because `str.replace` says nothing when its anchor
+does not match.
+
+The evidence was visible and went unread: a run two steps earlier did not
+print the `sampling` line that the same batch of edits was supposed to add.
+
+It is wired now, verified by running it rather than by a green test:
+
+```
+candidates kept    8  (1 duplicates merged)
+defined more than once  1
+```
+
+`test_main_actually_deduplicates_and_writes_rejects` drives `main()`
+end to end over two identical sections and asserts against the written file.
+A unit test on a function with no caller measures nothing — which is exactly
+what the repository's own production-consumer rule says, applied here to our
+own code.
+
+### Model confidence is not merely uncalibrated, it is empty
+
+One run, 18 candidates through the gates:
+
+| | confidence |
+|---|---|
+| 8 accepted | 1.0 |
+| 10 rejected | 1.0 |
+
+Every candidate, including three whose evidence quote was not in the source
+at all, is 1.0. Distinct values across the run: **one**. Asking for the full
+range, twice, in the prompt, changes nothing.
+
+`confidence_in_literature` should not be read as a signal by anything
+downstream. `occurrences` — how many distinct sections define the term — is
+the field that carries information, because it is counted rather than
+claimed.
+
+### What the rejections diagnose
+
+Now that rejected candidates are written out with the offending value, not
+just counted:
+
+| reason | n | what it means |
+|---|---|---|
+| verbatim_ngram | 5 | the model reuses the source's phrasing; the top failure |
+| evidence_not_in_source | 3 | fabricated quotes, still being caught |
+| term_length | 1 | ours, not the model's — see below |
+| definition_short | 1 | |
+
+`Complementary Learning Systems (CLS) theory` was refused for length because
+`clean_term()` stripped only a trailing gloss, leaving five words where four
+are allowed. The gloss is now removed wherever it appears. That was our
+defect rejecting a real concept.
+
+### Slot routing is skewed, and the questions did not fix it
+
+Slots chosen across 8 accepted candidates:
+
+    procedures 5, map 1, constraints 1, identity 1
+
+`procedures` asks "How are operations executed?", and a neuroscience
+mechanism reads as an operation, so mechanisms land there regardless of
+subject. Adding the slot questions to the prompt has not corrected this.
+Nothing here claims it did.
+
+`slot_unknown` did not fire in this run, so the earlier observation that it
+fires exactly once per warm run remains unconfirmed under this
+configuration — different chunk count, different regime. It is not carried
+forward as established.

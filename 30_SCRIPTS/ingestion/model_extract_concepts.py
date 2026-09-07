@@ -244,8 +244,13 @@ def clean_term(raw: Any) -> str:
     "Continual learning (CL)" is how academic prose introduces a term, and
     rejecting it on the parenthesis threw away real concepts — measured on a
     live run, where it was the first candidate the model returned.
+
+    The gloss is not always last. "Complementary Learning Systems (CLS)
+    theory" was refused for length on a later run, because stripping only a
+    trailing parenthesis left five words where four are allowed. Removing it
+    wherever it sits costs nothing and recovers a real concept.
     """
-    return re.sub(r"\s*\([^)]*\)\s*$", "", str(raw)).strip()
+    return " ".join(re.sub(r"\([^)]*\)", " ", str(raw)).split())
 
 
 def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
@@ -311,6 +316,7 @@ def extract_from_chunk(
     slot_block: str = "",
     sampling: dict[str, Any] | None = None,
     keep_alive: str = "",
+    rejected_out: list[dict[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], Counter[str]]:
     """One model call for one chunk. Returns accepted rows and reject counts."""
     slot_block = slot_block or ", ".join(CANONICAL_SLOTS)
@@ -386,6 +392,22 @@ def extract_from_chunk(
         ok, reason = validate(candidate, content)
         if not ok:
             rejects[reason] += 1
+            if rejected_out is not None:
+                #: A count alone is not a diagnosis. "slot_unknown: 1" says
+                #: something was refused; it does not say the model keeps
+                #: proposing the same slot that is not in the ontology, which
+                #: is the difference between an accident and a pattern.
+                rejected_out.append(
+                    {
+                        "reason": reason,
+                        "concept": str(candidate.get("concept", ""))[:120],
+                        "slot": str(candidate.get("slot", ""))[:60],
+                        "confidence": candidate.get("confidence"),
+                        "definition": str(candidate.get("definition", ""))[:300],
+                        "evidence": str(candidate.get("evidence", ""))[:300],
+                        "source_location": chunk["heading"][:120],
+                    }
+                )
             continue
         slot = str(candidate["slot"]).strip().lower()
         accepted.append(
@@ -502,6 +524,11 @@ def main() -> int:
         help="sampling seed, recorded so a run can be reproduced",
     )
     ap.add_argument(
+        "--rejects-file", type=pathlib.Path,
+        help="write every rejected candidate with its reason here; a reject "
+             "count says something was refused, not what",
+    )
+    ap.add_argument(
         "--keep-alive", default="60m",
         help="how long the provider holds the model loaded between calls; "
              "an unload mid-run silently changes the extraction regime",
@@ -532,6 +559,7 @@ def main() -> int:
     sampling = {"temperature": args.temperature, "seed": args.seed}
 
     rows: list[dict[str, Any]] = []
+    rejected_rows: list[dict[str, Any]] = []
     rejects: Counter[str] = Counter()
     skipped = 0
     for i, chunk in enumerate(chunks, start=1):
@@ -541,7 +569,7 @@ def main() -> int:
             continue
         accepted, chunk_rejects = extract_from_chunk(
             provider, chunk, args.source_book, args.model_tier, slot_block,
-            sampling, args.keep_alive,
+            sampling, args.keep_alive, rejected_rows,
         )
         rows.extend(accepted)
         rejects.update(chunk_rejects)
@@ -551,16 +579,29 @@ def main() -> int:
             file=sys.stderr,
         )
 
+    rows, collapsed = deduplicate(rows)
+
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
     args.output_file.write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
     confidences = sorted({round(r["confidence_in_literature"], 2) for r in rows})
+    repeated = sum(1 for r in rows if r["occurrences"] > 1)
+    slots_used = Counter(r["maps_to_slot"] for r in rows)
     print(f"\n{args.source_book}")
     print(f"  chunks processed   {len(chunks) - skipped} of {len(chunks)}")
-    print(f"  candidates kept    {len(rows)}")
+    print(f"  candidates kept    {len(rows)}  ({collapsed} duplicates merged)")
+    print(f"  defined more than once  {repeated}")
     print(f"  rejected           {sum(rejects.values())}  {dict(rejects.most_common())}")
     print(f"  distinct confidence values  {len(confidences)}  {confidences[:12]}")
+    print(f"  slots used         {dict(slots_used.most_common())}")
+    print(f"  sampling           {sampling}, keep_alive={args.keep_alive}")
     print(f"  written            {args.output_file}")
+    if args.rejects_file:
+        args.rejects_file.parent.mkdir(parents=True, exist_ok=True)
+        args.rejects_file.write_text(
+            json.dumps(rejected_rows, indent=2), encoding="utf-8"
+        )
+        print(f"  rejects written    {args.rejects_file}")
     return 0
 
 

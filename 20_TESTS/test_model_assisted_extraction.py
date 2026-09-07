@@ -332,3 +332,70 @@ def test_acronym_gloss_is_stripped_not_rejected():
     accepted, rejects = _run([dict(GOOD, concept="Quenched harmonic buffering (QHB)")])
     assert rejects == {}, rejects
     assert accepted[0]["concept"] == "Quenched harmonic buffering"
+
+
+def test_main_actually_deduplicates_and_writes_rejects(tmp_path, monkeypatch):
+    """End-to-end through main(), because a unit test is not wiring.
+
+    deduplicate() shipped with passing unit tests while main() never called
+    it: the edit that added the call silently failed to apply and nothing
+    caught it. A function with tests and no caller is not a feature.
+    """
+    #: Two chunks, so the fake provider returns the same concept twice and a
+    #: duplicate genuinely has to be collapsed.
+    book = tmp_path / "book.txt"
+    book.write_text(
+        f"# Section One\n\n{CHUNK}\n\n# Section Two\n\n{CHUNK}\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out.json"
+    rejects = tmp_path / "rejects.json"
+
+    payload = json.dumps([GOOD, dict(GOOD, concept="What", slot="state")])
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=payload),
+    )
+    monkeypatch.setattr(
+        sys, "argv",
+        [
+            "model_extract_concepts.py",
+            "--input-file", str(book),
+            "--source-book", "test_book",
+            "--output-file", str(out),
+            "--rejects-file", str(rejects),
+            "--provider", "fake",
+        ],
+    )
+
+    assert M.main() == 0
+
+    written = json.loads(out.read_text(encoding="utf-8"))
+    assert len(written) == 1, "the same concept in two sections must collapse"
+    assert written[0]["occurrences"] == 2
+    assert written[0]["also_found_in"] == ["Section Two"]
+
+    #: The generic term is refused in both chunks and both are recorded with
+    #: the offending value, not just counted.
+    refused = json.loads(rejects.read_text(encoding="utf-8"))
+    assert len(refused) == 2
+    assert {r["reason"] for r in refused} == {"term_generic"}
+    assert refused[0]["concept"] == "What"
+    assert refused[0]["slot"] == "state"
+
+
+def test_acronym_gloss_is_stripped_wherever_it_sits():
+    """Refused for length on a live run: the gloss was not last.
+
+    "Complementary Learning Systems (CLS) theory" is four words with the
+    gloss removed and five with it, and four is the limit.
+    """
+    assert (
+        M.clean_term("Complementary Learning Systems (CLS) theory")
+        == "Complementary Learning Systems theory"
+    )
+    accepted, rejects = _run(
+        [dict(GOOD, concept="Quenched harmonic (QHB) buffering")]
+    )
+    assert rejects == {}, rejects
+    assert accepted[0]["concept"] == "Quenched harmonic buffering"
