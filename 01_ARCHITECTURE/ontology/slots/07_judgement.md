@@ -28,3 +28,4 @@ How are decisions made?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
+| Parameter Importance Weighting | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | proposed | 2026-09-07 |

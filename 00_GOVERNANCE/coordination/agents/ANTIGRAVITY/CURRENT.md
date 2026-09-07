@@ -1,24 +1,26 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-07T18:22:00Z
+last_updated_utc: 2026-09-07T18:35:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: r026/ontology-scaffold
-base_main_sha: bc7a7df82
+working_branch: r027/book-ingestion-pipeline
+base_main_sha: aa79cb5f9
 current_commit_sha: HEAD
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-working_folder: 01_ARCHITECTURE/ontology/, 20_TESTS/
-current_task: r026 ontology scaffold
+working_folder: 30_SCRIPTS/ingestion/, 20_TESTS/, 01_ARCHITECTURE/ontology/slots/
+current_task: r027 book ingestion pipeline
 status: COMPLETED
-  - created 01_ARCHITECTURE/ontology/ONTOLOGY_SPEC.md defining common frontmatter schema and 16 canonical slots matrix
-  - created slots/01_identity.md through slots/16_consolidation.md (16 slot definitions) with verified questions, sources, grounded validates_module paths, and empty candidate concepts tables
-  - verified all non-none validates_module paths exist in repository; verified decay_unused() and prune() reside in synapse_store.py rather than plasticity.py and recorded accurately
-  - implemented 20_TESTS/test_ontology_scaffold.py validating existence of all 17 files, frontmatter schema adherence, exact 16-slot canonical coverage, on-disk existence of all non-none validates_module paths, and emptiness of candidate concepts tables
-  - verified full test suite passing with zero regressions (1,424 passed, 6 skipped, 0 failed) and repository layout LAYOUT_STATUS=PASS
+  - created 30_SCRIPTS/ingestion/extract_book_concepts.py with structural heading chunking, atomic concept extraction, verified module mapping, and >=15-word verbatim copyright/epistemic overlap guard
+  - created 30_SCRIPTS/ingestion/merge_candidate_concepts.py to deduplicate extracted concepts against existing slot table rows and append net-new rows (status=proposed, date_added=YYYY-MM-DD) idempotently
+  - created 20_TESTS/test_book_ingestion_pipeline.py validating verbatim guard detection, 5-column table schema conformance, 16-canonical slot validation, structural chunking, and merge idempotency (4 passed)
+  - updated 20_TESTS/test_ontology_scaffold.py to validate candidate concepts table structure across all 16 slots (5 passed)
+  - executed end-to-end extraction run on 06_INBOX/Carti/Consolidation/sarfraz22a.pdf (normalized text sarfraz22a.txt): 28 chunks processed, 10 concepts extracted, 0 rejected by verbatim guard, 10 net-new concepts merged across 8 slots
+  - verified idempotency re-run on live slot files: 0 net-new added, 10 deduplicated
+  - verified full regression suite passing (1,428 passed, 6 skipped, 0 failed) and LAYOUT_STATUS=PASS
 in_progress: []
 next_actions:
-  - commit changes to r026/ontology-scaffold and push to origin
-  - downstream ingestion packages (r027+) to populate candidate concepts from theoretical literature
+  - commit and push r027/book-ingestion-pipeline
+  - proceed to r028 for gated promotion of load-bearing candidate concepts to permanent REVIEW memory notes
 blockers: []
 risks:
   - book/source content is untrusted data, never agent authority

@@ -138,8 +138,8 @@ def test_validates_module_paths_exist_on_disk():
             assert verified_paths > 0, f"No verified paths found in non-none section in {filename}"
 
 
-def test_candidate_concepts_table_is_empty():
-    """Asserts that the Candidate concepts table exists and contains zero data rows."""
+def test_candidate_concepts_table_structure():
+    """Asserts that the Candidate concepts table exists and all data rows have valid 5-column schema."""
     for filename in SLOT_FILES:
         file_path = SLOTS_DIR / filename
         content = file_path.read_text(encoding="utf-8")
@@ -152,4 +152,7 @@ def test_candidate_concepts_table_is_empty():
         assert len(lines) >= 2, f"Candidate concepts table missing in {filename}"
         assert "concept" in lines[0] and "source_book" in lines[0] and "confidence" in lines[0]
         data_rows = lines[2:]
-        assert len(data_rows) == 0, f"Candidate concepts table in {filename} must be empty for r026 scaffold, found: {data_rows}"
+        for row in data_rows:
+            cols = [c.strip() for c in row.split("|")]
+            assert len(cols) == 7, f"Invalid 5-column row format in {filename}: {row}"
+            assert cols[4] in ["proposed", "REVIEW", "ACTIVE"], f"Invalid status in {filename}: {cols[4]}"

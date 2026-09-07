@@ -69,6 +69,8 @@ generated/
 !/06_INBOX/README.md
 !/06_INBOX/.gitkeep
 /06_INBOX/local_only/
+staging/
+/06_INBOX/staging/
 
 .vs/
 *.zip
