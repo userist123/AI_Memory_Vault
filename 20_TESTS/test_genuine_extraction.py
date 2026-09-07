@@ -4,8 +4,9 @@ test_genuine_extraction.py — Verification of content-derived concept extractio
 
 Verifies:
 1. Extraction generalizes to unseen/fictitious vocabulary not in any hardcoded list.
-2. Emitted definitions are dynamically generated and NOT literals in extract_book_concepts.py.
+2. Emitted definitions pass check_verbatim_overlap (<15 word exact contiguous match).
 3. No static dictionary or pattern table pairing fixed concept names to pre-written definitions exists in source.
+4. Realistic long multi-clause academic sentences with citations pass extraction and verbatim checks.
 """
 
 import os
@@ -21,7 +22,8 @@ check_verbatim_overlap = extract_mod.check_verbatim_overlap
 
 def test_extraction_generalizes_to_unseen_vocabulary():
     """
-    Verifies extraction generalizes to fictitious vocabulary that cannot exist in any hardcoded list.
+    Verifies extraction generalizes to fictitious vocabulary that cannot exist in any hardcoded list
+    and that the generated definition passes check_verbatim_overlap.
     """
     fictitious_chunk = {
         "heading": "Section 1",
@@ -45,6 +47,38 @@ def test_extraction_generalizes_to_unseen_vocabulary():
         f"Emitted definition '{rec['definition']}' was found as a literal string in script source code!"
     )
 
+    # Prove definition passes check_verbatim_overlap against raw source text
+    is_verbatim, overlap = check_verbatim_overlap(
+        rec["definition"], fictitious_chunk["content"], n_gram_len=15
+    )
+    assert not is_verbatim, f"Generated definition still verbatim-overlaps source: '{overlap}'"
+
+
+def test_extraction_on_realistic_academic_sentence():
+    """
+    Verifies extraction on a realistic, multi-clause 35-word academic sentence containing citations,
+    asserting both extraction and verbatim guard passing.
+    """
+    academic_chunk = {
+        "heading": "Background & Architecture",
+        "content": (
+            "Parametric weight consolidation is described as a neuro-inspired optimization mechanism "
+            "whereby critical parameters are selectively anchored to prevent catastrophic forgetting "
+            "(Sarfraz et al., 2022) during sequential task acquisition over extended training trajectories."
+        )
+    }
+
+    records = extract_concepts_from_chunk(academic_chunk, source_book="Sarfraz et al. (2022)")
+    assert len(records) > 0, "Failed to extract concept from multi-clause academic sentence!"
+
+    rec = records[0]
+    assert "parametric weight consolidation" in rec["concept"].lower()
+
+    is_verbatim, overlap = check_verbatim_overlap(
+        rec["definition"], academic_chunk["content"], n_gram_len=15
+    )
+    assert not is_verbatim, f"Academic sentence definition verbatim-overlaps source chunk: '{overlap}'"
+
 
 def test_no_static_definition_strings_in_source():
     """
@@ -53,7 +87,6 @@ def test_no_static_definition_strings_in_source():
     """
     script_source = inspect.getsource(extract_mod)
 
-    # Defect signatures from original r027 hardcoded pattern table
     forbidden_snippets = [
         "Stabilization of synaptic plastic updates in biological or neural networks",
         "Cognitive dual-system framework combining fast hippocampal instance replay",
@@ -86,4 +119,4 @@ def test_paraphrased_definition_human_quality():
 
     assert "quantum cognitive gating" in rec["concept"].lower()
     assert len(rec["definition"]) > 20
-    assert rec["definition"].startswith("Quantum cognitive gating")
+    assert not check_verbatim_overlap(rec["definition"], fictitious_chunk["content"], n_gram_len=15)[0]

@@ -1,24 +1,24 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-07T18:48:00Z
+last_updated_utc: 2026-09-07T18:57:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: r027-fix/genuine-concept-extraction
-base_main_sha: 7b67ab65b
+working_branch: r027-fix2/paraphrase-quality-and-guard-placement
+base_main_sha: 375b9e3f3
 current_commit_sha: HEAD
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
 working_folder: 30_SCRIPTS/ingestion/, 20_TESTS/, 01_ARCHITECTURE/ontology/slots/
-current_task: r027-fix genuine concept extraction
+current_task: r027-fix2 paraphrase quality & inline verbatim guard placement
 status: COMPLETED
-  - replaced static hardcoded pattern table in 30_SCRIPTS/ingestion/extract_book_concepts.py with dynamic NLP sentence-structure heuristic extraction and runtime paraphrasing (zero pre-written concept names or definitions in source code)
-  - implemented 20_TESTS/test_genuine_extraction.py: test_extraction_generalizes_to_unseen_vocabulary (fictitious concept 'Zorbatic interference' extracted with dynamic definition not present in source code), test_no_static_definition_strings_in_source, and test_paraphrased_definition_human_quality (3 passed)
-  - updated 20_TESTS/test_ontology_scaffold.py to accept 'unverified_source' in candidate concept status check
-  - audited legacy r027 concepts across slot markdown files: updated all 10 un-reproduced legacy rows to status='unverified_source' in place
-  - re-ran genuine extraction and merge pipeline on Sarfraz et al. (2022) (sarfraz22a.txt): extracted 1 genuine concept ('Synergy'), 7 raw sentences rejected by verbatim guard, 1 net-new concept merged with status='proposed'
-  - verified full test suite passing (1,431 passed, 6 skipped, 0 failed) and LAYOUT_STATUS=PASS
+  - upgraded generate_dynamic_paraphrase() in 30_SCRIPTS/ingestion/extract_book_concepts.py with general academic synonym substitutions, clause restructuring, and Pass 1/Pass 2 internal verbatim guard validation loop
+  - moved check_verbatim_overlap() inline inside extract_concepts_from_chunk() per candidate at generation time before emitting
+  - updated 20_TESTS/test_genuine_extraction.py: added explicit check_verbatim_overlap assertion to test_extraction_generalizes_to_unseen_vocabulary, added test_extraction_on_realistic_academic_sentence testing 35-word multi-clause academic sentence (4 passed)
+  - re-ran genuine extraction and merge on Sarfraz et al. (2022) (sarfraz22a.txt): 28 chunks processed, 2 genuine concepts extracted ('Synergy' and 'Reservoir Sampling'), 0 rejected by verbatim guard (both passed inline verbatim checks)
+  - verified explicitly that 'Synergy' definition passes check_verbatim_overlap (is_verbatim=False, 0 overlap)
+  - verified full regression suite passing (1,432 passed, 6 skipped, 0 failed) and LAYOUT_STATUS=PASS
 in_progress: []
 next_actions:
-  - commit and push r027-fix/genuine-concept-extraction
+  - commit and push r027-fix2/paraphrase-quality-and-guard-placement
   - proceed to r028 for gated promotion of load-bearing candidate concepts to permanent REVIEW memory notes
 blockers: []
 risks:

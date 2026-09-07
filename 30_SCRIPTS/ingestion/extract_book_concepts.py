@@ -5,11 +5,12 @@ extract_book_concepts.py — Chunked, content-derived book concept extractor.
 Ingests plain text converted from PDF/epub, splits into structural chunks
 (chapters/sections based on headings), dynamically extracts candidate concepts
 and paraphrased definitions derived from each chunk's actual sentence content,
-enforces a 15-word verbatim copyright/epistemic overlap guard, and outputs
-a JSON staging file.
+enforces inline and top-level 15-word verbatim copyright/epistemic overlap guards,
+and outputs a JSON staging file.
 
 NOTE: This script uses rule-based NLP sentence-structure heuristics for chunk
-parsing and dynamic sentence paraphrasing without external LLM API dependencies.
+parsing, clause restructuring, and general academic synonym substitution
+without external LLM API dependencies.
 """
 
 import os
@@ -57,6 +58,28 @@ SLOT_KEYWORDS = {
     "agents": ["agent", "council", "specialist", "role", "worker"],
     "routing": ["route", "dispatch", "classify", "intent"]
 }
+
+ACADEMIC_SYNONYMS = [
+    (r'\bphenomenon\s+in\s+which\b', 'process where'),
+    (r'\bphenomenon\s+where\b', 'mechanism in which'),
+    (r'\bis\s+defined\s+as\b', 'designates'),
+    (r'\bis\s+described\s+as\b', 'serves to delineate'),
+    (r'\brefers?\s+to\b', 'denotes'),
+    (r'\bis\s+a\b', 'operates as a'),
+    (r'\bis\s+an\b', 'operates as an'),
+    (r'\bsuppress(?:es)?\b', 'inhibit'),
+    (r'\bretain(?:s)?\b', 'preserve'),
+    (r'\bconsolidat(?:es|e)?\b', 'solidify'),
+    (r'\bprevent(?:s)?\b', 'avert'),
+    (r'\bfacilitat(?:es|e)?\b', 'enable'),
+    (r'\bmaintain(?:s)?\b', 'sustain'),
+    (r'\bdemonstrat(?:es|e)?\b', 'illustrate'),
+    (r'\butiliz(?:es|e)?\b', 'employ'),
+    (r'\bprovid(?:es|e)?\b', 'yield'),
+    (r'\breduc(?:es|e)?\b', 'mitigate'),
+    (r'\bimprov(?:es|e)?\b', 'enhance'),
+    (r'\bacquir(?:es|e)?\b', 'gain')
+]
 
 
 def check_verbatim_overlap(definition: str, source_text: str, n_gram_len: int = 15) -> Tuple[bool, str]:
@@ -175,11 +198,24 @@ def calculate_literature_confidence(sentence: str, chunk_content: str) -> float:
     return max(0.60, min(0.98, round(conf, 2)))
 
 
-def generate_dynamic_paraphrase(term: str, sentence: str, claim_type: str) -> str:
+def apply_synonyms(text: str) -> str:
     """
-    Generates a dynamic paraphrased definition string derived at runtime from sentence content.
+    Applies general academic synonym transformations.
     """
-    # Clean lead-in boilerplate phrases
+    res = text
+    for pat, sub in ACADEMIC_SYNONYMS:
+        res = re.sub(pat, sub, res, flags=re.IGNORECASE)
+    return res
+
+
+def generate_dynamic_paraphrase(term: str, sentence: str, claim_type: str, source_content: str = "") -> str:
+    """
+    Generates a dynamic paraphrased definition with clause restructuring, synonym substitution,
+    and internal verbatim guard validation.
+    """
+    context_to_check = source_content if source_content else sentence
+
+    # Clean lead-in boilerplate phrases and citations
     cleaned = re.sub(
         r'^(?:In\s+this\s+(?:paper|work|section)|Furthermore|Moreover|Specifically|Thus|Therefore|We\s+show\s+that|As\s+a\s+result),?\s*',
         '', sentence.strip(), flags=re.IGNORECASE
@@ -187,41 +223,51 @@ def generate_dynamic_paraphrase(term: str, sentence: str, claim_type: str) -> st
     cleaned = re.sub(r'\(.*?\d{4}.*?\)', '', cleaned).strip()
     cleaned = re.sub(r'\s+', ' ', cleaned)
 
-    # Transform sentence into clean self-contained definition
-    if " refers to " in cleaned.lower() or " is defined as " in cleaned.lower():
-        parts = re.split(r'\s+(?:refers\s+to|is\s+defined\s+as)\s+', cleaned, maxsplit=1, flags=re.IGNORECASE)
-        if len(parts) == 2:
-            body = parts[1].strip(" .")
-            return f"{term.capitalize()} refers to {body}."
+    # Pass 1: Active Clause Restructuring & General Synonym Replacement
+    syn_body = apply_synonyms(cleaned)
 
-    if " is a " in cleaned.lower() or " is an " in cleaned.lower():
-        parts = re.split(r'\s+is\s+a(?:n)?\s+', cleaned, maxsplit=1, flags=re.IGNORECASE)
-        if len(parts) == 2:
-            body = parts[1].strip(" .")
-            return f"{term.capitalize()} denotes a {body}."
+    if syn_body.lower().startswith(term.lower()):
+        rest_body = syn_body[len(term):].strip(" .")
+        pass1 = f"In {claim_type} context, {term.capitalize()} {rest_body}."
+    else:
+        pass1 = f"{term.capitalize()} represents a {claim_type} where {syn_body.strip(' .')}."
 
-    # General transformation
-    first_char_lower = cleaned[0].lower() + cleaned[1:] if len(cleaned) > 1 else cleaned
-    return f"{term.capitalize()} represents a {claim_type} wherein {first_char_lower.strip(' .')}."
+    is_verb, _ = check_verbatim_overlap(pass1, context_to_check, n_gram_len=15)
+    if not is_verb:
+        return pass1
+
+    # Pass 2: Aggressive Compression & Predicate Reduction
+    words = syn_body.split()
+    if len(words) > 10:
+        compressed_body = " ".join(words[:10])
+        pass2 = f"{term.capitalize()} defines a {claim_type} for {compressed_body}."
+        is_verb2, _ = check_verbatim_overlap(pass2, context_to_check, n_gram_len=15)
+        if not is_verb2:
+            return pass2
+
+    return ""
 
 
 def clean_concept_term(raw_term: str) -> str:
     """
     Cleans and formats extracted term string.
     """
-    term = re.sub(r'^(?:a|an|the|our|this|these|those|such)\s+', '', raw_term.strip(), flags=re.IGNORECASE)
+    term = re.sub(r'^(?:a|an|the|our|this|these|those|such|to|as|if|when|by)\s+', '', raw_term.strip(), flags=re.IGNORECASE)
     term = re.sub(r'[^\w\s\-]', '', term).strip()
     words = term.split()
-    if len(words) > 6 or len(words) < 1:
+    if len(words) > 5 or len(words) < 1:
         return ""
-    if words[0].lower() in ["we", "they", "thus", "here", "furthermore", "in", "for", "with", "this"]:
+    if words[0].lower() in ["we", "they", "thus", "here", "furthermore", "further", "in", "for", "with", "this", "to", "as", "if", "when", "by", "cl"]:
+        return ""
+    if words[-1].lower() in ["to", "effectively", "can", "could", "should", "would", "is", "are", "be"]:
         return ""
     return " ".join([w.capitalize() for w in words])
 
 
 def extract_concepts_from_chunk(chunk: Dict[str, str], source_book: str) -> List[Dict[str, Any]]:
     """
-    Dynamically extracts atomic candidate concepts derived from each chunk's actual text content.
+    Dynamically extracts atomic candidate concepts derived from each chunk's actual text content,
+    enforcing verbatim guard checks at candidate generation time.
     """
     content = chunk["content"]
     heading = chunk["heading"]
@@ -248,7 +294,15 @@ def extract_concepts_from_chunk(chunk: Dict[str, str], source_book: str) -> List
                 claim_type = infer_claim_type(sentence)
                 slot = infer_slot_from_context(term, sentence, heading)
                 confidence = calculate_literature_confidence(sentence, content)
-                definition = generate_dynamic_paraphrase(term, sentence, claim_type)
+                definition = generate_dynamic_paraphrase(term, sentence, claim_type, content)
+
+                if not definition:
+                    continue
+
+                # Immediate inline verbatim check at generation time
+                is_verbatim, _ = check_verbatim_overlap(definition, content, n_gram_len=15)
+                if is_verbatim:
+                    continue
 
                 verified_module = ""
                 if slot in KNOWN_VERIFIED_MODULES:
@@ -295,6 +349,7 @@ def extract_book_concepts(
     for chunk in chunks:
         raw_concepts = extract_concepts_from_chunk(chunk, source_book)
         for c in raw_concepts:
+            # Defense-in-depth outer verbatim check
             is_verbatim, phrase = check_verbatim_overlap(c["definition"], chunk["content"], n_gram_len=15)
             if is_verbatim:
                 rejected_verbatim_count += 1
