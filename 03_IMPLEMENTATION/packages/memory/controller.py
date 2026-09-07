@@ -458,12 +458,19 @@ class MemoryController:
             )
             candidate_trace['graph_expansion_enabled'] = bool(is_expansion_enabled)
 
-            # r024 WP-1 Phase B ranking arm. Off by default (None resolves to
-            # the instance default, itself None/'baseline' unless a caller
-            # opts in) -- only affects the graph-OFF branch immediately
-            # below; graph expansion's own scoring is untouched.
+            # r024 WP-1 Phase B ranking arm, validated on held-out and
+            # flipped by r025 WP-8: dev showed A1 (fused_score) recovering
+            # 3/8 context-recall losses (0.000->0.375); held-out confirmed
+            # it at the pre-registered threshold (4/27->6/27 measurable
+            # cases, +2, meeting the ">=2 cases" bar committed in
+            # WP8_PREREGISTRATION.md before this measurement ran). Default
+            # is now RANKING_ARM_FUSED_SCORE. A caller can still force the
+            # pre-r025 behaviour via `ranking_arm=RANKING_ARM_BASELINE`
+            # (instance constructor or per-call) for comparison/rollback.
+            # Only affects the graph-OFF branch immediately below; graph
+            # expansion's own scoring is untouched (out of scope, r024).
             active_ranking_arm = ranking_arm if ranking_arm is not None else getattr(self, 'ranking_arm', None)
-            active_ranking_arm = active_ranking_arm or RANKING_ARM_BASELINE
+            active_ranking_arm = active_ranking_arm or RANKING_ARM_FUSED_SCORE
             candidate_trace['ranking_arm'] = active_ranking_arm
 
             if not is_expansion_enabled:

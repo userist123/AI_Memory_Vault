@@ -32,7 +32,7 @@ from freeze import digest, hash_path  # noqa: E402
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 
 from memory_controller.authorizer import Principal  # noqa: E402
-from memory_controller.controller import MemoryController  # noqa: E402
+from memory_controller.controller import MemoryController, RANKING_ARM_BASELINE  # noqa: E402
 from memory_controller.storage.file_engine import FileStorageEngine  # noqa: E402
 from retrieval.vault_index import VaultIndex  # noqa: E402
 
@@ -60,6 +60,17 @@ def build(index, storage, graph_on: bool) -> MemoryController:
         # nothing while reporting "ok". Measuring the graph at all requires an
         # explicit budget; the default stays untouched.
         graph_expansion_budget=10 if graph_on else None,
+        # r025 WP-8 flipped MemoryController's default ranking_arm to
+        # RANKING_ARM_FUSED_SCORE. Pinned explicitly to RANKING_ARM_BASELINE
+        # here, deliberately, so R016 keeps comparing graph on/off holding
+        # the ranking scheme fixed -- letting it silently follow whatever
+        # the production ranking default becomes would confound "did the
+        # graph help" with "did the ranking default change", exactly the
+        # two-changes-cancelling failure this vault's own lessons warn
+        # about. Re-running R016 under the CURRENT production ranking
+        # default (unpinned) is a separate, explicit question -- see
+        # r025_wp8_a1_heldout/ for that comparison instead.
+        ranking_arm=RANKING_ARM_BASELINE,
     )
 
 
