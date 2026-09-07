@@ -25,6 +25,6 @@ What is implemented/real/active right now?
 - `00_GOVERNANCE/VAULT_STATE.md`
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added |
-|---|---|---|---|---|
-| Plasticity-Stability Balance | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | unverified_source | 2026-09-07 |
+| concept | source_book | confidence | status | date_added | promoted_note_id |
+|---|---|---|---|---|---|
+| Plasticity-Stability Balance | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | unverified_source | 2026-09-07 | |

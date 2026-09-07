@@ -25,5 +25,5 @@ Who knows how to do each thing?
 none (not yet built — explicitly recorded as unbuilt architecture)
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added |
-|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id |
+|---|---|---|---|---|---|

@@ -26,5 +26,5 @@ When should each agent be invoked?
 none (not yet built — explicitly recorded as unbuilt architecture)
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added |
-|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id |
+|---|---|---|---|---|---|
