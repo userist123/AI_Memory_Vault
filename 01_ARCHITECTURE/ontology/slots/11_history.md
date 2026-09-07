@@ -27,3 +27,4 @@ What has been tried and failed?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
+| Episodic Memory Buffer | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | proposed | 2026-09-07 |

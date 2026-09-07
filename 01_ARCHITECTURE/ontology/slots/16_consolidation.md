@@ -29,3 +29,6 @@ How does experience become knowledge?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
+| Synaptic Consolidation | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.95 | proposed | 2026-09-07 |
+| Complementary Learning Systems | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.95 | proposed | 2026-09-07 |
+| Stochastic Weight Consolidation | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | proposed | 2026-09-07 |

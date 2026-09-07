@@ -27,3 +27,4 @@ What is forbidden or risky?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
+| Catastrophic Forgetting Mitigation | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.95 | proposed | 2026-09-07 |

@@ -27,3 +27,4 @@ What is implemented/real/active right now?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
+| Plasticity-Stability Balance | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | proposed | 2026-09-07 |

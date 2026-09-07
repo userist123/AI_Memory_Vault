@@ -27,3 +27,4 @@ none (maps conceptually to note types in `03_IMPLEMENTATION/packages/lifecycle/v
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
+| Semantic Memory Store | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | proposed | 2026-09-07 |
