@@ -21,12 +21,12 @@
           "answer_correctness": 0.0
         },
         "one_hop_graph_expansion": {
-          "n": 10,
-          "n_measurable": 10,
+          "n": 12,
+          "n_measurable": 12,
           "n_unmeasurable": 0,
-          "candidate_recall": 0.8,
-          "context_recall": 0.2,
-          "answer_correctness": 0.2
+          "candidate_recall": 0.6666666666666666,
+          "context_recall": 0.16666666666666666,
+          "answer_correctness": 0.16666666666666666
         },
         "paraphrase": {
           "n": 4,
@@ -53,17 +53,17 @@
           "answer_correctness": null
         },
         "ALL": {
-          "n": 30,
-          "n_measurable": 27,
+          "n": 32,
+          "n_measurable": 29,
           "n_unmeasurable": 3,
-          "candidate_recall": 0.7407407407407407,
-          "context_recall": 0.14814814814814814,
-          "answer_correctness": 0.14814814814814814
+          "candidate_recall": 0.6896551724137931,
+          "context_recall": 0.13793103448275862,
+          "answer_correctness": 0.13793103448275862
         }
       },
       "errors": [],
       "graph_status": {
-        "disabled": 30
+        "disabled": 32
       }
     },
     "graph_on": {
@@ -85,12 +85,12 @@
           "answer_correctness": 0.0
         },
         "one_hop_graph_expansion": {
-          "n": 8,
-          "n_measurable": 8,
+          "n": 10,
+          "n_measurable": 10,
           "n_unmeasurable": 0,
           "candidate_recall": 1.0,
-          "context_recall": 0.125,
-          "answer_correctness": 0.125
+          "context_recall": 0.3,
+          "answer_correctness": 0.3
         },
         "paraphrase": {
           "n": 3,
@@ -117,12 +117,12 @@
           "answer_correctness": null
         },
         "ALL": {
-          "n": 23,
-          "n_measurable": 20,
+          "n": 25,
+          "n_measurable": 22,
           "n_unmeasurable": 3,
           "candidate_recall": 1.0,
-          "context_recall": 0.1,
-          "answer_correctness": 0.1
+          "context_recall": 0.18181818181818182,
+          "answer_correctness": 0.18181818181818182
         }
       },
       "errors": [
@@ -156,27 +156,27 @@
         }
       ],
       "graph_status": {
-        "ok": 23
+        "ok": 25
       }
     }
   },
   "mcnemar": {
     "candidate_recall": {
       "off_only": 0,
-      "on_only": 0,
-      "discordant": 0,
+      "on_only": 2,
+      "discordant": 2,
       "skipped_unmeasurable": 3
     },
     "context_recall": {
       "off_only": 2,
-      "on_only": 0,
-      "discordant": 2,
+      "on_only": 2,
+      "discordant": 4,
       "skipped_unmeasurable": 3
     },
     "answer_correctness": {
       "off_only": 2,
-      "on_only": 0,
-      "discordant": 2,
+      "on_only": 2,
+      "discordant": 4,
       "skipped_unmeasurable": 3
     }
   }
