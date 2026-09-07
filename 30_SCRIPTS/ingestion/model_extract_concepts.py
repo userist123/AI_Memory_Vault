@@ -393,6 +393,16 @@ def extract_from_chunk(
                 rejects[f"provider_retry_succeeded_on_{attempt}"] += 1
             break
         except Exception as exc:  # noqa: BLE001 - failures are data here
+            #: A client-side timeout does NOT cancel the work. Ollama keeps
+            #: generating, and the model stays loaded and busy — observed
+            #: directly: after a request timed out at 500s the endpoint still
+            #: held the model and would not start a queued one. Retrying a
+            #: timeout therefore queues a second request behind the first and
+            #: makes the backlog worse, which is the opposite of what a retry
+            #: is for. Only genuinely unreachable endpoints are retried.
+            if "timed out" in str(exc).lower():
+                rejects["provider_timeout"] += 1
+                return [], rejects
             if attempt >= max(1, attempts):
                 rejects[f"provider_error:{type(exc).__name__}"] += 1
                 return [], rejects

@@ -451,3 +451,30 @@ def test_a_persistent_provider_failure_is_recorded_not_raised(monkeypatch):
     assert AlwaysFails.calls == 3
     assert accepted == []
     assert rejects["provider_error:TimeoutError"] == 1
+
+
+def test_a_timeout_is_not_retried(monkeypatch):
+    """A client timeout does not cancel the server's work.
+
+    Observed directly: after a request timed out at 500s the endpoint still
+    held the model, still busy, and would not start a queued one. Retrying
+    then puts a second request behind the first and deepens the backlog,
+    which is the opposite of what a retry is for.
+    """
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
+
+    class TimesOut:
+        calls = 0
+
+        def generate(self, request):
+            TimesOut.calls += 1
+            raise RuntimeError(
+                "Could not reach local model endpoint http://x/api/generate: timed out"
+            )
+
+    accepted, rejects = M.extract_from_chunk(
+        TimesOut(), {"heading": "S", "content": CHUNK}, "b", "standard", attempts=3
+    )
+    assert TimesOut.calls == 1, "a timeout must be attempted once, not three times"
+    assert accepted == []
+    assert rejects["provider_timeout"] == 1

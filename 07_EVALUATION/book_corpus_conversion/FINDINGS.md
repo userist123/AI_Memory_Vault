@@ -503,3 +503,62 @@ format is the ontology's. It is a statement about what model-assisted
 extraction needs that the current row cannot carry, and it should be settled
 before a corpus-scale run fills sixteen slot tables with rows that cannot be
 reviewed.
+
+## r031 — the real cause of the "transient" failures
+
+An earlier section here called provider failures transient and added retries
+on that basis. That diagnosis was wrong, and the correction matters more than
+the retry did.
+
+### The model does not fit in the GPU
+
+| | |
+|---|---|
+| `glm-4.7-flash` on disk | 19.02 GB |
+| resident in VRAM | 6.26 GB |
+| GPU total | 8.15 GB |
+
+Two thirds of the model runs on the CPU. That is why the identical request
+took 148 seconds once and exceeded 500 the next time: throughput depends on
+how the layers happen to be split, which shifts with whatever else is
+resident.
+
+Of the six models installed, only two fit:
+
+| model | size | fits in 8 GB |
+|---|---|---|
+| qwen2.5-coder:3b | 1.93 GB | yes |
+| qwen2.5-coder:7b | 4.68 GB | yes |
+| gemma4:26b / 26b-64k | 17.99 GB | no |
+| qwen3-coder:30b | 18.56 GB | no |
+| glm-4.7-flash | 19.02 GB | no |
+
+Every measurement of speed taken so far was taken on a model running mostly
+on the CPU, and the ~48h corpus estimate inherits that.
+
+**This also gives the "two stable regimes" finding a simpler mechanism.**
+Cold and warm runs plausibly differ because the GPU/CPU layer split differs
+between loads. The observation stands — warm runs were byte-identical to each
+other, cold runs to each other — but the explanation is layer placement, not
+anything intrinsic to the model.
+
+### A client timeout does not cancel the work
+
+Observed directly: after a request timed out at 500 seconds, `/api/ps` still
+showed the model loaded and busy, and a request for a *different* model
+queued behind it instead of loading.
+
+So retrying a timeout does not recover anything. It adds a second request on
+top of one the server is still working through, and deepens the backlog. The
+retry logic added in the previous commit would have made a slow run worse.
+
+Timeouts are now attempted once and recorded as `provider_timeout`. Retries
+are kept for genuinely unreachable endpoints, which is what they were for.
+
+### What this changes
+
+The choice of model for a corpus-scale run is now a measured decision rather
+than a default. A 7B model resident entirely in VRAM may be several times
+faster than a 30B model spilling to CPU, and the trade against extraction
+quality has to be seen in data — which is the measurement currently queued
+behind a stuck request.
