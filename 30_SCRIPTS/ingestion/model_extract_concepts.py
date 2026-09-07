@@ -167,6 +167,22 @@ PROMPT = """\
 Read the passage below and identify the technical concepts it DEFINES or
 EXPLAINS. Ignore concepts it merely mentions in passing.
 
+A concept here is an idea a reader would need explained to understand the
+field. It is NOT an experimental setting, a dataset name, a hyperparameter,
+a tool, a metric name, or a value used in one paper's experiments. If the
+passage is describing how an experiment was configured rather than what
+something means, return [].
+
+Not concepts: "buffer size", "SGD optimizer", "grid search", "random crop",
+"number of training epochs", "Rot-MNIST", "backbone", "hyperparameters".
+
+Only exclusions are listed, deliberately. An earlier version of this prompt
+also gave four examples of GOOD concepts, and the model then returned those
+four in nearly every passage — one of them in seven of twelve — regardless of
+what the passage said. Naming desirable outputs turns extraction into recall,
+which is the exact defect r027 was written to remove from the code. Do not
+add positive examples here.
+
 Return JSON only — a list of objects, no prose around it. Each object:
 
   "concept"    The term, 1-4 words, as a noun phrase. Never a pronoun, a
@@ -579,6 +595,12 @@ def main() -> int:
         help="sampling seed, recorded so a run can be reproduced",
     )
     ap.add_argument(
+        "--min-occurrences", type=int, default=1,
+        help="keep only concepts defined in at least this many distinct "
+             "sections; 1 keeps everything. The only ranking signal available "
+             "— confidence and claim_type are constant on this pipeline",
+    )
+    ap.add_argument(
         "--attempts", type=int, default=3,
         help="tries per chunk before giving up; provider failures on this "
              "endpoint are transient and an unretried one loses the chunk",
@@ -646,6 +668,19 @@ def main() -> int:
 
     rows, collapsed = deduplicate(rows)
 
+    #: Selectivity by the one signal that is observed rather than claimed.
+    #: Model confidence is 1.00 on every candidate including fabricated ones,
+    #: and claim_type is "definition" on every survivor, so neither can rank
+    #: anything. How many distinct sections of a book define a term is
+    #: counted, and a book returns to what it is actually about.
+    occurrence_hist = Counter(r["occurrences"] for r in rows)
+    if args.min_occurrences > 1:
+        before = len(rows)
+        rows = [r for r in rows if r["occurrences"] >= args.min_occurrences]
+        dropped = before - len(rows)
+    else:
+        dropped = 0
+
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
     args.output_file.write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
@@ -656,6 +691,11 @@ def main() -> int:
     print(f"  chunks processed   {len(chunks) - skipped} of {len(chunks)}")
     print(f"  candidates kept    {len(rows)}  ({collapsed} duplicates merged)")
     print(f"  defined more than once  {repeated}")
+    print(f"  occurrence histogram    {dict(sorted(occurrence_hist.items()))}")
+    if dropped:
+        print(
+            f"  dropped below min_occurrences={args.min_occurrences}  {dropped}"
+        )
     print(f"  rejected           {sum(rejects.values())}  {dict(rejects.most_common())}")
     print(f"  distinct confidence values  {len(confidences)}  {confidences[:12]}")
     print(f"  slots used         {dict(slots_used.most_common())}")

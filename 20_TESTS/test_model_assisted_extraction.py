@@ -505,3 +505,71 @@ def test_every_documented_claim_type_is_accepted(claim_type):
     accepted, rejects = _run([dict(GOOD, claim_type=claim_type)])
     assert rejects == {}, rejects
     assert accepted[0]["claim_type"] == claim_type
+
+
+def test_min_occurrences_filters_by_the_only_observed_signal(tmp_path, monkeypatch):
+    """Confidence and claim_type are constant, so neither can rank anything.
+
+    How many distinct sections define a term is counted rather than claimed,
+    which makes it the only usable selectivity signal on this pipeline.
+    """
+    #: Three sections; the fake provider returns the same pair every time, so
+    #: both concepts end at occurrences=3 and both survive a floor of 2.
+    body = "\n\n".join(f"# Section {i}\n\n{CHUNK}" for i in range(1, 4))
+    book = tmp_path / "b.txt"
+    book.write_text(body, encoding="utf-8")
+    out = tmp_path / "o.json"
+
+    payload = json.dumps([GOOD])
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=payload),
+    )
+
+    def run(min_occ):
+        monkeypatch.setattr(sys, "argv", [
+            "x", "--input-file", str(book), "--source-book", "b",
+            "--output-file", str(out), "--provider", "fake",
+            "--min-occurrences", str(min_occ),
+        ])
+        assert M.main() == 0
+        return json.loads(out.read_text(encoding="utf-8"))
+
+    kept_all = run(1)
+    assert len(kept_all) == 1
+    assert kept_all[0]["occurrences"] == 3
+
+    #: A floor above what any concept reached removes everything, and that is
+    #: the honest outcome rather than an error.
+    assert run(4) == []
+
+
+def test_the_prompt_names_no_desirable_concept():
+    """Naming good outputs turns extraction into recall.
+
+    Measured: a prompt version listing "catastrophic forgetting", "episodic
+    memory", "synaptic consolidation" and "stability-plasticity trade-off" as
+    examples of good concepts made the model return those four in nearly
+    every passage — one in seven of twelve chunks — and they were four of the
+    five surviving candidates. Yield looked like it had improved by 85%. It
+    had not; the model was echoing the prompt.
+
+    This is r027's defect reintroduced through the prompt rather than the
+    code, and the code test for it cannot see the prompt, so this guards the
+    prompt directly.
+    """
+    banned = [
+        "catastrophic forgetting",
+        "episodic memory",
+        "synaptic consolidation",
+        "stability-plasticity trade-off",
+    ]
+    prompt = M.PROMPT.lower()
+    #: The exclusion list is fine — an exclusion cannot be echoed as output.
+    #: What must not appear is a concept named as desirable.
+    good_section = prompt.split("not concepts:")[0]
+    for term in banned:
+        assert term not in good_section, (
+            f"{term!r} is named before the exclusion list; the model will "
+            "return it regardless of the passage"
+        )

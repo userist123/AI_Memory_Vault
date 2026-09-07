@@ -670,3 +670,54 @@ raise the bar for what counts as load-bearing, or accept a review queue in
 the thousands.
 
 Nothing here should proceed to a corpus run until that is settled.
+
+## r031 — an attempted fix that failed, and why it looked like it worked
+
+The full paper, 12 chunks, three prompt versions, same model and seed:
+
+| prompt | candidates | setup noise present |
+|---|---|---|
+| v1 original | 35 | yes — half the list |
+| v2 + exclusions + 4 good examples | **5** | none |
+| v3 + exclusions only | **48** | yes, all of it back |
+
+v2 looks like an 85% reduction with the noise eliminated. It is not a fix.
+
+Four of v2's five survivors were **the four concepts the prompt named as
+good examples**: catastrophic forgetting, episodic memory, synaptic
+consolidation, stability-plasticity trade-off. The occurrence histogram shows
+one of them returned in seven of twelve chunks and three others in four each
+— regardless of what the passage said. The model was not filtering better, it
+was repeating the prompt.
+
+That is r027's defect — extraction that is really recall — reintroduced
+through the prompt instead of the code. The existing regression test for it
+uses `FakeModelProvider` and therefore never sees the prompt at all, so
+nothing in the suite could have caught it. `test_the_prompt_names_no_desirable_concept`
+now asserts against the prompt text directly.
+
+v3 removes the positive examples and keeps the exclusions. The result settles
+the question: **the exclusion list does not work.** Every term it names by
+example — `buffer size`, `SGD optimizer`, `grid search`, `random crop`,
+`Rot-MNIST`, `backbone`, `hyperparameters`, `number of training epochs` —
+comes back, alongside `GCIL-U`, `GCIL-L` and `S-TinyImageNet`. Yield is
+higher than the original 35.
+
+### Where that leaves the selectivity problem
+
+- **Model confidence**: constant. Cannot rank.
+- **claim_type**: constant, and swapped with slot on this model. Cannot rank.
+- **occurrences**: 47 of 48 concepts appear exactly once. Cannot rank.
+- **Prompt-level exclusion**: ignored by the model. Does not filter.
+
+Every mechanism tried for separating load-bearing concepts from experimental
+furniture has now been measured and none of them works. The candidates are
+individually reasonable and roughly half of them are things like "validation
+set" and "ReLU units".
+
+Prompt engineering is not going to fix this on this model, and the honest
+version of the pipeline is the one that yields ~48 per paper with half of it
+noise — not the one that yields 5 by echoing its own instructions.
+
+A corpus run at this rate is ~4,400 candidates. That is not a queue anyone
+reviews.
