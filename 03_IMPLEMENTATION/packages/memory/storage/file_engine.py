@@ -51,6 +51,9 @@ LEGACY_WRITE_ROOTS = (
 
 CANONICAL_FOLDERS = CONTENT_ROOTS + LEGACY_WRITE_ROOTS
 
+_TREE_LABELS = {root: "content root" for root in CONTENT_ROOTS}
+_TREE_LABELS.update({root: "legacy write root" for root in LEGACY_WRITE_ROOTS})
+
 
 class FileStorageEngine:
     def __init__(self, vault_root: str):
@@ -58,6 +61,25 @@ class FileStorageEngine:
         self.id_to_path: Dict[str, str] = {}
         self._cache: Dict[str, Tuple[float, Dict[str, Any]]] = {}
         self._initialize_index()
+
+    def _tree_label(self, filepath: str) -> str:
+        """Which of CONTENT_ROOTS / LEGACY_WRITE_ROOTS `filepath` falls under,
+        for the duplicate-UUID diagnostic below. Content roots are the
+        intended canonical source (see the module docstring); legacy roots
+        are scanned only because path_resolver.py still writes new notes
+        there. This does not decide which specific copy is correct -- a
+        content-root path is only canonical if it is genuine corpus content,
+        not a test fixture that landed there by accident (see WP-0,
+        01_ARCHITECTURE/knowledge/test_00000000.md moved out for exactly that
+        reason) -- it only tells the reader which rule applies to each path.
+        """
+        try:
+            rel = os.path.relpath(filepath, self.vault_root)
+        except ValueError:
+            return "unrecognized root"
+        top = rel.replace("\\", "/").split("/", 1)[0]
+        label = _TREE_LABELS.get(top)
+        return f"{label} ({top})" if label else f"unrecognized root ({top})"
 
     def _initialize_index(self):
         # Scan canonical folders to build the UUID -> Path index
@@ -81,7 +103,18 @@ class FileStorageEngine:
                     note_id = data.get("id")
                     if note_id:
                         if note_id in self.id_to_path:
-                            raise ValueError(f"Duplicate UUID found: {note_id} in {filepath} and {self.id_to_path[note_id]}")
+                            existing_path = self.id_to_path[note_id]
+                            raise ValueError(
+                                f"Duplicate UUID found: {note_id}\n"
+                                f"  existing: {existing_path} -- {self._tree_label(existing_path)}\n"
+                                f"  new:      {filepath} -- {self._tree_label(filepath)}\n"
+                                "Content roots (01_ARCHITECTURE, 02_PRODUCT, 10_DOCUMENTATION, "
+                                "00_GOVERNANCE) are the canonical corpus; legacy write roots are "
+                                "scanned only because path_resolver.py still writes new notes "
+                                "there (see storage/path_resolver.py). Two notes cannot share an "
+                                "id -- remove or renumber whichever copy is not meant to be "
+                                "canonical."
+                            )
                         self.id_to_path[note_id] = filepath
                         mtime = os.path.getmtime(filepath)
                         self._cache[note_id] = (mtime, data)

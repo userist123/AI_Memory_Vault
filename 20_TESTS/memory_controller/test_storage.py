@@ -160,9 +160,34 @@ def test_duplicate_uuid_detection(temp_vault):
     p2 = os.path.join(temp_vault, "02_PROJECTS", f"B_{note['id']}.md")
     with open(p1, 'w') as f: f.write(serialize(note))
     with open(p2, 'w') as f: f.write(serialize(note))
-    
+
     with pytest.raises(ValueError, match="Duplicate UUID"):
         FileStorageEngine(temp_vault)
+
+def test_duplicate_uuid_between_content_root_and_legacy_root_names_both_trees(temp_vault):
+    """WP-0 (r024): the real collision was a content-root note (a tracked
+    test fixture that landed in 01_ARCHITECTURE/knowledge/) sharing an id
+    with a legacy-root copy under 01_KNOWLEDGE/ -- not two legacy-root
+    copies, which is all the pre-existing test above covers. The hard
+    failure must stay (this must still raise), but the message must let a
+    reader tell which copy is in the canonical content tree and which is in
+    the legacy write tree, by naming both paths and both tree labels."""
+    content_root = os.path.join(temp_vault, "01_ARCHITECTURE", "knowledge")
+    os.makedirs(content_root, exist_ok=True)
+    note = create_valid_note()
+    content_path = os.path.join(content_root, f"canonical_{note['id']}.md")
+    legacy_path = os.path.join(temp_vault, "01_KNOWLEDGE", f"stray_{note['id']}.md")
+    with open(content_path, 'w') as f: f.write(serialize(note))
+    with open(legacy_path, 'w') as f: f.write(serialize(note))
+
+    with pytest.raises(ValueError, match="Duplicate UUID") as exc_info:
+        FileStorageEngine(temp_vault)
+
+    message = str(exc_info.value)
+    assert content_path in message
+    assert legacy_path in message
+    assert "content root" in message
+    assert "legacy write root" in message
 
 def test_malformed_frontmatter(temp_vault):
     bad_path = os.path.join(temp_vault, "01_KNOWLEDGE", "bad.md")
