@@ -183,6 +183,7 @@ class MemoryController:
         strict_graph_expansion: bool = False,
         graph_expansion_budget: Optional[int] = None,
         ranking_arm: Optional[str] = None,
+        classifier_filter_arm: Optional[str] = None,
     ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
@@ -221,6 +222,12 @@ class MemoryController:
         #: expansion's own scoring (lines ~563, ~575) is untouched, per
         #: "do not touch graph expansion. It is measured and off."
         self.ranking_arm = ranking_arm
+        #: r025 WP-9 Phase B classifier-filter arm (None/'hard' = production
+        #: default, unchanged: the classifier's inferred lifecycle/type
+        #: filters are applied as hard exclusions in storage.query(), same
+        #: as every explicit caller-supplied filter). Off by default, per
+        #: requirement 3. See CLASSIFIER_FILTER_ARMS and RetrievalEngine.retrieve().
+        self.classifier_filter_arm = classifier_filter_arm
 
     def _is_hub_node(self, node_id: str) -> bool:
         """Return True if node degree > 10 (hub cap constraint)."""
@@ -385,6 +392,7 @@ class MemoryController:
         strict_graph_expansion: Optional[bool] = None,
         graph_expansion_budget: Optional[int] = None,
         ranking_arm: Optional[str] = None,
+        classifier_filter_arm: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
@@ -401,12 +409,23 @@ class MemoryController:
             # Load budget for this agent
             budget = load_agent_budget(principal.value)
             disclosure_level = getattr(self, 'default_disclosure', 'metadata')
-            # Classify query
+            # Classify query. r025 WP-9: lifecycle_filters/target_types are
+            # EITHER entirely the classifier's own inference OR entirely a
+            # caller's explicit override (the block below replaces the list
+            # wholesale, never merges) -- so one boolean per dimension fully
+            # captures the distinction Phase B's arms need. RAW exclusion is
+            # unconditional in storage.query() regardless of this flag and
+            # is never in scope for any arm below; only the classifier's
+            # OWN inferred lifecycle/type filters are ever softened.
             classified = self.query_classifier.classify(sanitized)
+            classified['lifecycle_filters_source'] = 'inferred' if classified.get('lifecycle_filters') else 'none'
+            classified['target_types_source'] = 'inferred' if classified.get('target_types') else 'none'
             if lifecycles is not None:
                 classified['lifecycle_filters'] = [l.value if isinstance(l, Lifecycle) else l for l in lifecycles]
+                classified['lifecycle_filters_source'] = 'explicit'
             if types is not None:
                 classified['target_types'] = types
+                classified['target_types_source'] = 'explicit'
             # Handle pagination token decoding if provided
             offset = 0
             if page_token:
@@ -437,9 +456,14 @@ class MemoryController:
             # overlap over notes already filtered by lifecycle/type/RAW; see
             # RetrievalEngine.retrieve() / candidate_generation.py).
             candidate_trace: Dict[str, Any] = {}
+            active_classifier_filter_arm = (
+                classifier_filter_arm if classifier_filter_arm is not None
+                else getattr(self, 'classifier_filter_arm', None)
+            )
             notes = self.retrieval_engine.retrieve(
                 classified, principal, query_fp, disclosure_level, budget,
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
+                classifier_filter_arm=active_classifier_filter_arm,
             )
 
             # Score relevance of initial retrieved notes. Confidence stays in
