@@ -63,6 +63,19 @@ def build(index, storage, graph_on: bool) -> MemoryController:
     )
 
 
+#: r025 WP-11: there is no abstention signal to score against (Phase A,
+#: 07_EVALUATION/r025_wp11_abstention/PHASE_A_CALIBRATION.md — top
+#: fused_score, margin, and bm25/entity top-1 agreement all fail to
+#: separate answerable heldout queries from unanswerable/nonsense ones; the
+#: non-answerable population scores HIGHER on average on two of the three
+#: signals). Scoring an abstain case as `not (gold & context)` is a
+#: tautology, not a measurement: `gold_relevant_notes` is always `[]` for
+#: these cases by construction, so `gold & context` is always empty and the
+#: case scores 1.0 in every arm regardless of what the system does. Marking
+#: it UNMEASURABLE instead of a fabricated 1.0 is the fix Phase C requires.
+UNMEASURABLE = "UNMEASURABLE"
+
+
 def run_case(controller: MemoryController, case: dict, index) -> dict:
     pack = controller.search(Principal.HUMAN, case["query"], page_size=10)
     trace = pack.get("candidate_trace", {}) or {}
@@ -78,15 +91,27 @@ def run_case(controller: MemoryController, case: dict, index) -> dict:
     context = {r.get("id") for r in pack.get("results", []) if r.get("id")}
     gold = set(case["gold_relevant_notes"])
 
+    if case["abstain"]:
+        # No signal exists yet to say the system "declined" anything — it
+        # returned a normal ranked page like any other query (see Phase A).
+        # UNMEASURABLE until an actual abstention mechanism exists and is
+        # switched on (none is, per Phase B's finding: there is no signal to
+        # build one from yet).
+        return {
+            "id": case["id"],
+            "class": case["class"],
+            "candidate_recall": UNMEASURABLE,
+            "context_recall": UNMEASURABLE,
+            "answer_correctness": UNMEASURABLE,
+            "graph_status": trace.get("graph_expansion_status"),
+            "expanded": len(trace.get("graph_expanded_ids") or []),
+        }
+
     blob = " ".join(
         index.by_id[n].text for n in context if n in index.by_id
     ).lower()
     facts_ok = all(f.lower() in blob for f in case["required_facts"]) if case["required_facts"] else False
-
-    if case["abstain"]:
-        correct = not (gold & context)
-    else:
-        correct = bool(gold & context) and facts_ok
+    correct = bool(gold & context) and facts_ok
 
     return {
         "id": case["id"],
@@ -100,37 +125,46 @@ def run_case(controller: MemoryController, case: dict, index) -> dict:
 
 
 def summarise(rows: list[dict]) -> dict:
+    def _agg(sub: list[dict]) -> dict:
+        measurable = [r for r in sub if r["candidate_recall"] != UNMEASURABLE]
+        n_unmeasurable = len(sub) - len(measurable)
+        agg = {"n": len(sub), "n_measurable": len(measurable), "n_unmeasurable": n_unmeasurable}
+        if measurable:
+            agg["candidate_recall"] = sum(r["candidate_recall"] for r in measurable) / len(measurable)
+            agg["context_recall"] = sum(r["context_recall"] for r in measurable) / len(measurable)
+            agg["answer_correctness"] = sum(r["answer_correctness"] for r in measurable) / len(measurable)
+        else:
+            agg["candidate_recall"] = agg["context_recall"] = agg["answer_correctness"] = None
+        return agg
+
     out = {}
     for klass in sorted({r["class"] for r in rows}):
-        sub = [r for r in rows if r["class"] == klass]
-        out[klass] = {
-            "n": len(sub),
-            "candidate_recall": sum(r["candidate_recall"] for r in sub) / len(sub),
-            "context_recall": sum(r["context_recall"] for r in sub) / len(sub),
-            "answer_correctness": sum(r["answer_correctness"] for r in sub) / len(sub),
-        }
-    out["ALL"] = {
-        "n": len(rows),
-        "candidate_recall": sum(r["candidate_recall"] for r in rows) / len(rows),
-        "context_recall": sum(r["context_recall"] for r in rows) / len(rows),
-        "answer_correctness": sum(r["answer_correctness"] for r in rows) / len(rows),
-    }
+        out[klass] = _agg([r for r in rows if r["class"] == klass])
+    out["ALL"] = _agg(rows)
     return out
 
 
 def mcnemar(off: list[dict], on: list[dict], field: str) -> dict:
-    """Discordant pairs only — the paired test the design calls for."""
+    """Discordant pairs only — the paired test the design calls for.
+
+    UNMEASURABLE cases are excluded (r025 WP-11): they carry no comparable
+    0/1 value in either arm, so including them would either crash the
+    comparison or silently coerce a non-numeric sentinel into a number.
+    """
     by_id = {r["id"]: r for r in off}
-    b = c = 0
+    b = c = skipped = 0
     for r in on:
         o = by_id.get(r["id"])
         if not o:
+            continue
+        if r[field] == UNMEASURABLE or o[field] == UNMEASURABLE:
+            skipped += 1
             continue
         if o[field] == 1 and r[field] == 0:
             b += 1
         elif o[field] == 0 and r[field] == 1:
             c += 1
-    return {"off_only": b, "on_only": c, "discordant": b + c}
+    return {"off_only": b, "on_only": c, "discordant": b + c, "skipped_unmeasurable": skipped}
 
 
 def main() -> int:
