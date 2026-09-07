@@ -1,0 +1,46 @@
+{
+  "total_edges": 278,
+  "verified_ceiling": 32,
+  "target_new_cases": 20,
+  "contract_md_claim": {
+    "total_edges": 278,
+    "substantive_edges": 217,
+    "disjoint_ceiling": 32
+  },
+  "edge_count_matches_contract": true,
+  "filter_scan": {
+    "no_filter": {
+      "undirected_pairs": 172,
+      "nodes": 121,
+      "max_matching_cases": 42
+    },
+    "exclude_legal_index": {
+      "undirected_pairs": 156,
+      "nodes": 113,
+      "max_matching_cases": 41
+    },
+    "exclude_legal_index_stub100": {
+      "undirected_pairs": 146,
+      "nodes": 101,
+      "max_matching_cases": 38
+    },
+    "exclude_legal_index_manifest_stub100": {
+      "undirected_pairs": 126,
+      "nodes": 98,
+      "max_matching_cases": 36
+    }
+  },
+  "eligible_undirected_pairs": 56,
+  "eligible_nodes": 52,
+  "candidate_matching_upper_bound": 19,
+  "candidates_tried": 56,
+  "verified_before_disjointness": 2,
+  "rejected": 54,
+  "rejected_reasons": {
+    "gold_never_reached_via_graph_expansion": 36,
+    "gold_reachable_without_graph_expansion_not_a_real_graph_test": 16,
+    "exception_on_graph_on_search:GraphExpansionDegraded": 1,
+    "gold_reached_as_candidate_but_not_promoted_into_final_context": 1
+  },
+  "accepted_disjoint": 2
+}
