@@ -25,5 +25,5 @@ What is this system and what is it not?
 none
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added |
-|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id |
+|---|---|---|---|---|---|

@@ -89,7 +89,7 @@ def append_candidate_concepts_to_slot(
 
         existing_normalized.add(norm_name)
         conf_str = f"{item.get('confidence_in_literature', 0.90):.2f}"
-        row = f"| {item['concept']} | {item['source_book']} | {conf_str} | proposed | {date_str} |"
+        row = f"| {item['concept']} | {item['source_book']} | {conf_str} | proposed | {date_str} | |"
         new_rows.append(row)
         added_count += 1
 
@@ -97,7 +97,11 @@ def append_candidate_concepts_to_slot(
         return 0
 
     # Locate Candidate concepts table section
-    table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \|\s*\n\|---\|---\|---\|---\|---\|)', content)
+    table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \| promoted_note_id \|\s*\n\|---\|---\|---\|---\|---\|---\|)', content)
+    if not table_match:
+        # Fallback to 5-column header if not yet updated
+        table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \|\s*\n\|---\|---\|---\|---\|---\|)', content)
+
     if not table_match:
         raise ValueError(f"Could not locate '## Candidate concepts' table in {slot_file_path}")
 
