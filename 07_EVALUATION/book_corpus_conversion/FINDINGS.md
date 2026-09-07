@@ -151,3 +151,90 @@ Ingesting the remaining books through the current extractor would add roughly
 a hundred rows of which a quarter are unusable on their face, and the rest
 carry definitions no reader would accept — with a confidence score that says
 0.85 regardless.
+
+---
+
+# r031 — model-assisted extraction
+
+Decided after the measurements above: the rule-based extractor is not tuned
+into working on monograph prose, it is replaced for that job.
+
+## Corpus decision
+
+`RelațiiGraph+Judecată` is empty and stays empty. The theme is already
+covered by the books under `Ontologie+Memorie-episodică-semantică-procedurală`
+and `Memorie procedurală+Judecată+Routing`. It is dropped from the plan as a
+separate theme and no files are moved into it. The corpus is 20 files in five
+themes, not six.
+
+## How it is wired
+
+`30_SCRIPTS/ingestion/model_extract_concepts.py` depends only on the
+provider-neutral `ModelProvider` Protocol. Tests run against
+`FakeModelProvider` with no network; real runs use `LocalProvider` against a
+local Ollama endpoint — no API key, no cloud account, no vendor SDK. The
+script's original note about avoiding "external LLM API dependencies" is
+honoured: nothing leaves the machine.
+
+Note for whoever reads CLAUDE.md next: its protected-core paths
+(`cognitive_core/model_provider.py` and siblings) do not exist. The modules
+are in `03_IMPLEMENTATION/packages/providers/`.
+
+## First real measurement
+
+Three chunks of `sarfraz22a`, `glm-4.7-flash` via Ollama:
+
+| | |
+|---|---|
+| candidates kept | 13 |
+| rejected | 4 |
+| — evidence not present in the source | 2 |
+| — definition too short | 1 |
+| — paraphrase too close to source | 1 |
+
+The rule-based extractor produced 5 from the whole book. More importantly,
+the definitions are usable:
+
+> **Catastrophic forgetting** — A degradation in model performance on
+> previously learned tasks that occurs when the model learns new tasks.
+
+against the same pipeline's previous output:
+
+> "Mental exercise defines a finding for Ramon y Cajal spelled out this idea
+> in his Croonian."
+
+**The two rejected fabrications are the important number.** The model
+produced evidence quotes that were not in the passage it was given, and the
+grounding check caught both. That check runs against the text actually sent,
+not against the model's claim about it.
+
+## Three defects in this package, unfixed and reported
+
+1. **No deduplication.** Three chunks produced "Synaptic consolidation"
+   three times and "Episodic Memory" twice. Dedup is needed within a book
+   before it is needed across books.
+2. **Confidence is still not calibrated.** Values were 0.9, 0.95 and 1.0 —
+   three distinct values instead of the previous two, which is better and
+   still not a measurement. The model is asked for the full range and does
+   not use it.
+3. **Slot assignment is unreliable.** "Synaptic consolidation" was routed to
+   `procedures` rather than `consolidation`; "Catastrophic forgetting" to
+   `state`. The slot gate checks that a slot is canonical, not that it is
+   correct.
+
+## Cost
+
+Roughly 2.6 minutes per chunk on this machine. At 1,107 chunks the full
+corpus is on the order of 48 hours of local inference. That is a scheduling
+constraint, not a blocker, but it rules out iterating on the whole corpus —
+tune on a few chunks, then run once.
+
+## A known gap, recorded as a passing test
+
+`test_known_gap_heavy_rewording_passes_both_paraphrase_floors` asserts that a
+definition which rewords every content word while keeping the clause
+structure scores 0.43 token overlap, clears both floors, and is accepted.
+Neither gate can see structure, only vocabulary. The ceiling is not lowered
+to catch it, because 0.60 is set by the measured 0.68-0.72 defect and
+tightening further would reject genuine definitions that legitimately reuse
+technical terminology.
