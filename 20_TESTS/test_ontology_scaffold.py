@@ -155,4 +155,4 @@ def test_candidate_concepts_table_structure():
         for row in data_rows:
             cols = [c.strip() for c in row.split("|")]
             assert len(cols) == 7, f"Invalid 5-column row format in {filename}: {row}"
-            assert cols[4] in ["proposed", "REVIEW", "ACTIVE"], f"Invalid status in {filename}: {cols[4]}"
+            assert cols[4] in ["proposed", "unverified_source", "REVIEW", "ACTIVE"], f"Invalid status in {filename}: {cols[4]}"

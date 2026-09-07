@@ -28,4 +28,4 @@ How are operations executed?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added |
 |---|---|---|---|---|
-| Continual Incremental Learning | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | proposed | 2026-09-07 |
+| Continual Incremental Learning | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | unverified_source | 2026-09-07 |
