@@ -237,8 +237,11 @@ def test_an_empty_response_is_counted_rather_than_read_as_no_concepts():
     assert "unparseable_response" not in rejects
 
 
-def test_provider_failure_is_recorded_not_raised():
+def test_provider_failure_is_recorded_not_raised(monkeypatch):
     """A timeout must not read as 'the model found nothing here'."""
+    #: Without this the retry backoff is really slept and the suite goes from
+    #: 0.06s to 15s. A slow test is a test that stops being run.
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
 
     class Failing:
         def generate(self, request):
@@ -399,3 +402,52 @@ def test_acronym_gloss_is_stripped_wherever_it_sits():
     )
     assert rejects == {}, rejects
     assert accepted[0]["concept"] == "Quenched harmonic buffering"
+
+
+def test_a_transient_provider_failure_is_retried(monkeypatch):
+    """Measured: two chunks failed and the identical request then worked.
+
+    Unretried, a passing run silently loses those chunks — a hole in the
+    extraction with nothing in the output pointing at it.
+    """
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
+
+    class FlakyOnce:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self, request):
+            self.calls += 1
+            if self.calls == 1:
+                raise ConnectionError("endpoint busy")
+            return FakeModelProvider(canned_response=json.dumps([GOOD])).generate(
+                request
+            )
+
+    provider = FlakyOnce()
+    accepted, rejects = M.extract_from_chunk(
+        provider, {"heading": "S", "content": CHUNK}, "b", "standard"
+    )
+    assert provider.calls == 2
+    assert len(accepted) == 1
+    assert rejects["provider_retry_succeeded_on_2"] == 1
+
+
+def test_a_persistent_provider_failure_is_recorded_not_raised(monkeypatch):
+    """One unreachable chunk must not end a multi-hour run."""
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
+
+    class AlwaysFails:
+        calls = 0
+
+        def generate(self, request):
+            AlwaysFails.calls += 1
+            raise TimeoutError("no response")
+
+    accepted, rejects = M.extract_from_chunk(
+        AlwaysFails(), {"heading": "S", "content": CHUNK}, "b", "standard",
+        attempts=3,
+    )
+    assert AlwaysFails.calls == 3
+    assert accepted == []
+    assert rejects["provider_error:TimeoutError"] == 1

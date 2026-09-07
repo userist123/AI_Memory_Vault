@@ -442,3 +442,64 @@ Nothing here claims it did.
 fires exactly once per warm run remains unconfirmed under this
 configuration — different chunk count, different regime. It is not carried
 forward as established.
+
+## r031 — retries, and what survives the merge boundary
+
+### Provider failures are transient, and losing a chunk is silent
+
+One run lost both its chunks to `LocalProviderError`. The identical request,
+repeated by hand, succeeded in 148 seconds. The failure is transient, not
+deterministic.
+
+Unretried, that is a hole in the extraction with nothing in the output
+pointing at it: the run reports a candidate count, and the count is simply
+lower than it should be. Over a corpus of 1,107 chunks that is not a rare
+event to be tolerated, it is an unknown fraction of the corpus quietly
+missing.
+
+`--attempts` defaults to 3 with an increasing backoff. A retry that succeeds
+is counted under its own key, so the rate is visible rather than hidden. A
+chunk that fails all attempts is still recorded and the run continues — one
+unreachable chunk must not end a multi-hour job.
+
+Adding this made the test suite take 15 seconds instead of 0.06, because an
+older test slept the real backoff. Patched: a slow suite is a suite that
+stops being run.
+
+### The integration works, and drops almost everything
+
+Verified end to end against a COPY of the slot files
+(`--slots-dir` pointing at a temporary directory, vault untouched and
+confirmed clean with `git status`). All 8 candidates merged into their
+correct slot files.
+
+What arrives in the ontology:
+
+```
+| Synaptic Consolidation | sarfraz | 1.00 | proposed | 2026-09-08 | |
+```
+
+The candidate row has six fixed columns, and none of them is the definition,
+the evidence quote, or `occurrences`.
+
+That matters more than it looks:
+
+- The **evidence quote is the anti-hallucination mechanism**. It is checked
+  against the source text, it is why three fabricated citations were caught
+  in a single run — and it does not reach the person who reviews the row.
+- **`occurrences` is the only field carrying real information**, since it is
+  counted rather than claimed, and it is dropped.
+- **`confidence` is written as `1.00` on every row.** It is the one thing
+  that does survive, it is meaningless, and in a table it reads as maximum
+  certainty.
+
+r028 established that every promoted or declined candidate needs a sentence
+of actual reasoning. A reviewer working from the slot table has a term, a
+book name, and a number that is always 1.00. There is nothing there to reason
+from; the reasoning material is in the staging JSON that the merge discards.
+
+This is not a defect in the merge script — it predates this work and its row
+format is the ontology's. It is a statement about what model-assisted
+extraction needs that the current row cannot carry, and it should be settled
+before a corpus-scale run fills sixteen slot tables with rows that cannot be
+reviewed.

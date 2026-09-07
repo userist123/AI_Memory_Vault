@@ -68,6 +68,7 @@ import json
 import pathlib
 import re
 import sys
+import time
 from collections import Counter
 from typing import Any, Iterable
 
@@ -171,6 +172,12 @@ Return JSON only — a list of objects, no prose around it. Each object:
   "slot"       The single best fit. Choose by which QUESTION the concept
                helps answer, not by which name sounds closest:
 {slots}
+               claim_type and slot are INDEPENDENT. A mechanism can belong
+               to any slot. Do not pick "procedures" merely because the
+               concept is a mechanism, a method or an algorithm — ask which
+               question it answers. A mechanism by which experience becomes
+               durable knowledge belongs to consolidation; a definition of a
+               kind of memory belongs to ontology.
   "confidence" Your confidence from 0.0 to 1.0 that this is a real, load-
                bearing concept the passage genuinely defines. Use the full
                range. Be honest when you are unsure.
@@ -317,6 +324,8 @@ def extract_from_chunk(
     sampling: dict[str, Any] | None = None,
     keep_alive: str = "",
     rejected_out: list[dict[str, Any]] | None = None,
+    attempts: int = 3,
+    retry_backoff: float = 5.0,
 ) -> tuple[list[dict[str, Any]], Counter[str]]:
     """One model call for one chunk. Returns accepted rows and reject counts."""
     slot_block = slot_block or ", ".join(CANONICAL_SLOTS)
@@ -370,10 +379,27 @@ def extract_from_chunk(
         metadata=metadata,
     )
 
-    try:
-        response = provider.generate(request)
-    except Exception as exc:  # provider failures are data, not a crash
-        rejects[f"provider_error:{type(exc).__name__}"] += 1
+    #: Provider failures here are transient, not deterministic: two chunks
+    #: failed on one run and the identical request succeeded in 148s when
+    #: repeated. Without a retry a passing run quietly loses those chunks,
+    #: and over a corpus that is a hole in the extraction that nothing in the
+    #: output points at. The final failure is still recorded rather than
+    #: raised — one unreachable chunk should not end a multi-hour run.
+    response = None
+    for attempt in range(1, max(1, attempts) + 1):
+        try:
+            response = provider.generate(request)
+            if attempt > 1:
+                rejects[f"provider_retry_succeeded_on_{attempt}"] += 1
+            break
+        except Exception as exc:  # noqa: BLE001 - failures are data here
+            if attempt >= max(1, attempts):
+                rejects[f"provider_error:{type(exc).__name__}"] += 1
+                return [], rejects
+            time.sleep(retry_backoff * attempt)
+
+    if response is None:  # pragma: no cover - loop always returns or breaks
+        rejects["provider_error:unknown"] += 1
         return [], rejects
 
     #: An empty response and "this passage defines nothing" are the same
@@ -524,6 +550,15 @@ def main() -> int:
         help="sampling seed, recorded so a run can be reproduced",
     )
     ap.add_argument(
+        "--attempts", type=int, default=3,
+        help="tries per chunk before giving up; provider failures on this "
+             "endpoint are transient and an unretried one loses the chunk",
+    )
+    ap.add_argument(
+        "--retry-backoff", type=float, default=5.0,
+        help="seconds before the first retry, multiplied by attempt number",
+    )
+    ap.add_argument(
         "--rejects-file", type=pathlib.Path,
         help="write every rejected candidate with its reason here; a reject "
              "count says something was refused, not what",
@@ -569,7 +604,8 @@ def main() -> int:
             continue
         accepted, chunk_rejects = extract_from_chunk(
             provider, chunk, args.source_book, args.model_tier, slot_block,
-            sampling, args.keep_alive, rejected_rows,
+            sampling, args.keep_alive, rejected_rows, args.attempts,
+            args.retry_backoff,
         )
         rows.extend(accepted)
         rejects.update(chunk_rejects)
