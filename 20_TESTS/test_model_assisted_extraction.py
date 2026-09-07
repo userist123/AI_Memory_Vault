@@ -208,13 +208,33 @@ def test_rejects_a_missing_or_out_of_range_confidence():
 
 
 def test_unparseable_model_output_yields_nothing_rather_than_guesses():
-    """FakeModelProvider's default reply is not JSON."""
+    """FakeModelProvider's default reply is not JSON.
+
+    Counted, not silently zero: "the model answered something we could not
+    read" and "this passage defines nothing" are the same zero downstream and
+    are not the same event.
+    """
     provider = FakeModelProvider()
     accepted, rejects = M.extract_from_chunk(
         provider, {"heading": "S", "content": CHUNK}, "test_book", "standard"
     )
     assert accepted == []
-    assert rejects == {}
+    assert rejects["unparseable_response"] == 1
+
+
+def test_an_empty_response_is_counted_rather_than_read_as_no_concepts():
+    """Measured: Ollama's `format: "json"` returns "" from glm-4.7-flash.
+
+    Silently that reads as a passage with nothing in it, which is why the
+    option is not set and why this case has its own counter.
+    """
+    provider = FakeModelProvider(canned_response="")
+    accepted, rejects = M.extract_from_chunk(
+        provider, {"heading": "S", "content": CHUNK}, "test_book", "standard"
+    )
+    assert accepted == []
+    assert rejects["empty_response"] == 1
+    assert "unparseable_response" not in rejects
 
 
 def test_provider_failure_is_recorded_not_raised():

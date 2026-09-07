@@ -284,3 +284,84 @@ slot routing improved; the mechanism is in place and its effect is unmeasured.
   range does not produce it.
 - Slot correctness is unverified, per the variance finding above.
 - Cross-book deduplication is not done. Within-book is.
+
+## r031 — the noise floor, measured
+
+The previous section reported that the same three chunks yielded 13
+candidates and then 2, and that nothing could be concluded from a single run.
+That is now resolved, and the answer is not the one that was expected.
+
+### Sampling is pinned through the provider's own escape hatch
+
+`temperature: 0` and a fixed `seed` go through `metadata["local_options"]`,
+which `LocalProvider` already supports. `ModelRequest` stays provider-neutral;
+no Ollama-specific field was added to the shared contract, and nothing in the
+protected core was touched.
+
+### The result: two stable regimes, not noise
+
+One chunk of `sarfraz22a`, five runs, identical settings throughout:
+
+| run | model state | candidates | terms |
+|---|---|---|---|
+| 1 | cold (first load) | 5 | Semantic memory, Episodic memory, Instance-based hippocampal system, Parametric neocortical system, Plasticity and stability |
+| 2 | warm | 6 | SYNERgy method, Continual learning, Experience replay, Dual memory experience replay, Episodic memory, Rehearsal-based approaches |
+| 3 | warm | 6 | *identical to run 2* |
+| 4 | warm | 6 | *identical to run 2* |
+| 5 | cold (forced unload) | 5 | *identical to run 1* |
+
+Runs 2-4 match byte for byte — same terms, same slots, same confidences, and
+the same seven rejections with the same breakdown. Runs 1 and 5 match each
+other.
+
+So the model is deterministic in **both** states. This is not warm-up noise
+that settles: it is two stable regimes, and load state selects between them.
+
+**Consequence for the long run.** Ollama unloads an idle model by default. A
+multi-hour ingestion can therefore cross a regime boundary partway through
+and extract the second half of a corpus differently from the first, with
+nothing in the output to indicate it. `--keep-alive` now defaults to 60m to
+hold the model resident, and the setting is printed with every run.
+
+**Consequence for comparisons.** Pinning the seed is necessary and not
+sufficient. Any A/B between two prompts must also control load state, or it
+measures the regime rather than the change — and with 5 vs 6 candidates
+between regimes, that difference is the same size as the effects being
+looked for.
+
+### `format: "json"` is measured broken on this model
+
+Ollama's structured-output flag looks like the correct way to guarantee
+parseable responses. Against `glm-4.7-flash` it returns an empty string in
+under a second, every time, while the identical request without it answers
+normally in 27s:
+
+| configuration | time | response |
+|---|---|---|
+| baseline | 27s | ` ```json [{"a": 1}] ``` ` |
+| `format: json` | 0s | *empty* |
+| `temperature` + `seed` | 6s | `[{"a": 1}]` |
+| both | 0s | *empty* |
+
+It is not set. Pinned sampling alone already produces clean JSON without
+fences.
+
+### The defect this exposed in our own code
+
+The first three pinned runs reported `0 candidates, 0 rejected` — which reads
+as three passages that happened to define nothing, not as a provider
+returning nothing at all. An empty response and an empty result were the same
+number.
+
+`empty_response` and `unparseable_response` are now counted separately, each
+with a test. This is the same failure shape as the `_normalize()` defect in
+r030: a legitimate-looking zero standing in front of no work.
+
+### Still open
+
+- Confidence remains uncalibrated.
+- `slot_unknown` fires exactly once in every warm run — a repeatable pattern,
+  not an accident. The model proposes a slot outside the ontology for the
+  same passage each time. Worth looking at, now that "the same each time" is
+  a statement that can be made.
+- Cross-book deduplication is still not done.

@@ -211,12 +211,29 @@ def parse_model_json(content: str) -> list[dict[str, Any]]:
     fence = re.search(r"```(?:json)?\s*(.+?)```", text, re.DOTALL)
     if fence:
         text = fence.group(1).strip()
-    start, end = text.find("["), text.rfind("]")
-    if start == -1 or end == -1 or end < start:
-        return []
+
+    parsed: Any = None
+    #: A provider asked for JSON often returns the list wrapped in an object
+    #: ({"concepts": [...]}), so try the whole document before falling back
+    #: to locating a bracketed list inside prose.
     try:
-        parsed = json.loads(text[start : end + 1])
+        parsed = json.loads(text)
     except json.JSONDecodeError:
+        start, end = text.find("["), text.rfind("]")
+        if start == -1 or end == -1 or end < start:
+            return []
+        try:
+            parsed = json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            return []
+
+    if isinstance(parsed, dict):
+        #: Exactly one list-valued key is unambiguous; more than one is not,
+        #: and guessing which one holds the concepts is how wrong fields get
+        #: in. Whatever the key is called, its shape is what identifies it.
+        lists = [v for v in parsed.values() if isinstance(v, list)]
+        parsed = lists[0] if len(lists) == 1 else []
+    if not isinstance(parsed, list):
         return []
     return [item for item in parsed if isinstance(item, dict)]
 
@@ -292,11 +309,48 @@ def extract_from_chunk(
     source_book: str,
     model_tier: str,
     slot_block: str = "",
+    sampling: dict[str, Any] | None = None,
+    keep_alive: str = "",
 ) -> tuple[list[dict[str, Any]], Counter[str]]:
     """One model call for one chunk. Returns accepted rows and reject counts."""
     slot_block = slot_block or ", ".join(CANONICAL_SLOTS)
     rejects: Counter[str] = Counter()
     content = chunk["content"]
+
+    #: Sampling is pinned. Two runs over identical chunks previously returned
+    #: 13 candidates and then 2, which is more spread than any prompt change
+    #: under test could produce — with that much noise no comparison between
+    #: two configurations means anything.
+    #:
+    #: Passed through metadata because ModelRequest is provider-neutral by
+    #: design and must not grow Ollama-specific fields.
+    #:
+    #: Ollama's `format: "json"` is deliberately NOT set. It looks like the
+    #: right way to guarantee parseable output, and measured against
+    #: glm-4.7-flash it returns an empty string in under a second, every
+    #: time — while the same request without it answers normally. A silent
+    #: empty response reads downstream as "this passage defines nothing",
+    #: which is the most expensive kind of wrong answer here.
+    metadata: dict[str, Any] = {
+        "source_book": source_book,
+        "heading": chunk["heading"],
+    }
+    if keep_alive:
+        #: Pinning the seed is not sufficient on its own. Measured on this
+        #: corpus: with temperature 0 and a fixed seed, three consecutive
+        #: warm runs over one chunk were byte-identical — same six terms,
+        #: same slots, same seven rejections. Forcing the model to unload and
+        #: running again produced a DIFFERENT six, and that cold result was
+        #: itself identical to the very first cold run.
+        #:
+        #: So there are two stable regimes, not warm-up noise, and load state
+        #: selects between them. Left alone, Ollama unloads an idle model,
+        #: which means a long ingestion can switch regime partway through and
+        #: extract the second half of a corpus differently from the first —
+        #: with nothing in the output to say it happened.
+        metadata["keep_alive"] = keep_alive
+    if sampling:
+        metadata["local_options"] = dict(sampling)
 
     request = ModelRequest(
         prompt=PROMPT.format(
@@ -307,7 +361,7 @@ def extract_from_chunk(
         ),
         model_tier=model_tier,
         system_prompt=SYSTEM_PROMPT,
-        metadata={"source_book": source_book, "heading": chunk["heading"]},
+        metadata=metadata,
     )
 
     try:
@@ -316,8 +370,19 @@ def extract_from_chunk(
         rejects[f"provider_error:{type(exc).__name__}"] += 1
         return [], rejects
 
+    #: An empty response and "this passage defines nothing" are the same
+    #: zero downstream, and they are not the same event. Counting it is what
+    #: turned a silent `format: json` failure into a one-line diagnosis.
+    if not response.content.strip():
+        rejects["empty_response"] += 1
+        return [], rejects
+
+    parsed = parse_model_json(response.content)
+    if not parsed and response.content.strip():
+        rejects["unparseable_response"] += 1
+
     accepted = []
-    for candidate in parse_model_json(response.content):
+    for candidate in parsed:
         ok, reason = validate(candidate, content)
         if not ok:
             rejects[reason] += 1
@@ -429,6 +494,19 @@ def main() -> int:
              "120 is not enough for a large model on a book chunk)",
     )
     ap.add_argument(
+        "--temperature", type=float, default=0.0,
+        help="0 pins sampling so two runs are comparable (default)",
+    )
+    ap.add_argument(
+        "--seed", type=int, default=42,
+        help="sampling seed, recorded so a run can be reproduced",
+    )
+    ap.add_argument(
+        "--keep-alive", default="60m",
+        help="how long the provider holds the model loaded between calls; "
+             "an unload mid-run silently changes the extraction regime",
+    )
+    ap.add_argument(
         "--num-ctx", type=int, default=32768,
         help="context window requested from the local model",
     )
@@ -451,6 +529,7 @@ def main() -> int:
         args.provider, args.model, args.timeout, args.num_ctx
     )
     slot_block = format_slot_block(load_slot_questions())
+    sampling = {"temperature": args.temperature, "seed": args.seed}
 
     rows: list[dict[str, Any]] = []
     rejects: Counter[str] = Counter()
@@ -461,7 +540,8 @@ def main() -> int:
             rejects["chunk_too_long"] += 1
             continue
         accepted, chunk_rejects = extract_from_chunk(
-            provider, chunk, args.source_book, args.model_tier, slot_block
+            provider, chunk, args.source_book, args.model_tier, slot_block,
+            sampling, args.keep_alive,
         )
         rows.extend(accepted)
         rejects.update(chunk_rejects)
