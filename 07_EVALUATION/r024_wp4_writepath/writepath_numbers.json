@@ -1,0 +1,30 @@
+{
+  "content_roots": [
+    "01_ARCHITECTURE",
+    "02_PRODUCT",
+    "10_DOCUMENTATION",
+    "00_GOVERNANCE"
+  ],
+  "legacy_write_roots": [
+    "00_CORE",
+    "01_KNOWLEDGE",
+    "02_PROJECTS",
+    "03_PROCEDURES",
+    "04_MEMORY",
+    "05_RESOURCES",
+    "99_SYSTEM"
+  ],
+  "notes_by_root": {
+    "01_ARCHITECTURE": 734,
+    "02_PRODUCT": 55,
+    "10_DOCUMENTATION": 22,
+    "00_GOVERNANCE": 39
+  },
+  "notes_in_content_roots": 850,
+  "notes_in_legacy_roots": 0,
+  "total_notes": 850,
+  "declared_relations_total": 113,
+  "declared_relations_crossing_content_legacy_boundary": 0,
+  "wikilinks_total": 485,
+  "wikilinks_crossing_content_legacy_boundary": 0
+}
