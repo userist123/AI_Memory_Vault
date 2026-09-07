@@ -562,3 +562,51 @@ than a default. A 7B model resident entirely in VRAM may be several times
 faster than a 30B model spilling to CPU, and the trade against extraction
 quality has to be seen in data — which is the measurement currently queued
 behind a stuck request.
+
+## r031 — a second model, and the gate it walked through
+
+`qwen2.5-coder:7b` (4.68 GB, the largest installed model that fits entirely
+in the 8 GB GPU) was run over three chunks of the same paper.
+
+Its definitions are good — arguably better than the 30B model's:
+
+> **Episodic Memory** — A type of memory that stores specific instances of
+> events or experiences.
+
+But every one of its eight candidates carried:
+
+    "claim_type": "ontology"      <- ontology is a SLOT, not a claim type
+    "slot":       "identity"      <- all eight, regardless of subject
+
+The two fields were swapped, and **the pipeline accepted all eight**, because
+`validate()` checked the slot and never checked `claim_type` at all. Eight
+rows would have entered the `identity` slot table carrying a claim type that
+does not exist in the schema.
+
+An unvalidated field is a field the model may fill with anything. `claim_type`
+is now checked against the five documented values, with a distinct rejection
+reason when the value is a slot name — because that specific confusion means
+the model answered the wrong question and the slot field cannot be trusted
+either.
+
+This was only visible because a second model was tried. The 30B model happens
+to fill the field correctly, so the missing gate was invisible for as long as
+one model was used.
+
+### Model comparison, such as it is
+
+| | glm-4.7-flash (19 GB, spills to CPU) | qwen2.5-coder:7b (4.7 GB, fits) |
+|---|---|---|
+| candidates kept (3 chunks) | 13 | 8 |
+| verbatim rejections | 1 | 8 |
+| claim_type correct | yes | no, all wrong |
+| slot spread | 4 slots | 1 slot, all `identity` |
+| definition quality | good | good |
+
+The 7B model copies source phrasing far more (8 verbatim rejections against
+1) and cannot keep the two schema fields apart. The larger model is better at
+the structured part of the task even while running mostly on CPU.
+
+Timing is not comparable between the two runs: the 7B run spent an unknown
+part of its 14 minutes queued behind the stuck 30B request described above.
+Speed still needs a clean measurement on an idle endpoint.

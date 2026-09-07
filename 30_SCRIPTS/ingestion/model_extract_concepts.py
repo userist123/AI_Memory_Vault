@@ -98,6 +98,16 @@ MAX_JACCARD = 0.60
 #: A definition shorter than this is a label, not a definition.
 MIN_DEFINITION_WORDS = 12
 
+#: The kinds of claim a passage can make about a concept. Validated, unlike
+#: before: qwen2.5-coder:7b returned `claim_type: "ontology"` on all eight of
+#: its candidates — `ontology` is a SLOT, not a claim type — while putting
+#: `identity` in the slot field for every one of them. The two fields were
+#: swapped and nothing caught it, because only the slot was being checked.
+#: An unvalidated field is a field the model may fill with anything.
+CLAIM_TYPES = frozenset(
+    {"definition", "mechanism", "finding", "taxonomy", "constraint"}
+)
+
 #: Terms that are grammar rather than concepts. Every one of these was
 #: actually emitted as a concept by the rule-based extractor.
 GENERIC_TERMS = frozenset(
@@ -285,6 +295,15 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     if slot not in CANONICAL_SLOTS:
         return False, "slot_unknown"
 
+    claim_type = str(candidate.get("claim_type", "")).strip().lower()
+    if claim_type not in CLAIM_TYPES:
+        #: A slot name here means the model answered the wrong question, and
+        #: the slot field is then not to be trusted either.
+        return False, (
+            "claim_type_is_a_slot" if claim_type in CANONICAL_SLOTS
+            else "claim_type_unknown"
+        )
+
     try:
         confidence = float(candidate.get("confidence"))
     except (TypeError, ValueError):
@@ -450,7 +469,7 @@ def extract_from_chunk(
             {
                 "concept": clean_term(candidate["concept"]),
                 "definition": str(candidate["definition"]).strip(),
-                "claim_type": str(candidate.get("claim_type", "definition")).strip(),
+                "claim_type": str(candidate["claim_type"]).strip().lower(),
                 "maps_to_slot": slot,
                 "maps_to_module": (KNOWN_VERIFIED_MODULES.get(slot) or [None])[0],
                 "confidence_in_literature": float(candidate["confidence"]),

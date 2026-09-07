@@ -478,3 +478,30 @@ def test_a_timeout_is_not_retried(monkeypatch):
     assert TimesOut.calls == 1, "a timeout must be attempted once, not three times"
     assert accepted == []
     assert rejects["provider_timeout"] == 1
+
+
+def test_a_slot_name_in_claim_type_is_refused():
+    """qwen2.5-coder:7b returned claim_type "ontology" on all 8 candidates.
+
+    `ontology` is a slot, not a claim type, and the same run put `identity`
+    in the slot field for every candidate — the two fields were swapped. It
+    went unnoticed because claim_type was never validated. An unvalidated
+    field is a field the model may fill with anything.
+    """
+    accepted, rejects = _run([dict(GOOD, claim_type="ontology")])
+    assert accepted == []
+    assert rejects["claim_type_is_a_slot"] == 1
+
+
+def test_an_invented_claim_type_is_refused():
+    accepted, rejects = _run([dict(GOOD, claim_type="observation")])
+    assert accepted == []
+    assert rejects["claim_type_unknown"] == 1
+
+
+@pytest.mark.parametrize("claim_type", sorted(M.CLAIM_TYPES))
+def test_every_documented_claim_type_is_accepted(claim_type):
+    """The gate must not be narrower than the prompt it enforces."""
+    accepted, rejects = _run([dict(GOOD, claim_type=claim_type)])
+    assert rejects == {}, rejects
+    assert accepted[0]["claim_type"] == claim_type
