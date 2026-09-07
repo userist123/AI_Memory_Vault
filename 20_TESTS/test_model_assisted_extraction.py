@@ -231,8 +231,84 @@ def test_provider_failure_is_recorded_not_raised():
     assert rejects["provider_error:TimeoutError"] == 1
 
 
+def test_every_canonical_slot_carries_a_question():
+    """The prompt is built from the vault's own slot files, not a copy.
+
+    If a slot file loses its `## Question`, the slot silently stops being
+    offered to the model and stops being selected. That must fail loudly.
+    """
+    questions = M.load_slot_questions()
+    assert set(questions) >= set(M.CANONICAL_SLOTS)
+    assert questions["consolidation"] == "How does experience become knowledge?"
+
+    block = M.format_slot_block(questions)
+    for slot in M.CANONICAL_SLOTS:
+        assert slot in block
+        assert questions[slot] in block
+
+
+def test_deduplicate_collapses_repeats_and_counts_occurrences():
+    """One book defines its central terms repeatedly (measured: 3x in 3 chunks)."""
+    rows = [
+        dict(GOOD, concept="Synaptic consolidation", confidence=0.6),
+        dict(GOOD, concept="Episodic memory", confidence=0.8),
+        dict(GOOD, concept="synaptic  Consolidation", confidence=0.6),
+    ]
+    #: shape them like accepted rows
+    for i, r in enumerate(rows):
+        r["confidence_in_literature"] = r.pop("confidence")
+        r["definition"] = GOOD["definition"]
+        r["source_location"] = f"Section {i}"
+
+    merged, collapsed = M.deduplicate(rows)
+    assert collapsed == 1
+    assert [r["concept"] for r in merged] == [
+        "Synaptic consolidation",
+        "Episodic memory",
+    ]
+    assert merged[0]["occurrences"] == 2
+    assert merged[0]["also_found_in"] == ["Section 2"]
+    assert merged[1]["occurrences"] == 1
+
+
+def test_deduplicate_keeps_the_better_definition_but_the_full_count():
+    """Occurrences must survive the swap, or the observed signal is lost."""
+    weak = {
+        "concept": "Reservoir sampling",
+        "definition": "Short one.",
+        "confidence_in_literature": 0.4,
+        "source_location": "Section 1",
+    }
+    strong = dict(
+        weak,
+        definition="A much longer and more explanatory definition of the term.",
+        confidence_in_literature=0.9,
+        source_location="Section 2",
+    )
+    merged, collapsed = M.deduplicate([weak, strong])
+    assert collapsed == 1
+    assert merged[0]["confidence_in_literature"] == 0.9
+    assert merged[0]["occurrences"] == 2
+    assert merged[0]["also_found_in"] == ["Section 2"]
+
+
 def test_parse_model_json_survives_fencing_and_preamble():
     payload = "Here you go:\n```json\n[{\"concept\": \"X\"}]\n```"
     assert M.parse_model_json(payload) == [{"concept": "X"}]
     assert M.parse_model_json("not json at all") == []
     assert M.parse_model_json("[{broken}]") == []
+
+
+def test_acronym_gloss_is_stripped_not_rejected():
+    """"Continual learning (CL)" is a term, not malformed input.
+
+    Found on a live run: the shape check rejected the very first candidate
+    the model returned, because academic prose introduces a term with its
+    acronym in parentheses.
+    """
+    assert M.clean_term("Continual learning (CL)") == "Continual learning"
+    assert M.clean_term("Reservoir Sampling") == "Reservoir Sampling"
+
+    accepted, rejects = _run([dict(GOOD, concept="Quenched harmonic buffering (QHB)")])
+    assert rejects == {}, rejects
+    assert accepted[0]["concept"] == "Quenched harmonic buffering"
