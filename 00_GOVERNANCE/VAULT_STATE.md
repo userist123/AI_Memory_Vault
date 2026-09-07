@@ -47,16 +47,19 @@ in its constructor. Corrected 2026-09-06.
 
 | Component | State | Evidence |
 |---|---|---|
-| `memory/controller.py` — `search()` | real, in production | ~1000 lines, `search()` at line 274 |
+| `memory/controller.py` — `search()` | real, in production | 1210 lines, `search()` at line 383 |
 | Query-driven candidate generation | real | r004; before it, `retrieve()` never read the query text |
 | `lifecycle/policy.py` | real, sole authority | r001; 7/7 mutation paths gated, AST-verified |
 | `FileStorageEngine` | real, repaired | scanned 7 dead folders and loaded **0** notes until `da99af0` |
-| Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:118` builds the store, `:406` traverses; `enable_graph_expansion=False` |
+| Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:213` builds the store, `:583` traverses; `enable_graph_expansion=False` |
+| Ranking arm (`ranking_arm`) | **default changed 2026-09-07 (r025 WP-8)** | was `RANKING_ARM_BASELINE` (RelevanceScorer), now defaults to `RANKING_ARM_FUSED_SCORE`; held-out confirmed +2 measurable context-recall cases at a pre-registered threshold; `RANKING_ARM_BASELINE` still available explicitly for rollback/comparison |
+| Classifier-filter arm (`classifier_filter_arm`) | **implemented, OFF by default (r025 WP-9)** | the query classifier's INFERRED lifecycle/type filters can collapse the candidate pool to 0 (any query containing "verified"/"classified" as ordinary text — neither stage has any notes in this corpus); C2/C3 arms soften this behind a flag; production default stays the pre-existing hard-exclusion behaviour |
 | `graph/plasticity.py` | real, **not wired** | zero production call sites; journal + rollback exist, nothing calls them |
 | `attention`, `executive`, `global_workspace`, `reasoning` | present, **not wired** | r011 audited and recommended keeping them unwired |
 | Held-out benchmark v1 | **INVALID** | gold ids resolve to nothing; recall structurally 0 |
-| Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
-| Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
+| Held-out benchmark v2.1 | real, gold verified, 32 cases | `07_EVALUATION/heldout_retrieval_benchmark_v2/` (30 → 32 cases, r025 WP-12) |
+| Edge proposer | real | independent resample: 81.8% precision at n=55 (r024 WP-2, seed 8675309); an earlier same-author pass measured 90% at n=30 on a seed used while tuning — treat the independent figure as operative |
+| `MemoryController.update()` | real, **effectively unusable on most real notes** | ADMIN/HUMAN may only update ACTIVE-lifecycle notes (46/~850 of this corpus); the canonical schema requires UUID-format `id`; both confirmed 2026-09-07 (r025 WP-6) by an actual `update()` call, 0/45 succeeding, against real notes |
 
 ## 4. Corpus and graph, measured
 
@@ -68,7 +71,7 @@ in its constructor. Corrected 2026-09-06.
 | — declared / wikilink / mirrored | 102 / 75 / 101 |
 | Notes usable as a graph **seed** (out-edge) | 90 |
 | Notes reachable as graph **gold** (in-edge) | 78 |
-| Graph cases with pairwise-disjoint nodes | 33 |
+| Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
 and storage requires a frontmatter `id`. Do not treat 842 and 738 as the same
@@ -76,15 +79,42 @@ population.
 
 `search()` traverses **one hop** along outgoing edges. It is not multi-hop.
 Graph results describe roughly 9% of the corpus and must never be pooled with
-whole-corpus retrieval numbers.
+whole-corpus retrieval numbers. **The pairwise-disjoint ceiling of 32 was
+corrected 2026-09-07 (r025 WP-12)** from a prior "~33" estimate (this file and
+`R016_RESULT.md` both carried the stale figure); the runtime graph's edge
+count (278) is confirmed unchanged, so 32 is not new drift, only a corrected
+count. Of the 32 possible disjoint cases, the frozen benchmark uses 12
+(`07_EVALUATION/heldout_retrieval_benchmark_v2/`); a same-session audit found
+**0 of those 12 ever reach their gold note via actual graph traversal**
+(`graph_expanded_ids`) rather than via ordinary retrieval already finding it —
+every graph on/off comparison run against this benchmark to date (this
+includes the NO-GO below) has therefore not exercised traversal for a single
+case. See `07_EVALUATION/r025_wp12_graph_expansion/WP12_GRAPH_EXPANSION.md`.
 
 ## 5. Known open defects
 
 - **The write path was never migrated.** `storage/path_resolver.py` still sends
   a `knowledge` note to `01_KNOWLEDGE` while the corpus lives in
-  `01_ARCHITECTURE`. New notes land in the legacy tree. Existing notes are
-  pinned in place so an update cannot relocate them (`db08b847`), but the
-  taxonomy split is unresolved and is an architecture decision, not a constant.
+  `01_ARCHITECTURE`. **Measured 2026-09-07 (r025 WP-10): 0 notes currently sit
+  in any legacy write root** (not "many" — genuinely none; 6 of the 7 target
+  folders do not even exist on disk), because nothing has ever called
+  `propose()` against the real, file-backed `MemoryController` — every
+  `propose()` this suite exercises runs against the in-memory fixture engine.
+  The defect is therefore untriggered, not fixed: the very next real
+  `propose()` call will still land in a directory the graph layer never scans.
+  Existing notes are pinned in place so an update cannot relocate them
+  (`db08b847`), but the taxonomy split is unresolved and is an architecture
+  decision, not a constant.
+- **`MemoryController.update()` cannot currently mutate most real notes.**
+  Measured 2026-09-07 (r025 WP-6, attempting to promote 45 real edge
+  proposals): ADMIN/HUMAN principals may only `update()` a note whose
+  lifecycle is ACTIVE (46 of ~850 notes; the corpus is overwhelmingly
+  REVIEW), and the canonical schema requires `id` to match
+  `{"format": "uuid"}` while a large fraction of real notes use a slug id.
+  0 of 45 real, already-approved edge writes succeeded. Not fixed here —
+  loosening either gate without a separate, deliberate review would itself be
+  the policy bypass this vault's lifecycle authority exists to prevent. See
+  `07_EVALUATION/r025_wp6_edge_promotion/WP6_EDGE_PROMOTION.md`.
 - **`FileStorageEngine` hard-fails on duplicate UUIDs.** That is deliberate
   integrity behaviour, and stays that way — the legacy/content root union
   still makes collisions possible in general. The specific recurring instance

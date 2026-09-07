@@ -1,673 +1,246 @@
 # AI Memory Vault
 
-A persistent external memory substrate for AI agents: provenance-aware memory, skills, procedures, retrieval, cognitive runtime primitives, controlled learning, evidence, and resumable multi-agent execution.
-
-<p align="center">
-  <strong>ONE VAULT · ONE CANON · SELECTIVE COGNITION · VERIFIED EVOLUTION</strong>
-</p>
+A persistent external memory system for AI agents: lifecycle-governed notes, a
+retrieval pipeline (`MemoryController.search()`), and a derived synapse graph
+over the corpus.
 
 <p align="center">
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions"><img alt="GitHub Actions" src="https://img.shields.io/badge/CI-GitHub%20Actions-181717?logo=githubactions&logoColor=white"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-Plugin-7C3AED"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/07_EVALUATION"><img alt="Evidence Gated" src="https://img.shields.io/badge/Evidence-Gated-0F766E"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/09_COORDINATION/AGENT_MEMORY"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Agent%20Memory-Persistent-2563EB"></a>
-  <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Synced-7C3AED"></a>
+  <a href="00_GOVERNANCE/VAULT_STATE.md"><img alt="State card" src="https://img.shields.io/badge/state-VAULT__STATE.md-0F766E"></a>
+  <a href="20_TESTS/"><img alt="Tests" src="https://img.shields.io/badge/tests-pytest--q-2563EB"></a>
 </p>
 
-> **The problem:** standard RAG can retrieve text. This project is trying to make external memory *operationally useful* — bounded, attributable, lifecycle-aware, uncertainty-aware, and measurable at the point where an agent reasons, plans, verifies, and acts.
+> **Read [`00_GOVERNANCE/VAULT_STATE.md`](00_GOVERNANCE/VAULT_STATE.md) before this file.** This
+> README describes intent and layout. VAULT_STATE.md describes what is
+> currently true, re-derived from the live vault by
+> `20_TESTS/test_vault_state_accuracy.py` on every test run. Where the two
+> disagree, VAULT_STATE.md wins and this file is the one that needs fixing.
 
 ---
 
-## ✦ At a glance
+## What this actually does today
 
-| Layer | What is here | Reality status |
-|---|---|---|
-| Canonical Vault | Markdown memory, knowledge, skills, agents, procedures, provenance | **IMPLEMENTED** |
-| Memory V6 | extraction, proposals, conflict detection, lifecycle, consolidation, retrieval maintenance | **IMPLEMENTED / ACTIVE** |
-| Cognitive Core | recall, activation, working memory, global workspace, graphs, spreading activation, planning primitives | **IMPLEMENTED / PARTIAL** |
-| Memory Controller | storage boundary, read/write policy, context packs, progressive disclosure, lifecycle gating | **IMPLEMENTED** |
-| Model execution | fake, local/Ollama, OpenAI provider abstractions, tier routing, usage telemetry | **IMPLEMENTED** |
-| External skill ingestion | discovery, provenance, classification, validation, controlled promotion | **IMPLEMENTED** |
-| Persistent agent memory | resumable `CURRENT.md` state under `09_COORDINATION/AGENT_MEMORY/` | **IMPLEMENTED** |
-| Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
-| Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
-| Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
-| Fully closed continual learning | outcome → evidence → learning → canonical mutation loop | **PARTIAL / OPEN** |
+`MemoryController.search()` sanitizes a query, classifies it, gates candidates
+through a hard lifecycle/type filter, ranks them (BM25 + entity fusion), and
+returns a bounded, provenance-carrying context pack. A synapse graph exists
+and can extend that candidate set by one hop; it is implemented and **off by
+default**, and the evidence for turning it on is negative — see
+[Graph expansion](#graph-expansion-does-not-currently-help-retrieval) below.
+That is the whole claim this README makes about retrieval. Everything past
+this point is either measured evidence for/against a specific mechanism, or a
+map of where things live.
+
+## Three ways this repository misleads a newcomer
+
+These are not hypothetical. Each one has already fooled a real reader of this
+vault.
+
+1. **`memory_controller/` is a 19-line shim, not the implementation.** It sets
+   `__path__` across sibling packages under `03_IMPLEMENTATION/packages/`. A
+   `grep` inside `memory_controller/` itself finds almost nothing and is not
+   evidence the thing it names doesn't exist — the real controller is
+   `03_IMPLEMENTATION/packages/memory/controller.py`, over a thousand lines.
+2. **A module existing is not a module being used.** Before believing a
+   component is wired into production, check who imports it:
+   ```bash
+   grep -rlE "(from|import)[^#]*\bMODULE_NAME\b" --include='*.py' . \
+     | grep -v "/tests/\|test_\|benchmarks\|20_TESTS\|07_EVALUATION"
+   ```
+   An empty result means it is not wired, whatever the filename or a commit
+   message claims. `graph/plasticity.py` and the `attention`/`executive`/
+   `global_workspace`/`reasoning` modules currently fail this check on
+   purpose — present, deliberately not called from production.
+3. **Documentation drifts, and this repository has proof.** `synapse_store.py`
+   claimed for months to be "NOT wired into `MemoryController.search()`"
+   while the controller imported it in its constructor; an external audit
+   believed the docstring over the code. This README itself was rewritten
+   (2026-09-07) after its previous version described a `cognitive_core/`
+   module layout, a `09_COORDINATION/` directory, and a `memory_controller/`
+   implementation that do not exist at their claimed paths in this checkout —
+   caught the same way: by checking, not by reading the prose.
+
+## Repository map (verified against this checkout, not the historical layout)
+
+| Path | Contains |
+|---|---|
+| `00_GOVERNANCE/` | operating rules, coordination logs, `VAULT_STATE.md` |
+| `01_ARCHITECTURE/` | the corpus of governed notes (knowledge, memory, graphs) |
+| `02_PRODUCT/` | project-specific notes and workspaces |
+| `03_IMPLEMENTATION/packages/` | the real runtime: `memory/`, `retrieval/`, `graph/`, `lifecycle/`, `security/`, and the `memory_controller` namespace shim over them |
+| `07_EVALUATION/` | benchmarks, per-package measurement reports, frozen gold sets |
+| `10_DOCUMENTATION/` | procedures, Obsidian-facing resources |
+| `20_TESTS/` | the test suite this README's own numbers come from |
+| `30_SCRIPTS/` | operational tooling (skill ingestion, brief compilation) |
+| `.agents/` | agent profiles and operational skills |
+| `.claude-plugin/` | Claude Code plugin surface |
+| `.github/workflows/` | CI: test, security-scan, and audit workflows |
+
+`cognitive_core/` at the repository root exists but currently holds one file,
+`recall_cli.py` — a thin CLI wrapper, not the module set an earlier version
+of this README described. `00_CORE/`, `01_KNOWLEDGE/` (top level), `02_PROJECTS/`,
+`03_PROCEDURES/`, `04_MEMORY/`, `05_RESOURCES/`, and `99_SYSTEM/` are the
+legacy write targets `storage/path_resolver.py` still points new notes at —
+see [Write path](#write-path-and-edge-promotion). Directories not listed
+above (`04_CONFIG/`, `05_DATA/`, `06_INBOX/`, `08_OBSERVABILITY/`,
+`09_SECURITY/`, `40_EXPERIMENTS/`, `50_ARTIFACTS/`, `60_DEPLOYMENT/`,
+`70_INTEGRATIONS/`, `80_ARCHIVE/`, `90_RELEASE/`, `99_META/`) exist but were
+not audited for this rewrite; their names are the only claim made about them
+here.
+
+---
+
+## What is measured, by area
+
+Every subsection below names the exact report and the exact command that
+reproduces its numbers. None of these numbers are asserted from memory.
 
 <details>
-<summary><strong>What makes this different from “just RAG”?</strong></summary>
+<summary><strong>Retrieval ranking — default changed 2026-09-07, held-out confirmed</strong></summary>
 
-```text
-RAG mindset
-query → documents → prompt
+`RelevanceScorer`'s blended score (50% lexical overlap, 50% epistemic
+confidence) was the production ranking key. Held-out validation found ranking
+by the already-computed fusion score (`fused_score`) instead recovers more
+context-recall cases (4/27 → 6/27 measurable, held-out; +2 at a threshold
+pre-registered before the run). The production default is now
+`RANKING_ARM_FUSED_SCORE`; the prior behavior is still available via
+`ranking_arm=RANKING_ARM_BASELINE`.
 
-Vault target
-experience → evidence → pattern → applicability → influence → decision → outcome → reorganization
-```
+Report: `07_EVALUATION/r025_wp8_a1_heldout/WP8_A1_HELDOUT_VALIDATION.md`
+Reproduce: `python 07_EVALUATION/r025_wp8_a1_heldout/run_a1_heldout.py`
+</details>
 
-The long-term target is **retrieval ≠ influence**. The repository explicitly distinguishes a passive epistemic substrate from active runtime interfaces. The current implementation does not pretend that hidden model state, decoding, planning, or tool execution is magically controlled by a text file.
+<details>
+<summary><strong>Query-classifier filtering — a real defect, fixed behind a flag left off</strong></summary>
+
+The query classifier infers a lifecycle filter from any query merely
+containing a keyword like "verified" or "classified" as ordinary text — and
+neither lifecycle stage has any notes in this corpus, so the inferred filter
+collapses the candidate pool to zero. Confirmed on the frozen benchmark: 10 of
+42 cases lose their gold note this way. Two softer arms exist
+(`classifier_filter_arm="boost"` / `"conditional"`) that recover most of
+those cases without weakening an explicit, caller-supplied filter — RAW
+exclusion and any caller-passed lifecycle/type filter stay hard in every arm.
+Production default is unchanged (hard exclusion), per this being a measured
+finding, not a default flip.
+
+Report: `07_EVALUATION/r025_wp9_classifier/WP9_CLASSIFIER_FILTER_ARMS.md`
+Reproduce: `python 07_EVALUATION/r025_wp9_classifier/phase_b_arms.py`
+</details>
+
+<details>
+<summary><strong>Abstention — the metric could not fail, so it wasn't measuring anything</strong></summary>
+
+The benchmark harness scored every "the system should decline to answer"
+case as automatically correct, because the scoring formula's gold set was
+always empty for those cases. Measured the actual signal available (top
+fused score, score margin, generator agreement) across answerable,
+unanswerable, and 20 generated nonsense queries: none separate cleanly. The
+harness now scores these cases `UNMEASURABLE` instead of a fabricated pass,
+and reports `n` / `n_measurable` / `n_unmeasurable` separately everywhere.
+
+Report: `07_EVALUATION/r025_wp11_abstention/WP11_ABSTENTION_METRIC.md`
+Reproduce: `python 07_EVALUATION/r025_wp11_abstention/phase_a_calibration.py`
+</details>
+
+<details>
+<summary id="graph-expansion-does-not-currently-help-retrieval"><strong>Graph expansion — does not currently help retrieval, and the benchmark barely tests it</strong></summary>
+
+**Graph expansion is off by default, and nothing here argues for turning it
+on.** Every paired comparison run against this benchmark (this session and
+earlier ones) shows zero net improvement from enabling one-hop graph
+expansion, sometimes a small net loss.
+
+A closer audit found something more specific: of the graph-class benchmark
+cases (old and new), **none currently reach their gold note via actual graph
+traversal** (`graph_expanded_ids`) — either the gold note is already inside
+the ordinary candidate pool (so expansion changes nothing) or the classifier
+collapse above empties the pool entirely. So the existing on/off comparisons
+have not actually exercised the traversal mechanism for a single case; "no
+improvement" is honestly reported, but it is evidence about this benchmark's
+current cases, not a settled verdict on the mechanism.
+
+An attempt to add more graph cases up to the corpus's disjoint-node ceiling
+(32, corrected from a prior "~33" estimate this file and an older report both
+carried) found only 2 of 56 candidate edges could be turned into a
+genuinely-traversal-dependent test case — a real declared edge in this vault
+usually connects two notes similar enough that ordinary ranking already finds
+both, without needing the graph at all.
+
+Reports: `07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md` (v2.1),
+`07_EVALUATION/r025_wp12_graph_expansion/WP12_GRAPH_EXPANSION.md`
+Reproduce: `python 07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py`
+</details>
+
+<details>
+<summary id="write-path-and-edge-promotion"><strong>Write path and edge promotion — both measured broken, neither patched here</strong></summary>
+
+`storage/path_resolver.py` sends every new note `MemoryController.propose()`
+creates to a legacy folder (`01_KNOWLEDGE/`, `02_PROJECTS/`, etc.) that the
+graph/retrieval index layer never scans. Measured: **zero notes currently sit
+there** — not because it was fixed, but because nothing has yet called
+`propose()` against the real, file-backed storage engine. The next one will.
+
+Separately, an attempt to promote 45 already-reviewed, already-approved edge
+proposals into their source notes found `MemoryController.update()` rejects
+all 45: it only permits mutating an ACTIVE-lifecycle note (a small minority
+of this corpus), and the canonical frontmatter schema requires a UUID-format
+`id`, which many real notes don't have. Neither gate was loosened to force
+the writes through — doing so would be the exact policy bypass this vault's
+lifecycle authority exists to prevent.
+
+Reports: `07_EVALUATION/r025_wp10_write_path_damage/WP10_WRITE_PATH_DAMAGE.md`,
+`07_EVALUATION/r025_wp6_edge_promotion/WP6_EDGE_PROMOTION.md`
+Reproduce: `python 07_EVALUATION/r025_wp10_write_path_damage/measure_write_path_damage.py`
 </details>
 
 ---
 
-## 🧠 Cognitive loop
-
-```mermaid
-flowchart LR
-    T[Task / World] --> O[Observation]
-    O --> E[Experience]
-    E --> EV[Evidence]
-    EV --> P[Pattern / Transition]
-    P --> A[Applicability]
-    A --> F[Forged Recall]
-    F --> PL[Plan / Search]
-    PL --> X[Action]
-    X --> V[Verification]
-    V --> R[Outcome]
-    R --> RE[Reorganization]
-    RE --> EV
-    A -. uncertainty .-> G[Epistemic Gate]
-    G --> V
-```
-
-The architecture is intentionally split into five semantic layers:
-
-**Experience** — what happened.  
-**Model / Pattern** — what may generalize.  
-**Applicability** — where that memory should transfer.  
-**Influence** — how it is allowed to affect computation.  
-**Reorganization** — how verified outcomes alter future memory.
-
-Evidence, provenance, temporal validity, uncertainty, safety, and token economy cross all five layers.
-
----
-
-## ⚙️ System architecture
-
-```mermaid
-flowchart TB
-    U[Human / Task] --> R[Agent Runtime]
-    R --> S[Skill + Procedure Routing]
-    R --> M[Memory Controller]
-    M --> C[Context Compiler]
-    C --> Q[Selective Retrieval]
-    Q --> W[Working Context]
-    W --> R
-
-    M --> CC[Cognitive Core]
-    CC --> WM[Working Memory]
-    CC --> RC[Associative Recall]
-    CC --> MG[MultiGraph]
-    MG --> SA[Spreading Activation]
-    CC --> PL[Planning Primitives]
-    CC --> CO[Consolidation]
-
-    R --> EX[Execution / Tools]
-    EX --> VF[Verification]
-    VF --> OUT[Outcome]
-    OUT --> EVI[Evidence]
-    EVI --> CO
-
-    RAW[External Sources] --> ING[Ingestion + Provenance]
-    ING --> INBOX[06_INBOX / Review]
-    INBOX --> HG[Human / Policy Gate]
-    HG --> M
-
-    P[09_COORDINATION / Persistent Agent Memory] <--> R
-```
-
-### The core boundary
-
-```text
-              PASSIVE EPISTEMIC SUBSTRATE
-┌──────────────────────────────────────────────────┐
-│ experience • evidence • memory • skills         │
-│ provenance • lifecycle • temporal state         │
-└────────────────────────┬─────────────────────────┘
-                         │
-                         ▼
-              ACTIVE RUNTIME INTERFACES
-┌──────────────────────────────────────────────────┐
-│ representation / frame compiler                  │
-│ planning / search harness                        │
-│ epistemic gate / verification routing            │
-│ deterministic execution gateway                  │
-└──────────────────────────────────────────────────┘
-```
-
-These runtime interfaces are the target architecture. Some are present as isolated primitives or experiments; they are not all fully wired into the production agent path yet.
-
----
-
-# 🗂️ Repository map
-
-| Path | Role |
-|---|---|
-| `00_CORE/` | identity, rules, memory protocol, system invariants |
-| `01_KNOWLEDGE/` | knowledge notes, registries, agent/skill maps, external research |
-| `02_PROJECTS/` | project continuity |
-| `03_PROCEDURES/` | repeatable operational procedures |
-| `04_MEMORY/` | canonical memory records |
-| `05_RESOURCES/` | references and Obsidian navigation |
-| `06_INBOX/` | raw/imported/review-stage material |
-| `07_EVALUATION/` | audits, experiments, benchmarks, MVE, forensic evidence |
-| `08_EXPORTS/` | generated/export artifacts |
-| `09_COORDINATION/` | agent dispatch, persistent memory, project handoffs |
-| `10_ARCHIVE/` | historical material |
-| `90_TEMPLATES/` | templates |
-| `99_SYSTEM/` | system contracts and architecture |
-| `.agents/` | agent profiles, rules, operational skills |
-| `.claude-plugin/` | Claude Code plugin surface |
-| `cognitive_core/` | cognitive runtime primitives |
-| `memory_controller/` | canonical memory boundary and context control |
-| `scripts/` | operational tooling |
-| `tests/` | repository-level validation |
-| `.github/workflows/` | CI, security, ingestion, maintenance, evaluation |
-
----
-
-# 🧩 Cognitive Core
-
-Important runtime modules include:
-
-- `recall.py` — multi-signal recall using semantic, activation, temporal, working-memory, authority and lifecycle signals.
-- `ranked_search.py` — graph-aware reranking layer.
-- `multi_graph.py` — semantic, temporal, causal and entity-oriented graph views.
-- `spreading_activation.py` — associative activation over graph structure.
-- `working_memory.py` — active context state.
-- `global_workspace.py` — competitive workspace/broadcast primitive.
-- `activation.py` — activation/decay behavior.
-- `consolidation.py` / `sleep_consolidation.py` — maintenance and reconsolidation.
-- `planning.py` / `plan_complexity_analyzer.py` — planning and resource-routing primitives.
-- `learning.py`, `reflection.py`, `reasoning.py`, `motivation.py` — higher-level cognitive components.
-- `semantic.py` — semantic provider abstraction.
-
-### Reality check
-
-The current default retrieval path is not a fully semantic vector-native system. Deterministic semantic behavior and relevance scoring still contain lexical/token-overlap mechanisms; optional semantic/Qdrant/Ollama paths exist but are not equivalent to a universally wired production semantic index. This distinction is preserved intentionally.
-
----
-
-# 🗄️ Memory Controller
-
-`memory_controller/` is the trust and context boundary around canonical memory.
-
-It is responsible for things such as:
-
-```text
-query sanitation
-      ↓
-classification
-      ↓
-lifecycle-aware access
-      ↓
-candidate retrieval
-      ↓
-relevance scoring
-      ↓
-progressive disclosure
-      ↓
-bounded context pack
-      ↓
-provenance / audit
-```
-
-Key surfaces:
-
-- `controller.py`
-- `authority.py`
-- `context/retrieval.py`
-- `context/relevance_scoring.py`
-- `context/pack_builder.py`
-- `context/progressive_disclosure.py`
-- SQLite and file-backed storage engines
-
-Public reads remain lifecycle controlled. Cognitive inspection can explicitly handle REVIEW material without silently promoting it to canonical truth.
-
----
-
-# 🧱 Memory V6
-
-Memory V6 adds an operational memory-maintenance layer around the base Vault:
-
-| Capability | Purpose |
-|---|---|
-| Sensor buffer | transient session/event material |
-| Atomic extraction | facts, decisions, procedures, lessons |
-| Ollama adapter | optional local-model extraction |
-| Proposal queue | review-stage memory candidates |
-| Conflict detection | contradictions and competing claims |
-| Controlled promotion | human/policy-gated canonicalization |
-| MultiGraph | derived relationship views |
-| Spreading activation | associative activation / ranking |
-| Sleep consolidation | maintenance-oriented processing |
-| Retrieval benchmarks | Precision@K / Recall@K / MRR tooling |
-| Context budgets | bounded token/byte transport |
-| Usage telemetry | estimated vs actual model consumption |
-| Efficiency reporting | B4/B5-style execution economics |
-
-The architectural objective is **progressive disclosure**: do not load the whole Vault just because it exists.
-
-```text
-metadata
-   ↓
-relevant rules
-   ↓
-compact memory
-   ↓
-detailed evidence only when needed
-```
-
----
-
-# 🧠 Memory Influence — the new research layer
-
-The project is now testing whether external memory can influence computation beyond adding text to a prompt.
-
-### Four intended influence channels
-
-| Channel | Intended effect | Measurement target |
-|---|---|---|
-| Recall / Representation | change the explicit frame or hypothesis set | memory-off ≠ memory-on representation |
-| Planning | change branch/search preference | search trajectory / node allocation changes |
-| Uncertainty | change act / verify / explore / abstain behavior | verification routing and abstention |
-| Execution | deterministic action constraints at tool boundary | allowed vs rejected actions |
-
-The important safety distinction is:
-
-> **Memory influence must be explicit and observable. Hidden-state influence is not claimed.**
-
-### Evidence-Bound memory model
-
-The target persistent unit is an evidence-linked transfer pattern:
-
-```text
-Situation
-Goal
-Constraints
-Action
-State transition
-Outcome
-Evidence
-Temporal bounds
-Applicability
-Counterexamples
-```
-
-A compact influence artifact can then be forged on demand instead of repeatedly shipping the entire historical record through the model context.
-
----
-
-# 🧪 Planning Influence MVE
-
-The isolated MVE lives under:
-
-```text
-07_EVALUATION/luna/
-├── COGNITIVE_MEMORY_TARGET_MODEL_V1.md
-├── COGNITIVE_MEMORY_TARGET_MODEL_V2.md
-├── COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md
-├── PLANNING_INFLUENCE_EXPERIMENT_V1.md
-├── PLANNING_INFLUENCE_MVE_V2_VALIDATED.md
-├── PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md
-├── planning_influence_mve.py
-└── test_planning_influence_mve.py
-```
-
-### Experimental arms
-
-```text
-Arm 1 — baseline / uniform planner
-Arm 2 — advisory memory / uniform planner
-Arm 3 — cognitive treatment / memory-derived planner prior
-Arm 4 — stale / contradicted / neutral memory control
-```
-
-### Current deterministic evidence
-
-The latest local applicability-aware pilot is explicitly **runtime evidence from local reconstructed exact-source execution**, not CI proof:
-
-```text
-baseline:   30/30 success · 30 nodes · 0 fatal
-advisory:   30/30 success · 30 nodes · 0 fatal
-treatment:  30/30 success · 54 nodes · 12 fatal
-stale:      30/30 success · 30 nodes · 0 fatal
-```
-
-The treatment arm is therefore **not yet an efficiency win**. The prior naive treatment was worse still (125 nodes / 15 fatal). The negative result is intentionally retained as falsification evidence rather than tuned away.
-
-The recommendation matched the deterministic optimum in only `7/30` scenarios in the current pilot. Wrong memory recommendations account for the observed treatment cost.
-
-### Uncertainty policy
-
-The pre-registered policy separates:
-
-```text
-applicability
-+ evidence_strength
-+ contradiction_state
-+ verification_cost
-+ planner_influence
-+ execution_outcome
-```
-
-Fixed applicability strengths for the next isolated run:
-
-```text
-APPLICABLE                   = 1.00
-APPLICABLE_WITH_VERIFICATION = 0.35
-INSUFFICIENTLY_KNOWN         = 0.15
-NOT_APPLICABLE               = 0.00
-```
-
-The policy is design evidence. Its success has not yet been established.
-
----
-
-# 🧬 Continual learning direction
-
-The intended learning loop is conservative by design:
-
-```text
-REAL EXECUTION
-      ↓
-OUTCOME
-      ↓
-EVIDENCE
-      ↓
-EVALUATION
-      ↓
-CANDIDATE PATTERN / PROCEDURE / SKILL
-      ↓
-SANDBOX / REVIEW
-      ↓
-REGRESSION + HOLDOUT
-      ↓
-HUMAN / POLICY GATE
-      ↓
-CANONICAL MEMORY
-```
-
-Current outcome tooling and learning components exist, but the repository does **not** currently claim a completely closed autonomous continual-learning loop in which every outcome automatically mutates canonical memory.
-
-That restraint is deliberate: a result that happened once is evidence about an event, not automatically a reusable capability.
-
----
-
-# 🤖 Multi-agent operating model
-
-Persistent execution state lives under:
-
-```text
-09_COORDINATION/AGENT_MEMORY/
-├── README.md
-├── UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
-├── BOOTSTRAP_ALL_AGENTS_V1.md
-├── agents/
-│   ├── CODEX/
-│   ├── ANTIGRAVITY/
-│   ├── PERPLEXITY/
-│   └── LUNA/
-└── projects/
-    └── AI_MEMORY_VAULT/
-        └── CURRENT.md
-```
-
-Every substantive session is expected to leave:
-
-```text
-WHAT I DID
-WHERE
-EVIDENCE
-WHAT FAILED / REMAINS
-EXACT NEXT ACTION
-```
-
-### Current execution discipline
-
-```text
-MAIN_ONLY
-SEQUENTIAL_HANDOFF
-NO PARALLEL WORK ON SAME TASK
-NO FEATURE-BRANCH DEVELOPMENT FOR THIS RESEARCH CHAIN
-```
-
-This is the mechanism that makes work resumable across agents, PCs, IDEs and sessions without treating chat history as canonical state.
-
----
-
-# 📦 Skills & external knowledge
-
-Skills are treated as reusable capabilities, not just prompt snippets.
-
-```text
-source
-  ↓
-discovery
-  ↓
-provenance
-  ↓
-classification
-  ↓
-dedup / validation
-  ↓
-RAW_EXTERNAL
-  ↓
-human / policy review
-  ↓
-operational skill
-```
-
-Relevant surfaces:
-
-- `.agents/skills/`
-- `.agents/agents/`
-- `01_KNOWLEDGE/Agents_Skill_Matrix.md`
-- `01_KNOWLEDGE/Master_Skills_Catalog_251.md`
-- `skills/ai-memory-vault/SKILL.md`
-- `scripts/skill_ingestion.py`
-- `06_INBOX/RAW_IMPORTS/`
-
-The repository deliberately preserves source attribution, commit/path metadata, hashing and lifecycle state for imported material.
-
----
-
-# 🔐 Security & epistemic safety
-
-The system treats external information as untrusted until it crosses explicit boundaries.
-
-Core principles:
-
-- AI cannot promote its own claim to authoritative verification merely by writing `verified` metadata.
-- privileged provenance claims are controlled.
-- REVIEW content can be inspected without becoming ACTIVE memory automatically.
-- proposal lifecycle transitions are controlled.
-- audit trails are preserved.
-- provenance survives ingestion.
-- contradictory memory must not gain more influence merely because it is contradictory.
-- benchmark controls must not silently depend on oracle knowledge.
-
-The repository also contains security and forensic material covering memory trust boundaries, external corpus hygiene, Defender findings, and repository-level cleanup baselines.
-
----
-
-# 🛡️ CI / automation
-
-Current workflow surfaces include:
-
-```text
-.github/workflows/
-├── memory-v6-tests.yml
-├── planning-influence-mve.yml
-├── memory-consolidation.yml
-├── regenerate-skill-catalog.yml
-├── import-external-skills.yml
-├── process-raw-books.yml
-├── codeql.yml
-├── fortify.yml
-├── apisec-scan.yml
-└── jarvis-command-center.yml
-```
-
-The project distinguishes **CI verification** from local execution. A queued workflow is not a pass. A local run is not silently upgraded to CI evidence.
-
----
-
-# 🧪 Verification model
-
-The repository uses evidence levels to prevent capability inflation:
-
-| Level | Meaning |
-|---|---|
-| `DOCUMENT_VERIFIED` | supported by canonical documentation |
-| `CODE_VERIFIED` | confirmed from repository implementation |
-| `TEST_VERIFIED` | observed in actual automated test output |
-| `RUNTIME_VERIFIED` | observed in an actual runtime execution |
-| `CI_VERIFIED` | observed in GitHub Actions evidence |
-| `CLAIMED_ONLY` | stated but not sufficiently evidenced |
-| `UNVERIFIED` | design/speculation only |
-
-**Source of truth:** `main` + committed source + real test/runtime output + CI evidence.
-
-Reports, screenshots, README text and agent summaries do not outrank executable repository evidence.
-
----
-
-# 🚧 Known gaps — intentionally visible
-
-This section is not a weakness of the README. It is part of the project contract.
-
-1. Default retrieval still relies substantially on deterministic lexical/token-overlap behavior; semantic candidate generation is not universally wired into the default `MemoryController.search()` path.
-2. Graph-aware ranking exists, but production integration historically had failure paths that required explicit repair and diagnostics; graph behavior is not treated as automatically authoritative.
-3. Outcome telemetry does not yet constitute a fully closed autonomous learning loop.
-4. Planning Influence is an isolated experimental harness; it is not yet a production planner integration.
-5. The latest treatment pilot still shows negative efficiency against matched advisory control.
-6. CI execution observed in the current work chain may remain queued; queued means **not verified**.
-7. Some research artifacts are design targets rather than implementation guarantees.
-
-Showing these gaps is intentional. The project is being hardened by falsification, not by polishing its claims.
-
----
-
-# 🧭 Roadmap
-
-```text
-NOW
- │
- ├─ verify latest applicability-aware MVE in CI
- ├─ implement explicit verification route in isolated harness
- ├─ run frozen uncertainty policy without post-hoc tuning
- │
- ▼
-THEN
- │
- ├─ accept / falsify / redesign deterministic influence policy
- ├─ add held-out + stale/adversarial model-backed pairing
- │
- ▼
-LATER
- │
- ├─ representation influence measurement
- ├─ epistemic act/verify/abstain gate
- ├─ deterministic execution gateway experiments
- ├─ evidence-bound pattern compilation
- └─ closed, regression-protected learning loop
-```
-
-A model-backed MVE is **not authorized merely because deterministic unit tests pass**.
-
----
-
-# ⚡ Quick start
-
-### Run deterministic tests
+## Quick start
 
 ```bash
+# Full deterministic suite (in-memory fixtures; does not touch the real vault's files)
 pytest -q
+
+# One AST-level security/policy proof, of several under 20_TESTS/regression/
+pytest -q 20_TESTS/regression/test_candidate_generation_call_path.py
+
+# VAULT_STATE.md's own numeric claims, re-derived from the live vault
+pytest -q 20_TESTS/test_vault_state_accuracy.py
 ```
 
-### Run the isolated Planning Influence MVE tests
-
-```bash
-pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
-```
-
-### Run the deterministic MVE pilot
-
-```bash
-python 07_EVALUATION/luna/planning_influence_mve.py
-```
-
-### Memory V6 CLI examples
-
-```bash
-python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
-python -m cognitive_core.memory_v6_cli review --show-conflicts
-python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
-python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
-python -m cognitive_core.memory_v6_cli consolidate --render
-```
-
-Use the repository's environment files / requirements for the exact runtime dependencies in a local checkout.
+`pytest -q` from the repository root is the reproduction command for every
+pass/skip count referenced anywhere in this vault's own reports — none of
+those counts are meant to be trusted without it.
 
 ---
 
-# 🧭 Canonical navigation
+## Security and lifecycle
 
-### Architecture & contracts
-
-- [`99_SYSTEM/Memory_V6_Architecture.md`](99_SYSTEM/Memory_V6_Architecture.md)
-- [`07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md)
-- [`07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md)
-- [`00_CORE/Rules.md`](00_CORE/Rules.md)
-- [`00_CORE/Memory_Protocol.md`](00_CORE/Memory_Protocol.md)
-
-### MVE / research
-
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md)
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md)
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md)
-- [`07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md`](07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md)
-- [`07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md`](07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md)
-
-### Agent continuity
-
-- [`09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md`](09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md`](09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md)
-
-### Skills / ingestion
-
-- [`01_KNOWLEDGE/Agents_Skill_Matrix.md`](01_KNOWLEDGE/Agents_Skill_Matrix.md)
-- [`01_KNOWLEDGE/Master_Skills_Catalog_251.md`](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
-- [`skills/ai-memory-vault/SKILL.md`](skills/ai-memory-vault/SKILL.md)
-- [`scripts/skill_ingestion.py`](scripts/skill_ingestion.py)
-
-### Runtime
-
-- [`cognitive_core/`](cognitive_core/)
-- [`memory_controller/`](memory_controller/)
-- [`cognitive_core/recall_cli.py`](cognitive_core/recall_cli.py)
-- [GitHub Actions](../../actions)
+- Lifecycle transitions have exactly one authority:
+  `03_IMPLEMENTATION/packages/lifecycle/policy.py`. Every mutation path
+  (`propose`, `review`, `promote`, `update`, `attest`, `archive`, `supersede`)
+  routes a transition decision through it; nothing re-implements the rule
+  locally. `20_TESTS/regression/` contains AST-level proofs (not just
+  behavioral tests) that specific call paths cannot bypass their gate.
+- RAW-lifecycle exclusion is enforced unconditionally inside storage's own
+  `query()` method — every classifier arm and ranking arm described above
+  sits strictly downstream of it and cannot reach past it.
+- A principal cannot promote its own claim to `verified` by writing that
+  field directly; only `attest()` can, and it requires a reason and an
+  evidence reference.
 
 ---
 
-## Design principles
+## Contributing / coordination
 
-```text
-ONE CANON
-EVIDENCE OVER CONFIDENCE
-RETRIEVAL BEFORE CONTEXT INFLATION
-EXPLICIT INFLUENCE OVER MAGIC
-HUMAN-GATED PROMOTION
-PROVENANCE SURVIVES INGESTION
-FAILURE IS DATA
-MEASURE BEFORE AUTOMATING
-HOLD OUT WHAT SHOULD BE HELD OUT
-```
-
-> **The ambition is not to build the largest memory store. It is to build a memory system that can remember selectively, expose why a memory should matter, know when it should not matter, influence computation in measurable ways, verify what happened, and reorganize itself only when evidence earns the right to change future behavior.**
+Multiple agents may work this repository concurrently. Check
+`00_GOVERNANCE/coordination/` for in-progress or completed work before
+touching a file, and read `00_GOVERNANCE/VAULT_STATE.md` section "Handing
+work to another agent" before starting anything non-trivial — it links the
+procedures for turning a request into a brief and for recording a solved
+problem, and explains why four of this vault's own contributors independently
+re-derived the same findings before someone thought to write them down.
 
 <p align="center">
-  <sub>AI Memory Vault · CODEX Ready · Cognitive Memory Research & Engineering</sub>
+  <sub>AI Memory Vault — README last verified against commit history through r025, 2026-09-07.</sub>
 </p>
