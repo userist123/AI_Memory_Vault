@@ -610,3 +610,63 @@ the structured part of the task even while running mostly on CPU.
 Timing is not comparable between the two runs: the 7B run spent an unknown
 part of its 14 minutes queued behind the stuck 30B request described above.
 Speed still needs a clean measurement on an idle endpoint.
+
+## r031 — clean speed, and the review problem returns
+
+Measured on an idle endpoint, same chunk, same seed, each model unloaded
+before the next:
+
+| model | time | throughput | outcome |
+|---|---|---|---|
+| qwen2.5-coder:7b | **21.7s** | 43.8 tok/s | 8 objects parsed |
+| glm-4.7-flash | — | — | **crashed**: `llama-server process has terminated` |
+
+The 30B model is not merely slow on this machine. It no longer loads: a 19 GB
+model against an 8 GB GPU now fails outright rather than spilling. The earlier
+148s and 500s figures were taken while it still managed to load.
+
+So the model choice is settled by the hardware, not by preference. At 21.7s
+per chunk the corpus is roughly **7 hours**, against the ~48h estimated from
+the CPU-bound measurements.
+
+### What the gates catch on this model
+
+Six chunks, full validation:
+
+| | |
+|---|---|
+| proposed by the model | 60 |
+| **kept** | **10** (17%) |
+| verbatim_ngram | 17 |
+| slot_unknown | 14 |
+| claim_type_is_a_slot | 11 |
+| definition_short | 5 |
+| term_shape / paraphrase_shallow | 3 |
+
+The field confusion runs in both directions: `ontology` appears in
+`claim_type`, and `definition` appears in `slot` — 14 times, which is the
+entirety of `slot_unknown`. The claim_type gate added in the previous commit
+catches 11 candidates that would otherwise have entered the ontology.
+
+`claim_type` carries no information from this model even when it validates:
+all 10 survivors say `definition`, none says mechanism, finding, taxonomy or
+constraint. Like confidence, it should not be read as a signal.
+
+### The review load, now real
+
+10 candidates from 6 chunks is 1.67 per chunk. Across 1,107 chunks that is on
+the order of **1,850 candidates**.
+
+The original plan set a stop condition at ~300 for the whole corpus, on the
+reasoning that a queue nobody can review is backlog rather than memory. The
+rule-based extractor came in far under it at 112 — which turned out to be
+because its output was mostly unusable. Model-assisted extraction produces
+candidates worth reviewing and produces roughly sixteen times as many.
+
+The volume question was answered "not a problem" earlier in this document
+against the rule-based path. **Against this path it is the binding
+constraint**, and it is a decision rather than a defect: ingest fewer books,
+raise the bar for what counts as load-bearing, or accept a review queue in
+the thousands.
+
+Nothing here should proceed to a corpus run until that is settled.
