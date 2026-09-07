@@ -1,0 +1,103 @@
+{
+  "page_size": 10,
+  "cases_considered": 8,
+  "case_ids": [
+    "D01",
+    "D02",
+    "D03",
+    "D04",
+    "D05",
+    "D06",
+    "D07",
+    "D08"
+  ],
+  "candidate_recall": 0.5,
+  "context_recall": 0.0,
+  "total_loss_instances": 4,
+  "attribution": {
+    "ranked_out": 4
+  },
+  "dominant_category": "ranked_out",
+  "rows": [
+    {
+      "id": "D01",
+      "class": "exact_identifier_lookup",
+      "candidate_recall": 1,
+      "context_recall": 0,
+      "losses": [
+        {
+          "gold_id": "c1a01101-7291-49fa-9481-22904c10d010",
+          "category": "ranked_out",
+          "rank_in_reproduced_order": 25
+        }
+      ]
+    },
+    {
+      "id": "D02",
+      "class": "exact_identifier_lookup",
+      "candidate_recall": 1,
+      "context_recall": 0,
+      "losses": [
+        {
+          "gold_id": "3452fafe-8b80-445e-a742-9ceb68662e69",
+          "category": "ranked_out",
+          "rank_in_reproduced_order": 152
+        }
+      ]
+    },
+    {
+      "id": "D03",
+      "class": "paraphrase",
+      "candidate_recall": 1,
+      "context_recall": 0,
+      "losses": [
+        {
+          "gold_id": "1bc7f563-35da-4c5e-91cb-9bb789bb28a2",
+          "category": "ranked_out",
+          "rank_in_reproduced_order": 76
+        }
+      ]
+    },
+    {
+      "id": "D04",
+      "class": "paraphrase",
+      "candidate_recall": 1,
+      "context_recall": 0,
+      "losses": [
+        {
+          "gold_id": "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+          "category": "ranked_out",
+          "rank_in_reproduced_order": 194
+        }
+      ]
+    },
+    {
+      "id": "D05",
+      "class": "synonym_substitution",
+      "candidate_recall": 0,
+      "context_recall": 0,
+      "losses": []
+    },
+    {
+      "id": "D06",
+      "class": "synonym_substitution",
+      "candidate_recall": 0,
+      "context_recall": 0,
+      "losses": []
+    },
+    {
+      "id": "D07",
+      "class": "lexical_trap",
+      "candidate_recall": 0,
+      "context_recall": 0,
+      "losses": []
+    },
+    {
+      "id": "D08",
+      "class": "lexical_trap",
+      "candidate_recall": 0,
+      "context_recall": 0,
+      "losses": []
+    }
+  ]
+}
