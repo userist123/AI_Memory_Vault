@@ -65,12 +65,12 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 842 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 830 |
 | Notes visible to `FileStorageEngine` | 738 |
-| Graph edges | 278 |
-| — declared / wikilink / mirrored | 102 / 75 / 101 |
-| Notes usable as a graph **seed** (out-edge) | 90 |
-| Notes reachable as graph **gold** (in-edge) | 78 |
+| Graph edges | 262 |
+| — declared / inferred / wikilink | 95 / 94 / 73 |
+| Notes usable as a graph **seed** (out-edge) | 89 |
+| Notes reachable as graph **gold** (in-edge) | 77 |
 | Graph cases with pairwise-disjoint nodes | 33 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
@@ -105,6 +105,17 @@ whole-corpus retrieval numbers.
   but plasticity is still uncalled, so the interaction is untested in anger.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
+- **Promoted notes were islands, and one still could be.** A note can declare
+  a relation, validate on write and read correctly in Obsidian while
+  contributing nothing to the graph: `SynapseStore.from_index()` reads
+  `target_id` and `type`, and skips anything else with a bare `continue`
+  (`synapse_store.py:234`). `Promoted_reservoir_sampling.md` used `target`
+  with a file path, `relation` instead of `type`, and `derived_from`, which
+  is not in `ALLOWED_RELATIONS` and degrades silently to `related_to`. Three
+  mismatches, zero edges. Fixed, and guarded by
+  `20_TESTS/test_promoted_notes_reach_the_graph.py`, which asserts against
+  the real store rather than the frontmatter and was confirmed to fail on the
+  broken form before being trusted.
 - **Book ingestion has no working selectivity.** Extraction itself works and
   its gates work — grounding against the source text catches fabricated
   citations, and the paraphrase floors catch copied definitions. What does

@@ -15,8 +15,16 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - relation: derived_from
-    target: "01_ARCHITECTURE/ontology/slots/06_procedures.md"
+  # Three separate mismatches with what SynapseStore.from_index() reads, each
+  # of which silently produced no edge (synapse_store.py:234 does `continue`
+  # when target_id is absent):
+  #   target:            -> target_id, and it must be a NOTE ID, not a path
+  #   relation:          -> type
+  #   derived_from       -> not in ALLOWED_RELATIONS; it degraded to related_to
+  # part_of is the weakest relation that is true here: the concept belongs to
+  # the procedures slot rather than depending on or superseding it.
+  - type: part_of
+    target_id: slot-06-procedures
 ---
 
 # Reservoir Sampling
