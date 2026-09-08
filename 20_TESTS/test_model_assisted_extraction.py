@@ -493,10 +493,25 @@ def test_a_slot_name_in_claim_type_is_refused():
     assert rejects["claim_type_is_a_slot"] == 1
 
 
-def test_an_invented_claim_type_is_refused():
+def test_an_unrequested_claim_type_is_tolerated_not_refused():
+    """claim_type is no longer asked for, so it cannot be a rejection reason.
+
+    It was dropped because it carried no information — every surviving
+    candidate across every run said "definition" — while costing 11 of 50
+    rejections in a six-chunk run by corrupting the slot beside it. A model
+    that volunteers a value anyway keeps it; nothing downstream reads it.
+    """
     accepted, rejects = _run([dict(GOOD, claim_type="observation")])
-    assert accepted == []
-    assert rejects["claim_type_unknown"] == 1
+    assert rejects == {}, rejects
+    assert accepted[0]["claim_type"] == "observation"
+
+
+def test_a_candidate_with_no_claim_type_at_all_is_accepted():
+    """The field is optional now, and its absence must not be a rejection."""
+    without = {k: v for k, v in GOOD.items() if k != "claim_type"}
+    accepted, rejects = _run([without])
+    assert rejects == {}, rejects
+    assert accepted[0]["claim_type"] is None
 
 
 @pytest.mark.parametrize("claim_type", sorted(M.CLAIM_TYPES))

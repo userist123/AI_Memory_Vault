@@ -98,12 +98,26 @@ MAX_JACCARD = 0.60
 #: A definition shorter than this is a label, not a definition.
 MIN_DEFINITION_WORDS = 12
 
-#: The kinds of claim a passage can make about a concept. Validated, unlike
-#: before: qwen2.5-coder:7b returned `claim_type: "ontology"` on all eight of
-#: its candidates — `ontology` is a SLOT, not a claim type — while putting
-#: `identity` in the slot field for every one of them. The two fields were
-#: swapped and nothing caught it, because only the slot was being checked.
-#: An unvalidated field is a field the model may fill with anything.
+#: `claim_type` is no longer requested, and this records why so it is not
+#: reintroduced as an obvious improvement.
+#:
+#: It was asked for alongside `slot`, and both take values from a closed
+#: vocabulary. A 7B model does not hold two taxonomies of 5 and 16 apart:
+#: qwen2.5-coder:7b returned `claim_type: "ontology"` — a SLOT — on all eight
+#: of its candidates while putting `identity` in the slot field for every
+#: one, and in a later run put `definition` in the slot field 14 times, which
+#: was every `slot_unknown` rejection in that run. Eleven of fifty rejections
+#: in a six-chunk run were this confusion alone.
+#:
+#: And the field earned none of that cost. Across every run where it
+#: validated, every surviving candidate said `definition` — never mechanism,
+#: finding, taxonomy or constraint. Nothing downstream reads it either:
+#: `merge_candidate_concepts.py` never touches it and the ontology row has no
+#: column for it.
+#:
+#: So it carried no information, and its only measurable effect was to
+#: corrupt the field next to it. Asking a small model for less is the fix;
+#: asking it more insistently is not.
 CLAIM_TYPES = frozenset(
     {"definition", "mechanism", "finding", "taxonomy", "constraint"}
 )
@@ -194,16 +208,9 @@ Return JSON only — a list of objects, no prose around it. Each object:
   "evidence"   One sentence copied EXACTLY from the passage, character for
                character, that supports the definition. It must be present
                in the passage verbatim.
-  "claim_type" One of: definition, mechanism, finding, taxonomy, constraint.
   "slot"       The single best fit. Choose by which QUESTION the concept
                helps answer, not by which name sounds closest:
 {slots}
-               claim_type and slot are INDEPENDENT. A mechanism can belong
-               to any slot. Do not pick "procedures" merely because the
-               concept is a mechanism, a method or an algorithm — ask which
-               question it answers. A mechanism by which experience becomes
-               durable knowledge belongs to consolidation; a definition of a
-               kind of memory belongs to ontology.
   "confidence" Your confidence from 0.0 to 1.0 that this is a real, load-
                bearing concept the passage genuinely defines. Use the full
                range. Be honest when you are unsure.
@@ -311,14 +318,12 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     if slot not in CANONICAL_SLOTS:
         return False, "slot_unknown"
 
-    claim_type = str(candidate.get("claim_type", "")).strip().lower()
-    if claim_type not in CLAIM_TYPES:
-        #: A slot name here means the model answered the wrong question, and
-        #: the slot field is then not to be trusted either.
-        return False, (
-            "claim_type_is_a_slot" if claim_type in CANONICAL_SLOTS
-            else "claim_type_unknown"
-        )
+    #: A model that volunteers claim_type anyway is not punished for it, but
+    #: a value that is really a slot name still means the two fields were
+    #: confused and the slot cannot be trusted.
+    volunteered = str(candidate.get("claim_type", "")).strip().lower()
+    if volunteered and volunteered in CANONICAL_SLOTS:
+        return False, "claim_type_is_a_slot"
 
     try:
         confidence = float(candidate.get("confidence"))
@@ -485,7 +490,10 @@ def extract_from_chunk(
             {
                 "concept": clean_term(candidate["concept"]),
                 "definition": str(candidate["definition"]).strip(),
-                "claim_type": str(candidate["claim_type"]).strip().lower(),
+                #: Kept in the row only when the model offered it unasked, so
+                #: a better model's answer is not thrown away — but nothing
+                #: requires it and nothing downstream reads it.
+                "claim_type": str(candidate.get("claim_type", "")).strip().lower() or None,
                 "maps_to_slot": slot,
                 "maps_to_module": (KNOWN_VERIFIED_MODULES.get(slot) or [None])[0],
                 "confidence_in_literature": float(candidate["confidence"]),
