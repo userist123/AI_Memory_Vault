@@ -721,3 +721,70 @@ noise — not the one that yields 5 by echoing its own instructions.
 
 A corpus run at this rate is ~4,400 candidates. That is not a queue anyone
 reviews.
+
+## r031 — cross-model agreement, the first selectivity signal that works
+
+Four 7-8B models installed and run over the same six chunks of the same
+paper, identical seed and temperature, each unloaded between runs:
+
+| model | kept | verbatim rejections | GPU residency |
+|---|---:|---:|---|
+| qwen2.5-coder:7b | 22 | 14 | 92% |
+| llama3.1:8b | 16 | 10 | 66% |
+| mistral:7b-instruct | 10 | 11 | 69% |
+| qwen2.5:7b-instruct | 5 | 8 | 92% |
+
+The spread is the point. If all four returned roughly the same concepts there
+would be nothing to separate, and agreement would be as constant as
+confidence. One model returning 5 and another 22 from the same text means
+there is a core everyone sees and a periphery only one does.
+
+### What agreement separates
+
+30 distinct concepts across the four runs:
+
+| found by | n | share | examples |
+|---|---:|---:|---|
+| 4 of 4 | 3 | 10% | Reservoir sampling, Semantic memory, Synaptic consolidation |
+| 3 of 4 | 5 | 17% | Continual learning, Episodic memory, Fisher information matrix, stability-plasticity trade-off |
+| 2 of 4 | 4 | 13% | CLS-ER, Dual memory system, Exponential moving average |
+| **1 of 4** | **18** | **60%** | Overall loss, Supervised loss, Soft-targets, reliability plots, Representation space, Decision boundaries |
+
+The tail is the experimental furniture that no other mechanism could remove —
+not the prompt exclusions, not occurrences, not confidence.
+
+Unlike every signal tried before it, this one is **counted rather than
+claimed**, and no single model can inflate it because none of them sees the
+others' answers.
+
+### What it costs, and what it loses
+
+**Compute scales with models.** Four models over 1,107 chunks is roughly 27
+hours of local inference against about 7 for one.
+
+**It discards true positives.** `Catastrophic forgetting` and `Experience
+replay` were each found by exactly one of four models. Both are load-bearing.
+A threshold of 2 loses them. Agreement measures how *obvious* a concept is to
+several readers, which is close to but not the same as how important it is.
+
+So `--min-models` defaults to 1: every concept is kept and merely annotated
+with `models_agreeing` and `found_by`. A filter that silently drops real
+concepts should be something a person turns on deliberately, not a default.
+
+### Two ways this could stop being evidence, both guarded
+
+- **Counting a model against itself.** Two runs of one model are one opinion.
+  The tool identifies the model from the rows rather than the filename and
+  refuses duplicates outright.
+- **Folding terms too eagerly.** Agreement is worthless if `Supervised loss`
+  and `Overall loss` merge. The first version was also wrong in the other
+  direction — a bare trailing-s strip turned `approaches` into `approache`,
+  which failed to match `approach` on the first real pair it met. Both
+  directions are now parametrized tests.
+
+### Note on residency
+
+`llama3.1:8b` reports 66% on GPU and `mistral:7b-instruct` 69%, despite both
+being under 5 GB on disk. The 32k context window is what pushes them over an
+8 GB card; the two qwen 7b models fit at 92%. Lowering `--num-ctx` is the
+lever if their speed matters.
