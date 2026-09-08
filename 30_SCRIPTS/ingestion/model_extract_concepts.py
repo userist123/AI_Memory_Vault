@@ -550,6 +550,36 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     return merged, len(rows) - len(merged)
 
 
+def report_residency(model: str, base_url: str = "http://localhost:11434") -> str:
+    """How much of the model is actually on the GPU.
+
+    Purely diagnostic, and it fails quietly: a run must not break because a
+    status endpoint moved. It exists because "the model is slow" and "two
+    thirds of the model is running on the CPU" are the same observation from
+    the outside, and only the second one tells you what to do about it.
+    """
+    try:
+        import json as _json
+        from urllib import request as _request
+
+        with _request.urlopen(f"{base_url}/api/ps", timeout=10) as response:
+            data = _json.loads(response.read().decode("utf-8"))
+        for entry in data.get("models", []):
+            if entry.get("name") == model:
+                total = float(entry.get("size") or 0)
+                vram = float(entry.get("size_vram") or 0)
+                if total <= 0:
+                    return "unknown"
+                share = vram / total
+                verdict = "fully resident" if share > 0.99 else (
+                    f"{share:.0%} on GPU, the rest on CPU"
+                )
+                return f"{vram/1e9:.1f}GB of {total/1e9:.1f}GB — {verdict}"
+        return "not loaded"
+    except Exception:  # noqa: BLE001 - diagnostics never break a run
+        return "unavailable"
+
+
 def build_provider(kind: str, model: str, timeout: float, num_ctx: int) -> Any:
     if kind == "fake":
         from providers.fake_model_provider import FakeModelProvider
@@ -574,7 +604,14 @@ def main() -> int:
     ap.add_argument("--source-book", required=True)
     ap.add_argument("--output-file", required=True, type=pathlib.Path)
     ap.add_argument("--provider", default="local", choices=("local", "fake"))
-    ap.add_argument("--model", default="gemma4:26b-64k")
+    ap.add_argument(
+        "--model", default="mixtral:8x7b",
+        help="local model name. Whether it FITS matters more than its size: "
+             "a model larger than the GPU spills to CPU and eventually fails "
+             "to load at all — measured on this hardware, a 19 GB model on an "
+             "8 GB card ended in 'llama-server process has terminated'. The "
+             "run reports the resident fraction so this is visible.",
+    )
     ap.add_argument("--model-tier", default="standard")
     ap.add_argument(
         "--max-chunks", type=int, default=0,
@@ -700,6 +737,8 @@ def main() -> int:
     print(f"  distinct confidence values  {len(confidences)}  {confidences[:12]}")
     print(f"  slots used         {dict(slots_used.most_common())}")
     print(f"  sampling           {sampling}, keep_alive={args.keep_alive}")
+    if args.provider == "local":
+        print(f"  model residency    {args.model}: {report_residency(args.model)}")
     print(f"  written            {args.output_file}")
     if args.rejects_file:
         args.rejects_file.parent.mkdir(parents=True, exist_ok=True)
