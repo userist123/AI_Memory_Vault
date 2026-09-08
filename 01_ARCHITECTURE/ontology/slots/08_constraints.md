@@ -25,6 +25,6 @@ What is forbidden or risky?
 - `03_IMPLEMENTATION/packages/security/mutation_gate.py`
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id |
-|---|---|---|---|---|---|
-| Catastrophic Forgetting Mitigation | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.95 | unverified_source | 2026-09-07 | |
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
+|---|---|---|---|---|---|---|
+| Catastrophic Forgetting Mitigation | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.95 | unverified_source | 2026-09-07 | | |

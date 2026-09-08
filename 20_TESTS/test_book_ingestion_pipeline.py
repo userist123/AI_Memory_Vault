@@ -108,8 +108,8 @@ ontology_slot: {slot}
 # Ontology Slot: {slot.capitalize()}
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id |
-|---|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
+|---|---|---|---|---|---|---|
 """
         file_path.write_text(content, encoding="utf-8")
 
@@ -153,7 +153,7 @@ ontology_slot: {slot}
 
     new_row = table_lines[-1]
     cols = [c.strip() for c in new_row.split("|")]
-    assert len(cols) == 8  # Split by '|' produces 8 items for 6 columns (leading/trailing empty strings)
+    assert len(cols) == 9  # Split by '|' produces 9 items for 7 columns (leading/trailing empty strings)
     assert cols[1] == "Synaptic Consolidation"
     assert cols[2] == "Sarfraz et al. (2022)"
     assert cols[3] == "0.95"

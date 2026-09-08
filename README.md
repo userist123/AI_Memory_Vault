@@ -28,6 +28,9 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 | Memory Controller | storage boundary, read/write policy, context packs, progressive disclosure, lifecycle gating | **IMPLEMENTED** |
 | Model execution | fake, local/Ollama, OpenAI provider abstractions, tier routing, usage telemetry | **IMPLEMENTED** |
 | External skill ingestion | discovery, provenance, classification, validation, controlled promotion | **IMPLEMENTED** |
+| Book → text conversion | PDF outline / typography / page-fallback chunking, OCR detection, per-book metrics | **IMPLEMENTED** |
+| Book concept extraction | model-assisted, with grounding, paraphrase, shape and schema gates | **IMPLEMENTED / GATES PROVEN** |
+| Book concept *selectivity* | telling a load-bearing concept from experimental furniture | **MEASURED, NOT SOLVED** |
 | Persistent agent memory | resumable `CURRENT.md` state under `09_COORDINATION/AGENT_MEMORY/` | **IMPLEMENTED** |
 | Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
 | Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
@@ -544,8 +547,12 @@ This section is not a weakness of the README. It is part of the project contract
 5. The latest treatment pilot still shows negative efficiency against matched advisory control.
 6. CI execution observed in the current work chain may remain queued; queued means **not verified**.
 7. Some research artifacts are design targets rather than implementation guarantees.
+8. Book ingestion extracts and gates correctly but cannot rank. Model confidence is `1.00` on every candidate including ones whose evidence was fabricated; `claim_type` is constant; `occurrences` is 1 for 47 of 48 concepts in a full paper; a prompt-level exclusion list is ignored by the model. Roughly half the output is experimental furniture — `validation set`, `SGD optimizer`, `Rot-MNIST`. Measured, not estimated: [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md).
+9. Two books in the corpus are scans with no text layer and cannot be ingested without OCR, which this repository does not have.
 
 Showing these gaps is intentional. The project is being hardened by falsification, not by polishing its claims.
+
+One of them was nearly polished away and is worth stating plainly. A prompt change appeared to cut extraction noise by 85%; four of its five surviving concepts were the four the prompt itself listed as good examples, returned regardless of what the passage said. The number looked like a fix and was the model repeating its instructions. The version kept in the repository is the one with the worse number.
 
 ---
 

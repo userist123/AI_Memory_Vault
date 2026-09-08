@@ -208,17 +208,40 @@ def test_rejects_a_missing_or_out_of_range_confidence():
 
 
 def test_unparseable_model_output_yields_nothing_rather_than_guesses():
-    """FakeModelProvider's default reply is not JSON."""
+    """FakeModelProvider's default reply is not JSON.
+
+    Counted, not silently zero: "the model answered something we could not
+    read" and "this passage defines nothing" are the same zero downstream and
+    are not the same event.
+    """
     provider = FakeModelProvider()
     accepted, rejects = M.extract_from_chunk(
         provider, {"heading": "S", "content": CHUNK}, "test_book", "standard"
     )
     assert accepted == []
-    assert rejects == {}
+    assert rejects["unparseable_response"] == 1
 
 
-def test_provider_failure_is_recorded_not_raised():
+def test_an_empty_response_is_counted_rather_than_read_as_no_concepts():
+    """Measured: Ollama's `format: "json"` returns "" from glm-4.7-flash.
+
+    Silently that reads as a passage with nothing in it, which is why the
+    option is not set and why this case has its own counter.
+    """
+    provider = FakeModelProvider(canned_response="")
+    accepted, rejects = M.extract_from_chunk(
+        provider, {"heading": "S", "content": CHUNK}, "test_book", "standard"
+    )
+    assert accepted == []
+    assert rejects["empty_response"] == 1
+    assert "unparseable_response" not in rejects
+
+
+def test_provider_failure_is_recorded_not_raised(monkeypatch):
     """A timeout must not read as 'the model found nothing here'."""
+    #: Without this the retry backoff is really slept and the suite goes from
+    #: 0.06s to 15s. A slow test is a test that stops being run.
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
 
     class Failing:
         def generate(self, request):
@@ -312,3 +335,241 @@ def test_acronym_gloss_is_stripped_not_rejected():
     accepted, rejects = _run([dict(GOOD, concept="Quenched harmonic buffering (QHB)")])
     assert rejects == {}, rejects
     assert accepted[0]["concept"] == "Quenched harmonic buffering"
+
+
+def test_main_actually_deduplicates_and_writes_rejects(tmp_path, monkeypatch):
+    """End-to-end through main(), because a unit test is not wiring.
+
+    deduplicate() shipped with passing unit tests while main() never called
+    it: the edit that added the call silently failed to apply and nothing
+    caught it. A function with tests and no caller is not a feature.
+    """
+    #: Two chunks, so the fake provider returns the same concept twice and a
+    #: duplicate genuinely has to be collapsed.
+    book = tmp_path / "book.txt"
+    book.write_text(
+        f"# Section One\n\n{CHUNK}\n\n# Section Two\n\n{CHUNK}\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out.json"
+    rejects = tmp_path / "rejects.json"
+
+    payload = json.dumps([GOOD, dict(GOOD, concept="What", slot="state")])
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=payload),
+    )
+    monkeypatch.setattr(
+        sys, "argv",
+        [
+            "model_extract_concepts.py",
+            "--input-file", str(book),
+            "--source-book", "test_book",
+            "--output-file", str(out),
+            "--rejects-file", str(rejects),
+            "--provider", "fake",
+        ],
+    )
+
+    assert M.main() == 0
+
+    written = json.loads(out.read_text(encoding="utf-8"))
+    assert len(written) == 1, "the same concept in two sections must collapse"
+    assert written[0]["occurrences"] == 2
+    assert written[0]["also_found_in"] == ["Section Two"]
+
+    #: The generic term is refused in both chunks and both are recorded with
+    #: the offending value, not just counted.
+    refused = json.loads(rejects.read_text(encoding="utf-8"))
+    assert len(refused) == 2
+    assert {r["reason"] for r in refused} == {"term_generic"}
+    assert refused[0]["concept"] == "What"
+    assert refused[0]["slot"] == "state"
+
+
+def test_acronym_gloss_is_stripped_wherever_it_sits():
+    """Refused for length on a live run: the gloss was not last.
+
+    "Complementary Learning Systems (CLS) theory" is four words with the
+    gloss removed and five with it, and four is the limit.
+    """
+    assert (
+        M.clean_term("Complementary Learning Systems (CLS) theory")
+        == "Complementary Learning Systems theory"
+    )
+    accepted, rejects = _run(
+        [dict(GOOD, concept="Quenched harmonic (QHB) buffering")]
+    )
+    assert rejects == {}, rejects
+    assert accepted[0]["concept"] == "Quenched harmonic buffering"
+
+
+def test_a_transient_provider_failure_is_retried(monkeypatch):
+    """Measured: two chunks failed and the identical request then worked.
+
+    Unretried, a passing run silently loses those chunks — a hole in the
+    extraction with nothing in the output pointing at it.
+    """
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
+
+    class FlakyOnce:
+        def __init__(self):
+            self.calls = 0
+
+        def generate(self, request):
+            self.calls += 1
+            if self.calls == 1:
+                raise ConnectionError("endpoint busy")
+            return FakeModelProvider(canned_response=json.dumps([GOOD])).generate(
+                request
+            )
+
+    provider = FlakyOnce()
+    accepted, rejects = M.extract_from_chunk(
+        provider, {"heading": "S", "content": CHUNK}, "b", "standard"
+    )
+    assert provider.calls == 2
+    assert len(accepted) == 1
+    assert rejects["provider_retry_succeeded_on_2"] == 1
+
+
+def test_a_persistent_provider_failure_is_recorded_not_raised(monkeypatch):
+    """One unreachable chunk must not end a multi-hour run."""
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
+
+    class AlwaysFails:
+        calls = 0
+
+        def generate(self, request):
+            AlwaysFails.calls += 1
+            raise TimeoutError("no response")
+
+    accepted, rejects = M.extract_from_chunk(
+        AlwaysFails(), {"heading": "S", "content": CHUNK}, "b", "standard",
+        attempts=3,
+    )
+    assert AlwaysFails.calls == 3
+    assert accepted == []
+    assert rejects["provider_error:TimeoutError"] == 1
+
+
+def test_a_timeout_is_not_retried(monkeypatch):
+    """A client timeout does not cancel the server's work.
+
+    Observed directly: after a request timed out at 500s the endpoint still
+    held the model, still busy, and would not start a queued one. Retrying
+    then puts a second request behind the first and deepens the backlog,
+    which is the opposite of what a retry is for.
+    """
+    monkeypatch.setattr(M.time, "sleep", lambda _s: None)
+
+    class TimesOut:
+        calls = 0
+
+        def generate(self, request):
+            TimesOut.calls += 1
+            raise RuntimeError(
+                "Could not reach local model endpoint http://x/api/generate: timed out"
+            )
+
+    accepted, rejects = M.extract_from_chunk(
+        TimesOut(), {"heading": "S", "content": CHUNK}, "b", "standard", attempts=3
+    )
+    assert TimesOut.calls == 1, "a timeout must be attempted once, not three times"
+    assert accepted == []
+    assert rejects["provider_timeout"] == 1
+
+
+def test_a_slot_name_in_claim_type_is_refused():
+    """qwen2.5-coder:7b returned claim_type "ontology" on all 8 candidates.
+
+    `ontology` is a slot, not a claim type, and the same run put `identity`
+    in the slot field for every candidate — the two fields were swapped. It
+    went unnoticed because claim_type was never validated. An unvalidated
+    field is a field the model may fill with anything.
+    """
+    accepted, rejects = _run([dict(GOOD, claim_type="ontology")])
+    assert accepted == []
+    assert rejects["claim_type_is_a_slot"] == 1
+
+
+def test_an_invented_claim_type_is_refused():
+    accepted, rejects = _run([dict(GOOD, claim_type="observation")])
+    assert accepted == []
+    assert rejects["claim_type_unknown"] == 1
+
+
+@pytest.mark.parametrize("claim_type", sorted(M.CLAIM_TYPES))
+def test_every_documented_claim_type_is_accepted(claim_type):
+    """The gate must not be narrower than the prompt it enforces."""
+    accepted, rejects = _run([dict(GOOD, claim_type=claim_type)])
+    assert rejects == {}, rejects
+    assert accepted[0]["claim_type"] == claim_type
+
+
+def test_min_occurrences_filters_by_the_only_observed_signal(tmp_path, monkeypatch):
+    """Confidence and claim_type are constant, so neither can rank anything.
+
+    How many distinct sections define a term is counted rather than claimed,
+    which makes it the only usable selectivity signal on this pipeline.
+    """
+    #: Three sections; the fake provider returns the same pair every time, so
+    #: both concepts end at occurrences=3 and both survive a floor of 2.
+    body = "\n\n".join(f"# Section {i}\n\n{CHUNK}" for i in range(1, 4))
+    book = tmp_path / "b.txt"
+    book.write_text(body, encoding="utf-8")
+    out = tmp_path / "o.json"
+
+    payload = json.dumps([GOOD])
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=payload),
+    )
+
+    def run(min_occ):
+        monkeypatch.setattr(sys, "argv", [
+            "x", "--input-file", str(book), "--source-book", "b",
+            "--output-file", str(out), "--provider", "fake",
+            "--min-occurrences", str(min_occ),
+        ])
+        assert M.main() == 0
+        return json.loads(out.read_text(encoding="utf-8"))
+
+    kept_all = run(1)
+    assert len(kept_all) == 1
+    assert kept_all[0]["occurrences"] == 3
+
+    #: A floor above what any concept reached removes everything, and that is
+    #: the honest outcome rather than an error.
+    assert run(4) == []
+
+
+def test_the_prompt_names_no_desirable_concept():
+    """Naming good outputs turns extraction into recall.
+
+    Measured: a prompt version listing "catastrophic forgetting", "episodic
+    memory", "synaptic consolidation" and "stability-plasticity trade-off" as
+    examples of good concepts made the model return those four in nearly
+    every passage — one in seven of twelve chunks — and they were four of the
+    five surviving candidates. Yield looked like it had improved by 85%. It
+    had not; the model was echoing the prompt.
+
+    This is r027's defect reintroduced through the prompt rather than the
+    code, and the code test for it cannot see the prompt, so this guards the
+    prompt directly.
+    """
+    banned = [
+        "catastrophic forgetting",
+        "episodic memory",
+        "synaptic consolidation",
+        "stability-plasticity trade-off",
+    ]
+    prompt = M.PROMPT.lower()
+    #: The exclusion list is fine — an exclusion cannot be echoed as output.
+    #: What must not appear is a concept named as desirable.
+    good_section = prompt.split("not concepts:")[0]
+    for term in banned:
+        assert term not in good_section, (
+            f"{term!r} is named before the exclusion list; the model will "
+            "return it regardless of the passage"
+        )

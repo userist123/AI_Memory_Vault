@@ -284,3 +284,440 @@ slot routing improved; the mechanism is in place and its effect is unmeasured.
   range does not produce it.
 - Slot correctness is unverified, per the variance finding above.
 - Cross-book deduplication is not done. Within-book is.
+
+## r031 — the noise floor, measured
+
+The previous section reported that the same three chunks yielded 13
+candidates and then 2, and that nothing could be concluded from a single run.
+That is now resolved, and the answer is not the one that was expected.
+
+### Sampling is pinned through the provider's own escape hatch
+
+`temperature: 0` and a fixed `seed` go through `metadata["local_options"]`,
+which `LocalProvider` already supports. `ModelRequest` stays provider-neutral;
+no Ollama-specific field was added to the shared contract, and nothing in the
+protected core was touched.
+
+### The result: two stable regimes, not noise
+
+One chunk of `sarfraz22a`, five runs, identical settings throughout:
+
+| run | model state | candidates | terms |
+|---|---|---|---|
+| 1 | cold (first load) | 5 | Semantic memory, Episodic memory, Instance-based hippocampal system, Parametric neocortical system, Plasticity and stability |
+| 2 | warm | 6 | SYNERgy method, Continual learning, Experience replay, Dual memory experience replay, Episodic memory, Rehearsal-based approaches |
+| 3 | warm | 6 | *identical to run 2* |
+| 4 | warm | 6 | *identical to run 2* |
+| 5 | cold (forced unload) | 5 | *identical to run 1* |
+
+Runs 2-4 match byte for byte — same terms, same slots, same confidences, and
+the same seven rejections with the same breakdown. Runs 1 and 5 match each
+other.
+
+So the model is deterministic in **both** states. This is not warm-up noise
+that settles: it is two stable regimes, and load state selects between them.
+
+**Consequence for the long run.** Ollama unloads an idle model by default. A
+multi-hour ingestion can therefore cross a regime boundary partway through
+and extract the second half of a corpus differently from the first, with
+nothing in the output to indicate it. `--keep-alive` now defaults to 60m to
+hold the model resident, and the setting is printed with every run.
+
+**Consequence for comparisons.** Pinning the seed is necessary and not
+sufficient. Any A/B between two prompts must also control load state, or it
+measures the regime rather than the change — and with 5 vs 6 candidates
+between regimes, that difference is the same size as the effects being
+looked for.
+
+### `format: "json"` is measured broken on this model
+
+Ollama's structured-output flag looks like the correct way to guarantee
+parseable responses. Against `glm-4.7-flash` it returns an empty string in
+under a second, every time, while the identical request without it answers
+normally in 27s:
+
+| configuration | time | response |
+|---|---|---|
+| baseline | 27s | ` ```json [{"a": 1}] ``` ` |
+| `format: json` | 0s | *empty* |
+| `temperature` + `seed` | 6s | `[{"a": 1}]` |
+| both | 0s | *empty* |
+
+It is not set. Pinned sampling alone already produces clean JSON without
+fences.
+
+### The defect this exposed in our own code
+
+The first three pinned runs reported `0 candidates, 0 rejected` — which reads
+as three passages that happened to define nothing, not as a provider
+returning nothing at all. An empty response and an empty result were the same
+number.
+
+`empty_response` and `unparseable_response` are now counted separately, each
+with a test. This is the same failure shape as the `_normalize()` defect in
+r030: a legitimate-looking zero standing in front of no work.
+
+### Still open
+
+- Confidence remains uncalibrated.
+- `slot_unknown` fires exactly once in every warm run — a repeatable pattern,
+  not an accident. The model proposes a slot outside the ontology for the
+  same passage each time. Worth looking at, now that "the same each time" is
+  a statement that can be made.
+- Cross-book deduplication is still not done.
+
+## r031 — a correction, and what the rejections say
+
+### Correction: deduplication was reported working and was not
+
+The previous section and its commit describe deduplication collapsing
+repeated terms. That was false when written. `deduplicate()` shipped with
+passing unit tests and **no caller** — the edits wiring it into `main()`
+failed to apply silently, because `str.replace` says nothing when its anchor
+does not match.
+
+The evidence was visible and went unread: a run two steps earlier did not
+print the `sampling` line that the same batch of edits was supposed to add.
+
+It is wired now, verified by running it rather than by a green test:
+
+```
+candidates kept    8  (1 duplicates merged)
+defined more than once  1
+```
+
+`test_main_actually_deduplicates_and_writes_rejects` drives `main()`
+end to end over two identical sections and asserts against the written file.
+A unit test on a function with no caller measures nothing — which is exactly
+what the repository's own production-consumer rule says, applied here to our
+own code.
+
+### Model confidence is not merely uncalibrated, it is empty
+
+One run, 18 candidates through the gates:
+
+| | confidence |
+|---|---|
+| 8 accepted | 1.0 |
+| 10 rejected | 1.0 |
+
+Every candidate, including three whose evidence quote was not in the source
+at all, is 1.0. Distinct values across the run: **one**. Asking for the full
+range, twice, in the prompt, changes nothing.
+
+`confidence_in_literature` should not be read as a signal by anything
+downstream. `occurrences` — how many distinct sections define the term — is
+the field that carries information, because it is counted rather than
+claimed.
+
+### What the rejections diagnose
+
+Now that rejected candidates are written out with the offending value, not
+just counted:
+
+| reason | n | what it means |
+|---|---|---|
+| verbatim_ngram | 5 | the model reuses the source's phrasing; the top failure |
+| evidence_not_in_source | 3 | fabricated quotes, still being caught |
+| term_length | 1 | ours, not the model's — see below |
+| definition_short | 1 | |
+
+`Complementary Learning Systems (CLS) theory` was refused for length because
+`clean_term()` stripped only a trailing gloss, leaving five words where four
+are allowed. The gloss is now removed wherever it appears. That was our
+defect rejecting a real concept.
+
+### Slot routing is skewed, and the questions did not fix it
+
+Slots chosen across 8 accepted candidates:
+
+    procedures 5, map 1, constraints 1, identity 1
+
+`procedures` asks "How are operations executed?", and a neuroscience
+mechanism reads as an operation, so mechanisms land there regardless of
+subject. Adding the slot questions to the prompt has not corrected this.
+Nothing here claims it did.
+
+`slot_unknown` did not fire in this run, so the earlier observation that it
+fires exactly once per warm run remains unconfirmed under this
+configuration — different chunk count, different regime. It is not carried
+forward as established.
+
+## r031 — retries, and what survives the merge boundary
+
+### Provider failures are transient, and losing a chunk is silent
+
+One run lost both its chunks to `LocalProviderError`. The identical request,
+repeated by hand, succeeded in 148 seconds. The failure is transient, not
+deterministic.
+
+Unretried, that is a hole in the extraction with nothing in the output
+pointing at it: the run reports a candidate count, and the count is simply
+lower than it should be. Over a corpus of 1,107 chunks that is not a rare
+event to be tolerated, it is an unknown fraction of the corpus quietly
+missing.
+
+`--attempts` defaults to 3 with an increasing backoff. A retry that succeeds
+is counted under its own key, so the rate is visible rather than hidden. A
+chunk that fails all attempts is still recorded and the run continues — one
+unreachable chunk must not end a multi-hour job.
+
+Adding this made the test suite take 15 seconds instead of 0.06, because an
+older test slept the real backoff. Patched: a slow suite is a suite that
+stops being run.
+
+### The integration works, and drops almost everything
+
+Verified end to end against a COPY of the slot files
+(`--slots-dir` pointing at a temporary directory, vault untouched and
+confirmed clean with `git status`). All 8 candidates merged into their
+correct slot files.
+
+What arrives in the ontology:
+
+```
+| Synaptic Consolidation | sarfraz | 1.00 | proposed | 2026-09-08 | |
+```
+
+The candidate row has six fixed columns, and none of them is the definition,
+the evidence quote, or `occurrences`.
+
+That matters more than it looks:
+
+- The **evidence quote is the anti-hallucination mechanism**. It is checked
+  against the source text, it is why three fabricated citations were caught
+  in a single run — and it does not reach the person who reviews the row.
+- **`occurrences` is the only field carrying real information**, since it is
+  counted rather than claimed, and it is dropped.
+- **`confidence` is written as `1.00` on every row.** It is the one thing
+  that does survive, it is meaningless, and in a table it reads as maximum
+  certainty.
+
+r028 established that every promoted or declined candidate needs a sentence
+of actual reasoning. A reviewer working from the slot table has a term, a
+book name, and a number that is always 1.00. There is nothing there to reason
+from; the reasoning material is in the staging JSON that the merge discards.
+
+This is not a defect in the merge script — it predates this work and its row
+format is the ontology's. It is a statement about what model-assisted
+extraction needs that the current row cannot carry, and it should be settled
+before a corpus-scale run fills sixteen slot tables with rows that cannot be
+reviewed.
+
+## r031 — the real cause of the "transient" failures
+
+An earlier section here called provider failures transient and added retries
+on that basis. That diagnosis was wrong, and the correction matters more than
+the retry did.
+
+### The model does not fit in the GPU
+
+| | |
+|---|---|
+| `glm-4.7-flash` on disk | 19.02 GB |
+| resident in VRAM | 6.26 GB |
+| GPU total | 8.15 GB |
+
+Two thirds of the model runs on the CPU. That is why the identical request
+took 148 seconds once and exceeded 500 the next time: throughput depends on
+how the layers happen to be split, which shifts with whatever else is
+resident.
+
+Of the six models installed, only two fit:
+
+| model | size | fits in 8 GB |
+|---|---|---|
+| qwen2.5-coder:3b | 1.93 GB | yes |
+| qwen2.5-coder:7b | 4.68 GB | yes |
+| gemma4:26b / 26b-64k | 17.99 GB | no |
+| qwen3-coder:30b | 18.56 GB | no |
+| glm-4.7-flash | 19.02 GB | no |
+
+Every measurement of speed taken so far was taken on a model running mostly
+on the CPU, and the ~48h corpus estimate inherits that.
+
+**This also gives the "two stable regimes" finding a simpler mechanism.**
+Cold and warm runs plausibly differ because the GPU/CPU layer split differs
+between loads. The observation stands — warm runs were byte-identical to each
+other, cold runs to each other — but the explanation is layer placement, not
+anything intrinsic to the model.
+
+### A client timeout does not cancel the work
+
+Observed directly: after a request timed out at 500 seconds, `/api/ps` still
+showed the model loaded and busy, and a request for a *different* model
+queued behind it instead of loading.
+
+So retrying a timeout does not recover anything. It adds a second request on
+top of one the server is still working through, and deepens the backlog. The
+retry logic added in the previous commit would have made a slow run worse.
+
+Timeouts are now attempted once and recorded as `provider_timeout`. Retries
+are kept for genuinely unreachable endpoints, which is what they were for.
+
+### What this changes
+
+The choice of model for a corpus-scale run is now a measured decision rather
+than a default. A 7B model resident entirely in VRAM may be several times
+faster than a 30B model spilling to CPU, and the trade against extraction
+quality has to be seen in data — which is the measurement currently queued
+behind a stuck request.
+
+## r031 — a second model, and the gate it walked through
+
+`qwen2.5-coder:7b` (4.68 GB, the largest installed model that fits entirely
+in the 8 GB GPU) was run over three chunks of the same paper.
+
+Its definitions are good — arguably better than the 30B model's:
+
+> **Episodic Memory** — A type of memory that stores specific instances of
+> events or experiences.
+
+But every one of its eight candidates carried:
+
+    "claim_type": "ontology"      <- ontology is a SLOT, not a claim type
+    "slot":       "identity"      <- all eight, regardless of subject
+
+The two fields were swapped, and **the pipeline accepted all eight**, because
+`validate()` checked the slot and never checked `claim_type` at all. Eight
+rows would have entered the `identity` slot table carrying a claim type that
+does not exist in the schema.
+
+An unvalidated field is a field the model may fill with anything. `claim_type`
+is now checked against the five documented values, with a distinct rejection
+reason when the value is a slot name — because that specific confusion means
+the model answered the wrong question and the slot field cannot be trusted
+either.
+
+This was only visible because a second model was tried. The 30B model happens
+to fill the field correctly, so the missing gate was invisible for as long as
+one model was used.
+
+### Model comparison, such as it is
+
+| | glm-4.7-flash (19 GB, spills to CPU) | qwen2.5-coder:7b (4.7 GB, fits) |
+|---|---|---|
+| candidates kept (3 chunks) | 13 | 8 |
+| verbatim rejections | 1 | 8 |
+| claim_type correct | yes | no, all wrong |
+| slot spread | 4 slots | 1 slot, all `identity` |
+| definition quality | good | good |
+
+The 7B model copies source phrasing far more (8 verbatim rejections against
+1) and cannot keep the two schema fields apart. The larger model is better at
+the structured part of the task even while running mostly on CPU.
+
+Timing is not comparable between the two runs: the 7B run spent an unknown
+part of its 14 minutes queued behind the stuck 30B request described above.
+Speed still needs a clean measurement on an idle endpoint.
+
+## r031 — clean speed, and the review problem returns
+
+Measured on an idle endpoint, same chunk, same seed, each model unloaded
+before the next:
+
+| model | time | throughput | outcome |
+|---|---|---|---|
+| qwen2.5-coder:7b | **21.7s** | 43.8 tok/s | 8 objects parsed |
+| glm-4.7-flash | — | — | **crashed**: `llama-server process has terminated` |
+
+The 30B model is not merely slow on this machine. It no longer loads: a 19 GB
+model against an 8 GB GPU now fails outright rather than spilling. The earlier
+148s and 500s figures were taken while it still managed to load.
+
+So the model choice is settled by the hardware, not by preference. At 21.7s
+per chunk the corpus is roughly **7 hours**, against the ~48h estimated from
+the CPU-bound measurements.
+
+### What the gates catch on this model
+
+Six chunks, full validation:
+
+| | |
+|---|---|
+| proposed by the model | 60 |
+| **kept** | **10** (17%) |
+| verbatim_ngram | 17 |
+| slot_unknown | 14 |
+| claim_type_is_a_slot | 11 |
+| definition_short | 5 |
+| term_shape / paraphrase_shallow | 3 |
+
+The field confusion runs in both directions: `ontology` appears in
+`claim_type`, and `definition` appears in `slot` — 14 times, which is the
+entirety of `slot_unknown`. The claim_type gate added in the previous commit
+catches 11 candidates that would otherwise have entered the ontology.
+
+`claim_type` carries no information from this model even when it validates:
+all 10 survivors say `definition`, none says mechanism, finding, taxonomy or
+constraint. Like confidence, it should not be read as a signal.
+
+### The review load, now real
+
+10 candidates from 6 chunks is 1.67 per chunk. Across 1,107 chunks that is on
+the order of **1,850 candidates**.
+
+The original plan set a stop condition at ~300 for the whole corpus, on the
+reasoning that a queue nobody can review is backlog rather than memory. The
+rule-based extractor came in far under it at 112 — which turned out to be
+because its output was mostly unusable. Model-assisted extraction produces
+candidates worth reviewing and produces roughly sixteen times as many.
+
+The volume question was answered "not a problem" earlier in this document
+against the rule-based path. **Against this path it is the binding
+constraint**, and it is a decision rather than a defect: ingest fewer books,
+raise the bar for what counts as load-bearing, or accept a review queue in
+the thousands.
+
+Nothing here should proceed to a corpus run until that is settled.
+
+## r031 — an attempted fix that failed, and why it looked like it worked
+
+The full paper, 12 chunks, three prompt versions, same model and seed:
+
+| prompt | candidates | setup noise present |
+|---|---|---|
+| v1 original | 35 | yes — half the list |
+| v2 + exclusions + 4 good examples | **5** | none |
+| v3 + exclusions only | **48** | yes, all of it back |
+
+v2 looks like an 85% reduction with the noise eliminated. It is not a fix.
+
+Four of v2's five survivors were **the four concepts the prompt named as
+good examples**: catastrophic forgetting, episodic memory, synaptic
+consolidation, stability-plasticity trade-off. The occurrence histogram shows
+one of them returned in seven of twelve chunks and three others in four each
+— regardless of what the passage said. The model was not filtering better, it
+was repeating the prompt.
+
+That is r027's defect — extraction that is really recall — reintroduced
+through the prompt instead of the code. The existing regression test for it
+uses `FakeModelProvider` and therefore never sees the prompt at all, so
+nothing in the suite could have caught it. `test_the_prompt_names_no_desirable_concept`
+now asserts against the prompt text directly.
+
+v3 removes the positive examples and keeps the exclusions. The result settles
+the question: **the exclusion list does not work.** Every term it names by
+example — `buffer size`, `SGD optimizer`, `grid search`, `random crop`,
+`Rot-MNIST`, `backbone`, `hyperparameters`, `number of training epochs` —
+comes back, alongside `GCIL-U`, `GCIL-L` and `S-TinyImageNet`. Yield is
+higher than the original 35.
+
+### Where that leaves the selectivity problem
+
+- **Model confidence**: constant. Cannot rank.
+- **claim_type**: constant, and swapped with slot on this model. Cannot rank.
+- **occurrences**: 47 of 48 concepts appear exactly once. Cannot rank.
+- **Prompt-level exclusion**: ignored by the model. Does not filter.
+
+Every mechanism tried for separating load-bearing concepts from experimental
+furniture has now been measured and none of them works. The candidates are
+individually reasonable and roughly half of them are things like "validation
+set" and "ReLU units".
+
+Prompt engineering is not going to fix this on this model, and the honest
+version of the pipeline is the one that yields ~48 per paper with half of it
+noise — not the one that yields 5 by echoing its own instructions.
+
+A corpus run at this rate is ~4,400 candidates. That is not a queue anyone
+reviews.

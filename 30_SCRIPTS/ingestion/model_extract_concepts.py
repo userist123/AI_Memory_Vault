@@ -68,6 +68,7 @@ import json
 import pathlib
 import re
 import sys
+import time
 from collections import Counter
 from typing import Any, Iterable
 
@@ -96,6 +97,16 @@ MAX_JACCARD = 0.60
 
 #: A definition shorter than this is a label, not a definition.
 MIN_DEFINITION_WORDS = 12
+
+#: The kinds of claim a passage can make about a concept. Validated, unlike
+#: before: qwen2.5-coder:7b returned `claim_type: "ontology"` on all eight of
+#: its candidates — `ontology` is a SLOT, not a claim type — while putting
+#: `identity` in the slot field for every one of them. The two fields were
+#: swapped and nothing caught it, because only the slot was being checked.
+#: An unvalidated field is a field the model may fill with anything.
+CLAIM_TYPES = frozenset(
+    {"definition", "mechanism", "finding", "taxonomy", "constraint"}
+)
 
 #: Terms that are grammar rather than concepts. Every one of these was
 #: actually emitted as a concept by the rule-based extractor.
@@ -156,6 +167,22 @@ PROMPT = """\
 Read the passage below and identify the technical concepts it DEFINES or
 EXPLAINS. Ignore concepts it merely mentions in passing.
 
+A concept here is an idea a reader would need explained to understand the
+field. It is NOT an experimental setting, a dataset name, a hyperparameter,
+a tool, a metric name, or a value used in one paper's experiments. If the
+passage is describing how an experiment was configured rather than what
+something means, return [].
+
+Not concepts: "buffer size", "SGD optimizer", "grid search", "random crop",
+"number of training epochs", "Rot-MNIST", "backbone", "hyperparameters".
+
+Only exclusions are listed, deliberately. An earlier version of this prompt
+also gave four examples of GOOD concepts, and the model then returned those
+four in nearly every passage — one of them in seven of twelve — regardless of
+what the passage said. Naming desirable outputs turns extraction into recall,
+which is the exact defect r027 was written to remove from the code. Do not
+add positive examples here.
+
 Return JSON only — a list of objects, no prose around it. Each object:
 
   "concept"    The term, 1-4 words, as a noun phrase. Never a pronoun, a
@@ -171,6 +198,12 @@ Return JSON only — a list of objects, no prose around it. Each object:
   "slot"       The single best fit. Choose by which QUESTION the concept
                helps answer, not by which name sounds closest:
 {slots}
+               claim_type and slot are INDEPENDENT. A mechanism can belong
+               to any slot. Do not pick "procedures" merely because the
+               concept is a mechanism, a method or an algorithm — ask which
+               question it answers. A mechanism by which experience becomes
+               durable knowledge belongs to consolidation; a definition of a
+               kind of memory belongs to ontology.
   "confidence" Your confidence from 0.0 to 1.0 that this is a real, load-
                bearing concept the passage genuinely defines. Use the full
                range. Be honest when you are unsure.
@@ -211,12 +244,29 @@ def parse_model_json(content: str) -> list[dict[str, Any]]:
     fence = re.search(r"```(?:json)?\s*(.+?)```", text, re.DOTALL)
     if fence:
         text = fence.group(1).strip()
-    start, end = text.find("["), text.rfind("]")
-    if start == -1 or end == -1 or end < start:
-        return []
+
+    parsed: Any = None
+    #: A provider asked for JSON often returns the list wrapped in an object
+    #: ({"concepts": [...]}), so try the whole document before falling back
+    #: to locating a bracketed list inside prose.
     try:
-        parsed = json.loads(text[start : end + 1])
+        parsed = json.loads(text)
     except json.JSONDecodeError:
+        start, end = text.find("["), text.rfind("]")
+        if start == -1 or end == -1 or end < start:
+            return []
+        try:
+            parsed = json.loads(text[start : end + 1])
+        except json.JSONDecodeError:
+            return []
+
+    if isinstance(parsed, dict):
+        #: Exactly one list-valued key is unambiguous; more than one is not,
+        #: and guessing which one holds the concepts is how wrong fields get
+        #: in. Whatever the key is called, its shape is what identifies it.
+        lists = [v for v in parsed.values() if isinstance(v, list)]
+        parsed = lists[0] if len(lists) == 1 else []
+    if not isinstance(parsed, list):
         return []
     return [item for item in parsed if isinstance(item, dict)]
 
@@ -227,8 +277,13 @@ def clean_term(raw: Any) -> str:
     "Continual learning (CL)" is how academic prose introduces a term, and
     rejecting it on the parenthesis threw away real concepts — measured on a
     live run, where it was the first candidate the model returned.
+
+    The gloss is not always last. "Complementary Learning Systems (CLS)
+    theory" was refused for length on a later run, because stripping only a
+    trailing parenthesis left five words where four are allowed. Removing it
+    wherever it sits costs nothing and recovers a real concept.
     """
-    return re.sub(r"\s*\([^)]*\)\s*$", "", str(raw)).strip()
+    return " ".join(re.sub(r"\([^)]*\)", " ", str(raw)).split())
 
 
 def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
@@ -255,6 +310,15 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
 
     if slot not in CANONICAL_SLOTS:
         return False, "slot_unknown"
+
+    claim_type = str(candidate.get("claim_type", "")).strip().lower()
+    if claim_type not in CLAIM_TYPES:
+        #: A slot name here means the model answered the wrong question, and
+        #: the slot field is then not to be trusted either.
+        return False, (
+            "claim_type_is_a_slot" if claim_type in CANONICAL_SLOTS
+            else "claim_type_unknown"
+        )
 
     try:
         confidence = float(candidate.get("confidence"))
@@ -292,11 +356,51 @@ def extract_from_chunk(
     source_book: str,
     model_tier: str,
     slot_block: str = "",
+    sampling: dict[str, Any] | None = None,
+    keep_alive: str = "",
+    rejected_out: list[dict[str, Any]] | None = None,
+    attempts: int = 3,
+    retry_backoff: float = 5.0,
 ) -> tuple[list[dict[str, Any]], Counter[str]]:
     """One model call for one chunk. Returns accepted rows and reject counts."""
     slot_block = slot_block or ", ".join(CANONICAL_SLOTS)
     rejects: Counter[str] = Counter()
     content = chunk["content"]
+
+    #: Sampling is pinned. Two runs over identical chunks previously returned
+    #: 13 candidates and then 2, which is more spread than any prompt change
+    #: under test could produce — with that much noise no comparison between
+    #: two configurations means anything.
+    #:
+    #: Passed through metadata because ModelRequest is provider-neutral by
+    #: design and must not grow Ollama-specific fields.
+    #:
+    #: Ollama's `format: "json"` is deliberately NOT set. It looks like the
+    #: right way to guarantee parseable output, and measured against
+    #: glm-4.7-flash it returns an empty string in under a second, every
+    #: time — while the same request without it answers normally. A silent
+    #: empty response reads downstream as "this passage defines nothing",
+    #: which is the most expensive kind of wrong answer here.
+    metadata: dict[str, Any] = {
+        "source_book": source_book,
+        "heading": chunk["heading"],
+    }
+    if keep_alive:
+        #: Pinning the seed is not sufficient on its own. Measured on this
+        #: corpus: with temperature 0 and a fixed seed, three consecutive
+        #: warm runs over one chunk were byte-identical — same six terms,
+        #: same slots, same seven rejections. Forcing the model to unload and
+        #: running again produced a DIFFERENT six, and that cold result was
+        #: itself identical to the very first cold run.
+        #:
+        #: So there are two stable regimes, not warm-up noise, and load state
+        #: selects between them. Left alone, Ollama unloads an idle model,
+        #: which means a long ingestion can switch regime partway through and
+        #: extract the second half of a corpus differently from the first —
+        #: with nothing in the output to say it happened.
+        metadata["keep_alive"] = keep_alive
+    if sampling:
+        metadata["local_options"] = dict(sampling)
 
     request = ModelRequest(
         prompt=PROMPT.format(
@@ -307,27 +411,81 @@ def extract_from_chunk(
         ),
         model_tier=model_tier,
         system_prompt=SYSTEM_PROMPT,
-        metadata={"source_book": source_book, "heading": chunk["heading"]},
+        metadata=metadata,
     )
 
-    try:
-        response = provider.generate(request)
-    except Exception as exc:  # provider failures are data, not a crash
-        rejects[f"provider_error:{type(exc).__name__}"] += 1
+    #: Provider failures here are transient, not deterministic: two chunks
+    #: failed on one run and the identical request succeeded in 148s when
+    #: repeated. Without a retry a passing run quietly loses those chunks,
+    #: and over a corpus that is a hole in the extraction that nothing in the
+    #: output points at. The final failure is still recorded rather than
+    #: raised — one unreachable chunk should not end a multi-hour run.
+    response = None
+    for attempt in range(1, max(1, attempts) + 1):
+        try:
+            response = provider.generate(request)
+            if attempt > 1:
+                rejects[f"provider_retry_succeeded_on_{attempt}"] += 1
+            break
+        except Exception as exc:  # noqa: BLE001 - failures are data here
+            #: A client-side timeout does NOT cancel the work. Ollama keeps
+            #: generating, and the model stays loaded and busy — observed
+            #: directly: after a request timed out at 500s the endpoint still
+            #: held the model and would not start a queued one. Retrying a
+            #: timeout therefore queues a second request behind the first and
+            #: makes the backlog worse, which is the opposite of what a retry
+            #: is for. Only genuinely unreachable endpoints are retried.
+            if "timed out" in str(exc).lower():
+                rejects["provider_timeout"] += 1
+                return [], rejects
+            if attempt >= max(1, attempts):
+                rejects[f"provider_error:{type(exc).__name__}"] += 1
+                return [], rejects
+            time.sleep(retry_backoff * attempt)
+
+    if response is None:  # pragma: no cover - loop always returns or breaks
+        rejects["provider_error:unknown"] += 1
         return [], rejects
 
+    #: An empty response and "this passage defines nothing" are the same
+    #: zero downstream, and they are not the same event. Counting it is what
+    #: turned a silent `format: json` failure into a one-line diagnosis.
+    if not response.content.strip():
+        rejects["empty_response"] += 1
+        return [], rejects
+
+    parsed = parse_model_json(response.content)
+    if not parsed and response.content.strip():
+        rejects["unparseable_response"] += 1
+
     accepted = []
-    for candidate in parse_model_json(response.content):
+    for candidate in parsed:
         ok, reason = validate(candidate, content)
         if not ok:
             rejects[reason] += 1
+            if rejected_out is not None:
+                #: A count alone is not a diagnosis. "slot_unknown: 1" says
+                #: something was refused; it does not say the model keeps
+                #: proposing the same slot that is not in the ontology, which
+                #: is the difference between an accident and a pattern.
+                rejected_out.append(
+                    {
+                        "reason": reason,
+                        "concept": str(candidate.get("concept", ""))[:120],
+                        "slot": str(candidate.get("slot", ""))[:60],
+                        "confidence": candidate.get("confidence"),
+                        "definition": str(candidate.get("definition", ""))[:300],
+                        "evidence": str(candidate.get("evidence", ""))[:300],
+                        "source_location": chunk["heading"][:120],
+                    }
+                )
             continue
         slot = str(candidate["slot"]).strip().lower()
         accepted.append(
             {
                 "concept": clean_term(candidate["concept"]),
                 "definition": str(candidate["definition"]).strip(),
-                "claim_type": str(candidate.get("claim_type", "definition")).strip(),
+                "claim_type": str(candidate["claim_type"]).strip().lower(),
                 "maps_to_slot": slot,
                 "maps_to_module": (KNOWN_VERIFIED_MODULES.get(slot) or [None])[0],
                 "confidence_in_literature": float(candidate["confidence"]),
@@ -392,6 +550,36 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     return merged, len(rows) - len(merged)
 
 
+def report_residency(model: str, base_url: str = "http://localhost:11434") -> str:
+    """How much of the model is actually on the GPU.
+
+    Purely diagnostic, and it fails quietly: a run must not break because a
+    status endpoint moved. It exists because "the model is slow" and "two
+    thirds of the model is running on the CPU" are the same observation from
+    the outside, and only the second one tells you what to do about it.
+    """
+    try:
+        import json as _json
+        from urllib import request as _request
+
+        with _request.urlopen(f"{base_url}/api/ps", timeout=10) as response:
+            data = _json.loads(response.read().decode("utf-8"))
+        for entry in data.get("models", []):
+            if entry.get("name") == model:
+                total = float(entry.get("size") or 0)
+                vram = float(entry.get("size_vram") or 0)
+                if total <= 0:
+                    return "unknown"
+                share = vram / total
+                verdict = "fully resident" if share > 0.99 else (
+                    f"{share:.0%} on GPU, the rest on CPU"
+                )
+                return f"{vram/1e9:.1f}GB of {total/1e9:.1f}GB — {verdict}"
+        return "not loaded"
+    except Exception:  # noqa: BLE001 - diagnostics never break a run
+        return "unavailable"
+
+
 def build_provider(kind: str, model: str, timeout: float, num_ctx: int) -> Any:
     if kind == "fake":
         from providers.fake_model_provider import FakeModelProvider
@@ -416,7 +604,14 @@ def main() -> int:
     ap.add_argument("--source-book", required=True)
     ap.add_argument("--output-file", required=True, type=pathlib.Path)
     ap.add_argument("--provider", default="local", choices=("local", "fake"))
-    ap.add_argument("--model", default="gemma4:26b-64k")
+    ap.add_argument(
+        "--model", default="mixtral:8x7b",
+        help="local model name. Whether it FITS matters more than its size: "
+             "a model larger than the GPU spills to CPU and eventually fails "
+             "to load at all — measured on this hardware, a 19 GB model on an "
+             "8 GB card ended in 'llama-server process has terminated'. The "
+             "run reports the resident fraction so this is visible.",
+    )
     ap.add_argument("--model-tier", default="standard")
     ap.add_argument(
         "--max-chunks", type=int, default=0,
@@ -427,6 +622,39 @@ def main() -> int:
         "--timeout", type=float, default=600.0,
         help="seconds per model call (default 600; the provider default of "
              "120 is not enough for a large model on a book chunk)",
+    )
+    ap.add_argument(
+        "--temperature", type=float, default=0.0,
+        help="0 pins sampling so two runs are comparable (default)",
+    )
+    ap.add_argument(
+        "--seed", type=int, default=42,
+        help="sampling seed, recorded so a run can be reproduced",
+    )
+    ap.add_argument(
+        "--min-occurrences", type=int, default=1,
+        help="keep only concepts defined in at least this many distinct "
+             "sections; 1 keeps everything. The only ranking signal available "
+             "— confidence and claim_type are constant on this pipeline",
+    )
+    ap.add_argument(
+        "--attempts", type=int, default=3,
+        help="tries per chunk before giving up; provider failures on this "
+             "endpoint are transient and an unretried one loses the chunk",
+    )
+    ap.add_argument(
+        "--retry-backoff", type=float, default=5.0,
+        help="seconds before the first retry, multiplied by attempt number",
+    )
+    ap.add_argument(
+        "--rejects-file", type=pathlib.Path,
+        help="write every rejected candidate with its reason here; a reject "
+             "count says something was refused, not what",
+    )
+    ap.add_argument(
+        "--keep-alive", default="60m",
+        help="how long the provider holds the model loaded between calls; "
+             "an unload mid-run silently changes the extraction regime",
     )
     ap.add_argument(
         "--num-ctx", type=int, default=32768,
@@ -451,8 +679,10 @@ def main() -> int:
         args.provider, args.model, args.timeout, args.num_ctx
     )
     slot_block = format_slot_block(load_slot_questions())
+    sampling = {"temperature": args.temperature, "seed": args.seed}
 
     rows: list[dict[str, Any]] = []
+    rejected_rows: list[dict[str, Any]] = []
     rejects: Counter[str] = Counter()
     skipped = 0
     for i, chunk in enumerate(chunks, start=1):
@@ -461,7 +691,9 @@ def main() -> int:
             rejects["chunk_too_long"] += 1
             continue
         accepted, chunk_rejects = extract_from_chunk(
-            provider, chunk, args.source_book, args.model_tier, slot_block
+            provider, chunk, args.source_book, args.model_tier, slot_block,
+            sampling, args.keep_alive, rejected_rows, args.attempts,
+            args.retry_backoff,
         )
         rows.extend(accepted)
         rejects.update(chunk_rejects)
@@ -471,16 +703,49 @@ def main() -> int:
             file=sys.stderr,
         )
 
+    rows, collapsed = deduplicate(rows)
+
+    #: Selectivity by the one signal that is observed rather than claimed.
+    #: Model confidence is 1.00 on every candidate including fabricated ones,
+    #: and claim_type is "definition" on every survivor, so neither can rank
+    #: anything. How many distinct sections of a book define a term is
+    #: counted, and a book returns to what it is actually about.
+    occurrence_hist = Counter(r["occurrences"] for r in rows)
+    if args.min_occurrences > 1:
+        before = len(rows)
+        rows = [r for r in rows if r["occurrences"] >= args.min_occurrences]
+        dropped = before - len(rows)
+    else:
+        dropped = 0
+
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
     args.output_file.write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
     confidences = sorted({round(r["confidence_in_literature"], 2) for r in rows})
+    repeated = sum(1 for r in rows if r["occurrences"] > 1)
+    slots_used = Counter(r["maps_to_slot"] for r in rows)
     print(f"\n{args.source_book}")
     print(f"  chunks processed   {len(chunks) - skipped} of {len(chunks)}")
-    print(f"  candidates kept    {len(rows)}")
+    print(f"  candidates kept    {len(rows)}  ({collapsed} duplicates merged)")
+    print(f"  defined more than once  {repeated}")
+    print(f"  occurrence histogram    {dict(sorted(occurrence_hist.items()))}")
+    if dropped:
+        print(
+            f"  dropped below min_occurrences={args.min_occurrences}  {dropped}"
+        )
     print(f"  rejected           {sum(rejects.values())}  {dict(rejects.most_common())}")
     print(f"  distinct confidence values  {len(confidences)}  {confidences[:12]}")
+    print(f"  slots used         {dict(slots_used.most_common())}")
+    print(f"  sampling           {sampling}, keep_alive={args.keep_alive}")
+    if args.provider == "local":
+        print(f"  model residency    {args.model}: {report_residency(args.model)}")
     print(f"  written            {args.output_file}")
+    if args.rejects_file:
+        args.rejects_file.parent.mkdir(parents=True, exist_ok=True)
+        args.rejects_file.write_text(
+            json.dumps(rejected_rows, indent=2), encoding="utf-8"
+        )
+        print(f"  rejects written    {args.rejects_file}")
     return 0
 
 

@@ -25,6 +25,6 @@ How is relevant memory found?
 - `03_IMPLEMENTATION/packages/memory/controller.py` (verified definition of `MemoryController.search()` at line 376; distinct from the `03_IMPLEMENTATION/packages/memory_controller/` compatibility shim)
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id |
-|---|---|---|---|---|---|
-| Experience Replay | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | unverified_source | 2026-09-07 | |
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
+|---|---|---|---|---|---|---|
+| Experience Replay | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | unverified_source | 2026-09-07 | | |
