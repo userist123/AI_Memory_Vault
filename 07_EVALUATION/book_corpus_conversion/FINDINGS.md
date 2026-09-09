@@ -844,3 +844,80 @@ something else is going on.
 The grounding fix from the previous commit is visible in this run:
 llama3.1:8b went from 9 kept to 18, with `evidence_not_in_source` falling
 from 32 to 21. mistral went from 4 such rejections to 1.
+
+## r031 — chunk size was the confound, and recurrence comes back
+
+The previous section predicted that if monograph disagreement was chunk
+over-fill, smaller chunks would raise convergence. Same book, same text span,
+same four models; only `--pages-per-chunk` changed, 10 to 3. That turned 29
+chunks at a median of 44,614 characters into 95 at 12,777.
+
+The prediction had two halves and the result splits them:
+
+| | 8 big chunks | 24 small chunks |
+|---|---:|---:|
+| distinct concepts | 65 | 138 |
+| found by 4 of 4 | 2% | **6%** |
+| found by 1 of 4 | 69% | **69%** |
+
+**Confirmed:** convergence at the top tripled.
+**Refuted:** the tail did not shrink at all. It stayed at exactly 69%.
+
+Both are explained by the same thing: smaller chunks surface far more
+concepts — 138 against 65 over the same pages — and the newly visible ones
+are themselves mostly singletons. The gain is resolution, not selectivity.
+
+The cleanest single piece of evidence for the sampling account:
+**`Long-term potentiation` was found by 1 of 4 models at 10 pages per chunk
+and by 4 of 4 at 3 pages.** The concept did not improve. It stopped competing
+for attention with dozens of others in the same passage.
+
+### `occurrences` was not a dead signal, it was measured at the wrong resolution
+
+Earlier in this document `occurrences` is recorded as useless: 1 for 47 of 48
+concepts. That measurement was taken on large chunks, where a concept appears
+once because one chunk covers the whole chapter it belongs to.
+
+At 3 pages per chunk a book returns to its central ideas across chunk
+boundaries, and recurrence becomes visible again. What `llama3.1:8b` alone
+found in more than one section:
+
+    Configural learning, declarative memory, declarative memory system,
+    delayed conditional discrimination, episodic memory, long-term
+    potentiation, memory system, multiple memory systems, pattern separation,
+    procedural memory, relational representations, semantic memory,
+    spatial memory
+
+That is close to the core vocabulary of the book, from one model.
+
+### Recurrence approximates agreement at a quarter of the cost
+
+Taking the 3-of-4 agreement set (20 concepts, four runs) as the reference,
+and asking what one model's `occurrences >= 2` recovers from a single run:
+
+| model | recurrent concepts | how many are in the agreement core |
+|---|---:|---|
+| **llama3.1:8b** | 11 | **11 (100%)** |
+| mistral:7b-instruct | 5 | 4 (80%) |
+| qwen2.5:7b-instruct | 2 | 2 (100%) |
+| qwen2.5-coder:7b | 12 | 7 (58%) |
+
+`llama3.1:8b` at 3-page chunks with a recurrence floor of 2 produced eleven
+concepts and **every one of them was in the four-model core**. Precision was
+perfect on this sample; recall was 55% of the core, so it is a high-precision
+subset rather than a replacement.
+
+Model choice is not interchangeable here: the same rule on `qwen2.5-coder:7b`
+is only 58% precise.
+
+### Honest limits
+
+- One book, 24 chunks, one span. This is a promising result, not an
+  established one, and it should be repeated on a second monograph before
+  anything is built on it.
+- Recall is 55%. Half the core is missed.
+- Smaller chunks double the total candidate count, so the review-load problem
+  gets *worse*, not better — the filter is what makes it tractable, and the
+  filter's recall is the open question.
+- Cost per corpus run at 3 pages per chunk has not been measured; the chunk
+  count roughly triples while each call gets cheaper.
