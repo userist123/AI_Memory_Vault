@@ -788,3 +788,59 @@ concepts should be something a person turns on deliberately, not a default.
 being under 5 GB on disk. The 32k context window is what pushes them over an
 8 GB card; the two qwen 7b models fit at 92%. Lowering `--num-ctx` is the
 lever if their speed matters.
+
+## r031 — agreement does not transfer to monographs
+
+The previous section reported cross-model agreement as the first selectivity
+signal that works, measured on six chunks of a 17-page conference paper. Run
+on a real monograph it behaves differently, and the difference matters more
+than the similarity.
+
+Eight chunks of Schacter & Tulving, *Memory Systems 1994*, four models, same
+settings:
+
+| found by | n | share | what is in it |
+|---|---:|---:|---|
+| 4 of 4 | 1 | 2% | memory system |
+| 3 of 4 | 8 | 12% | declarative / episodic / semantic / procedural memory, locale system, taxon system, multiple memory systems, relational representations |
+| 2 of 4 | 11 | 17% | hippocampus, pattern separation, conjunctive encoding, configural learning, recency |
+| **1 of 4** | **45** | **69%** | **long-term potentiation, memory consolidation, cognitive learning, taxon learning, maplike representations** |
+
+The top is excellent — that 3-of-4 row is the core vocabulary of the book.
+
+**The tail is not noise.** On the paper, the 1-of-4 group was `Overall loss`,
+`SGD optimizer`, `reliability plots` — experimental furniture, and discarding
+it was pure gain. Here the same group contains `long-term potentiation` and
+`memory consolidation`, which are load-bearing for this vault by any reading.
+A `--min-models 2` filter would throw both away.
+
+### Why, and it is not a property of the books
+
+A monograph chunk in `pages` mode is ~44,000 characters and contains dozens
+of definable concepts. A paper chunk is ~4,600 and contains a few. Asked for
+a list, each model returns a different subset of an over-full passage — so
+disagreement records **which concepts a model happened to sample**, not which
+concepts are weak.
+
+The 4-of-4 share supports that reading directly: 10% on the paper against 2%
+here. Convergence falls as the passage gets fuller, which is what sampling
+predicts and what quality would not.
+
+### What this changes
+
+Agreement filters noise where noise exists as a distinct population. It is
+not a general quality signal, and the earlier section should be read with
+this one. On monographs it currently measures chunk over-fill.
+
+The testable consequence: if this is sampling, then **smaller chunks should
+raise convergence**, because a passage with three concepts in it leaves the
+models less room to differ. `convert_pdf_to_text.py --pages-per-chunk` is the
+lever — it defaults to 10. That is the next measurement, and if convergence
+does not rise with smaller chunks then the sampling explanation is wrong and
+something else is going on.
+
+### Also measured here
+
+The grounding fix from the previous commit is visible in this run:
+llama3.1:8b went from 9 kept to 18, with `evidence_not_in_source` falling
+from 32 to 21. mistral went from 4 such rejections to 1.
