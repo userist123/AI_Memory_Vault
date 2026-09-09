@@ -116,18 +116,37 @@ whole-corpus retrieval numbers.
   `20_TESTS/test_promoted_notes_reach_the_graph.py`, which asserts against
   the real store rather than the frontmatter and was confirmed to fail on the
   broken form before being trusted.
-- **Book ingestion has no working selectivity.** Extraction itself works and
-  its gates work — grounding against the source text catches fabricated
-  citations, and the paraphrase floors catch copied definitions. What does
-  not exist is any way to tell a load-bearing concept from experimental
-  furniture. Every mechanism was measured and none ranks anything:
-  model confidence is `1.00` on every candidate including fabricated ones;
-  `claim_type` is constant and is swapped with `slot` by the only model that
-  fits the GPU; `occurrences` is 1 for 47 of 48 concepts in a full paper; and
-  a prompt-level exclusion list is ignored. About half of what the pipeline
-  produces is terms like `validation set`, `SGD optimizer` and `Rot-MNIST`.
-  A corpus run would be ~4,400 candidates. Do not start one without deciding
-  what to do about that first.
+- **Selectivity now exists, and it costs.** Cross-model agreement is the only
+  ranking signal in this pipeline that carries information, because it is
+  counted rather than claimed and no model can inflate it —
+  `30_SCRIPTS/ingestion/agree_across_models.py`. Measured over four locally
+  installed 7-8B models on the same chunks: 60% of concepts were found by
+  exactly one model, and that tail is the experimental furniture
+  (`Overall loss`, `Soft-targets`, `reliability plots`) nothing else could
+  remove. It is not free: four models over 1,107 chunks is ~27h against ~7h
+  for one, and it discards true positives — `catastrophic forgetting` and
+  `experience replay` were each found by only one of four. `--min-models`
+  therefore defaults to 1, annotating rather than filtering.
+- **Nothing about book extraction was validated on a book until late.** Every
+  measurement through r031 was taken on `sarfraz22a`, a 17-page conference
+  paper. The first monograph run exposed two defects immediately: a fixed
+  24,000-character chunk limit that skipped 26 of Schacter & Tulving's 29
+  chunks, and a grounding check requiring exact whole-quote matching that
+  refused 51 candidates of which 17 quoted the source at 80% or better. Both
+  are fixed. Treat any paper-scale number as unvalidated at book scale until
+  it has been re-measured there.
+- **Every per-candidate signal is empty; only agreement carries anything.**
+  This is the list of what was measured and found to rank nothing, so it is
+  not tried again: model confidence is `1.00` on every candidate including
+  ones whose evidence was fabricated; `claim_type` was constant on every
+  survivor in every run and has been removed from the request, which also
+  stopped it corrupting `slot`; `occurrences` is 1 for 47 of 48 concepts in a
+  full paper; and a prompt-level exclusion list is ignored by the model —
+  the terms it names as bad come straight back. Volume is still the open
+  question: at the measured rate a corpus run is on the order of 4,000
+  candidates before agreement filtering, roughly half of them terms like
+  `validation set`, `SGD optimizer` and `Rot-MNIST`. Decide what to do about
+  that before starting one.
 - **Two books cannot be ingested at all.** Ashby's *Introduction to
   Cybernetics* and Minsky's *Society of Mind* are scans with no text layer,
   0.0 characters per page. They need OCR, which does not exist here.
