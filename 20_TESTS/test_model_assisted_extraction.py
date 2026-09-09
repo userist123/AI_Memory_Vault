@@ -588,3 +588,53 @@ def test_the_prompt_names_no_desirable_concept():
             f"{term!r} is named before the exclusion list; the model will "
             "return it regardless of the passage"
         )
+
+
+def test_the_chunk_limit_follows_the_context_window(tmp_path, monkeypatch):
+    """A fixed limit silently discarded most of a real book.
+
+    26 of Schacter & Tulving's 29 chunks exceed the old hardcoded 24,000
+    characters, so a monograph run would have processed three sections and
+    reported success. Page-mode chunking produces large chunks by design.
+    The real constraint is num_ctx, and the limit is now derived from it.
+    """
+    #: ~45k characters: over the old fixed limit, comfortably inside a 32k
+    #: token window at the provider's (chars + 2) // 3 estimate.
+    big = "word " * 9000
+    book = tmp_path / "b.txt"
+    book.write_text(f"# Section One\n\n{big}\n", encoding="utf-8")
+    out = tmp_path / "o.json"
+
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=json.dumps([])),
+    )
+    monkeypatch.setattr(sys, "argv", [
+        "x", "--input-file", str(book), "--source-book", "b",
+        "--output-file", str(out), "--provider", "fake",
+    ])
+    assert M.main() == 0
+
+    #: Not skipped: the provider was actually asked about this chunk.
+    assert len(big) > 24000, "fixture must exceed the old fixed limit"
+    assert M.CONTEXT_RESERVE_TOKENS > 0
+    derived = (32768 - M.CONTEXT_RESERVE_TOKENS) * 3
+    assert derived > len(big), "derived limit must admit a page-mode chunk"
+
+
+def test_an_explicit_chunk_limit_still_wins(tmp_path, monkeypatch):
+    """The derivation is a default, not a policy the caller cannot override."""
+    book = tmp_path / "b.txt"
+    book.write_text("# S\n\n" + "word " * 2000 + "\n", encoding="utf-8")
+    out = tmp_path / "o.json"
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=json.dumps([])),
+    )
+    monkeypatch.setattr(sys, "argv", [
+        "x", "--input-file", str(book), "--source-book", "b",
+        "--output-file", str(out), "--provider", "fake",
+        "--max-chunk-chars", "100",
+    ])
+    assert M.main() == 0
+    assert json.loads(out.read_text(encoding="utf-8")) == []

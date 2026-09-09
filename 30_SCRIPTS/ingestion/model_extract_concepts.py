@@ -98,6 +98,10 @@ MAX_JACCARD = 0.60
 #: A definition shorter than this is a label, not a definition.
 MIN_DEFINITION_WORDS = 12
 
+#: Tokens held back from num_ctx for the instructions, the slot block and
+#: the model's reply, so the chunk limit cannot claim the whole window.
+CONTEXT_RESERVE_TOKENS = 4000
+
 #: `claim_type` is no longer requested, and this records why so it is not
 #: reintroduced as an obvious improvement.
 #:
@@ -669,11 +673,27 @@ def main() -> int:
         help="context window requested from the local model",
     )
     ap.add_argument(
-        "--max-chunk-chars", type=int, default=24000,
+        "--max-chunk-chars", type=int, default=0,
         help="chunks longer than this are skipped rather than silently "
-             "truncated by the model's context window",
+             "truncated. Default 0 derives it from --num-ctx, which is the "
+             "real constraint; a fixed number drifts out of agreement with "
+             "the context window and starts skipping usable text",
     )
     args = ap.parse_args()
+
+    #: LocalProvider estimates tokens as (chars + 2) // 3 and fails closed
+    #: above num_ctx, so that ratio is what the limit has to respect. The
+    #: reserve covers the instructions, the slot block and the model's own
+    #: output, none of which are the chunk.
+    #:
+    #: The previous fixed 24,000 was far below what the window allows and
+    #: silently discarded most of a real book: 26 of Schacter & Tulving's 29
+    #: chunks exceed it, so a monograph run would have processed three
+    #: sections and reported success. Page-mode chunking produces large
+    #: chunks by design — that is what it is for.
+    max_chunk_chars = args.max_chunk_chars or max(
+        4000, (args.num_ctx - CONTEXT_RESERVE_TOKENS) * 3
+    )
 
     text = args.input_file.read_text(encoding="utf-8", errors="replace")
     chunks = split_into_structural_chunks(text)
@@ -694,7 +714,7 @@ def main() -> int:
     rejects: Counter[str] = Counter()
     skipped = 0
     for i, chunk in enumerate(chunks, start=1):
-        if len(chunk["content"]) > args.max_chunk_chars:
+        if len(chunk["content"]) > max_chunk_chars:
             skipped += 1
             rejects["chunk_too_long"] += 1
             continue
