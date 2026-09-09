@@ -102,6 +102,18 @@ MIN_DEFINITION_WORDS = 12
 #: the model's reply, so the chunk limit cannot claim the whole window.
 CONTEXT_RESERVE_TOKENS = 4000
 
+#: Grounding thresholds, both required. Chosen from the measured separation
+#: between accurate quotes and invented ones over 51 refused candidates:
+#: apparent fabrications had longest verbatim runs of 3-6 words, genuine
+#: quotes 25-27. A 12-word contiguous run is not something a model produces
+#: by accident, and the coverage share stops one borrowed phrase from
+#: carrying a sentence of invention.
+#:
+#: 12/0.70 was preferred over 10/0.65 because both admit the same 21
+#: candidates while 12/0.70 is stricter on each axis.
+MIN_VERBATIM_RUN_WORDS = 12
+MIN_EVIDENCE_COVERAGE = 0.70
+
 #: `claim_type` is no longer requested, and this records why so it is not
 #: reintroduced as an obvious improvement.
 #:
@@ -282,6 +294,49 @@ def parse_model_json(content: str) -> list[dict[str, Any]]:
     return [item for item in parsed if isinstance(item, dict)]
 
 
+def longest_verbatim_run(quote: str, source: str) -> int:
+    """Length in words of the longest run of `quote` present in `source`."""
+    words = _normalize_for_search(quote).split()
+    haystack = f" {_normalize_for_search(source)} "
+    best = 0
+    for start in range(len(words)):
+        #: Only look for runs longer than the best already found, and stop
+        #: this start as soon as one matches — the first hit from the long
+        #: end is the longest for that start.
+        for end in range(len(words), start + best, -1):
+            if f" {' '.join(words[start:end])} " in haystack:
+                best = end - start
+                break
+    return best
+
+
+def is_grounded(quote: str, source: str) -> bool:
+    """Whether the evidence really comes from the passage that was sent.
+
+    This used to demand the whole quote appear verbatim, which worked on
+    conference-paper chunks of ~4,600 characters and failed badly on a
+    monograph. Measured over 8 chunks of Schacter & Tulving at ~44,000
+    characters each, 51 candidates were refused for grounding — and 17 of
+    them quoted the source at 80% or better. One example matched 27 of its
+    30 words. Those were accurate quotes with a word or two dropped, thrown
+    away by an exact-match rule.
+
+    Fabrication looks nothing like that. The control case from the test
+    suite, "Vitter (1985) established this result", has a longest verbatim
+    run of 2 words. Across the whole rejected set the apparent fabrications
+    ran 3 to 6 words while the near-verbatim quotes ran 25 to 27.
+
+    So the rule is a long contiguous run, plus a share of the whole quote so
+    that a single borrowed phrase cannot carry forty invented words. Both
+    thresholds sit well above the fabricated group and below the genuine one.
+    """
+    words = _normalize_for_search(quote).split()
+    if not words:
+        return False
+    run = longest_verbatim_run(quote, source)
+    return run >= MIN_VERBATIM_RUN_WORDS and run / len(words) >= MIN_EVIDENCE_COVERAGE
+
+
 def clean_term(raw: Any) -> str:
     """The term without its acronym gloss.
 
@@ -339,7 +394,7 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     #: Grounding, checked against the text rather than against the claim.
     if not evidence:
         return False, "evidence_missing"
-    if _normalize_for_search(evidence) not in _normalize_for_search(chunk_text):
+    if not is_grounded(evidence, chunk_text):
         return False, "evidence_not_in_source"
 
     #: Paraphrase floors, both required.

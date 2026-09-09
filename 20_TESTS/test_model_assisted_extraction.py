@@ -638,3 +638,77 @@ def test_an_explicit_chunk_limit_still_wins(tmp_path, monkeypatch):
     ])
     assert M.main() == 0
     assert json.loads(out.read_text(encoding="utf-8")) == []
+
+
+#: A long passage, so the near-miss case is realistic: on monograph chunks of
+#: ~44,000 characters models quote accurately but drop a word or two.
+LONG_SOURCE = (
+    "The distinction between episodic and semantic memory systems is "
+    "traceable in some form to the Greek philosophers and is present in the "
+    "analyses of numerous later writers. Maine de Biran postulated the "
+    "existence of three separate kinds of memory that depend on different "
+    "mechanisms and can be characterized by different properties."
+)
+
+
+def test_an_accurate_quote_missing_a_word_is_still_grounded():
+    """Measured: 17 of 51 refusals quoted the source at 80% or better.
+
+    One matched 27 of its 30 words. An exact-match rule threw those away —
+    they are accurate quotes with a word dropped, not inventions.
+    """
+    near = (
+        "The distinction between episodic and semantic memory systems is "
+        "traceable in some form to the Greek philosophers and is present in "
+        "the analyses of later writers."
+    )
+    assert M.is_grounded(near, LONG_SOURCE)
+
+    accepted, rejects = _run(
+        [dict(GOOD, evidence=near, definition=(
+            "Two memory systems that later writers separated on grounds of "
+            "what each one stores about the past."
+        ))],
+        chunk_text=LONG_SOURCE,
+    )
+    assert rejects == {}, rejects
+    assert len(accepted) == 1
+
+
+@pytest.mark.parametrize(
+    "fabricated",
+    [
+        "Vitter (1985) established this result.",
+        "Tulving demonstrated in 1972 that the two systems are dissociable.",
+        "The authors conclude that memory is fundamentally reconstructive.",
+    ],
+)
+def test_a_fabricated_quote_is_still_refused(fabricated):
+    """The loosened rule must not open the door it was built to close.
+
+    Across the measured set, apparent fabrications had longest verbatim runs
+    of 3 to 6 words against 25 to 27 for genuine quotes; the control here
+    runs 2. The thresholds sit between those populations, not on top of one.
+    """
+    assert not M.is_grounded(fabricated, LONG_SOURCE)
+
+
+def test_a_borrowed_phrase_cannot_carry_an_invented_sentence():
+    """The run threshold alone is not enough, which is why coverage exists."""
+    padded = (
+        "The distinction between episodic and semantic memory systems is "
+        "traceable in some form to the Greek philosophers, and it follows "
+        "that recollection is impossible without a hippocampus, that all "
+        "learning is reconstructive, and that forgetting is adaptive by "
+        "design in every mammalian species so far examined."
+    )
+    run = M.longest_verbatim_run(padded, LONG_SOURCE)
+    assert run >= M.MIN_VERBATIM_RUN_WORDS, "the borrowed opening does match"
+    assert not M.is_grounded(padded, LONG_SOURCE), "coverage must refuse it"
+
+
+def test_longest_verbatim_run_measures_what_it_claims():
+    assert M.longest_verbatim_run("", LONG_SOURCE) == 0
+    assert M.longest_verbatim_run("wholly unrelated wording here", LONG_SOURCE) <= 2
+    exact = "Maine de Biran postulated the existence of three separate kinds of memory"
+    assert M.longest_verbatim_run(exact, LONG_SOURCE) == len(exact.split())
