@@ -510,25 +510,31 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     consolidation" three times, "Episodic Memory" twice. Left alone those
     become three slot rows for one concept and three review decisions.
 
-    The count of distinct sections defining a term is kept as `occurrences`,
-    because unlike the model's self-reported confidence it is an OBSERVED
-    signal: a concept a book defines in four places is load-bearing in a way
-    that a concept mentioned once is not.
+    `occurrences` is the number of DISTINCT source sections defining a term.
+    The source locations are tracked independently from the row selected as
+    the best definition, so duplicate model outputs from one section cannot
+    inflate the metric and replacing the best row cannot lose the history.
     """
     best: dict[str, dict[str, Any]] = {}
     order: list[str] = []
+    locations: dict[str, list[str]] = {}
+    location_sets: dict[str, set[str]] = {}
+
     for row in rows:
         key = " ".join(row["concept"].lower().split())
+        location = row["source_location"]
+
         if key not in best:
             best[key] = dict(row, occurrences=1, also_found_in=[])
             order.append(key)
+            locations[key] = [location]
+            location_sets[key] = {location}
             continue
 
         kept = best[key]
-        kept["occurrences"] += 1
-        location = row["source_location"]
-        if location != kept["source_location"] and location not in kept["also_found_in"]:
-            kept["also_found_in"].append(location)
+        if location not in location_sets[key]:
+            location_sets[key].add(location)
+            locations[key].append(location)
 
         #: Prefer the more confident definition; on a tie, the longer one,
         #: which in practice is the one that actually explains the term.
@@ -540,11 +546,14 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
             )
         )
         if better:
-            carried = {
-                "occurrences": kept["occurrences"],
-                "also_found_in": kept["also_found_in"],
-            }
-            best[key] = dict(row, **carried)
+            best[key] = dict(row)
+            kept = best[key]
+
+        kept["occurrences"] = len(locations[key])
+        kept_location = kept["source_location"]
+        kept["also_found_in"] = [
+            loc for loc in locations[key] if loc != kept_location
+        ]
 
     merged = [best[k] for k in order]
     return merged, len(rows) - len(merged)
