@@ -921,3 +921,75 @@ is only 58% precise.
   filter's recall is the open question.
 - Cost per corpus run at 3 pages per chunk has not been measured; the chunk
   count roughly triples while each call gets cheaper.
+
+## r031 — replicated on a second monograph
+
+The previous section's result was explicitly marked as one book and not
+established. Repeated on Squire & Kandel, *Memory from Mind to Molecules* —
+a different subject (molecular neurobiology rather than memory-system
+taxonomy), same protocol: 3 pages per chunk, 24 chunks, four models.
+
+### The agreement distribution is a property of the method, not of one book
+
+| | Schacter & Tulving | Squire & Kandel |
+|---|---:|---:|
+| distinct concepts | 138 | 115 |
+| found by 4 of 4 | 6% | 8% |
+| found by 1 of 4 | 69% | 70% |
+
+Within a point or two on both ends. The ~70% singleton tail is what this
+method does at this chunk size, on any book.
+
+### Recurrence replicates, and separates the models sharply
+
+Against the 3-of-4 agreement set as reference (20 concepts on each book):
+
+| model | Schacter precision | Squire precision |
+|---|---:|---:|
+| **llama3.1:8b** | 11/11 (100%) | **8/8 (100%)** |
+| qwen2.5:7b-instruct | 2/2 (100%) | 5/5 (100%) |
+| mistral:7b-instruct | 4/5 (80%) | 2/2 (100%) |
+| qwen2.5-coder:7b | 7/12 (58%) | **7/19 (37%)** |
+
+Recall for llama3.1:8b is 8 of 20 here against 11 of 20 before — 40-55%
+across the two books. High precision, partial recall.
+
+### The coder model is not noisy, it is answering a different question
+
+Its recurrent terms on Squire:
+
+    Aplysia, DNA, PET scans, behaviorism, brain structures, messenger RNA,
+    memory, nerve cells, protein, synaptic vesicle, ...
+
+against llama3.1:8b's:
+
+    classical conditioning, habituation, long-term memory, nondeclarative
+    memory, short-term memory, synaptic plasticity, synaptic potential,
+    synaptic strength
+
+The coder model extracts **entities** — nouns that recur in any biology text.
+The instruct models extract **concepts**. That is a systematic difference in
+what each treats as definable, not random error, and it is why its recurrence
+is 37% precise while its raw yield is the highest of the four.
+
+`memory` appears in its list, which is the clearest single illustration: a
+term that recurs in every chunk of a book about memory and carries no
+information.
+
+### Where this leaves the pipeline
+
+Established on two books, with the limits stated:
+
+- **Chunk at 3 pages, not 10.** Chunk size was confounding every earlier
+  selectivity measurement.
+- **Use an instruct model, not a coder model**, for extraction. This is not a
+  general claim about the models — it is specific to being asked what counts
+  as a concept.
+- **`occurrences >= 2` from one instruct model** recovers a high-precision
+  subset of what four models agree on, at a quarter of the compute.
+- Recall is 40-55%. This is a way to get a trustworthy core cheaply, not a
+  way to get everything.
+
+Still unmeasured: cost of a full corpus run at 3 pages per chunk, and whether
+precision holds on the books that are neither memory-systems taxonomy nor
+molecular neurobiology — Ashby, Newell, and the cognitive-architecture group.

@@ -1,13 +1,21 @@
-"""Agreement is the only selectivity signal in this pipeline that works.
+"""Cross-model agreement, and the two ways it can stop being evidence.
 
-Confidence is 1.00 on everything, claim_type was constant and got removed,
-occurrences is 1 for 47 of 48 concepts, and prompt-level exclusions are
-ignored by the model. Agreement is counted rather than claimed, and no model
-can inflate it because none of them sees the others' answers.
+Agreement is counted rather than claimed, and no model can inflate it because
+none of them sees the others' answers. That is what distinguishes it from the
+per-candidate fields, which were all measured and found constant: confidence
+is 1.00 on everything including fabricated candidates, and claim_type said
+"definition" on every survivor before it was removed from the request.
 
-These tests guard the two ways it could quietly stop being evidence: counting
-a model against itself, and folding terms so loosely that unrelated concepts
-merge.
+`occurrences` belongs on a different list. It was recorded as dead at 1 for
+47 of 48 concepts, but that was measured on ~44,000-character chunks where
+one chunk covers a whole chapter. At 3 pages per chunk recurrence reappears,
+and on one book a single model's `occurrences >= 2` recovered 11 concepts
+that were all in the four-model core. It was the wrong resolution, not a dead
+signal — so do not cite the 47-of-48 number as though it settled anything.
+
+What these tests guard: counting a model against itself, which would make the
+number meaningless while still looking plausible, and folding terms loosely
+enough that distinct concepts merge into manufactured agreement.
 """
 
 from __future__ import annotations
