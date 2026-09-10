@@ -21,7 +21,7 @@ The state as of the last section:
 | extraction at book scale | works, with gates that catch fabricated evidence |
 | selectivity | `occurrences >= 3` at 3 pages per chunk, ~210 candidates corpus-wide |
 | recall | 40-55% of what four models agree on |
-| cost | 13.7h measured at `num_ctx 32768`; the default is now 16384 and the re-measurement is pending |
+| cost | **12.8h** for one model: 37.2 s/chunk measured at `num_ctx 16384`, over 1,237 chunks |
 
 The method, and everything that failed on the way to it, is written up as a
 procedure: [`10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`](../../10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md).
@@ -1225,3 +1225,51 @@ check will not catch it — the scrambled text *is* in the source.
 
 The difference between the two books is the layout, not the OCR: single-
 column narrative recovers perfectly, two-column technical does not.
+
+## r031 — the context window re-measured, and a second chunking path caught
+
+### Controlled comparison, one variable
+
+Squire & Kandel end to end, `llama3.1:8b`, same seed, only `num_ctx` changed:
+
+| | 32768 | 16384 |
+|---|---:|---:|
+| wall clock | 66m28s | **53m54s** |
+| per chunk | 45.8s | **37.2s** |
+| GPU residency | 66% | 84% |
+| candidates kept | 159 | 155 |
+| `occurrences >= 2` | 38 | 35 |
+| `occurrences >= 3` | 17 | 13 |
+
+19% faster for materially the same output.
+
+**But the recurrence core is not stable across configurations.** 17 concepts
+against 13, with only 12 shared. Both runs used temperature 0 and a fixed
+seed; the context window alone moved the `>= 3` set by about five concepts.
+The "~210 candidates corpus-wide" figure should be read as an order of
+magnitude, not a count.
+
+### A second chunking path, quietly using a different size
+
+The OCR path emitted one heading per page. Measured: Minsky at a median of
+2,892 characters per chunk and Ashby at 4,302 — **below the 5,000-15,000 band
+that every recurrence measurement was taken in.**
+
+Chunk size was the confound behind every earlier selectivity result in this
+document. A second code path silently using a different one is that same
+mistake with a new name, and it was introduced an hour after the band was
+written down.
+
+Fixed to group pages the way `pages` mode does:
+
+| | before | after |
+|---|---|---|
+| Ashby | 150 chunks, 4,302 median | **53 chunks, 11,915 median** |
+| Minsky | 332 chunks, 2,892 median | **111 chunks, 8,100 median** |
+
+### Corpus cost, current
+
+    1,073 chunks (18 books)  +  164 (the two OCR books)  =  1,237
+    1,237 x 37.2s = 12.8 hours for one model
+
+Down from 13.7h and now including all 20 books rather than 18.

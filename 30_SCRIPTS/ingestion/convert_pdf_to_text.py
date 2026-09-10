@@ -145,7 +145,7 @@ def find_tessdata() -> str:
 
 
 def _extract_with_ocr(
-    doc: "pymupdf.Document", tessdata: str, dpi: int
+    doc: "pymupdf.Document", tessdata: str, dpi: int, per_chunk: int
 ) -> tuple[str, int]:
     """Rasterise and OCR every page. Returns (text, degraded page count).
 
@@ -163,10 +163,18 @@ def _extract_with_ocr(
         text = page.get_text(textpage=textpage)
         if _page_is_degraded(text):
             degraded += 1
-        #: Page grouping is the only structure available here. A scan has no
-        #: font metadata worth trusting and no outline, so pretending to
-        #: recover sections from it would be inventing structure.
-        out.append(f"\n\n# Page {i + 1}\n")
+        #: Page grouping is the only structure available here — a scan has no
+        #: font metadata worth trusting and no outline, so recovering sections
+        #: from it would be inventing them. But group the same way `pages`
+        #: mode does rather than emitting one heading per page: a heading per
+        #: page put Minsky at a median of 2,892 characters per chunk, below
+        #: the 5,000-15,000 band that the recurrence measurements were taken
+        #: in. Chunk size was the confound in every earlier selectivity
+        #: result, so a second path that quietly uses a different one is the
+        #: same mistake with a new name.
+        if i % per_chunk == 0:
+            last = min(i + per_chunk, doc.page_count)
+            out.append(f"\n\n# Pages {i + 1}-{last}\n")
         out.append(text)
     return "".join(out), degraded
 
@@ -361,13 +369,15 @@ def convert(
             #: minutes rather than an obstacle — but it stays opt-in, because
             #: OCR text is a different quality of input from a real text layer
             #: and the record says which one produced a book.
-            raw, degraded = _extract_with_ocr(doc, ocr_tessdata, ocr_dpi)
+            raw, degraded = _extract_with_ocr(
+                doc, ocr_tessdata, ocr_dpi, pages_per_chunk
+            )
             text = _normalize(raw)
             record.update(
                 status="OK",
                 mode="ocr",
-                headings=n,
-                headings_per_page=1.0,
+                headings=-(-n // pages_per_chunk),
+                headings_per_page=round(1 / pages_per_chunk, 2),
                 degraded_pages=degraded,
                 degraded_fraction=round(degraded / n, 3),
                 characters=len(text),
