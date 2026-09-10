@@ -107,6 +107,20 @@ MIN_DEFINITION_WORDS = 12
 #: the model's reply, so the chunk limit cannot claim the whole window.
 CONTEXT_RESERVE_TOKENS = 4000
 
+#: The context window is allocated in VRAM next to the weights, so it decides
+#: how much of the model runs on the GPU rather than the CPU. Measured on an
+#: 8 GB card with llama3.1:8b, four chunks each:
+#:
+#:   num_ctx 32768   66% resident   21s   skips 0 chunks
+#:   num_ctx 16384   84% resident   16s   skips 0 chunks
+#:   num_ctx  8192  100% resident   10s   skips 10% of chunks
+#:
+#: 8192 is the fastest and the wrong answer: the derived chunk limit falls to
+#: 12,576 characters and 48 of 463 chunks across four books exceed it, so a
+#: tenth of the corpus is silently dropped to buy speed. 16384 is the largest
+#: window that skips nothing, and it is a third faster than the old default.
+DEFAULT_NUM_CTX = 16384
+
 #: Grounding thresholds, both required. Chosen from the measured separation
 #: between accurate quotes and invented ones over 51 refused candidates:
 #: apparent fabrications had longest verbatim runs of 3-6 words, genuine
@@ -735,8 +749,10 @@ def main() -> int:
              "an unload mid-run silently changes the extraction regime",
     )
     ap.add_argument(
-        "--num-ctx", type=int, default=32768,
-        help="context window requested from the local model",
+        "--num-ctx", type=int, default=DEFAULT_NUM_CTX,
+        help="context window requested from the local model. Bigger is not "
+             "free: the window is allocated in VRAM alongside the weights, "
+             "so it decides how much of the model actually runs on the GPU",
     )
     ap.add_argument(
         "--max-chunk-chars", type=int, default=0,

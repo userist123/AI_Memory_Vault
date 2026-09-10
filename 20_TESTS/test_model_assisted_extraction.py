@@ -712,3 +712,26 @@ def test_longest_verbatim_run_measures_what_it_claims():
     assert M.longest_verbatim_run("wholly unrelated wording here", LONG_SOURCE) <= 2
     exact = "Maine de Biran postulated the existence of three separate kinds of memory"
     assert M.longest_verbatim_run(exact, LONG_SOURCE) == len(exact.split())
+
+
+def test_the_default_context_window_skips_no_chunks():
+    """The fastest setting is the wrong one, and this records why.
+
+    The window is allocated in VRAM beside the weights, so it decides how
+    much of the model runs on the GPU. Measured on an 8 GB card with
+    llama3.1:8b: 32768 gives 66% residency and 21s per four chunks, 16384
+    gives 84% and 16s, 8192 gives full residency and 10s.
+
+    8192 is fastest and drops a tenth of the corpus: its derived chunk limit
+    is 12,576 characters and 48 of 463 chunks across four books exceed it.
+    Speed bought by silently skipping content is the failure this whole
+    lineage keeps producing.
+    """
+    assert M.DEFAULT_NUM_CTX == 16384
+    limit = (M.DEFAULT_NUM_CTX - M.CONTEXT_RESERVE_TOKENS) * 3
+    #: p90 chunk size measured over four books at 3 pages was 13,024 and the
+    #: largest 18,427. The default must clear the largest, not the median.
+    assert limit > 18427, (
+        "the derived chunk limit must admit the largest measured chunk; "
+        "anything less drops content to buy throughput"
+    )
