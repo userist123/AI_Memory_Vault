@@ -78,6 +78,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from providers.model_provider import ModelRequest  # noqa: E402
 
+#: One definition of what makes two terms the same concept, shared with
+#: the agreement tool. Two normalizers that drift apart silently produce
+#: two different answers to the same question.
+from agree_across_models import normalize_term  # noqa: E402
+
 from extract_book_concepts import (  # noqa: E402
     CANONICAL_SLOTS,
     KNOWN_VERIFIED_MODULES,
@@ -585,7 +590,13 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     best: dict[str, dict[str, Any]] = {}
     order: list[str] = []
     for row in rows:
-        key = " ".join(row["concept"].lower().split())
+        #: The same folding the agreement tool uses. They disagreed until
+        #: Ashby made it visible: this side lowercased and collapsed spaces
+        #: only, so "Dynamic Systems" and "dynamic system" stayed two rows at
+        #: occurrences=1 each and neither reached a recurrence floor of 2,
+        #: while the agreement tool counted them as one concept. Recurrence
+        #: was undercounted everywhere it was measured.
+        key = normalize_term(row["concept"])
         if key not in best:
             best[key] = dict(row, occurrences=1, also_found_in=[])
             order.append(key)

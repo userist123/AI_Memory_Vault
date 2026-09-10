@@ -993,3 +993,54 @@ Established on two books, with the limits stated:
 Still unmeasured: cost of a full corpus run at 3 pages per chunk, and whether
 precision holds on the books that are neither memory-systems taxonomy nor
 molecular neurobiology — Ashby, Newell, and the cognitive-architecture group.
+
+## r031 — correction: the 100% precision was a bug of ours
+
+Ashby's *Design for a Brain* was run as a third book, deliberately outside
+the family the first two shared — 1950s cybernetics rather than memory
+research. Its output contained `Dynamic Systems` and `dynamic system` as two
+separate concepts in one model's run, which is what exposed the defect.
+
+**Two normalizers disagreed about what makes two terms the same concept.**
+Within-run deduplication in `model_extract_concepts.py` lowercased and
+collapsed whitespace. `agree_across_models.normalize_term` also folded
+plurals, hyphens and parenthetical glosses. So inside a single run a concept
+named two ways stayed two rows at `occurrences: 1`, and neither reached a
+recurrence floor of 2 — while the agreement tool, comparing across runs,
+counted them as one.
+
+Recurrence was undercounted everywhere it was measured. And because the
+undercount kept only the terms that happened to be spelled identically every
+time, it removed the near misses and **inflated the measured precision**.
+
+### The corrected numbers
+
+Precision of `occurrences >= 2` against each book's 3-of-4 agreement core:
+
+| model | Schacter | Squire | Ashby |
+|---|---:|---:|---:|
+| llama3.1:8b | 92% (11/12) | 82% (9/11) | 70% (7/10) |
+| qwen2.5:7b-instruct | 67% (2/3) | 100% (5/5) | 100% (3/3) |
+| mistral:7b-instruct | 83% (5/6) | 100% (2/2) | 100% (2/2) |
+| qwen2.5-coder:7b | 58% (7/12) | 40% (8/20) | 80% (4/5) |
+
+**The "11/11 and 8/8, perfect precision" reported in the two previous
+sections is withdrawn.** The real figures for llama3.1:8b are 92%, 82%, 70%,
+and they fall as the book moves away from neuroscience.
+
+### What survives the correction
+
+- The agreement distribution is still stable across all three books: 4-of-4
+  at 6%, 8%, 9%; 1-of-4 at 69%, 70%, 66%. That measurement did not depend on
+  the broken normalizer.
+- Instruct models still beat the coder model on recurrence precision in five
+  of six book-model pairs, and the qualitative reason still holds — the coder
+  model returns entities (`DNA`, `protein`, `memory`) where instruct models
+  return concepts.
+- Recurrence at 3 pages per chunk is still a usable high-precision signal
+  from a single model. It is 70-92% rather than 100%, which is a different
+  claim and should be planned against as such.
+
+The normalizers are now one function, imported rather than reimplemented, and
+`test_extraction_and_agreement_fold_terms_identically` fails if they ever
+diverge again.

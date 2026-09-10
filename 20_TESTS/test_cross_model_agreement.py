@@ -178,3 +178,50 @@ def test_plural_folding_reaches_the_real_stem(plural, singular):
 def test_short_words_and_double_s_are_left_alone(word):
     """Over-eager folding manufactures agreement nobody expressed."""
     assert A._singular(word) == word
+
+
+def test_extraction_and_agreement_fold_terms_identically():
+    """Two normalizers answering "same concept?" differently is a silent bug.
+
+    They did differ. Within-run deduplication lowercased and collapsed
+    whitespace; the agreement tool also folded plurals, hyphens and
+    parenthetical glosses. So "Dynamic Systems" and "dynamic system" stayed
+    two rows at occurrences=1 inside a run — neither reaching a recurrence
+    floor of 2 — while the agreement tool counted them as one concept.
+
+    Recurrence was undercounted everywhere it was measured, and because the
+    undercount kept only the safest terms it inflated the measured precision
+    to a spurious 100% on two books.
+    """
+    import model_extract_concepts as M  # noqa: PLC0415 - heavy import
+
+    assert M.normalize_term is A.normalize_term, (
+        "the extractor must fold terms with the agreement tool's normalizer, "
+        "not a private copy that can drift"
+    )
+
+    for a, b in [
+        ("Dynamic Systems", "dynamic system"),
+        ("State-determined system", "state determined systems"),
+        ("Continual learning (CL)", "continual learning"),
+    ]:
+        assert M.normalize_term(a) == M.normalize_term(b)
+
+
+def test_deduplicate_merges_a_plural_against_its_singular():
+    """The concrete case Ashby exposed, driven through the real function."""
+    import model_extract_concepts as M  # noqa: PLC0415
+
+    rows = [
+        {"concept": "Dynamic Systems", "definition": "a longer definition here",
+         "confidence_in_literature": 0.8, "source_location": "Pages 1-3"},
+        {"concept": "dynamic system", "definition": "short one",
+         "confidence_in_literature": 0.8, "source_location": "Pages 4-6"},
+    ]
+    merged, collapsed = M.deduplicate(rows)
+    assert collapsed == 1
+    assert len(merged) == 1
+    assert merged[0]["occurrences"] == 2, (
+        "a concept named twice in two sections must reach a recurrence "
+        "floor of 2; it did not before the normalizers were unified"
+    )
