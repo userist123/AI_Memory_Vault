@@ -1093,3 +1093,59 @@ better result.
 What is still not answered by any of this: recall is 40-55%, and the review
 load at the far end is unchanged — three hours of compute still produces more
 candidates than anyone has agreed to read.
+
+## r031 — one whole book, and a cost estimate that was wrong by 4.6x
+
+Squire & Kandel run end to end with `llama3.1:8b`, all 87 chunks at 3 pages.
+
+### The review load is bounded
+
+| threshold | per book | corpus estimate (1,073 chunks) |
+|---|---:|---:|
+| all candidates | 159 | ~1,960 |
+| `occurrences >= 2` | 38 | ~470 |
+| **`occurrences >= 3`** | **17** | **~210** |
+
+Occurrence histogram over the book: 121 concepts seen once, 21 twice, 8 three
+times, 5 five times, 2 six, 1 seven, 1 ten.
+
+At a floor of 3 the list is the book:
+
+    declarative memory (10), synaptic plasticity (7), long-term memory (6),
+    classical conditioning (6), short-term memory (5), nondeclarative memory
+    (5), medial temporal lobe (5), hippocampus (5), amygdala (5), habituation
+    (3), cerebellum (3), NMDA receptor (3), consolidation (3), ...
+
+**~210 candidates corpus-wide is under the 300 stop condition** this project
+set for itself at the outset. The volume problem, which has been the binding
+constraint since the first measurement, is answered — by a recurrence floor
+of 3 rather than by anything clever.
+
+### The cost estimate in the previous section was wrong
+
+It said 9.9 seconds per chunk and 3.0 hours for the corpus. The whole book
+took **66 minutes for 87 chunks — 45.8 seconds per chunk**, and the corpus is
+therefore **about 13.6 hours** for one model.
+
+The 9.9-second figure came from timing the first six chunks. Those are front
+matter — title pages, contents, sparse text — and produce almost no output.
+Dense prose produces far more, and generation time follows output length.
+
+That is the same error corrected twice already in this document: measuring
+the convenient sample and extrapolating from it. Timing the *first* chunks of
+a book is a systematically optimistic sample, not a random one.
+
+So the corpus run is an overnight job after all, which was the original
+intuition. It is one night, not three, and it produces roughly 210 reviewable
+candidates rather than four thousand unreviewable ones.
+
+### Also observed
+
+Confidence finally varied — five distinct values (0.7, 0.8, 0.9, 0.95, 1.0)
+across 159 candidates, against one value in every earlier run. That is a
+consequence of the larger sample, not of calibration: it is still clustered
+at the top and still should not be used to rank anything.
+
+Slots spread across 13 of 16 for the first time: identity 38, ontology 36,
+procedures 24, map 16, relationships 14, state 9, constraints 9,
+consolidation 6, and single digits elsewhere.
