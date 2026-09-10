@@ -142,11 +142,19 @@ whole-corpus retrieval numbers.
   survivor in every run and has been removed from the request, which also
   stopped it corrupting `slot`; `occurrences` is 1 for 47 of 48 concepts in a
   full paper; and a prompt-level exclusion list is ignored by the model —
-  the terms it names as bad come straight back. Volume is still the open
-  question: at the measured rate a corpus run is on the order of 4,000
-  candidates before agreement filtering, roughly half of them terms like
-  `validation set`, `SGD optimizer` and `Rot-MNIST`. Decide what to do about
-  that before starting one.
+  the terms it names as bad come straight back.
+- **Volume is answered, by a recurrence floor.** `occurrences` is the one
+  counted-rather-than-claimed field, and it only works at 3 pages per chunk —
+  at 10 pages one chunk covers a chapter and everything appears once. Whole
+  book measured: 159 raw candidates, 38 at `>= 2`, **17 at `>= 3`**, which is
+  roughly **210 corpus-wide** and under this project's own 300 stop
+  condition. Recall is 40-55% of what four models would agree on. The method
+  and everything that failed on the way to it are in
+  `10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`.
+- **A corpus run is ~13.6 hours** for one model at 45.8s per chunk over 1,073
+  chunks. Do not re-derive this from a book's first chunks: they are front
+  matter, produce almost no output, and generation time follows output
+  length. That mistake produced a 3.0-hour estimate, wrong by 4.6x.
 - **Two books cannot be ingested at all.** Ashby's *Introduction to
   Cybernetics* and Minsky's *Society of Mind* are scans with no text layer,
   0.0 characters per page. They need OCR, which does not exist here.
