@@ -1181,3 +1181,46 @@ at the top and still should not be used to rank anything.
 Slots spread across 13 of 16 for the first time: identity 38, ontology 36,
 procedures 24, map 16, relationships 14, state 9, constraints 9,
 consolidation 6, and single digits elsewhere.
+
+## r031 — the two scanned books, recovered unevenly
+
+Tesseract installed, so the blocker recorded since r030 is gone. Both scans
+OCR'd at 200 dpi: **492 pages in 6 minutes 23 seconds**, 0.78 seconds per
+page, 1,521,912 characters.
+
+| | pages | chars | degraded pages | column artefacts |
+|---|---:|---:|---:|---:|
+| Minsky, *Society of Mind* | 336 | 916,188 | **0** | **0** |
+| Ashby, *Introduction to Cybernetics* | 156 | 605,724 | 1 (1%) | **20 (13%)** |
+
+Minsky is clean enough to read directly:
+
+> "Up to this point we've portrayed the mind as made of scattered fragments
+> of machinery. But we adults rarely see ourselves that way; we have more
+> sense of unity."
+
+### Ashby is unblocked, not recovered
+
+Its character-level quality is fine — one degraded page in 156. The problem
+is layout: it is set in two columns with equations, and Tesseract reads the
+page image in horizontal lines, merging the columns:
+
+> "...to find how the transform follows **There results the transducer** from
+> the operand, shows that in all cases..."
+
+Two sentences from two columns, interleaved. The degraded-page detector
+cannot see this, because every individual word is correct — only the order is
+wrong. 13% of pages are affected, and they are the technical ones; the
+narrative pages are clean.
+
+`page.get_text(textpage=..., sort=True)` does **not** fix it. Block sorting
+runs after Tesseract has already merged the columns into single lines. A real
+fix needs column detection and per-column OCR, which is substantial work.
+
+So the honest statement is 20 of 20 books have text, and one of them has 13%
+of its pages in scrambled sentence order. Concept extraction from those pages
+will produce definitions built from two half-sentences, and the grounding
+check will not catch it — the scrambled text *is* in the source.
+
+The difference between the two books is the layout, not the OCR: single-
+column narrative recovers perfectly, two-column technical does not.
