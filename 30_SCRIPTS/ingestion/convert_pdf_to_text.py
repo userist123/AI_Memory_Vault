@@ -306,8 +306,11 @@ def convert(
                 chars_per_page=round(density, 1),
                 mode=None,
                 error=(
-                    "no usable text layer; this is a scanned image PDF and "
-                    "must be OCR'd before it can be ingested"
+                    "no usable text layer; this is a scanned image PDF. "
+                    "PyMuPDF can OCR it via page.get_textpage_ocr(), but that "
+                    "needs Tesseract on PATH and TESSDATA_PREFIX set — "
+                    "neither is present here, so OCR is a separate "
+                    "prerequisite rather than something this script can do"
                 ),
             )
             return record

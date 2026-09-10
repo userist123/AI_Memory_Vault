@@ -156,8 +156,14 @@ whole-corpus retrieval numbers.
   matter, produce almost no output, and generation time follows output
   length. That mistake produced a 3.0-hour estimate, wrong by 4.6x.
 - **Two books cannot be ingested at all.** Ashby's *Introduction to
-  Cybernetics* and Minsky's *Society of Mind* are scans with no text layer,
-  0.0 characters per page. They need OCR, which does not exist here.
+  Cybernetics* (156 pp) and Minsky's *Society of Mind* (336 pp) are scans
+  with no text layer, 0.0 characters per page. The route is
+  `page.get_textpage_ocr()`, which PyMuPDF supports but which requires
+  Tesseract on PATH with `TESSDATA_PREFIX` set. Checked 2026-09-10: neither
+  is present, and `pymupdf` raises "No tessdata specified and Tesseract is
+  not installed". None of the installed local models is a vision model
+  either, so there is no second route. This is an install, not a code
+  change — 2 of 20 books stay blocked until it happens.
 - **`glm-4.7-flash` no longer loads.** 19 GB against an 8 GB GPU; the
   endpoint returns `llama-server process has terminated`. Only
   `qwen2.5-coder` 3b and 7b fit. Any speed or quality number attributed to a
