@@ -42,7 +42,7 @@ ordered behind them.
 Four decisions in that command are load-bearing, and each was wrong at least
 once before it was right.
 
-## 1. Three pages per chunk, not ten
+## 1. Chunks of roughly 5,000-15,000 characters
 
 Chunk size was confounding every selectivity measurement taken before it was
 fixed.
@@ -53,7 +53,26 @@ passage, so disagreement between models records **what a model sampled**, not
 what is weak. `Long-term potentiation` was found by 1 model of 4 at ten pages
 per chunk and by 4 of 4 at three. The concept did not improve.
 
-At 3 pages the median chunk is 6,000-13,000 characters depending on the book.
+`--pages-per-chunk 3` is how you reach that band, but **only for books the
+converter puts in `pages` mode** — 8 of the 18 usable books. A `toc` or
+`font` book chunks on its own headings and the flag does nothing to it. Most
+land in the band anyway:
+
+| mode | chars per chunk, measured |
+|---|---|
+| `toc` (5 books) | 2,600 - 5,600 |
+| `font`, working (4 books) | 1,100 - 15,600 |
+| `font`, broken (Newell) | 1,381 across 912 chunks — see §4 |
+| `pages` at 3 pages (8 books) | 6,000 - 13,000 |
+
+So check the reported chunk size per book rather than assuming the flag did
+something. Two outliers in the current corpus: Wiener at ~1,100 characters
+per chunk is too small to hold a definition with its context, and Kandel at
+~15,600 across only 4 chunks is at the top of the band.
+
+**Validation limit:** all three books the recurrence rule was measured on —
+Schacter, Squire, Ashby — are `pages`-mode books. The rule is untested on
+`toc` and `font` books, which are 10 of 18.
 
 ## 2. An instruct model, not a coder model
 
