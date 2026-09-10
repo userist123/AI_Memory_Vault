@@ -11,11 +11,34 @@ Every other ranking signal in this pipeline was measured and found empty:
                      quote was not in the source at all
   claim_type         "definition" on every surviving candidate, in every run;
                      removed from the request entirely for that reason
-  occurrences        1 for 47 of 48 concepts in a full paper
   prompt exclusions  ignored by the model; the terms named as bad came back
 
 Agreement is different in kind. It is **counted rather than claimed**, and no
 single model can inflate it, because none of them knows what the others said.
+
+## What it turned out NOT to be
+
+An earlier version of this docstring listed `occurrences` among the empty
+signals and presented agreement as the general answer to selectivity. Both
+were measured further and both were wrong:
+
+  occurrences   Not dead — measured at the wrong resolution. At 10 pages per
+                chunk one chunk covers a chapter, so everything appears once.
+                At 3 pages, a single instruct model's `occurrences >= 3` gives
+                ~17 concepts per book at 70-92% precision against this tool's
+                own 3-of-4 core, for a quarter of the compute. That is now the
+                recommended path; see the ingestion procedure.
+
+  agreement     Works on conference papers, where the 1-of-4 tail is
+                experimental furniture and discarding it is pure gain. On
+                monographs the same tail holds `long-term potentiation` and
+                `memory consolidation`. The distribution barely moves between
+                books — 4-of-4 at 6-9%, 1-of-4 at 66-70% — which makes it a
+                property of the method rather than a measure of quality.
+
+So this tool's job is narrower than it was written for: it produces the
+reference set that a cheaper single-model rule is checked against, and it
+annotates rather than filters. `--min-models` defaults to 1 for that reason.
 
 ## What it measures, on six chunks of one paper, four models
 

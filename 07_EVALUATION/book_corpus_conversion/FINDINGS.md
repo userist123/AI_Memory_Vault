@@ -1,8 +1,40 @@
 # Book corpus conversion — measured findings
 
-Package: `r030/pdf-text-frontend`
-Measured: 2026-09-07, against `06_INBOX/Carti` (20 PDFs, 151 MB)
-Status: conversion works; **extraction at book scale does not**
+Packages: `r030/pdf-text-frontend`, `r031/model-assisted-extraction`
+Measured: 2026-09-07 to 2026-09-10, against `06_INBOX/Carti` (20 PDFs, 151 MB)
+
+## Read this first
+
+This document is a running log, appended section by section as things were
+measured. **Several early sections were later shown to be wrong, and the
+retractions are further down rather than edited in place** — that is
+deliberate, because how a wrong number was produced is usually more useful
+than the right one. Do not quote a figure from the middle of this file
+without checking whether a later section withdrew it.
+
+The state as of the last section:
+
+| | |
+|---|---|
+| conversion | works; 18 of 20 books, 2 are scans needing OCR |
+| extraction at book scale | works, with gates that catch fabricated evidence |
+| selectivity | `occurrences >= 3` at 3 pages per chunk, ~210 candidates corpus-wide |
+| recall | 40-55% of what four models agree on |
+| cost | ~13.6 hours for one model over the corpus |
+
+The method, and everything that failed on the way to it, is written up as a
+procedure: [`10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`](../../10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md).
+Read that to *use* the pipeline. Read this to see what the numbers were and
+which of them did not survive.
+
+**Claims withdrawn later in this file:** that extraction at book scale does
+not work (it does, once chunk size is right); that `occurrences` is a dead
+signal (wrong resolution, not dead); that cross-model agreement is a general
+selectivity filter (papers only); that a single model's recurrence is 100%
+precise (a normalizer bug — really 70-92%); and that a corpus run takes 3
+hours (13.6).
+
+---
 
 The PDFs themselves are not committed (`06_INBOX/*` is gitignored, and these
 are copyrighted works). Neither is the text extracted from them. What is
