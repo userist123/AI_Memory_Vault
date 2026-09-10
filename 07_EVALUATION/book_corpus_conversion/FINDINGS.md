@@ -1044,3 +1044,52 @@ and they fall as the book moves away from neuroscience.
 The normalizers are now one function, imported rather than reimplemented, and
 `test_extraction_and_agreement_fold_terms_identically` fails if they ever
 diverge again.
+
+## r031 — what a corpus run actually costs
+
+Measured rather than estimated. `llama3.1:8b` over six 3-page chunks of
+Squire took 59.5 seconds wall clock — **9.9 seconds per chunk**, with the
+model at 66% GPU residency.
+
+Corpus chunk count, counting `toc` and `font` books by their own structure
+and `pages` books at 3 pages per chunk:
+
+| | chunks | one model | four models |
+|---|---:|---:|---:|
+| as detected | 1,798 | 4.9h | 19.8h |
+| **with Newell forced to `pages`** | **1,073** | **3.0h** | 11.8h |
+
+### One book was half the run
+
+Newell's *Unified Theories of Cognition* produced **912 of the 1,798
+chunks — 51% of the entire corpus** — because font-mode detection marked its
+body paragraphs as headings at 1.63 per page. That sits *inside* the
+plausibility band of 0.05-2.0, so the automatic guard passes it. Its median
+chunk is 867 characters: too small to hold a definition and its context.
+
+It is also the book with 14 OCR-degraded pages. Half the compute would have
+gone to the worst-structured, worst-quality text in the corpus, at the
+resolution least likely to yield anything.
+
+Forced to `pages` at 3 pages per chunk it is 187 chunks with a median of
+6,908 characters, and the corpus drops from 4.9 hours to 3.0.
+
+`convert_pdf_to_text.py --force-mode pages` exists for this. The band cannot
+catch every failure — a book can sit inside it and still be wrong — so the
+override is deliberate and per-book rather than a widened threshold that
+would change every other book too.
+
+### The overnight question, answered
+
+A single-model corpus run at 3 pages per chunk is **about three hours**. That
+is an evening, not an overnight job, and well within what this hardware does
+unattended.
+
+The four-model agreement run is 11.8 hours. Given that recurrence from one
+instruct model recovers 70-92% precision against the four-model core, the
+four-model run costs four times as much for a reference set rather than a
+better result.
+
+What is still not answered by any of this: recall is 40-55%, and the review
+load at the far end is unchanged — three hours of compute still produces more
+candidates than anyone has agreed to read.

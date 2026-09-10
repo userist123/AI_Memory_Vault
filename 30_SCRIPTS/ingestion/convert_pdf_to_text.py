@@ -277,7 +277,9 @@ def _normalize(text: str) -> str:
     return "\n\n".join(out).strip() + "\n"
 
 
-def convert(path: pathlib.Path, pages_per_chunk: int) -> dict[str, object]:
+def convert(
+    path: pathlib.Path, pages_per_chunk: int, force_mode: str = ""
+) -> dict[str, object]:
     """Convert one PDF. Returns its metrics; never raises for a bad PDF."""
     record: dict[str, object] = {"book": str(path), "folder": path.parent.name}
     try:
@@ -312,7 +314,17 @@ def convert(path: pathlib.Path, pages_per_chunk: int) -> dict[str, object]:
 
         toc = doc.get_toc()
         rejected = None
-        if len(toc) >= 3:
+        if force_mode == "pages":
+            #: A deliberate per-book override, because the automatic band
+            #: cannot catch every failure. Newell's Unified Theories sits
+            #: inside the plausibility band at 1.63 headings per page while
+            #: marking body paragraphs as headings, and the result is 912
+            #: chunks of ~870 characters — 51% of the whole corpus run, spent
+            #: on the book with the worst structure and 14 OCR-degraded
+            #: pages. At 3 pages per chunk the same book is 187.
+            mode, text = "pages", _extract_by_pages(doc, pages_per_chunk)
+            headings = -(-n // pages_per_chunk)
+        elif len(toc) >= 3:
             mode, text, headings = "toc", _extract_by_toc(doc), len(toc)
         else:
             body = _body_size(doc, sample)
@@ -362,6 +374,12 @@ def main() -> int:
         help="pages per chunk in the 'pages' fallback mode (default: 10)",
     )
     ap.add_argument(
+        "--force-mode", default="", choices=("", "pages"),
+        help="override structure detection for this run. The plausibility "
+             "band cannot catch every failure: a book can sit inside it and "
+             "still mark body paragraphs as headings",
+    )
+    ap.add_argument(
         "--report", type=pathlib.Path,
         help="write the per-book metrics as JSON here",
     )
@@ -378,7 +396,7 @@ def main() -> int:
 
     records = []
     for path in pdfs:
-        rec = convert(path, args.pages_per_chunk)
+        rec = convert(path, args.pages_per_chunk, args.force_mode)
         text = rec.pop("_text", None)
         if text is not None and not args.dry_run:
             path.with_suffix(".txt").write_text(text, encoding="utf-8")
