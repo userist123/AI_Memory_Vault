@@ -16,11 +16,12 @@ The state as of the last section:
 
 | | |
 |---|---|
-| conversion | works; 18 of 20 books, 2 are scans needing OCR |
+| conversion | works; **20 of 20 books**, the 2 scans OCR'd once Tesseract was installed |
+| OCR quality | Minsky clean; Ashby has 13% of pages in scrambled column order — unblocked, not recovered |
 | extraction at book scale | works, with gates that catch fabricated evidence |
 | selectivity | `occurrences >= 3` at 3 pages per chunk, ~210 candidates corpus-wide |
 | recall | 40-55% of what four models agree on |
-| cost | ~13.6 hours for one model over the corpus |
+| cost | 13.7h measured at `num_ctx 32768`; the default is now 16384 and the re-measurement is pending |
 
 The method, and everything that failed on the way to it, is written up as a
 procedure: [`10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`](../../10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md).
