@@ -36,7 +36,23 @@ to each PDF (untracked — `06_INBOX/` is the inbox, nothing is promoted out of 
 - two books were OCR'd: Minsky recovered clean; Ashby is unblocked, not recovered
   (~13% column interleaving — treat its candidates with suspicion)
 
-To regenerate a book's chunks:
+**The whole corpus is already prepared** under `scratch/agent_corpus/`, one
+`<name>_chunks.json` per book, plus a `manifest.json` giving the order. Do them
+in that order — it is largest-book-first, and the reason is in
+`run_agent_corpus.py`: recurrence cannot be measured on a book with fewer
+sections than the review floor, so a small book's yield is not a result.
+
+To re-prepare, or to gate everything written back so far:
+
+```bash
+python 30_SCRIPTS/ingestion/run_agent_corpus.py prepare --work-dir scratch/agent_corpus
+python 30_SCRIPTS/ingestion/run_agent_corpus.py collect     --work-dir scratch/agent_corpus --agent-label antigravity
+```
+
+`collect` is resumable: run it whenever a batch of books is done. A book nobody
+has started is reported as pending, never as a book that yielded nothing.
+
+To regenerate a single book's chunks by hand:
 
 ```bash
 python 30_SCRIPTS/ingestion/gate_agent_candidates.py chunks \
