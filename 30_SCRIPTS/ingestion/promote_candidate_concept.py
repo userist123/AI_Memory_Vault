@@ -41,6 +41,16 @@ def find_slot_file(slot_name: str, slots_dir: str = SLOT_DIRECTORY) -> str:
     return matches[0]
 
 
+def read_slot_id(slot_file: str) -> str:
+    """Read the canonical ontology-slot id used by SynapseStore as target_id."""
+    with open(slot_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    match = re.search(r"(?m)^id:\s*[\"']?([^\"'\n]+)[\"']?\s*$", content)
+    if not match:
+        raise ValueError(f"No canonical id found in ontology slot file {slot_file}")
+    return match.group(1).strip()
+
+
 def slugify(text: str) -> str:
     cleaned = re.sub(r'[^\w\s\-]', '', text.lower())
     return re.sub(r'[\s\-]+', '_', cleaned).strip('_')
@@ -91,6 +101,7 @@ def promote_candidate_concept(
 
     note_uuid = str(uuid.uuid4())
     today_str = datetime.now().strftime("%Y-%m-%d")
+    slot_id = read_slot_id(slot_file)
 
     # Frontmatter matching canonical schema.py
     frontmatter_dict = {
@@ -112,8 +123,11 @@ def promote_candidate_concept(
         "verification": "unverified",
         "relations": [
             {
-                "relation": "derived_from",
-                "target": os.path.relpath(slot_file, start=".").replace("\\", "/")
+                # A promoted concept belongs to its ontology slot. This is
+                # the weakest truthful graph relation and is accepted by the
+                # closed SynapseStore vocabulary.
+                "type": "part_of",
+                "target_id": slot_id
             }
         ]
     }
@@ -123,7 +137,7 @@ def promote_candidate_concept(
 
     # Prepare note content
     definition_text = rewritten_definition.strip() if rewritten_definition else f"{concept_name} is a load-bearing concept extracted from {source_book}."
-    
+
     yaml_frontmatter = (
         "---\n"
         f"id: \"{frontmatter_dict['id']}\"\n"
@@ -142,8 +156,8 @@ def promote_candidate_concept(
         f"confidence: {frontmatter_dict['confidence']}\n"
         f"verification: {frontmatter_dict['verification']}\n"
         "relations:\n"
-        f"  - relation: derived_from\n"
-        f"    target: \"{frontmatter_dict['relations'][0]['target']}\"\n"
+        f"  - type: {frontmatter_dict['relations'][0]['type']}\n"
+        f"    target_id: \"{frontmatter_dict['relations'][0]['target_id']}\"\n"
         "---\n\n"
     )
 
