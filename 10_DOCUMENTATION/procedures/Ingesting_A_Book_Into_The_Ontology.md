@@ -87,11 +87,14 @@ across sections at all — each idea treated once and left behind — which woul
 have made recurrence an artefact of page chunking rather than a property of
 books.
 
-Measured on a `toc` book (*Memory in the Age of AI Agents*, 80 chunks, median
-5,550 characters): 144 candidates, 36 at `>= 2`, **13 at `>= 3`**. Squire, a
-`pages` book, gave 155 / 35 / **13**. The distributions are the same.
+Measured on a `toc` book (*Memory in the Age of AI Agents*, 55 chunks, median
+4,671 characters): 144 candidates, 36 at `>= 2`, **13 at `>= 3`**. Squire, a
+`pages` book, gave 155 / 35 / **13**. The distributions are the same, and the
+`toc` book was *below* the size band while matching it.
 
-Still untested on `font`-mode books.
+`font`-mode books: a first attempt on Soar returned zero recurrent concepts
+and meant nothing — 13 of its 22 chunks were over the limit, so 88% of the
+book never reached the model. Retested after forcing it to `pages` (§4).
 
 ## 2. An instruct model, not a coder model
 
@@ -145,10 +148,16 @@ Newell's *Unified Theories of Cognition* produced 912 chunks of ~870
 characters — **51% of the entire corpus run** — because font detection marked
 its body paragraphs as headings at 1.63 per page. That is inside the
 automatic plausibility band, so nothing catches it. Forced to pages it is 187
-chunks and the corpus drops from 4.9 hours to 3.0 at that (mis-measured)
-rate.
+chunks of 6,908 characters.
 
-Check the reported `mode` and `headings_per_page` per book before a long run.
+Soar needs the same treatment for the opposite reason: font detection gave it
+22 chunks at a median of **47,991 characters**, 13 of them over the limit, so
+88% of the book was skipped in silence. Forced to pages it is 126 chunks of
+7,194, none skipped.
+
+Between them these two books are the difference between 1,581 corpus chunks
+and 1,088. Check the reported `mode` and the MEASURED chunk sizes per book
+before a long run — `headings_per_page` alone did not catch either of them.
 
 ## What it costs
 
@@ -167,9 +176,12 @@ Two ways that number has been got wrong here, both worth not repeating:
   almost no output, and generation time follows output length. That produced
   a 3.0-hour estimate, wrong by 4.6x.
 - **Extrapolating from one book.** Squire runs at 37.2 s/chunk and *Memory in
-  the Age of AI Agents* at 44.5, despite the second having *smaller* chunks.
+  the Age of AI Agents* at 64.7, despite the second having *smaller* chunks.
   Generation time is driven by how much the model has to say about a passage,
   not by how much it reads, so it is a range and not a constant.
+- **Dividing instead of chunking.** The 64.7 figure was first reported as
+  44.5, because the chunk count came from a metrics field rather than from
+  chunking the file. Same division, same error, one layer down.
 
 `--num-ctx` is worth checking before a long run: the window is allocated in
 VRAM beside the weights, so 32768 dropped residency to 66% and cost a third
