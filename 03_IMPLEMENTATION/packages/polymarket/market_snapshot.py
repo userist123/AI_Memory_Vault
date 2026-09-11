@@ -269,7 +269,11 @@ class SnapshotStore:
         target = self.root / f"{snapshot_id}.json"
         if not target.exists():
             raise KeyError(snapshot_id)
-        return MarketSnapshot.from_dict(json.loads(target.read_text(encoding="utf-8")))
+        try:
+            payload = json.loads(target.read_text(encoding="utf-8"))
+            return MarketSnapshot.from_dict(payload)
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"invalid or tampered snapshot: {snapshot_id}") from exc
 
 
 def build_snapshot(
