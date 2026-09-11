@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - 'r046/polymarket-phase1-market-snapshots'
-    paths:
-      - '03_IMPLEMENTATION/packages/polymarket/**'
-      - '20_TESTS/polymarket/**'
-      - '07_EVALUATION/polymarket/fixtures/**'
-      - '.github/workflows/polymarket-phase1-tests.yml'
   workflow_dispatch:
 
 permissions:
