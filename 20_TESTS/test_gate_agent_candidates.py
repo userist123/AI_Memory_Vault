@@ -156,3 +156,143 @@ def test_the_local_default_names_a_model_that_actually_fits():
         "a default naming a model larger than the GPU sends the reader into "
         "the failure this file documents"
     )
+
+
+# --- the hole that 3,342 fabricated rows went through ---------------------
+
+_TEMPLATES = [
+    "Denotes a specialized functional paradigm whereby functional interactions "
+    "govern {a} and {b} and {c} within the underlying system architecture.",
+    "Characterizes an operational mechanism in which functional interactions "
+    "govern {a} and {b} and {c} within the underlying system architecture.",
+]
+
+
+def _templated(count):
+    """What a generator produces: one frame, three words swapped in."""
+    return [
+        _TEMPLATES[i % 2].format(a=f"alpha{i}", b=f"beta{i}", c=f"gamma{i}")
+        for i in range(count)
+    ]
+
+
+def test_a_template_is_invisible_to_every_other_gate():
+    """Why this gate had to exist at all.
+
+    A content-free frame shares no 8-gram with the evidence — it is not derived
+    from the evidence — so the paraphrase gate passes it. The evidence is a
+    verbatim copy, so grounding passes. The term is short and the definition is
+    long enough and ends in a period, so shape passes. Every gate was satisfied
+    by construction rather than by the candidate saying anything, and 3,342 rows
+    reached the ontology with zero rejections.
+    """
+    frames = G.find_reused_frames(_templated(20))
+    assert frames, "the frame must be visible when definitions are compared"
+    assert max(frames.values()) >= G.FRAME_REUSE_ROW_LIMIT
+
+
+def test_a_shared_domain_phrase_is_not_a_template():
+    """Measured, not assumed. On the real llama3.1:8b run four definitions
+    shared "essential for the stabilization of the spatial map" — across PKA,
+    late LTP, protein synthesis and gene expression — and each still said
+    something specific about its own concept. Four is reported; it is not a
+    refusal."""
+    real = [
+        "A protein kinase that plays a critical role in the transformation of "
+        "short term memory into long term memory in the hippocampus.",
+        "A phase of long term potentiation that requires PKA and is essential "
+        "for the stabilization of the spatial map.",
+        "A process that is essential for the stabilization of the spatial map "
+        "and underlies persistent synaptic change.",
+        "Components of long term potentiation that depend on PKA and are "
+        "essential for the stabilization of the spatial map.",
+    ]
+    frames = G.find_reused_frames(real)
+    assert frames, "the reuse is real and should be reported"
+    assert max(frames.values()) < G.FRAME_REUSE_ROW_LIMIT, (
+        "four definitions sharing a domain phrase must not be refused"
+    )
+
+
+def test_coverage_was_tried_and_does_not_separate_the_two():
+    """Pinned because it is the wrong threshold to reach for next time.
+
+    The fabricated definitions sat at 0.47 of their tokens inside a reused
+    frame; the real ones reached 0.83. The distributions overlap, so a coverage
+    threshold convicts the wrong rows. Reuse *count* is what separates them:
+    4 at most across 82 real candidates, against 168 in the fabricated run.
+    """
+    assert G.FRAME_REUSE_ROW_LIMIT > 4, "must clear the real run's maximum"
+
+
+def test_a_wholly_templated_batch_is_refused_even_below_the_row_limit(tmp_path):
+    """Thirteen of the fabricated books put 100% of their rows inside a reused
+    frame. Real books ran 0%, 0%, 0%, 0%, 0%, 33%, 50%."""
+    defs = _templated(12)
+    frames = G.find_reused_frames(defs)
+    touched = [d for d in defs if G._frames_in(d) & frames.keys()]
+    fraction = len(touched) / len(defs)
+
+    assert len(defs) >= G.FRAME_REUSE_BATCH_FLOOR
+    assert fraction > G.FRAME_REUSE_BATCH_FRACTION
+
+
+def test_the_fraction_is_ignored_on_a_batch_too_small_to_mean_anything():
+    """Four candidates, three sharing a phrase, is 75% and is evidence of
+    nothing. The floor is why the real 6-row book at 50% was not convicted."""
+    assert G.FRAME_REUSE_BATCH_FLOOR >= 10
+
+
+def test_the_template_gate_actually_runs_inside_gate(tmp_path, capsys):
+    """End to end through main(), not around it.
+
+    A function in this package once shipped with passing unit tests and no
+    caller. The batch check runs between validate() and deduplicate(), and only
+    a real pass proves it is wired in.
+    """
+    names = ["hippocampal trace", "cortical replay", "synaptic tagging",
+             "engram cell", "retrieval cue", "systems transfer",
+             "sleep spindle", "reconsolidation window", "place field",
+             "pattern separation", "dentate gating", "schema assimilation"]
+    chunk_sentences = []
+    candidates = []
+    for i in range(12):
+        sentence = (
+            f"The regulatory element number {i} governs how the hippocampal "
+            f"circuit stabilises a trace across repeated retrieval episodes "
+            f"over a period of consolidation lasting several weeks in total."
+        )
+        chunk_sentences.append(f"# Section {i}\n\n{sentence}")
+        candidates.append({
+            "chunk_index": 0,
+            "concept": names[i],
+            #: Evidence copied verbatim, so grounding passes.
+            "evidence": sentence,
+            #: One frame, three words swapped. Every other gate passes it.
+            "definition": _TEMPLATES[i % 2].format(
+                a=f"alpha{i}", b=f"beta{i}", c=f"gamma{i}"
+            ),
+            "slot": "consolidation",
+            "confidence": 0.9,
+        })
+
+    book = tmp_path / "book.txt"
+    book.write_text("\n\n".join(chunk_sentences), encoding="utf-8")
+    cand = tmp_path / "cand.json"
+    cand.write_text(json.dumps(candidates), encoding="utf-8")
+    out = tmp_path / "out.json"
+    rej = tmp_path / "rej.json"
+
+    G.main([
+        "gate", "--input-file", str(book), "--candidates", str(cand),
+        "--source-book", "book", "--output-file", str(out),
+        "--rejects-file", str(rej), "--agent-label", "test",
+    ])
+
+    kept = json.loads(out.read_text(encoding="utf-8"))
+    refused = json.loads(rej.read_text(encoding="utf-8"))
+    assert kept == [], "a wholly templated submission must keep nothing"
+    assert refused, "and must say why, per row"
+    reasons = {r["reason"] for r in refused}
+    assert reasons <= {"batch_is_templated", "definition_frame_reused"}
+    assert any(r.get("shared_frame") for r in refused)
