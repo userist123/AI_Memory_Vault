@@ -149,10 +149,9 @@ class MarketSnapshot:
     def recompute_hash(self) -> str:
         payload = self.canonical_payload()
         payload.pop("snapshot_id", None)
-        payload.pop("content_hash", None)
         return sha256_canonical(payload)
 
-    def verify(self) -> None:
+    def _validate_core(self) -> None:
         self.market.validate()
         snapshot_at = _parse_datetime(self.snapshot_at, field_name="snapshot_at")
         acquired_at = _parse_datetime(self.acquired_at, field_name="acquired_at")
@@ -171,9 +170,11 @@ class MarketSnapshot:
                 raise ValueError("price observation fields are required")
         if self.resolution is not None:
             self.resolution.validate(known_as_of)
+
+    def verify(self) -> None:
+        self._validate_core()
         if self.content_hash != self.recompute_hash():
             raise ValueError("snapshot content_hash does not match canonical payload")
-        _ = known_as_of
 
     def to_dict(self) -> dict[str, Any]:
         self.verify()
@@ -215,6 +216,35 @@ class MarketSnapshot:
         )
         snapshot.verify()
         return snapshot
+
+
+_ALLOWED_TRANSITIONS = {
+    MarketLifecycle.UNKNOWN: frozenset(MarketLifecycle),
+    MarketLifecycle.OPEN: frozenset({MarketLifecycle.OPEN, MarketLifecycle.CLOSED, MarketLifecycle.CANCELLED, MarketLifecycle.INVALIDATED}),
+    MarketLifecycle.CLOSED: frozenset({MarketLifecycle.CLOSED, MarketLifecycle.RESOLVED, MarketLifecycle.CANCELLED, MarketLifecycle.INVALIDATED}),
+    MarketLifecycle.RESOLVED: frozenset({MarketLifecycle.RESOLVED}),
+    MarketLifecycle.CANCELLED: frozenset({MarketLifecycle.CANCELLED}),
+    MarketLifecycle.INVALIDATED: frozenset({MarketLifecycle.INVALIDATED}),
+}
+
+
+def validate_snapshot_transition(previous: MarketSnapshot, current: MarketSnapshot) -> None:
+    """Validate monotonic identity/time/lifecycle progression between snapshots."""
+    previous.verify()
+    current.verify()
+    if previous.market.market_id != current.market.market_id:
+        raise ValueError("snapshot transition market_id mismatch")
+    if previous.market.condition_id != current.market.condition_id:
+        raise ValueError("snapshot transition condition_id mismatch")
+    if _parse_datetime(current.snapshot_at, field_name="snapshot_at") <= _parse_datetime(previous.snapshot_at, field_name="snapshot_at"):
+        raise ValueError("snapshot_at must move forward")
+    if current.market.lifecycle not in _ALLOWED_TRANSITIONS[previous.market.lifecycle]:
+        raise ValueError(
+            f"invalid market lifecycle transition: {previous.market.lifecycle.value} -> {current.market.lifecycle.value}"
+        )
+    if previous.market.lifecycle in {MarketLifecycle.RESOLVED, MarketLifecycle.CANCELLED, MarketLifecycle.INVALIDATED}:
+        if current.market.lifecycle != previous.market.lifecycle:
+            raise ValueError("terminal market lifecycle cannot transition")
 
 
 class SnapshotStore:
@@ -275,34 +305,11 @@ def build_snapshot(
         resolution=resolution,
         extra_source_metadata=dict(extra_source_metadata or {}),
     )
-    provisional.market.validate()
-    provisional.verify_without_hash()
+    provisional._validate_core()
     content_hash = provisional.recompute_hash()
     snapshot = replace(provisional, snapshot_id=f"PMS-{content_hash[:24]}", content_hash=content_hash)
     snapshot.verify()
     return snapshot
-
-
-def _verify_without_hash(self: MarketSnapshot) -> None:
-    _parse_datetime(self.snapshot_at, field_name="snapshot_at")
-    acquired_at = _parse_datetime(self.acquired_at, field_name="acquired_at")
-    snapshot_at = _parse_datetime(self.snapshot_at, field_name="snapshot_at")
-    known_as_of = _parse_datetime(self.known_as_of, field_name="known_as_of")
-    if acquired_at < snapshot_at:
-        raise ValueError("acquired_at cannot precede snapshot_at")
-    if self.schema_version != CANONICAL_SCHEMA_VERSION:
-        raise ValueError(f"unsupported schema version: {self.schema_version}")
-    if self.data_quality not in DATA_QUALITY_VALUES:
-        raise ValueError(f"unknown data_quality: {self.data_quality}")
-    if not self.source_type or not self.source_ref:
-        raise ValueError("source_type and source_ref are required")
-    for obs in self.price_observations:
-        _parse_datetime(obs.observed_at, field_name="price.observed_at")
-    if self.resolution is not None:
-        self.resolution.validate(known_as_of)
-
-
-MarketSnapshot.verify_without_hash = _verify_without_hash  # type: ignore[attr-defined]
 
 
 def parse_gamma_market(payload: Mapping[str, Any]) -> dict[str, Any]:
