@@ -19,6 +19,7 @@ from polymarket.market_snapshot import (
     PolymarketMarket,
     build_snapshot,
     parse_gamma_market,
+    validate_snapshot_transition,
 )
 
 
@@ -43,11 +44,14 @@ BASE_MARKET = PolymarketMarket(
 )
 
 
-def make_snapshot(*, known_as_of="2025-01-01T10:00:00Z", resolution=None):
+def make_snapshot(*, known_as_of="2025-01-01T10:00:00Z", resolution=None, lifecycle=MarketLifecycle.OPEN):
+    market = BASE_MARKET if lifecycle == MarketLifecycle.OPEN else PolymarketMarket(
+        **{**BASE_MARKET.__dict__, "lifecycle": lifecycle}
+    )
     return build_snapshot(
-        BASE_MARKET,
+        market,
         snapshot_at=known_as_of,
-        acquired_at="2025-01-01T10:01:00Z",
+        acquired_at=known_as_of,
         known_as_of=known_as_of,
         source_type="synthetic_fixture",
         source_ref="fixture://phase1/market-001",
@@ -82,7 +86,7 @@ def test_existing_snapshot_cannot_be_mutated(tmp_path):
     store.put(first)
     target = tmp_path / f"{first.snapshot_id}.json"
     target.write_text('{"tampered":true}\n', encoding="utf-8")
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError, match="snapshot|market|missing"):
         store.get(first.snapshot_id)
 
 
@@ -106,9 +110,7 @@ def test_resolution_is_allowed_when_known_before_boundary():
         resolution_rule_text="Yes if event X happens.",
         known_at="2025-01-03T09:00:00Z",
     )
-    snapshot = make_snapshot(
-        known_as_of="2025-01-03T10:00:00Z", resolution=resolution
-    )
+    snapshot = make_snapshot(known_as_of="2025-01-03T10:00:00Z", resolution=resolution)
     snapshot.verify()
 
 
@@ -169,6 +171,38 @@ def test_gamma_parser_does_not_promote_current_resolution_to_history():
     )
     assert "resolution" not in parsed
     assert parsed["closed"] is True
+
+
+def test_lifecycle_transition_is_monotonic():
+    previous = make_snapshot(known_as_of="2025-01-01T10:00:00Z", lifecycle=MarketLifecycle.OPEN)
+    current = make_snapshot(known_as_of="2025-01-02T10:00:00Z", lifecycle=MarketLifecycle.CLOSED)
+    validate_snapshot_transition(previous, current)
+
+
+def test_lifecycle_transition_rejects_regression():
+    previous = make_snapshot(known_as_of="2025-01-02T10:00:00Z", lifecycle=MarketLifecycle.CLOSED)
+    current = make_snapshot(known_as_of="2025-01-03T10:00:00Z", lifecycle=MarketLifecycle.OPEN)
+    with pytest.raises(ValueError, match="lifecycle transition"):
+        validate_snapshot_transition(previous, current)
+
+
+def test_lifecycle_transition_rejects_identity_mismatch():
+    previous = make_snapshot(known_as_of="2025-01-01T10:00:00Z")
+    other_market = PolymarketMarket(
+        **{**BASE_MARKET.__dict__, "market_id": "synthetic-002"}
+    )
+    current = build_snapshot(
+        other_market,
+        snapshot_at="2025-01-02T10:00:00Z",
+        acquired_at="2025-01-02T10:00:00Z",
+        known_as_of="2025-01-02T10:00:00Z",
+        source_type="synthetic_fixture",
+        source_ref="fixture://phase1/market-001",
+        data_quality="synthetic",
+        source_payload_hash="fixture-hash",
+    )
+    with pytest.raises(ValueError, match="market_id mismatch"):
+        validate_snapshot_transition(previous, current)
 
 
 def test_missing_required_market_fields_fail():
