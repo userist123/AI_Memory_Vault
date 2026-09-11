@@ -15,6 +15,8 @@ import pathlib
 import subprocess
 import sys
 
+import pytest
+
 _REPO = pathlib.Path(__file__).resolve().parents[1]
 _SCRIPT = _REPO / "30_SCRIPTS" / "ingestion" / "convert_pdf_to_text.py"
 sys.path.insert(0, str(_SCRIPT.parent))
@@ -101,3 +103,42 @@ def test_ocr_is_off_by_default():
     assert 'if density < MIN_CHARS_PER_PAGE and ocr_tessdata:' in source
     #: and the mode reaches the report, so a reader can tell them apart
     assert 'mode="ocr"' in source
+
+
+def test_the_module_imports_without_pymupdf():
+    """A module that refuses to be imported takes the whole suite with it.
+
+    This module called sys.exit() at import when pymupdf was missing. From
+    module scope that does not skip a test, it kills pytest's collector: both
+    CI gates ended with "mainloop: caught unexpected SystemExit!" and "no
+    tests ran", reporting failure having executed nothing.
+
+    The dependency is now checked at the point of use.
+    """
+    source = _SCRIPT.read_text(encoding="utf-8")
+    assert "    pymupdf = None" in source, (
+        "a missing pymupdf must leave the module importable"
+    )
+    assert "def require_pymupdf" in source
+    assert "    require_pymupdf()" in source, (
+        "the check has to run somewhere, or a missing dependency becomes an "
+        "AttributeError deep in a conversion"
+    )
+    #: and no exit may run at import. Checked against code rather than text:
+    #: the comment explaining this defect contains the word `sys.exit(`, and
+    #: a naive substring search matches the explanation instead of the bug.
+    head = source.split("def require_pymupdf", 1)[0]
+    code = [
+        line for line in head.splitlines()
+        if line.strip() and not line.lstrip().startswith(("#", '"""', "'''"))
+    ]
+    assert not any("sys.exit(" in line for line in code), (
+        "module scope must not exit; it kills pytest's collector"
+    )
+
+
+def test_requiring_pymupdf_fails_loudly_when_it_is_absent(monkeypatch):
+    monkeypatch.setattr(C, "pymupdf", None)
+    with pytest.raises(SystemExit) as excinfo:
+        C.require_pymupdf()
+    assert "pymupdf is required" in str(excinfo.value)

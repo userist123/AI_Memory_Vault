@@ -57,12 +57,29 @@ import sys
 from collections import Counter
 from typing import Iterable
 
+#: Import failure is deferred to the point of use rather than raised here.
+#:
+#: This module called sys.exit() at import time when pymupdf was missing, and
+#: pymupdf is not installed in CI. sys.exit() from module scope does not skip
+#: a test — it kills pytest's collector, so the whole run ends with
+#: "mainloop: caught unexpected SystemExit!" and "no tests ran". Both the
+#: enforce and regression gates reported failure having executed nothing.
+#:
+#: A module that refuses to be imported takes every other test down with it.
 try:
     import pymupdf
 except ImportError:  # pragma: no cover - environment guard
-    sys.exit(
-        "pymupdf is required. Install it with:  python -m pip install pymupdf"
-    )
+    pymupdf = None
+
+PYMUPDF_MISSING = (
+    "pymupdf is required. Install it with:  python -m pip install pymupdf"
+)
+
+
+def require_pymupdf() -> None:
+    """Fail at the point of use, loudly, with the same message as before."""
+    if pymupdf is None:
+        raise SystemExit(PYMUPDF_MISSING)
 
 #: Below this many characters per page, averaged over the document, the PDF
 #: is treated as having no usable text layer. A dense page of a printed book
@@ -457,6 +474,8 @@ def convert(
 
 
 def main() -> int:
+    require_pymupdf()
+
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("root", type=pathlib.Path, help="folder to scan for PDFs")
     ap.add_argument(
