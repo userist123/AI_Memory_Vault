@@ -116,6 +116,26 @@ FRAME_REUSE_ROW_LIMIT = 10
 FRAME_REUSE_BATCH_FRACTION = 0.60
 FRAME_REUSE_BATCH_FLOOR = 10
 
+#: How a definition opens, and how much of a batch shares its opening.
+#:
+#: Added after the 8-gram check was evaded rather than defeated. A second
+#: submission arrived with five frames instead of five, but varied further
+#: along — enough that the frames stopped sharing eight consecutive words, so
+#: only 20% of rows were caught where the first submission had lost 99%.
+#:
+#: What did not vary was the opening. Measured over the three runs:
+#:
+#:   real, llama3.1:8b     top five openings covered 28%, 32%, 40% of a book,
+#:                         with 23 distinct openings across 25 definitions
+#:   both generated runs   100%, from exactly 5 distinct openings, across
+#:                         books of 762, 449 and 379 definitions
+#:
+#: Real writing opens almost every definition differently, because the opening
+#: follows the concept. A generator picks from a short menu.
+OPENING_NGRAM = 4
+MAX_TOP_OPENING_COVERAGE = 0.70
+TOP_OPENINGS_COUNTED = 5
+
 
 def _tokens(text: str) -> list[str]:
     return [w for w in re.sub(r"[^\w\s]", " ", text.lower()).split() if w]
@@ -125,6 +145,27 @@ def _frames_in(definition: str, n: int = FRAME_NGRAM) -> set[str]:
     """Every n-gram in one definition, deduplicated."""
     words = _tokens(definition)
     return {" ".join(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def opening_concentration(definitions: list[str]) -> tuple[float, int]:
+    """How much of a batch shares the few commonest ways of starting.
+
+    Returns the fraction covered by the commonest openings and the number of
+    distinct ones. Both are printed, because the second is the number that
+    makes the finding obvious to a reader: 762 definitions with five distinct
+    openings is not a style, it is a menu.
+    """
+    counts: Counter[str] = Counter()
+    for definition in definitions:
+        words = _tokens(definition)
+        if len(words) >= OPENING_NGRAM:
+            counts[" ".join(words[:OPENING_NGRAM])] += 1
+
+    total = sum(counts.values())
+    if not total:
+        return 0.0, 0
+    top = sum(n for _, n in counts.most_common(TOP_OPENINGS_COUNTED))
+    return top / total, len(counts)
 
 
 def find_reused_frames(
@@ -251,26 +292,39 @@ def gate(args: argparse.Namespace) -> int:
     heavy = {g for g, n in frames.items() if n >= FRAME_REUSE_ROW_LIMIT}
     touched = [r for r in rows if _frames_in(r["definition"]) & frames.keys()]
     fraction = len(touched) / len(rows) if rows else 0.0
-    batch_templated = (
-        len(rows) >= FRAME_REUSE_BATCH_FLOOR
-        and fraction > FRAME_REUSE_BATCH_FRACTION
+    opening_cover, distinct_openings = opening_concentration(
+        [r["definition"] for r in rows]
     )
+    batch_templated = len(rows) >= FRAME_REUSE_BATCH_FLOOR and (
+        fraction > FRAME_REUSE_BATCH_FRACTION
+        or opening_cover > MAX_TOP_OPENING_COVERAGE
+    )
+
+    if len(rows) >= FRAME_REUSE_BATCH_FLOOR:
+        print(f"  definition openings     {distinct_openings} distinct; "
+              f"top {TOP_OPENINGS_COUNTED} cover {opening_cover:.0%} of rows")
 
     if heavy or batch_templated:
         kept: list[dict[str, Any]] = []
         for row in rows:
-            hit = _frames_in(row["definition"]) & (frames.keys() if batch_templated else heavy)
-            if not hit:
+            hit = _frames_in(row["definition"]) & heavy
+            #: A templated batch is refused whole. Keeping the rows that happen
+            #: not to share an 8-gram would keep the same generator's output
+            #: minus the ones it varied most, which is the worst of both: the
+            #: submission is not trusted and the survivors are not better, they
+            #: are merely less similar to each other.
+            if not hit and not batch_templated:
                 kept.append(row)
                 continue
-            phrase = max(hit, key=lambda g: frames[g])
-            reason = ("definition_frame_reused" if not batch_templated
-                      else "batch_is_templated")
+            phrase = (max(hit, key=lambda g: frames[g]) if hit
+                      else f"opening shared by {opening_cover:.0%} of the batch")
+            reason = ("batch_is_templated" if batch_templated
+                      else "definition_frame_reused")
             rejects[reason] += 1
             rejected.append({
                 "reason": reason,
                 "shared_frame": phrase,
-                "shared_with": frames[phrase],
+                "shared_with": frames.get(phrase, len(rows)),
                 "concept": str(row["concept"])[:120],
                 "slot": str(row["maps_to_slot"])[:60],
                 "confidence": row["confidence_in_literature"],
