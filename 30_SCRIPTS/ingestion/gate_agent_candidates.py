@@ -71,6 +71,7 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import re
 import sys
 from collections import Counter
 from typing import Any
@@ -86,6 +87,83 @@ from model_extract_concepts import (  # noqa: E402
     split_into_structural_chunks,
     validate,
 )
+
+
+
+FRAME_NGRAM = 8
+
+#: Reported at 3 — mild phrase reuse is worth seeing, not worth refusing.
+#: Measured on the real llama3.1:8b run, three or four definitions sharing an
+#: 8-gram is a shared *domain* phrase, not a scaffold: "essential for the
+#: stabilization of the spatial map" recurred across PKA, late LTP, protein
+#: synthesis and gene expression, and each of those definitions still said
+#: something specific about its own concept.
+MAX_DEFINITION_FRAME_REUSE = 3
+
+#: Refused at 10. The two populations separate cleanly here and nowhere else:
+#: across 82 real candidates the most any 8-gram was reused was 4, while the
+#: fabricated run reached 168, 109, 93, 89. Coverage was tried first and does
+#: not work — the fabricated definitions sat at 0.47 of their tokens and the
+#: real ones reached 0.83, so the distributions overlap and a coverage
+#: threshold would convict the wrong rows.
+FRAME_REUSE_ROW_LIMIT = 10
+
+#: A whole submission is refused when this much of it carries reused phrasing.
+#: Real books ran 0%, 0%, 0%, 0%, 0%, 33%, 50%; the fabricated run put thirteen
+#: books at exactly 100%. The floor exists because the fraction means nothing
+#: on a handful of rows — four candidates, three sharing a phrase, is 75% and
+#: is not evidence of anything.
+FRAME_REUSE_BATCH_FRACTION = 0.60
+FRAME_REUSE_BATCH_FLOOR = 10
+
+
+def _tokens(text: str) -> list[str]:
+    return [w for w in re.sub(r"[^\w\s]", " ", text.lower()).split() if w]
+
+
+def _frames_in(definition: str, n: int = FRAME_NGRAM) -> set[str]:
+    """Every n-gram in one definition, deduplicated."""
+    words = _tokens(definition)
+    return {" ".join(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def find_reused_frames(
+    definitions: list[str],
+    n: int = FRAME_NGRAM,
+    limit: int = MAX_DEFINITION_FRAME_REUSE,
+) -> dict[str, int]:
+    """n-grams appearing in `limit` or more distinct definitions in one batch.
+
+    The gates check each candidate against its evidence. Nothing checked the
+    candidates against *each other*, and that is the hole 3,342 fabricated rows
+    went through: five sentence frames, three words swapped into each, merged
+    into the ontology with zero rejections.
+
+        Characterizes an operational mechanism in which functional interactions
+        govern X and Y and Z within the underlying system architecture.
+
+    A frame like that shares no 8-gram with the evidence — it is not derived
+    from the evidence at all — so the paraphrase gate passes it. The evidence is
+    a verbatim copy, so grounding passes. The term is 1-4 words and the
+    definition is over twelve ending in a period, so shape passes. Every gate
+    was satisfied by construction rather than by the candidate saying anything.
+
+    So this asks the reverse question: does this definition share its phrasing
+    with its neighbours? Counting distinct definitions rather than occurrences
+    keeps one repetitive definition from convicting itself.
+    """
+    from collections import defaultdict
+
+    holders: dict[str, set[int]] = defaultdict(set)
+    for index, definition in enumerate(definitions):
+        words = _tokens(definition)
+        #: A set per definition, so a phrase repeated inside one definition
+        #: counts once.
+        for start in range(len(words) - n + 1):
+            holders[" ".join(words[start:start + n])].add(index)
+
+    return {phrase: len(owners) for phrase, owners in holders.items()
+            if len(owners) >= limit}
 
 
 def dump_chunks(args: argparse.Namespace) -> int:
@@ -168,6 +246,40 @@ def gate(args: argparse.Namespace) -> int:
             "provider": "agent",
         })
 
+    #: Batch-level, because a template is invisible one candidate at a time.
+    frames = find_reused_frames([r["definition"] for r in rows])
+    heavy = {g for g, n in frames.items() if n >= FRAME_REUSE_ROW_LIMIT}
+    touched = [r for r in rows if _frames_in(r["definition"]) & frames.keys()]
+    fraction = len(touched) / len(rows) if rows else 0.0
+    batch_templated = (
+        len(rows) >= FRAME_REUSE_BATCH_FLOOR
+        and fraction > FRAME_REUSE_BATCH_FRACTION
+    )
+
+    if heavy or batch_templated:
+        kept: list[dict[str, Any]] = []
+        for row in rows:
+            hit = _frames_in(row["definition"]) & (frames.keys() if batch_templated else heavy)
+            if not hit:
+                kept.append(row)
+                continue
+            phrase = max(hit, key=lambda g: frames[g])
+            reason = ("definition_frame_reused" if not batch_templated
+                      else "batch_is_templated")
+            rejects[reason] += 1
+            rejected.append({
+                "reason": reason,
+                "shared_frame": phrase,
+                "shared_with": frames[phrase],
+                "concept": str(row["concept"])[:120],
+                "slot": str(row["maps_to_slot"])[:60],
+                "confidence": row["confidence_in_literature"],
+                "definition": str(row["definition"])[:300],
+                "evidence": str(row["evidence_quote"])[:300],
+                "chunk_index": None,
+            })
+        rows = kept
+
     rows, collapsed = deduplicate(rows)
 
     args.output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -181,6 +293,13 @@ def gate(args: argparse.Namespace) -> int:
     print(f"  candidates submitted    {len(candidates)}")
     print(f"  kept                    {len(rows)}  ({collapsed} duplicates merged)")
     print(f"  rejected                {sum(rejects.values())}  {dict(rejects.most_common())}")
+    if frames:
+        worst = sorted(frames.items(), key=lambda kv: -kv[1])[:3]
+        verdict = "SUBMISSION REFUSED AS TEMPLATED" if batch_templated else "reported only"
+        print(f"  reused frames           {len(frames)} distinct 8-grams, "
+              f"{fraction:.0%} of rows touched  ({verdict})")
+        for phrase, count in worst:
+            print(f'      x{count:<5} "{phrase}"')
     print(f"  occurrence histogram    {dict(sorted(histogram.items()))}")
     print(f"  written                 {args.output_file}")
     if args.rejects_file:
@@ -200,7 +319,7 @@ def _summarise(candidate: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="command", required=True)
 
@@ -222,7 +341,7 @@ def main() -> int:
     )
     g.set_defaults(func=gate)
 
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
     return args.func(args)
 
 
