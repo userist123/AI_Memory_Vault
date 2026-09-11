@@ -76,13 +76,18 @@ def test_ocr_requested_without_tesseract_stops_the_run(tmp_path, monkeypatch):
     env = dict(**{k: v for k, v in __import__("os").environ.items()})
     env["TESSDATA_PREFIX"] = str(tmp_path / "definitely-not-here")
     env["PYTHONIOENCODING"] = "utf-8"
-    #: Point the candidate list at nothing via a sitecustomize-free route:
-    #: run with a cwd where no real tessdata path resolves is not possible,
-    #: so assert on the message only when Tesseract is genuinely absent.
-    if C.find_tessdata():
-        import pytest
 
+    #: Two preconditions, and both have to hold for this case to be reachable.
+    if C.find_tessdata():
         pytest.skip("Tesseract is installed here; the absent-path case cannot run")
+    if C.pymupdf is None:
+        #: The script exits on the missing library before it ever looks for
+        #: tessdata, which is the correct order — a converter with no PDF
+        #: reader has nothing to OCR. CI has no pymupdf, so this scenario
+        #: does not exist there. Asserting the tessdata message anyway is how
+        #: this test failed in CI while passing locally, where it skipped on
+        #: the first precondition and never ran at all.
+        pytest.skip("pymupdf is absent; the run stops earlier, for a better reason")
 
     result = subprocess.run(
         [sys.executable, str(_SCRIPT), str(tmp_path), "--ocr"],
@@ -142,3 +147,38 @@ def test_requiring_pymupdf_fails_loudly_when_it_is_absent(monkeypatch):
     with pytest.raises(SystemExit) as excinfo:
         C.require_pymupdf()
     assert "pymupdf is required" in str(excinfo.value)
+
+
+def test_the_missing_library_is_reported_before_the_missing_tessdata(tmp_path):
+    """Order matters, and it is checked rather than assumed.
+
+    A converter with no PDF reader has nothing to OCR, so the library is the
+    more fundamental prerequisite and must be named first. This also pins the
+    behaviour that made the previous test fail in CI: there the script exits
+    on pymupdf, never reaching the tessdata check.
+    """
+    import os
+
+    (tmp_path / "x.pdf").write_bytes(b"%PDF-1.4\n%%EOF\n")
+    env = dict(os.environ)
+    env["TESSDATA_PREFIX"] = str(tmp_path / "definitely-not-here")
+    env["PYTHONIOENCODING"] = "utf-8"
+    #: Make pymupdf unimportable for the child, whatever this machine has.
+    shim = tmp_path / "shim"
+    shim.mkdir()
+    (shim / "pymupdf.py").write_text(
+        'raise ImportError("simulated: pymupdf not installed")\n', encoding="utf-8"
+    )
+    env["PYTHONPATH"] = str(shim) + os.pathsep + env.get("PYTHONPATH", "")
+
+    result = subprocess.run(
+        [sys.executable, str(_SCRIPT), str(tmp_path), "--ocr"],
+        capture_output=True, text=True, env=env,
+    )
+    combined = result.stdout + result.stderr
+    assert result.returncode != 0
+    assert "pymupdf is required" in combined
+    assert "tessdata could not be found" not in combined, (
+        "the library check must come first; reporting tessdata would send the "
+        "reader to install the wrong thing"
+    )
