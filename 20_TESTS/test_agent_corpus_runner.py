@@ -174,3 +174,23 @@ def test_the_probe_never_raises_and_never_blocks(monkeypatch):
     assert probe["clean"] is True
     assert probe["local_servers_responding"] == {}
     assert probe["checked_at"]
+
+
+def test_no_script_can_reach_for_a_local_model_without_saying_so():
+    """--provider has no default, and that is the whole point.
+
+    It defaulted to "local". A runner that called this script without thinking
+    about the provider therefore started Ollama, and one did — repeatedly,
+    after the repository owner had asked for local models to stop being used.
+    The defaults sat in a function signature nobody read.
+
+    Reaching for a 7B model here is a decision with measured consequences: 82
+    candidates kept across 7 books, 1 above the review floor, the top rejection
+    being definitions that were the evidence reworded. A decision that costs
+    that much has to be typed out.
+    """
+    src = (_REPO / "30_SCRIPTS" / "ingestion" / "model_extract_concepts.py").read_text(
+        encoding="utf-8"
+    )
+    assert '"--provider", required=True' in src
+    assert '"--provider", default=' not in src

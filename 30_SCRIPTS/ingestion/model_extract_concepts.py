@@ -695,7 +695,15 @@ def main() -> int:
     ap.add_argument("--input-file", required=True, type=pathlib.Path)
     ap.add_argument("--source-book", required=True)
     ap.add_argument("--output-file", required=True, type=pathlib.Path)
-    ap.add_argument("--provider", default="local", choices=("local", "fake"))
+    ap.add_argument(
+        "--provider", required=True, choices=("local", "fake"),
+        help="No default, on purpose. This defaulted to \"local\", which meant "
+             "any script that called this without thinking about it started "
+             "Ollama — and one did, repeatedly, after the owner asked for local "
+             "models to stop being used. Reaching for a 7B model is a decision "
+             "with measured consequences (82 candidates kept across 7 books, 1 "
+             "above the review floor), so it has to be typed out.",
+    )
     ap.add_argument(
         "--model", default="llama3.1:8b",
         help="local model name. Whether it FITS matters more than its size: "

@@ -28,8 +28,25 @@ Every number here was measured in this repository against
 
 ## The recipe
 
+Convert, then have an agent read the chunks:
+
 ```bash
 python 30_SCRIPTS/ingestion/convert_pdf_to_text.py <folder> --pages-per-chunk 3
+python 30_SCRIPTS/ingestion/run_agent_corpus.py prepare --work-dir scratch/agent_corpus
+# the agent reads <name>_chunks.json and writes <name>_candidates.json
+python 30_SCRIPTS/ingestion/run_agent_corpus.py collect     --work-dir scratch/agent_corpus --agent-label <who>
+```
+
+### The local-provider fallback
+
+Same gates, a model provider instead of an agent. `--provider` has no default:
+it used to be `local`, and a runner that called the extractor without thinking
+about the provider therefore started Ollama. Measured, over 7 of 20 books on
+`llama3.1:8b`: 82 candidates kept, **1** above the review floor, the top
+rejection being definitions that were the evidence reworded. Choose it
+deliberately or not at all.
+
+```bash
 python 30_SCRIPTS/ingestion/model_extract_concepts.py \
     --input-file <book>.txt --source-book <name> \
     --output-file staging/<name>.json --rejects-file staging/<name>_rej.json \
