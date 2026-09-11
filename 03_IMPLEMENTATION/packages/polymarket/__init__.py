@@ -21,6 +21,13 @@ from .market_snapshot import (
     sha256_canonical,
     validate_snapshot_transition,
 )
+from .prediction_ledger import (
+    PREDICTION_LEDGER_SCHEMA_VERSION,
+    PredictionLedger,
+    PredictionProvenance,
+    PredictionRecord,
+    build_prediction,
+)
 
 __all__ = [
     "CANONICAL_SCHEMA_VERSION",
@@ -29,12 +36,17 @@ __all__ = [
     "HistoricalReplay",
     "MarketLifecycle",
     "MarketSnapshot",
+    "PREDICTION_LEDGER_SCHEMA_VERSION",
     "PolymarketMarket",
+    "PredictionLedger",
+    "PredictionProvenance",
+    "PredictionRecord",
     "PriceObservation",
     "ReplayResult",
     "ResolutionMetadata",
     "REPLAY_SCHEMA_VERSION",
     "SnapshotStore",
+    "build_prediction",
     "build_snapshot",
     "canonical_json",
     "parse_gamma_market",
