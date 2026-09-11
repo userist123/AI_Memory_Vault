@@ -138,3 +138,21 @@ def test_chunks_command_emits_the_slot_questions(tmp_path, book):
     #: The questions, not just the names — asked against a bare list a model
     #: picks by which name sounds closest.
     assert payload["slots"]["consolidation"] == "How does experience become knowledge?"
+
+
+def test_the_local_default_names_a_model_that_actually_fits():
+    """A default that cannot run is worse than no default.
+
+    --model defaulted to mixtral:8x7b, which is ~26 GB against an 8 GB card
+    and was never installed here. The 19 GB model that WAS installed ended in
+    "llama-server process has terminated" after spilling two thirds to CPU.
+    Anyone running the bare command would have hit that, not a result.
+    """
+    src = (_REPO / "30_SCRIPTS" / "ingestion" / "model_extract_concepts.py").read_text(
+        encoding="utf-8"
+    )
+    assert '"--model", default="llama3.1:8b"' in src
+    assert "mixtral" not in src, (
+        "a default naming a model larger than the GPU sends the reader into "
+        "the failure this file documents"
+    )
