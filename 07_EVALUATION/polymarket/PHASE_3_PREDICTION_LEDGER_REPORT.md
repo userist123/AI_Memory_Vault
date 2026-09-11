@@ -3,8 +3,8 @@
 Status: **ACCEPTED / RUNTIME VERIFIED**
 Branch: `r049-pm-phase3-prediction-ledger`
 Base: `main` at `efe2ce65d47679efc4cc5690bcf58bde7bcbc580`
-Acceptance commit: `a23a5ed8dc703dd85d8adcd80427c9e5967f4dac`
-Acceptance gate: GitHub Actions run `34655789263`
+Acceptance commit: `446f8ac30ffed9e8399df2f6d38b29e10274cb15`
+Acceptance gate: GitHub Actions run `34655829417`
 
 ## Scope
 
@@ -36,10 +36,10 @@ Phase 1 snapshot identifiers are mandatory in prediction provenance. `known_as_o
 python -m pytest -q 20_TESTS/polymarket/test_market_snapshot.py 20_TESTS/polymarket/test_historical_replay.py 20_TESTS/polymarket/test_prediction_ledger.py
 ```
 
-GitHub Actions run `34655789263`, job `Phase 3 prediction ledger`, completed successfully with:
+GitHub Actions run `34655829417`, job `Phase 3 prediction ledger`, completed successfully with:
 
 ```text
-27 passed in 0.07s
+27 passed in 0.10s
 ```
 
 The command exercised Phase 1 snapshot tests, Phase 2 historical replay tests, and Phase 3 ledger tests together.
@@ -51,7 +51,7 @@ Two earlier Phase 3 gate failures were corrected before acceptance:
 1. Run `34655649821`: test collection failed because the new test imported `packages` without the repository implementation root on `PYTHONPATH`.
 2. Run `34655706113`: after fixing the import path, 26 tests passed and one test failed because the test expected a ledger collision, while the implementation correctly rejected the forged ID earlier during canonical ID validation.
 
-The test was corrected to assert the actual integrity contract. Run `34655789263` then passed 27/27.
+The test was corrected to assert the actual integrity contract. Run `34655789263` then passed 27/27. The final report commit was then re-executed by run `34655829417`, which also passed 27/27.
 
 ## Acceptance matrix
 
