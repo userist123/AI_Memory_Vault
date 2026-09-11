@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONPATH: 03_IMPLEMENTATION/packages
+
 jobs:
   phase3:
     name: Phase 3 prediction ledger
