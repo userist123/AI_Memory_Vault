@@ -26,7 +26,7 @@ How are operations executed?
 - `10_DOCUMENTATION/procedures/Recording_A_Solved_Problem.md`
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
-|---|---|---|---|---|---|---|
-| Reservoir Sampling | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | promoted | 2026-09-07 | d7e9a1bd-341c-4da5-b482-6521c4e37146 | |
-| Continual Incremental Learning | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | unverified_source | 2026-09-07 | | |
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
+|---|---|---|---|---|---|---|---|
+| Reservoir Sampling | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | promoted | 2026-09-07 | d7e9a1bd-341c-4da5-b482-6521c4e37146 | | |
+| Continual Incremental Learning | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | unverified_source | 2026-09-07 | | | |

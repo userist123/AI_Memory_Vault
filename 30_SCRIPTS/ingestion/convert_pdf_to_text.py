@@ -57,12 +57,29 @@ import sys
 from collections import Counter
 from typing import Iterable
 
+#: Import failure is deferred to the point of use rather than raised here.
+#:
+#: This module called sys.exit() at import time when pymupdf was missing, and
+#: pymupdf is not installed in CI. sys.exit() from module scope does not skip
+#: a test — it kills pytest's collector, so the whole run ends with
+#: "mainloop: caught unexpected SystemExit!" and "no tests ran". Both the
+#: enforce and regression gates reported failure having executed nothing.
+#:
+#: A module that refuses to be imported takes every other test down with it.
 try:
     import pymupdf
 except ImportError:  # pragma: no cover - environment guard
-    sys.exit(
-        "pymupdf is required. Install it with:  python -m pip install pymupdf"
-    )
+    pymupdf = None
+
+PYMUPDF_MISSING = (
+    "pymupdf is required. Install it with:  python -m pip install pymupdf"
+)
+
+
+def require_pymupdf() -> None:
+    """Fail at the point of use, loudly, with the same message as before."""
+    if pymupdf is None:
+        raise SystemExit(PYMUPDF_MISSING)
 
 #: Below this many characters per page, averaged over the document, the PDF
 #: is treated as having no usable text layer. A dense page of a printed book
@@ -116,6 +133,67 @@ VOWEL_RATIO_FLOOR = 0.20
 DEGRADED_PAGE_THRESHOLD = 0.06
 
 _VOWELS = frozenset("aeiouy")
+
+
+#: Where Tesseract's language data lives. PyMuPDF takes the path directly, so
+#: OCR does not depend on TESSDATA_PREFIX being exported — which it was not on
+#: the machine this was built for, even after a clean install.
+_TESSDATA_CANDIDATES = (
+    r"C:\Program Files\Tesseract-OCR\tessdata",
+    r"C:\Program Files (x86)\Tesseract-OCR\tessdata",
+    "/usr/share/tesseract-ocr/5/tessdata",
+    "/usr/share/tesseract-ocr/4.00/tessdata",
+    "/usr/local/share/tessdata",
+    "/opt/homebrew/share/tessdata",
+)
+
+
+def find_tessdata() -> str:
+    """The tessdata directory, or "" when Tesseract is not installed."""
+    import os
+
+    env = os.environ.get("TESSDATA_PREFIX", "").strip()
+    if env and pathlib.Path(env).is_dir():
+        return env
+    for candidate in _TESSDATA_CANDIDATES:
+        if pathlib.Path(candidate).is_dir():
+            return candidate
+    return ""
+
+
+def _extract_with_ocr(
+    doc: "pymupdf.Document", tessdata: str, dpi: int, per_chunk: int
+) -> tuple[str, int]:
+    """Rasterise and OCR every page. Returns (text, degraded page count).
+
+    The degraded count is measured here rather than assumed. OCR output is
+    exactly where character-level damage is most likely — it is how Newell's
+    front matter became "Copynyhrnd Moterrol" — so reporting zero without
+    checking would be the same unmeasured claim this converter exists to
+    avoid.
+    """
+    out: list[str] = []
+    degraded = 0
+    for i in range(doc.page_count):
+        page = doc[i]
+        textpage = page.get_textpage_ocr(dpi=dpi, full=True, tessdata=tessdata)
+        text = page.get_text(textpage=textpage)
+        if _page_is_degraded(text):
+            degraded += 1
+        #: Page grouping is the only structure available here — a scan has no
+        #: font metadata worth trusting and no outline, so recovering sections
+        #: from it would be inventing them. But group the same way `pages`
+        #: mode does rather than emitting one heading per page: a heading per
+        #: page put Minsky at a median of 2,892 characters per chunk, below
+        #: the 5,000-15,000 band that the recurrence measurements were taken
+        #: in. Chunk size was the confound in every earlier selectivity
+        #: result, so a second path that quietly uses a different one is the
+        #: same mistake with a new name.
+        if i % per_chunk == 0:
+            last = min(i + per_chunk, doc.page_count)
+            out.append(f"\n\n# Pages {i + 1}-{last}\n")
+        out.append(text)
+    return "".join(out), degraded
 
 
 def _body_size(doc: "pymupdf.Document", sample_pages: list[int]) -> float:
@@ -277,7 +355,10 @@ def _normalize(text: str) -> str:
     return "\n\n".join(out).strip() + "\n"
 
 
-def convert(path: pathlib.Path, pages_per_chunk: int) -> dict[str, object]:
+def convert(
+    path: pathlib.Path, pages_per_chunk: int, force_mode: str = "",
+    ocr_tessdata: str = "", ocr_dpi: int = 200,
+) -> dict[str, object]:
     """Convert one PDF. Returns its metrics; never raises for a bad PDF."""
     record: dict[str, object] = {"book": str(path), "folder": path.parent.name}
     try:
@@ -298,21 +379,59 @@ def convert(path: pathlib.Path, pages_per_chunk: int) -> dict[str, object]:
         density = raw_chars / max(len(sample), 1)
 
         #: Decided before any extraction work, so a scan costs one pass.
+        if density < MIN_CHARS_PER_PAGE and ocr_tessdata:
+            #: Measured on Ashby's Introduction to Cybernetics: ~1 second and
+            #: ~3,500 characters per page at 200 dpi, legible enough to read.
+            #: The two scans in this corpus are 492 pages together, so this is
+            #: minutes rather than an obstacle — but it stays opt-in, because
+            #: OCR text is a different quality of input from a real text layer
+            #: and the record says which one produced a book.
+            raw, degraded = _extract_with_ocr(
+                doc, ocr_tessdata, ocr_dpi, pages_per_chunk
+            )
+            text = _normalize(raw)
+            record.update(
+                status="OK",
+                mode="ocr",
+                headings=-(-n // pages_per_chunk),
+                headings_per_page=round(1 / pages_per_chunk, 2),
+                degraded_pages=degraded,
+                degraded_fraction=round(degraded / n, 3),
+                characters=len(text),
+                chars_per_page=round(len(text) / n, 1),
+                ocr_dpi=ocr_dpi,
+            )
+            record["_text"] = text
+            return record
+
         if density < MIN_CHARS_PER_PAGE:
             record.update(
                 status="OCR_REQUIRED",
                 chars_per_page=round(density, 1),
                 mode=None,
                 error=(
-                    "no usable text layer; this is a scanned image PDF and "
-                    "must be OCR'd before it can be ingested"
+                    "no usable text layer; this is a scanned image PDF. "
+                    "PyMuPDF can OCR it via page.get_textpage_ocr(), but that "
+                    "needs Tesseract on PATH and TESSDATA_PREFIX set — "
+                    "neither is present here, so OCR is a separate "
+                    "prerequisite rather than something this script can do"
                 ),
             )
             return record
 
         toc = doc.get_toc()
         rejected = None
-        if len(toc) >= 3:
+        if force_mode == "pages":
+            #: A deliberate per-book override, because the automatic band
+            #: cannot catch every failure. Newell's Unified Theories sits
+            #: inside the plausibility band at 1.63 headings per page while
+            #: marking body paragraphs as headings, and the result is 912
+            #: chunks of ~870 characters — 51% of the whole corpus run, spent
+            #: on the book with the worst structure and 14 OCR-degraded
+            #: pages. At 3 pages per chunk the same book is 187.
+            mode, text = "pages", _extract_by_pages(doc, pages_per_chunk)
+            headings = -(-n // pages_per_chunk)
+        elif len(toc) >= 3:
             mode, text, headings = "toc", _extract_by_toc(doc), len(toc)
         else:
             body = _body_size(doc, sample)
@@ -355,11 +474,31 @@ def convert(path: pathlib.Path, pages_per_chunk: int) -> dict[str, object]:
 
 
 def main() -> int:
+    require_pymupdf()
+
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("root", type=pathlib.Path, help="folder to scan for PDFs")
     ap.add_argument(
         "--pages-per-chunk", type=int, default=10,
         help="pages per chunk in the 'pages' fallback mode (default: 10)",
+    )
+    ap.add_argument(
+        "--ocr", action="store_true",
+        help="OCR books that have no text layer. Off by default: OCR text is "
+             "a different quality of input from a real text layer, and which "
+             "one produced a book should be a deliberate choice recorded in "
+             "the report, not a silent fallback",
+    )
+    ap.add_argument(
+        "--ocr-dpi", type=int, default=200,
+        help="rasterisation dpi for OCR (default 200; ~1s and ~3,500 "
+             "characters per page measured at this setting)",
+    )
+    ap.add_argument(
+        "--force-mode", default="", choices=("", "pages"),
+        help="override structure detection for this run. The plausibility "
+             "band cannot catch every failure: a book can sit inside it and "
+             "still mark body paragraphs as headings",
     )
     ap.add_argument(
         "--report", type=pathlib.Path,
@@ -371,6 +510,20 @@ def main() -> int:
     )
     args = ap.parse_args()
 
+    tessdata = ""
+    if args.ocr:
+        tessdata = find_tessdata()
+        if not tessdata:
+            #: Loudly. A silent no-op here reproduces the exact failure this
+            #: whole flag exists to remove: a book reported as converted that
+            #: contains nothing.
+            sys.exit(
+                "--ocr was requested but Tesseract's tessdata could not be "
+                "found. Set TESSDATA_PREFIX, or install Tesseract "
+                "(winget install --id UB-Mannheim.TesseractOCR)."
+            )
+        print(f"OCR enabled, tessdata: {tessdata}")
+
     pdfs = sorted(args.root.rglob("*.pdf"))
     if not pdfs:
         print(f"no PDFs under {args.root}", file=sys.stderr)
@@ -378,7 +531,9 @@ def main() -> int:
 
     records = []
     for path in pdfs:
-        rec = convert(path, args.pages_per_chunk)
+        rec = convert(
+            path, args.pages_per_chunk, args.force_mode, tessdata, args.ocr_dpi
+        )
         text = rec.pop("_text", None)
         if text is not None and not args.dry_run:
             path.with_suffix(".txt").write_text(text, encoding="utf-8")

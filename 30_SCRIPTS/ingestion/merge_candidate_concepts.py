@@ -96,9 +96,16 @@ def append_candidate_concepts_to_slot(
         # visible. Pipes and newlines would break the table.
         evidence = str(item.get("evidence_quote", "")).replace("|", "/")
         evidence = " ".join(evidence.split())[:300]
+        # How many distinct sections of the book define this term. It is the
+        # only ranking signal in this pipeline that carries information:
+        # confidence is 1.00 on nearly everything including candidates whose
+        # evidence was fabricated, so the column beside this one is the
+        # misleading number and this one is the useful one. Review in
+        # descending order of it; a floor of 3 leaves ~17 concepts per book.
+        occurrences = item.get("occurrences", "")
         row = (
             f"| {item['concept']} | {item['source_book']} | {conf_str} "
-            f"| proposed | {date_str} | | {evidence} |"
+            f"| proposed | {date_str} | | {evidence} | {occurrences} |"
         )
         new_rows.append(row)
         added_count += 1
@@ -110,7 +117,7 @@ def append_candidate_concepts_to_slot(
     # The evidence column is optional in the pattern so that a slot file which
     # has not been migrated still merges, rather than silently matching
     # nothing and reporting zero additions.
-    table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \| promoted_note_id \|(?: evidence \|)?\s*\n\|---\|---\|---\|---\|---\|---\|(?:---\|)?)', content)
+    table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \| promoted_note_id \|(?: evidence \|)?(?: occurrences \|)?\s*\n\|---\|---\|---\|---\|---\|---\|(?:---\|)?(?:---\|)?)', content)
     if not table_match:
         # Fallback to 5-column header if not yet updated
         table_match = re.search(r'(## Candidate concepts\s*\n\| concept \| source_book \| confidence \| status \| date_added \|\s*\n\|---\|---\|---\|---\|---\|)', content)

@@ -78,6 +78,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from providers.model_provider import ModelRequest  # noqa: E402
 
+#: One definition of what makes two terms the same concept, shared with
+#: the agreement tool. Two normalizers that drift apart silently produce
+#: two different answers to the same question.
+from agree_across_models import normalize_term  # noqa: E402
+
 from extract_book_concepts import (  # noqa: E402
     CANONICAL_SLOTS,
     KNOWN_VERIFIED_MODULES,
@@ -151,16 +156,9 @@ Return JSON only — a list of objects, no prose around it. Each object:
   "evidence"   One sentence copied EXACTLY from the passage, character for
                character, that supports the definition. It must be present
                in the passage verbatim.
-  "claim_type" One of: definition, mechanism, finding, taxonomy, constraint.
   "slot"       The single best fit. Choose by which QUESTION the concept
                helps answer, not by which name sounds closest:
 {slots}
-               claim_type and slot are INDEPENDENT. A mechanism can belong
-               to any slot. Do not pick "procedures" merely because the
-               concept is a mechanism, a method or an algorithm — ask which
-               question it answers. A mechanism by which experience becomes
-               durable knowledge belongs to consolidation; a definition of a
-               kind of memory belongs to ontology.
   "confidence" Your confidence from 0.0 to 1.0 that this is a real, load-
                bearing concept the passage genuinely defines. Use the full
                range. Be honest when you are unsure.
@@ -212,6 +210,49 @@ def parse_model_json(content: str) -> list[dict[str, Any]]:
     return [item for item in parsed if isinstance(item, dict)]
 
 
+def longest_verbatim_run(quote: str, source: str) -> int:
+    """Length in words of the longest run of `quote` present in `source`."""
+    words = _normalize_for_search(quote).split()
+    haystack = f" {_normalize_for_search(source)} "
+    best = 0
+    for start in range(len(words)):
+        #: Only look for runs longer than the best already found, and stop
+        #: this start as soon as one matches — the first hit from the long
+        #: end is the longest for that start.
+        for end in range(len(words), start + best, -1):
+            if f" {' '.join(words[start:end])} " in haystack:
+                best = end - start
+                break
+    return best
+
+
+def is_grounded(quote: str, source: str) -> bool:
+    """Whether the evidence really comes from the passage that was sent.
+
+    This used to demand the whole quote appear verbatim, which worked on
+    conference-paper chunks of ~4,600 characters and failed badly on a
+    monograph. Measured over 8 chunks of Schacter & Tulving at ~44,000
+    characters each, 51 candidates were refused for grounding — and 17 of
+    them quoted the source at 80% or better. One example matched 27 of its
+    30 words. Those were accurate quotes with a word or two dropped, thrown
+    away by an exact-match rule.
+
+    Fabrication looks nothing like that. The control case from the test
+    suite, "Vitter (1985) established this result", has a longest verbatim
+    run of 2 words. Across the whole rejected set the apparent fabrications
+    ran 3 to 6 words while the near-verbatim quotes ran 25 to 27.
+
+    So the rule is a long contiguous run, plus a share of the whole quote so
+    that a single borrowed phrase cannot carry forty invented words. Both
+    thresholds sit well above the fabricated group and below the genuine one.
+    """
+    words = _normalize_for_search(quote).split()
+    if not words:
+        return False
+    run = longest_verbatim_run(quote, source)
+    return run >= MIN_VERBATIM_RUN_WORDS and run / len(words) >= MIN_EVIDENCE_COVERAGE
+
+
 def clean_term(raw: Any) -> str:
     return " ".join(re.sub(r"\([^)]*\)", " ", str(raw)).split())
 
@@ -247,7 +288,7 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
         return False, "confidence_range"
     if not evidence:
         return False, "evidence_missing"
-    if _normalize_for_search(evidence) not in _normalize_for_search(chunk_text):
+    if not is_grounded(evidence, chunk_text):
         return False, "evidence_not_in_source"
     copied, phrase = check_verbatim_overlap(definition, evidence, MAX_SHARED_NGRAM)
     if copied:
@@ -435,7 +476,7 @@ def main() -> int:
     rejects: Counter[str] = Counter()
     skipped = 0
     for i, chunk in enumerate(chunks, start=1):
-        if len(chunk["content"]) > args.max_chunk_chars:
+        if len(chunk["content"]) > max_chunk_chars:
             skipped += 1
             rejects["chunk_too_long"] += 1
             continue

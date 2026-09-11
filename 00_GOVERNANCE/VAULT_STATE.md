@@ -54,11 +54,11 @@ in its constructor. Corrected 2026-09-06.
 | Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:118` builds the store, `:406` traverses; `enable_graph_expansion=False` |
 | `graph/plasticity.py` | real, **not wired** | zero production call sites; journal + rollback exist, nothing calls them |
 | `attention`, `executive`, `global_workspace`, `reasoning` | present, **not wired** | r011 audited and recommended keeping them unwired |
-| Held-out benchmark v1 | **INVALID** | gold ids resolve to nothing; recall structurally 0 |
+| Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
-| `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030; 18 of 20 books converted, 6.6M chars, 1,107 chunks |
-| `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, **gates work, selectivity does not** | r031; see `07_EVALUATION/book_corpus_conversion/FINDINGS.md` |
+| `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030-r031; **20 of 20** books, 1,088 chunks measured by chunking |
+| `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, gates and selectivity both work | r031; recurrence floor validated on all 3 structure modes |
 | `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
 
 ## 4. Corpus and graph, measured
@@ -116,21 +116,65 @@ whole-corpus retrieval numbers.
   `20_TESTS/test_promoted_notes_reach_the_graph.py`, which asserts against
   the real store rather than the frontmatter and was confirmed to fail on the
   broken form before being trusted.
-- **Book ingestion has no working selectivity.** Extraction itself works and
-  its gates work — grounding against the source text catches fabricated
-  citations, and the paraphrase floors catch copied definitions. What does
-  not exist is any way to tell a load-bearing concept from experimental
-  furniture. Every mechanism was measured and none ranks anything:
-  model confidence is `1.00` on every candidate including fabricated ones;
-  `claim_type` is constant and is swapped with `slot` by the only model that
-  fits the GPU; `occurrences` is 1 for 47 of 48 concepts in a full paper; and
-  a prompt-level exclusion list is ignored. About half of what the pipeline
-  produces is terms like `validation set`, `SGD optimizer` and `Rot-MNIST`.
-  A corpus run would be ~4,400 candidates. Do not start one without deciding
-  what to do about that first.
-- **Two books cannot be ingested at all.** Ashby's *Introduction to
-  Cybernetics* and Minsky's *Society of Mind* are scans with no text layer,
-  0.0 characters per page. They need OCR, which does not exist here.
+- **Cross-model agreement is a reference set, not the filter.** It was
+  briefly recorded here as the only working ranking signal. It is not: it
+  separates cleanly on conference papers, where the 1-of-4 tail is
+  experimental furniture, and not on monographs, where the same tail holds
+  `long-term potentiation` and `memory consolidation`. Its distribution
+  barely moves between books (4-of-4 at 6-9%, 1-of-4 at 66-70%), which makes
+  it a property of the method rather than a measure of quality. It costs four
+  runs. `30_SCRIPTS/ingestion/agree_across_models.py` is kept for producing
+  the reference set that the cheap single-model rule is checked against, and
+  `--min-models` defaults to 1 so it annotates rather than filters.
+- **Nothing about book extraction was validated on a book until late.** Every
+  measurement through r031 was taken on `sarfraz22a`, a 17-page conference
+  paper. The first monograph run exposed two defects immediately: a fixed
+  24,000-character chunk limit that skipped 26 of Schacter & Tulving's 29
+  chunks, and a grounding check requiring exact whole-quote matching that
+  refused 51 candidates of which 17 quoted the source at 80% or better. Both
+  are fixed. Treat any paper-scale number as unvalidated at book scale until
+  it has been re-measured there.
+- **Every per-candidate signal is empty; only agreement carries anything.**
+  This is the list of what was measured and found to rank nothing, so it is
+  not tried again: model confidence is `1.00` on every candidate including
+  ones whose evidence was fabricated; `claim_type` was constant on every
+  survivor in every run and has been removed from the request, which also
+  stopped it corrupting `slot`; and a prompt-level exclusion list is ignored
+  by the model — the terms it names as bad come straight back. `occurrences`
+  is NOT on this list: it reads as dead at large chunk sizes, where one chunk
+  covers a chapter and everything appears once, and carries real signal once
+  chunks are small enough.
+- **Volume is answered, by a recurrence floor.** `occurrences` — how many
+  distinct sections define a term — is the one counted-rather-than-claimed
+  field. Validated on all three structure modes (`pages`, `toc`, `font`), and
+  the rate varies by 2.5x between books: 0.149 concepts at `>= 3` per chunk
+  for Squire & Kandel, 0.236 for a survey, 0.270 for Soar. Across 1,088
+  corpus chunks that is **160-290 candidates**, under this project's own 300
+  stop condition. Recall is 40-55% of what four models would agree on. The
+  method and everything that failed on the way to it are in
+  `10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`.
+- **A corpus run is 11.6-20.1 hours** for one model: 1,120 chunks measured,
+  at 37-65 s/chunk. That count needs `--force-mode pages` on SIX books
+  (Newell, Soar, Kandel 2001, Why We Forget, 2601.09113v1, Memory in the
+  Age of AI Agents); without it, four of them lose a single chunk each
+  that is 33-90% of the book, and Kandel is effectively not ingested. The spread is real — generation time follows output length,
+  so a book with smaller chunks can be slower per chunk.
+  Two ways this figure has been got wrong here, both worth not repeating.
+  Timing a book's first chunks: they are front matter, produce almost no
+  output, and that produced a 3.0-hour estimate wrong by 4.6x. And counting
+  chunks by dividing `characters / headings` from the conversion report
+  instead of chunking the file: that made Soar's 22 chunks look like 114 and
+  its 47,991-character median look like 7,798, which hid the fact that 88% of
+  the book was being skipped.
+- **The two scans are ingestible now.** Ashby's *Introduction to Cybernetics*
+  (156 pp) and Minsky's *Society of Mind* (336 pp) had no text layer at all.
+  Tesseract is installed and `convert_pdf_to_text.py --ocr` handles them: 492
+  pages in 6m23s, 0.78 s/page. Minsky came back clean — zero degraded pages,
+  zero column artefacts. **Ashby is unblocked, not recovered**: its character
+  quality is fine, but it is set in two columns and Tesseract merges them, so
+  13% of its pages are in scrambled sentence order. Neither the degraded-page
+  detector nor the extraction grounding check can see that, because every
+  word is correct and the scrambled text genuinely is in the source.
 - **`glm-4.7-flash` no longer loads.** 19 GB against an 8 GB GPU; the
   endpoint returns `llama-server process has terminated`. Only
   `qwen2.5-coder` 3b and 7b fit. Any speed or quality number attributed to a

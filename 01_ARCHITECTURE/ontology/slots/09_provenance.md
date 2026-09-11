@@ -25,5 +25,5 @@ Where did a piece of information come from?
 - `AGENTS.md` (specifically section 'Source of Truth' establishing the strict epistemic hierarchy: user-confirmed facts > direct execution/test evidence > official documentation > project documentation > repeated successful experience > external sources > inference)
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
-|---|---|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
+|---|---|---|---|---|---|---|---|
