@@ -19,7 +19,7 @@ The state as of the last section:
 | conversion | works; **20 of 20 books**, the 2 scans OCR'd once Tesseract was installed |
 | OCR quality | Minsky clean; Ashby has 13% of pages in scrambled column order — unblocked, not recovered |
 | extraction at book scale | works, with gates that catch fabricated evidence |
-| selectivity | `occurrences >= 3` at 3 pages per chunk, ~210 candidates corpus-wide |
+| selectivity | `occurrences >= 3`, validated on all three structure modes; 160-290 candidates corpus-wide |
 | recall | 40-55% of what four models agree on |
 | cost | **11.2-19.6h** for one model over 1,088 measured chunks: 37.2 s/chunk on one book, 64.7 on another |
 
@@ -1383,3 +1383,35 @@ below the band the rule was supposed to need.
 The timing does not survive. 59m19s over 55 chunks is **64.7 s/chunk**, not
 the 44.5 computed against 80. So the corpus is **11.2 to 19.6 hours**, a
 wider spread than any figure given for it so far.
+
+## r031 — `font` mode validated, and the per-book yield varies by 2.5x
+
+Soar, forced to `pages` so it actually fits, 126 chunks:
+
+    306 candidates, 71 at >= 2, 34 at >= 3
+
+The `>= 3` list is the book's own vocabulary, with counts:
+
+    substates (16), semantic memory (13), episodic memory (13), impasse (11),
+    working memory (10), cognitive architecture (8), chunking (8), operator
+    (8), knowledge search (7), procedural knowledge (7), problem space (6),
+    PSCM (5), PEACTIDM (4)
+
+That is the prediction made before the run, and it closes the last stated
+validation gap: all three structure modes behave the same way.
+
+### But the yield rate does not transfer between books
+
+| book | mode | chunks | at `>= 3` | per chunk |
+|---|---|---:|---:|---:|
+| Squire & Kandel | pages | 87 | 13 | 0.149 |
+| Memory in the Age of AI Agents | toc | 55 | 13 | 0.236 |
+| The Soar Cognitive Architecture | pages (forced) | 126 | **34** | **0.270** |
+
+Across 1,088 corpus chunks that is **160 to 290 candidates** at a floor of 3,
+not the "~210" this document has carried since it was computed from one book.
+210 sits inside the range by coincidence rather than by derivation.
+
+Soar being the high end is not a defect: it is a densely technical book about
+a single architecture, so its vocabulary genuinely recurs. A per-book cap
+would punish exactly the book with the most to say.

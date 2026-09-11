@@ -94,7 +94,13 @@ Measured on a `toc` book (*Memory in the Age of AI Agents*, 55 chunks, median
 
 `font`-mode books: a first attempt on Soar returned zero recurrent concepts
 and meant nothing — 13 of its 22 chunks were over the limit, so 88% of the
-book never reached the model. Retested after forcing it to `pages` (§4).
+book never reached the model. Retested after forcing it to `pages` (§4), it
+gave 306 candidates, 71 at `>= 2` and **34 at `>= 3`**, and the `>= 3` list is
+simply the book's vocabulary: substates (16), semantic memory (13), episodic
+memory (13), impasse (11), working memory (10), chunking (8), operator (8),
+problem space (6), PSCM, PEACTIDM.
+
+All three modes therefore behave the same way. What differs is the *rate*.
 
 ## 2. An instruct model, not a coder model
 
@@ -133,9 +139,24 @@ exception, because it is counted rather than claimed. On a whole book:
     121 concepts seen once, 21 twice, 8 three times, 5 five, 2 six, 1 seven,
     1 ten
 
-A floor of 3 leaves 17 concepts per book and roughly **210 across the whole
-corpus**, which is a list a person actually reads. A floor of 2 leaves 38 per
-book, ~470 corpus-wide.
+A floor of 3 leaves a list a person actually reads, but **how long it is
+varies by a factor of two and a half between books**:
+
+| book | mode | chunks | at `>= 3` | per chunk |
+|---|---|---:|---:|---:|
+| Squire & Kandel | pages | 87 | 13 | 0.149 |
+| Memory in the Age of AI Agents | toc | 55 | 13 | 0.236 |
+| The Soar Cognitive Architecture | pages (forced) | 126 | 34 | 0.270 |
+
+Across 1,088 corpus chunks that projects to **160-290 candidates**. An
+earlier version of this procedure said "17 concepts per book and roughly 210
+corpus-wide" on the strength of a single book; 210 happens to fall inside the
+range, but it was not derived from one.
+
+Soar is the high end for a reason that makes sense: it is a densely technical
+book about one architecture, so its vocabulary recurs constantly. That is
+genuine recurrence, not noise — which is also why a per-book cap would be the
+wrong instrument.
 
 Recall at that floor is 40-55% of what four models would agree on. This buys
 a trustworthy core cheaply; it does not get everything.
