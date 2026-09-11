@@ -32,17 +32,17 @@ A repository search for council/consensus/agent-council implementation returned 
 python -m pytest -q 20_TESTS/polymarket/test_market_snapshot.py 20_TESTS/polymarket/test_historical_replay.py 20_TESTS/polymarket/test_prediction_ledger.py 20_TESTS/polymarket/test_prediction_council.py
 ```
 
-Dedicated GitHub Actions run: `34656588705`
+Dedicated GitHub Actions run: `34656643838`
 Job: `Phase 4 prediction council`
 Result: **success**
 Runtime output:
 
 ```text
 ....................................                                     [100%]
-36 passed in 0.14s
+36 passed in 0.13s
 ```
 
-The gate exercises Phase 1 snapshot, Phase 2 replay, Phase 3 ledger, and Phase 4 council tests together.
+The gate checked the exact final branch revision before merge and exercised Phase 1 snapshot, Phase 2 replay, Phase 3 ledger, and Phase 4 council tests together.
 
 ## Acceptance matrix
 
