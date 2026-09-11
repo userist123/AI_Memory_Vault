@@ -33,16 +33,16 @@ ranking signal here that carries information, and it cannot be measured on a
 book with fewer sections than the review floor of 3. The previous run went
 smallest-first and produced five consecutive books whose zero was arithmetic.
 
-Each chunks file carries the sixteen slot **questions**. Use them.
+Each chunks file carries the sixteen slot **questions**. Use them. Against a
+bare list of sixteen names an extractor picks by which name sounds closest;
+that is how "synaptic consolidation" was once filed under `procedures`.
 
 **Skip every chunk marked `low_prose`.** 90 of the 1,120 are indexes,
 bibliographies or OCR damage — Newell's name index reads `Add(cos.(.W..385
 Brnr.J.S.415`, and Schacter's subject index is clean but is still just terms
 and page numbers. They are flagged rather than removed so the chunk indices keep
 meaning what they meant. Reading them for concepts is how `Parr of mr` and
-`My basic cdsirafioo` became candidates. Against a
-bare list of sixteen names an extractor picks by which name sounds closest;
-that is how "synaptic consolidation" was once filed under `procedures`.
+`My basic cdsirafioo` became candidates.
 
 ## What you write back
 
@@ -66,6 +66,14 @@ that is how "synaptic consolidation" was once filed under `procedures`.
 - `definition` is not the evidence reworded: no shared 8-gram, token overlap
   under 0.60. A synonym swap scores 0.68–0.72 and is refused.
 - `slot` is one of the sixteen. Nothing is repaired; malformed rows are refused.
+- **Definitions are compared with each other, not only with their evidence.**
+  A frame reused across ten definitions in one batch refuses those rows; a
+  batch of ten or more with over 60% of its rows sharing phrasing is refused
+  whole. This gate exists because 3,342 rows built from five sentence frames —
+  *"Characterizes an operational mechanism in which functional interactions
+  govern X and Y and Z within the underlying system architecture"* — passed
+  every other gate and reached the ontology with zero rejections. Mild reuse is
+  reported, not refused: four definitions sharing a domain phrase is normal.
 
 ## Gating
 
