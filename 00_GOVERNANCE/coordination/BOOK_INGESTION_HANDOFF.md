@@ -35,6 +35,9 @@ to each PDF (untracked — `06_INBOX/` is the inbox, nothing is promoted out of 
 - 20 books, **1,120 chunks**, 0 over the context limit, 0% of content skipped
 - two books were OCR'd: Minsky recovered clean; Ashby is unblocked, not recovered
   (~13% column interleaving — treat its candidates with suspicion)
+- 90 chunks (8%) are marked `low_prose` and should not be read for concepts:
+  indexes, bibliographies and OCR damage. Worst are Schacter (21 of 95),
+  Newell's *Unified Theories* (16 of 187) and Soar (12 of 126).
 
 **The whole corpus is already prepared** under `scratch/agent_corpus/`, one
 `<name>_chunks.json` per book, plus a `manifest.json` giving the order. Do them

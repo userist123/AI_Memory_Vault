@@ -194,3 +194,52 @@ def test_no_script_can_reach_for_a_local_model_without_saying_so():
     )
     assert '"--provider", required=True' in src
     assert '"--provider", default=' not in src
+
+
+def test_a_chunk_that_is_not_prose_is_flagged_not_removed(tmp_path, monkeypatch):
+    """An index page and an OCR'd page both land here, and both are useless to
+    read for concepts — reading Newell's name index is how "Parr of mr" became
+    a candidate. They stay in the file so the chunk indices keep meaning what
+    they meant; they carry a flag so nobody reads them by accident.
+    """
+    prose = ("The system is intelligent to the degree that it approximates a "
+             "knowledge level system, and this is what answers to the concept "
+             "we have laid out in the chapters that come before this one.")
+    index = "Recall, 10, 30 Recency, 23, 72 Receptive fields, 101 Recoding, 15"
+
+    books = [_book(tmp_path, "mixed", ["a"])]
+    path = tmp_path / books[0]["rel_path"]
+    path.write_text(
+        "\n\n".join([f"# Section {i}\n\n{prose}" for i in range(6)]
+                    + [f"# Back matter\n\n{index}"]),
+        encoding="utf-8",
+    )
+    manifest = tmp_path / "corpus_manifest.json"
+    manifest.write_text(json.dumps({"books": books}), encoding="utf-8")
+    monkeypatch.setattr(R, "MANIFEST", manifest)
+
+    work = tmp_path / "work"
+    R.prepare(argparse.Namespace(work_dir=work, corpus_root=tmp_path))
+
+    payload = json.loads((work / "mixed_chunks.json").read_text(encoding="utf-8"))
+    flagged = [c for c in payload["chunks"] if c["low_prose"]]
+    assert len(flagged) == 1, "only the index page"
+    assert "Recency" in flagged[0]["content"], "flagged, not dropped"
+    assert payload["chunk_count"] == 7
+    assert [c["chunk_index"] for c in payload["chunks"]] == list(range(7)), (
+        "indices must stay contiguous; a candidate names one of these"
+    )
+
+
+def test_the_prose_floor_is_relative_to_the_book_not_absolute():
+    """Measured across the corpus: Newell's median prose rate is 0.456 and a
+    survey paper's is 0.218, and both are fine. Four document-level metrics
+    have now failed here — function-word rate, intra-word punctuation,
+    low-vowel rate, and a letter-trigram model trained on this corpus's own
+    clean books — because OCR damage is partial and short words survive it.
+    """
+    clean = "the system is one of the ways that we can do this in a book " * 8
+    assert R.prose_rate(clean) > 0.4
+    assert R.prose_rate("Recall, 10, 30 Recency, 23, 72 Receptive fields") < 0.2
+    assert R.prose_rate("") == 0.0
+    assert 0 < R.LOW_PROSE_RATIO < 1

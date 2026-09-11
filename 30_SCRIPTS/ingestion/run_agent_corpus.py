@@ -55,6 +55,8 @@ import argparse
 import datetime
 import json
 import pathlib
+import re
+import statistics
 import sys
 from collections import Counter
 from typing import Any
@@ -139,6 +141,51 @@ def probe_local_providers(timeout: float = 1.5) -> dict[str, Any]:
     }
 
 
+
+#: The hundred-odd commonest English words. Continuous prose is roughly 35-50%
+#: of these; an index, a bibliography or a badly OCR'd page is far below its
+#: own book's level.
+_COMMON_WORDS = frozenset("""
+the of and to a in that is was it for as with his he be not on this by had at
+but from have are they you or an will we one all were her she there would their
+him been has when who which them what so up out if about into than its time can
+could no other some only two may these first also new like our over think most
+after more such then any very my me do did does how now
+""".split())
+
+#: A chunk this far below its own book's median is not prose. Relative, not
+#: absolute, because the absolute rate says nothing across books: Newell's
+#: median is 0.456 and a survey paper's is 0.218, and both are fine.
+LOW_PROSE_RATIO = 0.65
+
+
+def prose_rate(text: str) -> float:
+    """Fraction of words that are among the commonest English words.
+
+    Three families of text-quality metric have now failed on this corpus at the
+    document level — function-word rate, intra-word punctuation, low-vowel rate,
+    and a letter-trigram model trained on the corpus's own clean books. All of
+    them ranked a damaged book as clean. The reason is that OCR damage here is
+    partial: short common words survive it ("in development and developed a
+    Soar vpvtem that evhtbiled vach transitionv"), so a book-level average stays
+    respectable while individual pages are unreadable.
+
+    Compared against its own book's median, the same measure works, because the
+    comparison is then within one scan of one document.
+
+    What it flags is not only corruption. Of the 90 chunks it marks across the
+    corpus, some are OCR damage — Newell's name index reads "Add(cos.(.W..385
+    Brnr.J.S.415" — and others are perfectly clean back matter: subject indexes
+    from Schacter and Soar, pages of terms and page numbers. Both are useless to
+    read for concepts, which is why the flag is named for what it measures
+    rather than for what caused it.
+    """
+    words = re.findall(r"[a-z']+", text.lower())
+    if not words:
+        return 0.0
+    return sum(1 for w in words if w in _COMMON_WORDS) / len(words)
+
+
 def load_books() -> list[dict[str, str]]:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["books"]
 
@@ -174,13 +221,26 @@ def prepare(args: argparse.Namespace) -> int:
             missing.append(f'{book["short_name"]} (0 chunks)')
             continue
 
+        rates = [prose_rate(c["content"]) for c in chunks]
+        floor = statistics.median(rates) * LOW_PROSE_RATIO
+        low = [i for i, r in enumerate(rates) if r < floor]
+
         out = args.work_dir / f'{book["short_name"]}_chunks.json'
         out.write_text(json.dumps({
             "source_file": book["rel_path"],
             "chunk_count": len(chunks),
+            "low_prose_chunks": low,
             "slots": slots,
             "chunks": [
-                {"chunk_index": i, "heading": c["heading"], "content": c["content"]}
+                {
+                    "chunk_index": i,
+                    "heading": c["heading"],
+                    "content": c["content"],
+                    "prose_rate": round(rates[i], 3),
+                    #: Index pages and OCR damage both land here. Reading either
+                    #: for concepts produces terms like "Parr of mr".
+                    "low_prose": i in low,
+                }
                 for i, c in enumerate(chunks)
             ],
         }, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -190,6 +250,7 @@ def prepare(args: argparse.Namespace) -> int:
             "rel_path": book["rel_path"],
             "chunks_file": str(out.relative_to(_REPO)) if out.is_relative_to(_REPO) else str(out),
             "total_chunks": len(chunks),
+            "low_prose_chunks": len(low),
             "recurrence_measurable": len(chunks) >= MIN_CHUNKS_FOR_RECURRENCE,
         })
 
@@ -207,7 +268,14 @@ def prepare(args: argparse.Namespace) -> int:
     print(f"{'order':>5}  {'chunks':>6}  book")
     for b in prepared:
         mark = "" if b["recurrence_measurable"] else "   <- too few sections for occurrences>=3"
-        print(f'{b["order"]:>5}  {b["total_chunks"]:>6}  {b["short_name"]}{mark}')
+        low = f'  ({b["low_prose_chunks"]} not prose)' if b["low_prose_chunks"] else ""
+        print(f'{b["order"]:>5}  {b["total_chunks"]:>6}  {b["short_name"]}{low}{mark}')
+    total_low = sum(b["low_prose_chunks"] for b in prepared)
+    if total_low:
+        print(f"\n{total_low} chunk(s) are not continuous prose — indexes, "
+              "bibliographies, OCR damage. They are marked low_prose in the "
+              "chunks files, not removed; reading them for concepts is how a "
+              "name index becomes a candidate.")
     if flat:
         print(f"\n{len(flat)} book(s) cannot reach the review floor on their own; "
               "extract them, but do not read their yield as a result.")

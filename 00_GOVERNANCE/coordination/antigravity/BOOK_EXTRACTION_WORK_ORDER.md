@@ -33,7 +33,14 @@ ranking signal here that carries information, and it cannot be measured on a
 book with fewer sections than the review floor of 3. The previous run went
 smallest-first and produced five consecutive books whose zero was arithmetic.
 
-Each chunks file carries the sixteen slot **questions**. Use them. Against a
+Each chunks file carries the sixteen slot **questions**. Use them.
+
+**Skip every chunk marked `low_prose`.** 90 of the 1,120 are indexes,
+bibliographies or OCR damage — Newell's name index reads `Add(cos.(.W..385
+Brnr.J.S.415`, and Schacter's subject index is clean but is still just terms
+and page numbers. They are flagged rather than removed so the chunk indices keep
+meaning what they meant. Reading them for concepts is how `Parr of mr` and
+`My basic cdsirafioo` became candidates. Against a
 bare list of sixteen names an extractor picks by which name sounds closest;
 that is how "synaptic consolidation" was once filed under `procedures`.
 
