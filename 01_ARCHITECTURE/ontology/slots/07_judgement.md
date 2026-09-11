@@ -26,6 +26,6 @@ How are decisions made?
 - `30_SCRIPTS/prompt/compile_task_prompt.py` (verified to provide the `--infer` flag for task intent inference and reasoning)
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
-|---|---|---|---|---|---|---|
-| Parameter Importance Weighting | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | unverified_source | 2026-09-07 | | |
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
+|---|---|---|---|---|---|---|---|
+| Parameter Importance Weighting | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.85 | unverified_source | 2026-09-07 | | | |

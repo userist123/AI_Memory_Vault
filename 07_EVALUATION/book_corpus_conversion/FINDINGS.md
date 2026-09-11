@@ -1,8 +1,41 @@
 # Book corpus conversion — measured findings
 
-Package: `r030/pdf-text-frontend`
-Measured: 2026-09-07, against `06_INBOX/Carti` (20 PDFs, 151 MB)
-Status: conversion works; **extraction at book scale does not**
+Packages: `r030/pdf-text-frontend`, `r031/model-assisted-extraction`
+Measured: 2026-09-07 to 2026-09-10, against `06_INBOX/Carti` (20 PDFs, 151 MB)
+
+## Read this first
+
+This document is a running log, appended section by section as things were
+measured. **Several early sections were later shown to be wrong, and the
+retractions are further down rather than edited in place** — that is
+deliberate, because how a wrong number was produced is usually more useful
+than the right one. Do not quote a figure from the middle of this file
+without checking whether a later section withdrew it.
+
+The state as of the last section:
+
+| | |
+|---|---|
+| conversion | works; **20 of 20 books**, the 2 scans OCR'd once Tesseract was installed |
+| OCR quality | Minsky clean; Ashby has 13% of pages in scrambled column order — unblocked, not recovered |
+| extraction at book scale | works, with gates that catch fabricated evidence |
+| selectivity | `occurrences >= 3`, validated on all three structure modes; 160-290 candidates corpus-wide |
+| recall | 40-55% of what four models agree on |
+| cost | **11.2-19.6h** for one model over 1,088 measured chunks: 37.2 s/chunk on one book, 64.7 on another |
+
+The method, and everything that failed on the way to it, is written up as a
+procedure: [`10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`](../../10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md).
+Read that to *use* the pipeline. Read this to see what the numbers were and
+which of them did not survive.
+
+**Claims withdrawn later in this file:** that extraction at book scale does
+not work (it does, once chunk size is right); that `occurrences` is a dead
+signal (wrong resolution, not dead); that cross-model agreement is a general
+selectivity filter (papers only); that a single model's recurrence is 100%
+precise (a normalizer bug — really 70-92%); and that a corpus run takes 3
+hours (13.6).
+
+---
 
 The PDFs themselves are not committed (`06_INBOX/*` is gitignored, and these
 are copyrighted works). Neither is the text extracted from them. What is
@@ -721,3 +754,664 @@ noise — not the one that yields 5 by echoing its own instructions.
 
 A corpus run at this rate is ~4,400 candidates. That is not a queue anyone
 reviews.
+
+## r031 — cross-model agreement, the first selectivity signal that works
+
+Four 7-8B models installed and run over the same six chunks of the same
+paper, identical seed and temperature, each unloaded between runs:
+
+| model | kept | verbatim rejections | GPU residency |
+|---|---:|---:|---|
+| qwen2.5-coder:7b | 22 | 14 | 92% |
+| llama3.1:8b | 16 | 10 | 66% |
+| mistral:7b-instruct | 10 | 11 | 69% |
+| qwen2.5:7b-instruct | 5 | 8 | 92% |
+
+The spread is the point. If all four returned roughly the same concepts there
+would be nothing to separate, and agreement would be as constant as
+confidence. One model returning 5 and another 22 from the same text means
+there is a core everyone sees and a periphery only one does.
+
+### What agreement separates
+
+30 distinct concepts across the four runs:
+
+| found by | n | share | examples |
+|---|---:|---:|---|
+| 4 of 4 | 3 | 10% | Reservoir sampling, Semantic memory, Synaptic consolidation |
+| 3 of 4 | 5 | 17% | Continual learning, Episodic memory, Fisher information matrix, stability-plasticity trade-off |
+| 2 of 4 | 4 | 13% | CLS-ER, Dual memory system, Exponential moving average |
+| **1 of 4** | **18** | **60%** | Overall loss, Supervised loss, Soft-targets, reliability plots, Representation space, Decision boundaries |
+
+The tail is the experimental furniture that no other mechanism could remove —
+not the prompt exclusions, not occurrences, not confidence.
+
+Unlike every signal tried before it, this one is **counted rather than
+claimed**, and no single model can inflate it because none of them sees the
+others' answers.
+
+### What it costs, and what it loses
+
+**Compute scales with models.** Four models over 1,107 chunks is roughly 27
+hours of local inference against about 7 for one.
+
+**It discards true positives.** `Catastrophic forgetting` and `Experience
+replay` were each found by exactly one of four models. Both are load-bearing.
+A threshold of 2 loses them. Agreement measures how *obvious* a concept is to
+several readers, which is close to but not the same as how important it is.
+
+So `--min-models` defaults to 1: every concept is kept and merely annotated
+with `models_agreeing` and `found_by`. A filter that silently drops real
+concepts should be something a person turns on deliberately, not a default.
+
+### Two ways this could stop being evidence, both guarded
+
+- **Counting a model against itself.** Two runs of one model are one opinion.
+  The tool identifies the model from the rows rather than the filename and
+  refuses duplicates outright.
+- **Folding terms too eagerly.** Agreement is worthless if `Supervised loss`
+  and `Overall loss` merge. The first version was also wrong in the other
+  direction — a bare trailing-s strip turned `approaches` into `approache`,
+  which failed to match `approach` on the first real pair it met. Both
+  directions are now parametrized tests.
+
+### Note on residency
+
+`llama3.1:8b` reports 66% on GPU and `mistral:7b-instruct` 69%, despite both
+being under 5 GB on disk. The 32k context window is what pushes them over an
+8 GB card; the two qwen 7b models fit at 92%. Lowering `--num-ctx` is the
+lever if their speed matters.
+
+## r031 — agreement does not transfer to monographs
+
+The previous section reported cross-model agreement as the first selectivity
+signal that works, measured on six chunks of a 17-page conference paper. Run
+on a real monograph it behaves differently, and the difference matters more
+than the similarity.
+
+Eight chunks of Schacter & Tulving, *Memory Systems 1994*, four models, same
+settings:
+
+| found by | n | share | what is in it |
+|---|---:|---:|---|
+| 4 of 4 | 1 | 2% | memory system |
+| 3 of 4 | 8 | 12% | declarative / episodic / semantic / procedural memory, locale system, taxon system, multiple memory systems, relational representations |
+| 2 of 4 | 11 | 17% | hippocampus, pattern separation, conjunctive encoding, configural learning, recency |
+| **1 of 4** | **45** | **69%** | **long-term potentiation, memory consolidation, cognitive learning, taxon learning, maplike representations** |
+
+The top is excellent — that 3-of-4 row is the core vocabulary of the book.
+
+**The tail is not noise.** On the paper, the 1-of-4 group was `Overall loss`,
+`SGD optimizer`, `reliability plots` — experimental furniture, and discarding
+it was pure gain. Here the same group contains `long-term potentiation` and
+`memory consolidation`, which are load-bearing for this vault by any reading.
+A `--min-models 2` filter would throw both away.
+
+### Why, and it is not a property of the books
+
+A monograph chunk in `pages` mode is ~44,000 characters and contains dozens
+of definable concepts. A paper chunk is ~4,600 and contains a few. Asked for
+a list, each model returns a different subset of an over-full passage — so
+disagreement records **which concepts a model happened to sample**, not which
+concepts are weak.
+
+The 4-of-4 share supports that reading directly: 10% on the paper against 2%
+here. Convergence falls as the passage gets fuller, which is what sampling
+predicts and what quality would not.
+
+### What this changes
+
+Agreement filters noise where noise exists as a distinct population. It is
+not a general quality signal, and the earlier section should be read with
+this one. On monographs it currently measures chunk over-fill.
+
+The testable consequence: if this is sampling, then **smaller chunks should
+raise convergence**, because a passage with three concepts in it leaves the
+models less room to differ. `convert_pdf_to_text.py --pages-per-chunk` is the
+lever — it defaults to 10. That is the next measurement, and if convergence
+does not rise with smaller chunks then the sampling explanation is wrong and
+something else is going on.
+
+### Also measured here
+
+The grounding fix from the previous commit is visible in this run:
+llama3.1:8b went from 9 kept to 18, with `evidence_not_in_source` falling
+from 32 to 21. mistral went from 4 such rejections to 1.
+
+## r031 — chunk size was the confound, and recurrence comes back
+
+The previous section predicted that if monograph disagreement was chunk
+over-fill, smaller chunks would raise convergence. Same book, same text span,
+same four models; only `--pages-per-chunk` changed, 10 to 3. That turned 29
+chunks at a median of 44,614 characters into 95 at 12,777.
+
+The prediction had two halves and the result splits them:
+
+| | 8 big chunks | 24 small chunks |
+|---|---:|---:|
+| distinct concepts | 65 | 138 |
+| found by 4 of 4 | 2% | **6%** |
+| found by 1 of 4 | 69% | **69%** |
+
+**Confirmed:** convergence at the top tripled.
+**Refuted:** the tail did not shrink at all. It stayed at exactly 69%.
+
+Both are explained by the same thing: smaller chunks surface far more
+concepts — 138 against 65 over the same pages — and the newly visible ones
+are themselves mostly singletons. The gain is resolution, not selectivity.
+
+The cleanest single piece of evidence for the sampling account:
+**`Long-term potentiation` was found by 1 of 4 models at 10 pages per chunk
+and by 4 of 4 at 3 pages.** The concept did not improve. It stopped competing
+for attention with dozens of others in the same passage.
+
+### `occurrences` was not a dead signal, it was measured at the wrong resolution
+
+Earlier in this document `occurrences` is recorded as useless: 1 for 47 of 48
+concepts. That measurement was taken on large chunks, where a concept appears
+once because one chunk covers the whole chapter it belongs to.
+
+At 3 pages per chunk a book returns to its central ideas across chunk
+boundaries, and recurrence becomes visible again. What `llama3.1:8b` alone
+found in more than one section:
+
+    Configural learning, declarative memory, declarative memory system,
+    delayed conditional discrimination, episodic memory, long-term
+    potentiation, memory system, multiple memory systems, pattern separation,
+    procedural memory, relational representations, semantic memory,
+    spatial memory
+
+That is close to the core vocabulary of the book, from one model.
+
+### Recurrence approximates agreement at a quarter of the cost
+
+Taking the 3-of-4 agreement set (20 concepts, four runs) as the reference,
+and asking what one model's `occurrences >= 2` recovers from a single run:
+
+| model | recurrent concepts | how many are in the agreement core |
+|---|---:|---|
+| **llama3.1:8b** | 11 | **11 (100%)** |
+| mistral:7b-instruct | 5 | 4 (80%) |
+| qwen2.5:7b-instruct | 2 | 2 (100%) |
+| qwen2.5-coder:7b | 12 | 7 (58%) |
+
+`llama3.1:8b` at 3-page chunks with a recurrence floor of 2 produced eleven
+concepts and **every one of them was in the four-model core**. Precision was
+perfect on this sample; recall was 55% of the core, so it is a high-precision
+subset rather than a replacement.
+
+Model choice is not interchangeable here: the same rule on `qwen2.5-coder:7b`
+is only 58% precise.
+
+### Honest limits
+
+- One book, 24 chunks, one span. This is a promising result, not an
+  established one, and it should be repeated on a second monograph before
+  anything is built on it.
+- Recall is 55%. Half the core is missed.
+- Smaller chunks double the total candidate count, so the review-load problem
+  gets *worse*, not better — the filter is what makes it tractable, and the
+  filter's recall is the open question.
+- Cost per corpus run at 3 pages per chunk has not been measured; the chunk
+  count roughly triples while each call gets cheaper.
+
+## r031 — replicated on a second monograph
+
+The previous section's result was explicitly marked as one book and not
+established. Repeated on Squire & Kandel, *Memory from Mind to Molecules* —
+a different subject (molecular neurobiology rather than memory-system
+taxonomy), same protocol: 3 pages per chunk, 24 chunks, four models.
+
+### The agreement distribution is a property of the method, not of one book
+
+| | Schacter & Tulving | Squire & Kandel |
+|---|---:|---:|
+| distinct concepts | 138 | 115 |
+| found by 4 of 4 | 6% | 8% |
+| found by 1 of 4 | 69% | 70% |
+
+Within a point or two on both ends. The ~70% singleton tail is what this
+method does at this chunk size, on any book.
+
+### Recurrence replicates, and separates the models sharply
+
+Against the 3-of-4 agreement set as reference (20 concepts on each book):
+
+| model | Schacter precision | Squire precision |
+|---|---:|---:|
+| **llama3.1:8b** | 11/11 (100%) | **8/8 (100%)** |
+| qwen2.5:7b-instruct | 2/2 (100%) | 5/5 (100%) |
+| mistral:7b-instruct | 4/5 (80%) | 2/2 (100%) |
+| qwen2.5-coder:7b | 7/12 (58%) | **7/19 (37%)** |
+
+Recall for llama3.1:8b is 8 of 20 here against 11 of 20 before — 40-55%
+across the two books. High precision, partial recall.
+
+### The coder model is not noisy, it is answering a different question
+
+Its recurrent terms on Squire:
+
+    Aplysia, DNA, PET scans, behaviorism, brain structures, messenger RNA,
+    memory, nerve cells, protein, synaptic vesicle, ...
+
+against llama3.1:8b's:
+
+    classical conditioning, habituation, long-term memory, nondeclarative
+    memory, short-term memory, synaptic plasticity, synaptic potential,
+    synaptic strength
+
+The coder model extracts **entities** — nouns that recur in any biology text.
+The instruct models extract **concepts**. That is a systematic difference in
+what each treats as definable, not random error, and it is why its recurrence
+is 37% precise while its raw yield is the highest of the four.
+
+`memory` appears in its list, which is the clearest single illustration: a
+term that recurs in every chunk of a book about memory and carries no
+information.
+
+### Where this leaves the pipeline
+
+Established on two books, with the limits stated:
+
+- **Chunk at 3 pages, not 10.** Chunk size was confounding every earlier
+  selectivity measurement.
+- **Use an instruct model, not a coder model**, for extraction. This is not a
+  general claim about the models — it is specific to being asked what counts
+  as a concept.
+- **`occurrences >= 2` from one instruct model** recovers a high-precision
+  subset of what four models agree on, at a quarter of the compute.
+- Recall is 40-55%. This is a way to get a trustworthy core cheaply, not a
+  way to get everything.
+
+Still unmeasured: cost of a full corpus run at 3 pages per chunk, and whether
+precision holds on the books that are neither memory-systems taxonomy nor
+molecular neurobiology — Ashby, Newell, and the cognitive-architecture group.
+
+## r031 — correction: the 100% precision was a bug of ours
+
+Ashby's *Design for a Brain* was run as a third book, deliberately outside
+the family the first two shared — 1950s cybernetics rather than memory
+research. Its output contained `Dynamic Systems` and `dynamic system` as two
+separate concepts in one model's run, which is what exposed the defect.
+
+**Two normalizers disagreed about what makes two terms the same concept.**
+Within-run deduplication in `model_extract_concepts.py` lowercased and
+collapsed whitespace. `agree_across_models.normalize_term` also folded
+plurals, hyphens and parenthetical glosses. So inside a single run a concept
+named two ways stayed two rows at `occurrences: 1`, and neither reached a
+recurrence floor of 2 — while the agreement tool, comparing across runs,
+counted them as one.
+
+Recurrence was undercounted everywhere it was measured. And because the
+undercount kept only the terms that happened to be spelled identically every
+time, it removed the near misses and **inflated the measured precision**.
+
+### The corrected numbers
+
+Precision of `occurrences >= 2` against each book's 3-of-4 agreement core:
+
+| model | Schacter | Squire | Ashby |
+|---|---:|---:|---:|
+| llama3.1:8b | 92% (11/12) | 82% (9/11) | 70% (7/10) |
+| qwen2.5:7b-instruct | 67% (2/3) | 100% (5/5) | 100% (3/3) |
+| mistral:7b-instruct | 83% (5/6) | 100% (2/2) | 100% (2/2) |
+| qwen2.5-coder:7b | 58% (7/12) | 40% (8/20) | 80% (4/5) |
+
+**The "11/11 and 8/8, perfect precision" reported in the two previous
+sections is withdrawn.** The real figures for llama3.1:8b are 92%, 82%, 70%,
+and they fall as the book moves away from neuroscience.
+
+### What survives the correction
+
+- The agreement distribution is still stable across all three books: 4-of-4
+  at 6%, 8%, 9%; 1-of-4 at 69%, 70%, 66%. That measurement did not depend on
+  the broken normalizer.
+- Instruct models still beat the coder model on recurrence precision in five
+  of six book-model pairs, and the qualitative reason still holds — the coder
+  model returns entities (`DNA`, `protein`, `memory`) where instruct models
+  return concepts.
+- Recurrence at 3 pages per chunk is still a usable high-precision signal
+  from a single model. It is 70-92% rather than 100%, which is a different
+  claim and should be planned against as such.
+
+The normalizers are now one function, imported rather than reimplemented, and
+`test_extraction_and_agreement_fold_terms_identically` fails if they ever
+diverge again.
+
+## r031 — what a corpus run actually costs
+
+Measured rather than estimated. `llama3.1:8b` over six 3-page chunks of
+Squire took 59.5 seconds wall clock — **9.9 seconds per chunk**, with the
+model at 66% GPU residency.
+
+Corpus chunk count, counting `toc` and `font` books by their own structure
+and `pages` books at 3 pages per chunk:
+
+| | chunks | one model | four models |
+|---|---:|---:|---:|
+| as detected | 1,798 | 4.9h | 19.8h |
+| **with Newell forced to `pages`** | **1,073** | **3.0h** | 11.8h |
+
+### One book was half the run
+
+Newell's *Unified Theories of Cognition* produced **912 of the 1,798
+chunks — 51% of the entire corpus** — because font-mode detection marked its
+body paragraphs as headings at 1.63 per page. That sits *inside* the
+plausibility band of 0.05-2.0, so the automatic guard passes it. Its median
+chunk is 867 characters: too small to hold a definition and its context.
+
+It is also the book with 14 OCR-degraded pages. Half the compute would have
+gone to the worst-structured, worst-quality text in the corpus, at the
+resolution least likely to yield anything.
+
+Forced to `pages` at 3 pages per chunk it is 187 chunks with a median of
+6,908 characters, and the corpus drops from 4.9 hours to 3.0.
+
+`convert_pdf_to_text.py --force-mode pages` exists for this. The band cannot
+catch every failure — a book can sit inside it and still be wrong — so the
+override is deliberate and per-book rather than a widened threshold that
+would change every other book too.
+
+### The overnight question, answered
+
+A single-model corpus run at 3 pages per chunk is **about three hours**. That
+is an evening, not an overnight job, and well within what this hardware does
+unattended.
+
+The four-model agreement run is 11.8 hours. Given that recurrence from one
+instruct model recovers 70-92% precision against the four-model core, the
+four-model run costs four times as much for a reference set rather than a
+better result.
+
+What is still not answered by any of this: recall is 40-55%, and the review
+load at the far end is unchanged — three hours of compute still produces more
+candidates than anyone has agreed to read.
+
+## r031 — one whole book, and a cost estimate that was wrong by 4.6x
+
+Squire & Kandel run end to end with `llama3.1:8b`, all 87 chunks at 3 pages.
+
+### The review load is bounded
+
+| threshold | per book | corpus estimate (1,073 chunks) |
+|---|---:|---:|
+| all candidates | 159 | ~1,960 |
+| `occurrences >= 2` | 38 | ~470 |
+| **`occurrences >= 3`** | **17** | **~210** |
+
+Occurrence histogram over the book: 121 concepts seen once, 21 twice, 8 three
+times, 5 five times, 2 six, 1 seven, 1 ten.
+
+At a floor of 3 the list is the book:
+
+    declarative memory (10), synaptic plasticity (7), long-term memory (6),
+    classical conditioning (6), short-term memory (5), nondeclarative memory
+    (5), medial temporal lobe (5), hippocampus (5), amygdala (5), habituation
+    (3), cerebellum (3), NMDA receptor (3), consolidation (3), ...
+
+**~210 candidates corpus-wide is under the 300 stop condition** this project
+set for itself at the outset. The volume problem, which has been the binding
+constraint since the first measurement, is answered — by a recurrence floor
+of 3 rather than by anything clever.
+
+### The cost estimate in the previous section was wrong
+
+It said 9.9 seconds per chunk and 3.0 hours for the corpus. The whole book
+took **66 minutes for 87 chunks — 45.8 seconds per chunk**, and the corpus is
+therefore **about 13.6 hours** for one model.
+
+The 9.9-second figure came from timing the first six chunks. Those are front
+matter — title pages, contents, sparse text — and produce almost no output.
+Dense prose produces far more, and generation time follows output length.
+
+That is the same error corrected twice already in this document: measuring
+the convenient sample and extrapolating from it. Timing the *first* chunks of
+a book is a systematically optimistic sample, not a random one.
+
+So the corpus run is an overnight job after all, which was the original
+intuition. It is one night, not three, and it produces roughly 210 reviewable
+candidates rather than four thousand unreviewable ones.
+
+### Also observed
+
+Confidence finally varied — five distinct values (0.7, 0.8, 0.9, 0.95, 1.0)
+across 159 candidates, against one value in every earlier run. That is a
+consequence of the larger sample, not of calibration: it is still clustered
+at the top and still should not be used to rank anything.
+
+Slots spread across 13 of 16 for the first time: identity 38, ontology 36,
+procedures 24, map 16, relationships 14, state 9, constraints 9,
+consolidation 6, and single digits elsewhere.
+
+## r031 — the two scanned books, recovered unevenly
+
+Tesseract installed, so the blocker recorded since r030 is gone. Both scans
+OCR'd at 200 dpi: **492 pages in 6 minutes 23 seconds**, 0.78 seconds per
+page, 1,521,912 characters.
+
+| | pages | chars | degraded pages | column artefacts |
+|---|---:|---:|---:|---:|
+| Minsky, *Society of Mind* | 336 | 916,188 | **0** | **0** |
+| Ashby, *Introduction to Cybernetics* | 156 | 605,724 | 1 (1%) | **20 (13%)** |
+
+Minsky is clean enough to read directly:
+
+> "Up to this point we've portrayed the mind as made of scattered fragments
+> of machinery. But we adults rarely see ourselves that way; we have more
+> sense of unity."
+
+### Ashby is unblocked, not recovered
+
+Its character-level quality is fine — one degraded page in 156. The problem
+is layout: it is set in two columns with equations, and Tesseract reads the
+page image in horizontal lines, merging the columns:
+
+> "...to find how the transform follows **There results the transducer** from
+> the operand, shows that in all cases..."
+
+Two sentences from two columns, interleaved. The degraded-page detector
+cannot see this, because every individual word is correct — only the order is
+wrong. 13% of pages are affected, and they are the technical ones; the
+narrative pages are clean.
+
+`page.get_text(textpage=..., sort=True)` does **not** fix it. Block sorting
+runs after Tesseract has already merged the columns into single lines. A real
+fix needs column detection and per-column OCR, which is substantial work.
+
+So the honest statement is 20 of 20 books have text, and one of them has 13%
+of its pages in scrambled sentence order. Concept extraction from those pages
+will produce definitions built from two half-sentences, and the grounding
+check will not catch it — the scrambled text *is* in the source.
+
+The difference between the two books is the layout, not the OCR: single-
+column narrative recovers perfectly, two-column technical does not.
+
+## r031 — the context window re-measured, and a second chunking path caught
+
+### Controlled comparison, one variable
+
+Squire & Kandel end to end, `llama3.1:8b`, same seed, only `num_ctx` changed:
+
+| | 32768 | 16384 |
+|---|---:|---:|
+| wall clock | 66m28s | **53m54s** |
+| per chunk | 45.8s | **37.2s** |
+| GPU residency | 66% | 84% |
+| candidates kept | 159 | 155 |
+| `occurrences >= 2` | 38 | 35 |
+| `occurrences >= 3` | 17 | 13 |
+
+19% faster for materially the same output.
+
+**But the recurrence core is not stable across configurations.** 17 concepts
+against 13, with only 12 shared. Both runs used temperature 0 and a fixed
+seed; the context window alone moved the `>= 3` set by about five concepts.
+The "~210 candidates corpus-wide" figure should be read as an order of
+magnitude, not a count.
+
+### A second chunking path, quietly using a different size
+
+The OCR path emitted one heading per page. Measured: Minsky at a median of
+2,892 characters per chunk and Ashby at 4,302 — **below the 5,000-15,000 band
+that every recurrence measurement was taken in.**
+
+Chunk size was the confound behind every earlier selectivity result in this
+document. A second code path silently using a different one is that same
+mistake with a new name, and it was introduced an hour after the band was
+written down.
+
+Fixed to group pages the way `pages` mode does:
+
+| | before | after |
+|---|---|---|
+| Ashby | 150 chunks, 4,302 median | **53 chunks, 11,915 median** |
+| Minsky | 332 chunks, 2,892 median | **111 chunks, 8,100 median** |
+
+### Corpus cost, current
+
+    1,073 chunks (18 books)  +  164 (the two OCR books)  =  1,237
+    1,237 x 37.2s = 12.8 hours for one model
+
+Down from 13.7h and now including all 20 books rather than 18.
+
+## r031 — recurrence holds on a `toc` book, and per-chunk time varies by book
+
+The procedure recorded a limit: the recurrence rule had only been measured on
+`pages`-mode books, where the chunk boundaries are ones we impose. The
+concern was specific — a `toc` book is chunked on the author's own thematic
+sections, so a concept might be treated once and left behind, never
+recurring. That would make recurrence an artefact of page chunking rather
+than a property of books.
+
+It is not. *Memory in the Age of AI Agents*, `toc` mode, 80 chunks at a
+median of 5,550 characters:
+
+| | toc book | Squire (`pages`) |
+|---|---:|---:|
+| candidates | 144 | 155 |
+| `occurrences >= 2` | 36 | 35 |
+| `occurrences >= 3` | **13** | **13** |
+
+Histogram: 108 seen once, 23 twice, 10 three times, 2 four, 1 six.
+
+The `>= 3` set reads as the book's actual subject matter: KV cache, LLM
+memory, working memory, retrieval-augmented generation, context engineering,
+latent memory, memory slots, multimodal memory, K-nearest-neighbour search.
+
+`font`-mode books remain untested.
+
+### Per-chunk time is not a constant
+
+| book | mode | median chunk | per chunk |
+|---|---|---:|---:|
+| Squire & Kandel | pages | 8,551 chars | 37.2s |
+| Memory in the Age of AI Agents | toc | 5,550 chars | **44.5s** |
+
+Smaller chunks, slower per chunk — so generation time is driven by how much
+the model has to *say* about a passage, not by how much it reads. The corpus
+estimate is therefore a range rather than a number:
+
+    1,237 chunks x 37.2s = 12.8 hours
+    1,237 chunks x 44.5s = 15.3 hours
+
+The header table carries the range. A single-book measurement extrapolated to
+a corpus is the same mistake as timing a book's first six chunks, one level up.
+
+## r031 — every corpus-scale number in this file was derived, not measured
+
+A `font`-mode validation run finished in 2m53s instead of the expected 80
+minutes and produced zero recurrent concepts. The result looked like a clean
+negative. It was not a result at all: 13 of Soar's 22 chunks exceeded the
+chunk limit, so the run covered 12% of the book.
+
+Pulling that thread invalidated the chunk counts, the cost estimate, the
+per-mode size table in the procedure, and the description of a validation run
+already reported as successful.
+
+### The root cause
+
+Chunk counts for `toc` and `font` books were taken from the `headings` field
+in `conversion_metrics.json`, and chunk sizes as `characters / headings`.
+Neither is what `split_into_structural_chunks()` actually produces — it
+applies its own patterns to the text and does not split at every detected
+heading.
+
+For Soar that made 22 chunks look like 114, and a median of 47,991 characters
+look like 7,798 — wrong by a factor of six, in the direction that hides a
+problem.
+
+### Measured, by actually chunking every file
+
+| mode | books | chunks | median chunk |
+|---|---:|---:|---|
+| `toc` | 5 | 116 | 4,635 - 4,852 |
+| `font` | 3 | 37 | 590 - 4,748 |
+| `pages` | 8 | 458 | 3,595 - 12,777 |
+| `pages` (forced) | 2 | 313 | 6,908 - 7,194 |
+| `ocr` | 2 | 164 | 8,100 - 11,915 |
+
+**1,088 chunks**, against 1,237 claimed earlier and 1,581 before Soar and
+Newell were forced to `pages`. Soar goes from 22 chunks with 13 skipped to
+126 with none; Newell from 784 chunks of 867 characters to 187 of 6,908.
+
+Only 4 chunks in the whole corpus now exceed the limit, one each in four
+books.
+
+### The corpus had never been converted the way the procedure documents
+
+All the 3-page work — Schacter, Squire, Ashby, the `toc` survey — ran on
+copies in a scratch directory. The files under `06_INBOX/Carti` were still
+the original 10-page conversion. The recipe was written up before the corpus
+it describes had ever been produced.
+
+It has been now: `--pages-per-chunk 3 --ocr`, then Soar and Newell
+re-converted with `--force-mode pages`.
+
+### A reported run described with numbers it did not have
+
+The `toc` validation was reported here as "80 chunks, median 5,550". The
+script printed `toc-mode book: 55 chunks, median 4671 chars (band is
+5000-15000)` as its first line — including the parenthetical flagging that
+the book sits *below* the documented band. That line was missed by tailing
+the output.
+
+The validation's conclusion survives, because it came from the output JSON:
+13 concepts at `occurrences >= 3`, the same as Squire's 13. If anything it is
+a stronger result than claimed — recurrence held at a median chunk of 4,671,
+below the band the rule was supposed to need.
+
+The timing does not survive. 59m19s over 55 chunks is **64.7 s/chunk**, not
+the 44.5 computed against 80. So the corpus is **11.2 to 19.6 hours**, a
+wider spread than any figure given for it so far.
+
+## r031 — `font` mode validated, and the per-book yield varies by 2.5x
+
+Soar, forced to `pages` so it actually fits, 126 chunks:
+
+    306 candidates, 71 at >= 2, 34 at >= 3
+
+The `>= 3` list is the book's own vocabulary, with counts:
+
+    substates (16), semantic memory (13), episodic memory (13), impasse (11),
+    working memory (10), cognitive architecture (8), chunking (8), operator
+    (8), knowledge search (7), procedural knowledge (7), problem space (6),
+    PSCM (5), PEACTIDM (4)
+
+That is the prediction made before the run, and it closes the last stated
+validation gap: all three structure modes behave the same way.
+
+### But the yield rate does not transfer between books
+
+| book | mode | chunks | at `>= 3` | per chunk |
+|---|---|---:|---:|---:|
+| Squire & Kandel | pages | 87 | 13 | 0.149 |
+| Memory in the Age of AI Agents | toc | 55 | 13 | 0.236 |
+| The Soar Cognitive Architecture | pages (forced) | 126 | **34** | **0.270** |
+
+Across 1,088 corpus chunks that is **160 to 290 candidates** at a floor of 3,
+not the "~210" this document has carried since it was computed from one book.
+210 sits inside the range by coincidence rather than by derivation.
+
+Soar being the high end is not a defect: it is a densely technical book about
+a single architecture, so its vocabulary genuinely recurs. A per-book cap
+would punish exactly the book with the most to say.

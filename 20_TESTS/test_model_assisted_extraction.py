@@ -493,10 +493,25 @@ def test_a_slot_name_in_claim_type_is_refused():
     assert rejects["claim_type_is_a_slot"] == 1
 
 
-def test_an_invented_claim_type_is_refused():
+def test_an_unrequested_claim_type_is_tolerated_not_refused():
+    """claim_type is no longer asked for, so it cannot be a rejection reason.
+
+    It was dropped because it carried no information — every surviving
+    candidate across every run said "definition" — while costing 11 of 50
+    rejections in a six-chunk run by corrupting the slot beside it. A model
+    that volunteers a value anyway keeps it; nothing downstream reads it.
+    """
     accepted, rejects = _run([dict(GOOD, claim_type="observation")])
-    assert accepted == []
-    assert rejects["claim_type_unknown"] == 1
+    assert rejects == {}, rejects
+    assert accepted[0]["claim_type"] == "observation"
+
+
+def test_a_candidate_with_no_claim_type_at_all_is_accepted():
+    """The field is optional now, and its absence must not be a rejection."""
+    without = {k: v for k, v in GOOD.items() if k != "claim_type"}
+    accepted, rejects = _run([without])
+    assert rejects == {}, rejects
+    assert accepted[0]["claim_type"] is None
 
 
 @pytest.mark.parametrize("claim_type", sorted(M.CLAIM_TYPES))
@@ -573,3 +588,150 @@ def test_the_prompt_names_no_desirable_concept():
             f"{term!r} is named before the exclusion list; the model will "
             "return it regardless of the passage"
         )
+
+
+def test_the_chunk_limit_follows_the_context_window(tmp_path, monkeypatch):
+    """A fixed limit silently discarded most of a real book.
+
+    26 of Schacter & Tulving's 29 chunks exceed the old hardcoded 24,000
+    characters, so a monograph run would have processed three sections and
+    reported success. Page-mode chunking produces large chunks by design.
+    The real constraint is num_ctx, and the limit is now derived from it.
+    """
+    #: ~45k characters: over the old fixed limit, comfortably inside a 32k
+    #: token window at the provider's (chars + 2) // 3 estimate.
+    big = "word " * 9000
+    book = tmp_path / "b.txt"
+    book.write_text(f"# Section One\n\n{big}\n", encoding="utf-8")
+    out = tmp_path / "o.json"
+
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=json.dumps([])),
+    )
+    monkeypatch.setattr(sys, "argv", [
+        "x", "--input-file", str(book), "--source-book", "b",
+        "--output-file", str(out), "--provider", "fake",
+    ])
+    assert M.main() == 0
+
+    #: Not skipped: the provider was actually asked about this chunk.
+    assert len(big) > 24000, "fixture must exceed the old fixed limit"
+    assert M.CONTEXT_RESERVE_TOKENS > 0
+    derived = (32768 - M.CONTEXT_RESERVE_TOKENS) * 3
+    assert derived > len(big), "derived limit must admit a page-mode chunk"
+
+
+def test_an_explicit_chunk_limit_still_wins(tmp_path, monkeypatch):
+    """The derivation is a default, not a policy the caller cannot override."""
+    book = tmp_path / "b.txt"
+    book.write_text("# S\n\n" + "word " * 2000 + "\n", encoding="utf-8")
+    out = tmp_path / "o.json"
+    monkeypatch.setattr(
+        M, "build_provider",
+        lambda *a, **k: FakeModelProvider(canned_response=json.dumps([])),
+    )
+    monkeypatch.setattr(sys, "argv", [
+        "x", "--input-file", str(book), "--source-book", "b",
+        "--output-file", str(out), "--provider", "fake",
+        "--max-chunk-chars", "100",
+    ])
+    assert M.main() == 0
+    assert json.loads(out.read_text(encoding="utf-8")) == []
+
+
+#: A long passage, so the near-miss case is realistic: on monograph chunks of
+#: ~44,000 characters models quote accurately but drop a word or two.
+LONG_SOURCE = (
+    "The distinction between episodic and semantic memory systems is "
+    "traceable in some form to the Greek philosophers and is present in the "
+    "analyses of numerous later writers. Maine de Biran postulated the "
+    "existence of three separate kinds of memory that depend on different "
+    "mechanisms and can be characterized by different properties."
+)
+
+
+def test_an_accurate_quote_missing_a_word_is_still_grounded():
+    """Measured: 17 of 51 refusals quoted the source at 80% or better.
+
+    One matched 27 of its 30 words. An exact-match rule threw those away —
+    they are accurate quotes with a word dropped, not inventions.
+    """
+    near = (
+        "The distinction between episodic and semantic memory systems is "
+        "traceable in some form to the Greek philosophers and is present in "
+        "the analyses of later writers."
+    )
+    assert M.is_grounded(near, LONG_SOURCE)
+
+    accepted, rejects = _run(
+        [dict(GOOD, evidence=near, definition=(
+            "Two memory systems that later writers separated on grounds of "
+            "what each one stores about the past."
+        ))],
+        chunk_text=LONG_SOURCE,
+    )
+    assert rejects == {}, rejects
+    assert len(accepted) == 1
+
+
+@pytest.mark.parametrize(
+    "fabricated",
+    [
+        "Vitter (1985) established this result.",
+        "Tulving demonstrated in 1972 that the two systems are dissociable.",
+        "The authors conclude that memory is fundamentally reconstructive.",
+    ],
+)
+def test_a_fabricated_quote_is_still_refused(fabricated):
+    """The loosened rule must not open the door it was built to close.
+
+    Across the measured set, apparent fabrications had longest verbatim runs
+    of 3 to 6 words against 25 to 27 for genuine quotes; the control here
+    runs 2. The thresholds sit between those populations, not on top of one.
+    """
+    assert not M.is_grounded(fabricated, LONG_SOURCE)
+
+
+def test_a_borrowed_phrase_cannot_carry_an_invented_sentence():
+    """The run threshold alone is not enough, which is why coverage exists."""
+    padded = (
+        "The distinction between episodic and semantic memory systems is "
+        "traceable in some form to the Greek philosophers, and it follows "
+        "that recollection is impossible without a hippocampus, that all "
+        "learning is reconstructive, and that forgetting is adaptive by "
+        "design in every mammalian species so far examined."
+    )
+    run = M.longest_verbatim_run(padded, LONG_SOURCE)
+    assert run >= M.MIN_VERBATIM_RUN_WORDS, "the borrowed opening does match"
+    assert not M.is_grounded(padded, LONG_SOURCE), "coverage must refuse it"
+
+
+def test_longest_verbatim_run_measures_what_it_claims():
+    assert M.longest_verbatim_run("", LONG_SOURCE) == 0
+    assert M.longest_verbatim_run("wholly unrelated wording here", LONG_SOURCE) <= 2
+    exact = "Maine de Biran postulated the existence of three separate kinds of memory"
+    assert M.longest_verbatim_run(exact, LONG_SOURCE) == len(exact.split())
+
+
+def test_the_default_context_window_skips_no_chunks():
+    """The fastest setting is the wrong one, and this records why.
+
+    The window is allocated in VRAM beside the weights, so it decides how
+    much of the model runs on the GPU. Measured on an 8 GB card with
+    llama3.1:8b: 32768 gives 66% residency and 21s per four chunks, 16384
+    gives 84% and 16s, 8192 gives full residency and 10s.
+
+    8192 is fastest and drops a tenth of the corpus: its derived chunk limit
+    is 12,576 characters and 48 of 463 chunks across four books exceed it.
+    Speed bought by silently skipping content is the failure this whole
+    lineage keeps producing.
+    """
+    assert M.DEFAULT_NUM_CTX == 16384
+    limit = (M.DEFAULT_NUM_CTX - M.CONTEXT_RESERVE_TOKENS) * 3
+    #: p90 chunk size measured over four books at 3 pages was 13,024 and the
+    #: largest 18,427. The default must clear the largest, not the median.
+    assert limit > 18427, (
+        "the derived chunk limit must admit the largest measured chunk; "
+        "anything less drops content to buy throughput"
+    )

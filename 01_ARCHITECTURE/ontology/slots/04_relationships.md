@@ -26,5 +26,5 @@ How does information connect?
 - `03_IMPLEMENTATION/packages/graph/spreading_activation.py`
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
-|---|---|---|---|---|---|---|
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
+|---|---|---|---|---|---|---|---|

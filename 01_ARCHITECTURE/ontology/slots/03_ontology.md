@@ -25,6 +25,6 @@ What does each memory type mean?
 none (maps conceptually to note types in `03_IMPLEMENTATION/packages/lifecycle/validation/schema.py` where canonical type enum defines: knowledge, project, procedure, decision, experience, error, lesson, preference, resource, hypothesis, system, core, index)
 
 ## Candidate concepts
-| concept | source_book | confidence | status | date_added | promoted_note_id | evidence |
-|---|---|---|---|---|---|---|
-| Semantic Memory Store | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | unverified_source | 2026-09-07 | | |
+| concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
+|---|---|---|---|---|---|---|---|
+| Semantic Memory Store | Sarfraz et al. (2022) SYNERgy - Synaptic Consolidation & Experience Replay | 0.90 | unverified_source | 2026-09-07 | | | |

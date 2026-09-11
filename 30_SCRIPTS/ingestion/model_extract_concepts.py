@@ -78,6 +78,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from providers.model_provider import ModelRequest  # noqa: E402
 
+#: One definition of what makes two terms the same concept, shared with
+#: the agreement tool. Two normalizers that drift apart silently produce
+#: two different answers to the same question.
+from agree_across_models import normalize_term  # noqa: E402
+
 from extract_book_concepts import (  # noqa: E402
     CANONICAL_SLOTS,
     KNOWN_VERIFIED_MODULES,
@@ -98,12 +103,56 @@ MAX_JACCARD = 0.60
 #: A definition shorter than this is a label, not a definition.
 MIN_DEFINITION_WORDS = 12
 
-#: The kinds of claim a passage can make about a concept. Validated, unlike
-#: before: qwen2.5-coder:7b returned `claim_type: "ontology"` on all eight of
-#: its candidates — `ontology` is a SLOT, not a claim type — while putting
-#: `identity` in the slot field for every one of them. The two fields were
-#: swapped and nothing caught it, because only the slot was being checked.
-#: An unvalidated field is a field the model may fill with anything.
+#: Tokens held back from num_ctx for the instructions, the slot block and
+#: the model's reply, so the chunk limit cannot claim the whole window.
+CONTEXT_RESERVE_TOKENS = 4000
+
+#: The context window is allocated in VRAM next to the weights, so it decides
+#: how much of the model runs on the GPU rather than the CPU. Measured on an
+#: 8 GB card with llama3.1:8b, four chunks each:
+#:
+#:   num_ctx 32768   66% resident   21s   skips 0 chunks
+#:   num_ctx 16384   84% resident   16s   skips 0 chunks
+#:   num_ctx  8192  100% resident   10s   skips 10% of chunks
+#:
+#: 8192 is the fastest and the wrong answer: the derived chunk limit falls to
+#: 12,576 characters and 48 of 463 chunks across four books exceed it, so a
+#: tenth of the corpus is silently dropped to buy speed. 16384 is the largest
+#: window that skips nothing, and it is a third faster than the old default.
+DEFAULT_NUM_CTX = 16384
+
+#: Grounding thresholds, both required. Chosen from the measured separation
+#: between accurate quotes and invented ones over 51 refused candidates:
+#: apparent fabrications had longest verbatim runs of 3-6 words, genuine
+#: quotes 25-27. A 12-word contiguous run is not something a model produces
+#: by accident, and the coverage share stops one borrowed phrase from
+#: carrying a sentence of invention.
+#:
+#: 12/0.70 was preferred over 10/0.65 because both admit the same 21
+#: candidates while 12/0.70 is stricter on each axis.
+MIN_VERBATIM_RUN_WORDS = 12
+MIN_EVIDENCE_COVERAGE = 0.70
+
+#: `claim_type` is no longer requested, and this records why so it is not
+#: reintroduced as an obvious improvement.
+#:
+#: It was asked for alongside `slot`, and both take values from a closed
+#: vocabulary. A 7B model does not hold two taxonomies of 5 and 16 apart:
+#: qwen2.5-coder:7b returned `claim_type: "ontology"` — a SLOT — on all eight
+#: of its candidates while putting `identity` in the slot field for every
+#: one, and in a later run put `definition` in the slot field 14 times, which
+#: was every `slot_unknown` rejection in that run. Eleven of fifty rejections
+#: in a six-chunk run were this confusion alone.
+#:
+#: And the field earned none of that cost. Across every run where it
+#: validated, every surviving candidate said `definition` — never mechanism,
+#: finding, taxonomy or constraint. Nothing downstream reads it either:
+#: `merge_candidate_concepts.py` never touches it and the ontology row has no
+#: column for it.
+#:
+#: So it carried no information, and its only measurable effect was to
+#: corrupt the field next to it. Asking a small model for less is the fix;
+#: asking it more insistently is not.
 CLAIM_TYPES = frozenset(
     {"definition", "mechanism", "finding", "taxonomy", "constraint"}
 )
@@ -194,16 +243,9 @@ Return JSON only — a list of objects, no prose around it. Each object:
   "evidence"   One sentence copied EXACTLY from the passage, character for
                character, that supports the definition. It must be present
                in the passage verbatim.
-  "claim_type" One of: definition, mechanism, finding, taxonomy, constraint.
   "slot"       The single best fit. Choose by which QUESTION the concept
                helps answer, not by which name sounds closest:
 {slots}
-               claim_type and slot are INDEPENDENT. A mechanism can belong
-               to any slot. Do not pick "procedures" merely because the
-               concept is a mechanism, a method or an algorithm — ask which
-               question it answers. A mechanism by which experience becomes
-               durable knowledge belongs to consolidation; a definition of a
-               kind of memory belongs to ontology.
   "confidence" Your confidence from 0.0 to 1.0 that this is a real, load-
                bearing concept the passage genuinely defines. Use the full
                range. Be honest when you are unsure.
@@ -271,6 +313,49 @@ def parse_model_json(content: str) -> list[dict[str, Any]]:
     return [item for item in parsed if isinstance(item, dict)]
 
 
+def longest_verbatim_run(quote: str, source: str) -> int:
+    """Length in words of the longest run of `quote` present in `source`."""
+    words = _normalize_for_search(quote).split()
+    haystack = f" {_normalize_for_search(source)} "
+    best = 0
+    for start in range(len(words)):
+        #: Only look for runs longer than the best already found, and stop
+        #: this start as soon as one matches — the first hit from the long
+        #: end is the longest for that start.
+        for end in range(len(words), start + best, -1):
+            if f" {' '.join(words[start:end])} " in haystack:
+                best = end - start
+                break
+    return best
+
+
+def is_grounded(quote: str, source: str) -> bool:
+    """Whether the evidence really comes from the passage that was sent.
+
+    This used to demand the whole quote appear verbatim, which worked on
+    conference-paper chunks of ~4,600 characters and failed badly on a
+    monograph. Measured over 8 chunks of Schacter & Tulving at ~44,000
+    characters each, 51 candidates were refused for grounding — and 17 of
+    them quoted the source at 80% or better. One example matched 27 of its
+    30 words. Those were accurate quotes with a word or two dropped, thrown
+    away by an exact-match rule.
+
+    Fabrication looks nothing like that. The control case from the test
+    suite, "Vitter (1985) established this result", has a longest verbatim
+    run of 2 words. Across the whole rejected set the apparent fabrications
+    ran 3 to 6 words while the near-verbatim quotes ran 25 to 27.
+
+    So the rule is a long contiguous run, plus a share of the whole quote so
+    that a single borrowed phrase cannot carry forty invented words. Both
+    thresholds sit well above the fabricated group and below the genuine one.
+    """
+    words = _normalize_for_search(quote).split()
+    if not words:
+        return False
+    run = longest_verbatim_run(quote, source)
+    return run >= MIN_VERBATIM_RUN_WORDS and run / len(words) >= MIN_EVIDENCE_COVERAGE
+
+
 def clean_term(raw: Any) -> str:
     """The term without its acronym gloss.
 
@@ -311,14 +396,12 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     if slot not in CANONICAL_SLOTS:
         return False, "slot_unknown"
 
-    claim_type = str(candidate.get("claim_type", "")).strip().lower()
-    if claim_type not in CLAIM_TYPES:
-        #: A slot name here means the model answered the wrong question, and
-        #: the slot field is then not to be trusted either.
-        return False, (
-            "claim_type_is_a_slot" if claim_type in CANONICAL_SLOTS
-            else "claim_type_unknown"
-        )
+    #: A model that volunteers claim_type anyway is not punished for it, but
+    #: a value that is really a slot name still means the two fields were
+    #: confused and the slot cannot be trusted.
+    volunteered = str(candidate.get("claim_type", "")).strip().lower()
+    if volunteered and volunteered in CANONICAL_SLOTS:
+        return False, "claim_type_is_a_slot"
 
     try:
         confidence = float(candidate.get("confidence"))
@@ -330,7 +413,7 @@ def validate(candidate: dict[str, Any], chunk_text: str) -> tuple[bool, str]:
     #: Grounding, checked against the text rather than against the claim.
     if not evidence:
         return False, "evidence_missing"
-    if _normalize_for_search(evidence) not in _normalize_for_search(chunk_text):
+    if not is_grounded(evidence, chunk_text):
         return False, "evidence_not_in_source"
 
     #: Paraphrase floors, both required.
@@ -485,7 +568,10 @@ def extract_from_chunk(
             {
                 "concept": clean_term(candidate["concept"]),
                 "definition": str(candidate["definition"]).strip(),
-                "claim_type": str(candidate["claim_type"]).strip().lower(),
+                #: Kept in the row only when the model offered it unasked, so
+                #: a better model's answer is not thrown away — but nothing
+                #: requires it and nothing downstream reads it.
+                "claim_type": str(candidate.get("claim_type", "")).strip().lower() or None,
                 "maps_to_slot": slot,
                 "maps_to_module": (KNOWN_VERIFIED_MODULES.get(slot) or [None])[0],
                 "confidence_in_literature": float(candidate["confidence"]),
@@ -518,7 +604,13 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     best: dict[str, dict[str, Any]] = {}
     order: list[str] = []
     for row in rows:
-        key = " ".join(row["concept"].lower().split())
+        #: The same folding the agreement tool uses. They disagreed until
+        #: Ashby made it visible: this side lowercased and collapsed spaces
+        #: only, so "Dynamic Systems" and "dynamic system" stayed two rows at
+        #: occurrences=1 each and neither reached a recurrence floor of 2,
+        #: while the agreement tool counted them as one concept. Recurrence
+        #: was undercounted everywhere it was measured.
+        key = normalize_term(row["concept"])
         if key not in best:
             best[key] = dict(row, occurrences=1, also_found_in=[])
             order.append(key)
@@ -657,15 +749,33 @@ def main() -> int:
              "an unload mid-run silently changes the extraction regime",
     )
     ap.add_argument(
-        "--num-ctx", type=int, default=32768,
-        help="context window requested from the local model",
+        "--num-ctx", type=int, default=DEFAULT_NUM_CTX,
+        help="context window requested from the local model. Bigger is not "
+             "free: the window is allocated in VRAM alongside the weights, "
+             "so it decides how much of the model actually runs on the GPU",
     )
     ap.add_argument(
-        "--max-chunk-chars", type=int, default=24000,
+        "--max-chunk-chars", type=int, default=0,
         help="chunks longer than this are skipped rather than silently "
-             "truncated by the model's context window",
+             "truncated. Default 0 derives it from --num-ctx, which is the "
+             "real constraint; a fixed number drifts out of agreement with "
+             "the context window and starts skipping usable text",
     )
     args = ap.parse_args()
+
+    #: LocalProvider estimates tokens as (chars + 2) // 3 and fails closed
+    #: above num_ctx, so that ratio is what the limit has to respect. The
+    #: reserve covers the instructions, the slot block and the model's own
+    #: output, none of which are the chunk.
+    #:
+    #: The previous fixed 24,000 was far below what the window allows and
+    #: silently discarded most of a real book: 26 of Schacter & Tulving's 29
+    #: chunks exceed it, so a monograph run would have processed three
+    #: sections and reported success. Page-mode chunking produces large
+    #: chunks by design — that is what it is for.
+    max_chunk_chars = args.max_chunk_chars or max(
+        4000, (args.num_ctx - CONTEXT_RESERVE_TOKENS) * 3
+    )
 
     text = args.input_file.read_text(encoding="utf-8", errors="replace")
     chunks = split_into_structural_chunks(text)
@@ -686,7 +796,7 @@ def main() -> int:
     rejects: Counter[str] = Counter()
     skipped = 0
     for i, chunk in enumerate(chunks, start=1):
-        if len(chunk["content"]) > args.max_chunk_chars:
+        if len(chunk["content"]) > max_chunk_chars:
             skipped += 1
             rejects["chunk_too_long"] += 1
             continue
