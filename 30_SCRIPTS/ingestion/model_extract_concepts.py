@@ -600,6 +600,18 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     because unlike the model's self-reported confidence it is an OBSERVED
     signal: a concept a book defines in four places is load-bearing in a way
     that a concept mentioned once is not.
+
+    It counts *sections*, not submissions, and that distinction is the whole
+    value of the number. It used to count submissions, and an agent run over
+    Newell showed what that costs: "subgoal" was submitted twice out of chunk
+    63 and "preference" twice out of chunk 61, so both reported occurrences=2
+    while being defined in one place; "impasse" came from chunks 62, 62 and 63
+    and reported 3, which is the review floor, on two sections. The signal this
+    project ranks everything by was inflated by whoever repeated themselves.
+
+    Sections are identified by `source_location`. A book whose chunks share a
+    heading will undercount, and that is the safe direction: a concept wrongly
+    ranked low is read later, one wrongly ranked high is trusted now.
     """
     best: dict[str, dict[str, Any]] = {}
     order: list[str] = []
@@ -617,10 +629,12 @@ def deduplicate(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
             continue
 
         kept = best[key]
-        kept["occurrences"] += 1
         location = row["source_location"]
         if location != kept["source_location"] and location not in kept["also_found_in"]:
             kept["also_found_in"].append(location)
+        #: Sections, not submissions: the one it came from plus every distinct
+        #: other one it was also found in.
+        kept["occurrences"] = 1 + len(kept["also_found_in"])
 
         #: Prefer the more confident definition; on a tie, the longer one,
         #: which in practice is the one that actually explains the term.
