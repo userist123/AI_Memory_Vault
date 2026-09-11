@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 env:
-  PYTHONPATH: 03_IMPLEMENTATION/packages
+  PYTHONPATH: 03_IMPLEMENTATION
 
 jobs:
   phase3:
