@@ -153,8 +153,11 @@ whole-corpus retrieval numbers.
   stop condition. Recall is 40-55% of what four models would agree on. The
   method and everything that failed on the way to it are in
   `10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`.
-- **A corpus run is 11-20 hours** for one model: 1,088 chunks measured, at
-  37-65 s/chunk. The spread is real — generation time follows output length,
+- **A corpus run is 11.6-20.1 hours** for one model: 1,120 chunks measured,
+  at 37-65 s/chunk. That count needs `--force-mode pages` on SIX books
+  (Newell, Soar, Kandel 2001, Why We Forget, 2601.09113v1, Memory in the
+  Age of AI Agents); without it, four of them lose a single chunk each
+  that is 33-90% of the book, and Kandel is effectively not ingested. The spread is real — generation time follows output length,
   so a book with smaller chunks can be slower per chunk.
   Two ways this figure has been got wrong here, both worth not repeating.
   Timing a book's first chunks: they are front matter, produce almost no

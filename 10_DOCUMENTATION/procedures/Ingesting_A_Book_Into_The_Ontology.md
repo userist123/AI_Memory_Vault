@@ -176,16 +176,34 @@ Soar needs the same treatment for the opposite reason: font detection gave it
 88% of the book was skipped in silence. Forced to pages it is 126 chunks of
 7,194, none skipped.
 
-Between them these two books are the difference between 1,581 corpus chunks
-and 1,088. Check the reported `mode` and the MEASURED chunk sizes per book
-before a long run — `headings_per_page` alone did not catch either of them.
+**Six of the twenty books need `--force-mode pages`.** A pre-flight over the
+whole corpus found four more, each with a single chunk over the limit — which
+sounds minor and is not, because one chunk can be most of a book:
+
+| book | one chunk was | of the book |
+|---|---:|---:|
+| Kandel 2001 | 53,756 chars | **90%** |
+| Why We Forget | 75,981 | 47% |
+| 2601.09113v1 | 82,013 | 36% |
+| Memory in the Age of AI Agents | 144,119 | 33% |
+
+Corpus-wide that was 4.6% of characters, which is exactly the number that
+would have made it look ignorable. Per book it meant Kandel was effectively
+not ingested at all.
+
+The full list to force: Newell, Soar, Kandel 2001, Why We Forget,
+2601.09113v1, Memory in the Age of AI Agents.
+
+After forcing all six: **1,120 chunks, 20 books, zero over the limit, zero
+content skipped.** Check the MEASURED chunk sizes per book before a long run —
+`mode` and `headings_per_page` alone caught none of these six.
 
 ## What it costs
 
 **37 to 65 seconds per chunk** with `llama3.1:8b` on this hardware (RTX 5060
 Laptop, 8 GB, `--num-ctx 16384`, model at 84% GPU residency). The corpus is
-**1,088 chunks** across all 20 books, so **11 to 20 hours for one model** —
-an overnight run.
+**1,120 chunks** across all 20 books once the six books in §4 are forced, so
+**11.6 to 20.1 hours for one model** — an overnight run.
 
 The spread is wide because generation time follows output length, not input
 length: Squire runs 37.2 s/chunk at a median 8,551 characters, the AI-agent
