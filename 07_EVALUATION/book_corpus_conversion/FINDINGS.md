@@ -21,7 +21,7 @@ The state as of the last section:
 | extraction at book scale | works, with gates that catch fabricated evidence |
 | selectivity | `occurrences >= 3` at 3 pages per chunk, ~210 candidates corpus-wide |
 | recall | 40-55% of what four models agree on |
-| cost | **12.8h** for one model: 37.2 s/chunk measured at `num_ctx 16384`, over 1,237 chunks |
+| cost | **12.8-15.3h** for one model over 1,237 chunks: 37.2 s/chunk on one book, 44.5 on another |
 
 The method, and everything that failed on the way to it, is written up as a
 procedure: [`10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`](../../10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md).
@@ -1273,3 +1273,46 @@ Fixed to group pages the way `pages` mode does:
     1,237 x 37.2s = 12.8 hours for one model
 
 Down from 13.7h and now including all 20 books rather than 18.
+
+## r031 — recurrence holds on a `toc` book, and per-chunk time varies by book
+
+The procedure recorded a limit: the recurrence rule had only been measured on
+`pages`-mode books, where the chunk boundaries are ones we impose. The
+concern was specific — a `toc` book is chunked on the author's own thematic
+sections, so a concept might be treated once and left behind, never
+recurring. That would make recurrence an artefact of page chunking rather
+than a property of books.
+
+It is not. *Memory in the Age of AI Agents*, `toc` mode, 80 chunks at a
+median of 5,550 characters:
+
+| | toc book | Squire (`pages`) |
+|---|---:|---:|
+| candidates | 144 | 155 |
+| `occurrences >= 2` | 36 | 35 |
+| `occurrences >= 3` | **13** | **13** |
+
+Histogram: 108 seen once, 23 twice, 10 three times, 2 four, 1 six.
+
+The `>= 3` set reads as the book's actual subject matter: KV cache, LLM
+memory, working memory, retrieval-augmented generation, context engineering,
+latent memory, memory slots, multimodal memory, K-nearest-neighbour search.
+
+`font`-mode books remain untested.
+
+### Per-chunk time is not a constant
+
+| book | mode | median chunk | per chunk |
+|---|---|---:|---:|
+| Squire & Kandel | pages | 8,551 chars | 37.2s |
+| Memory in the Age of AI Agents | toc | 5,550 chars | **44.5s** |
+
+Smaller chunks, slower per chunk — so generation time is driven by how much
+the model has to *say* about a passage, not by how much it reads. The corpus
+estimate is therefore a range rather than a number:
+
+    1,237 chunks x 37.2s = 12.8 hours
+    1,237 chunks x 44.5s = 15.3 hours
+
+The header table carries the range. A single-book measurement extrapolated to
+a corpus is the same mistake as timing a book's first six chunks, one level up.

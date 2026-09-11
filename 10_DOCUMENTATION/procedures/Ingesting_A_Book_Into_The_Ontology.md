@@ -70,9 +70,19 @@ something. Two outliers in the current corpus: Wiener at ~1,100 characters
 per chunk is too small to hold a definition with its context, and Kandel at
 ~15,600 across only 4 chunks is at the top of the band.
 
-**Validation limit:** all three books the recurrence rule was measured on —
-Schacter, Squire, Ashby — are `pages`-mode books. The rule is untested on
-`toc` and `font` books, which are 10 of 18.
+**This was a stated validation limit and has since been closed for `toc`.**
+The recurrence rule was first measured only on `pages`-mode books, where the
+chunk boundaries are imposed by the flag. The worry was that a `toc` book,
+chunked on the author's own thematic sections, would not repeat concepts
+across sections at all — each idea treated once and left behind — which would
+have made recurrence an artefact of page chunking rather than a property of
+books.
+
+Measured on a `toc` book (*Memory in the Age of AI Agents*, 80 chunks, median
+5,550 characters): 144 candidates, 36 at `>= 2`, **13 at `>= 3`**. Squire, a
+`pages` book, gave 155 / 35 / **13**. The distributions are the same.
+
+Still untested on `font`-mode books.
 
 ## 2. An instruct model, not a coder model
 
@@ -133,13 +143,25 @@ Check the reported `mode` and `headings_per_page` per book before a long run.
 
 ## What it costs
 
-**45.8 seconds per chunk** with `llama3.1:8b` on this hardware (RTX 5060
-Laptop, 8 GB, model at 66% GPU residency). The corpus is ~1,073 chunks, so
-**about 13.6 hours for one model** — an overnight run.
+**37-45 seconds per chunk** with `llama3.1:8b` on this hardware (RTX 5060
+Laptop, 8 GB, `--num-ctx 16384`, model at 84% GPU residency). The corpus is
+1,237 chunks across all 20 books, so **12.8 to 15.3 hours for one model** —
+an overnight run.
 
-Do not time the first few chunks of a book and extrapolate. They are front
-matter, produce almost no output, and generation time follows output length.
-Doing exactly that produced a 3.0-hour estimate that was wrong by 4.6x.
+Two ways that number has been got wrong here, both worth not repeating:
+
+- **Timing the first few chunks of a book.** They are front matter, produce
+  almost no output, and generation time follows output length. That produced
+  a 3.0-hour estimate, wrong by 4.6x.
+- **Extrapolating from one book.** Squire runs at 37.2 s/chunk and *Memory in
+  the Age of AI Agents* at 44.5, despite the second having *smaller* chunks.
+  Generation time is driven by how much the model has to say about a passage,
+  not by how much it reads, so it is a range and not a constant.
+
+`--num-ctx` is worth checking before a long run: the window is allocated in
+VRAM beside the weights, so 32768 dropped residency to 66% and cost a third
+more time for the same output. 8192 is faster still and silently skips a
+tenth of the chunks, because the chunk limit derives from the window.
 
 Running four models for cross-model agreement costs four times as much and
 buys a reference set, not a better result: one instruct model's recurrence
