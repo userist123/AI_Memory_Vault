@@ -120,8 +120,29 @@ def test_a_wrong_chunk_index_is_refused(tmp_path, book, index):
 
 
 def test_repeats_collapse_and_count_occurrences(tmp_path, book):
-    """Recurrence is the one ranking signal that works, so it must survive."""
+    """Recurrence is the one ranking signal that works, so it must survive.
+
+    Two submissions of one term out of one section are one section. This test
+    asserted 2 until an agent run over Newell showed what that number was worth:
+    "impasse" arrived from chunks 62, 62 and 63 and reported 3 — the review
+    floor — on two sections.
+    """
     kept, _ = _gate(tmp_path, book, [GOOD, dict(GOOD, concept="Quenched Harmonic Buffering")])
+    assert len(kept) == 1
+    assert kept[0]["occurrences"] == 1, "same section twice is one section"
+
+
+def test_the_same_term_in_two_sections_counts_two(tmp_path):
+    """And the signal still works when the recurrence is real."""
+    two = tmp_path / "two.txt"
+    body = "\n".join([
+        "# Section One", "", CHUNK, "", "# Section Two", "", CHUNK, "",
+    ])
+    two.write_text(body, encoding="utf-8")
+    kept, _ = _gate(tmp_path, two, [
+        GOOD,
+        dict(GOOD, chunk_index=1, concept="Quenched Harmonic Buffering"),
+    ])
     assert len(kept) == 1
     assert kept[0]["occurrences"] == 2
 
