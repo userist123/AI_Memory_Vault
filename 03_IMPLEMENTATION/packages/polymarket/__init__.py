@@ -13,6 +13,7 @@ from .market_snapshot import (
     canonical_json,
     parse_gamma_market,
     sha256_canonical,
+    validate_snapshot_transition,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     "canonical_json",
     "parse_gamma_market",
     "sha256_canonical",
+    "validate_snapshot_transition",
 ]
