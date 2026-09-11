@@ -58,17 +58,26 @@ converter puts in `pages` mode** — 8 of the 18 usable books. A `toc` or
 `font` book chunks on its own headings and the flag does nothing to it. Most
 land in the band anyway:
 
-| mode | chars per chunk, measured |
-|---|---|
-| `toc` (5 books) | 2,600 - 5,600 |
-| `font`, working (4 books) | 1,100 - 15,600 |
-| `font`, broken (Newell) | 1,381 across 912 chunks — see §4 |
-| `pages` at 3 pages (8 books) | 6,000 - 13,000 |
+| mode | books | chunks | median chunk |
+|---|---:|---:|---|
+| `toc` | 5 | 116 | 4,635 - 4,852 |
+| `font` | 3 | 37 | 590 - 4,748 |
+| `pages` at 3 pages | 8 | 458 | 3,595 - 12,777 |
+| `pages`, forced (§4) | 2 | 313 | 6,908 - 7,194 |
+| `ocr` | 2 | 164 | 8,100 - 11,915 |
 
-So check the reported chunk size per book rather than assuming the flag did
-something. Two outliers in the current corpus: Wiener at ~1,100 characters
-per chunk is too small to hold a definition with its context, and Kandel at
-~15,600 across only 4 chunks is at the top of the band.
+**These are measured by chunking every file, and an earlier version of this
+table was not.** It took chunk counts from the `headings` field in the
+conversion report and sizes as `characters / headings`, which is not what
+`split_into_structural_chunks()` produces — it applies its own patterns and
+does not split at every detected heading. For Soar that made 22 chunks look
+like 114 and a median of 47,991 characters look like 7,798.
+
+So check the chunk size by chunking, not by dividing. Most `toc` and `font`
+books sit below 5,000, and recurrence still behaved identically on a `toc`
+book at a median of 4,671 — so the band's lower edge is softer than it
+looks. What matters is the upper edge: a chunk over the derived limit is
+skipped entirely.
 
 **This was a stated validation limit and has since been closed for `toc`.**
 The recurrence rule was first measured only on `pages`-mode books, where the
@@ -143,10 +152,14 @@ Check the reported `mode` and `headings_per_page` per book before a long run.
 
 ## What it costs
 
-**37-45 seconds per chunk** with `llama3.1:8b` on this hardware (RTX 5060
+**37 to 65 seconds per chunk** with `llama3.1:8b` on this hardware (RTX 5060
 Laptop, 8 GB, `--num-ctx 16384`, model at 84% GPU residency). The corpus is
-1,237 chunks across all 20 books, so **12.8 to 15.3 hours for one model** —
+**1,088 chunks** across all 20 books, so **11 to 20 hours for one model** —
 an overnight run.
+
+The spread is wide because generation time follows output length, not input
+length: Squire runs 37.2 s/chunk at a median 8,551 characters, the AI-agent
+survey 64.7 s/chunk at 4,671. Smaller chunks, nearly twice the time.
 
 Two ways that number has been got wrong here, both worth not repeating:
 

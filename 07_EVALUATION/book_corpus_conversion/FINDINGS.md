@@ -21,7 +21,7 @@ The state as of the last section:
 | extraction at book scale | works, with gates that catch fabricated evidence |
 | selectivity | `occurrences >= 3` at 3 pages per chunk, ~210 candidates corpus-wide |
 | recall | 40-55% of what four models agree on |
-| cost | **12.8-15.3h** for one model over 1,237 chunks: 37.2 s/chunk on one book, 44.5 on another |
+| cost | **11.2-19.6h** for one model over 1,088 measured chunks: 37.2 s/chunk on one book, 64.7 on another |
 
 The method, and everything that failed on the way to it, is written up as a
 procedure: [`10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md`](../../10_DOCUMENTATION/procedures/Ingesting_A_Book_Into_The_Ontology.md).
@@ -1316,3 +1316,70 @@ estimate is therefore a range rather than a number:
 
 The header table carries the range. A single-book measurement extrapolated to
 a corpus is the same mistake as timing a book's first six chunks, one level up.
+
+## r031 — every corpus-scale number in this file was derived, not measured
+
+A `font`-mode validation run finished in 2m53s instead of the expected 80
+minutes and produced zero recurrent concepts. The result looked like a clean
+negative. It was not a result at all: 13 of Soar's 22 chunks exceeded the
+chunk limit, so the run covered 12% of the book.
+
+Pulling that thread invalidated the chunk counts, the cost estimate, the
+per-mode size table in the procedure, and the description of a validation run
+already reported as successful.
+
+### The root cause
+
+Chunk counts for `toc` and `font` books were taken from the `headings` field
+in `conversion_metrics.json`, and chunk sizes as `characters / headings`.
+Neither is what `split_into_structural_chunks()` actually produces — it
+applies its own patterns to the text and does not split at every detected
+heading.
+
+For Soar that made 22 chunks look like 114, and a median of 47,991 characters
+look like 7,798 — wrong by a factor of six, in the direction that hides a
+problem.
+
+### Measured, by actually chunking every file
+
+| mode | books | chunks | median chunk |
+|---|---:|---:|---|
+| `toc` | 5 | 116 | 4,635 - 4,852 |
+| `font` | 3 | 37 | 590 - 4,748 |
+| `pages` | 8 | 458 | 3,595 - 12,777 |
+| `pages` (forced) | 2 | 313 | 6,908 - 7,194 |
+| `ocr` | 2 | 164 | 8,100 - 11,915 |
+
+**1,088 chunks**, against 1,237 claimed earlier and 1,581 before Soar and
+Newell were forced to `pages`. Soar goes from 22 chunks with 13 skipped to
+126 with none; Newell from 784 chunks of 867 characters to 187 of 6,908.
+
+Only 4 chunks in the whole corpus now exceed the limit, one each in four
+books.
+
+### The corpus had never been converted the way the procedure documents
+
+All the 3-page work — Schacter, Squire, Ashby, the `toc` survey — ran on
+copies in a scratch directory. The files under `06_INBOX/Carti` were still
+the original 10-page conversion. The recipe was written up before the corpus
+it describes had ever been produced.
+
+It has been now: `--pages-per-chunk 3 --ocr`, then Soar and Newell
+re-converted with `--force-mode pages`.
+
+### A reported run described with numbers it did not have
+
+The `toc` validation was reported here as "80 chunks, median 5,550". The
+script printed `toc-mode book: 55 chunks, median 4671 chars (band is
+5000-15000)` as its first line — including the parenthetical flagging that
+the book sits *below* the documented band. That line was missed by tailing
+the output.
+
+The validation's conclusion survives, because it came from the output JSON:
+13 concepts at `occurrences >= 3`, the same as Squire's 13. If anything it is
+a stronger result than claimed — recurrence held at a median chunk of 4,671,
+below the band the rule was supposed to need.
+
+The timing does not survive. 59m19s over 55 chunks is **64.7 s/chunk**, not
+the 44.5 computed against 80. So the corpus is **11.2 to 19.6 hours**, a
+wider spread than any figure given for it so far.
