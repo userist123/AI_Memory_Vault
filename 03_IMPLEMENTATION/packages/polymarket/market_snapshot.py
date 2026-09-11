@@ -184,36 +184,39 @@ class MarketSnapshot:
 
     @classmethod
     def from_dict(cls, payload: Mapping[str, Any]) -> "MarketSnapshot":
-        market_raw = dict(payload["market"])
-        market_raw["lifecycle"] = MarketLifecycle(market_raw["lifecycle"])
-        market_raw["outcomes"] = tuple(market_raw["outcomes"])
-        market_raw["outcome_ids"] = tuple(market_raw["outcome_ids"])
-        resolution_raw = payload.get("resolution")
-        resolution = None if resolution_raw is None else ResolutionMetadata(
-            status=str(resolution_raw["status"]),
-            outcome_ids=tuple(resolution_raw["outcome_ids"]),
-            resolution_source=resolution_raw.get("resolution_source"),
-            resolution_rule_text=resolution_raw.get("resolution_rule_text"),
-            known_at=str(resolution_raw["known_at"]),
-        )
-        snapshot = cls(
-            snapshot_id=str(payload["snapshot_id"]),
-            schema_version=str(payload["schema_version"]),
-            market=PolymarketMarket(**market_raw),
-            snapshot_at=str(payload["snapshot_at"]),
-            acquired_at=str(payload["acquired_at"]),
-            known_as_of=str(payload["known_as_of"]),
-            price_observations=tuple(PriceObservation(**x) for x in payload.get("price_observations", [])),
-            liquidity=payload.get("liquidity"),
-            volume=payload.get("volume"),
-            source_type=str(payload["source_type"]),
-            source_ref=str(payload["source_ref"]),
-            data_quality=str(payload["data_quality"]),
-            source_payload_hash=str(payload["source_payload_hash"]),
-            resolution=resolution,
-            extra_source_metadata=dict(payload.get("extra_source_metadata") or {}),
-            content_hash=str(payload["content_hash"]),
-        )
+        try:
+            market_raw = dict(payload["market"])
+            market_raw["lifecycle"] = MarketLifecycle(market_raw["lifecycle"])
+            market_raw["outcomes"] = tuple(market_raw["outcomes"])
+            market_raw["outcome_ids"] = tuple(market_raw["outcome_ids"])
+            resolution_raw = payload.get("resolution")
+            resolution = None if resolution_raw is None else ResolutionMetadata(
+                status=str(resolution_raw["status"]),
+                outcome_ids=tuple(resolution_raw["outcome_ids"]),
+                resolution_source=resolution_raw.get("resolution_source"),
+                resolution_rule_text=resolution_raw.get("resolution_rule_text"),
+                known_at=str(resolution_raw["known_at"]),
+            )
+            snapshot = cls(
+                snapshot_id=str(payload["snapshot_id"]),
+                schema_version=str(payload["schema_version"]),
+                market=PolymarketMarket(**market_raw),
+                snapshot_at=str(payload["snapshot_at"]),
+                acquired_at=str(payload["acquired_at"]),
+                known_as_of=str(payload["known_as_of"]),
+                price_observations=tuple(PriceObservation(**x) for x in payload.get("price_observations", [])),
+                liquidity=payload.get("liquidity"),
+                volume=payload.get("volume"),
+                source_type=str(payload["source_type"]),
+                source_ref=str(payload["source_ref"]),
+                data_quality=str(payload["data_quality"]),
+                source_payload_hash=str(payload["source_payload_hash"]),
+                resolution=resolution,
+                extra_source_metadata=dict(payload.get("extra_source_metadata") or {}),
+                content_hash=str(payload["content_hash"]),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError("malformed market snapshot payload") from exc
         snapshot.verify()
         return snapshot
 
@@ -269,7 +272,21 @@ class SnapshotStore:
         target = self.root / f"{snapshot_id}.json"
         if not target.exists():
             raise KeyError(snapshot_id)
-        return MarketSnapshot.from_dict(json.loads(target.read_text(encoding="utf-8")))
+        try:
+            payload = json.loads(target.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError("malformed market snapshot storage") from exc
+        if not isinstance(payload, dict):
+            raise ValueError("malformed market snapshot storage")
+        stored_hash = payload.get("content_hash")
+        if not isinstance(stored_hash, str) or not stored_hash:
+            raise ValueError("snapshot content_hash is missing")
+        canonical_payload = dict(payload)
+        canonical_payload.pop("snapshot_id", None)
+        canonical_payload.pop("content_hash", None)
+        if sha256_canonical(canonical_payload) != stored_hash:
+            raise ValueError("snapshot content_hash does not match stored bytes")
+        return MarketSnapshot.from_dict(payload)
 
 
 def build_snapshot(
