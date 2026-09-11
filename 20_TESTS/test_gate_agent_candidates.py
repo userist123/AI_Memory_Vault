@@ -296,3 +296,62 @@ def test_the_template_gate_actually_runs_inside_gate(tmp_path, capsys):
     reasons = {r["reason"] for r in refused}
     assert reasons <= {"batch_is_templated", "definition_frame_reused"}
     assert any(r.get("shared_frame") for r in refused)
+
+
+def test_a_generator_that_varies_its_frames_still_repeats_its_openings():
+    """The 8-gram check was evaded, not defeated.
+
+    A second submission used five frames that varied further along, so they
+    stopped sharing eight consecutive words: 20% of rows caught where the first
+    submission had lost 99%. What did not vary was how each definition started.
+
+    Measured across three runs — 23 distinct openings across 25 real
+    definitions, against exactly 5 across 762 generated ones.
+    """
+    menu = [
+        "A functional mechanism that", "A theoretical model accounting",
+        "An analytical construct describing", "A structural property governing",
+        "An operational formulation defining",
+    ]
+    generated = [
+        f"{menu[i % 5]} the way that component number {i} behaves under load."
+        for i in range(60)
+    ]
+    cover, distinct = G.opening_concentration(generated)
+    assert distinct == 5
+    assert cover > G.MAX_TOP_OPENING_COVERAGE
+
+
+def test_real_definitions_open_differently_because_the_concept_leads():
+    """Real openings follow the concept. Measured: the top five covered 28%,
+    32% and 40% of a book, never more."""
+    real = [
+        "A protein kinase that relays a signal into the nucleus of the cell.",
+        "The process by which a trace becomes independent of the hippocampus.",
+        "Components of potentiation that depend on new protein being made.",
+        "Slow oscillations that group spindles during non-REM sleep stages.",
+        "An account in which retrieval itself renders a memory labile again.",
+        "Structures on the dendrite that change shape as learning proceeds.",
+        "Repeated reactivation during rest, measured as ordered place cells.",
+        "The window after retrieval when a trace can still be disrupted here.",
+        "Encoding that binds an event to the place and time it happened in.",
+        "A gradient over which older memories resist damage more than new.",
+        "Cells that fire when an animal occupies one location in its space.",
+        "Transfer of dependence from one structure to another over weeks.",
+    ]
+    cover, distinct = G.opening_concentration(real)
+    assert distinct >= 10, "real writing opens almost every definition differently"
+    assert cover < G.MAX_TOP_OPENING_COVERAGE
+
+
+def test_a_templated_batch_is_refused_whole_not_filtered():
+    """Keeping the rows that happen not to share an 8-gram would keep the same
+    generator's output minus the ones it varied most — the submission is not
+    trusted and the survivors are not better, only less similar to each other.
+    """
+    src = (_REPO / "30_SCRIPTS" / "ingestion" / "gate_agent_candidates.py").read_text(
+        encoding="utf-8"
+    )
+    assert "if not hit and not batch_templated:" in src, (
+        "a templated batch must not be filtered row by row"
+    )

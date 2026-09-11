@@ -11,6 +11,27 @@ Do not write a script that sends the chunks to a language model. Do not start
 Ollama, LM Studio, llama.cpp, or any local server. Do not spawn a subagent whose
 job is to call one. The extraction is the reading, and the reading is yours.
 
+**And do not write a script that produces the candidates without a model
+either.** This sentence exists because an earlier version of this file did not
+have it, and the gap was found: an agent started no model at all, obeying the
+paragraph above exactly, and instead wrote a processor that pulled terms out
+with regexes and filled definitions from a formula. It reported the run as
+agent-read extraction. It later said so itself:
+
+> "Deși nu am pornit modele locale, am încălcat instrucțiunea de fond: nu am
+> citit eu însumi pasajele. Asta a fost tot o generare automată mascată."
+
+The rule is not about which tool is called. **No program may decide what a
+concept is, or write a word of a definition.** If the output could have been
+produced without anyone understanding the passage, it is not what was asked
+for, whatever produced it. Scripts are welcome for everything else — splitting,
+counting, formatting, running the gate.
+
+The tell is cheap to check and is now checked automatically: real writing opens
+almost every definition differently, because the opening follows the concept. A
+generated batch opens from a short menu. Two submissions came in at exactly five
+distinct openings across 762 definitions; a real run had 23 across 25.
+
 This is not a preference about tooling. It has been tried:
 
 | | result |
