@@ -1,14 +1,8 @@
-"""Canonical Polymarket market model and immutable historical snapshots.
-
-This module deliberately keeps the domain boundary separate from retrieval and memory.
-It uses the Vault's existing provenance field contract and SHA-256 canonical hashing
-convention, while refusing to infer historical resolution information from a current
-provider response without an explicit information-availability timestamp.
-"""
+"""Canonical Polymarket market model and immutable historical snapshots."""
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timezone
 from enum import Enum
 import hashlib
@@ -23,9 +17,8 @@ DATA_QUALITY_VALUES = frozenset({"verified", "synthetic", "unverified", "contrad
 def _parse_datetime(value: str, *, field_name: str) -> datetime:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field_name} must be a non-empty ISO-8601 string")
-    normalized = value.replace("Z", "+00:00")
     try:
-        parsed = datetime.fromisoformat(normalized)
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     except ValueError as exc:
         raise ValueError(f"{field_name} must be ISO-8601: {value!r}") from exc
     if parsed.tzinfo is None:
@@ -33,14 +26,7 @@ def _parse_datetime(value: str, *, field_name: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
-def _iso(value: datetime) -> str:
-    if value.tzinfo is None:
-        raise ValueError("datetime must include timezone")
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
 def canonical_json(value: Any) -> str:
-    """Serialize data deterministically for content addressing."""
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -74,11 +60,8 @@ class ResolutionMetadata:
     known_at: str
 
     def validate(self, known_as_of: datetime) -> None:
-        known = _parse_datetime(self.known_at, field_name="resolution.known_at")
-        if known > known_as_of:
-            raise ValueError(
-                "resolution information is known after the snapshot known_as_of boundary"
-            )
+        if _parse_datetime(self.known_at, field_name="resolution.known_at") > known_as_of:
+            raise ValueError("resolution information is known after known_as_of")
         if not self.status:
             raise ValueError("resolution.status cannot be empty")
 
@@ -108,18 +91,14 @@ class PolymarketMarket:
             raise ValueError("market_id is required")
         if not self.question.strip():
             raise ValueError("question is required")
-        if len(self.outcomes) == 0:
+        if not self.outcomes:
             raise ValueError("at least one outcome is required")
         if len(self.outcome_ids) != len(self.outcomes):
             raise ValueError("outcome_ids and outcomes must have equal length")
-        for field_name, value in (
-            ("created_at", self.created_at),
-            ("start_at", self.start_at),
-            ("close_at", self.close_at),
-            ("expected_resolution_at", self.expected_resolution_at),
-        ):
+        for name, value in (("created_at", self.created_at), ("start_at", self.start_at),
+                            ("close_at", self.close_at), ("expected_resolution_at", self.expected_resolution_at)):
             if value is not None:
-                _parse_datetime(value, field_name=field_name)
+                _parse_datetime(value, field_name=name)
 
 
 @dataclass(frozen=True)
@@ -139,30 +118,49 @@ class MarketSnapshot:
     source_payload_hash: str
     resolution: Optional[ResolutionMetadata] = None
     extra_source_metadata: Mapping[str, Any] = field(default_factory=dict)
-    content_hash: str = field(default="", compare=True)
+    content_hash: str = ""
 
     def canonical_payload(self) -> dict[str, Any]:
-        payload = asdict(self)
-        payload.pop("content_hash", None)
-        payload["market"]["lifecycle"] = self.market.lifecycle.value
-        payload["price_observations"] = [
-            asdict(obs) for obs in self.price_observations
-        ]
-        if self.resolution is not None:
-            payload["resolution"]["outcome_ids"] = list(self.resolution.outcome_ids)
-        payload["extra_source_metadata"] = dict(self.extra_source_metadata)
-        return payload
+        return {
+            "snapshot_id": self.snapshot_id,
+            "schema_version": self.schema_version,
+            "market": {
+                **asdict(self.market),
+                "lifecycle": self.market.lifecycle.value,
+                "outcomes": list(self.market.outcomes),
+                "outcome_ids": list(self.market.outcome_ids),
+            },
+            "snapshot_at": self.snapshot_at,
+            "acquired_at": self.acquired_at,
+            "known_as_of": self.known_as_of,
+            "price_observations": [asdict(x) for x in self.price_observations],
+            "liquidity": self.liquidity,
+            "volume": self.volume,
+            "source_type": self.source_type,
+            "source_ref": self.source_ref,
+            "data_quality": self.data_quality,
+            "source_payload_hash": self.source_payload_hash,
+            "resolution": None if self.resolution is None else {
+                **asdict(self.resolution), "outcome_ids": list(self.resolution.outcome_ids)
+            },
+            "extra_source_metadata": dict(self.extra_source_metadata),
+        }
 
     def recompute_hash(self) -> str:
-        return sha256_canonical(self.canonical_payload())
+        payload = self.canonical_payload()
+        payload.pop("snapshot_id", None)
+        payload.pop("content_hash", None)
+        return sha256_canonical(payload)
 
     def verify(self) -> None:
         self.market.validate()
-        known_as_of = _parse_datetime(self.known_as_of, field_name="known_as_of")
         snapshot_at = _parse_datetime(self.snapshot_at, field_name="snapshot_at")
         acquired_at = _parse_datetime(self.acquired_at, field_name="acquired_at")
+        known_as_of = _parse_datetime(self.known_as_of, field_name="known_as_of")
         if acquired_at < snapshot_at:
             raise ValueError("acquired_at cannot precede snapshot_at")
+        if self.schema_version != CANONICAL_SCHEMA_VERSION:
+            raise ValueError(f"unsupported schema version: {self.schema_version}")
         if self.data_quality not in DATA_QUALITY_VALUES:
             raise ValueError(f"unknown data_quality: {self.data_quality}")
         if not self.source_type or not self.source_ref:
@@ -175,20 +173,12 @@ class MarketSnapshot:
             self.resolution.validate(known_as_of)
         if self.content_hash != self.recompute_hash():
             raise ValueError("snapshot content_hash does not match canonical payload")
+        _ = known_as_of
 
     def to_dict(self) -> dict[str, Any]:
         self.verify()
         payload = self.canonical_payload()
         payload["content_hash"] = self.content_hash
-        payload["market"]["lifecycle"] = self.market.lifecycle.value
-        payload["resolution"] = (
-            None
-            if self.resolution is None
-            else {
-                **asdict(self.resolution),
-                "outcome_ids": list(self.resolution.outcome_ids),
-            }
-        )
         return payload
 
     @classmethod
@@ -197,24 +187,22 @@ class MarketSnapshot:
         market_raw["lifecycle"] = MarketLifecycle(market_raw["lifecycle"])
         market_raw["outcomes"] = tuple(market_raw["outcomes"])
         market_raw["outcome_ids"] = tuple(market_raw["outcome_ids"])
-        market = PolymarketMarket(**market_raw)
-        observations = tuple(
-            PriceObservation(**dict(item)) for item in payload.get("price_observations", [])
-        )
         resolution_raw = payload.get("resolution")
-        resolution = None
-        if resolution_raw is not None:
-            resolution_data = dict(resolution_raw)
-            resolution_data["outcome_ids"] = tuple(resolution_data["outcome_ids"])
-            resolution = ResolutionMetadata(**resolution_data)
+        resolution = None if resolution_raw is None else ResolutionMetadata(
+            status=str(resolution_raw["status"]),
+            outcome_ids=tuple(resolution_raw["outcome_ids"]),
+            resolution_source=resolution_raw.get("resolution_source"),
+            resolution_rule_text=resolution_raw.get("resolution_rule_text"),
+            known_at=str(resolution_raw["known_at"]),
+        )
         snapshot = cls(
             snapshot_id=str(payload["snapshot_id"]),
             schema_version=str(payload["schema_version"]),
-            market=market,
+            market=PolymarketMarket(**market_raw),
             snapshot_at=str(payload["snapshot_at"]),
             acquired_at=str(payload["acquired_at"]),
             known_as_of=str(payload["known_as_of"]),
-            price_observations=observations,
+            price_observations=tuple(PriceObservation(**x) for x in payload.get("price_observations", [])),
             liquidity=payload.get("liquidity"),
             volume=payload.get("volume"),
             source_type=str(payload["source_type"]),
@@ -226,13 +214,11 @@ class MarketSnapshot:
             content_hash=str(payload["content_hash"]),
         )
         snapshot.verify()
-        if not snapshot.schema_version == CANONICAL_SCHEMA_VERSION:
-            raise ValueError(f"unsupported schema version: {snapshot.schema_version}")
         return snapshot
 
 
 class SnapshotStore:
-    """Content-addressed JSON store; existing snapshots are never overwritten."""
+    """Content-addressed JSON store. Existing snapshot bytes are never overwritten."""
 
     def __init__(self, root: Path) -> None:
         self.root = Path(root)
@@ -243,8 +229,7 @@ class SnapshotStore:
         target = self.root / f"{snapshot.snapshot_id}.json"
         serialized = canonical_json(snapshot.to_dict()) + "\n"
         if target.exists():
-            existing = target.read_text(encoding="utf-8")
-            if existing != serialized:
+            if target.read_text(encoding="utf-8") != serialized:
                 raise ValueError(f"immutable snapshot collision: {snapshot.snapshot_id}")
             return target
         target.write_text(serialized, encoding="utf-8")
@@ -273,17 +258,6 @@ def build_snapshot(
     resolution: Optional[ResolutionMetadata] = None,
     extra_source_metadata: Optional[Mapping[str, Any]] = None,
 ) -> MarketSnapshot:
-    market.validate()
-    _parse_datetime(snapshot_at, field_name="snapshot_at")
-    _parse_datetime(acquired_at, field_name="acquired_at")
-    known = _parse_datetime(known_as_of, field_name="known_as_of")
-    if not source_type or not source_ref:
-        raise ValueError("source_type and source_ref are required")
-    if data_quality not in DATA_QUALITY_VALUES:
-        raise ValueError(f"unknown data_quality: {data_quality}")
-    if resolution is not None:
-        resolution.validate(known)
-
     provisional = MarketSnapshot(
         snapshot_id="pending",
         schema_version=CANONICAL_SCHEMA_VERSION,
@@ -300,45 +274,46 @@ def build_snapshot(
         source_payload_hash=source_payload_hash,
         resolution=resolution,
         extra_source_metadata=dict(extra_source_metadata or {}),
-        content_hash="",
     )
+    provisional.market.validate()
+    provisional.verify_without_hash()
     content_hash = provisional.recompute_hash()
-    snapshot_id = f"PMS-{content_hash[:24]}"
-    snapshot = MarketSnapshot(
-        **{**asdict(provisional), "snapshot_id": snapshot_id, "content_hash": content_hash}
-    )
+    snapshot = replace(provisional, snapshot_id=f"PMS-{content_hash[:24]}", content_hash=content_hash)
     snapshot.verify()
     return snapshot
 
 
+def _verify_without_hash(self: MarketSnapshot) -> None:
+    _parse_datetime(self.snapshot_at, field_name="snapshot_at")
+    acquired_at = _parse_datetime(self.acquired_at, field_name="acquired_at")
+    snapshot_at = _parse_datetime(self.snapshot_at, field_name="snapshot_at")
+    known_as_of = _parse_datetime(self.known_as_of, field_name="known_as_of")
+    if acquired_at < snapshot_at:
+        raise ValueError("acquired_at cannot precede snapshot_at")
+    if self.schema_version != CANONICAL_SCHEMA_VERSION:
+        raise ValueError(f"unsupported schema version: {self.schema_version}")
+    if self.data_quality not in DATA_QUALITY_VALUES:
+        raise ValueError(f"unknown data_quality: {self.data_quality}")
+    if not self.source_type or not self.source_ref:
+        raise ValueError("source_type and source_ref are required")
+    for obs in self.price_observations:
+        _parse_datetime(obs.observed_at, field_name="price.observed_at")
+    if self.resolution is not None:
+        self.resolution.validate(known_as_of)
+
+
+MarketSnapshot.verify_without_hash = _verify_without_hash  # type: ignore[attr-defined]
+
+
 def parse_gamma_market(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Parse only provider-verified market fields; preserve unknowns separately.
-
-    The current official Gamma market contract exposes `id`, `question`, `conditionId`,
-    `description`, `category`, `marketType`, `outcomes`, `outcomePrices`, lifecycle/date
-    fields, `resolutionSource`, `liquidity`, `volume`, and CLOB token IDs. Provider
-    fields that are resolution outcomes are intentionally *not* promoted to historical
-    resolution metadata without an explicit `known_at` supplied by the caller.
-    """
-    required = ("id", "question")
-    missing = [key for key in required if not payload.get(key)]
-    if missing:
-        raise ValueError(f"Gamma market missing required fields: {missing}")
-
-    outcomes = payload.get("outcomes")
-    outcome_prices = payload.get("outcomePrices")
-    clob_token_ids = payload.get("clobTokenIds")
+    """Parse provider-verified fields without inferring historical resolution."""
+    if not payload.get("id") or not payload.get("question"):
+        raise ValueError("Gamma market requires id and question")
 
     def decode_array(value: Any, field_name: str) -> list[str]:
         if value is None:
             return []
-        if isinstance(value, str):
-            try:
-                decoded = json.loads(value)
-            except json.JSONDecodeError as exc:
-                raise ValueError(f"{field_name} is not valid JSON") from exc
-        else:
-            decoded = value
+        decoded = json.loads(value) if isinstance(value, str) else value
         if not isinstance(decoded, list):
             raise ValueError(f"{field_name} must be an array or JSON array string")
         return [str(item) for item in decoded]
@@ -350,9 +325,9 @@ def parse_gamma_market(payload: Mapping[str, Any]) -> dict[str, Any]:
         "description": payload.get("description"),
         "category": payload.get("category"),
         "market_type": payload.get("marketType"),
-        "outcomes": decode_array(outcomes, "outcomes"),
-        "outcome_prices": decode_array(outcome_prices, "outcomePrices"),
-        "outcome_ids": decode_array(clob_token_ids, "clobTokenIds"),
+        "outcomes": decode_array(payload.get("outcomes"), "outcomes"),
+        "outcome_prices": decode_array(payload.get("outcomePrices"), "outcomePrices"),
+        "outcome_ids": decode_array(payload.get("clobTokenIds"), "clobTokenIds"),
         "active": payload.get("active"),
         "closed": payload.get("closed"),
         "created_at": payload.get("createdAt") or payload.get("creationDate"),
