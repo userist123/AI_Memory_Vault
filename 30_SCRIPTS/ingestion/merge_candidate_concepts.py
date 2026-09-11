@@ -66,6 +66,86 @@ def extract_existing_concepts(slot_file_path: str) -> Set[str]:
     return existing
 
 
+
+class SlotConflict(Exception):
+    """One concept proposed for two different slots.
+
+    Not a merge failure to be worked around — a decision nobody has made yet.
+    Extracting the corpus book by book produced this the moment a second book
+    covered the same ground: "semantic memory" arrived as `retrieval` from Soar,
+    which treats it as a store you retrieve from, and as `ontology` from
+    Schacter, which treats it as a distinct memory system. Both readings are
+    defensible in their own book. The vault holds the concept once.
+
+    Merging anyway would put one concept in the ontology twice, under two
+    slots, as two unrelated things — the exact fragmentation the slot scheme
+    exists to prevent. So this stops and names the disagreement.
+    """
+
+
+def find_slot_conflicts(records):
+    """Concepts proposed for more than one slot, and who proposed what."""
+    seen = {}
+    for item in records:
+        name = normalize_concept_name(item["concept"])
+        slot = str(item.get("maps_to_slot", "")).lower()
+        book = str(item.get("source_book", "?"))
+        by_slot = seen.setdefault(name, {})
+        books = by_slot.setdefault(slot, [])
+        if book not in books:
+            books.append(book)
+    return {name: by_slot for name, by_slot in seen.items() if len(by_slot) > 1}
+
+
+def _as_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def combine_across_books(records):
+    """One row per concept, carrying what every book contributed.
+
+    Within a slot the same concept arrives from several books — "declarative
+    memory" from Schacter at 15 sections and from Squire & Kandel at 22. The
+    old behaviour kept whichever came first and dropped the rest, so the
+    better-evidenced row was discarded roughly half the time, silently, and
+    counted as a deduplication.
+
+    occurrences add up, because the signal is how many distinct sections define
+    the term and sections in different books are different sections. A concept
+    two books each return to a dozen times is more load-bearing than one a
+    single book mentions twice, and the sum is what says so.
+
+    The evidence quote comes from the book that evidenced it best, since only
+    one fits in the table and a reviewer reads that one.
+    """
+    combined = {}
+    order = []
+    for item in records:
+        name = normalize_concept_name(item["concept"])
+        if name not in combined:
+            combined[name] = dict(item, source_books=[str(item.get("source_book", "?"))])
+            order.append(name)
+            continue
+
+        kept = combined[name]
+        book = str(item.get("source_book", "?"))
+        if book not in kept["source_books"]:
+            kept["source_books"].append(book)
+        occ_total = _as_int(kept.get("occurrences")) + _as_int(item.get("occurrences"))
+        if _as_int(item.get("occurrences")) > _as_int(kept.get("occurrences")):
+            # Better-evidenced book wins the definition and the quote.
+            combined[name] = dict(item, source_books=kept["source_books"])
+        combined[name]["occurrences"] = occ_total
+
+    for name in order:
+        row = combined[name]
+        row["source_book"] = "; ".join(row.pop("source_books"))
+    return [combined[n] for n in order]
+
+
 def append_candidate_concepts_to_slot(
     slot_file_path: str,
     new_concepts: List[Dict[str, Any]],
@@ -138,7 +218,8 @@ def append_candidate_concepts_to_slot(
 def merge_candidate_concepts(
     staging_file: str,
     slots_dir: str = SLOT_DIRECTORY,
-    override_date: str = None
+    override_date: str = None,
+    allow_slot_conflicts: bool = False,
 ) -> Dict[str, Any]:
     """
     Main merge function.
@@ -158,23 +239,55 @@ def merge_candidate_concepts(
             raise ValueError(f"Invalid canonical slot '{slot}' in concept record: {item}")
         grouped_by_slot.setdefault(slot, []).append(item)
 
+    # Before writing anything. A concept the corpus puts in two slots is a
+    # disagreement between books, and writing it into both is how one concept
+    # becomes two unrelated ones.
+    conflicts = find_slot_conflicts(staging_data)
+    if conflicts and not allow_slot_conflicts:
+        lines = [
+            "  " + name + ": " + ", ".join(
+                slot + " (" + ", ".join(books) + ")"
+                for slot, books in sorted(by_slot.items())
+            )
+            for name, by_slot in sorted(conflicts.items())
+        ]
+        raise SlotConflict(
+            str(len(conflicts)) + " concept(s) proposed for more than one slot; "
+            "decide before merging, or pass allow_slot_conflicts=True to write "
+            "each into its own slot deliberately:" + chr(10) + chr(10).join(lines)
+        )
+
     merged_stats = {}
     total_added = 0
-    total_deduped = 0
+    total_already_present = 0
+    total_combined = 0
 
     for slot_name, records in grouped_by_slot.items():
         slot_file = find_slot_file(slot_name, slots_dir)
-        added = append_candidate_concepts_to_slot(slot_file, records, date_str)
-        deduped = len(records) - added
-        merged_stats[slot_name] = {"added": added, "deduped": deduped}
+        rows = combine_across_books(records)
+        combined_here = len(records) - len(rows)
+        added = append_candidate_concepts_to_slot(slot_file, rows, date_str)
+        already = len(rows) - added
+        merged_stats[slot_name] = {
+            "added": added,
+            "combined_across_books": combined_here,
+            "already_in_slot_file": already,
+        }
         total_added += added
-        total_deduped += deduped
+        total_combined += combined_here
+        total_already_present += already
 
     return {
         "staging_file": staging_file,
         "total_records_processed": len(staging_data),
         "net_new_concepts_merged": total_added,
-        "concepts_deduplicated": total_deduped,
+        # Two different things that used to be one number called
+        # "deduplicated": rows folded together because several books define the
+        # same concept, and rows not written because the slot file already has
+        # that concept.
+        "combined_across_books": total_combined,
+        "already_in_slot_file": total_already_present,
+        "slot_conflicts": {k: sorted(v) for k, v in conflicts.items()},
         "per_slot_summary": merged_stats
     }
 
