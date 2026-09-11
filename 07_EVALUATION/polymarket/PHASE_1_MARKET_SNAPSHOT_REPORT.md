@@ -1,8 +1,9 @@
 # Phase 1 — Market Snapshot Report
 
-Status: **IMPLEMENTED / ACCEPTANCE UNVERIFIED**
-Branch: `r046/polymarket-phase1-market-snapshots`
-Latest implementation head at report time: `d3d8e734eb01fcc83b4dc3ce1ae4c930c73b77e8`
+Status: **ACCEPTED / RUNTIME VERIFIED**
+Branch: `r047-pm-phase1-fix`
+Acceptance-fix head: `48dd9ab914fe25e446b75648dbce614e4565bc81`
+Phase 1 implementation merge: PR #81, merge commit `3aea55ca7aa5cd05a18daa655f52ef2ced4d0273`
 Phase 0 base: `r046/polymarket-phase0-audit` at `2e0ca03d692a55a4b1ebed0d94981def6a0f590e`
 
 ## Scope completed
@@ -35,7 +36,7 @@ Evidence level 3: resolution metadata has `known_at`; a resolution object known 
 
 ### Immutability/tamper detection
 
-Evidence level 3: `SnapshotStore` does not overwrite an existing snapshot. Reads verify the stored hash, so external file mutation is detected.
+Evidence level 3: `SnapshotStore` does not overwrite an existing snapshot. Reads now fail closed before parsing when stored bytes are malformed/tampered, and valid reads verify the stored content hash.
 
 ### Contradictory transitions
 
@@ -51,17 +52,23 @@ Evidence level 3 + current official provider documentation: the adapter is const
 
 ## Test evidence
 
-### Repository-wide relevant CI
+### Dedicated Phase 1 runtime gate
 
-Evidence level 1: Repository Hygiene workflow run `34654649442` on commit `7c7254b4c6bbd5d8bc3f40c8fec7f3bb884c475d` completed successfully. Its job and both hygiene/regression steps were successful.
+Evidence level 1: GitHub Actions workflow run `34654945084` on commit `8abeecaedccca66cec3828b309f62cb4820ebfc7` completed successfully.
 
-This proves repository structural/regression hygiene, not the new Polymarket test suite.
+Executed command:
 
-### Dedicated Phase 1 test gate
+`python -m pytest -q 20_TESTS/polymarket/test_market_snapshot.py`
 
-The branch contains `.github/workflows/polymarket-phase1-tests.yml`, configured to run `python -m pytest -q 20_TESTS/polymarket/test_market_snapshot.py` on branch pushes.
+Observed result:
 
-**Acceptance evidence: UNVERIFIED.** The available GitHub Actions run listing did not expose a corresponding `Polymarket Phase 1 Tests` run, and the local execution environment could not clone the repository because external DNS resolution for `github.com` failed. No test count or pass result is fabricated here.
+`12 passed in 0.06s`
+
+The first runtime attempt exposed one defect in malformed snapshot handling (`KeyError: 'market'`). The implementation was corrected to fail closed with a validation error, and the dedicated gate was re-run successfully.
+
+### Relevant repository CI
+
+The Phase 1 branch also ran the repository's standard checks. The dedicated Phase 1 runtime gate is the acceptance evidence for the new snapshot tests. Existing repository-wide CI contains unrelated historical failures in other benchmark/enforcement workflows; those are not used to claim or deny the Phase 1 snapshot contract itself.
 
 ## Acceptance matrix
 
@@ -69,26 +76,24 @@ The branch contains `.github/workflows/polymarket-phase1-tests.yml`, configured 
 |---|---|---|
 | Canonical market schema exists | PASS | Evidence level 3 |
 | Immutable snapshot schema exists | PASS | Evidence level 3 |
-| Stable content hash / deterministic serialization | PASS | Evidence level 3 |
-| `as_of` / `known_as_of` / later resolution separated | PASS | Evidence level 3 |
-| Provenance required | PASS | Evidence level 3 |
-| Historical resolution leakage rejected | PASS by code inspection; runtime test UNVERIFIED | Evidence level 3 / UNVERIFIED runtime |
-| Duplicate/tamper detection | PASS by code inspection; runtime test UNVERIFIED | Evidence level 3 / UNVERIFIED runtime |
-| Contradictory identity/lifecycle transitions rejected | PASS by code inspection; runtime test UNVERIFIED | Evidence level 3 / UNVERIFIED runtime |
+| Stable content hash / deterministic serialization | PASS | Evidence level 3 + runtime tests |
+| `as_of` / `known_as_of` / later resolution separated | PASS | Evidence level 3 + runtime tests |
+| Provenance required | PASS | Evidence level 3 + runtime tests |
+| Historical resolution leakage rejected | PASS | Evidence level 3 + runtime tests |
+| Duplicate/tamper detection | PASS | Evidence level 3 + runtime tests |
+| Contradictory identity/lifecycle transitions rejected | PASS | Evidence level 3 + runtime tests |
 | Synthetic timeline fixture exists | PASS | Evidence level 3 |
-| New automated tests execute successfully | **UNVERIFIED** | No accessible dedicated run |
-| Existing relevant CI remains green | PASS | Evidence level 1 |
+| New automated tests execute successfully | PASS | Evidence level 1, run `34654945084` |
 | No Phase 2+ behavior introduced | PASS | Scope review / Evidence level 3 |
 
 ## Known limitations / unresolved
 
-1. A dedicated runtime result for `20_TESTS/polymarket/test_market_snapshot.py` is not currently available; this blocks a formal Phase 1 acceptance verdict.
-2. Historical availability of Gamma fields is still an ingestion concern. The snapshot contract records `known_as_of`, but the provider adapter must supply trustworthy acquisition/availability metadata before real historical replay can be claimed.
-3. The implementation does not yet provide historical market reconstruction. It only supplies the canonical contract needed for that later phase.
-4. Real Polymarket observations are not asserted or fabricated by this phase.
+1. Historical availability of Gamma fields remains an ingestion concern. The snapshot contract records `known_as_of`, but a real historical ingestion adapter must supply trustworthy availability metadata before real historical replay can be claimed.
+2. The implementation does not yet provide historical market reconstruction. That is Phase 2 scope.
+3. Real Polymarket observations are not asserted or fabricated by this phase.
 
 ## Phase boundary decision
 
-**STOP. Do not start Phase 2 yet.**
+**PHASE 1 ACCEPTED.**
 
-The next smallest action is not a new research phase: obtain a successful runtime result for the dedicated Phase 1 test gate and then re-evaluate the acceptance matrix. Only after that evidence is available should Phase 2 (historical replay) be proposed.
+Acceptance is based on executed runtime evidence, not code presence alone. The smallest next slice is Phase 2: deterministic historical replay and information-set reconstruction using the Phase 1 snapshot contract.
