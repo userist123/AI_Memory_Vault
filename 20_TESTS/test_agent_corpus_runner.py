@@ -111,7 +111,9 @@ def test_pending_is_not_the_same_as_yielded_nothing(corpus, tmp_path, monkeypatc
         report_name="report.json",
     ))
 
-    report = json.loads((tmp_path / "staging" / "report.json").read_text(encoding="utf-8"))
+    report = json.loads(
+        (tmp_path / "staging" / "report.json").read_text(encoding="utf-8")
+    )["books"]
     assert [b["short_name"] for b in report] == ["large"], (
         "only the book that was actually attempted belongs in the report"
     )
@@ -119,3 +121,56 @@ def test_pending_is_not_the_same_as_yielded_nothing(corpus, tmp_path, monkeypatc
 
     out = capsys.readouterr().out
     assert "pending (2)" in out and "medium" in out and "small" in out
+
+
+def test_the_report_records_whether_a_local_model_server_was_up(
+    corpus, tmp_path, monkeypatch
+):
+    """provider="agent" is only worth what the agent actually did.
+
+    An agent that wrote a script to call a 7B model would produce rows labelled
+    "agent" that are nothing of the sort. This cannot prevent that; it records
+    it beside the numbers, so the label can be weighed rather than taken.
+    """
+    work = tmp_path / "work"
+    _prepare(corpus, work)
+    monkeypatch.setattr(R, "_REPO", tmp_path)
+    (work / "large_candidates.json").write_text("[]", encoding="utf-8")
+
+    monkeypatch.setattr(R, "probe_local_providers", lambda: {
+        "checked_at": "2026-09-11T22:00:00+03:00",
+        "local_servers_responding": {
+            "ollama": {"port": 11434, "responding": True,
+                       "models_loaded": ["llama3.1:8b"]},
+        },
+        "clean": False,
+    })
+
+    R.collect(argparse.Namespace(
+        work_dir=work, corpus_root=corpus, agent_label="antigravity",
+        report_name="report.json",
+    ))
+
+    report = json.loads(
+        (tmp_path / "staging" / "report.json").read_text(encoding="utf-8")
+    )
+    assert report["local_provider_probe"]["clean"] is False
+    assert (report["local_provider_probe"]["local_servers_responding"]
+            ["ollama"]["models_loaded"] == ["llama3.1:8b"])
+
+
+def test_the_probe_never_raises_and_never_blocks(monkeypatch):
+    """It is an observation, not a gate. A run must not die because a probe
+    could not reach a port, and a local server must not stop the collection —
+    absence of a server is weak evidence anyway, since the work could have
+    gone through a remote endpoint."""
+    import urllib.request
+
+    def explode(*a, **k):
+        raise OSError("no network of any kind")
+
+    monkeypatch.setattr(urllib.request, "urlopen", explode)
+    probe = R.probe_local_providers(timeout=0.01)
+    assert probe["clean"] is True
+    assert probe["local_servers_responding"] == {}
+    assert probe["checked_at"]

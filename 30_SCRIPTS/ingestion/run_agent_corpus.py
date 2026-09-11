@@ -52,6 +52,7 @@ Those two are very different and the report keeps them apart.
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import pathlib
 import sys
@@ -74,6 +75,68 @@ MANIFEST = _HERE / "corpus_manifest.json"
 #: review floor of occurrences>=3, no matter how well it is read. It is still
 #: worth extracting — it just must not be read as evidence about yield.
 MIN_CHUNKS_FOR_RECURRENCE = 3
+
+
+#: Local model servers, on the ports they use out of the box. The point of
+#: probing them is not to stop anything — it is to keep the report honest.
+LOCAL_PROVIDER_PORTS = {
+    "ollama": 11434,
+    "lm-studio": 1234,
+    "llama.cpp": 8080,
+    "text-generation-webui": 5000,
+}
+
+
+def probe_local_providers(timeout: float = 1.5) -> dict[str, Any]:
+    """Record whether a local model server was up while this ran.
+
+    `provider` is written as "agent" on every row this file produces, and the
+    value of that label depends entirely on an agent having actually read the
+    passages. An agent that instead wrote a script to call a 7B model would
+    produce rows labelled "agent" that are nothing of the sort, and no amount
+    of asking prevents that.
+
+    So this does not prevent it. It observes it, into the report, next to the
+    numbers the reader is about to trust: which local servers answered, and
+    what they had loaded. A clean run says so; a run with llama3.1:8b resident
+    in VRAM says that too, and the reader gets to weigh it.
+
+    Absence of a server is weak evidence — the work could have gone through a
+    remote endpoint — so this is never a pass/fail gate, only a recorded
+    observation. It is deliberately cheap and never raises.
+    """
+    import urllib.error
+    import urllib.request
+
+    seen: dict[str, Any] = {}
+    for name, port in LOCAL_PROVIDER_PORTS.items():
+        try:
+            with urllib.request.urlopen(
+                f"http://localhost:{port}/", timeout=timeout
+            ) as response:
+                seen[name] = {"port": port, "responding": True,
+                              "status": response.status}
+        except urllib.error.HTTPError as exc:
+            #: An HTTP error is still a server answering.
+            seen[name] = {"port": port, "responding": True, "status": exc.code}
+        except Exception:
+            continue
+
+    if "ollama" in seen:
+        try:
+            with urllib.request.urlopen(
+                "http://localhost:11434/api/ps", timeout=timeout
+            ) as response:
+                loaded = json.loads(response.read() or b"{}").get("models", [])
+            seen["ollama"]["models_loaded"] = [m.get("name") for m in loaded]
+        except Exception:
+            pass
+
+    return {
+        "checked_at": datetime.datetime.now().astimezone().isoformat(),
+        "local_servers_responding": seen,
+        "clean": not seen,
+    }
 
 
 def load_books() -> list[dict[str, str]]:
@@ -203,9 +266,14 @@ def collect(args: argparse.Namespace) -> int:
             "agent_label": args.agent_label,
         })
 
+    probe = probe_local_providers()
     staging.mkdir(parents=True, exist_ok=True)
     out = staging / args.report_name
-    out.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    out.write_text(json.dumps({
+        "agent_label": args.agent_label,
+        "local_provider_probe": probe,
+        "books": report,
+    }, indent=2, ensure_ascii=False), encoding="utf-8")
 
     kept = sum(b["candidates_kept"] for b in report)
     at3 = sum(b["candidates_at_ge_3"] for b in report)
@@ -219,6 +287,16 @@ def collect(args: argparse.Namespace) -> int:
     print(f"  rejected                {sum(reasons.values())}  {dict(reasons.most_common())}")
     if pending:
         print(f"  pending ({len(pending)})         {', '.join(pending)}")
+
+    if probe["clean"]:
+        print("  local providers         none responding at collect time")
+    else:
+        for name, info in probe["local_servers_responding"].items():
+            models = info.get("models_loaded")
+            extra = f"  loaded={models}" if models else ""
+            print(f"  LOCAL PROVIDER UP       {name} on :{info['port']}{extra}")
+        print("  ^ recorded in the report. These rows are labelled provider="
+              '"agent"; weigh that label accordingly.')
     return 0
 
 
