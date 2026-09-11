@@ -74,12 +74,12 @@ def test_ledger_is_append_only_and_idempotent_for_identical_record():
     assert ledger.records() == (record,)
 
 
-def test_ledger_rejects_same_id_with_different_content():
+def test_ledger_rejects_forged_prediction_id():
     record = build_prediction(provenance=provenance(), **BASE)
     conflicting = build_prediction(provenance=provenance(), **{**BASE, "probability": 0.63})
     forged = type(record)(record.prediction_id, conflicting.schema_version, conflicting.market_id, conflicting.outcome_id, conflicting.probability, conflicting.predicted_at, conflicting.known_as_of, conflicting.provenance, conflicting.abstained, conflicting.note)
     ledger = PredictionLedger([record])
-    with pytest.raises(ValueError, match="collision"):
+    with pytest.raises(ValueError, match="prediction_id"):
         ledger.append(forged)
 
 
