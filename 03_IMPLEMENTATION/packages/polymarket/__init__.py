@@ -28,14 +28,21 @@ from .prediction_ledger import (
     PredictionRecord,
     build_prediction,
 )
+from .prediction_council import (
+    PREDICTION_COUNCIL_SCHEMA_VERSION,
+    CouncilRecord,
+    build_council,
+)
 
 __all__ = [
     "CANONICAL_SCHEMA_VERSION",
+    "CouncilRecord",
     "DATA_QUALITY_VALUES",
     "HistoricalPricePoint",
     "HistoricalReplay",
     "MarketLifecycle",
     "MarketSnapshot",
+    "PREDICTION_COUNCIL_SCHEMA_VERSION",
     "PREDICTION_LEDGER_SCHEMA_VERSION",
     "PolymarketMarket",
     "PredictionLedger",
@@ -46,6 +53,7 @@ __all__ = [
     "ResolutionMetadata",
     "REPLAY_SCHEMA_VERSION",
     "SnapshotStore",
+    "build_council",
     "build_prediction",
     "build_snapshot",
     "canonical_json",
