@@ -50,8 +50,19 @@ from .prediction_council import (
     CouncilRecord,
     build_council,
 )
+from .risk_abstention import (
+    RISK_ABSTENTION_SCHEMA_VERSION,
+    DECISION_ABSTAIN,
+    DECISION_BET,
+    AbstentionDecision,
+    AbstentionPolicy,
+    evaluate_prediction,
+    evaluate_prediction_against_history,
+)
 
 __all__ = [
+    "ABSTENTION_POLICY_SCHEMA_VERSION" if False else "AbstentionPolicy",
+    "AbstentionDecision",
     "CALIBRATION_SCHEMA_VERSION",
     "CalibrationBin",
     "CalibrationObservation",
@@ -59,6 +70,8 @@ __all__ = [
     "CANONICAL_SCHEMA_VERSION",
     "CouncilRecord",
     "DATA_QUALITY_VALUES",
+    "DECISION_ABSTAIN",
+    "DECISION_BET",
     "HistoricalPricePoint",
     "HistoricalReplay",
     "LOG_EPSILON",
@@ -77,6 +90,7 @@ __all__ = [
     "ReplayResult",
     "ResolutionMetadata",
     "REPLAY_SCHEMA_VERSION",
+    "RISK_ABSTENTION_SCHEMA_VERSION",
     "SnapshotStore",
     "build_council",
     "build_edge_observation",
@@ -84,6 +98,8 @@ __all__ = [
     "build_snapshot",
     "canonical_json",
     "compare_predictions_to_market",
+    "evaluate_prediction",
+    "evaluate_prediction_against_history",
     "observe_prediction",
     "parse_gamma_market",
     "score_calibration",
