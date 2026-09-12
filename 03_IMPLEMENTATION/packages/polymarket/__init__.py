@@ -1,5 +1,14 @@
 """Canonical Polymarket domain contracts used by research phases."""
 
+from .calibration import (
+    CALIBRATION_SCHEMA_VERSION,
+    LOG_EPSILON,
+    CalibrationBin,
+    CalibrationObservation,
+    CalibrationReport,
+    observe_prediction,
+    score_calibration,
+)
 from .historical_replay import (
     HistoricalPricePoint,
     HistoricalReplay,
@@ -35,11 +44,16 @@ from .prediction_council import (
 )
 
 __all__ = [
+    "CALIBRATION_SCHEMA_VERSION",
+    "CalibrationBin",
+    "CalibrationObservation",
+    "CalibrationReport",
     "CANONICAL_SCHEMA_VERSION",
     "CouncilRecord",
     "DATA_QUALITY_VALUES",
     "HistoricalPricePoint",
     "HistoricalReplay",
+    "LOG_EPSILON",
     "MarketLifecycle",
     "MarketSnapshot",
     "PREDICTION_COUNCIL_SCHEMA_VERSION",
@@ -57,7 +71,9 @@ __all__ = [
     "build_prediction",
     "build_snapshot",
     "canonical_json",
+    "observe_prediction",
     "parse_gamma_market",
+    "score_calibration",
     "sha256_canonical",
     "validate_snapshot_transition",
 ]
