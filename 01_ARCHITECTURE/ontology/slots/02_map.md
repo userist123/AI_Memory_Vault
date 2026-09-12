@@ -28,7 +28,7 @@ Where does each kind of information live?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
 |---|---|---|---|---|---|---|---|
-| mental imagery | 7688_jkt_au; laird_soar_cognitive_architecture | 0.90 | proposed | 2026-09-12 | | The other memories and architectural mechanisms for impasse processing, learning, mental imagery, and appraisal processing are covered in later chapters. | 10 |
+| mental imagery | 7688_jkt_au; laird_soar_cognitive_architecture | 0.90 | promoted | 2026-09-12 | c29221d5-4bde-44bb-a482-f8e8d7619214 | The other memories and architectural mechanisms for impasse processing, learning, mental imagery, and appraisal processing are covered in later chapters. | 10 |
 | computational modeling | 7688_jkt_au | 0.90 | proposed | 2026-09-12 | | Anyone interested in the computational modeling of minds should read this book.”—KEN FORBUS | 1 |
 | dispersion | ashby_design_for_a_brain | 0.95 | proposed | 2026-09-12 | | Not only does random dispersion lead to the intermingling of subsystems, with abundant chances of random interaction and confusion, but even more confusion is added with every fresh act of learning. | 7 |
 | isomorphism | ashby_intro_to_cybernetics | 0.95 | proposed | 2026-09-12 | | INTRODUCTION TO CYBERNETICS THE BLACK BOX ISOMORPHIC MACHINES through a spring S to a heavy wheel M, which is rigidly connected A : A he output shaft O. O’s degree | 5 |
