@@ -77,14 +77,10 @@ def _http_json_post(url: str, payload: Mapping[str, Any], timeout: float = 30.0)
     with urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
-def fetch_closed_markets(*, limit: int = 20, offset: int = 0, order: str | None = None, ascending: bool | None = None, timeout: float = 30.0) -> list[Mapping[str, Any]]:
+def fetch_closed_markets(*, limit: int = 20, offset: int = 0, timeout: float = 30.0) -> list[Mapping[str, Any]]:
     if not 1 <= limit <= 100 or offset < 0:
         raise ValueError("invalid pagination")
-    payload = _http_json(
-        GAMMA_MARKETS_URL,
-        {"closed": "true", "limit": limit, "offset": offset, "order": order, "ascending": str(ascending).lower() if ascending is not None else None},
-        timeout,
-    )
+    payload = _http_json(GAMMA_MARKETS_URL, {"closed": "true", "limit": limit, "offset": offset}, timeout)
     if not isinstance(payload, list):
         raise ValueError("Gamma /markets must return a JSON array")
     return payload
@@ -180,6 +176,16 @@ def run_mechanical_control(bundle: HistoricalMarketBundle, *, notional: float = 
     pnl = ledger.cash + settlement_value - 100.0
     return ControlReplayResult(bundle.market_id, bundle.question, outcome_id, point.observed_at, fill.fill_price or point.price, fill.filled_notional, fill.fee, settlement_value, pnl, bundle.resolution_known_at)
 
+def _history_with_single_token_fallback(token_ids: Sequence[str], *, fidelity: int, timeout: float) -> Mapping[str, Sequence[Mapping[str, Any]]]:
+    unique = tuple(dict.fromkeys(token_ids))
+    batch = fetch_batch_price_history(unique, fidelity=fidelity, timeout=timeout)
+    resolved: dict[str, Sequence[Mapping[str, Any]]] = dict(batch)
+    for token_id in unique:
+        if resolved.get(token_id):
+            continue
+        resolved[token_id] = fetch_price_history(token_id, fidelity=fidelity, timeout=timeout)
+    return resolved
+
 def collect_resolved_bundles(*, target_markets: int = 3, scan_pages: int = 5, fidelity: int = 1440, timeout: float = 30.0) -> tuple[HistoricalMarketBundle, ...]:
     if target_markets < 1:
         raise ValueError("target_markets must be positive")
@@ -188,7 +194,7 @@ def collect_resolved_bundles(*, target_markets: int = 3, scan_pages: int = 5, fi
     rejected: dict[str, int] = {}
     last_error: str | None = None
     for page in range(scan_pages):
-        payloads = fetch_closed_markets(limit=100, offset=page * 100, order="endDate", ascending=True, timeout=timeout)
+        payloads = fetch_closed_markets(limit=100, offset=page * 100, timeout=timeout)
         if not payloads:
             break
         acquired = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -205,7 +211,7 @@ def collect_resolved_bundles(*, target_markets: int = 3, scan_pages: int = 5, fi
                 if len(outcomes) != 2 or len(token_ids) != 2 or len(prices) != 2:
                     raise ValueError("non-binary market")
                 _resolved_outcomes(payload, outcomes, prices)
-                history = fetch_batch_price_history(token_ids, fidelity=fidelity, timeout=timeout)
+                history = _history_with_single_token_fallback(token_ids, fidelity=fidelity, timeout=timeout)
                 bundle = build_market_bundle(payload, resolution_known_at=acquired, history_by_token=history)
                 if len(bundle.price_history) < 2:
                     raise ValueError("insufficient CLOB history")
