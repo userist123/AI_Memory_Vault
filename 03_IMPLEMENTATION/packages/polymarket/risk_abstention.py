@@ -1,30 +1,34 @@
-"""Deterministic analysis-only market decision gating and abstention."""
+"""Deterministic analysis-only confidence gating and abstention."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 import math
 from typing import Optional
 
-from .historical_replay import HistoricalPricePoint
-from .market_model_edge import select_latest_eligible_price
 from .prediction_ledger import PredictionRecord
 
 RISK_ABSTENTION_SCHEMA_VERSION = "polymarket-risk-abstention.v1"
-DECISION_BET = "BET"
+DECISION_PROCEED = "PROCEED"
 DECISION_ABSTAIN = "ABSTAIN"
 
 
 @dataclass(frozen=True)
 class AbstentionPolicy:
-    """Pure analysis policy; it never creates orders or execution instructions."""
+    """Pure analysis policy with no execution or financial side effects."""
 
-    min_positive_edge: float = 0.05
+    min_probability: float = 0.55
+    min_distance_from_midpoint: float = 0.05
 
     def validate(self) -> None:
-        if not math.isfinite(self.min_positive_edge):
-            raise ValueError("min_positive_edge must be finite")
-        if not 0.0 <= self.min_positive_edge <= 1.0:
-            raise ValueError("min_positive_edge must be between 0 and 1")
+        values = (self.min_probability, self.min_distance_from_midpoint)
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("abstention policy values must be finite")
+        if not 0.5 < self.min_probability <= 1.0:
+            raise ValueError("min_probability must be in (0.5, 1]")
+        if not 0.0 < self.min_distance_from_midpoint <= 0.5:
+            raise ValueError("min_distance_from_midpoint must be in (0, 0.5]")
+        if self.min_probability - 0.5 < self.min_distance_from_midpoint:
+            raise ValueError("min_probability must imply at least min_distance_from_midpoint")
 
 
 @dataclass(frozen=True)
@@ -33,25 +37,19 @@ class AbstentionDecision:
     prediction_id: str
     market_id: str
     outcome_id: str
-    market_price: Optional[float]
     model_probability: float
-    edge: Optional[float]
     decision: str
     reason: str
 
     def validate(self) -> None:
         if self.schema_version != RISK_ABSTENTION_SCHEMA_VERSION:
             raise ValueError("unsupported risk-abstention schema version")
-        if self.decision not in (DECISION_BET, DECISION_ABSTAIN):
-            raise ValueError("decision must be BET or ABSTAIN")
+        if self.decision not in (DECISION_PROCEED, DECISION_ABSTAIN):
+            raise ValueError("decision must be PROCEED or ABSTAIN")
         if not self.prediction_id or not self.market_id or not self.outcome_id:
             raise ValueError("prediction and market identifiers are required")
         if not math.isfinite(self.model_probability) or not 0.0 <= self.model_probability <= 1.0:
             raise ValueError("model_probability must be between 0 and 1")
-        if self.market_price is not None and (not math.isfinite(self.market_price) or not 0.0 <= self.market_price <= 1.0):
-            raise ValueError("market_price must be between 0 and 1")
-        if self.edge is not None and not math.isfinite(self.edge):
-            raise ValueError("edge must be finite")
 
     def as_dict(self) -> dict[str, object]:
         self.validate()
@@ -60,9 +58,7 @@ class AbstentionDecision:
             "prediction_id": self.prediction_id,
             "market_id": self.market_id,
             "outcome_id": self.outcome_id,
-            "market_price": self.market_price,
             "model_probability": self.model_probability,
-            "edge": self.edge,
             "decision": self.decision,
             "reason": self.reason,
         }
@@ -71,10 +67,9 @@ class AbstentionDecision:
 def evaluate_prediction(
     prediction: PredictionRecord,
     *,
-    market_price: Optional[float],
     policy: AbstentionPolicy = AbstentionPolicy(),
 ) -> AbstentionDecision:
-    """Apply a deterministic BET/ABSTAIN gate; no bankroll, sizing, EV, or execution."""
+    """Apply a deterministic confidence gate without execution, sizing, or monetary outputs."""
     prediction.validate()
     policy.validate()
 
@@ -84,49 +79,28 @@ def evaluate_prediction(
             prediction.prediction_id,
             prediction.market_id,
             prediction.outcome_id,
-            market_price,
             prediction.probability,
-            None if market_price is None else prediction.probability - market_price,
             DECISION_ABSTAIN,
             "prediction_already_abstained",
         )
         decision.validate()
         return decision
 
-    if market_price is None:
-        decision = AbstentionDecision(
-            RISK_ABSTENTION_SCHEMA_VERSION,
-            prediction.prediction_id,
-            prediction.market_id,
-            prediction.outcome_id,
-            None,
-            prediction.probability,
-            None,
-            DECISION_ABSTAIN,
-            "missing_historical_market_price",
-        )
-        decision.validate()
-        return decision
-
-    if not math.isfinite(market_price) or not 0.0 <= market_price <= 1.0:
-        raise ValueError("market_price must be finite and between 0 and 1")
-
-    edge = prediction.probability - market_price
-    if edge <= policy.min_positive_edge:
-        reason = "edge_below_abstention_threshold" if edge < policy.min_positive_edge else "edge_at_abstention_threshold"
+    probability = prediction.probability
+    distance = abs(probability - 0.5)
+    if probability < policy.min_probability or distance < policy.min_distance_from_midpoint:
+        reason = "confidence_below_abstention_threshold"
         decision_name = DECISION_ABSTAIN
     else:
-        reason = "positive_edge_above_threshold"
-        decision_name = DECISION_BET
+        reason = "confidence_above_abstention_threshold"
+        decision_name = DECISION_PROCEED
 
     decision = AbstentionDecision(
         RISK_ABSTENTION_SCHEMA_VERSION,
         prediction.prediction_id,
         prediction.market_id,
         prediction.outcome_id,
-        market_price,
-        prediction.probability,
-        edge,
+        probability,
         decision_name,
         reason,
     )
@@ -134,23 +108,11 @@ def evaluate_prediction(
     return decision
 
 
-def evaluate_prediction_against_history(
-    prediction: PredictionRecord,
-    price_points: list[HistoricalPricePoint] | tuple[HistoricalPricePoint, ...],
-    *,
-    policy: AbstentionPolicy = AbstentionPolicy(),
-) -> AbstentionDecision:
-    """Resolve the latest eligible historical price, then apply the analysis-only gate."""
-    point = select_latest_eligible_price(prediction, price_points)
-    return evaluate_prediction(prediction, market_price=None if point is None else float(point.price), policy=policy)
-
-
 __all__ = [
     "AbstentionPolicy",
     "AbstentionDecision",
     "DECISION_ABSTAIN",
-    "DECISION_BET",
+    "DECISION_PROCEED",
     "RISK_ABSTENTION_SCHEMA_VERSION",
     "evaluate_prediction",
-    "evaluate_prediction_against_history",
 ]
