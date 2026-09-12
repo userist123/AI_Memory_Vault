@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
-
 import pytest
 
+from packages.polymarket.historical_replay import HistoricalPricePoint
 from packages.polymarket.prediction_ledger import PredictionProvenance, build_prediction
 from packages.polymarket.risk_abstention import (
     DECISION_ABSTAIN,
@@ -10,8 +9,6 @@ from packages.polymarket.risk_abstention import (
     evaluate_prediction,
     evaluate_prediction_against_history,
 )
-from packages.polymarket.historical_replay import HistoricalPricePoint
-
 
 CUTOFF = "2026-01-01T12:00:00Z"
 
@@ -39,16 +36,16 @@ def prediction(probability=0.62, *, abstained=False):
     )
 
 
-def point(price="0.50", observed_at="2026-01-01T11:30:00Z"):
+def point(price="0.50", observed_at="2026-01-01T11:30:00Z", *, source_ref="hist:1"):
     return HistoricalPricePoint(
         outcome_id="YES",
         observed_at=observed_at,
         price=price,
         requested_fidelity_minutes=60,
         source_type="clob",
-        source_ref="hist:1",
-        acquired_at="2026-01-01T11:31:00Z",
-        known_as_of="2026-01-01T11:31:00Z",
+        source_ref=source_ref,
+        acquired_at="2026-01-01T11:31:00Z" if observed_at < CUTOFF else "2026-01-01T12:02:00Z",
+        known_as_of="2026-01-01T11:31:00Z" if observed_at < CUTOFF else "2026-01-01T12:01:00Z",
     )
 
 
@@ -93,16 +90,16 @@ def test_fraction_is_monotone_and_capped():
 
 
 def test_history_selection_respects_prediction_cutoff():
-    eligible = point("0.50", "2026-01-01T11:30:00Z")
-    post_cutoff = point("0.40", "2026-01-01T12:00:00Z")
+    eligible = point("0.50", "2026-01-01T11:30:00Z", source_ref="hist:eligible")
+    post_cutoff = point("0.40", "2026-01-01T12:01:00Z", source_ref="hist:future")
     result = evaluate_prediction_against_history(prediction(0.62), [post_cutoff, eligible])
     assert result.market_price == pytest.approx(0.50)
     assert result.decision == DECISION_BET
 
 
 def test_contradictory_same_timestamp_fails_closed():
-    a = point("0.50")
-    b = point("0.51")
+    a = point("0.50", source_ref="hist:a")
+    b = point("0.51", source_ref="hist:b")
     with pytest.raises(ValueError, match="contradictory historical price point"):
         evaluate_prediction_against_history(prediction(), [a, b])
 
