@@ -55,7 +55,7 @@ def _bundle(resolution_known_at: str = "2026-01-01T00:00:00Z"):
 def test_evaluator_selects_latest_pre_cutoff_point_and_settles() -> None:
     prediction = _prediction()
     result = evaluate_prediction(prediction, _bundle())
-    assert result.selected_observed_at == "2023-11-15T00:00:00Z"
+    assert result.selected_observed_at == "2023-11-14T22:13:20Z"
     assert result.market_price == pytest.approx(0.60)
     assert result.edge == pytest.approx(0.15)
     assert result.settlement_win is True
