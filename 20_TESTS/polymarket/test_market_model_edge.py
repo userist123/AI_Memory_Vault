@@ -75,10 +75,10 @@ def test_post_cutoff_price_is_rejected_when_used_directly():
         build_edge_observation(prediction, point)
 
 
-def test_post_cutoff_observation_time_is_rejected_when_known_before_cutoff():
+def test_post_cutoff_observation_is_rejected_by_information_boundary():
     prediction = make_prediction()
-    point = make_price("0.5", observed_at=LATE_TIME, known_as_of=PREDICTION_TIME)
-    with pytest.raises(ValueError, match="after the prediction cutoff"):
+    point = make_price("0.5", observed_at=LATE_TIME, known_as_of=LATE_TIME)
+    with pytest.raises(ValueError, match="known after the prediction cutoff"):
         build_edge_observation(prediction, point)
 
 
@@ -107,10 +107,6 @@ def test_contradictory_same_timestamp_prices_fail_closed():
 def test_summary_is_deterministic_and_sorted_by_prediction_id():
     p1 = make_prediction(0.8, prediction_id_hint="one")
     p2 = make_prediction(0.2, prediction_id_hint="two")
-    prices = (
-        make_price("0.5", source_ref="p1-price"),
-        make_price("0.1", source_ref="p2-price"),
-    )
     # Both market prices target the same outcome and cutoff; each prediction gets the latest same price.
     # Use one common price to exercise deterministic ordering without adding implicit market selection semantics.
     summary = compare_predictions_to_market((p2, p1), (make_price("0.5", source_ref="common"),))
