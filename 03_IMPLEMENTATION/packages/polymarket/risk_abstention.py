@@ -146,7 +146,7 @@ def evaluate_prediction_against_history(
 
 
 __all__ = [
-    "ABSTENTION_POLICY_SCHEMA_VERSION" if False else "AbstentionPolicy",
+    "AbstentionPolicy",
     "AbstentionDecision",
     "DECISION_ABSTAIN",
     "DECISION_BET",
