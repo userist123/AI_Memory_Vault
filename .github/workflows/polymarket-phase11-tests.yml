@@ -41,7 +41,9 @@ jobs:
           import json
           from packages.polymarket.historical_paper_replay import collect_resolved_bundles, run_mechanical_control
 
-          bundles = collect_resolved_bundles(target_markets=3, scan_pages=3, fidelity=1440, timeout=30.0)
+          # One 100-market page is sufficient for a smoke gate and avoids a
+          # 300-request worst case before the deterministic acceptance decision.
+          bundles = collect_resolved_bundles(target_markets=3, scan_pages=1, fidelity=1440, timeout=30.0)
           results = [run_mechanical_control(bundle, notional=1.0) for bundle in bundles]
           payload = {
               "schema_version": "polymarket-historical-paper-replay.v1",
