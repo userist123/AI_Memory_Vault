@@ -27,7 +27,7 @@ none (not yet built — explicitly recorded as unbuilt architecture)
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
 |---|---|---|---|---|---|---|---|
-| agent | 2504.05840v1; 7688_jkt_au; minsky_society_of_mind | 0.95 | proposed | 2026-09-12 | | When any enterprise becomes too complex and large for one person to do, we construct organizations in which certain agents are concerned, not with the final result, but only with what some other agents do. | 23 |
+| agent | 2504.05840v1; 7688_jkt_au; minsky_society_of_mind | 0.95 | promoted | 2026-09-12 | 7986a2c9-0fb7-4282-95fa-3ea39da1ceb1 | When any enterprise becomes too complex and large for one person to do, we construct organizations in which certain agents are concerned, not with the final result, but only with what some other agents do. | 23 |
 | intelligent systems | 7688_jkt_au | 0.91 | proposed | 2026-09-12 | | A clear and comprehensive account of decades of effort aimed at understanding intelligence and building intelligent systems. | 1 |
 | ACT-R | comparison_cognitive_architectures | 0.94 | proposed | 2026-09-12 | | ACT-R hybrid [1] ? ? ? active ? Anderson, 2007 ASMO hybrid Many robotic systems ? IBM internet-ofthings system active 2009 Novianto, Johnston and Williams 2010 | 1 |
 | CLARION | comparison_cognitive_architectures | 0.90 | proposed | 2026-09-12 | | CLARION hybrid [1] Many psychological theories derived from it ? ? active 1994 Sun, 2002, 2016 | 1 |

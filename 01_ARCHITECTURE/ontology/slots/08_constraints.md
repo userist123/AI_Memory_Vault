@@ -27,7 +27,7 @@ What is forbidden or risky?
 ## Candidate concepts
 | concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
 |---|---|---|---|---|---|---|---|
-| essential variables | ashby_design_for_a_brain; ashby_intro_to_cybernetics | 0.95 | proposed | 2026-09-12 | | We can now define ' survival ' objectively and in terms of a field : it occurs when a line of behaviour takes no essential variable outside given limits. | 36 |
+| essential variables | ashby_design_for_a_brain; ashby_intro_to_cybernetics | 0.95 | promoted | 2026-09-12 | df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57 | We can now define ' survival ' objectively and in terms of a field : it occurs when a line of behaviour takes no essential variable outside given limits. | 36 |
 | homeostasis | ashby_design_for_a_brain | 0.95 | proposed | 2026-09-12 | | The distinction may best be illustrated by the inborn homeostatic mechanisms : the reaction to cold by shivering, for instance. | 6 |
 | law of requisite variety | ashby_intro_to_cybernetics | 0.95 | proposed | 2026-09-12 | | complexity, with climate, soil, host’s reactions, predalaw of Requisite Variety is Likely to play a dominating part. Its tors, competitors, and many other factors playing a part. The importance is | 6 |
 | constraint | ashby_intro_to_cybernetics | 0.95 | proposed | 2026-09-12 | | as in the previous paragraph, the constraint vectors over 7 consecutive states. can be identified and treated exactly as in $.7/11. When, however, The method of re-defining may seem artificial | 10 |

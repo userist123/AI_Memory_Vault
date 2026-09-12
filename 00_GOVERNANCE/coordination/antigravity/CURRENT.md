@@ -38,11 +38,13 @@ completed:
   - "PASUL 1 Complete — Reparat occurrences la minsky_society_of_mind: expandat la 55 de candidați acoperind 45 de secțiuni distincte (42% prose coverage), eliminat plafonarea la 3, spread autentic 1-16. Re-colectat și validat cu PASS."
   - "PASUL 2 Complete — Rezolvat cele 11 conflicte de sloturi: generat 00_GOVERNANCE/coordination/antigravity/SLOT_DECISIONS.md cu fundamentare textuală și aliniere canonică la întrebările sloturilor."
   - "PASUL 3 Complete — Raport final generat în 07_EVALUATION/book_corpus_conversion/CORPUS_INGESTION_REPORT.md (20/20 cărți PASS, 0 fail, distribuție completă a conceptelor)."
-  - "PASUL 4 (Merge Pass) Complete — Executat merge_candidate_concepts.py: consolidate 264 înregistrări brute din cele 20 de cărți în 201 concepte net-noi unice distribuite în cele 16 fișiere de slot din 01_ARCHITECTURE/ontology/slots/*.md; 63 de concepte multi-carte combinate cu sumare de occurrences și selectarea celui mai bine evidențiat citat; 0 conflicte de sloturi. Toate testele de schemă (test_ontology_scaffold.py, test_merge_across_books.py) și suita completă (1.699 teste) au trecut 100% PASS."
-in_progress:
-  - "Merge pass finalizat cu succes. Sistemul este pregătit pentru extragerea/popularea relațiilor de graf sinaptic și promovarea conceptelor."
+  - "PASUL 4 (Merge Pass) Complete — Executat merge_candidate_concepts.py: consolidate 264 înregistrări brute din cele 20 de cărți în 201 concepte net-noi unice distribuite în cele 16 fișiere de slot din 01_ARCHITECTURE/ontology/slots/*.md; 63 de concepte multi-carte combinate cu sumare de occurrences și selectarea celui mai bine evidențiat citat; 0 conflicte de sloturi."
+  - "Promovare 23 Concepte Nucleu (occurrences >= 20) Complete — Generate 23 de note atomice canonice Promoted_*.md în 01_ARCHITECTURE/knowledge/ cu ciclu de viață strict REVIEW și proveniență verificată din cărți; actualizate tabelele din sloturi la status=promoted și ID-ul notei."
+  - "Cablare Relații Sinaptice Inter-Sloturi & Concepte Complete — Conectate legături part_of, depends_on, applies_to, related_to conforme cu vocabularul închis ALLOWED_RELATIONS între conceptele ontologiei cognitive (ex. episodic/semantic -> declarative -> explicit; ultrastable -> homeostat)."
+  - "Recalibrare Stare Vault & Graph State Complete — Re-indexat VaultIndex și SynapseStore: 897 note în index, 362 muchii de graf (144 declared / 143 inferred / 75 wikilink), 125 seeds, 113 golds. Actualizat 00_GOVERNANCE/VAULT_STATE.md; 80/80 teste specifice PASS (test_concept_promotion.py, test_promoted_notes_reach_the_graph.py, test_vault_state_accuracy.py)."
+in_progress: []
 next_actions:
-  - "Analiza relațiilor sinaptice inter-sloturi și popularea frontmatter-ului 'relations' în fișierele de ontologie."
+  - "Opțional: Promovarea următoarei tranșe de concepte de recurență intermediară (occurrences 10-19, 17 concepte) sau analiza spreading activation pe noul graf sinaptic."
 blockers: []
 risks: []
 Evidence_refs:
