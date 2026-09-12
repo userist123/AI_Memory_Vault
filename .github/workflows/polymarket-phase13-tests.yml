@@ -25,7 +25,7 @@ jobs:
       - name: Run Phase 13 evaluator and regression
         run: |
           python -m pytest -q \
-            20_TESTS/polymarket/test_model_historical_evaluator.py \
+            20_TESTS/polymarket/test_model_historical_evaluator_contract.py \
             20_TESTS/polymarket/test_phase12_temporal_contract.py \
             20_TESTS/polymarket/test_historical_paper_replay.py \
             20_TESTS/polymarket/test_market_model_edge.py \
