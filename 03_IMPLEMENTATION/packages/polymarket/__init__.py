@@ -15,6 +15,14 @@ from .historical_replay import (
     ReplayResult,
     REPLAY_SCHEMA_VERSION,
 )
+from .market_model_edge import (
+    MARKET_MODEL_EDGE_SCHEMA_VERSION,
+    MarketModelEdgeObservation,
+    MarketModelEdgeSummary,
+    build_edge_observation,
+    compare_predictions_to_market,
+    select_latest_eligible_price,
+)
 from .market_snapshot import (
     CANONICAL_SCHEMA_VERSION,
     DATA_QUALITY_VALUES,
@@ -54,7 +62,10 @@ __all__ = [
     "HistoricalPricePoint",
     "HistoricalReplay",
     "LOG_EPSILON",
+    "MARKET_MODEL_EDGE_SCHEMA_VERSION",
     "MarketLifecycle",
+    "MarketModelEdgeObservation",
+    "MarketModelEdgeSummary",
     "MarketSnapshot",
     "PREDICTION_COUNCIL_SCHEMA_VERSION",
     "PREDICTION_LEDGER_SCHEMA_VERSION",
@@ -68,12 +79,15 @@ __all__ = [
     "REPLAY_SCHEMA_VERSION",
     "SnapshotStore",
     "build_council",
+    "build_edge_observation",
     "build_prediction",
     "build_snapshot",
     "canonical_json",
+    "compare_predictions_to_market",
     "observe_prediction",
     "parse_gamma_market",
     "score_calibration",
+    "select_latest_eligible_price",
     "sha256_canonical",
     "validate_snapshot_transition",
 ]
