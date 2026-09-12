@@ -9,7 +9,6 @@ from packages.polymarket.calibration import (
     score_calibration,
 )
 from packages.polymarket.market_snapshot import (
-    CANONICAL_SCHEMA_VERSION,
     MarketLifecycle,
     PolymarketMarket,
     PriceObservation,
@@ -48,9 +47,7 @@ def make_snapshot(*, snapshot_id_hint="evidence", known_as_of=EVIDENCE_TIME, res
         snapshot_at=known_as_of,
         acquired_at=known_as_of,
         known_as_of=known_as_of,
-        price_observations=(
-            PriceObservation("yes", "0.50", known_as_of, "test")
-        ,),
+        price_observations=(PriceObservation("yes", "0.50", known_as_of, "test"),),
         liquidity=None,
         volume=None,
         source_type="test",
@@ -61,7 +58,7 @@ def make_snapshot(*, snapshot_id_hint="evidence", known_as_of=EVIDENCE_TIME, res
     )
 
 
-def make_prediction(probability=0.8, *, evidence_id="evidence-1", known_as_of=PREDICTION_TIME):
+def make_prediction(probability=0.8, *, evidence_id, known_as_of=PREDICTION_TIME):
     return build_prediction(
         market_id="m1",
         outcome_id="yes",
@@ -79,7 +76,7 @@ def make_prediction(probability=0.8, *, evidence_id="evidence-1", known_as_of=PR
     )
 
 
-def make_resolution(*, winner=("yes",), known_at=RESOLUTION_TIME, data_quality="verified"):
+def make_resolution(*, winner=("yes",), known_at=RESOLUTION_TIME):
     return ResolutionMetadata(
         status="resolved",
         outcome_ids=tuple(winner),
@@ -90,8 +87,8 @@ def make_resolution(*, winner=("yes",), known_at=RESOLUTION_TIME, data_quality="
 
 
 def test_observation_requires_verified_resolution_and_no_post_cutoff_evidence():
-    prediction = make_prediction(0.8)
     evidence = make_snapshot(snapshot_id_hint="evidence-1")
+    prediction = make_prediction(0.8, evidence_id=evidence.snapshot_id)
     resolution = make_snapshot(
         snapshot_id_hint="resolution-1",
         known_as_of=RESOLUTION_TIME,
@@ -108,8 +105,8 @@ def test_observation_requires_verified_resolution_and_no_post_cutoff_evidence():
 
 
 def test_post_cutoff_evidence_is_rejected():
-    prediction = make_prediction(0.8)
     leaked = make_snapshot(snapshot_id_hint="evidence-1", known_as_of=RESOLUTION_TIME)
+    prediction = make_prediction(0.8, evidence_id=leaked.snapshot_id)
     resolution = make_snapshot(
         snapshot_id_hint="resolution-1",
         known_as_of=RESOLUTION_TIME,
@@ -124,12 +121,12 @@ def test_post_cutoff_evidence_is_rejected():
 
 
 def test_resolution_known_at_must_postdate_prediction_cutoff():
-    prediction = make_prediction(0.8, known_as_of=RESOLUTION_TIME)
     evidence = make_snapshot(snapshot_id_hint="evidence-1")
+    prediction = make_prediction(0.8, evidence_id=evidence.snapshot_id)
     resolution = make_snapshot(
         snapshot_id_hint="resolution-1",
-        known_as_of=RESOLUTION_TIME,
-        resolution=make_resolution(),
+        known_as_of=PREDICTION_TIME,
+        resolution=make_resolution(known_at=PREDICTION_TIME),
     )
     with pytest.raises(ValueError, match="must precede resolution knowledge"):
         observe_prediction(
@@ -140,8 +137,8 @@ def test_resolution_known_at_must_postdate_prediction_cutoff():
 
 
 def test_non_verified_resolution_is_rejected():
-    prediction = make_prediction(0.8)
     evidence = make_snapshot(snapshot_id_hint="evidence-1")
+    prediction = make_prediction(0.8, evidence_id=evidence.snapshot_id)
     resolution = make_snapshot(
         snapshot_id_hint="resolution-1",
         known_as_of=RESOLUTION_TIME,
@@ -157,7 +154,7 @@ def test_non_verified_resolution_is_rejected():
 
 
 def test_unknown_evidence_snapshot_is_rejected():
-    prediction = make_prediction(0.8)
+    prediction = make_prediction(0.8, evidence_id="PMS-missing")
     resolution = make_snapshot(
         snapshot_id_hint="resolution-1",
         known_as_of=RESOLUTION_TIME,
