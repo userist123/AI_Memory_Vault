@@ -104,6 +104,48 @@ def _as_int(value):
         return 0
 
 
+
+class DuplicateRows(Exception):
+    """The same extracted row loaded more than once.
+
+    `combine_across_books` sums occurrences across rows sharing a concept and a
+    slot, because a term defined in fifteen sections of one book and twenty-two
+    of another is defined in thirty-seven sections. That is correct for two
+    books and catastrophic for one row read twice, and nothing in the rows
+    themselves distinguishes the cases.
+
+    It happened. `staging/` held twenty-one per-book files and an aggregate
+    containing the same 264 rows, so a glob over the directory loaded 528. The
+    measured effect on "declarative memory": occurrences [15, 22, 8, 15, 22, 8]
+    summing to 90 against a true value of 45.
+
+    The ontology escaped it by luck rather than design — the promotion run
+    happened to take the aggregate as a single input file while the conflict
+    check globbed the directory. Two callers, two answers, and no complaint
+    from either.
+
+    So identity is (concept, source_book, evidence_quote). Two rows agreeing on
+    all three are not two observations. A book that genuinely defines a term
+    twice produces two different quotes.
+    """
+
+
+def find_duplicate_rows(records: List[Dict[str, Any]]) -> Dict[Tuple[str, str], int]:
+    """Rows appearing more than once with identical concept, book and evidence."""
+    seen: Dict[Tuple[str, str, str], int] = {}
+    for item in records:
+        key = (
+            normalize_concept_name(item.get("concept", "")),
+            str(item.get("source_book", "")),
+            " ".join(str(item.get("evidence_quote", "")).split()),
+        )
+        seen[key] = seen.get(key, 0) + 1
+    return {
+        (concept, book): count
+        for (concept, book, _evidence), count in seen.items() if count > 1
+    }
+
+
 def combine_across_books(records):
     """One row per concept, carrying what every book contributed.
 
@@ -120,7 +162,26 @@ def combine_across_books(records):
 
     The evidence quote comes from the book that evidenced it best, since only
     one fits in the table and a reviewer reads that one.
+
+    Summing is the right behaviour for two books and catastrophic for one row
+    read twice, and the function cannot tell those apart from the rows alone —
+    so exact duplicates are refused before any arithmetic. See
+    `find_duplicate_rows`.
     """
+    duplicates = find_duplicate_rows(records)
+    if duplicates:
+        lines = [
+            f"  {concept} from {book}: {count} identical rows"
+            for (concept, book), count in sorted(duplicates.items())
+        ]
+        raise DuplicateRows(
+            f"{len(duplicates)} row(s) appear more than once with identical "
+            "evidence. Summing them would multiply occurrences, which is the "
+            "only ranking signal this pipeline has:" + chr(10)
+            + chr(10).join(lines[:10])
+            + (chr(10) + f"  ... and {len(lines) - 10} more" if len(lines) > 10 else "")
+        )
+
     combined = {}
     order = []
     for item in records:
