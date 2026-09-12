@@ -189,6 +189,17 @@ def _bin_index(probability: float, bin_count: int) -> int:
     return min(int(probability * bin_count), bin_count - 1)
 
 
+def _ordering_key(item: "CalibrationObservation") -> tuple:
+    """A total order over observations, independent of how they arrived.
+
+    Probability first because it drives the binning; the identifiers break ties
+    so two observations with equal probability still order the same way on
+    every run and every platform.
+    """
+    return (item.probability, item.target, item.prediction_id, item.market_id,
+            item.outcome_id)
+
+
 def score_calibration(
     observations: Iterable[CalibrationObservation], *, bin_count: int = 10
 ) -> CalibrationReport:
@@ -200,6 +211,14 @@ def score_calibration(
         raise ValueError("bin_count must be between 2 and 100")
     for item in items:
         item.validate()
+
+    #: Sorted before any arithmetic, because floating-point addition is not
+    #: commutative and the contract claims determinism. The same observations
+    #: in a different order summed to a value differing in the last bits, and
+    #: the order-independence test happened to pass on one Python and fail on
+    #: another — a property that holds by luck reads exactly like one that
+    #: holds by construction until an environment changes.
+    items = tuple(sorted(items, key=_ordering_key))
 
     brier = sum((item.probability - item.target) ** 2 for item in items) / len(items)
     log_loss = sum(
