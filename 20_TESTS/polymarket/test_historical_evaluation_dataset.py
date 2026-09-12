@@ -71,5 +71,6 @@ def test_observation_after_prediction_cutoff_is_rejected() -> None:
 
 
 def test_invalid_temporal_order_is_rejected() -> None:
+    record = _record(observed_at=_ts(2), known_as_of=_ts(1), acquired_at=_ts(3))
     with pytest.raises(ValueError, match="observed_at cannot be after known_as_of"):
-        load_historical_evaluation_dataset([_record(known_as_of=_ts(0))])
+        load_historical_evaluation_dataset([record])
