@@ -53,11 +53,10 @@ from .prediction_council import (
 from .risk_abstention import (
     RISK_ABSTENTION_SCHEMA_VERSION,
     DECISION_ABSTAIN,
-    DECISION_BET,
+    DECISION_PROCEED,
     AbstentionDecision,
     AbstentionPolicy,
     evaluate_prediction,
-    evaluate_prediction_against_history,
 )
 
 __all__ = [
@@ -71,7 +70,7 @@ __all__ = [
     "CouncilRecord",
     "DATA_QUALITY_VALUES",
     "DECISION_ABSTAIN",
-    "DECISION_BET",
+    "DECISION_PROCEED",
     "HistoricalPricePoint",
     "HistoricalReplay",
     "LOG_EPSILON",
@@ -99,7 +98,6 @@ __all__ = [
     "canonical_json",
     "compare_predictions_to_market",
     "evaluate_prediction",
-    "evaluate_prediction_against_history",
     "observe_prediction",
     "parse_gamma_market",
     "score_calibration",
