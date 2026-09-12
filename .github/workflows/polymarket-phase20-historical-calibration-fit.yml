@@ -1,0 +1,29 @@
+name: Polymarket Phase 20 Historical Calibration Fit Tests
+
+on:
+  pull_request:
+    paths:
+      - '03_IMPLEMENTATION/packages/polymarket/historical_calibration_fit.py'
+      - '03_IMPLEMENTATION/packages/polymarket/historical_calibration_holdout.py'
+      - '20_TESTS/polymarket/test_historical_calibration_fit.py'
+      - '.github/workflows/polymarket-phase20-historical-calibration-fit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phase20-historical-calibration-fit:
+    name: phase20-historical-calibration-fit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install repository test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run Phase 20 tests
+        run: python -m pytest -q 20_TESTS/polymarket/test_historical_calibration_fit.py
