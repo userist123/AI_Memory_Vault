@@ -1,0 +1,32 @@
+name: Polymarket Phase 13 Tests
+
+on:
+  push:
+    branches:
+      - r065-pm-model-historical-evaluator
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  phase13:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: 03_IMPLEMENTATION
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pytest pyyaml
+      - name: Run Phase 13 evaluator and regression
+        run: |
+          python -m pytest -q \
+            20_TESTS/polymarket/test_model_historical_evaluator.py \
+            20_TESTS/polymarket/test_phase12_temporal_contract.py \
+            20_TESTS/polymarket/test_historical_paper_replay.py \
+            20_TESTS/polymarket/test_market_model_edge.py \
+            20_TESTS/polymarket/test_prediction_ledger.py

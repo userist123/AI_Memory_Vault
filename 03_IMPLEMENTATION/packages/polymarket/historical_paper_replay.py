@@ -23,12 +23,21 @@ class HistoricalTapePoint:
     observed_at: str
     price: float
     source_ref: str
+    acquired_at: str | None = None
+    known_as_of: str | None = None
+
     def validate(self) -> None:
         if not self.market_id or not self.outcome_id or not self.source_ref:
             raise ValueError("market_id, outcome_id, and source_ref are required")
         if math.isfinite(self.price) is False or not 0.0 < self.price < 1.0:
             raise ValueError("price must be strictly between 0 and 1")
         _parse_iso(self.observed_at)
+        if self.acquired_at is not None:
+            _parse_iso(self.acquired_at)
+        if self.known_as_of is not None:
+            _parse_iso(self.known_as_of)
+        if self.acquired_at is not None and self.known_as_of is not None and _parse_iso(self.known_as_of) > _parse_iso(self.acquired_at):
+            raise ValueError("known_as_of cannot be after acquired_at")
 
 @dataclass(frozen=True)
 class HistoricalMarketBundle:
@@ -140,7 +149,7 @@ def build_market_bundle(payload: Mapping[str, Any], *, resolution_known_at: str,
             if "t" not in raw or "p" not in raw:
                 continue
             observed_at = datetime.fromtimestamp(float(raw["t"]), tz=timezone.utc).isoformat().replace("+00:00", "Z")
-            points.append(HistoricalTapePoint(market_id, outcome_id, observed_at, float(raw["p"]), f"{CLOB_PRICES_HISTORY_URL}?market={outcome_id}"))
+            points.append(HistoricalTapePoint(market_id, outcome_id, observed_at, float(raw["p"]), f"{CLOB_PRICES_HISTORY_URL}?market={outcome_id}", resolution_known_at, resolution_known_at))
     bundle = HistoricalMarketBundle(market_id, question, tuple(outcome_ids), tuple(outcomes), winner_ids, resolution_known_at, tuple(sorted(points, key=lambda p: (_parse_iso(p.observed_at), p.outcome_id))), f"{GAMMA_MARKETS_URL}?id={market_id}")
     bundle.validate()
     if not bundle.price_history:
