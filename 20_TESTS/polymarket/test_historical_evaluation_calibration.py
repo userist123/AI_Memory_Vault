@@ -66,7 +66,7 @@ def test_calibration_score_uses_existing_deterministic_scorer() -> None:
 def test_projection_reuses_runner_validation_and_rejects_duplicate_rows() -> None:
     run = evaluate_historical_dataset([_record()])
     broken = type(run)(
-        evaluations=run.evaluations,
+        evaluations=run.evaluations + run.evaluations,
         rows=run.rows + run.rows,
         source_knowledge_bases=run.source_knowledge_bases,
     )
