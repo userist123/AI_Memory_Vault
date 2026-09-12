@@ -25,7 +25,7 @@ def _split(rows):
 
 
 def test_fit_uses_calibration_only_and_transforms_holdout() -> None:
-    split = _split([_row(1, 0.20, "YES"), _row(2, 0.25, "YES"), _row(3, 0.20, "NO")])
+    split = _split([_row(1, 0.20, "YES"), _row(2, 0.25, "NO"), _row(3, 0.20, "NO")])
     fit = fit_historical_calibration(split, bin_count=10)
     assert fit.calibration_observation_count == 2
     transformed = transform_historical_holdout(split, fit)
