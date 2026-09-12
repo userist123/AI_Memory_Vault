@@ -1,4 +1,4 @@
-Phase 18 scope
+# Phase 18
 
 Research-only adapter from the accepted Phase 17 historical evaluation runner into the existing deterministic calibration scorer.
 
