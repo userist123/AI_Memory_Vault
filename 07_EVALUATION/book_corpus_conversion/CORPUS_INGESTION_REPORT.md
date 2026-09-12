@@ -310,7 +310,18 @@ The mechanical test suite (`verify_agent_submission.py` and `gate_agent_candidat
 - Book `newell_how_can_human_mind_occur` contains **0 submitted and 0 kept concepts**.
 - **Reason**: This volume was formally flagged as `OFF SUBJECT` during early extraction rounds. In strict adherence to vault epistemics, no concepts were extracted from it, and it appropriately outputs a clean warning during test runs while keeping verification integrity at 100%.
 
-### 3. Slot Preservation & Merge Deferral Invariant
-- **No changes** have been made to `01_ARCHITECTURE/ontology/slots/*.md`.
-- Staging files under `staging/*.json` contain the verified, gated candidates with clean occurrence distributions and resolved slot metadata.
-- Merging these 202 unique concepts into the physical slot files requires an explicit, audited merge script and transaction boundary to be executed in a dedicated subsequent phase.
+### 3. Slot Merge Pass Execution
+- **Merge executed**: Following the resolution of the 11 slot conflicts, the canonical merge script (`python 30_SCRIPTS/ingestion/merge_candidate_concepts.py --staging-file staging/corpus_reconciled.json --slots-dir 01_ARCHITECTURE/ontology/slots`) was executed.
+- All 201 net-new unique concepts have been incorporated across the 16 canonical slot files (`01_ARCHITECTURE/ontology/slots/01_identity.md` through `16_consolidation.md`).
+- Multi-book occurrences have been aggregated, best textual quotes preserved, and zero slot conflicts remain.
+- All schema tests (`test_ontology_scaffold.py`, `test_merge_across_books.py`) pass 100%.
+
+---
+
+## 7. Next Architectural Frontiers
+
+1. **Inter-Slot Synaptic Relation Linking**:
+   - Traverse the newly populated 201 concepts and establish directional `relations: []` (e.g. `part_of`, `supports`, `refines`, `relates_to`) in the ontology definitions.
+2. **Promotion of Core High-Occurrence Concepts**:
+   - Concepts with recurrence `occurrences >= 3` (138 concepts) are eligible for promotion via `promote_candidate_concept.py` into dedicated atomic notes under `01_ARCHITECTURE/knowledge/` with lifecycle `REVIEW`.
+
