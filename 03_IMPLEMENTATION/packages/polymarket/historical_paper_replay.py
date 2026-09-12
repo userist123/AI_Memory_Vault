@@ -77,10 +77,14 @@ def _http_json_post(url: str, payload: Mapping[str, Any], timeout: float = 30.0)
     with urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
-def fetch_closed_markets(*, limit: int = 20, offset: int = 0, timeout: float = 30.0) -> list[Mapping[str, Any]]:
+def fetch_closed_markets(*, limit: int = 20, offset: int = 0, order: str | None = None, ascending: bool | None = None, timeout: float = 30.0) -> list[Mapping[str, Any]]:
     if not 1 <= limit <= 100 or offset < 0:
         raise ValueError("invalid pagination")
-    payload = _http_json(GAMMA_MARKETS_URL, {"closed": "true", "limit": limit, "offset": offset}, timeout)
+    payload = _http_json(
+        GAMMA_MARKETS_URL,
+        {"closed": "true", "limit": limit, "offset": offset, "order": order, "ascending": str(ascending).lower() if ascending is not None else None},
+        timeout,
+    )
     if not isinstance(payload, list):
         raise ValueError("Gamma /markets must return a JSON array")
     return payload
@@ -184,7 +188,7 @@ def collect_resolved_bundles(*, target_markets: int = 3, scan_pages: int = 5, fi
     rejected: dict[str, int] = {}
     last_error: str | None = None
     for page in range(scan_pages):
-        payloads = fetch_closed_markets(limit=100, offset=page * 100, timeout=timeout)
+        payloads = fetch_closed_markets(limit=100, offset=page * 100, order="endDate", ascending=True, timeout=timeout)
         if not payloads:
             break
         acquired = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -193,6 +197,8 @@ def collect_resolved_bundles(*, target_markets: int = 3, scan_pages: int = 5, fi
                 return tuple(bundles)
             attempted += 1
             try:
+                if payload.get("enableOrderBook") is not True:
+                    raise ValueError("market does not expose CLOB order book")
                 outcomes = _decode_json_array(payload.get("outcomes"), "outcomes")
                 token_ids = _decode_json_array(payload.get("clobTokenIds"), "clobTokenIds")
                 prices = _decode_json_array(payload.get("outcomePrices"), "outcomePrices")
