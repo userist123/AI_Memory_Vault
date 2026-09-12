@@ -112,8 +112,25 @@ def evaluate_prediction(
         raise ValueError("market_price must be finite and between 0 and 1")
 
     edge = prediction.probability - market_price
-    if edge <= policy.min_positive_edge:
-        reason = "edge_below_abstention_threshold" if edge < policy.min_positive_edge else "edge_at_abstention_threshold"
+
+    #: An edge exactly at the threshold must abstain, and binary floating point
+    #: does not let `<=` say so. 0.55 - 0.50 is 0.050000000000000044, which is
+    #: greater than 0.05 by 4.2e-17, so a prediction sitting precisely on a
+    #: 5-point threshold was returning BET. The gate failed open, which is the
+    #: wrong direction for the one component whose purpose is to decline.
+    #:
+    #: Tolerances are absolute as well as relative because the quantity is a
+    #: probability difference: rel_tol alone is meaningless as the threshold
+    #: approaches zero, which is exactly where a "bet on any positive edge"
+    #: policy would sit.
+    at_threshold = math.isclose(
+        edge, policy.min_positive_edge, rel_tol=1e-9, abs_tol=1e-12
+    )
+    if at_threshold:
+        reason = "edge_at_abstention_threshold"
+        decision_name = DECISION_ABSTAIN
+    elif edge < policy.min_positive_edge:
+        reason = "edge_below_abstention_threshold"
         decision_name = DECISION_ABSTAIN
     else:
         reason = "positive_edge_above_threshold"
