@@ -1,0 +1,23 @@
+name: Polymarket Phase 13 Contract Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  phase13-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: 03_IMPLEMENTATION
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pytest
+      - name: Run Phase 13 contract tests
+        run: python -m pytest -q 20_TESTS/polymarket/test_model_historical_evaluator_contract.py
