@@ -38,6 +38,15 @@ from .market_snapshot import (
     sha256_canonical,
     validate_snapshot_transition,
 )
+from .paper_simulation import (
+    PaperFill,
+    PaperInstruction,
+    PaperQuote,
+    PaperRun,
+    PortfolioLedger,
+    SCHEMA_VERSION as PAPER_SIMULATION_SCHEMA_VERSION,
+    simulate_fill,
+)
 from .prediction_ledger import (
     PREDICTION_LEDGER_SCHEMA_VERSION,
     PredictionLedger,
@@ -67,9 +76,15 @@ __all__ = [
     "MarketModelEdgeObservation",
     "MarketModelEdgeSummary",
     "MarketSnapshot",
+    "PAPER_SIMULATION_SCHEMA_VERSION",
     "PREDICTION_COUNCIL_SCHEMA_VERSION",
     "PREDICTION_LEDGER_SCHEMA_VERSION",
+    "PaperFill",
+    "PaperInstruction",
+    "PaperQuote",
+    "PaperRun",
     "PolymarketMarket",
+    "PortfolioLedger",
     "PredictionLedger",
     "PredictionProvenance",
     "PredictionRecord",
@@ -89,5 +104,6 @@ __all__ = [
     "score_calibration",
     "select_latest_eligible_price",
     "sha256_canonical",
+    "simulate_fill",
     "validate_snapshot_transition",
 ]
