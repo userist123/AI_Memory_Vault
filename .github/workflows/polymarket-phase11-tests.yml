@@ -41,9 +41,9 @@ jobs:
           import json
           from packages.polymarket.historical_paper_replay import collect_resolved_bundles, run_mechanical_control
 
-          # Scan up to 500 closed markets because recent closed markets can lack
-          # retained CLOB history even when their terminal outcome is explicit.
-          bundles = collect_resolved_bundles(target_markets=3, scan_pages=5, fidelity=1440, timeout=30.0)
+          # Scan a wider closed-market window because the public catalog contains
+          # many non-CLOB and historical markets whose CLOB tape is no longer retained.
+          bundles = collect_resolved_bundles(target_markets=3, scan_pages=50, fidelity=1440, timeout=30.0)
           results = [run_mechanical_control(bundle, notional=1.0) for bundle in bundles]
           payload = {
               "schema_version": "polymarket-historical-paper-replay.v1",
