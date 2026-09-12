@@ -1,0 +1,50 @@
+[
+  {
+    "concept": "frog-in-the-pan momentum",
+    "definition": "Behavioral asset pricing anomaly where investor underreaction to persistent fundamental news is amplified when information trickles continuously in small increments rather than large discrete shocks.",
+    "claim_type": null,
+    "maps_to_slot": "judgement",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "quantitative_momentum",
+    "source_location": "Section 3: Quality of Momentum",
+    "evidence_quote": "To calculate “frog-in-the-pan” momentum, the authors classify each daily return as either positive or negative (or zero in some cases).",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 1,
+    "also_found_in": []
+  },
+  {
+    "concept": "quality of momentum",
+    "definition": "Diagnostic assessment evaluating whether a stock's upward price trajectory is driven by smooth consistent compounding rather than high-volatility event spikes.",
+    "claim_type": null,
+    "maps_to_slot": "judgement",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "quantitative_momentum",
+    "source_location": "Section 3: Quality of Momentum",
+    "evidence_quote": "In Step 3 we seek to identify the quality of momentum associated with the stocks from Step 2.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 1,
+    "also_found_in": []
+  },
+  {
+    "concept": "12-2 momentum",
+    "definition": "Cross-sectional trend-following strategy sorting securities on cumulative twelve-month performance while discarding the immediate preceding month to minimize liquidity and reversal distortions.",
+    "claim_type": null,
+    "maps_to_slot": "procedures",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "quantitative_momentum",
+    "source_location": "Executive Summary",
+    "evidence_quote": "12/2 momentum is a strategy that sorts stocks based on their cumulative 12 month past returns (ignoring the first month).",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 1,
+    "also_found_in": []
+  }
+]
