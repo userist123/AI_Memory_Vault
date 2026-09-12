@@ -42,3 +42,5 @@ jobs:
             20_TESTS/polymarket/test_prediction_ledger.py \
             20_TESTS/polymarket/test_prediction_council.py \
             20_TESTS/polymarket/test_calibration.py
+
+# Final acceptance gate is intentionally dedicated to Phase 5 scope.
