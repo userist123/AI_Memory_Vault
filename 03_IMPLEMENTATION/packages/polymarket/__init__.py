@@ -61,7 +61,7 @@ from .risk_abstention import (
 )
 
 __all__ = [
-    "ABSTENTION_POLICY_SCHEMA_VERSION" if False else "AbstentionPolicy",
+    "AbstentionPolicy",
     "AbstentionDecision",
     "CALIBRATION_SCHEMA_VERSION",
     "CalibrationBin",
