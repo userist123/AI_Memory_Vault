@@ -46,6 +46,15 @@ class HistoricalEvaluationDatasetRow:
         self.provenance.validate()
         if self.provenance.knowledge_basis not in _SAFE_BASES:
             raise ValueError("dataset row is not cutoff-safe historical provenance")
+        cutoff = _parse(self.prediction.known_as_of)
+        observed = _parse(self.provenance.observed_at)
+        known = _parse(self.provenance.known_as_of)
+        acquired = _parse(self.provenance.acquired_at)
+        resolution = _parse(self.resolution_known_at)
+        if observed > cutoff or known > cutoff or acquired > cutoff:
+            raise ValueError("dataset point is not temporally eligible at prediction cutoff")
+        if resolution <= cutoff:
+            raise ValueError("resolution cannot be known at or before prediction cutoff")
         if self.point.known_as_of != self.provenance.known_as_of or self.point.acquired_at != self.provenance.acquired_at:
             raise ValueError("temporal tape point provenance mismatch")
         if self.point.observed_at != self.provenance.observed_at:
@@ -54,8 +63,8 @@ class HistoricalEvaluationDatasetRow:
             raise ValueError("source_timestamp_semantics is required")
         if not self.resolved_outcome_id:
             raise ValueError("resolved_outcome_id is required")
-        if _parse(self.resolution_known_at) <= _parse(self.prediction.known_as_of):
-            raise ValueError("resolution cannot be known at or before prediction cutoff")
+        if not 0.0 < self.point.price < 1.0:
+            raise ValueError("historical evaluation price must be strictly between 0 and 1")
         self.point.validate()
 
     def evaluate(self) -> HistoricalEvaluation:
