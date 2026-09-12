@@ -13,6 +13,8 @@ jobs:
   phase11:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      PYTHONPATH: 03_IMPLEMENTATION
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -61,13 +63,14 @@ jobs:
               ],
               "note": "Mechanical control only. Execution depth, fee and slippage are explicit synthetic Phase 10 inputs; no alpha or profitability claim is made.",
           }
-          if len(bundles) < 3:
-              raise SystemExit(f"UNVERIFIED: only {len(bundles)} suitable resolved markets collected; need 3")
           with open("artifacts/phase11/live_smoke.json", "w", encoding="utf-8") as handle:
               json.dump(payload, handle, indent=2)
           print(json.dumps(payload, indent=2))
+          if len(bundles) < 3:
+              raise SystemExit(f"UNVERIFIED: only {len(bundles)} suitable resolved markets collected; need 3")
           PY
       - name: Upload Phase 11 evidence
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: polymarket-phase11-real-historical-paper-replay
