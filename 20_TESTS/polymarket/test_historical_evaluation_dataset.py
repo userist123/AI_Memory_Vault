@@ -60,8 +60,13 @@ def test_resolution_known_before_prediction_cutoff_is_rejected() -> None:
 
 
 def test_point_acquired_after_prediction_cutoff_is_rejected() -> None:
-    with pytest.raises(ValueError, match="historical provenance"):
+    with pytest.raises(ValueError, match="temporally eligible"):
         load_historical_evaluation_dataset([_record(acquired_at=_ts(5))])
+
+
+def test_observation_after_prediction_cutoff_is_rejected() -> None:
+    with pytest.raises(ValueError, match="temporally eligible"):
+        load_historical_evaluation_dataset([_record(observed_at=_ts(5))])
 
 
 def test_invalid_temporal_order_is_rejected() -> None:
