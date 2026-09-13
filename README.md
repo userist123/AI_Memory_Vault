@@ -10,7 +10,7 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions"><img alt="GitHub Actions" src="https://img.shields.io/badge/CI-GitHub%20Actions-181717?logo=githubactions&logoColor=white"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-Plugin-7C3AED"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/07_EVALUATION"><img alt="Evidence Gated" src="https://img.shields.io/badge/Evidence-Gated-0F766E"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/09_COORDINATION/AGENT_MEMORY"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Agent%20Memory-Persistent-2563EB"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/00_GOVERNANCE/coordination"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Agent%20Memory-Persistent-2563EB"></a>
   <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Synced-7C3AED"></a>
 </p>
 
@@ -31,7 +31,11 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 | Book → text conversion | PDF outline / typography / page-fallback chunking, OCR detection, per-book metrics | **IMPLEMENTED** |
 | Book concept extraction | model-assisted, with grounding, paraphrase, shape and schema gates | **IMPLEMENTED / GATES PROVEN** |
 | Book concept *selectivity* | telling a load-bearing concept from experimental furniture | **MEASURED, NOT SOLVED** |
-| Persistent agent memory | resumable `CURRENT.md` state under `09_COORDINATION/AGENT_MEMORY/` | **IMPLEMENTED** |
+| Ontology promotion gate | a merge must consult a verdict manifest; unjudged rows are withheld and counted | **IMPLEMENTED** |
+| Row disposition | every one of the 213 slot rows carries a decision and a reason | **DECIDED, NOT EXECUTED** |
+| Polymarket forecasting | snapshots, council, calibration, edge, abstention, Kelly sizing, backtest, ablation, temporal contract | **IMPLEMENTED / UNVALIDATED ON REAL DATA** |
+| Polymarket resolution provenance | the moment an outcome became knowable | **ESTABLISHED UNAVAILABLE** |
+| Persistent agent memory | resumable `CURRENT.md` state under `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTED** |
 | Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
 | Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
 | Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
@@ -116,7 +120,7 @@ flowchart TB
     INBOX --> HG[Human / Policy Gate]
     HG --> M
 
-    P[09_COORDINATION / Persistent Agent Memory] <--> R
+    P[00_GOVERNANCE / Persistent Agent Memory] <--> R
 ```
 
 ### The core boundary
@@ -146,26 +150,33 @@ These runtime interfaces are the target architecture. Some are present as isolat
 
 | Path | Role |
 |---|---|
-| `00_CORE/` | identity, rules, memory protocol, system invariants |
-| `01_KNOWLEDGE/` | knowledge notes, registries, agent/skill maps, external research |
-| `02_PROJECTS/` | project continuity |
-| `03_PROCEDURES/` | repeatable operational procedures |
+| `00_GOVERNANCE/` | rules, protocols, invariants, agent coordination, `VAULT_STATE.md` |
+| `01_ARCHITECTURE/` | knowledge notes, registries, skill matrices, the ontology slot files |
+| `01_KNOWLEDGE/` | external research and imported knowledge |
+| `02_PRODUCT/` | project context and continuity |
+| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — cognitive core, memory controller, retrieval, polymarket, providers |
+| `04_CONFIG/` · `05_DATA/` | configuration and data artifacts |
 | `04_MEMORY/` | canonical memory records |
-| `05_RESOURCES/` | references and Obsidian navigation |
-| `06_INBOX/` | raw/imported/review-stage material |
-| `07_EVALUATION/` | audits, experiments, benchmarks, MVE, forensic evidence |
-| `08_EXPORTS/` | generated/export artifacts |
-| `09_COORDINATION/` | agent dispatch, persistent memory, project handoffs |
-| `10_ARCHIVE/` | historical material |
-| `90_TEMPLATES/` | templates |
-| `99_SYSTEM/` | system contracts and architecture |
+| `06_INBOX/` | raw and imported material, pre-review |
+| `07_EVALUATION/` | audits, experiments, benchmarks, MVE, forensic evidence, captured fixtures |
+| `08_OBSERVABILITY/` · `09_SECURITY/` | telemetry and security surfaces |
+| `10_DOCUMENTATION/` | procedures, resources, Obsidian projection |
+| `20_TESTS/` | the deterministic suite — `pytest -q` runs it from the repository root |
+| `30_SCRIPTS/` | ingestion, knowledge, memory, skills and verification tooling |
+| `40_EXPERIMENTS/` · `50_ARTIFACTS/` | experimental work and generated artifacts |
+| `60_DEPLOYMENT/` · `70_INTEGRATIONS/` | deployment and integration surfaces |
+| `80_ARCHIVE/` · `90_RELEASE/` · `99_META/` | history, releases, meta |
 | `.agents/` | agent profiles, rules, operational skills |
 | `.claude-plugin/` | Claude Code plugin surface |
 | `cognitive_core/` | cognitive runtime primitives |
-| `memory_controller/` | canonical memory boundary and context control |
-| `scripts/` | operational tooling |
-| `tests/` | repository-level validation |
+| `staging/` | per-book extraction rows, gitignored — never committed |
+| `AI_Memory_Vault_OBSIDIAN/` | the human navigation layer, which still carries the older `00_CORE` / `99_SYSTEM` vault layout |
 | `.github/workflows/` | CI, security, ingestion, maintenance, evaluation |
+
+> The numbered directories above are the repository. The vault layout the
+> Obsidian projection uses — `00_CORE/`, `09_COORDINATION/`, `99_SYSTEM/` — lives
+> under `AI_Memory_Vault_OBSIDIAN/` and is not the repository root. This README
+> described the second as if it were the first until 2026-09-14.
 
 ---
 
@@ -402,7 +413,7 @@ That restraint is deliberate: a result that happened once is evidence about an e
 Persistent execution state lives under:
 
 ```text
-09_COORDINATION/AGENT_MEMORY/
+00_GOVERNANCE/coordination/
 ├── README.md
 ├── UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
 ├── BOOTSTRAP_ALL_AGENTS_V1.md
@@ -472,6 +483,83 @@ Relevant surfaces:
 - `06_INBOX/RAW_IMPORTS/`
 
 The repository deliberately preserves source attribution, commit/path metadata, hashing and lifecycle state for imported material.
+
+---
+
+# 🚪 Ontology promotion gate
+
+A merge script wrote **201 concepts** into the sixteen ontology slot files in one
+step, every one `proposed`. That is what it was built to do. **160 were still
+there five days later, judged by nobody** — and when someone finally read them,
+28 were phrases rather than concepts, 8 duplicated concepts already promoted,
+1 was two concepts sharing a word, and 6 needed a decision nobody had made.
+
+The slot files were a working area to the merge script and canonical ontology to
+everything else. Nobody wrote a gate because nobody thought there was a boundary.
+
+```text
+staging rows → verdict manifest → gate → slot files
+                     ↑
+          a decision, with a reason, per concept
+```
+
+`30_SCRIPTS/ingestion/promotion_verdicts.py` is that boundary.
+
+- **`PROMOTE` alone admits.** `UNSURE` deliberately does not: a decision nobody
+  could make is not a decision to proceed.
+- **A concept absent from the manifest is withheld and counted**, never dropped.
+  A run that silently skipped them would look identical to a run where they had
+  been decided — which is exactly how the 160 became invisible.
+- **A `reason` is required on every entry, including approvals.** A verdict
+  without one is a vote.
+- **The gate does not judge quality.** A manifest marking a phrase `PROMOTE`
+  lets that phrase through and has done its job. What it removes is the
+  *unexamined* row.
+
+`30_SCRIPTS/ingestion/slot_rows.py` is the single reader for those files, and it
+**raises on a status no tool declares**. Ten rows carrying `unverified_source`
+sat unseen for five days because every audit filtered on the two statuses
+everyone knew about, and several independent tools agreed on 203 against a real
+213 — not from a shared bug, but from a shared assumption.
+
+Disposition for all 213 rows lives in
+[`07_EVALUATION/book_corpus_conversion/`](07_EVALUATION/book_corpus_conversion/).
+Executing it is a human decision and has not been taken.
+
+---
+
+# 📈 Polymarket forecasting
+
+`03_IMPLEMENTATION/packages/polymarket/` — market snapshots, a prediction
+council, calibration, model-vs-market edge, risk abstention, Kelly sizing
+clamped last and unconditionally, backtest, benchmark, ablation with
+Holm-Bonferroni correction, and a temporal provenance contract.
+
+### What the first real capture established
+
+The package was built through twenty-one phases against two fixtures we wrote
+ourselves. The first real data ([`fixtures/real_gamma_markets_*.json`](07_EVALUATION/polymarket/fixtures/))
+answered the question the design rested on:
+
+> **No public Polymarket endpoint carries a settlement timestamp.**
+
+Checked across all 143 keys in a 100-market resolved capture. The only
+settlement-adjacent fields are `resolvedBy`, an address, and
+`automaticallyResolved`, a boolean. `endDate` is the scheduled close,
+`closedTime` is when trading stopped and the UMA challenge period began, and
+`updatedAt` is when a worker wrote a database row. None is the moment the
+outcome became knowable.
+
+So `SOURCE_ONCHAIN_SETTLEMENT` is unreachable without a Polygon RPC node, every
+backtest scores on `SOURCE_MANUAL_ATTESTED`, and `ResolutionSet.by_source()`
+exists to report exactly that. `resolutions.py` deliberately has **no**
+`SOURCE_DERIVED_CLOSE_TIME` constant, and a test asserts the name stays absent:
+using a market's close time as its resolution time is the mistake the module
+exists to prevent.
+
+**No forecasting result here has been validated against real market outcomes.**
+The captures are provenance-stamped with URL, UTC query time, HTTP status,
+record count and SHA-256, and nothing is cleaned or reordered.
 
 ---
 
@@ -623,11 +711,11 @@ Use the repository's environment files / requirements for the exact runtime depe
 
 ### Architecture & contracts
 
-- [`99_SYSTEM/Memory_V6_Architecture.md`](99_SYSTEM/Memory_V6_Architecture.md)
+- [`00_GOVERNANCE/VAULT_STATE.md`](00_GOVERNANCE/VAULT_STATE.md)
 - [`07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md)
 - [`07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md)
-- [`00_CORE/Rules.md`](00_CORE/Rules.md)
-- [`00_CORE/Memory_Protocol.md`](00_CORE/Memory_Protocol.md)
+- [`00_GOVERNANCE/rules/Rules.md`](00_GOVERNANCE/rules/Rules.md)
+- [`00_GOVERNANCE/protocols/Memory_Protocol.md`](00_GOVERNANCE/protocols/Memory_Protocol.md)
 
 ### MVE / research
 
@@ -639,21 +727,21 @@ Use the repository's environment files / requirements for the exact runtime depe
 
 ### Agent continuity
 
-- [`09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md`](09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md`](09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md)
+- [`00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
+- [`00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md`](00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md)
+- [`00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md`](00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md)
 
 ### Skills / ingestion
 
-- [`01_KNOWLEDGE/Agents_Skill_Matrix.md`](01_KNOWLEDGE/Agents_Skill_Matrix.md)
-- [`01_KNOWLEDGE/Master_Skills_Catalog_251.md`](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
-- [`skills/ai-memory-vault/SKILL.md`](skills/ai-memory-vault/SKILL.md)
-- [`scripts/skill_ingestion.py`](scripts/skill_ingestion.py)
+- [`01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md`](01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md)
+- [`01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md`](01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md)
+- [`.agents/skills/`](.agents/skills/)
+- [`30_SCRIPTS/skills/skill_ingestion.py`](30_SCRIPTS/skills/skill_ingestion.py)
 
 ### Runtime
 
 - [`cognitive_core/`](cognitive_core/)
-- [`memory_controller/`](memory_controller/)
+- [`03_IMPLEMENTATION/packages/memory_controller/`](03_IMPLEMENTATION/packages/memory_controller/)
 - [`cognitive_core/recall_cli.py`](cognitive_core/recall_cli.py)
 - [GitHub Actions](../../actions)
 
