@@ -20,7 +20,11 @@ ROOT_ALLOWLIST = {
     ".github", ".agents", ".claude-plugin", ".obsidian",
     *NUMBERED_ROOTS,
 }
-ROOT_FILE_ALLOWLIST = {"README.md", ".gitkeep"}
+#: README.en.md is the English README. GitHub renders README.md on the
+#: repository page and has no language negotiation, so a second language is a
+#: second root file with a link between the two — there is no subdirectory that
+#: would still be found. Any further translation belongs here by the same rule.
+ROOT_FILE_ALLOWLIST = {"README.md", "README.en.md", ".gitkeep"}
 BANNED_IMPL_DIRS = {"__pycache__", "bin", "obj"}
 BANNED_IMPL_SUFFIXES = {".ipynb", ".sqlite", ".sqlite3", ".db", ".sqlite-shm", ".sqlite-wal", ".sqlite3-shm", ".sqlite3-wal", ".png", ".jpg", ".jpeg", ".gif", ".pdf"}
 BANNED_IMPORT_ROOTS = ("40_EXPERIMENTS", "50_ARTIFACTS", "06_INBOX", "80_ARCHIVE")
