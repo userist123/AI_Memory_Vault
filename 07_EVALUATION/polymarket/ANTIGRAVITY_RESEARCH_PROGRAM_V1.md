@@ -91,6 +91,16 @@ Ai raportat că `interval="all"` decimează banda de ~10–12 ori și îi taie �
 
 Fișier: `20_TESTS/polymarket/test_leakage_real_data.py`, rulând pe fixture-urile corpusului, **fără rețea**.
 
+**Fișierul există deja** (scris de Claude, pe `main`), pe cele 50 de piețe capturate. Conține 3 teste care trec și 3 `xfail(strict=True)`, fiecare verificat că eșuează pe propria aserțiune, nu pe altă eroare:
+
+- `HistoricalMarketBundle.validate` acceptă puncte observate după rezoluție — 0 din 11 piețe refuzate;
+- `run_mechanical_control` tranzacționează pe puncte cu `known_as_of` null — 0 din 50 refuzate;
+- `build_market_bundle` scrie data rezoluției ca `known_as_of` pe fiecare cotație, deci momentul în care un preț a devenit public se mută odată cu data decontării.
+
+Contrastul pe care îl documentează: vechiul `historical_replay.HistoricalPricePoint` refuză exact aceste lucruri. Noul drum pentru date reale nu.
+
+**Nu îl rescrie. Extinde-l:** adaugă breșa pieței-soră (rezoluția unei piețe folosibilă pentru alta pe același eveniment), care nu e acoperită, și mută testele pe corpusul v1 când există.
+
 - Fiecare apărare care rezistă: test normal care trece.
 - Fiecare breșă confirmată: test marcat `pytest.mark.xfail(strict=True, reason=...)`, care descrie exact comportamentul greșit. Astfel CI rămâne verde, iar ziua în care cineva repară breșa, testul trece neașteptat și forțează eliminarea marcajului.
 - Minimum cele trei breșe deja găsite: `known_as_of` null acceptat, puncte după închidere acceptate de `HistoricalMarketBundle`, rezoluția unei piețe-soră folosibilă ca informație pentru alta pe același eveniment.
