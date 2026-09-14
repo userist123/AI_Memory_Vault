@@ -1,0 +1,3 @@
+benchmark,tested_models_count,test_statistic_t_spa,p_value_hansen_spa,p_value_white_reality_check,best_model_symbol,best_model_strategy,decision
+Zero_Excess_Return_Cash,246,2.8443,0.2095,0.2205,NZDUSD,S2_MR_W20,ACCEPT_NULL (No Alpha)
+Equal_Weight_Buy_and_Hold_S0a,246,2.0975,0.386,0.4015,XAUUSD,S1_MOM_120,ACCEPT_NULL (No Alpha)
