@@ -145,6 +145,14 @@ Din ultimele două livrări, **niciunul din cele 33 de scripturi anunțate nu ex
 
 ---
 
+## Reguli permanente pentru această linie de cercetare
+
+Se aplică oricui livrează aici — Antigravity, Claude sau alt agent — și tuturor livrărilor viitoare, nu doar acestui program.
+
+1. **Nicio ieșire de script nu poate fi citată ca verificată dacă scriptul nu e comis** în același commit sau într-unul anterior, pe aceeași ramură. Un script care există doar într-un director local al agentului (de exemplu `~/.gemini/antigravity/brain/…/scratch/`) nu contează ca sursă.
+2. **Nicio descompunere nu se descrie calitativ fără cifrele ei.** Dacă un tabel intră în raport, intră cu numere. Se aplică în special rezultatelor care contrazic verdictul principal.
+3. **Scripturile care cer rețea nu se pot reproduce la nivel de octet** — datele live se schimbă. Pentru ele se comite răspunsul brut capturat; reproductibilitatea se cere de la analiza care îl citește.
+
 ## Reguli
 
 - Fără autentificare. Rate limit uman; la 429 te oprești, aștepți, raportezi, nu reiei în buclă.
