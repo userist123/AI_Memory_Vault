@@ -41,6 +41,39 @@ Scripturile tale se conectează la terminalul deja autentificat cu `mt5.initiali
 
 ---
 
+## Material existent: botul anterior al lui Owner
+
+În `02_PRODUCT/projects/imported/bot/trade/` există munca anterioară de trading: „Elite Quant Bot" pentru MT5, versiunile v10–v12, axat pe XAUUSD, cu o bibliotecă de strategii, un model ML și rapoarte zilnice. Nu sunt date de preț, ci cod și rezultate. Programul pornește de la ele, cu regulile de mai jos.
+
+### Ce arată deja rapoartele botului
+
+| raport | strategie | tranzacții | câștigate | PnL brut | probabilitate ML medie |
+|---|---|---|---|---|---|
+| v11, 2026-06-19 | `macd_momentum_fast12_signal9_slow26_H1` | 50 | **3** | **−2.373,12** | **0,999** |
+| v12, 2026-06-12 | `macd_momentum_fast12_signal9_slow26_M5` | 21 | **0** | **−759,60** | 0,5 |
+| v12, 2026-06-13 | `macd_momentum_fast5_signal5_slow35_M5` | 12 | **0** | 0,00 | 0,999 |
+
+Trei constatări, fiecare obligatorie pentru program:
+
+1. **Modelul ML era complet necalibrat.** A dat în medie o probabilitate de câștig de 0,999 pe o zi cu 3 câștiguri din 50. Orice componentă ML intră în program doar cu un test de calibrare pe date nevăzute, raportat înaintea oricărui rezultat de profit.
+2. **Contabilitatea botului nu e de încredere.** Pe 12 iunie, contorul cumulat arată 0 câștiguri din 21. Pe 13 iunie, cu 0 câștiguri în ziua respectivă, arată 35 din 47. Rapoartele nu pot servi drept istoric de performanță.
+3. **Istoricul autoritar e cel al contului MT5**, nu cel scris de bot. Dacă Owner exportă istoricul contului, e sursa de adevăr. **Depozitul e public:** exportul nu se comite. Rămâne local, iar în depozit intră doar statistici agregate, fără număr de cont, nume sau sume identificabile.
+
+### Strategiile existente
+
+`elite_quant_bot_v12/strategies/families/xau_library.py` definește patru familii (`xau_liquidity_sweep`, `xau_asian_box_break`, `xau_body_close_breakout`, `xau_fvg_pullback`), la care se adaugă variantele MACD din rapoarte.
+
+- Pot intra în preînregistrare ca familii candidate, pe lângă S1–S4, cu parametrii lor de atunci, **nemodificați**.
+- **Au fost construite privind istoricul de până la data creării lor.** Rezultatele lor contează ca out-of-sample doar pe date **de după** acea dată. Data exactă nu e în git: fișierele au intrat în depozit la 2026-09-06, prin import. Limita superioară sigură e data ultimului raport, **2026-06-19**. Tot ce e înainte e în eșantion și se raportează separat, marcat ca atare.
+- Nu li se ajustează parametrii ca să arate mai bine. O versiune ajustată e o strategie nouă, cu fereastra ei out-of-sample care începe de la zero.
+
+### Ce nu se folosește
+
+- `core/mt5_client.py` din bot **împachetează `order_send`**. Nu se importă, nu se copiază. Scrie un client propriu doar pentru citire (`initialize`, `symbols_get`, `symbol_info`, `copy_rates_range`, `copy_ticks_range`).
+- În același director se află **fișiere financiare personale**: bugete, un extras de cont. **Nu se deschid, nu se citesc, nu se copiază** și nu intră în niciun artefact.
+
+---
+
 ## PARTEA A — Preînregistrarea (se comite ÎNAINTE de orice legătură între semnale și randamente viitoare)
 
 Fișier: `07_EVALUATION/metatrader/research/PREREGISTRATION.md`, comis și urcat înainte de primul script care calculează un randament după un semnal. Ordinea commit-urilor se verifică.
@@ -196,6 +229,7 @@ Doar pentru combinațiile care trec corecția pe validare. O singură evaluare. 
   - nicio ieșire de script citată ca verificată fără script comis;
   - nicio descompunere descrisă fără cifrele ei;
   - scripturile care descarcă date se comit împreună cu răspunsul brut.
+- Nu importa și nu copia `02_PRODUCT/projects/imported/bot/trade/*/core/mt5_client.py` (conține `order_send`). Nu deschide fișierele financiare personale din `02_PRODUCT/projects/imported/`.
 - **Nu scrie în raport că ceva „funcționează", „e profitabil" sau „e garantat"** decât cu intervalul și valoarea p corectată lângă afirmație.
 
 ---
