@@ -1,0 +1,101 @@
+market_index,question,rule_category,ground_truth_category,rule_cluster_key,ground_truth_cluster_key,category_agreed,cluster_agreed,overall_agreed
+1,Los Angeles Dodgers vs. Miami Marlins: O/U 10.5,sports_pre_match,sports_pre_match,mlb_dodgers_vs_marlins_2026-09-13,mlb_dodgers_vs_marlins_2026-09-13,True,True,True
+2,Spread: Cleveland Guardians (-7.5),sports_pre_match,sports_in_play,mlb_guardians_game_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,False,False
+3,Cleveland Guardians vs. Minnesota Twins: O/U 11.5,sports_pre_match,sports_in_play,mlb_guardians_vs_twins_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,True,False
+4,Spread: Cleveland Guardians (-6.5),sports_pre_match,sports_in_play,mlb_guardians_game_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,False,False
+5,Los Angeles Angels vs. Washington Nationals: O/U 11.5,sports_pre_match,sports_pre_match,mlb_angels_vs_nationals_2026-09-13,mlb_angels_vs_nationals_2026-09-13,True,True,True
+6,Houston Astros vs. Tampa Bay Rays: O/U 19.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+7,Houston Astros vs. Tampa Bay Rays: O/U 18.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+8,Spread: Philadelphia Phillies (-6.5),sports_pre_match,sports_pre_match,mlb_phillies_game_2026-09-13,mlb_phillies_game_2026-09-13,True,True,True
+9,Spread: Philadelphia Phillies (-3.5),sports_pre_match,sports_pre_match,mlb_phillies_game_2026-09-13,mlb_phillies_game_2026-09-13,True,True,True
+10,Spread: Philadelphia Phillies (-4.5),sports_pre_match,sports_pre_match,mlb_phillies_game_2026-09-13,mlb_phillies_game_2026-09-13,True,True,True
+11,Los Angeles Dodgers vs. Miami Marlins: O/U 3.5,sports_pre_match,sports_pre_match,mlb_dodgers_vs_marlins_2026-09-13,mlb_dodgers_vs_marlins_2026-09-13,True,True,True
+12,Houston Astros vs. Tampa Bay Rays: O/U 16.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+13,Houston Astros vs. Tampa Bay Rays: O/U 17.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+14,New York Mets vs. New York Yankees: O/U 2.5,sports_pre_match,sports_pre_match,mlb_mets_vs_yankees_2026-09-13,mlb_mets_vs_yankees_2026-09-13,True,True,True
+15,Spread: Cleveland Guardians (-5.5),sports_pre_match,sports_in_play,mlb_guardians_game_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,False,False
+16,"Ethereum above 2,420 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+17,"Ethereum above 2,430 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+18,"Ethereum above 2,440 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+19,"Ethereum above 2,450 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+20,"Ethereum above 2,460 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+21,"Ethereum above 2,470 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+22,"Ethereum above 2,480 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+23,"Ethereum above 2,490 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+24,"Ethereum above 2,510 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+25,"Ethereum above 2,520 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+26,"Ethereum above 2,530 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+27,"Ethereum above 2,540 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+28,"Ethereum above 2,550 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+29,"Ethereum above 2,560 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+30,"Ethereum above 2,570 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+31,"Ethereum above 2,580 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_5pm,ETH_september_12_5pm,True,False,False
+32,"Bitcoin above 75,200 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+33,"Bitcoin above 75,400 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+34,"Bitcoin above 75,600 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+35,"Bitcoin above 75,800 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+36,"Bitcoin above 76,000 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+37,"Bitcoin above 76,200 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+38,"Bitcoin above 76,400 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+39,"Bitcoin above 76,600 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+40,"Bitcoin above 76,800 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+41,"Bitcoin above 77,000 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+42,"Bitcoin above 77,400 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+43,"Bitcoin above 77,600 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+44,"Bitcoin above 77,800 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+45,"Bitcoin above 78,000 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+46,"Bitcoin above 78,200 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+47,"Bitcoin above 78,400 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+48,"Bitcoin above 78,600 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+49,"Bitcoin above 78,800 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+50,"Bitcoin above 79,000 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+51,"Bitcoin above 79,200 on September 13, 5PM ET?",crypto_threshold,crypto_threshold,BTC_september_13_5pm,BTC_september_12_5pm,True,False,False
+52,Chicago White Sox vs. St. Louis Cardinals: O/U 3.5,sports_pre_match,sports_pre_match,mlb_cardinals_vs_white sox_2026-09-13,mlb_cardinals_vs_white_sox_2026-09-13,True,True,True
+53,Los Angeles Dodgers vs. Miami Marlins: O/U 4.5,sports_pre_match,sports_pre_match,mlb_dodgers_vs_marlins_2026-09-13,mlb_dodgers_vs_marlins_2026-09-13,True,True,True
+54,Pittsburgh Pirates vs. Chicago Cubs: O/U 3.5,sports_pre_match,sports_pre_match,mlb_cubs_vs_pirates_2026-09-13,mlb_cubs_vs_pirates_2026-09-13,True,True,True
+55,New York Mets vs. New York Yankees: O/U 3.5,sports_pre_match,sports_pre_match,mlb_mets_vs_yankees_2026-09-13,mlb_mets_vs_yankees_2026-09-13,True,True,True
+56,Cleveland Guardians vs. Minnesota Twins: O/U 10.5,sports_pre_match,sports_in_play,mlb_guardians_vs_twins_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,True,False
+57,Spread: Cleveland Guardians (-4.5),sports_pre_match,sports_in_play,mlb_guardians_game_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,False,False
+58,Spread: Cleveland Guardians (-3.5),sports_pre_match,sports_in_play,mlb_guardians_game_2026-09-13,mlb_guardians_vs_twins_2026-09-13,False,False,False
+59,Houston Astros vs. Tampa Bay Rays: O/U 15.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+60,New York Mets vs. New York Yankees: O/U 4.5,sports_pre_match,sports_pre_match,mlb_mets_vs_yankees_2026-09-13,mlb_mets_vs_yankees_2026-09-13,True,True,True
+61,Map 2 Total Rounds: Over/Under 27.5,sports_in_play,sports_in_play,esports_match_map_2_2026-09-13,esports_match_map_2026-09-13,True,False,False
+62,Cincinnati Reds vs. Milwaukee Brewers: O/U 5.5,sports_pre_match,sports_pre_match,mlb_brewers_vs_reds_2026-09-13,mlb_brewers_vs_reds_2026-09-13,True,True,True
+63,Pittsburgh Pirates vs. Chicago Cubs: O/U 4.5,sports_pre_match,sports_pre_match,mlb_cubs_vs_pirates_2026-09-13,mlb_cubs_vs_pirates_2026-09-13,True,True,True
+64,Spread: Toronto Blue Jays (-3.5),sports_pre_match,sports_pre_match,mlb_blue jays_game_2026-09-13,mlb_blue_jays_game_2026-09-13,True,True,True
+65,Chicago White Sox vs. St. Louis Cardinals: O/U 4.5,sports_pre_match,sports_pre_match,mlb_cardinals_vs_white sox_2026-09-13,mlb_cardinals_vs_white_sox_2026-09-13,True,True,True
+66,Philadelphia Phillies vs. Atlanta Braves: O/U 5.5,sports_pre_match,sports_pre_match,mlb_braves_vs_phillies_2026-09-13,mlb_phillies_game_2026-09-13,True,False,False
+67,Houston Astros vs. Tampa Bay Rays: O/U 14.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+68,Game Handicap: Mitul Anatoli (-1.5) vs Casapciuc Stanislav (,sports_pre_match,event_market,game_setkamemd_anatoli_stanisl_2026,other_cluster,False,False,False
+69,Mitul Anatoli vs. Casapciuc Stanislav: Total Games O/U 4.5,sports_pre_match,event_market,game_mitulanatoli_vs_casapciucstani,other_cluster,False,False,False
+70,Mitul Anatoli vs. Casapciuc Stanislav: Total Games O/U 3.5,sports_pre_match,event_market,game_mitulanatoli_vs_casapciucstani,other_cluster,False,False,False
+71,Total Kills Over/Under 36.5 in Game 4?,sports_in_play,sports_in_play,esports_match_map_1_2026-09-13,esports_match_map_2026-09-13,True,False,False
+72,Philadelphia Phillies vs. Atlanta Braves: O/U 6.5,sports_pre_match,sports_pre_match,mlb_braves_vs_phillies_2026-09-13,mlb_phillies_game_2026-09-13,True,False,False
+73,New York Mets vs. New York Yankees: O/U 5.5,sports_pre_match,sports_pre_match,mlb_mets_vs_yankees_2026-09-13,mlb_mets_vs_yankees_2026-09-13,True,True,True
+74,Chicago White Sox vs. St. Louis Cardinals: O/U 5.5,sports_pre_match,sports_pre_match,mlb_cardinals_vs_white sox_2026-09-13,mlb_cardinals_vs_white_sox_2026-09-13,True,True,True
+75,Houston Astros vs. Tampa Bay Rays: O/U 13.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+76,Spread: Tampa Bay Rays (-9.5),sports_pre_match,sports_pre_match,mlb_rays_game_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,False,False
+77,Spread: Los Angeles Dodgers (-4.5),sports_pre_match,sports_pre_match,mlb_dodgers_game_2026-09-13,mlb_dodgers_vs_marlins_2026-09-13,True,False,False
+78,Houston Astros vs. Tampa Bay Rays: O/U 12.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+79,Total Kills Over/Under 39.5 in Game 4?,sports_in_play,sports_in_play,esports_match_map_1_2026-09-13,esports_match_map_2026-09-13,True,False,False
+80,Total Kills Over/Under 33.5 in Game 4?,sports_in_play,sports_in_play,esports_match_map_1_2026-09-13,esports_match_map_2026-09-13,True,False,False
+81,Map 2 Rounds Handicap: Nuclear TigeRES (-6.5) vs UPGRADE (+6,sports_in_play,sports_in_play,esports_match_map_2_2026-09-13,esports_match_map_2026-09-13,True,False,False
+82,Chicago White Sox vs. St. Louis Cardinals: O/U 6.5,sports_pre_match,sports_pre_match,mlb_cardinals_vs_white sox_2026-09-13,mlb_cardinals_vs_white_sox_2026-09-13,True,True,True
+83,Map 2 Total Rounds: Over/Under 24.5,sports_in_play,sports_in_play,esports_match_map_2_2026-09-13,esports_match_map_2026-09-13,True,False,False
+84,Spread: Tampa Bay Rays (-8.5),sports_pre_match,sports_pre_match,mlb_rays_game_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,False,False
+85,Calmis Andrei vs. Burucenco Vadim,sports_pre_match,event_market,game_calmisandrei_vs_burucencovadim,other_cluster,False,False,False
+86,Spread: Milwaukee Brewers (-3.5),sports_pre_match,sports_pre_match,mlb_brewers_game_2026-09-13,mlb_brewers_vs_reds_2026-09-13,True,False,False
+87,Houston Astros vs. Tampa Bay Rays: O/U 10.5,sports_pre_match,sports_pre_match,mlb_astros_vs_rays_2026-09-13,mlb_astros_vs_rays_2026-09-13,True,True,True
+88,Philadelphia Phillies vs. Atlanta Braves: O/U 7.5,sports_pre_match,sports_pre_match,mlb_braves_vs_phillies_2026-09-13,mlb_phillies_game_2026-09-13,True,False,False
+89,Baltimore Orioles vs. Toronto Blue Jays: O/U 4.5,sports_pre_match,sports_pre_match,mlb_blue jays_vs_orioles_2026-09-13,mlb_blue_jays_game_2026-09-13,True,False,False
+90,Total Kills Over/Under 30.5 in Game 4?,sports_in_play,sports_in_play,esports_match_map_1_2026-09-13,esports_match_map_2026-09-13,True,False,False
+91,Map 2 Total Rounds: Over/Under 24.5,sports_in_play,sports_in_play,esports_match_map_2_2026-09-13,esports_match_map_2026-09-13,True,False,False
+92,Map 2 Rounds Handicap: Color (-6.5) vs INOX Division (+6.5),sports_in_play,sports_in_play,esports_match_map_2_2026-09-13,esports_match_map_2026-09-13,True,False,False
+93,Spread: New York Yankees (-3.5),sports_pre_match,sports_pre_match,mlb_yankees_game_2026-09-13,mlb_mets_vs_yankees_2026-09-13,True,False,False
+94,"Ethereum above 2,430 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
+95,"Ethereum above 2,440 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
+96,"Ethereum above 2,450 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
+97,"Ethereum above 2,460 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
+98,"Ethereum above 2,470 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
+99,"Ethereum above 2,480 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
+100,"Ethereum above 2,490 on September 13, 4PM ET?",crypto_threshold,crypto_threshold,ETH_september_13_4pm,ETH_september_12_4pm,True,False,False
