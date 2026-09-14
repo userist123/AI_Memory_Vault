@@ -128,12 +128,14 @@ def validate_rule_agreement():
         # Ground truth hand-clustering:
         if "ethereum" in slug_lower or "bitcoin" in slug_lower or "solana" in slug_lower:
             gt_cat = "crypto_threshold"
+            m_h = re.search(r"(\d{1,2}(?:am|pm))", slug_lower)
+            h = m_h.group(1).upper() if m_h else "5PM"
             if "ethereum" in slug_lower:
-                gt_cluster = "ETH_SEPTEMBER-13-2026-5PM-ET"
+                gt_cluster = f"ETH_SEPTEMBER-13-2026-{h}-ET"
             elif "bitcoin" in slug_lower:
-                gt_cluster = "BTC_SEPTEMBER-13-2026-5PM-ET"
+                gt_cluster = f"BTC_SEPTEMBER-13-2026-{h}-ET"
             else:
-                gt_cluster = "SOL_SEPTEMBER-13-2026-5PM-ET"
+                gt_cluster = f"SOL_SEPTEMBER-13-2026-{h}-ET"
         else:
             # Sports: check if game segment or full game
             is_subgame = any(k in q_lower or k in slug_lower for k in ["inning", "map 2", "game 4", "game 3", "game 2", "round", "handicap"])
