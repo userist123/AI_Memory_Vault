@@ -1,7 +1,8 @@
 # MANDAT — ANTIGRAVITY: există piețe-eveniment cu bandă de prețuri?
 
-> Emis: 2026-09-14 · **Înlocuiește** `ANTIGRAVITY_POPULATION_MANDATE.md`
+> Emis: 2026-09-14, 20:50 · **Termen: 23:00** · **Înlocuiește** `ANTIGRAVITY_POPULATION_MANDATE.md`
 > O singură întrebare, care cere rețea. Restul recensământului e deja făcut din datele de pe disc.
+> Dacă ajungi la un răspuns întemeiat înainte de termen, oprește-te și raportează atunci.
 
 ---
 
