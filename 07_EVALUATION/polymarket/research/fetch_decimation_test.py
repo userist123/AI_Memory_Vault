@@ -18,8 +18,13 @@ from datetime import datetime, timezone
 _orig_getaddrinfo = socket.getaddrinfo
 
 
+#: Exact hostnames only. A substring test would also reroute any host that
+#: merely contains the string, e.g. "polymarket.com.attacker.example".
+_POLYMARKET_HOSTS = frozenset({"gamma-api.polymarket.com", "clob.polymarket.com", "polymarket.com"})
+
+
 def _patched_getaddrinfo(host, port, *args, **kwargs):
-    if "polymarket.com" in host:
+    if isinstance(host, str) and host.lower().rstrip(".") in _POLYMARKET_HOSTS:
         return _orig_getaddrinfo("172.64.153.51", port, *args, **kwargs)
     return _orig_getaddrinfo(host, port, *args, **kwargs)
 
