@@ -1,6 +1,6 @@
 # PROGRAM DE CERCETARE — ANTIGRAVITY: Corpusul Polymarket v1 și studiul preînregistrat
 
-> Emis: 2026-09-14, 21:00 · **Termen: 2026-09-15, 06:00**
+> Emis: 2026-09-14, 21:00 · **Fără termen** — lucrezi până e gata și raportezi atunci.
 > **Înlocuiește** `ANTIGRAVITY_EVENT_MARKETS_MANDATE.md` — întrebarea de acolo devine partea B1 a acestui program.
 > Un singur livrabil mare. Structura internă de mai jos este ordinea de lucru, nu o listă de sarcini mici.
 
@@ -154,4 +154,4 @@ Din ultimele două livrări, **niciunul din cele 33 de scripturi anunțate nu ex
 6. Testele `xfail(strict=True)` chiar eșuează din motivul declarat.
 7. Suita și validatorul de layout, verzi.
 
-**Termen: 06:00.** Dacă programul se oprește într-un punct din motive legitime — de exemplu B1 arată că nu există piețe-eveniment cu bandă — continuă cu ce se poate măsura pe restul corpusului și spune clar ce nu s-a putut face și de ce.
+Dacă programul se oprește într-un punct din motive legitime — de exemplu B1 arată că nu există piețe-eveniment cu bandă — continuă cu ce se poate măsura pe restul corpusului și spune clar ce nu s-a putut face și de ce.
