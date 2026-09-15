@@ -29,6 +29,12 @@ SUMMARY_CSV = os.path.join(TABLES_DIR, "table_3_costs_summary.csv")
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out-dir", default=TABLES_DIR, help="Output directory for tables")
+    args = parser.parse_args()
+    out_dir = args.out_dir
+
     eligible_symbols = []
     with open(QUALITY_CSV, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -140,7 +146,7 @@ def main():
         }
     ]
 
-    out_csv = os.path.join(TABLES_DIR, "table_6b_zero_spread_robustness.csv")
+    out_csv = os.path.join(out_dir, "table_6b_zero_spread_robustness.csv")
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(records[0].keys()))
         writer.writeheader()

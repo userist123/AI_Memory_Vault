@@ -356,6 +356,12 @@ def backtest_h1_strategy(opens, closes, signals, timestamps, mask):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out-dir", default=TABLES_DIR, help="Output directory for tables")
+    args = parser.parse_args()
+    out_dir = args.out_dir
+
     timestamps, opens, highs, lows, closes = load_xauusd_h1()
     ts_arr = np.array(timestamps)
     holdout_mask = (ts_arr >= HOLDOUT_START) & (ts_arr <= HOLDOUT_END)
@@ -457,7 +463,7 @@ def main():
             print("ALERTA OVERCONFIDENCE: Greutatile ML contin coeficienti neregularizati giganti (>300.0), provocand colapsul sigmoidei la 0.999 sau 0.001.")
 
     # 5. Salvare tabel
-    out_csv = os.path.join(TABLES_DIR, "table_10_owner_bot_holdout.csv")
+    out_csv = os.path.join(out_dir, "table_10_owner_bot_holdout.csv")
     fieldnames = list(results[0].keys())
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

@@ -48,6 +48,12 @@ def load_h1(symbol: str):
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out-dir", default=TABLES_DIR, help="Output directory for tables")
+    args = parser.parse_args()
+    out_dir = args.out_dir
+
     records = []
     test_counter = 0
 
@@ -186,7 +192,7 @@ def main():
     print(f"Numar asteptat de fals-pozitive la alpha=0.05: {expected_false_positives:.2f}")
 
     # Salvare CSV
-    out_csv = os.path.join(TABLES_DIR, "table_11_exploratory_hypotheses.csv")
+    out_csv = os.path.join(out_dir, "table_11_exploratory_hypotheses.csv")
     fieldnames = list(records[0].keys())
     with open(out_csv, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)

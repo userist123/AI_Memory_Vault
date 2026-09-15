@@ -67,6 +67,12 @@ def fast_hansen_spa(d: np.ndarray, b_reps: int = 500, q: float = 10.0, seed: int
 
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out-dir", default=TABLES_DIR, help="Output directory for tables")
+    args = parser.parse_args()
+    out_dir = args.out_dir
+
     eligible_symbols = []
     with open(QUALITY_CSV, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -185,7 +191,7 @@ def main():
     print(f"Minimum Detectable Sharpe Ratio (MDSR @ 80% power): {mdsr_80:.4f}")
     print(f"=======================================================\n")
 
-    out_csv = os.path.join(TABLES_DIR, "table_8_power_analysis.csv")
+    out_csv = os.path.join(out_dir, "table_8_power_analysis.csv")
     fieldnames = [
         "injected_true_sharpe", "simulations_count", "rejections_count",
         "statistical_power_1_minus_beta", "power_ci_lower_95", "power_ci_upper_95",
