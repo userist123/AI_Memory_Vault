@@ -53,13 +53,35 @@ _CANONICAL_SCHEMA = {
         "verification_source": {"type": "string"},
         "relations": {
             "type": "array",
+            # Two accepted shapes, because until now the schema and the graph
+            # reader were mutually exclusive and the schema won every time:
+            #
+            #   this schema required   relation + target, forbade `type`
+            #   SynapseStore reads     type + target_id (synapse_store.py:234)
+            #
+            # so a note that validated could not produce an edge, and a note
+            # that produced an edge could not validate. Every promoted note
+            # was an island by construction, not by mistake. Measured on
+            # Promoted_reservoir_sampling.md: 0 neighbours while passing the
+            # validator.
+            #
+            # `target_id` also carried format: uuid, which forbids linking to
+            # an ontology slot at all — slot ids are `slot-06-procedures`, not
+            # UUIDs. That constraint is dropped rather than worked around.
+            #
+            # This is additive: every note that validated before still
+            # validates. The graph shape is now merely also allowed.
             "items": {
                 "type": "object",
-                "required": ["relation", "target"],
+                "anyOf": [
+                    {"required": ["relation", "target"]},
+                    {"required": ["type", "target_id"]},
+                ],
                 "properties": {
                     "relation": {"type": "string"},
                     "target": {"type": "string"},
-                    "target_id": {"type": "string", "format": "uuid"}
+                    "type": {"type": "string"},
+                    "target_id": {"type": "string"}
                 },
                 "additionalProperties": False
             }

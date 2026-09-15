@@ -1,0 +1,182 @@
+{
+  "summary": {
+    "total_queries": 6,
+    "avg_latency_off_ms": 367.41,
+    "avg_latency_on_ms": 391.84,
+    "total_edges_traversed": 393,
+    "total_nodes_expanded": 60,
+    "targets_found_off_rate": 0.23529411764705882,
+    "targets_found_on_rate": 0.17647058823529413
+  },
+  "queries": [
+    {
+      "query": "working memory capacity and chunking limits",
+      "latency_off_ms": 363.47,
+      "latency_on_ms": 386.4,
+      "seeds_count": 200,
+      "traversed_edges_count": 76,
+      "expanded_nodes_count": 10,
+      "activation_nodes": 49,
+      "max_activation": 0.6454,
+      "targets_expected": [
+        "chunking",
+        "buffer",
+        "working_memory"
+      ],
+      "targets_found_off": [],
+      "targets_found_on": [],
+      "targets_reached_via_expansion": [],
+      "expanded_sample": [
+        "b2888875-8546-4d42-b262-2c7f779e3cc9",
+        "be1863da-7db4-48b7-9486-ad13b1a74152",
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        "4dcd44ba-c65e-4928-804a-d3d8f0bdd888",
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ]
+    },
+    {
+      "query": "classical conditioning and sensitization in memory",
+      "latency_off_ms": 346.2,
+      "latency_on_ms": 351.07,
+      "seeds_count": 200,
+      "traversed_edges_count": 59,
+      "expanded_nodes_count": 10,
+      "activation_nodes": 42,
+      "max_activation": 0.5308,
+      "targets_expected": [
+        "classical_conditioning",
+        "sensitization",
+        "implicit_memory"
+      ],
+      "targets_found_off": [
+        "classical_conditioning"
+      ],
+      "targets_found_on": [
+        "implicit_memory"
+      ],
+      "targets_reached_via_expansion": [
+        "implicit_memory"
+      ],
+      "expanded_sample": [
+        "b2888875-8546-4d42-b262-2c7f779e3cc9",
+        "6e014224-af01-4011-8050-082d3f9ea35e",
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        "e045ded5-01fd-4a28-8f85-203ebae670de",
+        "d4e5337e-122f-402c-84d0-57230976ee0d"
+      ]
+    },
+    {
+      "query": "reinforcement learning policy and state transitions",
+      "latency_off_ms": 398.91,
+      "latency_on_ms": 425.8,
+      "seeds_count": 200,
+      "traversed_edges_count": 85,
+      "expanded_nodes_count": 10,
+      "activation_nodes": 53,
+      "max_activation": 0.6971,
+      "targets_expected": [
+        "reinforcement_learning",
+        "state",
+        "operator"
+      ],
+      "targets_found_off": [
+        "state"
+      ],
+      "targets_found_on": [
+        "operator"
+      ],
+      "targets_reached_via_expansion": [
+        "operator"
+      ],
+      "expanded_sample": [
+        "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57",
+        "b2888875-8546-4d42-b262-2c7f779e3cc9",
+        "e045ded5-01fd-4a28-8f85-203ebae670de",
+        "d4e5337e-122f-402c-84d0-57230976ee0d",
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ]
+    },
+    {
+      "query": "mental imagery and recollection retrieval processes",
+      "latency_off_ms": 367.74,
+      "latency_on_ms": 392.3,
+      "seeds_count": 200,
+      "traversed_edges_count": 58,
+      "expanded_nodes_count": 10,
+      "activation_nodes": 42,
+      "max_activation": 0.5392,
+      "targets_expected": [
+        "mental_imagery",
+        "recollection",
+        "declarative_memory"
+      ],
+      "targets_found_off": [
+        "mental_imagery"
+      ],
+      "targets_found_on": [
+        "declarative_memory"
+      ],
+      "targets_reached_via_expansion": [
+        "declarative_memory"
+      ],
+      "expanded_sample": [
+        "b2888875-8546-4d42-b262-2c7f779e3cc9",
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        "d4e5337e-122f-402c-84d0-57230976ee0d",
+        "b01db913-6bf2-4b14-a37a-81cb4b336d93",
+        "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1"
+      ]
+    },
+    {
+      "query": "step-mechanism and impasse regulation in problem solving",
+      "latency_off_ms": 370.4,
+      "latency_on_ms": 399.38,
+      "seeds_count": 200,
+      "traversed_edges_count": 68,
+      "expanded_nodes_count": 10,
+      "activation_nodes": 49,
+      "max_activation": 0.6466,
+      "targets_expected": [
+        "step_mechanism",
+        "impasse",
+        "regulation"
+      ],
+      "targets_found_off": [],
+      "targets_found_on": [],
+      "targets_reached_via_expansion": [],
+      "expanded_sample": [
+        "b2888875-8546-4d42-b262-2c7f779e3cc9",
+        "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+        "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57",
+        "99280cf1-6eb2-449c-a778-e800c2868e07",
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34"
+      ]
+    },
+    {
+      "query": "parametric memory and latent representations in cognitive models",
+      "latency_off_ms": 357.72,
+      "latency_on_ms": 396.06,
+      "seeds_count": 200,
+      "traversed_edges_count": 47,
+      "expanded_nodes_count": 10,
+      "activation_nodes": 27,
+      "max_activation": 0.8706,
+      "targets_expected": [
+        "parametric_memory",
+        "latent_memory"
+      ],
+      "targets_found_off": [
+        "parametric_memory"
+      ],
+      "targets_found_on": [],
+      "targets_reached_via_expansion": [],
+      "expanded_sample": [
+        "slot-14-routing",
+        "c1a01101-7291-49fa-9481-22904c10b001",
+        "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "slot-02-map"
+      ]
+    }
+  ]
+}

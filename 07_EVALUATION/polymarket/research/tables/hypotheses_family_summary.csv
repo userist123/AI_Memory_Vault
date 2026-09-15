@@ -1,0 +1,7 @@
+rank,hypothesis,effect_name,effect_size,mres,ci_95,raw_p,holm_threshold,raw_verdict,corrected_verdict
+1,H4: Crypto Grid Monotonicity Violations,Net Arbitrage Edge ($/share),0.4188,0.01,"[0.0000, 0.4188]",0.001,0.0083,REJECT_NULL,REJECT_NULL (DISCOVERY)
+2,H5: Single-Game Line Violations,Net Line Arbitrage Edge ($/share),0.0969,0.01,"[0.0000, 0.0969]",0.001,0.01,REJECT_NULL,REJECT_NULL (DISCOVERY)
+3,H1: Category Calibration Difference,Bias Delta (Pre-match vs In-play),0.1484,0.05,"[-0.0080, 0.2285]",0.062,0.0125,NULL,NULL
+4,H3: Horizon Accuracy Monotonicity,Brier Improvement (T-24h to T-10m),-0.0507,0.02,"[-0.2381, 0.1009]",0.432,0.0167,NULL,NULL
+5,H6: Liquidity Explains Calibration,Spearman Rank Correlation (|rho|),0.0478,0.15,"[-0.1349, 0.2900]",0.625,0.025,NULL,NULL
+6,H2: Favorite–Longshot Bias,Longshot Underperformance,0.0008,0.03,"[-0.0431, 0.0983]",0.946,0.05,NULL,NULL
