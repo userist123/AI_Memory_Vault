@@ -200,3 +200,24 @@ def test_when_a_price_became_known_does_not_depend_on_when_the_market_resolved(m
     late = build_market_bundle(payload, resolution_known_at="2026-12-31T23:59:59Z", history_by_token=history)
 
     assert [p.known_as_of for p in early.price_history] == [p.known_as_of for p in late.price_history]
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="HistoricalMarketBundle contains no sister-market timeline isolation: "
+           "an outcome resolved on an earlier line or inning can be consumed by "
+           "concurrent market replay on the same event without cross-line temporal gating",
+)
+def test_sister_market_resolution_cannot_leak_across_concurrent_lines(markets):
+    """Sister markets (e.g. lines on the same game or strikes on the same asset)
+    frequently resolve at different moments. Without cross-market dependency tracking,
+    the resolution of an early sister market can leak into the prediction of a later
+    sister market on the same event."""
+    sister_a = markets[1]
+    sister_b = markets[2]
+    bundle_a = _bundle(sister_a)
+    bundle_b = _bundle(sister_b)
+    assert hasattr(bundle_a, "sister_market_cutoffs"), (
+        "bundle must enforce sister market resolution cutoffs within shared event clusters"
+    )
+
