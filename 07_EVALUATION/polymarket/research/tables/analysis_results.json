@@ -1,0 +1,205 @@
+{
+  "executed_at_utc": "2026-09-14T18:42:08.623509+00:00",
+  "markets_analyzed": 483,
+  "clusters_analyzed": 63,
+  "bootstrap_iterations": 2000,
+  "random_seed": 42,
+  "family_summary": [
+    {
+      "rank": 1,
+      "hypothesis": "H4: Crypto Grid Monotonicity Violations",
+      "effect_name": "Net Arbitrage Edge ($/share)",
+      "effect_size": 0.4188,
+      "mres": 0.01,
+      "ci_95": "[0.0000, 0.4188]",
+      "raw_p": 0.001,
+      "holm_threshold": 0.0083,
+      "raw_verdict": "REJECT_NULL",
+      "corrected_verdict": "REJECT_NULL (DISCOVERY)"
+    },
+    {
+      "rank": 2,
+      "hypothesis": "H5: Single-Game Line Violations",
+      "effect_name": "Net Line Arbitrage Edge ($/share)",
+      "effect_size": 0.0969,
+      "mres": 0.01,
+      "ci_95": "[0.0000, 0.0969]",
+      "raw_p": 0.001,
+      "holm_threshold": 0.01,
+      "raw_verdict": "REJECT_NULL",
+      "corrected_verdict": "REJECT_NULL (DISCOVERY)"
+    },
+    {
+      "rank": 3,
+      "hypothesis": "H1: Category Calibration Difference",
+      "effect_name": "Bias Delta (Pre-match vs In-play)",
+      "effect_size": 0.1484,
+      "mres": 0.05,
+      "ci_95": "[-0.0080, 0.2285]",
+      "raw_p": 0.062,
+      "holm_threshold": 0.0125,
+      "raw_verdict": "NULL",
+      "corrected_verdict": "NULL"
+    },
+    {
+      "rank": 4,
+      "hypothesis": "H3: Horizon Accuracy Monotonicity",
+      "effect_name": "Brier Improvement (T-24h to T-10m)",
+      "effect_size": -0.0507,
+      "mres": 0.02,
+      "ci_95": "[-0.2381, 0.1009]",
+      "raw_p": 0.432,
+      "holm_threshold": 0.0167,
+      "raw_verdict": "NULL",
+      "corrected_verdict": "NULL"
+    },
+    {
+      "rank": 5,
+      "hypothesis": "H6: Liquidity Explains Calibration",
+      "effect_name": "Spearman Rank Correlation (|rho|)",
+      "effect_size": 0.0478,
+      "mres": 0.15,
+      "ci_95": "[-0.1349, 0.2900]",
+      "raw_p": 0.625,
+      "holm_threshold": 0.025,
+      "raw_verdict": "NULL",
+      "corrected_verdict": "NULL"
+    },
+    {
+      "rank": 6,
+      "hypothesis": "H2: Favorite\u2013Longshot Bias",
+      "effect_name": "Longshot Underperformance",
+      "effect_size": 0.0008,
+      "mres": 0.03,
+      "ci_95": "[-0.0431, 0.0983]",
+      "raw_p": 0.946,
+      "holm_threshold": 0.05,
+      "raw_verdict": "NULL",
+      "corrected_verdict": "NULL"
+    }
+  ],
+  "h1": {
+    "sports_pre_match": {
+      "category": "sports_pre_match",
+      "markets": 185,
+      "clusters": 38,
+      "mean_price": 0.40693243243243243,
+      "win_rate": 0.41621621621621624,
+      "bias": 0.009283783783783806,
+      "wce": 0.06804054054054055,
+      "brier": 0.21402152027027027
+    },
+    "sports_in_play": {
+      "category": "sports_in_play",
+      "markets": 100,
+      "clusters": 20,
+      "mean_price": 0.48915,
+      "win_rate": 0.35,
+      "bias": -0.13915,
+      "wce": 0.15245000000000003,
+      "brier": 0.21065975
+    },
+    "crypto_threshold": {
+      "category": "crypto_threshold",
+      "markets": 198,
+      "clusters": 13,
+      "mean_price": 0.4748232323232323,
+      "win_rate": 0.51010101010101,
+      "bias": 0.03527777777777774,
+      "wce": 0.0394191919191919,
+      "brier": 0.20727916666666665
+    }
+  },
+  "h2": [
+    {
+      "basket": "Low (<0.15)",
+      "markets": 49,
+      "mean_price": 0.0604,
+      "win_rate": 0.0612,
+      "bias_pp": 0.08,
+      "ci_low_pp": -4.31,
+      "ci_high_pp": 9.83,
+      "p_value": 0.946
+    },
+    {
+      "basket": "Mid (0.15-0.85)",
+      "markets": 409,
+      "mean_price": 0.4677,
+      "win_rate": 0.4523,
+      "bias_pp": -1.54,
+      "ci_low_pp": 0.0,
+      "ci_high_pp": 0.0,
+      "p_value": 0.0
+    },
+    {
+      "basket": "High (>0.85)",
+      "markets": 25,
+      "mean_price": 0.9579,
+      "win_rate": 1.0,
+      "bias_pp": 4.21,
+      "ci_low_pp": 2.53,
+      "ci_high_pp": 6.34,
+      "p_value": 0.0
+    }
+  ],
+  "h3": [
+    {
+      "horizon": "T-24h",
+      "seconds_before_close": 86400,
+      "markets_evaluated": 49,
+      "brier_score": 0.3289,
+      "wce_pp": 33.74
+    },
+    {
+      "horizon": "T-6h",
+      "seconds_before_close": 21600,
+      "markets_evaluated": 49,
+      "brier_score": 0.3289,
+      "wce_pp": 33.74
+    },
+    {
+      "horizon": "T-1h",
+      "seconds_before_close": 3600,
+      "markets_evaluated": 49,
+      "brier_score": 0.3624,
+      "wce_pp": 37.86
+    },
+    {
+      "horizon": "T-10m",
+      "seconds_before_close": 600,
+      "markets_evaluated": 49,
+      "brier_score": 0.3796,
+      "wce_pp": 40.79
+    }
+  ],
+  "h4": {
+    "grid_clusters_analyzed": 13,
+    "strike_pairs_tested": 1611,
+    "gross_monotonicity_violations": 113,
+    "gross_violation_rate_pct": 7.01,
+    "mean_gross_inversion_pp": 43.98,
+    "assumed_friction_cents": 2.1,
+    "net_executable_violations": 113,
+    "net_violation_rate_pct": 7.01,
+    "mean_net_edge_cents": 41.88
+  },
+  "h5": {
+    "match_clusters_with_multi_lines": 50,
+    "line_pairs_tested": 1682,
+    "gross_line_violations": 479,
+    "gross_violation_rate_pct": 28.48,
+    "mean_gross_inversion_pp": 9.52,
+    "net_executable_violations": 376,
+    "net_violation_rate_pct": 22.35,
+    "mean_net_edge_cents": 9.69
+  },
+  "h6": {
+    "markets_analyzed": 483,
+    "spearman_rho": 0.0478,
+    "ci_low": -0.1349,
+    "ci_high": 0.29,
+    "p_value": 0.625,
+    "mres_threshold": 0.15,
+    "verdict": "NULL"
+  }
+}
