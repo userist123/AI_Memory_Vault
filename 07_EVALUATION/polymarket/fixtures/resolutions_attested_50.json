@@ -1,0 +1,602 @@
+[
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4537965",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "104093803534517426712740679855443122353765698182657011070351298955004240391517"
+    ],
+    "known_at": "2026-09-13T20:51:54Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:46:54Z;source=gamma_markets_id=4537965",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4537361",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "80515337042402489923303528825089010006894250539752301432083507784704788128722"
+    ],
+    "known_at": "2026-09-13T20:51:45Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:46:45Z;source=gamma_markets_id=4537361",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4537351",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "8444008409791618367093938107346481230441527221744439379603329967605908408304"
+    ],
+    "known_at": "2026-09-13T20:51:30Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:46:30Z;source=gamma_markets_id=4537351",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4537349",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "113093919266562770948424148276005616656433859694590559459050252820799824983477"
+    ],
+    "known_at": "2026-09-13T20:53:57Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:48:57Z;source=gamma_markets_id=4537349",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4536988",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "66877355720312890755113956896766643421130336321937025664962227030625572784865"
+    ],
+    "known_at": "2026-09-13T20:53:57Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:48:57Z;source=gamma_markets_id=4536988",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4536932",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "32580159737065312662676761847900282660515660806316067234661371395266691934293"
+    ],
+    "known_at": "2026-09-13T20:53:57Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:48:57Z;source=gamma_markets_id=4536932",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4536864",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "75369071618101925384373660925307898780258191153764180151766802444387464381042"
+    ],
+    "known_at": "2026-09-13T20:31:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:26:25Z;source=gamma_markets_id=4536864",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4536862",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "99975455471162496298461979739099947854631516776635261042233031210290157220269"
+    ],
+    "known_at": "2026-09-13T20:24:09Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:19:09Z;source=gamma_markets_id=4536862",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4536632",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "108438332737757463409275064706041217990088739106434986432657885754080787685802"
+    ],
+    "known_at": "2026-09-13T20:24:09Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:19:09Z;source=gamma_markets_id=4536632",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4536464",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "6567759194183888882422289832814567964934577087595545820060921262118230672206"
+    ],
+    "known_at": "2026-09-13T20:54:43Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:43Z;source=gamma_markets_id=4536464",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535992",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "21119445817308434930371548287012583124245442537140566096187015256417694914206"
+    ],
+    "known_at": "2026-09-13T20:16:10Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:10Z;source=gamma_markets_id=4535992",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535951",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "113318019812275097294977957478649920987989268340383202255530170241463567046326"
+    ],
+    "known_at": "2026-09-13T20:31:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:26:25Z;source=gamma_markets_id=4535951",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535941",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "21002427329109260964263953365654439139942495747982224218349758165457674193046"
+    ],
+    "known_at": "2026-09-13T20:26:54Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:21:54Z;source=gamma_markets_id=4535941",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535831",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "70841541698882524444745962275952352054171037718123154059810050856869313749969"
+    ],
+    "known_at": "2026-09-13T20:54:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:25Z;source=gamma_markets_id=4535831",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535209",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "110245507400927383264452884746786720887569779715439611031303888814848857387902"
+    ],
+    "known_at": "2026-09-13T20:16:10Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:10Z;source=gamma_markets_id=4535209",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535091",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "59249002165448341536440918992731893773965357642206115094952171536830003950764"
+    ],
+    "known_at": "2026-09-13T20:54:40Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:40Z;source=gamma_markets_id=4535091",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4535044",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "95927062747849309958086241973875495136700841701227674790419142372753236449538"
+    ],
+    "known_at": "2026-09-13T20:16:10Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:10Z;source=gamma_markets_id=4535044",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534972",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "67514161448264559705111298440046522083741095398733302901755651531110898048173"
+    ],
+    "known_at": "2026-09-13T20:22:54Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:17:54Z;source=gamma_markets_id=4534972",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534962",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "81882846947091531223365080410679880025426788430745783700079698207886756040066"
+    ],
+    "known_at": "2026-09-13T20:29:58Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:24:58Z;source=gamma_markets_id=4534962",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534548",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "100630318011805001950382024145955304596145569887763743611700476683570399447587"
+    ],
+    "known_at": "2026-09-13T20:50:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:45:25Z;source=gamma_markets_id=4534548",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534266",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "105634982297989192240624899625179783104272703178303304716023693482846262988591"
+    ],
+    "known_at": "2026-09-13T20:16:10Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:10Z;source=gamma_markets_id=4534266",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534265",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "77445137954904442254931919657137745512854539960173099107709263682015821015231"
+    ],
+    "known_at": "2026-09-13T20:16:10Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:10Z;source=gamma_markets_id=4534265",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534222",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "49885917833438271788234594220139046604469352596373807821238433691884946653553"
+    ],
+    "known_at": "2026-09-13T20:26:46Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:21:46Z;source=gamma_markets_id=4534222",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534221",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "9130452584240788181862880717499136226792049853418853385868215510099021105624"
+    ],
+    "known_at": "2026-09-13T20:33:43Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:28:43Z;source=gamma_markets_id=4534221",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4534220",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "115680586800239471461480212988152575122879297501574913501639726680365687098134"
+    ],
+    "known_at": "2026-09-13T20:19:09Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:14:09Z;source=gamma_markets_id=4534220",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533972",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "104855116919713470420946423581085445115138760286668468402767260953150526735929"
+    ],
+    "known_at": "2026-09-13T20:38:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:33:25Z;source=gamma_markets_id=4533972",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533896",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "112457575432084936597551130380781920634226596251402808460297248508426414847990"
+    ],
+    "known_at": "2026-09-13T20:14:42Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:09:42Z;source=gamma_markets_id=4533896",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533883",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "67094231830393367410104844657613312516661788207299772303959149367111238059692"
+    ],
+    "known_at": "2026-09-13T20:54:43Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:43Z;source=gamma_markets_id=4533883",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533873",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "26801156707600274247051571293799785656081438241064753089407271788259226746844"
+    ],
+    "known_at": "2026-09-13T20:14:42Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:09:42Z;source=gamma_markets_id=4533873",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533872",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "47763393557350302878887451569629463230924364378603268357514224742840452920076"
+    ],
+    "known_at": "2026-09-13T20:54:43Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:43Z;source=gamma_markets_id=4533872",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533500",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "43588510721175702056382562022004034305450906558737461690890801140483957492451"
+    ],
+    "known_at": "2026-09-13T21:08:58Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T21:03:58Z;source=gamma_markets_id=4533500",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533499",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "33643715130764273707643535070261597236985185365603855517408848421211264828995"
+    ],
+    "known_at": "2026-09-13T19:48:24Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T19:43:24Z;source=gamma_markets_id=4533499",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533461",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "39622252838186957992898141672072164156678458920319124555366945114237546418937"
+    ],
+    "known_at": "2026-09-13T20:38:15Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:33:15Z;source=gamma_markets_id=4533461",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533460",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "109400511347914148878590474303726004266255460793482179008166114900547257513919"
+    ],
+    "known_at": "2026-09-13T20:38:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:33:25Z;source=gamma_markets_id=4533460",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533430",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "4910517214266457773238148082661545458648987916839748718668883735055227601132"
+    ],
+    "known_at": "2026-09-13T20:54:25Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:25Z;source=gamma_markets_id=4533430",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4533006",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "14740112484175556418974953490014377401366175010229289024096668692651190884530"
+    ],
+    "known_at": "2026-09-13T19:38:52Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T19:33:52Z;source=gamma_markets_id=4533006",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532903",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "13058093542073739718028678001167555348133211913647739379446658080203000296561"
+    ],
+    "known_at": "2026-09-13T20:16:28Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:28Z;source=gamma_markets_id=4532903",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532902",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "61666430436941954120678033904499044721580711642727058372517939163960386236641"
+    ],
+    "known_at": "2026-09-13T19:36:28Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T19:31:28Z;source=gamma_markets_id=4532902",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532901",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "112798223548171202298021383051042213013343575947882214991054781645324538528469"
+    ],
+    "known_at": "2026-09-13T20:38:16Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:33:16Z;source=gamma_markets_id=4532901",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532900",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "86848974125414566658959480284816848413615558597678028560494954788145409229243"
+    ],
+    "known_at": "2026-09-13T20:16:01Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:01Z;source=gamma_markets_id=4532900",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532899",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "80667822401022308756614926619065969813001464711659206291024957961976171302848"
+    ],
+    "known_at": "2026-09-13T20:15:58Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:10:58Z;source=gamma_markets_id=4532899",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532844",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "114866761825932692927855587585384050001956826375434498801605813950185514787131"
+    ],
+    "known_at": "2026-09-13T20:54:28Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:49:28Z;source=gamma_markets_id=4532844",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532843",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "77833700798057549775711193025735912171018908225624826409125393953469904877895"
+    ],
+    "known_at": "2026-09-13T20:16:55Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:55Z;source=gamma_markets_id=4532843",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532842",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "106190349975184599915122059504052418399264303118515170096544241623865954575075"
+    ],
+    "known_at": "2026-09-13T20:16:40Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:40Z;source=gamma_markets_id=4532842",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532841",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "39014842465301591482804445626571261994070913444125689257513281055438791989403"
+    ],
+    "known_at": "2026-09-13T20:16:43Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:43Z;source=gamma_markets_id=4532841",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532840",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "39084289534524503114701470385348335064256502264020667763431379390771142151694"
+    ],
+    "known_at": "2026-09-13T20:16:43Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:43Z;source=gamma_markets_id=4532840",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532839",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "10592413064836597369791499765016881414775316514412713794775428854658049833106"
+    ],
+    "known_at": "2026-09-13T20:16:40Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:40Z;source=gamma_markets_id=4532839",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532838",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "109754286040135657563975525696329335769234100904531970653803894728534411882407"
+    ],
+    "known_at": "2026-09-13T20:16:40Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:40Z;source=gamma_markets_id=4532838",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532837",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "68314006768901767781205199778768537253219814009276204856781009663113923806652"
+    ],
+    "known_at": "2026-09-13T20:16:55Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:55Z;source=gamma_markets_id=4532837",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  },
+  {
+    "schema_version": "polymarket-resolution.v1",
+    "market_id": "4532836",
+    "status": "resolved",
+    "winning_outcome_ids": [
+      "29189805789907053655982034859681744240739291168569028016464865885336718824291"
+    ],
+    "known_at": "2026-09-13T20:16:40Z",
+    "source": "manual_attested",
+    "source_ref": "human_attestation:closedTime+300s_official_box_score_confirmation;closedTime=2026-09-13T20:11:40Z;source=gamma_markets_id=4532836",
+    "recorded_at": "2026-09-13T21:12:27.661025Z"
+  }
+]

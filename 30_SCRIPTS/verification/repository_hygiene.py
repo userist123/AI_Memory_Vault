@@ -20,6 +20,10 @@ ROOT_ALLOWED = {
     "LICENSE.txt",
     "Makefile",
     "README.md",
+    #: English README. GitHub renders README.md and has no language negotiation,
+    #: so a second language is a second root file. Mirrors ROOT_ALLOWLIST in
+    #: validate_repository_layout.py; the two lists must agree.
+    "README.en.md",
     "justfile",
     "docker-compose.yml",
     "pyproject.toml",

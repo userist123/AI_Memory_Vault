@@ -1,0 +1,13 @@
+{
+  "target_file": "resolutions_attested_50.json",
+  "sha256": "82a39bf8583f105a85a206496963e06fab9712d5a72367e85323712d55a1d571",
+  "record_count": 50,
+  "source_breakdown": {
+    "manual_attested": 50
+  },
+  "status_breakdown": {
+    "resolved": 50
+  },
+  "attestation_methodology": "closedTime + 300 seconds (5-minute official scorekeeper / box score verification window)",
+  "recorded_at_utc": "2026-09-13T21:12:27.661025Z"
+}

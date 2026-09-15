@@ -1,0 +1,37 @@
+{
+  "corpus_name": "Polymarket CLOB Corpus v1",
+  "created_at_utc": "2026-09-14T18:36:31.276636+00:00",
+  "total_markets": 483,
+  "total_independent_units": 71,
+  "categories": {
+    "crypto_threshold": {
+      "markets_count": 198,
+      "independent_units_count": 13
+    },
+    "sports_in_play": {
+      "markets_count": 100,
+      "independent_units_count": 20
+    },
+    "sports_pre_match": {
+      "markets_count": 185,
+      "independent_units_count": 38
+    }
+  },
+  "files": {
+    "corpus_v1_markets.json": {
+      "size_bytes": 279403,
+      "size_mb": 0.266,
+      "sha256": "96216b17db589a8aa3f2de28cc07d97018b4a262e8162e9a0d1f9da8c88161a2"
+    },
+    "corpus_v1_resolutions.json": {
+      "size_bytes": 208997,
+      "size_mb": 0.199,
+      "sha256": "74bc613025da5c7158e1e3f1b0f4b84c82bed01bd500bfa5d4a50f2787c1fc97"
+    },
+    "corpus_v1_price_tapes.json": {
+      "size_bytes": 142408,
+      "size_mb": 0.136,
+      "sha256": "0052aad62b0fdd6ff48c7b32bd791c7f2258c02a06d45d01ce551d33c3facc78"
+    }
+  }
+}

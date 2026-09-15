@@ -1,0 +1,32 @@
+{
+  "skill_id": "skill:prompt-master:prompt-master",
+  "canonical_repository_id": "repo:nidhinjs/prompt-master",
+  "canonical_source_id": "prompt-master",
+  "source_url": "https://github.com/nidhinjs/prompt-master",
+  "license": "MIT",
+  "upstream_commit": "2bd92518e26bf659e21e3d9ab90573fcf3ddeccb",
+  "upstream_version": "1.8.0",
+  "upstream_pushed_at": "2026-08-24T07:30:40Z",
+  "repository_path": "06_INBOX/RAW_IMPORTS/skills/prompt-master/SKILL.md",
+  "original_raw_path": "06_INBOX/RAW_IMPORTS/skills/prompt-master/SKILL.md",
+  "content_hash": "651e5490f4b51c6e6ca32cc26eed10dff52f344b95a1b9122105f0c8d8e1506a",
+  "bundle_file_hashes": {
+    "references/patterns.md": "246073097e63aec5dc5598c04eb74d313275984582594acb6322726793e80bd3",
+    "references/templates.md": "5a678b8e20ec05daad4fd289a2d5cafedffa71b75adbde0a1900c8891267332c",
+    "SKILL.md": "651e5490f4b51c6e6ca32cc26eed10dff52f344b95a1b9122105f0c8d8e1506a"
+  },
+  "bundle_files_count": 3,
+  "extraction_status": "INSTALLED",
+  "target_installed_path": ".agents/skills/prompt-master",
+  "validation": {
+    "reviewed_at": "2026-09-12",
+    "reviewed_by": "Claude Code (r042)",
+    "method": "read-only static review; nothing from the bundle was executed",
+    "executable_content": "none - five markdown files and an MIT licence, no scripts, no binaries",
+    "network_calls": "none in the skill body; README carries two decorative image URLs",
+    "credential_handling": "the skill forbids emitting keys, tokens and secrets and strips them from user input",
+    "instruction_override_attempts": "none found",
+    "hidden_characters": "none - zero-width and bidirectional control characters checked across all four markdown files",
+    "notes": "SKILL.md scopes itself explicitly ('This role applies only to prompt generation; for all other tasks, follow default behavior and safety guidelines') and contains an Input Sanitization section treating pasted prompts as inert data, which matches the instruction-source boundary this vault already operates under."
+  }
+}

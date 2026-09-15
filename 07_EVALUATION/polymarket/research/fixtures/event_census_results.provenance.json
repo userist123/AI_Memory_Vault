@@ -1,0 +1,82 @@
+{
+  "census_executed_at": "2026-09-14T18:23:00.309877+00:00",
+  "total_closed_events_gathered": 553,
+  "total_candidate_event_markets": 524,
+  "events_probed": 100,
+  "markets_probed": 270,
+  "markets_with_usable_clob_tape": 0,
+  "markets_with_empty_or_no_clob_tape": 270,
+  "independent_event_units_with_tape": 0,
+  "queries_log": [
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&order=volume&ascending=false&limit=100",
+      "count": 100,
+      "purpose": "top_volume_closed"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=politics&limit=50",
+      "count": 50,
+      "tag": "politics"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=elections&limit=50",
+      "count": 50,
+      "tag": "elections"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=us-election&limit=50",
+      "count": 0,
+      "tag": "us-election"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=geopolitics&limit=50",
+      "count": 50,
+      "tag": "geopolitics"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=economy&limit=50",
+      "count": 50,
+      "tag": "economy"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=fed&limit=50",
+      "count": 50,
+      "tag": "fed"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=business&limit=50",
+      "count": 50,
+      "tag": "business"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=tech&limit=50",
+      "count": 50,
+      "tag": "tech"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=ai&limit=50",
+      "count": 50,
+      "tag": "ai"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=science&limit=50",
+      "count": 50,
+      "tag": "science"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=culture&limit=50",
+      "count": 0,
+      "tag": "culture"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=pop-culture&limit=50",
+      "count": 50,
+      "tag": "pop-culture"
+    },
+    {
+      "url": "https://gamma-api.polymarket.com/events?closed=true&tag_slug=international-affairs&limit=50",
+      "count": 3,
+      "tag": "international-affairs"
+    }
+  ]
+}
