@@ -6,12 +6,16 @@
 > **Calea**: `07_EVALUATION/metatrader/research/PREREGISTRATION.md`  
 > **Poarta de angajament (Commit Gate)**: Acest fișier este comis în Git **înainte** de rularea sau scrierea oricărui script care leagă semnale de tranzacționare de randamente viitoare.
 
+> [!WARNING]
+> **ERRATUM (2026-09-15)**:
+> Brokerul pe care rulează terminalul MT5 al utilizatorului este **RoboForex Ltd**, reglementat de **FSC Belize** (Financial Services Commission, licența nr. 000138/7). Entitățile reglementate UE ale grupului sunt **RoboMarkets Ltd** (CySEC licența 191/13) și **RoboMarkets Deutschland GmbH** (BaFin). Mențiunea „broker reglementat UE (RoboForex Ltd)” din secțiunea 0.1 a fost o eroare de atribuire a entității juridice din cadrul grupului. Cadrul ESMA (74–89% pierderi retail pe CFD-uri) rămâne relevant ca benchmark de piață, dar reglementarea directă a contului pe care au fost culese datele este Belize FSC, nu CySEC/BaFin.
+
 ---
 
 ## 0. Ipoteza Științifică și Obiectivul Studiului
 
 ### 0.1. Întrebarea de cercetare
-Există, în universul de instrumente financiare accesibile prin terminalul MetaTrader 5 la un broker reglementat UE (RoboForex Ltd), strategii clasice de tranzacționare mecanică (Momentum, Revenire la medie, Breakout, Carry) care generează un randament net statistic semnificativ (Sharpe net anualizat >= 0.50) după scăderea tuturor costurilor reale de tranzacționare (spread măsurat, comision pe lot, swap de finanțare peste noapte) pe date nevăzute în faza de proiectare, depășind atât rata de bază a pierderilor de retail ESMA (74%–89% conturi în pierdere), cât și controalele cu intrări aleatoare cu expunere identică?
+Există, în universul de instrumente financiare accesibile prin terminalul MetaTrader 5 la un broker reglementat UE (RoboForex Ltd) [a se vedea ERRATUM mai sus — entitatea este RoboForex Ltd sub licență FSC Belize], strategii clasice de tranzacționare mecanică (Momentum, Revenire la medie, Breakout, Carry) care generează un randament net statistic semnificativ (Sharpe net anualizat >= 0.50) după scăderea tuturor costurilor reale de tranzacționare (spread măsurat, comision pe lot, swap de finanțare peste noapte) pe date nevăzute în faza de proiectare, depășind atât rata de bază a pierderilor de retail ESMA (74%–89% conturi în pierdere), cât și controalele cu intrări aleatoare cu expunere identică?
 
 ### 0.2. Invariante Negative și Reguli de Integritate
 1. **Interdicție absolută de tranzacționare**: Niciun apel `order_send`, `order_check`, `order_calc_margin` sau orice alt apel care plasează comenzi sau atinge balanța contului nu este permis. Cercetarea se face exclusiv pe date istorice extrase în mod pasiv.
