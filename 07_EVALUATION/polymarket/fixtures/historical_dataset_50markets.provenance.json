@@ -1,0 +1,859 @@
+{
+  "target_file": "historical_dataset_50markets.json",
+  "sha256": "f5f7ad211998aaed235748bcaf848f0f3d4ed3de760d472db16bebfa452f4f01",
+  "market_count": 50,
+  "total_price_points": 620,
+  "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+  "markets": [
+    {
+      "market_id": "4537965",
+      "question": "Los Angeles Angels vs. Washington Nationals: O/U 11.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4537965",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=61132307481967276988002364894936713973810275981590478309714562700370376249141&interval=all",
+        "https://clob.polymarket.com/prices-history?market=104093803534517426712740679855443122353765698182657011070351298955004240391517&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789330814.0,
+        "t_max": 1789332026.0,
+        "start_iso": "2026-09-13T20:20:14Z",
+        "end_iso": "2026-09-13T20:40:26Z"
+      }
+    },
+    {
+      "market_id": "4537361",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 19.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4537361",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=43287898714654970712126549756297856483386446395754846276377621092204310578199&interval=all",
+        "https://clob.polymarket.com/prices-history?market=80515337042402489923303528825089010006894250539752301432083507784704788128722&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789330813.0,
+        "t_max": 1789332026.0,
+        "start_iso": "2026-09-13T20:20:13Z",
+        "end_iso": "2026-09-13T20:40:26Z"
+      }
+    },
+    {
+      "market_id": "4537351",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 18.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4537351",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=7906232500188193344654206856145443371474641631282841798829522826565130003301&interval=all",
+        "https://clob.polymarket.com/prices-history?market=8444008409791618367093938107346481230441527221744439379603329967605908408304&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789330815.0,
+        "t_max": 1789332029.0,
+        "start_iso": "2026-09-13T20:20:15Z",
+        "end_iso": "2026-09-13T20:40:29Z"
+      }
+    },
+    {
+      "market_id": "4537349",
+      "question": "Spread: Philadelphia Phillies (-6.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4537349",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=67487103018957546707242744247522576834632959643047759612731085439212477612930&interval=all",
+        "https://clob.polymarket.com/prices-history?market=113093919266562770948424148276005616656433859694590559459050252820799824983477&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789330813.0,
+        "t_max": 1789332026.0,
+        "start_iso": "2026-09-13T20:20:13Z",
+        "end_iso": "2026-09-13T20:40:26Z"
+      }
+    },
+    {
+      "market_id": "4536988",
+      "question": "Spread: Philadelphia Phillies (-3.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4536988",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=66877355720312890755113956896766643421130336321937025664962227030625572784865&interval=all",
+        "https://clob.polymarket.com/prices-history?market=42942667229791597570766783005092962844512093659135899443379719178862481470235&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789330812.0,
+        "t_max": 1789332027.0,
+        "start_iso": "2026-09-13T20:20:12Z",
+        "end_iso": "2026-09-13T20:40:27Z"
+      }
+    },
+    {
+      "market_id": "4536932",
+      "question": "Spread: Philadelphia Phillies (-4.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4536932",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=32580159737065312662676761847900282660515660806316067234661371395266691934293&interval=all",
+        "https://clob.polymarket.com/prices-history?market=107173170885007498359847823156198295223955883919533047591547940736342697887571&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789330815.0,
+        "t_max": 1789332029.0,
+        "start_iso": "2026-09-13T20:20:15Z",
+        "end_iso": "2026-09-13T20:40:29Z"
+      }
+    },
+    {
+      "market_id": "4536864",
+      "question": "Los Angeles Dodgers vs. Miami Marlins: O/U 3.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4536864",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=75369071618101925384373660925307898780258191153764180151766802444387464381042&interval=all",
+        "https://clob.polymarket.com/prices-history?market=14085566189362712882371471435734830471193259951404023365367953354848098096744&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 4,
+      "interval_covered": {
+        "t_min": 1789330215.0,
+        "t_max": 1789330815.0,
+        "start_iso": "2026-09-13T20:10:15Z",
+        "end_iso": "2026-09-13T20:20:15Z"
+      }
+    },
+    {
+      "market_id": "4536862",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 16.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4536862",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=99975455471162496298461979739099947854631516776635261042233031210290157220269&interval=all",
+        "https://clob.polymarket.com/prices-history?market=32387772808613544260635211142330242590889956742010144216459545295947295074497&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789329631.0,
+        "t_max": 1789330815.0,
+        "start_iso": "2026-09-13T20:00:31Z",
+        "end_iso": "2026-09-13T20:20:15Z"
+      }
+    },
+    {
+      "market_id": "4536632",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 17.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4536632",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=108438332737757463409275064706041217990088739106434986432657885754080787685802&interval=all",
+        "https://clob.polymarket.com/prices-history?market=27191772276780704144178209425205477139890990145887340941683017843372404127730&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 4,
+      "interval_covered": {
+        "t_min": 1789330215.0,
+        "t_max": 1789330815.0,
+        "start_iso": "2026-09-13T20:10:15Z",
+        "end_iso": "2026-09-13T20:20:15Z"
+      }
+    },
+    {
+      "market_id": "4536464",
+      "question": "New York Mets vs. New York Yankees: O/U 2.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4536464",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=84493878603771667980294634266341555437481101799892386623826389009278023251737&interval=all",
+        "https://clob.polymarket.com/prices-history?market=6567759194183888882422289832814567964934577087595545820060921262118230672206&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 10,
+      "interval_covered": {
+        "t_min": 1789330213.0,
+        "t_max": 1789332626.0,
+        "start_iso": "2026-09-13T20:10:13Z",
+        "end_iso": "2026-09-13T20:50:26Z"
+      }
+    },
+    {
+      "market_id": "4535992",
+      "question": "Chicago White Sox vs. St. Louis Cardinals: O/U 3.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535992",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=21119445817308434930371548287012583124245442537140566096187015256417694914206&interval=all",
+        "https://clob.polymarket.com/prices-history?market=43432077454003888015668528278272883504375977227594032149414049835928389493718&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 6,
+      "interval_covered": {
+        "t_min": 1789329015.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:50:15Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4535951",
+      "question": "Los Angeles Dodgers vs. Miami Marlins: O/U 4.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535951",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=113318019812275097294977957478649920987989268340383202255530170241463567046326&interval=all",
+        "https://clob.polymarket.com/prices-history?market=73467154262766729394835117403911787470018792721638867332672448457894245649111&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789329013.0,
+        "t_max": 1789330813.0,
+        "start_iso": "2026-09-13T19:50:13Z",
+        "end_iso": "2026-09-13T20:20:13Z"
+      }
+    },
+    {
+      "market_id": "4535941",
+      "question": "Pittsburgh Pirates vs. Chicago Cubs: O/U 3.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535941",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=21002427329109260964263953365654439139942495747982224218349758165457674193046&interval=all",
+        "https://clob.polymarket.com/prices-history?market=110394306625366938712478736378722661193223104662241128213866919605656583581645&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 10,
+      "interval_covered": {
+        "t_min": 1789328413.0,
+        "t_max": 1789330815.0,
+        "start_iso": "2026-09-13T19:40:13Z",
+        "end_iso": "2026-09-13T20:20:15Z"
+      }
+    },
+    {
+      "market_id": "4535831",
+      "question": "New York Mets vs. New York Yankees: O/U 3.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535831",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=82703059371053783986631536002177564700591388503590009019747535405018258589755&interval=all",
+        "https://clob.polymarket.com/prices-history?market=70841541698882524444745962275952352054171037718123154059810050856869313749969&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 14,
+      "interval_covered": {
+        "t_min": 1789329015.0,
+        "t_max": 1789332627.0,
+        "start_iso": "2026-09-13T19:50:15Z",
+        "end_iso": "2026-09-13T20:50:27Z"
+      }
+    },
+    {
+      "market_id": "4535209",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 15.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535209",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=110245507400927383264452884746786720887569779715439611031303888814848857387902&interval=all",
+        "https://clob.polymarket.com/prices-history?market=65252774466543117137141820805286442413830057464358055174896483910136387557553&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789328414.0,
+        "t_max": 1789330214.0,
+        "start_iso": "2026-09-13T19:40:14Z",
+        "end_iso": "2026-09-13T20:10:14Z"
+      }
+    },
+    {
+      "market_id": "4535091",
+      "question": "New York Mets vs. New York Yankees: O/U 4.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535091",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=107788867331719344781643761807579272613567580318415608125220235412191517250214&interval=all",
+        "https://clob.polymarket.com/prices-history?market=59249002165448341536440918992731893773965357642206115094952171536830003950764&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 18,
+      "interval_covered": {
+        "t_min": 1789327813.0,
+        "t_max": 1789332613.0,
+        "start_iso": "2026-09-13T19:30:13Z",
+        "end_iso": "2026-09-13T20:50:13Z"
+      }
+    },
+    {
+      "market_id": "4535044",
+      "question": "Map 2 Total Rounds: Over/Under 27.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4535044",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=95927062747849309958086241973875495136700841701227674790419142372753236449538&interval=all",
+        "https://clob.polymarket.com/prices-history?market=2188253080628381236062051678130189782129156420579471600243402788323188131490&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789328414.0,
+        "t_max": 1789330214.0,
+        "start_iso": "2026-09-13T19:40:14Z",
+        "end_iso": "2026-09-13T20:10:14Z"
+      }
+    },
+    {
+      "market_id": "4534972",
+      "question": "Cincinnati Reds vs. Milwaukee Brewers: O/U 5.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534972",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=67514161448264559705111298440046522083741095398733302901755651531110898048173&interval=all",
+        "https://clob.polymarket.com/prices-history?market=101163168555225450887131891993658069503855097511359035355804508057726513405449&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789328413.0,
+        "t_max": 1789330212.0,
+        "start_iso": "2026-09-13T19:40:13Z",
+        "end_iso": "2026-09-13T20:10:12Z"
+      }
+    },
+    {
+      "market_id": "4534962",
+      "question": "Pittsburgh Pirates vs. Chicago Cubs: O/U 4.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534962",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=81882846947091531223365080410679880025426788430745783700079698207886756040066&interval=all",
+        "https://clob.polymarket.com/prices-history?market=99081424675584734908944322596160888646326589174998110710803219462760928779319&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 12,
+      "interval_covered": {
+        "t_min": 1789327818.0,
+        "t_max": 1789330815.0,
+        "start_iso": "2026-09-13T19:30:18Z",
+        "end_iso": "2026-09-13T20:20:15Z"
+      }
+    },
+    {
+      "market_id": "4534548",
+      "question": "Spread: Toronto Blue Jays (-3.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534548",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=100630318011805001950382024145955304596145569887763743611700476683570399447587&interval=all",
+        "https://clob.polymarket.com/prices-history?market=103747355515583112684049467112605485515074810539933598948889276206490789199129&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 14,
+      "interval_covered": {
+        "t_min": 1789328413.0,
+        "t_max": 1789332029.0,
+        "start_iso": "2026-09-13T19:40:13Z",
+        "end_iso": "2026-09-13T20:40:29Z"
+      }
+    },
+    {
+      "market_id": "4534266",
+      "question": "Philadelphia Phillies vs. Atlanta Braves: O/U 5.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534266",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=105634982297989192240624899625179783104272703178303304716023693482846262988591&interval=all",
+        "https://clob.polymarket.com/prices-history?market=52588248835714430672161936096274486222979531741027250519060752399980729818172&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789328415.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:40:15Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4534265",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 14.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534265",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=77445137954904442254931919657137745512854539960173099107709263682015821015231&interval=all",
+        "https://clob.polymarket.com/prices-history?market=86655483252661136051959066947322893698252877863969754419604358641118863008279&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 12,
+      "interval_covered": {
+        "t_min": 1789327231.0,
+        "t_max": 1789330216.0,
+        "start_iso": "2026-09-13T19:20:31Z",
+        "end_iso": "2026-09-13T20:10:16Z"
+      }
+    },
+    {
+      "market_id": "4534222",
+      "question": "Game Handicap: Mitul Anatoli (-1.5) vs Casapciuc Stanislav (+1.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534222",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=19314435452407235369525706593323008205587801567083845661853015529176445583827&interval=all",
+        "https://clob.polymarket.com/prices-history?market=49885917833438271788234594220139046604469352596373807821238433691884946653553&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 12,
+      "interval_covered": {
+        "t_min": 1789327815.0,
+        "t_max": 1789330814.0,
+        "start_iso": "2026-09-13T19:30:15Z",
+        "end_iso": "2026-09-13T20:20:14Z"
+      }
+    },
+    {
+      "market_id": "4534221",
+      "question": "Mitul Anatoli vs. Casapciuc Stanislav: Total Games O/U 4.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534221",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=68169569643735164949901160818807379496799201517164487196577796512780395848183&interval=all",
+        "https://clob.polymarket.com/prices-history?market=9130452584240788181862880717499136226792049853418853385868215510099021105624&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 12,
+      "interval_covered": {
+        "t_min": 1789327814.0,
+        "t_max": 1789330813.0,
+        "start_iso": "2026-09-13T19:30:14Z",
+        "end_iso": "2026-09-13T20:20:13Z"
+      }
+    },
+    {
+      "market_id": "4534220",
+      "question": "Mitul Anatoli vs. Casapciuc Stanislav: Total Games O/U 3.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4534220",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=115680586800239471461480212988152575122879297501574913501639726680365687098134&interval=all",
+        "https://clob.polymarket.com/prices-history?market=43623484524168714561419789211574572271064104472095375086256591276891578549520&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 10,
+      "interval_covered": {
+        "t_min": 1789327817.0,
+        "t_max": 1789330216.0,
+        "start_iso": "2026-09-13T19:30:17Z",
+        "end_iso": "2026-09-13T20:10:16Z"
+      }
+    },
+    {
+      "market_id": "4533972",
+      "question": "Total Kills Over/Under 36.5 in Game 4?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533972",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=104855116919713470420946423581085445115138760286668468402767260953150526735929&interval=all",
+        "https://clob.polymarket.com/prices-history?market=35523220502022710895449101818412680996468953916890533757956277534911152921451&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 14,
+      "interval_covered": {
+        "t_min": 1789327815.0,
+        "t_max": 1789331419.0,
+        "start_iso": "2026-09-13T19:30:15Z",
+        "end_iso": "2026-09-13T20:30:19Z"
+      }
+    },
+    {
+      "market_id": "4533896",
+      "question": "Philadelphia Phillies vs. Atlanta Braves: O/U 6.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533896",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=112457575432084936597551130380781920634226596251402808460297248508426414847990&interval=all",
+        "https://clob.polymarket.com/prices-history?market=104939394788752716374958763142317997778962712037955531973526487651794724200239&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 10,
+      "interval_covered": {
+        "t_min": 1789327815.0,
+        "t_max": 1789330214.0,
+        "start_iso": "2026-09-13T19:30:15Z",
+        "end_iso": "2026-09-13T20:10:14Z"
+      }
+    },
+    {
+      "market_id": "4533883",
+      "question": "New York Mets vs. New York Yankees: O/U 5.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533883",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=26108280788548094148663554758661619064116371187758705948959648882705664501017&interval=all",
+        "https://clob.polymarket.com/prices-history?market=67094231830393367410104844657613312516661788207299772303959149367111238059692&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 20,
+      "interval_covered": {
+        "t_min": 1789327233.0,
+        "t_max": 1789332628.0,
+        "start_iso": "2026-09-13T19:20:33Z",
+        "end_iso": "2026-09-13T20:50:28Z"
+      }
+    },
+    {
+      "market_id": "4533873",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 13.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533873",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=26801156707600274247051571293799785656081438241064753089407271788259226746844&interval=all",
+        "https://clob.polymarket.com/prices-history?market=95259849821834092655646638360946142003867087524875027580773926612200848036703&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 12,
+      "interval_covered": {
+        "t_min": 1789327229.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:20:29Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4533872",
+      "question": "Spread: Tampa Bay Rays (-9.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533872",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=47763393557350302878887451569629463230924364378603268357514224742840452920076&interval=all",
+        "https://clob.polymarket.com/prices-history?market=26934826123034637870676910813593968464168737066299675777007179320689754546278&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 20,
+      "interval_covered": {
+        "t_min": 1789327230.0,
+        "t_max": 1789332624.0,
+        "start_iso": "2026-09-13T19:20:30Z",
+        "end_iso": "2026-09-13T20:50:24Z"
+      }
+    },
+    {
+      "market_id": "4533500",
+      "question": "Spread: Los Angeles Dodgers (-4.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533500",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=24650358625386394700690010481581298201396784683652705037192458634066833357543&interval=all",
+        "https://clob.polymarket.com/prices-history?market=43588510721175702056382562022004034305450906558737461690890801140483957492451&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 24,
+      "interval_covered": {
+        "t_min": 1789326613.0,
+        "t_max": 1789333223.0,
+        "start_iso": "2026-09-13T19:10:13Z",
+        "end_iso": "2026-09-13T21:00:23Z"
+      }
+    },
+    {
+      "market_id": "4533499",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 12.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533499",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=33643715130764273707643535070261597236985185365603855517408848421211264828995&interval=all",
+        "https://clob.polymarket.com/prices-history?market=51135517059603086276429783608198009729878960037068068104711953270698493852559&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789326614.0,
+        "t_max": 1789328418.0,
+        "start_iso": "2026-09-13T19:10:14Z",
+        "end_iso": "2026-09-13T19:40:18Z"
+      }
+    },
+    {
+      "market_id": "4533461",
+      "question": "Total Kills Over/Under 39.5 in Game 4?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533461",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=16823384911812860576395516953416298187033595863263265595704203997242949063418&interval=all",
+        "https://clob.polymarket.com/prices-history?market=39622252838186957992898141672072164156678458920319124555366945114237546418937&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789327232.0,
+        "t_max": 1789331419.0,
+        "start_iso": "2026-09-13T19:20:32Z",
+        "end_iso": "2026-09-13T20:30:19Z"
+      }
+    },
+    {
+      "market_id": "4533460",
+      "question": "Total Kills Over/Under 33.5 in Game 4?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533460",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=109400511347914148878590474303726004266255460793482179008166114900547257513919&interval=all",
+        "https://clob.polymarket.com/prices-history?market=50383099804854032013421301243100719755039651826897362360493027857886304422849&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789327229.0,
+        "t_max": 1789331417.0,
+        "start_iso": "2026-09-13T19:20:29Z",
+        "end_iso": "2026-09-13T20:30:17Z"
+      }
+    },
+    {
+      "market_id": "4533430",
+      "question": "Spread: Tampa Bay Rays (-8.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533430",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=4910517214266457773238148082661545458648987916839748718668883735055227601132&interval=all",
+        "https://clob.polymarket.com/prices-history?market=72746486253924554317271707866184772653929210458525910555125383290857771712471&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 22,
+      "interval_covered": {
+        "t_min": 1789326615.0,
+        "t_max": 1789332628.0,
+        "start_iso": "2026-09-13T19:10:15Z",
+        "end_iso": "2026-09-13T20:50:28Z"
+      }
+    },
+    {
+      "market_id": "4533006",
+      "question": "Houston Astros vs. Tampa Bay Rays: O/U 10.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4533006",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=14740112484175556418974953490014377401366175010229289024096668692651190884530&interval=all",
+        "https://clob.polymarket.com/prices-history?market=304006608927113577323360956703619677653503102019106282685741815235201064815&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 8,
+      "interval_covered": {
+        "t_min": 1789326015.0,
+        "t_max": 1789327819.0,
+        "start_iso": "2026-09-13T19:00:15Z",
+        "end_iso": "2026-09-13T19:30:19Z"
+      }
+    },
+    {
+      "market_id": "4532903",
+      "question": "Philadelphia Phillies vs. Atlanta Braves: O/U 7.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532903",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=13058093542073739718028678001167555348133211913647739379446658080203000296561&interval=all",
+        "https://clob.polymarket.com/prices-history?market=15319502775662044962835507234478839303738471738860154950669460783839190140766&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326014.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:00:14Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4532902",
+      "question": "Baltimore Orioles vs. Toronto Blue Jays: O/U 4.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532902",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=61666430436941954120678033904499044721580711642727058372517939163960386236641&interval=all",
+        "https://clob.polymarket.com/prices-history?market=12644876669924258652678239521401958616193756118318080074232733564781170088145&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 10,
+      "interval_covered": {
+        "t_min": 1789325415.0,
+        "t_max": 1789327816.0,
+        "start_iso": "2026-09-13T18:50:15Z",
+        "end_iso": "2026-09-13T19:30:16Z"
+      }
+    },
+    {
+      "market_id": "4532901",
+      "question": "Total Kills Over/Under 30.5 in Game 4?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532901",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=112798223548171202298021383051042213013343575947882214991054781645324538528469&interval=all",
+        "https://clob.polymarket.com/prices-history?market=115236160528990022349740980159760101316334073079933165193662697058963893310057&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 18,
+      "interval_covered": {
+        "t_min": 1789326613.0,
+        "t_max": 1789331419.0,
+        "start_iso": "2026-09-13T19:10:13Z",
+        "end_iso": "2026-09-13T20:30:19Z"
+      }
+    },
+    {
+      "market_id": "4532900",
+      "question": "Map 2 Total Rounds: Over/Under 24.5",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532900",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=86848974125414566658959480284816848413615558597678028560494954788145409229243&interval=all",
+        "https://clob.polymarket.com/prices-history?market=112684251924230518469420666210450809428612722058871315372665102889249031698326&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326017.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:00:17Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4532899",
+      "question": "Map 2 Rounds Handicap: Color (-6.5) vs INOX Division (+6.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532899",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=5604993560617796256549946640318463960803251077104451926800016625393937156510&interval=all",
+        "https://clob.polymarket.com/prices-history?market=80667822401022308756614926619065969813001464711659206291024957961976171302848&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326014.0,
+        "t_max": 1789330212.0,
+        "start_iso": "2026-09-13T19:00:14Z",
+        "end_iso": "2026-09-13T20:10:12Z"
+      }
+    },
+    {
+      "market_id": "4532844",
+      "question": "Spread: New York Yankees (-3.5)",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532844",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=13387072107241006680818196894011624633863796359508584584684501549303876172717&interval=all",
+        "https://clob.polymarket.com/prices-history?market=114866761825932692927855587585384050001956826375434498801605813950185514787131&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 26,
+      "interval_covered": {
+        "t_min": 1789325416.0,
+        "t_max": 1789332621.0,
+        "start_iso": "2026-09-13T18:50:16Z",
+        "end_iso": "2026-09-13T20:50:21Z"
+      }
+    },
+    {
+      "market_id": "4532843",
+      "question": "Ethereum above 2,430 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532843",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=77833700798057549775711193025735912171018908225624826409125393953469904877895&interval=all",
+        "https://clob.polymarket.com/prices-history?market=105277475421061653048664766577597418849643698688456438071499736097222468942207&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326017.0,
+        "t_max": 1789330216.0,
+        "start_iso": "2026-09-13T19:00:17Z",
+        "end_iso": "2026-09-13T20:10:16Z"
+      }
+    },
+    {
+      "market_id": "4532842",
+      "question": "Ethereum above 2,440 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532842",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=106190349975184599915122059504052418399264303118515170096544241623865954575075&interval=all",
+        "https://clob.polymarket.com/prices-history?market=103919209003934353893297062221391072985663273428613580418736199003887995603128&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326013.0,
+        "t_max": 1789330212.0,
+        "start_iso": "2026-09-13T19:00:13Z",
+        "end_iso": "2026-09-13T20:10:12Z"
+      }
+    },
+    {
+      "market_id": "4532841",
+      "question": "Ethereum above 2,450 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532841",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=39014842465301591482804445626571261994070913444125689257513281055438791989403&interval=all",
+        "https://clob.polymarket.com/prices-history?market=18844762779847041943898757597468921444245758016690129880398713777180065326792&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326015.0,
+        "t_max": 1789330213.0,
+        "start_iso": "2026-09-13T19:00:15Z",
+        "end_iso": "2026-09-13T20:10:13Z"
+      }
+    },
+    {
+      "market_id": "4532840",
+      "question": "Ethereum above 2,460 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532840",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=39084289534524503114701470385348335064256502264020667763431379390771142151694&interval=all",
+        "https://clob.polymarket.com/prices-history?market=32732932241691325099000776837624216898324393060628966070887585572979110152520&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326016.0,
+        "t_max": 1789330214.0,
+        "start_iso": "2026-09-13T19:00:16Z",
+        "end_iso": "2026-09-13T20:10:14Z"
+      }
+    },
+    {
+      "market_id": "4532839",
+      "question": "Ethereum above 2,470 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532839",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=10592413064836597369791499765016881414775316514412713794775428854658049833106&interval=all",
+        "https://clob.polymarket.com/prices-history?market=17992312663115053025998954920168505605954875736264212892010220956653602553611&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326015.0,
+        "t_max": 1789330214.0,
+        "start_iso": "2026-09-13T19:00:15Z",
+        "end_iso": "2026-09-13T20:10:14Z"
+      }
+    },
+    {
+      "market_id": "4532838",
+      "question": "Ethereum above 2,480 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532838",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=109754286040135657563975525696329335769234100904531970653803894728534411882407&interval=all",
+        "https://clob.polymarket.com/prices-history?market=87639258046003530537836309386621329445625899049679606518419052567160010245575&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326013.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:00:13Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4532837",
+      "question": "Ethereum above 2,490 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532837",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=68314006768901767781205199778768537253219814009276204856781009663113923806652&interval=all",
+        "https://clob.polymarket.com/prices-history?market=18412654113736001545792841596877378587420622556975338956527729332888822872964&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326013.0,
+        "t_max": 1789330215.0,
+        "start_iso": "2026-09-13T19:00:13Z",
+        "end_iso": "2026-09-13T20:10:15Z"
+      }
+    },
+    {
+      "market_id": "4532836",
+      "question": "Ethereum above 2,500 on September 13, 4PM ET?",
+      "gamma_url": "https://gamma-api.polymarket.com/markets?id=4532836",
+      "clob_urls": [
+        "https://clob.polymarket.com/prices-history?market=29189805789907053655982034859681744240739291168569028016464865885336718824291&interval=all",
+        "https://clob.polymarket.com/prices-history?market=112835236711605222318698187852475095602931676522607165719128970582100252247536&interval=all"
+      ],
+      "acquired_at_utc": "2026-09-13T21:09:46.667138Z",
+      "points_count": 16,
+      "interval_covered": {
+        "t_min": 1789326014.0,
+        "t_max": 1789330214.0,
+        "start_iso": "2026-09-13T19:00:14Z",
+        "end_iso": "2026-09-13T20:10:14Z"
+      }
+    }
+  ]
+}
