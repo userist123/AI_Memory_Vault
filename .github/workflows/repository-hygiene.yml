@@ -27,3 +27,4 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest
           pytest 20_TESTS/regression/test_repository_hygiene.py -q
+          pytest 20_TESTS/test_r031_repairs.py -q

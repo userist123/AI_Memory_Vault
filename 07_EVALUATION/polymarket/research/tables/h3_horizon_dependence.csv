@@ -1,0 +1,5 @@
+horizon,seconds_before_close,markets_evaluated,brier_score,wce_pp
+T-24h,86400,49,0.3289,33.74
+T-6h,21600,49,0.3289,33.74
+T-1h,3600,49,0.3624,37.86
+T-10m,600,49,0.3796,40.79

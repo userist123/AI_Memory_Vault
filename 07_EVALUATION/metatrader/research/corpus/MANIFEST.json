@@ -1,0 +1,750 @@
+{
+  "provenance": {
+    "broker_company": "RoboForex Ltd",
+    "terminal_build": 5836,
+    "extraction_time_utc": "2026-09-14T21:41:02.176316+00:00",
+    "total_files": 74
+  },
+  "files": [
+    {
+      "symbol": "AUDCAD",
+      "timeframe": "D1",
+      "bars": 7246,
+      "start": "2000-03-10",
+      "end": "2026-09-15",
+      "rel_path": "D1/AUDCAD_D1.csv",
+      "size_bytes": 443651,
+      "sha256": "a05d380cdb88162b344f01ba951d626ed93ff95310fee971c8d31429e11868eb"
+    },
+    {
+      "symbol": "AUDCAD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/AUDCAD_H1.csv",
+      "size_bytes": 624728,
+      "sha256": "08bb1e6959e8e47549b16be6af9afc0c02b98dea762ddc6a84a2aac59656cb4a"
+    },
+    {
+      "symbol": "AUDCHF",
+      "timeframe": "D1",
+      "bars": 7727,
+      "start": "1998-05-11",
+      "end": "2026-09-15",
+      "rel_path": "D1/AUDCHF_D1.csv",
+      "size_bytes": 470707,
+      "sha256": "b09d400e99f3c719a7f0b755fb84eb25b8a484b6a4bb6d0b58b511ae6e1321c0"
+    },
+    {
+      "symbol": "AUDCHF",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/AUDCHF_H1.csv",
+      "size_bytes": 622157,
+      "sha256": "dbf316a9f12cad93c64d144c4bfacdf0342e307cbdf75ef0ec4a9ce27c0632f1"
+    },
+    {
+      "symbol": "AUDJPY",
+      "timeframe": "D1",
+      "bars": 9121,
+      "start": "1993-05-17",
+      "end": "2026-09-15",
+      "rel_path": "D1/AUDJPY_D1.csv",
+      "size_bytes": 519599,
+      "sha256": "ec82bede7371e4cf20d7d2c9cdc329175247732cf3755940bb2fc184c90be1b2"
+    },
+    {
+      "symbol": "AUDJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/AUDJPY_H1.csv",
+      "size_bytes": 606313,
+      "sha256": "aaa77ed7e981ca3218653316d2452968325a0f8ca5e4dc77a5ae3a66c0d69fa0"
+    },
+    {
+      "symbol": "AUDNZD",
+      "timeframe": "D1",
+      "bars": 6417,
+      "start": "2000-01-26",
+      "end": "2026-09-15",
+      "rel_path": "D1/AUDNZD_D1.csv",
+      "size_bytes": 412974,
+      "sha256": "87e99c47b92d922df20a1e5c935148eb49790c29401c8db75378da5f4a1b2dfb"
+    },
+    {
+      "symbol": "AUDNZD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/AUDNZD_H1.csv",
+      "size_bytes": 647994,
+      "sha256": "42558c7041d40a8273cc2a6489f480463a900b49d35faee563a1b0fe7b439dc2"
+    },
+    {
+      "symbol": "AUDUSD",
+      "timeframe": "D1",
+      "bars": 9152,
+      "start": "1993-04-27",
+      "end": "2026-09-15",
+      "rel_path": "D1/AUDUSD_D1.csv",
+      "size_bytes": 550964,
+      "sha256": "262e7f5942b72e8493c08bd56691d6374e836ccc82b4f57995648bee50b152b5"
+    },
+    {
+      "symbol": "AUDUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/AUDUSD_H1.csv",
+      "size_bytes": 623632,
+      "sha256": "f99476a25737fc8f8bdc3cb4763c18f2cc8e832abd08f91b2cb4d64f8b4b706a"
+    },
+    {
+      "symbol": "CADCHF",
+      "timeframe": "D1",
+      "bars": 7727,
+      "start": "1998-05-08",
+      "end": "2026-09-15",
+      "rel_path": "D1/CADCHF_D1.csv",
+      "size_bytes": 472707,
+      "sha256": "0fd3a773741f6114382049e1fdb393c011cc4ba32111f600a7962f23718a2e90"
+    },
+    {
+      "symbol": "CADCHF",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/CADCHF_H1.csv",
+      "size_bytes": 621444,
+      "sha256": "dc1e8023d332edd0be0bea8004e6f61db29dd86bf721a52b212b237e5508fde3"
+    },
+    {
+      "symbol": "CADJPY",
+      "timeframe": "D1",
+      "bars": 7095,
+      "start": "2000-03-14",
+      "end": "2026-09-15",
+      "rel_path": "D1/CADJPY_D1.csv",
+      "size_bytes": 413872,
+      "sha256": "749ac3427f93323281a9a72693553884d177de8a365703f20c143545ee0104c2"
+    },
+    {
+      "symbol": "CADJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/CADJPY_H1.csv",
+      "size_bytes": 624890,
+      "sha256": "47746f63c6e2b1e2faed51bf212e5cd8ecf65df83ce4872c8169a81869534ca6"
+    },
+    {
+      "symbol": "CHFJPY",
+      "timeframe": "D1",
+      "bars": 9118,
+      "start": "1992-02-19",
+      "end": "2026-09-15",
+      "rel_path": "D1/CHFJPY_D1.csv",
+      "size_bytes": 529301,
+      "sha256": "47fd8deca753f08f7d153f2737ce8bb1bf4faee71f43c28c80a879aa242ac42c"
+    },
+    {
+      "symbol": "CHFJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/CHFJPY_H1.csv",
+      "size_bytes": 625460,
+      "sha256": "e031a02b42c3a0b5245476cac8ec40fd8524927cf2c298d5a0ed7e381939950a"
+    },
+    {
+      "symbol": "EURAUD",
+      "timeframe": "D1",
+      "bars": 6001,
+      "start": "2004-06-17",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURAUD_D1.csv",
+      "size_bytes": 428999,
+      "sha256": "127d87cb597b82767d51e0c5a0b236fbb0783d704f5eaef9d95c39757d3d68d3"
+    },
+    {
+      "symbol": "EURAUD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURAUD_H1.csv",
+      "size_bytes": 731766,
+      "sha256": "cc1f5c628a735d691e872dd3edbb884c806fb0ecc1f96d2a47c921678c1cc5c5"
+    },
+    {
+      "symbol": "EURCAD",
+      "timeframe": "D1",
+      "bars": 7311,
+      "start": "1999-12-20",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURCAD_D1.csv",
+      "size_bytes": 505939,
+      "sha256": "5a6e2054c1d949a79c6db62e228a646696d875ddd82ee7fea47a20834830f53f"
+    },
+    {
+      "symbol": "EURCAD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURCAD_H1.csv",
+      "size_bytes": 736178,
+      "sha256": "f9a62e18f3b100b4881efca9d6501b4b908d55fa0cb4550b54529315083cadcd"
+    },
+    {
+      "symbol": "EURCHF",
+      "timeframe": "D1",
+      "bars": 9093,
+      "start": "1993-04-28",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURCHF_D1.csv",
+      "size_bytes": 614523,
+      "sha256": "919de3846efa6f8eb2cf7123e8674cd67e84690374d9f4ccceaf0a95fe8b963f"
+    },
+    {
+      "symbol": "EURCHF",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURCHF_H1.csv",
+      "size_bytes": 623587,
+      "sha256": "bd67dbcb7b257ffcb1c47a9ff55a5dd4138e16261468b04c308035a5323651dc"
+    },
+    {
+      "symbol": "EURGBP",
+      "timeframe": "D1",
+      "bars": 9165,
+      "start": "1993-05-03",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURGBP_D1.csv",
+      "size_bytes": 555500,
+      "sha256": "62950563102bc70b4b1c3b8bd8266b37808bc0bf7c9d40ad546d5bbfac042cb6"
+    },
+    {
+      "symbol": "EURGBP",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURGBP_H1.csv",
+      "size_bytes": 615213,
+      "sha256": "d91736d2bf9e198d4b8035964c98ed421d39023dfdba50a7daa77986278df273"
+    },
+    {
+      "symbol": "EURJPY",
+      "timeframe": "D1",
+      "bars": 9039,
+      "start": "1993-04-27",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURJPY_D1.csv",
+      "size_bytes": 551322,
+      "sha256": "fe322cbd5c87ef2ea9a51d0af5c6896c0fcda1462e1117701b6c54601f9133d9"
+    },
+    {
+      "symbol": "EURJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURJPY_H1.csv",
+      "size_bytes": 625093,
+      "sha256": "07e83b6ae1d0c1e0f25b48e127f667aedbaaefa86c6eca11e75f53298f5546b2"
+    },
+    {
+      "symbol": "EURNZD",
+      "timeframe": "D1",
+      "bars": 7554,
+      "start": "1999-01-05",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURNZD_D1.csv",
+      "size_bytes": 534101,
+      "sha256": "d73fd71e9d8be4b6a49ef9b8a63d28d04058de6b2c7c42a9ec63b4515dd0b496"
+    },
+    {
+      "symbol": "EURNZD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURNZD_H1.csv",
+      "size_bytes": 707254,
+      "sha256": "4d33eabdf590154885678e5e70a993c714e8da859d9c0e3dc8490271e9751d63"
+    },
+    {
+      "symbol": "EURUSD",
+      "timeframe": "D1",
+      "bars": 10000,
+      "start": "1990-02-06",
+      "end": "2026-09-15",
+      "rel_path": "D1/EURUSD_D1.csv",
+      "size_bytes": 640961,
+      "sha256": "9bd87888a4a0761cd67e56ac9355cbbef650f8cce4c8ba647ba98f254adfd0fc"
+    },
+    {
+      "symbol": "EURUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 01:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/EURUSD_H1.csv",
+      "size_bytes": 648164,
+      "sha256": "00887b89a0c8b6d88360546fb27e0d256ab664e398272ef4aa02c696dcbf2836"
+    },
+    {
+      "symbol": "GBPAUD",
+      "timeframe": "D1",
+      "bars": 7721,
+      "start": "1998-04-27",
+      "end": "2026-09-15",
+      "rel_path": "D1/GBPAUD_D1.csv",
+      "size_bytes": 532016,
+      "sha256": "f18395849833c371dcfa6a88a0f40923651ea3416178093a048f33a541142dd7"
+    },
+    {
+      "symbol": "GBPAUD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/GBPAUD_H1.csv",
+      "size_bytes": 678868,
+      "sha256": "ca7aa31e557d3014e5267626b668bf0fcc2b450f6e1efb827d818e976118ea6c"
+    },
+    {
+      "symbol": "GBPCAD",
+      "timeframe": "D1",
+      "bars": 7736,
+      "start": "1998-04-16",
+      "end": "2026-09-15",
+      "rel_path": "D1/GBPCAD_D1.csv",
+      "size_bytes": 537862,
+      "sha256": "eb0a3749f236bebab5929d021b6128eac182f8ca10bc72be2f7a1ab437e0572c"
+    },
+    {
+      "symbol": "GBPCAD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/GBPCAD_H1.csv",
+      "size_bytes": 734623,
+      "sha256": "da1430c8d85abbc06365b7fe564ce020714af526c71a51fae3a3953509ab0089"
+    },
+    {
+      "symbol": "GBPNZD",
+      "timeframe": "D1",
+      "bars": 5718,
+      "start": "2006-01-02",
+      "end": "2026-09-15",
+      "rel_path": "D1/GBPNZD_D1.csv",
+      "size_bytes": 388002,
+      "sha256": "f3ca7f8505250a3b4b1f59fc9d17b464861dd19ddf0901c0c1f5369cdbee7703"
+    },
+    {
+      "symbol": "GBPNZD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/GBPNZD_H1.csv",
+      "size_bytes": 650822,
+      "sha256": "5001930d25693164cec2dad4f62b896fdf22e07e7bf605c58315247fe6803e74"
+    },
+    {
+      "symbol": "GBPJPY",
+      "timeframe": "D1",
+      "bars": 9165,
+      "start": "1993-04-19",
+      "end": "2026-09-15",
+      "rel_path": "D1/GBPJPY_D1.csv",
+      "size_bytes": 561854,
+      "sha256": "bca9c199a09c034e19e11805e318a8624b23e2c05765ee1764762b76379193b6"
+    },
+    {
+      "symbol": "GBPJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/GBPJPY_H1.csv",
+      "size_bytes": 625488,
+      "sha256": "4ca78fa49fe9f6027e581b946e3d524a1aa34bceed8292fa6a72b02627605fb0"
+    },
+    {
+      "symbol": "GBPUSD",
+      "timeframe": "D1",
+      "bars": 9157,
+      "start": "1993-05-12",
+      "end": "2026-09-15",
+      "rel_path": "D1/GBPUSD_D1.csv",
+      "size_bytes": 638846,
+      "sha256": "4fe61a1778a9bd1fd5bcfe516c40321e66152a098c9fea02392f79a9cba58115"
+    },
+    {
+      "symbol": "GBPUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/GBPUSD_H1.csv",
+      "size_bytes": 678411,
+      "sha256": "73550c4005ff4cc2e2d3cfe8410f2cd9e104bdb66b8cfdfb1d0bc742f38e861a"
+    },
+    {
+      "symbol": "GBPCHF",
+      "timeframe": "D1",
+      "bars": 8875,
+      "start": "1993-04-07",
+      "end": "2026-09-15",
+      "rel_path": "D1/GBPCHF_D1.csv",
+      "size_bytes": 585693,
+      "sha256": "9abc17bc48eeccc4bda117e17c8b99ca710f7a62e625300b8bfa5773d4b7a64a"
+    },
+    {
+      "symbol": "GBPCHF",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/GBPCHF_H1.csv",
+      "size_bytes": 638037,
+      "sha256": "6d119f51849964b06ed1e5e3d72256a6a6047960150962ead68f951314dfbe4c"
+    },
+    {
+      "symbol": "NZDCAD",
+      "timeframe": "D1",
+      "bars": 7737,
+      "start": "1998-04-24",
+      "end": "2026-09-15",
+      "rel_path": "D1/NZDCAD_D1.csv",
+      "size_bytes": 464592,
+      "sha256": "2c848907a7d250edd719bdb653ac1aff50eb4b04d5d9d09c7835652531ae993d"
+    },
+    {
+      "symbol": "NZDCAD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/NZDCAD_H1.csv",
+      "size_bytes": 623764,
+      "sha256": "de89a55fba9dd27980b7e87f1385742773d564e17b6395e25d3659dc67bafd65"
+    },
+    {
+      "symbol": "NZDCHF",
+      "timeframe": "D1",
+      "bars": 7735,
+      "start": "1998-04-29",
+      "end": "2026-09-15",
+      "rel_path": "D1/NZDCHF_D1.csv",
+      "size_bytes": 464685,
+      "sha256": "1641d0ed89bff65de4e952ebaa3c3f118b327481a8aaf16399459f51f76016ac"
+    },
+    {
+      "symbol": "NZDCHF",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/NZDCHF_H1.csv",
+      "size_bytes": 624194,
+      "sha256": "d42bd956992392904db0ee964256603c22a9016662d3f9980244f39438a72340"
+    },
+    {
+      "symbol": "NZDJPY",
+      "timeframe": "D1",
+      "bars": 7728,
+      "start": "1998-05-07",
+      "end": "2026-09-15",
+      "rel_path": "D1/NZDJPY_D1.csv",
+      "size_bytes": 439661,
+      "sha256": "d032cc6e7e33174873f15c745eb355a2fd92b3ea9ca033cae35b1de3115df9c0"
+    },
+    {
+      "symbol": "NZDJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/NZDJPY_H1.csv",
+      "size_bytes": 584968,
+      "sha256": "f8aaf3a7ca2a73ce2b1c3e15234974c450fe3b086d377e8a734d74136a8873c5"
+    },
+    {
+      "symbol": "NZDUSD",
+      "timeframe": "D1",
+      "bars": 8799,
+      "start": "1994-02-01",
+      "end": "2026-09-15",
+      "rel_path": "D1/NZDUSD_D1.csv",
+      "size_bytes": 532404,
+      "sha256": "184a5d4938252ed6241c3915404fd5b688b319040cab20315ad135dde99ddf2a"
+    },
+    {
+      "symbol": "NZDUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/NZDUSD_H1.csv",
+      "size_bytes": 624215,
+      "sha256": "51120848a146173a863ff0be72f8cf1c2b2c535d1fa52c6b29be751f6a6d5df3"
+    },
+    {
+      "symbol": "USDCAD",
+      "timeframe": "D1",
+      "bars": 9168,
+      "start": "1993-04-28",
+      "end": "2026-09-15",
+      "rel_path": "D1/USDCAD_D1.csv",
+      "size_bytes": 599450,
+      "sha256": "464c9e81a53f22d36152fd251a7f2670404fcf804bd7880972194108feccc00b"
+    },
+    {
+      "symbol": "USDCAD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/USDCAD_H1.csv",
+      "size_bytes": 678169,
+      "sha256": "53446d0c0399d89311c3c7d1a18fca8b89249217d97ae2988cc1942a8c053ccf"
+    },
+    {
+      "symbol": "USDCHF",
+      "timeframe": "D1",
+      "bars": 10000,
+      "start": "1990-01-25",
+      "end": "2026-09-15",
+      "rel_path": "D1/USDCHF_D1.csv",
+      "size_bytes": 635080,
+      "sha256": "b69f6846ebd134f08927121456d0594d6e158dafb9a754662844f327f0e47e5a"
+    },
+    {
+      "symbol": "USDCHF",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 01:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/USDCHF_H1.csv",
+      "size_bytes": 621589,
+      "sha256": "428bd5952478e124006e05c149e8b00644b29756db850b9a82b4270937ce6486"
+    },
+    {
+      "symbol": "USDJPY",
+      "timeframe": "D1",
+      "bars": 10000,
+      "start": "1990-02-16",
+      "end": "2026-09-15",
+      "rel_path": "D1/USDJPY_D1.csv",
+      "size_bytes": 598224,
+      "sha256": "d0d6c1898fbb9af358f6728a69f2a26a6bc02ec0247f6b4a9bb5ce2dbf76097f"
+    },
+    {
+      "symbol": "USDJPY",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-02-04 00:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/USDJPY_H1.csv",
+      "size_bytes": 624845,
+      "sha256": "a5b7f8e0e26894e36c9b43decb33a8882035214c69601619bd9ed2b1831f44f3"
+    },
+    {
+      "symbol": "XAUUSD",
+      "timeframe": "D1",
+      "bars": 6774,
+      "start": "2000-06-20",
+      "end": "2026-09-14",
+      "rel_path": "D1/XAUUSD_D1.csv",
+      "size_bytes": 416562,
+      "sha256": "0c74785820593b0bcd4aa7d463c96b07b1e73154e4f467d3e77b542bf989e8fd"
+    },
+    {
+      "symbol": "XAUUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-01-02 17:00",
+      "end": "2026-09-14 23:00",
+      "rel_path": "H1/XAUUSD_H1.csv",
+      "size_bytes": 637951,
+      "sha256": "1a0897e8bd374f30616ab6bcfcc7a43b29af44f5e1491e38de17cecf734e6de6"
+    },
+    {
+      "symbol": "XAGUSD",
+      "timeframe": "D1",
+      "bars": 6188,
+      "start": "2002-09-16",
+      "end": "2026-09-14",
+      "rel_path": "D1/XAGUSD_D1.csv",
+      "size_bytes": 355309,
+      "sha256": "7d76d65edfa985b33c935f0192bf6014c1f57a03fc4d5dd17a82279f10073d60"
+    },
+    {
+      "symbol": "XAGUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-01-02 17:00",
+      "end": "2026-09-14 23:00",
+      "rel_path": "H1/XAGUSD_H1.csv",
+      "size_bytes": 595386,
+      "sha256": "9edf1391d5abb8e81c0800ab69797e6f5b8c0694f5e6197bf6387ffb8a2ece22"
+    },
+    {
+      "symbol": "XAUEUR",
+      "timeframe": "D1",
+      "bars": 3494,
+      "start": "2013-03-04",
+      "end": "2026-09-14",
+      "rel_path": "D1/XAUEUR_D1.csv",
+      "size_bytes": 223652,
+      "sha256": "6ea16c5b9b059990baa9f38ebc19b334fab106d50391c9ad28aa95e7da6a1918"
+    },
+    {
+      "symbol": "XAUEUR",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-01-02 17:00",
+      "end": "2026-09-14 23:00",
+      "rel_path": "H1/XAUEUR_H1.csv",
+      "size_bytes": 633987,
+      "sha256": "1e90e47dd07b5dea81ad54d3b48b25b887baf06a36f514b238d9be3a1076a9f5"
+    },
+    {
+      "symbol": "BTCUSD",
+      "timeframe": "D1",
+      "bars": 4406,
+      "start": "2013-01-01",
+      "end": "2026-09-15",
+      "rel_path": "D1/BTCUSD_D1.csv",
+      "size_bytes": 267201,
+      "sha256": "080c38b760332bca10a3321171aba793313391f862054543b321a5c85cec0a60"
+    },
+    {
+      "symbol": "BTCUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-07-25 09:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/BTCUSD_H1.csv",
+      "size_bytes": 663692,
+      "sha256": "2920a70e1f0717fb48d4ed492f54b654bc5e7bb6d0d94bee4504ee44efedc715"
+    },
+    {
+      "symbol": "ETHUSD",
+      "timeframe": "D1",
+      "bars": 3655,
+      "start": "2016-05-02",
+      "end": "2026-09-15",
+      "rel_path": "D1/ETHUSD_D1.csv",
+      "size_bytes": 207546,
+      "sha256": "6323dc28b434af7986503dfe77ae88ac8d891e65f04f064488b901c4f15e6b57"
+    },
+    {
+      "symbol": "ETHUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-07-25 09:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/ETHUSD_H1.csv",
+      "size_bytes": 610497,
+      "sha256": "d65801276cd4e8b610452bcc644b5bd14e36e0577820b91db70ffbef240254de"
+    },
+    {
+      "symbol": "XRPUSD",
+      "timeframe": "D1",
+      "bars": 3218,
+      "start": "2017-11-24",
+      "end": "2026-09-15",
+      "rel_path": "D1/XRPUSD_D1.csv",
+      "size_bytes": 178987,
+      "sha256": "47f7a49c6f2f9663ce82f3c57950ef7bc2ee630f6457b395d2956f8d0317b50c"
+    },
+    {
+      "symbol": "XRPUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-07-25 09:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/XRPUSD_H1.csv",
+      "size_bytes": 609493,
+      "sha256": "ce42a0a0cefa450976eec527eb7deb158d050f826ca030dac6d6c78c78af414a"
+    },
+    {
+      "symbol": "SOLUSD",
+      "timeframe": "D1",
+      "bars": 2227,
+      "start": "2020-08-11",
+      "end": "2026-09-15",
+      "rel_path": "D1/SOLUSD_D1.csv",
+      "size_bytes": 117570,
+      "sha256": "ee76fce24bacb6191a843d2e8b10ad53c0d0b0bb2d7541a83b8a0f9b00c9a018"
+    },
+    {
+      "symbol": "SOLUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-07-25 09:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/SOLUSD_H1.csv",
+      "size_bytes": 544437,
+      "sha256": "2a4efdd177967308b5c8f84b3a7eae0de7f1a6a7bbcb1fadec33e78b951b4144"
+    },
+    {
+      "symbol": "ADAUSD",
+      "timeframe": "D1",
+      "bars": 3074,
+      "start": "2018-04-17",
+      "end": "2026-09-15",
+      "rel_path": "D1/ADAUSD_D1.csv",
+      "size_bytes": 169144,
+      "sha256": "d071d0aa8178fa79a5d559ab934099fc7e0e6c49e4c4b951e2d7364509da2022"
+    },
+    {
+      "symbol": "ADAUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-07-24 20:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/ADAUSD_H1.csv",
+      "size_bytes": 555705,
+      "sha256": "af1d019cac1d3ef8bc63ad7fa27fb6cfb42860e257ca8f44a58472989e22dbed"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "timeframe": "D1",
+      "bars": 2630,
+      "start": "2019-07-05",
+      "end": "2026-09-15",
+      "rel_path": "D1/DOGEUSD_D1.csv",
+      "size_bytes": 153477,
+      "sha256": "58fd8f33f03f9a46c8ae6e0b528dd83909f52d4cc269c80800f8f62aa647069f"
+    },
+    {
+      "symbol": "DOGEUSD",
+      "timeframe": "H1",
+      "bars": 10000,
+      "start": "2025-07-25 09:00",
+      "end": "2026-09-15 00:00",
+      "rel_path": "H1/DOGEUSD_H1.csv",
+      "size_bytes": 603941,
+      "sha256": "1226c7676b5626b0132e49f34d7e6e8e0f9be1293e006e1e2b5a253a747deca5"
+    }
+  ]
+}
