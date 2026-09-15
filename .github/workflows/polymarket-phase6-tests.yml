@@ -1,0 +1,45 @@
+name: Polymarket Phase 6 Tests
+
+on:
+  push:
+    branches:
+      - r052-pm-phase6-market-model-edge
+    paths:
+      - '03_IMPLEMENTATION/packages/polymarket/**'
+      - '20_TESTS/polymarket/**'
+      - '07_EVALUATION/polymarket/**'
+      - '.github/workflows/polymarket-phase6-tests.yml'
+  pull_request:
+    paths:
+      - '03_IMPLEMENTATION/packages/polymarket/**'
+      - '20_TESTS/polymarket/**'
+      - '07_EVALUATION/polymarket/**'
+      - '.github/workflows/polymarket-phase6-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: 03_IMPLEMENTATION
+
+jobs:
+  phase6-market-model-edge:
+    name: Phase 6 market-model edge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install test runner
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyyaml
+      - name: Run Phase 1-6 Polymarket tests
+        run: |
+          python -m pytest -q \
+            20_TESTS/polymarket/test_market_snapshot.py \
+            20_TESTS/polymarket/test_historical_replay.py \
+            20_TESTS/polymarket/test_prediction_ledger.py \
+            20_TESTS/polymarket/test_prediction_council.py \
+            20_TESTS/polymarket/test_calibration.py \
+            20_TESTS/polymarket/test_market_model_edge.py

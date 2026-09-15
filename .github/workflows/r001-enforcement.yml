@@ -105,6 +105,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The repository currently contains a very large number of paths/renames.
+          # Keep Git's rename detection explicit so the CI scan is deterministic and
+          # does not emit the default diff.renameLimit warning.
+          git config --global diff.renameLimit 100000
+          git config --global diff.renames true
           docker run --rm -w /repo -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --config=/repo/.gitleaks.toml --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
 
       - name: Dependency audit
