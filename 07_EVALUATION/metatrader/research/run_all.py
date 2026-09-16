@@ -2,11 +2,11 @@
 run_all.py — Verificator de Reproductibilitate Octet-cu-Octet (V1 + V2 Research Suite)
 
 Funcționalitate:
-1. Regenerează toate tabelele de date offline (V1 și V2) într-un director temporar izolat.
+1. Regenerează toate tabelele de date offline (V1 și V2, inclusiv Table 8 Power Analysis) într-un director temporar izolat.
 2. Compară binar (octet cu octet) fiecare fișier generat cu versiunea comisă în depozit.
 3. Verifică integritatea lanțului criptografic SHA-256 din prospective_log.jsonl.
 4. Iese cu cod de eroare nenul dacă există chiar și un singur octet diferit.
-5. Opțional: flag-ul --include-power re-rulează simularea Monte Carlo pentru Table 8.
+5. Opțional: flag-ul --skip-power sare peste simularea Monte Carlo pentru Table 8.
 """
 
 import argparse
@@ -39,7 +39,7 @@ def run_cmd(cmd_list: list):
 
 def main():
     parser = argparse.ArgumentParser(description="V1 + V2 Reproducibility Runner")
-    parser.add_argument("--include-power", action="store_true", help="Re-run full Monte Carlo simulation for Table 8 (~2 min)")
+    parser.add_argument("--skip-power", action="store_true", help="Skip Monte Carlo simulation for Table 8 (~2 min)")
     args = parser.parse_args()
 
     print("=== START REPRODUCIBILITY RUNNER (MT5 V1 + V2 RESEARCH SUITE) ===", flush=True)
@@ -66,8 +66,8 @@ def main():
     # 6. V2: Regenerare ipoteze exploratorii (table_11)
     run_cmd([os.path.join(BASE_DIR, "analyze_exploratory_hypotheses.py"), "--out-dir", TEMP_DIR])
 
-    # 7. V2: Putere statistică (table_8) - dacă e solicitat
-    if args.include_power:
+    # 7. V2: Putere statistică (table_8) - regenerat offline by default
+    if not args.skip_power:
         run_cmd([os.path.join(BASE_DIR, "analyze_statistical_power.py"), "--out-dir", TEMP_DIR])
 
     # 8. Verificare comparativă octet-cu-octet a tuturor tabelelor regenerate offline
@@ -84,7 +84,7 @@ def main():
         "table_11_exploratory_hypotheses.csv",
     ]
 
-    if args.include_power:
+    if not args.skip_power:
         verified_files.append("table_8_power_analysis.csv")
 
     mismatches = []
@@ -115,12 +115,12 @@ def main():
             print(f"  [DIFF!] {fname:36s} | Comm SHA: {h_comm[:12]} != Temp SHA: {h_temp[:12]}", file=sys.stderr, flush=True)
             mismatches.append((fname, h_comm, h_temp))
 
-    # Verificare hash-uri pentru tabelele extrase live (table_1 census, table_9 ticks, table_8 dacă nu e re-rulat)
+    # Verificare hash-uri pentru tabelele extrase live (table_1 census, table_9 ticks)
     fixed_artifacts = [
         ("table_1_census.csv", "5c6b289d309331a2ddd8ffa9b95527b9344b85afd40c0cc65615abf6bbc87629"),
         ("table_9_tick_cost_comparison.csv", "b43401bf12290c869f3993173b608ab43436fd4f275b7d1893741e3d8b77183c"),
     ]
-    if not args.include_power:
+    if args.skip_power:
         fixed_artifacts.append(("table_8_power_analysis.csv", "acfa945e1da4e5df1bdac17516f43b4d3cc9d50e0eba6e1917cf4190d980ca95"))
 
     print("\nVerifying fixed empirical artifacts cryptographic SHA-256 hashes...", flush=True)

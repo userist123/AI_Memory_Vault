@@ -3,7 +3,7 @@ fetch_tick_costs.py — Auditul Costurilor Reale din Tick-uri vs. Bare D1
 
 Analizează spread-ul efectiv de execuție din tick-uri reale (copy_ticks_range)
 pe un eșantion reprezentativ din cele 28 de instrumente eligibile,
-cu accent pe momentul de execuție al barei D1 (fereastra de rollover 23:55 - 00:15).
+cu accent pe momentul de execuție al barei D1 (fereastra de rollover 23:55 - 00:15 Server Time / EET-EEST, nu UTC).
 
 Generează:
 - 07_EVALUATION/metatrader/research/tables/table_9_tick_cost_comparison.csv
@@ -103,7 +103,7 @@ def main():
         overall_mean_pts = float(np.mean(valid_spreads))
         p95_pts = float(np.percentile(valid_spreads, 95))
 
-        # Fereastra de rollover la trecerea dintre zile: 23:55:00 - 00:15:00 ora serverului
+        # Fereastra de rollover la trecerea dintre zile: 23:55:00 - 00:15:00 Server Time (EET/EEST, broker server clock, nu UTC)
         sec_in_day = valid_times % 86400
         rollover_mask = (sec_in_day >= 86100) | (sec_in_day <= 900)
         rollover_spreads = valid_spreads[rollover_mask]

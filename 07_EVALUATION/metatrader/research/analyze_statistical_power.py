@@ -191,6 +191,7 @@ def main():
     print(f"Minimum Detectable Sharpe Ratio (MDSR @ 80% power): {mdsr_80:.4f}")
     print(f"=======================================================\n")
 
+    os.makedirs(out_dir, exist_ok=True)
     out_csv = os.path.join(out_dir, "table_8_power_analysis.csv")
     fieldnames = [
         "injected_true_sharpe", "simulations_count", "rejections_count",

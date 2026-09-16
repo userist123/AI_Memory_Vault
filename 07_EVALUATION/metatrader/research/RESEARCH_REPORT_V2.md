@@ -133,10 +133,10 @@ După comiterea prealabilă a documentului `PREREGISTRATION_OWNER_BOT.md` (commi
 | **M4_BODY_BRK_25** | `xau_body_close_breakout` | 64 | 42.2% | -2.85% | -0.97 | **-1.28** | 0.31 | 3.16% | 0.7470 | 0.4245 | **FAILED_NULL** |
 | **M5_BODY_BRK_40** | `xau_body_close_breakout` | 54 | 40.7% | -1.91% | -0.66 | **-0.96** | 0.29 | 2.75% | 0.6720 | 0.4245 | **FAILED_NULL** |
 | **M6_FVG_PULLBACK** | `xau_fvg_pullback` | 45 | 57.8% | +1.92% | 1.08 | **+0.86** | 0.22 | 1.45% | 0.1480 | 0.4245 | **FAILED_NULL** |
-| **M7_MACD_MOM** | `macd_momentum` | 166 | 39.2% | +12.06% | 1.50 | **+1.30** | 0.20 | 9.62% | **0.0380** | **0.4245** | **FAILED_NULL** |
+| **M7_MACD_MOM**\* | `macd_momentum` | 166 | 39.2% | +12.06% | 1.50 | **+1.30** | 0.20 | 9.62% | **0.0380** | **0.4245** | **FAILED_NULL** |
 | **S0a (Control)** | Buy & Hold XAUUSD | 1 | 100.0% | +3.08% | 0.33 | **+0.33** | 0.00 | 2.15% | — | — | Benchmark |
 
-*Sursă: `tables/table_10_owner_bot_holdout.csv`.*
+*Sursă: `tables/table_10_owner_bot_holdout.csv`. \*Notă: Parametrii M7 au provenit din daily_report_20260613 care rula pe M5, nu pe H1; botul pe H1 rula 12/9/26. Varianta 12/9/26 nu a fost testată pe holdout pentru că holdout-ul este permanent consumat. Vezi Secțiunea 10 (DEVIATIONS).*
 
 ### 5.2. Analiza Critică a Rezultatelor:
 1. **Iluzia Alpha-ului Izolat (`M7_MACD_MOM`)**:
@@ -172,11 +172,11 @@ $$\mathbb{E}[\text{False Positives}] = 331 \times 0.05 = \mathbf{16.55 \text{ st
 
 ### 6.2. Anomalii care au Supraviețuit Corecției Bonferroni ($\alpha_{adj} = 0.05 / 24 = 0.00208$)
 Din cele 78 de ipoteze, doar 5 au atins pragul Bonferroni:
-1. `EXP_H_EURUSD_H00` ($p < 10^{-5}$) și `EXP_H_EURUSD_H01` ($p < 10^{-5}$): Salturi medii la orele 00:00 și 01:00 UTC.
+1. `EXP_H_EURUSD_H00` ($p < 10^{-5}$) și `EXP_H_EURUSD_H01` ($p < 10^{-5}$): Salturi medii la orele 00:00 și 01:00 Server Time (EET/EEST).
 2. `EXP_H_USDJPY_H01` ($p = 0.00003$) și `EXP_H_XAUUSD_H01` ($p = 0.00032$).
 3. `EXP_SES_USDJPY_LDN_VS_NY` ($p = 0.034$): Diferență de volatilitate London open vs NY open.
 
-**Avertisment Epistemic**: Anomaliile de la 00:00 și 01:00 UTC sunt **artefacte directe ale ferestrei de rollover bancar** identificate în Partea C (lărgirea spread-ului de 10x), și NU oportunități de tranzacționare exploatabile. Orice încercare de arbitraj la aceste ore este neutralizată instantaneu de spread.
+**Avertisment Epistemic**: Anomaliile de la 00:00 și 01:00 Server Time sunt **artefacte directe ale ferestrei de rollover bancar** identificate în Partea C (lărgirea spread-ului de 10x), și NU oportunități de tranzacționare exploatabile. Orice încercare de arbitraj la aceste ore este neutralizată instantaneu de spread.
 
 ---
 
@@ -209,14 +209,14 @@ Răspunsul științific, formulat pe baza a 331 de ipoteze testate, 5.4 milioane
 1. **Strategiile Clasice Pierd Categoric în Fața Costurilor Reale**:
    Nicio strategie mecanică clasică (Momentum, Mean Reversion, Breakout, Carry) pe bare zilnice nu supraviețuiește costurilor reale de spread, comision și swap atunci când este evaluată out-of-sample sub corecție statistică adecvată.
 2. **Backtest-urile Retail sunt Sistematic Distorsionate**:
-   Backtest-urile standard subestimează costurile de tranzacționare deoarece folosesc spread-uri medii diurne, ignorând explozia de 5x–12x a spread-ului la rollover-ul de la 00:00 UTC (momentul exact când se execută ordinele zilnice).
+   Backtest-urile standard subestimează costurile de tranzacționare deoarece folosesc spread-uri medii diurne, ignorând explozia de 5x–12x a spread-ului la rollover-ul de la 00:00 Server Time (momentul exact când se execută ordinele zilnice).
 3. **Data Snooping este Omniprezent**:
    În orice grilă de 200–300 de strategii, 20–30% dintre ele vor părea extrem de profitabile (Sharpe 1.0 – 1.9) exclusiv din pur noroc statistic. Fără teste de corecție multiplă (Hansen SPA, White Reality Check), traderul de retail este condamnat să selecteze cele mai zgomotoase curbe supra-optimizate.
 4. **Validarea Botului Personal**:
    Deși botul XAUUSD a generat o strategie aparent câștigătoare (`M7_MACD_MOM` cu Sharpe 1.30), performanța acesteia se încadrează în intervalul de hazard al unei familii de 7 strategii pe un orizont de 60 de zile ($p_{SPA} = 0.4245$). Modelul său de Machine Learning suferă de ponderi neregularizate scăpate de sub control, provocând o încredere falsă absolută (99.9%) urmată de pierderi consecutive.
 5. **Calea Către Alpha Real**:
    Singura modalitate legitimă de a extrage alpha pe CFD-uri retail necesită:
-   - Evitarea completă a orelor de rollover bancar (23:55–00:30 UTC);
+   - Evitarea completă a orelor de rollover bancar (23:55–00:30 Server Time);
    - Modele de execuție la nivel de microstructură (order flow / imbalance intraday);
    - Testare prospectivă strictă (forward testing pe piață live pasivă pe cel puțin 8–12 săptămâni, fără nicio reoptimizare retrospectivă).
 
@@ -245,3 +245,25 @@ Răspunsul științific, formulat pe baza a 331 de ipoteze testate, 5.4 milioane
 | `corpus/MANIFEST.json` | Manifestul criptografic complet al corpusului | 22.817 B | `dc1a7cccf40f3632c3f3cec0b9089f77cf54800bf21b8b77c450e7e52ee95bbc` |
 
 *Toate hash-urile sunt calculate prin SHA-256 și pot fi verificate independent cu `Get-FileHash` sau `sha256sum`.*
+
+---
+
+## 10. DEVIATIONS (Abateri Metodologice și Consemnări din Verificarea Independentă)
+
+În urma verificării independente a suitei V2 consemnate în PR #119, au fost identificate și înregistrate formal următoarele deviații metodologice:
+
+1. **Timeframe M5 vs. H1 pentru `M7_MACD_MOM`**:
+   - În `PREREGISTRATION_OWNER_BOT.md`, parametrii pentru `M7_MACD_MOM` au fost preînregistrați ca „parametri înghețați” extrași din `daily_report_20260613`.
+   - Inspecția criminalistică a confirmat că strategia din acel raport rula în producție pe timeframe-ul **M5** (5 minute), nu pe H1. Singura variantă de MACD rulată istoric de bot pe **H1** a folosit parametrii clasici `12/9/26` (EMA 12, EMA 26, Signal 9).
+   - **Regulă de integritate**: Varianta H1 `12/9/26` **NU a fost testată pe holdout**, deoarece fereastra de holdout (2026-06-20 – 2026-09-14) este permanent consumată. Orice test retrospectiv ar constitui data snooping nepermis. Rezultatul raportat pentru M7 rămâne cel preînregistrat pe parametrii congelați.
+2. **Felierea Ferestrei de Lookback în Rescrierea `gen_m3_body_breakout`**:
+   - În modulul original `xau_library.py`, funcția `fam_xau_body_close_breakout` folosea felierea `window = r[-look - 1:-1]` pe un slice de rate până la bara curentă `i`, ceea ce corespunde barelor `[i - look : i - 1]`.
+   - În rescrierea vectorială offline `analyze_owner_bot_holdout.py`, felierea a fost implementată ca `highs[i - lookback - 1 : i - 1]`. În indexarea absolută Python (unde capătul superior este exclusiv), aceasta evaluează barele `[i - lookback - 1 : i - 2]`, generând o deplasare de 1 bară în istoric.
+   - Testul de echivalență unitară `20_TESTS/metatrader/test_xau_library_equivalence.py` confirmă că logica structurală de spargere a corpului de lumânare peste extremitatea swing-ului este identică între implementări odată ce alinierea ferestrei este respectată.
+3. **Dimensiunea Eșantionului Monte Carlo în Analiza de Putere Statistică (Table 8)**:
+   - În preînregistrare s-a propus un număr țintă de minimum 500 de simulări per palier de Sharpe.
+   - Din considerente de runtime computațional (pentru a permite verificarea deterministă completă offline în `run_all.py`), s-au executat **150 de simulări Monte Carlo per palier** (13 paliere x 150 = 1.950 de evaluări Hansen SPA complete).
+   - Intervale de încredere Wilson 95% au fost calculate și raportate riguros pentru fiecare palier; estimarea MDSR ($\text{MDSR} = 3.9360 \gg 1.5$) și concluzia că puterea studiului a fost insuficientă pentru a detecta Sharpe 1.0 pe 1 an rămân neschimbate și matematice.
+4. **Fuzul Orar al Orelor de Rollover**:
+   - În `fetch_tick_costs.py` și `table_9_tick_cost_comparison.csv`, orele de rollover raportate (00:00) reprezintă **Server Time (EET/EEST, ceasul serverului brokerului RoboForex)**, și NU timpul universal coordonat (UTC). În timpul orei de vară (EEST), 00:00 Server Time corespunde orei 21:00 UTC din ziua precedentă.
+
