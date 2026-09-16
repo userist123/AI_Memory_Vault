@@ -1,0 +1,569 @@
+{
+  "page_size": 10,
+  "populations": {
+    "answerable_heldout": {
+      "label": "answerable_heldout",
+      "n": 22,
+      "min": 0.022124,
+      "max": 0.029508,
+      "mean": 0.028103,
+      "median": 0.028425,
+      "stdev": 0.00154,
+      "scores_sorted": [
+        0.022124,
+        0.026796,
+        0.027352,
+        0.02739,
+        0.0274,
+        0.027608,
+        0.027829,
+        0.02785,
+        0.028069,
+        0.028323,
+        0.028323,
+        0.028528,
+        0.028701,
+        0.028701,
+        0.028701,
+        0.028893,
+        0.029092,
+        0.029244,
+        0.029244,
+        0.029297,
+        0.029297,
+        0.029508
+      ]
+    },
+    "unanswerable_heldout": {
+      "label": "unanswerable_heldout",
+      "n": 3,
+      "min": 0.023424,
+      "max": 0.026102,
+      "mean": 0.024896,
+      "median": 0.025163,
+      "stdev": 0.001359,
+      "scores_sorted": [
+        0.023424,
+        0.025163,
+        0.026102
+      ]
+    },
+    "nonsense_generated": {
+      "label": "nonsense_generated",
+      "n": 20,
+      "min": 0.025935,
+      "max": 0.029508,
+      "mean": 0.028726,
+      "median": 0.029376,
+      "stdev": 0.001255,
+      "scores_sorted": [
+        0.025935,
+        0.026102,
+        0.026628,
+        0.027199,
+        0.027608,
+        0.028988,
+        0.029244,
+        0.029244,
+        0.029244,
+        0.029244,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508,
+        0.029508
+      ]
+    }
+  },
+  "per_case_answerable": [
+    {
+      "id": "H01",
+      "query": "Which agent role in the council matrix covers compilers, AST parsers and tooling?",
+      "top_fused_score": 0.028701,
+      "margin": 0.01682,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 29.690971,
+      "top_entity_raw": 0.204124
+    },
+    {
+      "id": "H02",
+      "query": "Which confidence level means directly verified by execution, test or an authoritative primary source?",
+      "top_fused_score": null,
+      "margin": null,
+      "bm25_entity_agree_top1": null,
+      "top_bm25_raw": null,
+      "top_entity_raw": null
+    },
+    {
+      "id": "H03",
+      "query": "Which file name marks a directory as a real skill in the skills catalogue?",
+      "top_fused_score": 0.028701,
+      "margin": 0.017199,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 39.181628,
+      "top_entity_raw": 0.894427
+    },
+    {
+      "id": "H04",
+      "query": "Which Romanian government decision number governs classified information standards?",
+      "top_fused_score": null,
+      "margin": null,
+      "bm25_entity_agree_top1": null,
+      "top_bm25_raw": null,
+      "top_entity_raw": null
+    },
+    {
+      "id": "H05",
+      "query": "Which memory class records an analysed failure?",
+      "top_fused_score": 0.026796,
+      "margin": 0.015437,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 16.016046,
+      "top_entity_raw": 0.447214
+    },
+    {
+      "id": "H06",
+      "query": "What role does this repository play between sessions, models and projects?",
+      "top_fused_score": 0.029092,
+      "margin": 0.001586,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 2.581265,
+      "top_entity_raw": 0.57735
+    },
+    {
+      "id": "H07",
+      "query": "Which runtime is listed for automation, algorithmic trading and security tooling?",
+      "top_fused_score": 0.027829,
+      "margin": 0.016214,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 32.426521,
+      "top_entity_raw": 0.447214
+    },
+    {
+      "id": "H08",
+      "query": "How is a plausible but independently unverified claim rated?",
+      "top_fused_score": 0.029244,
+      "margin": 0.017319,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 25.037967,
+      "top_entity_raw": 0.133631
+    },
+    {
+      "id": "H09",
+      "query": "What is the single objective a conversion page is built around?",
+      "top_fused_score": 0.027608,
+      "margin": 0.015517,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 15.370615,
+      "top_entity_raw": 0.080582
+    },
+    {
+      "id": "H10",
+      "query": "Which shell is used for directory administration and policy automation?",
+      "top_fused_score": 0.028323,
+      "margin": 0.0168,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 21.684447,
+      "top_entity_raw": 0.213201
+    },
+    {
+      "id": "H11",
+      "query": "What label applies when there is insufficient basis to judge reliability?",
+      "top_fused_score": 0.0274,
+      "margin": 0.01538,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 24.444877,
+      "top_entity_raw": 0.030373
+    },
+    {
+      "id": "H12",
+      "query": "Which note type captures a reusable fact or concept?",
+      "top_fused_score": 0.022124,
+      "margin": 0.01007,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 23.289668,
+      "top_entity_raw": 0.082479
+    },
+    {
+      "id": "H13",
+      "query": "What kind of practices does the security reference restrict itself to?",
+      "top_fused_score": 0.028323,
+      "margin": 0.016683,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 23.894957,
+      "top_entity_raw": 0.57735
+    },
+    {
+      "id": "H14",
+      "query": "Which memory class records the reasoning behind a choice rather than the verified steps to perform one?",
+      "top_fused_score": null,
+      "margin": null,
+      "bm25_entity_agree_top1": null,
+      "top_bm25_raw": null,
+      "top_entity_raw": null
+    },
+    {
+      "id": "H15",
+      "query": "Which document is the research summary on Romanian classified-information digital security reform rather than the government decision itself?",
+      "top_fused_score": null,
+      "margin": null,
+      "bm25_entity_agree_top1": null,
+      "top_bm25_raw": null,
+      "top_entity_raw": null
+    },
+    {
+      "id": "H16",
+      "query": "Which catalogue enumerates council agents rather than the contents of the skills directory?",
+      "top_fused_score": 0.027352,
+      "margin": 0.01541,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 20.901116,
+      "top_entity_raw": 0.447214
+    },
+    {
+      "id": "H17",
+      "query": "Which reference lists languages and runtimes rather than security practices?",
+      "top_fused_score": 0.02785,
+      "margin": 0.016143,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 18.198253,
+      "top_entity_raw": 0.57735
+    },
+    {
+      "id": "H18",
+      "query": "Which document defines the confidence levels referenced by the LogAnalyzer DFIR enterprise architecture?",
+      "top_fused_score": 0.029508,
+      "margin": 0.018098,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 36.618535,
+      "top_entity_raw": 0.557086
+    },
+    {
+      "id": "H19",
+      "query": "Which memory protocol governs the note classes used by the LogAnalyzer DFIR architecture?",
+      "top_fused_score": 0.029244,
+      "margin": 0.018328,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 27.399341,
+      "top_entity_raw": 0.557086
+    },
+    {
+      "id": "H20",
+      "query": "Which conversion-page design document is linked from the MengTo agent skills catalogue?",
+      "top_fused_score": 0.028893,
+      "margin": 0.017109,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 23.472287,
+      "top_entity_raw": 0.447214
+    },
+    {
+      "id": "H21",
+      "query": "Which technology reference is linked from the note about splitting prompts for token-limited models?",
+      "top_fused_score": 0.028528,
+      "margin": 0.016481,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 23.71202,
+      "top_entity_raw": 0.57735
+    },
+    {
+      "id": "H22",
+      "query": "Which research summary is linked from the HG 585/2002 classified-information legislation note?",
+      "top_fused_score": null,
+      "margin": null,
+      "bm25_entity_agree_top1": null,
+      "top_bm25_raw": null,
+      "top_entity_raw": null
+    },
+    {
+      "id": "H23",
+      "query": "Which security reference is linked from the PaperCut Xerox secure print setup note?",
+      "top_fused_score": 0.029297,
+      "margin": 0.017765,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 55.622372,
+      "top_entity_raw": 0.57735
+    },
+    {
+      "id": "H24",
+      "query": "Which identity document is linked from the FinScope project note?",
+      "top_fused_score": 0.029297,
+      "margin": 0.001116,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 5.849595,
+      "top_entity_raw": 0.316228
+    },
+    {
+      "id": "H25",
+      "query": "Which full legislative text is linked from the atomic note on SIC security accreditation?",
+      "top_fused_score": 0.028701,
+      "margin": 0.017171,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 23.74706,
+      "top_entity_raw": 0.447214
+    },
+    {
+      "id": "H26",
+      "query": "Which agent matrix is linked from the master skills catalogue?",
+      "top_fused_score": 0.028069,
+      "margin": 0.01614,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 19.15515,
+      "top_entity_raw": 0.447214
+    },
+    {
+      "id": "H27",
+      "query": "Which skills catalogue is linked from the bio-inspired cognitive brain architecture specification?",
+      "top_fused_score": 0.02739,
+      "margin": 0.015586,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 19.970478,
+      "top_entity_raw": 0.447214
+    }
+  ],
+  "per_case_unanswerable": [
+    {
+      "id": "H28",
+      "query": "What is the certified maximum operating altitude in metres recorded in this repository?",
+      "top_fused_score": 0.023424,
+      "margin": 0.01171,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 22.857752,
+      "top_entity_raw": 0.0
+    },
+    {
+      "id": "H29",
+      "query": "Which veterinary clinic is contracted for on-site animal care in this repository?",
+      "top_fused_score": 0.026102,
+      "margin": 0.014335,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 14.000543,
+      "top_entity_raw": 0.0
+    },
+    {
+      "id": "H30",
+      "query": "What is the ISBN of the printed annual cookbook described in this repository?",
+      "top_fused_score": 0.025163,
+      "margin": 0.013318,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 16.467991,
+      "top_entity_raw": 0.0
+    }
+  ],
+  "per_case_nonsense": [
+    {
+      "query": "xyzzy plugh frobnicate",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "purple velocity eleven bicycles whisper",
+      "top_fused_score": 0.029244,
+      "margin": 0.017998,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 0.215627,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "qwzx flerp glomp shazzam",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "the moon ate seventeen umbrellas quietly",
+      "top_fused_score": 0.027608,
+      "margin": 0.016132,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 6.910156,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "banana thermodynamics of Tuesday",
+      "top_fused_score": 0.029244,
+      "margin": 0.017998,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 0.319008,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "zzzyxwvut abcdefghij klmnop",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "asdf jkl; qwerty uiop zxcvbn",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "grondle wimplestitch farnoxical dervish",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "what colour is the sound of Wednesday",
+      "top_fused_score": 0.025935,
+      "margin": 0.01428,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 8.849492,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "how many syllables does silence weigh",
+      "top_fused_score": 0.026628,
+      "margin": 0.01501,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 11.025043,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "flibbertigibbet moonshadow paperclip syzygy",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "lorem ipsum dolor sit amet consectetur",
+      "top_fused_score": 0.028988,
+      "margin": 0.01771,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 16.550921,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "the seventeenth invisible elephant of March",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "wobblefinch quantum marmalade recursion",
+      "top_fused_score": 0.029244,
+      "margin": 0.017998,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 0.724491,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "please describe the taste of the number nine",
+      "top_fused_score": 0.027199,
+      "margin": 0.015653,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 8.715348,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "hjkl asdf poiuy mnbvc",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "glorbnak fritzendorf krellwhistle",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "what is the airspeed velocity of an unladen thought",
+      "top_fused_score": 0.026102,
+      "margin": 0.014485,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 8.849492,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "throbbing gristle of the fourth dimension pancake",
+      "top_fused_score": 0.029244,
+      "margin": 0.017998,
+      "bm25_entity_agree_top1": false,
+      "top_bm25_raw": 0.319008,
+      "top_entity_raw": 0.0
+    },
+    {
+      "query": "zibzab morlock fendrifuge",
+      "top_fused_score": 0.029508,
+      "margin": 0.018293,
+      "bm25_entity_agree_top1": true,
+      "top_bm25_raw": 0.0,
+      "top_entity_raw": 0.0
+    }
+  ],
+  "overlap_answerable_vs_unanswerable": {
+    "overlap_range": [
+      0.023424,
+      0.026102
+    ],
+    "overlap_fraction_of_combined_span": 0.3627
+  },
+  "overlap_answerable_vs_nonsense": {
+    "overlap_range": [
+      0.025935,
+      0.029508
+    ],
+    "overlap_fraction_of_combined_span": 0.4839
+  },
+  "overlap_unanswerable_vs_nonsense": {
+    "overlap_range": [
+      0.025935,
+      0.026102
+    ],
+    "overlap_fraction_of_combined_span": 0.0274
+  },
+  "D1_top_fused_score": {
+    "separable": false,
+    "min_pos": 0.022124,
+    "max_neg": 0.029508
+  },
+  "D2_margin": {
+    "separable": false,
+    "min_pos": 0.001116,
+    "max_neg": 0.018293
+  },
+  "D2_margin_stats": {
+    "answerable": {
+      "n": 22,
+      "min": 0.001116,
+      "max": 0.018328,
+      "mean": 0.014926
+    },
+    "non_answerable": {
+      "n": 23,
+      "min": 0.01171,
+      "max": 0.018293,
+      "mean": 0.01685
+    }
+  },
+  "D3_bm25_entity_agreement_rate": {
+    "answerable": 0.0455,
+    "unanswerable": 0.0,
+    "nonsense": 0.5
+  }
+}
