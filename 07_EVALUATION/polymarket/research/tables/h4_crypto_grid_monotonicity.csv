@@ -1,0 +1,2 @@
+grid_clusters_analyzed,strike_pairs_tested,gross_monotonicity_violations,gross_violation_rate_pct,mean_gross_inversion_pp,assumed_friction_cents,net_executable_violations,net_violation_rate_pct,mean_net_edge_cents
+13,1611,113,7.01,43.98,2.1,113,7.01,41.88

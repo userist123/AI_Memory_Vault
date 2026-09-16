@@ -43,3 +43,29 @@ regexes = [
   '''sk-123456789''',
   '''test_secret_for_ablation_harness_32chars''',
 ]
+
+# Placeholder credentials in imported third-party CI workflows.
+#
+# Narrow on purpose: this covers .github/workflows files inside
+# 02_PRODUCT/projects/imported/ and nothing else. Those directories hold whole
+# third-party repositories with their own CI, whose build steps set literal env
+# values so a build can run without secrets.
+#
+# The three findings that prompted this, all from commit b71d849f3
+# (2026-09-06), were the same line in three copies of one imported project:
+#
+#     JWT_SECRET: 'ci-placeholder-must-be-32-chars-long-ok'
+#
+# sitting beside NEXT_PUBLIC_APP_URL: 'https://example.com'. The value states
+# what it is. The files are already gone from the working tree — current-tree
+# gitleaks passes — so only git history retains them, and the alternative to an
+# allowlist was rewriting 1,278 commits on a shared branch.
+#
+# This does NOT allowlist the imported projects generally, only their workflow
+# files. A real credential committed anywhere else under 02_PRODUCT, including
+# elsewhere in those same projects, still fails the scan.
+[[allowlists]]
+description = "Placeholder credentials in imported third-party CI workflows"
+paths = [
+  '''(^|/)02_PRODUCT/projects/imported/.*/\.github/workflows/.*\.ya?ml$''',
+]

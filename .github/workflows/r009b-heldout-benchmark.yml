@@ -26,19 +26,25 @@ jobs:
       - name: Zero-regression gate
         run: |
           python -m pytest 20_TESTS -q
-      - name: Held-out benchmark (single candidate execution)
-        env:
-          R009B_CANDIDATE_ID: ${{ github.sha }}
+      # v1 is not run. 07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md
+      # records why: every one of v1's 36 held-out and 12 dev cases referenced
+      # one of two gold notes that do not exist in the vault, so its recall is
+      # structurally zero. VAULT_STATE.md marks it INVALID.
+      #
+      # It also could not pass: validate_schema() requires `expected_answer`
+      # regardless of its `heldout` flag, and dev.json has never had that
+      # field, so the step failed on every commit since 29daa115f. A gate that
+      # cannot pass teaches everyone to ignore the colour of CI, and this one
+      # would have measured nothing even if it had.
+      - name: Held-out benchmark v2 (production arms)
         run: |
-          python 07_EVALUATION/heldout_retrieval_benchmark_v1/heldout_retrieval_benchmark.py --candidate-id "$R009B_CANDIDATE_ID" --baseline --output 07_EVALUATION/heldout_retrieval_benchmark_v1/r009b_baseline.json
-      - name: Benchmark integrity and results
+          python 07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py             > 07_EVALUATION/heldout_retrieval_benchmark_v2/r016_ci_arms.json
+      - name: Benchmark results
         run: |
-          cat 07_EVALUATION/heldout_retrieval_benchmark_v1/r009b_baseline.json
-          cat 07_EVALUATION/heldout_retrieval_benchmark_v1/receipts/${{ github.sha }}.json
-      - name: Upload baseline artifact
+          cat 07_EVALUATION/heldout_retrieval_benchmark_v2/r016_ci_arms.json
+      - name: Upload benchmark artifact
         uses: actions/upload-artifact@v4
         with:
-          name: r009b-heldout-${{ github.sha }}
+          name: r009b-heldout-v2-${{ github.sha }}
           path: |
-            07_EVALUATION/heldout_retrieval_benchmark_v1/r009b_baseline.json
-            07_EVALUATION/heldout_retrieval_benchmark_v1/receipts/${{ github.sha }}.json
+            07_EVALUATION/heldout_retrieval_benchmark_v2/r016_ci_arms.json

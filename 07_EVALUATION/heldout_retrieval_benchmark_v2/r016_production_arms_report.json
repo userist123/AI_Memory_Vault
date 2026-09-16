@@ -9,8 +9,8 @@
           "n_measurable": 5,
           "n_unmeasurable": 0,
           "candidate_recall": 0.6,
-          "context_recall": 0.4,
-          "answer_correctness": 0.4
+          "context_recall": 0.2,
+          "answer_correctness": 0.2
         },
         "lexical_trap": {
           "n": 4,

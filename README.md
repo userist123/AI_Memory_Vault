@@ -1,306 +1,328 @@
 # AI Memory Vault
 
-A persistent external memory substrate for AI agents: provenance-aware memory, skills, procedures, retrieval, cognitive runtime primitives, controlled learning, evidence, and resumable multi-agent execution.
+Un substrat de memorie externă persistentă pentru agenți AI: memorie cu proveniență, competențe, proceduri, regăsire, primitive cognitive de execuție, învățare controlată, dovezi și execuție multi-agent reluabilă.
 
 <p align="center">
-  <strong>ONE VAULT · ONE CANON · SELECTIVE COGNITION · VERIFIED EVOLUTION</strong>
+  <strong>Română</strong> · <a href="README.en.md">English</a>
+</p>
+
+<p align="center">
+  <strong>UN SINGUR VAULT · UN SINGUR CANON · COGNIȚIE SELECTIVĂ · EVOLUȚIE VERIFICATĂ</strong>
 </p>
 
 <p align="center">
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/actions"><img alt="GitHub Actions" src="https://img.shields.io/badge/CI-GitHub%20Actions-181717?logo=githubactions&logoColor=white"></a>
   <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/.claude-plugin"><img alt="Claude Code" src="https://img.shields.io/badge/Claude%20Code-Plugin-7C3AED"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/07_EVALUATION"><img alt="Evidence Gated" src="https://img.shields.io/badge/Evidence-Gated-0F766E"></a>
-  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/09_COORDINATION/AGENT_MEMORY"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Agent%20Memory-Persistent-2563EB"></a>
-  <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Synced-7C3AED"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/07_EVALUATION"><img alt="Evidence Gated" src="https://img.shields.io/badge/Dovezi-Obligatorii-0F766E"></a>
+  <a href="https://github.com/userist123/AI_Memory_Vault_CODEX_READY/tree/main/00_GOVERNANCE/coordination"><img alt="Persistent Agent Memory" src="https://img.shields.io/badge/Memorie%20Agent-Persistent%C4%83-2563EB"></a>
+  <a href="https://obsidian.md/"><img alt="Obsidian" src="https://img.shields.io/badge/Obsidian-Sincronizat-7C3AED"></a>
 </p>
 
-> **The problem:** standard RAG can retrieve text. This project is trying to make external memory *operationally useful* — bounded, attributable, lifecycle-aware, uncertainty-aware, and measurable at the point where an agent reasons, plans, verifies, and acts.
+> **Problema:** un sistem RAG standard poate regăsi text. Proiectul acesta încearcă să facă memoria externă *utilă operațional* — delimitată, atribuibilă, conștientă de ciclul de viață, conștientă de incertitudine și măsurabilă exact în punctul în care un agent raționează, planifică, verifică și acționează.
 
 ---
 
-## ✦ At a glance
+## ✦ Pe scurt
 
-| Layer | What is here | Reality status |
+| Strat | Ce există aici | Starea reală |
 |---|---|---|
-| Canonical Vault | Markdown memory, knowledge, skills, agents, procedures, provenance | **IMPLEMENTED** |
-| Memory V6 | extraction, proposals, conflict detection, lifecycle, consolidation, retrieval maintenance | **IMPLEMENTED / ACTIVE** |
-| Cognitive Core | recall, activation, working memory, global workspace, graphs, spreading activation, planning primitives | **IMPLEMENTED / PARTIAL** |
-| Memory Controller | storage boundary, read/write policy, context packs, progressive disclosure, lifecycle gating | **IMPLEMENTED** |
-| Model execution | fake, local/Ollama, OpenAI provider abstractions, tier routing, usage telemetry | **IMPLEMENTED** |
-| External skill ingestion | discovery, provenance, classification, validation, controlled promotion | **IMPLEMENTED** |
-| Persistent agent memory | resumable `CURRENT.md` state under `09_COORDINATION/AGENT_MEMORY/` | **IMPLEMENTED** |
-| Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
-| Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
-| Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
-| Fully closed continual learning | outcome → evidence → learning → canonical mutation loop | **PARTIAL / OPEN** |
+| Vault canonic | memorie în Markdown, cunoștințe, competențe, agenți, proceduri, proveniență | **IMPLEMENTAT** |
+| Memory V6 | extragere, propuneri, detectare de conflicte, ciclu de viață, consolidare, întreținerea regăsirii | **IMPLEMENTAT / ACTIV** |
+| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT / PARȚIAL** |
+| Memory Controller | granița de stocare, politica de citire/scriere, pachete de context, dezvăluire progresivă, control pe ciclu de viață | **IMPLEMENTAT** |
+| Execuția modelelor | abstracții de furnizor fake, local/Ollama, OpenAI, rutare pe niveluri, telemetrie de consum | **IMPLEMENTAT** |
+| Ingestia de competențe externe | descoperire, proveniență, clasificare, validare, promovare controlată | **IMPLEMENTAT** |
+| Conversie carte → text | segmentare după cuprins / tipografie / pagini, detectare OCR, metrici per carte | **IMPLEMENTAT** |
+| Extragerea conceptelor din cărți | asistată de model, cu porți de ancorare, parafrază, formă și schemă | **IMPLEMENTAT / PORȚI DEMONSTRATE** |
+| *Selectivitatea* conceptelor | a distinge un concept portant de mobilierul experimental | **MĂSURAT, NEREZOLVAT** |
+| Poarta de promovare în ontologie | un merge trebuie să consulte un manifest de verdicte; rândurile nejudecate sunt reținute și numărate | **IMPLEMENTAT** |
+| Dispoziția rândurilor | fiecare dintre cele 213 rânduri de slot are o decizie și un temei | **DECIS, NEEXECUTAT** |
+| Predicție Polymarket | instantanee, consiliu, calibrare, avantaj față de piață, abstenție, dimensionare Kelly, backtest, ablație, contract temporal | **IMPLEMENTAT / NEVALIDAT PE DATE REALE** |
+| Proveniența rezoluțiilor Polymarket | momentul în care un rezultat a devenit cognoscibil | **STABILIT CA INDISPONIBIL** |
+| Memoria persistentă a agenților | stare reluabilă `CURRENT.md` în `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTAT** |
+| Planning Influence | MVE determinist izolat, cu patru brațe și priori slabi | **EXPERIMENTAL** |
+| Politica de incertitudine | contract de aplicabilitate + forța dovezii + contradicție + cost de verificare | **PROIECTAT / PREÎNREGISTRAT** |
+| Influență cognitivă susținută de model | MVE cauzal pereche pe execuție reală de model | **ÎNCĂ NEDEMONSTRAT** |
+| Învățare continuă complet închisă | bucla rezultat → dovadă → învățare → mutație canonică | **PARȚIAL / DESCHIS** |
 
 <details>
-<summary><strong>What makes this different from “just RAG”?</strong></summary>
+<summary><strong>Prin ce diferă asta de „pur și simplu RAG"?</strong></summary>
 
 ```text
-RAG mindset
-query → documents → prompt
+Mentalitatea RAG
+interogare → documente → prompt
 
-Vault target
-experience → evidence → pattern → applicability → influence → decision → outcome → reorganization
+Ținta Vault
+experiență → dovadă → tipar → aplicabilitate → influență → decizie → rezultat → reorganizare
 ```
 
-The long-term target is **retrieval ≠ influence**. The repository explicitly distinguishes a passive epistemic substrate from active runtime interfaces. The current implementation does not pretend that hidden model state, decoding, planning, or tool execution is magically controlled by a text file.
+Ținta pe termen lung este **regăsire ≠ influență**. Depozitul separă explicit un substrat epistemic pasiv de interfețele active de execuție. Implementarea actuală nu pretinde că starea ascunsă a modelului, decodarea, planificarea sau execuția de unelte ar fi controlate magic de un fișier text.
 </details>
 
 ---
 
-## 🧠 Cognitive loop
+## 🧠 Bucla cognitivă
 
 ```mermaid
 flowchart LR
-    T[Task / World] --> O[Observation]
-    O --> E[Experience]
-    E --> EV[Evidence]
-    EV --> P[Pattern / Transition]
-    P --> A[Applicability]
-    A --> F[Forged Recall]
-    F --> PL[Plan / Search]
-    PL --> X[Action]
-    X --> V[Verification]
-    V --> R[Outcome]
-    R --> RE[Reorganization]
+    T[Sarcină / Lume] --> O[Observație]
+    O --> E[Experiență]
+    E --> EV[Dovadă]
+    EV --> P[Tipar / Tranziție]
+    P --> A[Aplicabilitate]
+    A --> F[Recall forjat]
+    F --> PL[Plan / Căutare]
+    PL --> X[Acțiune]
+    X --> V[Verificare]
+    V --> R[Rezultat]
+    R --> RE[Reorganizare]
     RE --> EV
-    A -. uncertainty .-> G[Epistemic Gate]
+    A -. incertitudine .-> G[Poartă epistemică]
     G --> V
 ```
 
-The architecture is intentionally split into five semantic layers:
+Arhitectura este împărțită intenționat în cinci straturi semantice:
 
-**Experience** — what happened.  
-**Model / Pattern** — what may generalize.  
-**Applicability** — where that memory should transfer.  
-**Influence** — how it is allowed to affect computation.  
-**Reorganization** — how verified outcomes alter future memory.
+**Experiență** — ce s-a întâmplat.  
+**Model / Tipar** — ce s-ar putea generaliza.  
+**Aplicabilitate** — unde ar trebui să se transfere acea memorie.  
+**Influență** — cum îi este permis să afecteze computația.  
+**Reorganizare** — cum modifică rezultatele verificate memoria viitoare.
 
-Evidence, provenance, temporal validity, uncertainty, safety, and token economy cross all five layers.
+Dovada, proveniența, valabilitatea temporală, incertitudinea, siguranța și economia de tokeni traversează toate cele cinci straturi.
 
 ---
 
-## ⚙️ System architecture
+## ⚙️ Arhitectura sistemului
 
 ```mermaid
 flowchart TB
-    U[Human / Task] --> R[Agent Runtime]
-    R --> S[Skill + Procedure Routing]
+    U[Om / Sarcină] --> R[Execuția agentului]
+    R --> S[Rutare competențe + proceduri]
     R --> M[Memory Controller]
-    M --> C[Context Compiler]
-    C --> Q[Selective Retrieval]
-    Q --> W[Working Context]
+    M --> C[Compilator de context]
+    C --> Q[Regăsire selectivă]
+    Q --> W[Context de lucru]
     W --> R
 
-    M --> CC[Cognitive Core]
-    CC --> WM[Working Memory]
-    CC --> RC[Associative Recall]
+    M --> CC[Nucleu cognitiv]
+    CC --> WM[Memorie de lucru]
+    CC --> RC[Recall asociativ]
     CC --> MG[MultiGraph]
-    MG --> SA[Spreading Activation]
-    CC --> PL[Planning Primitives]
-    CC --> CO[Consolidation]
+    MG --> SA[Activare prin difuzie]
+    CC --> PL[Primitive de planificare]
+    CC --> CO[Consolidare]
 
-    R --> EX[Execution / Tools]
-    EX --> VF[Verification]
-    VF --> OUT[Outcome]
-    OUT --> EVI[Evidence]
+    R --> EX[Execuție / Unelte]
+    EX --> VF[Verificare]
+    VF --> OUT[Rezultat]
+    OUT --> EVI[Dovadă]
     EVI --> CO
 
-    RAW[External Sources] --> ING[Ingestion + Provenance]
-    ING --> INBOX[06_INBOX / Review]
-    INBOX --> HG[Human / Policy Gate]
+    RAW[Surse externe] --> ING[Ingestie + Proveniență]
+    ING --> INBOX[06_INBOX / Recenzie]
+    INBOX --> HG[Poartă umană / de politică]
     HG --> M
 
-    P[09_COORDINATION / Persistent Agent Memory] <--> R
+    P[00_GOVERNANCE / Memorie persistentă a agenților] <--> R
 ```
 
-### The core boundary
+### Granița fundamentală
 
 ```text
-              PASSIVE EPISTEMIC SUBSTRATE
+            SUBSTRAT EPISTEMIC PASIV
 ┌──────────────────────────────────────────────────┐
-│ experience • evidence • memory • skills         │
-│ provenance • lifecycle • temporal state         │
+│ experiență • dovadă • memorie • competențe       │
+│ proveniență • ciclu de viață • stare temporală   │
 └────────────────────────┬─────────────────────────┘
                          │
                          ▼
-              ACTIVE RUNTIME INTERFACES
+          INTERFEȚE ACTIVE DE EXECUȚIE
 ┌──────────────────────────────────────────────────┐
-│ representation / frame compiler                  │
-│ planning / search harness                        │
-│ epistemic gate / verification routing            │
-│ deterministic execution gateway                  │
+│ compilator de reprezentare / cadru               │
+│ harnașament de planificare / căutare             │
+│ poartă epistemică / rutare de verificare         │
+│ portal determinist de execuție                   │
 └──────────────────────────────────────────────────┘
 ```
 
-These runtime interfaces are the target architecture. Some are present as isolated primitives or experiments; they are not all fully wired into the production agent path yet.
+Aceste interfețe de execuție sunt arhitectura-țintă. Unele există ca primitive izolate sau experimente; nu toate sunt încă integrate complet în calea de producție a agentului.
 
 ---
 
-# 🗂️ Repository map
+# 🗂️ Harta depozitului
 
-| Path | Role |
+| Cale | Rol |
 |---|---|
-| `00_CORE/` | identity, rules, memory protocol, system invariants |
-| `01_KNOWLEDGE/` | knowledge notes, registries, agent/skill maps, external research |
-| `02_PROJECTS/` | project continuity |
-| `03_PROCEDURES/` | repeatable operational procedures |
-| `04_MEMORY/` | canonical memory records |
-| `05_RESOURCES/` | references and Obsidian navigation |
-| `06_INBOX/` | raw/imported/review-stage material |
-| `07_EVALUATION/` | audits, experiments, benchmarks, MVE, forensic evidence |
-| `08_EXPORTS/` | generated/export artifacts |
-| `09_COORDINATION/` | agent dispatch, persistent memory, project handoffs |
-| `10_ARCHIVE/` | historical material |
-| `90_TEMPLATES/` | templates |
-| `99_SYSTEM/` | system contracts and architecture |
-| `.agents/` | agent profiles, rules, operational skills |
-| `.claude-plugin/` | Claude Code plugin surface |
-| `cognitive_core/` | cognitive runtime primitives |
-| `memory_controller/` | canonical memory boundary and context control |
-| `scripts/` | operational tooling |
-| `tests/` | repository-level validation |
-| `.github/workflows/` | CI, security, ingestion, maintenance, evaluation |
+| `00_GOVERNANCE/` | reguli, protocoale, invarianți, coordonarea agenților, `VAULT_STATE.md` |
+| `01_ARCHITECTURE/` | note de cunoștințe, registre, matrice de competențe, fișierele de slot ale ontologiei |
+| `01_KNOWLEDGE/` | cercetare externă și cunoștințe importate |
+| `02_PRODUCT/` | contextul și continuitatea proiectelor |
+| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, polymarket, furnizori |
+| `04_CONFIG/` · `05_DATA/` | configurație și artefacte de date |
+| `04_MEMORY/` | înregistrări canonice de memorie |
+| `06_INBOX/` | material brut și importat, înainte de recenzie |
+| `07_EVALUATION/` | audituri, experimente, benchmark-uri, MVE, dovezi forensice, capturi de date |
+| `08_OBSERVABILITY/` · `09_SECURITY/` | telemetrie și suprafețe de securitate |
+| `10_DOCUMENTATION/` | proceduri, resurse, proiecția Obsidian |
+| `20_TESTS/` | suita deterministă — `pytest -q` o rulează din rădăcina depozitului |
+| `30_SCRIPTS/` | unelte de ingestie, cunoștințe, memorie, competențe și verificare |
+| `40_EXPERIMENTS/` · `50_ARTIFACTS/` | lucru experimental și artefacte generate |
+| `60_DEPLOYMENT/` · `70_INTEGRATIONS/` | suprafețe de implementare și integrare |
+| `80_ARCHIVE/` · `90_RELEASE/` · `99_META/` | istoric, versiuni, meta |
+| `.agents/` | profiluri de agenți, reguli, competențe operaționale |
+| `.claude-plugin/` | suprafața de plugin pentru Claude Code |
+| `cognitive_core/` | primitive cognitive de execuție |
+| `staging/` | rânduri de extragere per carte, în `.gitignore` — niciodată comise |
+| `AI_Memory_Vault_OBSIDIAN/` | stratul de navigare pentru oameni, care păstrează încă vechiul layout `00_CORE` / `99_SYSTEM` |
+| `.github/workflows/` | CI, securitate, ingestie, întreținere, evaluare |
+
+> Directoarele numerotate de mai sus sunt depozitul. Layout-ul de vault pe care
+> îl folosește proiecția Obsidian — `00_CORE/`, `09_COORDINATION/`, `99_SYSTEM/` —
+> se află sub `AI_Memory_Vault_OBSIDIAN/` și nu este rădăcina depozitului. Acest
+> README l-a descris pe al doilea ca și cum ar fi fost primul, până la 2026-09-14.
 
 ---
 
-# 🧩 Cognitive Core
+# 🧩 Nucleul cognitiv
 
-Important runtime modules include:
+Module importante de execuție:
 
-- `recall.py` — multi-signal recall using semantic, activation, temporal, working-memory, authority and lifecycle signals.
-- `ranked_search.py` — graph-aware reranking layer.
-- `multi_graph.py` — semantic, temporal, causal and entity-oriented graph views.
-- `spreading_activation.py` — associative activation over graph structure.
-- `working_memory.py` — active context state.
-- `global_workspace.py` — competitive workspace/broadcast primitive.
-- `activation.py` — activation/decay behavior.
-- `consolidation.py` / `sleep_consolidation.py` — maintenance and reconsolidation.
-- `planning.py` / `plan_complexity_analyzer.py` — planning and resource-routing primitives.
-- `learning.py`, `reflection.py`, `reasoning.py`, `motivation.py` — higher-level cognitive components.
-- `semantic.py` — semantic provider abstraction.
+- `recall.py` — recall cu semnale multiple: semantic, activare, temporal, memorie de lucru, autoritate și ciclu de viață.
+- `ranked_search.py` — strat de reordonare conștient de graf.
+- `multi_graph.py` — vederi de graf semantice, temporale, cauzale și orientate pe entități.
+- `spreading_activation.py` — activare asociativă peste structura grafului.
+- `working_memory.py` — starea contextului activ.
+- `global_workspace.py` — primitivă de spațiu global de lucru, competitivă, cu difuzare.
+- `activation.py` — comportamentul de activare și decădere.
+- `consolidation.py` / `sleep_consolidation.py` — întreținere și reconsolidare.
+- `planning.py` / `plan_complexity_analyzer.py` — primitive de planificare și rutare de resurse.
+- `learning.py`, `reflection.py`, `reasoning.py`, `motivation.py` — componente cognitive de nivel superior.
+- `semantic.py` — abstracție de furnizor semantic.
 
-### Reality check
+### Verificarea realității
 
-The current default retrieval path is not a fully semantic vector-native system. Deterministic semantic behavior and relevance scoring still contain lexical/token-overlap mechanisms; optional semantic/Qdrant/Ollama paths exist but are not equivalent to a universally wired production semantic index. This distinction is preserved intentionally.
+Calea implicită de regăsire nu este, în acest moment, un sistem complet semantic, nativ vectorial. Comportamentul semantic determinist și scorul de relevanță conțin încă mecanisme lexicale, de suprapunere de tokeni; există căi opționale semantice/Qdrant/Ollama, dar ele nu echivalează cu un index semantic de producție cablat universal. Distincția este păstrată intenționat.
 
 ---
 
 # 🗄️ Memory Controller
 
-`memory_controller/` is the trust and context boundary around canonical memory.
+`03_IMPLEMENTATION/packages/memory_controller/` este granița de încredere și de context din jurul memoriei canonice.
 
-It is responsible for things such as:
+Numele este astăzi un shim de compatibilitate: pachetul conține doar un `__init__.py` care redirecționează vechiul spațiu de import către pachete-frate descompuse pe responsabilități. Implementarea trăiește sub `retrieval/`, `memory/`, `security/`, `lifecycle/`, `interfaces/` și `observability/`.
+
+Răspunde de lucruri precum:
 
 ```text
-query sanitation
+igienizarea interogării
       ↓
-classification
+clasificare
       ↓
-lifecycle-aware access
+acces conștient de ciclul de viață
       ↓
-candidate retrieval
+regăsirea candidaților
       ↓
-relevance scoring
+scorarea relevanței
       ↓
-progressive disclosure
+dezvăluire progresivă
       ↓
-bounded context pack
+pachet de context delimitat
       ↓
-provenance / audit
+proveniență / audit
 ```
 
-Key surfaces:
+Suprafețe principale:
 
-- `controller.py`
-- `authority.py`
-- `context/retrieval.py`
-- `context/relevance_scoring.py`
-- `context/pack_builder.py`
-- `context/progressive_disclosure.py`
-- SQLite and file-backed storage engines
+- `memory/controller.py`
+- `security/authority.py`
+- `retrieval/context/retrieval.py`
+- `retrieval/context/relevance_scoring.py`
+- `retrieval/context/pack_builder.py`
+- `retrieval/context/progressive_disclosure.py`
+- motoare de stocare pe SQLite și pe fișiere
 
-Public reads remain lifecycle controlled. Cognitive inspection can explicitly handle REVIEW material without silently promoting it to canonical truth.
+(căi relative la `03_IMPLEMENTATION/packages/`)
+
+Citirile publice rămân controlate pe ciclu de viață. Inspecția cognitivă poate trata explicit material aflat în REVIEW fără a-l promova în tăcere la adevăr canonic.
 
 ---
 
 # 🧱 Memory V6
 
-Memory V6 adds an operational memory-maintenance layer around the base Vault:
+Memory V6 adaugă peste Vault-ul de bază un strat operațional de întreținere a memoriei:
 
-| Capability | Purpose |
+| Capacitate | Scop |
 |---|---|
-| Sensor buffer | transient session/event material |
-| Atomic extraction | facts, decisions, procedures, lessons |
-| Ollama adapter | optional local-model extraction |
-| Proposal queue | review-stage memory candidates |
-| Conflict detection | contradictions and competing claims |
-| Controlled promotion | human/policy-gated canonicalization |
-| MultiGraph | derived relationship views |
-| Spreading activation | associative activation / ranking |
-| Sleep consolidation | maintenance-oriented processing |
-| Retrieval benchmarks | Precision@K / Recall@K / MRR tooling |
-| Context budgets | bounded token/byte transport |
-| Usage telemetry | estimated vs actual model consumption |
-| Efficiency reporting | B4/B5-style execution economics |
+| Buffer de senzori | material tranzitoriu de sesiune/eveniment |
+| Extragere atomică | fapte, decizii, proceduri, lecții |
+| Adaptor Ollama | extragere opțională cu model local |
+| Coadă de propuneri | candidați de memorie aflați în recenzie |
+| Detectare de conflicte | contradicții și afirmații concurente |
+| Promovare controlată | canonicalizare cu poartă umană/de politică |
+| MultiGraph | vederi derivate de relații |
+| Activare prin difuzie | activare asociativă / clasificare |
+| Consolidare în somn | procesare orientată pe întreținere |
+| Benchmark-uri de regăsire | unelte Precision@K / Recall@K / MRR |
+| Bugete de context | transport delimitat în tokeni/octeți |
+| Telemetrie de consum | consum de model estimat față de real |
+| Raportare de eficiență | economia execuției, în stil B4/B5 |
 
-The architectural objective is **progressive disclosure**: do not load the whole Vault just because it exists.
+Obiectivul arhitectural este **dezvăluirea progresivă**: nu încărca tot Vault-ul doar pentru că există.
 
 ```text
-metadata
+metadate
    ↓
-relevant rules
+reguli relevante
    ↓
-compact memory
+memorie compactă
    ↓
-detailed evidence only when needed
+dovezi detaliate doar când e nevoie
 ```
 
 ---
 
-# 🧠 Memory Influence — the new research layer
+# 🧠 Influența memoriei — noul strat de cercetare
 
-The project is now testing whether external memory can influence computation beyond adding text to a prompt.
+Proiectul testează acum dacă memoria externă poate influența computația dincolo de a adăuga text într-un prompt.
 
-### Four intended influence channels
+### Patru canale de influență vizate
 
-| Channel | Intended effect | Measurement target |
+| Canal | Efect urmărit | Ținta măsurării |
 |---|---|---|
-| Recall / Representation | change the explicit frame or hypothesis set | memory-off ≠ memory-on representation |
-| Planning | change branch/search preference | search trajectory / node allocation changes |
-| Uncertainty | change act / verify / explore / abstain behavior | verification routing and abstention |
-| Execution | deterministic action constraints at tool boundary | allowed vs rejected actions |
+| Recall / Reprezentare | schimbă cadrul explicit sau setul de ipoteze | reprezentare cu memorie ≠ fără memorie |
+| Planificare | schimbă preferința de ramificare/căutare | traiectoria căutării / alocarea de noduri |
+| Incertitudine | schimbă comportamentul de a acționa / verifica / explora / se abține | rutarea verificării și abstenția |
+| Execuție | constrângeri deterministe de acțiune la granița uneltelor | acțiuni permise față de respinse |
 
-The important safety distinction is:
+Distincția importantă de siguranță este:
 
-> **Memory influence must be explicit and observable. Hidden-state influence is not claimed.**
+> **Influența memoriei trebuie să fie explicită și observabilă. Influența asupra stării ascunse nu este revendicată.**
 
-### Evidence-Bound memory model
+### Model de memorie legat de dovezi
 
-The target persistent unit is an evidence-linked transfer pattern:
+Unitatea persistentă vizată este un tipar de transfer legat de dovezi:
 
 ```text
-Situation
-Goal
-Constraints
-Action
-State transition
-Outcome
-Evidence
-Temporal bounds
-Applicability
-Counterexamples
+Situație
+Scop
+Constrângeri
+Acțiune
+Tranziție de stare
+Rezultat
+Dovadă
+Limite temporale
+Aplicabilitate
+Contraexemple
 ```
 
-A compact influence artifact can then be forged on demand instead of repeatedly shipping the entire historical record through the model context.
+Un artefact compact de influență poate fi apoi forjat la cerere, în loc să fie trimis repetat prin contextul modelului întregul istoric.
 
 ---
 
 # 🧪 Planning Influence MVE
 
-The isolated MVE lives under:
+MVE-ul izolat se află sub:
 
 ```text
 07_EVALUATION/luna/
@@ -314,44 +336,44 @@ The isolated MVE lives under:
 └── test_planning_influence_mve.py
 ```
 
-### Experimental arms
+### Brațele experimentului
 
 ```text
-Arm 1 — baseline / uniform planner
-Arm 2 — advisory memory / uniform planner
-Arm 3 — cognitive treatment / memory-derived planner prior
-Arm 4 — stale / contradicted / neutral memory control
+Brațul 1 — bază / planificator uniform
+Brațul 2 — memorie consultativă / planificator uniform
+Brațul 3 — tratament cognitiv / prior de planificare derivat din memorie
+Brațul 4 — control cu memorie învechită / contrazisă / neutră
 ```
 
-### Current deterministic evidence
+### Dovada deterministă actuală
 
-The latest local applicability-aware pilot is explicitly **runtime evidence from local reconstructed exact-source execution**, not CI proof:
+Cel mai recent pilot local, conștient de aplicabilitate, este explicit **dovadă de execuție dintr-o rulare locală reconstruită din sursa exactă**, nu dovadă din CI:
 
 ```text
-baseline:   30/30 success · 30 nodes · 0 fatal
-advisory:   30/30 success · 30 nodes · 0 fatal
-treatment:  30/30 success · 54 nodes · 12 fatal
-stale:      30/30 success · 30 nodes · 0 fatal
+bază:        30/30 succes · 30 noduri · 0 fatale
+consultativ: 30/30 succes · 30 noduri · 0 fatale
+tratament:   30/30 succes · 54 noduri · 12 fatale
+învechit:    30/30 succes · 30 noduri · 0 fatale
 ```
 
-The treatment arm is therefore **not yet an efficiency win**. The prior naive treatment was worse still (125 nodes / 15 fatal). The negative result is intentionally retained as falsification evidence rather than tuned away.
+Brațul de tratament **nu este, prin urmare, încă un câștig de eficiență**. Tratamentul naiv anterior era și mai prost (125 noduri / 15 fatale). Rezultatul negativ este păstrat intenționat ca dovadă de falsificare, în loc să fie ajustat până dispare.
 
-The recommendation matched the deterministic optimum in only `7/30` scenarios in the current pilot. Wrong memory recommendations account for the observed treatment cost.
+Recomandarea a coincis cu optimul determinist în doar `7/30` scenarii în pilotul curent. Recomandările greșite de memorie explică costul observat al tratamentului.
 
-### Uncertainty policy
+### Politica de incertitudine
 
-The pre-registered policy separates:
+Politica preînregistrată separă:
 
 ```text
-applicability
-+ evidence_strength
-+ contradiction_state
-+ verification_cost
-+ planner_influence
-+ execution_outcome
+aplicabilitate
++ forța dovezii
++ starea de contradicție
++ costul verificării
++ influența asupra planificatorului
++ rezultatul execuției
 ```
 
-Fixed applicability strengths for the next isolated run:
+Forțe fixe de aplicabilitate pentru următoarea rulare izolată:
 
 ```text
 APPLICABLE                   = 1.00
@@ -360,46 +382,46 @@ INSUFFICIENTLY_KNOWN         = 0.15
 NOT_APPLICABLE               = 0.00
 ```
 
-The policy is design evidence. Its success has not yet been established.
+Politica este dovadă de proiectare. Reușita ei nu a fost încă stabilită.
 
 ---
 
-# 🧬 Continual learning direction
+# 🧬 Direcția învățării continue
 
-The intended learning loop is conservative by design:
+Bucla de învățare vizată este conservatoare prin construcție:
 
 ```text
-REAL EXECUTION
+EXECUȚIE REALĂ
       ↓
-OUTCOME
+REZULTAT
       ↓
-EVIDENCE
+DOVADĂ
       ↓
-EVALUATION
+EVALUARE
       ↓
-CANDIDATE PATTERN / PROCEDURE / SKILL
+TIPAR / PROCEDURĂ / COMPETENȚĂ CANDIDAT
       ↓
-SANDBOX / REVIEW
+SANDBOX / RECENZIE
       ↓
-REGRESSION + HOLDOUT
+REGRESIE + SET REȚINUT
       ↓
-HUMAN / POLICY GATE
+POARTĂ UMANĂ / DE POLITICĂ
       ↓
-CANONICAL MEMORY
+MEMORIE CANONICĂ
 ```
 
-Current outcome tooling and learning components exist, but the repository does **not** currently claim a completely closed autonomous continual-learning loop in which every outcome automatically mutates canonical memory.
+Uneltele de rezultat și componentele de învățare există, dar depozitul **nu** revendică în acest moment o buclă de învățare continuă autonomă complet închisă, în care fiecare rezultat mutează automat memoria canonică.
 
-That restraint is deliberate: a result that happened once is evidence about an event, not automatically a reusable capability.
+Reținerea aceasta este deliberată: un rezultat care s-a întâmplat o dată este o dovadă despre un eveniment, nu automat o capacitate reutilizabilă.
 
 ---
 
-# 🤖 Multi-agent operating model
+# 🤖 Modelul de operare multi-agent
 
-Persistent execution state lives under:
+Starea de execuție persistentă se află sub:
 
 ```text
-09_COORDINATION/AGENT_MEMORY/
+00_GOVERNANCE/coordination/
 ├── README.md
 ├── UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md
 ├── BOOTSTRAP_ALL_AGENTS_V1.md
@@ -413,87 +435,131 @@ Persistent execution state lives under:
         └── CURRENT.md
 ```
 
-Every substantive session is expected to leave:
+Fiecare sesiune substanțială este așteptată să lase în urmă:
 
 ```text
-WHAT I DID
-WHERE
-EVIDENCE
-WHAT FAILED / REMAINS
-EXACT NEXT ACTION
+CE AM FĂCUT
+UNDE
+DOVADA
+CE A EȘUAT / CE RĂMÂNE
+URMĂTOAREA ACȚIUNE EXACTĂ
 ```
 
-### Current execution discipline
+### Disciplina de execuție actuală
 
 ```text
-MAIN_ONLY
-SEQUENTIAL_HANDOFF
-NO PARALLEL WORK ON SAME TASK
-NO FEATURE-BRANCH DEVELOPMENT FOR THIS RESEARCH CHAIN
+DOAR PE MAIN
+PREDARE SECVENȚIALĂ
+FĂRĂ LUCRU ÎN PARALEL PE ACEEAȘI SARCINĂ
+FĂRĂ DEZVOLTARE PE RAMURI DE FUNCȚIONALITATE PENTRU ACEST LANȚ DE CERCETARE
 ```
 
-This is the mechanism that makes work resumable across agents, PCs, IDEs and sessions without treating chat history as canonical state.
+Acesta este mecanismul care face munca reluabilă între agenți, calculatoare, IDE-uri și sesiuni, fără a trata istoricul de conversație drept stare canonică.
 
 ---
 
-# 📦 Skills & external knowledge
+# 📦 Competențe și cunoștințe externe
 
-Skills are treated as reusable capabilities, not just prompt snippets.
+Competențele sunt tratate ca aptitudini reutilizabile, nu ca simple fragmente de prompt.
 
 ```text
-source
+sursă
   ↓
-discovery
+descoperire
   ↓
-provenance
+proveniență
   ↓
-classification
+clasificare
   ↓
-dedup / validation
+deduplicare / validare
   ↓
 RAW_EXTERNAL
   ↓
-human / policy review
+recenzie umană / de politică
   ↓
-operational skill
+competență operațională
 ```
 
-Relevant surfaces:
+Suprafețe relevante:
 
 - `.agents/skills/`
 - `.agents/agents/`
-- `01_KNOWLEDGE/Agents_Skill_Matrix.md`
-- `01_KNOWLEDGE/Master_Skills_Catalog_251.md`
-- `skills/ai-memory-vault/SKILL.md`
-- `scripts/skill_ingestion.py`
+- `01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md`
+- `01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md`
+- `30_SCRIPTS/skills/skill_ingestion.py`
 - `06_INBOX/RAW_IMPORTS/`
 
-The repository deliberately preserves source attribution, commit/path metadata, hashing and lifecycle state for imported material.
+Depozitul păstrează deliberat atribuirea sursei, metadatele de commit/cale, amprentele hash și starea de ciclu de viață pentru materialul importat.
 
 ---
 
-# 🔐 Security & epistemic safety
+# 🚪 Poarta de promovare în ontologie
 
-The system treats external information as untrusted until it crosses explicit boundaries.
+Un script de merge a scris **201 concepte** în cele șaisprezece fișiere de slot ale ontologiei, într-un singur pas, toate cu statusul `proposed`. Exact asta fusese construit să facă. **160 erau încă acolo cinci zile mai târziu, judecate de nimeni** — iar când cineva le-a citit în sfârșit, 28 erau sintagme, nu concepte, 8 dublau concepte deja promovate, 1 era două concepte diferite sub același cuvânt, iar 6 cereau o decizie pe care n-o luase nimeni.
 
-Core principles:
+Fișierele de slot erau zonă de lucru pentru scriptul de merge și ontologie canonică pentru tot restul. Nimeni nu scrisese o poartă pentru că nimeni nu credea că există o graniță.
 
-- AI cannot promote its own claim to authoritative verification merely by writing `verified` metadata.
-- privileged provenance claims are controlled.
-- REVIEW content can be inspected without becoming ACTIVE memory automatically.
-- proposal lifecycle transitions are controlled.
-- audit trails are preserved.
-- provenance survives ingestion.
-- contradictory memory must not gain more influence merely because it is contradictory.
-- benchmark controls must not silently depend on oracle knowledge.
+```text
+rânduri din staging → manifest de verdicte → poartă → fișiere de slot
+                              ↑
+                 o decizie, cu un temei, pentru fiecare concept
+```
 
-The repository also contains security and forensic material covering memory trust boundaries, external corpus hygiene, Defender findings, and repository-level cleanup baselines.
+`30_SCRIPTS/ingestion/promotion_verdicts.py` este acea graniță.
+
+- **Doar `PROMOTE` admite.** `UNSURE` deliberat nu: o decizie pe care nimeni n-a putut s-o ia nu este o decizie de a continua.
+- **Un concept absent din manifest este reținut și numărat**, niciodată aruncat în tăcere. O rulare care i-ar fi sărit fără urmă ar arăta identic cu una în care fuseseră judecați — exact mecanismul prin care cele 160 au devenit invizibile.
+- **Un `reason` este obligatoriu pe fiecare intrare, inclusiv pe aprobări.** Un verdict fără motiv este un vot.
+- **Poarta nu judecă calitatea.** Un manifest care marchează o sintagmă cu `PROMOTE` lasă sintagma să treacă și și-a făcut treaba. Ce elimină ea este rândul *neexaminat*.
+
+`30_SCRIPTS/ingestion/slot_rows.py` este singurul cititor al acelor fișiere și **aruncă o eroare la un status pe care niciun tool nu îl declară**. Zece rânduri cu `unverified_source` au stat nevăzute cinci zile pentru că fiecare audit filtra pe cele două statusuri pe care le știa toată lumea, iar mai multe instrumente independente au dat 203 față de 213 reale — nu dintr-un bug comun, ci dintr-o presupunere comună.
+
+Dispoziția tuturor celor 213 rânduri se află în
+[`07_EVALUATION/book_corpus_conversion/`](07_EVALUATION/book_corpus_conversion/).
+Executarea ei este o decizie umană și nu a fost luată.
 
 ---
 
-# 🛡️ CI / automation
+# 📈 Predicție Polymarket
 
-Current workflow surfaces include:
+`03_IMPLEMENTATION/packages/polymarket/` — instantanee de piață, un consiliu de predicție, calibrare, avantajul modelului față de piață, abstenție de risc, dimensionare Kelly aplicată ultima și necondiționat, backtest, benchmark, ablație cu corecție Holm-Bonferroni și un contract de proveniență temporală.
+
+### Ce a stabilit prima captură reală
+
+Pachetul a fost construit de-a lungul a douăzeci și una de faze, împotriva a două fixture-uri scrise de noi. Primele date reale ([`fixtures/real_gamma_markets_*.json`](07_EVALUATION/polymarket/fixtures/)) au răspuns la întrebarea pe care se sprijinea proiectarea:
+
+> **Niciun endpoint public Polymarket nu poartă o marcă temporală a decontării.**
+
+Verificat pe toate cele 143 de chei dintr-o captură de 100 de piețe rezolvate. Singurele câmpuri apropiate de decontare sunt `resolvedBy`, o adresă, și `automaticallyResolved`, un boolean. `endDate` este momentul programat al închiderii, `closedTime` este momentul în care tranzacționarea s-a oprit și a început perioada de contestație UMA, iar `updatedAt` este momentul în care un worker a scris un rând în baza de date. Niciunul nu este momentul în care rezultatul a devenit cognoscibil.
+
+Prin urmare, `SOURCE_ONCHAIN_SETTLEMENT` este inaccesibil fără un nod Polygon RPC, fiecare backtest scorează pe `SOURCE_MANUAL_ATTESTED`, iar `ResolutionSet.by_source()` există tocmai ca să raporteze asta. `resolutions.py` **nu** are, deliberat, o constantă `SOURCE_DERIVED_CLOSE_TIME`, iar un test cere ca numele să rămână absent: folosirea momentului de închidere a unei piețe drept moment al rezoluției este exact greșeala pe care modulul o previne.
+
+**Niciun rezultat de predicție de aici nu a fost validat împotriva unor rezultate reale de piață.** Capturile sunt ștanțate cu proveniență — URL, marcă temporală UTC, cod HTTP, număr de înregistrări și SHA-256 — și nimic nu este curățat sau reordonat.
+
+---
+
+# 🔐 Securitate și siguranță epistemică
+
+Sistemul tratează informația externă ca neîncrezută până când trece granițe explicite.
+
+Principii fundamentale:
+
+- un AI nu își poate promova propria afirmație la verificare autoritară doar scriind metadata `verified`.
+- afirmațiile de proveniență privilegiată sunt controlate.
+- conținutul din REVIEW poate fi inspectat fără a deveni automat memorie ACTIVĂ.
+- tranzițiile de ciclu de viață ale propunerilor sunt controlate.
+- traseele de audit sunt păstrate.
+- proveniența supraviețuiește ingestiei.
+- memoria contradictorie nu trebuie să câștige mai multă influență doar pentru că este contradictorie.
+- controalele de benchmark nu trebuie să depindă în tăcere de cunoașterea oracolului.
+
+Depozitul conține și material de securitate și forensic despre granițele de încredere ale memoriei, igiena corpusurilor externe, constatările Defender și liniile de bază de curățare la nivel de depozit.
+
+---
+
+# 🛡️ CI / automatizare
+
+Suprafețele actuale de workflow includ:
 
 ```text
 .github/workflows/
@@ -509,96 +575,100 @@ Current workflow surfaces include:
 └── jarvis-command-center.yml
 ```
 
-The project distinguishes **CI verification** from local execution. A queued workflow is not a pass. A local run is not silently upgraded to CI evidence.
+Proiectul distinge **verificarea în CI** de execuția locală. Un workflow în așteptare nu este o trecere. O rulare locală nu este promovată în tăcere la dovadă din CI.
 
 ---
 
-# 🧪 Verification model
+# 🧪 Modelul de verificare
 
-The repository uses evidence levels to prevent capability inflation:
+Depozitul folosește niveluri de dovadă pentru a preveni inflația de capacități:
 
-| Level | Meaning |
+| Nivel | Semnificație |
 |---|---|
-| `DOCUMENT_VERIFIED` | supported by canonical documentation |
-| `CODE_VERIFIED` | confirmed from repository implementation |
-| `TEST_VERIFIED` | observed in actual automated test output |
-| `RUNTIME_VERIFIED` | observed in an actual runtime execution |
-| `CI_VERIFIED` | observed in GitHub Actions evidence |
-| `CLAIMED_ONLY` | stated but not sufficiently evidenced |
-| `UNVERIFIED` | design/speculation only |
+| `DOCUMENT_VERIFIED` | susținut de documentație canonică |
+| `CODE_VERIFIED` | confirmat din implementarea din depozit |
+| `TEST_VERIFIED` | observat într-o ieșire reală de test automat |
+| `RUNTIME_VERIFIED` | observat într-o execuție reală |
+| `CI_VERIFIED` | observat în dovezi din GitHub Actions |
+| `CLAIMED_ONLY` | afirmat, dar insuficient susținut cu dovezi |
+| `UNVERIFIED` | doar proiectare/speculație |
 
-**Source of truth:** `main` + committed source + real test/runtime output + CI evidence.
+**Sursa de adevăr:** `main` + sursa comisă + ieșire reală de test/execuție + dovezi din CI.
 
-Reports, screenshots, README text and agent summaries do not outrank executable repository evidence.
-
----
-
-# 🚧 Known gaps — intentionally visible
-
-This section is not a weakness of the README. It is part of the project contract.
-
-1. Default retrieval still relies substantially on deterministic lexical/token-overlap behavior; semantic candidate generation is not universally wired into the default `MemoryController.search()` path.
-2. Graph-aware ranking exists, but production integration historically had failure paths that required explicit repair and diagnostics; graph behavior is not treated as automatically authoritative.
-3. Outcome telemetry does not yet constitute a fully closed autonomous learning loop.
-4. Planning Influence is an isolated experimental harness; it is not yet a production planner integration.
-5. The latest treatment pilot still shows negative efficiency against matched advisory control.
-6. CI execution observed in the current work chain may remain queued; queued means **not verified**.
-7. Some research artifacts are design targets rather than implementation guarantees.
-
-Showing these gaps is intentional. The project is being hardened by falsification, not by polishing its claims.
+Rapoartele, capturile de ecran, textul din README și rezumatele agenților nu au întâietate față de dovada executabilă din depozit.
 
 ---
 
-# 🧭 Roadmap
+# 🚧 Lacune cunoscute — vizibile intenționat
+
+Secțiunea aceasta nu este o slăbiciune a README-ului. Face parte din contractul proiectului.
+
+1. Regăsirea implicită se sprijină încă substanțial pe comportament determinist lexical, de suprapunere de tokeni; generarea semantică de candidați nu este cablată universal în calea implicită `MemoryController.search()`.
+2. Clasificarea conștientă de graf există, dar integrarea în producție a avut istoric căi de eșec care au cerut reparații și diagnostice explicite; comportamentul grafului nu este tratat ca automat autoritar.
+3. Telemetria de rezultat nu constituie încă o buclă de învățare autonomă complet închisă.
+4. Planning Influence este un harnașament experimental izolat; nu este încă o integrare de planificator în producție.
+5. Cel mai recent pilot de tratament arată în continuare eficiență negativă față de controlul consultativ pereche.
+6. Execuția în CI observată în lanțul curent de lucru poate rămâne în așteptare; în așteptare înseamnă **neverificat**.
+7. Unele artefacte de cercetare sunt ținte de proiectare, nu garanții de implementare.
+8. Ingestia de cărți extrage și filtrează corect, dar nu poate clasifica. Încrederea modelului este `1.00` pe fiecare candidat, inclusiv pe cei a căror dovadă a fost fabricată; `claim_type` este constant; `occurrences` este 1 pentru 47 din 48 de concepte dintr-o lucrare întreagă; o listă de excludere la nivel de prompt este ignorată de model. Aproximativ jumătate din ieșire este mobilier experimental — `validation set`, `SGD optimizer`, `Rot-MNIST`. Măsurat, nu estimat: [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md).
+9. Două cărți din corpus sunt scanări fără strat de text și nu pot fi ingerate fără OCR, pe care acest depozit nu îl are.
+
+Expunerea acestor lacune este intenționată. Proiectul este întărit prin falsificare, nu prin lustruirea afirmațiilor lui.
+
+Una dintre ele a fost cât pe ce să fie lustruită și merită spusă pe șleau. O modificare de prompt a părut să taie zgomotul de extragere cu 85%; patru din cele cinci concepte rămase erau exact cele patru pe care promptul însuși le dădea ca exemple bune, returnate indiferent de ce spunea pasajul. Cifra arăta ca o reparație și era modelul repetându-și instrucțiunile. Versiunea păstrată în depozit este cea cu cifra mai proastă.
+
+---
+
+# 🧭 Foaie de parcurs
 
 ```text
-NOW
+ACUM
  │
- ├─ verify latest applicability-aware MVE in CI
- ├─ implement explicit verification route in isolated harness
- ├─ run frozen uncertainty policy without post-hoc tuning
- │
- ▼
-THEN
- │
- ├─ accept / falsify / redesign deterministic influence policy
- ├─ add held-out + stale/adversarial model-backed pairing
+ ├─ verifică în CI cel mai recent MVE conștient de aplicabilitate
+ ├─ implementează ruta explicită de verificare în harnașamentul izolat
+ ├─ rulează politica de incertitudine înghețată, fără ajustări ulterioare
  │
  ▼
-LATER
+APOI
  │
- ├─ representation influence measurement
- ├─ epistemic act/verify/abstain gate
- ├─ deterministic execution gateway experiments
- ├─ evidence-bound pattern compilation
- └─ closed, regression-protected learning loop
+ ├─ acceptă / falsifică / reproiectează politica deterministă de influență
+ ├─ adaugă pereche susținută de model, cu set reținut și memorie învechită/adversă
+ │
+ ▼
+MAI TÂRZIU
+ │
+ ├─ măsurarea influenței asupra reprezentării
+ ├─ poartă epistemică de acțiune/verificare/abstenție
+ ├─ experimente de portal determinist de execuție
+ ├─ compilarea tiparelor legate de dovezi
+ └─ buclă de învățare închisă, protejată de regresie
 ```
 
-A model-backed MVE is **not authorized merely because deterministic unit tests pass**.
+Un MVE susținut de model **nu este autorizat doar pentru că trec testele unitare deterministe**.
 
 ---
 
-# ⚡ Quick start
+# ⚡ Pornire rapidă
 
-### Run deterministic tests
+### Rulează testele deterministe
 
 ```bash
 pytest -q
 ```
 
-### Run the isolated Planning Influence MVE tests
+### Rulează testele izolate ale Planning Influence MVE
 
 ```bash
 pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
 ```
 
-### Run the deterministic MVE pilot
+### Rulează pilotul determinist MVE
 
 ```bash
 python 07_EVALUATION/luna/planning_influence_mve.py
 ```
 
-### Memory V6 CLI examples
+### Exemple de CLI pentru Memory V6
 
 ```bash
 python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
@@ -608,21 +678,21 @@ python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```
 
-Use the repository's environment files / requirements for the exact runtime dependencies in a local checkout.
+Pentru dependențele exacte de execuție într-un checkout local, folosește fișierele de mediu / requirements ale depozitului.
 
 ---
 
-# 🧭 Canonical navigation
+# 🧭 Navigare canonică
 
-### Architecture & contracts
+### Arhitectură și contracte
 
-- [`99_SYSTEM/Memory_V6_Architecture.md`](99_SYSTEM/Memory_V6_Architecture.md)
+- [`00_GOVERNANCE/VAULT_STATE.md`](00_GOVERNANCE/VAULT_STATE.md)
 - [`07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_TARGET_MODEL_V2.md)
 - [`07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md`](07_EVALUATION/luna/COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md)
-- [`00_CORE/Rules.md`](00_CORE/Rules.md)
-- [`00_CORE/Memory_Protocol.md`](00_CORE/Memory_Protocol.md)
+- [`00_GOVERNANCE/rules/Rules.md`](00_GOVERNANCE/rules/Rules.md)
+- [`00_GOVERNANCE/protocols/Memory_Protocol.md`](00_GOVERNANCE/protocols/Memory_Protocol.md)
 
-### MVE / research
+### MVE / cercetare
 
 - [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md)
 - [`07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md)
@@ -630,44 +700,44 @@ Use the repository's environment files / requirements for the exact runtime depe
 - [`07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md`](07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md)
 - [`07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md`](07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md)
 
-### Agent continuity
+### Continuitatea agenților
 
-- [`09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](09_COORDINATION/AGENT_MEMORY/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md`](09_COORDINATION/AGENT_MEMORY/BOOTSTRAP_ALL_AGENTS_V1.md)
-- [`09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md`](09_COORDINATION/AGENT_MEMORY/projects/AI_MEMORY_VAULT/CURRENT.md)
+- [`00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md`](00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md)
+- [`00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md`](00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md)
+- [`00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md`](00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md)
 
-### Skills / ingestion
+### Competențe / ingestie
 
-- [`01_KNOWLEDGE/Agents_Skill_Matrix.md`](01_KNOWLEDGE/Agents_Skill_Matrix.md)
-- [`01_KNOWLEDGE/Master_Skills_Catalog_251.md`](01_KNOWLEDGE/Master_Skills_Catalog_251.md)
-- [`skills/ai-memory-vault/SKILL.md`](skills/ai-memory-vault/SKILL.md)
-- [`scripts/skill_ingestion.py`](scripts/skill_ingestion.py)
+- [`01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md`](01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md)
+- [`01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md`](01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md)
+- [`.agents/skills/`](.agents/skills/)
+- [`30_SCRIPTS/skills/skill_ingestion.py`](30_SCRIPTS/skills/skill_ingestion.py)
 
-### Runtime
+### Execuție
 
 - [`cognitive_core/`](cognitive_core/)
-- [`memory_controller/`](memory_controller/)
+- [`03_IMPLEMENTATION/packages/memory_controller/`](03_IMPLEMENTATION/packages/memory_controller/)
 - [`cognitive_core/recall_cli.py`](cognitive_core/recall_cli.py)
 - [GitHub Actions](../../actions)
 
 ---
 
-## Design principles
+## Principii de proiectare
 
 ```text
-ONE CANON
-EVIDENCE OVER CONFIDENCE
-RETRIEVAL BEFORE CONTEXT INFLATION
-EXPLICIT INFLUENCE OVER MAGIC
-HUMAN-GATED PROMOTION
-PROVENANCE SURVIVES INGESTION
-FAILURE IS DATA
-MEASURE BEFORE AUTOMATING
-HOLD OUT WHAT SHOULD BE HELD OUT
+UN SINGUR CANON
+DOVADA ÎNAINTEA ÎNCREDERII
+REGĂSIRE ÎNAINTEA INFLAȚIEI DE CONTEXT
+INFLUENȚĂ EXPLICITĂ ÎN LOC DE MAGIE
+PROMOVARE CU POARTĂ UMANĂ
+PROVENIENȚA SUPRAVIEȚUIEȘTE INGESTIEI
+EȘECUL ESTE DATĂ
+MĂSOARĂ ÎNAINTE SĂ AUTOMATIZEZI
+REȚINE CE TREBUIE REȚINUT
 ```
 
-> **The ambition is not to build the largest memory store. It is to build a memory system that can remember selectively, expose why a memory should matter, know when it should not matter, influence computation in measurable ways, verify what happened, and reorganize itself only when evidence earns the right to change future behavior.**
+> **Ambiția nu este de a construi cel mai mare depozit de memorie. Este de a construi un sistem de memorie care poate să își amintească selectiv, să expună de ce ar trebui să conteze o amintire, să știe când nu ar trebui să conteze, să influențeze computația în moduri măsurabile, să verifice ce s-a întâmplat și să se reorganizeze doar atunci când dovada câștigă dreptul de a schimba comportamentul viitor.**
 
 <p align="center">
-  <sub>AI Memory Vault · CODEX Ready · Cognitive Memory Research & Engineering</sub>
+  <sub>AI Memory Vault · CODEX Ready · Cercetare și inginerie de memorie cognitivă</sub>
 </p>
