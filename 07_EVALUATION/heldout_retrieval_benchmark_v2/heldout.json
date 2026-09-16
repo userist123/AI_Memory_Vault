@@ -409,6 +409,34 @@
       "required_facts": [],
       "wrong_note_ids": [],
       "abstain": true
+    },
+    {
+      "id": "H31",
+      "class": "one_hop_graph_expansion",
+      "query": "📐 1. Topologia de Arhitectură Enterprise",
+      "expected_answer": "System Architecture.",
+      "gold_relevant_notes": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+      ],
+      "required_facts": [
+        "Regulile si identitatea sistemului."
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
+    },
+    {
+      "id": "H32",
+      "class": "one_hop_graph_expansion",
+      "query": "Principiul călăuzitor este maximizarea raportului data-to-ink",
+      "expected_answer": "Principii de Motion Design și Microinteracțiuni UI.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a003"
+      ],
+      "required_facts": [
+        "Confirmă acțiunea imediată a utilizatorului"
+      ],
+      "wrong_note_ids": [],
+      "abstain": false
     }
   ]
 }

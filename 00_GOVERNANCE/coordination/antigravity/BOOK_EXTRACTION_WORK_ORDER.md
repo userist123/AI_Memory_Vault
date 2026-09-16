@@ -58,6 +58,13 @@ Each chunks file carries the sixteen slot **questions**. Use them. Against a
 bare list of sixteen names an extractor picks by which name sounds closest;
 that is how "synaptic consolidation" was once filed under `procedures`.
 
+**Skip any book the manifest marks `OFF SUBJECT`.** One of the twenty is not
+the book its filename claims: the file named as Anderson's *How Can the Human
+Mind Occur in the Physical Universe* is a scam preview from ilide.info — a
+title page, a storefront link, then ~450 pages of nineteenth-century filler.
+It was read in full, all 154 chunks, before anyone noticed. `prepare` now
+measures subject-matter density per book and says so up front.
+
 **Skip every chunk marked `low_prose`.** 90 of the 1,120 are indexes,
 bibliographies or OCR damage — Newell's name index reads `Add(cos.(.W..385
 Brnr.J.S.415`, and Schacter's subject index is clean but is still just terms

@@ -1,0 +1,21 @@
+{
+  "storage_fix_commit": "da99af0f6",
+  "content_roots_total_notes": 850,
+  "legacy_write_roots_total_notes": 0,
+  "legacy_notes_with_parseable_id": 0,
+  "legacy_notes_added_after_storage_fix": 0,
+  "legacy_notes_added_before_storage_fix": 0,
+  "legacy_notes_add_timing_unknown": 0,
+  "legacy_notes_invisible_to_vault_index_now": 0,
+  "legacy_notes_visible_to_vault_index_now": 0,
+  "by_legacy_root": {
+    "00_CORE": 0,
+    "01_KNOWLEDGE": 0,
+    "02_PROJECTS": 0,
+    "03_PROCEDURES": 0,
+    "04_MEMORY": 0,
+    "05_RESOURCES": 0,
+    "99_SYSTEM": 0
+  },
+  "all_legacy_notes": []
+}

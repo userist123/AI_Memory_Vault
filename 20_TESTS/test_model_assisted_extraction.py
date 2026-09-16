@@ -735,3 +735,46 @@ def test_the_default_context_window_skips_no_chunks():
         "the derived chunk limit must admit the largest measured chunk; "
         "anything less drops content to buy throughput"
     )
+
+
+def _row(concept, location, definition="A definition long enough to survive the shape gate here."):
+    return {
+        "concept": concept, "definition": definition, "claim_type": None,
+        "maps_to_slot": "map", "maps_to_module": None,
+        "confidence_in_literature": 0.9, "source_book": "b",
+        "source_location": location, "evidence_quote": "q",
+        "extraction_method": "agent_direct", "model": "m", "provider": "agent",
+    }
+
+
+def test_occurrences_counts_sections_not_submissions():
+    """The number everything is ranked by, inflated by repetition.
+
+    An agent run over Newell submitted "subgoal" twice out of chunk 63 and
+    "preference" twice out of chunk 61; both reported occurrences=2 while being
+    defined in one place. "impasse" came from chunks 62, 62 and 63 and reported
+    3 — the review floor — on two sections. Whoever repeats themselves was
+    promoting their own candidates.
+    """
+    rows, _ = M.deduplicate([
+        _row("subgoal", "Chunk 63"),
+        _row("subgoal", "Chunk 63"),
+        _row("impasse", "Chunk 62"),
+        _row("impasse", "Chunk 62"),
+        _row("impasse", "Chunk 63"),
+        _row("problem space", "Chunk 7"),
+        _row("problem space", "Chunk 36"),
+        _row("problem space", "Chunk 58"),
+    ])
+    by = {r["concept"]: r["occurrences"] for r in rows}
+    assert by["subgoal"] == 1, "twice from one section is one section"
+    assert by["impasse"] == 2, "62, 62, 63 is two sections, not three"
+    assert by["problem space"] == 3, "three distinct sections still count three"
+
+
+def test_a_repeated_submission_still_collapses_to_one_row():
+    """The dedup itself must not change: one row per concept, repeats merged."""
+    rows, collapsed = M.deduplicate([_row("x", "A"), _row("x", "A"), _row("x", "B")])
+    assert len(rows) == 1
+    assert collapsed == 2
+    assert rows[0]["also_found_in"] == ["B"]
