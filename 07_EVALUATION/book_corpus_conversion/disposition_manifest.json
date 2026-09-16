@@ -1,0 +1,1721 @@
+{
+  "schema_version": "ontology-row-disposition.v1",
+  "source_disposition": "07_EVALUATION/book_corpus_conversion/ROW_DISPOSITION.md",
+  "source_verdicts": "07_EVALUATION/book_corpus_conversion/promotion_verdicts.json",
+  "decided_at": "2026-09-12",
+  "decided_by": "antigravity",
+  "rows": [
+    {
+      "slot_file": "01_identity.md",
+      "line": 30,
+      "concept": "agentic memory",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Textul folosește sintagma ca titlu de secțiune și termen umbrelă pentru întreaga problemă a memoriei în agenți, funcționând ca o etichetă de meta-nivel și nu ca o componentă de identitate a arhitecturii."
+    },
+    {
+      "slot_file": "01_identity.md",
+      "line": 31,
+      "concept": "cognitive architecture",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (5ed5f5b1-a936-4b51-a4ef-c9742d14730c) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "01_identity.md",
+      "line": 32,
+      "concept": "homeostat",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (2a299363-8d18-48bd-bfa6-fb495686eeba) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "01_identity.md",
+      "line": 33,
+      "concept": "problem space computational model",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "01_identity.md",
+      "line": 34,
+      "concept": "artificial intelligence",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (artificial intelligence, occ=5); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "01_identity.md",
+      "line": 35,
+      "concept": "coherence",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Desemnează o formulă de produs scalar între vectori de stare cuantică la timpi diferiți dintr-un preprint neverificat, fiind neoperaționalizabilă pentru identitatea unui sistem cognitiv."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 31,
+      "concept": "mental imagery",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (c29221d5-4bde-44bb-a482-f8e8d7619214) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 32,
+      "concept": "computational modeling",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 33,
+      "concept": "dispersion",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Descrie proprietatea topologică cibernetică de dispersie a conexiunilor care izolează subsistemele și previne interferența generalizată în timpul învățării, aparținând organizării structurale a hărții."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 34,
+      "concept": "isomorphism",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=5 >= 3): Definește maparea bijectivă riguroasă de conservare a structurii și comportamentului între două mașini dinamice, fiind criteriul matematic formal de mapare structurală între sisteme."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 35,
+      "concept": "agent architecture",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 36,
+      "concept": "synapse specificity",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 37,
+      "concept": "place cells",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 38,
+      "concept": "spatial visual system",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 39,
+      "concept": "hierarchical memory",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește organizarea memoriei în grafuri multi-nivel stratificate cu legături părinte-copil pe niveluri de abstractizare, reprezentând o topologie structurală explicită în slotul map."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 40,
+      "concept": "frame",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=8 >= 3): Definește structura de date topologică și situațională a lui Minsky cu terminale relaționale și valori implicite, oferind scheletul de mapare a scenelor și contextelor în slotul map."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 41,
+      "concept": "problem space",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Definește arena topologică universală postulată de Newell în care are loc deliberarea cognitivă prin tranziții incrementale între descrieri de stări, răspunzând la întrebarea 'unde trăiește informația'."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 42,
+      "concept": "perceptual representation system",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=4 >= 3): Definește sistemul cortical pre-semantic (PRS) care păstrează hărțile structurale ale stimulilor vizuali și auditivi upstream de memoria declarativă, acoperind reprezentarea perceptuală în slotul map."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 43,
+      "concept": "configural association",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=8 >= 3): Definește mecanismul de legare a stimulilor elementari într-o reprezentare compusă unitară cu proprietăți emergente distincte, rezolvând problema compozițională a hărților cognitive."
+    },
+    {
+      "slot_file": "02_map.md",
+      "line": 44,
+      "concept": "method of loci",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Descrie arhitectura mnemotehnică de ancorare a conținuturilor în coordonate spațiale imaginate ('palatul memoriei'), constituind un protocol nativ de organizare spațio-topologică în slotul map."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 30,
+      "concept": "implicit memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (ac5e8530-c152-4b81-97ee-549caca0fa75) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 31,
+      "concept": "explicit memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (93678180-ff9e-45f5-927e-01320aff8eb9) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 32,
+      "concept": "parametric memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (519ef025-222f-485e-b7ee-1684078fe6e7) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 33,
+      "concept": "semantic memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (84ef8b0f-d457-4741-be32-582ba76e3ab3) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 34,
+      "concept": "integrated theories",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 35,
+      "concept": "cognitive science",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 36,
+      "concept": "multistable system",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=5 >= 3): Definește clasa ontologică de sisteme compuse din părți ultrastabile cuplate slab care se pot adapta succesiv la medii variate, completând taxonomia sistemelor dinamice alături de 'state-determined system'."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 37,
+      "concept": "state-determined system",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (0d68bba6-662b-4633-b065-bf1666889af9) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 38,
+      "concept": "canonical representation",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește expresia matematică standardizată prin care un sistem dinamic modelează transformările discrete ale stărilor sale, oferind o schemă riguroasă de tipizare ontologică."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 39,
+      "concept": "black box",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=8 >= 3): Definește tipul ontologic fundamental în cibernetică al sistemelor ale căror mecanisme interne sunt opace și pot fi deduse exclusiv prin seturi de intrări și ieșiri, stabilind o categorie formală de reprezentare."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 40,
+      "concept": "symbolic",
+      "status": "proposed",
+      "disposition": "UNDECIDED",
+      "reason": "Retinut la poarta ca UNSURE; necesita decizie arhitecturala explicita: Este utilizat în surse atât ca paradigmă arhitecturală de ordin înalt (simbolic vs conexionist) cât și ca tip de reprezentare discretă; ar trebui tranșat dacă dorim noțiuni de paradigmă globală în ontology sau doar structuri de cunoaștere concrete precum 'chunk'."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 41,
+      "concept": "connectionist",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 42,
+      "concept": "hybrid",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 43,
+      "concept": "knowledge level",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 44,
+      "concept": "computational intelligence",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 45,
+      "concept": "sensitization",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (cce3323b-2701-4907-ba4c-e5854fcd2bf8) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 46,
+      "concept": "long term identifier",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 47,
+      "concept": "neural network",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (neural network, occ=4); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 48,
+      "concept": "big data",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (big data, occ=5); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 49,
+      "concept": "model",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (model, occ=6); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 50,
+      "concept": "dataset",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (dataset, occ=5); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 51,
+      "concept": "factual memory",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"semantic memory\"; conform manifestului de verdicte: Textul definește 'factual memory' ca inventar de fapte stabile despre lume și utilizator verificate periodic, fiind exact conținutul taxonomic al conceptului 'semantic memory' deja promovat în slotul ontology.",
+      "merge_into": "semantic memory"
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 52,
+      "concept": "microneme",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 53,
+      "concept": "symbol system",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 54,
+      "concept": "qualia",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un concept filozofic fenomenologic legat în text de compactificarea teoriei M în 11 dimensiuni, fără operaționalizare mecanică într-un sistem de memorie persistentă."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 55,
+      "concept": "integrated information",
+      "status": "proposed",
+      "disposition": "UNDECIDED",
+      "reason": "Retinut la poarta ca UNSURE; necesita decizie arhitecturala explicita: Teoria IIT (Tononi) are baze matematice cunoscute (Phi), însă citatul din preprint o leagă de densitatea plasmei gluonice; dacă se dorește integrarea Phi ca metrică teoretică, este necesară o definiție decuplată de fizica speculativă a particulelor."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 56,
+      "concept": "topological",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un adjectiv matematic extras dintr-o teoretizare a lagrangienilor de câmp cuantic fără mecanică sau structură cognitivă proprie."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 57,
+      "concept": "artificial",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un adjectiv trunchiat dintr-o expresie compusă ('artificial consciousness') dintr-un preprint speculativ, complet lipsit de individualitate ontologică."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 58,
+      "concept": "stable model",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"parametric memory\"; conform manifestului de verdicte: Definește rețeaua cu actualizare lentă prin medii mobile exponențiale care stochează cunoștințele consolidate peste taskuri, fiind o instanțiere directă a conceptului 'parametric memory' deja promovat în ontology.",
+      "merge_into": "parametric memory"
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 59,
+      "concept": "plasticity",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Descrie o proprietate generală a rețelelor neurale artificiale de adaptare a ponderilor, suprapunându-se trivial peste noțiunea generală de învățare și duplicând mecanismul structural de 'synaptic plasticity' (propus în consolidation), fără a aduce o structură nouă în ontology."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 60,
+      "concept": "dual memory",
+      "status": "proposed",
+      "disposition": "UNDECIDED",
+      "reason": "Retinut la poarta ca UNSURE; necesita decizie arhitecturala explicita: Textul se referă la arhitecturi inspirate din CLS (Complementary Learning Systems) cu două viteze de învățare; ar trebui lămurit dacă dorim un nod ontologic pentru framework-ul dual în sine sau dacă acesta este acoperit deja de distincția dintre working memory și semantic memory."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 61,
+      "concept": "working model",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"buffer\"; conform manifestului de verdicte: Reprezintă componenta de rețea plastică care absoarbe temporar feedback-ul curent înainte de consolidare, funcționând ca o zonă tampon de acumulare identică conceptual cu 'buffer' din slotul state.",
+      "merge_into": "buffer"
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 62,
+      "concept": "nondeclarative memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 63,
+      "concept": "declarative memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (e045ded5-01fd-4a28-8f85-203ebae670de) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 64,
+      "concept": "subsymbolic",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Definește cantitățile continue matematice (valori de activare, forțe asociative) care moderează accesibilitatea și viteza de regăsire a structurilor simbolice, reprezentând un palier computațional indispensabil în slotul ontology."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 65,
+      "concept": "chunk",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește pachetul simbolic atomic de informație semantică cu atribute discrete supus activării și degradării în ACT-R și Soar, reprezentând unitatea structurală esențială din slotul ontology."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 66,
+      "concept": "schema",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=5 >= 3): Definește structura cognitivă de cunoștințe generale organizate pe roluri și scenarii care oferă scheletul de interpretare a evenimentelor noi, constituind o formă canonică de reprezentare în slotul ontology."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 67,
+      "concept": "message",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 68,
+      "concept": "Maxwell demon",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 69,
+      "concept": "communication theory",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 70,
+      "concept": "cybernetics",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "03_ontology.md",
+      "line": 71,
+      "concept": "Semantic Memory Store",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D1+C: redenumire redundanta inventata de dictionarul v1; semantic memory este deja promovat la 03_ontology.md:33."
+    },
+    {
+      "slot_file": "04_relationships.md",
+      "line": 31,
+      "concept": "psychological theories",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "04_relationships.md",
+      "line": 32,
+      "concept": "shared memory",
+      "status": "proposed",
+      "disposition": "UNDECIDED",
+      "reason": "Retinut la poarta ca UNSURE; necesita decizie arhitecturala explicita: Citatul îl listează doar ca temă de cercetare multi-agent; decizia depinde de stabilirea dacă arhitectura noastră folosește un spațiu de blackboard/memorie partajată ca primitivă relațională sau doar schimb de mesaje."
+    },
+    {
+      "slot_file": "04_relationships.md",
+      "line": 33,
+      "concept": "entanglement",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Termenul este folosit în text strict în sensul corelațiilor cuantice din plasma gluonică, fiind o analogie fizică speculativă fără fundament computațional pentru relațiile cognitive."
+    },
+    {
+      "slot_file": "04_relationships.md",
+      "line": 34,
+      "concept": "collective memory",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește constructul social și relațional prin care mai mulți agenți coordonează narative comune despre istorie și își aliniază perspectivele mutuale, încadrându-se direct în slotul relationships."
+    },
+    {
+      "slot_file": "04_relationships.md",
+      "line": 35,
+      "concept": "common vocabulary",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 30,
+      "concept": "state",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (be1863da-7db4-48b7-9486-ad13b1a74152) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 31,
+      "concept": "short-term memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (64b95fc3-bf65-4b06-87c1-f84129396a23) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 32,
+      "concept": "contextual memory",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"working memory\"; conform manifestului de verdicte: Descrie modulul de urmărire a variabilelor de sesiune, intenției utilizatorului și constrângerilor de dialog, reprezentând instanțierea conversațională în agenții AI a conceptului 'working memory' deja promovat în state.",
+      "merge_into": "working memory"
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 33,
+      "concept": "stability",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (d5ee32c8-67be-4c08-b6a4-5f60f0456fb1) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 34,
+      "concept": "ultrastable system",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (1a25d3da-57e2-4902-ab35-da8b476d7e7b) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 35,
+      "concept": "Markov chain",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește formalismul matematic stocastic de modelare a dinamicii sistemelor prin matrici de tranziție între stări discrete, oferind un model canonic de reprezentare a stărilor succesive."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 36,
+      "concept": "variety",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (911ffebf-ab09-4d79-8aac-247781c673a4) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 37,
+      "concept": "early phase of LTP",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 38,
+      "concept": "working memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (c67c2beb-e722-4155-ad31-66a48823aa20) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 39,
+      "concept": "feeling state",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 40,
+      "concept": "simulation",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (simulation, occ=3); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 41,
+      "concept": "latent memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (e66a94e4-28b6-47d6-90b3-358cd6dcd743) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 42,
+      "concept": "pronome",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește mecanismul lui Minsky de pointeri temporari din memoria de lucru care leagă roluri tranzitorii de agenții activi fără modificarea conexiunilor permanente, răspunzând la 'ce este activ acum'."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 43,
+      "concept": "buffer",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (ff28fea6-0138-41b6-acd7-e1c0759966b1) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 44,
+      "concept": "goal",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește structura cognitivă activă din memoria de lucru care menține contextul obiectivului curent și filtrează regulile relevante în timpul execuției, constituind componenta cheie din slotul state."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 45,
+      "concept": "organization",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "05_state.md",
+      "line": 46,
+      "concept": "Plasticity-Stability Balance",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D2+C: termen absent/fabricat in lucrare (0 aparitii; textul are doar stability-plasticity dilemma/trade-off)."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 31,
+      "concept": "fine-tuning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este o procedură generică de antrenare offline/supervizată a modelelor neuronale pe date specifice, neconstituind o procedură internă a ciclului de memorie al agentului."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 32,
+      "concept": "in-context learning",
+      "status": "proposed",
+      "disposition": "UNDECIDED",
+      "reason": "Retinut la poarta ca UNSURE; necesita decizie arhitecturala explicita: Este capacitatea de adaptare la câteva exemple plasate în prompt; ar trebui tranșat dacă o considerăm o procedură internă de execuție sau o proprietate emergentă a motorului de inferență LLM."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 33,
+      "concept": "reactive execution",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 34,
+      "concept": "planning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 35,
+      "concept": "adaptation",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (21072af8-9792-4faa-9b9c-f15da7618a37) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 36,
+      "concept": "regulation",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (90175c6e-32e8-4c7c-8c4c-6661170e34d5) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 37,
+      "concept": "transformation",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (28c144c3-2c81-4d19-8a06-5ba1d5de11be) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 38,
+      "concept": "operator",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (d4e5337e-122f-402c-84d0-57230976ee0d) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 39,
+      "concept": "procedural memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (6e014224-af01-4011-8050-082d3f9ea35e) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 40,
+      "concept": "classification",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (classification, occ=3); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 41,
+      "concept": "algorithm",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (algorithm, occ=5); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 42,
+      "concept": "machine learning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (machine learning, occ=7); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 43,
+      "concept": "production system",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 44,
+      "concept": "elaboration phase",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 45,
+      "concept": "search control",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 46,
+      "concept": "optimization",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Citatul trimite la algoritmul Adam de coborâre pe gradient din literatura de calcul numeric, termenul fiind un concept de matematică aplicată, nu o procedură cognitivă de memorie."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 47,
+      "concept": "continual learning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Desemnează o întreagă disciplină și paradigmă de cercetare (lifelong learning), nefiind o procedură algoritmică discretă care poate fi executată într-un pas procedural."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 48,
+      "concept": "regularization",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este o tehnică matematică generală de penalizare a funcției de cost în optimizarea învățării automate, nu o procedură specifică sistemului de memorie cognitivă."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 49,
+      "concept": "component process",
+      "status": "proposed",
+      "disposition": "UNDECIDED",
+      "reason": "Retinut la poarta ca UNSURE; necesita decizie arhitecturala explicita: Denumește generic operațiile elementare dintr-o arhitectură modulară (modelul MEM); termenul este atât de abstract încât ar trebui decis dacă dorim o procedură meta-generic numită astfel sau proceduri concrete specifice."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 50,
+      "concept": "habituation",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=9 >= 3): Definește procedura elementară de învățare non-asociativă manifestată prin reducerea eliberării de transmițători la stimulări repetate inofensive, completând repertoriul de proceduri reflexe alături de 'sensitization' și 'classical conditioning'."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 51,
+      "concept": "classical conditioning",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (d12f2aea-c6fd-456c-a472-7fd3ff786392) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 52,
+      "concept": "production rule",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=5 >= 3): Definește unitatea fundamentală de execuție de tip condiție-acțiune din sistemele de producție care citește și modifică memoria de lucru secvențial, aducând o primitivă esențială în slotul procedures."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 53,
+      "concept": "time series",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 54,
+      "concept": "central inhibition",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 55,
+      "concept": "Reservoir Sampling",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (d7e9a1bd-341c-4da5-b482-6521c4e37146) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "06_procedures.md",
+      "line": 56,
+      "concept": "Continual Incremental Learning",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D1+C: fuziune lexicala artificiala; conceptul continual learning exista deja la 06_procedures.md:47."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 31,
+      "concept": "loss",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Textul se referă strict la funcția de pierdere matematică (NT-Xent contrastive loss) folosită în gradient descent, fiind o unealtă de calcul numeric și nu o capacitate cognitivă de judecată sau decizie."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 32,
+      "concept": "reasoning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 33,
+      "concept": "emotion",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 34,
+      "concept": "anomaly detection",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 35,
+      "concept": "numeric preference",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Definește reprezentarea formală a utilității cantitative și valorii de politică pentru rezolvarea preferințelor între acțiuni candidate în ciclul decizional din Soar, răspunzând direct la întrebarea slotului judgement."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 36,
+      "concept": "cognitive appraisal",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 37,
+      "concept": "metacognition",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 38,
+      "concept": "interpretability",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (interpretability, occ=4); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 39,
+      "concept": "prediction",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (prediction, occ=6); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 40,
+      "concept": "reflection",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește procesul metacognitiv de auto-evaluare prin care un agent auditează propriile urme de execuție pentru diagnosticarea erorilor și extragerea corecțiilor, răspunzând direct la întrebarea slotului judgement."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 41,
+      "concept": "b-brain",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=4 >= 3): Definește arhitectura reflectivă de ordinul doi a lui Minsky în care un modul separat monitorizează exclusiv configurațiile și performanțele interne ale procesorului principal, fără contact direct cu stimulii externi."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 42,
+      "concept": "default assumption",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Desemnează mecanismul euristic de atribuire a valorilor pre-configurate în terminalele de reprezentare în absența informației explicite, permițând decizia rapidă sub informație parțială."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 43,
+      "concept": "decision cycle",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 44,
+      "concept": "preference",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 45,
+      "concept": "functional dissociation",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Reprezintă o metodologie experimentală și clinică de cercetare neuropsihologică pentru validarea izolării sistemelor de memorie, nefiind o componentă operațională a arhitecturii cognitive."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 46,
+      "concept": "false memory",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește distorsiunea cognitivă și eșecul de judecată a realității surselor în reamintire, oferind o categorie ontologică esențială pentru diagnosticarea halucinațiilor și verificarea epistemică în slotul judgement."
+    },
+    {
+      "slot_file": "07_judgement.md",
+      "line": 47,
+      "concept": "Parameter Importance Weighting",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D2+C: sintagma compusa absenta in lucrare (0 aparitii; textul contine doar parameter importance 2x)."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 30,
+      "concept": "essential variables",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 31,
+      "concept": "homeostasis",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"essential variables\"; conform manifestului de verdicte: Textul lui Ashby definește homeostazia strict ca procesul de menținere a variabilelor esențiale în interiorul limitelor de viabilitate, fiind izomorfă cu dinamica conceptului 'essential variables' deja promovat în slotul constraints.",
+      "merge_into": "essential variables"
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 32,
+      "concept": "law of requisite variety",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește legea matematică cibernetică universală conform căreia capacitatea unui regulator de a bloca perturbațiile este limitată strict de varietatea stărilor sale interne, răspunzând direct cerințelor de frontieră din slotul constraints."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 33,
+      "concept": "constraint",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (f4211085-75c4-4184-a1a9-0c33da73ac74) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 34,
+      "concept": "calcineurin",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 35,
+      "concept": "privacy",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (privacy, occ=5); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 36,
+      "concept": "censor",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=4 >= 3): Descrie dispozitivul de memorie inhibitorie care reține circumstanțele specifice de eșec pentru a suprima preventiv activarea acțiunilor care duc la blocaje, oferind o primitivă clară de constrângere decizională."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 37,
+      "concept": "cognitive band",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 38,
+      "concept": "biological band",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 39,
+      "concept": "rational band",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 40,
+      "concept": "social band",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 41,
+      "concept": "task environment",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 42,
+      "concept": "background noise",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 43,
+      "concept": "entropy",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 44,
+      "concept": "second law of thermodynamics",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "08_constraints.md",
+      "line": 45,
+      "concept": "Catastrophic Forgetting Mitigation",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D1+C: sintagma fabricata prin alipire; conceptul umbrela forgetting este promovat in 16_consolidation.md:34."
+    },
+    {
+      "slot_file": "09_provenance.md",
+      "line": 30,
+      "concept": "metadata",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: termen generic de machine learning / CS (metadata, occ=4); decuplat de arhitectura cognitiva a memoriei."
+    },
+    {
+      "slot_file": "09_provenance.md",
+      "line": 31,
+      "concept": "safety",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Citatul discută cerințe etice dintr-un preprint speculativ, termenul fiind decuplat complet de întrebarea canonică a slotului provenance ('de unde provine informația')."
+    },
+    {
+      "slot_file": "10_confidence.md",
+      "line": 30,
+      "concept": "familiarity",
+      "status": "proposed",
+      "disposition": "SPLIT",
+      "reason": "Homonimie documentata in manifest: necesita separare in familiarity (feeling of knowing) (10_confidence.md) si familiarity buffer (05_state.md)."
+    },
+    {
+      "slot_file": "10_confidence.md",
+      "line": 31,
+      "concept": "generalization",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=4 >= 3): Definește metrica de certitudine epistemică și transfer out-of-distribution a reprezentărilor dincolo de eșantioanele imediate de antrenare, completând slotul confidence cu o măsură cantitativă de robustețe a cunoștințelor."
+    },
+    {
+      "slot_file": "10_confidence.md",
+      "line": 32,
+      "concept": "amount of information",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=2 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 30,
+      "concept": "episodic memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (b01db913-6bf2-4b14-a37a-81cb4b336d93) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 31,
+      "concept": "impasse",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (4dcd44ba-c65e-4928-804a-d3d8f0bdd888) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 32,
+      "concept": "tie impasse",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"impasse\"; conform manifestului de verdicte: Reprezintă o instanțiere particulară din arhitectura Soar a impasului decizional (când preferințele existente nu pot departaja operatorii candidați), fiind acoperită direct de conceptul 'impasse' promovat în slotul history.",
+      "merge_into": "impasse"
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 33,
+      "concept": "experiential memory",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"episodic memory\"; conform manifestului de verdicte: Textul survey-ului din 2025 folosește 'experiential memory' pentru a denumi istoricul traiectoriilor operaționale de execuție, fiind o redenumire în literatura LLM a conceptului canonic de 'episodic memory' deja promovat în slotul history.",
+      "merge_into": "episodic memory"
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 34,
+      "concept": "consciousness",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un construct filozofic speculativ tratat în preprint prin platforme de ioni captați și lasere, lipsit de orice definire operațională temporală sau autobiografică compatibilă cu slotul history."
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 35,
+      "concept": "neural",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Rândul reprezintă un artefact de extracție dintr-o referință bibliografică (conferința NeurIPS) și un adjectiv generic fără granițe conceptuale ontologice."
+    },
+    {
+      "slot_file": "11_history.md",
+      "line": 36,
+      "concept": "Episodic Memory Buffer",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D1+C: comasare in episodic memory (deja promovat la 11_history.md:30 cu 50 occ vs 2 occ izolate)."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 30,
+      "concept": "exploration",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Definește competența și comportamentul activ de căutare deliberată a stărilor slab eșantionate din medii parțial observabile, constituind un skill critic de achiziție în învățarea prin întărire."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 31,
+      "concept": "representation",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Textul se referă generic la vectori denși de trăsături din spațiul latent, termenul fiind o noțiune computațională generică fără specificitate de skill."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 32,
+      "concept": "reward",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Desemnează un semnal numeric extern furnizat de mediu (funcție de recompensă scalară), nu o deprindere sau o competență executabilă a agentului."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 33,
+      "concept": "experience",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un substantiv de limbaj comun mult prea general ('experience'), reprezentând un eșantion brut de date de antrenare și nu o capacitate sau deprindere cognitivă."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 34,
+      "concept": "Hierarchical Temporal Memory",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 35,
+      "concept": "deep learning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 36,
+      "concept": "quantum",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un adjectiv trunchiat extras dintr-o trecere în revistă a unor algoritmi speculativi, nefiind o abilitate sau o procedură coerentă."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 37,
+      "concept": "learning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un termen umbrelă mult prea cuprinzător extras dintr-o ecuație de optimizare, fiind deja acoperit la nivel operațional de procesele specifice din consolidation și procedures."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 38,
+      "concept": "perception",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=4 >= 3): Definește abilitatea și canalul cognitiv de conversie a semnalelor senzoriale brute în reprezentări structurate (chunks) compatibile cu producțiile sistemului, reprezentând o competență de bază în skills."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 39,
+      "concept": "mnemonic",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=4 >= 3): Definește abilitatea procedurală dobândită de transformare deliberată a informațiilor abstracte în ancore vizuale sau narative durabile, constituind un skill cognitiv formal de memorare."
+    },
+    {
+      "slot_file": "12_skills.md",
+      "line": 40,
+      "concept": "communication engineering",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 30,
+      "concept": "agent",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (7986a2c9-0fb7-4282-95fa-3ea39da1ceb1) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 31,
+      "concept": "intelligent systems",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 32,
+      "concept": "ACT-R",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 33,
+      "concept": "CLARION",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 34,
+      "concept": "OpenCog",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 35,
+      "concept": "architecture",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Textul din preprint folosește termenul ca o etichetă descriptivă ultra-generică pentru un sistem compus ipotetic ('Veronica X Pro Architecture'), fără a defini o primitivă de organizare multi-agent și suprapunându-se trivial peste noțiunea generală de sistem."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 36,
+      "concept": "brain-computer",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Este un fragment trunchiat de colocare ('brain-computer interface') dintr-o ecuație hamiltoniană speculativă, nefiind un actor computațional sau un agent în sine."
+    },
+    {
+      "slot_file": "13_agents.md",
+      "line": 37,
+      "concept": "computing machine",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 31,
+      "concept": "feedback",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (99280cf1-6eb2-449c-a778-e800c2868e07) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 32,
+      "concept": "step-mechanism",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (735c6b3e-bf68-49db-8746-95cc2660ead4) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 33,
+      "concept": "coupling",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=9 >= 3): Definește canalul cibernetic și protocolul de interconectare funcțională prin care controlerul direcționează și influențează subsistemele regulatoare, răspunzând direct la 'când și cum e direcționat fluxul'."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 34,
+      "concept": "transducer",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (bdd2358e-e305-454e-9cf0-f044eb5c4244) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 35,
+      "concept": "substate",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (a8a64a3e-1d72-4971-9f2b-64b14a3ea916) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 36,
+      "concept": "operator proposal",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește faza din ciclul decizional cognitiv în care producțiile analizează starea curentă și propun candidați de acțiune în setul de selecție, constituind pasul cheie de rutare a posibilităților."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 37,
+      "concept": "cross-exclusion",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Definește mecanismul de inhibiție reciprocă concurențială prin care activarea unei agenții suspendă automat rutarea și formarea de memorie în agențiile rivale, prevenind conflictele de control."
+    },
+    {
+      "slot_file": "14_routing.md",
+      "line": 38,
+      "concept": "subgoal",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 30,
+      "concept": "contrastive learning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Reprezintă un obiectiv de antrenare auto-supervizată pentru structurarea spațiului de reprezentare (pozitive vs negative), nefiind un mecanism sau protocol de regăsire a memoriei."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 31,
+      "concept": "retrieval",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (9e6da9df-7fca-4cf5-99bf-03fbdee15170) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 32,
+      "concept": "long-term memory",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (11e9fe55-6924-4231-9635-c5629bff6ae3) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 33,
+      "concept": "external memory",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Textul folosește termenul ca sintagmă umbrelă pentru orice modul extern atașat la un model (ex. LSTM cu memorie externă), funcționând ca o frază generică ce dublează procesul de 'retrieval' fără specificarea unei structuri concrete."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 34,
+      "concept": "retrieval-augmented generation",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): RAG este un pattern arhitectural compus de aplicație industrială ce combină căutarea cu un generator, nefiind o primitivă ontologică discretă (este acoperit funcțional de 'retrieval' combinat cu generarea)."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 35,
+      "concept": "associative memory",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Definește mecanismul de regăsire adresabil prin conținut (content-addressable memory) în care înregistrările sunt accesate pe baza similarității semantice sau suprapunerii de trăsături, aparținând esenței slotului retrieval."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 36,
+      "concept": "cue based retrieval",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 37,
+      "concept": "k-line",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește mecanismul structural al lui Minsky de conectare mnemonică ce reactivează simultan constelația specifică de agenți care au participat la rezolvarea cu succes a unei probleme anterioare."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 38,
+      "concept": "recognition memory",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 39,
+      "concept": "priming",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (67f5d777-20a7-4464-867c-7a2c1739d18a) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 40,
+      "concept": "activation",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=6 >= 3): Definește valoarea numerică asociativă calculată din istoric și propagare contextuală care dictează accesibilitatea și probabilitatea de regăsire a elementelor de memorie în ACT-R, răspunzând direct la slotul retrieval."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 41,
+      "concept": "retrieval cue",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește semnalul sau cheia de interogare externă/internă care declanșează accesul asociativ rapid la rețelele de memorie autobiografică sau semantică, completând mecanismele din slotul retrieval."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 42,
+      "concept": "recollection",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (ac3d2e8a-f55f-404b-ba7d-5157f39ae873) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "15_retrieval.md",
+      "line": 43,
+      "concept": "Experience Replay",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Artefact v1 cu evidence/occ gol in slot gresit (15_retrieval.md); duplicat al randului legitim propus din 16_consolidation.md:43."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 32,
+      "concept": "reinforcement learning",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (10664ba8-39ac-4498-8823-f47014a73efc) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 33,
+      "concept": "momentum",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Reprezintă un parametru matematic de optimizare numerică (medie mobilă exponențială a pierderilor contrastive pe epoci) dintr-un algoritm specific de RL, neconstituind un proces cognitiv de consolidare a memoriei."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 34,
+      "concept": "forgetting",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (39a37abc-5f60-4fd0-aa2c-9338a922dc43) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 35,
+      "concept": "consolidation",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (b2888875-8546-4d42-b262-2c7f779e3cc9) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 36,
+      "concept": "learning from experience",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 37,
+      "concept": "online learning",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 38,
+      "concept": "synaptic plasticity",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește mecanismul bio-computațional de modificare a forței de transmisie a joncțiunilor în funcție de activitate, oferind fundamentul fizic/structural prin care experiența se transformă în stocare permanentă în slotul consolidation."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 39,
+      "concept": "long-term potentiation",
+      "status": "proposed",
+      "disposition": "MERGE_INTO",
+      "reason": "Izomorf cu targetul promovat \"consolidation\"; conform manifestului de verdicte: LTP este expresia electrofiziologică și celulară directă a consolidării sinaptice pe căile hipocampice, nejustificând un nod separat în ontologie față de conceptul de 'consolidation' deja promovat.",
+      "merge_into": "consolidation"
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 40,
+      "concept": "late phase of LTP",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Sub pragul de recurenta (occ=1 < 3); zgomot de extractie din commit 3de7fff3e fara validare arhitecturala."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 41,
+      "concept": "chunking",
+      "status": "promoted",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Concept promovat la commit 596aabfb5; detine note_id activ (a1df3d1c-201c-4217-aa62-f36292b01aa4) si muchii in graful de cunostinte; protejat de invariantul I-003."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 42,
+      "concept": "papert principle",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=3 >= 3): Formulează principiul arhitectural fundamental conform căruia dezvoltarea cognitivă avansată are loc prin sinteza de noi strategii administrative de orchestrare a cunoștințelor preexistente, nu prin simpla acumulare cumulativă de date."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 43,
+      "concept": "experience replay",
+      "status": "proposed",
+      "disposition": "KEEP_PROMOTED",
+      "reason": "Admis la poarta prin manifestul de verdicte (occ=7 >= 3): Definește tehnica și procesul cognitiv activ de re-eșantionare și re-traversare a traiectoriilor istorice stocate pentru actualizarea reprezentărilor fără uitare catastrofică, reprezentând un mecanism distinct de consolidare offline."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 44,
+      "concept": "creb",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Acord catalog-manifest (REJECT): Desemnează o proteină și o cascadă moleculară de transcripție genetică (CREB-1) specifică neurobiologiei Aplysia, situându-se la un nivel de detaliu biochimic mult prea scăzut pentru ontologia de arhitectură cognitivă."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 45,
+      "concept": "Synergy",
+      "status": "proposed",
+      "disposition": "DELETE",
+      "reason": "Lot C: denumirea modelului specific din lucrare (\"SYNERgy\"), nu o primitiva ontologica de consolidare."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 46,
+      "concept": "Synaptic Consolidation",
+      "status": "unverified_source",
+      "disposition": "KEEP_PROPOSED",
+      "reason": "Dezacord cu Lot C: recuperabil din text (52 aparitii in 8 chunks); mecanism post-achizitie distinct de synaptic plasticity."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 47,
+      "concept": "Complementary Learning Systems",
+      "status": "unverified_source",
+      "disposition": "KEEP_PROPOSED",
+      "reason": "Dezacord cu Lot C: teorie autentica in lucrare (4 aparitii); fundament formal pentru sistemele duale de memorie."
+    },
+    {
+      "slot_file": "16_consolidation.md",
+      "line": 48,
+      "concept": "Stochastic Weight Consolidation",
+      "status": "unverified_source",
+      "disposition": "DELETE",
+      "reason": "Lot D2+C: termen complet absent in lucrare (0 aparitii); artefact al tabelei regex initiale."
+    }
+  ]
+}

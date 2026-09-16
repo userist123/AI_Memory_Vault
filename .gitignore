@@ -28,6 +28,7 @@ desktop.ini
 cache/
 tmp/
 temp/
+scratch/
 logs/
 *.log
 __pycache__/

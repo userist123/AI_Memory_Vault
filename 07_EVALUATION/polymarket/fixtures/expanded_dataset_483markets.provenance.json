@@ -1,0 +1,35 @@
+{
+  "target_file": "expanded_dataset_483markets.json",
+  "sha256": "10ecd5ab3c6c123e7904e16c03f8402e3707fe90f84ebdce8e12ac12cdd0c2f0",
+  "market_count": 483,
+  "queried_at_utc": "2026-09-13T21:38:43.565918Z",
+  "slices": [
+    {
+      "offset": 0,
+      "limit": 100,
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=0&order=id&ascending=false"
+    },
+    {
+      "offset": 300,
+      "limit": 100,
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=300&order=id&ascending=false"
+    },
+    {
+      "offset": 600,
+      "limit": 100,
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=600&order=id&ascending=false"
+    },
+    {
+      "offset": 900,
+      "limit": 100,
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=900&order=id&ascending=false"
+    },
+    {
+      "offset": 1200,
+      "limit": 100,
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=1200&order=id&ascending=false"
+    }
+  ],
+  "clob_prices_endpoint": "https://clob.polymarket.com/batch-prices-history",
+  "notes": "Expanded CLOB dataset across 5 temporal slices of the modern CLOB era to verify calibration and resolve the 19 percentage points discrepancy."
+}
