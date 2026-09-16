@@ -98,6 +98,15 @@ AI_Memory_Vault_OBSIDIAN/
 .obsidian/*.backup*
 
 # Personal / local files
+# These patterns did not stop the files they name: Buget_Personal and
+# account-statement both reached the public main anyway. .gitignore does not
+# apply to a force-add or to a file tracked before the pattern existed, so the
+# enforcement is 30_SCRIPTS/verification/personal_data_guard.py in CI; these
+# lines only keep the obvious cases out of `git add -A`.
 Buget_Personal*
 account-statement*
+[Ff]actura*.pdf
+[Ii]nvoice*.pdf
+*repayment_plan*
+*extras*de*cont*
 .claude/

@@ -1,0 +1,6 @@
+[
+  {
+    "path": "20_TESTS/regression/test_personal_data_guard.py",
+    "reason": "The guard's own tests. Holds the IBAN example published with the format specification and a synthetic Luhn-valid number; neither identifies anyone. The CNP there is built at runtime from a fixed synthetic prefix, not stored. Values are deliberately not repeated in this reason, since this file is scanned too."
+  }
+]
