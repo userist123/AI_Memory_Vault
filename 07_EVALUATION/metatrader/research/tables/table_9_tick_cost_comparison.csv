@@ -1,0 +1,11 @@
+symbol,category,ticks_analyzed,v1_bar_median_spread_points,tick_overall_median_spread_points,tick_overall_mean_spread_points,tick_p95_spread_points,rollover_00h_median_spread_points,rollover_expansion_multiplier_ticks,v1_rollover_expansion_multiplier,rollover_penalty_per_trade_points,discrepancy_tick_vs_v1_pct
+EURUSD,FX_MAJOR,280166,12.0,13.0,13.39,14.0,69.0,5.31,2.08,57.0,8.3
+USDJPY,FX_MAJOR,628890,17.0,20.0,20.58,23.0,144.5,7.22,2.29,127.5,17.6
+GBPUSD,FX_MAJOR,244415,13.0,13.0,15.34,16.0,149.0,11.46,4.08,136.0,-0.0
+AUDUSD,FX_MAJOR,302815,14.0,16.0,16.24,17.0,79.0,4.94,1.79,65.0,14.3
+USDCAD,FX_MAJOR,386897,15.0,16.0,16.54,17.0,112.0,7.0,2.4,97.0,6.7
+USDCHF,FX_MAJOR,190669,11.0,12.0,12.85,12.0,138.0,11.5,5.0,127.0,9.1
+EURGBP,FX_CROSS,176213,8.0,9.0,10.91,12.0,95.0,10.56,3.38,87.0,12.5
+GBPJPY,FX_CROSS,673046,22.0,22.0,23.94,28.0,275.0,12.5,5.95,253.0,-0.0
+XAUUSD,METALS,2400320,17.0,21.0,24.62,46.0,21.0,1.0,1.06,4.0,23.5
+ETHUSD,CRYPTO,201568,143.0,143.0,144.69,151.0,143.0,1.0,1.0,0.0,0.0

@@ -115,7 +115,11 @@ Deoarece $p_{\text{SPA}} = 0.2095 > 0.05$, **HOLDOUT-UL (2026-03-15 – 2026-09-
 
 1. **Restricția Universului la 37 de Instrumente**:
    Preînregistrarea anticipa testarea pe acțiuni și indici bursieri conform ghidului general MT5. Conectarea la terminalul demo RoboForex Ltd a relevat că serverul nu oferă acțiuni sau indici pe acest cont. Studiul s-a concentrat pe cele 37 de instrumente disponibile (Forex, Metale, Crypto), documentând absența acțiunilor în Secțiunea 1.
-2. **Nicio altă abatere**:
+2. **Identificarea Entității Juridice a Brokerului (Erratum)**:
+   Entitatea directă pe care a rulat terminalul MT5 este RoboForex Ltd (reglementată FSC Belize, licența 000138/7), parte a grupului RoboMarkets. Mențiunea inițială de broker reglementat direct UE a fost rectificată formal prin Erratum în `PREREGISTRATION.md`.
+3. **Reținerea Barelor cu Spread Egal cu Zero**:
+   Preînregistrarea (A1.3) prevedea zero bare cu spread negativ sau egal cu zero pe instrumente CFD/FX fără comision fix. În baza istorică D1 furnizată de terminalul MT5, arhivele vechi și unele instrumente crypto (ex. ETHUSD cu 3.429 de bare) raportează `spread == 0`. Aceste instrumente au fost totuși reținute în universul de 28 deoarece modelul de cost a aplicat riguros un comision fix (\$2/lot) și spread-ul mediu pozitiv din specificația curentă a instrumentului, eliminând ipoteza execuției fără frecare. Această abatere a fost omisă din secțiunea de devieri la data livrării V1 și este formalizată acum.
+4. **Nicio altă abatere**:
    Împărțirea temporală, grilele de parametri, regulile de execuție la Open, formulele de cost și testul Hansen SPA au fost aplicate fără nicio modificare.
 
 ---

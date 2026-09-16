@@ -1,0 +1,79 @@
+test_id,category,symbol,description,sample_size,metric_value,test_statistic,raw_p_value,bonferroni_adjusted_alpha,significant_after_correction,epistemic_status
+EXP_H_EURUSD_H00,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 00:00 UTC,416,1.21,5.1787,0.0,0.00208,True,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H01,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 01:00 UTC,416,2.14,5.6407,0.0,0.00208,True,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H02,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 02:00 UTC,416,0.61,1.728,0.08399,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H03,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 03:00 UTC,416,0.78,1.9331,0.05323,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H04,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 04:00 UTC,416,-0.82,-2.5107,0.01205,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H05,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 05:00 UTC,416,0.1,0.3994,0.6896,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H06,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 06:00 UTC,416,0.13,0.4745,0.63511,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H07,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 07:00 UTC,416,0.11,0.3851,0.70013,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H08,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 08:00 UTC,416,0.3,0.927,0.35394,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H09,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 09:00 UTC,416,0.42,0.8743,0.38193,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H10,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 10:00 UTC,418,0.25,0.417,0.67668,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H11,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 11:00 UTC,418,0.37,0.8244,0.40972,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H12,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 12:00 UTC,418,0.01,0.0185,0.98521,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H13,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 13:00 UTC,418,-0.63,-1.4827,0.13816,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H14,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 14:00 UTC,418,-0.58,-1.2842,0.19906,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H15,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 15:00 UTC,418,1.21,1.6904,0.09095,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H16,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 16:00 UTC,418,1.14,2.0489,0.04047,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H17,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 17:00 UTC,418,0.63,0.9516,0.34128,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H18,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 18:00 UTC,418,-0.48,-1.0,0.31732,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H19,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 19:00 UTC,418,-0.64,-1.5462,0.12205,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H20,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 20:00 UTC,418,-0.58,-1.3716,0.1702,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H21,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 21:00 UTC,416,0.32,0.8184,0.41312,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H22,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 22:00 UTC,416,-0.16,-0.4499,0.65275,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_EURUSD_H23,Intraday_Hourly_Seasonality,EURUSD,Randament mediu la ora 23:00 UTC,410,0.41,1.8145,0.0696,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H00,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 00:00 UTC,417,0.74,2.2444,0.02481,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H01,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 01:00 UTC,416,2.05,4.2099,3e-05,0.00208,True,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H02,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 02:00 UTC,416,-0.61,-1.1457,0.2519,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H03,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 03:00 UTC,416,-0.9,-1.37,0.17069,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H04,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 04:00 UTC,416,0.77,1.5517,0.12074,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H05,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 05:00 UTC,416,0.13,0.3251,0.74514,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H06,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 06:00 UTC,416,-0.43,-0.9675,0.33327,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H07,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 07:00 UTC,416,-0.12,-0.2519,0.80113,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H08,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 08:00 UTC,416,0.17,0.4035,0.68657,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H09,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 09:00 UTC,416,0.18,0.3032,0.76175,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H10,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 10:00 UTC,418,0.82,1.1952,0.232,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H11,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 11:00 UTC,418,-0.11,-0.1756,0.86059,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H12,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 12:00 UTC,418,0.83,2.0085,0.04459,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H13,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 13:00 UTC,418,-0.44,-0.7887,0.43029,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H14,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 14:00 UTC,418,-0.13,-0.2665,0.78984,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H15,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 15:00 UTC,418,-1.15,-1.4874,0.13691,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H16,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 16:00 UTC,418,-1.42,-1.7808,0.07495,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H17,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 17:00 UTC,418,0.48,0.698,0.4852,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H18,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 18:00 UTC,418,0.86,1.6372,0.10159,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H19,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 19:00 UTC,418,0.46,1.0273,0.3043,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H20,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 20:00 UTC,418,1.07,1.8929,0.05837,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H21,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 21:00 UTC,416,0.59,1.362,0.1732,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H22,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 22:00 UTC,416,0.79,2.0901,0.03661,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_USDJPY_H23,Intraday_Hourly_Seasonality,USDJPY,Randament mediu la ora 23:00 UTC,409,-1.01,-2.6438,0.0082,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H00,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 00:00 UTC,35,7.08,1.1183,0.26346,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H01,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 01:00 UTC,436,5.9,3.5954,0.00032,0.00208,True,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H02,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 02:00 UTC,436,0.27,0.1984,0.84277,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H03,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 03:00 UTC,436,4.29,2.7594,0.00579,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H04,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 04:00 UTC,436,-1.44,-0.7657,0.44387,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H05,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 05:00 UTC,436,-0.67,-0.5458,0.58521,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H06,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 06:00 UTC,436,0.14,0.1568,0.87541,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H07,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 07:00 UTC,436,-0.02,-0.0156,0.98752,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H08,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 08:00 UTC,436,-1.43,-0.9685,0.33278,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H09,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 09:00 UTC,436,2.93,2.4111,0.01591,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H10,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 10:00 UTC,438,0.13,0.0987,0.92142,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H11,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 11:00 UTC,438,-0.2,-0.1499,0.88087,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H12,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 12:00 UTC,438,-1.71,-1.6618,0.09655,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H13,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 13:00 UTC,438,1.07,0.8189,0.41287,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H14,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 14:00 UTC,438,2.68,1.8737,0.06097,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H15,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 15:00 UTC,438,-0.95,-0.473,0.63621,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H16,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 16:00 UTC,438,0.25,0.124,0.90131,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H17,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 17:00 UTC,439,-0.41,-0.1793,0.85772,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H18,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 18:00 UTC,439,1.71,1.1013,0.27078,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H19,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 19:00 UTC,439,-1.78,-1.3309,0.18321,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H20,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 20:00 UTC,427,-0.1,-0.0824,0.93433,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H21,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 21:00 UTC,422,-1.35,-1.0327,0.30172,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H22,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 22:00 UTC,422,2.84,1.9687,0.04899,0.00208,False,HYPOTHESIS_ONLY
+EXP_H_XAUUSD_H23,Intraday_Hourly_Seasonality,XAUUSD,Randament mediu la ora 23:00 UTC,387,-0.38,-0.4412,0.65908,0.00208,False,HYPOTHESIS_ONLY
+EXP_SES_EURUSD_LDN_VS_NY,Session_Open_Volatility,EURUSD,Diferenta volatilitate London Open vs NY Open,1668,-0.57,-1.9001,0.0576,0.05,False,HYPOTHESIS_ONLY
+EXP_SES_USDJPY_LDN_VS_NY,Session_Open_Volatility,USDJPY,Diferenta volatilitate London Open vs NY Open,1668,0.85,2.1212,0.03406,0.05,True,HYPOTHESIS_ONLY
+EXP_SES_XAUUSD_LDN_VS_NY,Session_Open_Volatility,XAUUSD,Diferenta volatilitate London Open vs NY Open,1748,1.35,1.3084,0.19091,0.05,False,HYPOTHESIS_ONLY
+EXP_REG_EURUSD_MOM60_VOL,Volatility_Regime_Conditioning,EURUSD,Performanta MOM60 in High Vol vs Low Vol,9939,0.64,0.5376,0.59087,0.05,False,HYPOTHESIS_ONLY
+EXP_REG_USDJPY_MOM60_VOL,Volatility_Regime_Conditioning,USDJPY,Performanta MOM60 in High Vol vs Low Vol,9939,0.11,0.0881,0.9298,0.05,False,HYPOTHESIS_ONLY
+EXP_REG_XAUUSD_MOM60_VOL,Volatility_Regime_Conditioning,XAUUSD,Performanta MOM60 in High Vol vs Low Vol,6713,-2.65,-0.9988,0.31795,0.05,False,HYPOTHESIS_ONLY

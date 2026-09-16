@@ -96,3 +96,8 @@ AI_Memory_Vault_OBSIDIAN/
 # Obsidian canvas drafts and backups
 *.canvas
 .obsidian/*.backup*
+
+# Personal / local files
+Buget_Personal*
+account-statement*
+.claude/
