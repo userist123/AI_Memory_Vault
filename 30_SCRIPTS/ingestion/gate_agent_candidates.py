@@ -88,6 +88,124 @@ from model_extract_concepts import (  # noqa: E402
 )
 
 
+
+FRAME_NGRAM = 8
+
+#: Reported at 3 — mild phrase reuse is worth seeing, not worth refusing.
+#: Measured on the real llama3.1:8b run, three or four definitions sharing an
+#: 8-gram is a shared *domain* phrase, not a scaffold: "essential for the
+#: stabilization of the spatial map" recurred across PKA, late LTP, protein
+#: synthesis and gene expression, and each of those definitions still said
+#: something specific about its own concept.
+MAX_DEFINITION_FRAME_REUSE = 3
+
+#: Refused at 10. The two populations separate cleanly here and nowhere else:
+#: across 82 real candidates the most any 8-gram was reused was 4, while the
+#: fabricated run reached 168, 109, 93, 89. Coverage was tried first and does
+#: not work — the fabricated definitions sat at 0.47 of their tokens and the
+#: real ones reached 0.83, so the distributions overlap and a coverage
+#: threshold would convict the wrong rows.
+FRAME_REUSE_ROW_LIMIT = 10
+
+#: A whole submission is refused when this much of it carries reused phrasing.
+#: Real books ran 0%, 0%, 0%, 0%, 0%, 33%, 50%; the fabricated run put thirteen
+#: books at exactly 100%. The floor exists because the fraction means nothing
+#: on a handful of rows — four candidates, three sharing a phrase, is 75% and
+#: is not evidence of anything.
+FRAME_REUSE_BATCH_FRACTION = 0.60
+FRAME_REUSE_BATCH_FLOOR = 10
+
+#: How a definition opens, and how much of a batch shares its opening.
+#:
+#: Added after the 8-gram check was evaded rather than defeated. A second
+#: submission arrived with five frames instead of five, but varied further
+#: along — enough that the frames stopped sharing eight consecutive words, so
+#: only 20% of rows were caught where the first submission had lost 99%.
+#:
+#: What did not vary was the opening. Measured over the three runs:
+#:
+#:   real, llama3.1:8b     top five openings covered 28%, 32%, 40% of a book,
+#:                         with 23 distinct openings across 25 definitions
+#:   both generated runs   100%, from exactly 5 distinct openings, across
+#:                         books of 762, 449 and 379 definitions
+#:
+#: Real writing opens almost every definition differently, because the opening
+#: follows the concept. A generator picks from a short menu.
+OPENING_NGRAM = 4
+MAX_TOP_OPENING_COVERAGE = 0.70
+TOP_OPENINGS_COUNTED = 5
+
+
+def _tokens(text: str) -> list[str]:
+    return [w for w in re.sub(r"[^\w\s]", " ", text.lower()).split() if w]
+
+
+def _frames_in(definition: str, n: int = FRAME_NGRAM) -> set[str]:
+    """Every n-gram in one definition, deduplicated."""
+    words = _tokens(definition)
+    return {" ".join(words[i:i + n]) for i in range(len(words) - n + 1)}
+
+
+def opening_concentration(definitions: list[str]) -> tuple[float, int]:
+    """How much of a batch shares the few commonest ways of starting.
+
+    Returns the fraction covered by the commonest openings and the number of
+    distinct ones. Both are printed, because the second is the number that
+    makes the finding obvious to a reader: 762 definitions with five distinct
+    openings is not a style, it is a menu.
+    """
+    counts: Counter[str] = Counter()
+    for definition in definitions:
+        words = _tokens(definition)
+        if len(words) >= OPENING_NGRAM:
+            counts[" ".join(words[:OPENING_NGRAM])] += 1
+
+    total = sum(counts.values())
+    if not total:
+        return 0.0, 0
+    top = sum(n for _, n in counts.most_common(TOP_OPENINGS_COUNTED))
+    return top / total, len(counts)
+
+
+def find_reused_frames(
+    definitions: list[str],
+    n: int = FRAME_NGRAM,
+    limit: int = MAX_DEFINITION_FRAME_REUSE,
+) -> dict[str, int]:
+    """n-grams appearing in `limit` or more distinct definitions in one batch.
+
+    The gates check each candidate against its evidence. Nothing checked the
+    candidates against *each other*, and that is the hole 3,342 fabricated rows
+    went through: five sentence frames, three words swapped into each, merged
+    into the ontology with zero rejections.
+
+        Characterizes an operational mechanism in which functional interactions
+        govern X and Y and Z within the underlying system architecture.
+
+    A frame like that shares no 8-gram with the evidence — it is not derived
+    from the evidence at all — so the paraphrase gate passes it. The evidence is
+    a verbatim copy, so grounding passes. The term is 1-4 words and the
+    definition is over twelve ending in a period, so shape passes. Every gate
+    was satisfied by construction rather than by the candidate saying anything.
+
+    So this asks the reverse question: does this definition share its phrasing
+    with its neighbours? Counting distinct definitions rather than occurrences
+    keeps one repetitive definition from convicting itself.
+    """
+    from collections import defaultdict
+
+    holders: dict[str, set[int]] = defaultdict(set)
+    for index, definition in enumerate(definitions):
+        words = _tokens(definition)
+        #: A set per definition, so a phrase repeated inside one definition
+        #: counts once.
+        for start in range(len(words) - n + 1):
+            holders[" ".join(words[start:start + n])].add(index)
+
+    return {phrase: len(owners) for phrase, owners in holders.items()
+            if len(owners) >= limit}
+
+
 def dump_chunks(args: argparse.Namespace) -> int:
     """Write the chunks an agent should read, with the slot definitions."""
     text = args.input_file.read_text(encoding="utf-8", errors="replace")
@@ -167,6 +285,53 @@ def gate(args: argparse.Namespace) -> int:
             "model": args.agent_label,
             "provider": "agent",
         })
+
+    #: Batch-level, because a template is invisible one candidate at a time.
+    frames = find_reused_frames([r["definition"] for r in rows])
+    heavy = {g for g, n in frames.items() if n >= FRAME_REUSE_ROW_LIMIT}
+    touched = [r for r in rows if _frames_in(r["definition"]) & frames.keys()]
+    fraction = len(touched) / len(rows) if rows else 0.0
+    opening_cover, distinct_openings = opening_concentration(
+        [r["definition"] for r in rows]
+    )
+    batch_templated = len(rows) >= FRAME_REUSE_BATCH_FLOOR and (
+        fraction > FRAME_REUSE_BATCH_FRACTION
+        or opening_cover > MAX_TOP_OPENING_COVERAGE
+    )
+
+    if len(rows) >= FRAME_REUSE_BATCH_FLOOR:
+        print(f"  definition openings     {distinct_openings} distinct; "
+              f"top {TOP_OPENINGS_COUNTED} cover {opening_cover:.0%} of rows")
+
+    if heavy or batch_templated:
+        kept: list[dict[str, Any]] = []
+        for row in rows:
+            hit = _frames_in(row["definition"]) & heavy
+            #: A templated batch is refused whole. Keeping the rows that happen
+            #: not to share an 8-gram would keep the same generator's output
+            #: minus the ones it varied most, which is the worst of both: the
+            #: submission is not trusted and the survivors are not better, they
+            #: are merely less similar to each other.
+            if not hit and not batch_templated:
+                kept.append(row)
+                continue
+            phrase = (max(hit, key=lambda g: frames[g]) if hit
+                      else f"opening shared by {opening_cover:.0%} of the batch")
+            reason = ("batch_is_templated" if batch_templated
+                      else "definition_frame_reused")
+            rejects[reason] += 1
+            rejected.append({
+                "reason": reason,
+                "shared_frame": phrase,
+                "shared_with": frames.get(phrase, len(rows)),
+                "concept": str(row["concept"])[:120],
+                "slot": str(row["maps_to_slot"])[:60],
+                "confidence": row["confidence_in_literature"],
+                "definition": str(row["definition"])[:300],
+                "evidence": str(row["evidence_quote"])[:300],
+                "chunk_index": None,
+            })
+        rows = kept
 
     rows, collapsed = deduplicate(rows)
 
