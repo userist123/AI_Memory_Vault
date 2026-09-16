@@ -97,7 +97,7 @@ AI_Memory_Vault_OBSIDIAN/
 *.canvas
 .obsidian/*.backup*
 
-# Personal / local files
-Buget_Personal*
-account-statement*
+# Personal / local files (strictly excluded from git)
+*Buget_Personal*
+*account-statement*
 .claude/
