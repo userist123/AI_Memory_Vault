@@ -40,8 +40,8 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 | Polymarket forecasting | snapshots, council, calibration, edge, abstention, Kelly sizing, backtest, ablation, temporal contract | **IMPLEMENTED / UNVALIDATED ON REAL DATA** |
 | Polymarket resolution provenance | the moment an outcome became knowable | **ESTABLISHED UNAVAILABLE** |
 | Persistent agent memory | resumable `CURRENT.md` state under `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTED** |
-| Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
-| Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
+| Planning Influence | isolated deterministic MVE V3 without oracle leakage, $N=200$/cell, permutation invariant | **VALIDATED (GATE PASSED)** |
+| Uncertainty policy | applicability contract + uncertainty attenuation ($p^* = 0.40$) + contradiction veto | **DETERMINISTICALLY VALIDATED** |
 | Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
 | Fully closed continual learning | outcome → evidence → learning → canonical mutation loop | **PARTIAL / OPEN** |
 
@@ -320,69 +320,52 @@ A compact influence artifact can then be forged on demand instead of repeatedly 
 
 ---
 
-# 🧪 Planning Influence MVE
+# 🧪 Planning Influence MVE (V3 Validated)
 
-The isolated MVE lives under:
+The canonical isolated MVE and experimental artifacts live under `07_EVALUATION/luna/`:
 
 ```text
 07_EVALUATION/luna/
-├── COGNITIVE_MEMORY_TARGET_MODEL_V1.md
-├── COGNITIVE_MEMORY_TARGET_MODEL_V2.md
-├── COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md
-├── PLANNING_INFLUENCE_EXPERIMENT_V1.md
-├── PLANNING_INFLUENCE_MVE_V2_VALIDATED.md
-├── PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md
-├── planning_influence_mve.py
-└── test_planning_influence_mve.py
+├── PLANNING_INFLUENCE_PREREGISTRATION_V2.md  # Frozen formal pre-registration
+├── PLANNING_INFLUENCE_RESULTS_V3.md          # Full V3 scientific report
+├── planning_influence_mve_v3.py              # V3 harness immune to oracle leakage
+├── run_experiments_v3.py                     # Full experimental grid runner
+├── run_all_v3.py                             # Byte-for-byte reproducibility suite
+└── tables/                                   # 5 identically regenerated CSV tables
+    ├── table_luna_1_main_experiment.csv
+    ├── table_luna_2_accuracy_thresholds.csv
+    ├── table_luna_3_stale_arm.csv
+    ├── table_luna_4_verification_ablation.csv
+    └── table_luna_5_robustness_grid.csv
 ```
 
-### Experimental arms
+### Structural Isolation and Removal of Ordering Artifacts
+> [!IMPORTANT]
+> **Methodological Rectification Note:** In earlier pilot versions (V1/V2), fixed candidate insertion order favored the first evaluated branch (`index = 0`), creating distorted values in blind search (e.g. 2.0 nodes or 30 nodes / 30 scenarios). In the canonical **V3** release, candidate order is pseudo-randomly shuffled per scenario (`rng.shuffle`), and tie-breaking at equal scores is position-invariant via deterministic SHA-256 hashing (`(scenario_id, candidate, step, seed)`). Isolation unit tests in `20_TESTS/test_planning_influence_isolation.py` prove mathematically that the unguided baseline has zero oracle access ($2.88 \approx 2.9167$ theoretical PUCT expectation, $r^2 < 0.01$).
+
+### Canonical Deterministic Evidence (V3, $N=200$ / cell)
+
+The full evaluation covers 11 accuracy levels $\times$ 2 applicability modes $\times$ 4 policies across $17,600$ deterministic runs:
 
 ```text
-Arm 1 — baseline / uniform planner
-Arm 2 — advisory memory / uniform planner
-Arm 3 — cognitive treatment / memory-derived planner prior
-Arm 4 — stale / contradicted / neutral memory control
+blind baseline (K=4):     2.88 nodes · 0.97 fatals (matches PUCT theoretical 2.9167)
+calibrated memory p=0.8:  1.48 nodes · 0.22 fatals (49% node savings, -78% fatals)
+perfect memory p=1.0:     1.00 node  · 0.00 fatals (theoretical optimum reached)
+stale arm (contradiction): 2.79 nodes · 1.01 fatals (delta fatals = 0.000, safety veto intact)
 ```
 
-### Current deterministic evidence
+### Critical Breakeven Accuracy Thresholds ($p^*$)
+- **Calibrated Mode:** `v1_uncertainty` breaks even at $p^* = \mathbf{0.40}$ ($\Delta_{\text{nodes}} = +0.31$, 95% CI $[0.080, 0.565]$); `v2_verification_action` at $p^* = \mathbf{0.50}$.
+- **Uninformative Mode:** `v1_uncertainty` breaks even at $p^* = \mathbf{0.50}$ ($\Delta_{\text{nodes}} = +0.565$, 95% CI $[0.300, 0.835]$); `v2_verification_action` at $p^* = \mathbf{0.70}$.
 
-The latest local applicability-aware pilot is explicitly **runtime evidence from local reconstructed exact-source execution**, not CI proof:
+### Cost-Benefit Analysis of Verification as an Action
+Each explicit verification action costs $1.0$ search node. In small action spaces ($K=4$), this fixed cost exceeds the benefit (negative net savings of $-0.235$ to $-0.305$ nodes compared to passive uncertainty attenuation `v1_uncertainty`). Explicit verification is economically justified exclusively in large action spaces ($K \ge 6$) or under critical failure penalties.
 
-```text
-baseline:   30/30 success · 30 nodes · 0 fatal
-advisory:   30/30 success · 30 nodes · 0 fatal
-treatment:  30/30 success · 54 nodes · 12 fatal
-stale:      30/30 success · 30 nodes · 0 fatal
-```
+### Search Space Scaling
+- **At $K=6$ ($F=3$ fatals, $p=0.8$):** memory savings reach **$+2.74$ nodes** (**58%** reduction, fatals drop from 1.545 to 0.400).
+- **At $K=8$ ($F=4$ fatals, $p=0.8$):** memory savings reach **$+4.89$ nodes** (**70%** reduction, fatals drop from 2.065 to 0.350).
 
-The treatment arm is therefore **not yet an efficiency win**. The prior naive treatment was worse still (125 nodes / 15 fatal). The negative result is intentionally retained as falsification evidence rather than tuned away.
-
-The recommendation matched the deterministic optimum in only `7/30` scenarios in the current pilot. Wrong memory recommendations account for the observed treatment cost.
-
-### Uncertainty policy
-
-The pre-registered policy separates:
-
-```text
-applicability
-+ evidence_strength
-+ contradiction_state
-+ verification_cost
-+ planner_influence
-+ execution_outcome
-```
-
-Fixed applicability strengths for the next isolated run:
-
-```text
-APPLICABLE                   = 1.00
-APPLICABLE_WITH_VERIFICATION = 0.35
-INSUFFICIENTLY_KNOWN         = 0.15
-NOT_APPLICABLE               = 0.00
-```
-
-The policy is design evidence. Its success has not yet been established.
+**Formal Verdict:** Gate passed (`GATE PASSED`) under Section 8 of the Uncertainty Policy. Memory may be coupled to production planners using certainty attenuation (`v1_uncertainty`).
 
 ---
 
@@ -688,16 +671,16 @@ A model-backed MVE is **not authorized merely because deterministic unit tests p
 pytest -q
 ```
 
-### Run the isolated Planning Influence MVE tests
+### Run the isolated Planning Influence V3 tests
 
 ```bash
-pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
+pytest -q 20_TESTS/test_planning_influence_isolation.py
 ```
 
-### Run the deterministic MVE pilot
+### Run the Planning Influence V3 byte-for-byte reproducibility suite
 
 ```bash
-python 07_EVALUATION/luna/planning_influence_mve.py
+python 07_EVALUATION/luna/run_all_v3.py
 ```
 
 ### Memory V6 CLI examples
@@ -726,9 +709,11 @@ Use the repository's environment files / requirements for the exact runtime depe
 
 ### MVE / research
 
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md) — Canonical V3 scientific report (Validated)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_PREREGISTRATION_V2.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_PREREGISTRATION_V2.md) — Frozen formal pre-registration
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md) (Erratum: fixed ordering)
 - [`07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md)
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md) (Erratum: fixed ordering)
 - [`07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md`](07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md)
 - [`07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md`](07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md)
 

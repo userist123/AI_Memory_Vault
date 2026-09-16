@@ -40,8 +40,8 @@ Un substrat de memorie externă persistentă pentru agenți AI: memorie cu prove
 | Predicție Polymarket | instantanee, consiliu, calibrare, avantaj față de piață, abstenție, dimensionare Kelly, backtest, ablație, contract temporal | **IMPLEMENTAT / NEVALIDAT PE DATE REALE** |
 | Proveniența rezoluțiilor Polymarket | momentul în care un rezultat a devenit cognoscibil | **STABILIT CA INDISPONIBIL** |
 | Memoria persistentă a agenților | stare reluabilă `CURRENT.md` în `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTAT** |
-| Planning Influence | MVE determinist izolat, cu patru brațe și priori slabi | **EXPERIMENTAL** |
-| Politica de incertitudine | contract de aplicabilitate + forța dovezii + contradicție + cost de verificare | **PROIECTAT / PREÎNREGISTRAT** |
+| Planning Influence | MVE determinist izolat V3 fără scurgere de oracol, $N=200$/celulă, testat pentru invarianță | **VALIDAT (GATE PASSED)** |
+| Politica de incertitudine | contract de aplicabilitate + atenuare incertitudine ($p^* = 0.40$) + veto de contradicție | **VALIDAT DETERMINIST** |
 | Influență cognitivă susținută de model | MVE cauzal pereche pe execuție reală de model | **ÎNCĂ NEDEMONSTRAT** |
 | Învățare continuă complet închisă | bucla rezultat → dovadă → învățare → mutație canonică | **PARȚIAL / DESCHIS** |
 
@@ -320,69 +320,52 @@ Un artefact compact de influență poate fi apoi forjat la cerere, în loc să f
 
 ---
 
-# 🧪 Planning Influence MVE
+# 🧪 Planning Influence MVE (V3 Validat)
 
-MVE-ul izolat se află sub:
+MVE-ul canonic izolat și artefactele experimentale se află sub `07_EVALUATION/luna/`:
 
 ```text
 07_EVALUATION/luna/
-├── COGNITIVE_MEMORY_TARGET_MODEL_V1.md
-├── COGNITIVE_MEMORY_TARGET_MODEL_V2.md
-├── COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md
-├── PLANNING_INFLUENCE_EXPERIMENT_V1.md
-├── PLANNING_INFLUENCE_MVE_V2_VALIDATED.md
-├── PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md
-├── planning_influence_mve.py
-└── test_planning_influence_mve.py
+├── PLANNING_INFLUENCE_PREREGISTRATION_V2.md  # Preînregistrare formală înghețată
+├── PLANNING_INFLUENCE_RESULTS_V3.md          # Raport științific complet V3
+├── planning_influence_mve_v3.py              # Harnașament V3 imun la scurgeri de oracol
+├── run_experiments_v3.py                     # Runner experimental (grilă completă)
+├── run_all_v3.py                             # Suită de reproductibilitate byte-for-byte
+└── tables/                                   # 5 tabele CSV regenerate identic
+    ├── table_luna_1_main_experiment.csv
+    ├── table_luna_2_accuracy_thresholds.csv
+    ├── table_luna_3_stale_arm.csv
+    ├── table_luna_4_verification_ablation.csv
+    └── table_luna_5_robustness_grid.csv
 ```
 
-### Brațele experimentului
+### Izolarea structurală și eliminarea artefactelor de ordonare
+> [!IMPORTANT]
+> **Notă de rectificare metodologică:** În variantele pilot anterioare (V1/V2), ordinea fixă de inserare a candidaților favoriza primul braț evaluat (`index = 0`), creând valori distorsionate la căutarea oarbă (de ex. 2.0 noduri sau 30 noduri/30 scenarii). În versiunea canonică **V3**, ordinea ramurilor este permutată pseudo-aleatoriu per scenariu (`rng.shuffle`), iar departajarea la scoruri egale (tie-breaking) este invariantă la poziție prin hashing SHA-256 (`(scenario_id, candidate, step, seed)`). Testele de izolare din `20_TESTS/test_planning_influence_isolation.py` confirmă matematic că baseline-ul nu cunoaște răspunsul ($2.88 \approx 2.9167$ teoretic, $r^2 < 0.01$).
+
+### Dovada deterministă canonică (V3, $N=200$ / celulă)
+
+Evaluarea completă acoperă 11 nivele de acuratețe $\times$ 2 moduri de aplicabilitate $\times$ 4 politici pe $17.600$ de rulări deterministe:
 
 ```text
-Brațul 1 — bază / planificator uniform
-Brațul 2 — memorie consultativă / planificator uniform
-Brațul 3 — tratament cognitiv / prior de planificare derivat din memorie
-Brațul 4 — control cu memorie învechită / contrazisă / neutră
+bază neinformativă (K=4):  2.88 noduri · 0.97 fatale (conform teoriei PUCT 2.9167)
+memorie calibrată p=0.8:   1.48 noduri · 0.22 fatale (economie de 49% noduri, -78% fatale)
+memorie perfectă p=1.0:    1.00 nod    · 0.00 fatale (maximul teoretic atins)
+stale arm (contradicție):  2.79 noduri · 1.01 fatale (delta fatale = 0.000, veto de siguranță intact)
 ```
 
-### Dovada deterministă actuală
+### Praguri critice de rentabilitate ($p^*$)
+- **Mod Calibrat:** `v1_uncertainty` devine rentabilă la $p^* = \mathbf{0.40}$ ($\Delta_{\text{nodes}} = +0.31$, 95% CI $[0.080, 0.565]$); `v2_verification_action` la $p^* = \mathbf{0.50}$.
+- **Mod Neinformativ:** `v1_uncertainty` devine rentabilă la $p^* = \mathbf{0.50}$ ($\Delta_{\text{nodes}} = +0.565$, 95% CI $[0.300, 0.835]$); `v2_verification_action` la $p^* = \mathbf{0.70}$.
 
-Cel mai recent pilot local, conștient de aplicabilitate, este explicit **dovadă de execuție dintr-o rulare locală reconstruită din sursa exactă**, nu dovadă din CI:
+### Analiza cost-beneficiu a verificării ca acțiune
+Fiecare acțiune de verificare costă $1.0$ nod. În spații mici de căutare ($K=4$), costul depășește beneficiul (economie netă negativă de $-0.235$ până la $-0.305$ noduri față de atenuarea pasivă V1). Verificarea explicită este justificată exclusiv în spații mari ($K \ge 6$) sau în regimuri cu penalitate critică la eșec.
 
-```text
-bază:        30/30 succes · 30 noduri · 0 fatale
-consultativ: 30/30 succes · 30 noduri · 0 fatale
-tratament:   30/30 succes · 54 noduri · 12 fatale
-învechit:    30/30 succes · 30 noduri · 0 fatale
-```
+### Scalabilitate în spații largi de căutare
+- **La $K=6$ ($F=3$ fatale, $p=0.8$):** economia memoriei este de **$+2.74$ noduri** (reducere de **58%**, fatalele scad de la 1.545 la 0.400).
+- **La $K=8$ ($F=4$ fatale, $p=0.8$):** economia memoriei este de **$+4.89$ noduri** (reducere de **70%**, fatalele scad de la 2.065 la 0.350).
 
-Brațul de tratament **nu este, prin urmare, încă un câștig de eficiență**. Tratamentul naiv anterior era și mai prost (125 noduri / 15 fatale). Rezultatul negativ este păstrat intenționat ca dovadă de falsificare, în loc să fie ajustat până dispare.
-
-Recomandarea a coincis cu optimul determinist în doar `7/30` scenarii în pilotul curent. Recomandările greșite de memorie explică costul observat al tratamentului.
-
-### Politica de incertitudine
-
-Politica preînregistrată separă:
-
-```text
-aplicabilitate
-+ forța dovezii
-+ starea de contradicție
-+ costul verificării
-+ influența asupra planificatorului
-+ rezultatul execuției
-```
-
-Forțe fixe de aplicabilitate pentru următoarea rulare izolată:
-
-```text
-APPLICABLE                   = 1.00
-APPLICABLE_WITH_VERIFICATION = 0.35
-INSUFFICIENTLY_KNOWN         = 0.15
-NOT_APPLICABLE               = 0.00
-```
-
-Politica este dovadă de proiectare. Reușita ei nu a fost încă stabilită.
+**Decizie formală:** Poartă de validare trecută (`GATE PASSED`) conform Secțiunii 8 din politica de incertitudine. Memoria poate fi cuplată în producție la planificator folosind atenuarea prin certitudine (`v1_uncertainty`).
 
 ---
 
@@ -656,16 +639,16 @@ Un MVE susținut de model **nu este autorizat doar pentru că trec testele unita
 pytest -q
 ```
 
-### Rulează testele izolate ale Planning Influence MVE
+### Rulează testele de izolare și invarianță ale Planning Influence V3
 
 ```bash
-pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
+pytest -q 20_TESTS/test_planning_influence_isolation.py
 ```
 
-### Rulează pilotul determinist MVE
+### Rulează suita completă de reproductibilitate Planning Influence V3 (byte-for-byte)
 
 ```bash
-python 07_EVALUATION/luna/planning_influence_mve.py
+python 07_EVALUATION/luna/run_all_v3.py
 ```
 
 ### Exemple de CLI pentru Memory V6
@@ -694,9 +677,11 @@ Pentru dependențele exacte de execuție într-un checkout local, folosește fi�
 
 ### MVE / cercetare
 
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md) — Raport științific canonic V3 (Validat)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_PREREGISTRATION_V2.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_PREREGISTRATION_V2.md) — Preînregistrare formală înghețată
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md) (Errată: ordonare fixă)
 - [`07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md)
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md) (Errată: ordonare fixă)
 - [`07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md`](07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md)
 - [`07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md`](07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md)
 

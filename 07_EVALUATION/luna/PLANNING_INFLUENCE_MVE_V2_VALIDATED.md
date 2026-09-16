@@ -1,8 +1,14 @@
 # AI Memory Vault — Planning Influence MVE V2
 
-Status: EXPERIMENT HARNESS SPECIFICATION — NOT EXECUTED
-Evidence level: UNVERIFIED / DESIGN SPECIFICATION
+Status: SUPERSEDED BY V3 — HISTORICAL AUDIT RECORD ONLY
+Evidence level: INVALIDATED (Oracle Leakage & Asymmetric Memory Error in V1/V2)
 Purpose: Minimal isolated causal test for computational planning influence from external memory.
+
+> [!WARNING]
+> **ERRATUM (2026-09-16 — Superseded by Planning Influence V3)**:
+> Rezultatele raportate inițial în această serie au fost compromise metodologic de o scurgere de oracol prin ordonare și departajare: în harnașamentul V1/V2 (`planning_influence_mve.py`), ramura optimă era plasată mecanic pe prima poziție (`order[0]`), iar departajarea la priori uniformi alegea mereu prima ramură (`-branches.index(candidate)`). În consecință, brațul de bază „rezolva” scenariile din primul nod deoarece primea răspunsul codificat în poziție. În plus, memoria generației V1 recomanda ramura greșită în 23 din 30 de scenarii (rată de eroare de 77%).
+> Cadrul experimental a fost complet reconstruit pe un control legitim fără scurgere de oracol, cu ordonare aleatoare echilibrată și grilă parametrică de acuratețe în `planning_influence_mve_v3.py`.
+> Consultați raportul științific complet și autoritativ: [`PLANNING_INFLUENCE_RESULTS_V3.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md).
 
 ## 1. Causal question
 

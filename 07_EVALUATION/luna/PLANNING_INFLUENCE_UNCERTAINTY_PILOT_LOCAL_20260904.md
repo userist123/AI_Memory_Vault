@@ -1,7 +1,12 @@
 # Planning Influence — Uncertainty Policy Pilot
 
+> [!WARNING]
+> **ERRATUM (2026-09-16 — Superseded by Planning Influence V3)**:
+> Rezultatul raportat aici (`baseline: 30 noduri · 0 fatale` vs `treatment: 54 noduri · 12 fatale`) a fost invalidat metodologic: brațul de bază a rezolvat 30/30 de scenarii în primul pas exclusiv datorită scurgerii de oracol prin ordonarea ramurilor (`optimal = order[0]`) și departajării pe primul index (`-branches.index(candidate)`). Când ordinea este amestecată legitim, baza consumă 87.3 noduri și 29.8 fatale.
+> Consultați raportul științific complet și autoritativ: [`PLANNING_INFLUENCE_RESULTS_V3.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md).
+
 Date: 2026-09-04
-Evidence level: `RUNTIME_VERIFIED` (local reconstructed exact-source execution)
+Evidence level: `HISTORICAL_RECORD_SUPERSEDED`
 CI evidence: `UNVERIFIED`
 Production Vault changes: `NONE`
 
