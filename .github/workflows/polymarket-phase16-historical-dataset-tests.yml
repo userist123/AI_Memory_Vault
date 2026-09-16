@@ -1,0 +1,23 @@
+name: Polymarket Phase 16 Historical Evaluation Dataset Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  phase16-historical-dataset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: 03_IMPLEMENTATION
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install repository test dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Run Phase 16 dataset tests
+        run: python -m pytest -q 20_TESTS/polymarket/test_historical_evaluation_dataset.py

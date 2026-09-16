@@ -1,0 +1,315 @@
+{
+  "n_correct_proposals": 45,
+  "n_actually_promotable": 0,
+  "promotable_review_ids": [],
+  "blocking_reason_counts": {
+    "source_or_target_id_unresolved": 29,
+    "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)": 13,
+    "schema_validation_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'": 2,
+    "schema_validation_failed:ValidationError:'proc-brain-arch-0001' is not a 'uuid'": 1
+  },
+  "results": [
+    {
+      "review_id": 1,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 3,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 4,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 5,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 8,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 9,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 10,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "c1a01101-7291-49fa-9481-22904c10c001",
+      "real_target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    },
+    {
+      "review_id": 11,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 12,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 13,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "knw-retrieval-bottleneck-p0-0001",
+      "real_target_id": "reg-retrieval-hypotheses-0001"
+    },
+    {
+      "review_id": 14,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+      "real_target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    },
+    {
+      "review_id": 15,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 16,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "c1a01101-7291-49fa-9481-22904c10d002",
+      "real_target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    },
+    {
+      "review_id": 17,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 18,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 19,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+      "real_target_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+    },
+    {
+      "review_id": 20,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 21,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "knw-context-packing-p1-0001",
+      "real_target_id": "knw-retrieval-bottleneck-p0-0001"
+    },
+    {
+      "review_id": 22,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 23,
+      "would_succeed": false,
+      "principal": "AI_AGENT",
+      "reason": "schema_validation_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'",
+      "real_source_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+      "real_target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    },
+    {
+      "review_id": 24,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 25,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "idx-leg-ro-mapn-m172-2021",
+      "real_target_id": "knw-leg-hg585-2002-0001"
+    },
+    {
+      "review_id": 26,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 27,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 28,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 29,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 30,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 33,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 34,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 35,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 36,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 37,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 38,
+      "would_succeed": false,
+      "principal": "AI_AGENT",
+      "reason": "schema_validation_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'",
+      "real_source_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+      "real_target_id": "knw-leg-hg585-2002-0001"
+    },
+    {
+      "review_id": 39,
+      "would_succeed": false,
+      "principal": "ADMIN",
+      "reason": "schema_validation_failed:ValidationError:'proc-brain-arch-0001' is not a 'uuid'",
+      "real_source_id": "proc-brain-arch-0001",
+      "real_target_id": "proc-enterprise-integration-0001"
+    },
+    {
+      "review_id": 40,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+      "real_target_id": "proc-reflexion-0001"
+    },
+    {
+      "review_id": 41,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "atm-hg585-art236-258-acreditare-sic",
+      "real_target_id": "idx-leg-ro-hg-585-2002"
+    },
+    {
+      "review_id": 42,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 43,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 44,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "atm-dora-art6-16-risc-tic",
+      "real_target_id": "idx-leg-eu-dora-2022-2554"
+    },
+    {
+      "review_id": 45,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 46,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "knw-context-packing-p1-0001",
+      "real_target_id": "reg-retrieval-hypotheses-0001"
+    },
+    {
+      "review_id": 48,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 49,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+      "real_target_id": "proc-brain-arch-0001"
+    },
+    {
+      "review_id": 51,
+      "would_succeed": false,
+      "principal": "n/a",
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 53,
+      "would_succeed": false,
+      "principal": "none",
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+      "real_source_id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+      "real_target_id": "atm-gdpr-art32-securitate"
+    }
+  ]
+}

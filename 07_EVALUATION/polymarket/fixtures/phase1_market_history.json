@@ -1,0 +1,33 @@
+{
+  "fixture_type": "synthetic",
+  "market": {
+    "market_id": "synthetic-001",
+    "condition_id": "0xsynthetic001",
+    "question": "Will event X happen?",
+    "description": "Deterministic Phase 1 temporal-isolation fixture.",
+    "outcomes": ["Yes", "No"],
+    "outcome_ids": ["yes-token", "no-token"]
+  },
+  "timeline": [
+    {
+      "snapshot_at": "2025-01-01T10:00:00Z",
+      "known_as_of": "2025-01-01T10:00:00Z",
+      "lifecycle": "open",
+      "yes_price": "0.40"
+    },
+    {
+      "snapshot_at": "2025-01-02T10:00:00Z",
+      "known_as_of": "2025-01-02T10:00:00Z",
+      "lifecycle": "closed",
+      "yes_price": "0.62"
+    },
+    {
+      "snapshot_at": "2025-01-03T10:00:00Z",
+      "known_as_of": "2025-01-03T10:00:00Z",
+      "lifecycle": "resolved",
+      "yes_price": "1.00",
+      "resolution_known_at": "2025-01-03T09:00:00Z"
+    }
+  ],
+  "leakage_assertion": "The 2025-01-01 snapshot must not contain resolution metadata known only on 2025-01-03."
+}

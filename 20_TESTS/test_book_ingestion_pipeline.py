@@ -142,7 +142,11 @@ ontology_slot: {slot}
     # Run 1: First merge
     res1 = merge_candidate_concepts(str(staging_file), slots_dir=str(mock_slots_dir), override_date="2026-09-07")
     assert res1["net_new_concepts_merged"] == 2
-    assert res1["concepts_deduplicated"] == 0
+    # "deduplicated" used to conflate two different things. A row folded
+    # together because several books define the same concept is not a row
+    # skipped because the slot file already has it.
+    assert res1["already_in_slot_file"] == 0
+    assert res1["combined_across_books"] == 0
 
     # Verify table row schema in consolidation slot file
     consolidation_file = find_slot_file("consolidation", str(mock_slots_dir))
@@ -164,7 +168,9 @@ ontology_slot: {slot}
     # Run 2: Second merge with exact same staging file (idempotency check)
     res2 = merge_candidate_concepts(str(staging_file), slots_dir=str(mock_slots_dir), override_date="2026-09-07")
     assert res2["net_new_concepts_merged"] == 0
-    assert res2["concepts_deduplicated"] == 2
+    assert res2["already_in_slot_file"] == 2, (
+        "a second merge of the same staging file must add nothing"
+    )
 
 
 def test_structural_chunking():
