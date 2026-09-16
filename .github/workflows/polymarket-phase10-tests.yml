@@ -1,0 +1,55 @@
+name: Polymarket Phase 10 Tests
+
+on:
+  push:
+    branches:
+      - r062-paper-simulation
+    paths:
+      - '03_IMPLEMENTATION/packages/polymarket/**'
+      - '20_TESTS/polymarket/**'
+      - '07_EVALUATION/polymarket/**'
+      - '.github/workflows/polymarket-phase10-tests.yml'
+  pull_request:
+    paths:
+      - '03_IMPLEMENTATION/packages/polymarket/**'
+      - '20_TESTS/polymarket/**'
+      - '07_EVALUATION/polymarket/**'
+      - '.github/workflows/polymarket-phase10-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: 03_IMPLEMENTATION
+
+jobs:
+  phase10-paper-simulation:
+    name: Phase 10 paper simulation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install test runner
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pyyaml
+      - name: Run Phase 1-10 Polymarket tests
+        run: |
+          python -m pytest -q \
+            20_TESTS/polymarket/test_market_snapshot.py \
+            20_TESTS/polymarket/test_historical_replay.py \
+            20_TESTS/polymarket/test_prediction_ledger.py \
+            20_TESTS/polymarket/test_prediction_council.py \
+            20_TESTS/polymarket/test_calibration.py \
+            20_TESTS/polymarket/test_market_model_edge.py \
+            20_TESTS/polymarket/test_risk_abstention.py \
+            20_TESTS/polymarket/test_risk_sizing.py \
+            20_TESTS/polymarket/test_backtest.py \
+            20_TESTS/polymarket/test_benchmark.py \
+            20_TESTS/polymarket/test_ablation.py \
+            20_TESTS/polymarket/test_gamma_ingest.py \
+            20_TESTS/polymarket/test_resolutions.py \
+            20_TESTS/polymarket/test_pipeline_end_to_end.py \
+            20_TESTS/polymarket/test_paper_simulation.py \
+            20_TESTS/polymarket/test_paper_pipeline.py

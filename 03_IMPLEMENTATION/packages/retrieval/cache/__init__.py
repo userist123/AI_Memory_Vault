@@ -17,21 +17,29 @@ class Cache(LRUCache):
     This guarantees isolation and prevents cache leakage.
     """
 
-    def _build_key(self, principal, query_fp, lifecycle=None, target_types=None, disclosure_level="metadata"):
+    def _build_key(self, principal, query_fp, lifecycle=None, target_types=None, disclosure_level="metadata",
+                   classifier_filter_arm=None):
         parts = [principal.value]
         parts.append(query_fp)
         parts.append(tuple(sorted(lifecycle)) if lifecycle else ())
         parts.append(tuple(sorted(target_types)) if target_types else ())
         parts.append(disclosure_level)
+        # r025 WP-9: two classifier-filter arms softening the same inferred
+        # filter differently must never collide, and an arm change must
+        # never silently reuse another arm's entry. `None` preserves the
+        # pre-WP-9 key for any caller that never passes this argument.
+        parts.append(classifier_filter_arm)
         raw = "|".join(str(p) for p in parts)
         return hashlib.sha256(raw.encode()).hexdigest()
 
-    def get(self, principal, query_fp, lifecycle=None, target_types=None, disclosure_level="metadata"):
-        key = self._build_key(principal, query_fp, lifecycle, target_types, disclosure_level)
+    def get(self, principal, query_fp, lifecycle=None, target_types=None, disclosure_level="metadata",
+            classifier_filter_arm=None):
+        key = self._build_key(principal, query_fp, lifecycle, target_types, disclosure_level, classifier_filter_arm)
         return super().get(key)
 
-    def set(self, value, principal, query_fp, lifecycle=None, target_types=None, disclosure_level="metadata", ttl=None, events=None):
-        key = self._build_key(principal, query_fp, lifecycle, target_types, disclosure_level)
+    def set(self, value, principal, query_fp, lifecycle=None, target_types=None, disclosure_level="metadata",
+            classifier_filter_arm=None, ttl=None, events=None):
+        key = self._build_key(principal, query_fp, lifecycle, target_types, disclosure_level, classifier_filter_arm)
         return super().set(value, key, ttl=ttl, events=events)
 
 

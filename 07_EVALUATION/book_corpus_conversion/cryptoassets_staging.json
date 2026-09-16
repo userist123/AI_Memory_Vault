@@ -1,0 +1,195 @@
+[
+  {
+    "concept": "cryptocurrency",
+    "definition": "Digital monetary asset engineered primarily to function as a trustless medium of exchange, store of value, and unit of account without centralized banking intermediation.",
+    "claim_type": null,
+    "maps_to_slot": "ontology",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [7, 12, 13, 19, 28]",
+    "evidence_quote": "The native assets historically have been called cryptocurrencies or altcoins, but we prefer the term cryptoassets, which is the term we will use throughout the book.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 5,
+    "also_found_in": [
+      "Chunk 12",
+      "Chunk 13",
+      "Chunk 19",
+      "Chunk 28"
+    ]
+  },
+  {
+    "concept": "cryptocommodity",
+    "definition": "Fungible protocol resource providing programmatic access to foundational computational primitives such as processing cycles, bandwidth, or decentralized storage.",
+    "claim_type": null,
+    "maps_to_slot": "ontology",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [12, 13, 22, 26]",
+    "evidence_quote": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or digital tokens (cryptotokens), provisioning finished digital goods and services.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 4,
+    "also_found_in": [
+      "Chunk 13",
+      "Chunk 22",
+      "Chunk 26"
+    ]
+  },
+  {
+    "concept": "cryptotoken",
+    "definition": "Application-specific digital credential issued upon an underlying blockchain protocol that conveys programmatic access rights, platform utility, or governance privileges within a decentralized service.",
+    "claim_type": null,
+    "maps_to_slot": "ontology",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [12, 13, 22]",
+    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games, and more, which are orchestrated by cryptotokens. Just as in the physical world, where currencies and commodities fuel an economy to create finished goods and services, so too in the digital world the infrastructures provided by cryptocurrencies and cryptocommodities are coming together to support the aforementioned finished-product digital goods and services.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 3,
+    "also_found_in": [
+      "Chunk 13",
+      "Chunk 22"
+    ]
+  },
+  {
+    "concept": "network value",
+    "definition": "Aggregate monetary capitalization of an autonomous distributed cryptographic network, determined by multiplying total circulating token quantity by the prevailing open-market exchange price.",
+    "claim_type": null,
+    "maps_to_slot": "state",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [12, 18, 22, 23]",
+    "evidence_quote": "As of March 2017, there were over 800 cryptoassets with a fascinating family tree, accruing to a total network value1 of over $24 billion.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 4,
+    "also_found_in": [
+      "Chunk 18",
+      "Chunk 22",
+      "Chunk 23"
+    ]
+  },
+  {
+    "concept": "proof-of-work",
+    "definition": "Consensus algorithm requiring network participants to expend verifiable computational energy solving mathematical hash puzzles to validate transaction blocks and secure chronological ledger state.",
+    "claim_type": null,
+    "maps_to_slot": "procedures",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [10, 12, 24]",
+    "evidence_quote": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync. Technobabble? Sure.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 3,
+    "also_found_in": [
+      "Chunk 12",
+      "Chunk 24"
+    ]
+  },
+  {
+    "concept": "smart contracts",
+    "definition": "Self-executing computer programs stored directly on a distributed ledger that autonomously evaluate preconditions and execute deterministic state transitions without third-party intervention.",
+    "claim_type": null,
+    "maps_to_slot": "procedures",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [12, 13, 23]",
+    "evidence_quote": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of Zcash, both of whom worked at DigiCash for a time.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 3,
+    "also_found_in": [
+      "Chunk 13",
+      "Chunk 23"
+    ]
+  },
+  {
+    "concept": "hard fork",
+    "definition": "Non-backward-compatible consensus protocol divergence that renders previously invalid blocks valid, necessitating universal node software upgrades to prevent a permanent ledger partition.",
+    "claim_type": null,
+    "maps_to_slot": "routing",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [12, 13]",
+    "evidence_quote": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the immutable nature of the blockchain, a use case we’ll address more in the next chapter.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 2,
+    "also_found_in": [
+      "Chunk 13"
+    ]
+  },
+  {
+    "concept": "volatility",
+    "definition": "Statistical dispersion measure quantifying the variance and frequency of historical price fluctuations, serving as a primary indicator of market risk and asset liquidity transitions.",
+    "claim_type": null,
+    "maps_to_slot": "judgement",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [15, 16]",
+    "evidence_quote": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns per unit of volatility, or risk-reward ratio.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 2,
+    "also_found_in": [
+      "Chunk 16"
+    ]
+  },
+  {
+    "concept": "correlation",
+    "definition": "Normalized statistical metric measuring the degree of co-movement between the returns of different asset classes, critical for optimizing the efficient frontier of investment portfolios.",
+    "claim_type": null,
+    "maps_to_slot": "judgement",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [15, 16]",
+    "evidence_quote": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its behavior differs significantly from the preexisting assets in that portfolio, it can actually decrease the overall risk of the portfolio.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 2,
+    "also_found_in": [
+      "Chunk 16"
+    ]
+  },
+  {
+    "concept": "mining",
+    "definition": "Operational process whereby distributed hardware nodes contribute specialized computation to validate transactions, seal chronological blocks, and mint programmatic protocol subsidies.",
+    "claim_type": null,
+    "maps_to_slot": "procedures",
+    "maps_to_module": null,
+    "confidence_in_literature": 0.95,
+    "source_book": "cryptoassets",
+    "source_location": "Chapters [11, 12, 18, 23, 24]",
+    "evidence_quote": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure bitcoin transactions, there needs to be a native asset that can be paid out to the miners for their work.",
+    "extraction_method": "agent_direct",
+    "model": "antigravity",
+    "provider": "agent",
+    "occurrences": 5,
+    "also_found_in": [
+      "Chunk 12",
+      "Chunk 18",
+      "Chunk 23",
+      "Chunk 24"
+    ]
+  }
+]

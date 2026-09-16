@@ -1,0 +1,10 @@
+{
+  "query_url": "https://clob.polymarket.com/prices-history?market=65804651831039537125654373265121851049085423295502084947322820720829800576360&interval=all",
+  "queried_at_utc": "2026-09-13T21:06:24.810730+00:00",
+  "http_status": 200,
+  "record_count": 2,
+  "sha256": "50bc941a7d4e20b69792006179f73d60fbac9e71a10eed1a91f5c62cbf62dbe6",
+  "token_id": "65804651831039537125654373265121851049085423295502084947322820720829800576360",
+  "market_id": "4504950",
+  "notes": "Captured with interval=all to obtain actual trade history points for intraday market 4504950 (fidelity=1440 returns 0 daily points for intraday markets lasting <24h)"
+}

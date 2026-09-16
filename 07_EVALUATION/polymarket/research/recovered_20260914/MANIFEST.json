@@ -1,0 +1,218 @@
+{
+  "recovered_from": "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/",
+  "recovered_at": "2026-09-14",
+  "recovered_by": "Claude",
+  "note": "byte-identical copies of files that were never committed; mtime is last modification in the source directory, not first run",
+  "files": [
+    {
+      "path": "raw_inputs/batch_history_all_expanded.json",
+      "bytes": 461924,
+      "sha256": "a6aecf5989f544119fe540850aca0d93eeb66d8db852547dbbc5045f4ac9cae1",
+      "source_mtime_local": "2026-09-14T00:38:16"
+    },
+    {
+      "path": "raw_inputs/qualified_clob_markets_500.json",
+      "bytes": 4010118,
+      "sha256": "b53a52243c080deb2c2200afa33c6d48a0aadd4fc2923dfcea4b39d254f1aa7d",
+      "source_mtime_local": "2026-09-14T00:38:05"
+    },
+    {
+      "path": "scripts/adversarial_leakage_test.py",
+      "bytes": 8043,
+      "sha256": "825015ed8a3ad4343800ddadf7436b6f4ea1c4dcddeba456a900f216e26eb316",
+      "source_mtime_local": "2026-09-14T00:11:20"
+    },
+    {
+      "path": "scripts/analyze_483_corpus.py",
+      "bytes": 6298,
+      "sha256": "271aa1b90a3f3a975ca9c23aef6f87a3c94903841466a233f4c44ab14bfe6376",
+      "source_mtime_local": "2026-09-14T00:38:26"
+    },
+    {
+      "path": "scripts/analyze_entry_timing.py",
+      "bytes": 3972,
+      "sha256": "0b06d01d2f57e3be56f7f2317d926df450f8417508cc81f875b99b3600658b98",
+      "source_mtime_local": "2026-09-14T00:36:09"
+    },
+    {
+      "path": "scripts/analyze_in_play.py",
+      "bytes": 3295,
+      "sha256": "c73b2d87a849c69a5bc185d7fe09dc7821b8d630f5ddb1c1ca065ae783393cdb",
+      "source_mtime_local": "2026-09-14T00:36:26"
+    },
+    {
+      "path": "scripts/analyze_post_close_points.py",
+      "bytes": 2127,
+      "sha256": "41544e0f6bd0398a6077a36a22bac7f7977d31a814c04600891fa01199ece026",
+      "source_mtime_local": "2026-09-14T00:37:28"
+    },
+    {
+      "path": "scripts/build_attested_resolutions.py",
+      "bytes": 3603,
+      "sha256": "68ef35f2598544d49ea0150fe55862aee7e266fab26f5ebbf38cb32b2b9e49d8",
+      "source_mtime_local": "2026-09-14T00:12:24"
+    },
+    {
+      "path": "scripts/build_historical_dataset.py",
+      "bytes": 6506,
+      "sha256": "47cb15236b68b9f6c6c482b97665c5984139303e2f0e4b6ec1b084b6830bcd9e",
+      "source_mtime_local": "2026-09-14T00:09:42"
+    },
+    {
+      "path": "scripts/check_game_time.py",
+      "bytes": 597,
+      "sha256": "e50efe1366c8070e044b0bf1ec99732ac233351cb52f848bb0c41e2c975808d0",
+      "source_mtime_local": "2026-09-14T00:36:16"
+    },
+    {
+      "path": "scripts/check_times.py",
+      "bytes": 812,
+      "sha256": "30230bd7839fa22f7dbd64467ecb558717900c732cd38fcce0b1da115827156d",
+      "source_mtime_local": "2026-09-14T00:12:15"
+    },
+    {
+      "path": "scripts/expand_corpus_500.py",
+      "bytes": 4727,
+      "sha256": "a11360778e828e2e83cf46667876619bf772de270d6e34bc30bfa61afbe4bd5b",
+      "source_mtime_local": "2026-09-14T00:37:59"
+    },
+    {
+      "path": "scripts/inspect_candidates.py",
+      "bytes": 443,
+      "sha256": "e765b77929e997a02a60b910cabf058ec48f3b41cbc36e25a3b27c28850c99e3",
+      "source_mtime_local": "2026-09-14T00:08:57"
+    },
+    {
+      "path": "scripts/inspect_in_play_subset.py",
+      "bytes": 1203,
+      "sha256": "e489c8573e38ed9e0fe53a0e9341d6cc8df9fa22166a208c9f54dff760a6859b",
+      "source_mtime_local": "2026-09-14T00:36:34"
+    },
+    {
+      "path": "scripts/inspect_trades.py",
+      "bytes": 1508,
+      "sha256": "068ec5c8f4cdf148ed30f2c982c54debea61bbe3e2916a581de0a8dc237875b3",
+      "source_mtime_local": "2026-09-14T00:10:06"
+    },
+    {
+      "path": "scripts/measure_corpus_depth.py",
+      "bytes": 7880,
+      "sha256": "bbc8ae0d1a2075833261d8f4cd053372e14f8b56d8a1af347e9d9dc529f73a81",
+      "source_mtime_local": "2026-09-14T00:07:49"
+    },
+    {
+      "path": "scripts/point_counts.py",
+      "bytes": 615,
+      "sha256": "f10ed526f149ebe6ac2c8c648e9cf0b2a2fc6c0a1f8ec6fb387f11e793950f6a",
+      "source_mtime_local": "2026-09-14T00:09:02"
+    },
+    {
+      "path": "scripts/print_repo_table.py",
+      "bytes": 1193,
+      "sha256": "f60d7dd6bccbcdd6f396d4d5890b04bc3d440d8f0499f423a55093f8faa3a1a1",
+      "source_mtime_local": "2026-09-14T00:12:49"
+    },
+    {
+      "path": "scripts/probe_clob_diversity.py",
+      "bytes": 1837,
+      "sha256": "46be6b667bbf373fa15d342a4d86f55612653ec11db45ddedd897741a971e461",
+      "source_mtime_local": "2026-09-14T00:37:43"
+    },
+    {
+      "path": "scripts/probe_high_volume.py",
+      "bytes": 940,
+      "sha256": "6715675e08e318c8bf0440d96cb1ff572b406e37a8b9244f755d2b8c3e3221bc",
+      "source_mtime_local": "2026-09-14T00:09:07"
+    },
+    {
+      "path": "scripts/probe_keyset.py",
+      "bytes": 996,
+      "sha256": "033fa0cae1cf8327de2cc056f0bdcd6b8eb496475ba5ffde6f9012666306dea4",
+      "source_mtime_local": "2026-09-14T00:08:11"
+    },
+    {
+      "path": "scripts/run_mechanical_control_evaluation.py",
+      "bytes": 4439,
+      "sha256": "a23cd69551ab3b27fb03756f50b893babc1192b71e2acffced94dafb66b58377",
+      "source_mtime_local": "2026-09-14T00:09:58"
+    },
+    {
+      "path": "scripts/save_corpus_depth_fixture.py",
+      "bytes": 2194,
+      "sha256": "7756b6542944080ee7c55ca725b6dd86c524416d6b7254128454dcc6c4ddec25",
+      "source_mtime_local": "2026-09-14T00:08:18"
+    },
+    {
+      "path": "scripts/save_expanded_fixture.py",
+      "bytes": 2362,
+      "sha256": "773f0eb19974a8cb5660268be51105ca96664d9b11d0d386eae3fc4c41459b81",
+      "source_mtime_local": "2026-09-14T00:38:40"
+    },
+    {
+      "path": "scripts/test_clob_endpoint_sampling.py",
+      "bytes": 2293,
+      "sha256": "5c4605c0b35263652c9b3d41fbf12356c353ae5a60c6c55768d84c6b08931b14",
+      "source_mtime_local": "2026-09-14T00:36:47"
+    },
+    {
+      "path": "scripts/test_exact_tokens.py",
+      "bytes": 3444,
+      "sha256": "35264b5acf3968d7dacf5be9b051527f43c86963ff83c954a7f3b1c02295c0ed",
+      "source_mtime_local": "2026-09-14T00:37:05"
+    },
+    {
+      "path": "scripts/test_gamma_filter.py",
+      "bytes": 1678,
+      "sha256": "2b92530dd6b53c4e70ebff008bca4a8b9f6c38d8542b51e25f5293e94aee4320",
+      "source_mtime_local": "2026-09-14T00:08:03"
+    },
+    {
+      "path": "scripts/test_ts_window.py",
+      "bytes": 1248,
+      "sha256": "dadc3af31292b2385272506a8746fe5dea9ac7a95356114ec2655bbe32b15a6b",
+      "source_mtime_local": "2026-09-14T00:37:18"
+    },
+    {
+      "path": "scripts/verify_bundles.py",
+      "bytes": 1707,
+      "sha256": "ecd1cd840b803cd59fb105a7d43f5dca5ce20af58203e1bd9fb42920ed9f8dae",
+      "source_mtime_local": "2026-09-14T00:09:32"
+    },
+    {
+      "path": "scripts/verify_manifest.py",
+      "bytes": 2608,
+      "sha256": "e2a3527504a9fbee65d17354b92731bae44cc8464cc463099cab2cd89916f5e0",
+      "source_mtime_local": "2026-09-14T00:12:41"
+    },
+    {
+      "path": "scripts/write_depth_findings.py",
+      "bytes": 6837,
+      "sha256": "2c14cb9bad2b801f90ab8a6266f5dc3c80fcfb1fd30cb19eade5fab34fd48fcc",
+      "source_mtime_local": "2026-09-14T00:08:41"
+    },
+    {
+      "path": "scripts/write_findings_19pct.py",
+      "bytes": 9772,
+      "sha256": "386209ae399d0c326131cfb3ee966f85e2d8cbe443b1f974697c34f369f7a175",
+      "source_mtime_local": "2026-09-14T00:39:02"
+    },
+    {
+      "path": "scripts/write_leakage_audit.py",
+      "bytes": 10319,
+      "sha256": "dba523e2d6cf8bed8555f6ed40a753c9b94dc0284a0f90bd56a3a8644dbb5ac3",
+      "source_mtime_local": "2026-09-14T00:11:41"
+    },
+    {
+      "path": "scripts/write_mechanical_results.py",
+      "bytes": 5379,
+      "sha256": "2a332abbb7201498d05ca0fc83e52b42435691e0bea88f7a7bc0df18e7d84936",
+      "source_mtime_local": "2026-09-14T00:10:18"
+    },
+    {
+      "path": "scripts/write_overnight_report.py",
+      "bytes": 10649,
+      "sha256": "38bd1889996a72224508efb86d530df2e8c0ac3f55a81e7a846572b6efdf5de7",
+      "source_mtime_local": "2026-09-14T00:13:08"
+    }
+  ]
+}

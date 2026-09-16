@@ -94,9 +94,58 @@ def _pattern(concept: str) -> re.Pattern[str]:
     return re.compile(rf"(?<![\w-])({body})(?![\w-])", re.IGNORECASE)
 
 
-def find_mentions(chunks: list[dict[str, Any]], concept: str) -> list[dict[str, Any]]:
-    """Every non-low_prose section mentioning the term, with context."""
+def most_distinctive_word(concept: str, chunks: list[dict[str, Any]]) -> str | None:
+    """The word of a multi-word term that narrows the search most.
+
+    Three concepts came back with zero mentions while being genuinely present:
+    Soar writes "appraisal" in 18 sections, "SVS" in 19 and "feelings" in 4,
+    never "cognitive appraisal", "spatial visual system" or "feeling state".
+    Zero is the worst possible wrong answer — it says there is nothing to look
+    at.
+
+    Falling back to the grammatical head is worse than useless here. The head
+    of "feeling state" is "state", which appears in 87 of 114 sections and is
+    its own concept in this book; the head of "spatial visual system" is
+    "system". Both would return most of the book.
+
+    So this picks the rarest word instead — the one that actually distinguishes
+    the term. "feeling" over "state", "appraisal" over "cognitive", and the
+    result is a short list rather than the table of contents.
+    """
+    words = [w for w in re.sub(r"[^\w\s-]", " ", concept.strip().lower()).split()
+             if len(w) > 3]
+    if len(words) < 2:
+        return None
+    scored = []
+    for word in words:
+        pattern = _pattern(word)
+        count = sum(1 for c in chunks
+                    if not c.get("low_prose") and pattern.search(c["content"]))
+        if count:
+            scored.append((count, word))
+    return min(scored)[1] if scored else None
+
+
+def find_mentions(
+    chunks: list[dict[str, Any]], concept: str
+) -> list[dict[str, Any]]:
+    """Every non-low_prose section mentioning the term, with context.
+
+    Falls back to the head noun when the full term appears nowhere, and says so
+    on every entry, because a loose match is a weaker reason to look than an
+    exact one and the reader should be able to tell them apart.
+    """
     pattern = _pattern(concept)
+    loose = False
+    matched_word = concept
+    if not any(
+        pattern.search(c["content"]) for c in chunks if not c.get("low_prose")
+    ):
+        head = most_distinctive_word(concept, chunks)
+        if head:
+            pattern = _pattern(head)
+            matched_word = head
+            loose = True
     found: list[dict[str, Any]] = []
     for chunk in chunks:
         if chunk.get("low_prose"):
@@ -119,6 +168,11 @@ def find_mentions(chunks: list[dict[str, Any]], concept: str) -> list[dict[str, 
             #: Unanswered on purpose. A mention is not an occurrence, and
             #: nothing here can tell the difference.
             "defines_the_term": None,
+            #: True when the full term appears nowhere and this matched only
+            #: its most distinctive word — the passage may be about something
+            #: else, so a loose hit is a weaker reason to look than an exact one.
+            "loose_match": loose,
+            "matched_on": matched_word,
         })
     return found
 
@@ -143,8 +197,11 @@ def build(args: argparse.Namespace) -> int:
     for concept, done in sorted(submitted.items()):
         mentions = find_mentions(chunks, concept)
         unchecked = [m for m in mentions if m["chunk_index"] not in done]
+        loose = bool(mentions) and mentions[0].get("loose_match")
         rows.append({
             "concept": concept,
+            "matched_on": (mentions[0]["matched_on"] if loose else concept),
+            "loose_match": loose,
             "already_submitted_from": sorted(x for x in done if isinstance(x, int)),
             "sections_mentioning": len(mentions),
             "sections_not_yet_looked_at": [m["chunk_index"] for m in unchecked],

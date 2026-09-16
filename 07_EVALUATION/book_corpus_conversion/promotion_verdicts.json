@@ -1,0 +1,471 @@
+{
+  "schema_version": "polymarket-promotion-verdicts.v1",
+  "source_review": "07_EVALUATION/book_corpus_conversion/PROMOTION_REVIEW.md",
+  "decided_at": "2026-09-12",
+  "decided_by": "antigravity",
+  "verdicts": [
+    {
+      "concept": "architecture",
+      "verdict": "REJECT",
+      "reason": "Textul din preprint folosește termenul ca o etichetă descriptivă ultra-generică pentru un sistem compus ipotetic ('Veronica X Pro Architecture'), fără a defini o primitivă de organizare multi-agent și suprapunându-se trivial peste noțiunea generală de sistem."
+    },
+    {
+      "concept": "brain-computer",
+      "verdict": "REJECT",
+      "reason": "Este un fragment trunchiat de colocare ('brain-computer interface') dintr-o ecuație hamiltoniană speculativă, nefiind un actor computațional sau un agent în sine."
+    },
+    {
+      "concept": "familiarity",
+      "verdict": "SPLIT",
+      "reason": "Sub aceeași etichetă există două concepte complet diferite: 1) 'familiarity (semnal epistemic)' -> Slot: confidence, occ: 3 (why_we_forget), reprezentând senzația sub-recolectivă de recunoaștere perceptuală; 2) 'familiarity buffer (filtru RL)' -> Slot: state, occ: 6 (2504.05840v1), reprezentând un buffer circular de pierdere contrastivă care filtrează stările rare."
+    },
+    {
+      "concept": "generalization",
+      "verdict": "PROMOTE",
+      "reason": "Definește metrica de certitudine epistemică și transfer out-of-distribution a reprezentărilor dincolo de eșantioanele imediate de antrenare, completând slotul confidence cu o măsură cantitativă de robustețe a cunoștințelor."
+    },
+    {
+      "concept": "momentum",
+      "verdict": "REJECT",
+      "reason": "Reprezintă un parametru matematic de optimizare numerică (medie mobilă exponențială a pierderilor contrastive pe epoci) dintr-un algoritm specific de RL, neconstituind un proces cognitiv de consolidare a memoriei."
+    },
+    {
+      "concept": "synaptic plasticity",
+      "verdict": "PROMOTE",
+      "reason": "Definește mecanismul bio-computațional de modificare a forței de transmisie a joncțiunilor în funcție de activitate, oferind fundamentul fizic/structural prin care experiența se transformă în stocare permanentă în slotul consolidation."
+    },
+    {
+      "concept": "experience replay",
+      "verdict": "PROMOTE",
+      "reason": "Definește tehnica și procesul cognitiv activ de re-eșantionare și re-traversare a traiectoriilor istorice stocate pentru actualizarea reprezentărilor fără uitare catastrofică, reprezentând un mecanism distinct de consolidare offline."
+    },
+    {
+      "concept": "long-term potentiation",
+      "verdict": "MERGE",
+      "reason": "LTP este expresia electrofiziologică și celulară directă a consolidării sinaptice pe căile hipocampice, nejustificând un nod separat în ontologie față de conceptul de 'consolidation' deja promovat.",
+      "merge_into": "consolidation"
+    },
+    {
+      "concept": "creb",
+      "verdict": "REJECT",
+      "reason": "Desemnează o proteină și o cascadă moleculară de transcripție genetică (CREB-1) specifică neurobiologiei Aplysia, situându-se la un nivel de detaliu biochimic mult prea scăzut pentru ontologia de arhitectură cognitivă."
+    },
+    {
+      "concept": "papert principle",
+      "verdict": "PROMOTE",
+      "reason": "Formulează principiul arhitectural fundamental conform căruia dezvoltarea cognitivă avansată are loc prin sinteza de noi strategii administrative de orchestrare a cunoștințelor preexistente, nu prin simpla acumulare cumulativă de date."
+    },
+    {
+      "concept": "homeostasis",
+      "verdict": "MERGE",
+      "reason": "Textul lui Ashby definește homeostazia strict ca procesul de menținere a variabilelor esențiale în interiorul limitelor de viabilitate, fiind izomorfă cu dinamica conceptului 'essential variables' deja promovat în slotul constraints.",
+      "merge_into": "essential variables"
+    },
+    {
+      "concept": "law of requisite variety",
+      "verdict": "PROMOTE",
+      "reason": "Definește legea matematică cibernetică universală conform căreia capacitatea unui regulator de a bloca perturbațiile este limitată strict de varietatea stărilor sale interne, răspunzând direct cerințelor de frontieră din slotul constraints."
+    },
+    {
+      "concept": "censor",
+      "verdict": "PROMOTE",
+      "reason": "Descrie dispozitivul de memorie inhibitorie care reține circumstanțele specifice de eșec pentru a suprima preventiv activarea acțiunilor care duc la blocaje, oferind o primitivă clară de constrângere decizională."
+    },
+    {
+      "concept": "experiential memory",
+      "verdict": "MERGE",
+      "reason": "Textul survey-ului din 2025 folosește 'experiential memory' pentru a denumi istoricul traiectoriilor operaționale de execuție, fiind o redenumire în literatura LLM a conceptului canonic de 'episodic memory' deja promovat în slotul history.",
+      "merge_into": "episodic memory"
+    },
+    {
+      "concept": "tie impasse",
+      "verdict": "MERGE",
+      "reason": "Reprezintă o instanțiere particulară din arhitectura Soar a impasului decizional (când preferințele existente nu pot departaja operatorii candidați), fiind acoperită direct de conceptul 'impasse' promovat în slotul history.",
+      "merge_into": "impasse"
+    },
+    {
+      "concept": "consciousness",
+      "verdict": "REJECT",
+      "reason": "Este un construct filozofic speculativ tratat în preprint prin platforme de ioni captați și lasere, lipsit de orice definire operațională temporală sau autobiografică compatibilă cu slotul history."
+    },
+    {
+      "concept": "neural",
+      "verdict": "REJECT",
+      "reason": "Rândul reprezintă un artefact de extracție dintr-o referință bibliografică (conferința NeurIPS) și un adjectiv generic fără granițe conceptuale ontologice."
+    },
+    {
+      "concept": "agentic memory",
+      "verdict": "REJECT",
+      "reason": "Textul folosește sintagma ca titlu de secțiune și termen umbrelă pentru întreaga problemă a memoriei în agenți, funcționând ca o etichetă de meta-nivel și nu ca o componentă de identitate a arhitecturii."
+    },
+    {
+      "concept": "coherence",
+      "verdict": "REJECT",
+      "reason": "Desemnează o formulă de produs scalar între vectori de stare cuantică la timpi diferiți dintr-un preprint neverificat, fiind neoperaționalizabilă pentru identitatea unui sistem cognitiv."
+    },
+    {
+      "concept": "loss",
+      "verdict": "REJECT",
+      "reason": "Textul se referă strict la funcția de pierdere matematică (NT-Xent contrastive loss) folosită în gradient descent, fiind o unealtă de calcul numeric și nu o capacitate cognitivă de judecată sau decizie."
+    },
+    {
+      "concept": "reflection",
+      "verdict": "PROMOTE",
+      "reason": "Definește procesul metacognitiv de auto-evaluare prin care un agent auditează propriile urme de execuție pentru diagnosticarea erorilor și extragerea corecțiilor, răspunzând direct la întrebarea slotului judgement."
+    },
+    {
+      "concept": "false memory",
+      "verdict": "PROMOTE",
+      "reason": "Definește distorsiunea cognitivă și eșecul de judecată a realității surselor în reamintire, oferind o categorie ontologică esențială pentru diagnosticarea halucinațiilor și verificarea epistemică în slotul judgement."
+    },
+    {
+      "concept": "b-brain",
+      "verdict": "PROMOTE",
+      "reason": "Definește arhitectura reflectivă de ordinul doi a lui Minsky în care un modul separat monitorizează exclusiv configurațiile și performanțele interne ale procesorului principal, fără contact direct cu stimulii externi."
+    },
+    {
+      "concept": "numeric preference",
+      "verdict": "PROMOTE",
+      "reason": "Definește reprezentarea formală a utilității cantitative și valorii de politică pentru rezolvarea preferințelor între acțiuni candidate în ciclul decizional din Soar, răspunzând direct la întrebarea slotului judgement."
+    },
+    {
+      "concept": "default assumption",
+      "verdict": "PROMOTE",
+      "reason": "Desemnează mecanismul euristic de atribuire a valorilor pre-configurate în terminalele de reprezentare în absența informației explicite, permițând decizia rapidă sub informație parțială."
+    },
+    {
+      "concept": "functional dissociation",
+      "verdict": "REJECT",
+      "reason": "Reprezintă o metodologie experimentală și clinică de cercetare neuropsihologică pentru validarea izolării sistemelor de memorie, nefiind o componentă operațională a arhitecturii cognitive."
+    },
+    {
+      "concept": "frame",
+      "verdict": "PROMOTE",
+      "reason": "Definește structura de date topologică și situațională a lui Minsky cu terminale relaționale și valori implicite, oferind scheletul de mapare a scenelor și contextelor în slotul map."
+    },
+    {
+      "concept": "configural association",
+      "verdict": "PROMOTE",
+      "reason": "Definește mecanismul de legare a stimulilor elementari într-o reprezentare compusă unitară cu proprietăți emergente distincte, rezolvând problema compozițională a hărților cognitive."
+    },
+    {
+      "concept": "dispersion",
+      "verdict": "PROMOTE",
+      "reason": "Descrie proprietatea topologică cibernetică de dispersie a conexiunilor care izolează subsistemele și previne interferența generalizată în timpul învățării, aparținând organizării structurale a hărții."
+    },
+    {
+      "concept": "hierarchical memory",
+      "verdict": "PROMOTE",
+      "reason": "Definește organizarea memoriei în grafuri multi-nivel stratificate cu legături părinte-copil pe niveluri de abstractizare, reprezentând o topologie structurală explicită în slotul map."
+    },
+    {
+      "concept": "isomorphism",
+      "verdict": "PROMOTE",
+      "reason": "Definește maparea bijectivă riguroasă de conservare a structurii și comportamentului între două mașini dinamice, fiind criteriul matematic formal de mapare structurală între sisteme."
+    },
+    {
+      "concept": "perceptual representation system",
+      "verdict": "PROMOTE",
+      "reason": "Definește sistemul cortical pre-semantic (PRS) care păstrează hărțile structurale ale stimulilor vizuali și auditivi upstream de memoria declarativă, acoperind reprezentarea perceptuală în slotul map."
+    },
+    {
+      "concept": "problem space",
+      "verdict": "PROMOTE",
+      "reason": "Definește arena topologică universală postulată de Newell în care are loc deliberarea cognitivă prin tranziții incrementale între descrieri de stări, răspunzând la întrebarea 'unde trăiește informația'."
+    },
+    {
+      "concept": "method of loci",
+      "verdict": "PROMOTE",
+      "reason": "Descrie arhitectura mnemotehnică de ancorare a conținuturilor în coordonate spațiale imaginate ('palatul memoriei'), constituind un protocol nativ de organizare spațio-topologică în slotul map."
+    },
+    {
+      "concept": "factual memory",
+      "verdict": "MERGE",
+      "reason": "Textul definește 'factual memory' ca inventar de fapte stabile despre lume și utilizator verificate periodic, fiind exact conținutul taxonomic al conceptului 'semantic memory' deja promovat în slotul ontology.",
+      "merge_into": "semantic memory"
+    },
+    {
+      "concept": "black box",
+      "verdict": "PROMOTE",
+      "reason": "Definește tipul ontologic fundamental în cibernetică al sistemelor ale căror mecanisme interne sunt opace și pot fi deduse exclusiv prin seturi de intrări și ieșiri, stabilind o categorie formală de reprezentare."
+    },
+    {
+      "concept": "dual memory",
+      "verdict": "UNSURE",
+      "reason": "Textul se referă la arhitecturi inspirate din CLS (Complementary Learning Systems) cu două viteze de învățare; ar trebui lămurit dacă dorim un nod ontologic pentru framework-ul dual în sine sau dacă acesta este acoperit deja de distincția dintre working memory și semantic memory."
+    },
+    {
+      "concept": "working model",
+      "verdict": "MERGE",
+      "reason": "Reprezintă componenta de rețea plastică care absoarbe temporar feedback-ul curent înainte de consolidare, funcționând ca o zonă tampon de acumulare identică conceptual cu 'buffer' din slotul state.",
+      "merge_into": "buffer"
+    },
+    {
+      "concept": "chunk",
+      "verdict": "PROMOTE",
+      "reason": "Definește pachetul simbolic atomic de informație semantică cu atribute discrete supus activării și degradării în ACT-R și Soar, reprezentând unitatea structurală esențială din slotul ontology."
+    },
+    {
+      "concept": "canonical representation",
+      "verdict": "PROMOTE",
+      "reason": "Definește expresia matematică standardizată prin care un sistem dinamic modelează transformările discrete ale stărilor sale, oferind o schemă riguroasă de tipizare ontologică."
+    },
+    {
+      "concept": "multistable system",
+      "verdict": "PROMOTE",
+      "reason": "Definește clasa ontologică de sisteme compuse din părți ultrastabile cuplate slab care se pot adapta succesiv la medii variate, completând taxonomia sistemelor dinamice alături de 'state-determined system'."
+    },
+    {
+      "concept": "cryptocurrency",
+      "verdict": "PROMOTE",
+      "reason": "Definește clasa ontologică a activelor digitale monetare destinate funcționării ca mijloc de schimb și depozit de valoare fără intermediere centralizată, reprezentând prima ramură din taxonomia canonică a activelor crypto."
+    },
+    {
+      "concept": "artificial",
+      "verdict": "REJECT",
+      "reason": "Este un adjectiv trunchiat dintr-o expresie compusă ('artificial consciousness') dintr-un preprint speculativ, complet lipsit de individualitate ontologică."
+    },
+    {
+      "concept": "plasticity",
+      "verdict": "REJECT",
+      "reason": "Descrie o proprietate generală a rețelelor neurale artificiale de adaptare a ponderilor, suprapunându-se trivial peste noțiunea generală de învățare și duplicând mecanismul structural de 'synaptic plasticity' (propus în consolidation), fără a aduce o structură nouă în ontology."
+    },
+    {
+      "concept": "schema",
+      "verdict": "PROMOTE",
+      "reason": "Definește structura cognitivă de cunoștințe generale organizate pe roluri și scenarii care oferă scheletul de interpretare a evenimentelor noi, constituind o formă canonică de reprezentare în slotul ontology."
+    },
+    {
+      "concept": "symbolic",
+      "verdict": "UNSURE",
+      "reason": "Este utilizat în surse atât ca paradigmă arhitecturală de ordin înalt (simbolic vs conexionist) cât și ca tip de reprezentare discretă; ar trebui tranșat dacă dorim noțiuni de paradigmă globală în ontology sau doar structuri de cunoaștere concrete precum 'chunk'."
+    },
+    {
+      "concept": "cryptocommodity",
+      "verdict": "PROMOTE",
+      "reason": "Definește clasa activelor digitale fungibile care asigură acces programatic la resurse brute descentralizate (putere de calcul, stocare, bandă), fiind a doua categorie distinctă din taxonomia Burniske & Tatar."
+    },
+    {
+      "concept": "qualia",
+      "verdict": "REJECT",
+      "reason": "Este un concept filozofic fenomenologic legat în text de compactificarea teoriei M în 11 dimensiuni, fără operaționalizare mecanică într-un sistem de memorie persistentă."
+    },
+    {
+      "concept": "integrated information",
+      "verdict": "UNSURE",
+      "reason": "Teoria IIT (Tononi) are baze matematice cunoscute (Phi), însă citatul din preprint o leagă de densitatea plasmei gluonice; dacă se dorește integrarea Phi ca metrică teoretică, este necesară o definiție decuplată de fizica speculativă a particulelor."
+    },
+    {
+      "concept": "cryptotoken",
+      "verdict": "PROMOTE",
+      "reason": "Definește clasa credențialelor digitale specifice aplicațiilor descentralizate care conferă drepturi de acces la produse finite sau guvernanță, completând triada ontologică clasică de cryptoassets."
+    },
+    {
+      "concept": "topological",
+      "verdict": "REJECT",
+      "reason": "Este un adjectiv matematic extras dintr-o teoretizare a lagrangienilor de câmp cuantic fără mecanică sau structură cognitivă proprie."
+    },
+    {
+      "concept": "stable model",
+      "verdict": "MERGE",
+      "reason": "Definește rețeaua cu actualizare lentă prin medii mobile exponențiale care stochează cunoștințele consolidate peste taskuri, fiind o instanțiere directă a conceptului 'parametric memory' deja promovat în ontology.",
+      "merge_into": "parametric memory"
+    },
+    {
+      "concept": "subsymbolic",
+      "verdict": "PROMOTE",
+      "reason": "Definește cantitățile continue matematice (valori de activare, forțe asociative) care moderează accesibilitatea și viteza de regăsire a structurilor simbolice, reprezentând un palier computațional indispensabil în slotul ontology."
+    },
+    {
+      "concept": "habituation",
+      "verdict": "PROMOTE",
+      "reason": "Definește procedura elementară de învățare non-asociativă manifestată prin reducerea eliberării de transmițători la stimulări repetate inofensive, completând repertoriul de proceduri reflexe alături de 'sensitization' și 'classical conditioning'."
+    },
+    {
+      "concept": "mining",
+      "verdict": "PROMOTE",
+      "reason": "Definește procedura distribuită operațională prin care nodurile hardware contribuie calcul specializat pentru validarea tranzacțiilor și sigilarea blocurilor criptografice, aparținând nativ slotului procedures."
+    },
+    {
+      "concept": "regularization",
+      "verdict": "REJECT",
+      "reason": "Este o tehnică matematică generală de penalizare a funcției de cost în optimizarea învățării automate, nu o procedură specifică sistemului de memorie cognitivă."
+    },
+    {
+      "concept": "component process",
+      "verdict": "UNSURE",
+      "reason": "Denumește generic operațiile elementare dintr-o arhitectură modulară (modelul MEM); termenul este atât de abstract încât ar trebui decis dacă dorim o procedură meta-generic numită astfel sau proceduri concrete specifice."
+    },
+    {
+      "concept": "production rule",
+      "verdict": "PROMOTE",
+      "reason": "Definește unitatea fundamentală de execuție de tip condiție-acțiune din sistemele de producție care citește și modifică memoria de lucru secvențial, aducând o primitivă esențială în slotul procedures."
+    },
+    {
+      "concept": "fine-tuning",
+      "verdict": "REJECT",
+      "reason": "Este o procedură generică de antrenare offline/supervizată a modelelor neuronale pe date specifice, neconstituind o procedură internă a ciclului de memorie al agentului."
+    },
+    {
+      "concept": "in-context learning",
+      "verdict": "UNSURE",
+      "reason": "Este capacitatea de adaptare la câteva exemple plasate în prompt; ar trebui tranșat dacă o considerăm o procedură internă de execuție sau o proprietate emergentă a motorului de inferență LLM."
+    },
+    {
+      "concept": "proof-of-work",
+      "verdict": "PROMOTE",
+      "reason": "Definește algoritmul procedural de consens distribuit bazat pe consum verificabil de energie pentru rezolvarea de puzzle-uri criptografice, fiind o procedură critică în ledgerul distribuit."
+    },
+    {
+      "concept": "smart contracts",
+      "verdict": "PROMOTE",
+      "reason": "Definește programele autonome stocate pe ledger care evaluează precondiții și execută tranziții deterministe de stare fără intervenție umană, integrând codul procedural imutabil în slotul procedures."
+    },
+    {
+      "concept": "optimization",
+      "verdict": "REJECT",
+      "reason": "Citatul trimite la algoritmul Adam de coborâre pe gradient din literatura de calcul numeric, termenul fiind un concept de matematică aplicată, nu o procedură cognitivă de memorie."
+    },
+    {
+      "concept": "continual learning",
+      "verdict": "REJECT",
+      "reason": "Desemnează o întreagă disciplină și paradigmă de cercetare (lifelong learning), nefiind o procedură algoritmică discretă care poate fi executată într-un pas procedural."
+    },
+    {
+      "concept": "safety",
+      "verdict": "REJECT",
+      "reason": "Citatul discută cerințe etice dintr-un preprint speculativ, termenul fiind decuplat complet de întrebarea canonică a slotului provenance ('de unde provine informația')."
+    },
+    {
+      "concept": "shared memory",
+      "verdict": "UNSURE",
+      "reason": "Citatul îl listează doar ca temă de cercetare multi-agent; decizia depinde de stabilirea dacă arhitectura noastră folosește un spațiu de blackboard/memorie partajată ca primitivă relațională sau doar schimb de mesaje."
+    },
+    {
+      "concept": "collective memory",
+      "verdict": "PROMOTE",
+      "reason": "Definește constructul social și relațional prin care mai mulți agenți coordonează narative comune despre istorie și își aliniază perspectivele mutuale, încadrându-se direct în slotul relationships."
+    },
+    {
+      "concept": "entanglement",
+      "verdict": "REJECT",
+      "reason": "Termenul este folosit în text strict în sensul corelațiilor cuantice din plasma gluonică, fiind o analogie fizică speculativă fără fundament computațional pentru relațiile cognitive."
+    },
+    {
+      "concept": "external memory",
+      "verdict": "REJECT",
+      "reason": "Textul folosește termenul ca sintagmă umbrelă pentru orice modul extern atașat la un model (ex. LSTM cu memorie externă), funcționând ca o frază generică ce dublează procesul de 'retrieval' fără specificarea unei structuri concrete."
+    },
+    {
+      "concept": "k-line",
+      "verdict": "PROMOTE",
+      "reason": "Definește mecanismul structural al lui Minsky de conectare mnemonică ce reactivează simultan constelația specifică de agenți care au participat la rezolvarea cu succes a unei probleme anterioare."
+    },
+    {
+      "concept": "retrieval cue",
+      "verdict": "PROMOTE",
+      "reason": "Definește semnalul sau cheia de interogare externă/internă care declanșează accesul asociativ rapid la rețelele de memorie autobiografică sau semantică, completând mecanismele din slotul retrieval."
+    },
+    {
+      "concept": "contrastive learning",
+      "verdict": "REJECT",
+      "reason": "Reprezintă un obiectiv de antrenare auto-supervizată pentru structurarea spațiului de reprezentare (pozitive vs negative), nefiind un mecanism sau protocol de regăsire a memoriei."
+    },
+    {
+      "concept": "activation",
+      "verdict": "PROMOTE",
+      "reason": "Definește valoarea numerică asociativă calculată din istoric și propagare contextuală care dictează accesibilitatea și probabilitatea de regăsire a elementelor de memorie în ACT-R, răspunzând direct la slotul retrieval."
+    },
+    {
+      "concept": "retrieval-augmented generation",
+      "verdict": "REJECT",
+      "reason": "RAG este un pattern arhitectural compus de aplicație industrială ce combină căutarea cu un generator, nefiind o primitivă ontologică discretă (este acoperit funcțional de 'retrieval' combinat cu generarea)."
+    },
+    {
+      "concept": "associative memory",
+      "verdict": "PROMOTE",
+      "reason": "Definește mecanismul de regăsire adresabil prin conținut (content-addressable memory) în care înregistrările sunt accesate pe baza similarității semantice sau suprapunerii de trăsături, aparținând esenței slotului retrieval."
+    },
+    {
+      "concept": "coupling",
+      "verdict": "PROMOTE",
+      "reason": "Definește canalul cibernetic și protocolul de interconectare funcțională prin care controlerul direcționează și influențează subsistemele regulatoare, răspunzând direct la 'când și cum e direcționat fluxul'."
+    },
+    {
+      "concept": "operator proposal",
+      "verdict": "PROMOTE",
+      "reason": "Definește faza din ciclul decizional cognitiv în care producțiile analizează starea curentă și propun candidați de acțiune în setul de selecție, constituind pasul cheie de rutare a posibilităților."
+    },
+    {
+      "concept": "cross-exclusion",
+      "verdict": "PROMOTE",
+      "reason": "Definește mecanismul de inhibiție reciprocă concurențială prin care activarea unei agenții suspendă automat rutarea și formarea de memorie în agențiile rivale, prevenind conflictele de control."
+    },
+    {
+      "concept": "experience",
+      "verdict": "REJECT",
+      "reason": "Este un substantiv de limbaj comun mult prea general ('experience'), reprezentând un eșantion brut de date de antrenare și nu o capacitate sau deprindere cognitivă."
+    },
+    {
+      "concept": "representation",
+      "verdict": "REJECT",
+      "reason": "Textul se referă generic la vectori denși de trăsături din spațiul latent, termenul fiind o noțiune computațională generică fără specificitate de skill."
+    },
+    {
+      "concept": "quantum",
+      "verdict": "REJECT",
+      "reason": "Este un adjectiv trunchiat extras dintr-o trecere în revistă a unor algoritmi speculativi, nefiind o abilitate sau o procedură coerentă."
+    },
+    {
+      "concept": "perception",
+      "verdict": "PROMOTE",
+      "reason": "Definește abilitatea și canalul cognitiv de conversie a semnalelor senzoriale brute în reprezentări structurate (chunks) compatibile cu producțiile sistemului, reprezentând o competență de bază în skills."
+    },
+    {
+      "concept": "mnemonic",
+      "verdict": "PROMOTE",
+      "reason": "Definește abilitatea procedurală dobândită de transformare deliberată a informațiilor abstracte în ancore vizuale sau narative durabile, constituind un skill cognitiv formal de memorare."
+    },
+    {
+      "concept": "exploration",
+      "verdict": "PROMOTE",
+      "reason": "Definește competența și comportamentul activ de căutare deliberată a stărilor slab eșantionate din medii parțial observabile, constituind un skill critic de achiziție în învățarea prin întărire."
+    },
+    {
+      "concept": "reward",
+      "verdict": "REJECT",
+      "reason": "Desemnează un semnal numeric extern furnizat de mediu (funcție de recompensă scalară), nu o deprindere sau o competență executabilă a agentului."
+    },
+    {
+      "concept": "learning",
+      "verdict": "REJECT",
+      "reason": "Este un termen umbrelă mult prea cuprinzător extras dintr-o ecuație de optimizare, fiind deja acoperit la nivel operațional de procesele specifice din consolidation și procedures."
+    },
+    {
+      "concept": "goal",
+      "verdict": "PROMOTE",
+      "reason": "Definește structura cognitivă activă din memoria de lucru care menține contextul obiectivului curent și filtrează regulile relevante în timpul execuției, constituind componenta cheie din slotul state."
+    },
+    {
+      "concept": "Markov chain",
+      "verdict": "PROMOTE",
+      "reason": "Definește formalismul matematic stocastic de modelare a dinamicii sistemelor prin matrici de tranziție între stări discrete, oferind un model canonic de reprezentare a stărilor succesive."
+    },
+    {
+      "concept": "pronome",
+      "verdict": "PROMOTE",
+      "reason": "Definește mecanismul lui Minsky de pointeri temporari din memoria de lucru care leagă roluri tranzitorii de agenții activi fără modificarea conexiunilor permanente, răspunzând la 'ce este activ acum'."
+    },
+    {
+      "concept": "network value",
+      "verdict": "PROMOTE",
+      "reason": "Definește metrica macroeconomică de evaluare a stării agregate de capitalizare a unei rețele criptografice autonome (oferta circulantă înmulțită cu prețul de piață), aparținând stării financiare din domeniu."
+    },
+    {
+      "concept": "contextual memory",
+      "verdict": "MERGE",
+      "reason": "Descrie modulul de urmărire a variabilelor de sesiune, intenției utilizatorului și constrângerilor de dialog, reprezentând instanțierea conversațională în agenții AI a conceptului 'working memory' deja promovat în state.",
+      "merge_into": "working memory"
+    }
+  ]
+}
