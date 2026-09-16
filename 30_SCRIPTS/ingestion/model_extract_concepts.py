@@ -447,7 +447,16 @@ def main() -> int:
     ap.add_argument("--source-book", required=True)
     ap.add_argument("--output-file", required=True, type=pathlib.Path)
     ap.add_argument("--provider", default="local", choices=("local", "fake"))
-    ap.add_argument("--model", default="mixtral:8x7b")
+    ap.add_argument(
+        "--model", default="llama3.1:8b",
+        help="local model name. Whether it FITS matters more than its size: "
+             "a model larger than the GPU spills to CPU and eventually fails "
+             "to load at all — measured on this hardware, a 19 GB model on an "
+             "8 GB card ended in 'llama-server process has terminated'. The "
+             "run reports the resident fraction so this is visible. "
+             "This path is the fallback; see gate_agent_candidates.py for "
+             "having a capable agent read the chunks instead.",
+    )
     ap.add_argument("--model-tier", default="standard")
     ap.add_argument("--max-chunks", type=int, default=0)
     ap.add_argument("--timeout", type=float, default=600.0)
