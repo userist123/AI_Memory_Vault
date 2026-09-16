@@ -1,0 +1,94 @@
+{
+  "target_file": "corpus_depth_sample_500.json",
+  "sha256": "1397d989371b4b2516c678f2bb71d1c37683ed719791410f9af5597df75226a0",
+  "sample_size": 500,
+  "acquired_at_utc": "2026-09-13T21:08:21.600731+00:00",
+  "slices": [
+    {
+      "name": "era_2020_offset0",
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=0",
+      "count": 100,
+      "first_id": "12"
+    },
+    {
+      "name": "era_2022_offset500",
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=500",
+      "count": 100,
+      "first_id": "213594"
+    },
+    {
+      "name": "era_2023_offset1000",
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=1000",
+      "count": 100,
+      "first_id": "238945"
+    },
+    {
+      "name": "era_2024_offset1500",
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&offset=1500",
+      "count": 100,
+      "first_id": "239606"
+    },
+    {
+      "name": "era_2026_recent",
+      "url": "https://gamma-api.polymarket.com/markets?closed=true&limit=100&order=id&ascending=false",
+      "count": 100,
+      "first_id": "4537965"
+    }
+  ],
+  "cascade_summary": {
+    "raw": 500,
+    "f1_closed": 500,
+    "f2_enable_order_book": 101,
+    "f3_clob_token_ids": 101,
+    "f4_unambiguous_winner": 101,
+    "f5_history_interval_all": 100,
+    "f5_history_fidelity_1440": 0
+  },
+  "era_breakdown": {
+    "era_2020_offset0": {
+      "total": 100,
+      "f1_closed": 100,
+      "f2_orderbook": 0,
+      "f3_tokenids": 0,
+      "f4_winner": 0,
+      "f5_all": 0,
+      "f5_1440": 0
+    },
+    "era_2022_offset500": {
+      "total": 100,
+      "f1_closed": 100,
+      "f2_orderbook": 0,
+      "f3_tokenids": 0,
+      "f4_winner": 0,
+      "f5_all": 0,
+      "f5_1440": 0
+    },
+    "era_2023_offset1000": {
+      "total": 100,
+      "f1_closed": 100,
+      "f2_orderbook": 0,
+      "f3_tokenids": 0,
+      "f4_winner": 0,
+      "f5_all": 0,
+      "f5_1440": 0
+    },
+    "era_2024_offset1500": {
+      "total": 100,
+      "f1_closed": 100,
+      "f2_orderbook": 1,
+      "f3_tokenids": 1,
+      "f4_winner": 1,
+      "f5_all": 0,
+      "f5_1440": 0
+    },
+    "era_2026_recent": {
+      "total": 100,
+      "f1_closed": 100,
+      "f2_orderbook": 100,
+      "f3_tokenids": 100,
+      "f4_winner": 100,
+      "f5_all": 100,
+      "f5_1440": 0
+    }
+  }
+}

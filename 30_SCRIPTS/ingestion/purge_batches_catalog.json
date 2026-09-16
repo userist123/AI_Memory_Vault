@@ -1,0 +1,536 @@
+{
+  "A": [
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/01_identity.md",
+      "concept": "agentic memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/01_identity.md",
+      "concept": "coherence"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "qualia"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "topological"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "artificial"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "plasticity"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/04_relationships.md",
+      "concept": "entanglement"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "fine-tuning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "optimization"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "continual learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "regularization"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "loss"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "functional dissociation"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/09_provenance.md",
+      "concept": "safety"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/11_history.md",
+      "concept": "consciousness"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/11_history.md",
+      "concept": "neural"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "representation"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "reward"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "experience"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "quantum"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "architecture"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "brain-computer"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/15_retrieval.md",
+      "concept": "contrastive learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/15_retrieval.md",
+      "concept": "external memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/15_retrieval.md",
+      "concept": "retrieval-augmented generation"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "momentum"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "creb"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "factual memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "stable model"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "working model"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "contextual memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "homeostasis"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/11_history.md",
+      "concept": "tie impasse"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/11_history.md",
+      "concept": "experiential memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "long-term potentiation"
+    }
+  ],
+  "B": [
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/01_identity.md",
+      "concept": "problem space computational model"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/02_map.md",
+      "concept": "computational modeling"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/02_map.md",
+      "concept": "agent architecture"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/02_map.md",
+      "concept": "synapse specificity"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/02_map.md",
+      "concept": "place cells"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/02_map.md",
+      "concept": "spatial visual system"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "integrated theories"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "cognitive science"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "connectionist"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "hybrid"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "knowledge level"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "computational intelligence"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "long term identifier"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "microneme"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "symbol system"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "message"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "Maxwell demon"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "communication theory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "cybernetics"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/04_relationships.md",
+      "concept": "psychological theories"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/04_relationships.md",
+      "concept": "common vocabulary"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "early phase of LTP"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "feeling state"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "organization"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "reactive execution"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "planning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "production system"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "elaboration phase"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "search control"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "time series"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "central inhibition"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "reasoning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "emotion"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "anomaly detection"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "cognitive appraisal"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "metacognition"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "decision cycle"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "preference"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "calcineurin"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "cognitive band"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "biological band"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "rational band"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "social band"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "task environment"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "background noise"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "entropy"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "second law of thermodynamics"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/10_confidence.md",
+      "concept": "amount of information"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "Hierarchical Temporal Memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "deep learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/12_skills.md",
+      "concept": "communication engineering"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "intelligent systems"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "ACT-R"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "CLARION"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "OpenCog"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/13_agents.md",
+      "concept": "computing machine"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/14_routing.md",
+      "concept": "subgoal"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/15_retrieval.md",
+      "concept": "cue based retrieval"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/15_retrieval.md",
+      "concept": "recognition memory"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "learning from experience"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "online learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "late phase of LTP"
+    }
+  ],
+  "C": [
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/01_identity.md",
+      "concept": "artificial intelligence"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "neural network"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "big data"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "model"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "dataset"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "Semantic Memory Store"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "simulation"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "Plasticity-Stability Balance"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "classification"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "algorithm"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "machine learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "Continual Incremental Learning"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "interpretability"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "prediction"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "Parameter Importance Weighting"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "privacy"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "Catastrophic Forgetting Mitigation"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/09_provenance.md",
+      "concept": "metadata"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/11_history.md",
+      "concept": "Episodic Memory Buffer"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "Synergy"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "Synaptic Consolidation"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "Complementary Learning Systems"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "Stochastic Weight Consolidation"
+    }
+  ],
+  "D1": [
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/03_ontology.md",
+      "concept": "Semantic Memory Store",
+      "reason": "redenumit / duplicat cu semantic memory (promoted)"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/06_procedures.md",
+      "concept": "Continual Incremental Learning",
+      "reason": "redenumit / duplicat cu continual learning (proposed)"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/08_constraints.md",
+      "concept": "Catastrophic Forgetting Mitigation",
+      "reason": "redenumit / duplicat cu forgetting (promoted)"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/11_history.md",
+      "concept": "Episodic Memory Buffer",
+      "reason": "comasat in episodic memory (promoted, 50 occ vs 2 occ)"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/15_retrieval.md",
+      "concept": "Experience Replay",
+      "reason": "redenumit / duplicat cu experience replay in 16_consolidation.md (proposed)"
+    }
+  ],
+  "D2": [
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/05_state.md",
+      "concept": "Plasticity-Stability Balance",
+      "reason": "absent / fabricat (textul are stability-plasticity dilemma/trade-off)"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/07_judgement.md",
+      "concept": "Parameter Importance Weighting",
+      "reason": "absent / fabricat (textul are doar parameter importance)"
+    },
+    {
+      "slot_file": "01_ARCHITECTURE/ontology/slots/16_consolidation.md",
+      "concept": "Stochastic Weight Consolidation",
+      "reason": "absent / fabricat (concept inexistent in lucrare)"
+    }
+  ]
+}
