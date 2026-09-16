@@ -1,8 +1,8 @@
 # Phase 1 — Market Snapshot Report
 
 Status: **ACCEPTED / RUNTIME VERIFIED**
-Branch: `r047-pm-phase1-fix`
-Acceptance-fix head: `48dd9ab914fe25e446b75648dbce614e4565bc81`
+Branch: `r046/polymarket-phase1-market-snapshots`
+Acceptance-fix head: `8abeecaedccca66cec3828b309f62cb4820ebfc7`
 Phase 1 implementation merge: PR #81, merge commit `3aea55ca7aa5cd05a18daa655f52ef2ced4d0273`
 Phase 0 base: `r046/polymarket-phase0-audit` at `2e0ca03d692a55a4b1ebed0d94981def6a0f590e`
 

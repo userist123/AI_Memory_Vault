@@ -71,7 +71,6 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
-import re
 import sys
 from collections import Counter
 from typing import Any
@@ -347,13 +346,6 @@ def gate(args: argparse.Namespace) -> int:
     print(f"  candidates submitted    {len(candidates)}")
     print(f"  kept                    {len(rows)}  ({collapsed} duplicates merged)")
     print(f"  rejected                {sum(rejects.values())}  {dict(rejects.most_common())}")
-    if frames:
-        worst = sorted(frames.items(), key=lambda kv: -kv[1])[:3]
-        verdict = "SUBMISSION REFUSED AS TEMPLATED" if batch_templated else "reported only"
-        print(f"  reused frames           {len(frames)} distinct 8-grams, "
-              f"{fraction:.0%} of rows touched  ({verdict})")
-        for phrase, count in worst:
-            print(f'      x{count:<5} "{phrase}"')
     print(f"  occurrence histogram    {dict(sorted(histogram.items()))}")
     print(f"  written                 {args.output_file}")
     if args.rejects_file:
@@ -373,7 +365,7 @@ def _summarise(candidate: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def main(argv: list[str] | None = None) -> int:
+def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="command", required=True)
 
@@ -395,7 +387,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     g.set_defaults(func=gate)
 
-    args = ap.parse_args(argv)
+    args = ap.parse_args()
     return args.func(args)
 
 

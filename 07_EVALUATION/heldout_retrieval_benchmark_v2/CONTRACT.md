@@ -81,3 +81,41 @@ file to CRLF produces an identical digest. `.gitattributes` additionally pins
 
     python freeze.py            # verify
     python freeze.py --freeze   # re-freeze, only for a deliberate new version
+
+## v2.1 (r025 WP-12) — 2 new graph cases added; most attempted candidates could not be verified
+
+v2.1 is an additive revision of v2, not a break: `schema_version` and
+`set_name` are unchanged, only `heldout.json` grew from 30 to 32 cases
+(`H31`, `H32`, both `one_hop_graph_expansion`) and both files were
+re-frozen. Full method and numbers:
+`07_EVALUATION/r025_wp12_graph_expansion/WP12_GRAPH_EXPANSION.md`.
+
+**The brief for this package cited a ceiling of 33; the verified,
+currently-matching-corpus figure (re-measured fresh, not from memory) is
+32**, unchanged from the figure already in this file above. The runtime
+graph has exactly 278 edges, byte-identical to this document's own number,
+confirming no corpus drift since v2 was frozen.
+
+**Adding cases up to that ceiling turned out not to be achievable.** Of 56
+eligible candidate edges (excluding nodes already used, hub nodes per
+`MemoryController._is_hub_node`, and one index/catalog note type), only 2
+produced a case that is genuinely reachable via `graph_expanded_ids` AND NOT
+already reachable through ordinary retrieval with graph expansion off. The
+other 54 fail because a real declared/wikilink edge in this vault typically
+connects two topically-related notes, and topical relatedness is exactly
+what the entity/BM25 fusion scorer also rewards — so the gold note usually
+already lands inside the default 200-candidate pool on its own, and
+`RetrievalEngine`'s own anti-redundancy check
+(`if t_id in seed_ids: continue`) then structurally excludes it from ever
+being credited to graph expansion.
+
+**This is not new damage from this package — auditing the ORIGINAL 12 cases
+(`H18`-`H27`, `D09`-`D10`) the same way shows 0/12 ever reach gold via
+`graph_expanded_ids` either** (2 of them reach gold anyway, but only because
+it was already in the ordinary candidate pool, contaminating them as real
+graph tests). Every prior graph on/off comparison run against this class
+(R016, r024, r025 WP-8) has therefore never actually exercised graph
+traversal for a single case in either the old or the new set. This does not
+retract those comparisons' conclusion (graph expansion has not helped
+recall) — it means the mechanism they were nominally testing was, in
+practice, never the reason for that result.
