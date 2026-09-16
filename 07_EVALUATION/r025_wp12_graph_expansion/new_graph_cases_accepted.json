@@ -1,0 +1,32 @@
+[
+  {
+    "id": "G000",
+    "class": "one_hop_graph_expansion",
+    "query": "📐 1. Topologia de Arhitectură Enterprise",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "proc-enterprise-integration-0001",
+    "origin": "declared",
+    "verify_reason": "ok"
+  },
+  {
+    "id": "G001",
+    "class": "one_hop_graph_expansion",
+    "query": "Standarde de Vizualizare a Datelor (Data Viz & KPI Engineering)",
+    "gold_relevant_notes": [
+      "b4e88f21-7291-49fa-9481-22904c10a003"
+    ],
+    "required_facts": [
+      "Principii de Motion Design și Microinteracțiuni UI"
+    ],
+    "abstain": false,
+    "seed_id": "b4e88f21-7291-49fa-9481-22904c10a002",
+    "origin": "declared",
+    "verify_reason": "ok"
+  }
+]

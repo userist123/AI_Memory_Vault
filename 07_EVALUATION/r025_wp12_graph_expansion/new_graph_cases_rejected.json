@@ -1,0 +1,812 @@
+[
+  {
+    "id": "cand000",
+    "class": "one_hop_graph_expansion",
+    "query": "📊 Ghid Canonic: Benchmark-uri & Metrici de Evaluare Memorie AI (2026 Standards)",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "knw-benchmarks-2026-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand001",
+    "class": "one_hop_graph_expansion",
+    "query": "Agent Memory Trace Emitter Protocol Specification",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "knw-agent-memory-trace-protocol-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand002",
+    "class": "one_hop_graph_expansion",
+    "query": "Agent Memory Trace Emitter Protocol Specification",
+    "gold_relevant_notes": [
+      "knw-memory-usage-audit-principles-0001"
+    ],
+    "required_facts": [
+      "Memory Usage Audit Principles & Provenance Chain Invariants"
+    ],
+    "abstain": false,
+    "seed_id": "knw-agent-memory-trace-protocol-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand003",
+    "class": "one_hop_graph_expansion",
+    "query": "Context Packing P1 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "knw-context-packing-p1-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand004",
+    "class": "one_hop_graph_expansion",
+    "query": "Context Packing P1 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "knw-retrieval-bottleneck-p0-0001"
+    ],
+    "required_facts": [
+      "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification"
+    ],
+    "abstain": false,
+    "seed_id": "knw-context-packing-p1-0001",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand005",
+    "class": "one_hop_graph_expansion",
+    "query": "Context Packing P1 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "reg-retrieval-hypotheses-0001"
+    ],
+    "required_facts": [
+      "Retrieval Hypothesis Registry"
+    ],
+    "abstain": false,
+    "seed_id": "knw-context-packing-p1-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand006",
+    "class": "one_hop_graph_expansion",
+    "query": "Arhitectura Panourilor de Administrare și Tablourilor de Bord (Dashboard & Admin UI)",
+    "gold_relevant_notes": [
+      "b4e88f21-7291-49fa-9481-22904c10a002"
+    ],
+    "required_facts": [
+      "Standarde de Vizualizare a Datelor (Data Viz & KPI Engineering)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10b005",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand008",
+    "class": "one_hop_graph_expansion",
+    "query": "Legea-cadru nr. 153/2017 privind Salarizarea Personalului Plătit din Fonduri Publice",
+    "gold_relevant_notes": [
+      "knw-leg-m172-2021-0001"
+    ],
+    "required_facts": [
+      "Ordinul Ministrului Apărării Naționale nr."
+    ],
+    "abstain": false,
+    "seed_id": "knw-leg-l153-2017-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand009",
+    "class": "one_hop_graph_expansion",
+    "query": "Ordinul Ministrului Apărării Naționale nr.",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10c001"
+    ],
+    "required_facts": [
+      "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)"
+    ],
+    "abstain": false,
+    "seed_id": "knw-leg-m172-2021-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand010",
+    "class": "one_hop_graph_expansion",
+    "query": "Integrarea Modelelor AI Locale (Ollama & Securitate la Nivel de Client)",
+    "gold_relevant_notes": [
+      "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+    ],
+    "required_facts": [
+      "1. Information Integrity"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10b002",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand011",
+    "class": "one_hop_graph_expansion",
+    "query": "Memory Usage Audit Principles & Provenance Chain Invariants",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "knw-memory-usage-audit-principles-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand012",
+    "class": "one_hop_graph_expansion",
+    "query": "Arhitectura Sistemelor de Tranzacționare Algoritmică în Python (MT5 & Risc)",
+    "gold_relevant_notes": [
+      "ae0206df-b0cb-4810-b2a2-cea462600561"
+    ],
+    "required_facts": [
+      "Elite Quant Bot / XAU_Kinetic"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10b004",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand013",
+    "class": "one_hop_graph_expansion",
+    "query": "Contracte Multi-Agent — Registru de Transferuri (Claude Code / Gemini CLI / Antigravity)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10c001"
+    ],
+    "required_facts": [
+      "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand014",
+    "class": "one_hop_graph_expansion",
+    "query": "Contracte Multi-Agent — Registru de Transferuri (Claude Code / Gemini CLI / Antigravity)",
+    "gold_relevant_notes": [
+      "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    ],
+    "required_facts": [
+      "Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand015",
+    "class": "one_hop_graph_expansion",
+    "query": "Contracte Multi-Agent — Registru de Transferuri (Claude Code / Gemini CLI / Antigravity)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10b001"
+    ],
+    "required_facts": [
+      "Dezvoltare Aplicații Desktop C# / .NET WPF (Enterprise & Guvernamental)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand016",
+    "class": "one_hop_graph_expansion",
+    "query": "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)",
+    "gold_relevant_notes": [
+      "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    ],
+    "required_facts": [
+      "Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10c001",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand017",
+    "class": "one_hop_graph_expansion",
+    "query": "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10b001"
+    ],
+    "required_facts": [
+      "Dezvoltare Aplicații Desktop C# / .NET WPF (Enterprise & Guvernamental)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10c001",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand018",
+    "class": "one_hop_graph_expansion",
+    "query": "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10b003"
+    ],
+    "required_facts": [
+      "Procedură Operațională: PowerShell SecOps, Colectare Forensic și Audit INFOSEC"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10c001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand019",
+    "class": "one_hop_graph_expansion",
+    "query": "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10b002"
+    ],
+    "required_facts": [
+      "Integrarea Modelelor AI Locale (Ollama & Securitate la Nivel de Client)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10c001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand020",
+    "class": "one_hop_graph_expansion",
+    "query": "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "knw-retrieval-bottleneck-p0-0001",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand021",
+    "class": "one_hop_graph_expansion",
+    "query": "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "knw-benchmarks-2026-0001"
+    ],
+    "required_facts": [
+      "📊 Ghid Canonic: Benchmark-uri & Metrici de Evaluare Memorie AI (2026 Standards)"
+    ],
+    "abstain": false,
+    "seed_id": "knw-retrieval-bottleneck-p0-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand022",
+    "class": "one_hop_graph_expansion",
+    "query": "Retrieval Hypothesis Registry",
+    "gold_relevant_notes": [
+      "knw-retrieval-bottleneck-p0-0001"
+    ],
+    "required_facts": [
+      "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification"
+    ],
+    "abstain": false,
+    "seed_id": "reg-retrieval-hypotheses-0001",
+    "origin": "declared",
+    "verify_reason": "exception_on_graph_on_search:GraphExpansionDegraded"
+  },
+  {
+    "id": "cand023",
+    "class": "one_hop_graph_expansion",
+    "query": "Temporal Memory P2 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "knw-temporal-memory-p2-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand024",
+    "class": "one_hop_graph_expansion",
+    "query": "Temporal Memory P2 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "knw-retrieval-bottleneck-p0-0001"
+    ],
+    "required_facts": [
+      "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification"
+    ],
+    "abstain": false,
+    "seed_id": "knw-temporal-memory-p2-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand025",
+    "class": "one_hop_graph_expansion",
+    "query": "Temporal Memory P2 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "knw-context-packing-p1-0001"
+    ],
+    "required_facts": [
+      "Context Packing P1 Empirical Findings & Architectural Specification"
+    ],
+    "abstain": false,
+    "seed_id": "knw-temporal-memory-p2-0001",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand026",
+    "class": "one_hop_graph_expansion",
+    "query": "Temporal Memory P2 Empirical Findings & Architectural Specification",
+    "gold_relevant_notes": [
+      "reg-retrieval-hypotheses-0001"
+    ],
+    "required_facts": [
+      "Retrieval Hypothesis Registry"
+    ],
+    "abstain": false,
+    "seed_id": "knw-temporal-memory-p2-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand027",
+    "class": "one_hop_graph_expansion",
+    "query": "XAU_Kinetic Clean Architecture Principles",
+    "gold_relevant_notes": [
+      "ae0206df-b0cb-4810-b2a2-cea462600561"
+    ],
+    "required_facts": [
+      "Elite Quant Bot / XAU_Kinetic"
+    ],
+    "abstain": false,
+    "seed_id": "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand028",
+    "class": "one_hop_graph_expansion",
+    "query": "Elite Quant Bot / XAU_Kinetic",
+    "gold_relevant_notes": [
+      "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+    ],
+    "required_facts": [
+      "Procedure: Deployment and Operation of XAU_Kinetic Quant Bot"
+    ],
+    "abstain": false,
+    "seed_id": "ae0206df-b0cb-4810-b2a2-cea462600561",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand029",
+    "class": "one_hop_graph_expansion",
+    "query": "LogAnalyzer DFIR Enterprise (AirGapped & Network Editions)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10b001"
+    ],
+    "required_facts": [
+      "Dezvoltare Aplicații Desktop C# / .NET WPF (Enterprise & Guvernamental)"
+    ],
+    "abstain": false,
+    "seed_id": "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand030",
+    "class": "one_hop_graph_expansion",
+    "query": "Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10b001"
+    ],
+    "required_facts": [
+      "Dezvoltare Aplicații Desktop C# / .NET WPF (Enterprise & Guvernamental)"
+    ],
+    "abstain": false,
+    "seed_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand031",
+    "class": "one_hop_graph_expansion",
+    "query": "🌐 Runbook Canonic: Sincronizarea și Conectarea Agenților AI din Browser",
+    "gold_relevant_notes": [
+      "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+    ],
+    "required_facts": [
+      "+--> MEMORY RETRIEVAL"
+    ],
+    "abstain": false,
+    "seed_id": "proc-browser-ai-0001",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand033",
+    "class": "one_hop_graph_expansion",
+    "query": "Procedură: Configurare Perplexity Space pentru Research — Registru de Transferuri",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10d001"
+    ],
+    "required_facts": [
+      "Contracte Multi-Agent — Registru de Transferuri (Claude Code / Gemini CLI / Antigravity)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d003",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand034",
+    "class": "one_hop_graph_expansion",
+    "query": "Procedură: Configurare Perplexity Space pentru Research — Registru de Transferuri",
+    "gold_relevant_notes": [
+      "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    ],
+    "required_facts": [
+      "Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d003",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand035",
+    "class": "one_hop_graph_expansion",
+    "query": "Procedură Operațională: PowerShell SecOps, Colectare Forensic și Audit INFOSEC",
+    "gold_relevant_notes": [
+      "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+    ],
+    "required_facts": [
+      "1. Information Integrity"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10b003",
+    "origin": "declared",
+    "verify_reason": "gold_reached_as_candidate_but_not_promoted_into_final_context"
+  },
+  {
+    "id": "cand036",
+    "class": "one_hop_graph_expansion",
+    "query": "Procedură: Workflow Remodelare UI „Obsidian Tactical Command\" (/remodelUI)",
+    "gold_relevant_notes": [
+      "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    ],
+    "required_facts": [
+      "Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d002",
+    "origin": "declared",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand037",
+    "class": "one_hop_graph_expansion",
+    "query": "Procedură: Workflow Remodelare UI „Obsidian Tactical Command\" (/remodelUI)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10c001"
+    ],
+    "required_facts": [
+      "Standarde Operaționale — Registru Militar de Transferuri & Device Control (C# WPF .NET 10)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d002",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand038",
+    "class": "one_hop_graph_expansion",
+    "query": "Procedură: Workflow Remodelare UI „Obsidian Tactical Command\" (/remodelUI)",
+    "gold_relevant_notes": [
+      "c1a01101-7291-49fa-9481-22904c10d001"
+    ],
+    "required_facts": [
+      "Contracte Multi-Agent — Registru de Transferuri (Claude Code / Gemini CLI / Antigravity)"
+    ],
+    "abstain": false,
+    "seed_id": "c1a01101-7291-49fa-9481-22904c10d002",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand039",
+    "class": "one_hop_graph_expansion",
+    "query": "AI Memory Vault — Multi-Agent Execution Protocol V1",
+    "gold_relevant_notes": [
+      "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+    ],
+    "required_facts": [
+      "1. Information Integrity"
+    ],
+    "abstain": false,
+    "seed_id": "multi-agent-execution-protocol-v1",
+    "origin": "declared",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand040",
+    "class": "one_hop_graph_expansion",
+    "query": "Prefer Multi-File Project Structure Over Single-File Scripts",
+    "gold_relevant_notes": [
+      "ae0206df-b0cb-4810-b2a2-cea462600561"
+    ],
+    "required_facts": [
+      "Elite Quant Bot / XAU_Kinetic"
+    ],
+    "abstain": false,
+    "seed_id": "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "origin": "wikilink",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand041",
+    "class": "one_hop_graph_expansion",
+    "query": "Use MetaTrader 5 + Python + Tkinter for the Live Trading Application",
+    "gold_relevant_notes": [
+      "ae0206df-b0cb-4810-b2a2-cea462600561"
+    ],
+    "required_facts": [
+      "Elite Quant Bot / XAU_Kinetic"
+    ],
+    "abstain": false,
+    "seed_id": "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+    "origin": "wikilink",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand042",
+    "class": "one_hop_graph_expansion",
+    "query": "Trading Bot Prompts Should Be Written in English, In Exhaustive Detail",
+    "gold_relevant_notes": [
+      "ae0206df-b0cb-4810-b2a2-cea462600561"
+    ],
+    "required_facts": [
+      "Elite Quant Bot / XAU_Kinetic"
+    ],
+    "abstain": false,
+    "seed_id": "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+    "origin": "wikilink",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand043",
+    "class": "one_hop_graph_expansion",
+    "query": "External Resources Directory Manifest",
+    "gold_relevant_notes": [
+      "b0fb6f37-1678-4ae7-8a12-6523925c0ef6"
+    ],
+    "required_facts": [
+      "GitHub Repo: Registru-de-transferuri"
+    ],
+    "abstain": false,
+    "seed_id": "616effd2-5172-46dc-b8c1-528c724a5de1",
+    "origin": "wikilink",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand044",
+    "class": "one_hop_graph_expansion",
+    "query": "External Resources Directory Manifest",
+    "gold_relevant_notes": [
+      "ef084612-2d02-481e-a7d3-6cbe4608e10d"
+    ],
+    "required_facts": [
+      "PaperCut MF + Xerox EIP 3.7 Setup Reference"
+    ],
+    "abstain": false,
+    "seed_id": "616effd2-5172-46dc-b8c1-528c724a5de1",
+    "origin": "wikilink",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  },
+  {
+    "id": "cand045",
+    "class": "one_hop_graph_expansion",
+    "query": "Quant Bot Backtest Only Executed Single Entries, Not Multi-Entry BUY/SELL",
+    "gold_relevant_notes": [
+      "ae0206df-b0cb-4810-b2a2-cea462600561"
+    ],
+    "required_facts": [
+      "Elite Quant Bot / XAU_Kinetic"
+    ],
+    "abstain": false,
+    "seed_id": "7a873fba-2d99-4f1a-bde9-44edc8239e6e",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand046",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-eu-aiact-2024-1689"
+    ],
+    "required_facts": [
+      "> **AVERTISMENT DE CONFORMITATE & REGIM DE GUVERNANȚĂ**:"
+    ],
+    "abstain": false,
+    "seed_id": "atm-aiact-art12-logging",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand047",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-eu-aiact-2024-1689"
+    ],
+    "required_facts": [
+      "> **AVERTISMENT DE CONFORMITATE & REGIM DE GUVERNANȚĂ**:"
+    ],
+    "abstain": false,
+    "seed_id": "atm-aiact-art14-human-oversight",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand048",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-eu-dora-2022-2554"
+    ],
+    "required_facts": [
+      "> **AVERTISMENT DE CONFORMITATE & REGIM DE GUVERNANȚĂ**:"
+    ],
+    "abstain": false,
+    "seed_id": "atm-dora-art6-16-risc-tic",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand049",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-eu-gdpr-2016-679"
+    ],
+    "required_facts": [
+      "Regulamentul (UE) 2016/679 privind Protecția Datelor cu Caracter Personal (GDPR)"
+    ],
+    "abstain": false,
+    "seed_id": "atm-gdpr-art25-by-design",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand050",
+    "class": "one_hop_graph_expansion",
+    "query": "Notă Derivată Atomică: Securitatea Prelucrării Datelor și Reziliența Sistemelor",
+    "gold_relevant_notes": [
+      "leg-eu-gdpr-2016-679"
+    ],
+    "required_facts": [
+      "Regulamentul (UE) 2016/679 privind Protecția Datelor cu Caracter Personal (GDPR)"
+    ],
+    "abstain": false,
+    "seed_id": "atm-gdpr-art32-securitate",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand051",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-ro-legea-153-2017"
+    ],
+    "required_facts": [
+      "Legea-cadru nr. 153/2017 privind Salarizarea Personalului Plătit din Fonduri Publice"
+    ],
+    "abstain": false,
+    "seed_id": "atm-l153-anexavi-spor-clasificate",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand052",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-ro-legea-190-2018"
+    ],
+    "required_facts": [
+      "Legea nr. 190/2018 privind Măsuri de Punere în Aplicare a GDPR în România"
+    ],
+    "abstain": false,
+    "seed_id": "atm-l190-art4-cnp-garantii",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand053",
+    "class": "one_hop_graph_expansion",
+    "query": "> **REGIM DE GUVERNANȚĂ & DISCLAIMER JURIDIC**:",
+    "gold_relevant_notes": [
+      "leg-ro-mapn-m172-2021"
+    ],
+    "required_facts": [
+      "Ordinul Ministrului Apărării Naționale nr."
+    ],
+    "abstain": false,
+    "seed_id": "atm-m172-art193-199-medii-stocare",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand054",
+    "class": "one_hop_graph_expansion",
+    "query": "Notă Derivată Atomică: Ținerea Registrelor de Evidență în Format Electronic Omologat",
+    "gold_relevant_notes": [
+      "leg-ro-mapn-m172-2021"
+    ],
+    "required_facts": [
+      "Ordinul Ministrului Apărării Naționale nr."
+    ],
+    "abstain": false,
+    "seed_id": "atm-m172-art51-evidenta-electronica",
+    "origin": "wikilink",
+    "verify_reason": "gold_never_reached_via_graph_expansion"
+  },
+  {
+    "id": "cand055",
+    "class": "one_hop_graph_expansion",
+    "query": "GitHub Repo: Registru-de-transferuri",
+    "gold_relevant_notes": [
+      "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+    ],
+    "required_facts": [
+      "Registru de Transferuri (Media Transfer Register & Device Control, Air-Gapped)"
+    ],
+    "abstain": false,
+    "seed_id": "b0fb6f37-1678-4ae7-8a12-6523925c0ef6",
+    "origin": "wikilink",
+    "verify_reason": "gold_reachable_without_graph_expansion_not_a_real_graph_test"
+  }
+]
