@@ -84,8 +84,15 @@ def test_score_components_exposes_the_same_two_signals_unblended():
 # 2. Baseline stays the production default: the flag genuinely defaults OFF.
 # ---------------------------------------------------------------------------
 
-def test_baseline_ranking_matches_pre_r024_relevance_scorer_order():
-    storage, controller = make_controller()  # ranking_arm=None -> baseline
+def test_explicit_baseline_arm_still_matches_pre_r024_relevance_scorer_order():
+    """RANKING_ARM_BASELINE still exists and still behaves exactly as
+    before r025 flipped the default -- a caller can always force it back
+    (e.g. for a controlled comparison, or a rollback) by passing it
+    explicitly. This is no longer what an UNSPECIFIED call produces (see
+    test_ranking_arm_defaults_to_fused_score_end_to_end below) -- r025 WP-8
+    validated fused_score on held-out (+2 measurable cases at the
+    pre-registered threshold) and flipped the production default."""
+    storage, controller = make_controller(ranking_arm=RANKING_ARM_BASELINE)
     storage.set("high_overlap_low_conf", _note("high_overlap_low_conf", "alpha beta gamma delta", confidence="unknown"))
     storage.set("low_overlap_high_conf", _note("low_overlap_high_conf", "totally unrelated text", confidence="very_high"))
 
@@ -100,13 +107,17 @@ def test_baseline_ranking_matches_pre_r024_relevance_scorer_order():
     assert pack["candidate_trace"]["ranking_arm"] == RANKING_ARM_BASELINE
 
 
-def test_ranking_arm_defaults_to_none_end_to_end_when_unspecified():
-    """No caller anywhere passes ranking_arm; the flag must resolve to the
-    literal baseline constant, not silently to some other arm."""
+def test_ranking_arm_defaults_to_fused_score_end_to_end_when_unspecified():
+    """r025 WP-8: held-out confirmed A1 (fused_score) at the pre-registered
+    threshold (WP8_PREREGISTRATION.md, +2 measurable context-recall cases),
+    so the production default flipped from RANKING_ARM_BASELINE to
+    RANKING_ARM_FUSED_SCORE. No caller anywhere passes ranking_arm; the
+    flag must resolve to that new default, not silently stay on the old
+    one."""
     storage, controller = make_controller()
     storage.set("n1", _note("n1", "hello world"))
     pack = controller.search(Principal.HUMAN, "hello")
-    assert pack["candidate_trace"]["ranking_arm"] == RANKING_ARM_BASELINE
+    assert pack["candidate_trace"]["ranking_arm"] == RANKING_ARM_FUSED_SCORE
 
 
 # ---------------------------------------------------------------------------

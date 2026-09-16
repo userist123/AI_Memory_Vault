@@ -1,0 +1,4 @@
+category,market_count,cluster_count,mean_price,win_rate,bias_pp,wce_pp,brier_score
+sports_pre_match,185,38,0.4069,0.4162,0.93,6.8,0.214
+sports_in_play,100,20,0.4891,0.35,-13.91,15.25,0.2107
+crypto_threshold,198,13,0.4748,0.5101,3.53,3.94,0.2073

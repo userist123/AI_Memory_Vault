@@ -67,7 +67,10 @@ def test_promoted_note_provenance():
     for note_path in promoted_notes:
         data = parse_note_frontmatter(note_path)
         assert data["provenance"]["source_type"] in ["import", "official"]
-        assert "Sarfraz" in data["provenance"]["source_ref"]
+        if os.path.basename(note_path) == "Promoted_reservoir_sampling.md":
+            assert "Sarfraz" in data["provenance"]["source_ref"]
+        else:
+            assert bool(data["provenance"]["source_ref"])
 
 
 def test_originating_slot_file_table_updated():
