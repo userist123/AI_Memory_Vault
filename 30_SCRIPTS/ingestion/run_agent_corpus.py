@@ -186,6 +186,49 @@ def prose_rate(text: str) -> float:
     return sum(1 for w in words if w in _COMMON_WORDS) / len(words)
 
 
+
+#: What these twenty books are about. Baked in on purpose: this is a pre-flight
+#: check for one named corpus, not a general-purpose topicality measure, and a
+#: list that says what it assumes is honest in a way that a tuned model is not.
+_TOPIC_TERMS = (
+    "memory", "cognit", "synap", "neuro", "learn", "brain", "architecture",
+    "knowledge", "consolidat", "retriev", "hippocamp", "representation",
+    "system",
+)
+
+#: Mentions per thousand characters. Measured across the corpus: every real
+#: book scored 1.21 to 9.29, and the one book that was not a book scored 0.20.
+#: Set below both so it flags only the egregious case — a genuine book on an
+#: unexpected subject should be read, not withheld.
+MIN_TOPIC_DENSITY = 0.5
+
+
+def topic_density(text: str) -> float:
+    """Mentions of the corpus's subject matter per thousand characters.
+
+    This exists because a book sat second in the reading order, at 154 chunks,
+    and contained none of its own subject. The file named as Anderson's *How
+    Can the Human Mind Occur in the Physical Universe* came from a scam preview
+    on ilide.info: a title page, a link to a blogspot storefront, and then
+    roughly 450 pages of nineteenth-century filler — golf club rules, bicycle
+    advertisements, Ruskin, and Hungarian Project Gutenberg text. Zero mentions
+    of ACT-R, declarative memory, buffers or activation.
+
+    Nothing in the pipeline noticed. The converter reported status OK. The
+    prose-rate check passed it, correctly — filler is well-formed prose. It was
+    ranked second in the reading order on chunk count alone, and an agent read
+    all 154 chunks before anyone knew.
+
+    The check is cheap, it runs once per book, and it would have saved that
+    reading. It is a warning and not a gate: a real book on an unexpected
+    subject should be read, and a human should decide.
+    """
+    if not text:
+        return 0.0
+    lowered = text.lower()
+    return sum(lowered.count(t) for t in _TOPIC_TERMS) / (len(text) / 1000)
+
+
 def load_books() -> list[dict[str, str]]:
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["books"]
 
@@ -221,6 +264,7 @@ def prepare(args: argparse.Namespace) -> int:
             missing.append(f'{book["short_name"]} (0 chunks)')
             continue
 
+        density = topic_density(path.read_text(encoding="utf-8", errors="replace"))
         rates = [prose_rate(c["content"]) for c in chunks]
         floor = statistics.median(rates) * LOW_PROSE_RATIO
         low = [i for i, r in enumerate(rates) if r < floor]
@@ -251,6 +295,8 @@ def prepare(args: argparse.Namespace) -> int:
             "chunks_file": str(out.relative_to(_REPO)) if out.is_relative_to(_REPO) else str(out),
             "total_chunks": len(chunks),
             "low_prose_chunks": len(low),
+            "topic_density": round(density, 2),
+            "on_subject": density >= MIN_TOPIC_DENSITY,
             "recurrence_measurable": len(chunks) >= MIN_CHUNKS_FOR_RECURRENCE,
         })
 
@@ -269,6 +315,9 @@ def prepare(args: argparse.Namespace) -> int:
     for b in prepared:
         mark = "" if b["recurrence_measurable"] else "   <- too few sections for occurrences>=3"
         low = f'  ({b["low_prose_chunks"]} not prose)' if b["low_prose_chunks"] else ""
+        if not b["on_subject"]:
+            low += f'   <- OFF SUBJECT, density {b["topic_density"]}; do not read'
+
         print(f'{b["order"]:>5}  {b["total_chunks"]:>6}  {b["short_name"]}{low}{mark}')
     total_low = sum(b["low_prose_chunks"] for b in prepared)
     if total_low:

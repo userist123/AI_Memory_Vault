@@ -243,3 +243,39 @@ def test_the_prose_floor_is_relative_to_the_book_not_absolute():
     assert R.prose_rate("Recall, 10, 30 Recency, 23, 72 Receptive fields") < 0.2
     assert R.prose_rate("") == 0.0
     assert 0 < R.LOW_PROSE_RATIO < 1
+
+
+def test_a_book_that_is_not_about_its_subject_is_flagged_before_it_is_read():
+    """154 chunks were read before anyone noticed the book was not the book.
+
+    The file named as Anderson's *How Can the Human Mind Occur in the Physical
+    Universe* came from a scam preview: a title page, a link to a blogspot
+    storefront, then roughly 450 pages of nineteenth-century filler — golf club
+    rules, bicycle advertisements, Ruskin, Hungarian Gutenberg text. Zero
+    mentions of ACT-R, declarative memory, buffers or activation.
+
+    Nothing caught it. The converter reported status OK. The prose-rate check
+    passed it, correctly — filler is well-formed prose. It was ranked second in
+    the reading order on chunk count alone.
+    """
+    real = (
+        "Memory consolidation in the hippocampus depends on synaptic change, "
+        "and the cognitive architecture that learns from it must represent "
+        "knowledge in a form the retrieval system can reach. " * 6
+    )
+    filler = (
+        "The golf links at Concord are open to members of the school, and the "
+        "wheelmen of the league are invited to the exhibition of bicycles held "
+        "in the town hall on the afternoon of the fourteenth. " * 6
+    )
+    assert R.topic_density(real) >= R.MIN_TOPIC_DENSITY
+    assert R.topic_density(filler) < R.MIN_TOPIC_DENSITY
+    assert R.topic_density("") == 0.0
+
+
+def test_the_topic_floor_clears_every_real_book_in_the_corpus():
+    """Measured, not guessed: the real books scored 1.21 to 9.29 mentions per
+    thousand characters and the one that was not a book scored 0.20. The floor
+    sits below both, so a genuine book on an unexpected subject is read rather
+    than withheld — it warns, it does not gate."""
+    assert 0.2 < R.MIN_TOPIC_DENSITY < 1.21
