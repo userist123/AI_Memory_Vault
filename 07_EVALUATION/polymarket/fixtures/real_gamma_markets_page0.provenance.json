@@ -1,0 +1,8 @@
+{
+  "query_url": "https://gamma-api.polymarket.com/markets?limit=100&offset=0",
+  "queried_at_utc": "2026-09-12T21:20:50.261877+00:00",
+  "http_status": 200,
+  "record_count": 100,
+  "sha256": "60baea60346e71154d72a8c46cc235446ebd30299c9d9237c1cf295d1d739821",
+  "network_transport_notes": "Queried directly via Gamma API https://gamma-api.polymarket.com/markets with Cloudflare edge resolution 172.64.153.51"
+}

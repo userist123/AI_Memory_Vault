@@ -179,8 +179,13 @@ def promote_candidate_concept(
         f.write(yaml_frontmatter + note_body)
 
     # Update slot file table row in place
-    # Format: | concept | source_book | confidence | status | date_added | promoted_note_id |
-    new_row = f"| {target_cols[1]} | {target_cols[2]} | {target_cols[3]} | promoted | {target_cols[5]} | {note_uuid} |"
+    # Format: | concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
+    if len(target_cols) >= 10:
+        evidence = target_cols[7]
+        occurrences = target_cols[8]
+        new_row = f"| {target_cols[1]} | {target_cols[2]} | {target_cols[3]} | promoted | {target_cols[5]} | {note_uuid} | {evidence} | {occurrences} |"
+    else:
+        new_row = f"| {target_cols[1]} | {target_cols[2]} | {target_cols[3]} | promoted | {target_cols[5]} | {note_uuid} |"
     lines[target_row_idx] = new_row
 
     with open(slot_file, "w", encoding="utf-8") as f:

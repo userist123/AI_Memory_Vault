@@ -104,6 +104,48 @@ def _as_int(value):
         return 0
 
 
+
+class DuplicateRows(Exception):
+    """The same extracted row loaded more than once.
+
+    `combine_across_books` sums occurrences across rows sharing a concept and a
+    slot, because a term defined in fifteen sections of one book and twenty-two
+    of another is defined in thirty-seven sections. That is correct for two
+    books and catastrophic for one row read twice, and nothing in the rows
+    themselves distinguishes the cases.
+
+    It happened. `staging/` held twenty-one per-book files and an aggregate
+    containing the same 264 rows, so a glob over the directory loaded 528. The
+    measured effect on "declarative memory": occurrences [15, 22, 8, 15, 22, 8]
+    summing to 90 against a true value of 45.
+
+    The ontology escaped it by luck rather than design — the promotion run
+    happened to take the aggregate as a single input file while the conflict
+    check globbed the directory. Two callers, two answers, and no complaint
+    from either.
+
+    So identity is (concept, source_book, evidence_quote). Two rows agreeing on
+    all three are not two observations. A book that genuinely defines a term
+    twice produces two different quotes.
+    """
+
+
+def find_duplicate_rows(records: List[Dict[str, Any]]) -> Dict[Tuple[str, str], int]:
+    """Rows appearing more than once with identical concept, book and evidence."""
+    seen: Dict[Tuple[str, str, str], int] = {}
+    for item in records:
+        key = (
+            normalize_concept_name(item.get("concept", "")),
+            str(item.get("source_book", "")),
+            " ".join(str(item.get("evidence_quote", "")).split()),
+        )
+        seen[key] = seen.get(key, 0) + 1
+    return {
+        (concept, book): count
+        for (concept, book, _evidence), count in seen.items() if count > 1
+    }
+
+
 def combine_across_books(records):
     """One row per concept, carrying what every book contributed.
 
@@ -120,7 +162,26 @@ def combine_across_books(records):
 
     The evidence quote comes from the book that evidenced it best, since only
     one fits in the table and a reviewer reads that one.
+
+    Summing is the right behaviour for two books and catastrophic for one row
+    read twice, and the function cannot tell those apart from the rows alone —
+    so exact duplicates are refused before any arithmetic. See
+    `find_duplicate_rows`.
     """
+    duplicates = find_duplicate_rows(records)
+    if duplicates:
+        lines = [
+            f"  {concept} from {book}: {count} identical rows"
+            for (concept, book), count in sorted(duplicates.items())
+        ]
+        raise DuplicateRows(
+            f"{len(duplicates)} row(s) appear more than once with identical "
+            "evidence. Summing them would multiply occurrences, which is the "
+            "only ranking signal this pipeline has:" + chr(10)
+            + chr(10).join(lines[:10])
+            + (chr(10) + f"  ... and {len(lines) - 10} more" if len(lines) > 10 else "")
+        )
+
     combined = {}
     order = []
     for item in records:
@@ -220,15 +281,41 @@ def merge_candidate_concepts(
     slots_dir: str = SLOT_DIRECTORY,
     override_date: str = None,
     allow_slot_conflicts: bool = False,
+    verdicts_file: str = None,
 ) -> Dict[str, Any]:
-    """
-    Main merge function.
+    """Merge staging rows into the slot tables.
+
+    `verdicts_file` is the boundary between a working area and the ontology.
+    Without one this writes whatever it is given, which is how 201 concepts
+    entered in a single commit and 160 of them were still unjudged five days
+    later — 47% of which did not belong there at all.
+
+    With one, a concept absent from the manifest is withheld and counted, not
+    dropped: a run that silently skipped them would look identical to a run
+    where they had been decided.
+
+    The gate does not judge. A manifest marking a phrase PROMOTE lets that
+    phrase through and has done its job. What it removes is the row that
+    entered because a script ran rather than because someone decided.
     """
     if not os.path.exists(staging_file):
         raise FileNotFoundError(f"Staging file not found: {staging_file}")
 
     with open(staging_file, "r", encoding="utf-8") as f:
         staging_data: List[Dict[str, Any]] = json.load(f)
+
+    withheld: Dict[str, List[str]] = {}
+    if verdicts_file:
+        from promotion_verdicts import load_manifest, partition
+        manifest = load_manifest(verdicts_file)
+        before = len(staging_data)
+        staging_data, withheld = partition(staging_data, manifest)
+        if not staging_data:
+            raise ValueError(
+                f"the manifest admits none of the {before} staging rows; "
+                "merging nothing is more likely a mismatched manifest than a "
+                f"decision. Withheld: { {k: len(v) for k, v in withheld.items()} }"
+            )
 
     date_str = override_date or datetime.now().strftime("%Y-%m-%d")
 
@@ -288,6 +375,10 @@ def merge_candidate_concepts(
         "combined_across_books": total_combined,
         "already_in_slot_file": total_already_present,
         "slot_conflicts": {k: sorted(v) for k, v in conflicts.items()},
+        # Grouped by why, never dropped. NO_VERDICT is the group that matters:
+        # it is how the 160 got in.
+        "withheld_by_verdict": {k: sorted(v) for k, v in withheld.items()},
+        "gated": bool(verdicts_file),
         "per_slot_summary": merged_stats
     }
 
@@ -296,10 +387,15 @@ def main():
     parser = argparse.ArgumentParser(description="Merge staging candidate concepts into ontology slot markdown tables.")
     parser.add_argument("--staging-file", default="staging/extracted_concepts.json", help="Path to staging JSON file")
     parser.add_argument("--slots-dir", default=SLOT_DIRECTORY, help="Path to ontology slots directory")
+    parser.add_argument("--verdicts-file", default=None,
+                        help="Promotion verdict manifest. Without it every "
+                             "staging row is written; with it only concepts "
+                             "carrying a PROMOTE verdict are.")
 
     args = parser.parse_args()
 
-    results = merge_candidate_concepts(args.staging_file, args.slots_dir)
+    results = merge_candidate_concepts(args.staging_file, args.slots_dir,
+                                       verdicts_file=args.verdicts_file)
     print(json.dumps(results, indent=2))
 
 

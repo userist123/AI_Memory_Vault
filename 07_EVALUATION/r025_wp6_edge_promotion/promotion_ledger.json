@@ -1,0 +1,383 @@
+[
+  {
+    "review_id": 10,
+    "source_id": "c1a01101-7291-49fa-9481-22904c10c001",
+    "target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "relation": "part_of",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "air-gapped",
+      "cognitivevaultclient",
+      "datagrid",
+      "dotnet10",
+      "euci",
+      "infosec"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Development standards doc for the Registru Transferuri project, linked part_of the project itself; tags overlap directly (registru-transferuri, wpf, dotnet10, air-gapped, infosec)."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 13,
+    "source_id": "knw-retrieval-bottleneck-p0-0001",
+    "target_id": "reg-retrieval-hypotheses-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "candidate-generation",
+      "contradiction_guardrail",
+      "llm",
+      "q02_p16_hardware_telemetry",
+      "q09_temporal_superseded_policy",
+      "retrieval"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "The two notes already cross-reference each other by target_id in their own frontmatter relations -- a declared, not just inferred, connection."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 14,
+    "source_id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+    "target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "relation": "part_of",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "deviceiocontrol",
+      "dpapi",
+      "lta",
+      "pin",
+      "pkcs11interop",
+      "qscd"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "PIN-auth/SQLCipher security pattern doc, part_of the Registru project whose own stack line names SQLite WAL/SQLCipher explicitly."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 16,
+    "source_id": "c1a01101-7291-49fa-9481-22904c10d002",
+    "target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "relation": "part_of",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "auditchainverifier",
+      "cognitivevaultclient",
+      "datagrid",
+      "infosec",
+      "kpi",
+      "obsidian-tactical"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "UI remodel workflow procedure, part_of the Registru project; tags match directly (registru-transferuri, obsidian-tactical)."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 19,
+    "source_id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+    "target_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "aes-256-cbc",
+      "dpapi",
+      "jwt",
+      "localmachine",
+      "lta",
+      "pin"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "PIN-auth/DPAPI/JWT security pattern doc linked to a compliance-requirements doc that specifically enumerates DPAPI-class technical requirements (HG585/MS111) -- specific technical overlap, not generic legal language."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 21,
+    "source_id": "knw-context-packing-p1-0001",
+    "target_id": "knw-retrieval-bottleneck-p0-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "contextpackbuilder",
+      "contradiction_guardrail",
+      "empirical-evidence",
+      "llm",
+      "locomo",
+      "partial"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Both declare relations to the same target_id in their own frontmatter -- part of the same P0/P1 retrieval-research thread."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 23,
+    "source_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+    "target_id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+    "relation": "part_of",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "air-gapped",
+      "dpapi",
+      "hg585",
+      "infosec",
+      "lta",
+      "pin"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "HG585/MS111 compliance-requirements doc, part_of the Registru project, which cites HG 585/2002 directly in its own compliance section."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "update_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'",
+    "promoted_at": null
+  },
+  {
+    "review_id": 25,
+    "source_id": "idx-leg-ro-mapn-m172-2021",
+    "target_id": "knw-leg-hg585-2002-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "dvd",
+      "hdd",
+      "infosec",
+      "sic",
+      "ssd",
+      "usb"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "An index of the M172/2021 order linked to the HG585/2002 legislation doc; both concern physical storage-media handling for classified information -- a specific, substantive regulatory-domain overlap, not generic legal boilerplate."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 38,
+    "source_id": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+    "target_id": "knw-leg-hg585-2002-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "dpapi",
+      "hg585",
+      "infosec",
+      "sha-256",
+      "tic"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Compliance-requirements doc explicitly tagged 'hg585', directly citing the same source law as the target."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "update_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'",
+    "promoted_at": null
+  },
+  {
+    "review_id": 39,
+    "source_id": "proc-brain-arch-0001",
+    "target_id": "proc-enterprise-integration-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "act-r",
+      "cognitive_core",
+      "gwt",
+      "snn"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Both declare relations to the identical target_id in their own frontmatter -- part of the same declared architecture-document set."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "update_failed:ValidationError:'proc-brain-arch-0001' is not a 'uuid'",
+    "promoted_at": null
+  },
+  {
+    "review_id": 40,
+    "source_id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+    "target_id": "proc-reflexion-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "cognitive_core",
+      "criticagent",
+      "selfrefine",
+      "verifieragent"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Both describe the same multi-agent cognitive_core pipeline (critic-agent/verifier-agent/self-refine terms are specific, shared, and central to both documents' actual subjects)."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 41,
+    "source_id": "atm-hg585-art236-258-acreditare-sic",
+    "target_id": "idx-leg-ro-hg-585-2002",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "ads",
+      "das",
+      "orniss",
+      "sic"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Atomic obligation note derived from HG585 articles 236-258, linked to the legal index of that exact same source act (source_act matches: [[HG_585_2002]] in both)."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 44,
+    "source_id": "atm-dora-art6-16-risc-tic",
+    "target_id": "idx-leg-eu-dora-2022-2554",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "bcp",
+      "drp",
+      "tic"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Atomic DORA obligation note (articles 6-16) linked to the legal index of the identical source act ([[Regulament_UE_2022_2554_DORA]] in both) -- direct index-to-content relationship."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 46,
+    "source_id": "knw-context-packing-p1-0001",
+    "target_id": "reg-retrieval-hypotheses-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "contradiction_guardrail",
+      "llm",
+      "packing_failure"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Both declare relations to the same target_id in their own frontmatter, part of the same P0/P1 retrieval-research thread (same pattern as #13/#21)."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 49,
+    "source_id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+    "target_id": "proc-brain-arch-0001",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 1.0,
+    "shared_entities": [
+      "cognitive_core",
+      "criticagent",
+      "verifieragent"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "Multi-agent pipeline architecture and cognitive-brain architecture spec share specific agent-role vocabulary (critic-agent, verifier-agent) central to both documents, and the brain spec declares relations to the same target_id pattern seen in #39/#40."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  },
+  {
+    "review_id": 53,
+    "source_id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+    "target_id": "atm-gdpr-art32-securitate",
+    "relation": "related_to",
+    "proposer": "edge_proposer.py",
+    "proposal_origin": "proposed_weak",
+    "score": 0.9893,
+    "shared_entities": [
+      "aes-256-cbc",
+      "dpapi",
+      "sha-256"
+    ],
+    "approval": {
+      "judgement": "correct",
+      "judgement_reason": "A SQLCipher/DPAPI encryption pattern doc linked to GDPR Article 32, which is specifically 'security of processing' -- a direct, substantive match between a security-of-processing regulation and a security-of-processing implementation pattern, not generic legal language."
+    },
+    "sample_seed": 8675309,
+    "promoted": false,
+    "promotion_reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)",
+    "promoted_at": null
+  }
+]

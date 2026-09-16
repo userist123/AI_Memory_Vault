@@ -1,0 +1,187 @@
+{
+  "n_correct_proposals": 45,
+  "n_promoted": 0,
+  "n_blocked": 45,
+  "blocked": [
+    {
+      "review_id": 1,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 3,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 4,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 5,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 8,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 9,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 10,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 11,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 12,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 13,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 14,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 15,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 16,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 17,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 18,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 19,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 20,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 21,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 22,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 23,
+      "reason": "update_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'"
+    },
+    {
+      "review_id": 24,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 25,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 26,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 27,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 28,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 29,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 30,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 33,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 34,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 35,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 36,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 37,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 38,
+      "reason": "update_failed:ValidationError:datetime.date(2026, 8, 14) is not of type 'string'"
+    },
+    {
+      "review_id": 39,
+      "reason": "update_failed:ValidationError:'proc-brain-arch-0001' is not a 'uuid'"
+    },
+    {
+      "review_id": 40,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 41,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 42,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 43,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 44,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 45,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 46,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 48,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 49,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    },
+    {
+      "review_id": 51,
+      "reason": "source_or_target_id_unresolved"
+    },
+    {
+      "review_id": 53,
+      "reason": "lifecycle_gate_blocks_every_principal(lifecycle=REVIEW)"
+    }
+  ]
+}

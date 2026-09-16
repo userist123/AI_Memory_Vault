@@ -1,0 +1,79 @@
+name: Polymarket Phase 11 Tests
+
+on:
+  push:
+    branches:
+      - r063-pm-historical-paper-replay
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  phase11:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: 03_IMPLEMENTATION
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pytest pyyaml
+      - name: Run deterministic Phase 1-11 regression
+        run: |
+          python -m pytest -q \
+            20_TESTS/polymarket/test_market_snapshot.py \
+            20_TESTS/polymarket/test_historical_replay.py \
+            20_TESTS/polymarket/test_prediction_ledger.py \
+            20_TESTS/polymarket/test_prediction_council.py \
+            20_TESTS/polymarket/test_calibration.py \
+            20_TESTS/polymarket/test_market_model_edge.py \
+            20_TESTS/polymarket/test_paper_simulation.py \
+            20_TESTS/polymarket/test_paper_pipeline.py \
+            20_TESTS/polymarket/test_historical_paper_replay.py
+      - name: Live public-data smoke and mechanical paper control
+        run: |
+          mkdir -p artifacts/phase11
+          python - <<'PY'
+          import json
+          from packages.polymarket.historical_paper_replay import collect_resolved_bundles, run_mechanical_control
+
+          # Scan a wider closed-market window because the public catalog contains
+          # many non-CLOB and historical markets whose CLOB tape is no longer retained.
+          bundles = collect_resolved_bundles(target_markets=3, scan_pages=50, fidelity=1440, timeout=30.0)
+          results = [run_mechanical_control(bundle, notional=1.0) for bundle in bundles]
+          payload = {
+              "schema_version": "polymarket-historical-paper-replay.v1",
+              "markets_collected": len(bundles),
+              "markets_required": 3,
+              "controls": [
+                  {
+                      "market_id": r.market_id,
+                      "question": r.question,
+                      "bought_outcome_id": r.bought_outcome_id,
+                      "entry_at": r.entry_at,
+                      "entry_price": r.entry_price,
+                      "notional": r.notional,
+                      "settlement_value": r.settlement_value,
+                      "pnl": r.pnl,
+                      "resolution_known_at": r.resolution_known_at,
+                  }
+                  for r in results
+              ],
+              "note": "Mechanical control only. Execution depth, fee and slippage are explicit synthetic Phase 10 inputs; no alpha or profitability claim is made.",
+          }
+          with open("artifacts/phase11/live_smoke.json", "w", encoding="utf-8") as handle:
+              json.dump(payload, handle, indent=2)
+          print(json.dumps(payload, indent=2))
+          if len(bundles) < 3:
+              raise SystemExit(f"UNVERIFIED: only {len(bundles)} suitable resolved markets collected; need 3")
+          PY
+      - name: Upload Phase 11 evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: polymarket-phase11-real-historical-paper-replay
+          path: artifacts/phase11/live_smoke.json

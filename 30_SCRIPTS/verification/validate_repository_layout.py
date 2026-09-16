@@ -14,9 +14,14 @@ NUMBERED_ROOTS = {
     "50_ARTIFACTS", "60_DEPLOYMENT", "70_INTEGRATIONS", "80_ARCHIVE", "90_RELEASE", "99_META",
 }
 ROOT_ALLOWLIST = {
-    "README.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
+    #: README.en.md is the English README. GitHub renders README.md on the
+    #: repository page and has no language negotiation, so a second language
+    #: has to be a second root file with a link between the two — a
+    #: translation in a subdirectory is one nobody finds. Any further
+    #: translation belongs here by the same rule.
+    "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", "pytest.ini",
-    "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests",
+    "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests", "docs",
     ".github", ".agents", ".claude-plugin", ".obsidian",
     *NUMBERED_ROOTS,
 }
