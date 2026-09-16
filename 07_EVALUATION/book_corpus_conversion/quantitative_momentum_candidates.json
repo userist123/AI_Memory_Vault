@@ -1,0 +1,29 @@
+[
+  {
+    "concept": "frog-in-the-pan momentum",
+    "slot": "judgement",
+    "definition": "Behavioral asset pricing anomaly where market underreaction is maximized when information arrives continuously in gradual incremental amounts rather than sudden dramatic jumps.",
+    "evidence": "To calculate “frog-in-the-pan” momentum, the authors classify each daily return as either positive or negative (or zero in some cases).",
+    "evidence_quote": "To calculate “frog-in-the-pan” momentum, the authors classify each daily return as either positive or negative (or zero in some cases).",
+    "chunk_index": 6,
+    "confidence": 0.95
+  },
+  {
+    "concept": "quality of momentum",
+    "slot": "judgement",
+    "definition": "Diagnostic assessment evaluating whether a stock's upward price trajectory is driven by smooth consistent compounding rather than high-volatility event spikes.",
+    "evidence": "In Step 3 we seek to identify the quality of momentum associated with the stocks from Step 2.",
+    "evidence_quote": "In Step 3 we seek to identify the quality of momentum associated with the stocks from Step 2.",
+    "chunk_index": 5,
+    "confidence": 0.95
+  },
+  {
+    "concept": "12-2 momentum",
+    "slot": "procedures",
+    "definition": "Systematic ranking rule sorting assets by their cumulative trailing twelve-month returns while omitting the most recent month to avoid short-term reversal effects.",
+    "evidence": "12/2 momentum is a strategy that sorts stocks based on their cumulative 12 month past returns (ignoring the first month).",
+    "evidence_quote": "12/2 momentum is a strategy that sorts stocks based on their cumulative 12 month past returns (ignoring the first month).",
+    "chunk_index": 0,
+    "confidence": 0.95
+  }
+]

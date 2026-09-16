@@ -1,0 +1,19 @@
+{
+  "fixture_type": "synthetic",
+  "market_id": "replay-001",
+  "timeline": [
+    {"at": "2025-01-01T00:00:00Z", "lifecycle": "open", "known_as_of": "2025-01-01T00:00:00Z"},
+    {"at": "2025-01-02T00:00:00Z", "lifecycle": "open", "known_as_of": "2025-01-02T00:00:00Z"},
+    {"at": "2025-01-04T10:00:00Z", "lifecycle": "resolved", "known_as_of": "2025-01-04T10:00:00Z", "resolution_known_at": "2025-01-04T09:00:00Z"}
+  ],
+  "price_history": [
+    {"outcome_id": "yes", "observed_at": "2025-01-01T01:00:00Z", "price": "0.40", "requested_fidelity_minutes": 60},
+    {"outcome_id": "yes", "observed_at": "2025-01-03T01:00:00Z", "price": "0.65", "requested_fidelity_minutes": 60},
+    {"outcome_id": "yes", "observed_at": "2025-01-05T01:00:00Z", "price": "0.90", "requested_fidelity_minutes": 60}
+  ],
+  "assertions": [
+    "At 2025-01-03T00:00:00Z the resolved state is invisible.",
+    "The delayed/acquired-later state is invisible before its acquisition cutoff.",
+    "Sparse price points are preserved; no interpolation is performed."
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "tokens_evaluated": 40,
+  "total_points_interval_all": 166,
+  "total_points_dense": 1664,
+  "aggregate_decimation_ratio": 10.02,
+  "mean_entry_clipping_minutes": 4.6,
+  "total_settlement_sweep_points": 184,
+  "decimation_confirmed": true
+}
