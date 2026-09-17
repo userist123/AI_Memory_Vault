@@ -35,4 +35,3 @@ none (not yet built — explicitly recorded as unbuilt architecture)
 | substate | laird_soar_cognitive_architecture | 0.90 | promoted | 2026-09-12 | a8a64a3e-1d72-4971-9f2b-64b14a3ea916 | In response to an impasse, it creates a substate in which the agent can attempt to resolve the impasse. | 12 |
 | operator proposal | laird_soar_cognitive_architecture | 0.90 | proposed | 2026-09-12 | | Operator proposal An operator is proposed by a rule that tests the current state and creates an acceptable preference for an operator. | 7 |
 | cross-exclusion | minsky_society_of_mind | 0.95 | proposed | 2026-09-12 | | We can accomplish that by building them into a cross-exclusion system so that, for example, Hunger’s memories can be formed only when Hunger is active. | 3 |
-| subgoal | newell_unified_theories_of_cognition | 0.95 | proposed | 2026-09-12 | | Such a scheme can generate all the sorts of subgoals that we have become familiar with in Al systems | 1 |
