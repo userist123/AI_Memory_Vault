@@ -22,9 +22,15 @@ jobs:
       - name: Run repository hygiene validator
         run: python 30_SCRIPTS/verification/repository_hygiene.py
 
+      - name: Refuse personal documents
+        run: |
+          python -m pip install pypdf==6.16.2
+          python 30_SCRIPTS/verification/personal_data_guard.py
+
       - name: Run hygiene regression tests
         run: |
           python -m pip install --upgrade pip
           python -m pip install pytest
           pytest 20_TESTS/regression/test_repository_hygiene.py -q
+          pytest 20_TESTS/regression/test_personal_data_guard.py -q
           pytest 20_TESTS/test_r031_repairs.py -q
