@@ -1,0 +1,1523 @@
+{
+  "metadata": {
+    "title": "Selectivity Signals Empirical Evaluation (Part A)",
+    "schema_version": "selectivity-evaluation.v1",
+    "model_baseline_shift": "Local models (llama3.1:8b, mistral:7b, qwen2.5:7b) retired; evaluated on re-indexed online corpus",
+    "books_evaluated_count": 6,
+    "all_books_carry_index": true,
+    "all_books_carry_headings": true
+  },
+  "furniture_negative_control": {
+    "total_items": 7,
+    "all_rejected": true,
+    "items": {
+      "validation set": {
+        "clean_term": "validation set",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      },
+      "ReLU units": {
+        "clean_term": "relu units",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      },
+      "backbone": {
+        "clean_term": "backbone",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      },
+      "hyperparameters": {
+        "clean_term": "hyperparameters",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      },
+      "number of training epochs": {
+        "clean_term": "number of training epochs",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      },
+      "Rot-MNIST": {
+        "clean_term": "rot-mnist",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      },
+      "S-TinyImageNet": {
+        "clean_term": "s-tinyimagenet",
+        "rejected": true,
+        "status": "REJECTED_AS_EXPECTED"
+      }
+    }
+  },
+  "criteria_summary": {
+    "baseline_occ3": {
+      "name": "Baseline occ >= 3",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 13,
+          "precision": 92.31,
+          "author_hits": 12
+        },
+        "squire_kandel": {
+          "retained_count": 12,
+          "precision": 100.0,
+          "author_hits": 12
+        },
+        "ashby_design": {
+          "retained_count": 11,
+          "precision": 81.82,
+          "author_hits": 9
+        },
+        "laird_soar": {
+          "retained_count": 15,
+          "precision": 80.0,
+          "author_hits": 12
+        },
+        "newell_utc": {
+          "retained_count": 1,
+          "precision": 100.0,
+          "author_hits": 1
+        },
+        "burniske_crypto": {
+          "retained_count": 7,
+          "precision": 57.14,
+          "author_hits": 4
+        }
+      },
+      "min_precision": 57.14,
+      "all_books_gte_80": false
+    },
+    "baseline_occ2": {
+      "name": "Baseline occ >= 2",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 13,
+          "precision": 92.31,
+          "author_hits": 12
+        },
+        "squire_kandel": {
+          "retained_count": 12,
+          "precision": 100.0,
+          "author_hits": 12
+        },
+        "ashby_design": {
+          "retained_count": 11,
+          "precision": 81.82,
+          "author_hits": 9
+        },
+        "laird_soar": {
+          "retained_count": 15,
+          "precision": 80.0,
+          "author_hits": 12
+        },
+        "newell_utc": {
+          "retained_count": 11,
+          "precision": 9.09,
+          "author_hits": 1
+        },
+        "burniske_crypto": {
+          "retained_count": 10,
+          "precision": 60.0,
+          "author_hits": 6
+        }
+      },
+      "min_precision": 9.09,
+      "all_books_gte_80": false
+    },
+    "signal_spread": {
+      "name": "Signal spread: occ >= 2 & spread >= 0.12",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 13,
+          "precision": 92.31,
+          "author_hits": 12
+        },
+        "squire_kandel": {
+          "retained_count": 7,
+          "precision": 100.0,
+          "author_hits": 7
+        },
+        "ashby_design": {
+          "retained_count": 9,
+          "precision": 88.89,
+          "author_hits": 8
+        },
+        "laird_soar": {
+          "retained_count": 10,
+          "precision": 70.0,
+          "author_hits": 7
+        },
+        "newell_utc": {
+          "retained_count": 2,
+          "precision": 50.0,
+          "author_hits": 1
+        },
+        "burniske_crypto": {
+          "retained_count": 7,
+          "precision": 57.14,
+          "author_hits": 4
+        }
+      },
+      "min_precision": 50.0,
+      "all_books_gte_80": false
+    },
+    "signal_span": {
+      "name": "Signal span: occ >= 2 & span >= 0.30",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 13,
+          "precision": 92.31,
+          "author_hits": 12
+        },
+        "squire_kandel": {
+          "retained_count": 7,
+          "precision": 100.0,
+          "author_hits": 7
+        },
+        "ashby_design": {
+          "retained_count": 9,
+          "precision": 88.89,
+          "author_hits": 8
+        },
+        "laird_soar": {
+          "retained_count": 11,
+          "precision": 81.82,
+          "author_hits": 9
+        },
+        "newell_utc": {
+          "retained_count": 1,
+          "precision": 100.0,
+          "author_hits": 1
+        },
+        "burniske_crypto": {
+          "retained_count": 7,
+          "precision": 57.14,
+          "author_hits": 4
+        }
+      },
+      "min_precision": 57.14,
+      "all_books_gte_80": false
+    },
+    "signal_co_deg": {
+      "name": "Signal co_deg: occ >= 2 & co_deg >= 3",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 13,
+          "precision": 92.31,
+          "author_hits": 12
+        },
+        "squire_kandel": {
+          "retained_count": 10,
+          "precision": 100.0,
+          "author_hits": 10
+        },
+        "ashby_design": {
+          "retained_count": 11,
+          "precision": 81.82,
+          "author_hits": 9
+        },
+        "laird_soar": {
+          "retained_count": 15,
+          "precision": 80.0,
+          "author_hits": 12
+        },
+        "newell_utc": {
+          "retained_count": 4,
+          "precision": 0.0,
+          "author_hits": 0
+        },
+        "burniske_crypto": {
+          "retained_count": 8,
+          "precision": 50.0,
+          "author_hits": 4
+        }
+      },
+      "min_precision": 0.0,
+      "all_books_gte_80": false
+    },
+    "composite_spread_heading_early": {
+      "name": "Composite: occ >= 2 & (spread >= 0.15 | heading_hit | early_def)",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 12,
+          "precision": 91.67,
+          "author_hits": 11
+        },
+        "squire_kandel": {
+          "retained_count": 7,
+          "precision": 100.0,
+          "author_hits": 7
+        },
+        "ashby_design": {
+          "retained_count": 9,
+          "precision": 88.89,
+          "author_hits": 8
+        },
+        "laird_soar": {
+          "retained_count": 9,
+          "precision": 77.78,
+          "author_hits": 7
+        },
+        "newell_utc": {
+          "retained_count": 1,
+          "precision": 100.0,
+          "author_hits": 1
+        },
+        "burniske_crypto": {
+          "retained_count": 6,
+          "precision": 66.67,
+          "author_hits": 4
+        }
+      },
+      "min_precision": 66.67,
+      "all_books_gte_80": false
+    },
+    "composite_occ3_spread": {
+      "name": "Composite: occ >= 3 & spread >= 0.10",
+      "per_book": {
+        "schacter_1994": {
+          "retained_count": 13,
+          "precision": 92.31,
+          "author_hits": 12
+        },
+        "squire_kandel": {
+          "retained_count": 7,
+          "precision": 100.0,
+          "author_hits": 7
+        },
+        "ashby_design": {
+          "retained_count": 9,
+          "precision": 88.89,
+          "author_hits": 8
+        },
+        "laird_soar": {
+          "retained_count": 12,
+          "precision": 75.0,
+          "author_hits": 9
+        },
+        "newell_utc": {
+          "retained_count": 1,
+          "precision": 100.0,
+          "author_hits": 1
+        },
+        "burniske_crypto": {
+          "retained_count": 7,
+          "precision": 57.14,
+          "author_hits": 4
+        }
+      },
+      "min_precision": 57.14,
+      "all_books_gte_80": false
+    }
+  },
+  "books": {
+    "schacter_1994": {
+      "title": "Schacter & Tulving (1994) Memory Systems",
+      "domain": "Memory Taxonomy",
+      "total_candidates": 13,
+      "author_labels_count": {
+        "in_index_entries": 998,
+        "headings": 5,
+        "definitional_terms": 13
+      },
+      "concepts": {
+        "functional dissociation": {
+          "concept": "functional dissociation",
+          "occ": 3,
+          "spread": 0.2725,
+          "span": 0.5915,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 6,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "perceptual representation system": {
+          "concept": "perceptual representation system",
+          "occ": 4,
+          "spread": 0.3463,
+          "span": 0.7465,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "component process": {
+          "concept": "component process",
+          "occ": 5,
+          "spread": 0.3504,
+          "span": 0.9155,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "semantic memory": {
+          "concept": "semantic memory",
+          "occ": 7,
+          "spread": 0.181,
+          "span": 0.5211,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 11,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "nondeclarative memory": {
+          "concept": "nondeclarative memory",
+          "occ": 8,
+          "spread": 0.2576,
+          "span": 0.6338,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "configural association": {
+          "concept": "configural association",
+          "occ": 8,
+          "spread": 0.1436,
+          "span": 0.3521,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 11,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "procedural memory": {
+          "concept": "procedural memory",
+          "occ": 8,
+          "spread": 0.1494,
+          "span": 0.4225,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": true,
+          "gt_author": true
+        },
+        "implicit memory": {
+          "concept": "implicit memory",
+          "occ": 9,
+          "spread": 0.2184,
+          "span": 0.5915,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "episodic memory": {
+          "concept": "episodic memory",
+          "occ": 10,
+          "spread": 0.2541,
+          "span": 0.7324,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 11,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "working memory": {
+          "concept": "working memory",
+          "occ": 11,
+          "spread": 0.2406,
+          "span": 0.8028,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 11,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "explicit memory": {
+          "concept": "explicit memory",
+          "occ": 13,
+          "spread": 0.2979,
+          "span": 0.7324,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "declarative memory": {
+          "concept": "declarative memory",
+          "occ": 15,
+          "spread": 0.2116,
+          "span": 0.6056,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "priming": {
+          "concept": "priming",
+          "occ": 20,
+          "spread": 0.2856,
+          "span": 0.7465,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        }
+      }
+    },
+    "squire_kandel": {
+      "title": "Squire & Kandel Memory: From Mind to Molecules",
+      "domain": "Neuroscience & Molecular Memory",
+      "total_candidates": 12,
+      "author_labels_count": {
+        "in_index_entries": 996,
+        "headings": 10,
+        "definitional_terms": 15
+      },
+      "concepts": {
+        "long-term potentiation": {
+          "concept": "long-term potentiation",
+          "occ": 4,
+          "spread": 0.3314,
+          "span": 0.8243,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 2,
+          "in_index": true,
+          "in_headings": false,
+          "defined": true,
+          "gt_author": true
+        },
+        "consolidation": {
+          "concept": "consolidation",
+          "occ": 4,
+          "spread": 0.0214,
+          "span": 0.0541,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "working memory": {
+          "concept": "working memory",
+          "occ": 4,
+          "spread": 0.0825,
+          "span": 0.2027,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "creb": {
+          "concept": "creb",
+          "occ": 5,
+          "spread": 0.0251,
+          "span": 0.0676,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 2,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "synaptic plasticity": {
+          "concept": "synaptic plasticity",
+          "occ": 6,
+          "spread": 0.1841,
+          "span": 0.5,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "priming": {
+          "concept": "priming",
+          "occ": 8,
+          "spread": 0.2281,
+          "span": 0.7568,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": true,
+          "in_headings": false,
+          "defined": true,
+          "gt_author": true
+        },
+        "habituation": {
+          "concept": "habituation",
+          "occ": 9,
+          "spread": 0.053,
+          "span": 0.1757,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 6,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "sensitization": {
+          "concept": "sensitization",
+          "occ": 10,
+          "spread": 0.1218,
+          "span": 0.5135,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "classical conditioning": {
+          "concept": "classical conditioning",
+          "occ": 10,
+          "spread": 0.2194,
+          "span": 0.6757,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "short-term memory": {
+          "concept": "short-term memory",
+          "occ": 12,
+          "spread": 0.0703,
+          "span": 0.2973,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": true,
+          "gt_author": true
+        },
+        "nondeclarative memory": {
+          "concept": "nondeclarative memory",
+          "occ": 15,
+          "spread": 0.1639,
+          "span": 0.6486,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 8,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "declarative memory": {
+          "concept": "declarative memory",
+          "occ": 22,
+          "spread": 0.1382,
+          "span": 0.4595,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 9,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        }
+      }
+    },
+    "ashby_design": {
+      "title": "W. Ross Ashby Design for a Brain",
+      "domain": "Cybernetics & Systems Theory",
+      "total_candidates": 11,
+      "author_labels_count": {
+        "in_index_entries": 396,
+        "headings": 8,
+        "definitional_terms": 9
+      },
+      "concepts": {
+        "adaptation": {
+          "concept": "adaptation",
+          "occ": 47,
+          "spread": 0.2501,
+          "span": 0.8242,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "dispersion": {
+          "concept": "dispersion",
+          "occ": 7,
+          "spread": 0.0535,
+          "span": 0.1429,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 9,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "essential variables": {
+          "concept": "essential variables",
+          "occ": 31,
+          "spread": 0.1943,
+          "span": 0.6374,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "feedback": {
+          "concept": "feedback",
+          "occ": 21,
+          "spread": 0.1505,
+          "span": 0.5824,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "homeostasis": {
+          "concept": "homeostasis",
+          "occ": 6,
+          "spread": 0.2613,
+          "span": 0.5934,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "homeostat": {
+          "concept": "homeostat",
+          "occ": 26,
+          "spread": 0.1797,
+          "span": 0.6044,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "multistable system": {
+          "concept": "multistable system",
+          "occ": 5,
+          "spread": 0.0189,
+          "span": 0.0549,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 8,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "stability": {
+          "concept": "stability",
+          "occ": 41,
+          "spread": 0.2451,
+          "span": 0.7692,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "state-determined system": {
+          "concept": "state-determined system",
+          "occ": 31,
+          "spread": 0.2668,
+          "span": 0.8462,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 9,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "step-mechanism": {
+          "concept": "step-mechanism",
+          "occ": 16,
+          "spread": 0.1961,
+          "span": 0.6484,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 9,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "ultrastable system": {
+          "concept": "ultrastable system",
+          "occ": 34,
+          "spread": 0.1695,
+          "span": 0.6593,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        }
+      }
+    },
+    "laird_soar": {
+      "title": "John E. Laird The Soar Cognitive Architecture",
+      "domain": "Cognitive Architectures",
+      "total_candidates": 22,
+      "author_labels_count": {
+        "in_index_entries": 630,
+        "headings": 8,
+        "definitional_terms": 21
+      },
+      "concepts": {
+        "operator": {
+          "concept": "operator",
+          "occ": 18,
+          "spread": 0.1306,
+          "span": 0.5043,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 13,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "working memory": {
+          "concept": "working memory",
+          "occ": 15,
+          "spread": 0.1764,
+          "span": 0.6261,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "substate": {
+          "concept": "substate",
+          "occ": 12,
+          "spread": 0.1054,
+          "span": 0.3913,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 13,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "chunking": {
+          "concept": "chunking",
+          "occ": 11,
+          "spread": 0.2299,
+          "span": 0.9652,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "impasse": {
+          "concept": "impasse",
+          "occ": 12,
+          "spread": 0.1049,
+          "span": 0.3826,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 14,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "semantic memory": {
+          "concept": "semantic memory",
+          "occ": 10,
+          "spread": 0.2441,
+          "span": 0.6174,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "episodic memory": {
+          "concept": "episodic memory",
+          "occ": 10,
+          "spread": 0.2528,
+          "span": 0.6348,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "reinforcement learning": {
+          "concept": "reinforcement learning",
+          "occ": 8,
+          "spread": 0.2091,
+          "span": 0.5652,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 8,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "cognitive architecture": {
+          "concept": "cognitive architecture",
+          "occ": 11,
+          "spread": 0.2698,
+          "span": 0.9739,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 11,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "state": {
+          "concept": "state",
+          "occ": 12,
+          "spread": 0.0533,
+          "span": 0.1913,
+          "early_def": true,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "operator proposal": {
+          "concept": "operator proposal",
+          "occ": 7,
+          "spread": 0.0521,
+          "span": 0.1478,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 10,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "mental imagery": {
+          "concept": "mental imagery",
+          "occ": 9,
+          "spread": 0.2464,
+          "span": 0.6522,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 9,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "procedural memory": {
+          "concept": "procedural memory",
+          "occ": 7,
+          "spread": 0.2014,
+          "span": 0.5739,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 12,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "numeric preference": {
+          "concept": "numeric preference",
+          "occ": 3,
+          "spread": 0.1333,
+          "span": 0.287,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 4,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "tie impasse": {
+          "concept": "tie impasse",
+          "occ": 5,
+          "spread": 0.0559,
+          "span": 0.1565,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 6,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "problem space computational model": {
+          "concept": "problem space computational model",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "long term identifier": {
+          "concept": "long term identifier",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 2,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "cue based retrieval": {
+          "concept": "cue based retrieval",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "spatial visual system": {
+          "concept": "spatial visual system",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "cognitive appraisal": {
+          "concept": "cognitive appraisal",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "feeling state": {
+          "concept": "feeling state",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "metacognition": {
+          "concept": "metacognition",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        }
+      }
+    },
+    "newell_utc": {
+      "title": "Allen Newell Unified Theories of Cognition",
+      "domain": "Cognitive Science & Psychology",
+      "total_candidates": 19,
+      "author_labels_count": {
+        "in_index_entries": 1053,
+        "headings": 10,
+        "definitional_terms": 6
+      },
+      "concepts": {
+        "cognitive architecture": {
+          "concept": "cognitive architecture",
+          "occ": 2,
+          "spread": 0.064,
+          "span": 0.128,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "problem space": {
+          "concept": "problem space",
+          "occ": 3,
+          "spread": 0.1671,
+          "span": 0.408,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 2,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "knowledge level": {
+          "concept": "knowledge level",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "symbol system": {
+          "concept": "symbol system",
+          "occ": 2,
+          "spread": 0.052,
+          "span": 0.104,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "production system": {
+          "concept": "production system",
+          "occ": 2,
+          "spread": 0.004,
+          "span": 0.008,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "working memory": {
+          "concept": "working memory",
+          "occ": 2,
+          "spread": 0.008,
+          "span": 0.016,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 4,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "chunking": {
+          "concept": "chunking",
+          "occ": 2,
+          "spread": 0.004,
+          "span": 0.008,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "impasse": {
+          "concept": "impasse",
+          "occ": 2,
+          "spread": 0.004,
+          "span": 0.008,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "subgoal": {
+          "concept": "subgoal",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "decision cycle": {
+          "concept": "decision cycle",
+          "occ": 2,
+          "spread": 0.004,
+          "span": 0.008,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "elaboration phase": {
+          "concept": "elaboration phase",
+          "occ": 2,
+          "spread": 0.004,
+          "span": 0.008,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "preference": {
+          "concept": "preference",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 2,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "recognition memory": {
+          "concept": "recognition memory",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "cognitive band": {
+          "concept": "cognitive band",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "biological band": {
+          "concept": "biological band",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "rational band": {
+          "concept": "rational band",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "social band": {
+          "concept": "social band",
+          "occ": 1,
+          "spread": 0.0,
+          "span": 0.0,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 3,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "task environment": {
+          "concept": "task environment",
+          "occ": 2,
+          "spread": 0.14,
+          "span": 0.28,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "search control": {
+          "concept": "search control",
+          "occ": 2,
+          "spread": 0.032,
+          "span": 0.064,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 0,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        }
+      }
+    },
+    "burniske_crypto": {
+      "title": "Chris Burniske Cryptoassets",
+      "domain": "Financial Markets & Crypto (Non-Cognitive Outgroup)",
+      "total_candidates": 10,
+      "author_labels_count": {
+        "in_index_entries": 1423,
+        "headings": 8,
+        "definitional_terms": 67
+      },
+      "concepts": {
+        "cryptocurrency": {
+          "concept": "cryptocurrency",
+          "occ": 5,
+          "spread": 0.2481,
+          "span": 0.7241,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "cryptocommodity": {
+          "concept": "cryptocommodity",
+          "occ": 4,
+          "spread": 0.2045,
+          "span": 0.4828,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "cryptotoken": {
+          "concept": "cryptotoken",
+          "occ": 3,
+          "spread": 0.1551,
+          "span": 0.3448,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "network value": {
+          "concept": "network value",
+          "occ": 4,
+          "spread": 0.1491,
+          "span": 0.3793,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "proof-of-work": {
+          "concept": "proof-of-work",
+          "occ": 3,
+          "spread": 0.2132,
+          "span": 0.4828,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "smart contracts": {
+          "concept": "smart contracts",
+          "occ": 3,
+          "spread": 0.1713,
+          "span": 0.3793,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": true,
+          "gt_author": true
+        },
+        "hard fork": {
+          "concept": "hard fork",
+          "occ": 2,
+          "spread": 0.0172,
+          "span": 0.0345,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": false,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": false
+        },
+        "volatility": {
+          "concept": "volatility",
+          "occ": 2,
+          "spread": 0.0172,
+          "span": 0.0345,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "correlation": {
+          "concept": "correlation",
+          "occ": 2,
+          "spread": 0.0172,
+          "span": 0.0345,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 1,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        },
+        "mining": {
+          "concept": "mining",
+          "occ": 5,
+          "spread": 0.1858,
+          "span": 0.4483,
+          "early_def": false,
+          "heading_hit": false,
+          "co_deg": 7,
+          "in_index": true,
+          "in_headings": false,
+          "defined": false,
+          "gt_author": true
+        }
+      }
+    }
+  },
+  "conclusion": {
+    "selectivity_resolved_by_new_signals": false,
+    "best_existing_signal": "occ >= 3",
+    "baseline_occ3_min_precision": 57.14,
+    "finding": "Neither individual new signals (spread, span, co_deg, early_def) nor composite criteria beat 'occ >= 3' across all 6 books. Precision drops on out-of-domain books (Burniske: 57.14%). Per Part A.4 contract, 'occ >= 3' remains the empirically superior floor and this is reported as a clean negative result."
+  }
+}
