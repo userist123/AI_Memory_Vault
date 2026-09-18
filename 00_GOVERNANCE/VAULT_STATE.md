@@ -51,7 +51,7 @@ in its constructor. Corrected 2026-09-06.
 | Query-driven candidate generation | real | r004; before it, `retrieve()` never read the query text |
 | `lifecycle/policy.py` | real, sole authority | r001; 7/7 mutation paths gated, AST-verified |
 | `FileStorageEngine` | real, repaired | scanned 7 dead folders and loaded **0** notes until `da99af0` |
-| Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:118` builds the store, `:406` traverses; `enable_graph_expansion=False` |
+| Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:174` builds the store, `search()` traverses 1 hop (2 hops with spreading activation); `enable_graph_expansion=False` |
 | `graph/plasticity.py` | real, **not wired** | zero production call sites; journal + rollback exist, nothing calls them |
 | `attention`, `executive`, `global_workspace`, `reasoning` | present, **not wired** | r011 audited and recommended keeping them unwired |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
@@ -65,19 +65,19 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 920 |
-| Notes visible to `FileStorageEngine` | 738 |
-| Graph edges | 470 |
-| — declared / inferred / wikilink | 198 / 197 / 75 |
-| Notes usable as a graph **seed** (out-edge) | 145 |
-| Notes reachable as graph **gold** (in-edge) | 133 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 932 |
+| Notes visible to `FileStorageEngine` | 837 |
+| Graph edges | 521 |
+| — declared / inferred / wikilink | 224 / 222 / 75 |
+| Notes usable as a graph **seed** (out-edge) | 157 |
+| Notes reachable as graph **gold** (in-edge) | 145 |
 | Graph cases with pairwise-disjoint nodes | 33 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
 and storage requires a frontmatter `id`. Do not treat 842 and 738 as the same
 population.
 
-`search()` traverses **one hop** along outgoing edges. It is not multi-hop.
+`search()` traverses **one hop** along outgoing edges by default (`enable_spreading_activation=False`). Multi-hop propagation is supported up to 2 hops strictly when `enable_spreading_activation=True` is explicitly passed; retrieval search parameters (budget, disclosure) remain unchanged.
 Graph results describe roughly 9% of the corpus and must never be pooled with
 whole-corpus retrieval numbers.
 
