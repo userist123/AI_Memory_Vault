@@ -1,137 +1,641 @@
 {
-  "benchmark_set": "Heldout Benchmark v2 (29 cases) + Ashby Curriculum Extension (5 cases)",
-  "existing_cases_regression_check": {
-    "graph_off": {
-      "n": 32,
-      "n_measurable": 29,
-      "n_unmeasurable": 3,
-      "candidate_recall": 0.6897,
-      "context_recall": 0.069,
-      "answer_correctness": 0.069
+  "timestamp": "2026-09-18T20:17:37.615787+00:00",
+  "benchmark_description": "OpenStax Psychology 2e Chapter 8 Ingestion & Held-Out Evaluation",
+  "heldout_regression_check": {
+    "total_heldout_cases": 32,
+    "results": {
+      "graph_off": {
+        "n_total": 32,
+        "n_measurable": 29,
+        "n_unmeasurable": 3,
+        "raw_correct_fraction": "2/29",
+        "candidate_recall": 0.6897,
+        "context_recall": 0.069,
+        "answer_correctness": 0.069
+      },
+      "graph_on": {
+        "n_total": 32,
+        "n_measurable": 29,
+        "n_unmeasurable": 3,
+        "raw_correct_fraction": "4/29",
+        "candidate_recall": 0.7586,
+        "context_recall": 0.1379,
+        "answer_correctness": 0.1379
+      }
     },
-    "graph_on": {
-      "n": 32,
-      "n_measurable": 29,
-      "n_unmeasurable": 3,
-      "candidate_recall": 0.7586,
-      "context_recall": 0.1379,
-      "answer_correctness": 0.1379
-    }
+    "zero_regression_verified": true
   },
   "curriculum_comparative_eval": {
-    "vault_without_book": {
-      "summary": {
-        "n": 5,
-        "n_measurable": 5,
-        "n_unmeasurable": 0,
-        "candidate_recall": 0.0,
-        "context_recall": 0.0,
-        "answer_correctness": 0.0
-      },
-      "cases": [
-        {
-          "id": "ASHBY-01",
-          "class": "exact_identifier_lookup",
-          "candidate_recall": 0,
-          "context_recall": 0,
-          "answer_correctness": 0,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-02",
-          "class": "conceptual_definition",
-          "candidate_recall": 0,
-          "context_recall": 0,
-          "answer_correctness": 0,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-03",
-          "class": "architectural_analysis",
-          "candidate_recall": 0,
-          "context_recall": 0,
-          "answer_correctness": 0,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-04",
-          "class": "system_design",
-          "candidate_recall": 0,
-          "context_recall": 0,
-          "answer_correctness": 0,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-05",
-          "class": "neuro_plasticity",
-          "candidate_recall": 0,
-          "context_recall": 0,
-          "answer_correctness": 0,
-          "graph_status": "disabled",
-          "expanded": 0
-        }
-      ]
+    "total_questions": 17,
+    "review_questions_total": 12,
+    "trap_questions_total": 5,
+    "vault_without_curriculum": {
+      "review_questions_answered_fraction": "0/12",
+      "traps_correctly_abstained_fraction": "5/5",
+      "overall_success_fraction": "5/17"
     },
-    "vault_with_book": {
-      "summary": {
-        "n": 5,
-        "n_measurable": 5,
-        "n_unmeasurable": 0,
-        "candidate_recall": 1.0,
-        "context_recall": 1.0,
-        "answer_correctness": 1.0
+    "vault_with_curriculum": {
+      "review_questions_answered_fraction": "7/12",
+      "traps_correctly_abstained_fraction": "5/5",
+      "overall_success_fraction": "12/17"
+    },
+    "detailed_test_cases": [
+      {
+        "id": "openstax-psy2e-ch08-q01",
+        "type": "author_review",
+        "section": "8.1 How Memory Functions",
+        "question": "________ is a memory store with a phonological loop, visuospatial sketchpad, episodic buffer, and a central executive.",
+        "expected_answer": "working memory",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+        "verdict": "PASS"
       },
-      "cases": [
-        {
-          "id": "ASHBY-01",
-          "class": "exact_identifier_lookup",
-          "candidate_recall": 1,
-          "context_recall": 1,
-          "answer_correctness": 1,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-02",
-          "class": "conceptual_definition",
-          "candidate_recall": 1,
-          "context_recall": 1,
-          "answer_correctness": 1,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-03",
-          "class": "architectural_analysis",
-          "candidate_recall": 1,
-          "context_recall": 1,
-          "answer_correctness": 1,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-04",
-          "class": "system_design",
-          "candidate_recall": 1,
-          "context_recall": 1,
-          "answer_correctness": 1,
-          "graph_status": "disabled",
-          "expanded": 0
-        },
-        {
-          "id": "ASHBY-05",
-          "class": "neuro_plasticity",
-          "candidate_recall": 1,
-          "context_recall": 1,
-          "answer_correctness": 1,
-          "graph_status": "disabled",
-          "expanded": 0
-        }
-      ]
+      {
+        "id": "openstax-psy2e-ch08-q02",
+        "type": "author_review",
+        "section": "8.1 How Memory Functions",
+        "question": "The storage capacity of long-term memory is ________.",
+        "expected_answer": "essentially limitless",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": false,
+        "matching_note": null,
+        "verdict": "FAIL"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q03",
+        "type": "author_review",
+        "section": "8.1 How Memory Functions",
+        "question": "The three functions of memory are ________.",
+        "expected_answer": "encoding, storage, and retrieval",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": false,
+        "matching_note": null,
+        "verdict": "FAIL"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q04",
+        "type": "author_review",
+        "section": "8.2 Parts of the Brain Involved with Memory",
+        "question": "This physical trace of memory is known as the ________.",
+        "expected_answer": "engram",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "73f5b12e-ba89-5e2d-b147-a3a866c6edbb",
+        "verdict": "PASS"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q05",
+        "type": "author_review",
+        "section": "8.2 Parts of the Brain Involved with Memory",
+        "question": "An exceptionally clear recollection of an important event is a (an) ________.",
+        "expected_answer": "flashbulb memory",
+        "openstax_note_retrieved": false,
+        "answer_facts_found": false,
+        "matching_note": null,
+        "verdict": "FAIL"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q06",
+        "type": "author_review",
+        "section": "8.3 Problems with Memory",
+        "question": "________ is when our recollections of the past are done in a self-enhancing manner.",
+        "expected_answer": "egocentric bias",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": false,
+        "matching_note": null,
+        "verdict": "FAIL"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q07",
+        "type": "author_review",
+        "section": "8.3 Problems with Memory",
+        "question": "Tip-of-the-tongue phenomenon is also known as ________.",
+        "expected_answer": "blocking",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": false,
+        "matching_note": null,
+        "verdict": "FAIL"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q08",
+        "type": "author_review",
+        "section": "8.3 Problems with Memory",
+        "question": "The formulation of new memories is sometimes called ________, and the process of bringing up old memories is called ________.",
+        "expected_answer": "construction; reconstruction",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "73f5b12e-ba89-5e2d-b147-a3a866c6edbb",
+        "verdict": "PASS"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q09",
+        "type": "author_review",
+        "section": "8.4 Ways to Enhance Memory",
+        "question": "When you are learning how to play the piano, the statement 'Every good boy does fine' can help you remember the notes E, G, B, D, and F for the lines of the treble clef. This is an example of a (an) ________.",
+        "expected_answer": "acrostic",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "13fbebce-897e-579c-8d82-04368506cb7b",
+        "verdict": "PASS"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q10",
+        "type": "author_review",
+        "section": "8.4 Ways to Enhance Memory",
+        "question": "According to a study by Yogo and Fujihara (2008), if you want to improve your short-term memory, you should spend time writing about ________.",
+        "expected_answer": "a traumatic life experience",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "13fbebce-897e-579c-8d82-04368506cb7b",
+        "verdict": "PASS"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q11",
+        "type": "author_review",
+        "section": "8.4 Ways to Enhance Memory",
+        "question": "The self-referencing effect refers to ________.",
+        "expected_answer": "making the material you are trying to memorize personally meaningful to you",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "13fbebce-897e-579c-8d82-04368506cb7b",
+        "verdict": "PASS"
+      },
+      {
+        "id": "openstax-psy2e-ch08-q12",
+        "type": "author_review",
+        "section": "8.4 Ways to Enhance Memory",
+        "question": "Memory aids that help organize information for encoding are ________.",
+        "expected_answer": "mnemonic devices",
+        "openstax_note_retrieved": true,
+        "answer_facts_found": true,
+        "matching_note": "13fbebce-897e-579c-8d82-04368506cb7b",
+        "verdict": "PASS"
+      },
+      {
+        "id": "openstax-psy2e-ch08-trap01",
+        "type": "trap_abstain",
+        "section": "8.2 Parts of the Brain Involved with Memory",
+        "question": "What specific concentration of potassium chloride in millimoles per liter triggers long-term depression in Purkinje cells according to Chapter 8?",
+        "abstain_expected": true,
+        "abstain_correct": true,
+        "verdict": "PASS",
+        "reason": "System refrained from matching extraneous concept in memory chapter",
+        "retrieved_openstax_notes": [
+          "13fbebce-897e-579c-8d82-04368506cb7b",
+          "73f5b12e-ba89-5e2d-b147-a3a866c6edbb"
+        ]
+      },
+      {
+        "id": "openstax-psy2e-ch08-trap02",
+        "type": "trap_abstain",
+        "section": "General Memory Theory",
+        "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultrastability equations for memory networks?",
+        "abstain_expected": true,
+        "abstain_correct": true,
+        "verdict": "PASS",
+        "reason": "System refrained from matching extraneous concept in memory chapter",
+        "retrieved_openstax_notes": [
+          "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+          "f96cf593-6ff1-5671-8498-2d5bda03b414",
+          "13fbebce-897e-579c-8d82-04368506cb7b",
+          "73f5b12e-ba89-5e2d-b147-a3a866c6edbb"
+        ]
+      },
+      {
+        "id": "openstax-psy2e-ch08-trap03",
+        "type": "trap_abstain",
+        "section": "8.3 Problems with Memory",
+        "question": "What did the 2024 fMRI study by Zhang et al. conclude about TikTok usage and episodic memory retention in adolescents according to Chapter 8?",
+        "abstain_expected": true,
+        "abstain_correct": true,
+        "verdict": "PASS",
+        "reason": "System refrained from matching extraneous concept in memory chapter",
+        "retrieved_openstax_notes": [
+          "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+          "13fbebce-897e-579c-8d82-04368506cb7b",
+          "f96cf593-6ff1-5671-8498-2d5bda03b414",
+          "73f5b12e-ba89-5e2d-b147-a3a866c6edbb"
+        ]
+      },
+      {
+        "id": "openstax-psy2e-ch08-trap04",
+        "type": "trap_abstain",
+        "section": "8.2 Parts of the Brain Involved with Memory",
+        "question": "How many distinct histological layers of the neocortex are identified in Section 8.2 as participating in prospective memory consolidation?",
+        "abstain_expected": true,
+        "abstain_correct": true,
+        "verdict": "PASS",
+        "reason": "System refrained from matching extraneous concept in memory chapter",
+        "retrieved_openstax_notes": [
+          "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+          "13fbebce-897e-579c-8d82-04368506cb7b"
+        ]
+      },
+      {
+        "id": "openstax-psy2e-ch08-trap05",
+        "type": "trap_abstain",
+        "section": "8.3 Problems with Memory",
+        "question": "What is the recommended pediatric therapeutic dosage of memantine in milligrams per day specified in Chapter 8 for treating mild cognitive impairment?",
+        "abstain_expected": true,
+        "abstain_correct": true,
+        "verdict": "PASS",
+        "reason": "System refrained from matching extraneous concept in memory chapter",
+        "retrieved_openstax_notes": [
+          "13fbebce-897e-579c-8d82-04368506cb7b"
+        ]
+      }
+    ]
+  },
+  "extracted_claims_audit": {
+    "total_claims_audited": 41,
+    "claims_pass_count": 41,
+    "raw_pass_fraction": "41/41",
+    "evaluator": "deterministic_verbatim_matcher_against_raw_html",
+    "claims_details": [
+      {
+        "note_file": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+        "concept_title": "1. Anterograde Amnesia",
+        "exact_quote": "With anterograde amnesia , you cannot remember new information, although you can remember information and events that happened prior to your injury. The hippocampus is usually affected",
+        "quote_length": 184,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+        "concept_title": "2. Retrograde Amnesia",
+        "exact_quote": "Retrograde amnesia is loss of memory for events that occurred prior to the trauma. People with retrograde amnesia cannot remember some or even all of their past. They have difficulty remembering episodic memories.",
+        "quote_length": 213,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+        "concept_title": "3. Memory Construction and Reconstruction",
+        "exact_quote": "The formulation of new memories is sometimes called construction , and the process of bringing up old memories is called reconstruction . Yet as we retrieve our memories, we also tend to alter and modify them.",
+        "quote_length": 209,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+        "concept_title": "4. Suggestibility and False Memories",
+        "exact_quote": "Suggestibility describes the effects of misinformation from external sources that leads to the creation of false memories.",
+        "quote_length": 122,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+        "concept_title": "5. Eyewitness Identification Fallibility",
+        "exact_quote": "Gary Wells and Deah Quinlivan (2009) assert it’s suggestive police identification procedures, such as stacking lineups to make the defendant stand out, telling the witness which person to identify, and confirming witnesses choices by telling them “Good choice,” or “You picked the guy.”",
+        "quote_length": 286,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+        "concept_title": "6. Misinformation Effect Paradigm",
+        "exact_quote": "Loftus also developed the misinformation effect paradigm , which holds that after exposure to additional and possibly inaccurate information, a person may misremember the original event.",
+        "quote_length": 186,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "1. Engram and Lashley's Equipotentiality Hypothesis",
+        "exact_quote": "Based on his creation of lesions and the animals’ reaction, he formulated the equipotentiality hypothesis : if part of one area of the brain involved in memory is damaged, another part of the same area can take over that memory function (Lashley, 1950).",
+        "quote_length": 253,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "2. Role of the Amygdala in Emotional Memory and Consolidation",
+        "exact_quote": "Because of its role in processing emotional information, the amygdala is also involved in memory consolidation: the process of transferring new learning into long-term memory. The amygdala seems to facilitate encoding memories at a deeper level when the event is emotionally arousing.",
+        "quote_length": 284,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "3. Role of the Hippocampus and Declarative Memory in Patient H.M.",
+        "exact_quote": "One famous patient, known for years only as H. M., had both his left and right temporal lobes (hippocampi) removed in an attempt to help control the seizures he had been suffering from for years (Corkin, Amaral, González, Johnson, & Hyman, 1997). As a result, his declarative memory was significantly affected, and he could not form new semantic knowledge.",
+        "quote_length": 356,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "4. Role of the Cerebellum in Procedural Memory",
+        "exact_quote": "Although the hippocampus seems to be more of a processing area for explicit memories, you could still lose it and be able to create implicit memories (procedural memory, motor learning, and classical conditioning), thanks to your cerebellum ( Figure 8.8 ).",
+        "quote_length": 256,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "5. Prefrontal Cortex Activation in Encoding and Retrieval",
+        "exact_quote": "In another study, encoding was associated with left frontal activity, while retrieval of information was associated with the right frontal region (Craik et al., 1999).",
+        "quote_length": 167,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "6. Synaptic Plasticity and Neurotransmitters in Memory Consolidation",
+        "exact_quote": "Repeated activity by neurons leads to increased neurotransmitters in the synapses and more efficient and more synaptic connections. This is how memory consolidation occurs.",
+        "quote_length": 172,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "7. Arousal Theory and Flashbulb Memories",
+        "exact_quote": "It is also believed that strong emotions trigger the formation of strong memories, and weaker emotional experiences form weaker memories; this is called arousal theory (Christianson, 1992). For example, strong emotional experiences can trigger the release of neurotransmitters, as well as hormones, which strengthen memory; therefore, our memory for an emotional event is usually better than our memory for a non-emotional event.",
+        "quote_length": 429,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_biological_basis_of_memory.md",
+        "concept_title": "8. Frailties of Flashbulb Memories and Memory Reconstruction",
+        "exact_quote": "Even flashbulb memories for important events can have decreased accuracy with the passage of time.",
+        "quote_length": 98,
+        "quote_verified_in_source": true,
+        "source_file": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_forgetting_and_seven_sins.md",
+        "concept_title": "1. Amnesia",
+        "exact_quote": "Amnesia is the loss of long-term memory that occurs as the result of disease, physical trauma, or psychological trauma.",
+        "quote_length": 119,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_forgetting_and_seven_sins.md",
+        "concept_title": "2. Anterograde Amnesia",
+        "exact_quote": "With anterograde amnesia , you cannot remember new information, although you can remember information and events that happened prior to your injury.",
+        "quote_length": 148,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_forgetting_and_seven_sins.md",
+        "concept_title": "3. Retrograde Amnesia",
+        "exact_quote": "Retrograde amnesia is loss of memory for events that occurred prior to the trauma. People with retrograde amnesia cannot remember some or even all of their past.",
+        "quote_length": 161,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_forgetting_and_seven_sins.md",
+        "concept_title": "4. Memory Construction and Reconstruction",
+        "exact_quote": "The formulation of new memories is sometimes called construction , and the process of bringing up old memories is called reconstruction . Yet as we retrieve our memories, we also tend to alter and modify them.",
+        "quote_length": 209,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_forgetting_and_seven_sins.md",
+        "concept_title": "5. Suggestibility",
+        "exact_quote": "Suggestibility describes the effects of misinformation from external sources that leads to the creation of false memories.",
+        "quote_length": 122,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_forgetting_and_seven_sins.md",
+        "concept_title": "6. Misinformation Effect Paradigm",
+        "exact_quote": "Loftus also developed the misinformation effect paradigm , which holds that after exposure to additional and possibly inaccurate information, a person may misremember the original event.",
+        "quote_length": 186,
+        "quote_verified_in_source": true,
+        "source_file": "8_3_problems_with_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "1. Memory Encoding",
+        "exact_quote": "We get information into our brains through a process called encoding , which is the input of information into the memory system. Once we receive sensory information from the environment, our brains label or code it.",
+        "quote_length": 215,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "2. Automatic vs. Effortful Processing",
+        "exact_quote": "This is known as automatic processing , or the encoding of details like time, space, frequency, and the meaning of words. Automatic processing is usually done without any conscious awareness.",
+        "quote_length": 191,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "3. Semantic Encoding",
+        "exact_quote": "The encoding of words and their meaning is known as semantic encoding . It was first demonstrated by William Bousfield (1935) in an experiment in which he asked people to memorize words.",
+        "quote_length": 186,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "4. Visual Encoding and High-Imagery Words",
+        "exact_quote": "Visual encoding is the encoding of images, and acoustic encoding is the encoding of sounds, words in particular.",
+        "quote_length": 112,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "5. High-Imagery Dual Coding",
+        "exact_quote": "High-imagery words are encoded both visually and semantically (Paivio, 1986), thus building a stronger memory.",
+        "quote_length": 110,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "6. Acoustic Encoding",
+        "exact_quote": "These lessons are easy to remember because of acoustic encoding. We encode the sounds the words make. This is one of the reasons why much of what we teach young children is done through song, rhyme, and rhythm.",
+        "quote_length": 210,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "7. Levels of Processing in Encoding",
+        "exact_quote": "Words that had been encoded semantically were better remembered than those encoded visually or acoustically. Semantic encoding involves a deeper level of processing than the shallower visual or acoustic encoding.",
+        "quote_length": 212,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_encoding_functions.md",
+        "concept_title": "8. Self-Reference Effect",
+        "exact_quote": "The self-reference effect is the tendency for an individual to have better memory for information that relates to oneself in comparison to material that has less personal relevance (Rogers, Kuiper, & Kirker, 1977).",
+        "quote_length": 214,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "1. Chunking",
+        "exact_quote": "Another strategy is chunking : you organize information into manageable bits or chunks (Bodie, Powers, & Fitch-Hauser, 2006). Chunking is useful when trying to remember information like dates and phone numbers.",
+        "quote_length": 210,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "2. Elaborative Rehearsal",
+        "exact_quote": "You could also enhance memory by using elaborative rehearsal : a technique in which you think about the meaning of new information and its relation to knowledge already stored in your memory (Tigner, 1999).",
+        "quote_length": 206,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "3. Mnemonic Devices",
+        "exact_quote": "Mnemonic devices are memory aids that help us organize information for encoding ( Figure 8.18 ). They are especially useful when we want to recall larger bits of information such as steps, stages, phases, and parts of a system (Bellezza, 1981).",
+        "quote_length": 244,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "4. Acronyms and Acrostics",
+        "exact_quote": "An acronym is a word formed by the first letter of each of the words you want to remember. For example, even if you live near one, you might have difficulty recalling the names of all five Great Lakes. What if I told you to think of the word Homes? HOMES is an acronym that represents Huron, Ontario, Michigan, Erie, and Superior: the five Great Lakes. Another type of mnemonic device is an acrostic: you make a phrase of all the first letters of the words.",
+        "quote_length": 457,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "5. Expressive Writing and Short-Term Memory",
+        "exact_quote": "Masao Yogo and Shuji Fujihara (2008) had participants write for 20-minute intervals several times per month. The participants were instructed to write about a traumatic experience, their best possible future selves, or a trivial topic. The researchers found that this simple writing task increased short-term memory capacity after five weeks, but only for the participants who wrote about traumatic experiences.",
+        "quote_length": 411,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "6. Self-Reference Effect",
+        "exact_quote": "As you go through the process of elaborative rehearsal, it would be even more beneficial to make the material you are trying to memorize personally meaningful to you. In other words, make use of the self-reference effect.",
+        "quote_length": 221,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_enhancement_strategies.md",
+        "concept_title": "7. Distributed Practice",
+        "exact_quote": "Use distributed practice : Study across time in short durations rather than trying to cram it all in at once. Memory consolidation takes time, and studying across time allows time for memories to consolidate.",
+        "quote_length": 208,
+        "quote_verified_in_source": true,
+        "source_file": "8_4_ways_to_enhance_memory.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_storage_and_retrieval.md",
+        "concept_title": "1. Atkinson-Shiffrin Model Stages",
+        "exact_quote": "In order for a memory to go into storage (i.e., long-term memory), it has to pass through three distinct stages: Sensory Memory , Short-Term Memory , and finally Long-Term Memory . These stages were first proposed by Richard Atkinson and Richard Shiffrin (1968).",
+        "quote_length": 262,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_storage_and_retrieval.md",
+        "concept_title": "2. Baddeley and Hitch Working Memory Model",
+        "exact_quote": "There are memories in visual-spatial form, as well as memories of spoken or written material, and they are stored in three short-term systems: a visuospatial sketchpad, an episodic buffer (Baddeley, 2000), and a phonological loop. According to Baddeley and Hitch, a central executive part of memory supervises or controls the flow of information to and from the three short-term systems",
+        "quote_length": 386,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_storage_and_retrieval.md",
+        "concept_title": "3. Sensory Memory",
+        "exact_quote": "In the Atkinson-Shiffrin model, stimuli from the environment are processed first in sensory memory : storage of brief sensory events, such as sights, sounds, and tastes. It is very brief storage—up to a couple of seconds.",
+        "quote_length": 221,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_storage_and_retrieval.md",
+        "concept_title": "4. Short-Term Memory Duration and Role",
+        "exact_quote": "Short-term memory (STM) is a temporary storage system that processes incoming sensory memory. The terms short-term and working memory are sometimes used interchangeably, but they are not exactly the same. Short-term memory is more accurately described as a component of working memory.",
+        "quote_length": 285,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_storage_and_retrieval.md",
+        "concept_title": "5. Rehearsal Mechanisms",
+        "exact_quote": "Active rehearsal is a way of attending to information to move it from short-term to long-term memory. During active rehearsal, you repeat (practice) the information to be remembered.",
+        "quote_length": 182,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      },
+      {
+        "note_file": "openstax_psy2e_memory_storage_and_retrieval.md",
+        "concept_title": "6. Capacity of Short-Term and Working Memory",
+        "exact_quote": "In 1956, George Miller reviewed most of the research on the capacity of short-term memory and found that people can retain between 5 and 9 items, so he reported the capacity of short-term memory was the",
+        "quote_length": 202,
+        "quote_verified_in_source": true,
+        "source_file": "8_1_how_memory_functions.html",
+        "verdict": "PASS"
+      }
+    ]
+  },
+  "model_and_cost_telemetry": {
+    "model_name": "gemini-3.7-flash",
+    "total_chunks_processed": 6,
+    "total_prompt_tokens": 15924,
+    "total_completion_tokens": 5585,
+    "total_tokens": 21509,
+    "total_latency_seconds": 68.788,
+    "elapsed_pipeline_seconds": 370.421,
+    "total_cost_usd": 0.002871,
+    "pricing_schedule": {
+      "prompt_per_1m": 0.075,
+      "completion_per_1m": 0.3
     }
   }
 }

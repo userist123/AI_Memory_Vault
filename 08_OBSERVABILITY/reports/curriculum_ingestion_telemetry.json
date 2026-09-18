@@ -1,57 +1,195 @@
 {
-  "timestamp": "2026-09-18T19:28:10+00:00",
-  "book": {
-    "title": "Design for a Brain: The Origin of Adaptive Behaviour",
-    "author": "W. Ross Ashby",
-    "edition": "Second Edition, Chapman & Hall (1960)",
-    "license": "Public Domain / Open Educational Access (Estate of W. Ross Ashby, wrossashby.info)",
-    "source_file": "06_INBOX/Carti/Creier cibernetic/ilide.info-ross-ashby-design-for-brain-pr_3eb93315caef1123f55c2ddc8fee78b6.txt",
-    "characters_processed": 551566,
-    "tokens_consumed": 122745
+  "timestamp": "2026-09-18T20:14:20.184166+00:00",
+  "curriculum_book": {
+    "title": "Psychology 2e",
+    "chapter": "Chapter 8: Memory",
+    "publisher": "OpenStax, Rice University",
+    "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "provenance_manifest": "07_EVALUATION/curriculum/provenance_manifest.json",
+    "frozen_test_set": "07_EVALUATION/curriculum/openstax_ch08_frozen_test_set.json"
   },
-  "ingestion_telemetry": {
-    "elapsed_seconds": 0.0695,
-    "cost_usd": 0.0,
-    "pricing_tier": "local_deterministic_pipeline",
-    "notes_created_count": 6,
-    "synapses_added_count": 18
+  "model_telemetry": {
+    "model_name": "gemini-3.7-flash",
+    "total_chunks_processed": 6,
+    "total_prompt_tokens": 15924,
+    "total_completion_tokens": 5585,
+    "total_tokens": 21509,
+    "total_latency_seconds": 68.788,
+    "elapsed_pipeline_seconds": 370.421,
+    "total_cost_usd": 0.002871,
+    "pricing_schedule": {
+      "prompt_per_1m": 0.075,
+      "completion_per_1m": 0.3
+    }
   },
-  "created_notes": [
+  "citation_verification": {
+    "total_claims_extracted": 41,
+    "total_claims_verified": 41,
+    "total_claims_rejected": 0,
+    "verification_pass_fraction": "41/41",
+    "verification_pass_rate_pct": 100.0
+  },
+  "trust_boundary_compliance": {
+    "invoked_via": "MemoryController.propose",
+    "principal": "Principal.AI_AGENT",
+    "source_type": "ai",
+    "lifecycle": "REVIEW",
+    "verification": "unverified",
+    "p0_invariants_preserved": [
+      "I-001",
+      "I-002",
+      "I-003",
+      "I-004",
+      "I-005"
+    ]
+  },
+  "notes_proposed": [
     {
-      "id": "knw-ashby-homeostasis-and-stability",
-      "path": "01_ARCHITECTURE/knowledge/ashby_homeostasis_and_stability.md",
-      "title": "Homeostazie, Variabile Esențiale și Câmpuri de Stabilitate (Ashby)",
-      "tokens": 860
+      "id": "f96cf593-6ff1-5671-8498-2d5bda03b414",
+      "filename": "openstax_psy2e_memory_encoding_functions.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_memory_encoding_functions.md",
+      "verified_claims": 8,
+      "rejected_claims": 0,
+      "tokens": 944
     },
     {
-      "id": "knw-ashby-ultrastable-system",
-      "path": "01_ARCHITECTURE/knowledge/ashby_ultrastable_system.md",
-      "title": "Sistemul Ultrastabil și Bucla Dublă de Feedback (Ashby)",
-      "tokens": 875
+      "id": "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+      "filename": "openstax_psy2e_memory_storage_and_retrieval.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_memory_storage_and_retrieval.md",
+      "verified_claims": 6,
+      "rejected_claims": 0,
+      "tokens": 995
     },
     {
-      "id": "knw-ashby-homeostat-apparatus",
-      "path": "01_ARCHITECTURE/knowledge/ashby_homeostat_apparatus.md",
-      "title": "Aparatul Homeostat: Arhitectură și Căutare Aleatoare (Ashby)",
-      "tokens": 794
+      "id": "73f5b12e-ba89-5e2d-b147-a3a866c6edbb",
+      "filename": "openstax_psy2e_biological_basis_of_memory.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_biological_basis_of_memory.md",
+      "verified_claims": 8,
+      "rejected_claims": 0,
+      "tokens": 1207
     },
     {
-      "id": "knw-ashby-step-mechanisms",
-      "path": "01_ARCHITECTURE/knowledge/ashby_step_mechanisms.md",
-      "title": "Mecanisme în Trepte și Parametri Discreți (Ashby)",
-      "tokens": 641
+      "id": "7baa7791-77cc-5d1d-95fa-92f7ac855db0",
+      "filename": "openstax_psy2e_amnesia_and_memory_reconstruction.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_amnesia_and_memory_reconstruction.md",
+      "verified_claims": 6,
+      "rejected_claims": 0,
+      "tokens": 759
     },
     {
-      "id": "knw-ashby-multistable-systems",
-      "path": "01_ARCHITECTURE/knowledge/ashby_multistable_systems.md",
-      "title": "Sisteme Multistabile și Izolare Locală (Ashby)",
-      "tokens": 663
+      "id": "a86eefed-3ea3-5f13-bccf-9f59e3095a24",
+      "filename": "openstax_psy2e_forgetting_and_seven_sins.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_forgetting_and_seven_sins.md",
+      "verified_claims": 6,
+      "rejected_claims": 0,
+      "tokens": 659
     },
     {
-      "id": "knw-ashby-habituation-and-plasticity",
-      "path": "01_ARCHITECTURE/knowledge/ashby_habituation_and_plasticity.md",
-      "title": "Obișnuință, Reflex și Plasticitate Neuronală (Ashby)",
-      "tokens": 701
+      "id": "13fbebce-897e-579c-8d82-04368506cb7b",
+      "filename": "openstax_psy2e_memory_enhancement_strategies.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_memory_enhancement_strategies.md",
+      "verified_claims": 7,
+      "rejected_claims": 0,
+      "tokens": 1021
+    }
+  ],
+  "chunk_reports": [
+    {
+      "chunk_id": "f96cf593-6ff1-5671-8498-2d5bda03b414",
+      "slug": "memory-encoding-functions",
+      "telemetry": {
+        "prompt_tokens": 2738,
+        "completion_tokens": 944,
+        "total_tokens": 3682,
+        "latency_seconds": 5.144,
+        "cost_usd": 0.000489,
+        "model": "gemini-3.7-flash"
+      },
+      "claims_extracted": 8,
+      "claims_verified": 8,
+      "claims_rejected": 0,
+      "rejected_details": []
+    },
+    {
+      "chunk_id": "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+      "slug": "memory-storage-and-retrieval",
+      "telemetry": {
+        "prompt_tokens": 2775,
+        "completion_tokens": 995,
+        "total_tokens": 3770,
+        "latency_seconds": 4.733,
+        "cost_usd": 0.000507,
+        "model": "gemini-3.8-flash"
+      },
+      "claims_extracted": 6,
+      "claims_verified": 6,
+      "claims_rejected": 0,
+      "rejected_details": []
+    },
+    {
+      "chunk_id": "73f5b12e-ba89-5e2d-b147-a3a866c6edbb",
+      "slug": "biological-basis-of-memory",
+      "telemetry": {
+        "prompt_tokens": 2463,
+        "completion_tokens": 1207,
+        "total_tokens": 3670,
+        "latency_seconds": 26.31,
+        "cost_usd": 0.000547,
+        "model": "gemini-3.8-flash"
+      },
+      "claims_extracted": 8,
+      "claims_verified": 8,
+      "claims_rejected": 0,
+      "rejected_details": []
+    },
+    {
+      "chunk_id": "7baa7791-77cc-5d1d-95fa-92f7ac855db0",
+      "slug": "amnesia-and-memory-reconstruction",
+      "telemetry": {
+        "prompt_tokens": 2817,
+        "completion_tokens": 759,
+        "total_tokens": 3576,
+        "latency_seconds": 13.394,
+        "cost_usd": 0.000439,
+        "model": "gemini-3.8-flash"
+      },
+      "claims_extracted": 6,
+      "claims_verified": 6,
+      "claims_rejected": 0,
+      "rejected_details": []
+    },
+    {
+      "chunk_id": "a86eefed-3ea3-5f13-bccf-9f59e3095a24",
+      "slug": "forgetting-and-seven-sins",
+      "telemetry": {
+        "prompt_tokens": 2844,
+        "completion_tokens": 659,
+        "total_tokens": 3503,
+        "latency_seconds": 7.6,
+        "cost_usd": 0.000411,
+        "model": "gemini-3.8-flash"
+      },
+      "claims_extracted": 6,
+      "claims_verified": 6,
+      "claims_rejected": 0,
+      "rejected_details": []
+    },
+    {
+      "chunk_id": "13fbebce-897e-579c-8d82-04368506cb7b",
+      "slug": "memory-enhancement-strategies",
+      "telemetry": {
+        "prompt_tokens": 2287,
+        "completion_tokens": 1021,
+        "total_tokens": 3308,
+        "latency_seconds": 11.607,
+        "cost_usd": 0.000478,
+        "model": "gemini-3.8-flash"
+      },
+      "claims_extracted": 7,
+      "claims_verified": 7,
+      "claims_rejected": 0,
+      "rejected_details": []
     }
   ]
 }
