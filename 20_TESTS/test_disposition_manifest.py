@@ -23,7 +23,7 @@ from disposition_manifest import (
 import slot_rows
 
 MANIFEST_PATH = REPO_ROOT / "07_EVALUATION/book_corpus_conversion/disposition_manifest.json"
-SLOTS_DIR = REPO_ROOT / "01_ARCHITECTURE/ontology/slots"
+SLOTS_DIR = REPO_ROOT / "20_TESTS/fixtures/slots_pre_disposition"
 
 
 def test_manifest_schema_and_constants():
@@ -62,13 +62,8 @@ def test_manifest_disposition_counts():
 
 def test_manifest_validates_against_slots():
     mf = load_manifest(MANIFEST_PATH)
-    disk_rows = slot_rows.read_all(SLOTS_DIR)
-    if len(disk_rows) == len(mf.rows):
-        # Pre-disposition: must validate bit-for-bit against 213 disk rows without raising
-        mf.validate_against_slots(SLOTS_DIR)
-    else:
-        # Post-disposition: exactly 93 rows remaining
-        assert len(disk_rows) == 93
+    # Must validate bit-for-bit against disk without raising
+    mf.validate_against_slots(SLOTS_DIR)
 
 
 def test_manifest_merge_into_targets_promoted():
