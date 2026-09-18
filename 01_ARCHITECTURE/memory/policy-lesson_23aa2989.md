@@ -10,7 +10,8 @@ provenance:
 confidence: high
 verification: unverified
 relations: ["00_GOVERNANCE/rules/Rules", "01_ARCHITECTURE/graphs/Memory - Lessons Map", "01_ARCHITECTURE/graphs/08 Memory Subsystems Map"]
-lifecycle: REVIEW
+lifecycle: ARCHIVED
+archive_reason: Consolidated into knowledge node
 id: 23aa2989-1fba-41b4-ac6e-1923e0a18d88
 ---
 ## Formal Reflexion Analysis

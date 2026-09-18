@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-09-17T22:25:00Z",
+  "contract": "ANTIGRAVITY_CLOSURE_PROGRAM.md Part C",
+  "transitions": {
+    "rezultat_observable": true,
+    "dovada_uuid_bound": true,
+    "invatare_bayesian": true,
+    "mutatie_canonica_reversible": true
+  },
+  "planted_false_memory": {
+    "memory_id": "planted-false-memory-bad-param",
+    "initial_alpha": 3.0,
+    "initial_beta": 1.0,
+    "initial_score": 0.75,
+    "withdrawal_threshold": 0.35,
+    "expected_steps_to_withdrawal": 5,
+    "observed_steps_to_withdrawal": 5,
+    "score_history": [
+      0.75,
+      0.6,
+      0.5,
+      0.428571,
+      0.375,
+      0.333333
+    ],
+    "strictly_monotonic": true,
+    "withdrawn_status_achieved": true,
+    "reversibility_verified": true
+  },
+  "planted_true_memory": {
+    "memory_id": "planted-true-memory-circuit-breaker",
+    "initial_alpha": 8.0,
+    "initial_beta": 2.0,
+    "initial_score": 0.8,
+    "total_observations": 50,
+    "success_count": 42,
+    "noise_failure_count": 8,
+    "final_score": 0.8333,
+    "withdrawn": false,
+    "stability_verified": true
+  },
+  "anti_self_confirmation": {
+    "total_evidence": 3,
+    "admitted_count": 2,
+    "rejected_count": 1,
+    "retention_ratio": 0.6667,
+    "direct_choice_blocked": true
+  },
+  "ontology_decay_bridge": {
+    "active_concept": "semantic memory",
+    "active_final_confidence": 0.91,
+    "active_status": "active",
+    "dormant_concept": "dormant obsolete term",
+    "dormant_final_confidence": 0.3229,
+    "dormant_status": "demoted",
+    "idle_epochs": 8,
+    "decay_factor": 0.9
+  },
+  "negative_controls": {
+    "disabled_downward_mutation_caught": true,
+    "bypassed_guard_caught": true
+  }
+}

@@ -1,0 +1,340 @@
+{
+  "generated_at": "2026-09-18T19:17:21.763742+00:00",
+  "dormant_candidates": [],
+  "stale_review_candidates": [
+    {
+      "id": "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+      "age_days": 40.8
+    },
+    {
+      "id": "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+      "age_days": 40.8
+    },
+    {
+      "id": "ca940601-808d-4632-9c7c-5c3052776a56",
+      "age_days": 40.8
+    },
+    {
+      "id": "43a1cd72-a97c-4ff2-a75d-3bffbe529a4e",
+      "age_days": 40.8
+    },
+    {
+      "id": "77569a01-2412-42d7-a46a-8064cff7498d",
+      "age_days": 40.8
+    },
+    {
+      "id": "c77673a3-047c-4073-acd8-251399e641e8",
+      "age_days": 40.8
+    },
+    {
+      "id": "d9d51728-e1eb-4b8f-b96c-5a7567ae9f89",
+      "age_days": 40.8
+    },
+    {
+      "id": "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d",
+      "age_days": 40.8
+    },
+    {
+      "id": "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+      "age_days": 40.8
+    },
+    {
+      "id": "c756201a-2e4b-4471-bada-3d7ddd1f7b71",
+      "age_days": 40.8
+    },
+    {
+      "id": "04e86b85-4346-4c5f-a495-c5a43231b61e",
+      "age_days": 40.8
+    },
+    {
+      "id": "eb0af74c-f4f3-47d6-9a5a-7d60fabcded2",
+      "age_days": 40.8
+    },
+    {
+      "id": "6105b902-608d-42d1-b08e-d081d5dd3b87",
+      "age_days": 39.8
+    },
+    {
+      "id": "7a0b3d7c-365c-4946-9211-e24e380ba1b1",
+      "age_days": 39.8
+    },
+    {
+      "id": "efdc25a2-dca9-4336-8bd4-88880233f42e",
+      "age_days": 39.8
+    },
+    {
+      "id": "fc3ee786-e982-4138-86b1-fa6365b0d335",
+      "age_days": 39.8
+    },
+    {
+      "id": "b45781a9-30bc-4389-aeb0-5e8c14828bc4",
+      "age_days": 38.8
+    },
+    {
+      "id": "cfca79df-d8f8-4720-bd8f-7f7ea7116b47",
+      "age_days": 38.8
+    },
+    {
+      "id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+      "age_days": 35.8
+    },
+    {
+      "id": "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+      "age_days": 35.8
+    },
+    {
+      "id": "3d063fab-d6d1-411b-89b2-d31222f4b937",
+      "age_days": 35.8
+    },
+    {
+      "id": "441f6cc3-a6a0-47ff-9b41-164b5901560f",
+      "age_days": 35.8
+    },
+    {
+      "id": "b8bd05ab-076f-429d-a742-d1bc2ba0c212",
+      "age_days": 35.8
+    },
+    {
+      "id": "3c2aeb6e-a01e-4f87-b4fb-830cb776376f",
+      "age_days": 35.8
+    },
+    {
+      "id": "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+      "age_days": 35.8
+    },
+    {
+      "id": "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+      "age_days": 35.8
+    },
+    {
+      "id": "7a873fba-2d99-4f1a-bde9-44edc8239e6e",
+      "age_days": 35.8
+    },
+    {
+      "id": "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+      "age_days": 35.8
+    },
+    {
+      "id": "5e996db2-ce48-40c7-bee7-3fc9ca7b8c87",
+      "age_days": 35.8
+    },
+    {
+      "id": "6bdb2775-add5-426b-ac0c-1b1fef75f2e1",
+      "age_days": 35.8
+    },
+    {
+      "id": "0d0d9f30-fa32-416f-95e3-0149006dae79",
+      "age_days": 35.8
+    },
+    {
+      "id": "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+      "age_days": 35.8
+    },
+    {
+      "id": "5c13df21-63b8-4521-840d-e7325258e40a",
+      "age_days": 35.8
+    },
+    {
+      "id": "733e3571-a08a-488b-a7f6-e7cf1a0197a2",
+      "age_days": 35.8
+    },
+    {
+      "id": "85085ad7-9aa2-42c5-a350-43cc394e3ac4",
+      "age_days": 35.8
+    },
+    {
+      "id": "9cdde96f-0e2e-4544-b2b3-f75b890a599b",
+      "age_days": 35.8
+    },
+    {
+      "id": "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+      "age_days": 35.8
+    },
+    {
+      "id": "b0fb6f37-1678-4ae7-8a12-6523925c0ef6",
+      "age_days": 35.8
+    },
+    {
+      "id": "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+      "age_days": 34.8
+    },
+    {
+      "id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+      "age_days": 34.8
+    },
+    {
+      "id": "71a2ef74-8d48-411d-b686-d44746f0515c",
+      "age_days": 34.8
+    },
+    {
+      "id": "78fe5b4d-0822-4616-8437-fa8a84cedf55",
+      "age_days": 34.8
+    },
+    {
+      "id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+      "age_days": 34.8
+    },
+    {
+      "id": "e613709a-3909-421a-9720-782fb73df150",
+      "age_days": 32.0
+    },
+    {
+      "id": "276d1940-c948-4feb-902f-bd6c74958594",
+      "age_days": 32.0
+    },
+    {
+      "id": "4b5d72d1-dc4a-43db-b7eb-595faeef85e4",
+      "age_days": 32.0
+    },
+    {
+      "id": "b4e88f21-7291-49fa-9481-22904c10a002",
+      "age_days": 31.8
+    },
+    {
+      "id": "b4e88f21-7291-49fa-9481-22904c10a001",
+      "age_days": 31.8
+    },
+    {
+      "id": "b4e88f21-7291-49fa-9481-22904c10a004",
+      "age_days": 31.8
+    },
+    {
+      "id": "b4e88f21-7291-49fa-9481-22904c10a006",
+      "age_days": 31.8
+    },
+    {
+      "id": "b4e88f21-7291-49fa-9481-22904c10a003",
+      "age_days": 31.8
+    },
+    {
+      "id": "b4e88f21-7291-49fa-9481-22904c10a005",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10b006",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10b001",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10b005",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10b002",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10b004",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10b003",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10c001",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10d001",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10d003",
+      "age_days": 31.8
+    },
+    {
+      "id": "c1a01101-7291-49fa-9481-22904c10d002",
+      "age_days": 31.8
+    },
+    {
+      "id": "60a9210f-eb13-4b64-9347-605ce4792ae2",
+      "age_days": 26.8
+    },
+    {
+      "id": "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+      "age_days": 24.8
+    },
+    {
+      "id": "ae0206df-b0cb-4810-b2a2-cea462600561",
+      "age_days": 24.8
+    },
+    {
+      "id": "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+      "age_days": 24.8
+    },
+    {
+      "id": "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+      "age_days": 18.8
+    },
+    {
+      "id": "knw-retrieval-bottleneck-p0-0001",
+      "age_days": 16.9
+    },
+    {
+      "id": "reg-retrieval-hypotheses-0001",
+      "age_days": 16.9
+    },
+    {
+      "id": "knw-context-packing-p1-0001",
+      "age_days": 16.8
+    },
+    {
+      "id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+      "age_days": 16.8
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "note_a": "33333333-3333-4333-a333-333333333333",
+      "note_b": "44444444-4444-4444-a444-444444444444",
+      "overlap": 1.0,
+      "severity": "overlap"
+    },
+    {
+      "note_a": "33333333-3333-4333-a333-333333333333",
+      "note_b": "55555555-5555-4555-a555-555555555555",
+      "overlap": 1.0,
+      "severity": "overlap"
+    },
+    {
+      "note_a": "44444444-4444-4444-a444-444444444444",
+      "note_b": "55555555-5555-4555-a555-555555555555",
+      "overlap": 1.0,
+      "severity": "overlap"
+    },
+    {
+      "note_a": "22222222-2222-4222-a222-222222222222",
+      "note_b": "33333333-3333-4333-a333-333333333333",
+      "overlap": 0.9,
+      "severity": "overlap"
+    },
+    {
+      "note_a": "22222222-2222-4222-a222-222222222222",
+      "note_b": "44444444-4444-4444-a444-444444444444",
+      "overlap": 0.9,
+      "severity": "overlap"
+    },
+    {
+      "note_a": "22222222-2222-4222-a222-222222222222",
+      "note_b": "55555555-5555-4555-a555-555555555555",
+      "overlap": 0.9,
+      "severity": "overlap"
+    }
+  ],
+  "stats": {
+    "total_notes": 825,
+    "eligible_notes": 236,
+    "processed_notes": 100,
+    "budget_cap": 100,
+    "budget_exhausted": true,
+    "active_notes": 29,
+    "review_notes": 71,
+    "dormant_candidates": 0,
+    "stale_review_candidates": 71,
+    "conflict_pairs": 6
+  }
+}

@@ -10,7 +10,8 @@ provenance:
 confidence: high
 verification: unverified
 relations: ["07_EVALUATION/README", "01_ARCHITECTURE/graphs/08 Memory Subsystems Map"]
-lifecycle: REVIEW
+lifecycle: ARCHIVED
+archive_reason: Consolidated into knowledge node
 id: 99f8a2c1-fd2d-40cf-bb8e-21718251629e
 ---
 Action blocked by Autonomy Policy.

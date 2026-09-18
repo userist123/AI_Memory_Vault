@@ -1,0 +1,57 @@
+{
+  "timestamp": "2026-09-18T19:28:10+00:00",
+  "book": {
+    "title": "Design for a Brain: The Origin of Adaptive Behaviour",
+    "author": "W. Ross Ashby",
+    "edition": "Second Edition, Chapman & Hall (1960)",
+    "license": "Public Domain / Open Educational Access (Estate of W. Ross Ashby, wrossashby.info)",
+    "source_file": "06_INBOX/Carti/Creier cibernetic/ilide.info-ross-ashby-design-for-brain-pr_3eb93315caef1123f55c2ddc8fee78b6.txt",
+    "characters_processed": 551566,
+    "tokens_consumed": 122745
+  },
+  "ingestion_telemetry": {
+    "elapsed_seconds": 0.0695,
+    "cost_usd": 0.0,
+    "pricing_tier": "local_deterministic_pipeline",
+    "notes_created_count": 6,
+    "synapses_added_count": 18
+  },
+  "created_notes": [
+    {
+      "id": "knw-ashby-homeostasis-and-stability",
+      "path": "01_ARCHITECTURE/knowledge/ashby_homeostasis_and_stability.md",
+      "title": "Homeostazie, Variabile Esențiale și Câmpuri de Stabilitate (Ashby)",
+      "tokens": 860
+    },
+    {
+      "id": "knw-ashby-ultrastable-system",
+      "path": "01_ARCHITECTURE/knowledge/ashby_ultrastable_system.md",
+      "title": "Sistemul Ultrastabil și Bucla Dublă de Feedback (Ashby)",
+      "tokens": 875
+    },
+    {
+      "id": "knw-ashby-homeostat-apparatus",
+      "path": "01_ARCHITECTURE/knowledge/ashby_homeostat_apparatus.md",
+      "title": "Aparatul Homeostat: Arhitectură și Căutare Aleatoare (Ashby)",
+      "tokens": 794
+    },
+    {
+      "id": "knw-ashby-step-mechanisms",
+      "path": "01_ARCHITECTURE/knowledge/ashby_step_mechanisms.md",
+      "title": "Mecanisme în Trepte și Parametri Discreți (Ashby)",
+      "tokens": 641
+    },
+    {
+      "id": "knw-ashby-multistable-systems",
+      "path": "01_ARCHITECTURE/knowledge/ashby_multistable_systems.md",
+      "title": "Sisteme Multistabile și Izolare Locală (Ashby)",
+      "tokens": 663
+    },
+    {
+      "id": "knw-ashby-habituation-and-plasticity",
+      "path": "01_ARCHITECTURE/knowledge/ashby_habituation_and_plasticity.md",
+      "title": "Obișnuință, Reflex și Plasticitate Neuronală (Ashby)",
+      "tokens": 701
+    }
+  ]
+}

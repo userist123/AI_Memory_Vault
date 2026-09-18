@@ -23,7 +23,8 @@ from .skill_router import SkillRouter
 
 
 def root() -> Path:
-    return Path(__file__).resolve().parent.parent
+    # Resolve repository root from 03_IMPLEMENTATION/packages/interfaces/memory_v6_cli.py
+    return Path(__file__).resolve().parents[3]
 
 
 def _load_controller():
@@ -90,15 +91,15 @@ def main() -> None:
     promote.add_argument("--principal", default="ai_agent", choices=["human", "admin", "ai_agent"])
 
     consolidate = sub.add_parser("consolidate")
-    consolidate.add_argument("--output", default="04_MEMORY/sleep_consolidation_report.json")
+    consolidate.add_argument("--output", default="08_OBSERVABILITY/reports/sleep_consolidation_report.json")
     consolidate.add_argument("--dormant-days", type=int, default=60)
     consolidate.add_argument("--stale-review-days", type=int, default=14)
     consolidate.add_argument("--render", action="store_true")
-    consolidate.add_argument("--render-output", default="05_RESOURCES/Obsidian/Sleep_Consolidation_Report.md")
+    consolidate.add_argument("--render-output", default="08_OBSERVABILITY/reports/Sleep_Consolidation_Report.md")
 
     render = sub.add_parser("render-report")
-    render.add_argument("--input", default="04_MEMORY/sleep_consolidation_report.json")
-    render.add_argument("--output", default="05_RESOURCES/Obsidian/Sleep_Consolidation_Report.md")
+    render.add_argument("--input", default="08_OBSERVABILITY/reports/sleep_consolidation_report.json")
+    render.add_argument("--output", default="08_OBSERVABILITY/reports/Sleep_Consolidation_Report.md")
 
     benchmark = sub.add_parser("benchmark")
     benchmark.add_argument("--cases", default=str(Path("cognitive_core") / "benchmarks" / "sample_cases.jsonl"))
@@ -113,7 +114,7 @@ def main() -> None:
 
     audit = sub.add_parser("security-audit")
     audit.add_argument("--target", required=True)
-    audit.add_argument("--output", default="04_MEMORY/security_audit_report.json")
+    audit.add_argument("--output", default="08_OBSERVABILITY/reports/security_audit_report.json")
 
     route = sub.add_parser("route-skill")
     route.add_argument("task")
@@ -125,7 +126,7 @@ def main() -> None:
     label_outcome.add_argument("--evidence", required=True)
     label_outcome.add_argument("--confidence", default="medium", choices=["low", "medium", "high"])
     label_outcome.add_argument("--labeled-by", default="human")
-    label_outcome.add_argument("--output", default="04_MEMORY/outcome_events.jsonl")
+    label_outcome.add_argument("--output", default="08_OBSERVABILITY/reports/outcome_events.jsonl")
 
     args = parser.parse_args()
     queue = MemoryProposalQueue(root() / "06_INBOX" / "memory_proposals.jsonl")

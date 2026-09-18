@@ -88,7 +88,16 @@ class SleepConsolidator:
 
     def run(self) -> SleepConsolidationReport:
         now = datetime.now(timezone.utc)
-        all_notes = list(self.controller.storage.store.values())
+        storage = getattr(self.controller, "storage", None)
+        if hasattr(storage, "store") and isinstance(storage.store, dict):
+            all_notes = list(storage.store.values())
+        elif hasattr(storage, "all_notes") and callable(storage.all_notes):
+            all_notes = storage.all_notes()
+        elif hasattr(storage, "id_to_path"):
+            all_notes = [storage.get(nid) for nid in list(storage.id_to_path.keys())]
+            all_notes = [n for n in all_notes if n]
+        else:
+            all_notes = []
 
         report = SleepConsolidationReport(generated_at=now.isoformat())
 

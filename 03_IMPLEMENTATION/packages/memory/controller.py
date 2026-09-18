@@ -184,6 +184,7 @@ class MemoryController:
         graph_expansion_budget: Optional[int] = None,
         ranking_arm: Optional[str] = None,
         classifier_filter_arm: Optional[str] = None,
+        enable_spreading_activation: bool = False,
     ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
@@ -201,6 +202,7 @@ class MemoryController:
         # Graph expansion configuration (r009)
         self.index = index
         self.enable_graph_expansion = bool(enable_graph_expansion)
+        self.enable_spreading_activation = bool(enable_spreading_activation)
         #: When true, a degraded expansion raises instead of falling back to
         #: the unexpanded ranking. Off in production, mandatory for any
         #: measurement that compares a graph arm against a baseline.
@@ -393,6 +395,7 @@ class MemoryController:
         graph_expansion_budget: Optional[int] = None,
         ranking_arm: Optional[str] = None,
         classifier_filter_arm: Optional[str] = None,
+        enable_spreading_activation: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
@@ -481,6 +484,12 @@ class MemoryController:
                 else getattr(self, 'enable_graph_expansion', False)
             )
             candidate_trace['graph_expansion_enabled'] = bool(is_expansion_enabled)
+            is_spreading_enabled = (
+                enable_spreading_activation
+                if enable_spreading_activation is not None
+                else getattr(self, 'enable_spreading_activation', False)
+            )
+            candidate_trace['spreading_activation_enabled'] = bool(is_spreading_enabled)
 
             # r024 WP-1 Phase B ranking arm, validated on held-out and
             # flipped by r025 WP-8: dev showed A1 (fused_score) recovering
@@ -498,6 +507,7 @@ class MemoryController:
             candidate_trace['ranking_arm'] = active_ranking_arm
 
             if not is_expansion_enabled:
+                candidate_trace['spreading_activation_enabled'] = False
                 candidate_trace['graph_expansion_status'] = 'disabled'
                 candidate_trace['graph_seed_ids'] = []
                 candidate_trace['graph_seed_weights'] = {}
@@ -591,7 +601,9 @@ class MemoryController:
 
                                 for syn in self.synapse_store.neighbors(s_id):
                                     t_id = syn.target_id
-                                    if not t_id or t_id in seed_ids:
+                                    if not t_id or t_id == s_id:
+                                        continue
+                                    if not is_spreading_enabled and t_id in seed_ids:
                                         continue
 
                                     # Hub cap check for target node
@@ -605,12 +617,46 @@ class MemoryController:
                                     delta = (s_weight if s_weight > 0 else 0.5) * w * decay
                                     delta = min(delta, max_per_seed_contrib)
                                     activation[t_id] = activation.get(t_id, 0.0) + delta
+                                    if hasattr(syn, 'activations'):
+                                        syn.activations += 1
                                     edges_traversed.append({
                                         'source': s_id,
                                         'target': t_id,
+                                        'relation': getattr(syn, 'relation', 'related_to'),
                                         'weight': round(w, 4),
                                         'contribution': round(delta, 4),
                                     })
+
+                            if is_spreading_enabled and max_new_expansions > 0:
+                                # Multi-hop spreading activation (hop 2 propagation)
+                                for t1_id, t1_score in list(activation.items()):
+                                    if self._is_hub_node(t1_id):
+                                        continue
+                                    for syn2 in self.synapse_store.neighbors(t1_id):
+                                        t2_id = syn2.target_id
+                                        if not t2_id or t2_id == t1_id:
+                                            continue
+                                        if not is_spreading_enabled and t2_id in seed_ids:
+                                            continue
+                                        if self._is_hub_node(t2_id):
+                                            if t2_id not in hub_nodes_skipped:
+                                                hub_nodes_skipped.append(t2_id)
+                                            continue
+                                        w2 = getattr(syn2, 'weight', 0.4)
+                                        delta2 = t1_score * w2 * decay
+                                        delta2 = min(delta2, max_per_seed_contrib * 0.5)
+                                        if delta2 > 1e-4:
+                                            activation[t2_id] = activation.get(t2_id, 0.0) + delta2
+                                            if hasattr(syn2, 'activations'):
+                                                syn2.activations += 1
+                                            edges_traversed.append({
+                                                'source': t1_id,
+                                                'target': t2_id,
+                                                'relation': getattr(syn2, 'relation', 'related_to'),
+                                                'weight': round(w2, 4),
+                                                'contribution': round(delta2, 4),
+                                                'hop': 2,
+                                            })
 
                             # Filter expanded candidate targets (P0 Security Invariant)
                             candidate_expansions = []
