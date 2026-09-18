@@ -353,20 +353,16 @@ def test_disposition_file_mode():
     target_items = [r.to_dict() for r in mf.rows]
     res = purge_rows(
         target_items,
-        slots_dir="01_ARCHITECTURE/ontology/slots",
+        slots_dir="20_TESTS/fixtures/slots_pre_disposition",
         apply=False,
         from_disposition_manifest=True
     )
 
     assert res["total_targets"] == 213
-    if res["deleted_count"] == 0:
-        # Already applied: all 112 approved deletions have already been purged from disk
-        assert res["not_found_count"] >= 112 or res["files_modified_count"] == 0
-    else:
-        assert res["deleted_count"] == 112
-        assert res["refused_count"] == 101
-        assert res["not_found_count"] == 0
-        assert res["files_modified_count"] == 16
+    assert res["deleted_count"] == 112
+    assert res["refused_count"] == 101
+    assert res["not_found_count"] == 0
+    assert res["files_modified_count"] == 16
 
 
 
@@ -390,7 +386,7 @@ def test_batch_mode_cannot_delete_what_the_manifest_protects(tmp_path):
         pytest.skip("disposition manifest not present")
 
     slots = tmp_path / "slots"
-    shutil.copytree(repo / "01_ARCHITECTURE" / "ontology" / "slots", slots)
+    shutil.copytree(repo / "20_TESTS" / "fixtures" / "slots_pre_disposition", slots)
 
     def run(*extra):
         out = subprocess.run(
@@ -407,19 +403,13 @@ def test_batch_mode_cannot_delete_what_the_manifest_protects(tmp_path):
         r["reason"].split("'")[1]
         for r in guarded["refused"]
     }
-    import slot_rows
-    disk_count = len(slot_rows.read_all(repo / "01_ARCHITECTURE" / "ontology" / "slots"))
-    if disk_count == 93:
-        # Purge has already been applied to disk
-        assert guarded["deleted_count"] == 0
-    else:
-        assert guarded["deleted_count"] == 112, "batch mode must stop at the approved set"
-        assert guarded["refused_count"] == 10
-        assert protected == {"MERGE_INTO", "KEEP_PROPOSED"}
+    assert guarded["deleted_count"] == 112, "batch mode must stop at the approved set"
+    assert guarded["refused_count"] == 10
+    assert protected == {"MERGE_INTO", "KEEP_PROPOSED"}
 
-        # The old behaviour stays reachable, but only by asking for it.
-        unguarded = run("--disposition-manifest", "")
-        assert unguarded["deleted_count"] == 122
+    # The old behaviour stays reachable, but only by asking for it.
+    unguarded = run("--disposition-manifest", "")
+    assert unguarded["deleted_count"] == 122
 
 
 def test_the_manifest_and_batch_paths_agree_on_what_may_go(tmp_path):
@@ -434,7 +424,7 @@ def test_the_manifest_and_batch_paths_agree_on_what_may_go(tmp_path):
 
     def deleted_via(*args):
         slots = tmp_path / f"slots{abs(hash(args))}"
-        shutil.copytree(repo / "01_ARCHITECTURE" / "ontology" / "slots", slots)
+        shutil.copytree(repo / "20_TESTS" / "fixtures" / "slots_pre_disposition", slots)
         out = subprocess.run(
             [sys.executable, str(repo / "30_SCRIPTS" / "ingestion" / "purge_rejected_rows.py"),
              *args, "--slots-dir", str(slots), "--json"],
