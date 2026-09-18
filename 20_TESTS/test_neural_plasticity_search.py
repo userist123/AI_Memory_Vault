@@ -22,6 +22,7 @@ from retrieval.vault_index import VaultIndex
 
 class TestNeuralPlasticitySearch(unittest.TestCase):
     def setUp(self):
+        os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = "0" * 32
         self.storage = FileStorageEngine(str(REPO_ROOT))
         self.index = VaultIndex.load(REPO_ROOT, lifecycles=["ACTIVE", "VERIFIED"])
         self.store = SynapseStore()
