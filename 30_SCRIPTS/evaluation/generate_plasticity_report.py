@@ -14,7 +14,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 PART_A_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "sleep_consolidation_report.json"
 PART_B_PRE_PATH = REPO_ROOT / "07_EVALUATION" / "heldout_retrieval_benchmark_v2" / "baseline_report_pre_cleanup.json"
@@ -23,7 +23,7 @@ PART_C_PROPOSALS_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "edge_propo
 PART_C_SAMPLE_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "edge_verification_sample_50.json"
 PART_E_TELEMETRY_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "curriculum_ingestion_telemetry.json"
 PART_E_EVAL_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "curriculum_heldout_eval.json"
-OUTPUT_REPORT_PATH = REPO_ROOT / "NEURAL_PLASTICITY_REPORT.md"
+OUTPUT_REPORT_PATH = REPO_ROOT / "07_EVALUATION" / "neural_plasticity" / "NEURAL_PLASTICITY_REPORT.md"
 
 
 def fmt_pct(num: float, den: int) -> str:
