@@ -1,1 +1,0 @@
-No additional scaffold should be created during migration.
