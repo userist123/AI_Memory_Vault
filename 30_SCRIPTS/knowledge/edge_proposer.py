@@ -242,6 +242,94 @@ def _weight_for(relation: str, confidence: float) -> float:
     return round(base, 4)
 
 
+def extract_evidence_quote(text: str, target_entities: Iterable[str], max_len: int = 240) -> str:
+    """Finds an exact representative sentence from text containing one of the target entities."""
+    if not text:
+        return ""
+    sentences = re.split(r"(?<=[.!?\n])\s+", text)
+    ent_lower = [e.lower() for e in target_entities if len(e) >= 3]
+    for s in sentences:
+        s_clean = s.strip()
+        if not s_clean or len(s_clean) < 15:
+            continue
+        s_low = s_clean.lower()
+        if any(e in s_low for e in ent_lower):
+            if len(s_clean) > max_len:
+                return s_clean[:max_len - 3] + "..."
+            return s_clean
+    for s in sentences:
+        s_clean = s.strip()
+        if len(s_clean) >= 20:
+            return s_clean[:max_len - 3] + "..." if len(s_clean) > max_len else s_clean
+    return text[:max_len].strip()
+
+
+def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str, str]:
+    """Classify relation between two notes into ALLOWED_RELATIONS with direction."""
+    a, b = na.id, nb.id
+    body_a_low = na.body.lower()
+    body_b_low = nb.body.lower()
+    title_a_low = na.title.lower()
+    title_b_low = nb.title.lower()
+
+    # 1. Supersedes (temporal/versioned replacement)
+    if _same_subject(na.title, nb.title):
+        ua, ub = na.updated, nb.updated
+        if ua and ub and ua != ub:
+            (src, dst) = (a, b) if ua > ub else (b, a)
+            return "supersedes", src, dst
+    if any(k in body_a_low for k in ["supersedes", "înlocuiește"]):
+        return "supersedes", a, b
+    if any(k in body_b_low for k in ["supersedes", "înlocuiește"]):
+        return "supersedes", b, a
+
+    # 2. Applies_to (lessons applied to procedures/rules)
+    if na.type in LESSON_TYPES and nb.type in PROCEDURE_TYPES:
+        return "applies_to", a, b
+    if nb.type in LESSON_TYPES and na.type in PROCEDURE_TYPES:
+        return "applies_to", b, a
+
+    # 3. Verified_by (tests verifying architecture/knowledge)
+    if (na.type == "test" or "test_" in na.path.stem) and nb.type in {"knowledge", "procedure", "architecture", "lesson"}:
+        return "verified_by", b, a
+    if (nb.type == "test" or "test_" in nb.path.stem) and na.type in {"knowledge", "procedure", "architecture", "lesson"}:
+        return "verified_by", a, b
+
+    # 4. Depends_on (prerequisites and dependencies)
+    dep_keywords = ["depends on", "prerequisite", "cerință prealabilă", "requires", "depinde de", "bazează pe"]
+    if any(k in body_a_low for k in dep_keywords):
+        return "depends_on", a, b
+    if any(k in body_b_low for k in dep_keywords):
+        return "depends_on", b, a
+
+    # 5. Caused (causal progression)
+    cause_keywords = ["caused by", "cauzat de", "a dus la", "consequence of", "rezultat din"]
+    if any(k in body_a_low for k in cause_keywords):
+        return "caused", a, b
+    if any(k in body_b_low for k in cause_keywords):
+        return "caused", b, a
+
+    # 6. Contradicts (opposing findings, contrast)
+    contra_keywords = ["contradicts", "în contradicție", "disputes", "contrazice", "spre deosebire de"]
+    if any(k in body_a_low for k in contra_keywords):
+        return "contradicts", a, b
+    if any(k in body_b_low for k in contra_keywords):
+        return "contradicts", b, a
+
+    # 7. Part_of (containment, chapter/section, subproject)
+    part_keywords = ["part of", "parte din", "capitol", "chapter", "subsystem", "component"]
+    if any(k in body_a_low for k in part_keywords) or (na.type == "project" and nb.type != "project"):
+        if na.type == "project" and nb.type != "project":
+            return "part_of", b, a
+        return "part_of", a, b
+    if any(k in body_b_low for k in part_keywords) or (nb.type == "project" and na.type != "project"):
+        if nb.type == "project" and na.type != "project":
+            return "part_of", a, b
+        return "part_of", b, a
+
+    return "related_to", a, b
+
+
 def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List[dict], int]:
     """Returns (proposals, candidate_pair_count). candidate_pair_count is the
     number of (a, b) pairs that shared ANY rare entity at all, BEFORE the
@@ -302,19 +390,14 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
         if score < MIN_SCORE:
             continue
 
-        relation, src, dst = "related_to", a, b
-        if na.type in LESSON_TYPES and nb.type in PROCEDURE_TYPES:
-            relation, src, dst = "applies_to", a, b
-        elif nb.type in LESSON_TYPES and na.type in PROCEDURE_TYPES:
-            relation, src, dst = "applies_to", b, a
-        elif _same_subject(na.title, nb.title):
-            ua, ub = na.updated, nb.updated
-            if ua and ub and ua != ub:
-                (src, dst) = (a, b) if ua > ub else (b, a)
-                relation = "supersedes"
-        elif set(na.tags) & set(nb.tags) and (na.type == "project") != (nb.type == "project"):
-            relation = "part_of"
-            src, dst = (a, b) if nb.type == "project" else (b, a)
+        relation, src, dst = classify_relation(na, nb, pair_shared[(a, b)])
+        shared_ents = sorted(pair_shared[(a, b)])[:6]
+        src_note = index.by_id[src]
+        dst_note = index.by_id[dst]
+        sq = extract_evidence_quote(src_note.body, shared_ents)
+        tq = extract_evidence_quote(dst_note.body, shared_ents)
+        if not sq or not tq:
+            continue
 
         origin = "proposed_weak" if relation in WEAK_RELATIONS else "proposed"
         proposals.append({
@@ -322,13 +405,16 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
             "confidence": round(score, 4),
             "weight": _weight_for(relation, score),
             "origin": origin,
-            "evidence_entities": sorted(pair_shared[(a, b)])[:6],
-            "source_path": index.by_id[src].path.as_posix(),
-            "target_path": index.by_id[dst].path.as_posix(),
+            "evidence_entities": shared_ents,
+            "source_quote": sq,
+            "target_quote": tq,
+            "source_path": src_note.path.as_posix(),
+            "target_path": dst_note.path.as_posix(),
         })
         if len(proposals) >= limit:
             break
     return proposals, candidate_pair_count
+
 
 
 OLLAMA_PROMPT = """You are a relation classifier for a memory graph.
@@ -450,11 +536,16 @@ def validate_proposals(proposals: List[dict], index: VaultIndex) -> Tuple[List[d
         if not evidence and not p.get("llm_raw_response"):
             rejected["missing_evidence"] += 1
             continue
+        sq = p.get("source_quote")
+        tq = p.get("target_quote")
+        if not sq or not tq or not isinstance(sq, str) or not isinstance(tq, str):
+            rejected["missing_quote_evidence"] += 1
+            continue
         key = (src, dst, relation)
         if key in seen:
             rejected["duplicate_edge"] += 1
             continue
-        text_fields = [p.get("source_path", ""), p.get("target_path", ""), *evidence]
+        text_fields = [p.get("source_path", ""), p.get("target_path", ""), sq, tq, *evidence]
         if any(_has_control_chars(str(t)) for t in text_fields):
             rejected["control_character_abuse"] += 1
             continue
