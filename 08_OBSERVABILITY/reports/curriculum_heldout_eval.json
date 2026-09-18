@@ -1,0 +1,137 @@
+{
+  "benchmark_set": "Heldout Benchmark v2 (29 cases) + Ashby Curriculum Extension (5 cases)",
+  "existing_cases_regression_check": {
+    "graph_off": {
+      "n": 32,
+      "n_measurable": 29,
+      "n_unmeasurable": 3,
+      "candidate_recall": 0.6897,
+      "context_recall": 0.069,
+      "answer_correctness": 0.069
+    },
+    "graph_on": {
+      "n": 32,
+      "n_measurable": 29,
+      "n_unmeasurable": 3,
+      "candidate_recall": 0.7586,
+      "context_recall": 0.1379,
+      "answer_correctness": 0.1379
+    }
+  },
+  "curriculum_comparative_eval": {
+    "vault_without_book": {
+      "summary": {
+        "n": 5,
+        "n_measurable": 5,
+        "n_unmeasurable": 0,
+        "candidate_recall": 0.0,
+        "context_recall": 0.0,
+        "answer_correctness": 0.0
+      },
+      "cases": [
+        {
+          "id": "ASHBY-01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-02",
+          "class": "conceptual_definition",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-03",
+          "class": "architectural_analysis",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-04",
+          "class": "system_design",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-05",
+          "class": "neuro_plasticity",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0
+        }
+      ]
+    },
+    "vault_with_book": {
+      "summary": {
+        "n": 5,
+        "n_measurable": 5,
+        "n_unmeasurable": 0,
+        "candidate_recall": 1.0,
+        "context_recall": 1.0,
+        "answer_correctness": 1.0
+      },
+      "cases": [
+        {
+          "id": "ASHBY-01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-02",
+          "class": "conceptual_definition",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-03",
+          "class": "architectural_analysis",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-04",
+          "class": "system_design",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0
+        },
+        {
+          "id": "ASHBY-05",
+          "class": "neuro_plasticity",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0
+        }
+      ]
+    }
+  }
+}
