@@ -246,3 +246,13 @@ class FileStorageEngine:
     def all_notes(self) -> List[Dict[str, Any]]:
         """Return all non-RAW notes for read-only indexing consumers."""
         return self.query("graph")
+
+    @property
+    def store(self) -> Dict[str, Any]:
+        """Read-only view of notes mapping id -> note dict for compatibility."""
+        res = {}
+        for nid in list(self.id_to_path.keys()):
+            note = self.get(nid)
+            if note:
+                res[nid] = note
+        return res

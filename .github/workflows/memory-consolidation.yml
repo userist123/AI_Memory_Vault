@@ -19,11 +19,15 @@ jobs:
           python-version: '3.11'
 
       - name: Run consolidation
-        run: python -m cognitive_core.memory_v6_cli consolidate --output 04_MEMORY/sleep_consolidation_report.json
+        env:
+          PYTHONPATH: 03_IMPLEMENTATION/packages
+        run: |
+          mkdir -p 08_OBSERVABILITY/reports
+          python -m cognitive_core.memory_v6_cli consolidate --output 08_OBSERVABILITY/reports/sleep_consolidation_report.json
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
         with:
           name: sleep-consolidation-report
-          path: 04_MEMORY/sleep_consolidation_report.json
+          path: 08_OBSERVABILITY/reports/sleep_consolidation_report.json
           retention-days: 30
