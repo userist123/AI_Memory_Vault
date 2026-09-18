@@ -1,0 +1,254 @@
+{
+  "schema_version": "curriculum-evaluation-set.v1",
+  "source": "OpenStax Psychology 2e, Chapter 8: Memory (Review Questions & Traps)",
+  "license": "CC BY 4.0",
+  "chapter": 8,
+  "total_questions": 17,
+  "total_review_questions": 12,
+  "total_trap_questions": 5,
+  "questions": [
+    {
+      "id": "openstax-psy2e-ch08-q01",
+      "type": "author_review",
+      "section": "8.1 How Memory Functions",
+      "question": "________ is a memory store with a phonological loop, visuospatial sketchpad, episodic buffer, and a central executive.",
+      "choices": [
+        "sensory memory",
+        "episodic memory",
+        "working memory",
+        "implicit memory"
+      ],
+      "correct_answer": "working memory",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q02",
+      "type": "author_review",
+      "section": "8.1 How Memory Functions",
+      "question": "The storage capacity of long-term memory is ________.",
+      "choices": [
+        "one or two bits of information",
+        "seven bits, plus or minus two",
+        "limited",
+        "essentially limitless"
+      ],
+      "correct_answer": "essentially limitless",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q03",
+      "type": "author_review",
+      "section": "8.1 How Memory Functions",
+      "question": "The three functions of memory are ________.",
+      "choices": [
+        "automatic processing, effortful processing, and storage",
+        "encoding, processing, and storage",
+        "automatic processing, effortful processing, and retrieval",
+        "encoding, storage, and retrieval"
+      ],
+      "correct_answer": "encoding, storage, and retrieval",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q04",
+      "type": "author_review",
+      "section": "8.2 Parts of the Brain Involved with Memory",
+      "question": "This physical trace of memory is known as the ________.",
+      "choices": [
+        "engram",
+        "Lashley effect",
+        "Deese-Roediger-McDermott Paradigm",
+        "flashbulb memory effect"
+      ],
+      "correct_answer": "engram",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q05",
+      "type": "author_review",
+      "section": "8.2 Parts of the Brain Involved with Memory",
+      "question": "An exceptionally clear recollection of an important event is a (an) ________.",
+      "choices": [
+        "engram",
+        "arousal theory",
+        "flashbulb memory",
+        "equipotentiality hypothesis"
+      ],
+      "correct_answer": "flashbulb memory",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q06",
+      "type": "author_review",
+      "section": "8.3 Problems with Memory",
+      "question": "________ is when our recollections of the past are done in a self-enhancing manner.",
+      "choices": [
+        "stereotypical bias",
+        "egocentric bias",
+        "hindsight bias",
+        "enhancement bias"
+      ],
+      "correct_answer": "egocentric bias",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q07",
+      "type": "author_review",
+      "section": "8.3 Problems with Memory",
+      "question": "Tip-of-the-tongue phenomenon is also known as ________.",
+      "choices": [
+        "persistence",
+        "misattribution",
+        "transience",
+        "blocking"
+      ],
+      "correct_answer": "blocking",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q08",
+      "type": "author_review",
+      "section": "8.3 Problems with Memory",
+      "question": "The formulation of new memories is sometimes called ________, and the process of bringing up old memories is called ________.",
+      "choices": [
+        "construction; reconstruction",
+        "reconstruction; construction",
+        "production; reproduction",
+        "reproduction; production"
+      ],
+      "correct_answer": "construction; reconstruction",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q09",
+      "type": "author_review",
+      "section": "8.4 Ways to Enhance Memory",
+      "question": "When you are learning how to play the piano, the statement 'Every good boy does fine' can help you remember the notes E, G, B, D, and F for the lines of the treble clef. This is an example of a (an) ________.",
+      "choices": [
+        "jingle",
+        "acronym",
+        "acrostic",
+        "acoustic"
+      ],
+      "correct_answer": "acrostic",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q10",
+      "type": "author_review",
+      "section": "8.4 Ways to Enhance Memory",
+      "question": "According to a study by Yogo and Fujihara (2008), if you want to improve your short-term memory, you should spend time writing about ________.",
+      "choices": [
+        "your best possible future self",
+        "a traumatic life experience",
+        "a trivial topic",
+        "your grocery list"
+      ],
+      "correct_answer": "a traumatic life experience",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q11",
+      "type": "author_review",
+      "section": "8.4 Ways to Enhance Memory",
+      "question": "The self-referencing effect refers to ________.",
+      "choices": [
+        "making the material you are trying to memorize personally meaningful to you",
+        "making a phrase of all the first letters of the words you are trying to memorize",
+        "making a word formed by the first letter of each of the words you are trying to memorize",
+        "saying words you want to remember out loud to yourself"
+      ],
+      "correct_answer": "making the material you are trying to memorize personally meaningful to you",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-q12",
+      "type": "author_review",
+      "section": "8.4 Ways to Enhance Memory",
+      "question": "Memory aids that help organize information for encoding are ________.",
+      "choices": [
+        "mnemonic devices",
+        "memory-enhancing strategies",
+        "elaborative rehearsal",
+        "effortful processing"
+      ],
+      "correct_answer": "mnemonic devices",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap01",
+      "type": "unanswerable_trap",
+      "section": "8.2 Parts of the Brain Involved with Memory",
+      "question": "What specific concentration of potassium chloride in millimoles per liter triggers long-term depression in Purkinje cells according to Chapter 8?",
+      "choices": [
+        "0.5 mmol/L",
+        "10 mmol/L",
+        "25 mmol/L",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 discusses the cerebellum in procedural memory, but gives no ionic concentrations for Purkinje cell depression."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap02",
+      "type": "unanswerable_trap",
+      "section": "General Memory Theory",
+      "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultrastability equations for memory networks?",
+      "choices": [
+        "1952",
+        "1960",
+        "1971",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "trap_rationale": "W. Ross Ashby and ultrastability equations are not discussed or cited anywhere in Chapter 8."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap03",
+      "type": "unanswerable_trap",
+      "section": "8.3 Problems with Memory",
+      "question": "What did the 2024 fMRI study by Zhang et al. conclude about TikTok usage and episodic memory retention in adolescents according to Chapter 8?",
+      "choices": [
+        "Severe episodic decay",
+        "Enhanced memory consolidation",
+        "No measurable change",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "trap_rationale": "OpenStax Psychology 2e was published in 2020 and mentions no 2024 studies or social media video platform effects."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap04",
+      "type": "unanswerable_trap",
+      "section": "8.2 Parts of the Brain Involved with Memory",
+      "question": "How many distinct histological layers of the neocortex are identified in Section 8.2 as participating in prospective memory consolidation?",
+      "choices": [
+        "Three layers",
+        "Four layers",
+        "Six layers",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "trap_rationale": "Section 8.2 discusses gross brain areas (amygdala, hippocampus, cerebellum, prefrontal cortex) without laminar neocortical histology."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap05",
+      "type": "unanswerable_trap",
+      "section": "8.3 Problems with Memory",
+      "question": "What is the recommended pediatric therapeutic dosage of memantine in milligrams per day specified in Chapter 8 for treating mild cognitive impairment?",
+      "choices": [
+        "5 mg/day",
+        "10 mg/day",
+        "20 mg/day",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 mentions Alzheimer disease conceptually but gives no pharmaceutical prescription guidelines or drug dosages."
+    }
+  ]
+}
