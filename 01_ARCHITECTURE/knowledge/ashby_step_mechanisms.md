@@ -1,7 +1,8 @@
 ---
 id: "knw-ashby-step-mechanisms"
 type: knowledge
-lifecycle: ACTIVE
+lifecycle: ARCHIVED
+archive_reason: scrise de agent fara citate din sursa; provenance si verificare auto-declarate
 category: cybernetics-plasticity
 tags: [ashby, step-mechanisms, parameters, synaptic-weights, plasticity]
 created: "2026-09-18T19:28:10+00:00"

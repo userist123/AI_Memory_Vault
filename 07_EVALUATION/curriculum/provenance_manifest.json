@@ -1,0 +1,58 @@
+{
+  "work_title": "Psychology 2e",
+  "chapter": "Chapter 8: Memory",
+  "authors": [
+    "Rose M. Spielman",
+    "William J. Jenkins",
+    "Marilyn D. Lovett"
+  ],
+  "publisher": "OpenStax, Rice University",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "book_url": "https://openstax.org/details/books/psychology-2e",
+  "download_timestamp": "2026-09-18T19:53:30.970518+00:00",
+  "files": [
+    {
+      "filename": "8_0_introduction.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-introduction",
+      "bytes": 263986,
+      "sha256": "a23765765d0aa3fc1708f2aa6b43e8079a79bf55377c36e7e33976632ed6f8bf"
+    },
+    {
+      "filename": "8_1_how_memory_functions.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-1-how-memory-functions",
+      "bytes": 305363,
+      "sha256": "fcffa94f37369c48d099ace88ef0c0e8b53444e840a41d6f7da8076038a1acf5"
+    },
+    {
+      "filename": "8_2_parts_of_the_brain_involved_with_memory.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-2-parts-of-the-brain-involved-with-memory",
+      "bytes": 277989,
+      "sha256": "089da9b58847a3889ad122179b9bace45d5e732908622629933df7218924c51c"
+    },
+    {
+      "filename": "8_3_problems_with_memory.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-3-problems-with-memory",
+      "bytes": 314708,
+      "sha256": "c2872598e82549702d17702a83c61a7a89771bee15ac2258edd9e6cb89276ad1"
+    },
+    {
+      "filename": "8_4_ways_to_enhance_memory.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-4-ways-to-enhance-memory",
+      "bytes": 275551,
+      "sha256": "20a1a9e50fc8dcab8b68776b7ab05e7eb98c486b2080ec4fc76e4c96bbbdabc6"
+    },
+    {
+      "filename": "8_summary.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-summary",
+      "bytes": 264942,
+      "sha256": "c6de94f5575dd67cd92b1882be619a1657feaa531a84645a34ac249467f1af38"
+    },
+    {
+      "filename": "8_review_questions.html",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-review-questions",
+      "bytes": 267105,
+      "sha256": "d778dff6a7927aa69fe701a5b7e97e45e0dff3a027aac9d2c0b8526d1bb5cd51"
+    }
+  ]
+}
