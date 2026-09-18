@@ -182,11 +182,12 @@ def test_the_manifest_round_trips(tmp_path):
     assert m.admits("cryptocurrency") and not m.admits("external memory")
 
 
-# --- the ungated path still works --------------------------------------------
+# --- the ungated path still works outside the ontology --------------------------------------------
 
 def test_without_a_manifest_nothing_changes(tmp_path):
-    """The gate is opt-in. Existing callers must not break, and the report says
-    plainly whether it ran."""
+    """Outside the canonical slot files no manifest is needed: this is how a dry
+    run works. The report says plainly whether the gate ran. The canonical
+    case is covered in test_canonical_write_requires_verdicts.py."""
     import merge_candidate_concepts as M
 
     slot = tmp_path / "03_ontology.md"

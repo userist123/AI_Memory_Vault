@@ -24,6 +24,33 @@ CANONICAL_SLOTS = [
 
 SLOT_DIRECTORY = "01_ARCHITECTURE/ontology/slots"
 
+#: The slot files everything else in the vault reads as the ontology. Anchored
+#: to this script, not to the working directory, so the gate below guards the
+#: ontology of the checkout the script belongs to wherever it is run from.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+CANONICAL_SLOT_DIRECTORY = os.path.join(_REPO_ROOT, SLOT_DIRECTORY)
+
+
+class UngatedCanonicalWrite(Exception):
+    """A write into the canonical slot files with no verdict manifest.
+
+    The manifest was opt-in when it was introduced, so existing callers would
+    not break. Opt-in meant the gate held only for callers who chose it: the
+    command that wrote 201 unjudged concepts in one step was still one flag
+    short of doing it again. Without a manifest a merge may still target any
+    other directory — a copy of the slots for a dry run, a staging area — and
+    report what it would have written. It may not write the ontology.
+    """
+
+
+def _same_directory(a: str, b: str) -> bool:
+    """Compare resolved paths, so './', a trailing separator, a symlink or a
+    change of case on Windows does not make the ontology look like somewhere
+    else."""
+    def norm(path: str) -> str:
+        return os.path.normcase(os.path.realpath(path))
+    return norm(a) == norm(b)
+
 
 def find_slot_file(slot_name: str, slots_dir: str = SLOT_DIRECTORY) -> str:
     """
@@ -286,9 +313,11 @@ def merge_candidate_concepts(
     """Merge staging rows into the slot tables.
 
     `verdicts_file` is the boundary between a working area and the ontology.
-    Without one this writes whatever it is given, which is how 201 concepts
-    entered in a single commit and 160 of them were still unjudged five days
-    later — 47% of which did not belong there at all.
+    Without one this used to write whatever it was given, which is how 201
+    concepts entered in a single commit and 160 of them were still unjudged five
+    days later — 47% of which did not belong there at all. A write into the
+    canonical slot files now requires one; any other `slots_dir` does not, which
+    is how a dry run is done. See `UngatedCanonicalWrite`.
 
     With one, a concept absent from the manifest is withheld and counted, not
     dropped: a run that silently skipped them would look identical to a run
@@ -344,6 +373,16 @@ def merge_candidate_concepts(
             "each into its own slot deliberately:" + chr(10) + chr(10).join(lines)
         )
 
+    # After validation, so a malformed staging file still reports what is
+    # wrong with it; before the first write, so nothing reaches the ontology.
+    if not verdicts_file and _same_directory(slots_dir, CANONICAL_SLOT_DIRECTORY):
+        raise UngatedCanonicalWrite(
+            f"refusing to write {len(staging_data)} staging row(s) into the "
+            f"canonical slot files ({CANONICAL_SLOT_DIRECTORY}) without a verdict "
+            "manifest. Pass verdicts_file (--verdicts-file) to write the concepts "
+            "it admits, or point slots_dir at a copy of the slots for a dry run."
+        )
+
     merged_stats = {}
     total_added = 0
     total_already_present = 0
@@ -388,9 +427,11 @@ def main():
     parser.add_argument("--staging-file", default="staging/extracted_concepts.json", help="Path to staging JSON file")
     parser.add_argument("--slots-dir", default=SLOT_DIRECTORY, help="Path to ontology slots directory")
     parser.add_argument("--verdicts-file", default=None,
-                        help="Promotion verdict manifest. Without it every "
-                             "staging row is written; with it only concepts "
-                             "carrying a PROMOTE verdict are.")
+                        help="Promotion verdict manifest. Required to write the "
+                             "canonical slot files, and only concepts carrying "
+                             "a PROMOTE verdict are written. Without it the "
+                             "merge may only target another --slots-dir, such "
+                             "as a copy of the slots for a dry run.")
 
     args = parser.parse_args()
 
