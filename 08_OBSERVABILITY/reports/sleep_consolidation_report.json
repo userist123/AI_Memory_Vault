@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T19:10:52.107968+00:00",
+  "generated_at": "2026-09-18T19:17:21.763742+00:00",
   "dormant_candidates": [],
   "stale_review_candidates": [
     {
@@ -12,10 +12,6 @@
     },
     {
       "id": "ca940601-808d-4632-9c7c-5c3052776a56",
-      "age_days": 40.8
-    },
-    {
-      "id": "208b7e63-4615-4a79-af5d-f64ecb2051c9",
       "age_days": 40.8
     },
     {
@@ -71,304 +67,224 @@
       "age_days": 39.8
     },
     {
-      "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
-      "age_days": 39.8
+      "id": "b45781a9-30bc-4389-aeb0-5e8c14828bc4",
+      "age_days": 38.8
     },
     {
-      "id": "04a60639-b8f3-4d37-a1bc-ad7ca536a4b2",
-      "age_days": 39.8
+      "id": "cfca79df-d8f8-4720-bd8f-7f7ea7116b47",
+      "age_days": 38.8
     },
     {
-      "id": "062cb894-65b4-4faf-a7fc-77cb067d492e",
-      "age_days": 39.8
+      "id": "4c5884fe-f24e-426e-a012-1414dbddae23",
+      "age_days": 35.8
     },
     {
-      "id": "063669ac-003c-4ec8-9d7c-c8bbc75ca2cb",
-      "age_days": 39.8
+      "id": "d94d32d6-701e-43b7-b031-761b2c6c8e43",
+      "age_days": 35.8
     },
     {
-      "id": "08c91a9a-2f0e-4d18-b76e-b501d30fcde9",
-      "age_days": 39.8
+      "id": "3d063fab-d6d1-411b-89b2-d31222f4b937",
+      "age_days": 35.8
     },
     {
-      "id": "0ba9e146-1258-404b-b5f5-1888dfc08b5b",
-      "age_days": 39.8
+      "id": "441f6cc3-a6a0-47ff-9b41-164b5901560f",
+      "age_days": 35.8
     },
     {
-      "id": "0bc17a2b-dbd2-49db-92ac-5ecda6ba8ff2",
-      "age_days": 39.8
+      "id": "b8bd05ab-076f-429d-a742-d1bc2ba0c212",
+      "age_days": 35.8
     },
     {
-      "id": "0defe4b9-032c-44e3-8f81-8df7329fef97",
-      "age_days": 39.8
+      "id": "3c2aeb6e-a01e-4f87-b4fb-830cb776376f",
+      "age_days": 35.8
     },
     {
-      "id": "0f034a7e-becd-406c-9b67-73ab84ed319b",
-      "age_days": 39.8
+      "id": "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+      "age_days": 35.8
     },
     {
-      "id": "13d69e2d-c87e-4130-8ae0-ab46442233c5",
-      "age_days": 39.8
+      "id": "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+      "age_days": 35.8
     },
     {
-      "id": "172b48c2-adbd-4b2b-a29d-c894667149e3",
-      "age_days": 39.8
+      "id": "7a873fba-2d99-4f1a-bde9-44edc8239e6e",
+      "age_days": 35.8
     },
     {
-      "id": "1c1a371f-5652-4bf4-9d75-62ec44c34353",
-      "age_days": 39.8
+      "id": "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+      "age_days": 35.8
     },
     {
-      "id": "1f9358e1-95da-4189-af4c-5dcf4171ddd1",
-      "age_days": 39.8
+      "id": "5e996db2-ce48-40c7-bee7-3fc9ca7b8c87",
+      "age_days": 35.8
     },
     {
-      "id": "1f97da66-6355-42fa-a66d-ccb53418c6ea",
-      "age_days": 39.8
+      "id": "6bdb2775-add5-426b-ac0c-1b1fef75f2e1",
+      "age_days": 35.8
     },
     {
-      "id": "22b23d28-08d7-4f95-b1ee-2955fd8d5bc7",
-      "age_days": 39.8
+      "id": "0d0d9f30-fa32-416f-95e3-0149006dae79",
+      "age_days": 35.8
     },
     {
-      "id": "282156f7-13e5-4bec-ad59-d22bcf6606c7",
-      "age_days": 39.8
+      "id": "1328c5fb-3316-4c02-ae53-511eb3d3f96b",
+      "age_days": 35.8
     },
     {
-      "id": "2953948a-1439-4022-a81a-a88cddbe4dad",
-      "age_days": 39.8
+      "id": "5c13df21-63b8-4521-840d-e7325258e40a",
+      "age_days": 35.8
     },
     {
-      "id": "297e5d26-a36f-4ef0-9076-79a7d82a676e",
-      "age_days": 39.8
+      "id": "733e3571-a08a-488b-a7f6-e7cf1a0197a2",
+      "age_days": 35.8
     },
     {
-      "id": "29e00617-44b0-4e61-982b-4aed884f405c",
-      "age_days": 39.8
+      "id": "85085ad7-9aa2-42c5-a350-43cc394e3ac4",
+      "age_days": 35.8
     },
     {
-      "id": "2b644bd4-07dd-4575-b865-22d2329c6950",
-      "age_days": 39.8
+      "id": "9cdde96f-0e2e-4544-b2b3-f75b890a599b",
+      "age_days": 35.8
     },
     {
-      "id": "2c253db0-7128-47d2-8f74-e7b1acef6354",
-      "age_days": 39.8
+      "id": "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+      "age_days": 35.8
     },
     {
-      "id": "2c8b0093-ae33-415e-b8be-9ecb055eecb8",
-      "age_days": 39.8
+      "id": "b0fb6f37-1678-4ae7-8a12-6523925c0ef6",
+      "age_days": 35.8
     },
     {
-      "id": "30122ca7-41bd-4c4f-92a3-223953df3541",
-      "age_days": 39.8
+      "id": "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+      "age_days": 34.8
     },
     {
-      "id": "3069105a-f636-4955-b058-cd5914b68768",
-      "age_days": 39.8
+      "id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+      "age_days": 34.8
     },
     {
-      "id": "3a58c6c4-dd07-4d95-a1b7-a71da67ef487",
-      "age_days": 39.8
+      "id": "71a2ef74-8d48-411d-b686-d44746f0515c",
+      "age_days": 34.8
     },
     {
-      "id": "3d9f3bf9-5250-4250-8b6e-c7567ee954fa",
-      "age_days": 39.8
+      "id": "78fe5b4d-0822-4616-8437-fa8a84cedf55",
+      "age_days": 34.8
     },
     {
-      "id": "408abf03-b9f0-45e3-a4dc-b24d66a66417",
-      "age_days": 39.8
+      "id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+      "age_days": 34.8
     },
     {
-      "id": "410800d9-c57c-44cd-bc4d-2a227d36482c",
-      "age_days": 39.8
+      "id": "e613709a-3909-421a-9720-782fb73df150",
+      "age_days": 32.0
     },
     {
-      "id": "44f75746-624a-4f0c-b58f-926ac8bb3120",
-      "age_days": 39.8
+      "id": "276d1940-c948-4feb-902f-bd6c74958594",
+      "age_days": 32.0
     },
     {
-      "id": "46d6732b-2734-4b27-b294-06ba1baaa004",
-      "age_days": 39.8
+      "id": "4b5d72d1-dc4a-43db-b7eb-595faeef85e4",
+      "age_days": 32.0
     },
     {
-      "id": "476dbb55-2976-4dde-9b35-c6ec8f4d3eb3",
-      "age_days": 39.8
+      "id": "b4e88f21-7291-49fa-9481-22904c10a002",
+      "age_days": 31.8
     },
     {
-      "id": "488a8d3e-bb29-4a0a-9371-2c15a6f01f35",
-      "age_days": 39.8
+      "id": "b4e88f21-7291-49fa-9481-22904c10a001",
+      "age_days": 31.8
     },
     {
-      "id": "4b2c2b48-b6ba-4745-9121-cf3e3e392155",
-      "age_days": 39.8
+      "id": "b4e88f21-7291-49fa-9481-22904c10a004",
+      "age_days": 31.8
     },
     {
-      "id": "4bd401e4-0d6c-43f1-bf0a-4737470d637c",
-      "age_days": 39.8
+      "id": "b4e88f21-7291-49fa-9481-22904c10a006",
+      "age_days": 31.8
     },
     {
-      "id": "4db37d74-1eb0-4b6d-a88b-f39bb2fa34c9",
-      "age_days": 39.8
+      "id": "b4e88f21-7291-49fa-9481-22904c10a003",
+      "age_days": 31.8
     },
     {
-      "id": "503afa9c-7505-45b0-8f87-ddd9de783999",
-      "age_days": 39.8
+      "id": "b4e88f21-7291-49fa-9481-22904c10a005",
+      "age_days": 31.8
     },
     {
-      "id": "50f86e64-0201-45dd-9e30-f942b7c2307f",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10b006",
+      "age_days": 31.8
     },
     {
-      "id": "51c4da70-882a-4870-902a-9d561d96aca7",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10b001",
+      "age_days": 31.8
     },
     {
-      "id": "520b562b-cca4-4276-8a7c-54e70ddf6742",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10b005",
+      "age_days": 31.8
     },
     {
-      "id": "57a270ad-7bd8-41ef-b3e0-29207a03fe42",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10b002",
+      "age_days": 31.8
     },
     {
-      "id": "57aad6d3-425f-41ef-a3ce-c896b0bb5fd8",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10b004",
+      "age_days": 31.8
     },
     {
-      "id": "5a487831-f0b5-4335-9edb-d3cf18968230",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10b003",
+      "age_days": 31.8
     },
     {
-      "id": "5bd6aa84-7f4c-4809-8fc2-ff2b0269219a",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10c001",
+      "age_days": 31.8
     },
     {
-      "id": "5d7754f8-83e7-4c9c-836a-5f58dd255b9c",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10d001",
+      "age_days": 31.8
     },
     {
-      "id": "5e98bb40-eabc-4ce2-96de-4023a3a6f86b",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10d003",
+      "age_days": 31.8
     },
     {
-      "id": "5fe07c3f-7bdc-416d-9b50-f1a8d513e764",
-      "age_days": 39.8
+      "id": "c1a01101-7291-49fa-9481-22904c10d002",
+      "age_days": 31.8
     },
     {
-      "id": "5fefc511-da18-475f-a52e-823f097ea724",
-      "age_days": 39.8
+      "id": "60a9210f-eb13-4b64-9347-605ce4792ae2",
+      "age_days": 26.8
     },
     {
-      "id": "61ca1c64-b8fc-4231-bf42-7cf42b65d73c",
-      "age_days": 39.8
+      "id": "f82194d2-31a8-4c91-a83d-e42109ab7d12",
+      "age_days": 24.8
     },
     {
-      "id": "6460e7eb-0502-4fb2-847c-0f1fe6445f2e",
-      "age_days": 39.8
+      "id": "ae0206df-b0cb-4810-b2a2-cea462600561",
+      "age_days": 24.8
     },
     {
-      "id": "6624fb14-425d-4ba9-9a71-dfb08155c7e9",
-      "age_days": 39.8
+      "id": "b492a8e1-5c02-4b21-9e12-c7f8a31e9202",
+      "age_days": 24.8
     },
     {
-      "id": "66e39b72-98a5-4178-af1e-fbe4b4f30d4c",
-      "age_days": 39.8
+      "id": "f5cfb84d-68d1-43ae-b67a-513e3ce7aa34",
+      "age_days": 18.8
     },
     {
-      "id": "67ade641-2858-43e2-ba16-edb3c7808364",
-      "age_days": 39.8
+      "id": "knw-retrieval-bottleneck-p0-0001",
+      "age_days": 16.9
     },
     {
-      "id": "6e033ba5-1f1d-423a-945e-d305a31309f3",
-      "age_days": 39.8
+      "id": "reg-retrieval-hypotheses-0001",
+      "age_days": 16.9
     },
     {
-      "id": "6f13ce75-97bc-446f-a124-baeb2c2b6fa3",
-      "age_days": 39.8
+      "id": "knw-context-packing-p1-0001",
+      "age_days": 16.8
     },
     {
-      "id": "721a6be7-18ed-4b23-9358-ade2409b3864",
-      "age_days": 39.8
-    },
-    {
-      "id": "72b4feb0-f538-4419-a2b1-c52160822c38",
-      "age_days": 39.8
-    },
-    {
-      "id": "785b2583-c36e-45d6-a8e1-7d86d9bb018c",
-      "age_days": 39.8
-    },
-    {
-      "id": "7bffd3d3-2c0e-425a-a065-bbd6a25c379d",
-      "age_days": 39.8
-    },
-    {
-      "id": "7ef801b8-4532-4149-8557-3b21fa843df6",
-      "age_days": 39.8
-    },
-    {
-      "id": "7f451888-67f7-4f5e-be85-6514b3df4c7e",
-      "age_days": 39.8
-    },
-    {
-      "id": "7f66eac2-3a38-4aa8-8356-17ba2d7bb5d2",
-      "age_days": 39.8
-    },
-    {
-      "id": "80bb24a5-017d-48f2-bfa2-a806a6c04f61",
-      "age_days": 39.8
-    },
-    {
-      "id": "81f9b698-7bc0-43f1-ae74-fc409a1a5f21",
-      "age_days": 39.8
-    },
-    {
-      "id": "8215efcf-2678-41be-82f3-42402f745df7",
-      "age_days": 39.8
-    },
-    {
-      "id": "84ad777c-0aa8-427e-855b-c5cff4a1f094",
-      "age_days": 39.8
-    },
-    {
-      "id": "84c35b53-7481-4b32-8532-aeb520a0e978",
-      "age_days": 39.8
-    },
-    {
-      "id": "86f2b3e5-41b5-43ce-a8ae-a7d6724869c3",
-      "age_days": 39.8
-    },
-    {
-      "id": "88f38081-452f-4851-a76a-34a43aa69054",
-      "age_days": 39.8
-    },
-    {
-      "id": "8944c90d-a00b-445f-af68-9712aee8a058",
-      "age_days": 39.8
-    },
-    {
-      "id": "89b205d9-eebf-4d56-b68d-2efe75d8448a",
-      "age_days": 39.8
-    },
-    {
-      "id": "8eed0c13-96d3-45e8-a2e8-9f924b37a940",
-      "age_days": 39.8
-    },
-    {
-      "id": "9172283b-3cad-484c-97d5-487b6c82be77",
-      "age_days": 39.8
-    },
-    {
-      "id": "9282384d-86b0-4e53-b8e3-8bcf45d5e97b",
-      "age_days": 39.8
-    },
-    {
-      "id": "933abefa-2f61-488b-b847-3ddd5b2f909d",
-      "age_days": 39.8
-    },
-    {
-      "id": "95c33d8d-6c20-40b7-b6ef-79f67d85446c",
-      "age_days": 39.8
+      "id": "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+      "age_days": 16.8
     }
   ],
   "conflict_pairs": [
@@ -411,14 +327,14 @@
   ],
   "stats": {
     "total_notes": 825,
-    "eligible_notes": 788,
+    "eligible_notes": 236,
     "processed_notes": 100,
     "budget_cap": 100,
     "budget_exhausted": true,
-    "active_notes": 8,
-    "review_notes": 92,
+    "active_notes": 29,
+    "review_notes": 71,
     "dormant_candidates": 0,
-    "stale_review_candidates": 92,
+    "stale_review_candidates": 71,
     "conflict_pairs": 6
   }
 }

@@ -1,6 +1,6 @@
 {
-  "corpus_notes": 850,
-  "storage_notes": 744,
+  "corpus_notes": 918,
+  "storage_notes": 825,
   "arms": {
     "graph_off": {
       "summary": {
@@ -25,8 +25,8 @@
           "n_measurable": 12,
           "n_unmeasurable": 0,
           "candidate_recall": 0.6666666666666666,
-          "context_recall": 0.16666666666666666,
-          "answer_correctness": 0.16666666666666666
+          "context_recall": 0.08333333333333333,
+          "answer_correctness": 0.08333333333333333
         },
         "paraphrase": {
           "n": 4,
@@ -57,8 +57,8 @@
           "n_measurable": 29,
           "n_unmeasurable": 3,
           "candidate_recall": 0.6896551724137931,
-          "context_recall": 0.13793103448275862,
-          "answer_correctness": 0.13793103448275862
+          "context_recall": 0.06896551724137931,
+          "answer_correctness": 0.06896551724137931
         }
       },
       "errors": [],
@@ -168,15 +168,15 @@
       "skipped_unmeasurable": 3
     },
     "context_recall": {
-      "off_only": 2,
+      "off_only": 0,
       "on_only": 2,
-      "discordant": 4,
+      "discordant": 2,
       "skipped_unmeasurable": 3
     },
     "answer_correctness": {
-      "off_only": 2,
+      "off_only": 0,
       "on_only": 2,
-      "discordant": 4,
+      "discordant": 2,
       "skipped_unmeasurable": 3
     }
   }

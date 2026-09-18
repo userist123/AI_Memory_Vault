@@ -8,7 +8,8 @@ updated: '2026-08-10'
 confidence: high
 verification: unverified
 relations: ["07_EVALUATION/README", "01_ARCHITECTURE/graphs/08 Memory Subsystems Map"]
-lifecycle: REVIEW
+lifecycle: ARCHIVED
+archive_reason: Consolidated into knowledge node
 provenance:
   source_type: inference
   source_ref: generated
