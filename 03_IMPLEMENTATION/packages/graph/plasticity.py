@@ -147,8 +147,14 @@ class AttributionModel:
         # 2. State 2: RETRIEVED_CANDIDATE
         if candidate_trace and isinstance(candidate_trace, dict):
             raw_candidates = candidate_trace.get("candidates_considered", [])
-            for c in raw_candidates:
-                cid = c if isinstance(c, str) else c.get("id") if isinstance(c, dict) else None
+            if isinstance(raw_candidates, (list, tuple, set)):
+                for c in raw_candidates:
+                    cid = c if isinstance(c, str) else c.get("id") if isinstance(c, dict) else None
+                    if cid:
+                        candidate_ids.add(str(cid))
+                        node_states[str(cid)] = MemoryAttributionState.RETRIEVED_CANDIDATE
+            for fr in (candidate_trace.get("fused_ranking") or []):
+                cid = fr if isinstance(fr, str) else fr.get("id") if isinstance(fr, dict) else None
                 if cid:
                     candidate_ids.add(str(cid))
                     node_states[str(cid)] = MemoryAttributionState.RETRIEVED_CANDIDATE

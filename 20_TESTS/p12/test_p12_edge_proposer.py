@@ -37,7 +37,8 @@ def _index(pairs):
 def _base_pair(source_id="a", target_id="b"):
     return {"source_id": source_id, "target_id": target_id, "relation": "related_to",
             "confidence": 1.0, "weight": 0.5, "origin": "proposed_weak",
-            "evidence_entities": ["ENTITY-1"], "source_path": "a.md", "target_path": "b.md"}
+            "evidence_entities": ["ENTITY-1"], "source_path": "a.md", "target_path": "b.md",
+            "source_quote": "Sample evidence quote from source", "target_quote": "Sample evidence quote from target"}
 
 
 # ---------- deterministic candidate generation ----------
