@@ -4,13 +4,14 @@ import sys
 import unittest
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PACKAGES_DIR = REPO_ROOT / "03_IMPLEMENTATION" / "packages"
 for p in (str(REPO_ROOT), str(PACKAGES_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 
 from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController
@@ -18,6 +19,13 @@ from memory_controller.storage.file_engine import FileStorageEngine
 from graph.synapse_store import SynapseStore, Synapse, is_durable
 from graph.plasticity import PlasticityEngine, PlasticityJournal
 from retrieval.vault_index import VaultIndex
+
+
+@pytest.fixture(autouse=True)
+def _hmac_secret(monkeypatch):
+    """Set per test, not at import: a module-level default is gone by the time
+    this runs if an earlier test in the session removed it."""
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 
 
 class TestNeuralPlasticitySearch(unittest.TestCase):

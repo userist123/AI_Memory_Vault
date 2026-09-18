@@ -31,10 +31,8 @@ from cognitive_core.agents import (
 )
 
 @pytest.fixture(autouse=True)
-def setup_test_environment():
-    os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = "m4-4-test-hmac-secret-key-67890"
-    yield
-    os.environ.pop("MEMORY_CONTROLLER_HMAC_SECRET", None)
+def setup_test_environment(monkeypatch):
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", "m4-4-test-hmac-secret-key-67890")
 
 @pytest.fixture
 def temp_checkpoint_dir():
