@@ -1,207 +1,264 @@
-"""Empirical evaluation proving vault improvement with ingested curriculum.
+"""Transfer benchmark: OpenStax Ch8 Memory — dual-arm evaluation.
 
-Runs:
-1. Existing 29 heldout cases on the vault with the book (verifying ZERO regression).
-2. 5 new Ashby curriculum heldout cases on:
-   a. Baseline vault without the book (0/5 context recall, 0/5 answer correctness)
-   b. Enriched vault with the book (5/5 context recall, 5/5 answer correctness)
-Saves report to 08_OBSERVABILITY/reports/curriculum_heldout_eval.json.
+Control arm: vault WITHOUT the 16 new openstax_psy2e_8_* notes.
+Treatment arm: vault WITH the 16 new openstax_psy2e_8_* notes (lifecycle=REVIEW).
+
+Reader: gemini-3.1-flash-lite, temperature=0, pure note-grounded reasoning.
+- Answerable: correct + verbatim quote found in notes  CORRECT_SUPPORTED
+- Answerable: correct + no quote / invented quote       CORRECT_UNSUPPORTED
+- Answerable: wrong choice                              WRONG
+- Answerable: INSUFFICIENT                              ABSTAIN
+- Trap: INSUFFICIENT                                    TRAP_PASS (correct behavior)
+- Trap: any choice                                      TRAP_FAIL (hallucination)
+
+Saves to 08_OBSERVABILITY/reports/curriculum_heldout_eval.json.
 """
 from __future__ import annotations
 
 import json
 import os
 import sys
-from collections import Counter
+import time
 from pathlib import Path
+from typing import Any, Dict, List
 
 REPO = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
-sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
-
+sys.path.insert(0, str(REPO.resolve()))
+sys.path.insert(0, str((REPO / "03_IMPLEMENTATION" / "packages").resolve()))
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 
-from memory_controller.authorizer import Principal
-from memory_controller.controller import MemoryController, RANKING_ARM_BASELINE
-from memory_controller.storage.file_engine import FileStorageEngine
-from retrieval.vault_index import VaultIndex
+import google.generativeai as genai  # noqa: E402
+from memory_controller.authorizer import Principal  # noqa: E402
+from memory_controller.controller import MemoryController, Lifecycle  # noqa: E402
+from memory_controller.storage.file_engine import FileStorageEngine  # noqa: E402
+from retrieval.vault_index import VaultIndex  # noqa: E402
 
-HELDOUT_PATH = REPO / "07_EVALUATION" / "heldout_retrieval_benchmark_v2" / "heldout.json"
+FROZEN_TEST_PATH = REPO / "07_EVALUATION" / "curriculum" / "openstax_ch08_frozen_test_set.json"
 REPORT_PATH = REPO / "08_OBSERVABILITY" / "reports" / "curriculum_heldout_eval.json"
 
-UNMEASURABLE = "UNMEASURABLE"
-
-ASHBY_CASES = [
-    {
-        "id": "ASHBY-01",
-        "class": "exact_identifier_lookup",
-        "query": "What electromechanical apparatus consisting of four interconnected units was designed by W. Ross Ashby to study ultrastability?",
-        "expected_answer": "The Homeostat.",
-        "gold_relevant_notes": ["knw-ashby-homeostat-apparatus"],
-        "required_facts": ["homeostat"],
-        "wrong_note_ids": [],
-        "abstain": False,
-    },
-    {
-        "id": "ASHBY-02",
-        "class": "conceptual_definition",
-        "query": "According to W. Ross Ashby in Design for a Brain, to what entity does the concept of stability belong?",
-        "expected_answer": "A field of behaviour in the phase space.",
-        "gold_relevant_notes": ["knw-ashby-homeostasis-and-stability"],
-        "required_facts": ["stabilit", "field"],
-        "wrong_note_ids": [],
-        "abstain": False,
-    },
-    {
-        "id": "ASHBY-03",
-        "class": "architectural_analysis",
-        "query": "In Ashby's ultrastable system architecture, what two concurrent feedback mechanisms operate together?",
-        "expected_answer": "Primary continuous feedback loop and secondary step-mechanisms reconfiguring parameters.",
-        "gold_relevant_notes": ["knw-ashby-ultrastable-system"],
-        "required_facts": ["feedback", "step-mechanism"],
-        "wrong_note_ids": [],
-        "abstain": False,
-    },
-    {
-        "id": "ASHBY-04",
-        "class": "system_design",
-        "query": "Why does a fully-joined system fail to adapt as system size N grows large according to Ashby?",
-        "expected_answer": "The probability of global stability decreases exponentially as p^N.",
-        "gold_relevant_notes": ["knw-ashby-multistable-systems"],
-        "required_facts": ["p^n", "multistab"],
-        "wrong_note_ids": [],
-        "abstain": False,
-    },
-    {
-        "id": "ASHBY-05",
-        "class": "neuro_plasticity",
-        "query": "How does Ashby explain neural habituation and synaptic plasticity in Design for a Brain?",
-        "expected_answer": "As progressive constriction of the field of stability toward absorbing states.",
-        "gold_relevant_notes": ["knw-ashby-habituation-and-plasticity"],
-        "required_facts": ["constric", "habitu"],
-        "wrong_note_ids": [],
-        "abstain": False,
-    }
-]
+OPENSTAX_NOTE_PATTERN = "openstax-psychology-2e-ch08"
+MAX_NOTES = 5  # AGENTS.md: MAX_MEMORY_RESULTS = 5
+READER_MODEL = "gemini-3.1-flash-lite"
 
 
-def build_r016_controller(index, storage, graph_on: bool) -> MemoryController:
-    return MemoryController(
-        storage=storage,
-        index=index,
-        enable_graph_expansion=graph_on,
-        strict_graph_expansion=False,
-        graph_expansion_budget=10 if graph_on else None,
-        ranking_arm=RANKING_ARM_BASELINE,
+def build_reader_prompt(question: str, choices: List[str], notes_text: str) -> str:
+    choices_json = json.dumps(choices, indent=2, ensure_ascii=False)
+    return (
+        "You are an objective evaluation reader. Answer the multiple-choice question based EXCLUSIVELY "
+        "on the Memory Notes below.\n\n"
+        f"Memory Notes:\n{notes_text}\n\n"
+        f"Question:\n{question}\n\n"
+        f"Choices (select EXACTLY the text of one choice, or INSUFFICIENT):\n{choices_json}\n\n"
+        "Rules:\n"
+        "1. If the Memory Notes contain factual evidence proving one choice, output that choice text "
+        "and the verbatim sentence from the Memory Notes as evidence_quote.\n"
+        "2. If the Memory Notes do NOT contain sufficient factual evidence, output "
+        'selected_choice = "INSUFFICIENT" and evidence_quote = null.\n'
+        "3. Never use pre-trained knowledge. Only use what is in the Memory Notes.\n"
+        "4. Output ONLY valid JSON:\n"
+        '{"selected_choice": "<choice text or INSUFFICIENT>", "evidence_quote": "<verbatim sentence or null>"}'
     )
 
 
-def build_prod_controller(index, storage, graph_on: bool = False) -> MemoryController:
-    return MemoryController(
-        storage=storage,
-        index=index,
-        enable_graph_expansion=graph_on,
-        strict_graph_expansion=False,
-        graph_expansion_budget=10 if graph_on else None,
+def call_reader(prompt: str, model: Any, max_retries: int = 5) -> Dict[str, Any]:
+    import time as _time
+    from google.api_core.exceptions import ResourceExhausted
+    for attempt in range(max_retries):
+        try:
+            resp = model.generate_content(
+                prompt,
+                generation_config={"response_mime_type": "application/json", "temperature": 0.0},
+            )
+            usage = resp.usage_metadata
+            try:
+                result = json.loads(resp.text)
+            except Exception:
+                result = {"selected_choice": "PARSE_ERROR", "evidence_quote": None}
+            return {
+                "selected_choice": result.get("selected_choice", "PARSE_ERROR"),
+                "evidence_quote": result.get("evidence_quote"),
+                "prompt_tokens": getattr(usage, "prompt_token_count", 0),
+                "completion_tokens": getattr(usage, "candidates_token_count", 0),
+                "total_tokens": getattr(usage, "total_token_count", 0),
+            }
+        except ResourceExhausted as exc:
+            wait = 30 * (2 ** attempt)
+            print(f"\n  [quota] 429 on attempt {attempt + 1}/{max_retries}, waiting {wait}s... ({exc})", flush=True)
+            _time.sleep(wait)
+    # All retries exhausted
+    return {"selected_choice": "QUOTA_ERROR", "evidence_quote": None, "total_tokens": 0}
+
+
+
+def verify_evidence_quote(evidence_quote, notes_text: str) -> bool:
+    if not evidence_quote:
+        return False
+    norm_quote = " ".join(evidence_quote.split())
+    norm_text = " ".join(notes_text.split())
+    return norm_quote in norm_text
+
+
+def evaluate_question(
+    q: Dict[str, Any],
+    controller: MemoryController,
+    storage: FileStorageEngine,
+    model: Any,
+    openstax_ids: set,
+) -> Dict[str, Any]:
+    is_trap = q.get("unanswerable", False)
+    correct_answer = q.get("correct_answer", "")
+    choices = q.get("choices", [])
+
+    search_res = controller.search(
+        Principal.AI_AGENT,
+        query=q["question"],
+        page_size=MAX_NOTES,
+        lifecycles=[Lifecycle.REVIEW, Lifecycle.ACTIVE],
     )
+    retrieved_ids = [it.get("id") for it in search_res.get("results", []) if it.get("id")]
+
+    notes_parts = []
+    for nid in retrieved_ids:
+        note = storage.get(nid)
+        if note:
+            notes_parts.append(note.get("content", "") or "")
+    notes_text = "\n\n".join(p for p in notes_parts if p)
+
+    # Count how many of the retrieved IDs are OpenStax notes (using pre-computed set from index)
+    openstax_count = sum(1 for nid in retrieved_ids if nid in openstax_ids)
+
+    if not notes_text:
+        reader_result = {"selected_choice": "INSUFFICIENT", "evidence_quote": None, "total_tokens": 0}
+    else:
+        prompt = build_reader_prompt(q["question"], choices, notes_text)
+        reader_result = call_reader(prompt, model)
 
 
-def run_case(controller: MemoryController, case: dict, index) -> dict:
-    pack = controller.search(Principal.HUMAN, case["query"], page_size=10)
-    trace = pack.get("candidate_trace", {}) or {}
-    candidates = {
-        e.get("id") for e in (trace.get("fused_ranking") or []) if isinstance(e, dict)
-    }
-    candidates |= set(trace.get("graph_expanded_ids") or [])
-    context = {r.get("id") for r in pack.get("results", []) if r.get("id")}
-    gold = set(case["gold_relevant_notes"])
+    selected = reader_result["selected_choice"]
+    evidence_quote = reader_result["evidence_quote"]
+    quote_verified = verify_evidence_quote(evidence_quote, notes_text)
 
-    if case["abstain"]:
-        return {
-            "id": case["id"],
-            "class": case["class"],
-            "candidate_recall": UNMEASURABLE,
-            "context_recall": UNMEASURABLE,
-            "answer_correctness": UNMEASURABLE,
-            "graph_status": trace.get("graph_expansion_status"),
-            "expanded": len(trace.get("graph_expanded_ids") or []),
-        }
-
-    blob = " ".join(
-        index.by_id[n].text for n in context if n in index.by_id
-    ).lower()
-    facts_ok = all(f.lower() in blob for f in case["required_facts"]) if case["required_facts"] else False
-    correct = bool(gold & context) and facts_ok
+    if is_trap:
+        verdict = "TRAP_PASS" if selected == "INSUFFICIENT" else "TRAP_FAIL"
+    else:
+        if selected == correct_answer:
+            verdict = "CORRECT_SUPPORTED" if quote_verified else "CORRECT_UNSUPPORTED"
+        elif selected == "INSUFFICIENT":
+            verdict = "ABSTAIN"
+        else:
+            verdict = "WRONG"
 
     return {
-        "id": case["id"],
-        "class": case["class"],
-        "candidate_recall": int(bool(gold & candidates)) if gold else 1,
-        "context_recall": int(bool(gold & context)) if gold else 1,
-        "answer_correctness": int(correct),
-        "graph_status": trace.get("graph_expansion_status"),
-        "expanded": len(trace.get("graph_expanded_ids") or []),
+        "id": q["id"],
+        "type": q.get("type", "unknown"),
+        "question": q["question"][:80] + "...",
+        "correct_answer": correct_answer,
+        "selected_choice": selected,
+        "verdict": verdict,
+        "evidence_quote": evidence_quote,
+        "quote_verified": quote_verified,
+        "notes_retrieved_count": len(notes_parts),
+        "openstax_notes_in_retrieved": openstax_count,
+        "tokens_used": reader_result.get("total_tokens", 0),
     }
 
 
-def summarise(rows: list[dict]) -> dict:
-    measurable = [r for r in rows if r["candidate_recall"] != UNMEASURABLE]
-    n_unmeasurable = len(rows) - len(measurable)
-    agg = {"n": len(rows), "n_measurable": len(measurable), "n_unmeasurable": n_unmeasurable}
-    if measurable:
-        agg["candidate_recall"] = round(sum(r["candidate_recall"] for r in measurable) / len(measurable), 4)
-        agg["context_recall"] = round(sum(r["context_recall"] for r in measurable) / len(measurable), 4)
-        agg["answer_correctness"] = round(sum(r["answer_correctness"] for r in measurable) / len(measurable), 4)
+def run_arm(questions: List[Dict[str, Any]], include_openstax: bool, model: Any) -> Dict[str, Any]:
+    storage = FileStorageEngine(str(REPO))
+    if include_openstax:
+        index = VaultIndex.load(REPO, lifecycles=["ACTIVE", "VERIFIED", "REVIEW"])
     else:
-        agg["candidate_recall"] = agg["context_recall"] = agg["answer_correctness"] = None
-    return agg
+        full_index = VaultIndex.load(REPO, lifecycles=["ACTIVE", "VERIFIED", "REVIEW"])
+        openstax_ids = {
+            n.id for n in full_index.notes
+            if OPENSTAX_NOTE_PATTERN in (n.meta.get("provenance", {}) or {}).get("source_ref", "")
+        }
+        index = VaultIndex([n for n in full_index.notes if n.id not in openstax_ids])
+        print(f"  Excluded {len(openstax_ids)} OpenStax notes from control arm index.")
+
+    controller = MemoryController(storage=storage, index=index)
+
+    # Always need the full openstax_ids set for accurate counting
+    if include_openstax:
+        openstax_ids = {
+            n.id for n in index.notes
+            if OPENSTAX_NOTE_PATTERN in (n.meta.get("provenance", {}) or {}).get("source_ref", "")
+        }
+
+    results = []
+    for q in questions:
+        arm_label = "TREATMENT" if include_openstax else "CONTROL"
+        print(f"  [{arm_label}] {q['id']}...", end=" ", flush=True)
+        res = evaluate_question(q, controller, storage, model, openstax_ids)
+        results.append(res)
+        print(f"{res['verdict']} (notes={res['notes_retrieved_count']} openstax={res['openstax_notes_in_retrieved']})")
+        time.sleep(5)  # rate-limit: avoid 250k token/min quota on free tier
+
+
+    review_q = [r for r in results if r["type"] == "author_review"]
+    trap_q = [r for r in results if r["type"] == "unanswerable_trap"]
+
+    def frac(lst, pred): return f"{sum(1 for r in lst if pred(r))}/{len(lst)}"
+
+    return {
+        "arm": "treatment" if include_openstax else "control",
+        "include_openstax_notes": include_openstax,
+        "review_questions": {
+            "total": len(review_q),
+            "correct_supported": frac(review_q, lambda r: r["verdict"] == "CORRECT_SUPPORTED"),
+            "correct_unsupported": frac(review_q, lambda r: r["verdict"] == "CORRECT_UNSUPPORTED"),
+            "correct_total": frac(review_q, lambda r: r["verdict"].startswith("CORRECT")),
+            "abstain": frac(review_q, lambda r: r["verdict"] == "ABSTAIN"),
+            "wrong": frac(review_q, lambda r: r["verdict"] == "WRONG"),
+        },
+        "trap_questions": {
+            "total": len(trap_q),
+            "trap_pass": frac(trap_q, lambda r: r["verdict"] == "TRAP_PASS"),
+            "trap_fail": frac(trap_q, lambda r: r["verdict"] == "TRAP_FAIL"),
+        },
+        "total_tokens_used": sum(r["tokens_used"] for r in results),
+        "per_question": results,
+    }
 
 
 def main() -> int:
-    heldout_cases = json.loads(HELDOUT_PATH.read_text(encoding="utf-8"))["cases"]
-    storage = FileStorageEngine(str(REPO))
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY missing")
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(READER_MODEL)
 
-    # 1. Full index with book included
-    full_index = VaultIndex.load(REPO, include_raw=True, include_archived=True)
-    
-    # 2. Baseline index and storage WITHOUT book
-    ashby_ids = {c["id"] for c in ASHBY_CASES} | {g for c in ASHBY_CASES for g in c["gold_relevant_notes"]}
-    notes_without_ashby = [n for n in full_index.notes if n.id not in ashby_ids]
-    index_without_ashby = VaultIndex(notes_without_ashby)
+    test_data = json.loads(FROZEN_TEST_PATH.read_text(encoding="utf-8"))
+    questions = test_data["questions"]
+    print(f"Loaded {len(questions)} questions ({test_data['total_review_questions']} review + {test_data['total_trap_questions']} traps)")
 
-    storage_without_ashby = FileStorageEngine(str(REPO))
-    storage_without_ashby.id_to_path = {k: v for k, v in storage.id_to_path.items() if k not in ashby_ids}
+    print("\n=== CONTROL ARM (no OpenStax notes) ===")
+    control = run_arm(questions, include_openstax=False, model=model)
+
+    print("\n=== TREATMENT ARM (with OpenStax notes) ===")
+    treatment = run_arm(questions, include_openstax=True, model=model)
 
     report = {
-        "benchmark_set": "Heldout Benchmark v2 (29 cases) + Ashby Curriculum Extension (5 cases)",
-        "existing_cases_regression_check": {},
-        "curriculum_comparative_eval": {},
-    }
-
-    # Run existing 29 cases with book included
-    for label, graph_on in (("graph_off", False), ("graph_on", True)):
-        ctrl = build_r016_controller(full_index, storage, graph_on)
-        rows = [run_case(ctrl, c, full_index) for c in heldout_cases]
-        report["existing_cases_regression_check"][label] = summarise(rows)
-
-    # Run 5 curriculum cases WITHOUT book
-    ctrl_no_book = build_prod_controller(index_without_ashby, storage_without_ashby, False)
-    rows_no_book = [run_case(ctrl_no_book, c, index_without_ashby) for c in ASHBY_CASES]
-    report["curriculum_comparative_eval"]["vault_without_book"] = {
-        "summary": summarise(rows_no_book),
-        "cases": rows_no_book,
-    }
-
-    # Run 5 curriculum cases WITH book
-    ctrl_with_book = build_prod_controller(full_index, storage, False)
-    rows_with_book = [run_case(ctrl_with_book, c, full_index) for c in ASHBY_CASES]
-    report["curriculum_comparative_eval"]["vault_with_book"] = {
-        "summary": summarise(rows_with_book),
-        "cases": rows_with_book,
+        "schema": "curriculum-transfer-benchmark-v1",
+        "source": "OpenStax Psychology 2e, Chapter 8: Memory",
+        "model": READER_MODEL,
+        "max_notes_retrieved": MAX_NOTES,
+        "ingestion_telemetry": "08_OBSERVABILITY/reports/curriculum_ingestion_telemetry.json",
+        "control_arm": control,
+        "treatment_arm": treatment,
     }
 
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
-    print(json.dumps(report, indent=2, ensure_ascii=False))
+    REPORT_PATH.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8", newline="\n")
+    print(f"\nReport saved to {REPORT_PATH}")
+    print("\n=== SUMMARY ===")
+    for arm_key in ("control_arm", "treatment_arm"):
+        arm = report[arm_key]
+        rq = arm["review_questions"]
+        tq = arm["trap_questions"]
+        print(f"\n{arm['arm'].upper()} arm:")
+        print(f"  Review Q: supported={rq['correct_supported']}  unsupported={rq['correct_unsupported']}  abstain={rq['abstain']}  wrong={rq['wrong']}")
+        print(f"  Traps:    pass={tq['trap_pass']}  fail={tq['trap_fail']}")
     return 0
 
 
