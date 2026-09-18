@@ -3,9 +3,9 @@
   "source": "OpenStax Psychology 2e, Chapter 8: Memory (Review Questions & Traps)",
   "license": "CC BY 4.0",
   "chapter": 8,
-  "total_questions": 17,
+  "total_questions": 22,
   "total_review_questions": 12,
-  "total_trap_questions": 5,
+  "total_trap_questions": 10,
   "questions": [
     {
       "id": "openstax-psy2e-ch08-q01",
@@ -188,7 +188,11 @@
       ],
       "correct_answer": "NOT_IN_CHAPTER",
       "unanswerable": true,
-      "trap_rationale": "Chapter 8 discusses the cerebellum in procedural memory, but gives no ionic concentrations for Purkinje cell depression."
+      "trap_rationale": "Chapter 8 discusses the cerebellum in procedural memory, but gives no ionic concentrations for Purkinje cell depression.",
+      "specific_terms": [
+        "potassium",
+        "purkinje"
+      ]
     },
     {
       "id": "openstax-psy2e-ch08-trap02",
@@ -203,7 +207,11 @@
       ],
       "correct_answer": "NOT_IN_CHAPTER",
       "unanswerable": true,
-      "trap_rationale": "W. Ross Ashby and ultrastability equations are not discussed or cited anywhere in Chapter 8."
+      "trap_rationale": "W. Ross Ashby and ultrastability equations are not discussed or cited anywhere in Chapter 8.",
+      "specific_terms": [
+        "ashby",
+        "ultrastability"
+      ]
     },
     {
       "id": "openstax-psy2e-ch08-trap03",
@@ -218,7 +226,11 @@
       ],
       "correct_answer": "NOT_IN_CHAPTER",
       "unanswerable": true,
-      "trap_rationale": "OpenStax Psychology 2e was published in 2020 and mentions no 2024 studies or social media video platform effects."
+      "trap_rationale": "OpenStax Psychology 2e was published in 2020 and mentions no 2024 studies or social media video platform effects.",
+      "specific_terms": [
+        "tiktok",
+        "zhang"
+      ]
     },
     {
       "id": "openstax-psy2e-ch08-trap04",
@@ -233,7 +245,11 @@
       ],
       "correct_answer": "NOT_IN_CHAPTER",
       "unanswerable": true,
-      "trap_rationale": "Section 8.2 discusses gross brain areas (amygdala, hippocampus, cerebellum, prefrontal cortex) without laminar neocortical histology."
+      "trap_rationale": "Section 8.2 discusses gross brain areas (amygdala, hippocampus, cerebellum, prefrontal cortex) without laminar neocortical histology.",
+      "specific_terms": [
+        "histological",
+        "neocortex"
+      ]
     },
     {
       "id": "openstax-psy2e-ch08-trap05",
@@ -248,7 +264,111 @@
       ],
       "correct_answer": "NOT_IN_CHAPTER",
       "unanswerable": true,
-      "trap_rationale": "Chapter 8 mentions Alzheimer disease conceptually but gives no pharmaceutical prescription guidelines or drug dosages."
+      "trap_rationale": "Chapter 8 mentions Alzheimer disease conceptually but gives no pharmaceutical prescription guidelines or drug dosages.",
+      "specific_terms": [
+        "memantine",
+        "therapeutic dosage"
+      ]
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap06",
+      "type": "unanswerable_trap",
+      "subtype": "near_domain_trap",
+      "section": "8.1 How Memory Functions",
+      "question": "In George Sperling's (1960) iconic memory study, what exact duration in milliseconds was the visual display presented before the tone cue according to Chapter 8?",
+      "choices": [
+        "50 milliseconds",
+        "250 milliseconds",
+        "500 milliseconds",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "specific_terms": [
+        "sperling",
+        "tachistoscope"
+      ],
+      "trap_rationale": "Chapter 8 discusses sensory memory briefly, but does not cite George Sperling (1960) or tachistoscopic millisecond durations."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap07",
+      "type": "unanswerable_trap",
+      "subtype": "near_domain_trap",
+      "section": "8.2 Parts of the Brain Involved with Memory",
+      "question": "How many centimeters of medial temporal lobe tissue did surgeon William Beecher Scoville bilaterally resect from patient H.M. according to Chapter 8?",
+      "choices": [
+        "2.5 cm",
+        "5.0 cm",
+        "8.0 cm",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "specific_terms": [
+        "scoville",
+        "resected"
+      ],
+      "trap_rationale": "Section 8.2 discusses patient H.M.'s hippocampi removal and seizures, but does not mention surgeon William Beecher Scoville or resection measurements in centimeters."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap08",
+      "type": "unanswerable_trap",
+      "subtype": "near_domain_trap",
+      "section": "8.3 Problems with Memory",
+      "question": "According to Chapter 8, what retention plateau percentage did Harry Bahrick (1984) discover in his 50-year Spanish vocabulary permastore study?",
+      "choices": [
+        "15%",
+        "40%",
+        "75%",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "specific_terms": [
+        "bahrick",
+        "permastore"
+      ],
+      "trap_rationale": "Chapter 8 explains Ebbinghaus's forgetting curve, but does not cite Harry Bahrick (1984) or permastore retention percentages."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap09",
+      "type": "unanswerable_trap",
+      "subtype": "near_domain_trap",
+      "section": "8.1 How Memory Functions",
+      "question": "At what depth in feet underwater did Godden and Baddeley (1975) test context-dependent word recall in scuba divers according to Chapter 8?",
+      "choices": [
+        "10 feet",
+        "20 feet",
+        "50 feet",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "specific_terms": [
+        "godden",
+        "underwater"
+      ],
+      "trap_rationale": "Chapter 8 discusses Baddeley and Hitch's working memory model, but does not cover the Godden and Baddeley (1975) underwater scuba diving context-dependent memory experiment."
+    },
+    {
+      "id": "openstax-psy2e-ch08-trap10",
+      "type": "unanswerable_trap",
+      "subtype": "near_domain_trap",
+      "section": "8.2 Parts of the Brain Involved with Memory",
+      "question": "What frequency of high-frequency tetanic electrical stimulation did Terje L\u00f8mo and Timothy Bliss (1973) apply to hippocampal perforant path synapses according to Chapter 8?",
+      "choices": [
+        "10 Hz",
+        "50 Hz",
+        "100 Hz",
+        "NOT_IN_CHAPTER"
+      ],
+      "correct_answer": "NOT_IN_CHAPTER",
+      "unanswerable": true,
+      "specific_terms": [
+        "lomo",
+        "tetanic"
+      ],
+      "trap_rationale": "Section 8.2 mentions synaptic plasticity and neurotransmitters, but does not cite L\u00f8mo and Bliss (1973), perforant path synapses, or tetanic stimulation frequencies."
     }
   ]
 }
