@@ -39,8 +39,9 @@ def test_search_finds_a_seed_note_with_id_title_path_snippet_and_score(world):
     controller, vault = world
     out = ma.search(controller, "consolidarea nocturna instaleaza dependentele", limit=3)
     assert out["count"] >= 1 and ma.NOTICE in out["notice"]
-    top = out["query_results"][0]
-    assert top["title"] == "consolidarea nocturna"
+    # The order among three seed notes is not stable across platforms (ties broken by random ids),
+    # so the check is on the note being returned with the right fields, not on its rank.
+    top = next(r for r in out["query_results"] if r["title"] == "consolidarea nocturna")
     assert top["path"].startswith("01_ARCHITECTURE/knowledge/") and (vault / top["path"]).exists()
     assert "dependentele" in top["snippet"]
     assert top["id"] and top["lifecycle"] == "ACTIVE"
