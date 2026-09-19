@@ -1,0 +1,248 @@
+{
+  "note": "Field values read line by line WITHOUT a YAML parser, from the files as they were before repair.",
+  "notes": {
+    "00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md": {
+      "sha256_before": "4539ea7953512768c9f3bfd4b95e73936d31dcb20162936753974a0396ca0afa",
+      "kind_before": "unclosed_frontmatter",
+      "tolerant_before": {
+        "agent": "CODEX",
+        "last_updated_utc": "2026-09-04T19:15:00Z",
+        "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+        "working_branch": "main",
+        "base_main_sha": "ea3094b53367578dd9ab4ece85010841a0f2e0e1",
+        "current_commit_sha": "ea3094b53367578dd9ab4ece85010841a0f2e0e1",
+        "project_id": "AI_MEMORY_VAULT",
+        "application": "AI Memory Vault / Memory Engine",
+        "working_folder": "repository root; relevant paths under cognitive_core/, memory_controller/, 07_EVALUATION/, 09_COORDINATION/",
+        "current_task": "implementation deferred; sequential continuation from main",
+        "status": "READY_FOR_REVIEW",
+        "completed": [
+          "R001 C8 real retrieval fusion run recorded previously",
+          "prior implementation/evaluation evidence remains archived in Vault"
+        ],
+        "in_progress": [
+          "none while implementation is deferred"
+        ],
+        "next_actions": [
+          "when activated, fetch main and read project CURRENT plus latest task/session",
+          "resume the exact NEXT action from persisted handoff",
+          "run real tests/runtime evidence and commit directly to main"
+        ],
+        "blockers": [
+          "implementation deferred until token availability"
+        ],
+        "risks": [
+          "do not claim causality from non-causal benchmarks",
+          "do not weaken security or lifecycle rules to improve metrics",
+          "do not work from legacy feature branches"
+        ],
+        "Evidence_refs": [
+          "07_EVALUATION/codex/",
+          "09_COORDINATION/dispatch/"
+        ],
+        "related_sessions": [],
+        "related_agents": "ANTIGRAVITY, PERPLEXITY, LUNA",
+        "NEXT": "read project CURRENT and take the next implementation task on main when activated"
+      }
+    },
+    "00_GOVERNANCE/coordination/agents/LUNA/CURRENT.md": {
+      "sha256_before": "4041d14c9150be8fab148131a78079f7215fae1d224ffee0c932ba9ca09cb360",
+      "kind_before": "unclosed_frontmatter",
+      "tolerant_before": {
+        "agent": "LUNA",
+        "last_updated_utc": "2026-09-04T19:29:00Z",
+        "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+        "working_branch": "main",
+        "base_main_sha": "1c794ccf79bff3022c08164fbd18a371aa5253d2",
+        "current_commit_sha": "1c794ccf79bff3022c08164fbd18a371aa5253d2",
+        "project_id": "AI_MEMORY_VAULT",
+        "application": "AI Memory Vault / Memory Engine",
+        "working_folder": "repository root; 07_EVALUATION/luna/, 09_COORDINATION/",
+        "current_task": "sequential architecture, verification and adversarial reconciliation from main",
+        "status": "ACTIVE_HANDOFF_READY",
+        "completed": [
+          "prior independent memory-engine audit",
+          "R001 verification framework established",
+          "cognitive-memory target model V1/V2 and planning MVE specified",
+          "deterministic four-arm Planning Influence MVE harness added",
+          "oracle-leak flaw in MVE treatment compiler removed; memory recommendation is now independent from scenario optimal outcome"
+        ],
+        "in_progress": [
+          "verify corrected MVE against repository truth and CI runtime evidence"
+        ],
+        "next_actions": [
+          "inspect Planning Influence MVE CI run after queue clears",
+          "inspect Memory V6 CI result for GAP-011",
+          "preserve actual runtime stdout as evidence only after successful execution",
+          "then design model-backed paired MVE without changing production Vault contracts",
+          "persist every verification session and final next action"
+        ],
+        "blockers": [
+          "GitHub Actions jobs observed during current session remain queued",
+          "remote legacy branch deletion requires explicit delete-ref/admin capability"
+        ],
+        "risks": [
+          "do not inherit another agent's claim as evidence",
+          "do not promote REVIEW to ACTIVE",
+          "do not work from legacy feature branches",
+          "do not treat deterministic mechanics results as model-level cognitive evidence"
+        ],
+        "Evidence_refs": [
+          "07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md",
+          "07_EVALUATION/luna/planning_influence_mve.py",
+          "07_EVALUATION/luna/test_planning_influence_mve.py",
+          ".github/workflows/planning-influence-mve.yml"
+        ],
+        "related_agents": "CODEX, ANTIGRAVITY, PERPLEXITY",
+        "NEXT": "verify CI for corrected MVE and GAP-011, then proceed to model-backed causal MVE design"
+      }
+    },
+    "00_GOVERNANCE/coordination/agents/PERPLEXITY/CURRENT.md": {
+      "sha256_before": "1a07581dec4fc1b6c01918e79dcfa59562246dc12ef2fb2612efbb71f71ab295",
+      "kind_before": "unclosed_frontmatter",
+      "tolerant_before": {
+        "agent": "PERPLEXITY",
+        "last_updated_utc": "2026-09-04T19:20:00Z",
+        "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+        "working_branch": "main",
+        "base_main_sha": "ec9a16f674e65febae3fe4f986b15d6c79e01857",
+        "current_commit_sha": "ec9a16f674e65febae3fe4f986b15d6c79e01857",
+        "project_id": "AI_MEMORY_VAULT",
+        "application": "AI Memory Vault / Memory Engine",
+        "working_folder": "repository root; 07_EVALUATION/perplexity/, 09_COORDINATION/",
+        "current_task": "external research and evidence synthesis; sequential continuation from main",
+        "status": "READY_FOR_REVIEW",
+        "completed": [
+          "memory-engine research synthesis",
+          "book-learning guidance imported into Vault",
+          "R001 cognitive-memory adversarial validation delivered"
+        ],
+        "in_progress": [
+          "none until next research dispatch"
+        ],
+        "next_actions": [
+          "when activated, fetch main and read project CURRENT plus latest task/session",
+          "preserve source identifiers and dates",
+          "distinguish research from repository evidence",
+          "persist task/session state before handoff"
+        ],
+        "blockers": [],
+        "risks": [
+          "external research is not repository proof",
+          "do not invent experimental results",
+          "do not work from legacy feature branches"
+        ],
+        "Evidence_refs": [
+          "07_EVALUATION/perplexity/",
+          "07_EVALUATION/perplexity/PERPLEXITY_BOOK_LEARNING_GUIDANCE_20260904.md",
+          "07_EVALUATION/luna/ (for cognitive-memory validation handoff)"
+        ],
+        "related_agents": "CODEX, ANTIGRAVITY, LUNA",
+        "NEXT": "read project CURRENT and take the next research task on main"
+      }
+    },
+    "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md": {
+      "sha256_before": "99e22b915896e5db127aa61ba6151c41f07374ea097c8c5eebeb88347ead5ace",
+      "kind_before": "unclosed_frontmatter",
+      "tolerant_before": {
+        "project_id": "AI_MEMORY_VAULT",
+        "application": "AI Memory Vault / Memory Engine",
+        "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+        "last_updated_utc": "2026-09-04T21:30:00Z",
+        "current_main_sha": "7224e6ac32b4130383135735d09fd674b863ef88",
+        "status": "ACTIVE",
+        "working_branch_policy": "MAIN_ONLY",
+        "agent_execution_policy": "SEQUENTIAL_HANDOFF",
+        "current_round": "R001",
+        "active_work": [
+          "repository remediation, security hardening and structural rebuild on main",
+          "bounded terminal resolution contract and deterministic MVE calibration",
+          "single-main sequential execution"
+        ],
+        "recent_state": [
+          "cognitive-memory target model V2 defines a bounded resolution pipeline with terminal response boundary",
+          "bounded terminal resolution is executable in the Planning Influence MVE",
+          "06_INBOX is now explicitly local-only by contract; operational content is excluded from Git",
+          "one pending memory proposal was moved to 07_EVALUATION/historical_runs before removing it from the inbox",
+          ".gitignore now blocks operational inbox content and common local secret/runtime artifacts",
+          "raw PDF books were removed from the public operational inbox; their original paths remain observable in Git history",
+          "workflow process-raw-books.yml was removed because it depended on versioned raw inbox data and would bypass the local-only boundary",
+          ".env.example contains placeholders only",
+          ".gitleaks.toml and a fail-closed staged pre-commit hook were added",
+          "secret-scan.yml runs Gitleaks on push/pull_request/manual dispatch using pinned action commit and Gitleaks 8.30.1",
+          "redacted R001 secret incident inventory records ten reported credential categories as PENDING until external rotation/revocation evidence exists",
+          "history rewrite procedure exists but remains PENDING_OWNER_APPROVAL; no force-push performed",
+          "repository hygiene validator and regression tests were added; local reconstructed execution passed 4/4 tests",
+          "strict hygiene CI workflow was added, but CI runtime has not yet been verified"
+        ],
+        "open_requirements": [
+          "finish metadata-driven cleanup of remaining 06_INBOX/RAW_IMPORTS nested tracked files",
+          "verify secret-scanning and hygiene CI runs with exact stdout/log evidence",
+          "audit all existing numbered roots and create exact before/after structural map",
+          "migrate production code and tests incrementally into 03_IMPLEMENTATION and 20_TESTS, updating imports/workflows",
+          "eliminate compatibility paths only after tests prove the migration safe",
+          "implement retrieval candidate fusion/rerank/observability requirements where currently absent",
+          "verify temporal/lifecycle/trust/learning E2E gates and structured traces",
+          "execute Planning Influence MVE tests against exact current main source and capture stdout/stderr",
+          "only then consider reusable cognitive_core integration of terminal resolution"
+        ],
+        "blockers": [
+          "external credential rotation/revocation is outside repository access and still lacks owner evidence",
+          "local environment cannot clone GitHub directly",
+          "repository contains a large pre-existing raw-inbox subtree that requires metadata-driven file-by-file removal with the available GitHub write interface",
+          "CI runners may remain queued/unavailable; no CI result will be claimed without logs",
+          "no force-push/history rewrite without owner approval"
+        ],
+        "next_actions": [
+          "enumerate and remove remaining tracked files under 06_INBOX/RAW_IMPORTS",
+          "inspect and harden workflow paths affected by the inbox change",
+          "create the 00-99 structural migration inventory before moving production code",
+          "run exact MVE and hygiene tests on the latest main source",
+          "preserve one reversible, evidence-backed change set at a time"
+        ]
+      }
+    },
+    "00_GOVERNANCE/coordination/agents/CLAUDE_SONNET/CURRENT.md": {
+      "sha256_before": "2dafa8049ed8ac46f951abe22c657ed7d13dd2d4e5115eac62c1b8736a3e796f",
+      "kind_before": "yaml_error",
+      "tolerant_before": {
+        "agent": "CLAUDE_SONNET",
+        "last_updated_utc": "2026-09-07T01:10:00Z",
+        "repository": "userist123/AI_Memory_Vault_CODEX_READY",
+        "working_branch": "r024/storage-duplicate-uuid-diagnostics (+ 5 sibling package branches, see below)",
+        "base_main_sha": "e7659d510",
+        "current_commit_sha": "HEAD",
+        "project_id": "AI_MEMORY_VAULT",
+        "application": "AI Memory Vault / Memory Engine",
+        "working_folder": "03_IMPLEMENTATION/packages/memory/, 07_EVALUATION/, 20_TESTS/",
+        "current_task": "r024 night session — 6 of 8 packages finished; WP-6 deferred; WP-7 continuous (each package's own commit carries its report)",
+        "status": "PAUSED (not merged to main, per brief) — WP-0/WP-3/WP-1/WP-5/WP-2/WP-4 DONE, each on its own branch; WP-6 NOT STARTED (deliberately, see below); WP-7 satisfied per-package",
+        "in_progress": [],
+        "next_actions": [
+          "owner decision needed before WP-6 can start: what does \"a promoted edge enters REVIEW lifecycle\" mean concretely? Edges (SynapseStore.Synapse) have no lifecycle field or note identity today -- promoting ~199 WP-2-cleared proposals through lifecycle/policy.py requires deciding whether promotion means (a) writing each edge into its source note's frontmatter relations: via MemoryController.update() (a real, lifecycle-policy-gated mutation, but the note's OWN lifecycle doesn't necessarily change), (b) creating a new REVIEW-lifecycle note representing the edge, or (c) something else -- not decided here because rushing this call under time pressure is exactly the \"destructive write path\" risk the standing traps warn about",
+          "once WP-6's promotion semantics are decided: implement with provenance-per-edge, hub exclusion, then re-run R016 graph arms (07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py) and report the new numbers against the 278-edge baseline",
+          "each package branch above needs review/merge decisions from the vault owner; none was merged to main (forbidden by the brief)"
+        ],
+        "blockers": [
+          "WP-6 blocked on an owner decision (see next_actions), not on missing capability"
+        ],
+        "risks": [
+          "one branch per package; do not combine packages in one branch (respected: 6 separate branches below)",
+          "do not touch path_resolver.py (WP-4 stayed numbers-only, no migration)",
+          "do not adjust edge-proposer thresholds (WP-2 did not touch edge_proposer.py)",
+          "accidentally destroyed this worktree once this session by running `git checkout main` inside it (conflicted with the primary worktree's own main checkout) -- recreated via `git worktree add -b <branch> <path> origin/main`; no data lost, everything already committed was on origin. Lesson for future sessions: never check out `main` by name inside an assigned worktree; branch directly off `origin/main` instead."
+        ],
+        "Evidence_refs": [
+          "00_GOVERNANCE/VAULT_STATE.md",
+          "07_EVALUATION/r024_hypotheses.md",
+          "07_EVALUATION/r024_wp1_ranking/",
+          "07_EVALUATION/r024_wp5_dilution/",
+          "07_EVALUATION/r024_wp2_precision/",
+          "07_EVALUATION/r024_wp4_writepath/"
+        ],
+        "related_agents": "ANTIGRAVITY, CODEX, LUNA, PERPLEXITY, CLAUDE_OPUS",
+        "NEXT": "an owner reviews/merges the 6 finished package branches independently, then decides WP-6's promotion semantics before anyone starts it"
+      }
+    }
+  }
+}

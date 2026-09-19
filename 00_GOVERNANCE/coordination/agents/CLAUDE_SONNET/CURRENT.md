@@ -12,16 +12,16 @@ current_task: r024 night session — 6 of 8 packages finished; WP-6 deferred; WP
 status: PAUSED (not merged to main, per brief) — WP-0/WP-3/WP-1/WP-5/WP-2/WP-4 DONE, each on its own branch; WP-6 NOT STARTED (deliberately, see below); WP-7 satisfied per-package
 in_progress: []
 next_actions:
-  - owner decision needed before WP-6 can start: what does "a promoted edge enters REVIEW lifecycle" mean concretely? Edges (SynapseStore.Synapse) have no lifecycle field or note identity today -- promoting ~199 WP-2-cleared proposals through lifecycle/policy.py requires deciding whether promotion means (a) writing each edge into its source note's frontmatter relations: via MemoryController.update() (a real, lifecycle-policy-gated mutation, but the note's OWN lifecycle doesn't necessarily change), (b) creating a new REVIEW-lifecycle note representing the edge, or (c) something else -- not decided here because rushing this call under time pressure is exactly the "destructive write path" risk the standing traps warn about
-  - once WP-6's promotion semantics are decided: implement with provenance-per-edge, hub exclusion, then re-run R016 graph arms (07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py) and report the new numbers against the 278-edge baseline
+  - "owner decision needed before WP-6 can start: what does \"a promoted edge enters REVIEW lifecycle\" mean concretely? Edges (SynapseStore.Synapse) have no lifecycle field or note identity today -- promoting ~199 WP-2-cleared proposals through lifecycle/policy.py requires deciding whether promotion means (a) writing each edge into its source note's frontmatter relations: via MemoryController.update() (a real, lifecycle-policy-gated mutation, but the note's OWN lifecycle doesn't necessarily change), (b) creating a new REVIEW-lifecycle note representing the edge, or (c) something else -- not decided here because rushing this call under time pressure is exactly the \"destructive write path\" risk the standing traps warn about"
+  - "once WP-6's promotion semantics are decided: implement with provenance-per-edge, hub exclusion, then re-run R016 graph arms (07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py) and report the new numbers against the 278-edge baseline"
   - each package branch above needs review/merge decisions from the vault owner; none was merged to main (forbidden by the brief)
 blockers:
   - WP-6 blocked on an owner decision (see next_actions), not on missing capability
 risks:
-  - one branch per package; do not combine packages in one branch (respected: 6 separate branches below)
+  - "one branch per package; do not combine packages in one branch (respected: 6 separate branches below)"
   - do not touch path_resolver.py (WP-4 stayed numbers-only, no migration)
   - do not adjust edge-proposer thresholds (WP-2 did not touch edge_proposer.py)
-  - accidentally destroyed this worktree once this session by running `git checkout main` inside it (conflicted with the primary worktree's own main checkout) -- recreated via `git worktree add -b <branch> <path> origin/main`; no data lost, everything already committed was on origin. Lesson for future sessions: never check out `main` by name inside an assigned worktree; branch directly off `origin/main` instead.
+  - "accidentally destroyed this worktree once this session by running `git checkout main` inside it (conflicted with the primary worktree's own main checkout) -- recreated via `git worktree add -b <branch> <path> origin/main`; no data lost, everything already committed was on origin. Lesson for future sessions: never check out `main` by name inside an assigned worktree; branch directly off `origin/main` instead."
 Evidence_refs:
   - 00_GOVERNANCE/VAULT_STATE.md
   - 07_EVALUATION/r024_hypotheses.md
