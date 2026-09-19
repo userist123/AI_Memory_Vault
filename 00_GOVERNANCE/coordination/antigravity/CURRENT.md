@@ -1,14 +1,12 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-12T10:12:00Z
+last_updated_utc: 2026-09-19T15:00:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: main
-base_main_sha: 596aabfb5
-current_commit_sha: 596aabfb5
+working_branch: antigravity/curriculum-v2-process
+base_main_sha: b3ada1b54
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-working_folder: scratch/agent_corpus/, 01_ARCHITECTURE/ontology/slots/
-current_task: AGENT_CORPUS_INGESTION_AND_SLOT_MERGE
+current_task: REPEATABLE_CURRICULUM_PIPELINE_AND_TRANSFER_BENCHMARK
 status: COMPLETED
 completed:
   - "Exploit & Offensive Skills Audit: Inspected all skills across .agents/skills/ and cataloged all offensive, exploit, payload, bypass, and weaponized pentesting tools."
@@ -42,16 +40,23 @@ completed:
   - "Promovare 23 Concepte Nucleu (occurrences >= 20) Complete — Generate 23 de note atomice canonice Promoted_*.md în 01_ARCHITECTURE/knowledge/ cu ciclu de viață strict REVIEW și proveniență verificată din cărți; actualizate tabelele din sloturi la status=promoted și ID-ul notei."
   - "Cablare Relații Sinaptice Inter-Sloturi & Concepte Complete — Conectate legături part_of, depends_on, applies_to, related_to conforme cu vocabularul închis ALLOWED_RELATIONS între conceptele ontologiei cognitive (ex. episodic/semantic -> declarative -> explicit; ultrastable -> homeostat)."
   - "Recalibrare Stare Vault & Graph State Complete — Re-indexat VaultIndex și SynapseStore: 897 note în index, 362 muchii de graf (144 declared / 143 inferred / 75 wikilink), 125 seeds, 113 golds. Actualizat 00_GOVERNANCE/VAULT_STATE.md; 80/80 teste specifice PASS (test_concept_promotion.py, test_promoted_notes_reach_the_graph.py, test_vault_state_accuracy.py)."
+  - "Curriculum Module Profile Schema & Validator: Implemented curriculum module profile JSON schema (version 1.0.0) with automated validation in validate_curriculum_profile.py and test coverage."
+  - "Bibliographic Provenance Architecture: Implemented validate_bibliographic_provenance.py enforcing work manifests (ISBN, edition, license URL, source hashes) and note-level verification; enriched 16 Psychology notes and 5 Statistics notes with complete verifiable provenance."
+  - "OpenStax Introductory Statistics Chapter 8 Ingestion: Ingested Confidence Intervals module via generic profile-driven pipeline with zero domain-specific code; extracted 5 knowledge notes with 24/25 verbatim citations verified; recorded genuine token telemetry."
+  - "Dual-Arm Transfer Benchmark & Paired Statistics: Evaluated live reader transfer benchmark (0/12 control -> 7/12 treatment, Wilson score 95% CIs, McNemar exact two-sided p=0.01562 < 0.05 demonstrating statistically significant transfer); saved raw responses for deterministic offline evaluation."
+  - "Small Sample Proportions Procedure & CI Gate: Authored canonical procedure 10_DOCUMENTATION/procedures/reporting_small_sample_proportions.md citing verbatim OpenStax Ch 8; implemented gate_curriculum_report_statistics.py and test suite 20_TESTS/test_gate_curriculum_report_statistics.py (9/9 passed); verified full test suite (2254 passed, 0 failed)."
 in_progress: []
 next_actions:
-  - "Opțional: Promovarea următoarei tranșe de concepte de recurență intermediară (occurrences 10-19, 17 concepte) sau analiza spreading activation pe noul graf sinaptic."
+  - "Push branch antigravity/curriculum-v2-process and open Pull Request to main."
 blockers: []
 risks: []
 Evidence_refs:
-  - 30_SCRIPTS/verification/validate_repository_layout.py
-  - 20_TESTS/
-  - 01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md
-  - 01_ARCHITECTURE/graphs/Master_Cognitive_Brain_Synthesis.md
+  - 30_SCRIPTS/verification/gate_curriculum_report_statistics.py
+  - 30_SCRIPTS/knowledge/validate_bibliographic_provenance.py
+  - 20_TESTS/test_gate_curriculum_report_statistics.py
+  - 20_TESTS/test_curriculum_offline_judgment.py
+  - 07_EVALUATION/curriculum/reports/TRANSFER_BENCHMARK_STATISTICS-CONFIDENCE-INTERVALS-V1.md
+  - 10_DOCUMENTATION/procedures/reporting_small_sample_proportions.md
 related_agents: CODEX, CLAUDE_CODE, LUNA
 ---
 
