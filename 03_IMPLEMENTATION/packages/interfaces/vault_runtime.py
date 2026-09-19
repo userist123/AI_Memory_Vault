@@ -59,7 +59,7 @@ def state_dir() -> Path:
     return Path(base) / APP_DIR_NAME
 
 
-def secret_path() -> Path:
+def key_file_path() -> Path:
     return state_dir() / "hmac.key"
 
 
@@ -108,7 +108,7 @@ def init_secret(force: bool = False) -> Tuple[Path, bool]:
 
     Never overwrites an existing secret unless `force` is set. The value is not returned.
     """
-    path = secret_path()
+    path = key_file_path()
     if path.exists() and not force:
         return path, False
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -140,7 +140,7 @@ def load_secret() -> Tuple[str, str]:
                 f"{SECRET_ENV} is set but shorter than {MIN_SECRET_LENGTH} characters "
                 f"(got {len(env_value.strip())})")
         return env_value, "env"
-    path = secret_path()
+    path = key_file_path()
     if not path.exists():
         raise VaultSecretMissing(
             f"The HMAC secret ({SECRET_ENV}) is missing: it is not in the environment and "
