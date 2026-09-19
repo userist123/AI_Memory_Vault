@@ -326,52 +326,45 @@ MVE-ul izolat se află sub:
 
 ```text
 07_EVALUATION/luna/
-├── COGNITIVE_MEMORY_TARGET_MODEL_V1.md
-├── COGNITIVE_MEMORY_TARGET_MODEL_V2.md
-├── COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md
-├── PLANNING_INFLUENCE_EXPERIMENT_V1.md
-├── PLANNING_INFLUENCE_MVE_V2_VALIDATED.md
+├── PLANNING_INFLUENCE_PREREGISTRATION_V2.md
+├── PLANNING_INFLUENCE_PREREGISTRATION_V2_1.md
+├── PLANNING_INFLUENCE_RESULTS_V3.md
 ├── PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md
-├── planning_influence_mve.py
-└── test_planning_influence_mve.py
+├── planning_influence_mve_v3.py
+├── simulate_puct_benchmark.py
+├── run_experiments_v3.py
+├── generate_planning_influence_report.py
+├── run_all_v3.py
+├── tables/ (table_luna_1..5.csv)
+├── planning_influence_mve.py (pilot inițial retras)
+└── test_planning_influence_mve.py (retras)
 ```
 
 ### Brațele experimentului
 
 ```text
-Brațul 1 — bază / planificator uniform
+Brațul 1 — bază / planificator uniform (izolat, fără scurgere de oracol)
 Brațul 2 — memorie consultativă / planificator uniform
-Brațul 3 — tratament cognitiv / prior de planificare derivat din memorie
-Brațul 4 — control cu memorie învechită / contrazisă / neutră
+Brațul 3 — tratament cognitiv / prior de planificare derivat din memorie (v1_uncertainty, v2_verification_action)
+Brațul 4 — control cu memorie învechită / contrazisă (CONFIRMED_CONTRADICTION)
 ```
 
-### Dovada deterministă actuală — ⚠️ RETRASĂ (măsurătoare invalidă)
+### Rezultate V3 validate (`PLANNING_INFLUENCE_RESULTS_V3.md`)
 
-> **Pilotul de mai jos este retras. Nu este un rezultat.** Comparația bază ↔ tratament a fost făcută cu un harnașament care îi dădea bazei răspunsul. Cifrele rămân aici doar ca urmă a ceea ce s-a raportat, nu ca dovadă a vreunui efect al memoriei.
+Harnașamentul V3 rezolvă defectul structural de scurgere al pilotului inițial prin ordonare complet aleatoare și departajare PUCT ortogonală prin SHA-256 (`test_planning_influence_isolation.py` trece 100%, cu test strict `xfail` pe pilotul vechi).
 
-**Mecanismul scurgerii.** În `07_EVALUATION/luna/planning_influence_mve.py` (la commit-ul `a51815b88`):
+Rezultatele experimentale pe grila preînregistrată ($N=200$ scenarii/celulă, 17.600 evaluări totale în `run_experiments_v3.py` reproduse octet cu octet prin `run_all_v3.py`):
 
-- linia 153, `optimal=order[0]` — ramura optimă este mereu prima în lista de ramuri a scenariului;
-- linia 252, `-branches.index(candidate)` — selecția PUCT departajează egalitățile după poziția ramurii (indexul cel mai mic câștigă).
+1. **Izolarea bazei și reperul PUCT:** Căutarea neghidată consumă în medie $\approx 2.921$ noduri PUCT ($SE = 0.0032$, derivat Monte Carlo pe 200.000 de rulări în `simulate_puct_benchmark.py`), iar poziția ramurii optime are corelație nulă cu costul ($r^2 < 0.01$).
+2. **Praguri de rentabilitate ($p^*$):** Memoria devine profitabilă economic la o acuratețe de cel puțin $p^* = 0.40$ în regim calibrat ($\Delta_{\text{nodes}} = +0.310$, 95% CI $[0.080, 0.565]$) și $p^* = 0.50$ în regim neinformativ ($\Delta_{\text{nodes}} = +0.565$, 95% CI $[0.300, 0.835]$) pentru politica `v1_uncertainty`.
+3. **Prioritatea absolută a vetoului de contradicție:** Când memoria este marcată `CONFIRMED_CONTRADICTION`, priorii sunt forțați strict uniformi ($0.25$) pentru toate politicile, garantând $\Delta_{\text{fatals}} = 0.0000$ pe brațul stale și neutralizând complet riscul decizional.
+4. **Economia verificării ca acțiune (`v2_verification_action`):** În spații restrânse ($K=4$), taxa de $1.0$ nod per verificare produce o economie netă negativă ($-0.235$ până la $-0.305$ noduri) față de `v1_uncertainty`; verificarea activă se justifică exclusiv în spații mari ($K \ge 6$) sau în regimuri de risc critic asimetric.
 
-Cu priori uniformi (planificatorul fără memorie), la primul pas toate ramurile au exact același scor. Departajarea după poziție alege indexul 0, adică tocmai optimul. Baza nu a *găsit* optimul: l-a primit din primul pas, în fiecare scenariu. De aceea a costat 30 de noduri pentru 30 de scenarii, minimul posibil.
+> **Limitare metodologică:** Aceasta este o **simulare deterministă cu oracol de scenariu**. Ea demonstrează matematic mecanica de fuziune a memoriei în planificare (izolarea oracolului, ponderarea Bayesiană a priorităților, vetoul absolut de contradicție), dar **nu constituie o dovadă că un agent real cu LLM planifică mai bine**.
 
-**De ce invalidează comparația.** Diferența față de tratament (54 de noduri, 12 fatale) nu măsoară efectul memoriei. Măsoară faptul că brațul de referință „știa" răspunsul din construcție, iar orice braț care pornește dintr-un prior diferit poate doar să piardă față de el. Concluzia despre `7/30` recomandări coincidente cu optimul și explicația „recomandările greșite explică costul tratamentului" stau pe aceeași bază și sunt retrase odată cu ea.
+### Pilotul determinist inițial — ⚠️ RETRAS (măsurătoare invalidă prin scurgere de oracol, PR #165)
 
-**Ce a arătat V3 despre bază.** Pe ramura nemerge-uită `antigravity/planning-influence-v3`, harnașamentul V3 permută ramurile și departajează egalitățile printr-un hash, fără legătură cu poziția. Acolo baza urcă la aproximativ 2,9 noduri pe scenariu. O verificare independentă a dinamicii PUCT a dat 2,92. Cifrele acestea vin din raportarea acelei ramuri și a verificării ei; nu au fost reproduse în acest depozit.
-
-**Starea V3.** V3 **nu este validat** și **nu a intrat pe `main`**: raportul ei conținea cifre care nu corespundeau propriilor tabele. Până la o rulare curată, întrebarea „ajută memoria planificatorul?" rămâne fără răspuns pe `main`.
-
-Ce s-a raportat inițial (păstrat pentru trasabilitate, **retras**):
-
-```text
-bază:        30/30 succes · 30 noduri · 0 fatale
-consultativ: 30/30 succes · 30 noduri · 0 fatale
-tratament:   30/30 succes · 54 noduri · 12 fatale
-învechit:    30/30 succes · 30 noduri · 0 fatale
-```
-
-Tratamentul naiv anterior (125 noduri / 15 fatale) a fost măsurat cu același harnașament și e retras la fel.
+> **Pilotul inițial este retras și păstrat exclusiv pentru trasabilitate istorică.** Comparația bază ↔ tratament din `planning_influence_mve.py` a fost viciată de o scurgere de oracol: linia 153 punea ramura optimă pe prima poziție (`optimal=order[0]`), iar selecția PUCT (linia 252) departaja egalitățile după poziția ramurii (`-branches.index(candidate)`). Baza alegea astfel optimul din pasul 1 în toate cele 30 de scenarii (cost artificial de 1.0 nod/scenariu). Cifrele raportate inițial (bază 30 noduri / tratament 54 noduri / 12 fatale) sunt invalide și au fost retrase formal prin PR #165.
 
 ### Politica de incertitudine
 
@@ -669,16 +662,16 @@ Un MVE susținut de model **nu este autorizat doar pentru că trec testele unita
 pytest -q
 ```
 
-### Rulează testele izolate ale Planning Influence MVE
+### Rulează testele de izolare ale Planning Influence V3
 
 ```bash
-pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
+pytest -q 20_TESTS/test_planning_influence_isolation.py
 ```
 
-### Rulează pilotul determinist MVE
+### Rulează suita completă de reproducere Planning Influence V3
 
 ```bash
-python 07_EVALUATION/luna/planning_influence_mve.py
+python 07_EVALUATION/luna/run_all_v3.py
 ```
 
 ### Exemple de CLI pentru Memory V6
