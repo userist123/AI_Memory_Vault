@@ -17,8 +17,6 @@ relations:
   - type: related_to
     target_id: 86cbfde2-e9f9-4f3d-9cb5-4dc8e8850e07
   - type: related_to
-    target_id: knw-memory-usage-audit-principles-0001
-  - type: related_to
     target_id: c754b481-44a2-4e2f-9cb2-0be36aebb498
 ---
 

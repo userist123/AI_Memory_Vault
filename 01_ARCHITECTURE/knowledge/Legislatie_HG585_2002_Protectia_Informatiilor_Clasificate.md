@@ -28,8 +28,6 @@ relations:
   - type: related_to
     target_id: knw-leg-m172-2021-0001
   - type: related_to
-    target_id: knw-leg-l153-2017-0001
-  - type: related_to
     target_id: 99522c1a-b212-4571-b4d8-7dbbba2a3462
   - type: related_to
     target_id: romania-classified-information-digital-security-reform

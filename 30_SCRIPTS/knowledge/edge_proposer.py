@@ -164,6 +164,12 @@ SPURIOUS_ENTITIES = frozenset({
     "openstax", "psychology", "curriculum", "ch08",
     "provenance_manifest", "verified-source", "cc-by",
     "source_ref", "source_date", "extraction_date", "original_path",
+    # Fifth round (PR #168 audit findings):
+    # Meta-analysis, audit terms, and common evaluation tokens
+    "delete_canonical", "high", "risk", "policy", "lesson", "audit",
+    "wrong_type", "context", "system", "architecture", "procedure",
+    "evaluation", "report", "evidence", "sample", "metric", "target",
+    "source", "result", "results", "notes", "note", "rule", "rules",
 })
 
 #: Runs of underscores and similar rules used as visual separators in legal
@@ -184,7 +190,7 @@ DUNDER_RE = re.compile(r"^__[a-zA-Z0-9_]+__$")
 def is_spurious_entity(e: str) -> bool:
     """Predicate evaluating whether an entity token is spurious / boilerplate."""
     e_low = e.lower().strip()
-    if not e_low or len(e_low) <= 2:
+    if not e_low or len(e_low) < 4:
         return True
     if e_low in SPURIOUS_ENTITIES:
         return True
@@ -269,46 +275,118 @@ def _weight_for(relation: str, confidence: float) -> float:
 
 
 def extract_evidence_quote(text: str, target_entities: Iterable[str], max_len: int = 300) -> str:
-    """Finds an exact verbatim sentence from text containing at least one target entity.
+    """Finds an exact verbatim sentence from text containing at least one target entity with word boundary.
     Returns empty string if no qualifying sentence containing a target entity is found.
     The returned quote is guaranteed to be a verbatim substring of text."""
     if not text:
         return ""
     sentences = re.split(r"(?<=[.!?\n])\s+", text)
-    ent_lower = [e.lower() for e in target_entities if len(e) >= 3]
-    if not ent_lower:
+    valid_ents = [e.strip() for e in target_entities if len(e.strip()) >= 3 and not is_spurious_entity(e)]
+    if not valid_ents:
         return ""
+    pattern = re.compile(r"\b(" + "|".join(re.escape(e) for e in valid_ents) + r")\b", re.IGNORECASE)
     for s in sentences:
         s_clean = s.strip()
         if not s_clean or len(s_clean) < 15:
             continue
-        s_low = s_clean.lower()
-        if any(e in s_low for e in ent_lower):
+        if pattern.search(s_clean):
             if s_clean in text:
-                return s_clean
+                return s_clean if len(s_clean) <= max_len else s_clean[:max_len]
             idx = text.find(s_clean)
             if idx != -1:
-                return text[idx:idx + len(s_clean)]
+                sub = text[idx:idx + len(s_clean)]
+                return sub if len(sub) <= max_len else sub[:max_len]
     return ""
 
 
+def _has_explicit_reference(src_note: Any, target_note: Any) -> bool:
+    """Checks whether src_note explicitly references target_note via
+    outgoing_ids, wikilink, markdown link, explicit ID mention, or frontmatter relation field."""
+    target_id = getattr(target_note, "id", "")
+    target_stem = getattr(getattr(target_note, "path", None), "stem", "")
+    target_title = getattr(target_note, "title", "")
+    body = getattr(src_note, "body", "") or ""
+
+    # 1. Declared outgoing IDs from frontmatter parser
+    if target_id and target_id in getattr(src_note, "outgoing_ids", lambda: [])():
+        return True
+
+    # 2. Exact ID citation (e.g. note-123 or SEC-001) as a whole word
+    if target_id and len(target_id) >= 4 and target_id.lower() not in {"index", "readme", "note"}:
+        if re.search(rf"\b{re.escape(target_id)}\b", body, re.IGNORECASE):
+            return True
+
+    # 3. Wikilinks via method or regex: [[target_id]], [[target_stem]], [[target_title]]
+    for wl in getattr(src_note, "wikilinks", lambda: [])():
+        wl_low = wl.lower()
+        for identifier in (target_id, target_stem, target_title):
+            if identifier and len(identifier) >= 4 and identifier.lower() not in {"index", "readme", "note", "test"}:
+                if identifier.lower() in wl_low:
+                    return True
+
+    for identifier in (target_id, target_stem, target_title):
+        if identifier and len(identifier) >= 4 and identifier.lower() not in {"index", "readme", "note", "test"}:
+            if re.search(rf"\[\[(?:[^\]]*[/\\])?{re.escape(identifier)}(?:\|[^\]]+)?\]\]", body, re.IGNORECASE):
+                return True
+
+    # 4. Markdown links: [text](...target_stem...)
+    if target_stem and len(target_stem) >= 4 and target_stem.lower() not in {"index", "readme", "note"}:
+        if re.search(rf"\]\([^)]*{re.escape(target_stem)}(\.md)?\)", body, re.IGNORECASE):
+            return True
+
+    # 5. Frontmatter fields
+    meta = getattr(src_note, "meta", {}) or {}
+    for field in ("depends_on", "supersedes", "verified_by", "relations", "links", "related"):
+        val = meta.get(field)
+        if not val:
+            continue
+        if isinstance(val, (str, int)):
+            val = [str(val)]
+        if isinstance(val, list):
+            for item in val:
+                if isinstance(item, dict):
+                    target_cand = str(item.get("target_id") or item.get("target") or "")
+                else:
+                    target_cand = str(item).strip()
+                target_cand_low = target_cand.lower()
+                if not target_cand_low:
+                    continue
+                for target_val in (target_id, target_stem, target_title):
+                    if target_val and len(target_val) >= 4 and target_val.lower() in target_cand_low:
+                        return True
+    return False
+
+
 def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str, str]:
-    """Classify relation between two notes into ALLOWED_RELATIONS with direction."""
+    """Classify relation between two notes into ALLOWED_RELATIONS with direction.
+    Strong relations (depends_on, supersedes, verified_by) require explicit evidence."""
     a, b = na.id, nb.id
-    body_a_low = na.body.lower()
-    body_b_low = nb.body.lower()
-    title_a_low = na.title.lower()
-    title_b_low = nb.title.lower()
+    body_a_low = (na.body or "").lower()
+    body_b_low = (nb.body or "").lower()
+
+    # 0. Check declared frontmatter relations first
+    for rel_dict in getattr(na, "relations", lambda: [])():
+        target = rel_dict.get("target_id")
+        rel_type = rel_dict.get("relation") or rel_dict.get("type")
+        if target == b and rel_type in ALLOWED_RELATIONS:
+            return rel_type, a, b
+    for rel_dict in getattr(nb, "relations", lambda: [])():
+        target = rel_dict.get("target_id")
+        rel_type = rel_dict.get("relation") or rel_dict.get("type")
+        if target == a and rel_type in ALLOWED_RELATIONS:
+            return rel_type, b, a
 
     # 1. Supersedes (temporal/versioned replacement)
+    # Strong relation: requires same-subject versioning or explicit reference
     if _same_subject(na.title, nb.title):
         ua, ub = na.updated, nb.updated
         if ua and ub and ua != ub:
             (src, dst) = (a, b) if ua > ub else (b, a)
             return "supersedes", src, dst
-    if any(k in body_a_low for k in ["supersedes", "înlocuiește"]):
+
+    if _has_explicit_reference(na, nb) and any(k in body_a_low for k in ["supersedes", "înlocuiește"]):
         return "supersedes", a, b
-    if any(k in body_b_low for k in ["supersedes", "înlocuiește"]):
+    if _has_explicit_reference(nb, na) and any(k in body_b_low for k in ["supersedes", "înlocuiește"]):
         return "supersedes", b, a
 
     # 2. Applies_to (lessons applied to procedures/rules)
@@ -318,16 +396,24 @@ def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str
         return "applies_to", b, a
 
     # 3. Verified_by (tests verifying architecture/knowledge)
-    if (na.type == "test" or "test_" in na.path.stem) and nb.type in {"knowledge", "procedure", "architecture", "lesson"}:
-        return "verified_by", b, a
-    if (nb.type == "test" or "test_" in nb.path.stem) and na.type in {"knowledge", "procedure", "architecture", "lesson"}:
-        return "verified_by", a, b
+    # Strong relation: requires explicit reference between test and verified target
+    stem_a = getattr(getattr(na, "path", None), "stem", "")
+    stem_b = getattr(getattr(nb, "path", None), "stem", "")
+    if (na.type == "test" or "test_" in stem_a) and nb.type in {"knowledge", "procedure", "architecture", "lesson"}:
+        if _has_explicit_reference(na, nb) or _has_explicit_reference(nb, na):
+            return "verified_by", b, a
+    if (nb.type == "test" or "test_" in stem_b) and na.type in {"knowledge", "procedure", "architecture", "lesson"}:
+        if _has_explicit_reference(na, nb) or _has_explicit_reference(nb, na):
+            return "verified_by", a, b
 
     # 4. Depends_on (prerequisites and dependencies)
+    # Strong relation: requires explicit reference between notes
     dep_keywords = ["depends on", "prerequisite", "cerință prealabilă", "requires", "depinde de", "bazează pe"]
-    if any(k in body_a_low for k in dep_keywords):
+    a_refs_b = _has_explicit_reference(na, nb)
+    b_refs_a = _has_explicit_reference(nb, na)
+    if a_refs_b and any(k in body_a_low for k in dep_keywords):
         return "depends_on", a, b
-    if any(k in body_b_low for k in dep_keywords):
+    if b_refs_a and any(k in body_b_low for k in dep_keywords):
         return "depends_on", b, a
 
     # 5. Caused (causal progression)
@@ -393,6 +479,7 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
     norm = 2 * math.log(n_notes)
 
     proposals = []
+    duplicate_pairs_skipped = 0
     for (a, b), raw in sorted(pair_scores.items(), key=lambda p: -p[1])[:limit * 3]:
         na, nb = index.by_id.get(a), index.by_id.get(b)
         if na is None or nb is None or a == b:
@@ -404,6 +491,14 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
             continue
         if _is_ephemeral(na) or _is_ephemeral(nb):
             continue
+
+        # Duplicate detection: identical or near-identical body content is duplicate, not semantic relation
+        norm_body_a = re.sub(r"\s+", " ", getattr(na, "body", "") or "").strip().lower()
+        norm_body_b = re.sub(r"\s+", " ", getattr(nb, "body", "") or "").strip().lower()
+        if len(norm_body_a) >= 100 and norm_body_a == norm_body_b:
+            duplicate_pairs_skipped += 1
+            continue
+
         # At least one shared entity must be genuinely rare.
         if min(df[e] for e in pair_shared[(a, b)]) > RARE_ENTITY_DF_MAX:
             continue

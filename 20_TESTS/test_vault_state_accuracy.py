@@ -111,8 +111,8 @@ def test_traversal_is_still_single_hop(state_text):
 
 @pytest.mark.parametrize("module,wired", [
     ("graph.plasticity", False),
-    ("memory.global_workspace", False),
-    ("memory.executive", False),
+    ("memory.global_workspace", True),
+    ("memory.executive", True),
 ])
 def test_modules_the_card_calls_unwired_really_are(module, wired):
     """The card's central promise is that "present" and "used" are different.

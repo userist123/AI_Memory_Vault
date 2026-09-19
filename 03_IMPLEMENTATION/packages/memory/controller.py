@@ -33,6 +33,9 @@ from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.budget import ContextBudget, load_agent_budget, BudgetExceededError
 from .context.pack_builder import ContextPackBuilder
 from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntityResolver
+from .planning import Planner, ActivePlan
+from .plan_complexity_analyzer import PlanComplexityAnalyzer, PlanComplexity, ExecutionMode
+from .council_budget_controller import CouncilBudgetController, CouncilTier, CouncilBudgetDecision
 
 class StorageEngine:
     def __init__(self):
@@ -185,6 +188,11 @@ class MemoryController:
         ranking_arm: Optional[str] = None,
         classifier_filter_arm: Optional[str] = None,
         enable_spreading_activation: bool = False,
+        enable_cognitive_core: bool = False,
+        enable_working_memory: bool = False,
+        enable_global_workspace: bool = False,
+        enable_reasoning: bool = False,
+        enable_executive: bool = False,
     ):
         self.storage = storage
         self.authorizer = authorizer or DefaultAuthorizer()
@@ -197,6 +205,20 @@ class MemoryController:
         self.scorer = RelevanceScorer()
         self.pack_builder = ContextPackBuilder()
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
+        self.planner = Planner()
+        self.complexity_analyzer = PlanComplexityAnalyzer()
+        self.council_budget = CouncilBudgetController()
+        self.enable_cognitive_core = bool(enable_cognitive_core)
+        self.enable_working_memory = bool(enable_working_memory)
+        self.enable_global_workspace = bool(enable_global_workspace)
+        self.enable_reasoning = bool(enable_reasoning)
+        self.enable_executive = bool(enable_executive)
+        self.working_memory: Optional[WorkingMemory] = None
+        self.global_workspace: Optional[GlobalWorkspace] = None
+        self.reasoning_engine: Optional[ReasoningEngine] = None
+        self.executive: Optional[Executive] = None
+        self._in_reasoning_synthesize = False
+        self._in_executive_loop = False
         # Counter for generating review note IDs (r2, r3, ...)
         self._review_counter = 2
         # Graph expansion configuration (r009)
@@ -230,6 +252,26 @@ class MemoryController:
         #: as every explicit caller-supplied filter). Off by default, per
         #: requirement 3. See CLASSIFIER_FILTER_ARMS and RetrievalEngine.retrieve().
         self.classifier_filter_arm = classifier_filter_arm
+
+    def _get_working_memory(self, capacity: int = 10) -> WorkingMemory:
+        if self.working_memory is None:
+            self.working_memory = WorkingMemory(capacity=capacity)
+        return self.working_memory
+
+    def _get_global_workspace(self, max_slots: int = 5) -> GlobalWorkspace:
+        if self.global_workspace is None:
+            self.global_workspace = GlobalWorkspace(max_slots=max_slots)
+        return self.global_workspace
+
+    def _get_reasoning_engine(self) -> ReasoningEngine:
+        if self.reasoning_engine is None:
+            self.reasoning_engine = ReasoningEngine(self)
+        return self.reasoning_engine
+
+    def _get_executive(self) -> Executive:
+        if self.executive is None:
+            self.executive = Executive(self)
+        return self.executive
 
     def _is_hub_node(self, node_id: str) -> bool:
         """Return True if node degree > 10 (hub cap constraint)."""
@@ -396,6 +438,11 @@ class MemoryController:
         ranking_arm: Optional[str] = None,
         classifier_filter_arm: Optional[str] = None,
         enable_spreading_activation: Optional[bool] = None,
+        enable_cognitive_core: Optional[bool] = None,
+        enable_working_memory: Optional[bool] = None,
+        enable_global_workspace: Optional[bool] = None,
+        enable_reasoning: Optional[bool] = None,
+        enable_executive: Optional[bool] = None,
     ) -> Dict[str, Any]:
         """Execute a full search pipeline and return a Context Pack."""
         target_id = "unknown_query"
@@ -412,6 +459,37 @@ class MemoryController:
             # Load budget for this agent
             budget = load_agent_budget(principal.value)
             disclosure_level = getattr(self, 'default_disclosure', 'metadata')
+
+            # Cognitive Core planning & complexity analysis
+            active_enable_cognitive_core = (
+                enable_cognitive_core
+                if enable_cognitive_core is not None
+                else getattr(self, 'enable_cognitive_core', False)
+            )
+            if active_enable_cognitive_core:
+                plan = self.planner.create_plan(sanitized, [])
+                plan_complexity = self.complexity_analyzer.analyze(plan)
+                council_decision = self.council_budget.decide(
+                    sanitized,
+                    complexity=plan_complexity.council_complexity,
+                    require_review=plan_complexity.require_review,
+                )
+                if council_decision.tier == CouncilTier.NONE:
+                    tier_max_notes = min(page_size, 3)
+                    tier_tokens = 600
+                    tier_bytes = 8192
+                elif council_decision.tier == CouncilTier.LIGHT:
+                    tier_max_notes = min(page_size, 5)
+                    tier_tokens = 1200
+                    tier_bytes = 16384
+                elif council_decision.tier == CouncilTier.STANDARD:
+                    tier_max_notes = min(page_size, 5)
+                    tier_tokens = 2500
+                    tier_bytes = 32768
+                else:  # HIGH_RISK
+                    tier_max_notes = min(page_size, 5)
+                    tier_tokens = 2500
+                    tier_bytes = 32768
             # Classify query. r025 WP-9: lifecycle_filters/target_types are
             # EITHER entirely the classifier's own inference OR entirely a
             # caller's explicit override (the block below replaces the list
@@ -490,6 +568,42 @@ class MemoryController:
                 else getattr(self, 'enable_spreading_activation', False)
             )
             candidate_trace['spreading_activation_enabled'] = bool(is_spreading_enabled)
+
+            active_enable_working_memory = (
+                enable_working_memory
+                if enable_working_memory is not None
+                else getattr(self, 'enable_working_memory', False)
+            )
+            candidate_trace['working_memory_enabled'] = bool(active_enable_working_memory)
+
+            active_enable_global_workspace = (
+                enable_global_workspace
+                if enable_global_workspace is not None
+                else getattr(self, 'enable_global_workspace', False)
+            )
+            candidate_trace['global_workspace_enabled'] = bool(active_enable_global_workspace)
+
+            active_enable_reasoning = (
+                enable_reasoning
+                if enable_reasoning is not None
+                else getattr(self, 'enable_reasoning', False)
+            )
+            candidate_trace['reasoning_enabled'] = bool(active_enable_reasoning)
+
+            active_enable_executive = (
+                enable_executive
+                if enable_executive is not None
+                else getattr(self, 'enable_executive', False)
+            )
+            candidate_trace['executive_enabled'] = bool(active_enable_executive)
+
+            if active_enable_executive and not getattr(self, '_in_executive_loop', False):
+                try:
+                    self._in_executive_loop = True
+                    exec_instance = self._get_executive()
+                    candidate_trace['executive_intent'] = exec_instance._parse_intent(sanitized)
+                finally:
+                    self._in_executive_loop = False
 
             # r024 WP-1 Phase B ranking arm, validated on held-out and
             # flipped by r025 WP-8: dev showed A1 (fused_score) recovering
@@ -745,6 +859,37 @@ class MemoryController:
                     )
                 else:
                     notes = sorted(notes, key=lambda n: (initial_score_map.get(n.get('id'), 0), n.get('id', '')), reverse=True)
+
+            if active_enable_working_memory:
+                wm = self._get_working_memory(capacity=page_size)
+                wm_admissions = [(n, initial_score_map.get(n.get('id'), 0.5)) for n in notes if n.get('id')]
+                wm.admit(wm_admissions)
+                notes = wm.get_active_context()
+                candidate_trace['working_memory_active_count'] = len(notes)
+
+            if active_enable_global_workspace:
+                gw = self._get_global_workspace(max_slots=page_size)
+                for n in notes:
+                    n_id = n.get('id')
+                    if not n_id:
+                        continue
+                    score = initial_score_map.get(n_id, 0.5)
+                    prop = WorkspaceProposal(
+                        agent_id=str(n_id),
+                        content=n,
+                        coherence_score=score,
+                        action_type="retrieval",
+                    )
+                    gw.submit_proposal(prop)
+                broadcast = gw.compete_and_broadcast()
+                candidate_trace['global_workspace_broadcast'] = broadcast
+                if broadcast and broadcast.get("coalition"):
+                    coalition_ids = set(broadcast.get("coalition", []))
+                    winning_notes = [n for n in notes if n.get('id') in coalition_ids]
+                    other_notes = [n for n in notes if n.get('id') not in coalition_ids]
+                    if winning_notes:
+                        notes = winning_notes + other_notes
+
             # Apply progressive disclosure
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata':
@@ -757,8 +902,19 @@ class MemoryController:
                 disclosed = pd.full_document(notes)
             # Pagination slicing
             total = len(disclosed)
-            end = min(offset + page_size, total)
+            effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
+            end = min(offset + effective_page_size, total)
             page_results = disclosed[offset:end]
+
+            if active_enable_reasoning and not getattr(self, '_in_reasoning_synthesize', False):
+                try:
+                    self._in_reasoning_synthesize = True
+                    re_engine = self._get_reasoning_engine()
+                    reasoning_res = re_engine.synthesize(principal, page_results, sanitized)
+                    candidate_trace['reasoning_synthesis'] = reasoning_res.get('synthesis')
+                    candidate_trace['reasoning_mode'] = reasoning_res.get('mode')
+                finally:
+                    self._in_reasoning_synthesize = False
             next_token = None
             if end < total:
                 payload = {
@@ -780,11 +936,21 @@ class MemoryController:
                 token_obj = PaginationToken(payload, secret.encode())
                 next_token = token_obj.encode()
             # Build context pack
+            pack_budget = {
+                'soft': min(budget.soft_context_budget, tier_bytes),
+                'hard': min(budget.hard_context_budget, tier_bytes),
+                'soft_tokens': int(tier_tokens * 0.75),
+                'hard_tokens': tier_tokens,
+                'max_notes': tier_max_notes,
+            } if active_enable_cognitive_core else {
+                'soft': budget.soft_context_budget,
+                'hard': budget.hard_context_budget,
+            }
             try:
                 pack = self.pack_builder.build(
                     request_id='search',
                     agent_id=principal.value,
-                    budget={'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
+                    budget=pack_budget,
                     results=page_results,
                     disclosure_level=disclosure_level,
                     minimal_provenance=None,
@@ -795,7 +961,7 @@ class MemoryController:
                 pack = {
                     'requestId': 'search',
                     'agentId': principal.value,
-                    'budget': {'soft': budget.soft_context_budget, 'hard': budget.hard_context_budget},
+                    'budget': pack_budget,
                     'disclosureLevel': disclosure_level,
                     'results': [],
                 }
@@ -810,6 +976,32 @@ class MemoryController:
                 cid for cid in candidate_trace['final_context_ids']
                 if cid in candidate_trace.get('graph_expanded_ids', [])
             ]
+            if active_enable_cognitive_core:
+                candidate_trace['cognitive_core'] = {
+                    'enabled': True,
+                    'plan_complexity': {
+                        'step_count': plan_complexity.step_count,
+                        'execution_mode': plan_complexity.execution_mode.value,
+                        'council_complexity': plan_complexity.council_complexity,
+                        'require_review': plan_complexity.require_review,
+                        'retrieval_steps': plan_complexity.retrieval_steps,
+                        'verification_steps': plan_complexity.verification_steps,
+                        'destructive_steps': plan_complexity.destructive_steps,
+                    },
+                    'council_decision': {
+                        'tier': council_decision.tier.value,
+                        'run_retrieval': council_decision.run_retrieval,
+                        'run_verifier': council_decision.run_verifier,
+                        'reason': council_decision.reason,
+                        'should_dispatch': council_decision.should_dispatch,
+                    },
+                    'allocated_token_budget': tier_tokens,
+                    'allocated_max_results': tier_max_notes,
+                }
+            else:
+                candidate_trace['cognitive_core'] = {
+                    'enabled': False,
+                }
             pack['candidate_trace'] = candidate_trace
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
@@ -1247,6 +1439,12 @@ class MemoryController:
                 audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
                 raise
 
+
+# Cognitive core modules wired in production path behind explicit flags (OFF by default)
+from cognitive_core.working_memory import WorkingMemory
+from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
+from cognitive_core.reasoning import ReasoningEngine
+from cognitive_core.executive import Executive
 
 # Export singleton
 from .storage.file_engine import FileStorageEngine

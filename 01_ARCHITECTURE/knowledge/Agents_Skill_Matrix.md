@@ -83,5 +83,4 @@ JARVIS is a control-plane client and must never become a second canonical memory
 
 - [[02 Memory Knowledge Map]]
 - [[Knowledge Graph Home]]
-- [[Master_Skills_Catalog_251]]
 - [[Deep Visual Web Engineering Master Report]]
