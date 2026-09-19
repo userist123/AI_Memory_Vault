@@ -132,3 +132,40 @@ def test_negative_control_flipping_a_verdict_changes_the_computed_precision(tmp_
     flipped = gpr.audit_summary(SAMPLE, path)
     assert flipped["total"]["accepted"] == gpr.audit_summary()["total"]["accepted"] + 1
     assert f"| **Total** | {flipped['total']['accepted']} | " not in REPORT.read_text(encoding="utf-8")
+
+
+# ---- the plasticity report must not assert what it did not compute -------------------------
+
+
+def test_report_has_no_hand_written_status_claims():
+    report = REPORT.read_text(encoding="utf-8")
+    source = (REPO / "30_SCRIPTS" / "evaluation" / "generate_plasticity_report.py").read_text(encoding="utf-8")
+    for text in ("TOATE PORȚILE VERIFICATE EMPIRIC", "antigravity/curriculum-openstax-v3", "Generat de**: ANTIGRAVITY"):
+        assert text not in report, text
+        assert text not in source, text
+    assert 'PERSONAL_DATA_STATUS=PASS")' not in source and 'LAYOUT_STATUS=PASS")' not in source
+
+
+def test_executive_status_reflects_the_audit_result():
+    summary = gpr.audit_summary()
+    line = gpr.executive_status(summary, "PASS", "PASS")
+    assert f"strong {summary['tiers']['strong']['accepted']}/{summary['tiers']['strong']['total']}" in line
+    assert "TOATE" not in line
+
+
+def test_negative_control_executive_status_without_an_audit_says_pending():
+    assert "ÎN AȘTEPTARE" in gpr.executive_status(None, "PASS", "PASS")
+
+
+def test_negative_control_a_check_that_cannot_run_is_reported_as_not_computed():
+    assert gpr.check_status("30_SCRIPTS/verification/does_not_exist.py", "LAYOUT_STATUS") == gpr.NOT_COMPUTED
+    assert gpr.check_pytest("20_TESTS/does_not_exist_dir") is None
+
+
+def test_verdict_26_reason_matches_the_notes():
+    row = next(r for r in load(VERDICTS)["verdicts"] if r["index"] == 26)
+    assert row["verdict"] == "REJECT"
+    assert "wrongly said" in row["rationale"]  # the earlier claim is named as wrong, not repeated as fact
+    assert "GPO_Baseline_Deployment.md:9" in row["rationale"]
+    line9 = (REPO / "02_PRODUCT" / "projects" / "GPO_Baseline_Deployment.md").read_text(encoding="utf-8").splitlines()[8]
+    assert "[[Security_Practices]]" in line9

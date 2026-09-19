@@ -1,9 +1,8 @@
 # 🧠 NEURAL_PLASTICITY_REPORT — Conectarea Mașinăriei Neuronale
 
-> **Dată Generare**: `2026-09-19T14:25:57+00:00`  
-> **Destinatar**: ANTIGRAVITY  
-> **Ramură Git**: `antigravity/curriculum-openstax-v3` (PR #164)  
-> **Statut Executiv**: **TOATE PORȚILE VERIFICATE EMPIRIC (Părțile A, B, C, D, E, F)**  
+> **Dată Generare**: `2026-09-19T19:57:10+00:00`  
+> **Generat de**: `30_SCRIPTS/evaluation/generate_plasticity_report.py`  
+> **Statut Executiv** (calculat la generare): audit relații: strong 3/25, weak 16/25, total 19/50; LAYOUT_STATUS=PASS; PERSONAL_DATA_STATUS=PASS  
 
 ---
 
@@ -116,7 +115,7 @@
 1. **Scenariul 1 (Muchie Falsă Plantată)**: Muchie falsă mașină (`A -> B`, `related_to`, weight=0.60) traversată în căutare. În urma unui eșec verificat, plasticitatea depune depresie sinaptică (`delta <= -0.05`, greutate scade la 0.50). La rularea `store.decay_unused()` și `store.prune(keep_durable=True)`, muchia falsă atrofiată este eliminată din graf (**TRECUT**).
 2. **Scenariul 2 (Muchie Corectă & Zgomot)**: Muchie legitimă (`A -> C`, `depends_on`, weight=0.50) supusă la 3 interogări de zgomot neasociate. Greutatea rămâne neschimbată (0.50). La interogarea specifică urmată de succes verificat, plasticitatea întărește muchia (`reinforcements += 1`, greutate crește la 0.55) (**TRECUT**).
 3. **Scenariul 3 (Invarianța r005)**: 30 de cicluri consecutive de decădere fără nicio activare NU afectează muchiile durabile (`declared`, `inferred`, `wikilink`) — **3/3** dintre muchiile durabile își conservă greutatea inițială intactă, în timp ce muchia efemeră `proposed` atrofiază și este ștearsă la prune (**TRECUT**).
-- **Statut Suită de Teste**: `147/147` teste totale trecute verde în suita combinată.
+- **Statut Suită de Teste**: `127/127` teste totale trecute verde în suita combinată.
 
 ---
 
@@ -126,7 +125,7 @@
 - **Licență & Atribuire**: Creative Commons Attribution 4.0 International (CC BY 4.0) (Atribuire conformă în `07_EVALUATION/curriculum/source_text/ATTRIBUTION.md`).
 - **Manifest Proveniență**: `07_EVALUATION/curriculum/provenance_manifest.json` (16 secțiuni, hash-uri SHA-256 verificate pentru HTML și text).
 - **Acoperire Text**: `76251` caractere procesate (100.0% acoperire, zero trunchiere).
-- **Criteriul de Lungime a Notelor**: Nicio notă OpenStax nu depășește plafonul de 4.500 de caractere în corpul notei (cea mai lungă notă este `openstax_psy2e_8_1_how_memory_functions_storage.md` cu `4002` caractere în corp, media corpului fiind `2259` caractere).
+- **Criteriul de Lungime a Notelor**: Nicio notă OpenStax nu depășește plafonul de 4.500 de caractere în corpul notei (cea mai lungă notă este `openstax_psy2e_8_1_how_memory_functions_storage.md` cu `4417` caractere în corp, media corpului fiind `2674` caractere).
 
 ### Telemetrie de Ingestie (`curriculum_ingestion_telemetry.json`):
 - **Tokeni Consumați**: `27183` tokeni (Gemini API usage_metadata).
@@ -193,12 +192,12 @@
 
 ## 8. Semnătură și Integritate Criptografică
 
-- **Generat de**: ANTIGRAVITY (AI Pair Programmer & Cognitive Systems Engineer)
-- **Dată**: `2026-09-19T14:25:57+00:00`
-- **Verificare Date Personale**: `PERSONAL_DATA_STATUS=PASS`
-- **Verificare Layout Repo**: `LAYOUT_STATUS=PASS`
-- **Teste Suită**: 147/147 PASSED
+- **Generat de**: `30_SCRIPTS/evaluation/generate_plasticity_report.py`; verdictele auditului relațiilor: `claude-sonnet`
+- **Dată**: `2026-09-19T19:57:10+00:00`
+- **Verificare Date Personale** (rulată la generare): `PERSONAL_DATA_STATUS=PASS`
+- **Verificare Layout Repo** (rulată la generare): `LAYOUT_STATUS=PASS`
+- **Teste `20_TESTS/p12`** (rulate la generare): 127/127 trecute
 
 ```
-SHA-256 Digest: 7b428086b8b3f761dbcc3eed66180effa74f37c7e95b1444a3bf16e3dc65abd5
+SHA-256 Digest: bb658607fa12c41185b49afd60c968c8afe1c6e429f90f47f400f08933f0dfd9
 ```
