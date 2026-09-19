@@ -13,14 +13,17 @@
       "correct_unsupported": "0/12",
       "correct_total": "0/12",
       "abstain": "12/12",
-      "wrong": "0/12"
+      "wrong": "0/12",
+      "reader_format_error": "0/12"
     },
     "trap_questions": {
       "total": 10,
       "trap_pass": "10/10",
-      "trap_fail": "0/10"
+      "trap_fail": "0/10",
+      "reader_format_error": "0/10"
     },
-    "total_tokens_used": 100412,
+    "reader_format_errors_total": 0,
+    "total_tokens_used": 100413,
     "per_question": [
       {
         "id": "openstax-psy2e-ch08-q01",
@@ -182,7 +185,7 @@
         "id": "openstax-psy2e-ch08-trap01",
         "type": "unanswerable_trap",
         "question": "What specific concentration of potassium chloride in millimoles per liter trigge...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
@@ -195,46 +198,46 @@
         "id": "openstax-psy2e-ch08-trap02",
         "type": "unanswerable_trap",
         "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultras...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 0,
-        "tokens_used": 5651
+        "tokens_used": 5650
       },
       {
         "id": "openstax-psy2e-ch08-trap03",
         "type": "unanswerable_trap",
         "question": "What did the 2024 fMRI study by Zhang et al. conclude about TikTok usage and epi...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 0,
-        "tokens_used": 6730
+        "tokens_used": 6734
       },
       {
         "id": "openstax-psy2e-ch08-trap04",
         "type": "unanswerable_trap",
         "question": "How many distinct histological layers of the neocortex are identified in Section...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 0,
-        "tokens_used": 3183
+        "tokens_used": 3180
       },
       {
         "id": "openstax-psy2e-ch08-trap05",
         "type": "unanswerable_trap",
         "question": "What is the recommended pediatric therapeutic dosage of memantine in milligrams ...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
@@ -247,7 +250,7 @@
         "id": "openstax-psy2e-ch08-trap06",
         "type": "unanswerable_trap",
         "question": "In George Sperling's (1960) iconic memory study, what exact duration in millisec...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
@@ -260,7 +263,7 @@
         "id": "openstax-psy2e-ch08-trap07",
         "type": "unanswerable_trap",
         "question": "How many centimeters of medial temporal lobe tissue did surgeon William Beecher ...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
@@ -273,40 +276,40 @@
         "id": "openstax-psy2e-ch08-trap08",
         "type": "unanswerable_trap",
         "question": "According to Chapter 8, what retention plateau percentage did Harry Bahrick (198...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 0,
-        "tokens_used": 5116
+        "tokens_used": 5113
       },
       {
         "id": "openstax-psy2e-ch08-trap09",
         "type": "unanswerable_trap",
         "question": "At what depth in feet underwater did Godden and Baddeley (1975) test context-dep...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 0,
-        "tokens_used": 5058
+        "tokens_used": 5057
       },
       {
         "id": "openstax-psy2e-ch08-trap10",
         "type": "unanswerable_trap",
         "question": "What frequency of high-frequency tetanic electrical stimulation did Terje Lømo a...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 0,
-        "tokens_used": 4989
+        "tokens_used": 4994
       }
     ]
   },
@@ -319,14 +322,17 @@
       "correct_unsupported": "0/12",
       "correct_total": "6/12",
       "abstain": "6/12",
-      "wrong": "0/12"
+      "wrong": "0/12",
+      "reader_format_error": "0/12"
     },
     "trap_questions": {
       "total": 10,
-      "trap_pass": "5/10",
-      "trap_fail": "5/10"
+      "trap_pass": "10/10",
+      "trap_fail": "0/10",
+      "reader_format_error": "0/10"
     },
-    "total_tokens_used": 78568,
+    "reader_format_errors_total": 0,
+    "total_tokens_used": 78552,
     "per_question": [
       {
         "id": "openstax-psy2e-ch08-q01",
@@ -488,72 +494,72 @@
         "id": "openstax-psy2e-ch08-trap01",
         "type": "unanswerable_trap",
         "question": "What specific concentration of potassium chloride in millimoles per liter trigge...",
-        "correct_answer": "NOT_IN_CHAPTER",
-        "selected_choice": "NOT_IN_CHAPTER",
-        "verdict": "TRAP_FAIL",
+        "correct_answer": "INSUFFICIENT",
+        "selected_choice": "INSUFFICIENT",
+        "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 3,
-        "tokens_used": 4271
+        "tokens_used": 4270
       },
       {
         "id": "openstax-psy2e-ch08-trap02",
         "type": "unanswerable_trap",
         "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultras...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 5,
-        "tokens_used": 2813
+        "tokens_used": 2812
       },
       {
         "id": "openstax-psy2e-ch08-trap03",
         "type": "unanswerable_trap",
         "question": "What did the 2024 fMRI study by Zhang et al. conclude about TikTok usage and epi...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 5,
-        "tokens_used": 2531
+        "tokens_used": 2529
       },
       {
         "id": "openstax-psy2e-ch08-trap04",
         "type": "unanswerable_trap",
         "question": "How many distinct histological layers of the neocortex are identified in Section...",
-        "correct_answer": "NOT_IN_CHAPTER",
-        "selected_choice": "NOT_IN_CHAPTER",
-        "verdict": "TRAP_FAIL",
+        "correct_answer": "INSUFFICIENT",
+        "selected_choice": "INSUFFICIENT",
+        "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 4,
-        "tokens_used": 3317
+        "tokens_used": 3313
       },
       {
         "id": "openstax-psy2e-ch08-trap05",
         "type": "unanswerable_trap",
         "question": "What is the recommended pediatric therapeutic dosage of memantine in milligrams ...",
-        "correct_answer": "NOT_IN_CHAPTER",
-        "selected_choice": "NOT_IN_CHAPTER",
-        "verdict": "TRAP_FAIL",
+        "correct_answer": "INSUFFICIENT",
+        "selected_choice": "INSUFFICIENT",
+        "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 1,
-        "tokens_used": 4159
+        "tokens_used": 4158
       },
       {
         "id": "openstax-psy2e-ch08-trap06",
         "type": "unanswerable_trap",
         "question": "In George Sperling's (1960) iconic memory study, what exact duration in millisec...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
@@ -566,53 +572,53 @@
         "id": "openstax-psy2e-ch08-trap07",
         "type": "unanswerable_trap",
         "question": "How many centimeters of medial temporal lobe tissue did surgeon William Beecher ...",
-        "correct_answer": "NOT_IN_CHAPTER",
-        "selected_choice": "NOT_IN_CHAPTER",
-        "verdict": "TRAP_FAIL",
+        "correct_answer": "INSUFFICIENT",
+        "selected_choice": "INSUFFICIENT",
+        "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 2,
-        "tokens_used": 5158
+        "tokens_used": 5157
       },
       {
         "id": "openstax-psy2e-ch08-trap08",
         "type": "unanswerable_trap",
         "question": "According to Chapter 8, what retention plateau percentage did Harry Bahrick (198...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 3,
-        "tokens_used": 4049
+        "tokens_used": 4046
       },
       {
         "id": "openstax-psy2e-ch08-trap09",
         "type": "unanswerable_trap",
         "question": "At what depth in feet underwater did Godden and Baddeley (1975) test context-dep...",
-        "correct_answer": "NOT_IN_CHAPTER",
-        "selected_choice": "NOT_IN_CHAPTER",
-        "verdict": "TRAP_FAIL",
+        "correct_answer": "INSUFFICIENT",
+        "selected_choice": "INSUFFICIENT",
+        "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 2,
-        "tokens_used": 4513
+        "tokens_used": 4511
       },
       {
         "id": "openstax-psy2e-ch08-trap10",
         "type": "unanswerable_trap",
         "question": "What frequency of high-frequency tetanic electrical stimulation did Terje Lømo a...",
-        "correct_answer": "NOT_IN_CHAPTER",
+        "correct_answer": "INSUFFICIENT",
         "selected_choice": "INSUFFICIENT",
         "verdict": "TRAP_PASS",
         "evidence_quote": null,
         "quote_verified": false,
         "notes_retrieved_count": 5,
         "openstax_notes_in_retrieved": 3,
-        "tokens_used": 3233
+        "tokens_used": 3232
       }
     ]
   }
