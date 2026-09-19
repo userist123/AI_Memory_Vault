@@ -158,3 +158,12 @@ def test_init_secret_output_names_the_path_but_not_the_value(tmp_path):
     assert str(state / "hmac.key") in res.stdout
     res2 = subprocess.run(CLI + ["--init-secret"], capture_output=True, text=True, cwd=REPO, env=_cli_env(state))
     assert "deja existent" in res2.stdout
+
+
+def test_the_suite_never_points_at_the_real_per_user_directory(monkeypatch):
+    """conftest sets AI_MEMORY_VAULT_HOME for every test; a run must not touch the owner's usage log."""
+    isolated = vr.state_dir()
+    monkeypatch.delenv(vr.HOME_ENV)
+    real = vr.state_dir()
+    assert isolated != real
+    assert vr.APP_DIR_NAME in str(real)
