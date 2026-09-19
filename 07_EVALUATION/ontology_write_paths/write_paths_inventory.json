@@ -89,6 +89,43 @@
       ]
     },
     {
+      "file": "20_TESTS/test_controller_slot_path.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "vault",
+          "line": 36,
+          "call": "shutil.copytree"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 40,
+          "what": "name slot_file"
+        },
+        {
+          "line": 41,
+          "what": "name slot_file"
+        },
+        {
+          "line": 60,
+          "what": "name slot_file"
+        },
+        {
+          "line": 61,
+          "what": "name slot_file"
+        },
+        {
+          "line": 67,
+          "what": "name slot_file"
+        }
+      ]
+    },
+    {
       "file": "20_TESTS/test_promote_candidate_concept_gate.py",
       "category": "test",
       "writes": [

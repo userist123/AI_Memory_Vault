@@ -44,6 +44,12 @@
       "conclusion": "Reviewed: the merge gate's own tests; the canonical directory is patched to a temporary one."
     },
     {
+      "path": "20_TESTS/test_controller_slot_path.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: copies the slots into a temporary vault before calling the controller; the real slots are never touched (a control test checks it)."
+    },
+    {
       "path": "20_TESTS/test_promote_candidate_concept_gate.py",
       "role": "test",
       "gate": "n/a (temporary directories)",
@@ -94,9 +100,9 @@
   ],
   "not_visible_to_the_scan": [
     {
-      "path": "`MemoryController.update` / `promote` / `archive` -> `FileStorageEngine.set()` on the 16 `slot-*` notes",
-      "gate": "Authorizer and lifecycle policy; no verdict or disposition manifest",
-      "conclusion": "OPEN, not changed here. The slot files carry ids (`slot-06-procedures`) under a scanned root, so the engine indexes them and the controller can rewrite their frontmatter and body. That is a generic note-mutation path, not a row gate. Closing it means a decision in the controller, which this change does not touch."
+      "path": "`MemoryController.archive` / `supersede` -> `FileStorageEngine.set()` on the 16 `slot-*` notes",
+      "gate": "Authorizer and lifecycle policy only (archive: HUMAN, ADMIN; supersede: HUMAN, ADMIN, AI_AGENT); no verdict or disposition manifest",
+      "conclusion": "OPEN, not changed here. Corrects the earlier wording: `update`/`propose` on the slot notes are refused, but only because their `id` is not a uuid, not by policy; `archive` and `supersede` succeed and rewrite the slot file's `lifecycle` (ARCHIVED/SUPERSEDED). Trace, tests and closing options: 07_EVALUATION/ontology_write_paths/CONTROLLER_SLOT_PATH.md."
     }
   ]
 }
