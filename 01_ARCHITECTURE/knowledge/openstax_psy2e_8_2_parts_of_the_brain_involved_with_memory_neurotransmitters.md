@@ -19,14 +19,22 @@ verification: unverified
 relations: []
 ---
 
+
 # Neurotransmitters (OpenStax Psychology 2e)
 
 ## 1. Sursă & Proveniență
 - **Manual**: *Psychology 2e*, OpenStax, Rice University (2020).
+- **Ediție**: 2nd Edition (2020).
+- **Autori**: Rose M. Spielman, William J. Jenkins, Marilyn D. Lovett.
+- **ISBN**: ISBN-13: 978-1-951693-23-7.
+- **Tip sursă**: manual (textbook).
 - **Capitol**: Chapter 8: Memory.
-- **Secțiune**: Neurotransmitters.
+- **Secțiune**: Neurotransmitters..
 - **Licență**: Creative Commons Attribution 4.0 International (CC BY 4.0).
+- **URL Licență**: https://creativecommons.org/licenses/by/4.0/.
 - **Manifest**: `07_EVALUATION/curriculum/provenance_manifest.json`.
+- **Metodă extragere**: model: gemini-3.1-flash-lite, prompt_version: 1.0.
+- **SHA-256 text extras**: cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6.
 
 ---
 

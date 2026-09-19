@@ -2,13 +2,14 @@ import pytest
 import json
 import os
 import hashlib
+import tempfile
 from typing import List, Dict, Any
 from unittest.mock import patch
 
 from memory_controller.controller import controller, Principal, Operation
 import memory_controller.audit.logger as logger_module
 
-TEST_AUDIT_LOG = "test_audit_log.jsonl"
+TEST_AUDIT_LOG = os.path.join(tempfile.gettempdir(), "test_audit_log.jsonl")
 
 def setup_function():
     # Force the audit logger to use a clean test file
@@ -54,6 +55,12 @@ def setup_function():
 def teardown_function():
     from memory_controller.controller import MemoryController
     MemoryController._global_review_counter = 2
+    for path in (TEST_AUDIT_LOG, "empty_audit_log.jsonl"):
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
 def read_logs() -> List[Dict[str, Any]]:
     logs = []
@@ -260,15 +267,16 @@ def test_audit_hash_chaining_and_tamper_detection():
 
 def test_audit_empty_and_nonexistent_log():
     # Non-existent file
-    non_existent_logger = logger_module.AuditLogger("non_existent_log_path.jsonl")
-    if os.path.exists("non_existent_log_path.jsonl"):
-        os.remove("non_existent_log_path.jsonl")
+    non_existent_path = os.path.join(tempfile.gettempdir(), "non_existent_log_path.jsonl")
+    non_existent_logger = logger_module.AuditLogger(non_existent_path)
+    if os.path.exists(non_existent_path):
+        os.remove(non_existent_path)
     is_valid, violations = non_existent_logger.verify_integrity()
     assert is_valid is True
     assert len(violations) == 0
 
     # Empty file
-    empty_path = "empty_audit_log.jsonl"
+    empty_path = os.path.join(tempfile.gettempdir(), "empty_audit_log.jsonl")
     open(empty_path, "w", encoding="utf-8").close()
     empty_logger = logger_module.AuditLogger(empty_path)
     is_valid, violations = empty_logger.verify_integrity()

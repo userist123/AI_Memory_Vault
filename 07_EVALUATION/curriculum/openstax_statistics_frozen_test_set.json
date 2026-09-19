@@ -1,0 +1,379 @@
+{
+  "schema_version": "curriculum-evaluation-set.v1",
+  "source": "OpenStax Introductory Statistics 2e, Chapter 8: Confidence Intervals (Review Questions & Traps)",
+  "license": "CC BY 4.0",
+  "chapter": 8,
+  "total_questions": 22,
+  "total_review_questions": 12,
+  "total_trap_questions": 10,
+  "questions": [
+    {
+      "id": "openstax-stats2e-ch08-q01",
+      "type": "author_review",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "A point estimate is best defined as ________.",
+      "choices": [
+        "a single number calculated from a sample used to estimate a population parameter",
+        "a range of values within which a population parameter is believed to fall",
+        "the probability that a sample statistic equals the population mean",
+        "the standard deviation of the sampling distribution"
+      ],
+      "correct_answer": "a single number calculated from a sample used to estimate a population parameter",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q02",
+      "type": "author_review",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "The confidence level represents ________.",
+      "choices": [
+        "the probability that a specific calculated interval contains the population parameter",
+        "the proportion of repeated samples whose confidence intervals will contain the true population parameter",
+        "the percentage error tolerated in the point estimate",
+        "the degree of freedom associated with the normal distribution"
+      ],
+      "correct_answer": "the proportion of repeated samples whose confidence intervals will contain the true population parameter",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q03",
+      "type": "author_review",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "When the sample size n increases while keeping the confidence level constant, what happens to the confidence interval?",
+      "choices": [
+        "The error bound increases, making the confidence interval wider",
+        "The error bound decreases, making the confidence interval narrower",
+        "The error bound remains identical but shifts toward zero",
+        "The confidence level decreases proportionally"
+      ],
+      "correct_answer": "The error bound decreases, making the confidence interval narrower",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q04",
+      "type": "author_review",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "When constructing a confidence interval for the mean mu of a population and the population standard deviation sigma is known, which distribution must be used?",
+      "choices": [
+        "Student's t-distribution with n - 1 degrees of freedom",
+        "standard normal distribution (z-distribution)",
+        "binomial distribution",
+        "chi-square distribution"
+      ],
+      "correct_answer": "standard normal distribution (z-distribution)",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q05",
+      "type": "author_review",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "When using the sample size formula n = (z^2 * sigma^2) / EBM^2, how should a fractional result for n always be rounded?",
+      "choices": [
+        "Round to the nearest integer using standard mathematical rounding",
+        "Always round UP to the next higher integer to ensure the sample size is large enough",
+        "Round DOWN to the lower integer to conserve sample resources",
+        "Keep the fractional value for sample weighting"
+      ],
+      "correct_answer": "Always round UP to the next higher integer to ensure the sample size is large enough",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q06",
+      "type": "author_review",
+      "section": "8.2 A Single Population Mean using the Student's t Distribution",
+      "question": "When constructing a confidence interval for the mean mu of a population where the population standard deviation sigma is unknown, which distribution should be used?",
+      "choices": [
+        "Student's t-distribution using sample standard deviation s",
+        "standard normal distribution using s directly as sigma",
+        "Poisson distribution",
+        "exponential distribution"
+      ],
+      "correct_answer": "Student's t-distribution using sample standard deviation s",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q07",
+      "type": "author_review",
+      "section": "8.2 A Single Population Mean using the Student's t Distribution",
+      "question": "For a confidence interval for the mean mu of a population based on a sample of size n where sigma is unknown, the degrees of freedom for the Student's t-distribution are ________.",
+      "choices": [
+        "n",
+        "n - 1",
+        "n - 2",
+        "n + 1"
+      ],
+      "correct_answer": "n - 1",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q08",
+      "type": "author_review",
+      "section": "8.2 A Single Population Mean using the Student's t Distribution",
+      "question": "Compared to the standard normal distribution, the Student's t-distribution has ________.",
+      "choices": [
+        "less spread and thinner tails",
+        "more probability in its tails and thicker tails, reflecting greater variability",
+        "an asymmetric, skewed right distribution",
+        "a higher peak at the center with zero tail variance"
+      ],
+      "correct_answer": "more probability in its tails and thicker tails, reflecting greater variability",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q09",
+      "type": "author_review",
+      "section": "8.3 A Population Proportion",
+      "question": "In a survey estimating a population proportion, if x represents the number of successes in a sample of size n, the point estimate p' is given by ________.",
+      "choices": [
+        "x / n",
+        "(x + 1) / (n + 2)",
+        "n / x",
+        "sqrt(x * n)"
+      ],
+      "correct_answer": "x / n",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q10",
+      "type": "author_review",
+      "section": "8.3 A Population Proportion",
+      "question": "The 'plus four' method for calculating confidence intervals for a population proportion should be used when ________.",
+      "choices": [
+        "the population standard deviation is strictly known",
+        "the confidence level is at least 90% and the sample size is at least ten",
+        "the sample size exceeds 1,000 observations",
+        "the number of successes equals zero"
+      ],
+      "correct_answer": "the confidence level is at least 90% and the sample size is at least ten",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q11",
+      "type": "author_review",
+      "section": "8.3 A Population Proportion",
+      "question": "In the 'plus four' method, what hypothetical adjustment is made to the study trials?",
+      "choices": [
+        "Add four successes to x and four to n",
+        "Add four failures to the sample without changing x",
+        "Imagine four additional trials: two successes and two failures (add 2 to x and 4 to n)",
+        "Multiply both x and n by a factor of 1.04"
+      ],
+      "correct_answer": "Imagine four additional trials: two successes and two failures (add 2 to x and 4 to n)",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-q12",
+      "type": "author_review",
+      "section": "8.4 Confidence Intervals & Calculating Sample Size",
+      "question": "When calculating the required sample size n to estimate a population proportion without a preliminary estimate of p', what values should be used for p' and q' to ensure a conservative, sufficiently large sample?",
+      "choices": [
+        "p' = 0.5 and q' = 0.5",
+        "p' = 0.1 and q' = 0.9",
+        "p' = 0.25 and q' = 0.75",
+        "p' = 0.8 and q' = 0.2"
+      ],
+      "correct_answer": "p' = 0.5 and q' = 0.5",
+      "unanswerable": false
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap01",
+      "type": "unanswerable_trap",
+      "subtype": "historical_publication_trap",
+      "section": "8.0 Introduction",
+      "question": "According to Chapter 8, which exact year did Jerzy Neyman first publish his foundational paper introducing confidence intervals in the Philosophical Transactions of the Royal Society of London?",
+      "choices": [
+        "1928",
+        "1934",
+        "1937",
+        "1942"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 teaches confidence interval procedures without historical citation or publication years of Jerzy Neyman's 1937 paper.",
+      "specific_terms": [
+        "neyman",
+        "philosophical transactions"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap02",
+      "type": "unanswerable_trap",
+      "subtype": "normality_test_trap",
+      "section": "8.2 A Single Population Mean using the Student's t Distribution",
+      "question": "In Section 8.2, what specific critical threshold for the Anderson-Darling normality test statistic must the sample data satisfy before applying the Student's t-distribution?",
+      "choices": [
+        "A^2 < 0.576",
+        "A^2 < 0.752",
+        "A^2 < 1.092",
+        "A^2 < 1.250"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Section 8.2 assumes underlying normality or large n, but never mentions the Anderson-Darling goodness-of-fit test.",
+      "specific_terms": [
+        "anderson-darling",
+        "a^2"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap03",
+      "type": "unanswerable_trap",
+      "subtype": "resampling_trap",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "According to Chapter 8, what is the maximum recommended BCa (bias-corrected and accelerated) bootstrap iteration count when sample skewness exceeds 0.8?",
+      "choices": [
+        "1,000 iterations",
+        "5,000 iterations",
+        "10,000 iterations",
+        "25,000 iterations"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 covers parametric intervals (z and t) and never mentions bootstrap resampling or BCa intervals.",
+      "specific_terms": [
+        "bootstrap",
+        "resampling"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap04",
+      "type": "unanswerable_trap",
+      "subtype": "exact_binomial_trap",
+      "section": "8.3 A Population Proportion",
+      "question": "In Section 8.3, what exact non-coverage probability adjustment is prescribed by the Clopper-Pearson exact binomial confidence interval formula?",
+      "choices": [
+        "Beta distribution quantiles at alpha / 2",
+        "Poisson tail approximation with continuity correction",
+        "Hypergeometric probability weighting",
+        "Gram-Charlier expansion term"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Section 8.3 teaches standard normal approximation and plus-four, but never mentions the Clopper-Pearson exact interval.",
+      "specific_terms": [
+        "clopper-pearson",
+        "exact binomial"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap05",
+      "type": "unanswerable_trap",
+      "subtype": "time_series_autocorrelation_trap",
+      "section": "8.1 A Single Population Mean using the Normal Distribution",
+      "question": "According to Section 8.1, what specific penalty factor must be multiplied into the margin of error when time-series observations exhibit an autoregressive lag-1 coefficient phi of 0.4?",
+      "choices": [
+        "sqrt((1 + 0.4) / (1 - 0.4))",
+        "1 / (1 - 0.4)^2",
+        "sqrt(1 - 0.4^2)",
+        "1 + 2 * 0.4"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 strictly assumes independent random samples and never discusses autoregressive time-series autocorrelation adjustments.",
+      "specific_terms": [
+        "autoregressive",
+        "lag-1"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap06",
+      "type": "unanswerable_trap",
+      "subtype": "bayesian_prior_trap",
+      "section": "8.3 A Population Proportion",
+      "question": "What is the recommended prior hyperparameter beta(alpha=1, beta=1) credible interval quantile prescribed in Chapter 8 for estimating posterior binomial parameters?",
+      "choices": [
+        "Equal-tailed 95% interval",
+        "Highest posterior density (HPD) interval",
+        "Jeffreys prior interval",
+        "Conjugate Dirichlet interval"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 is purely frequentist and contains zero discussion of Bayesian priors, credible intervals, or posterior distributions.",
+      "specific_terms": [
+        "bayesian",
+        "credible interval"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap07",
+      "type": "unanswerable_trap",
+      "subtype": "multiple_comparisons_trap",
+      "section": "8.4 Confidence Intervals & Calculating Sample Size",
+      "question": "According to Section 8.4, what minimum sample size n is required under the Bonferroni inequality correction when constructing simultaneous 95% confidence intervals across 5 independent population means?",
+      "choices": [
+        "n = 184",
+        "n = 245",
+        "n = 312",
+        "n = 428"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 covers single population mean and proportion sample sizes, without family-wise error rate or Bonferroni adjustments.",
+      "specific_terms": [
+        "bonferroni",
+        "simultaneous confidence"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap08",
+      "type": "unanswerable_trap",
+      "subtype": "two_sample_welch_trap",
+      "section": "8.2 A Single Population Mean using the Student's t Distribution",
+      "question": "In Section 8.2, what degrees-of-freedom formula does Chapter 8 specify when using Welch's t-interval for two unequal population variances?",
+      "choices": [
+        "Satterthwaite approximation",
+        "Harmonic mean of degrees of freedom",
+        "Minimum of (n1 - 1, n2 - 1)",
+        "Pooled variance degrees of freedom n1 + n2 - 2"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 is titled 'Confidence Intervals' for a single population mean/proportion. Two-sample Welch intervals are not in Chapter 8.",
+      "specific_terms": [
+        "welch",
+        "satterthwaite"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap09",
+      "type": "unanswerable_trap",
+      "subtype": "kernel_density_trap",
+      "section": "8.2 A Single Population Mean using the Student's t Distribution",
+      "question": "What specific bandwidth adjustment does Chapter 8 recommend when using kernel density estimation to verify sample symmetry prior to Student's t calculation?",
+      "choices": [
+        "Silverman's rule of thumb h = 0.9 * A * n^(-1/5)",
+        "Sheather-Jones plug-in bandwidth",
+        "Cross-validation maximum likelihood h",
+        "Scott's normal reference rule"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "Chapter 8 does not mention kernel density estimation, bandwidth selection, or non-parametric density smoothing.",
+      "specific_terms": [
+        "kernel density",
+        "bandwidth"
+      ]
+    },
+    {
+      "id": "openstax-stats2e-ch08-trap10",
+      "type": "unanswerable_trap",
+      "subtype": "fictitious_study_trap",
+      "section": "8.3 A Population Proportion",
+      "question": "According to Chapter 8, which 2023 study by Henderson & Morales demonstrated that plus-four intervals have empirical coverage of 94.8% on micro-survey samples of size n=8?",
+      "choices": [
+        "Journal of Statistical Education (2023)",
+        "The American Statistician (2023)",
+        "Technometrics (2023)",
+        "Annals of Applied Statistics (2023)"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "unanswerable": true,
+      "trap_rationale": "OpenStax does not cite a 2023 Henderson & Morales paper; it notes computer studies demonstrated effectiveness without citing specific 2023 papers.",
+      "specific_terms": [
+        "henderson",
+        "morales"
+      ]
+    }
+  ]
+}

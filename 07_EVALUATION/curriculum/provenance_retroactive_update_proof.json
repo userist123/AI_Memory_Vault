@@ -1,0 +1,183 @@
+{
+  "timestamp": "2026-09-19T14:29:53.954604+00:00",
+  "total_notes_updated": 16,
+  "manifest": "07_EVALUATION/curriculum/provenance_manifest.json",
+  "records": [
+    {
+      "filename": "openstax_psy2e_8_1_how_memory_functions_encoding.md",
+      "id": "bc70c5a0-74f3-5659-96bb-6fa7d8ec9886",
+      "proposal_id": "bc70c5a0-74f3-5659-96bb-6fa7d8ec9886",
+      "before_sha256": "4c405aff3474225a9ca54cc3345d375509b745fc0023609dbd9b2c81e9d05281",
+      "after_sha256": "a2ab98bc161b7e18be5f065450cd0c1d634202e63aed4f34ade800e62b969bc9",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "25bd960fcbe7c26694f7f55d8a44d7655ba3304f5b264d7030f611f9fe28b16f"
+    },
+    {
+      "filename": "openstax_psy2e_8_1_how_memory_functions_overview.md",
+      "id": "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b",
+      "proposal_id": "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b",
+      "before_sha256": "6841929214ab062dced0aed2fe41ada97c62d50c049ba330a08104524ab6f82c",
+      "after_sha256": "14d7837eeb86a948e540ccf1ccf9937c81b379a3091b979fb8188bf6e263dd93",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "25bd960fcbe7c26694f7f55d8a44d7655ba3304f5b264d7030f611f9fe28b16f"
+    },
+    {
+      "filename": "openstax_psy2e_8_1_how_memory_functions_retrieval.md",
+      "id": "59280499-cba1-5dd3-b7d8-b33b69d5765e",
+      "proposal_id": "59280499-cba1-5dd3-b7d8-b33b69d5765e",
+      "before_sha256": "9ce8bb21fc4e81bff3baa4d864db064fa119611c45999986b83a9933a10f3599",
+      "after_sha256": "ecf09ae52389c30280c274987c5cba62aa4252d676c1a4b2c9650905a04d550d",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "25bd960fcbe7c26694f7f55d8a44d7655ba3304f5b264d7030f611f9fe28b16f"
+    },
+    {
+      "filename": "openstax_psy2e_8_1_how_memory_functions_storage.md",
+      "id": "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+      "proposal_id": "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+      "before_sha256": "72a6f59ab53a545a79a87dd74493348f2dc4d0dc20a8e61f305f1fd6cffcbf22",
+      "after_sha256": "4afb372c9587878a1e988060369a99067505bf814cab7740f990220f7567448d",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "25bd960fcbe7c26694f7f55d8a44d7655ba3304f5b264d7030f611f9fe28b16f"
+    },
+    {
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_neurotransmitters.md",
+      "id": "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+      "proposal_id": "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+      "before_sha256": "35c13d1e23feee5e25fb25a6ac587ecd51df5beb297cccb9141fc688e404d125",
+      "after_sha256": "26ef393accf2fbb415492d0983f716b29c7e3cf38b2f536401b670499c90a347",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6"
+    },
+    {
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_overview.md",
+      "id": "66559b50-540d-5014-8cad-9d0ea451fc90",
+      "proposal_id": "66559b50-540d-5014-8cad-9d0ea451fc90",
+      "before_sha256": "5616011af1eb24ece74d3b29b2812c205c3759acaeb551c21493961a9da301c7",
+      "after_sha256": "7025e8ba649172ce94f6e253f7b1a06a94b6766eb24f6a862c651b2ca052820c",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6"
+    },
+    {
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_amygdala.md",
+      "id": "8091d22f-ca07-53d1-aa10-7b2f5c82e861",
+      "proposal_id": "8091d22f-ca07-53d1-aa10-7b2f5c82e861",
+      "before_sha256": "a82f200c05d7730dacb3f31ef1bbd3dd74143ef37203b5676aa77ebcc2ab3ee2",
+      "after_sha256": "79ae06091592dd7caf313f30a9a79b321077d285d24efecbc40f3386fb3a8563",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6"
+    },
+    {
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_cerebellum_and_prefrontal_cortex.md",
+      "id": "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+      "proposal_id": "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+      "before_sha256": "b4fd9f36bc019b40df44bb017ed3a13f3c36713227fca80990c0dd6628b9ec6b",
+      "after_sha256": "709f917a2962edc34c735541633c1ea7355ad50e22382da98dcf90bca23ab4a7",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6"
+    },
+    {
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_hippocampus.md",
+      "id": "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+      "proposal_id": "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+      "before_sha256": "bcb75a6e8c544a56cd2035adf088fc330b42128a32e435a82474a60b172ef2c8",
+      "after_sha256": "db9dd18acb684fbcf86cab55fc7c0342b73db61e1e173c43c8bf98881e5f0bf0",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6"
+    },
+    {
+      "filename": "openstax_psy2e_8_3_problems_with_memory_amnesia.md",
+      "id": "c34f9935-2cfb-5e86-b39a-8cc5205e140d",
+      "proposal_id": "c34f9935-2cfb-5e86-b39a-8cc5205e140d",
+      "before_sha256": "69a91cab22daf071b5944ee4c7154c40f88e183ef4a768df2c44ecf866ad443b",
+      "after_sha256": "912c90cc72ca7258f6674c069c76974a679f3d66eac4385db881563d6c1e0304",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "bf105b5fe10038dce06b08fadb9d54bb03da45434aaa63fefe88eaea42a818ff"
+    },
+    {
+      "filename": "openstax_psy2e_8_3_problems_with_memory_forgetting.md",
+      "id": "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+      "proposal_id": "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+      "before_sha256": "9fc61e1f97a89d2dd95efb700acdcbc9efb7d73bbec35d86984dc8d280ea2610",
+      "after_sha256": "5ae0dc5e5dda59d1a4b97d8df5c96e1e3313ad1539a4c0e8e633c252157ccd32",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "bf105b5fe10038dce06b08fadb9d54bb03da45434aaa63fefe88eaea42a818ff"
+    },
+    {
+      "filename": "openstax_psy2e_8_3_problems_with_memory_memory_construction_and_reconstruction.md",
+      "id": "bd0e0105-38d9-5373-a176-59f1f454f32f",
+      "proposal_id": "bd0e0105-38d9-5373-a176-59f1f454f32f",
+      "before_sha256": "cced20db82b4048cd140ada92855fa9456c42147669d20bc2c9c0cc95f85897b",
+      "after_sha256": "41b0d87a6b57959d16f271de2421ea0e91222484413379f6c0ee5754d976c9d0",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "bf105b5fe10038dce06b08fadb9d54bb03da45434aaa63fefe88eaea42a818ff"
+    },
+    {
+      "filename": "openstax_psy2e_8_3_problems_with_memory_overview.md",
+      "id": "46cfee29-6e38-5dea-b4be-ec220daadf60",
+      "proposal_id": "46cfee29-6e38-5dea-b4be-ec220daadf60",
+      "before_sha256": "eed135bc4a4a3e48cf251bde5669db23985031695b0fc176a5a8079b8c282c3c",
+      "after_sha256": "e8db32fb7e0faee48771ec91084aa83c2a123f8f971ab6b98f2a91ed16140371",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "bf105b5fe10038dce06b08fadb9d54bb03da45434aaa63fefe88eaea42a818ff"
+    },
+    {
+      "filename": "openstax_psy2e_8_4_ways_to_enhance_memory_how_to_study_effectively.md",
+      "id": "5fa452dd-c98b-581d-8ee9-24450ae24390",
+      "proposal_id": "5fa452dd-c98b-581d-8ee9-24450ae24390",
+      "before_sha256": "cbdae39441fee8e6486a24983c478f72d04d7335a14c6823a6db967e10033a1b",
+      "after_sha256": "49c65af28912ba95992a5e382b7589f56f56c6a919d0bada313f71388ce810d5",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "5f6dddf50b4e9409532d9caf799d0c90da3a072191c4e1a7d8412d9874ff9187"
+    },
+    {
+      "filename": "openstax_psy2e_8_4_ways_to_enhance_memory_memory_enhancing_strategies.md",
+      "id": "4ad5e2c5-0500-5b92-9ee6-8e3e435be059",
+      "proposal_id": "4ad5e2c5-0500-5b92-9ee6-8e3e435be059",
+      "before_sha256": "57a65b095d1579a93d6cfd396397a5928e841d03a836ec0b28fcba7dac4aac3d",
+      "after_sha256": "32a5ab40fd450230774c82b62c29f8fe574d403a652b7708bc55c7aa4abd1e72",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "5f6dddf50b4e9409532d9caf799d0c90da3a072191c4e1a7d8412d9874ff9187"
+    },
+    {
+      "filename": "openstax_psy2e_8_4_ways_to_enhance_memory_overview.md",
+      "id": "4048fe19-04a4-5860-a334-4b65c81be2c3",
+      "proposal_id": "4048fe19-04a4-5860-a334-4b65c81be2c3",
+      "before_sha256": "52a50ecf4a04ad095cf840e5ad6a5df4356327dd2ec6cab4814cd260268ab0f0",
+      "after_sha256": "5acfaf918cc6087a6d60c75325b426a300069e7dcbdb8eb6557353415ea5ac1b",
+      "lifecycle": "REVIEW",
+      "verification": "unverified",
+      "source_type": "ai",
+      "text_sha256": "5f6dddf50b4e9409532d9caf799d0c90da3a072191c4e1a7d8412d9874ff9187"
+    }
+  ]
+}

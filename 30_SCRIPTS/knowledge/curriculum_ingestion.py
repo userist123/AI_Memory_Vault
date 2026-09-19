@@ -1,16 +1,19 @@
-"""Ingestion pipeline for OpenStax Psychology 2e Chapter 8: Memory.
+"""Ingestion pipeline for curriculum textbook modules.
 
 Enforces:
-1. Pure HTML-derived sectioning (h2/h3 headings, no hand-crafted topic descriptions).
-2. Complete character coverage: all text is sent in full chunks without truncation.
-3. Pre-flight anti-leak guard on every prompt (zero test answers, zero 4-grams).
-4. Persisted prompt artifacts with SHA-256 digests.
-5. Online real Gemini API invocation with genuine token and cost telemetry.
-6. 100% character-by-character verbatim citation verification against raw text.
-7. Mutation strictly through MemoryController.propose(Principal.AI_AGENT) (P0 Invariants I-001..I-005).
+1. Mandatory curriculum module profile validation before execution.
+2. Pre-flight preliminary topic verification via topicality terms and minimum density.
+3. Pure HTML/text-derived sectioning (headings, no hand-crafted topic descriptions).
+4. Complete character coverage: all text is processed in full chunks without truncation.
+5. Pre-flight anti-leak guard on every prompt (zero test answers, zero 4-grams from frozen test set).
+6. Persisted prompt artifacts with SHA-256 digests.
+7. Online real Gemini API invocation with genuine token and cost telemetry.
+8. 100% character-by-character verbatim citation verification against raw text.
+9. Mutation strictly through MemoryController.propose(Principal.AI_AGENT) (P0 Invariants I-001..I-005).
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -20,13 +23,12 @@ import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
-
-from bs4 import BeautifulSoup
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PACKAGES_DIR = REPO_ROOT / "03_IMPLEMENTATION" / "packages"
-for p in (str(REPO_ROOT), str(PACKAGES_DIR)):
+SCRIPTS_DIR = REPO_ROOT / "30_SCRIPTS" / "knowledge"
+for p in (str(REPO_ROOT), str(PACKAGES_DIR), str(SCRIPTS_DIR)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
@@ -36,11 +38,9 @@ from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController, Lifecycle
 from memory_controller.storage.file_engine import FileStorageEngine
 from retrieval.vault_index import VaultIndex
+from validate_curriculum_profile import validate_curriculum_profile
 
-RAW_DIR = REPO_ROOT / "06_INBOX" / "RAW_IMPORTS" / "openstax_psychology_2e_ch08"
-FROZEN_TEST_SET_PATH = REPO_ROOT / "07_EVALUATION" / "curriculum" / "openstax_ch08_frozen_test_set.json"
 PROMPT_ARTIFACTS_DIR = REPO_ROOT / "08_OBSERVABILITY" / "artifacts" / "prompts"
-TELEMETRY_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "curriculum_ingestion_telemetry.json"
 OUTPUT_DIR = REPO_ROOT / "01_ARCHITECTURE" / "knowledge"
 
 PROMPT_TEMPLATE = """You are a cognitive knowledge extraction engine for an AI Memory Vault.
@@ -54,7 +54,7 @@ Source Text:
 Extraction Requirements:
 1. Identify the essential factual concepts described in this section.
 2. For each concept, provide:
-   - title: A concise, standard psychological term or concept title.
+   - title: A concise, standard domain term or concept title.
    - summary: A factual summary (2-4 sentences) explaining the mechanism, definition, or finding.
    - exact_quote: A verbatim character-by-character quote from the Source Text supporting the concept. The quote MUST exist identically in the Source Text.
 3. Return output strictly in valid JSON format matching this schema:
@@ -70,22 +70,34 @@ Extraction Requirements:
 Do NOT invent information. Extract only what is substantiated by the text.
 """
 
-CONTENT_FILES = [
-    "8_1_how_memory_functions.html",
-    "8_2_parts_of_the_brain_involved_with_memory.html",
-    "8_3_problems_with_memory.html",
-    "8_4_ways_to_enhance_memory.html",
-]
+
+def check_topicality(
+    text: str,
+    topicality_terms: List[str],
+    min_density: float = 0.5,
+) -> Tuple[bool, float]:
+    """Calculates mentions of topicality terms per thousand characters.
+    Rejects text if density < min_density.
+    """
+    if not text:
+        return False, 0.0
+    lowered = text.lower()
+    total_mentions = sum(lowered.count(t.lower()) for t in topicality_terms)
+    char_count = len(text)
+    density = total_mentions / (char_count / 1000.0) if char_count else 0.0
+    return density >= min_density, density
 
 
-def check_prompt_anti_leak(non_book_text: str, test_set_path: Path = FROZEN_TEST_SET_PATH) -> bool:
+def check_prompt_anti_leak(non_book_text: str, test_set_path: Path) -> bool:
+    if not test_set_path.exists():
+        raise FileNotFoundError(f"Frozen test set not found: {test_set_path}")
     data = json.loads(test_set_path.read_text(encoding="utf-8"))
     text_lower = non_book_text.lower()
 
     prohibited_answers = set()
     for q in data["questions"]:
-        ans = q.get("correct_answer", "")
-        if ans and ans != "NOT_IN_CHAPTER":
+        ans = str(q.get("correct_answer", ""))
+        if ans and ans != "NOT_IN_CHAPTER" and ans != "INSUFFICIENT":
             prohibited_answers.add(ans.lower())
     prohibited_answers.add("limitless")
 
@@ -100,55 +112,65 @@ def check_prompt_anti_leak(non_book_text: str, test_set_path: Path = FROZEN_TEST
             four_gram = " ".join(words[i:i+4])
             pattern = r"\b" + re.escape(four_gram) + r"\b"
             if re.search(pattern, text_lower):
-                raise AssertionError(f"Leak detected: 4-word question sequence '{four_gram}' from Q '{q['id']}' found in non-book prompt text")
+                raise AssertionError(
+                    f"Leak detected: 4-word question sequence '{four_gram}' from Q '{q['id']}' found in non-book prompt text"
+                )
     return True
 
 
-def partition_page(html_path: Path) -> Tuple[str, List[Tuple[str, str, str]]]:
-    """Partitions an OpenStax HTML page into clean sections by HTML headings.
+def partition_page(file_path: Path) -> Tuple[str, List[Tuple[str, str, str]]]:
+    """Partitions an HTML or text file into clean sections.
     Returns (page_full_text, [(section_slug, section_title, section_text)]).
     Guarantees that sum(len(sec_text)) == len(page_full_text).
     """
-    soup = BeautifulSoup(html_path.read_text(encoding="utf-8"), "html.parser")
-    page = soup.find("div", {"data-type": "page"})
-    if not page:
-        raise ValueError(f"No div[data-type='page'] found in {html_path.name}")
+    if file_path.suffix.lower() == ".html":
+        soup = BeautifulSoup(file_path.read_text(encoding="utf-8"), "html.parser")
+        page = soup.find("div", {"data-type": "page"}) or soup.find("main") or soup
 
-    page_title_el = page.find(["h1", "h2"])
-    page_title = page_title_el.get_text(strip=True) if page_title_el else html_path.stem
+        page_title_el = page.find(["h1", "h2"])
+        page_title = page_title_el.get_text(strip=True) if page_title_el else file_path.stem
 
-    sections: List[Tuple[str, str, str]] = []
-    current_title = f"{page_title} - Overview"
-    current_slug = f"{html_path.stem}_overview"
-    current_children = []
+        sections: List[Tuple[str, str, str]] = []
+        current_title = f"{page_title} - Overview"
+        current_slug = f"{file_path.stem}_overview"
+        current_children = []
 
-    for child in page.children:
-        if child.name is None:
-            continue
-        if child.name == "section" and child.get("data-depth") == "1":
-            if current_children:
-                txt = " ".join(" ".join(c.get_text(separator=" ").split()) for c in current_children)
-                txt = " ".join(txt.split())
-                if txt:
-                    sections.append((current_slug, current_title, txt))
-                current_children = []
-            h = child.find(["h2", "h3", "h4"])
-            sec_title = h.get_text(strip=True) if h else "Section"
-            slug_base = re.sub(r"[^a-z0-9]+", "_", sec_title.lower()).strip("_")
-            current_title = sec_title
-            current_slug = f"{html_path.stem}_{slug_base}"
-            current_children.append(child)
-        else:
-            current_children.append(child)
+        for child in page.children:
+            if child.name is None:
+                continue
+            if child.name == "section" and child.get("data-depth") == "1":
+                if current_children:
+                    txt = " ".join(" ".join(c.get_text(separator=" ").split()) for c in current_children)
+                    txt = " ".join(txt.split())
+                    if txt:
+                        sections.append((current_slug, current_title, txt))
+                    current_children = []
+                h = child.find(["h2", "h3", "h4"])
+                sec_title = h.get_text(strip=True) if h else "Section"
+                slug_base = re.sub(r"[^a-z0-9]+", "_", sec_title.lower()).strip("_")
+                current_title = sec_title
+                current_slug = f"{file_path.stem}_{slug_base}"
+                current_children.append(child)
+            else:
+                current_children.append(child)
 
-    if current_children:
-        txt = " ".join(" ".join(c.get_text(separator=" ").split()) for c in current_children)
-        txt = " ".join(txt.split())
-        if txt:
-            sections.append((current_slug, current_title, txt))
+        if current_children:
+            txt = " ".join(" ".join(c.get_text(separator=" ").split()) for c in current_children)
+            txt = " ".join(txt.split())
+            if txt:
+                sections.append((current_slug, current_title, txt))
 
-    page_full_text = " ".join(page.get_text(separator=" ").split())
-    return page_full_text, sections
+        page_full_text = " ".join(page.get_text(separator=" ").split())
+        return page_full_text, sections
+
+    elif file_path.suffix.lower() == ".txt":
+        raw_text = file_path.read_text(encoding="utf-8")
+        clean_text = " ".join(raw_text.split())
+        slug = file_path.stem
+        title = slug.replace("_", " ").title()
+        return clean_text, [(slug, title, clean_text)]
+    else:
+        raise ValueError(f"Unsupported file format: {file_path.suffix}")
 
 
 def call_gemini_with_fallback(prompt: str) -> Dict[str, Any]:
@@ -203,7 +225,50 @@ def call_gemini_with_fallback(prompt: str) -> Dict[str, Any]:
     raise RuntimeError(f"All Gemini models failed: {last_err}")
 
 
-def run_curriculum_ingestion() -> Dict[str, Any]:
+def run_curriculum_ingestion(
+    profile_path: Union[str, Path, None] = None,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    if profile_path is None:
+        raise ValueError("Curriculum ingestion requires a valid --profile path.")
+
+    p_path = Path(profile_path)
+    if not p_path.exists():
+        raise FileNotFoundError(f"Profile path not found: {p_path}")
+
+    ok, errors = validate_curriculum_profile(p_path, check_referenced_files=True)
+    if not ok:
+        raise ValueError(f"Profile validation failed for {p_path}: {'; '.join(errors)}")
+
+    profile = json.loads(p_path.read_text(encoding="utf-8"))
+    module_id = profile["module_id"]
+    domain = profile["domain"]
+    source_cfg = profile["source"]
+    eval_cfg = profile["evaluation"]
+
+    provenance_manifest_rel = source_cfg["provenance_manifest"]
+    manifest_path = REPO_ROOT / provenance_manifest_rel
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"Manifest not found: {manifest_path}")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    raw_dir_rel = source_cfg.get("raw_dir")
+    source_text_dir_rel = source_cfg.get("source_text_dir")
+    content_files = source_cfg["content_files"]
+
+    content_dir = None
+    content_dir_rel = None
+    if source_text_dir_rel and (REPO_ROOT / source_text_dir_rel).exists() and (REPO_ROOT / source_text_dir_rel / content_files[0]).exists():
+        content_dir = REPO_ROOT / source_text_dir_rel
+        content_dir_rel = source_text_dir_rel
+    elif raw_dir_rel and (REPO_ROOT / raw_dir_rel).exists() and (REPO_ROOT / raw_dir_rel / content_files[0]).exists():
+        content_dir = REPO_ROOT / raw_dir_rel
+        content_dir_rel = raw_dir_rel
+    else:
+        raise FileNotFoundError(f"Content files not found in source_text_dir ({source_text_dir_rel}) or raw_dir ({raw_dir_rel})")
+    frozen_test_set_path = REPO_ROOT / eval_cfg["frozen_test_set"]
+    telemetry_path = REPO_ROOT / "08_OBSERVABILITY" / "reports" / f"curriculum_ingestion_telemetry_{module_id}.json"
+
     PROMPT_ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
     start_pipeline = time.perf_counter()
 
@@ -224,8 +289,12 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
     total_claims_rejected = 0
 
     all_sections = []
-    for fname in CONTENT_FILES:
-        fpath = RAW_DIR / fname
+    aggregated_full_text = []
+
+    for fname in content_files:
+        fpath = content_dir / fname
+        if not fpath.exists():
+            raise FileNotFoundError(f"Content file not found: {fpath}")
         page_text, sections = partition_page(fpath)
         combined_text = " ".join(s[2] for s in sections)
         is_exact = (len(page_text) == len(combined_text))
@@ -239,17 +308,38 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
         if not is_exact:
             raise ValueError(f"Coverage mismatch on {fname}: page={len(page_text)} sent={len(combined_text)}")
         all_sections.extend(sections)
+        aggregated_full_text.append(page_text)
+
+    # Preliminary topic verification
+    full_corpus_text = " ".join(aggregated_full_text)
+    topicality_terms = profile["topicality_terms"]
+    min_density = profile.get("min_topic_density", 0.5)
+    topical_ok, density = check_topicality(full_corpus_text, topicality_terms, min_density)
+    if not topical_ok:
+        raise ValueError(
+            f"Preliminary topic verification FAILED: topic density {density:.3f} is below threshold {min_density}. "
+            f"Source text does not match profile '{module_id}' domain topicality."
+        )
+
+    if dry_run:
+        return {
+            "status": "DRY_RUN_PASSED",
+            "module_id": module_id,
+            "sections_count": len(all_sections),
+            "topic_density": density,
+            "coverage_reports": coverage_reports,
+        }
 
     notes_created = []
 
     for sec_slug, sec_title, sec_text in all_sections:
         prompt_non_book = PROMPT_TEMPLATE.format(section_title=sec_title, section_text="")
-        check_prompt_anti_leak(prompt_non_book)
+        check_prompt_anti_leak(prompt_non_book, frozen_test_set_path)
 
         full_prompt = PROMPT_TEMPLATE.format(section_title=sec_title, section_text=sec_text)
         prompt_hash = hashlib.sha256(full_prompt.encode("utf-8")).hexdigest()
 
-        prompt_file = PROMPT_ARTIFACTS_DIR / f"prompt_{sec_slug}.txt"
+        prompt_file = PROMPT_ARTIFACTS_DIR / f"prompt_{module_id}_{sec_slug}.txt"
         prompt_file.write_text(full_prompt, encoding="utf-8")
         saved_prompts_info.append({
             "section_slug": sec_slug,
@@ -285,12 +375,10 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
                 continue
 
             total_claims_extracted += 1
-            # Verify verbatim in sec_text
             if quote in sec_text:
                 total_claims_verified += 1
                 verified_concepts.append({"title": title, "summary": summary, "exact_quote": quote})
             else:
-                # Try normalized whitespace
                 norm_quote = " ".join(quote.split())
                 norm_text = " ".join(sec_text.split())
                 if norm_quote in norm_text:
@@ -302,19 +390,24 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
         if not verified_concepts:
             continue
 
-        # Propose note via MemoryController.propose (P0 Invariants)
-        note_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"openstax-psy2e-{sec_slug}"))
-        note_filename = f"openstax_psy2e_{sec_slug}.md"
+        # Create note metadata and content
+        note_uuid = str(uuid.uuid5(uuid.NAMESPACE_URL, f"{module_id}-{sec_slug}"))
+        note_filename = f"{module_id}_{sec_slug}.md"
 
         body_lines = [
-            f"# {sec_title} (OpenStax Psychology 2e)",
+            f"# {sec_title} ({source_cfg.get('work_title', 'Curriculum')})",
             "",
             "## 1. Sursă & Proveniență",
-            "- **Manual**: *Psychology 2e*, OpenStax, Rice University (2020).",
-            "- **Capitol**: Chapter 8: Memory.",
+            f"- **Manual**: *{source_cfg.get('work_title')}*, {manifest.get('publisher', 'OpenStax')}.",
+            f"- **Ediție**: {manifest.get('edition', '2nd Edition')}.",
+            f"- **Autori**: {', '.join(manifest.get('authors', []))}.",
+            f"- **ISBN**: {manifest.get('isbn_or_doi', 'N/A')}.",
+            f"- **Tip sursă**: {manifest.get('source_type', 'manual')}.",
+            f"- **Capitol / Temă**: {source_cfg.get('chapter_or_topic')}.",
             f"- **Secțiune**: {sec_title}.",
-            "- **Licență**: Creative Commons Attribution 4.0 International (CC BY 4.0).",
-            f"- **Manifest**: `07_EVALUATION/curriculum/provenance_manifest.json`.",
+            f"- **Licență**: {manifest.get('license', 'CC BY 4.0')}.",
+            f"- **URL Licență**: {manifest.get('license_url', 'https://creativecommons.org/licenses/by/4.0/')}.",
+            f"- **Manifest**: `{provenance_manifest_rel}`.",
             "",
             "---",
             "",
@@ -330,20 +423,21 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
             body_lines.append("")
 
         full_body = "\n".join(body_lines)
+        today_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         note_data = {
             "id": note_uuid,
             "type": "knowledge",
-            "category": "cognitive-psychology-memory",
-            "tags": ["openstax", "psychology", "memory", "ch08", "curriculum", "verified-source"],
-            "created": "2026-09-18",
-            "updated": "2026-09-18",
+            "category": domain,
+            "tags": ["openstax", domain, "curriculum", "verified-source"],
+            "created": today_iso,
+            "updated": today_iso,
             "provenance": {
                 "source_type": "ai",
-                "source_ref": f"openstax-psychology-2e-ch08-{sec_slug}",
-                "source_date": "2020-04-22",
-                "original_path": f"06_INBOX/RAW_IMPORTS/openstax_psychology_2e_ch08/{sec_slug}.html",
-                "extraction_date": "2026-09-18",
+                "source_ref": f"{module_id}-{sec_slug}",
+                "source_date": today_iso,
+                "original_path": f"{content_dir_rel}/{sec_slug}",
+                "extraction_date": today_iso,
                 "redaction": "none",
                 "provenance_status": "complete",
             },
@@ -353,27 +447,23 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
             "lifecycle": "REVIEW",
         }
 
-        # Propose strictly through MemoryController
-        proposal_id = controller.propose(Principal.AI_AGENT, note_data)
-
-        # Write to knowledge directory with REVIEW lifecycle
         frontmatter = [
             "---",
             f'id: "{note_uuid}"',
             "type: knowledge",
             "lifecycle: REVIEW",
-            "category: cognitive-psychology-memory",
-            'tags: ["openstax", "psychology", "memory", "ch08", "curriculum", "verified-source"]',
-            'created: "2026-09-18"',
-            'updated: "2026-09-18"',
+            f"category: {domain}",
+            f'tags: ["openstax", "{domain}", "curriculum", "verified-source"]',
+            f'created: "{today_iso}"',
+            f'updated: "{today_iso}"',
             "provenance:",
             "  source_type: ai",
-            f'  source_ref: "openstax-psychology-2e-ch08-{sec_slug}"',
-            '  source_date: "2020-04-22"',
-            f'  original_path: "06_INBOX/RAW_IMPORTS/openstax_psychology_2e_ch08/{sec_slug}.html"',
-            '  extraction_date: "2026-09-18"',
-            '  redaction: none',
-            '  provenance_status: complete',
+            f'  source_ref: "{module_id}-{sec_slug}"',
+            f'  source_date: "{today_iso}"',
+            f'  original_path: "{content_dir_rel}/{sec_slug}"',
+            f'  extraction_date: "{today_iso}"',
+            "  redaction: none",
+            "  provenance_status: complete",
             "confidence: high",
             "verification: unverified",
             "relations: []",
@@ -385,6 +475,10 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
         target_path = OUTPUT_DIR / note_filename
         target_path.write_text("\n".join(frontmatter), encoding="utf-8", newline="\n")
 
+        # Register in storage and propose strictly through MemoryController
+        storage.id_to_path[note_uuid] = str(target_path)
+        proposal_id = controller.propose(Principal.AI_AGENT, note_data)
+
         notes_created.append({
             "id": note_uuid,
             "filename": note_filename,
@@ -395,23 +489,23 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
         })
 
     elapsed_pipeline = time.perf_counter() - start_pipeline
-
     pass_fraction = f"{total_claims_verified}/{total_claims_extracted}"
     pass_pct = (total_claims_verified / total_claims_extracted * 100.0) if total_claims_extracted else 0.0
 
     telemetry = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "module_id": module_id,
         "curriculum_book": {
-            "title": "Psychology 2e",
-            "chapter": "Chapter 8: Memory",
-            "publisher": "OpenStax, Rice University",
-            "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
-            "license_url": "https://creativecommons.org/licenses/by/4.0/",
-            "provenance_manifest": "07_EVALUATION/curriculum/provenance_manifest.json",
-            "frozen_test_set": "07_EVALUATION/curriculum/openstax_ch08_frozen_test_set.json",
+            "title": source_cfg.get("work_title"),
+            "chapter": source_cfg.get("chapter_or_topic"),
+            "publisher": manifest.get("publisher"),
+            "license": manifest.get("license"),
+            "license_url": manifest.get("license_url"),
+            "provenance_manifest": provenance_manifest_rel,
+            "frozen_test_set": eval_cfg.get("frozen_test_set"),
         },
         "character_coverage": {
-            "total_content_pages": len(CONTENT_FILES),
+            "total_content_pages": len(content_files),
             "pages": coverage_reports,
             "total_page_characters": sum(c["page_characters"] for c in coverage_reports),
             "total_sent_characters": sum(c["sent_characters"] for c in coverage_reports),
@@ -425,7 +519,7 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
             "prompts_artifacts": saved_prompts_info,
         },
         "model_telemetry": {
-            "model_name": "gemini-3.7-flash (with fallback)",
+            "model_name": "gemini (with fallback)",
             "total_sections_processed": len(all_sections),
             "total_prompt_tokens": total_prompt_tokens,
             "total_completion_tokens": total_completion_tokens,
@@ -456,14 +550,27 @@ def run_curriculum_ingestion() -> Dict[str, Any]:
         "notes_proposed": notes_created,
     }
 
-    TELEMETRY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    TELEMETRY_PATH.write_text(json.dumps(telemetry, indent=2), encoding="utf-8", newline="\n")
+    telemetry_path.parent.mkdir(parents=True, exist_ok=True)
+    telemetry_path.write_text(json.dumps(telemetry, indent=2), encoding="utf-8", newline="\n")
     return telemetry
 
 
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Curriculum knowledge ingestion pipeline.")
+    parser.add_argument("--profile", type=Path, required=True, help="Path to curriculum module profile JSON")
+    parser.add_argument("--dry-run", action="store_true", help="Perform validation, topicality check, and partitioning without LLM call")
+    args = parser.parse_args()
+
+    print(f"Starting Curriculum Ingestion with profile: {args.profile}")
+    tel = run_curriculum_ingestion(profile_path=args.profile, dry_run=args.dry_run)
+    if args.dry_run:
+        print(f"Dry run passed: {tel['sections_count']} sections, topic density = {tel['topic_density']:.3f}")
+    else:
+        print(f"Ingestion completed: {len(tel['notes_proposed'])} notes created.")
+        print(f"Tokens: {tel['model_telemetry']['total_tokens']}, Cost: ${tel['model_telemetry']['total_cost_usd']}")
+        print(f"Citations pass: {tel['citation_verification']['verification_pass_fraction']}")
+    return 0
+
+
 if __name__ == "__main__":
-    print("Starting OpenStax Psychology 2e Chapter 8 Ingestion...")
-    tel = run_curriculum_ingestion()
-    print(f"Ingestion completed: {len(tel['notes_proposed'])} notes created.")
-    print(f"Tokens: {tel['model_telemetry']['total_tokens']}, Cost: ${tel['model_telemetry']['total_cost_usd']}")
-    print(f"Citations pass: {tel['citation_verification']['verification_pass_fraction']}")
+    sys.exit(main())

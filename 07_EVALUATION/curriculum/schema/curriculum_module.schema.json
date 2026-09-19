@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CurriculumModuleProfile",
+  "description": "Schema version 1.0 for curriculum module profiles governing textbook domain ingestion and transfer benchmarks.",
+  "type": "object",
+  "required": [
+    "module_id",
+    "domain",
+    "learning_goal",
+    "expected_capabilities",
+    "source",
+    "topicality_terms",
+    "evaluation",
+    "forbidden_outputs"
+  ],
+  "properties": {
+    "module_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)+-v[0-9]+$",
+      "description": "Versioned unique identifier for the curriculum module (e.g. psychology-memory-ch08-v1)."
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 2,
+      "description": "Academic or operational domain identifier (e.g. cognitive-psychology, statistics)."
+    },
+    "learning_goal": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Concise statement explaining why this material was selected for vault ingestion."
+    },
+    "expected_capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 5
+      },
+      "description": "Concrete capabilities the vault should acquire or support following ingestion."
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "provenance_manifest",
+        "work_title",
+        "chapter_or_topic",
+        "content_files"
+      ],
+      "properties": {
+        "provenance_manifest": {
+          "type": "string",
+          "description": "Relative path to the provenance manifest JSON."
+        },
+        "work_title": {
+          "type": "string"
+        },
+        "chapter_or_topic": {
+          "type": "string"
+        },
+        "raw_dir": {
+          "type": "string",
+          "description": "Directory containing raw source files."
+        },
+        "source_text_dir": {
+          "type": "string",
+          "description": "Directory containing converted plain-text files."
+        },
+        "content_files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "List of content filenames to be processed in order."
+        }
+      },
+      "additionalProperties": true
+    },
+    "topicality_terms": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "string",
+        "minLength": 2
+      },
+      "description": "Key domain terms used for pre-flight preliminary topic verification."
+    },
+    "min_topic_density": {
+      "type": "number",
+      "minimum": 0.1,
+      "default": 0.5,
+      "description": "Minimum required mentions per 1000 characters during preliminary topic verification."
+    },
+    "evaluation": {
+      "type": "object",
+      "required": [
+        "frozen_test_set",
+        "success_criteria"
+      ],
+      "properties": {
+        "frozen_test_set": {
+          "type": "string",
+          "description": "Relative path to the frozen evaluation test set JSON."
+        },
+        "success_criteria": {
+          "type": "object",
+          "required": [
+            "min_treatment_supported",
+            "max_wrong",
+            "min_trap_pass_rate"
+          ],
+          "properties": {
+            "min_treatment_supported": {
+              "type": "string",
+              "pattern": "^[0-9]+/[0-9]+$"
+            },
+            "max_wrong": {
+              "type": "string",
+              "pattern": "^[0-9]+/[0-9]+$"
+            },
+            "min_trap_pass_rate": {
+              "type": "string",
+              "pattern": "^[0-9]+/[0-9]+$"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "forbidden_outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      },
+      "description": "Behaviors or memory states strictly forbidden for this module (e.g. unreviewed ACTIVE notes)."
+    },
+    "retroactive": {
+      "type": "boolean",
+      "default": false,
+      "description": "True if this profile was documented after ingestion had already occurred."
+    },
+    "retroactive_note": {
+      "type": "string",
+      "description": "Mandatory explanation if retroactive is true."
+    }
+  },
+  "additionalProperties": true
+}

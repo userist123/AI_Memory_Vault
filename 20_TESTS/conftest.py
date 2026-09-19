@@ -40,3 +40,10 @@ def isolated_runtime_vault(request: pytest.FixtureRequest, tmp_path_factory, mon
         },
     )
     monkeypatch.setenv("MEMORY_VAULT_ROOT", str(root))
+
+
+@pytest.fixture(autouse=True)
+def isolate_audit_log(monkeypatch, tmp_path_factory):
+    """Ensure audit logger defaults to a temporary directory instead of repository root."""
+    tmp_art = tmp_path_factory.mktemp("artifacts")
+    monkeypatch.setenv("ANTIGRAVITY_ARTIFACT_DIR", str(tmp_art))

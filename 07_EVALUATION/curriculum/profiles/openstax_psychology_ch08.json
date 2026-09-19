@@ -1,0 +1,58 @@
+{
+  "module_id": "psychology-memory-ch08-v1",
+  "domain": "cognitive-psychology",
+  "learning_goal": "Establish baseline empirical knowledge and mechanisms of human memory (encoding, storage, retrieval, consolidation, amnesia, and enhancement) to support cognitive agent reasoning.",
+  "expected_capabilities": [
+    "Distinguish between sensory memory, short-term/working memory, and long-term memory systems.",
+    "Recall neural substrates of memory systems including amygdala, hippocampus, cerebellum, and prefrontal cortex.",
+    "Recognize memory distortions, forgetting curves, and amnesia distinctions (retrograde vs anterograde).",
+    "Identify evidence-based memory enhancement techniques (elaborative rehearsal, chunking, spacing effect)."
+  ],
+  "source": {
+    "work_title": "Psychology 2e",
+    "chapter_or_topic": "Chapter 8: Memory",
+    "provenance_manifest": "07_EVALUATION/curriculum/provenance_manifest.json",
+    "raw_dir": "06_INBOX/RAW_IMPORTS/openstax_psychology_2e_ch08",
+    "source_text_dir": "07_EVALUATION/curriculum/source_text",
+    "content_files": [
+      "8_1_how_memory_functions.html",
+      "8_2_parts_of_the_brain_involved_with_memory.html",
+      "8_3_problems_with_memory.html",
+      "8_4_ways_to_enhance_memory.html"
+    ]
+  },
+  "topicality_terms": [
+    "memory",
+    "cognit",
+    "synap",
+    "neuro",
+    "learn",
+    "brain",
+    "architecture",
+    "knowledge",
+    "consolidat",
+    "retriev",
+    "hippocamp",
+    "representation",
+    "system",
+    "amnesia",
+    "encoding",
+    "storage"
+  ],
+  "min_topic_density": 0.5,
+  "evaluation": {
+    "frozen_test_set": "07_EVALUATION/curriculum/openstax_ch08_frozen_test_set.json",
+    "success_criteria": {
+      "min_treatment_supported": "6/12",
+      "max_wrong": "0/12",
+      "min_trap_pass_rate": "10/10"
+    }
+  },
+  "forbidden_outputs": [
+    "Promotion of proposed notes to ACTIVE without explicit human attestation",
+    "Fabricated citations or quotes not identical to source text",
+    "Unattributed assertions outside of chapter coverage"
+  ],
+  "retroactive": true,
+  "retroactive_note": "Redactat retroactiv după ingestia inițială a OpenStax Psychology 2e Capitolul 8 (#164), pentru a servi drept profil canonic de referință în procesul repetabil de curriculum."
+}

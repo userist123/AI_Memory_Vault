@@ -29,6 +29,21 @@ validate_frontmatter = schema_mod.validate_frontmatter
 SLOT_DIRECTORY = "01_ARCHITECTURE/ontology/slots"
 KNOWLEDGE_DIRECTORY = "01_ARCHITECTURE/knowledge"
 
+class BibliographicProvenanceRequired(Exception):
+    """Raised when promoting a curriculum concept lacking valid bibliographic provenance."""
+    pass
+
+
+CURRICULUM_PROVENANCE_MANIFEST = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "..",
+    "..",
+    "07_EVALUATION",
+    "curriculum",
+    "provenance_manifest.json",
+)
+
+
 # The canonical-slot gate is shared with merge_candidate_concepts.py so both
 # writers refuse the same thing in the same way.
 import sys as _sys
@@ -132,6 +147,32 @@ def promote_candidate_concept(
     source_book = target_cols[2]
     conf_val = target_cols[3]
     date_added = target_cols[5]
+
+    # Bibliographic provenance gate for curriculum notes
+    if "openstax" in source_book.lower() or source_book.startswith("curriculum"):
+        _prov_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "knowledge")
+        if _prov_dir not in _sys.path:
+            _sys.path.insert(0, _prov_dir)
+        from validate_bibliographic_provenance import validate_source_manifest
+        manifest_path = CURRICULUM_PROVENANCE_MANIFEST
+        if not os.path.exists(manifest_path):
+            raise BibliographicProvenanceRequired(
+                f"Cannot promote curriculum concept '{concept_name}': manifest not found at {manifest_path}"
+            )
+        try:
+            with open(manifest_path, "r", encoding="utf-8") as _mf:
+                _mdata = json.load(_mf)
+            _ok, _errs = validate_source_manifest(_mdata)
+            if not _ok:
+                raise BibliographicProvenanceRequired(
+                    f"Cannot promote curriculum concept '{concept_name}': invalid bibliographic provenance: {_errs}"
+                )
+        except Exception as _ex:
+            if isinstance(_ex, BibliographicProvenanceRequired):
+                raise
+            raise BibliographicProvenanceRequired(
+                f"Cannot promote curriculum concept '{concept_name}': provenance verification error: {_ex}"
+            )
 
     note_uuid = str(uuid.uuid4())
     today_str = datetime.now().strftime("%Y-%m-%d")

@@ -1,0 +1,843 @@
+{
+  "module_id": "psychology-memory-ch08-v1",
+  "source": "OpenStax Psychology 2e, Chapter 8: Memory",
+  "model": "gemini-3.1-flash-lite",
+  "responses": [
+    {
+      "question_id": "openstax-psy2e-ch08-q01",
+      "arm": "control",
+      "type": "author_review",
+      "question": "________ is a memory store with a phonological loop, visuospatial sketchpad, episodic buffer, and a central executive.",
+      "choices": [
+        "sensory memory",
+        "episodic memory",
+        "working memory",
+        "implicit memory"
+      ],
+      "correct_answer": "working memory",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5766,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q02",
+      "arm": "control",
+      "type": "author_review",
+      "question": "The storage capacity of long-term memory is ________.",
+      "choices": [
+        "one or two bits of information",
+        "seven bits, plus or minus two",
+        "limited",
+        "essentially limitless"
+      ],
+      "correct_answer": "essentially limitless",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3206,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q03",
+      "arm": "control",
+      "type": "author_review",
+      "question": "The three functions of memory are ________.",
+      "choices": [
+        "automatic processing, effortful processing, and storage",
+        "encoding, processing, and storage",
+        "automatic processing, effortful processing, and retrieval",
+        "encoding, storage, and retrieval"
+      ],
+      "correct_answer": "encoding, storage, and retrieval",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5293,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q04",
+      "arm": "control",
+      "type": "author_review",
+      "question": "This physical trace of memory is known as the ________.",
+      "choices": [
+        "engram",
+        "Lashley effect",
+        "Deese-Roediger-McDermott Paradigm",
+        "flashbulb memory effect"
+      ],
+      "correct_answer": "engram",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4715,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q05",
+      "arm": "control",
+      "type": "author_review",
+      "question": "An exceptionally clear recollection of an important event is a (an) ________.",
+      "choices": [
+        "engram",
+        "arousal theory",
+        "flashbulb memory",
+        "equipotentiality hypothesis"
+      ],
+      "correct_answer": "flashbulb memory",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4465,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q06",
+      "arm": "control",
+      "type": "author_review",
+      "question": "________ is when our recollections of the past are done in a self-enhancing manner.",
+      "choices": [
+        "stereotypical bias",
+        "egocentric bias",
+        "hindsight bias",
+        "enhancement bias"
+      ],
+      "correct_answer": "egocentric bias",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4091,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q07",
+      "arm": "control",
+      "type": "author_review",
+      "question": "Tip-of-the-tongue phenomenon is also known as ________.",
+      "choices": [
+        "persistence",
+        "misattribution",
+        "transience",
+        "blocking"
+      ],
+      "correct_answer": "blocking",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 1554,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q08",
+      "arm": "control",
+      "type": "author_review",
+      "question": "The formulation of new memories is sometimes called ________, and the process of bringing up old memories is called ________.",
+      "choices": [
+        "construction; reconstruction",
+        "reconstruction; construction",
+        "production; reproduction",
+        "reproduction; production"
+      ],
+      "correct_answer": "construction; reconstruction",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3130,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q09",
+      "arm": "control",
+      "type": "author_review",
+      "question": "When you are learning how to play the piano, the statement 'Every good boy does fine' can help you remember the notes E, G, B, D, and F for the lines of the treble clef. This is an example of a (an) ________.",
+      "choices": [
+        "jingle",
+        "acronym",
+        "acrostic",
+        "acoustic"
+      ],
+      "correct_answer": "acrostic",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5840,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q10",
+      "arm": "control",
+      "type": "author_review",
+      "question": "According to a study by Yogo and Fujihara (2008), if you want to improve your short-term memory, you should spend time writing about ________.",
+      "choices": [
+        "your best possible future self",
+        "a traumatic life experience",
+        "a trivial topic",
+        "your grocery list"
+      ],
+      "correct_answer": "a traumatic life experience",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5617,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q11",
+      "arm": "control",
+      "type": "author_review",
+      "question": "The self-referencing effect refers to ________.",
+      "choices": [
+        "making the material you are trying to memorize personally meaningful to you",
+        "making a phrase of all the first letters of the words you are trying to memorize",
+        "making a word formed by the first letter of each of the words you are trying to memorize",
+        "saying words you want to remember out loud to yourself"
+      ],
+      "correct_answer": "making the material you are trying to memorize personally meaningful to you",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 2495,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q12",
+      "arm": "control",
+      "type": "author_review",
+      "question": "Memory aids that help organize information for encoding are ________.",
+      "choices": [
+        "mnemonic devices",
+        "memory-enhancing strategies",
+        "elaborative rehearsal",
+        "effortful processing"
+      ],
+      "correct_answer": "mnemonic devices",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5087,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap01",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "What specific concentration of potassium chloride in millimoles per liter triggers long-term depression in Purkinje cells according to Chapter 8?",
+      "choices": [
+        "0.5 mmol/L",
+        "10 mmol/L",
+        "25 mmol/L",
+        "50 mmol/L"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3759,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap02",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultrastability equations for memory networks?",
+      "choices": [
+        "1948",
+        "1952",
+        "1971",
+        "1978"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5650,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap03",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "What did the 2024 fMRI study by Zhang et al. conclude about TikTok usage and episodic memory retention in adolescents according to Chapter 8?",
+      "choices": [
+        "Severe episodic decay",
+        "Enhanced memory consolidation",
+        "No measurable change",
+        "Increased semantic interference"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 6734,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap04",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "How many distinct histological layers of the neocortex are identified in Section 8.2 as participating in prospective memory consolidation?",
+      "choices": [
+        "Three layers",
+        "Four layers",
+        "Six layers",
+        "Eight layers"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3180,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap05",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "What is the recommended pediatric therapeutic dosage of memantine in milligrams per day specified in Chapter 8 for treating mild cognitive impairment?",
+      "choices": [
+        "5 mg/day",
+        "10 mg/day",
+        "20 mg/day",
+        "40 mg/day"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4164,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap06",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "In George Sperling's (1960) iconic memory study, what exact duration in milliseconds was the visual display presented before the tone cue according to Chapter 8?",
+      "choices": [
+        "50 milliseconds",
+        "250 milliseconds",
+        "500 milliseconds",
+        "1000 milliseconds"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5674,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap07",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "How many centimeters of medial temporal lobe tissue did surgeon William Beecher Scoville bilaterally resect from patient H.M. according to Chapter 8?",
+      "choices": [
+        "2.5 cm",
+        "5.0 cm",
+        "8.0 cm",
+        "12.0 cm"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4829,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap08",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "According to Chapter 8, what retention plateau percentage did Harry Bahrick (1984) discover in his 50-year Spanish vocabulary permastore study?",
+      "choices": [
+        "15%",
+        "40%",
+        "75%",
+        "90%"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5113,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap09",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "At what depth in feet underwater did Godden and Baddeley (1975) test context-dependent word recall in scuba divers according to Chapter 8?",
+      "choices": [
+        "10 feet",
+        "20 feet",
+        "50 feet",
+        "100 feet"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5057,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap10",
+      "arm": "control",
+      "type": "unanswerable_trap",
+      "question": "What frequency of high-frequency tetanic electrical stimulation did Terje Lømo and Timothy Bliss (1973) apply to hippocampal perforant path synapses according to Chapter 8?",
+      "choices": [
+        "10 Hz",
+        "50 Hz",
+        "100 Hz",
+        "200 Hz"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4994,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q01",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "________ is a memory store with a phonological loop, visuospatial sketchpad, episodic buffer, and a central executive.",
+      "choices": [
+        "sensory memory",
+        "episodic memory",
+        "working memory",
+        "implicit memory"
+      ],
+      "correct_answer": "working memory",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 3,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3865,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q02",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "The storage capacity of long-term memory is ________.",
+      "choices": [
+        "one or two bits of information",
+        "seven bits, plus or minus two",
+        "limited",
+        "essentially limitless"
+      ],
+      "correct_answer": "essentially limitless",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3143,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q03",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "The three functions of memory are ________.",
+      "choices": [
+        "automatic processing, effortful processing, and storage",
+        "encoding, processing, and storage",
+        "automatic processing, effortful processing, and retrieval",
+        "encoding, storage, and retrieval"
+      ],
+      "correct_answer": "encoding, storage, and retrieval",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "encoding, storage, and retrieval",
+      "evidence_quote": "Retrieval, or getting the information out of memory and back into awareness, is the third function.",
+      "tokens_used": 3006,
+      "verdict_original": "CORRECT_SUPPORTED"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q04",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "This physical trace of memory is known as the ________.",
+      "choices": [
+        "engram",
+        "Lashley effect",
+        "Deese-Roediger-McDermott Paradigm",
+        "flashbulb memory effect"
+      ],
+      "correct_answer": "engram",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "engram",
+      "evidence_quote": "The engram is defined as the group of neurons that serve as the physical representation of memory.",
+      "tokens_used": 2640,
+      "verdict_original": "CORRECT_SUPPORTED"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q05",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "An exceptionally clear recollection of an important event is a (an) ________.",
+      "choices": [
+        "engram",
+        "arousal theory",
+        "flashbulb memory",
+        "equipotentiality hypothesis"
+      ],
+      "correct_answer": "flashbulb memory",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4465,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q06",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "________ is when our recollections of the past are done in a self-enhancing manner.",
+      "choices": [
+        "stereotypical bias",
+        "egocentric bias",
+        "hindsight bias",
+        "enhancement bias"
+      ],
+      "correct_answer": "egocentric bias",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 2,
+      "selected_choice": "egocentric bias",
+      "evidence_quote": "Types of bias include stereotypical, egocentric, and hindsight bias, all of which reconstruct past events to align with present perspectives.",
+      "tokens_used": 5151,
+      "verdict_original": "CORRECT_SUPPORTED"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q07",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "Tip-of-the-tongue phenomenon is also known as ________.",
+      "choices": [
+        "persistence",
+        "misattribution",
+        "transience",
+        "blocking"
+      ],
+      "correct_answer": "blocking",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 1,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 1567,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q08",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "The formulation of new memories is sometimes called ________, and the process of bringing up old memories is called ________.",
+      "choices": [
+        "construction; reconstruction",
+        "reconstruction; construction",
+        "production; reproduction",
+        "reproduction; production"
+      ],
+      "correct_answer": "construction; reconstruction",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 4,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4090,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q09",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "When you are learning how to play the piano, the statement 'Every good boy does fine' can help you remember the notes E, G, B, D, and F for the lines of the treble clef. This is an example of a (an) ________.",
+      "choices": [
+        "jingle",
+        "acronym",
+        "acrostic",
+        "acoustic"
+      ],
+      "correct_answer": "acrostic",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 1,
+      "selected_choice": "acrostic",
+      "evidence_quote": "Common types include acronyms, acrostics, and jingles, which organize information into patterns or phrases that are easier to remember.",
+      "tokens_used": 5209,
+      "verdict_original": "CORRECT_SUPPORTED"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q10",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "According to a study by Yogo and Fujihara (2008), if you want to improve your short-term memory, you should spend time writing about ________.",
+      "choices": [
+        "your best possible future self",
+        "a traumatic life experience",
+        "a trivial topic",
+        "your grocery list"
+      ],
+      "correct_answer": "a traumatic life experience",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "a traumatic life experience",
+      "evidence_quote": "The researchers found that this simple writing task increased short-term memory capacity after five weeks, but only for the participants who wrote about traumatic experiences.",
+      "tokens_used": 2862,
+      "verdict_original": "CORRECT_SUPPORTED"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q11",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "The self-referencing effect refers to ________.",
+      "choices": [
+        "making the material you are trying to memorize personally meaningful to you",
+        "making a phrase of all the first letters of the words you are trying to memorize",
+        "making a word formed by the first letter of each of the words you are trying to memorize",
+        "saying words you want to remember out loud to yourself"
+      ],
+      "correct_answer": "making the material you are trying to memorize personally meaningful to you",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 0,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 2495,
+      "verdict_original": "ABSTAIN"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-q12",
+      "arm": "treatment",
+      "type": "author_review",
+      "question": "Memory aids that help organize information for encoding are ________.",
+      "choices": [
+        "mnemonic devices",
+        "memory-enhancing strategies",
+        "elaborative rehearsal",
+        "effortful processing"
+      ],
+      "correct_answer": "mnemonic devices",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "mnemonic devices",
+      "evidence_quote": "Mnemonic devices are memory aids that help us organize information for encoding ( Figure 8.18 ).",
+      "tokens_used": 3095,
+      "verdict_original": "CORRECT_SUPPORTED"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap01",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "What specific concentration of potassium chloride in millimoles per liter triggers long-term depression in Purkinje cells according to Chapter 8?",
+      "choices": [
+        "0.5 mmol/L",
+        "10 mmol/L",
+        "25 mmol/L",
+        "50 mmol/L"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 3,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4270,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap02",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultrastability equations for memory networks?",
+      "choices": [
+        "1948",
+        "1952",
+        "1971",
+        "1978"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 2812,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap03",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "What did the 2024 fMRI study by Zhang et al. conclude about TikTok usage and episodic memory retention in adolescents according to Chapter 8?",
+      "choices": [
+        "Severe episodic decay",
+        "Enhanced memory consolidation",
+        "No measurable change",
+        "Increased semantic interference"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 2529,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap04",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "How many distinct histological layers of the neocortex are identified in Section 8.2 as participating in prospective memory consolidation?",
+      "choices": [
+        "Three layers",
+        "Four layers",
+        "Six layers",
+        "Eight layers"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 4,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3313,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap05",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "What is the recommended pediatric therapeutic dosage of memantine in milligrams per day specified in Chapter 8 for treating mild cognitive impairment?",
+      "choices": [
+        "5 mg/day",
+        "10 mg/day",
+        "20 mg/day",
+        "40 mg/day"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 1,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4158,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap06",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "In George Sperling's (1960) iconic memory study, what exact duration in milliseconds was the visual display presented before the tone cue according to Chapter 8?",
+      "choices": [
+        "50 milliseconds",
+        "250 milliseconds",
+        "500 milliseconds",
+        "1000 milliseconds"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 5,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 2936,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap07",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "How many centimeters of medial temporal lobe tissue did surgeon William Beecher Scoville bilaterally resect from patient H.M. according to Chapter 8?",
+      "choices": [
+        "2.5 cm",
+        "5.0 cm",
+        "8.0 cm",
+        "12.0 cm"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 2,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 5157,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap08",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "According to Chapter 8, what retention plateau percentage did Harry Bahrick (1984) discover in his 50-year Spanish vocabulary permastore study?",
+      "choices": [
+        "15%",
+        "40%",
+        "75%",
+        "90%"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 3,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4046,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap09",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "At what depth in feet underwater did Godden and Baddeley (1975) test context-dependent word recall in scuba divers according to Chapter 8?",
+      "choices": [
+        "10 feet",
+        "20 feet",
+        "50 feet",
+        "100 feet"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 2,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 4511,
+      "verdict_original": "TRAP_PASS"
+    },
+    {
+      "question_id": "openstax-psy2e-ch08-trap10",
+      "arm": "treatment",
+      "type": "unanswerable_trap",
+      "question": "What frequency of high-frequency tetanic electrical stimulation did Terje Lømo and Timothy Bliss (1973) apply to hippocampal perforant path synapses according to Chapter 8?",
+      "choices": [
+        "10 Hz",
+        "50 Hz",
+        "100 Hz",
+        "200 Hz"
+      ],
+      "correct_answer": "INSUFFICIENT",
+      "notes_retrieved_count": 5,
+      "openstax_notes_in_retrieved": 3,
+      "selected_choice": "INSUFFICIENT",
+      "evidence_quote": null,
+      "tokens_used": 3232,
+      "verdict_original": "TRAP_PASS"
+    }
+  ]
+}
