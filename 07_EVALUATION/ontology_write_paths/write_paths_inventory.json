@@ -1,0 +1,564 @@
+{
+  "modules": [
+    {
+      "file": "20_TESTS/test_book_ingestion_pipeline.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "test_canonical_slot_validation",
+          "line": 84,
+          "call": "open(write)"
+        },
+        {
+          "function": "test_merge_idempotency_and_table_schema",
+          "line": 114,
+          "call": "write_text"
+        },
+        {
+          "function": "test_merge_idempotency_and_table_schema",
+          "line": 140,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 32,
+          "what": "attribute SLOT_DIRECTORY"
+        },
+        {
+          "line": 32,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 88,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 98,
+          "what": "name mock_slots_dir"
+        },
+        {
+          "line": 99,
+          "what": "name mock_slots_dir"
+        },
+        {
+          "line": 103,
+          "what": "name mock_slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/test_canonical_write_requires_verdicts.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "ontology",
+          "line": 40,
+          "call": "write_text"
+        },
+        {
+          "function": "staging",
+          "line": 48,
+          "call": "write_text"
+        },
+        {
+          "function": "test_a_manifest_opens_the_gate",
+          "line": 78,
+          "call": "write_text"
+        },
+        {
+          "function": "test_a_working_copy_needs_no_manifest",
+          "line": 93,
+          "call": "write_text"
+        },
+        {
+          "function": "test_a_malformed_staging_file_still_reports_its_own_error",
+          "line": 103,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 111,
+          "what": "attribute CANONICAL_SLOT_DIRECTORY"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/test_promote_candidate_concept_gate.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "_manifest",
+          "line": 48,
+          "call": "write_text"
+        },
+        {
+          "function": "world",
+          "line": 62,
+          "call": "write_text"
+        },
+        {
+          "function": "test_non_canonical_directory_needs_no_manifest",
+          "line": 116,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 61,
+          "what": "name slot_file"
+        },
+        {
+          "line": 62,
+          "what": "name slot_file"
+        },
+        {
+          "line": 65,
+          "what": "name slot_file"
+        },
+        {
+          "line": 69,
+          "what": "name slot_file"
+        },
+        {
+          "line": 70,
+          "what": "name slot_file"
+        },
+        {
+          "line": 74,
+          "what": "name slot_file"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/test_promoter_emits_graph_relations.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "vault",
+          "line": 48,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 157,
+          "what": "literal '01_ARCHITECTURE/ontology/slots/06_procedures.md'"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/test_purge_rejected_rows.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "temp_slots_dir",
+          "line": 62,
+          "call": "write_text"
+        },
+        {
+          "function": "temp_slots_dir",
+          "line": 65,
+          "call": "write_text"
+        },
+        {
+          "function": "temp_slots_dir",
+          "line": 68,
+          "call": "write_text"
+        },
+        {
+          "function": "test_batch_mode_cannot_delete_what_the_manifest_protects",
+          "line": 393,
+          "call": "shutil.copytree"
+        },
+        {
+          "function": "test_the_manifest_and_batch_paths_agree_on_what_may_go.deleted_via",
+          "line": 437,
+          "call": "shutil.copytree"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 61,
+          "what": "name slot_file"
+        },
+        {
+          "line": 62,
+          "what": "name slot_file"
+        },
+        {
+          "line": 72,
+          "what": "parameter temp_slots_dir"
+        },
+        {
+          "line": 77,
+          "what": "name temp_slots_dir"
+        },
+        {
+          "line": 84,
+          "what": "name temp_slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/ontology/test_row_disposition_applied.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "test_negative_control_planted_deletion_of_promoted",
+          "line": 188,
+          "call": "shutil.copytree"
+        },
+        {
+          "function": "test_negative_control_planted_deletion_of_promoted",
+          "line": 195,
+          "call": "write_text"
+        },
+        {
+          "function": "test_negative_control_planted_tampering_of_promoted_note_id",
+          "line": 204,
+          "call": "shutil.copytree"
+        },
+        {
+          "function": "test_negative_control_planted_tampering_of_promoted_note_id",
+          "line": 209,
+          "call": "write_text"
+        },
+        {
+          "function": "test_negative_control_planted_tampering_of_merge_occurrences",
+          "line": 218,
+          "call": "shutil.copytree"
+        },
+        {
+          "function": "test_negative_control_planted_tampering_of_merge_occurrences",
+          "line": 223,
+          "call": "write_text"
+        },
+        {
+          "function": "test_negative_control_planted_duplicate_slot_conflict",
+          "line": 232,
+          "call": "shutil.copytree"
+        },
+        {
+          "function": "test_negative_control_planted_duplicate_slot_conflict",
+          "line": 237,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 43,
+          "what": "name SLOTS_DIR"
+        },
+        {
+          "line": 56,
+          "what": "name SLOTS_DIR"
+        },
+        {
+          "line": 68,
+          "what": "attribute slot_file"
+        },
+        {
+          "line": 70,
+          "what": "attribute slot_file"
+        },
+        {
+          "line": 76,
+          "what": "attribute slot_file"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/ingestion/apply_row_disposition.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "apply_dispositions",
+          "line": 280,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 52,
+          "what": "literal '01_ARCHITECTURE/ontology/slots'"
+        },
+        {
+          "line": 52,
+          "what": "name DEFAULT_SLOTS_DIR"
+        },
+        {
+          "line": 107,
+          "what": "parameter slots_dir"
+        },
+        {
+          "line": 116,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 117,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 122,
+          "what": "name slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/ingestion/disposition_manifest.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "DispositionManifest.save",
+          "line": 160,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 37,
+          "what": "name slot_file"
+        },
+        {
+          "line": 46,
+          "what": "attribute slot_file"
+        },
+        {
+          "line": 49,
+          "what": "attribute slot_file"
+        },
+        {
+          "line": 51,
+          "what": "attribute slot_file"
+        },
+        {
+          "line": 54,
+          "what": "attribute slot_file"
+        },
+        {
+          "line": 59,
+          "what": "attribute slot_file"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/ingestion/merge_candidate_concepts.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "append_candidate_concepts_to_slot",
+          "line": 300,
+          "call": "open(write)"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 25,
+          "what": "literal '01_ARCHITECTURE/ontology/slots'"
+        },
+        {
+          "line": 25,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 31,
+          "what": "name CANONICAL_SLOT_DIRECTORY"
+        },
+        {
+          "line": 31,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 55,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 55,
+          "what": "parameter slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/ingestion/model_extract_concepts.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "main",
+          "line": 856,
+          "call": "write_text"
+        },
+        {
+          "function": "main",
+          "line": 879,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 178,
+          "what": "name SLOT_DIR"
+        },
+        {
+          "line": 191,
+          "what": "name SLOT_DIR"
+        },
+        {
+          "line": 203,
+          "what": "name SLOT_DIR"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/ingestion/promote_candidate_concept.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "promote_candidate_concept",
+          "line": 212,
+          "call": "open(write)"
+        },
+        {
+          "function": "promote_candidate_concept",
+          "line": 225,
+          "call": "open(write)"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 29,
+          "what": "literal '01_ARCHITECTURE/ontology/slots'"
+        },
+        {
+          "line": 29,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 43,
+          "what": "name SLOT_DIRECTORY"
+        },
+        {
+          "line": 43,
+          "what": "parameter slots_dir"
+        },
+        {
+          "line": 47,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 50,
+          "what": "name slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/ingestion/purge_rejected_rows.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "purge_rows",
+          "line": 366,
+          "call": "open(write)"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 35,
+          "what": "literal '01_ARCHITECTURE/ontology/slots'"
+        },
+        {
+          "line": 35,
+          "what": "name DEFAULT_SLOTS_DIR"
+        },
+        {
+          "line": 67,
+          "what": "parameter slots_dir"
+        },
+        {
+          "line": 76,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 85,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 89,
+          "what": "name slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/verification/generate_closure_report.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "<module>",
+          "line": 292,
+          "call": "open(write)"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 36,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 37,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 109,
+          "what": "literal 'Dispoziția din `disposition_manifest.json` a fost aplicată pe toate sloturile din"
+        }
+      ]
+    },
+    {
+      "file": "30_SCRIPTS/verification/ontology_write_paths.py",
+      "category": "script",
+      "writes": [
+        {
+          "function": "main",
+          "line": 240,
+          "call": "write_text"
+        },
+        {
+          "function": "main",
+          "line": 245,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 190,
+          "what": "literal '# Write paths into `01_ARCHITECTURE/ontology/slots/`'"
+        }
+      ]
+    }
+  ]
+}

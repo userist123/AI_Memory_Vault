@@ -29,6 +29,16 @@ validate_frontmatter = schema_mod.validate_frontmatter
 SLOT_DIRECTORY = "01_ARCHITECTURE/ontology/slots"
 KNOWLEDGE_DIRECTORY = "01_ARCHITECTURE/knowledge"
 
+# The canonical-slot gate is shared with merge_candidate_concepts.py so both
+# writers refuse the same thing in the same way.
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from merge_candidate_concepts import (  # noqa: E402
+    CANONICAL_SLOT_DIRECTORY,
+    UngatedCanonicalWrite,
+    _same_directory,
+)
+
 
 def find_slot_file(slot_name: str, slots_dir: str = SLOT_DIRECTORY) -> str:
     """
@@ -62,11 +72,35 @@ def promote_candidate_concept(
     rewritten_definition: str = None,
     slots_dir: str = SLOT_DIRECTORY,
     notes_dir: str = KNOWLEDGE_DIRECTORY,
-    judgment_reasoning: str = ""
+    judgment_reasoning: str = "",
+    verdicts_file: str = None,
 ) -> Dict[str, Any]:
     """
     Promotes a 'proposed' candidate concept to a REVIEW memory note in the vault.
+
+    Rewriting a row of the canonical slot files to `promoted` requires
+    `verdicts_file`, a promotion-verdicts manifest that admits (PROMOTE) this
+    concept, exactly as merge_candidate_concepts.py requires one to add rows.
+    Without it this used to flip any `proposed` row on the caller's say-so, the
+    same one-flag-short path the merge gate closed. Any other `slots_dir` (a copy
+    of the slots) needs no manifest, which is how a dry run is done.
     """
+    if _same_directory(slots_dir, CANONICAL_SLOT_DIRECTORY):
+        if not verdicts_file:
+            raise UngatedCanonicalWrite(
+                f"refusing to promote {concept_name!r} in the canonical slot files "
+                f"({CANONICAL_SLOT_DIRECTORY}) without a verdict manifest. Pass "
+                "verdicts_file (--verdicts-file), or point slots_dir at a copy of "
+                "the slots for a dry run."
+            )
+        from promotion_verdicts import VerdictError, load_manifest
+        manifest = load_manifest(verdicts_file)
+        if not manifest.admits(concept_name):
+            verdict = manifest.get(concept_name)
+            raise VerdictError(
+                f"{concept_name}: the manifest does not admit promotion "
+                f"({verdict.verdict if verdict else 'NO_VERDICT'})"
+            )
     slot_file = find_slot_file(slot_name, slots_dir)
     with open(slot_file, "r", encoding="utf-8") as f:
         content = f.read()
@@ -207,13 +241,15 @@ def main():
     parser.add_argument("--slot-name", required=True, help="Canonical slot name")
     parser.add_argument("--rewritten-definition", help="Optional rewritten definition string")
     parser.add_argument("--reasoning", help="Judgment reasoning for promotion")
+    parser.add_argument("--verdicts-file", help="Promotion-verdicts manifest (required for the canonical slot files)")
 
     args = parser.parse_args()
     res = promote_candidate_concept(
         args.concept_name,
         args.slot_name,
         rewritten_definition=args.rewritten_definition,
-        judgment_reasoning=args.reasoning
+        judgment_reasoning=args.reasoning,
+        verdicts_file=args.verdicts_file,
     )
     print(json.dumps(res, indent=2))
 
