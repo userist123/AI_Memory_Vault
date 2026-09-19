@@ -83,8 +83,8 @@ class TestNegativeControls(unittest.TestCase):
     def test_a_writer_using_a_slots_dir_parameter_is_reported(self):
         root = self._repo({"03_IMPLEMENTATION/packages/x/rogue.py": (
             "def go(slots_dir, text):\n"
-            "    with open(slots_dir + '/a.md', 'w') as f:\n"
-            "        f.write(text)\n")})
+            "    f = open(slots_dir + '/a.md', 'w')\n"
+            "    f.write(text)\n")})
         self.assertEqual(len(owp.scan(root)), 1)
 
     def test_readers_and_unrelated_writers_are_not_reported(self):
