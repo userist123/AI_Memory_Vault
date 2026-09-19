@@ -26,6 +26,12 @@
       "conclusion": "Gated. Was OPEN: `--apply` deleted rows with no manifest, and `--disposition-manifest ''` switched the only protection off. Gate added in this change, shared with the merge and promotion gates."
     },
     {
+      "path": "20_TESTS/memory_vault_fixture.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: copies the real slots INTO a temporary vault and writes seed notes there; the real slots are only read."
+    },
+    {
       "path": "20_TESTS/ontology/test_row_disposition_applied.py",
       "role": "test",
       "gate": "n/a (temporary directories)",
@@ -48,6 +54,18 @@
       "role": "test",
       "gate": "n/a (temporary directories)",
       "conclusion": "Reviewed: copies the slots into a temporary vault before calling the controller; the real slots are never touched (a control test checks it)."
+    },
+    {
+      "path": "20_TESTS/test_curriculum_provenance.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory."
+    },
+    {
+      "path": "20_TESTS/test_memory_usage_evidence.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: writes a temporary questions file for a negative control; never touches the slots."
     },
     {
       "path": "20_TESTS/test_promote_candidate_concept_gate.py",
@@ -74,10 +92,28 @@
       "conclusion": "Reviewed: reads the real slots and copies them into `tmp_path` before any change."
     },
     {
-      "path": "20_TESTS/test_curriculum_provenance.py",
-      "role": "test",
-      "gate": "n/a (temporary directories)",
-      "conclusion": "Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory."
+      "path": "30_SCRIPTS/ingestion/disposition_manifest.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: writes the manifest JSON (`save`); reads the slots through `slot_rows.read_all`."
+    },
+    {
+      "path": "30_SCRIPTS/ingestion/model_extract_concepts.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: writes the staging and rejects files; `SLOT_DIR` is only read for the slot questions."
+    },
+    {
+      "path": "30_SCRIPTS/verification/generate_closure_report.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: writes a report file; reads the slots."
+    },
+    {
+      "path": "30_SCRIPTS/verification/ontology_write_paths.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: this scanner. Writes its own report and JSON, never the slots."
     }
   ],
   "not_visible_to_the_scan": [

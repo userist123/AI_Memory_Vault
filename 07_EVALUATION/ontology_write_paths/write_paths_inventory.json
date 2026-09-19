@@ -1,6 +1,28 @@
 {
   "modules": [
     {
+      "file": "20_TESTS/memory_vault_fixture.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "make_vault",
+          "line": 51,
+          "call": "shutil.copytree"
+        },
+        {
+          "function": "make_vault",
+          "line": 54,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        }
+      ]
+    },
+    {
       "file": "20_TESTS/test_book_ingestion_pipeline.py",
       "category": "test",
       "writes": [
@@ -122,6 +144,70 @@
         {
           "line": 67,
           "what": "name slot_file"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/test_curriculum_provenance.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "TestCurriculumBibliographicProvenance.test_negative_control_note_without_edition_fails",
+          "line": 77,
+          "call": "write_text"
+        },
+        {
+          "function": "TestCurriculumBibliographicProvenance.test_negative_control_note_without_license_fails",
+          "line": 89,
+          "call": "write_text"
+        },
+        {
+          "function": "TestCurriculumPromotionProvenanceGate.test_negative_control_promotion_refused_without_provenance_manifest",
+          "line": 112,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 97,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 99,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 102,
+          "what": "name slot_file"
+        },
+        {
+          "line": 102,
+          "what": "name slots_dir"
+        },
+        {
+          "line": 112,
+          "what": "name slot_file"
+        },
+        {
+          "line": 126,
+          "what": "name slots_dir"
+        }
+      ]
+    },
+    {
+      "file": "20_TESTS/test_memory_usage_evidence.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "test_negative_control_a_question_whose_passage_is_not_in_the_file_is_refused",
+          "line": 57,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 122,
+          "what": "literal 'ontology/slots'"
         }
       ]
     },
@@ -511,12 +597,12 @@
       "writes": [
         {
           "function": "promote_candidate_concept",
-          "line": 212,
+          "line": 253,
           "call": "open(write)"
         },
         {
           "function": "promote_candidate_concept",
-          "line": 225,
+          "line": 266,
           "call": "open(write)"
         }
       ],
@@ -530,19 +616,19 @@
           "what": "name SLOT_DIRECTORY"
         },
         {
-          "line": 43,
+          "line": 58,
           "what": "name SLOT_DIRECTORY"
         },
         {
-          "line": 43,
+          "line": 58,
           "what": "parameter slots_dir"
         },
         {
-          "line": 47,
+          "line": 62,
           "what": "name slots_dir"
         },
         {
-          "line": 50,
+          "line": 65,
           "what": "name slots_dir"
         }
       ]
