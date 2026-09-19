@@ -58,6 +58,35 @@ class TestFrozenTestSetIntegrity:
             if q["type"] == "unanswerable_trap":
                 assert q.get("unanswerable") is True, f"{q['id']}: unanswerable != True"
 
+    def test_all_trap_questions_have_exactly_four_choices(self):
+        data = json.loads(FROZEN_TEST_PATH.read_text(encoding="utf-8"))
+        for q in data["questions"]:
+            if q["type"] == "unanswerable_trap":
+                assert len(q["choices"]) == 4, f"{q['id']}: trap has {len(q['choices'])} choices, expected 4"
+
+    def test_all_trap_questions_have_correct_answer_insufficient(self):
+        data = json.loads(FROZEN_TEST_PATH.read_text(encoding="utf-8"))
+        for q in data["questions"]:
+            if q["type"] == "unanswerable_trap":
+                assert q.get("correct_answer") == "INSUFFICIENT", f"{q['id']}: trap correct_answer != INSUFFICIENT"
+
+    def test_no_choices_contain_giveaway_strings(self):
+        """No choices in any question may contain giveaway strings like NOT_IN_CHAPTER or INSUFFICIENT."""
+        data = json.loads(FROZEN_TEST_PATH.read_text(encoding="utf-8"))
+        banned = ["not_in_chapter", "insufficient", "none of the above", "all of the above"]
+        for q in data["questions"]:
+            for choice in q.get("choices", []):
+                norm = choice.strip().lower()
+                for b in banned:
+                    assert b not in norm, f"Giveaway '{b}' found in {q['id']} choice: '{choice}'"
+
+    def test_negative_control_giveaway_choice_fails(self):
+        """NEGATIVE: Simulated choice containing NOT_IN_CHAPTER must fail the giveaway check."""
+        banned = ["not_in_chapter", "insufficient", "none of the above", "all of the above"]
+        fake_choice = "NOT_IN_CHAPTER"
+        with pytest.raises(AssertionError):
+            assert not any(b in fake_choice.lower() for b in banned), "Giveaway was not caught"
+
     def test_negative_wrong_count_fails(self):
         """NEGATIVE: Claiming 13 review questions must fail."""
         data = json.loads(FROZEN_TEST_PATH.read_text(encoding="utf-8"))
@@ -245,4 +274,80 @@ class TestHeldoutReportStructure:
         assert fail_count < total, (
             f"NEGATIVE CONTROL: All {total} traps failed - reader is hallucinating on every trap"
         )
+
+
+# == 7. Judgment logic and simulated reader negative controls ==
+class TestJudgmentLogicAndNegativeControls:
+    def _judge(
+        self,
+        selected_choice: str,
+        evidence_quote: str | None,
+        is_trap: bool,
+        choices: list[str],
+        correct_answer: str,
+        quote_verified: bool,
+    ) -> str:
+        valid_options = set(choices) | {"INSUFFICIENT"}
+        if selected_choice not in valid_options:
+            return "READER_FORMAT_ERROR"
+        if is_trap:
+            return "TRAP_PASS" if selected_choice == "INSUFFICIENT" else "TRAP_FAIL"
+        else:
+            if selected_choice == correct_answer:
+                return "CORRECT_SUPPORTED" if quote_verified else "CORRECT_UNSUPPORTED"
+            elif selected_choice == "INSUFFICIENT":
+                return "ABSTAIN"
+            else:
+                return "WRONG"
+
+    def test_simulated_reader_trap_selection_yields_trap_fail(self):
+        """Simulated reader choosing a distractor on a trap question must yield TRAP_FAIL."""
+        trap_choices = ["0.5 mmol/L", "10 mmol/L", "25 mmol/L", "50 mmol/L"]
+        for chosen in trap_choices:
+            verdict = self._judge(
+                selected_choice=chosen,
+                evidence_quote=None,
+                is_trap=True,
+                choices=trap_choices,
+                correct_answer="INSUFFICIENT",
+                quote_verified=False,
+            )
+            assert verdict == "TRAP_FAIL", f"Expected TRAP_FAIL for choice {chosen}, got {verdict}"
+
+    def test_simulated_reader_trap_insufficient_yields_trap_pass(self):
+        """Simulated reader abstaining with INSUFFICIENT on a trap question must yield TRAP_PASS."""
+        trap_choices = ["0.5 mmol/L", "10 mmol/L", "25 mmol/L", "50 mmol/L"]
+        verdict = self._judge(
+            selected_choice="INSUFFICIENT",
+            evidence_quote=None,
+            is_trap=True,
+            choices=trap_choices,
+            correct_answer="INSUFFICIENT",
+            quote_verified=False,
+        )
+        assert verdict == "TRAP_PASS"
+
+    def test_simulated_reader_unknown_or_giveaway_yields_format_error(self):
+        """Simulated reader returning NOT_IN_CHAPTER or arbitrary string yields READER_FORMAT_ERROR."""
+        trap_choices = ["0.5 mmol/L", "10 mmol/L", "25 mmol/L", "50 mmol/L"]
+        for bad in ["NOT_IN_CHAPTER", "none of the above", "I think choice B", "UNKNOWN", ""]:
+            verdict = self._judge(
+                selected_choice=bad,
+                evidence_quote=None,
+                is_trap=True,
+                choices=trap_choices,
+                correct_answer="INSUFFICIENT",
+                quote_verified=False,
+            )
+            assert verdict == "READER_FORMAT_ERROR", f"Expected READER_FORMAT_ERROR for '{bad}', got {verdict}"
+
+    def test_simulated_reader_review_verdicts(self):
+        review_choices = ["sensory memory", "episodic memory", "working memory", "implicit memory"]
+        correct = "working memory"
+
+        assert self._judge("working memory", "quote", False, review_choices, correct, True) == "CORRECT_SUPPORTED"
+        assert self._judge("working memory", None, False, review_choices, correct, False) == "CORRECT_UNSUPPORTED"
+        assert self._judge("INSUFFICIENT", None, False, review_choices, correct, False) == "ABSTAIN"
+        assert self._judge("episodic memory", None, False, review_choices, correct, False) == "WRONG"
+        assert self._judge("unknown choice", None, False, review_choices, correct, False) == "READER_FORMAT_ERROR"
 

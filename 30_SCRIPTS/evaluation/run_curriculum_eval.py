@@ -73,9 +73,9 @@ def call_reader(prompt: str, model: Any, max_retries: int = 5) -> Dict[str, Any]
             try:
                 result = json.loads(resp.text)
             except Exception:
-                result = {"selected_choice": "PARSE_ERROR", "evidence_quote": None}
+                result = {"selected_choice": "READER_FORMAT_ERROR", "evidence_quote": None}
             return {
-                "selected_choice": result.get("selected_choice", "PARSE_ERROR"),
+                "selected_choice": result.get("selected_choice", "READER_FORMAT_ERROR"),
                 "evidence_quote": result.get("evidence_quote"),
                 "prompt_tokens": getattr(usage, "prompt_token_count", 0),
                 "completion_tokens": getattr(usage, "candidates_token_count", 0),
@@ -96,6 +96,29 @@ def verify_evidence_quote(evidence_quote, notes_text: str) -> bool:
     norm_quote = " ".join(evidence_quote.split())
     norm_text = " ".join(notes_text.split())
     return norm_quote in norm_text
+
+
+def judge_answer(
+    selected_choice: str,
+    evidence_quote: str | None,
+    is_trap: bool,
+    choices: List[str],
+    correct_answer: str,
+    quote_verified: bool,
+) -> str:
+    valid_options = set(choices) | {"INSUFFICIENT"}
+    if selected_choice not in valid_options:
+        return "READER_FORMAT_ERROR"
+
+    if is_trap:
+        return "TRAP_PASS" if selected_choice == "INSUFFICIENT" else "TRAP_FAIL"
+    else:
+        if selected_choice == correct_answer:
+            return "CORRECT_SUPPORTED" if quote_verified else "CORRECT_UNSUPPORTED"
+        elif selected_choice == "INSUFFICIENT":
+            return "ABSTAIN"
+        else:
+            return "WRONG"
 
 
 def evaluate_question(
@@ -137,20 +160,18 @@ def evaluate_question(
         prompt = build_reader_prompt(q["question"], choices, notes_text)
         reader_result = call_reader(prompt, model)
 
-
     selected = reader_result["selected_choice"]
     evidence_quote = reader_result["evidence_quote"]
     quote_verified = verify_evidence_quote(evidence_quote, notes_text)
 
-    if is_trap:
-        verdict = "TRAP_PASS" if selected == "INSUFFICIENT" else "TRAP_FAIL"
-    else:
-        if selected == correct_answer:
-            verdict = "CORRECT_SUPPORTED" if quote_verified else "CORRECT_UNSUPPORTED"
-        elif selected == "INSUFFICIENT":
-            verdict = "ABSTAIN"
-        else:
-            verdict = "WRONG"
+    verdict = judge_answer(
+        selected_choice=selected,
+        evidence_quote=evidence_quote,
+        is_trap=is_trap,
+        choices=choices,
+        correct_answer=correct_answer,
+        quote_verified=quote_verified,
+    )
 
     return {
         "id": q["id"],
@@ -209,12 +230,15 @@ def run_arm(questions: List[Dict[str, Any]], include_openstax: bool, model: Any)
             "correct_total": frac(review_q, lambda r: r["verdict"].startswith("CORRECT")),
             "abstain": frac(review_q, lambda r: r["verdict"] == "ABSTAIN"),
             "wrong": frac(review_q, lambda r: r["verdict"] == "WRONG"),
+            "reader_format_error": frac(review_q, lambda r: r["verdict"] == "READER_FORMAT_ERROR"),
         },
         "trap_questions": {
             "total": len(trap_q),
             "trap_pass": frac(trap_q, lambda r: r["verdict"] == "TRAP_PASS"),
             "trap_fail": frac(trap_q, lambda r: r["verdict"] == "TRAP_FAIL"),
+            "reader_format_error": frac(trap_q, lambda r: r["verdict"] == "READER_FORMAT_ERROR"),
         },
+        "reader_format_errors_total": sum(1 for r in results if r["verdict"] == "READER_FORMAT_ERROR"),
         "total_tokens_used": sum(r["tokens_used"] for r in results),
         "per_question": results,
     }

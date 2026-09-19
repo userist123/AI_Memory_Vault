@@ -184,9 +184,9 @@
         "0.5 mmol/L",
         "10 mmol/L",
         "25 mmol/L",
-        "NOT_IN_CHAPTER"
+        "50 mmol/L"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "trap_rationale": "Chapter 8 discusses the cerebellum in procedural memory, but gives no ionic concentrations for Purkinje cell depression.",
       "specific_terms": [
@@ -200,12 +200,12 @@
       "section": "General Memory Theory",
       "question": "According to Chapter 8, which specific year did W. Ross Ashby publish his ultrastability equations for memory networks?",
       "choices": [
+        "1948",
         "1952",
-        "1960",
         "1971",
-        "NOT_IN_CHAPTER"
+        "1978"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "trap_rationale": "W. Ross Ashby and ultrastability equations are not discussed or cited anywhere in Chapter 8.",
       "specific_terms": [
@@ -222,9 +222,9 @@
         "Severe episodic decay",
         "Enhanced memory consolidation",
         "No measurable change",
-        "NOT_IN_CHAPTER"
+        "Increased semantic interference"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "trap_rationale": "OpenStax Psychology 2e was published in 2020 and mentions no 2024 studies or social media video platform effects.",
       "specific_terms": [
@@ -241,9 +241,9 @@
         "Three layers",
         "Four layers",
         "Six layers",
-        "NOT_IN_CHAPTER"
+        "Eight layers"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "trap_rationale": "Section 8.2 discusses gross brain areas (amygdala, hippocampus, cerebellum, prefrontal cortex) without laminar neocortical histology.",
       "specific_terms": [
@@ -260,9 +260,9 @@
         "5 mg/day",
         "10 mg/day",
         "20 mg/day",
-        "NOT_IN_CHAPTER"
+        "40 mg/day"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "trap_rationale": "Chapter 8 mentions Alzheimer disease conceptually but gives no pharmaceutical prescription guidelines or drug dosages.",
       "specific_terms": [
@@ -280,9 +280,9 @@
         "50 milliseconds",
         "250 milliseconds",
         "500 milliseconds",
-        "NOT_IN_CHAPTER"
+        "1000 milliseconds"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "specific_terms": [
         "sperling",
@@ -300,9 +300,9 @@
         "2.5 cm",
         "5.0 cm",
         "8.0 cm",
-        "NOT_IN_CHAPTER"
+        "12.0 cm"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "specific_terms": [
         "scoville",
@@ -320,9 +320,9 @@
         "15%",
         "40%",
         "75%",
-        "NOT_IN_CHAPTER"
+        "90%"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "specific_terms": [
         "bahrick",
@@ -340,9 +340,9 @@
         "10 feet",
         "20 feet",
         "50 feet",
-        "NOT_IN_CHAPTER"
+        "100 feet"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "specific_terms": [
         "godden",
@@ -360,9 +360,9 @@
         "10 Hz",
         "50 Hz",
         "100 Hz",
-        "NOT_IN_CHAPTER"
+        "200 Hz"
       ],
-      "correct_answer": "NOT_IN_CHAPTER",
+      "correct_answer": "INSUFFICIENT",
       "unanswerable": true,
       "specific_terms": [
         "lomo",
@@ -370,5 +370,6 @@
       ],
       "trap_rationale": "Section 8.2 mentions synaptic plasticity and neurotransmitters, but does not cite L\u00f8mo and Bliss (1973), perforant path synapses, or tetanic stimulation frequencies."
     }
-  ]
+  ],
+  "round4_refactoring_note": "Removed NOT_IN_CHAPTER giveaway option from all traps. Traps now feature 4 plausible distractors; correct response is autonomous INSUFFICIENT output."
 }
