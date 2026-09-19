@@ -1,0 +1,1823 @@
+{
+  "benchmark": "07_EVALUATION/heldout_retrieval_benchmark_v2/heldout.json",
+  "ranking_arm": "RANKING_ARM_BASELINE (pinned, as in run_production_arms.build)",
+  "strict_graph_expansion": false,
+  "corpus_notes": 926,
+  "n_cases": 32,
+  "seed_distribution_budget_default": {
+    "min": 0,
+    "median": 200.0,
+    "max": 200
+  },
+  "default_budget_negative_control": {
+    "zero_at_seed_count": 20,
+    "queries_total": 32,
+    "queries_expansion_impossible": {
+      "k": 25,
+      "n": 32,
+      "text": "25/32"
+    },
+    "nodes_added_where_impossible": 0,
+    "queries_expansion_possible": {
+      "k": 7,
+      "n": 32,
+      "text": "7/32"
+    },
+    "nodes_added_where_possible": 0,
+    "passed": true
+  },
+  "arms": {
+    "graph_off": {
+      "graph_on": false,
+      "budget": null,
+      "errors": [],
+      "summary": {
+        "n_queries": 32,
+        "n_measurable": 29,
+        "candidate_recall": {
+          "k": 20,
+          "n": 29,
+          "text": "20/29"
+        },
+        "context_recall": {
+          "k": 2,
+          "n": 29,
+          "text": "2/29"
+        },
+        "queries_with_expansion": {
+          "k": 0,
+          "n": 32,
+          "text": "0/32"
+        },
+        "new_nodes_total": 0,
+        "mean_new_nodes_per_query": 0.0,
+        "mean_new_nodes_when_expanded": null,
+        "graph_status": {
+          "disabled": 32
+        }
+      },
+      "rows": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "disabled",
+          "expanded": 0,
+          "seeds": 0
+        }
+      ]
+    },
+    "budget_default": {
+      "graph_on": true,
+      "budget": null,
+      "errors": [],
+      "summary": {
+        "n_queries": 32,
+        "n_measurable": 29,
+        "candidate_recall": {
+          "k": 20,
+          "n": 29,
+          "text": "20/29"
+        },
+        "context_recall": {
+          "k": 2,
+          "n": 29,
+          "text": "2/29"
+        },
+        "queries_with_expansion": {
+          "k": 0,
+          "n": 32,
+          "text": "0/32"
+        },
+        "new_nodes_total": 0,
+        "mean_new_nodes_per_query": 0.0,
+        "mean_new_nodes_when_expanded": null,
+        "graph_status": {
+          "ok": 32
+        },
+        "candidate_recall_vs_off": {
+          "gained": 0,
+          "lost": 0
+        },
+        "context_recall_vs_off": {
+          "gained": 0,
+          "lost": 0
+        }
+      },
+      "rows": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 200
+        }
+      ]
+    },
+    "budget_5": {
+      "graph_on": true,
+      "budget": 5,
+      "errors": [],
+      "summary": {
+        "n_queries": 32,
+        "n_measurable": 29,
+        "candidate_recall": {
+          "k": 22,
+          "n": 29,
+          "text": "22/29"
+        },
+        "context_recall": {
+          "k": 4,
+          "n": 29,
+          "text": "4/29"
+        },
+        "queries_with_expansion": {
+          "k": 25,
+          "n": 32,
+          "text": "25/32"
+        },
+        "new_nodes_total": 125,
+        "mean_new_nodes_per_query": 3.90625,
+        "mean_new_nodes_when_expanded": 5.0,
+        "graph_status": {
+          "ok": 32
+        },
+        "candidate_recall_vs_off": {
+          "gained": 2,
+          "lost": 0
+        },
+        "context_recall_vs_off": {
+          "gained": 2,
+          "lost": 0
+        }
+      },
+      "rows": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 5,
+          "seeds": 200
+        }
+      ]
+    },
+    "budget_10": {
+      "graph_on": true,
+      "budget": 10,
+      "errors": [],
+      "summary": {
+        "n_queries": 32,
+        "n_measurable": 29,
+        "candidate_recall": {
+          "k": 22,
+          "n": 29,
+          "text": "22/29"
+        },
+        "context_recall": {
+          "k": 4,
+          "n": 29,
+          "text": "4/29"
+        },
+        "queries_with_expansion": {
+          "k": 25,
+          "n": 32,
+          "text": "25/32"
+        },
+        "new_nodes_total": 250,
+        "mean_new_nodes_per_query": 7.8125,
+        "mean_new_nodes_when_expanded": 10.0,
+        "graph_status": {
+          "ok": 32
+        },
+        "candidate_recall_vs_off": {
+          "gained": 2,
+          "lost": 0
+        },
+        "context_recall_vs_off": {
+          "gained": 2,
+          "lost": 0
+        }
+      },
+      "rows": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 10,
+          "seeds": 200
+        }
+      ]
+    },
+    "budget_20": {
+      "graph_on": true,
+      "budget": 20,
+      "errors": [],
+      "summary": {
+        "n_queries": 32,
+        "n_measurable": 29,
+        "candidate_recall": {
+          "k": 22,
+          "n": 29,
+          "text": "22/29"
+        },
+        "context_recall": {
+          "k": 4,
+          "n": 29,
+          "text": "4/29"
+        },
+        "queries_with_expansion": {
+          "k": 25,
+          "n": 32,
+          "text": "25/32"
+        },
+        "new_nodes_total": 500,
+        "mean_new_nodes_per_query": 15.625,
+        "mean_new_nodes_when_expanded": 20.0,
+        "graph_status": {
+          "ok": 32
+        },
+        "candidate_recall_vs_off": {
+          "gained": 2,
+          "lost": 0
+        },
+        "context_recall_vs_off": {
+          "gained": 2,
+          "lost": 0
+        }
+      },
+      "rows": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 0
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 0,
+          "seeds": 9
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "graph_status": "ok",
+          "expanded": 20,
+          "seeds": 200
+        }
+      ]
+    }
+  }
+}
