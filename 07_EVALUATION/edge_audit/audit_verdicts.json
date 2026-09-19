@@ -296,7 +296,7 @@
       "rel_tier": "weak",
       "verdict": "REJECT",
       "category": "wrong_direction",
-      "rationale": "The general Security Practices note lists 'GPO baseline' as one of its domains; the GPO Baseline Deployment project is therefore (loosely) a part of that topic, not the reverse. `part_of` from the practices note to the project inverts it, and neither note cites the other. The source is a generic reference, the target a specific project with a known `$PSScriptRoot` issue.",
+      "rationale": "The general Security Practices note lists 'GPO baseline' as one of its domains; the GPO Baseline Deployment project is therefore (loosely) a part of that topic, not the reverse. `part_of` from the practices note to the project inverts it. The link itself is real: 02_PRODUCT/projects/GPO_Baseline_Deployment.md:9 declares `related: [[Security_Practices]]` (an earlier version of this reason wrongly said neither note cites the other). The source is a generic reference, the target a specific project with a known `$PSScriptRoot` issue. REJECT stands because of the direction, not because the notes are unrelated.",
       "evaluator": "claude-sonnet"
     },
     {
