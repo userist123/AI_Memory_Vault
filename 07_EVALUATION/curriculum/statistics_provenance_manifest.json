@@ -1,0 +1,68 @@
+{
+  "work_title": "Introductory Statistics 2e",
+  "chapter": "Chapter 8: Confidence Intervals",
+  "authors": [
+    "Barbara Illowsky",
+    "Susan Dean"
+  ],
+  "publisher": "OpenStax, Rice University",
+  "edition": "2nd Edition",
+  "year": 2023,
+  "isbn_or_doi": "ISBN-13: 978-1-951693-55-8",
+  "source_type": "manual",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "book_url": "https://openstax.org/details/books/introductory-statistics-2e",
+  "extraction_method": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "1.0"
+  },
+  "conversion_note": "Converted from original OpenStax HTML to plain text fixture using BeautifulSoup for test repeatability and CC BY 4.0 distribution.",
+  "files": [
+    {
+      "html_filename": "8_0_introduction.html",
+      "text_filename": "8_0_introduction.txt",
+      "source_url": "https://openstax.org/books/introductory-statistics-2e/pages/8-introduction",
+      "html_bytes": 277979,
+      "html_sha256": "b3efd3da4b2841499494e16c0a475333e43f856652fe4cd64df0616629742098",
+      "text_bytes": 6832,
+      "text_sha256": "4d1e79a8a557f59d02fdeeb768195b3837255c6774c702f8be853803f46f361c"
+    },
+    {
+      "html_filename": "8_1_a_single_population_mean_using_the_normal_distribution.html",
+      "text_filename": "8_1_a_single_population_mean_using_the_normal_distribution.txt",
+      "source_url": "https://openstax.org/books/introductory-statistics-2e/pages/8-1-a-single-population-mean-using-the-normal-distribution",
+      "html_bytes": 346378,
+      "html_sha256": "3981dd0e4822f167328caf5c169c140aef0d433fd3a05b2e7e54d37397218c17",
+      "text_bytes": 21075,
+      "text_sha256": "4c61a10f2a53e79d55e86d270248aab278e5f23020ac2a8ae873f33a02f0feda"
+    },
+    {
+      "html_filename": "8_2_a_single_population_mean_using_the_student_t_distribution.html",
+      "text_filename": "8_2_a_single_population_mean_using_the_student_t_distribution.txt",
+      "source_url": "https://openstax.org/books/introductory-statistics-2e/pages/8-2-a-single-population-mean-using-the-student-t-distribution",
+      "html_bytes": 298116,
+      "html_sha256": "949cd258c1abcd57c774703e430ab77bbc95e051bbeded1353c5699cd911ddba",
+      "text_bytes": 11636,
+      "text_sha256": "842f3d26b7d370e95f930dabab8334fe532cc9406983e870c91c8689f58e6164"
+    },
+    {
+      "html_filename": "8_3_a_population_proportion.html",
+      "text_filename": "8_3_a_population_proportion.txt",
+      "source_url": "https://openstax.org/books/introductory-statistics-2e/pages/8-3-a-population-proportion",
+      "html_bytes": 336552,
+      "html_sha256": "92b056f7c638378f988812258b4a269ee12592b1b2e1ea95a9116a6bd01811c0",
+      "text_bytes": 18559,
+      "text_sha256": "d2837fd4247a9335a9c2b3c679e6430eee9af371f1297d294b9a14f4df9c595f"
+    },
+    {
+      "html_filename": "8_4_confidence_interval_calculating_sample_size.html",
+      "text_filename": "8_4_confidence_interval_calculating_sample_size.txt",
+      "source_url": "https://openstax.org/books/introductory-statistics-2e/pages/8-formula-review",
+      "html_bytes": 286766,
+      "html_sha256": "9870b38d02c33d526e60bab6f1353af9e014dc377cd592276bd353bc67d3137b",
+      "text_bytes": 4888,
+      "text_sha256": "5178530bd1a3b168b72574fb600dd5a9879df9ab7913bf949515b99e6a9a0c60"
+    }
+  ]
+}
