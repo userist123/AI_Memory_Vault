@@ -12,6 +12,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -76,6 +81,54 @@ def audit_summary(sample_path: Path = PART_C_SAMPLE_PATH, verdicts_path: Path = 
             "limitations": len(doc.get("limitations", []))}
 
 
+NOT_COMPUTED = "NECALCULAT"
+
+
+def _run_check(args, timeout=1800):
+    """Run a repository check in a child process; None if it could not be run.
+
+    The child writes its audit log into a temporary directory so a check never
+    leaves files in the repository root.
+    """
+    with tempfile.TemporaryDirectory() as scratch:
+        env = dict(os.environ, ANTIGRAVITY_ARTIFACT_DIR=scratch)
+        try:
+            proc = subprocess.run([sys.executable, *args], cwd=REPO_ROOT, env=env,
+                                  capture_output=True, text=True, timeout=timeout)
+        except (OSError, subprocess.SubprocessError):
+            return None
+    return (proc.stdout or "") + (proc.stderr or "")
+
+
+def check_status(script: str, key: str) -> str:
+    """Value of `KEY=VALUE` printed by a verification script, computed now."""
+    out = _run_check([script])
+    match = re.search(rf"^{key}=(\S+)", out or "", re.M)
+    return match.group(1) if match else NOT_COMPUTED
+
+
+def check_pytest(target: str):
+    """(passed, total) of a pytest target, computed now; None if it could not be read."""
+    out = _run_check(["-m", "pytest", target, "-q", "-p", "no:cacheprovider"])
+    if not out:
+        return None
+    counts = {name: int(n) for n, name in re.findall(r"(\d+) (passed|failed|error|errors)\b", out)}
+    passed = counts.get("passed", 0)
+    total = passed + counts.get("failed", 0) + counts.get("error", 0) + counts.get("errors", 0)
+    return (passed, total) if total else None
+
+
+def executive_status(audit, layout_status: str, personal_status: str) -> str:
+    """The executive line, derived from the recorded results (no verdict on its own)."""
+    if audit is None:
+        audit_part = "audit relații: ÎN AȘTEPTARE"
+    else:
+        tiers = audit["tiers"]
+        audit_part = ("audit relații: " + ", ".join(f"{k} {v['accepted']}/{v['total']}" for k, v in tiers.items())
+                      + f", total {audit['total']['accepted']}/{audit['total']['total']}")
+    return f"{audit_part}; LAYOUT_STATUS={layout_status}; PERSONAL_DATA_STATUS={personal_status}"
+
+
 def generate_report() -> str:
     # 1. Load Part A
     part_a = json.loads(PART_A_PATH.read_text(encoding="utf-8")) if PART_A_PATH.exists() else {}
@@ -128,8 +181,10 @@ def generate_report() -> str:
     # 4. Part D
     d_test_count = 3
     d_test_passed = 3
-    d_p12_test_count = 147
-    d_p12_test_passed = 147
+    _p12 = check_pytest("20_TESTS/p12")
+    d_p12_test_passed, d_p12_test_count = _p12 if _p12 else (NOT_COMPUTED, NOT_COMPUTED)
+    layout_status = check_status("30_SCRIPTS/verification/validate_repository_layout.py", "LAYOUT_STATUS")
+    personal_status = check_status("30_SCRIPTS/verification/personal_data_guard.py", "PERSONAL_DATA_STATUS")
 
     # 5. Load Part E
     part_e_tel = json.loads(PART_E_TELEMETRY_PATH.read_text(encoding="utf-8")) if PART_E_TELEMETRY_PATH.exists() else {}
@@ -171,9 +226,8 @@ def generate_report() -> str:
     lines.append("# 🧠 NEURAL_PLASTICITY_REPORT — Conectarea Mașinăriei Neuronale")
     lines.append("")
     lines.append(f"> **Dată Generare**: `{generated_timestamp}`  ")
-    lines.append("> **Destinatar**: ANTIGRAVITY  ")
-    lines.append("> **Ramură Git**: `antigravity/curriculum-openstax-v3` (PR #164)  ")
-    lines.append("> **Statut Executiv**: **TOATE PORȚILE VERIFICATE EMPIRIC (Părțile A, B, C, D, E, F)**  ")
+    lines.append("> **Generat de**: `30_SCRIPTS/evaluation/generate_plasticity_report.py`  ")
+    lines.append(f"> **Statut Executiv** (calculat la generare): {executive_status(c_audit, layout_status, personal_status)}  ")
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -376,11 +430,12 @@ def generate_report() -> str:
     lines.append("")
     lines.append("## 8. Semnătură și Integritate Criptografică")
     lines.append("")
-    lines.append("- **Generat de**: ANTIGRAVITY (AI Pair Programmer & Cognitive Systems Engineer)")
+    lines.append("- **Generat de**: `30_SCRIPTS/evaluation/generate_plasticity_report.py`"
+                 + (f"; verdictele auditului relațiilor: `{c_audit['evaluator']}`" if c_audit else ""))
     lines.append(f"- **Dată**: `{generated_timestamp}`")
-    lines.append("- **Verificare Date Personale**: `PERSONAL_DATA_STATUS=PASS`")
-    lines.append("- **Verificare Layout Repo**: `LAYOUT_STATUS=PASS`")
-    lines.append(f"- **Teste Suită**: {d_p12_test_passed}/{d_p12_test_count} PASSED")
+    lines.append(f"- **Verificare Date Personale** (rulată la generare): `PERSONAL_DATA_STATUS={personal_status}`")
+    lines.append(f"- **Verificare Layout Repo** (rulată la generare): `LAYOUT_STATUS={layout_status}`")
+    lines.append(f"- **Teste `20_TESTS/p12`** (rulate la generare): {d_p12_test_passed}/{d_p12_test_count} trecute")
     lines.append("")
 
     pre_hash_content = "\n".join(lines) + "\n"
