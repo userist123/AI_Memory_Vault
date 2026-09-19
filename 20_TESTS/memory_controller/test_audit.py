@@ -54,6 +54,12 @@ def setup_function():
 def teardown_function():
     from memory_controller.controller import MemoryController
     MemoryController._global_review_counter = 2
+    for path in (TEST_AUDIT_LOG, "empty_audit_log.jsonl"):
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
 def read_logs() -> List[Dict[str, Any]]:
     logs = []
