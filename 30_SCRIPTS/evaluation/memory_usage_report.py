@@ -1,0 +1,169 @@
+"""Report on real use of the vault's memory, from the per-user usage log.
+
+Every MCP or CLI call appends one line to `usage.jsonl` in the per-user vault directory
+(03_IMPLEMENTATION/packages/interfaces/vault_runtime.py). This script reads that log and
+reports, with numbers computed here and nothing typed by hand:
+
+* calls per day and per tool;
+* the share of searches that returned nothing;
+* latency p50 and p95;
+* how many proposals were made and how many of those notes have since been attested;
+* which lifecycle states the returned notes were in.
+
+The log holds no query text (only its SHA-256) and no note content, so this report cannot
+contain either. Attestation is read from the vault itself, by note id.
+
+Usage:
+    python 30_SCRIPTS/evaluation/memory_usage_report.py [--log FILE] [--vault DIR] [--out FILE.md]
+"""
+from __future__ import annotations
+
+import argparse
+import math
+import os
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional
+
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
+
+from interfaces import vault_runtime  # noqa: E402
+
+SEARCH_TOOLS = ("memory_search", "recall_cli")
+PROPOSE_TOOL = "memory_propose"
+
+
+def percentile(values: List[float], q: float) -> Optional[float]:
+    """Nearest-rank percentile (q in 0..100); None for an empty list."""
+    if not values:
+        return None
+    ordered = sorted(values)
+    rank = max(1, math.ceil(q / 100.0 * len(ordered)))
+    return ordered[rank - 1]
+
+
+def fraction(k: int, n: int) -> Dict[str, Any]:
+    return {"k": k, "n": n, "text": f"{k}/{n}", "percent": (100.0 * k / n) if n else None}
+
+
+def attested_ids(vault_root: Path, ids: Iterable[str]) -> Dict[str, bool]:
+    """For each proposed note id: is the note verified now? Missing notes count as not attested."""
+    ids = list(ids)
+    if not ids:
+        return {}
+    os.environ.setdefault(vault_runtime.SECRET_ENV, "0" * 32)  # the storage engine needs none; the import chain reads it
+    from memory_controller.storage.file_engine import FileStorageEngine
+    storage = FileStorageEngine(str(vault_root))
+    out = {}
+    for note_id in ids:
+        note = storage.get(note_id)
+        out[note_id] = bool(note) and note.get("verification") == "verified"
+    return out
+
+
+def build_report(rows: List[Dict[str, Any]], vault_root: Optional[Path] = None) -> Dict[str, Any]:
+    ok = [r for r in rows if r.get("outcome") == "ok"]
+    errors = [r for r in rows if r.get("outcome") != "ok"]
+
+    per_day: Dict[str, Counter] = defaultdict(Counter)
+    for r in rows:
+        per_day[str(r.get("ts", ""))[:10]][r.get("tool", "?")] += 1
+
+    searches = [r for r in ok if r.get("tool") in SEARCH_TOOLS]
+    empty = [r for r in searches if int(r.get("n_results", 0)) == 0]
+
+    latencies = [float(r["latency_ms"]) for r in ok if r.get("latency_ms") is not None]
+    by_tool_latency = {
+        tool: {"p50": percentile([float(r["latency_ms"]) for r in ok if r.get("tool") == tool], 50),
+               "p95": percentile([float(r["latency_ms"]) for r in ok if r.get("tool") == tool], 95),
+               "n": sum(1 for r in ok if r.get("tool") == tool)}
+        for tool in sorted({r.get("tool") for r in ok})
+    }
+
+    proposals = [r for r in ok if r.get("tool") == PROPOSE_TOOL]
+    proposed_ids = [i for r in proposals for i in r.get("ids", [])]
+    attested = attested_ids(vault_root, proposed_ids) if vault_root is not None else {}
+
+    lifecycle = Counter()
+    for r in searches:
+        for name, count in (r.get("lifecycle_counts") or {}).items():
+            lifecycle[name] += int(count)
+
+    return {
+        "calls_total": len(rows),
+        "calls_ok": len(ok),
+        "calls_error": len(errors),
+        "distinct_queries": len({r["query_sha256"] for r in searches if r.get("query_sha256")}),
+        "clients": dict(Counter(r.get("client", "unknown") for r in rows)),
+        "calls_per_day": {day: dict(counts) for day, counts in sorted(per_day.items())},
+        "calls_per_tool": dict(Counter(r.get("tool", "?") for r in rows)),
+        "searches": len(searches),
+        "searches_with_zero_results": fraction(len(empty), len(searches)),
+        "latency_ms": {"p50": percentile(latencies, 50), "p95": percentile(latencies, 95), "n": len(latencies),
+                       "by_tool": by_tool_latency},
+        "proposals": len(proposals),
+        "proposed_note_ids": len(proposed_ids),
+        "proposals_attested": fraction(sum(attested.values()), len(proposed_ids)) if vault_root is not None else None,
+        "returned_notes_by_lifecycle": dict(lifecycle),
+    }
+
+
+def _fmt(value: Optional[float]) -> str:
+    return "n/a" if value is None else f"{value:.1f}"
+
+
+def render(report: Dict[str, Any]) -> str:
+    lines = [
+        "# Memory usage report",
+        "",
+        "Generated by `30_SCRIPTS/evaluation/memory_usage_report.py` from the per-user usage log.",
+        "Every number below is computed from that log; it holds no query text and no note content.",
+        "",
+        f"- Calls: {report['calls_total']} ({report['calls_ok']} ok, {report['calls_error']} error)",
+        f"- Searches: {report['searches']}, distinct queries (by hash): {report['distinct_queries']}",
+        f"- Searches with zero results: {report['searches_with_zero_results']['text']}"
+        + ("" if report["searches_with_zero_results"]["percent"] is None
+           else f" ({report['searches_with_zero_results']['percent']:.1f}%)"),
+        f"- Latency (ms, ok calls): p50 {_fmt(report['latency_ms']['p50'])}, p95 {_fmt(report['latency_ms']['p95'])}"
+        f" over {report['latency_ms']['n']} calls",
+        f"- Proposals made: {report['proposals']}",
+    ]
+    attested = report["proposals_attested"]
+    lines.append("- Proposals attested: " + (attested["text"] if attested else "not computed (no vault given)"))
+    lines += ["", "## Calls per day and tool", "", "| day | tool | calls |", "|---|---|---:|"]
+    for day, counts in report["calls_per_day"].items():
+        for tool, n in sorted(counts.items()):
+            lines.append(f"| {day} | {tool} | {n} |")
+    lines += ["", "## Latency by tool (ms)", "", "| tool | calls | p50 | p95 |", "|---|---:|---:|---:|"]
+    for tool, stats in report["latency_ms"]["by_tool"].items():
+        lines.append(f"| {tool} | {stats['n']} | {_fmt(stats['p50'])} | {_fmt(stats['p95'])} |")
+    lines += ["", "## Clients", ""]
+    lines += [f"- {name}: {n}" for name, n in sorted(report["clients"].items())]
+    lines += ["", "## Lifecycle of returned notes", ""]
+    total = sum(report["returned_notes_by_lifecycle"].values())
+    for name, n in sorted(report["returned_notes_by_lifecycle"].items()):
+        lines.append(f"- {name}: {n}/{total}")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--log", help="usage log (default: the per-user usage.jsonl)")
+    parser.add_argument("--vault", default=str(REPO), help="vault root, to read attestation of proposed notes")
+    parser.add_argument("--out", help="write the markdown report here")
+    args = parser.parse_args(argv)
+    rows = vault_runtime.read_usage_log(Path(args.log) if args.log else None)
+    text = render(build_report(rows, Path(args.vault)))
+    if args.out:
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.out).write_text(text, encoding="utf-8", newline="\n")
+    sys.stdout.reconfigure(encoding="utf-8")
+    print(text)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
