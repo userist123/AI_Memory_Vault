@@ -31,6 +31,7 @@ Evidence_refs:
 related_sessions: []
 related_agents: ANTIGRAVITY, PERPLEXITY, LUNA
 NEXT: read project CURRENT and take the next implementation task on main when activated
+---
 
 
 ## 🔗 Legături Sinaptice

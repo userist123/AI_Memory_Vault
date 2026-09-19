@@ -1,0 +1,218 @@
+{
+  "roots": [
+    "01_ARCHITECTURE",
+    "02_PRODUCT",
+    "10_DOCUMENTATION",
+    "00_GOVERNANCE",
+    "00_CORE",
+    "01_KNOWLEDGE",
+    "02_PROJECTS",
+    "03_PROCEDURES",
+    "04_MEMORY",
+    "05_RESOURCES",
+    "99_SYSTEM"
+  ],
+  "count": 49,
+  "by_kind": {
+    "no_frontmatter": 48,
+    "unclosed_frontmatter": 1
+  },
+  "files": [
+    {
+      "path": "01_ARCHITECTURE/FOLDER_COMMUNICATION_MAP.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/Awesome_Design_Skills_Index.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/BACKEND_SOURCES_AUG2026.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/BACKEND_WEBDEVELOPMENT_SOURCES_AUG2026.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/IMPORT_MANIFEST.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/IMPORT_STATUS.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/PROGRAMMING_SOURCES_AUG2026.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/SOURCES.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/_DISCOVERY/DISCOVERY_REPORT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS/import-map.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/knowledge/UI_Sensei_Design_Philosophy.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "01_ARCHITECTURE/memory/ATTRIBUTION_PLASTICITY_MODEL.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/ORIGINAL_REQUEST.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/JARVIS_WEB_OLLAMA_INTEGRATION_PLAN.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/DEPLOYMENT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/docs/SECURITY.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/bot/trade/AUDIT_v1.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/bot/trade/ELITE_QUANT_ARCHITECT_SYSTEM_PROMPT (1).md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/bot/trade/ELITE_QUANT_ARCHITECT_SYSTEM_PROMPT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/bot/trade/ELITE_QUANT_BOT_COMPLETE_PROMPT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/bot/trade/cerebras-agent/ELITE_QUANT_BOT_COMPLETE_PROMPT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/site/memory/PRD.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/imported/site/test_result.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/jarvis_web/DESIGN_SYSTEM.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/jarvis_web/walkthrough.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/registru-transferuri/docs/DEPLOYMENT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/registru-transferuri/docs/SECURITY.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/VAULT_STATE.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/BOOK_INGESTION_HANDOFF.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/PROMPT_MASTER_PORTABLE.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/agents/ANTIGRAVITY/CURRENT.md",
+      "kind": "unclosed_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/agents/CLAUDE_OPUS/R001_LIFECYCLE_AUTHORITY.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/ADR_DRAFT_lifecycle_transition.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/BOOK_EXTRACTION_WORK_ORDER.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/NEXT_TASK.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/P5_SEARCH_INTEGRATION_REPORT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/RECONCILIATION_REPORT.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/SLOT_DECISIONS.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/antigravity/VAL1_EXECUTION_DIRECTIVE.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/RESOLUTION_IMPLEMENTATION_PROMPT_V1.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/STATUS_SNAPSHOT_20260904_LUNA.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/remediation_v7/audit-report.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "kind": "no_frontmatter"
+    },
+    {
+      "path": "00_GOVERNANCE/review/REVIEW_QUEUE.md",
+      "kind": "no_frontmatter"
+    }
+  ]
+}

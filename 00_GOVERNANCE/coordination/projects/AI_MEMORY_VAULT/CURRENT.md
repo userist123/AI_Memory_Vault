@@ -49,6 +49,7 @@ next_actions:
   - create the 00-99 structural migration inventory before moving production code
   - run exact MVE and hygiene tests on the latest main source
   - preserve one reversible, evidence-backed change set at a time
+---
 
 
 ## 🔗 Legături Sinaptice
