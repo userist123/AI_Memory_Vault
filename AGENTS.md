@@ -72,8 +72,11 @@ Raw imports remain under `06_INBOX/RAW_IMPORTS/` and are evidence, not canonical
 ### Unified Secure Retrieval Policy
 
 All agents (Claude Code, Antigravity, Codex, etc.) must access vault memory exclusively through authorized interfaces:
-- Primary: REST API `http://localhost:8000/memory/search?query=...`
-- Offline fallback: `python -m cognitive_core.recall_cli --query "..."` (versiune securizată, delegată la `MemoryController.search()` și supusă acelorași verificări ale invariantelor `I-001..I-012` și `I-RETRIEVAL` validate prin testele adversariale `P0-001..P0-015`)
+- Primary: the MCP server `vault-memory` (stdio, registered in `.mcp.json`): `memory_search(query, limit)`, `memory_get(note_id)`, `memory_propose(title, body, type, provenance)`. It calls `MemoryController.search()` as `Principal.AI_AGENT` with the production defaults.
+- Fallback: `python -m cognitive_core.recall_cli --query "..."` (versiune securizată, delegată la `MemoryController.search()` și supusă acelorași verificări ale invariantelor `I-001..I-012` și `I-RETRIEVAL` validate prin testele adversariale `P0-001..P0-015`)
+- There is no REST server: `http://localhost:8000/memory/search` does not exist (nu există) and must not be called.
+- First use on a machine: `python -m cognitive_core.recall_cli --init-secret` (once). The HMAC secret is generated locally, outside the repository.
+- A proposal made with `memory_propose` is a candidate (`REVIEW`, `unverified`); only the owner attests it.
 
 Direct unauthenticated filesystem scans, raw `os.walk` traversals, or any attempts to bypass memory trust boundaries (`I-001..I-012`, `I-RETRIEVAL`) are strictly prohibited across all runtimes.
 

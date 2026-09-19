@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vault-memory": {
+      "command": "python",
+      "args": ["03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py"]
+    }
+  }
+}
