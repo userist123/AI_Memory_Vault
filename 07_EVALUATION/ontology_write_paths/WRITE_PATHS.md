@@ -15,16 +15,17 @@ conclusion column says whether it really writes into them.
 | `20_TESTS/test_book_ingestion_pipeline.py` | test_canonical_slot_validation : 84 (+2 more) | open(write) | test | n/a (temporary directories) | Reviewed: writes only into `tmp_path` copies; the one call with the canonical directory expects a ValueError before any write. |
 | `20_TESTS/test_canonical_write_requires_verdicts.py` | ontology : 40 (+4 more) | write_text | test | n/a (temporary directories) | Reviewed: the merge gate's own tests; the canonical directory is patched to a temporary one. |
 | `20_TESTS/test_controller_slot_path.py` | vault : 36 | shutil.copytree | test | n/a (temporary directories) | Reviewed: copies the slots into a temporary vault before calling the controller; the real slots are never touched (a control test checks it). |
+| `20_TESTS/test_curriculum_provenance.py` | TestCurriculumBibliographicProvenance.test_negative_control_note_without_edition_fails : 77 (+2 more) | write_text | test | n/a (temporary directories) | Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory. |
 | `20_TESTS/test_promote_candidate_concept_gate.py` | _manifest : 48 (+2 more) | write_text | test | n/a (temporary directories) | Reviewed: the promotion gate's tests; the canonical directory is patched to a temporary one. |
 | `20_TESTS/test_promoter_emits_graph_relations.py` | vault : 48 | write_text | test | n/a (temporary directories) | Reviewed: promotes into a `tmp_path` slots directory. |
 | `20_TESTS/test_purge_canonical_gate.py` | world : 50 (+1 more) | write_text | test | n/a (temporary directories) | Reviewed: the purge gate's tests; the canonical directory is patched to a temporary one. |
-| `20_TESTS/test_purge_rejected_rows.py` | temp_slots_dir : 62 (+4 more) | write_text | test | n/a (temporary directories) | Reviewed: applies only to temporary copies; the two calls on the canonical directory use `apply=False`. |
+| `20_TESTS/test_purge_rejected_rows.py` | temp_slots_dir : 62 (+4 more) | write_text | test | n/a (temporary directories) | Reviewed: reads the real slots and copies them into `tmp_path` before any change. |
 | `20_TESTS/ontology/test_row_disposition_applied.py` | test_negative_control_planted_deletion_of_promoted : 188 (+7 more) | shutil.copytree | test | n/a (temporary directories) | Reviewed: reads the real slots and copies them into `tmp_path` before any change. |
 | `30_SCRIPTS/ingestion/apply_row_disposition.py` | apply_dispositions : 280 | write_text | script | disposition manifest (`load_manifest`, `validate_against_slots`, row-coverage checks); dry run unless `--apply` | Gated. Needs a manifest that matches the rows on disk bit for bit. |
 | `30_SCRIPTS/ingestion/disposition_manifest.py` | DispositionManifest.save : 160 | write_text | script | n/a | Reviewed: writes the manifest JSON (`save`); reads the slots through `slot_rows.read_all`. |
 | `30_SCRIPTS/ingestion/merge_candidate_concepts.py` | append_candidate_concepts_to_slot : 300 | open(write) | script | verdict manifest (`UngatedCanonicalWrite`, PR #163) | Gated. Refuses a write into the canonical slot files without a manifest; other directories are dry runs. |
 | `30_SCRIPTS/ingestion/model_extract_concepts.py` | main : 856 (+1 more) | write_text | script | n/a | Reviewed: writes the staging and rejects files; `SLOT_DIR` is only read for the slot questions. |
-| `30_SCRIPTS/ingestion/promote_candidate_concept.py` | promote_candidate_concept : 212 (+1 more) | open(write) | script | verdict manifest admitting the concept (`UngatedCanonicalWrite`, added in this change) | Was ungated: flipped any `proposed` row to `promoted` with no manifest. Gated here, with tests and a control. |
+| `30_SCRIPTS/ingestion/promote_candidate_concept.py` | promote_candidate_concept : 253 (+1 more) | open(write) | script | verdict manifest admitting the concept (`UngatedCanonicalWrite`, added in this change) | Was ungated: flipped any `proposed` row to `promoted` with no manifest. Gated here, with tests and a control. |
 | `30_SCRIPTS/ingestion/purge_rejected_rows.py` | purge_rows : 395 | open(write) | script | disposition manifest (`UngatedCanonicalWrite`): `--apply` on the canonical slots needs targets that carry a manifest-supplied disposition; dry run and copies stay free | Gated. Was OPEN: `--apply` deleted rows with no manifest, and `--disposition-manifest ''` switched the only protection off. Gate added in this change, shared with the merge and promotion gates. |
 | `30_SCRIPTS/verification/generate_closure_report.py` | <module> : 292 | open(write) | script | n/a | Reviewed: writes a report file; reads the slots. |
 | `30_SCRIPTS/verification/ontology_write_paths.py` | main : 240 (+1 more) | write_text | script | n/a | Reviewed: this scanner. Writes its own report and JSON, never the slots. |
@@ -38,5 +39,5 @@ conclusion column says whether it really writes into them.
 ## Totals (from the scan)
 
 - read_only: 4
-- test: 8
+- test: 9
 - writer: 4
