@@ -28,20 +28,23 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 |---|---|---|
 | Canonical Vault | Markdown memory, knowledge, skills, agents, procedures, provenance | **IMPLEMENTED** |
 | Memory V6 | extraction, proposals, conflict detection, lifecycle, consolidation, retrieval maintenance | **IMPLEMENTED / ACTIVE** |
-| Cognitive Core | recall, activation, working memory, global workspace, graphs, spreading activation, planning primitives | **IMPLEMENTED / PARTIAL** |
+| Cognitive Core | recall, activation, working memory, global workspace, graphs, spreading activation, planning primitives | **IMPLEMENTED AND TESTED — NOT WIRED INTO PRODUCTION SEARCH** (spreading activation sits behind a flag that is off; `executive` and the global workspace have no production consumer) |
 | Memory Controller | storage boundary, read/write policy, context packs, progressive disclosure, lifecycle gating | **IMPLEMENTED** |
 | Model execution | fake, local/Ollama, OpenAI provider abstractions, tier routing, usage telemetry | **IMPLEMENTED** |
 | External skill ingestion | discovery, provenance, classification, validation, controlled promotion | **IMPLEMENTED** |
 | Book → text conversion | PDF outline / typography / page-fallback chunking, OCR detection, per-book metrics | **IMPLEMENTED** |
 | Book concept extraction | model-assisted, with grounding, paraphrase, shape and schema gates | **IMPLEMENTED / GATES PROVEN** |
 | Book concept *selectivity* | telling a load-bearing concept from experimental furniture | **MEASURED, NOT SOLVED** |
-| Ontology promotion gate | a merge must consult a verdict manifest; unjudged rows are withheld and counted | **IMPLEMENTED** |
-| Row disposition | every one of the 213 slot rows carries a decision and a reason | **DECIDED, NOT EXECUTED** |
+| Book curriculum | ingestion with verified quotes, then a control ↔ treatment benchmark on questions written by the book's authors | **FIRST TRANSFER SHOWN — ONE CHAPTER** |
+| Ontology promotion gate | without a verdict manifest, writes into the ontology slots are refused (merge and promotion); unjudged rows are withheld and counted | **IMPLEMENTED / MANDATORY** |
+| Row disposition | 213 slot rows, each with a decision and a reason; 93 remain | **EXECUTED — 7 ROWS AWAIT THE OWNER'S DECISION** |
+| Graph expansion | 521 synapses, spreading activation, a per-query budget of new nodes | **EFFECTIVELY OFF AT THE DEFAULT BUDGET — DECISION PENDING** |
+| Personal-data guard | validated CNP, IBAN and card numbers, personal document names; reports the path, never the value | **IMPLEMENTED / IN CI** |
 | Polymarket forecasting | snapshots, council, calibration, edge, abstention, Kelly sizing, backtest, ablation, temporal contract | **IMPLEMENTED / UNVALIDATED ON REAL DATA** |
 | Polymarket resolution provenance | the moment an outcome became knowable | **ESTABLISHED UNAVAILABLE** |
 | Persistent agent memory | resumable `CURRENT.md` state under `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTED** |
-| Planning Influence | isolated deterministic MVE with four arms and soft priors | **EXPERIMENTAL** |
-| Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **DESIGN / PRE-REGISTERED** |
+| Planning Influence | V3 simulation without oracle leakage, contradiction veto with absolute priority, baseline benchmark derived by simulation | **VALIDATED AS A SIMULATION — NOT AS A REAL AGENT** |
+| Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **MEASURED IN THE V3 SIMULATION** |
 | Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
 | Fully closed continual learning | outcome → evidence → learning → canonical mutation loop | **PARTIAL / OPEN** |
 
@@ -536,8 +539,41 @@ everyone knew about, and several independent tools agreed on 203 against a real
 213 — not from a shared bug, but from a shared assumption.
 
 Disposition for all 213 rows lives in
-[`07_EVALUATION/book_corpus_conversion/`](07_EVALUATION/book_corpus_conversion/).
-Executing it is a human decision and has not been taken.
+[`07_EVALUATION/book_corpus_conversion/`](07_EVALUATION/book_corpus_conversion/)
+and **has been executed**: 93 rows remain, and the 43 already-promoted concepts were left untouched. Seven rows — six undecided, plus `familiarity`, which hides two concepts behind one word — await a decision by the owner and are touched by no script.
+
+### The gate is now mandatory
+
+The manifest was introduced as opt-in, so existing callers would not break — which meant the gate held only for callers who chose it. For part of a week the parameter did not even exist on `main`: an old branch, merged on top of newer code, had deleted it, and no test failed, because nothing required it.
+
+A write into the canonical slots **without a manifest is now refused** with `UngatedCanonicalWrite`, before the first write, both on merge (`merge_candidate_concepts.py`) and on promotion (`promote_candidate_concept.py`). Any other directory is still allowed: that is how a dry run against a copy of the slots works.
+
+Every write path into the slots, with its gate, is inventoried in
+[`07_EVALUATION/ontology_write_paths/WRITE_PATHS.md`](07_EVALUATION/ontology_write_paths/WRITE_PATHS.md),
+and a test fails on any new writer that is not on the list. One path is still open and marked as such there: `purge_rejected_rows.py --apply` can delete rows without a manifest.
+
+---
+
+# 📚 Book curriculum
+
+A book does not become knowledge because it was read. It becomes knowledge if, after ingestion, the vault can answer questions it could not answer before — and the questions were not written by whoever extracted the notes.
+
+```text
+source with a verifiable licence → text + hash → extraction with verified quotes → REVIEW
+        → questions frozen before extraction → control ↔ treatment → result
+```
+
+The first chapter through the whole chain: OpenStax *Psychology 2e*, chapter 8 ("Memory"), CC BY 4.0. The questions are the authors' own review questions, with their answer key, frozen in a commit before extraction. The traps have answers absent from the chapter and no option that hints at an exit. A reader model gets only the notes the vault retrieves and must answer with a choice **plus a sentence quoted verbatim from a note**, or `INSUFFICIENT`.
+
+| Arm | Questions supported | Abstentions on traps | Wrong answers |
+|---|---|---|---|
+| control — without the chapter's notes | 0/12 | 10/10 | 0/12 |
+| treatment — with the notes in `REVIEW` | 6/12 | 10/10 | 0/12 |
+
+The full report, with a per-question table, is in
+[`07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md`](07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md).
+
+The limits are part of the result: one chapter, 12 questions, so a difference of one or two questions would be noise. The notes stay `REVIEW` until the owner attests them. Three figures reported earlier for the same chapter ("7/12", "5/5 abstentions", "50/50 audit") were **withdrawn**, and the report's DEVIATIONS section says why: extraction targeted at the questions, traps judged by a string that could never appear, a self-audit.
 
 ---
 
@@ -574,6 +610,13 @@ exists to prevent.
 The captures are provenance-stamped with URL, UTC query time, HTTP status,
 record count and SHA-256, and nothing is cleaned or reordered.
 
+### How many observations there really are
+
+The extended set has 483 markets but **only 63 independent outcomes**: one American football game yields 56 markets, one Bitcoin day 117, and they all resolve together. A confidence interval computed on 483 would claim almost eight times more information than exists. Once the dependence is corrected, the interval becomes too wide to support an exploitable edge
+([`ANTIGRAVITY_RESEARCH_PROGRAM_V1.md`](07_EVALUATION/polymarket/ANTIGRAVITY_RESEARCH_PROGRAM_V1.md)).
+
+In Romania, Polymarket and Kalshi are on the ONJN list of unauthorised operators. The package remains research only: no real-money trading.
+
 ---
 
 # 🔐 Security & epistemic safety
@@ -591,27 +634,29 @@ Core principles:
 - contradictory memory must not gain more influence merely because it is contradictory.
 - benchmark controls must not silently depend on oracle knowledge.
 
+The repository is public, so personal data has its own gate, separate from secret scanning: `30_SCRIPTS/verification/personal_data_guard.py` refuses documents named for what they are (invoice, account statement, ID card…) and content carrying a **validated** Romanian CNP, Romanian IBAN or card number (check digit, mod-97, Luhn). It reports the path, the rule and a count — never the value — and runs in CI.
+
 The repository also contains security and forensic material covering memory trust boundaries, external corpus hygiene, Defender findings, and repository-level cleanup baselines.
 
 ---
 
 # 🛡️ CI / automation
 
-Current workflow surfaces include:
+The workflows in [`.github/workflows/`](.github/workflows/), grouped by what they check:
 
-```text
-.github/workflows/
-├── memory-v6-tests.yml
-├── planning-influence-mve.yml
-├── memory-consolidation.yml
-├── regenerate-skill-catalog.yml
-├── import-external-skills.yml
-├── process-raw-books.yml
-├── codeql.yml
-├── fortify.yml
-├── apisec-scan.yml
-└── jarvis-command-center.yml
-```
+| What it checks | Workflows |
+|---|---|
+| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml` |
+| repository hygiene: absolute paths, disallowed root files, personal data | `repository-hygiene.yml` |
+| retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
+| runtime write paths | `write-path-audit.yml` |
+| security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
+| research: Planning Influence V3 and the Polymarket phases | `planning-influence-mve.yml`, `polymarket-phase*.yml` (one per phase) |
+| scheduled runs and ingestion | `memory-consolidation.yml` (the nightly consolidation), `import-external-skills.yml`, `jarvis-command-center.yml` |
+
+A test (`20_TESTS/test_readme_references.py`) fails if the README names a workflow or a path that does not exist — the previous list had fallen 22 files behind and cited two deleted workflows.
+
+The nightly consolidation failed every day after the reorganisation: first it called a module that had moved, then it did not install its dependencies. Nobody noticed, because the tests ran in an environment that had them. A test now checks that every workflow running repository code installs its dependencies first.
 
 The project distinguishes **CI verification** from local execution. A queued workflow is not a pass. A local run is not silently upgraded to CI evidence.
 
@@ -642,14 +687,15 @@ Reports, screenshots, README text and agent summaries do not outrank executable 
 This section is not a weakness of the README. It is part of the project contract.
 
 1. Default retrieval still relies substantially on deterministic lexical/token-overlap behavior; semantic candidate generation is not universally wired into the default `MemoryController.search()` path.
-2. Graph-aware ranking exists, but production integration historically had failure paths that required explicit repair and diagnostics; graph behavior is not treated as automatically authoritative.
-3. Outcome telemetry does not yet constitute a fully closed autonomous learning loop.
-4. Planning Influence is an isolated experimental harness; it is not yet a production planner integration.
-5. The latest treatment pilot still shows negative efficiency against matched advisory control.
+2. **Graph expansion is effectively off in production.** The default budget of new nodes is `min(2·n, 20) − n`, which is zero whenever lexical search finds 20 or more notes — and the lexical limit rose to 200. On the held-out benchmark, expansion is impossible for 25 of 32 queries and the results are identical to the graph switched off; any fixed budget from 5 to 20 adds the same 2 cases, at the edge of noise ([`07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md`](07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md)). Any older conclusion of the form "the graph does not help" was measured with a graph that added nothing. The default value is an owner decision not yet taken.
+3. **Most notes have no connection at all.** Of 948 indexed notes, only 157 have an outgoing edge and 145 an incoming one (`00_GOVERNANCE/VAULT_STATE.md`): the rest cannot be reached through the graph, however large the budget.
+4. Outcome telemetry does not yet constitute a fully closed autonomous learning loop.
+5. Planning Influence V3 is a deterministic simulation with a scenario oracle. It demonstrates the mechanics — isolation, priors, veto — not that a real agent with a real model plans better. The initial pilot is withdrawn.
 6. CI execution observed in the current work chain may remain queued; queued means **not verified**.
 7. Some research artifacts are design targets rather than implementation guarantees.
-8. Book ingestion extracts and gates correctly but cannot rank. Model confidence is `1.00` on every candidate including ones whose evidence was fabricated; `claim_type` is constant; `occurrences` is 1 for 47 of 48 concepts in a full paper; a prompt-level exclusion list is ignored by the model. Roughly half the output is experimental furniture — `validation set`, `SGD optimizer`, `Rot-MNIST`. Measured, not estimated: [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md).
-9. Two books in the corpus are scans with no text layer and cannot be ingested without OCR, which this repository does not have.
+8. **Concept selectivity remains unsolved.** The first measurements, on local models, showed constant model confidence (`1.00` even on fabricated evidence) and roughly half the output as experimental furniture — `validation set`, `SGD optimizer`, `Rot-MNIST`. Recurrence across distinct sections (`occurrences ≥ 3`) remained the only signal that works; none of the five new signals tested later beat it, and that measurement used small samples. Measured, not estimated: [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md).
+9. The two scanned books were converted through OCR, but quality is uneven: in Ashby, 13% of pages have their columns in scrambled order.
+10. Two paths can still write into the ontology around the verdict manifest: `purge_rejected_rows.py --apply` and the controller's generic write path to the `slot-*` notes. They are documented, not closed.
 
 Showing these gaps is intentional. The project is being hardened by falsification, not by polishing its claims.
 
@@ -660,24 +706,35 @@ One of them was nearly polished away and is worth stating plainly. A prompt chan
 # 🧭 Roadmap
 
 ```text
+DONE
+ │
+ ├─ Planning Influence V3: leak-free simulation, veto fixed, derived baseline
+ ├─ first transfer shown from a book (one chapter, 12 questions)
+ ├─ verdict gate mandatory on merge and on promotion
+ ├─ personal-data guard in CI
+ │
+ ▼
 NOW
  │
- ├─ verify latest applicability-aware MVE in CI
- ├─ implement explicit verification route in isolated harness
- ├─ run frozen uncertainty policy without post-hoc tuning
+ ├─ per-domain curriculum profile, required before ingestion
+ ├─ bibliographic provenance, required before promotion
+ ├─ general transfer benchmark + a second book, from another domain
+ ├─ independent audit of the relations proposed in the graph
+ ├─ the graph expansion budget decision
  │
  ▼
 THEN
  │
- ├─ accept / falsify / redesign deterministic influence policy
- ├─ add held-out + stale/adversarial model-backed pairing
+ ├─ connecting isolated notes: most of the memory has no synapse
+ ├─ from book to procedure and gate, for method books
+ ├─ model-backed pairing: real agent, retrieval, action, verified outcome
+ ├─ the cognitive core wired into the real path and measured — or retired if it does not help
  │
  ▼
 LATER
  │
  ├─ representation influence measurement
  ├─ epistemic act/verify/abstain gate
- ├─ deterministic execution gateway experiments
  ├─ evidence-bound pattern compilation
  └─ closed, regression-protected learning loop
 ```
@@ -706,17 +763,31 @@ pytest -q 20_TESTS/test_planning_influence_isolation.py
 python 07_EVALUATION/luna/run_all_v3.py
 ```
 
-### Memory V6 CLI examples
+### The checks every PR must pass
 
 ```bash
-python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
+python -m pytest 20_TESTS -q
+python 30_SCRIPTS/verification/validate_repository_layout.py
+python 30_SCRIPTS/verification/repository_hygiene.py
+python 30_SCRIPTS/verification/personal_data_guard.py
+```
+
+The full suite, not a subset: results reported from subsets have hidden failures that CI found immediately.
+
+### Memory V6 CLI examples
+
+The modules live under `03_IMPLEMENTATION/packages`, so the CLI needs it on `PYTHONPATH`:
+
+```bash
+export PYTHONPATH=03_IMPLEMENTATION/packages   # PowerShell: $env:PYTHONPATH = "03_IMPLEMENTATION/packages"
+python -m cognitive_core.memory_v6_cli extract --text "We decided: use SQLite WAL." --enqueue
 python -m cognitive_core.memory_v6_cli review --show-conflicts
 python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
 python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```
 
-Use the repository's environment files / requirements for the exact runtime dependencies in a local checkout.
+Dependencies: `pip install -e .` and `pip install -r requirements-memory-v6.txt`, as in CI.
 
 ---
 
@@ -732,9 +803,18 @@ Use the repository's environment files / requirements for the exact runtime depe
 
 ### MVE / research
 
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md) — the valid results, generated from the tables
 - [`07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md)
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md) — history
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md) — withdrawn
+- [`07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md`](07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md) — the graph expansion budget
+
+### Curriculum & ontology
+
+- [`07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md`](07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md) — the OpenStax transfer benchmark
+- [`07_EVALUATION/curriculum/`](07_EVALUATION/curriculum/) — provenance, attributed source text, the frozen test set
+- [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md) — extraction measurements, with their withdrawals
+- [`07_EVALUATION/ontology_write_paths/WRITE_PATHS.md`](07_EVALUATION/ontology_write_paths/WRITE_PATHS.md) — who can write into the ontology
 - [`07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md`](07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md)
 - [`07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md`](07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md)
 
