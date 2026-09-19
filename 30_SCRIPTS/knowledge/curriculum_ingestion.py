@@ -25,8 +25,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from bs4 import BeautifulSoup
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PACKAGES_DIR = REPO_ROOT / "03_IMPLEMENTATION" / "packages"
 SCRIPTS_DIR = REPO_ROOT / "30_SCRIPTS" / "knowledge"
