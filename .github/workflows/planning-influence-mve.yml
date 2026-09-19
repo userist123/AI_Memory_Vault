@@ -3,9 +3,13 @@ name: Planning Influence MVE
 on:
   push:
     paths:
-      - '07_EVALUATION/luna/planning_influence_mve.py'
-      - '07_EVALUATION/luna/test_planning_influence_mve.py'
-      - '07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md'
+      - '07_EVALUATION/luna/**'
+      - '20_TESTS/test_planning_influence_isolation.py'
+      - '.github/workflows/planning-influence-mve.yml'
+  pull_request:
+    paths:
+      - '07_EVALUATION/luna/**'
+      - '20_TESTS/test_planning_influence_isolation.py'
       - '.github/workflows/planning-influence-mve.yml'
   workflow_dispatch:
 
@@ -16,7 +20,7 @@ jobs:
   mve:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -24,20 +28,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install pytest
-        run: python -m pip install --upgrade pip pytest
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip pytest numpy
 
-      - name: Run deterministic unit tests
-        run: python -m pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
+      - name: Run deterministic isolation tests
+        run: python -m pytest -v 20_TESTS/test_planning_influence_isolation.py
 
-      - name: Execute Planning Influence pilot
-        run: |
-          mkdir -p mve-output
-          python 07_EVALUATION/luna/planning_influence_mve.py | tee mve-output/planning_influence_runtime.txt
-
-      - name: Upload runtime evidence
-        uses: actions/upload-artifact@v4
-        with:
-          name: planning-influence-mve-runtime
-          path: mve-output/planning_influence_runtime.txt
-          if-no-files-found: error
+      - name: Run complete V3 reproducibility suite
+        run: python 07_EVALUATION/luna/run_all_v3.py

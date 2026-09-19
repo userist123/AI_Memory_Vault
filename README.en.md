@@ -326,52 +326,45 @@ The isolated MVE lives under:
 
 ```text
 07_EVALUATION/luna/
-├── COGNITIVE_MEMORY_TARGET_MODEL_V1.md
-├── COGNITIVE_MEMORY_TARGET_MODEL_V2.md
-├── COGNITIVE_MEMORY_V2_REPOSITORY_REALITY_MAP_V1.md
-├── PLANNING_INFLUENCE_EXPERIMENT_V1.md
-├── PLANNING_INFLUENCE_MVE_V2_VALIDATED.md
+├── PLANNING_INFLUENCE_PREREGISTRATION_V2.md
+├── PLANNING_INFLUENCE_PREREGISTRATION_V2_1.md
+├── PLANNING_INFLUENCE_RESULTS_V3.md
 ├── PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md
-├── planning_influence_mve.py
-└── test_planning_influence_mve.py
+├── planning_influence_mve_v3.py
+├── simulate_puct_benchmark.py
+├── run_experiments_v3.py
+├── generate_planning_influence_report.py
+├── run_all_v3.py
+├── tables/ (table_luna_1..5.csv)
+├── planning_influence_mve.py (retired initial pilot)
+└── test_planning_influence_mve.py (retired)
 ```
 
 ### Experimental arms
 
 ```text
-Arm 1 — baseline / uniform planner
+Arm 1 — baseline / uniform planner (isolated, zero oracle leakage)
 Arm 2 — advisory memory / uniform planner
-Arm 3 — cognitive treatment / memory-derived planner prior
-Arm 4 — stale / contradicted / neutral memory control
+Arm 3 — cognitive treatment / memory-derived planner prior (v1_uncertainty, v2_verification_action)
+Arm 4 — stale / contradicted memory control (CONFIRMED_CONTRADICTION)
 ```
 
-### Current deterministic evidence — ⚠️ RETRACTED (invalid measurement)
+### Validated V3 Results (`PLANNING_INFLUENCE_RESULTS_V3.md`)
 
-> **The pilot below is retracted. It is not a result.** The baseline ↔ treatment comparison was run with a harness that handed the answer to the baseline. The figures stay here only as a record of what was reported, not as evidence of any memory effect.
+The V3 harness fixes the structural leakage of the initial pilot via balanced random branch permutation and orthogonal position-independent SHA-256 tie-breaking (`test_planning_influence_isolation.py` passes 100%, with a strict `xfail` on the retired legacy harness).
 
-**The leak.** In `07_EVALUATION/luna/planning_influence_mve.py` (at commit `a51815b88`):
+Empirical results across the pre-registered experimental grid ($N=200$ independent scenarios per cell, 17,600 total planner evaluations in `run_experiments_v3.py` reproduced byte-for-byte by `run_all_v3.py`):
 
-- line 153, `optimal=order[0]` — the optimal branch is always first in the scenario's branch list;
-- line 252, `-branches.index(candidate)` — PUCT selection breaks ties by branch position (lowest index wins).
+1. **Baseline isolation and PUCT benchmark:** Uninformed search requires on average $\approx 2.921$ PUCT nodes ($SE = 0.0032$, derived via 200,000-run Monte Carlo simulation in `simulate_puct_benchmark.py`), with zero correlation between optimal branch position and search cost ($r^2 < 0.01$).
+2. **Accuracy thresholds ($p^*$):** Memory provides net search cost reduction above $p^* = 0.40$ in calibrated mode ($\Delta_{\text{nodes}} = +0.310$, 95% CI $[0.080, 0.565]$) and $p^* = 0.50$ in uninformative mode ($\Delta_{\text{nodes}} = +0.565$, 95% CI $[0.300, 0.835]$) under the `v1_uncertainty` policy.
+3. **Absolute priority of contradiction veto:** Under `CONFIRMED_CONTRADICTION`, priors are strictly forced to uniform ($0.25$) across all policies, guaranteeing $\Delta_{\text{fatals}} = 0.0000$ on the stale arm and completely eliminating decision risk.
+4. **Cost-benefit of verification-as-action (`v2_verification_action`):** In small action spaces ($K=4$), paying $1.0$ node per verification yields negative net cost savings ($-0.235$ to $-0.305$ nodes) compared to `v1_uncertainty`; active verification is economically warranted only in larger search spaces ($K \ge 6$) or asymmetric high-stakes failure domains.
 
-With uniform priors (the memoryless planner), every branch has exactly the same score on the first step. The positional tie-break picks index 0, which is the optimum. The baseline did not *find* the optimum: it was given it on step one, in every scenario. That is why it cost 30 nodes for 30 scenarios, the minimum possible.
+> **Methodological limitation:** This is a **deterministic simulation with scenario oracle**. It mathematically validates the mechanics of memory fusion in planning (oracle isolation, Bayesian uncertainty weighting, absolute contradiction veto), but **does not prove that a real LLM-backed agent plans better**.
 
-**Why this invalidates the comparison.** The gap to treatment (54 nodes, 12 fatal) does not measure the effect of memory. It measures that the reference arm "knew" the answer by construction, so any arm starting from a different prior can only lose to it. The `7/30` recommendation-matched-optimum finding and the explanation "wrong memory recommendations account for the treatment cost" rest on the same footing and are retracted with it.
+### Initial deterministic pilot — ⚠️ RETRACTED (invalid measurement via oracle leak, PR #165)
 
-**What V3 showed about the baseline.** On the unmerged branch `antigravity/planning-influence-v3`, the V3 harness permutes the branches and breaks ties with a hash unrelated to position. There the baseline rises to roughly 2.9 nodes per scenario. An independent check of the PUCT dynamics gave 2.92. These figures come from that branch's reporting and from that check; they have not been reproduced in this repository.
-
-**V3 status.** V3 is **not validated** and **has not landed on `main`**: its report contained figures that did not match its own tables. Until a clean run exists, the question "does memory help the planner?" is unanswered on `main`.
-
-What was originally reported (kept for traceability, **retracted**):
-
-```text
-baseline:   30/30 success · 30 nodes · 0 fatal
-advisory:   30/30 success · 30 nodes · 0 fatal
-treatment:  30/30 success · 54 nodes · 12 fatal
-stale:      30/30 success · 30 nodes · 0 fatal
-```
-
-The earlier naive treatment (125 nodes / 15 fatal) was measured with the same harness and is retracted likewise.
+> **The initial pilot is retracted and kept solely for historical traceability.** The baseline ↔ treatment comparison in `planning_influence_mve.py` was compromised by an oracle leak: line 153 placed the optimal branch at index 0 (`optimal=order[0]`), and PUCT selection (line 252) broke ties by branch position (`-branches.index(candidate)`). The baseline thus selected the optimum on step 1 across all 30 scenarios (an artificial 1.0 node/scenario cost). The originally reported figures (baseline 30 nodes / treatment 54 nodes / 12 fatal) are invalid and were formally retracted via PR #165.
 
 ### Uncertainty policy
 
@@ -701,16 +694,16 @@ A model-backed MVE is **not authorized merely because deterministic unit tests p
 pytest -q
 ```
 
-### Run the isolated Planning Influence MVE tests
+### Run isolated Planning Influence V3 tests
 
 ```bash
-pytest -q 07_EVALUATION/luna/test_planning_influence_mve.py
+pytest -q 20_TESTS/test_planning_influence_isolation.py
 ```
 
-### Run the deterministic MVE pilot
+### Run complete Planning Influence V3 reproducibility suite
 
 ```bash
-python 07_EVALUATION/luna/planning_influence_mve.py
+python 07_EVALUATION/luna/run_all_v3.py
 ```
 
 ### Memory V6 CLI examples
