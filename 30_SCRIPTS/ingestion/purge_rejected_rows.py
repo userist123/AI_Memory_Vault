@@ -33,6 +33,17 @@ import pathlib
 from typing import List, Dict, Any, Tuple, Optional, Set
 
 DEFAULT_SLOTS_DIR = "01_ARCHITECTURE/ontology/slots"
+
+# The canonical-slot gate is shared with merge_candidate_concepts.py and
+# promote_candidate_concept.py, so all three writers refuse the same thing the
+# same way (paths resolved and normalised, not compared as strings).
+import sys as _sys
+_sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from merge_candidate_concepts import (  # noqa: E402
+    CANONICAL_SLOT_DIRECTORY,
+    UngatedCanonicalWrite,
+    _same_directory,
+)
 CATALOG_PATH = pathlib.Path(__file__).parent / "purge_batches_catalog.json"
 
 #: Consulted by --batch and --concept-file so a selection cannot outrank a
@@ -150,6 +161,24 @@ def purge_rows(
     allow_status: if specified, extends allowed statuses with comma-separated values (e.g. 'unverified_source').
     from_disposition_manifest: if True, indicates targets come from disposition manifest.
     """
+    # Before anything is read or planned. A purge deletes rows from the ontology,
+    # and `--apply` used to be the only thing standing between a row selection and
+    # that: the disposition manifest only annotated targets when it happened to be
+    # on disk, and `--disposition-manifest ''` switched it off. Writing the
+    # canonical slot files now requires targets that a disposition manifest
+    # supplied (each carries its `disposition`); a dry run on any directory, and
+    # an apply on a copy of the slots, stay permitted without one.
+    if apply and _same_directory(slots_dir, CANONICAL_SLOT_DIRECTORY):
+        decided = from_disposition_manifest and all("disposition" in item for item in target_items)
+        if not decided:
+            raise UngatedCanonicalWrite(
+                f"refusing to delete {len(target_items)} row(s) from the canonical slot "
+                f"files ({CANONICAL_SLOT_DIRECTORY}) without a disposition manifest. "
+                "Use --disposition-file, or keep the default --disposition-manifest so "
+                "every target carries its recorded disposition; or point --slots-dir at "
+                "a copy of the slots for a run that writes."
+            )
+
     allowed_statuses: Set[str] = {"proposed"}
     if from_disposition_manifest:
         allowed_statuses.add("unverified_source")

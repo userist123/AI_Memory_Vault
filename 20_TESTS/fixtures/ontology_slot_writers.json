@@ -2,16 +2,16 @@
   "purpose": "Reviewed dispositions of every Python module the static scan finds in a write context for 01_ARCHITECTURE/ontology/slots/. test_ontology_slot_writers.py fails on a module the scan finds that is not listed here, and on a listed module the scan no longer finds.",
   "writers": [
     {
-      "path": "30_SCRIPTS/ingestion/merge_candidate_concepts.py",
-      "role": "writer",
-      "gate": "verdict manifest (`UngatedCanonicalWrite`, PR #163)",
-      "conclusion": "Gated. Refuses a write into the canonical slot files without a manifest; other directories are dry runs."
-    },
-    {
       "path": "30_SCRIPTS/ingestion/apply_row_disposition.py",
       "role": "writer",
       "gate": "disposition manifest (`load_manifest`, `validate_against_slots`, row-coverage checks); dry run unless `--apply`",
       "conclusion": "Gated. Needs a manifest that matches the rows on disk bit for bit."
+    },
+    {
+      "path": "30_SCRIPTS/ingestion/merge_candidate_concepts.py",
+      "role": "writer",
+      "gate": "verdict manifest (`UngatedCanonicalWrite`, PR #163)",
+      "conclusion": "Gated. Refuses a write into the canonical slot files without a manifest; other directories are dry runs."
     },
     {
       "path": "30_SCRIPTS/ingestion/promote_candidate_concept.py",
@@ -22,32 +22,14 @@
     {
       "path": "30_SCRIPTS/ingestion/purge_rejected_rows.py",
       "role": "writer",
-      "gate": "none by manifest: dry run unless `--apply`; refuses non-`proposed` statuses; the disposition manifest only annotates targets",
-      "conclusion": "OPEN. With `--apply` it deletes rows from the canonical slot files with no manifest. The file is in PR #164's list, so it is not changed here."
+      "gate": "disposition manifest (`UngatedCanonicalWrite`): `--apply` on the canonical slots needs targets that carry a manifest-supplied disposition; dry run and copies stay free",
+      "conclusion": "Gated. Was OPEN: `--apply` deleted rows with no manifest, and `--disposition-manifest ''` switched the only protection off. Gate added in this change, shared with the merge and promotion gates."
     },
     {
-      "path": "30_SCRIPTS/ingestion/disposition_manifest.py",
-      "role": "read_only",
-      "gate": "n/a",
-      "conclusion": "Reviewed: writes the manifest JSON (`save`); reads the slots through `slot_rows.read_all`."
-    },
-    {
-      "path": "30_SCRIPTS/ingestion/model_extract_concepts.py",
-      "role": "read_only",
-      "gate": "n/a",
-      "conclusion": "Reviewed: writes the staging and rejects files; `SLOT_DIR` is only read for the slot questions."
-    },
-    {
-      "path": "30_SCRIPTS/verification/generate_closure_report.py",
-      "role": "read_only",
-      "gate": "n/a",
-      "conclusion": "Reviewed: writes a report file; reads the slots."
-    },
-    {
-      "path": "30_SCRIPTS/verification/ontology_write_paths.py",
-      "role": "read_only",
-      "gate": "n/a",
-      "conclusion": "Reviewed: this scanner. Writes its own report and JSON, never the slots."
+      "path": "20_TESTS/ontology/test_row_disposition_applied.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: reads the real slots and copies them into `tmp_path` before any change."
     },
     {
       "path": "20_TESTS/test_book_ingestion_pipeline.py",
@@ -74,16 +56,40 @@
       "conclusion": "Reviewed: promotes into a `tmp_path` slots directory."
     },
     {
+      "path": "20_TESTS/test_purge_canonical_gate.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: the purge gate's tests; the canonical directory is patched to a temporary one."
+    },
+    {
       "path": "20_TESTS/test_purge_rejected_rows.py",
       "role": "test",
       "gate": "n/a (temporary directories)",
       "conclusion": "Reviewed: applies only to temporary copies; the two calls on the canonical directory use `apply=False`."
     },
     {
-      "path": "20_TESTS/ontology/test_row_disposition_applied.py",
-      "role": "test",
-      "gate": "n/a (temporary directories)",
-      "conclusion": "Reviewed: reads the real slots and copies them into `tmp_path` before any change."
+      "path": "30_SCRIPTS/ingestion/disposition_manifest.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: writes the manifest JSON (`save`); reads the slots through `slot_rows.read_all`."
+    },
+    {
+      "path": "30_SCRIPTS/ingestion/model_extract_concepts.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: writes the staging and rejects files; `SLOT_DIR` is only read for the slot questions."
+    },
+    {
+      "path": "30_SCRIPTS/verification/generate_closure_report.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: writes a report file; reads the slots."
+    },
+    {
+      "path": "30_SCRIPTS/verification/ontology_write_paths.py",
+      "role": "read_only",
+      "gate": "n/a",
+      "conclusion": "Reviewed: this scanner. Writes its own report and JSON, never the slots."
     }
   ],
   "not_visible_to_the_scan": [
