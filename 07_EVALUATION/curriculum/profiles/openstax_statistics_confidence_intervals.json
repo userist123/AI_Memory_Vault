@@ -1,0 +1,57 @@
+{
+  "module_id": "statistics-confidence-intervals-v1",
+  "domain": "mathematical-statistics",
+  "learning_goal": "Establish rigorous principles of confidence intervals, point estimation, margin of error, and sample size calculations to discipline statistical inference and evaluation reporting in vault procedures.",
+  "expected_capabilities": [
+    "Construct and interpret confidence intervals for a single population mean when population standard deviation is known using normal distribution and z-scores.",
+    "Construct and interpret confidence intervals for a single population mean when population standard deviation is unknown using Student's t-distribution and degrees of freedom.",
+    "Construct and interpret confidence intervals for a population proportion using standard normal approximations and the plus-four method.",
+    "Calculate minimum sample size required to estimate a population mean or proportion within a specified margin of error at a given confidence level.",
+    "Distinguish between point estimates and interval estimates, correctly interpreting the confidence level as the long-run capture proportion of repeated samples.",
+    "Enforce the fundamental requirement of independent observations to prevent pseudoreplication and sample size inflation."
+  ],
+  "source": {
+    "work_title": "Introductory Statistics 2e",
+    "chapter_or_topic": "Chapter 8: Confidence Intervals",
+    "provenance_manifest": "07_EVALUATION/curriculum/statistics_provenance_manifest.json",
+    "raw_dir": "06_INBOX/RAW_IMPORTS/openstax_statistics_2e_ch08",
+    "source_text_dir": "07_EVALUATION/curriculum/source_text/statistics_ch08",
+    "content_files": [
+      "8_0_introduction.txt",
+      "8_1_a_single_population_mean_using_the_normal_distribution.txt",
+      "8_2_a_single_population_mean_using_the_student_t_distribution.txt",
+      "8_3_a_population_proportion.txt",
+      "8_4_confidence_interval_calculating_sample_size.txt"
+    ]
+  },
+  "topicality_terms": [
+    "confidence interval",
+    "point estimate",
+    "margin of error",
+    "confidence level",
+    "critical value",
+    "standard error",
+    "student's t",
+    "degrees of freedom",
+    "population mean",
+    "population proportion",
+    "sample size",
+    "normal distribution",
+    "error bound"
+  ],
+  "min_topic_density": 0.5,
+  "evaluation": {
+    "frozen_test_set": "07_EVALUATION/curriculum/openstax_statistics_frozen_test_set.json",
+    "success_criteria": {
+      "min_treatment_supported": "4/12",
+      "max_wrong": "1/12",
+      "min_trap_pass_rate": "10/10"
+    }
+  },
+  "forbidden_outputs": [
+    "Promotion of proposed notes to ACTIVE without explicit human attestation",
+    "Reporting of sample proportions without explicit sample size N and confidence intervals",
+    "Fabricated statistical definitions or unverified formulas absent from chapter text"
+  ],
+  "retroactive": false
+}
