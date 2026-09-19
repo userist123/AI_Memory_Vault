@@ -84,6 +84,12 @@
       "role": "test",
       "gate": "n/a (temporary directories)",
       "conclusion": "Reviewed: reads the real slots and copies them into `tmp_path` before any change."
+    },
+    {
+      "path": "20_TESTS/test_curriculum_provenance.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory."
     }
   ],
   "not_visible_to_the_scan": [
