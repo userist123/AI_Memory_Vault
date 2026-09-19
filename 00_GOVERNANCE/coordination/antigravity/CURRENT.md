@@ -1,6 +1,6 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-19T20:05:00Z
+last_updated_utc: 2026-09-20T00:25:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
 working_branch: antigravity/graph-and-core-real
 base_main_sha: 76a050d51
@@ -43,20 +43,20 @@ completed:
   - "Curriculum Module Profile Schema & Validator: Implemented curriculum module profile JSON schema (version 1.0.0) with automated validation in validate_curriculum_profile.py and test coverage."
   - "Bibliographic Provenance Architecture: Implemented validate_bibliographic_provenance.py enforcing work manifests (ISBN, edition, license URL, source hashes) and note-level verification; enriched 16 Psychology notes and 5 Statistics notes with complete verifiable provenance."
   - "OpenStax Introductory Statistics Chapter 8 Ingestion: Ingested Confidence Intervals module via generic profile-driven pipeline with zero domain-specific code; extracted 5 knowledge notes with 24/25 verbatim citations verified; recorded genuine token telemetry."
-  - "Dual-Arm Transfer Benchmark & Paired Statistics: Evaluated live reader transfer benchmark (0/12 control -> 7/12 treatment, Wilson score 95% CIs, McNemar exact two-sided p=0.01562 < 0.05 demonstrating statistically significant transfer); saved raw responses for deterministic offline evaluation."
-  - "Small Sample Proportions Procedure & CI Gate: Authored canonical procedure 10_DOCUMENTATION/procedures/reporting_small_sample_proportions.md citing verbatim OpenStax Ch 8; implemented gate_curriculum_report_statistics.py and test suite 20_TESTS/test_gate_curriculum_report_statistics.py (9/9 passed); verified full test suite (2254 passed, 0 failed)."
+  - "Partea 2 Complete (Graph precision filters & transactional prune): Implemented length >= 4, word boundaries, duplicate filtering and explicit evidence requirement in edge_proposer.py (163 clean proposals on real graph); added prune_edges and bit-for-bit rollback in plasticity.py; pruned 5 audit-invalidated relations; generated 50-sample audit packet v2; verified VAULT_STATE.md with tests."
+  - "Partea 3 Complete (Cognitive Core wiring & empirical evaluation): Pre-registered 4 hypotheses in 07_EVALUATION/cognitive_core/PREREGISTRATION.md; wired PlanComplexityAnalyzer, CouncilBudgetController, and ContextPackBuilder into MemoryController.search() behind enable_cognitive_core: bool = False; evaluated dual-arm on heldout.json v2 (68.2% results token reduction, 52.0% envelope reduction, 0 recall degradation, McNemar p=1.0, 0% budget violations); authored EVALUATION_REPORT.md; updated VAULT_STATE.md Section 3."
 in_progress: []
 next_actions:
-  - "Push branch antigravity/curriculum-v2-process and open Pull Request to main."
+  - "Deliver final program summary and handoff report."
 blockers: []
 risks: []
 Evidence_refs:
-  - 30_SCRIPTS/verification/gate_curriculum_report_statistics.py
-  - 30_SCRIPTS/knowledge/validate_bibliographic_provenance.py
-  - 20_TESTS/test_gate_curriculum_report_statistics.py
-  - 20_TESTS/test_curriculum_offline_judgment.py
-  - 07_EVALUATION/curriculum/reports/TRANSFER_BENCHMARK_STATISTICS-CONFIDENCE-INTERVALS-V1.md
-  - 10_DOCUMENTATION/procedures/reporting_small_sample_proportions.md
+  - 07_EVALUATION/cognitive_core/PREREGISTRATION.md
+  - 07_EVALUATION/cognitive_core/EVALUATION_REPORT.md
+  - 07_EVALUATION/cognitive_core/cognitive_core_benchmark_report.json
+  - 20_TESTS/test_cognitive_core_search_wiring.py
+  - 03_IMPLEMENTATION/packages/memory/controller.py
+  - 00_GOVERNANCE/VAULT_STATE.md
 related_agents: CODEX, CLAUDE_CODE, LUNA
 ---
 

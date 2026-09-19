@@ -1,0 +1,1785 @@
+{
+  "timestamp_utc": "2026-09-19T21:23:47Z",
+  "dataset": "heldout_retrieval_benchmark_v2/heldout.json",
+  "dataset_hash": "0222d5e858dfca5bbae6db4559eafe0d43b133380a912664aaa7e4ea6c0d8418",
+  "total_cases": 32,
+  "corpus_notes": 954,
+  "arms": {
+    "baseline_off": {
+      "enable_cognitive_core": false,
+      "summary": {
+        "total_cases": 32,
+        "measurable_cases": 29,
+        "unmeasurable_cases": 3,
+        "candidate_recall": 0.6552,
+        "context_recall": 0.069,
+        "answer_correctness": 0.069,
+        "budget_violation_rate": 0.0,
+        "results_count": {
+          "mean": 8.38,
+          "median": 10.0
+        },
+        "results_tokens": {
+          "mean": 835.12,
+          "median": 910.0,
+          "p95": 1467
+        },
+        "envelope_tokens": {
+          "mean": 1073.53,
+          "median": 1150.0,
+          "p95": 1752
+        },
+        "latency_ms": {
+          "mean": 358.93,
+          "median": 432.54,
+          "p95": 506.14,
+          "min": 9.36,
+          "max": 667.42
+        },
+        "by_class": {
+          "exact_identifier_lookup": {
+            "n": 5,
+            "n_measurable": 5,
+            "context_recall": 0.2,
+            "answer_correctness": 0.2
+          },
+          "lexical_trap": {
+            "n": 4,
+            "n_measurable": 4,
+            "context_recall": 0.0,
+            "answer_correctness": 0.0
+          },
+          "one_hop_graph_expansion": {
+            "n": 12,
+            "n_measurable": 12,
+            "context_recall": 0.0833,
+            "answer_correctness": 0.0833
+          },
+          "paraphrase": {
+            "n": 4,
+            "n_measurable": 4,
+            "context_recall": 0.0,
+            "answer_correctness": 0.0
+          },
+          "synonym_substitution": {
+            "n": 4,
+            "n_measurable": 4,
+            "context_recall": 0.0,
+            "answer_correctness": 0.0
+          },
+          "unanswerable": {
+            "n": 3,
+            "n_measurable": 0,
+            "context_recall": null,
+            "answer_correctness": null
+          }
+        }
+      },
+      "cases": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 446.508,
+          "results_count": 10,
+          "results_tokens": 959,
+          "envelope_tokens": 1244,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 9.364,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 73,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 446.679,
+          "results_count": 10,
+          "results_tokens": 1041,
+          "envelope_tokens": 1326,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 9.528,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 73,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 503.712,
+          "results_count": 10,
+          "results_tokens": 1165,
+          "envelope_tokens": 1450,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 13.541,
+          "results_count": 9,
+          "results_tokens": 1059,
+          "envelope_tokens": 1131,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 425.892,
+          "results_count": 10,
+          "results_tokens": 850,
+          "envelope_tokens": 1135,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 428.513,
+          "results_count": 10,
+          "results_tokens": 1227,
+          "envelope_tokens": 1512,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 422.447,
+          "results_count": 10,
+          "results_tokens": 896,
+          "envelope_tokens": 1181,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 427.222,
+          "results_count": 10,
+          "results_tokens": 743,
+          "envelope_tokens": 1028,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 433.783,
+          "results_count": 10,
+          "results_tokens": 760,
+          "envelope_tokens": 1045,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 667.424,
+          "results_count": 10,
+          "results_tokens": 1074,
+          "envelope_tokens": 1359,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 430.273,
+          "results_count": 10,
+          "results_tokens": 768,
+          "envelope_tokens": 1053,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 9.685,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 73,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 9.633,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 73,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 443.399,
+          "results_count": 10,
+          "results_tokens": 954,
+          "envelope_tokens": 1239,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 434.695,
+          "results_count": 10,
+          "results_tokens": 1366,
+          "envelope_tokens": 1651,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 443.036,
+          "results_count": 10,
+          "results_tokens": 740,
+          "envelope_tokens": 1025,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 453.999,
+          "results_count": 10,
+          "results_tokens": 880,
+          "envelope_tokens": 1165,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 443.247,
+          "results_count": 10,
+          "results_tokens": 946,
+          "envelope_tokens": 1231,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 489.272,
+          "results_count": 10,
+          "results_tokens": 924,
+          "envelope_tokens": 1209,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 9.473,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 73,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 456.546,
+          "results_count": 10,
+          "results_tokens": 755,
+          "envelope_tokens": 1040,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 13.46,
+          "results_count": 9,
+          "results_tokens": 1059,
+          "envelope_tokens": 1131,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 457.373,
+          "results_count": 10,
+          "results_tokens": 1148,
+          "envelope_tokens": 1433,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 425.973,
+          "results_count": 10,
+          "results_tokens": 760,
+          "envelope_tokens": 1045,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 430.028,
+          "results_count": 10,
+          "results_tokens": 1147,
+          "envelope_tokens": 1432,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "abstain": true,
+          "latency_ms": 431.292,
+          "results_count": 10,
+          "results_tokens": 985,
+          "envelope_tokens": 1270,
+          "budget_violated": false,
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "abstain": true,
+          "latency_ms": 506.145,
+          "results_count": 10,
+          "results_tokens": 742,
+          "envelope_tokens": 1027,
+          "budget_violated": false,
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "abstain": true,
+          "latency_ms": 477.298,
+          "results_count": 10,
+          "results_tokens": 834,
+          "envelope_tokens": 1119,
+          "budget_violated": false,
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 414.639,
+          "results_count": 10,
+          "results_tokens": 1467,
+          "envelope_tokens": 1752,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 471.798,
+          "results_count": 10,
+          "results_tokens": 1470,
+          "envelope_tokens": 1755,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": false
+          }
+        }
+      ]
+    },
+    "treatment_on": {
+      "enable_cognitive_core": true,
+      "summary": {
+        "total_cases": 32,
+        "measurable_cases": 29,
+        "unmeasurable_cases": 3,
+        "candidate_recall": 0.6552,
+        "context_recall": 0.069,
+        "answer_correctness": 0.069,
+        "budget_violation_rate": 0.0,
+        "results_count": {
+          "mean": 2.78,
+          "median": 3.0
+        },
+        "results_tokens": {
+          "mean": 265.88,
+          "median": 255.0,
+          "p95": 501
+        },
+        "envelope_tokens": {
+          "mean": 515.59,
+          "median": 538.0,
+          "p95": 785
+        },
+        "latency_ms": {
+          "mean": 348.38,
+          "median": 433.75,
+          "p95": 475.98,
+          "min": 9.4,
+          "max": 502.94
+        },
+        "by_class": {
+          "exact_identifier_lookup": {
+            "n": 5,
+            "n_measurable": 5,
+            "context_recall": 0.2,
+            "answer_correctness": 0.2
+          },
+          "lexical_trap": {
+            "n": 4,
+            "n_measurable": 4,
+            "context_recall": 0.0,
+            "answer_correctness": 0.0
+          },
+          "one_hop_graph_expansion": {
+            "n": 12,
+            "n_measurable": 12,
+            "context_recall": 0.0833,
+            "answer_correctness": 0.0833
+          },
+          "paraphrase": {
+            "n": 4,
+            "n_measurable": 4,
+            "context_recall": 0.0,
+            "answer_correctness": 0.0
+          },
+          "synonym_substitution": {
+            "n": 4,
+            "n_measurable": 4,
+            "context_recall": 0.0,
+            "answer_correctness": 0.0
+          },
+          "unanswerable": {
+            "n": 3,
+            "n_measurable": 0,
+            "context_recall": null,
+            "answer_correctness": null
+          }
+        }
+      },
+      "cases": [
+        {
+          "id": "H01",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 433.949,
+          "results_count": 3,
+          "results_tokens": 250,
+          "envelope_tokens": 533,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H02",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 9.795,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 71,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H03",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 429.105,
+          "results_count": 3,
+          "results_tokens": 360,
+          "envelope_tokens": 642,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H04",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 10.421,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 71,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H05",
+          "class": "exact_identifier_lookup",
+          "abstain": false,
+          "latency_ms": 433.548,
+          "results_count": 3,
+          "results_tokens": 253,
+          "envelope_tokens": 536,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H06",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 14.042,
+          "results_count": 3,
+          "results_tokens": 423,
+          "envelope_tokens": 706,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H07",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 459.512,
+          "results_count": 5,
+          "results_tokens": 501,
+          "envelope_tokens": 785,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "standard",
+              "run_retrieval": true,
+              "run_verifier": true,
+              "reason": "risky capability detected in query",
+              "should_dispatch": true
+            },
+            "allocated_token_budget": 2500,
+            "allocated_max_results": 5
+          }
+        },
+        {
+          "id": "H08",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 475.981,
+          "results_count": 3,
+          "results_tokens": 293,
+          "envelope_tokens": 575,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H09",
+          "class": "paraphrase",
+          "abstain": false,
+          "latency_ms": 445.853,
+          "results_count": 3,
+          "results_tokens": 292,
+          "envelope_tokens": 575,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H10",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 425.015,
+          "results_count": 3,
+          "results_tokens": 252,
+          "envelope_tokens": 534,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H11",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 429.43,
+          "results_count": 3,
+          "results_tokens": 250,
+          "envelope_tokens": 532,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H12",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 447.126,
+          "results_count": 3,
+          "results_tokens": 268,
+          "envelope_tokens": 550,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H13",
+          "class": "synonym_substitution",
+          "abstain": false,
+          "latency_ms": 440.222,
+          "results_count": 5,
+          "results_tokens": 418,
+          "envelope_tokens": 702,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "standard",
+              "run_retrieval": true,
+              "run_verifier": true,
+              "reason": "risky capability detected in query",
+              "should_dispatch": true
+            },
+            "allocated_token_budget": 2500,
+            "allocated_max_results": 5
+          }
+        },
+        {
+          "id": "H14",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 10.395,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 71,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H15",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 9.401,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 73,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "standard",
+              "run_retrieval": true,
+              "run_verifier": true,
+              "reason": "risky capability detected in query",
+              "should_dispatch": true
+            },
+            "allocated_token_budget": 2500,
+            "allocated_max_results": 5
+          }
+        },
+        {
+          "id": "H16",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 439.215,
+          "results_count": 3,
+          "results_tokens": 253,
+          "envelope_tokens": 536,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H17",
+          "class": "lexical_trap",
+          "abstain": false,
+          "latency_ms": 429.649,
+          "results_count": 5,
+          "results_tokens": 523,
+          "envelope_tokens": 807,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "standard",
+              "run_retrieval": true,
+              "run_verifier": true,
+              "reason": "risky capability detected in query",
+              "should_dispatch": true
+            },
+            "allocated_token_budget": 2500,
+            "allocated_max_results": 5
+          }
+        },
+        {
+          "id": "H18",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 430.97,
+          "results_count": 3,
+          "results_tokens": 256,
+          "envelope_tokens": 539,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H19",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 446.62,
+          "results_count": 3,
+          "results_tokens": 254,
+          "envelope_tokens": 537,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H20",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 438.748,
+          "results_count": 3,
+          "results_tokens": 364,
+          "envelope_tokens": 646,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H21",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 443.444,
+          "results_count": 3,
+          "results_tokens": 253,
+          "envelope_tokens": 536,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H22",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 9.881,
+          "results_count": 0,
+          "results_tokens": 1,
+          "envelope_tokens": 71,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H23",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 448.339,
+          "results_count": 5,
+          "results_tokens": 391,
+          "envelope_tokens": 675,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "standard",
+              "run_retrieval": true,
+              "run_verifier": true,
+              "reason": "risky capability detected in query",
+              "should_dispatch": true
+            },
+            "allocated_token_budget": 2500,
+            "allocated_max_results": 5
+          }
+        },
+        {
+          "id": "H24",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 13.072,
+          "results_count": 3,
+          "results_tokens": 301,
+          "envelope_tokens": 583,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H25",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 472.12,
+          "results_count": 5,
+          "results_tokens": 406,
+          "envelope_tokens": 690,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "standard",
+              "run_retrieval": true,
+              "run_verifier": true,
+              "reason": "risky capability detected in query",
+              "should_dispatch": true
+            },
+            "allocated_token_budget": 2500,
+            "allocated_max_results": 5
+          }
+        },
+        {
+          "id": "H26",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 441.039,
+          "results_count": 3,
+          "results_tokens": 250,
+          "envelope_tokens": 533,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H27",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 420.356,
+          "results_count": 3,
+          "results_tokens": 256,
+          "envelope_tokens": 539,
+          "budget_violated": false,
+          "candidate_recall": 1,
+          "context_recall": 1,
+          "answer_correctness": 1,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H28",
+          "class": "unanswerable",
+          "abstain": true,
+          "latency_ms": 415.498,
+          "results_count": 3,
+          "results_tokens": 346,
+          "envelope_tokens": 629,
+          "budget_violated": false,
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H29",
+          "class": "unanswerable",
+          "abstain": true,
+          "latency_ms": 455.618,
+          "results_count": 3,
+          "results_tokens": 249,
+          "envelope_tokens": 532,
+          "budget_violated": false,
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H30",
+          "class": "unanswerable",
+          "abstain": true,
+          "latency_ms": 440.36,
+          "results_count": 3,
+          "results_tokens": 252,
+          "envelope_tokens": 535,
+          "budget_violated": false,
+          "candidate_recall": "UNMEASURABLE",
+          "context_recall": "UNMEASURABLE",
+          "answer_correctness": "UNMEASURABLE",
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H31",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 426.519,
+          "results_count": 2,
+          "results_tokens": 218,
+          "envelope_tokens": 501,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        },
+        {
+          "id": "H32",
+          "class": "one_hop_graph_expansion",
+          "abstain": false,
+          "latency_ms": 502.945,
+          "results_count": 2,
+          "results_tokens": 371,
+          "envelope_tokens": 654,
+          "budget_violated": false,
+          "candidate_recall": 0,
+          "context_recall": 0,
+          "answer_correctness": 0,
+          "cognitive_core": {
+            "enabled": true,
+            "plan_complexity": {
+              "step_count": 1,
+              "execution_mode": "simple",
+              "council_complexity": 1,
+              "require_review": false,
+              "retrieval_steps": 1,
+              "verification_steps": 0,
+              "destructive_steps": 0
+            },
+            "council_decision": {
+              "tier": "none",
+              "run_retrieval": false,
+              "run_verifier": false,
+              "reason": "task below complexity threshold and no risk signal: Council skipped",
+              "should_dispatch": false
+            },
+            "allocated_token_budget": 600,
+            "allocated_max_results": 3
+          }
+        }
+      ]
+    }
+  },
+  "statistical_tests": {
+    "context_recall": {
+      "metric": "context_recall",
+      "arm_a_better": 0,
+      "arm_b_better": 0,
+      "concordant": 29,
+      "discordant": 0,
+      "skipped_unmeasurable": 3,
+      "exact_two_sided_p_value": 1.0
+    },
+    "answer_correctness": {
+      "metric": "answer_correctness",
+      "arm_a_better": 0,
+      "arm_b_better": 0,
+      "concordant": 29,
+      "discordant": 0,
+      "skipped_unmeasurable": 3,
+      "exact_two_sided_p_value": 1.0
+    }
+  },
+  "delta": {
+    "latency_mean_ms_diff": -10.55,
+    "latency_median_ms_diff": 1.21,
+    "results_tokens_mean_diff": -569.24,
+    "results_tokens_reduction_pct": 68.16,
+    "envelope_tokens_mean_diff": -557.94,
+    "envelope_tokens_reduction_pct": 51.97,
+    "context_recall_diff": 0.0,
+    "answer_correctness_diff": 0.0
+  }
+}
