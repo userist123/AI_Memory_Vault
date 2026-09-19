@@ -122,3 +122,45 @@ def test_thresholds_are_the_calibrated_values():
     deliberately, with a fresh hand-verified sample."""
     assert ep.MIN_OVERLAP_COVERAGE == 0.10
     assert ep.RARE_ENTITY_DF_MAX == 5
+
+
+# --- OpenStax curriculum boilerplate filter (Point 5) ----------------------
+
+
+@pytest.mark.parametrize("token", [
+    "openstax", "psychology", "curriculum", "ch08",
+    "provenance_manifest", "verified-source", "cc-by",
+    "source_ref", "source_date", "extraction_date", "original_path",
+])
+def test_openstax_boilerplate_is_spurious(token):
+    """Every OpenStax note carries these in provenance or headings; without this
+    filter, all 120 section-pairs in Chapter 8 share them as spurious entities."""
+    assert token in ep.SPURIOUS_ENTITIES
+
+
+def test_openstax_boilerplate_filtered_from_note_entities():
+    """Verify that build_entity_df excludes OpenStax boilerplate."""
+    class _MockNote:
+        id = "openstax-test-note"
+        text = "openstax psychology curriculum ch08 AtkinsonShiffrin Model"
+        tags = ["verified-source", "curriculum"]
+
+    class _MockIndex:
+        notes = [_MockNote()]
+
+    ents, _ = ep.build_entity_df(_MockIndex())
+    note_ents = ents["openstax-test-note"]
+    assert "openstax" not in note_ents
+    assert "psychology" not in note_ents
+    assert "curriculum" not in note_ents
+    assert "ch08" not in note_ents
+    assert "verified-source" not in note_ents
+
+
+def test_openstax_filter_negative_control_fails_on_unfiltered_spurious():
+    """NEGATIVE CONTROL: If a spurious token were removed from SPURIOUS_ENTITIES,
+    this check must be able to fail."""
+    fake_allowed = "openstax"
+    assert fake_allowed in ep.SPURIOUS_ENTITIES, (
+        "NEGATIVE CONTROL: openstax MUST be in SPURIOUS_ENTITIES to prevent false cross-section edges"
+    )

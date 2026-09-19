@@ -152,6 +152,12 @@ SPURIOUS_ENTITIES = frozenset({
     "monitorul", "oficial", "emitent", "anexa", "lista", "regim", "finale",
     "care", "pentru", "din", "sau", "prin", "asupra", "autorizarea",
     "requires_legal_review", "verified_source", "url", "knowledge",
+    # Fourth round (Punctul 5 - Curriculum OpenStax):
+    # Book-level boilerplate entities shared across all 16 OpenStax sections.
+    # Without this filter, all 120 note-pairs share these entities.
+    "openstax", "psychology", "curriculum", "ch08",
+    "provenance_manifest", "verified-source", "cc-by",
+    "source_ref", "source_date", "extraction_date", "original_path",
 })
 
 #: Runs of underscores and similar rules used as visual separators in legal
