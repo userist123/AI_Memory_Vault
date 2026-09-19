@@ -36,8 +36,44 @@ def sanitize_filename(category: str) -> str:
         
     return safe
 
-def resolve_path(vault_root: str, note: dict) -> str:
-    """Resolves the physical directory for a note based on its type and guarantees containment."""
+#: Where NEW notes go when the vault has the content tree.
+#:
+#: The write path was never migrated: every type below used to land in the legacy
+#: tree (01_KNOWLEDGE, 03_PROCEDURES, ...) while the corpus lives in the content
+#: roots, so a note written today was invisible to anything that reads the corpus
+#: layout and sat in a second taxonomy. The destinations below are where the
+#: existing notes of each type already are (measured on the vault: lesson, error
+#: and preference in 01_ARCHITECTURE/memory; knowledge in 01_ARCHITECTURE/knowledge;
+#: procedure in 10_DOCUMENTATION/procedures; project in 02_PRODUCT/projects).
+#:
+#: A folder is used only if it exists in the vault being written to. A vault without
+#: the content tree (the temporary vaults of the unit tests, or an older layout) keeps
+#: the legacy destination, so this is a change of where the real vault writes, not a
+#: change of what a path means. Notes that already exist are not touched: they keep
+#: their exact path (FileStorageEngine._target_path_for, db08b847).
+#: Types not listed keep their legacy folder; moving them needs the same evidence.
+CONTENT_TREE_FOR_TYPE = {
+    "knowledge": "01_ARCHITECTURE/knowledge",
+    "lesson": "01_ARCHITECTURE/memory",
+    "error": "01_ARCHITECTURE/memory",
+    "preference": "01_ARCHITECTURE/memory",
+    "procedure": "10_DOCUMENTATION/procedures",
+    "project": "02_PRODUCT/projects",
+}
+
+
+def _destination_folder(vault_root: str, note_type: str, legacy_folder: str) -> str:
+    content_folder = CONTENT_TREE_FOR_TYPE.get(note_type)
+    if content_folder and os.path.isdir(os.path.join(vault_root, *content_folder.split("/"))):
+        return content_folder
+    return legacy_folder
+
+
+def resolve_path(vault_root: str, note: dict, prefer_content_tree: bool = True) -> str:
+    """Resolves the physical directory for a note based on its type and guarantees containment.
+
+    `prefer_content_tree=False` gives the legacy destination, for a note that already lives in the legacy tree.
+    """
     note_type = str(note.get("type", "knowledge")).lower()
     
     mapping = {
@@ -57,6 +93,8 @@ def resolve_path(vault_root: str, note: dict) -> str:
     }
     
     folder = mapping.get(note_type, "04_MEMORY") # default to memory if unknown
+    if prefer_content_tree:
+        folder = _destination_folder(vault_root, note_type, folder)
     
     # Strict exclusion for RAW_IMPORTS mutation
     if "06_INBOX" in folder:
