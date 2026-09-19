@@ -59,6 +59,38 @@ class TestCurriculumOfflineRegression:
         assert mcn["two_sided_p_value"] == 0.03125
         assert mcn["is_significant_at_alpha_05"] is True
 
+    def test_statistics_offline_judgment_verdicts(self):
+        raw_stats = REPO_ROOT / "07_EVALUATION" / "curriculum" / "raw_responses" / "statistics-confidence-intervals-v1_responses.json"
+        assert raw_stats.exists(), f"Raw responses not found at {raw_stats}"
+        raw_data = json.loads(raw_stats.read_text(encoding="utf-8"))
+        test_data = json.loads((REPO_ROOT / "07_EVALUATION" / "curriculum" / "openstax_statistics_frozen_test_set.json").read_text(encoding="utf-8"))
+
+        eval_res = evaluate_raw_responses(raw_data, test_data)
+
+        # Control arm checks
+        c_rq = eval_res["control_arm"]["review_questions"]
+        c_tq = eval_res["control_arm"]["trap_questions"]
+        assert c_rq["correct_supported"] == "0/12"
+        assert c_rq["wrong"] == "0/12"
+        assert c_tq["trap_pass"] == "10/10"
+        assert c_tq["trap_fail"] == "0/10"
+
+        # Treatment arm checks
+        t_rq = eval_res["treatment_arm"]["review_questions"]
+        t_tq = eval_res["treatment_arm"]["trap_questions"]
+        assert t_rq["correct_supported"] == "7/12"
+        assert t_rq["correct_unsupported"] == "0/12"
+        assert t_rq["wrong"] == "0/12"
+        assert t_tq["trap_pass"] == "10/10"
+        assert t_tq["trap_fail"] == "0/10"
+
+        # McNemar test check
+        mcn = eval_res["paired_statistics"]["mcnemar_exact"]
+        assert mcn["b_improved"] == 7
+        assert mcn["c_regressed"] == 0
+        assert mcn["two_sided_p_value"] == pytest.approx(0.01562, rel=1e-3)
+        assert mcn["is_significant_at_alpha_05"] is True
+
 
 class TestStatisticalFunctions:
     def test_wilson_interval_boundaries(self):
