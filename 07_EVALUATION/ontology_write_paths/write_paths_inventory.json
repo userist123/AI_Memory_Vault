@@ -89,6 +89,43 @@
       ]
     },
     {
+      "file": "20_TESTS/test_controller_slot_path.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "vault",
+          "line": 36,
+          "call": "shutil.copytree"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 0,
+          "what": "path built from 'ontology' + 'slots'"
+        },
+        {
+          "line": 40,
+          "what": "name slot_file"
+        },
+        {
+          "line": 41,
+          "what": "name slot_file"
+        },
+        {
+          "line": 60,
+          "what": "name slot_file"
+        },
+        {
+          "line": 61,
+          "what": "name slot_file"
+        },
+        {
+          "line": 67,
+          "what": "name slot_file"
+        }
+      ]
+    },
+    {
       "file": "20_TESTS/test_promote_candidate_concept_gate.py",
       "category": "test",
       "writes": [
@@ -153,6 +190,48 @@
       ]
     },
     {
+      "file": "20_TESTS/test_purge_canonical_gate.py",
+      "category": "test",
+      "writes": [
+        {
+          "function": "world",
+          "line": 50,
+          "call": "write_text"
+        },
+        {
+          "function": "test_apply_on_a_copy_needs_no_manifest",
+          "line": 97,
+          "call": "write_text"
+        }
+      ],
+      "slot_refs": [
+        {
+          "line": 49,
+          "what": "name slot_file"
+        },
+        {
+          "line": 50,
+          "what": "name slot_file"
+        },
+        {
+          "line": 53,
+          "what": "name slot_file"
+        },
+        {
+          "line": 61,
+          "what": "name slot_file"
+        },
+        {
+          "line": 62,
+          "what": "name slot_file"
+        },
+        {
+          "line": 65,
+          "what": "name slot_file"
+        }
+      ]
+    },
+    {
       "file": "20_TESTS/test_purge_rejected_rows.py",
       "category": "test",
       "writes": [
@@ -173,20 +252,16 @@
         },
         {
           "function": "test_batch_mode_cannot_delete_what_the_manifest_protects",
-          "line": 393,
+          "line": 389,
           "call": "shutil.copytree"
         },
         {
           "function": "test_the_manifest_and_batch_paths_agree_on_what_may_go.deleted_via",
-          "line": 437,
+          "line": 427,
           "call": "shutil.copytree"
         }
       ],
       "slot_refs": [
-        {
-          "line": 0,
-          "what": "path built from 'ontology' + 'slots'"
-        },
         {
           "line": 61,
           "what": "name slot_file"
@@ -206,6 +281,10 @@
         {
           "line": 84,
           "what": "name temp_slots_dir"
+        },
+        {
+          "line": 88,
+          "what": "parameter temp_slots_dir"
         }
       ]
     },
@@ -474,7 +553,7 @@
       "writes": [
         {
           "function": "purge_rows",
-          "line": 366,
+          "line": 395,
           "call": "open(write)"
         }
       ],
@@ -488,19 +567,19 @@
           "what": "name DEFAULT_SLOTS_DIR"
         },
         {
-          "line": 67,
+          "line": 78,
           "what": "parameter slots_dir"
         },
         {
-          "line": 76,
+          "line": 83,
           "what": "name slots_dir"
         },
         {
-          "line": 85,
+          "line": 96,
           "what": "name slots_dir"
         },
         {
-          "line": 89,
+          "line": 100,
           "what": "name slots_dir"
         }
       ]

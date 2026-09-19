@@ -23,6 +23,7 @@ PART_B_PRE_PATH = REPO_ROOT / "07_EVALUATION" / "heldout_retrieval_benchmark_v2"
 PART_B_POST_PATH = REPO_ROOT / "07_EVALUATION" / "heldout_retrieval_benchmark_v2" / "baseline_report_post_cleanup.json"
 PART_C_PROPOSALS_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "edge_proposals.json"
 PART_C_SAMPLE_PATH = REPO_ROOT / "07_EVALUATION" / "edge_audit" / "audit_sample_50.json"
+PART_C_VERDICTS_PATH = REPO_ROOT / "07_EVALUATION" / "edge_audit" / "audit_verdicts.json"
 PART_E_TELEMETRY_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "curriculum_ingestion_telemetry.json"
 PART_E_EVAL_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "curriculum_heldout_eval.json"
 OUTPUT_REPORT_PATH = REPO_ROOT / "07_EVALUATION" / "neural_plasticity" / "NEURAL_PLASTICITY_REPORT.md"
@@ -33,6 +34,46 @@ def fmt_pct(num: float, den: int) -> str:
         return "0/0"
     pct = (num / den) * 100.0
     return f"{pct:.1f}% ({int(round(num))}/{den})"
+
+
+def audit_summary(sample_path: Path = PART_C_SAMPLE_PATH, verdicts_path: Path = PART_C_VERDICTS_PATH):
+    """Recompute the relation-audit result from audit_verdicts.json, or None if there is none.
+
+    Raises ValueError when the verdicts do not cover exactly the sample's 50 relations,
+    when a row has no evaluator, no reason or an unknown verdict, or when the sample
+    file is not the one the verdicts were written against. A report must not quote a
+    precision computed from verdicts that do not match the sample.
+    """
+    if not verdicts_path.exists():
+        return None
+    sample_bytes = sample_path.read_bytes()
+    sample = json.loads(sample_bytes.decode("utf-8"))
+    doc = json.loads(verdicts_path.read_text(encoding="utf-8"))
+    # Canonical-LF digest: the file checks out with CRLF on Windows and LF on Linux.
+    if doc.get("sample_sha256") != hashlib.sha256(sample_bytes.replace(b"\r\n", b"\n")).hexdigest():
+        raise ValueError("audit_verdicts.json was written against a different audit_sample_50.json")
+    key = lambda r: (r["index"], r["source_id"], r["target_id"], r["relation"])  # noqa: E731
+    expected = {key(r) for r in sample["samples"]}
+    rows = doc["verdicts"]
+    got = [key(r) for r in rows]
+    if len(got) != len(set(got)) or set(got) != expected:
+        raise ValueError("verdicts do not cover exactly the relations of the sample")
+    for r in rows:
+        if r.get("verdict") not in {"ACCEPT", "REJECT"}:
+            raise ValueError(f"relation {r['index']}: unknown verdict {r.get('verdict')!r}")
+        if not str(r.get("evaluator", "")).strip() or not str(r.get("rationale", "")).strip():
+            raise ValueError(f"relation {r['index']}: evaluator and rationale are required")
+    tiers = {}
+    for tier in ("strong", "weak"):
+        sub = [r for r in rows if r["rel_tier"] == tier]
+        tiers[tier] = {"accepted": sum(1 for r in sub if r["verdict"] == "ACCEPT"), "total": len(sub)}
+    total = {"accepted": sum(t["accepted"] for t in tiers.values()), "total": len(rows)}
+    reasons = Counter(r["category"] for r in rows if r["verdict"] == "REJECT")
+    reasons_by_tier = {t: Counter(r["category"] for r in rows if r["verdict"] == "REJECT" and r["rel_tier"] == t)
+                       for t in ("strong", "weak")}
+    return {"evaluator": doc["evaluator"], "evaluator_kind": doc.get("evaluator_kind", ""),
+            "tiers": tiers, "total": total, "reasons": reasons, "reasons_by_tier": reasons_by_tier,
+            "limitations": len(doc.get("limitations", []))}
 
 
 def generate_report() -> str:
@@ -76,6 +117,13 @@ def generate_report() -> str:
     c_audit_strong_count = part_c_sample.get("strong_count", 25)
     c_audit_weak_count = part_c_sample.get("weak_count", 25)
     c_audit_status = part_c_sample.get("status", "PENDING_AUDIT")
+    c_audit = audit_summary()
+    if c_audit:
+        c_audit_row = ("audit realizat: " + ", ".join(
+            f"{k} {v['accepted']}/{v['total']}" for k, v in c_audit["tiers"].items())
+            + f", total {c_audit['total']['accepted']}/{c_audit['total']['total']}")
+    else:
+        c_audit_row = "audit în așteptare"
 
     # 4. Part D
     d_test_count = 3
@@ -135,7 +183,7 @@ def generate_report() -> str:
     lines.append("|---|---|---|---|")
     lines.append("| **Consolidare Zilnică (Part A)** | Conexiuni import stricate, scriptul eșua la import (`validate_repository_layout` neconform) | Funcțional în CI (`memory-consolidation.yml`) și CLI v6; consultativ (zero mutații distructive) | `08_OBSERVABILITY/reports/sleep_consolidation_report.json` |")
     lines.append(f"| **Curățare Graf & Hub-uri (Part B)** | Hub-uri dense nefiltrate; 552 note redundante de eroare zgomotoase | Hub-uri plafonate (in-degree max 50); 552 note arhivate; zero regresie pe heldout | `baseline_report_pre_cleanup.json` vs `baseline_report_post_cleanup.json` |")
-    lines.append(f"| **Relații Tipizate (Part C)** | Relațiile din `synapse_store` nefolosite activ; citate lipsă la ambele capete | Vocabular de 7 tipuri, citate bidirecționale verificate; {c_total} propuneri; audit în așteptare | `07_EVALUATION/edge_audit/audit_packet.md` |")
+    lines.append(f"| **Relații Tipizate (Part C)** | Relațiile din `synapse_store` nefolosite activ; citate lipsă la ambele capete | Vocabular de 7 tipuri, citate bidirecționale verificate; {c_total} propuneri; {c_audit_row} | `07_EVALUATION/edge_audit/audit_packet.md` |")
     lines.append(f"| **Plasticitate Neuronală (Part D)** | `plasticity.py` complet neconectat la căutare; eroare TypeError pe trace | Conectat la `MemoryController.search()` cu propagare multi-hop; 3 teste empirice trecute | `tests/test_neural_plasticity_search.py` ({d_test_passed}/{d_test_count} trecute) |")
 
     ctrl_rq = part_e_eval.get("control_arm", {}).get("review_questions", {})
@@ -214,14 +262,36 @@ def generate_report() -> str:
         lines.append(f"| `{rel}` | {cls_name} | {count} |")
 
     lines.append("")
-    lines.append("### Statut Audit Relații: ÎN AȘTEPTARE")
-    lines.append(f"- **Pachet de Audit Generat**: `07_EVALUATION/edge_audit/audit_packet.md`")
-    lines.append(f"- **Eșantion Stratificat JSON**: `07_EVALUATION/edge_audit/audit_sample_50.json`")
-    lines.append(f"- **Dimensiune Eșantion**: `{c_audit_sample_size}` propuneri ({c_audit_strong_count} relații tari + {c_audit_weak_count} relații slabe, eșantionate reproductibil cu seed=42).")
-    lines.append("- **Stare Curentă**: `AUDIT ÎN AȘTEPTARE — necesită evaluare umană / critic independent`.")
-    lines.append("- **Rubrică de Evaluare**: Toate rubricile de verdict (`- [ ] ACCEPT / - [ ] REJECT`, motiv, semnătură evaluator) sunt lăsate necompletate.")
-    lines.append("- **Clarificare de Integritate**: Nu se mai pretinde o rată de acuratețe artificială de „100% (50/50)\"; evaluarea de precizie va fi înregistrată exclusiv post-audit.")
-    lines.append("")
+    if c_audit is None:
+        lines.append("### Statut Audit Relații: ÎN AȘTEPTARE")
+        lines.append(f"- **Pachet de Audit Generat**: `07_EVALUATION/edge_audit/audit_packet.md`")
+        lines.append(f"- **Eșantion Stratificat JSON**: `07_EVALUATION/edge_audit/audit_sample_50.json`")
+        lines.append(f"- **Dimensiune Eșantion**: `{c_audit_sample_size}` propuneri ({c_audit_strong_count} relații tari + {c_audit_weak_count} relații slabe, eșantionate reproductibil cu seed=42).")
+        lines.append("- **Stare Curentă**: `AUDIT ÎN AȘTEPTARE — necesită evaluare umană / critic independent`.")
+        lines.append("- **Rubrică de Evaluare**: Toate rubricile de verdict (`- [ ] ACCEPT / - [ ] REJECT`, motiv, semnătură evaluator) sunt lăsate necompletate.")
+        lines.append("- **Clarificare de Integritate**: Nu se mai pretinde o rată de acuratețe artificială de „100% (50/50)\"; evaluarea de precizie va fi înregistrată exclusiv post-audit.")
+        lines.append("")
+    else:
+        lines.append("### Statut Audit Relații: REALIZAT")
+        lines.append(f"- **Pachet de Audit (nemodificat)**: `07_EVALUATION/edge_audit/audit_packet.md`; eșantion: `07_EVALUATION/edge_audit/audit_sample_50.json` ({c_audit_strong_count} tari + {c_audit_weak_count} slabe, seed=42).")
+        lines.append("- **Verdicte**: `07_EVALUATION/edge_audit/audit_verdicts.json`, fiecare rând cu evaluator și motiv.")
+        lines.append(f"- **Evaluator**: `{c_audit['evaluator']}` — {c_audit['evaluator_kind']}.")
+        lines.append("")
+        lines.append("| Strat | Acceptate | Total | Precizie |")
+        lines.append("|---|---|---|---|")
+        for tier_name, label in (("strong", "Tari (Strong)"), ("weak", "Slabe (Weak)")):
+            t = c_audit["tiers"][tier_name]
+            lines.append(f"| {label} | {t['accepted']} | {t['total']} | {fmt_pct(t['accepted'], t['total'])} |")
+        lines.append(f"| **Total** | {c_audit['total']['accepted']} | {c_audit['total']['total']} | {fmt_pct(c_audit['total']['accepted'], c_audit['total']['total'])} |")
+        lines.append("")
+        lines.append("| Motiv de respingere | Tari | Slabe | Total |")
+        lines.append("|---|---|---|---|")
+        for reason, count in sorted(c_audit["reasons"].items(), key=lambda kv: (-kv[1], kv[0])):
+            lines.append(f"| `{reason}` | {c_audit['reasons_by_tier']['strong'][reason]} | {c_audit['reasons_by_tier']['weak'][reason]} | {count} |")
+        lines.append("")
+        lines.append(f"- **Limite**: eșantion de {c_audit['total']['total']} relații și un singur evaluator (AI, nu uman); `audit_verdicts.json` listează {c_audit['limitations']} limite (note foarte mari citite pe structură, cazuri de duplicate). Rezultatul se raportează așa cum a ieșit, fără ajustări.")
+        lines.append("- **Clarificare de Integritate**: cifra „100% (50/50)\" din Runda 2 rămâne retrasă (vezi DEVIATIONS); precizia de mai sus provine din verdictele înregistrate, nu dintr-un motor de reguli.")
+        lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 5. Partea D: Plasticitate Conectată la Căutarea din Producție")

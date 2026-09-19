@@ -1,6 +1,6 @@
 # 🧠 NEURAL_PLASTICITY_REPORT — Conectarea Mașinăriei Neuronale
 
-> **Dată Generare**: `2026-09-19T10:09:10+00:00`  
+> **Dată Generare**: `2026-09-19T14:25:57+00:00`  
 > **Destinatar**: ANTIGRAVITY  
 > **Ramură Git**: `antigravity/curriculum-openstax-v3` (PR #164)  
 > **Statut Executiv**: **TOATE PORȚILE VERIFICATE EMPIRIC (Părțile A, B, C, D, E, F)**  
@@ -13,7 +13,7 @@
 |---|---|---|---|
 | **Consolidare Zilnică (Part A)** | Conexiuni import stricate, scriptul eșua la import (`validate_repository_layout` neconform) | Funcțional în CI (`memory-consolidation.yml`) și CLI v6; consultativ (zero mutații distructive) | `08_OBSERVABILITY/reports/sleep_consolidation_report.json` |
 | **Curățare Graf & Hub-uri (Part B)** | Hub-uri dense nefiltrate; 552 note redundante de eroare zgomotoase | Hub-uri plafonate (in-degree max 50); 552 note arhivate; zero regresie pe heldout | `baseline_report_pre_cleanup.json` vs `baseline_report_post_cleanup.json` |
-| **Relații Tipizate (Part C)** | Relațiile din `synapse_store` nefolosite activ; citate lipsă la ambele capete | Vocabular de 7 tipuri, citate bidirecționale verificate; 233 propuneri; audit în așteptare | `07_EVALUATION/edge_audit/audit_packet.md` |
+| **Relații Tipizate (Part C)** | Relațiile din `synapse_store` nefolosite activ; citate lipsă la ambele capete | Vocabular de 7 tipuri, citate bidirecționale verificate; 233 propuneri; audit realizat: strong 3/25, weak 16/25, total 19/50 | `07_EVALUATION/edge_audit/audit_packet.md` |
 | **Plasticitate Neuronală (Part D)** | `plasticity.py` complet neconectat la căutare; eroare TypeError pe trace | Conectat la `MemoryController.search()` cu propagare multi-hop; 3 teste empirice trecute | `tests/test_neural_plasticity_search.py` (3/3 trecute) |
 | **Curriculum Ingestat (Part E)** | Nicio carte completă procesată; fără telemetrie de cost | Ingestat OpenStax *Psychology 2e* (Chapter 8: Memory); 16 secțiuni REVIEW, 27183 tokeni, cost $0.003773 | `curriculum_heldout_eval.json` (6/12 tratament vs 0/12 control; 10/10 capcane trecute) |
 
@@ -82,13 +82,27 @@
 | `supersedes` | Puternică (Strong) | 25 |
 | `verified_by` | Puternică (Strong) | 1 |
 
-### Statut Audit Relații: ÎN AȘTEPTARE
-- **Pachet de Audit Generat**: `07_EVALUATION/edge_audit/audit_packet.md`
-- **Eșantion Stratificat JSON**: `07_EVALUATION/edge_audit/audit_sample_50.json`
-- **Dimensiune Eșantion**: `50` propuneri (25 relații tari + 25 relații slabe, eșantionate reproductibil cu seed=42).
-- **Stare Curentă**: `AUDIT ÎN AȘTEPTARE — necesită evaluare umană / critic independent`.
-- **Rubrică de Evaluare**: Toate rubricile de verdict (`- [ ] ACCEPT / - [ ] REJECT`, motiv, semnătură evaluator) sunt lăsate necompletate.
-- **Clarificare de Integritate**: Nu se mai pretinde o rată de acuratețe artificială de „100% (50/50)"; evaluarea de precizie va fi înregistrată exclusiv post-audit.
+### Statut Audit Relații: REALIZAT
+- **Pachet de Audit (nemodificat)**: `07_EVALUATION/edge_audit/audit_packet.md`; eșantion: `07_EVALUATION/edge_audit/audit_sample_50.json` (25 tari + 25 slabe, seed=42).
+- **Verdicte**: `07_EVALUATION/edge_audit/audit_verdicts.json`, fiecare rând cu evaluator și motiv.
+- **Evaluator**: `claude-sonnet` — AI model (independent of the rule engine edge_proposer.py that proposed the edges; not a human review).
+
+| Strat | Acceptate | Total | Precizie |
+|---|---|---|---|
+| Tari (Strong) | 3 | 25 | 12.0% (3/25) |
+| Slabe (Weak) | 16 | 25 | 64.0% (16/25) |
+| **Total** | 19 | 50 | 38.0% (19/50) |
+
+| Motiv de respingere | Tari | Slabe | Total |
+|---|---|---|---|
+| `wrong_type` | 7 | 3 | 10 |
+| `unrelated` | 6 | 2 | 8 |
+| `duplicate_content` | 3 | 3 | 6 |
+| `shared_terms_only` | 4 | 0 | 4 |
+| `wrong_direction` | 2 | 1 | 3 |
+
+- **Limite**: eșantion de 50 relații și un singur evaluator (AI, nu uman); `audit_verdicts.json` listează 3 limite (note foarte mari citite pe structură, cazuri de duplicate). Rezultatul se raportează așa cum a ieșit, fără ajustări.
+- **Clarificare de Integritate**: cifra „100% (50/50)" din Runda 2 rămâne retrasă (vezi DEVIATIONS); precizia de mai sus provine din verdictele înregistrate, nu dintr-un motor de reguli.
 
 ---
 
@@ -180,11 +194,11 @@
 ## 8. Semnătură și Integritate Criptografică
 
 - **Generat de**: ANTIGRAVITY (AI Pair Programmer & Cognitive Systems Engineer)
-- **Dată**: `2026-09-19T10:09:10+00:00`
+- **Dată**: `2026-09-19T14:25:57+00:00`
 - **Verificare Date Personale**: `PERSONAL_DATA_STATUS=PASS`
 - **Verificare Layout Repo**: `LAYOUT_STATUS=PASS`
 - **Teste Suită**: 147/147 PASSED
 
 ```
-SHA-256 Digest: f74a27ef815817aeef187c49dd96c9d608e3af3f455bca97f9de6752eee49444
+SHA-256 Digest: 7b428086b8b3f761dbcc3eed66180effa74f37c7e95b1444a3bf16e3dc65abd5
 ```
