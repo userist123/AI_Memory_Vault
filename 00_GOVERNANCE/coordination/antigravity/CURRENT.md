@@ -45,16 +45,22 @@ completed:
   - "OpenStax Introductory Statistics Chapter 8 Ingestion: Ingested Confidence Intervals module via generic profile-driven pipeline with zero domain-specific code; extracted 5 knowledge notes with 24/25 verbatim citations verified; recorded genuine token telemetry."
   - "Partea 2 Complete (Graph precision filters & transactional prune): Implemented length >= 4, word boundaries, duplicate filtering and explicit evidence requirement in edge_proposer.py (163 clean proposals on real graph); added prune_edges and bit-for-bit rollback in plasticity.py; pruned 5 audit-invalidated relations; generated 50-sample audit packet v2; verified VAULT_STATE.md with tests."
   - "Partea 3 Complete (Cognitive Core wiring & empirical evaluation): Pre-registered 4 hypotheses in 07_EVALUATION/cognitive_core/PREREGISTRATION.md; wired PlanComplexityAnalyzer, CouncilBudgetController, and ContextPackBuilder into MemoryController.search() behind enable_cognitive_core: bool = False; evaluated dual-arm on heldout.json v2 (68.2% results token reduction, 52.0% envelope reduction, 0 recall degradation, McNemar p=1.0, 0% budget violations); authored EVALUATION_REPORT.md; updated VAULT_STATE.md Section 3."
+  - "Partea 3B Complete (5 Cognitive Modules Production Wiring & Benchmark v3 Evaluation): Pre-registered decision rules in MODULE_EVALUATION_PREREGISTRATION.md and committed to git (commit 23b1344bb); wired spreading_activation, working_memory, global_workspace, reasoning, and executive into MemoryController.search() behind explicit flags (OFF by default); verified non-empty production grep consumers; evaluated all arms on benchmark v3 frozen cases (160 queries / 130 measurable); generated MODULE_EVALUATION_REPORT.md and module_v3_results.json; all 5 modules remain OFF by default with empirical evidence; updated VAULT_STATE.md Section 3; verified with 34/34 passing tests."
 in_progress: []
 next_actions:
   - "Deliver final program summary and handoff report."
 blockers: []
 risks: []
 Evidence_refs:
+  - 07_EVALUATION/cognitive_core/MODULE_EVALUATION_PREREGISTRATION.md
+  - 07_EVALUATION/cognitive_core/MODULE_EVALUATION_REPORT.md
+  - 07_EVALUATION/cognitive_core/module_v3_results.json
   - 07_EVALUATION/cognitive_core/PREREGISTRATION.md
   - 07_EVALUATION/cognitive_core/EVALUATION_REPORT.md
   - 07_EVALUATION/cognitive_core/cognitive_core_benchmark_report.json
+  - 20_TESTS/test_modules_search_wiring.py
   - 20_TESTS/test_cognitive_core_search_wiring.py
+  - 20_TESTS/test_vault_state_accuracy.py
   - 03_IMPLEMENTATION/packages/memory/controller.py
   - 00_GOVERNANCE/VAULT_STATE.md
 related_agents: CODEX, CLAUDE_CODE, LUNA

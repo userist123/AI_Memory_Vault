@@ -54,7 +54,7 @@ in its constructor. Corrected 2026-09-06.
 | Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:118` builds the store, `:406` traverses; `enable_graph_expansion=False` |
 | Cognitive core (`PlanComplexityAnalyzer`, `CouncilBudgetController`, `ContextPackBuilder`) | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on heldout v2 in `07_EVALUATION/cognitive_core/EVALUATION_REPORT.md` (52% envelope token reduction, zero recall loss); `enable_cognitive_core=False` |
 | `graph/plasticity.py` | real, **not wired** | zero production call sites; journal + rollback exist, nothing calls them |
-| `attention`, `executive`, `global_workspace`, `reasoning` | present, **not wired** | r011 audited and recommended keeping them unwired |
+| `executive`, `global_workspace`, `reasoning`, `working_memory` | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on benchmark v3 in `07_EVALUATION/cognitive_core/MODULE_EVALUATION_REPORT.md`; OFF by default |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |

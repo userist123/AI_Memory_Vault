@@ -1,0 +1,8032 @@
+{
+  "benchmark_sha256": "eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa",
+  "n_cases": 160,
+  "timestamp": "2026-09-19T22:15:15Z",
+  "arms_summary": {
+    "baseline_off": {
+      "description": "Toate modulele cognitive oprite (Standard BM25/Fuzionat)",
+      "n_total": 160,
+      "n_measurable": 127,
+      "candidate_recall": "97/127",
+      "candidate_recall_rate": 0.7638,
+      "candidate_ci": {
+        "proportion": 0.7638,
+        "lower": 0.6828,
+        "upper": 0.8292
+      },
+      "context_recall": "19/127",
+      "context_recall_rate": 0.1496,
+      "context_ci": {
+        "proportion": 0.1496,
+        "lower": 0.0979,
+        "upper": 0.2219
+      },
+      "latency_median_ms": 427.76,
+      "latency_mean_ms": 417.05,
+      "error_count": 0
+    },
+    "spreading_activation": {
+      "description": "Activare prin difuzie (hop-2 multi-hop)",
+      "n_total": 160,
+      "n_measurable": 127,
+      "candidate_recall": "97/127",
+      "candidate_recall_rate": 0.7638,
+      "candidate_ci": {
+        "proportion": 0.7638,
+        "lower": 0.6828,
+        "upper": 0.8292
+      },
+      "context_recall": "19/127",
+      "context_recall_rate": 0.1496,
+      "context_ci": {
+        "proportion": 0.1496,
+        "lower": 0.0979,
+        "upper": 0.2219
+      },
+      "latency_median_ms": 432.37,
+      "latency_mean_ms": 421.78,
+      "error_count": 0
+    },
+    "working_memory": {
+      "description": "Working Memory activat (retenție & atenție bounded k=5)",
+      "n_total": 160,
+      "n_measurable": 127,
+      "candidate_recall": "97/127",
+      "candidate_recall_rate": 0.7638,
+      "candidate_ci": {
+        "proportion": 0.7638,
+        "lower": 0.6828,
+        "upper": 0.8292
+      },
+      "context_recall": "9/127",
+      "context_recall_rate": 0.0709,
+      "context_ci": {
+        "proportion": 0.0709,
+        "lower": 0.0377,
+        "upper": 0.1292
+      },
+      "latency_median_ms": 433.1,
+      "latency_mean_ms": 421.53,
+      "error_count": 0
+    },
+    "global_workspace": {
+      "description": "Global Workspace activat (competiție & coaliție broadcast)",
+      "n_total": 160,
+      "n_measurable": 127,
+      "candidate_recall": "97/127",
+      "candidate_recall_rate": 0.7638,
+      "candidate_ci": {
+        "proportion": 0.7638,
+        "lower": 0.6828,
+        "upper": 0.8292
+      },
+      "context_recall": "19/127",
+      "context_recall_rate": 0.1496,
+      "context_ci": {
+        "proportion": 0.1496,
+        "lower": 0.0979,
+        "upper": 0.2219
+      },
+      "latency_median_ms": 437.01,
+      "latency_mean_ms": 423.89,
+      "error_count": 0
+    },
+    "reasoning": {
+      "description": "Reasoning activat (sinteză ToT & concluzii ancorate)",
+      "n_total": 160,
+      "n_measurable": 127,
+      "candidate_recall": "97/127",
+      "candidate_recall_rate": 0.7638,
+      "candidate_ci": {
+        "proportion": 0.7638,
+        "lower": 0.6828,
+        "upper": 0.8292
+      },
+      "context_recall": "19/127",
+      "context_recall_rate": 0.1496,
+      "context_ci": {
+        "proportion": 0.1496,
+        "lower": 0.0979,
+        "upper": 0.2219
+      },
+      "latency_median_ms": 436.47,
+      "latency_mean_ms": 425.35,
+      "error_count": 0
+    },
+    "executive": {
+      "description": "Executive activat (buclă de control & parsare intenție)",
+      "n_total": 160,
+      "n_measurable": 127,
+      "candidate_recall": "97/127",
+      "candidate_recall_rate": 0.7638,
+      "candidate_ci": {
+        "proportion": 0.7638,
+        "lower": 0.6828,
+        "upper": 0.8292
+      },
+      "context_recall": "19/127",
+      "context_recall_rate": 0.1496,
+      "context_ci": {
+        "proportion": 0.1496,
+        "lower": 0.0979,
+        "upper": 0.2219
+      },
+      "latency_median_ms": 455.29,
+      "latency_mean_ms": 439.08,
+      "error_count": 0
+    }
+  },
+  "comparisons": {
+    "spreading_activation": {
+      "context_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 19,
+        "ties_both_0": 108,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "candidate_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 97,
+        "ties_both_0": 30,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "latency_ratio": 1.01
+    },
+    "working_memory": {
+      "context_recall_paired": {
+        "wins": 4,
+        "losses": 14,
+        "net": -10,
+        "ties_both_1": 5,
+        "ties_both_0": 104,
+        "skipped": 33,
+        "discordant": 18,
+        "mcnemar_p": 0.030884,
+        "winning_cases": [
+          "R3-012",
+          "R3-030",
+          "R3-049",
+          "R3-090"
+        ],
+        "losing_cases": [
+          "R3-013",
+          "R3-026",
+          "R3-031",
+          "R3-051",
+          "R3-056",
+          "R3-068",
+          "R3-073",
+          "R3-075",
+          "R3-104",
+          "R3-108",
+          "R3-117",
+          "R3-124",
+          "R3-126",
+          "R3-127"
+        ]
+      },
+      "candidate_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 97,
+        "ties_both_0": 30,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "latency_ratio": 1.01
+    },
+    "global_workspace": {
+      "context_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 19,
+        "ties_both_0": 108,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "candidate_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 97,
+        "ties_both_0": 30,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "latency_ratio": 1.02
+    },
+    "reasoning": {
+      "context_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 19,
+        "ties_both_0": 108,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "candidate_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 97,
+        "ties_both_0": 30,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "latency_ratio": 1.02
+    },
+    "executive": {
+      "context_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 19,
+        "ties_both_0": 108,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "candidate_recall_paired": {
+        "wins": 0,
+        "losses": 0,
+        "net": 0,
+        "ties_both_1": 97,
+        "ties_both_0": 30,
+        "skipped": 33,
+        "discordant": 0,
+        "mcnemar_p": 1.0,
+        "winning_cases": [],
+        "losing_cases": []
+      },
+      "latency_ratio": 1.06
+    }
+  },
+  "verdicts": {
+    "spreading_activation": {
+      "rule_net_context_ge_2": false,
+      "rule_mcnemar_sig_lt_05": false,
+      "rule_candidate_safe": true,
+      "rule_latency_and_safety": true,
+      "adopted": false,
+      "verdict": "nu câștigă — rămâne oprit, cu dovada"
+    },
+    "working_memory": {
+      "rule_net_context_ge_2": false,
+      "rule_mcnemar_sig_lt_05": true,
+      "rule_candidate_safe": true,
+      "rule_latency_and_safety": true,
+      "adopted": false,
+      "verdict": "nu câștigă — rămâne oprit, cu dovada"
+    },
+    "global_workspace": {
+      "rule_net_context_ge_2": false,
+      "rule_mcnemar_sig_lt_05": false,
+      "rule_candidate_safe": true,
+      "rule_latency_and_safety": true,
+      "adopted": false,
+      "verdict": "nu câștigă — rămâne oprit, cu dovada"
+    },
+    "reasoning": {
+      "rule_net_context_ge_2": false,
+      "rule_mcnemar_sig_lt_05": false,
+      "rule_candidate_safe": true,
+      "rule_latency_and_safety": true,
+      "adopted": false,
+      "verdict": "nu câștigă — rămâne oprit, cu dovada"
+    },
+    "executive": {
+      "rule_net_context_ge_2": false,
+      "rule_mcnemar_sig_lt_05": false,
+      "rule_candidate_safe": true,
+      "rule_latency_and_safety": true,
+      "adopted": false,
+      "verdict": "nu câștigă — rămâne oprit, cu dovada"
+    }
+  },
+  "raw_results": {
+    "baseline_off": [
+      {
+        "id": "R3-001",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 408.418,
+        "error": null
+      },
+      {
+        "id": "R3-002",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.358,
+        "error": null
+      },
+      {
+        "id": "R3-003",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 489.949,
+        "error": null
+      },
+      {
+        "id": "R3-004",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.262,
+        "error": null
+      },
+      {
+        "id": "R3-005",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 116.665,
+        "error": null
+      },
+      {
+        "id": "R3-006",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 419.822,
+        "error": null
+      },
+      {
+        "id": "R3-007",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.22,
+        "error": null
+      },
+      {
+        "id": "R3-008",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.182,
+        "error": null
+      },
+      {
+        "id": "R3-009",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 416.488,
+        "error": null
+      },
+      {
+        "id": "R3-010",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 422.856,
+        "error": null
+      },
+      {
+        "id": "R3-011",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 446.779,
+        "error": null
+      },
+      {
+        "id": "R3-012",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.293,
+        "error": null
+      },
+      {
+        "id": "R3-013",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 429.546,
+        "error": null
+      },
+      {
+        "id": "R3-014",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.796,
+        "error": null
+      },
+      {
+        "id": "R3-015",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 414.01,
+        "error": null
+      },
+      {
+        "id": "R3-016",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.2,
+        "error": null
+      },
+      {
+        "id": "R3-017",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 479.148,
+        "error": null
+      },
+      {
+        "id": "R3-018",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.832,
+        "error": null
+      },
+      {
+        "id": "R3-019",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.069,
+        "error": null
+      },
+      {
+        "id": "R3-020",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 411.107,
+        "error": null
+      },
+      {
+        "id": "R3-021",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.846,
+        "error": null
+      },
+      {
+        "id": "R3-022",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.642,
+        "error": null
+      },
+      {
+        "id": "R3-023",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 432.918,
+        "error": null
+      },
+      {
+        "id": "R3-024",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 422.523,
+        "error": null
+      },
+      {
+        "id": "R3-025",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.32,
+        "error": null
+      },
+      {
+        "id": "R3-026",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 483.029,
+        "error": null
+      },
+      {
+        "id": "R3-027",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.705,
+        "error": null
+      },
+      {
+        "id": "R3-028",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 416.389,
+        "error": null
+      },
+      {
+        "id": "R3-029",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 120.27,
+        "error": null
+      },
+      {
+        "id": "R3-030",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 412.534,
+        "error": null
+      },
+      {
+        "id": "R3-031",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 474.149,
+        "error": null
+      },
+      {
+        "id": "R3-032",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.247,
+        "error": null
+      },
+      {
+        "id": "R3-033",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.87,
+        "error": null
+      },
+      {
+        "id": "R3-034",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.074,
+        "error": null
+      },
+      {
+        "id": "R3-035",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.513,
+        "error": null
+      },
+      {
+        "id": "R3-036",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.574,
+        "error": null
+      },
+      {
+        "id": "R3-037",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.809,
+        "error": null
+      },
+      {
+        "id": "R3-038",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 448.672,
+        "error": null
+      },
+      {
+        "id": "R3-039",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.508,
+        "error": null
+      },
+      {
+        "id": "R3-040",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.947,
+        "error": null
+      },
+      {
+        "id": "R3-041",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 12.709,
+        "error": null
+      },
+      {
+        "id": "R3-042",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 450.753,
+        "error": null
+      },
+      {
+        "id": "R3-043",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.363,
+        "error": null
+      },
+      {
+        "id": "R3-044",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 419.884,
+        "error": null
+      },
+      {
+        "id": "R3-045",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 413.236,
+        "error": null
+      },
+      {
+        "id": "R3-046",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 408.944,
+        "error": null
+      },
+      {
+        "id": "R3-047",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 412.471,
+        "error": null
+      },
+      {
+        "id": "R3-048",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 412.162,
+        "error": null
+      },
+      {
+        "id": "R3-049",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.624,
+        "error": null
+      },
+      {
+        "id": "R3-050",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.847,
+        "error": null
+      },
+      {
+        "id": "R3-051",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 405.96,
+        "error": null
+      },
+      {
+        "id": "R3-052",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 16.136,
+        "error": null
+      },
+      {
+        "id": "R3-053",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 16.273,
+        "error": null
+      },
+      {
+        "id": "R3-054",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.58,
+        "error": null
+      },
+      {
+        "id": "R3-055",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 407.951,
+        "error": null
+      },
+      {
+        "id": "R3-056",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 427.894,
+        "error": null
+      },
+      {
+        "id": "R3-057",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 409.49,
+        "error": null
+      },
+      {
+        "id": "R3-058",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.085,
+        "error": null
+      },
+      {
+        "id": "R3-059",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.8,
+        "error": null
+      },
+      {
+        "id": "R3-060",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.896,
+        "error": null
+      },
+      {
+        "id": "R3-061",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 468.973,
+        "error": null
+      },
+      {
+        "id": "R3-062",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 458.267,
+        "error": null
+      },
+      {
+        "id": "R3-063",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 473.325,
+        "error": null
+      },
+      {
+        "id": "R3-064",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.596,
+        "error": null
+      },
+      {
+        "id": "R3-065",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 474.612,
+        "error": null
+      },
+      {
+        "id": "R3-066",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.689,
+        "error": null
+      },
+      {
+        "id": "R3-067",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.586,
+        "error": null
+      },
+      {
+        "id": "R3-068",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 475.307,
+        "error": null
+      },
+      {
+        "id": "R3-069",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.428,
+        "error": null
+      },
+      {
+        "id": "R3-070",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 490.293,
+        "error": null
+      },
+      {
+        "id": "R3-071",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 456.664,
+        "error": null
+      },
+      {
+        "id": "R3-072",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 472.527,
+        "error": null
+      },
+      {
+        "id": "R3-073",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 461.466,
+        "error": null
+      },
+      {
+        "id": "R3-074",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 476.509,
+        "error": null
+      },
+      {
+        "id": "R3-075",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 466.788,
+        "error": null
+      },
+      {
+        "id": "R3-076",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 472.538,
+        "error": null
+      },
+      {
+        "id": "R3-077",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 499.229,
+        "error": null
+      },
+      {
+        "id": "R3-078",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 462.932,
+        "error": null
+      },
+      {
+        "id": "R3-079",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.161,
+        "error": null
+      },
+      {
+        "id": "R3-080",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 475.27,
+        "error": null
+      },
+      {
+        "id": "R3-081",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.577,
+        "error": null
+      },
+      {
+        "id": "R3-082",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.901,
+        "error": null
+      },
+      {
+        "id": "R3-083",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 473.419,
+        "error": null
+      },
+      {
+        "id": "R3-084",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 457.109,
+        "error": null
+      },
+      {
+        "id": "R3-085",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.157,
+        "error": null
+      },
+      {
+        "id": "R3-086",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 480.273,
+        "error": null
+      },
+      {
+        "id": "R3-087",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 469.338,
+        "error": null
+      },
+      {
+        "id": "R3-088",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 9.962,
+        "error": null
+      },
+      {
+        "id": "R3-089",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 462.707,
+        "error": null
+      },
+      {
+        "id": "R3-090",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 450.691,
+        "error": null
+      },
+      {
+        "id": "R3-091",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 464.852,
+        "error": null
+      },
+      {
+        "id": "R3-092",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 454.979,
+        "error": null
+      },
+      {
+        "id": "R3-093",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 460.978,
+        "error": null
+      },
+      {
+        "id": "R3-094",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 484.284,
+        "error": null
+      },
+      {
+        "id": "R3-095",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 459.196,
+        "error": null
+      },
+      {
+        "id": "R3-096",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 488.959,
+        "error": null
+      },
+      {
+        "id": "R3-097",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 123.395,
+        "error": null
+      },
+      {
+        "id": "R3-098",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 492.585,
+        "error": null
+      },
+      {
+        "id": "R3-099",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 460.29,
+        "error": null
+      },
+      {
+        "id": "R3-100",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.174,
+        "error": null
+      },
+      {
+        "id": "R3-101",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.226,
+        "error": null
+      },
+      {
+        "id": "R3-102",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 431.523,
+        "error": null
+      },
+      {
+        "id": "R3-103",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.347,
+        "error": null
+      },
+      {
+        "id": "R3-104",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 460.738,
+        "error": null
+      },
+      {
+        "id": "R3-105",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.949,
+        "error": null
+      },
+      {
+        "id": "R3-106",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.503,
+        "error": null
+      },
+      {
+        "id": "R3-107",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.339,
+        "error": null
+      },
+      {
+        "id": "R3-108",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 452.266,
+        "error": null
+      },
+      {
+        "id": "R3-109",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 449.323,
+        "error": null
+      },
+      {
+        "id": "R3-110",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.209,
+        "error": null
+      },
+      {
+        "id": "R3-111",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 414.479,
+        "error": null
+      },
+      {
+        "id": "R3-112",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.672,
+        "error": null
+      },
+      {
+        "id": "R3-113",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.267,
+        "error": null
+      },
+      {
+        "id": "R3-114",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.256,
+        "error": null
+      },
+      {
+        "id": "R3-115",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.698,
+        "error": null
+      },
+      {
+        "id": "R3-116",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 407.499,
+        "error": null
+      },
+      {
+        "id": "R3-117",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 411.487,
+        "error": null
+      },
+      {
+        "id": "R3-118",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 427.628,
+        "error": null
+      },
+      {
+        "id": "R3-119",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 408.584,
+        "error": null
+      },
+      {
+        "id": "R3-120",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.787,
+        "error": null
+      },
+      {
+        "id": "R3-121",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 413.497,
+        "error": null
+      },
+      {
+        "id": "R3-122",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 391.121,
+        "error": null
+      },
+      {
+        "id": "R3-123",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.835,
+        "error": null
+      },
+      {
+        "id": "R3-124",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 467.916,
+        "error": null
+      },
+      {
+        "id": "R3-125",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 411.637,
+        "error": null
+      },
+      {
+        "id": "R3-126",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 414.641,
+        "error": null
+      },
+      {
+        "id": "R3-127",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 473.538,
+        "error": null
+      },
+      {
+        "id": "R3-128",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 413.241,
+        "error": null
+      },
+      {
+        "id": "R3-129",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.326,
+        "error": null
+      },
+      {
+        "id": "R3-130",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.602,
+        "error": null
+      },
+      {
+        "id": "R3-131",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 478.169,
+        "error": null
+      },
+      {
+        "id": "R3-132",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 476.45,
+        "error": null
+      },
+      {
+        "id": "R3-133",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 476.751,
+        "error": null
+      },
+      {
+        "id": "R3-134",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 472.324,
+        "error": null
+      },
+      {
+        "id": "R3-135",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 419.567,
+        "error": null
+      },
+      {
+        "id": "R3-136",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 473.036,
+        "error": null
+      },
+      {
+        "id": "R3-137",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 469.924,
+        "error": null
+      },
+      {
+        "id": "R3-138",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 476.219,
+        "error": null
+      },
+      {
+        "id": "R3-139",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 423.656,
+        "error": null
+      },
+      {
+        "id": "R3-140",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 469.891,
+        "error": null
+      },
+      {
+        "id": "R3-141",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 414.795,
+        "error": null
+      },
+      {
+        "id": "R3-142",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 447.272,
+        "error": null
+      },
+      {
+        "id": "R3-143",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 480.194,
+        "error": null
+      },
+      {
+        "id": "R3-144",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 489.673,
+        "error": null
+      },
+      {
+        "id": "R3-145",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 395.031,
+        "error": null
+      },
+      {
+        "id": "R3-146",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 414.955,
+        "error": null
+      },
+      {
+        "id": "R3-147",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 414.188,
+        "error": null
+      },
+      {
+        "id": "R3-148",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 418.233,
+        "error": null
+      },
+      {
+        "id": "R3-149",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 416.357,
+        "error": null
+      },
+      {
+        "id": "R3-150",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 410.457,
+        "error": null
+      },
+      {
+        "id": "R3-151",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 430.577,
+        "error": null
+      },
+      {
+        "id": "R3-152",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 419.873,
+        "error": null
+      },
+      {
+        "id": "R3-153",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 412.892,
+        "error": null
+      },
+      {
+        "id": "R3-154",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 413.868,
+        "error": null
+      },
+      {
+        "id": "R3-155",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 418.55,
+        "error": null
+      },
+      {
+        "id": "R3-156",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 446.48,
+        "error": null
+      },
+      {
+        "id": "R3-157",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 453.725,
+        "error": null
+      },
+      {
+        "id": "R3-158",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 423.442,
+        "error": null
+      },
+      {
+        "id": "R3-159",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 417.056,
+        "error": null
+      },
+      {
+        "id": "R3-160",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 448.139,
+        "error": null
+      }
+    ],
+    "spreading_activation": [
+      {
+        "id": "R3-001",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 397.025,
+        "error": null
+      },
+      {
+        "id": "R3-002",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.784,
+        "error": null
+      },
+      {
+        "id": "R3-003",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.501,
+        "error": null
+      },
+      {
+        "id": "R3-004",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 471.887,
+        "error": null
+      },
+      {
+        "id": "R3-005",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 122.097,
+        "error": null
+      },
+      {
+        "id": "R3-006",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.896,
+        "error": null
+      },
+      {
+        "id": "R3-007",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 411.831,
+        "error": null
+      },
+      {
+        "id": "R3-008",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 410.926,
+        "error": null
+      },
+      {
+        "id": "R3-009",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 411.996,
+        "error": null
+      },
+      {
+        "id": "R3-010",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 418.279,
+        "error": null
+      },
+      {
+        "id": "R3-011",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.514,
+        "error": null
+      },
+      {
+        "id": "R3-012",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.35,
+        "error": null
+      },
+      {
+        "id": "R3-013",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 427.262,
+        "error": null
+      },
+      {
+        "id": "R3-014",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.595,
+        "error": null
+      },
+      {
+        "id": "R3-015",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 410.158,
+        "error": null
+      },
+      {
+        "id": "R3-016",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.719,
+        "error": null
+      },
+      {
+        "id": "R3-017",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.753,
+        "error": null
+      },
+      {
+        "id": "R3-018",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.773,
+        "error": null
+      },
+      {
+        "id": "R3-019",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.286,
+        "error": null
+      },
+      {
+        "id": "R3-020",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 436.254,
+        "error": null
+      },
+      {
+        "id": "R3-021",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.0,
+        "error": null
+      },
+      {
+        "id": "R3-022",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.624,
+        "error": null
+      },
+      {
+        "id": "R3-023",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 444.301,
+        "error": null
+      },
+      {
+        "id": "R3-024",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 455.438,
+        "error": null
+      },
+      {
+        "id": "R3-025",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.378,
+        "error": null
+      },
+      {
+        "id": "R3-026",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 467.147,
+        "error": null
+      },
+      {
+        "id": "R3-027",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.406,
+        "error": null
+      },
+      {
+        "id": "R3-028",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 423.318,
+        "error": null
+      },
+      {
+        "id": "R3-029",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 119.1,
+        "error": null
+      },
+      {
+        "id": "R3-030",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 427.478,
+        "error": null
+      },
+      {
+        "id": "R3-031",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 480.091,
+        "error": null
+      },
+      {
+        "id": "R3-032",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.843,
+        "error": null
+      },
+      {
+        "id": "R3-033",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.115,
+        "error": null
+      },
+      {
+        "id": "R3-034",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.513,
+        "error": null
+      },
+      {
+        "id": "R3-035",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.813,
+        "error": null
+      },
+      {
+        "id": "R3-036",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.68,
+        "error": null
+      },
+      {
+        "id": "R3-037",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 438.048,
+        "error": null
+      },
+      {
+        "id": "R3-038",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 456.713,
+        "error": null
+      },
+      {
+        "id": "R3-039",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.549,
+        "error": null
+      },
+      {
+        "id": "R3-040",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.635,
+        "error": null
+      },
+      {
+        "id": "R3-041",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 14.19,
+        "error": null
+      },
+      {
+        "id": "R3-042",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 457.092,
+        "error": null
+      },
+      {
+        "id": "R3-043",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.42,
+        "error": null
+      },
+      {
+        "id": "R3-044",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 416.81,
+        "error": null
+      },
+      {
+        "id": "R3-045",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 430.873,
+        "error": null
+      },
+      {
+        "id": "R3-046",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 424.934,
+        "error": null
+      },
+      {
+        "id": "R3-047",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 413.963,
+        "error": null
+      },
+      {
+        "id": "R3-048",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 415.598,
+        "error": null
+      },
+      {
+        "id": "R3-049",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.287,
+        "error": null
+      },
+      {
+        "id": "R3-050",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.146,
+        "error": null
+      },
+      {
+        "id": "R3-051",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 421.003,
+        "error": null
+      },
+      {
+        "id": "R3-052",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 19.023,
+        "error": null
+      },
+      {
+        "id": "R3-053",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 19.367,
+        "error": null
+      },
+      {
+        "id": "R3-054",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.062,
+        "error": null
+      },
+      {
+        "id": "R3-055",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 431.959,
+        "error": null
+      },
+      {
+        "id": "R3-056",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 436.324,
+        "error": null
+      },
+      {
+        "id": "R3-057",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.15,
+        "error": null
+      },
+      {
+        "id": "R3-058",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 453.107,
+        "error": null
+      },
+      {
+        "id": "R3-059",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 447.174,
+        "error": null
+      },
+      {
+        "id": "R3-060",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.975,
+        "error": null
+      },
+      {
+        "id": "R3-061",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 495.892,
+        "error": null
+      },
+      {
+        "id": "R3-062",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 482.874,
+        "error": null
+      },
+      {
+        "id": "R3-063",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 483.14,
+        "error": null
+      },
+      {
+        "id": "R3-064",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.17,
+        "error": null
+      },
+      {
+        "id": "R3-065",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 482.066,
+        "error": null
+      },
+      {
+        "id": "R3-066",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 492.472,
+        "error": null
+      },
+      {
+        "id": "R3-067",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 482.333,
+        "error": null
+      },
+      {
+        "id": "R3-068",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 496.457,
+        "error": null
+      },
+      {
+        "id": "R3-069",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.094,
+        "error": null
+      },
+      {
+        "id": "R3-070",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 481.618,
+        "error": null
+      },
+      {
+        "id": "R3-071",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 469.498,
+        "error": null
+      },
+      {
+        "id": "R3-072",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 481.688,
+        "error": null
+      },
+      {
+        "id": "R3-073",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 470.061,
+        "error": null
+      },
+      {
+        "id": "R3-074",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 507.2,
+        "error": null
+      },
+      {
+        "id": "R3-075",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 490.896,
+        "error": null
+      },
+      {
+        "id": "R3-076",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 494.111,
+        "error": null
+      },
+      {
+        "id": "R3-077",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 464.005,
+        "error": null
+      },
+      {
+        "id": "R3-078",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 491.556,
+        "error": null
+      },
+      {
+        "id": "R3-079",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 473.677,
+        "error": null
+      },
+      {
+        "id": "R3-080",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 479.983,
+        "error": null
+      },
+      {
+        "id": "R3-081",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 504.076,
+        "error": null
+      },
+      {
+        "id": "R3-082",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.353,
+        "error": null
+      },
+      {
+        "id": "R3-083",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.739,
+        "error": null
+      },
+      {
+        "id": "R3-084",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 475.822,
+        "error": null
+      },
+      {
+        "id": "R3-085",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.712,
+        "error": null
+      },
+      {
+        "id": "R3-086",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 481.222,
+        "error": null
+      },
+      {
+        "id": "R3-087",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.306,
+        "error": null
+      },
+      {
+        "id": "R3-088",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 9.479,
+        "error": null
+      },
+      {
+        "id": "R3-089",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 462.621,
+        "error": null
+      },
+      {
+        "id": "R3-090",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 451.466,
+        "error": null
+      },
+      {
+        "id": "R3-091",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 476.051,
+        "error": null
+      },
+      {
+        "id": "R3-092",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 463.45,
+        "error": null
+      },
+      {
+        "id": "R3-093",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 459.476,
+        "error": null
+      },
+      {
+        "id": "R3-094",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 483.289,
+        "error": null
+      },
+      {
+        "id": "R3-095",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 468.805,
+        "error": null
+      },
+      {
+        "id": "R3-096",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.649,
+        "error": null
+      },
+      {
+        "id": "R3-097",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 120.677,
+        "error": null
+      },
+      {
+        "id": "R3-098",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 479.45,
+        "error": null
+      },
+      {
+        "id": "R3-099",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 464.709,
+        "error": null
+      },
+      {
+        "id": "R3-100",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.978,
+        "error": null
+      },
+      {
+        "id": "R3-101",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 423.851,
+        "error": null
+      },
+      {
+        "id": "R3-102",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 446.191,
+        "error": null
+      },
+      {
+        "id": "R3-103",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.886,
+        "error": null
+      },
+      {
+        "id": "R3-104",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 464.055,
+        "error": null
+      },
+      {
+        "id": "R3-105",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.459,
+        "error": null
+      },
+      {
+        "id": "R3-106",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.23,
+        "error": null
+      },
+      {
+        "id": "R3-107",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.368,
+        "error": null
+      },
+      {
+        "id": "R3-108",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 460.317,
+        "error": null
+      },
+      {
+        "id": "R3-109",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.929,
+        "error": null
+      },
+      {
+        "id": "R3-110",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 413.731,
+        "error": null
+      },
+      {
+        "id": "R3-111",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 424.591,
+        "error": null
+      },
+      {
+        "id": "R3-112",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.714,
+        "error": null
+      },
+      {
+        "id": "R3-113",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.03,
+        "error": null
+      },
+      {
+        "id": "R3-114",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 434.892,
+        "error": null
+      },
+      {
+        "id": "R3-115",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.319,
+        "error": null
+      },
+      {
+        "id": "R3-116",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.317,
+        "error": null
+      },
+      {
+        "id": "R3-117",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 422.436,
+        "error": null
+      },
+      {
+        "id": "R3-118",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.501,
+        "error": null
+      },
+      {
+        "id": "R3-119",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.222,
+        "error": null
+      },
+      {
+        "id": "R3-120",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.42,
+        "error": null
+      },
+      {
+        "id": "R3-121",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 427.359,
+        "error": null
+      },
+      {
+        "id": "R3-122",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 408.513,
+        "error": null
+      },
+      {
+        "id": "R3-123",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 438.449,
+        "error": null
+      },
+      {
+        "id": "R3-124",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 470.749,
+        "error": null
+      },
+      {
+        "id": "R3-125",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.479,
+        "error": null
+      },
+      {
+        "id": "R3-126",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 426.154,
+        "error": null
+      },
+      {
+        "id": "R3-127",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 495.508,
+        "error": null
+      },
+      {
+        "id": "R3-128",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.762,
+        "error": null
+      },
+      {
+        "id": "R3-129",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.041,
+        "error": null
+      },
+      {
+        "id": "R3-130",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.418,
+        "error": null
+      },
+      {
+        "id": "R3-131",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 471.662,
+        "error": null
+      },
+      {
+        "id": "R3-132",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 480.471,
+        "error": null
+      },
+      {
+        "id": "R3-133",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 484.889,
+        "error": null
+      },
+      {
+        "id": "R3-134",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 473.779,
+        "error": null
+      },
+      {
+        "id": "R3-135",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 414.674,
+        "error": null
+      },
+      {
+        "id": "R3-136",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 482.966,
+        "error": null
+      },
+      {
+        "id": "R3-137",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 475.391,
+        "error": null
+      },
+      {
+        "id": "R3-138",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 479.18,
+        "error": null
+      },
+      {
+        "id": "R3-139",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 429.217,
+        "error": null
+      },
+      {
+        "id": "R3-140",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 479.777,
+        "error": null
+      },
+      {
+        "id": "R3-141",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 421.008,
+        "error": null
+      },
+      {
+        "id": "R3-142",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 449.087,
+        "error": null
+      },
+      {
+        "id": "R3-143",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 484.07,
+        "error": null
+      },
+      {
+        "id": "R3-144",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 487.48,
+        "error": null
+      },
+      {
+        "id": "R3-145",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 404.811,
+        "error": null
+      },
+      {
+        "id": "R3-146",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 424.631,
+        "error": null
+      },
+      {
+        "id": "R3-147",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 419.93,
+        "error": null
+      },
+      {
+        "id": "R3-148",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 417.797,
+        "error": null
+      },
+      {
+        "id": "R3-149",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 418.586,
+        "error": null
+      },
+      {
+        "id": "R3-150",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 424.726,
+        "error": null
+      },
+      {
+        "id": "R3-151",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 434.327,
+        "error": null
+      },
+      {
+        "id": "R3-152",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 416.675,
+        "error": null
+      },
+      {
+        "id": "R3-153",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 424.104,
+        "error": null
+      },
+      {
+        "id": "R3-154",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 413.849,
+        "error": null
+      },
+      {
+        "id": "R3-155",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 418.843,
+        "error": null
+      },
+      {
+        "id": "R3-156",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 444.796,
+        "error": null
+      },
+      {
+        "id": "R3-157",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 460.063,
+        "error": null
+      },
+      {
+        "id": "R3-158",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 420.612,
+        "error": null
+      },
+      {
+        "id": "R3-159",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 423.144,
+        "error": null
+      },
+      {
+        "id": "R3-160",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 448.53,
+        "error": null
+      }
+    ],
+    "working_memory": [
+      {
+        "id": "R3-001",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.307,
+        "error": null
+      },
+      {
+        "id": "R3-002",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.413,
+        "error": null
+      },
+      {
+        "id": "R3-003",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 483.438,
+        "error": null
+      },
+      {
+        "id": "R3-004",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 472.862,
+        "error": null
+      },
+      {
+        "id": "R3-005",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 120.243,
+        "error": null
+      },
+      {
+        "id": "R3-006",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 415.846,
+        "error": null
+      },
+      {
+        "id": "R3-007",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.893,
+        "error": null
+      },
+      {
+        "id": "R3-008",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 412.89,
+        "error": null
+      },
+      {
+        "id": "R3-009",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 417.193,
+        "error": null
+      },
+      {
+        "id": "R3-010",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 416.898,
+        "error": null
+      },
+      {
+        "id": "R3-011",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.307,
+        "error": null
+      },
+      {
+        "id": "R3-012",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 420.523,
+        "error": null
+      },
+      {
+        "id": "R3-013",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 431.457,
+        "error": null
+      },
+      {
+        "id": "R3-014",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 494.299,
+        "error": null
+      },
+      {
+        "id": "R3-015",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 417.506,
+        "error": null
+      },
+      {
+        "id": "R3-016",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 475.367,
+        "error": null
+      },
+      {
+        "id": "R3-017",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.646,
+        "error": null
+      },
+      {
+        "id": "R3-018",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.945,
+        "error": null
+      },
+      {
+        "id": "R3-019",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.967,
+        "error": null
+      },
+      {
+        "id": "R3-020",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 416.005,
+        "error": null
+      },
+      {
+        "id": "R3-021",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.701,
+        "error": null
+      },
+      {
+        "id": "R3-022",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.207,
+        "error": null
+      },
+      {
+        "id": "R3-023",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 453.782,
+        "error": null
+      },
+      {
+        "id": "R3-024",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 445.694,
+        "error": null
+      },
+      {
+        "id": "R3-025",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.935,
+        "error": null
+      },
+      {
+        "id": "R3-026",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 466.219,
+        "error": null
+      },
+      {
+        "id": "R3-027",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.239,
+        "error": null
+      },
+      {
+        "id": "R3-028",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 421.958,
+        "error": null
+      },
+      {
+        "id": "R3-029",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 123.818,
+        "error": null
+      },
+      {
+        "id": "R3-030",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 432.988,
+        "error": null
+      },
+      {
+        "id": "R3-031",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.846,
+        "error": null
+      },
+      {
+        "id": "R3-032",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.543,
+        "error": null
+      },
+      {
+        "id": "R3-033",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 423.889,
+        "error": null
+      },
+      {
+        "id": "R3-034",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.749,
+        "error": null
+      },
+      {
+        "id": "R3-035",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.35,
+        "error": null
+      },
+      {
+        "id": "R3-036",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 423.897,
+        "error": null
+      },
+      {
+        "id": "R3-037",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.9,
+        "error": null
+      },
+      {
+        "id": "R3-038",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 452.571,
+        "error": null
+      },
+      {
+        "id": "R3-039",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.239,
+        "error": null
+      },
+      {
+        "id": "R3-040",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.071,
+        "error": null
+      },
+      {
+        "id": "R3-041",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 13.442,
+        "error": null
+      },
+      {
+        "id": "R3-042",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 469.816,
+        "error": null
+      },
+      {
+        "id": "R3-043",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.842,
+        "error": null
+      },
+      {
+        "id": "R3-044",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 426.561,
+        "error": null
+      },
+      {
+        "id": "R3-045",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 427.766,
+        "error": null
+      },
+      {
+        "id": "R3-046",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 424.788,
+        "error": null
+      },
+      {
+        "id": "R3-047",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 415.766,
+        "error": null
+      },
+      {
+        "id": "R3-048",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 419.01,
+        "error": null
+      },
+      {
+        "id": "R3-049",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 425.352,
+        "error": null
+      },
+      {
+        "id": "R3-050",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 440.59,
+        "error": null
+      },
+      {
+        "id": "R3-051",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.728,
+        "error": null
+      },
+      {
+        "id": "R3-052",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 17.138,
+        "error": null
+      },
+      {
+        "id": "R3-053",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 17.162,
+        "error": null
+      },
+      {
+        "id": "R3-054",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.844,
+        "error": null
+      },
+      {
+        "id": "R3-055",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.277,
+        "error": null
+      },
+      {
+        "id": "R3-056",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 441.705,
+        "error": null
+      },
+      {
+        "id": "R3-057",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.45,
+        "error": null
+      },
+      {
+        "id": "R3-058",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 442.938,
+        "error": null
+      },
+      {
+        "id": "R3-059",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.215,
+        "error": null
+      },
+      {
+        "id": "R3-060",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 431.288,
+        "error": null
+      },
+      {
+        "id": "R3-061",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 483.478,
+        "error": null
+      },
+      {
+        "id": "R3-062",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 479.539,
+        "error": null
+      },
+      {
+        "id": "R3-063",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 484.887,
+        "error": null
+      },
+      {
+        "id": "R3-064",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.939,
+        "error": null
+      },
+      {
+        "id": "R3-065",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 481.346,
+        "error": null
+      },
+      {
+        "id": "R3-066",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 488.043,
+        "error": null
+      },
+      {
+        "id": "R3-067",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 471.054,
+        "error": null
+      },
+      {
+        "id": "R3-068",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 488.784,
+        "error": null
+      },
+      {
+        "id": "R3-069",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 493.475,
+        "error": null
+      },
+      {
+        "id": "R3-070",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 477.398,
+        "error": null
+      },
+      {
+        "id": "R3-071",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 465.638,
+        "error": null
+      },
+      {
+        "id": "R3-072",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 480.97,
+        "error": null
+      },
+      {
+        "id": "R3-073",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 461.042,
+        "error": null
+      },
+      {
+        "id": "R3-074",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 472.103,
+        "error": null
+      },
+      {
+        "id": "R3-075",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 493.22,
+        "error": null
+      },
+      {
+        "id": "R3-076",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 488.938,
+        "error": null
+      },
+      {
+        "id": "R3-077",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.618,
+        "error": null
+      },
+      {
+        "id": "R3-078",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 470.441,
+        "error": null
+      },
+      {
+        "id": "R3-079",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.365,
+        "error": null
+      },
+      {
+        "id": "R3-080",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 480.783,
+        "error": null
+      },
+      {
+        "id": "R3-081",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.789,
+        "error": null
+      },
+      {
+        "id": "R3-082",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.938,
+        "error": null
+      },
+      {
+        "id": "R3-083",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.339,
+        "error": null
+      },
+      {
+        "id": "R3-084",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 467.287,
+        "error": null
+      },
+      {
+        "id": "R3-085",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 484.193,
+        "error": null
+      },
+      {
+        "id": "R3-086",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 474.144,
+        "error": null
+      },
+      {
+        "id": "R3-087",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.726,
+        "error": null
+      },
+      {
+        "id": "R3-088",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 11.25,
+        "error": null
+      },
+      {
+        "id": "R3-089",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 462.576,
+        "error": null
+      },
+      {
+        "id": "R3-090",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 1,
+        "latency_ms": 446.128,
+        "error": null
+      },
+      {
+        "id": "R3-091",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 465.036,
+        "error": null
+      },
+      {
+        "id": "R3-092",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 458.994,
+        "error": null
+      },
+      {
+        "id": "R3-093",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 462.581,
+        "error": null
+      },
+      {
+        "id": "R3-094",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.463,
+        "error": null
+      },
+      {
+        "id": "R3-095",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 464.245,
+        "error": null
+      },
+      {
+        "id": "R3-096",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.161,
+        "error": null
+      },
+      {
+        "id": "R3-097",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 123.764,
+        "error": null
+      },
+      {
+        "id": "R3-098",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.254,
+        "error": null
+      },
+      {
+        "id": "R3-099",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 458.817,
+        "error": null
+      },
+      {
+        "id": "R3-100",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.779,
+        "error": null
+      },
+      {
+        "id": "R3-101",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.78,
+        "error": null
+      },
+      {
+        "id": "R3-102",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 442.235,
+        "error": null
+      },
+      {
+        "id": "R3-103",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.41,
+        "error": null
+      },
+      {
+        "id": "R3-104",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 457.567,
+        "error": null
+      },
+      {
+        "id": "R3-105",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.482,
+        "error": null
+      },
+      {
+        "id": "R3-106",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.604,
+        "error": null
+      },
+      {
+        "id": "R3-107",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.14,
+        "error": null
+      },
+      {
+        "id": "R3-108",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 465.052,
+        "error": null
+      },
+      {
+        "id": "R3-109",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.888,
+        "error": null
+      },
+      {
+        "id": "R3-110",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.079,
+        "error": null
+      },
+      {
+        "id": "R3-111",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 431.539,
+        "error": null
+      },
+      {
+        "id": "R3-112",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 442.966,
+        "error": null
+      },
+      {
+        "id": "R3-113",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.547,
+        "error": null
+      },
+      {
+        "id": "R3-114",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.295,
+        "error": null
+      },
+      {
+        "id": "R3-115",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.975,
+        "error": null
+      },
+      {
+        "id": "R3-116",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.2,
+        "error": null
+      },
+      {
+        "id": "R3-117",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.063,
+        "error": null
+      },
+      {
+        "id": "R3-118",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.476,
+        "error": null
+      },
+      {
+        "id": "R3-119",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.855,
+        "error": null
+      },
+      {
+        "id": "R3-120",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.305,
+        "error": null
+      },
+      {
+        "id": "R3-121",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.646,
+        "error": null
+      },
+      {
+        "id": "R3-122",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 405.807,
+        "error": null
+      },
+      {
+        "id": "R3-123",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.155,
+        "error": null
+      },
+      {
+        "id": "R3-124",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 468.43,
+        "error": null
+      },
+      {
+        "id": "R3-125",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.619,
+        "error": null
+      },
+      {
+        "id": "R3-126",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.016,
+        "error": null
+      },
+      {
+        "id": "R3-127",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.17,
+        "error": null
+      },
+      {
+        "id": "R3-128",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.417,
+        "error": null
+      },
+      {
+        "id": "R3-129",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.392,
+        "error": null
+      },
+      {
+        "id": "R3-130",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.062,
+        "error": null
+      },
+      {
+        "id": "R3-131",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 479.506,
+        "error": null
+      },
+      {
+        "id": "R3-132",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 486.39,
+        "error": null
+      },
+      {
+        "id": "R3-133",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 483.568,
+        "error": null
+      },
+      {
+        "id": "R3-134",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 477.276,
+        "error": null
+      },
+      {
+        "id": "R3-135",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 420.718,
+        "error": null
+      },
+      {
+        "id": "R3-136",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 485.168,
+        "error": null
+      },
+      {
+        "id": "R3-137",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 470.18,
+        "error": null
+      },
+      {
+        "id": "R3-138",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 477.096,
+        "error": null
+      },
+      {
+        "id": "R3-139",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 424.041,
+        "error": null
+      },
+      {
+        "id": "R3-140",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 481.118,
+        "error": null
+      },
+      {
+        "id": "R3-141",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 420.904,
+        "error": null
+      },
+      {
+        "id": "R3-142",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 448.604,
+        "error": null
+      },
+      {
+        "id": "R3-143",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 480.797,
+        "error": null
+      },
+      {
+        "id": "R3-144",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 478.665,
+        "error": null
+      },
+      {
+        "id": "R3-145",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 404.444,
+        "error": null
+      },
+      {
+        "id": "R3-146",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 419.89,
+        "error": null
+      },
+      {
+        "id": "R3-147",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 420.613,
+        "error": null
+      },
+      {
+        "id": "R3-148",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 420.504,
+        "error": null
+      },
+      {
+        "id": "R3-149",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 422.677,
+        "error": null
+      },
+      {
+        "id": "R3-150",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 423.141,
+        "error": null
+      },
+      {
+        "id": "R3-151",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 444.469,
+        "error": null
+      },
+      {
+        "id": "R3-152",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 421.001,
+        "error": null
+      },
+      {
+        "id": "R3-153",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 421.64,
+        "error": null
+      },
+      {
+        "id": "R3-154",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 429.63,
+        "error": null
+      },
+      {
+        "id": "R3-155",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 432.365,
+        "error": null
+      },
+      {
+        "id": "R3-156",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 460.662,
+        "error": null
+      },
+      {
+        "id": "R3-157",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 461.542,
+        "error": null
+      },
+      {
+        "id": "R3-158",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 428.525,
+        "error": null
+      },
+      {
+        "id": "R3-159",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 426.776,
+        "error": null
+      },
+      {
+        "id": "R3-160",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 441.598,
+        "error": null
+      }
+    ],
+    "global_workspace": [
+      {
+        "id": "R3-001",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 404.624,
+        "error": null
+      },
+      {
+        "id": "R3-002",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.346,
+        "error": null
+      },
+      {
+        "id": "R3-003",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 491.9,
+        "error": null
+      },
+      {
+        "id": "R3-004",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 490.311,
+        "error": null
+      },
+      {
+        "id": "R3-005",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 121.842,
+        "error": null
+      },
+      {
+        "id": "R3-006",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 418.732,
+        "error": null
+      },
+      {
+        "id": "R3-007",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.188,
+        "error": null
+      },
+      {
+        "id": "R3-008",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.645,
+        "error": null
+      },
+      {
+        "id": "R3-009",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 433.078,
+        "error": null
+      },
+      {
+        "id": "R3-010",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 426.362,
+        "error": null
+      },
+      {
+        "id": "R3-011",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 441.047,
+        "error": null
+      },
+      {
+        "id": "R3-012",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.485,
+        "error": null
+      },
+      {
+        "id": "R3-013",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 428.576,
+        "error": null
+      },
+      {
+        "id": "R3-014",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.933,
+        "error": null
+      },
+      {
+        "id": "R3-015",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 431.063,
+        "error": null
+      },
+      {
+        "id": "R3-016",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 495.374,
+        "error": null
+      },
+      {
+        "id": "R3-017",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 479.509,
+        "error": null
+      },
+      {
+        "id": "R3-018",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.37,
+        "error": null
+      },
+      {
+        "id": "R3-019",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.207,
+        "error": null
+      },
+      {
+        "id": "R3-020",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 419.421,
+        "error": null
+      },
+      {
+        "id": "R3-021",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.726,
+        "error": null
+      },
+      {
+        "id": "R3-022",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 440.651,
+        "error": null
+      },
+      {
+        "id": "R3-023",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 449.007,
+        "error": null
+      },
+      {
+        "id": "R3-024",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 437.859,
+        "error": null
+      },
+      {
+        "id": "R3-025",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.928,
+        "error": null
+      },
+      {
+        "id": "R3-026",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 464.908,
+        "error": null
+      },
+      {
+        "id": "R3-027",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.156,
+        "error": null
+      },
+      {
+        "id": "R3-028",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 436.375,
+        "error": null
+      },
+      {
+        "id": "R3-029",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 124.349,
+        "error": null
+      },
+      {
+        "id": "R3-030",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.035,
+        "error": null
+      },
+      {
+        "id": "R3-031",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 495.038,
+        "error": null
+      },
+      {
+        "id": "R3-032",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.886,
+        "error": null
+      },
+      {
+        "id": "R3-033",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.127,
+        "error": null
+      },
+      {
+        "id": "R3-034",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.666,
+        "error": null
+      },
+      {
+        "id": "R3-035",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.161,
+        "error": null
+      },
+      {
+        "id": "R3-036",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 423.192,
+        "error": null
+      },
+      {
+        "id": "R3-037",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.285,
+        "error": null
+      },
+      {
+        "id": "R3-038",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 450.272,
+        "error": null
+      },
+      {
+        "id": "R3-039",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.957,
+        "error": null
+      },
+      {
+        "id": "R3-040",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.979,
+        "error": null
+      },
+      {
+        "id": "R3-041",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 12.744,
+        "error": null
+      },
+      {
+        "id": "R3-042",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 460.547,
+        "error": null
+      },
+      {
+        "id": "R3-043",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.338,
+        "error": null
+      },
+      {
+        "id": "R3-044",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.809,
+        "error": null
+      },
+      {
+        "id": "R3-045",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 420.642,
+        "error": null
+      },
+      {
+        "id": "R3-046",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 421.761,
+        "error": null
+      },
+      {
+        "id": "R3-047",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 436.32,
+        "error": null
+      },
+      {
+        "id": "R3-048",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 437.422,
+        "error": null
+      },
+      {
+        "id": "R3-049",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.033,
+        "error": null
+      },
+      {
+        "id": "R3-050",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.234,
+        "error": null
+      },
+      {
+        "id": "R3-051",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 428.813,
+        "error": null
+      },
+      {
+        "id": "R3-052",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 16.416,
+        "error": null
+      },
+      {
+        "id": "R3-053",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 16.655,
+        "error": null
+      },
+      {
+        "id": "R3-054",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 452.371,
+        "error": null
+      },
+      {
+        "id": "R3-055",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 423.106,
+        "error": null
+      },
+      {
+        "id": "R3-056",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 449.582,
+        "error": null
+      },
+      {
+        "id": "R3-057",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.031,
+        "error": null
+      },
+      {
+        "id": "R3-058",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 458.625,
+        "error": null
+      },
+      {
+        "id": "R3-059",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 444.548,
+        "error": null
+      },
+      {
+        "id": "R3-060",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.683,
+        "error": null
+      },
+      {
+        "id": "R3-061",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 476.814,
+        "error": null
+      },
+      {
+        "id": "R3-062",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.433,
+        "error": null
+      },
+      {
+        "id": "R3-063",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 498.392,
+        "error": null
+      },
+      {
+        "id": "R3-064",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 484.986,
+        "error": null
+      },
+      {
+        "id": "R3-065",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 478.911,
+        "error": null
+      },
+      {
+        "id": "R3-066",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.557,
+        "error": null
+      },
+      {
+        "id": "R3-067",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.963,
+        "error": null
+      },
+      {
+        "id": "R3-068",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 486.548,
+        "error": null
+      },
+      {
+        "id": "R3-069",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 498.939,
+        "error": null
+      },
+      {
+        "id": "R3-070",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 479.348,
+        "error": null
+      },
+      {
+        "id": "R3-071",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 464.319,
+        "error": null
+      },
+      {
+        "id": "R3-072",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 476.538,
+        "error": null
+      },
+      {
+        "id": "R3-073",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 468.844,
+        "error": null
+      },
+      {
+        "id": "R3-074",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 482.435,
+        "error": null
+      },
+      {
+        "id": "R3-075",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 481.485,
+        "error": null
+      },
+      {
+        "id": "R3-076",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 491.788,
+        "error": null
+      },
+      {
+        "id": "R3-077",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 482.909,
+        "error": null
+      },
+      {
+        "id": "R3-078",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 472.986,
+        "error": null
+      },
+      {
+        "id": "R3-079",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 495.523,
+        "error": null
+      },
+      {
+        "id": "R3-080",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 486.785,
+        "error": null
+      },
+      {
+        "id": "R3-081",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.834,
+        "error": null
+      },
+      {
+        "id": "R3-082",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 493.027,
+        "error": null
+      },
+      {
+        "id": "R3-083",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.603,
+        "error": null
+      },
+      {
+        "id": "R3-084",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 473.185,
+        "error": null
+      },
+      {
+        "id": "R3-085",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.475,
+        "error": null
+      },
+      {
+        "id": "R3-086",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 481.741,
+        "error": null
+      },
+      {
+        "id": "R3-087",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.638,
+        "error": null
+      },
+      {
+        "id": "R3-088",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 9.97,
+        "error": null
+      },
+      {
+        "id": "R3-089",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 467.831,
+        "error": null
+      },
+      {
+        "id": "R3-090",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 459.978,
+        "error": null
+      },
+      {
+        "id": "R3-091",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 469.133,
+        "error": null
+      },
+      {
+        "id": "R3-092",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 462.23,
+        "error": null
+      },
+      {
+        "id": "R3-093",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 465.268,
+        "error": null
+      },
+      {
+        "id": "R3-094",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.186,
+        "error": null
+      },
+      {
+        "id": "R3-095",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 446.233,
+        "error": null
+      },
+      {
+        "id": "R3-096",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.421,
+        "error": null
+      },
+      {
+        "id": "R3-097",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 118.499,
+        "error": null
+      },
+      {
+        "id": "R3-098",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 467.693,
+        "error": null
+      },
+      {
+        "id": "R3-099",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 475.919,
+        "error": null
+      },
+      {
+        "id": "R3-100",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 471.688,
+        "error": null
+      },
+      {
+        "id": "R3-101",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 411.911,
+        "error": null
+      },
+      {
+        "id": "R3-102",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 438.31,
+        "error": null
+      },
+      {
+        "id": "R3-103",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.972,
+        "error": null
+      },
+      {
+        "id": "R3-104",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 473.928,
+        "error": null
+      },
+      {
+        "id": "R3-105",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.303,
+        "error": null
+      },
+      {
+        "id": "R3-106",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 435.714,
+        "error": null
+      },
+      {
+        "id": "R3-107",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.054,
+        "error": null
+      },
+      {
+        "id": "R3-108",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 454.997,
+        "error": null
+      },
+      {
+        "id": "R3-109",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.677,
+        "error": null
+      },
+      {
+        "id": "R3-110",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.704,
+        "error": null
+      },
+      {
+        "id": "R3-111",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.57,
+        "error": null
+      },
+      {
+        "id": "R3-112",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 438.007,
+        "error": null
+      },
+      {
+        "id": "R3-113",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.557,
+        "error": null
+      },
+      {
+        "id": "R3-114",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 434.54,
+        "error": null
+      },
+      {
+        "id": "R3-115",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.293,
+        "error": null
+      },
+      {
+        "id": "R3-116",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.747,
+        "error": null
+      },
+      {
+        "id": "R3-117",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 422.211,
+        "error": null
+      },
+      {
+        "id": "R3-118",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 441.503,
+        "error": null
+      },
+      {
+        "id": "R3-119",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.223,
+        "error": null
+      },
+      {
+        "id": "R3-120",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.964,
+        "error": null
+      },
+      {
+        "id": "R3-121",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.291,
+        "error": null
+      },
+      {
+        "id": "R3-122",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 404.729,
+        "error": null
+      },
+      {
+        "id": "R3-123",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.095,
+        "error": null
+      },
+      {
+        "id": "R3-124",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 476.935,
+        "error": null
+      },
+      {
+        "id": "R3-125",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.372,
+        "error": null
+      },
+      {
+        "id": "R3-126",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 441.558,
+        "error": null
+      },
+      {
+        "id": "R3-127",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 480.663,
+        "error": null
+      },
+      {
+        "id": "R3-128",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.596,
+        "error": null
+      },
+      {
+        "id": "R3-129",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.99,
+        "error": null
+      },
+      {
+        "id": "R3-130",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.249,
+        "error": null
+      },
+      {
+        "id": "R3-131",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 482.505,
+        "error": null
+      },
+      {
+        "id": "R3-132",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 484.907,
+        "error": null
+      },
+      {
+        "id": "R3-133",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 481.533,
+        "error": null
+      },
+      {
+        "id": "R3-134",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 475.242,
+        "error": null
+      },
+      {
+        "id": "R3-135",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 415.644,
+        "error": null
+      },
+      {
+        "id": "R3-136",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 480.57,
+        "error": null
+      },
+      {
+        "id": "R3-137",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 477.811,
+        "error": null
+      },
+      {
+        "id": "R3-138",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 477.499,
+        "error": null
+      },
+      {
+        "id": "R3-139",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 418.345,
+        "error": null
+      },
+      {
+        "id": "R3-140",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 487.215,
+        "error": null
+      },
+      {
+        "id": "R3-141",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 422.989,
+        "error": null
+      },
+      {
+        "id": "R3-142",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 453.993,
+        "error": null
+      },
+      {
+        "id": "R3-143",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 478.803,
+        "error": null
+      },
+      {
+        "id": "R3-144",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 490.176,
+        "error": null
+      },
+      {
+        "id": "R3-145",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 404.346,
+        "error": null
+      },
+      {
+        "id": "R3-146",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 417.212,
+        "error": null
+      },
+      {
+        "id": "R3-147",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 427.556,
+        "error": null
+      },
+      {
+        "id": "R3-148",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 427.68,
+        "error": null
+      },
+      {
+        "id": "R3-149",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 432.196,
+        "error": null
+      },
+      {
+        "id": "R3-150",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 428.131,
+        "error": null
+      },
+      {
+        "id": "R3-151",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 438.828,
+        "error": null
+      },
+      {
+        "id": "R3-152",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 428.356,
+        "error": null
+      },
+      {
+        "id": "R3-153",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 426.599,
+        "error": null
+      },
+      {
+        "id": "R3-154",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 429.153,
+        "error": null
+      },
+      {
+        "id": "R3-155",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 429.721,
+        "error": null
+      },
+      {
+        "id": "R3-156",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 445.802,
+        "error": null
+      },
+      {
+        "id": "R3-157",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 473.894,
+        "error": null
+      },
+      {
+        "id": "R3-158",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 426.963,
+        "error": null
+      },
+      {
+        "id": "R3-159",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 417.695,
+        "error": null
+      },
+      {
+        "id": "R3-160",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 440.028,
+        "error": null
+      }
+    ],
+    "reasoning": [
+      {
+        "id": "R3-001",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 408.351,
+        "error": null
+      },
+      {
+        "id": "R3-002",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.697,
+        "error": null
+      },
+      {
+        "id": "R3-003",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 477.783,
+        "error": null
+      },
+      {
+        "id": "R3-004",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 483.55,
+        "error": null
+      },
+      {
+        "id": "R3-005",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 120.877,
+        "error": null
+      },
+      {
+        "id": "R3-006",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 429.115,
+        "error": null
+      },
+      {
+        "id": "R3-007",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.976,
+        "error": null
+      },
+      {
+        "id": "R3-008",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.581,
+        "error": null
+      },
+      {
+        "id": "R3-009",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 422.514,
+        "error": null
+      },
+      {
+        "id": "R3-010",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.571,
+        "error": null
+      },
+      {
+        "id": "R3-011",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 448.258,
+        "error": null
+      },
+      {
+        "id": "R3-012",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.06,
+        "error": null
+      },
+      {
+        "id": "R3-013",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 427.469,
+        "error": null
+      },
+      {
+        "id": "R3-014",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.664,
+        "error": null
+      },
+      {
+        "id": "R3-015",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.576,
+        "error": null
+      },
+      {
+        "id": "R3-016",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 482.504,
+        "error": null
+      },
+      {
+        "id": "R3-017",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.642,
+        "error": null
+      },
+      {
+        "id": "R3-018",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.447,
+        "error": null
+      },
+      {
+        "id": "R3-019",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.313,
+        "error": null
+      },
+      {
+        "id": "R3-020",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 422.658,
+        "error": null
+      },
+      {
+        "id": "R3-021",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 443.465,
+        "error": null
+      },
+      {
+        "id": "R3-022",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.2,
+        "error": null
+      },
+      {
+        "id": "R3-023",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 450.298,
+        "error": null
+      },
+      {
+        "id": "R3-024",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 439.964,
+        "error": null
+      },
+      {
+        "id": "R3-025",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.053,
+        "error": null
+      },
+      {
+        "id": "R3-026",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 468.746,
+        "error": null
+      },
+      {
+        "id": "R3-027",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.717,
+        "error": null
+      },
+      {
+        "id": "R3-028",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 419.598,
+        "error": null
+      },
+      {
+        "id": "R3-029",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 119.673,
+        "error": null
+      },
+      {
+        "id": "R3-030",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.235,
+        "error": null
+      },
+      {
+        "id": "R3-031",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 494.862,
+        "error": null
+      },
+      {
+        "id": "R3-032",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.769,
+        "error": null
+      },
+      {
+        "id": "R3-033",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 427.329,
+        "error": null
+      },
+      {
+        "id": "R3-034",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 433.436,
+        "error": null
+      },
+      {
+        "id": "R3-035",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.716,
+        "error": null
+      },
+      {
+        "id": "R3-036",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.475,
+        "error": null
+      },
+      {
+        "id": "R3-037",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.886,
+        "error": null
+      },
+      {
+        "id": "R3-038",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 448.101,
+        "error": null
+      },
+      {
+        "id": "R3-039",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.614,
+        "error": null
+      },
+      {
+        "id": "R3-040",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.583,
+        "error": null
+      },
+      {
+        "id": "R3-041",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 13.825,
+        "error": null
+      },
+      {
+        "id": "R3-042",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 461.577,
+        "error": null
+      },
+      {
+        "id": "R3-043",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.426,
+        "error": null
+      },
+      {
+        "id": "R3-044",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 418.172,
+        "error": null
+      },
+      {
+        "id": "R3-045",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 422.443,
+        "error": null
+      },
+      {
+        "id": "R3-046",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 427.125,
+        "error": null
+      },
+      {
+        "id": "R3-047",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 433.698,
+        "error": null
+      },
+      {
+        "id": "R3-048",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 418.066,
+        "error": null
+      },
+      {
+        "id": "R3-049",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.682,
+        "error": null
+      },
+      {
+        "id": "R3-050",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.167,
+        "error": null
+      },
+      {
+        "id": "R3-051",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 414.211,
+        "error": null
+      },
+      {
+        "id": "R3-052",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 17.092,
+        "error": null
+      },
+      {
+        "id": "R3-053",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 16.222,
+        "error": null
+      },
+      {
+        "id": "R3-054",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 434.818,
+        "error": null
+      },
+      {
+        "id": "R3-055",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.649,
+        "error": null
+      },
+      {
+        "id": "R3-056",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 453.721,
+        "error": null
+      },
+      {
+        "id": "R3-057",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.783,
+        "error": null
+      },
+      {
+        "id": "R3-058",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.26,
+        "error": null
+      },
+      {
+        "id": "R3-059",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.096,
+        "error": null
+      },
+      {
+        "id": "R3-060",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 415.085,
+        "error": null
+      },
+      {
+        "id": "R3-061",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 474.244,
+        "error": null
+      },
+      {
+        "id": "R3-062",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 458.598,
+        "error": null
+      },
+      {
+        "id": "R3-063",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 487.741,
+        "error": null
+      },
+      {
+        "id": "R3-064",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 471.89,
+        "error": null
+      },
+      {
+        "id": "R3-065",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 478.496,
+        "error": null
+      },
+      {
+        "id": "R3-066",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 480.093,
+        "error": null
+      },
+      {
+        "id": "R3-067",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 474.923,
+        "error": null
+      },
+      {
+        "id": "R3-068",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 477.979,
+        "error": null
+      },
+      {
+        "id": "R3-069",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 489.598,
+        "error": null
+      },
+      {
+        "id": "R3-070",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 487.425,
+        "error": null
+      },
+      {
+        "id": "R3-071",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 463.673,
+        "error": null
+      },
+      {
+        "id": "R3-072",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 490.451,
+        "error": null
+      },
+      {
+        "id": "R3-073",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 468.47,
+        "error": null
+      },
+      {
+        "id": "R3-074",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 473.834,
+        "error": null
+      },
+      {
+        "id": "R3-075",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 473.498,
+        "error": null
+      },
+      {
+        "id": "R3-076",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 483.066,
+        "error": null
+      },
+      {
+        "id": "R3-077",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 470.041,
+        "error": null
+      },
+      {
+        "id": "R3-078",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 460.132,
+        "error": null
+      },
+      {
+        "id": "R3-079",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 473.93,
+        "error": null
+      },
+      {
+        "id": "R3-080",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 472.64,
+        "error": null
+      },
+      {
+        "id": "R3-081",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 476.4,
+        "error": null
+      },
+      {
+        "id": "R3-082",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 478.37,
+        "error": null
+      },
+      {
+        "id": "R3-083",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 482.439,
+        "error": null
+      },
+      {
+        "id": "R3-084",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 457.851,
+        "error": null
+      },
+      {
+        "id": "R3-085",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 479.441,
+        "error": null
+      },
+      {
+        "id": "R3-086",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 481.83,
+        "error": null
+      },
+      {
+        "id": "R3-087",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 475.33,
+        "error": null
+      },
+      {
+        "id": "R3-088",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 10.023,
+        "error": null
+      },
+      {
+        "id": "R3-089",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 463.638,
+        "error": null
+      },
+      {
+        "id": "R3-090",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 459.661,
+        "error": null
+      },
+      {
+        "id": "R3-091",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 474.916,
+        "error": null
+      },
+      {
+        "id": "R3-092",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 467.479,
+        "error": null
+      },
+      {
+        "id": "R3-093",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 459.158,
+        "error": null
+      },
+      {
+        "id": "R3-094",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 471.306,
+        "error": null
+      },
+      {
+        "id": "R3-095",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 460.218,
+        "error": null
+      },
+      {
+        "id": "R3-096",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 479.573,
+        "error": null
+      },
+      {
+        "id": "R3-097",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 118.063,
+        "error": null
+      },
+      {
+        "id": "R3-098",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 489.558,
+        "error": null
+      },
+      {
+        "id": "R3-099",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 458.899,
+        "error": null
+      },
+      {
+        "id": "R3-100",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 473.295,
+        "error": null
+      },
+      {
+        "id": "R3-101",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 416.265,
+        "error": null
+      },
+      {
+        "id": "R3-102",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 434.524,
+        "error": null
+      },
+      {
+        "id": "R3-103",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.796,
+        "error": null
+      },
+      {
+        "id": "R3-104",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 466.185,
+        "error": null
+      },
+      {
+        "id": "R3-105",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.638,
+        "error": null
+      },
+      {
+        "id": "R3-106",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.104,
+        "error": null
+      },
+      {
+        "id": "R3-107",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.059,
+        "error": null
+      },
+      {
+        "id": "R3-108",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 454.094,
+        "error": null
+      },
+      {
+        "id": "R3-109",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.943,
+        "error": null
+      },
+      {
+        "id": "R3-110",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 414.796,
+        "error": null
+      },
+      {
+        "id": "R3-111",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 409.424,
+        "error": null
+      },
+      {
+        "id": "R3-112",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 441.867,
+        "error": null
+      },
+      {
+        "id": "R3-113",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.524,
+        "error": null
+      },
+      {
+        "id": "R3-114",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.515,
+        "error": null
+      },
+      {
+        "id": "R3-115",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.365,
+        "error": null
+      },
+      {
+        "id": "R3-116",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.229,
+        "error": null
+      },
+      {
+        "id": "R3-117",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 422.581,
+        "error": null
+      },
+      {
+        "id": "R3-118",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 431.873,
+        "error": null
+      },
+      {
+        "id": "R3-119",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 497.812,
+        "error": null
+      },
+      {
+        "id": "R3-120",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.193,
+        "error": null
+      },
+      {
+        "id": "R3-121",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 440.242,
+        "error": null
+      },
+      {
+        "id": "R3-122",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 411.688,
+        "error": null
+      },
+      {
+        "id": "R3-123",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.257,
+        "error": null
+      },
+      {
+        "id": "R3-124",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 481.596,
+        "error": null
+      },
+      {
+        "id": "R3-125",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 426.66,
+        "error": null
+      },
+      {
+        "id": "R3-126",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 426.403,
+        "error": null
+      },
+      {
+        "id": "R3-127",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 509.531,
+        "error": null
+      },
+      {
+        "id": "R3-128",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.245,
+        "error": null
+      },
+      {
+        "id": "R3-129",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.021,
+        "error": null
+      },
+      {
+        "id": "R3-130",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.21,
+        "error": null
+      },
+      {
+        "id": "R3-131",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 490.522,
+        "error": null
+      },
+      {
+        "id": "R3-132",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 500.206,
+        "error": null
+      },
+      {
+        "id": "R3-133",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 478.012,
+        "error": null
+      },
+      {
+        "id": "R3-134",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 512.952,
+        "error": null
+      },
+      {
+        "id": "R3-135",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 416.555,
+        "error": null
+      },
+      {
+        "id": "R3-136",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 487.649,
+        "error": null
+      },
+      {
+        "id": "R3-137",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 496.859,
+        "error": null
+      },
+      {
+        "id": "R3-138",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 473.239,
+        "error": null
+      },
+      {
+        "id": "R3-139",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 424.115,
+        "error": null
+      },
+      {
+        "id": "R3-140",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 510.594,
+        "error": null
+      },
+      {
+        "id": "R3-141",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 466.106,
+        "error": null
+      },
+      {
+        "id": "R3-142",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 458.616,
+        "error": null
+      },
+      {
+        "id": "R3-143",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 486.002,
+        "error": null
+      },
+      {
+        "id": "R3-144",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 495.285,
+        "error": null
+      },
+      {
+        "id": "R3-145",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 409.112,
+        "error": null
+      },
+      {
+        "id": "R3-146",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 416.53,
+        "error": null
+      },
+      {
+        "id": "R3-147",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 450.113,
+        "error": null
+      },
+      {
+        "id": "R3-148",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 426.574,
+        "error": null
+      },
+      {
+        "id": "R3-149",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 433.228,
+        "error": null
+      },
+      {
+        "id": "R3-150",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 425.142,
+        "error": null
+      },
+      {
+        "id": "R3-151",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 450.534,
+        "error": null
+      },
+      {
+        "id": "R3-152",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 419.173,
+        "error": null
+      },
+      {
+        "id": "R3-153",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 428.749,
+        "error": null
+      },
+      {
+        "id": "R3-154",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 577.327,
+        "error": null
+      },
+      {
+        "id": "R3-155",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 486.443,
+        "error": null
+      },
+      {
+        "id": "R3-156",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 509.177,
+        "error": null
+      },
+      {
+        "id": "R3-157",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 469.17,
+        "error": null
+      },
+      {
+        "id": "R3-158",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 433.794,
+        "error": null
+      },
+      {
+        "id": "R3-159",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 434.537,
+        "error": null
+      },
+      {
+        "id": "R3-160",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 440.949,
+        "error": null
+      }
+    ],
+    "executive": [
+      {
+        "id": "R3-001",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.544,
+        "error": null
+      },
+      {
+        "id": "R3-002",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 485.37,
+        "error": null
+      },
+      {
+        "id": "R3-003",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 527.569,
+        "error": null
+      },
+      {
+        "id": "R3-004",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 578.773,
+        "error": null
+      },
+      {
+        "id": "R3-005",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 122.519,
+        "error": null
+      },
+      {
+        "id": "R3-006",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 441.764,
+        "error": null
+      },
+      {
+        "id": "R3-007",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 451.061,
+        "error": null
+      },
+      {
+        "id": "R3-008",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 482.212,
+        "error": null
+      },
+      {
+        "id": "R3-009",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 499.197,
+        "error": null
+      },
+      {
+        "id": "R3-010",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 445.612,
+        "error": null
+      },
+      {
+        "id": "R3-011",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 462.584,
+        "error": null
+      },
+      {
+        "id": "R3-012",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 430.726,
+        "error": null
+      },
+      {
+        "id": "R3-013",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 432.335,
+        "error": null
+      },
+      {
+        "id": "R3-014",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 486.219,
+        "error": null
+      },
+      {
+        "id": "R3-015",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 430.872,
+        "error": null
+      },
+      {
+        "id": "R3-016",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 502.574,
+        "error": null
+      },
+      {
+        "id": "R3-017",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 495.074,
+        "error": null
+      },
+      {
+        "id": "R3-018",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.058,
+        "error": null
+      },
+      {
+        "id": "R3-019",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.852,
+        "error": null
+      },
+      {
+        "id": "R3-020",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 420.017,
+        "error": null
+      },
+      {
+        "id": "R3-021",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.683,
+        "error": null
+      },
+      {
+        "id": "R3-022",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 423.464,
+        "error": null
+      },
+      {
+        "id": "R3-023",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 446.371,
+        "error": null
+      },
+      {
+        "id": "R3-024",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 452.023,
+        "error": null
+      },
+      {
+        "id": "R3-025",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.366,
+        "error": null
+      },
+      {
+        "id": "R3-026",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 485.959,
+        "error": null
+      },
+      {
+        "id": "R3-027",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.061,
+        "error": null
+      },
+      {
+        "id": "R3-028",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 420.556,
+        "error": null
+      },
+      {
+        "id": "R3-029",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 119.747,
+        "error": null
+      },
+      {
+        "id": "R3-030",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 458.395,
+        "error": null
+      },
+      {
+        "id": "R3-031",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 487.842,
+        "error": null
+      },
+      {
+        "id": "R3-032",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 9.594,
+        "error": null
+      },
+      {
+        "id": "R3-033",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 434.96,
+        "error": null
+      },
+      {
+        "id": "R3-034",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 472.083,
+        "error": null
+      },
+      {
+        "id": "R3-035",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 440.054,
+        "error": null
+      },
+      {
+        "id": "R3-036",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 508.792,
+        "error": null
+      },
+      {
+        "id": "R3-037",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 537.902,
+        "error": null
+      },
+      {
+        "id": "R3-038",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 694.036,
+        "error": null
+      },
+      {
+        "id": "R3-039",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 455.956,
+        "error": null
+      },
+      {
+        "id": "R3-040",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 429.236,
+        "error": null
+      },
+      {
+        "id": "R3-041",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 13.052,
+        "error": null
+      },
+      {
+        "id": "R3-042",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 463.177,
+        "error": null
+      },
+      {
+        "id": "R3-043",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.747,
+        "error": null
+      },
+      {
+        "id": "R3-044",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 418.85,
+        "error": null
+      },
+      {
+        "id": "R3-045",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 441.955,
+        "error": null
+      },
+      {
+        "id": "R3-046",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 420.447,
+        "error": null
+      },
+      {
+        "id": "R3-047",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.94,
+        "error": null
+      },
+      {
+        "id": "R3-048",
+        "class": "direct",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 425.761,
+        "error": null
+      },
+      {
+        "id": "R3-049",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.088,
+        "error": null
+      },
+      {
+        "id": "R3-050",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.354,
+        "error": null
+      },
+      {
+        "id": "R3-051",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 429.447,
+        "error": null
+      },
+      {
+        "id": "R3-052",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 17.116,
+        "error": null
+      },
+      {
+        "id": "R3-053",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 17.005,
+        "error": null
+      },
+      {
+        "id": "R3-054",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 449.049,
+        "error": null
+      },
+      {
+        "id": "R3-055",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 421.328,
+        "error": null
+      },
+      {
+        "id": "R3-056",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 435.888,
+        "error": null
+      },
+      {
+        "id": "R3-057",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 425.698,
+        "error": null
+      },
+      {
+        "id": "R3-058",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 451.946,
+        "error": null
+      },
+      {
+        "id": "R3-059",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 447.889,
+        "error": null
+      },
+      {
+        "id": "R3-060",
+        "class": "direct",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 427.51,
+        "error": null
+      },
+      {
+        "id": "R3-061",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 500.721,
+        "error": null
+      },
+      {
+        "id": "R3-062",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 475.475,
+        "error": null
+      },
+      {
+        "id": "R3-063",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 477.494,
+        "error": null
+      },
+      {
+        "id": "R3-064",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 500.629,
+        "error": null
+      },
+      {
+        "id": "R3-065",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 490.709,
+        "error": null
+      },
+      {
+        "id": "R3-066",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 493.223,
+        "error": null
+      },
+      {
+        "id": "R3-067",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.866,
+        "error": null
+      },
+      {
+        "id": "R3-068",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 479.701,
+        "error": null
+      },
+      {
+        "id": "R3-069",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 540.338,
+        "error": null
+      },
+      {
+        "id": "R3-070",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 509.408,
+        "error": null
+      },
+      {
+        "id": "R3-071",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 461.516,
+        "error": null
+      },
+      {
+        "id": "R3-072",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 478.872,
+        "error": null
+      },
+      {
+        "id": "R3-073",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 522.243,
+        "error": null
+      },
+      {
+        "id": "R3-074",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 484.815,
+        "error": null
+      },
+      {
+        "id": "R3-075",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 512.72,
+        "error": null
+      },
+      {
+        "id": "R3-076",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 500.436,
+        "error": null
+      },
+      {
+        "id": "R3-077",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 493.029,
+        "error": null
+      },
+      {
+        "id": "R3-078",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 476.186,
+        "error": null
+      },
+      {
+        "id": "R3-079",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 505.658,
+        "error": null
+      },
+      {
+        "id": "R3-080",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 535.954,
+        "error": null
+      },
+      {
+        "id": "R3-081",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 500.132,
+        "error": null
+      },
+      {
+        "id": "R3-082",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 494.976,
+        "error": null
+      },
+      {
+        "id": "R3-083",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 507.49,
+        "error": null
+      },
+      {
+        "id": "R3-084",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 526.346,
+        "error": null
+      },
+      {
+        "id": "R3-085",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 493.933,
+        "error": null
+      },
+      {
+        "id": "R3-086",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 554.243,
+        "error": null
+      },
+      {
+        "id": "R3-087",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 500.864,
+        "error": null
+      },
+      {
+        "id": "R3-088",
+        "class": "multi_hop",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 10.115,
+        "error": null
+      },
+      {
+        "id": "R3-089",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 467.629,
+        "error": null
+      },
+      {
+        "id": "R3-090",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 468.389,
+        "error": null
+      },
+      {
+        "id": "R3-091",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 469.869,
+        "error": null
+      },
+      {
+        "id": "R3-092",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 466.598,
+        "error": null
+      },
+      {
+        "id": "R3-093",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 513.594,
+        "error": null
+      },
+      {
+        "id": "R3-094",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 491.929,
+        "error": null
+      },
+      {
+        "id": "R3-095",
+        "class": "multi_hop",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 482.118,
+        "error": null
+      },
+      {
+        "id": "R3-096",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 481.493,
+        "error": null
+      },
+      {
+        "id": "R3-097",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 119.796,
+        "error": null
+      },
+      {
+        "id": "R3-098",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 489.925,
+        "error": null
+      },
+      {
+        "id": "R3-099",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 475.252,
+        "error": null
+      },
+      {
+        "id": "R3-100",
+        "class": "multi_hop",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 495.42,
+        "error": null
+      },
+      {
+        "id": "R3-101",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.31,
+        "error": null
+      },
+      {
+        "id": "R3-102",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 441.029,
+        "error": null
+      },
+      {
+        "id": "R3-103",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 419.884,
+        "error": null
+      },
+      {
+        "id": "R3-104",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 484.885,
+        "error": null
+      },
+      {
+        "id": "R3-105",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 418.989,
+        "error": null
+      },
+      {
+        "id": "R3-106",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.158,
+        "error": null
+      },
+      {
+        "id": "R3-107",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 567.203,
+        "error": null
+      },
+      {
+        "id": "R3-108",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 472.55,
+        "error": null
+      },
+      {
+        "id": "R3-109",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 436.815,
+        "error": null
+      },
+      {
+        "id": "R3-110",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 437.856,
+        "error": null
+      },
+      {
+        "id": "R3-111",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 438.681,
+        "error": null
+      },
+      {
+        "id": "R3-112",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 456.356,
+        "error": null
+      },
+      {
+        "id": "R3-113",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 439.269,
+        "error": null
+      },
+      {
+        "id": "R3-114",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 454.948,
+        "error": null
+      },
+      {
+        "id": "R3-115",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 428.473,
+        "error": null
+      },
+      {
+        "id": "R3-116",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 417.221,
+        "error": null
+      },
+      {
+        "id": "R3-117",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 418.074,
+        "error": null
+      },
+      {
+        "id": "R3-118",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 440.327,
+        "error": null
+      },
+      {
+        "id": "R3-119",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 427.982,
+        "error": null
+      },
+      {
+        "id": "R3-120",
+        "class": "conceptual",
+        "candidate_recall": 0,
+        "context_recall": 0,
+        "latency_ms": 10.13,
+        "error": null
+      },
+      {
+        "id": "R3-121",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 420.623,
+        "error": null
+      },
+      {
+        "id": "R3-122",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.818,
+        "error": null
+      },
+      {
+        "id": "R3-123",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 468.181,
+        "error": null
+      },
+      {
+        "id": "R3-124",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 487.829,
+        "error": null
+      },
+      {
+        "id": "R3-125",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 422.56,
+        "error": null
+      },
+      {
+        "id": "R3-126",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 428.966,
+        "error": null
+      },
+      {
+        "id": "R3-127",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 1,
+        "latency_ms": 481.986,
+        "error": null
+      },
+      {
+        "id": "R3-128",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 432.705,
+        "error": null
+      },
+      {
+        "id": "R3-129",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 431.589,
+        "error": null
+      },
+      {
+        "id": "R3-130",
+        "class": "conceptual",
+        "candidate_recall": 1,
+        "context_recall": 0,
+        "latency_ms": 424.579,
+        "error": null
+      },
+      {
+        "id": "R3-131",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 506.826,
+        "error": null
+      },
+      {
+        "id": "R3-132",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 493.287,
+        "error": null
+      },
+      {
+        "id": "R3-133",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 490.985,
+        "error": null
+      },
+      {
+        "id": "R3-134",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 501.373,
+        "error": null
+      },
+      {
+        "id": "R3-135",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 442.29,
+        "error": null
+      },
+      {
+        "id": "R3-136",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 507.537,
+        "error": null
+      },
+      {
+        "id": "R3-137",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 508.441,
+        "error": null
+      },
+      {
+        "id": "R3-138",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 498.5,
+        "error": null
+      },
+      {
+        "id": "R3-139",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 439.392,
+        "error": null
+      },
+      {
+        "id": "R3-140",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 497.201,
+        "error": null
+      },
+      {
+        "id": "R3-141",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 444.545,
+        "error": null
+      },
+      {
+        "id": "R3-142",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 479.681,
+        "error": null
+      },
+      {
+        "id": "R3-143",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 499.894,
+        "error": null
+      },
+      {
+        "id": "R3-144",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 491.691,
+        "error": null
+      },
+      {
+        "id": "R3-145",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 418.367,
+        "error": null
+      },
+      {
+        "id": "R3-146",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 453.08,
+        "error": null
+      },
+      {
+        "id": "R3-147",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 463.437,
+        "error": null
+      },
+      {
+        "id": "R3-148",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 438.345,
+        "error": null
+      },
+      {
+        "id": "R3-149",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 444.254,
+        "error": null
+      },
+      {
+        "id": "R3-150",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 421.145,
+        "error": null
+      },
+      {
+        "id": "R3-151",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 435.544,
+        "error": null
+      },
+      {
+        "id": "R3-152",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 455.624,
+        "error": null
+      },
+      {
+        "id": "R3-153",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 423.484,
+        "error": null
+      },
+      {
+        "id": "R3-154",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 461.996,
+        "error": null
+      },
+      {
+        "id": "R3-155",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 417.917,
+        "error": null
+      },
+      {
+        "id": "R3-156",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 477.921,
+        "error": null
+      },
+      {
+        "id": "R3-157",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 461.613,
+        "error": null
+      },
+      {
+        "id": "R3-158",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 427.607,
+        "error": null
+      },
+      {
+        "id": "R3-159",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 436.54,
+        "error": null
+      },
+      {
+        "id": "R3-160",
+        "class": "abstain",
+        "candidate_recall": "UNMEASURABLE",
+        "context_recall": "UNMEASURABLE",
+        "latency_ms": 461.478,
+        "error": null
+      }
+    ]
+  }
+}
