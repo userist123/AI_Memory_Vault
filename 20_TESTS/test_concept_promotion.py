@@ -23,7 +23,7 @@ spec.loader.exec_module(schema_mod)
 validate_frontmatter = schema_mod.validate_frontmatter
 
 KNOWLEDGE_DIR = "01_ARCHITECTURE/knowledge"
-SLOTS_DIR = "01_ARCHITECTURE/ontology/slots"
+SLOTS_DIR = "20_TESTS/fixtures/slots_pre_disposition"
 
 
 def parse_note_frontmatter(filepath: str) -> dict:
@@ -118,7 +118,7 @@ def test_declined_concept_has_no_note_file():
             synergy_row = line
             break
 
-    if synergy_row is not None:
-        cols = [c.strip() for c in synergy_row.split("|")]
-        assert cols[4] == "proposed"
-        assert cols[6] == ""  # Empty promoted_note_id for declined concept
+    assert synergy_row is not None
+    cols = [c.strip() for c in synergy_row.split("|")]
+    assert cols[4] == "proposed"
+    assert cols[6] == ""  # Empty promoted_note_id for declined concept

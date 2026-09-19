@@ -1,7 +1,8 @@
 ---
 id: "knw-ashby-habituation-and-plasticity"
 type: knowledge
-lifecycle: ACTIVE
+lifecycle: ARCHIVED
+archive_reason: scrise de agent fara citate din sursa; provenance si verificare auto-declarate
 category: cybernetics-plasticity
 tags: [ashby, habituation, neural-plasticity, constriction, reflexes]
 created: "2026-09-18T19:28:10+00:00"

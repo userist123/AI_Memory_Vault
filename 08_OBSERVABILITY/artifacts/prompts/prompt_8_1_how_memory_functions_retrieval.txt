@@ -1,0 +1,25 @@
+You are a cognitive knowledge extraction engine for an AI Memory Vault.
+Analyze the following textbook section and extract its core factual concepts, theories, empirical findings, and definitions.
+
+Section Title: Retrieval
+
+Source Text:
+Retrieval So you have worked hard to encode (via effortful processing) and store some important information for your upcoming final exam. How do you get that information back out of storage when you need it? The act of getting information out of memory storage and back into conscious awareness is known as retrieval . This would be similar to finding and opening a paper you had previously saved on your computer’s hard drive. Now it’s back on your desktop, and you can work with it again. Our ability to retrieve information from long-term memory is vital to our everyday functioning. You must be able to retrieve information from memory in order to do everything from knowing how to brush your hair and teeth, to driving to work, to knowing how to perform your job once you get there. There are three ways you can retrieve information out of your long-term memory storage system: recall, recognition, and relearning. Recall is what we most often think about when we talk about memory retrieval: it means you can access information without cues. For example, you would use recall for an essay test. Recognition happens when you identify information that you have previously learned after encountering it again. It involves a process of comparison. When you take a multiple-choice test, you are relying on recognition to help you choose the correct answer. Here is another example. Let’s say you graduated from high school 10 years ago, and you have returned to your hometown for your 10-year reunion. You may not be able to recall all of your classmates, but you recognize many of them based on their yearbook photos. The third form of retrieval is relearning , and it’s just what it sounds like. It involves learning information that you previously learned. Whitney took Spanish in high school, but after high school she did not have the opportunity to speak Spanish. Whitney is now 31, and her company has offered her an opportunity to work in their Mexico City office. In order to prepare herself, she enrolls in a Spanish course at the local community center. She’s surprised at how quickly she’s able to pick up the language after not speaking it for 13 years; this is an example of relearning.
+
+Extraction Requirements:
+1. Identify the essential factual concepts described in this section.
+2. For each concept, provide:
+   - title: A concise, standard psychological term or concept title.
+   - summary: A factual summary (2-4 sentences) explaining the mechanism, definition, or finding.
+   - exact_quote: A verbatim character-by-character quote from the Source Text supporting the concept. The quote MUST exist identically in the Source Text.
+3. Return output strictly in valid JSON format matching this schema:
+{
+  "concepts": [
+    {
+      "title": "...",
+      "summary": "...",
+      "exact_quote": "..."
+    }
+  ]
+}
+Do NOT invent information. Extract only what is substantiated by the text.

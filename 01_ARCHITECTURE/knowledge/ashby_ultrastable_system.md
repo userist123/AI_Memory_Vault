@@ -1,7 +1,8 @@
 ---
 id: "knw-ashby-ultrastable-system"
 type: knowledge
-lifecycle: ACTIVE
+lifecycle: ARCHIVED
+archive_reason: scrise de agent fara citate din sursa; provenance si verificare auto-declarate
 category: cybernetics-foundations
 tags: [ashby, ultrastability, double-feedback, homeostat, adaptation]
 created: "2026-09-18T19:28:10+00:00"

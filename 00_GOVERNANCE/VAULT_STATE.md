@@ -65,12 +65,12 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 920 |
-| Notes visible to `FileStorageEngine` | 738 |
-| Graph edges | 470 |
-| — declared / inferred / wikilink | 198 / 197 / 75 |
-| Notes usable as a graph **seed** (out-edge) | 145 |
-| Notes reachable as graph **gold** (in-edge) | 133 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 948 |
+| Notes visible to `FileStorageEngine` | 853 |
+| Graph edges | 521 |
+| — declared / inferred / wikilink | 224 / 222 / 75 |
+| Notes usable as a graph **seed** (out-edge) | 157 |
+| Notes reachable as graph **gold** (in-edge) | 145 |
 | Graph cases with pairwise-disjoint nodes | 33 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,

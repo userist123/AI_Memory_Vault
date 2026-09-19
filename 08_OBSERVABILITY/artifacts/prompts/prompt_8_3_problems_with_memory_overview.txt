@@ -1,0 +1,25 @@
+You are a cognitive knowledge extraction engine for an AI Memory Vault.
+Analyze the following textbook section and extract its core factual concepts, theories, empirical findings, and definitions.
+
+Section Title: 8.3Problems with Memory - Overview
+
+Source Text:
+8.3 Problems with Memory Learning Objectives By the end of this section, you will be able to: Compare and contrast the two types of amnesia Discuss the unreliability of eyewitness testimony Discuss encoding failure Discuss the various memory errors Compare and contrast the two types of interference You may pride yourself on your amazing ability to remember the birthdates and ages of all of your friends and family members, or you may be able to recall vivid details of your 5th birthday party at Chuck E. Cheese’s. However, all of us have at times felt frustrated, and even embarrassed, when our memories have failed us. There are several reasons why this happens.
+
+Extraction Requirements:
+1. Identify the essential factual concepts described in this section.
+2. For each concept, provide:
+   - title: A concise, standard psychological term or concept title.
+   - summary: A factual summary (2-4 sentences) explaining the mechanism, definition, or finding.
+   - exact_quote: A verbatim character-by-character quote from the Source Text supporting the concept. The quote MUST exist identically in the Source Text.
+3. Return output strictly in valid JSON format matching this schema:
+{
+  "concepts": [
+    {
+      "title": "...",
+      "summary": "...",
+      "exact_quote": "..."
+    }
+  ]
+}
+Do NOT invent information. Extract only what is substantiated by the text.
