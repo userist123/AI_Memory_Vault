@@ -29,7 +29,11 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip pytest numpy
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -r requirements-memory-v6.txt
+          pip install pytest numpy
 
       - name: Run deterministic isolation tests
         run: python -m pytest -v 20_TESTS/test_planning_influence_isolation.py
