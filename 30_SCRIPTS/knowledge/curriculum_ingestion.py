@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Tuple
 
 from bs4 import BeautifulSoup
 
-REPO_ROOT = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 PACKAGES_DIR = REPO_ROOT / "03_IMPLEMENTATION" / "packages"
 for p in (str(REPO_ROOT), str(PACKAGES_DIR)):
     if p not in sys.path:

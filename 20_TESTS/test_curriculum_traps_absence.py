@@ -1,24 +1,26 @@
 """Tests verifying that specific terms in curriculum trap questions do not exist in Chapter 8 text.
 
+Uses committed plain text fixtures in 07_EVALUATION/curriculum/source_text/.
 Includes a negative control demonstrating that the absence check correctly detects present terms.
 """
 import json
 import unittest
 from pathlib import Path
-from bs4 import BeautifulSoup
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 TEST_SET_PATH = REPO_ROOT / "07_EVALUATION" / "curriculum" / "openstax_ch08_frozen_test_set.json"
-RAW_CHAPTER_DIR = REPO_ROOT / "06_INBOX" / "RAW_IMPORTS" / "openstax_psychology_2e_ch08"
+SOURCE_TEXT_DIR = REPO_ROOT / "07_EVALUATION" / "curriculum" / "source_text"
 
 
 class TestCurriculumTrapsAbsence(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.full_text = ""
-        for html_file in sorted(RAW_CHAPTER_DIR.glob("8_*.html")):
-            soup = BeautifulSoup(html_file.read_text(encoding="utf-8"), "html.parser")
-            cls.full_text += " " + soup.get_text(separator=" ")
+        txt_files = sorted(SOURCE_TEXT_DIR.glob("*.txt"))
+        if not txt_files:
+            raise RuntimeError(f"No text fixtures found in {SOURCE_TEXT_DIR}")
+        for txt_file in txt_files:
+            cls.full_text += " " + txt_file.read_text(encoding="utf-8")
         cls.full_text_lower = cls.full_text.lower()
         cls.test_set = json.loads(TEST_SET_PATH.read_text(encoding="utf-8"))
 

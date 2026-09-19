@@ -22,7 +22,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-REPO = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO.resolve()))
 sys.path.insert(0, str((REPO / "03_IMPLEMENTATION" / "packages").resolve()))
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)

@@ -1,4 +1,4 @@
-﻿"""Tests for OpenStax transfer benchmark - Punctul 3 and Punctul 4.
+"""Tests for OpenStax transfer benchmark - Punctul 3 and Punctul 4.
 
 Tests:
 1. Frozen test set integrity (22 questions frozen, schema correct).
@@ -14,7 +14,7 @@ import os
 import sys
 from pathlib import Path
 
-REPO = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO.resolve()))
 sys.path.insert(0, str((REPO / "03_IMPLEMENTATION" / "packages").resolve()))
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)

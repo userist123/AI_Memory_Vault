@@ -14,7 +14,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-REPO_ROOT = Path(r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 PART_A_PATH = REPO_ROOT / "08_OBSERVABILITY" / "reports" / "sleep_consolidation_report.json"
 PART_B_PRE_PATH = REPO_ROOT / "07_EVALUATION" / "heldout_retrieval_benchmark_v2" / "baseline_report_pre_cleanup.json"
