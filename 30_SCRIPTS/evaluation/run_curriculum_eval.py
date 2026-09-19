@@ -117,11 +117,15 @@ def evaluate_question(
     )
     retrieved_ids = [it.get("id") for it in search_res.get("results", []) if it.get("id")]
 
+    MAX_NOTE_CHARS = 4500
     notes_parts = []
     for nid in retrieved_ids:
         note = storage.get(nid)
         if note:
-            notes_parts.append(note.get("content", "") or "")
+            c = note.get("content", "") or ""
+            if len(c) > MAX_NOTE_CHARS:
+                c = c[:MAX_NOTE_CHARS]
+            notes_parts.append(c)
     notes_text = "\n\n".join(p for p in notes_parts if p)
 
     # Count how many of the retrieved IDs are OpenStax notes (using pre-computed set from index)
@@ -165,25 +169,20 @@ def evaluate_question(
 
 def run_arm(questions: List[Dict[str, Any]], include_openstax: bool, model: Any) -> Dict[str, Any]:
     storage = FileStorageEngine(str(REPO))
+    full_index = VaultIndex.load(REPO, lifecycles=["ACTIVE", "VERIFIED", "REVIEW"])
+    openstax_ids = {
+        n.id for n in full_index.notes
+        if OPENSTAX_NOTE_PATTERN in (n.meta.get("provenance", {}) or {}).get("source_ref", "")
+    }
+
     if include_openstax:
-        index = VaultIndex.load(REPO, lifecycles=["ACTIVE", "VERIFIED", "REVIEW"])
+        index = full_index
     else:
-        full_index = VaultIndex.load(REPO, lifecycles=["ACTIVE", "VERIFIED", "REVIEW"])
-        openstax_ids = {
-            n.id for n in full_index.notes
-            if OPENSTAX_NOTE_PATTERN in (n.meta.get("provenance", {}) or {}).get("source_ref", "")
-        }
+        storage.id_to_path = {k: v for k, v in storage.id_to_path.items() if k not in openstax_ids}
         index = VaultIndex([n for n in full_index.notes if n.id not in openstax_ids])
-        print(f"  Excluded {len(openstax_ids)} OpenStax notes from control arm index.")
+        print(f"  Excluded {len(openstax_ids)} OpenStax notes from control arm index and storage.")
 
     controller = MemoryController(storage=storage, index=index)
-
-    # Always need the full openstax_ids set for accurate counting
-    if include_openstax:
-        openstax_ids = {
-            n.id for n in index.notes
-            if OPENSTAX_NOTE_PATTERN in (n.meta.get("provenance", {}) or {}).get("source_ref", "")
-        }
 
     results = []
     for q in questions:
