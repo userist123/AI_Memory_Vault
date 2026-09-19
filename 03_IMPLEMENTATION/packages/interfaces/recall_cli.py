@@ -164,11 +164,12 @@ def main():
 
     if args.init_secret:
         try:
-            path, created = vault_runtime.init_secret(force=args.force)
+            _, created = vault_runtime.init_secret(force=args.force)
         except vault_runtime.VaultSecretInvalid as e:
             print(f"[!] {e}", file=sys.stderr)
             sys.exit(2)
-        print(f"[*] Secret HMAC {'creat' if created else 'deja existent, neschimbat'}: {path}")
+        # Where the file is comes from the configuration, not from the call that wrote the key.
+        print(f"[*] Secret HMAC {'creat' if created else 'deja existent, neschimbat'}: {vault_runtime.key_file_path()}")
         return
     if not args.query:
         parser.error("--query este obligatoriu (sau folositi --init-secret)")
