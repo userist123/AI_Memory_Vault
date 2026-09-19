@@ -1,3 +1,12 @@
+> ⚠️ **RETRACTED — INVALID MEASUREMENT. Do not cite the figures below as a result.**
+> The baseline arm was handed the optimal branch: `build_scenarios` places it first
+> (`planning_influence_mve.py:153`, `optimal=order[0]`) and PUCT breaks ties by branch
+> position (`:252`, `-branches.index(candidate)`), so the memoryless planner finds the
+> optimum on step one in every scenario. The baseline-vs-treatment gap measures that,
+> not an effect of memory. Explanation: `README.md`, section "Dovada deterministă
+> actuală — RETRASĂ" (English: `README.en.md`, "Current deterministic evidence — RETRACTED").
+> The original text and figures are kept unchanged below as history.
+
 # Planning Influence — Uncertainty Policy Pilot
 
 Date: 2026-09-04
