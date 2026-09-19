@@ -49,7 +49,8 @@ def audit_summary(sample_path: Path = PART_C_SAMPLE_PATH, verdicts_path: Path = 
     sample_bytes = sample_path.read_bytes()
     sample = json.loads(sample_bytes.decode("utf-8"))
     doc = json.loads(verdicts_path.read_text(encoding="utf-8"))
-    if doc.get("sample_sha256") != hashlib.sha256(sample_bytes).hexdigest():
+    # Canonical-LF digest: the file checks out with CRLF on Windows and LF on Linux.
+    if doc.get("sample_sha256") != hashlib.sha256(sample_bytes.replace(b"\r\n", b"\n")).hexdigest():
         raise ValueError("audit_verdicts.json was written against a different audit_sample_50.json")
     key = lambda r: (r["index"], r["source_id"], r["target_id"], r["relation"])  # noqa: E731
     expected = {key(r) for r in sample["samples"]}

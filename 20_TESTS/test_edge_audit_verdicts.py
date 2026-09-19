@@ -53,7 +53,7 @@ def test_the_original_packet_is_not_modified():
 
 def test_verdicts_are_bound_to_this_sample_file():
     import hashlib
-    assert load(VERDICTS)["sample_sha256"] == hashlib.sha256(SAMPLE.read_bytes()).hexdigest()
+    assert load(VERDICTS)["sample_sha256"] == hashlib.sha256(SAMPLE.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def test_report_figures_equal_those_computed_from_the_json():

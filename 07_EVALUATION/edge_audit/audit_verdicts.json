@@ -4,7 +4,7 @@
   "evaluator_kind": "AI model (independent of the rule engine edge_proposer.py that proposed the edges; not a human review)",
   "evaluated_at": "2026-09-19T11:57:07Z",
   "sample_file": "07_EVALUATION/edge_audit/audit_sample_50.json",
-  "sample_sha256": "035ead33ea06317ac72bda821072d1c65b036ecb91fb1459819d8b7b88d3d298",
+  "sample_sha256": "a46484f1c47148529f712602b05b5fff8960c1008af7cc60cfb189fbe6c71252",
   "criterion": "ACCEPT only if the relation type (depends_on, part_of, related_to, supersedes, ...) is true for the content of both notes and the note content supports it; words in common without a link of meaning, wrong direction, wrong type and duplicate content are REJECT.",
   "method": "Per relation: the two notes' text was read from the working tree (frontmatter, body), plus the relation type and both quotes; where the notes cross-reference each other this was checked with grep. Nothing was tuned to a target precision.",
   "limitations": [
@@ -563,5 +563,6 @@
       "rationale": "Both are ACTIVE procedures about the same system: the first specifies the bio-inspired cognitive modules of AI Memory Vault (ACT-R activation, reconsolidation, cognitive_core), the second the blueprint for integrating that system into a large application, whose sidecar example imports cognitive_core. Architecture and its integration guide are related. Weak link: the quoted ACT-R formula and the code snippet do not show it; the notes' subject matter does.",
       "evaluator": "claude-sonnet"
     }
-  ]
+  ],
+  "sample_sha256_note": "SHA-256 of the sample file with CRLF normalised to LF (the file checks out differently on Windows and Linux)."
 }
