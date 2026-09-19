@@ -1,0 +1,25 @@
+You are a cognitive knowledge extraction engine for an AI Memory Vault.
+Analyze the following textbook section and extract its core factual concepts, theories, empirical findings, and definitions.
+
+Section Title: Amnesia
+
+Source Text:
+Amnesia Amnesia is the loss of long-term memory that occurs as the result of disease, physical trauma, or psychological trauma. Endel Tulving (2002) and his colleagues at the University of Toronto studied K. C. for years. K. C. suffered a traumatic head injury in a motorcycle accident and then had severe amnesia. Tulving writes, the outstanding fact about K.C.'s mental make-up is his utter inability to remember any events, circumstances, or situations from his own life. His episodic amnesia covers his whole life, from birth to the present. The only exception is the experiences that, at any time, he has had in the last minute or two. (Tulving, 2002, p. 14) Anterograde Amnesia There are two common types of amnesia: anterograde amnesia and retrograde amnesia ( Figure 8.10 ). Anterograde amnesia is commonly caused by brain trauma, such as a blow to the head. With anterograde amnesia , you cannot remember new information, although you can remember information and events that happened prior to your injury. The hippocampus is usually affected (McLeod, 2011). This suggests that damage to the brain has resulted in the inability to transfer information from short-term to long-term memory; that is, the inability to consolidate memories. Many people with this form of amnesia are unable to form new episodic or semantic memories, but are still able to form new procedural memories (Bayley & Squire, 2002). This was true of H. M., which was discussed earlier. The brain damage caused by his surgery resulted in anterograde amnesia. H. M. would read the same magazine over and over, having no memory of ever reading it—it was always new to him. He also could not remember people he had met after his surgery. If you were introduced to H. M. and then you left the room for a few minutes, he would not know you upon your return and would introduce himself to you again. However, when presented the same puzzle several days in a row, although he did not remember having seen the puzzle before, his speed at solving it became faster each day (because of relearning) (Corkin, 1965, 1968). Figure 8.10 This diagram illustrates the timeline of retrograde and anterograde amnesia. Memory problems that extend back in time before the injury and prevent retrieval of information previously stored in long-term memory are known as retrograde amnesia. Conversely, memory problems that extend forward in time from the point of injury and prevent the formation of new memories are called anterograde amnesia. Retrograde Amnesia Retrograde amnesia is loss of memory for events that occurred prior to the trauma. People with retrograde amnesia cannot remember some or even all of their past. They have difficulty remembering episodic memories. What if you woke up in the hospital one day and there were people surrounding your bed claiming to be your spouse, your children, and your parents? The trouble is you don’t recognize any of them. You were in a car accident, suffered a head injury, and now have retrograde amnesia. You don’t remember anything about your life prior to waking up in the hospital. This may sound like the stuff of Hollywood movies, and Hollywood has been fascinated with the amnesia plot for nearly a century, going all the way back to the film Garden of Lies from 1915 to more recent movies such as the Jason Bourne spy thrillers. However, for real-life sufferers of retrograde amnesia, like former NFL football player Scott Bolzan, the story is not a Hollywood movie. Bolzan fell, hit his head, and deleted 46 years of his life in an instant. He is now living with one of the most extreme cases of retrograde amnesia on record. Link to Learning View the video story about Scott Bolzan's amnesia and his attempts to get his life back to learn more.
+
+Extraction Requirements:
+1. Identify the essential factual concepts described in this section.
+2. For each concept, provide:
+   - title: A concise, standard psychological term or concept title.
+   - summary: A factual summary (2-4 sentences) explaining the mechanism, definition, or finding.
+   - exact_quote: A verbatim character-by-character quote from the Source Text supporting the concept. The quote MUST exist identically in the Source Text.
+3. Return output strictly in valid JSON format matching this schema:
+{
+  "concepts": [
+    {
+      "title": "...",
+      "summary": "...",
+      "exact_quote": "..."
+    }
+  ]
+}
+Do NOT invent information. Extract only what is substantiated by the text.

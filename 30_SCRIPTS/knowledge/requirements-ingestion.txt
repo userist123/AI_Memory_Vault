@@ -1,0 +1,2 @@
+# Dedicated dependencies for offline curriculum HTML extraction and ingestion
+beautifulsoup4>=4.12.0

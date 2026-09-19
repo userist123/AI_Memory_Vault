@@ -68,14 +68,14 @@ def resolve_slot_file(slot_ref: str, slots_dir: str) -> str:
     """
     Resolves slot file path from relative path, filename, or slot name.
     """
-    # Direct existing path
-    if os.path.exists(slot_ref):
-        return slot_ref
-
-    # Path inside slots_dir
+    # Path inside slots_dir takes precedence when slots_dir is specified
     direct_in_dir = os.path.join(slots_dir, os.path.basename(slot_ref))
     if os.path.exists(direct_in_dir):
         return direct_in_dir
+
+    # Direct existing path
+    if os.path.exists(slot_ref):
+        return slot_ref
 
     # Match by slot name suffix (e.g. '03_ontology.md' or 'ontology')
     clean_name = slot_ref.replace(".md", "")

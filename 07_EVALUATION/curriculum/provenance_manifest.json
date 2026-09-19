@@ -1,0 +1,61 @@
+{
+  "work_title": "Psychology 2e",
+  "chapter": "Chapter 8: Memory",
+  "authors": [
+    "Rose M. Spielman",
+    "William J. Jenkins",
+    "Marilyn D. Lovett"
+  ],
+  "publisher": "OpenStax, Rice University",
+  "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "book_url": "https://openstax.org/details/books/psychology-2e",
+  "conversion_note": "Converted from original OpenStax HTML to plain text fixture using BeautifulSoup for test repeatability and CC BY 4.0 distribution.",
+  "files": [
+    {
+      "html_filename": "8_0_introduction.html",
+      "text_filename": "8_0_introduction.txt",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-introduction",
+      "html_bytes": 263986,
+      "html_sha256": "a23765765d0aa3fc1708f2aa6b43e8079a79bf55377c36e7e33976632ed6f8bf",
+      "text_bytes": 1478,
+      "text_sha256": "07f5430d8c5349b63fc3170b7c816a5eaf2c4074780cd5c5fb0cb9e01708c842"
+    },
+    {
+      "html_filename": "8_1_how_memory_functions.html",
+      "text_filename": "8_1_how_memory_functions.txt",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-1-how-memory-functions",
+      "html_bytes": 305363,
+      "html_sha256": "fcffa94f37369c48d099ace88ef0c0e8b53444e840a41d6f7da8076038a1acf5",
+      "text_bytes": 26080,
+      "text_sha256": "25bd960fcbe7c26694f7f55d8a44d7655ba3304f5b264d7030f611f9fe28b16f"
+    },
+    {
+      "html_filename": "8_2_parts_of_the_brain_involved_with_memory.html",
+      "text_filename": "8_2_parts_of_the_brain_involved_with_memory.txt",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-2-parts-of-the-brain-involved-with-memory",
+      "html_bytes": 277989,
+      "html_sha256": "089da9b58847a3889ad122179b9bace45d5e732908622629933df7218924c51c",
+      "text_bytes": 11319,
+      "text_sha256": "cb99c6c4bc32225ac4e8acbb2b7b8f24c35f63755820736581e9e92c3e1a6ae6"
+    },
+    {
+      "html_filename": "8_3_problems_with_memory.html",
+      "text_filename": "8_3_problems_with_memory.txt",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-3-problems-with-memory",
+      "html_bytes": 314708,
+      "html_sha256": "c2872598e82549702d17702a83c61a7a89771bee15ac2258edd9e6cb89276ad1",
+      "text_bytes": 29505,
+      "text_sha256": "bf105b5fe10038dce06b08fadb9d54bb03da45434aaa63fefe88eaea42a818ff"
+    },
+    {
+      "html_filename": "8_4_ways_to_enhance_memory.html",
+      "text_filename": "8_4_ways_to_enhance_memory.txt",
+      "source_url": "https://openstax.org/books/psychology-2e/pages/8-4-ways-to-enhance-memory",
+      "html_bytes": 275551,
+      "html_sha256": "20a1a9e50fc8dcab8b68776b7ab05e7eb98c486b2080ec4fc76e4c96bbbdabc6",
+      "text_bytes": 9925,
+      "text_sha256": "5f6dddf50b4e9409532d9caf799d0c90da3a072191c4e1a7d8412d9874ff9187"
+    }
+  ]
+}

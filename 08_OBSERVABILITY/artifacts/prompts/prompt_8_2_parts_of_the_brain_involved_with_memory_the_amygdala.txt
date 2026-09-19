@@ -1,0 +1,25 @@
+You are a cognitive knowledge extraction engine for an AI Memory Vault.
+Analyze the following textbook section and extract its core factual concepts, theories, empirical findings, and definitions.
+
+Section Title: The Amygdala
+
+Source Text:
+The Amygdala First, let’s look at the role of the amygdala in memory formation. The main job of the amygdala is to regulate emotions, such as fear and aggression ( Figure 8.8 ). The amygdala plays a part in how memories are stored because storage is influenced by stress hormones. For example, one researcher experimented with rats and the fear response (Josselyn, 2010). Using Pavlovian conditioning, a neutral tone was paired with a foot shock to the rats. This produced a fear memory in the rats. After being conditioned, each time they heard the tone, they would freeze (a defense response in rats), indicating a memory for the impending shock. Then the researchers induced cell death in neurons in the lateral amygdala, which is the specific area of the brain responsible for fear memories. They found the fear memory faded (became extinct). Because of its role in processing emotional information, the amygdala is also involved in memory consolidation: the process of transferring new learning into long-term memory. The amygdala seems to facilitate encoding memories at a deeper level when the event is emotionally arousing. Link to Learning In this TED Talk called “A Mouse. A Laser Beam. A Manipulated Memory,” Steve Ramirez and Xu Liu from MIT talk about using laser beams to manipulate fear memory in rats. Find out why their work caused a media frenzy once it was published in Science .
+
+Extraction Requirements:
+1. Identify the essential factual concepts described in this section.
+2. For each concept, provide:
+   - title: A concise, standard psychological term or concept title.
+   - summary: A factual summary (2-4 sentences) explaining the mechanism, definition, or finding.
+   - exact_quote: A verbatim character-by-character quote from the Source Text supporting the concept. The quote MUST exist identically in the Source Text.
+3. Return output strictly in valid JSON format matching this schema:
+{
+  "concepts": [
+    {
+      "title": "...",
+      "summary": "...",
+      "exact_quote": "..."
+    }
+  ]
+}
+Do NOT invent information. Extract only what is substantiated by the text.

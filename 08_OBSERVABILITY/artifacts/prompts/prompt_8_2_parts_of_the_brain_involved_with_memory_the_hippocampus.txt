@@ -1,0 +1,25 @@
+You are a cognitive knowledge extraction engine for an AI Memory Vault.
+Analyze the following textbook section and extract its core factual concepts, theories, empirical findings, and definitions.
+
+Section Title: The Hippocampus
+
+Source Text:
+The Hippocampus Another group of researchers also experimented with rats to learn how the hippocampus functions in memory processing ( Figure 8.8 ). They created lesions in the hippocampi of the rats, and found that the rats demonstrated memory impairment on various tasks, such as object recognition and maze running. They concluded that the hippocampus is involved in memory, specifically normal recognition memory as well as spatial memory (when the memory tasks are like recall tests) (Clark, Zola, & Squire, 2000). Another job of the hippocampus is to project information to cortical regions that give memories meaning and connect them with other memories. It also plays a part in memory consolidation: the process of transferring new learning into long-term memory. Injury to this area leaves us unable to process new declarative memories. One famous patient, known for years only as H. M., had both his left and right temporal lobes (hippocampi) removed in an attempt to help control the seizures he had been suffering from for years (Corkin, Amaral, González, Johnson, & Hyman, 1997). As a result, his declarative memory was significantly affected, and he could not form new semantic knowledge. He lost the ability to form new memories, yet he could still remember information and events that had occurred prior to the surgery.
+
+Extraction Requirements:
+1. Identify the essential factual concepts described in this section.
+2. For each concept, provide:
+   - title: A concise, standard psychological term or concept title.
+   - summary: A factual summary (2-4 sentences) explaining the mechanism, definition, or finding.
+   - exact_quote: A verbatim character-by-character quote from the Source Text supporting the concept. The quote MUST exist identically in the Source Text.
+3. Return output strictly in valid JSON format matching this schema:
+{
+  "concepts": [
+    {
+      "title": "...",
+      "summary": "...",
+      "exact_quote": "..."
+    }
+  ]
+}
+Do NOT invent information. Extract only what is substantiated by the text.

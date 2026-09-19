@@ -1,57 +1,333 @@
 {
-  "timestamp": "2026-09-18T19:28:10+00:00",
-  "book": {
-    "title": "Design for a Brain: The Origin of Adaptive Behaviour",
-    "author": "W. Ross Ashby",
-    "edition": "Second Edition, Chapman & Hall (1960)",
-    "license": "Public Domain / Open Educational Access (Estate of W. Ross Ashby, wrossashby.info)",
-    "source_file": "06_INBOX/Carti/Creier cibernetic/ilide.info-ross-ashby-design-for-brain-pr_3eb93315caef1123f55c2ddc8fee78b6.txt",
-    "characters_processed": 551566,
-    "tokens_consumed": 122745
+  "timestamp": "2026-09-18T20:48:46.713396+00:00",
+  "curriculum_book": {
+    "title": "Psychology 2e",
+    "chapter": "Chapter 8: Memory",
+    "publisher": "OpenStax, Rice University",
+    "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "provenance_manifest": "07_EVALUATION/curriculum/provenance_manifest.json",
+    "frozen_test_set": "07_EVALUATION/curriculum/openstax_ch08_frozen_test_set.json"
   },
-  "ingestion_telemetry": {
-    "elapsed_seconds": 0.0695,
-    "cost_usd": 0.0,
-    "pricing_tier": "local_deterministic_pipeline",
-    "notes_created_count": 6,
-    "synapses_added_count": 18
+  "character_coverage": {
+    "total_content_pages": 4,
+    "pages": [
+      {
+        "filename": "8_1_how_memory_functions.html",
+        "page_characters": 25926,
+        "sent_characters": 25926,
+        "exact_match": true,
+        "section_count": 4
+      },
+      {
+        "filename": "8_2_parts_of_the_brain_involved_with_memory.html",
+        "page_characters": 11276,
+        "sent_characters": 11276,
+        "exact_match": true,
+        "section_count": 5
+      },
+      {
+        "filename": "8_3_problems_with_memory.html",
+        "page_characters": 29177,
+        "sent_characters": 29177,
+        "exact_match": true,
+        "section_count": 4
+      },
+      {
+        "filename": "8_4_ways_to_enhance_memory.html",
+        "page_characters": 9872,
+        "sent_characters": 9872,
+        "exact_match": true,
+        "section_count": 3
+      }
+    ],
+    "total_page_characters": 76251,
+    "total_sent_characters": 76251,
+    "coverage_percentage": 100.0,
+    "truncation_applied": false
   },
-  "created_notes": [
+  "anti_leak_guard": {
+    "guard_status": "PASS",
+    "negative_control_verified": true,
+    "prompts_saved_count": 16,
+    "prompts_artifacts": [
+      {
+        "section_slug": "8_1_how_memory_functions_overview",
+        "section_title": "8.1How Memory Functions - Overview",
+        "sha256": "8de5c41b25feb564044366054389c23d4aa53fdca78bd70ab29e884c4f66f29e",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_1_how_memory_functions_overview.txt",
+        "character_count": 1775
+      },
+      {
+        "section_slug": "8_1_how_memory_functions_encoding",
+        "section_title": "Encoding",
+        "sha256": "cf870d19f199ed47f7619bf43ec11e3fd52ec455779b9ea5936c1775a54f0c55",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_1_how_memory_functions_encoding.txt",
+        "character_count": 6964
+      },
+      {
+        "section_slug": "8_1_how_memory_functions_storage",
+        "section_title": "Storage",
+        "sha256": "f89a5701de6f99c980ca33b4be22983a402969ecb3dd32d4e48ef09fa6951f00",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_1_how_memory_functions_storage.txt",
+        "character_count": 17825
+      },
+      {
+        "section_slug": "8_1_how_memory_functions_retrieval",
+        "section_title": "Retrieval",
+        "sha256": "5fe558508a1785b097af4bd438446c6430b4907a40e4e8da0ea089b531f165c1",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_1_how_memory_functions_retrieval.txt",
+        "character_count": 3141
+      },
+      {
+        "section_slug": "8_2_parts_of_the_brain_involved_with_memory_overview",
+        "section_title": "8.2Parts of the Brain Involved with Memory - Overview",
+        "sha256": "2f495310814e5bb2c423a0fb3f6fe4d7736daf25eaf31cc067971ecb3780687d",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_2_parts_of_the_brain_involved_with_memory_overview.txt",
+        "character_count": 3482
+      },
+      {
+        "section_slug": "8_2_parts_of_the_brain_involved_with_memory_the_amygdala",
+        "section_title": "The Amygdala",
+        "sha256": "30bdb17de2f7800b4ee148619b3a3f1b86a86097a82aa8c3383fff29ba3ed945",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_2_parts_of_the_brain_involved_with_memory_the_amygdala.txt",
+        "character_count": 2341
+      },
+      {
+        "section_slug": "8_2_parts_of_the_brain_involved_with_memory_the_hippocampus",
+        "section_title": "The Hippocampus",
+        "sha256": "4769287681a1ab9f2d5c38dc031bfefe69a3646fa21e0a77536a0187de5e47d9",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_2_parts_of_the_brain_involved_with_memory_the_hippocampus.txt",
+        "character_count": 2281
+      },
+      {
+        "section_slug": "8_2_parts_of_the_brain_involved_with_memory_the_cerebellum_and_prefrontal_cortex",
+        "section_title": "The Cerebellum and Prefrontal Cortex",
+        "sha256": "f748639369c669bd50dfdcf566786ad87716727689ea53d47d3dac21080a6af9",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_2_parts_of_the_brain_involved_with_memory_the_cerebellum_and_prefrontal_cortex.txt",
+        "character_count": 2458
+      },
+      {
+        "section_slug": "8_2_parts_of_the_brain_involved_with_memory_neurotransmitters",
+        "section_title": "Neurotransmitters",
+        "sha256": "aac69db6b89d1af9dbdf1de3a139a1514ee731f1ca06d55cc4a3ae10e9e1aa69",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_2_parts_of_the_brain_involved_with_memory_neurotransmitters.txt",
+        "character_count": 5498
+      },
+      {
+        "section_slug": "8_3_problems_with_memory_overview",
+        "section_title": "8.3Problems with Memory - Overview",
+        "sha256": "a9c50e4cde0a55a8dc4a3528a270d0cb426286a566fa91168b4b7752fdc2cd39",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_3_problems_with_memory_overview.txt",
+        "character_count": 1632
+      },
+      {
+        "section_slug": "8_3_problems_with_memory_amnesia",
+        "section_title": "Amnesia",
+        "sha256": "0704419b4fe9427ffd58e97c144b2c00e9613b6638c5f4c9d0e928336779520c",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_3_problems_with_memory_amnesia.txt",
+        "character_count": 4701
+      },
+      {
+        "section_slug": "8_3_problems_with_memory_memory_construction_and_reconstruction",
+        "section_title": "Memory Construction and Reconstruction",
+        "sha256": "81bf171cc6dc3c1812677c4fc7ba0f885c956faaf961fc2a8f622cb819fe2431",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_3_problems_with_memory_memory_construction_and_reconstruction.txt",
+        "character_count": 13635
+      },
+      {
+        "section_slug": "8_3_problems_with_memory_forgetting",
+        "section_title": "Forgetting",
+        "sha256": "14ec3dfaae55ca4d336aef479ef3cd053eb44264a651323802666a81cf564199",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_3_problems_with_memory_forgetting.txt",
+        "character_count": 13019
+      },
+      {
+        "section_slug": "8_4_ways_to_enhance_memory_overview",
+        "section_title": "8.4Ways to Enhance Memory - Overview",
+        "sha256": "7419c80e54199d961a32d5fb370faa8fd44a5a4da5f61edbb598968569476f00",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_4_ways_to_enhance_memory_overview.txt",
+        "character_count": 1506
+      },
+      {
+        "section_slug": "8_4_ways_to_enhance_memory_memory_enhancing_strategies",
+        "section_title": "Memory-Enhancing Strategies",
+        "sha256": "bcda4b3e70c3cfb7776ddf4eb7d09bec3275eaf140171e412af5ed2894ddffc7",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_4_ways_to_enhance_memory_memory_enhancing_strategies.txt",
+        "character_count": 5729
+      },
+      {
+        "section_slug": "8_4_ways_to_enhance_memory_how_to_study_effectively",
+        "section_title": "How to Study Effectively",
+        "sha256": "9326521fd5fcffc5c39873a295afc69205926bb06620e63e84ca63d3090fe15d",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_8_4_ways_to_enhance_memory_how_to_study_effectively.txt",
+        "character_count": 5515
+      }
+    ]
+  },
+  "model_telemetry": {
+    "model_name": "gemini-3.7-flash (with fallback)",
+    "total_sections_processed": 16,
+    "total_prompt_tokens": 19473,
+    "total_completion_tokens": 7710,
+    "total_tokens": 27183,
+    "total_latency_seconds": 53.241,
+    "elapsed_pipeline_seconds": 88.064,
+    "total_cost_usd": 0.003773,
+    "pricing_schedule": {
+      "prompt_per_1m": 0.075,
+      "completion_per_1m": 0.3
+    }
+  },
+  "citation_verification": {
+    "total_claims_extracted": 83,
+    "total_claims_verified": 80,
+    "total_claims_rejected": 3,
+    "verification_pass_fraction": "80/83",
+    "verification_pass_rate_pct": 96.39
+  },
+  "trust_boundary_compliance": {
+    "invoked_via": "MemoryController.propose",
+    "principal": "Principal.AI_AGENT",
+    "source_type": "ai",
+    "lifecycle": "REVIEW",
+    "verification": "unverified",
+    "p0_invariants_preserved": [
+      "I-001",
+      "I-002",
+      "I-003",
+      "I-004",
+      "I-005"
+    ]
+  },
+  "notes_proposed": [
     {
-      "id": "knw-ashby-homeostasis-and-stability",
-      "path": "01_ARCHITECTURE/knowledge/ashby_homeostasis_and_stability.md",
-      "title": "Homeostazie, Variabile Esențiale și Câmpuri de Stabilitate (Ashby)",
-      "tokens": 860
+      "id": "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b",
+      "filename": "openstax_psy2e_8_1_how_memory_functions_overview.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_1_how_memory_functions_overview.md",
+      "section_title": "8.1How Memory Functions - Overview",
+      "verified_claims": 4,
+      "proposal_id": "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b"
     },
     {
-      "id": "knw-ashby-ultrastable-system",
-      "path": "01_ARCHITECTURE/knowledge/ashby_ultrastable_system.md",
-      "title": "Sistemul Ultrastabil și Bucla Dublă de Feedback (Ashby)",
-      "tokens": 875
+      "id": "bc70c5a0-74f3-5659-96bb-6fa7d8ec9886",
+      "filename": "openstax_psy2e_8_1_how_memory_functions_encoding.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_1_how_memory_functions_encoding.md",
+      "section_title": "Encoding",
+      "verified_claims": 7,
+      "proposal_id": "bc70c5a0-74f3-5659-96bb-6fa7d8ec9886"
     },
     {
-      "id": "knw-ashby-homeostat-apparatus",
-      "path": "01_ARCHITECTURE/knowledge/ashby_homeostat_apparatus.md",
-      "title": "Aparatul Homeostat: Arhitectură și Căutare Aleatoare (Ashby)",
-      "tokens": 794
+      "id": "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+      "filename": "openstax_psy2e_8_1_how_memory_functions_storage.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_1_how_memory_functions_storage.md",
+      "section_title": "Storage",
+      "verified_claims": 10,
+      "proposal_id": "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb"
     },
     {
-      "id": "knw-ashby-step-mechanisms",
-      "path": "01_ARCHITECTURE/knowledge/ashby_step_mechanisms.md",
-      "title": "Mecanisme în Trepte și Parametri Discreți (Ashby)",
-      "tokens": 641
+      "id": "59280499-cba1-5dd3-b7d8-b33b69d5765e",
+      "filename": "openstax_psy2e_8_1_how_memory_functions_retrieval.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_1_how_memory_functions_retrieval.md",
+      "section_title": "Retrieval",
+      "verified_claims": 4,
+      "proposal_id": "59280499-cba1-5dd3-b7d8-b33b69d5765e"
     },
     {
-      "id": "knw-ashby-multistable-systems",
-      "path": "01_ARCHITECTURE/knowledge/ashby_multistable_systems.md",
-      "title": "Sisteme Multistabile și Izolare Locală (Ashby)",
-      "tokens": 663
+      "id": "66559b50-540d-5014-8cad-9d0ea451fc90",
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_overview.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_overview.md",
+      "section_title": "8.2Parts of the Brain Involved with Memory - Overview",
+      "verified_claims": 6,
+      "proposal_id": "66559b50-540d-5014-8cad-9d0ea451fc90"
     },
     {
-      "id": "knw-ashby-habituation-and-plasticity",
-      "path": "01_ARCHITECTURE/knowledge/ashby_habituation_and_plasticity.md",
-      "title": "Obișnuință, Reflex și Plasticitate Neuronală (Ashby)",
-      "tokens": 701
+      "id": "8091d22f-ca07-53d1-aa10-7b2f5c82e861",
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_amygdala.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_amygdala.md",
+      "section_title": "The Amygdala",
+      "verified_claims": 3,
+      "proposal_id": "8091d22f-ca07-53d1-aa10-7b2f5c82e861"
+    },
+    {
+      "id": "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_hippocampus.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_hippocampus.md",
+      "section_title": "The Hippocampus",
+      "verified_claims": 3,
+      "proposal_id": "23b3793b-fef3-5536-bfc1-da42d6c8a700"
+    },
+    {
+      "id": "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_cerebellum_and_prefrontal_cortex.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_the_cerebellum_and_prefrontal_cortex.md",
+      "section_title": "The Cerebellum and Prefrontal Cortex",
+      "verified_claims": 4,
+      "proposal_id": "37a81ae3-71a3-5bb4-b8e9-351f4edd2450"
+    },
+    {
+      "id": "e6bfe28e-9d91-5dd3-a18c-4af282af627b",
+      "filename": "openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_neurotransmitters.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_2_parts_of_the_brain_involved_with_memory_neurotransmitters.md",
+      "section_title": "Neurotransmitters",
+      "verified_claims": 5,
+      "proposal_id": "e6bfe28e-9d91-5dd3-a18c-4af282af627b"
+    },
+    {
+      "id": "46cfee29-6e38-5dea-b4be-ec220daadf60",
+      "filename": "openstax_psy2e_8_3_problems_with_memory_overview.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_3_problems_with_memory_overview.md",
+      "section_title": "8.3Problems with Memory - Overview",
+      "verified_claims": 4,
+      "proposal_id": "46cfee29-6e38-5dea-b4be-ec220daadf60"
+    },
+    {
+      "id": "c34f9935-2cfb-5e86-b39a-8cc5205e140d",
+      "filename": "openstax_psy2e_8_3_problems_with_memory_amnesia.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_3_problems_with_memory_amnesia.md",
+      "section_title": "Amnesia",
+      "verified_claims": 4,
+      "proposal_id": "c34f9935-2cfb-5e86-b39a-8cc5205e140d"
+    },
+    {
+      "id": "bd0e0105-38d9-5373-a176-59f1f454f32f",
+      "filename": "openstax_psy2e_8_3_problems_with_memory_memory_construction_and_reconstruction.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_3_problems_with_memory_memory_construction_and_reconstruction.md",
+      "section_title": "Memory Construction and Reconstruction",
+      "verified_claims": 5,
+      "proposal_id": "bd0e0105-38d9-5373-a176-59f1f454f32f"
+    },
+    {
+      "id": "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+      "filename": "openstax_psy2e_8_3_problems_with_memory_forgetting.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_3_problems_with_memory_forgetting.md",
+      "section_title": "Forgetting",
+      "verified_claims": 9,
+      "proposal_id": "67a36e52-a645-57b9-a04e-fb4b1b08fac5"
+    },
+    {
+      "id": "4048fe19-04a4-5860-a334-4b65c81be2c3",
+      "filename": "openstax_psy2e_8_4_ways_to_enhance_memory_overview.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_4_ways_to_enhance_memory_overview.md",
+      "section_title": "8.4Ways to Enhance Memory - Overview",
+      "verified_claims": 2,
+      "proposal_id": "4048fe19-04a4-5860-a334-4b65c81be2c3"
+    },
+    {
+      "id": "4ad5e2c5-0500-5b92-9ee6-8e3e435be059",
+      "filename": "openstax_psy2e_8_4_ways_to_enhance_memory_memory_enhancing_strategies.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_4_ways_to_enhance_memory_memory_enhancing_strategies.md",
+      "section_title": "Memory-Enhancing Strategies",
+      "verified_claims": 5,
+      "proposal_id": "4ad5e2c5-0500-5b92-9ee6-8e3e435be059"
+    },
+    {
+      "id": "5fa452dd-c98b-581d-8ee9-24450ae24390",
+      "filename": "openstax_psy2e_8_4_ways_to_enhance_memory_how_to_study_effectively.md",
+      "path": "01_ARCHITECTURE/knowledge/openstax_psy2e_8_4_ways_to_enhance_memory_how_to_study_effectively.md",
+      "section_title": "How to Study Effectively",
+      "verified_claims": 5,
+      "proposal_id": "5fa452dd-c98b-581d-8ee9-24450ae24390"
     }
   ]
 }
