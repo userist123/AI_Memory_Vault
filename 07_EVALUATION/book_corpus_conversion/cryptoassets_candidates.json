@@ -12,19 +12,27 @@
     "concept": "cryptocurrency",
     "slot": "ontology",
     "definition": "Cryptographically secured medium of exchange designed to facilitate peer-to-peer economic transfers without centralized intermediaries.",
-    "evidence": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games, and more, which are orchestrated by cryptotokens.",
-    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games, and more, which are orchestrated by cryptotokens.",
+    "evidence": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games…",
+    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games…",
     "chunk_index": 12,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "56d91e9a70ba5187063e482b124736c693e3310af7efe78f118e0805d991414b",
+    "evidence_quote_chars": 226,
+    "evidence_sha256": "56d91e9a70ba5187063e482b124736c693e3310af7efe78f118e0805d991414b",
+    "evidence_chars": 226
   },
   {
     "concept": "cryptocurrency",
     "slot": "ontology",
     "definition": "Sovereign cryptographic purchasing unit circulating across a distributed network to settle economic claims.",
-    "evidence": "In some ways, cryptocommodities are more tangible in value than cryptocurrencies. For example, the largest cryptocommodity, Ethereum, is a decentralized world computer upon which globally accessible and uncensored applications can be built.",
-    "evidence_quote": "In some ways, cryptocommodities are more tangible in value than cryptocurrencies. For example, the largest cryptocommodity, Ethereum, is a decentralized world computer upon which globally accessible and uncensored applications can be built.",
+    "evidence": "In some ways, cryptocommodities are more tangible in value than cryptocurrencies. For example, the largest cryptocommodity, Ethereum, is a decentralized world computer upon which…",
+    "evidence_quote": "In some ways, cryptocommodities are more tangible in value than cryptocurrencies. For example, the largest cryptocommodity, Ethereum, is a decentralized world computer upon which…",
     "chunk_index": 13,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "0fa6cfdfe08c9ec8b360c4ba6ae87c38c7b226edc43dbe2c759324e21c9d7938",
+    "evidence_quote_chars": 240,
+    "evidence_sha256": "0fa6cfdfe08c9ec8b360c4ba6ae87c38c7b226edc43dbe2c759324e21c9d7938",
+    "evidence_chars": 240
   },
   {
     "concept": "cryptocurrency",
@@ -39,19 +47,27 @@
     "concept": "cryptocurrency",
     "slot": "ontology",
     "definition": "Decentralized payment system token securing monetary transfers through math-based distributed consensus.",
-    "evidence": "A recent article in Huffington Post had this to say: Millennials, assisted by a cadre of impressively socially awkward Bitcoin startup VC types, are piling intellectual and financial capital into this whole cryptocurrency idea—Bitcoin, Ethereum, all of it.",
-    "evidence_quote": "A recent article in Huffington Post had this to say: Millennials, assisted by a cadre of impressively socially awkward Bitcoin startup VC types, are piling intellectual and financial capital into this whole cryptocurrency idea—Bitcoin, Ethereum, all of it.",
+    "evidence": "A recent article in Huffington Post had this to say: Millennials, assisted by a cadre of impressively socially awkward Bitcoin startup VC types, are piling intellectual and…",
+    "evidence_quote": "A recent article in Huffington Post had this to say: Millennials, assisted by a cadre of impressively socially awkward Bitcoin startup VC types, are piling intellectual and…",
     "chunk_index": 28,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "7ce506b114a08fc9c4bf9f6c7f5ae941a8b088b32206787f3e11e7351ef488a5",
+    "evidence_quote_chars": 256,
+    "evidence_sha256": "7ce506b114a08fc9c4bf9f6c7f5ae941a8b088b32206787f3e11e7351ef488a5",
+    "evidence_chars": 256
   },
   {
     "concept": "cryptocommodity",
     "slot": "ontology",
     "definition": "Fungible protocol asset providing access to fundamental digital resources like compute, bandwidth, or file storage within a decentralized architecture.",
-    "evidence": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or digital tokens (cryptotokens), provisioning finished digital goods and services.",
-    "evidence_quote": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or digital tokens (cryptotokens), provisioning finished digital goods and services.",
+    "evidence": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or…",
+    "evidence_quote": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or…",
     "chunk_index": 12,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "1c288f03c54566fe575ac3a95c8b586b8a8b38c774495792847727689728f08c",
+    "evidence_quote_chars": 253,
+    "evidence_sha256": "1c288f03c54566fe575ac3a95c8b586b8a8b38c774495792847727689728f08c",
+    "evidence_chars": 253
   },
   {
     "concept": "cryptocommodity",
@@ -66,28 +82,40 @@
     "concept": "cryptocommodity",
     "slot": "ontology",
     "definition": "Decentralized computing infrastructure token serving as commodity fuel for running smart contracts.",
-    "evidence": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better or worse depends on the situation.",
-    "evidence_quote": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better or worse depends on the situation.",
+    "evidence": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better…",
+    "evidence_quote": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better…",
     "chunk_index": 22,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "b9627ae5f7e0d730342d8458f7e8ad7fa0827c7299b99dcd0e0616dd7fc5bbcd",
+    "evidence_quote_chars": 213,
+    "evidence_sha256": "b9627ae5f7e0d730342d8458f7e8ad7fa0827c7299b99dcd0e0616dd7fc5bbcd",
+    "evidence_chars": 213
   },
   {
     "concept": "cryptocommodity",
     "slot": "ontology",
     "definition": "Raw digital resource produced by a distributed cryptographic network that serves as fuel for powering complex decentralized computations.",
-    "evidence": "Our definition is more expansive, as many new ICOs relate to the creation of new cryptotokens and cryptocommodities. To get an idea of the growth of ICOs over the last few years, see Figure 16.",
-    "evidence_quote": "Our definition is more expansive, as many new ICOs relate to the creation of new cryptotokens and cryptocommodities. To get an idea of the growth of ICOs over the last few years, see Figure 16.",
+    "evidence": "Our definition is more expansive, as many new ICOs relate to the creation of new cryptotokens and cryptocommodities. To get an idea of the growth of ICOs over the last few years…",
+    "evidence_quote": "Our definition is more expansive, as many new ICOs relate to the creation of new cryptotokens and cryptocommodities. To get an idea of the growth of ICOs over the last few years…",
     "chunk_index": 26,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "4defcf95da367b9de0c4592a330ce3e5e7877fcb57a048f2666001fcd39b013b",
+    "evidence_quote_chars": 193,
+    "evidence_sha256": "4defcf95da367b9de0c4592a330ce3e5e7877fcb57a048f2666001fcd39b013b",
+    "evidence_chars": 193
   },
   {
     "concept": "cryptotoken",
     "slot": "ontology",
     "definition": "Application-layer digital asset issued on an existing blockchain that represents contractual rights or utility confined to a specific software platform.",
-    "evidence": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games, and more, which are orchestrated by cryptotokens. Just as in the physical world, where currencies and commodities fuel an economy to create finished goods and services, so too in the digital world the infrastructures provided by cryptocurrencies and cryptocommodities are coming together to support the aforementioned finished-product digital goods and services.",
-    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games, and more, which are orchestrated by cryptotokens. Just as in the physical world, where currencies and commodities fuel an economy to create finished goods and services, so too in the digital world the infrastructures provided by cryptocurrencies and cryptocommodities are coming together to support the aforementioned finished-product digital goods and services.",
+    "evidence": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games…",
+    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games…",
     "chunk_index": 12,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "d0732067b453fe7c390efbc1666ac85fbeeeb59599b6382c216bf1a1f345dbab",
+    "evidence_quote_chars": 539,
+    "evidence_sha256": "d0732067b453fe7c390efbc1666ac85fbeeeb59599b6382c216bf1a1f345dbab",
+    "evidence_chars": 539
   },
   {
     "concept": "cryptotoken",
@@ -102,10 +130,14 @@
     "concept": "cryptotoken",
     "slot": "ontology",
     "definition": "Programmatic ledger entry representing fractional ownership, access credentials, or participation rights inside an application deployed on a shared network.",
-    "evidence": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better or worse depends on the situation.",
-    "evidence_quote": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better or worse depends on the situation.",
+    "evidence": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better…",
+    "evidence_quote": "As we covered in Chapter 5, Ethereum, which we defined as a cryptocommodity, is a common platform for dApps and their associated cryptotokens. Whether this relation is for better…",
     "chunk_index": 22,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "b9627ae5f7e0d730342d8458f7e8ad7fa0827c7299b99dcd0e0616dd7fc5bbcd",
+    "evidence_quote_chars": 213,
+    "evidence_sha256": "b9627ae5f7e0d730342d8458f7e8ad7fa0827c7299b99dcd0e0616dd7fc5bbcd",
+    "evidence_chars": 213
   },
   {
     "concept": "network value",
@@ -120,37 +152,53 @@
     "concept": "network value",
     "slot": "state",
     "definition": "Total market capital stored within a public blockchain network, reflecting investor sentiment, liquidity depth, and capital commitments.",
-    "evidence": "As of April 2017, the aggregate network value for cryptoassets was so small on a relative basis, storing less than $30 billion in value, that they had yet to penetrate most traditional investor capital pools.",
-    "evidence_quote": "As of April 2017, the aggregate network value for cryptoassets was so small on a relative basis, storing less than $30 billion in value, that they had yet to penetrate most traditional investor capital pools.",
+    "evidence": "As of April 2017, the aggregate network value for cryptoassets was so small on a relative basis, storing less than $30 billion in value, that they had yet to penetrate most…",
+    "evidence_quote": "As of April 2017, the aggregate network value for cryptoassets was so small on a relative basis, storing less than $30 billion in value, that they had yet to penetrate most…",
     "chunk_index": 18,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "e6bd42db7ea5a587a051f039ec3893ca2830f5365eaa003cd930d7865d008836",
+    "evidence_quote_chars": 208,
+    "evidence_sha256": "e6bd42db7ea5a587a051f039ec3893ca2830f5365eaa003cd930d7865d008836",
+    "evidence_chars": 208
   },
   {
     "concept": "network value",
     "slot": "state",
     "definition": "Valuation benchmark reflecting the macroeconomic balance of circulating cryptoassets and transaction activity.",
-    "evidence": "” Remember, in the process of writing this book, we watched the aggregate network value of cryptoassets jump from approximately $10 billion to north of $100 billion and hundreds of new cryptoassets come to market.",
-    "evidence_quote": "” Remember, in the process of writing this book, we watched the aggregate network value of cryptoassets jump from approximately $10 billion to north of $100 billion and hundreds of new cryptoassets come to market.",
+    "evidence": "” Remember, in the process of writing this book, we watched the aggregate network value of cryptoassets jump from approximately $10 billion to north of $100 billion and hundreds…",
+    "evidence_quote": "” Remember, in the process of writing this book, we watched the aggregate network value of cryptoassets jump from approximately $10 billion to north of $100 billion and hundreds…",
     "chunk_index": 22,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "5a0e8fba1115af0eeb34cba8409076e9b88a30278e543c3239c51b9d79a50c02",
+    "evidence_quote_chars": 213,
+    "evidence_sha256": "5a0e8fba1115af0eeb34cba8409076e9b88a30278e543c3239c51b9d79a50c02",
+    "evidence_chars": 213
   },
   {
     "concept": "network value",
     "slot": "state",
     "definition": "Cumulative market footprint quantifying the security threshold and monetary scale of an autonomous distributed economic system.",
-    "evidence": "The same goes for the security of a cryptoasset with a network value of $300,000 versus $3 billion. Hash Rates as a Sign of Security One way to determine the relative safety of a cryptoasset is through its hash rate.",
-    "evidence_quote": "The same goes for the security of a cryptoasset with a network value of $300,000 versus $3 billion. Hash Rates as a Sign of Security One way to determine the relative safety of a cryptoasset is through its hash rate.",
+    "evidence": "The same goes for the security of a cryptoasset with a network value of $300,000 versus $3 billion. Hash Rates as a Sign of Security One way to determine the relative safety of a…",
+    "evidence_quote": "The same goes for the security of a cryptoasset with a network value of $300,000 versus $3 billion. Hash Rates as a Sign of Security One way to determine the relative safety of a…",
     "chunk_index": 23,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "36b03c3eb4d5a412a01c28a2440c4f1e22c7c5072a9e98f5ab89148928cf72bc",
+    "evidence_quote_chars": 216,
+    "evidence_sha256": "36b03c3eb4d5a412a01c28a2440c4f1e22c7c5072a9e98f5ab89148928cf72bc",
+    "evidence_chars": 216
   },
   {
     "concept": "proof-of-work",
     "slot": "procedures",
     "definition": "Consensus algorithm that forces nodes to expend physical energy solving computationally difficult hash problems before appending verified transaction blocks.",
-    "evidence": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync. Technobabble? Sure.",
-    "evidence_quote": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync. Technobabble? Sure.",
+    "evidence": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync…",
+    "evidence_quote": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync…",
     "chunk_index": 10,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "9ad38d0d455c0618056316695f3c28c2f45a710dfbcf4acbf56f9e577c06b2e8",
+    "evidence_quote_chars": 191,
+    "evidence_sha256": "9ad38d0d455c0618056316695f3c28c2f45a710dfbcf4acbf56f9e577c06b2e8",
+    "evidence_chars": 191
   },
   {
     "concept": "proof-of-work",
@@ -174,10 +222,14 @@
     "concept": "smart contracts",
     "slot": "procedures",
     "definition": "Self-executing protocol agreements with the terms directly encoded into software and enforced by a decentralized network without human escrow.",
-    "evidence": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of Zcash, both of whom worked at DigiCash for a time.",
-    "evidence_quote": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of Zcash, both of whom worked at DigiCash for a time.",
+    "evidence": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of…",
+    "evidence_quote": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of…",
     "chunk_index": 12,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "211d1151aea383ae2173268de8468d9b1d9c0cf59fbdc99322f03a666e161979",
+    "evidence_quote_chars": 228,
+    "evidence_sha256": "211d1151aea383ae2173268de8468d9b1d9c0cf59fbdc99322f03a666e161979",
+    "evidence_chars": 228
   },
   {
     "concept": "smart contracts",
@@ -201,10 +253,14 @@
     "concept": "hard fork",
     "slot": "routing",
     "definition": "Discontinuous ledger schism occurring when an incompatible protocol alteration causes nodes running newer software to permanently diverge from legacy clients.",
-    "evidence": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the immutable nature of the blockchain, a use case we’ll address more in the next chapter.",
-    "evidence_quote": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the immutable nature of the blockchain, a use case we’ll address more in the next chapter.",
+    "evidence": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the…",
+    "evidence_quote": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the…",
     "chunk_index": 12,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "a767dd10b1ee8e1e67720f67d4fd7d8cb25f49b366b4f15c0b56e45b4d0ea2fc",
+    "evidence_quote_chars": 265,
+    "evidence_sha256": "a767dd10b1ee8e1e67720f67d4fd7d8cb25f49b366b4f15c0b56e45b4d0ea2fc",
+    "evidence_chars": 265
   },
   {
     "concept": "hard fork",
@@ -219,28 +275,40 @@
     "concept": "volatility",
     "slot": "judgement",
     "definition": "Statistical dispersion metric quantifying the magnitude and frequency of asset price fluctuations over specified trading time horizons.",
-    "evidence": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns per unit of volatility, or risk-reward ratio.",
-    "evidence_quote": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns per unit of volatility, or risk-reward ratio.",
+    "evidence": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns…",
+    "evidence_quote": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns…",
     "chunk_index": 15,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "f08ffeb5985b844b9d9294cfd2b6bcff2d3691698e78f2a2e4d73a62e536322f",
+    "evidence_quote_chars": 224,
+    "evidence_sha256": "f08ffeb5985b844b9d9294cfd2b6bcff2d3691698e78f2a2e4d73a62e536322f",
+    "evidence_chars": 224
   },
   {
     "concept": "volatility",
     "slot": "judgement",
     "definition": "Market variance characteristic reflecting rapid pricing shifts in newly emerging asset classes subject to early adoption waves.",
-    "evidence": "Volatility is most commonly derived by taking the standard deviation of the daily percent price changes. The bigger this number is, the more the investor can expect significant swings in the price of the asset they’re holding and therefore, the riskier the asset is.",
-    "evidence_quote": "Volatility is most commonly derived by taking the standard deviation of the daily percent price changes. The bigger this number is, the more the investor can expect significant swings in the price of the asset they’re holding and therefore, the riskier the asset is.",
+    "evidence": "Volatility is most commonly derived by taking the standard deviation of the daily percent price changes. The bigger this number is, the more the investor can expect significant…",
+    "evidence_quote": "Volatility is most commonly derived by taking the standard deviation of the daily percent price changes. The bigger this number is, the more the investor can expect significant…",
     "chunk_index": 16,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "ab09f3851f6e720452ee37367395a490a233714ac79a53d0b7be68bfa8d7bdc8",
+    "evidence_quote_chars": 266,
+    "evidence_sha256": "ab09f3851f6e720452ee37367395a490a233714ac79a53d0b7be68bfa8d7bdc8",
+    "evidence_chars": 266
   },
   {
     "concept": "correlation",
     "slot": "judgement",
     "definition": "Statistical relationship indicating the degree to which asset return profiles move in tandem or independently of broader benchmark markets.",
-    "evidence": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its behavior differs significantly from the preexisting assets in that portfolio, it can actually decrease the overall risk of the portfolio.",
-    "evidence_quote": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its behavior differs significantly from the preexisting assets in that portfolio, it can actually decrease the overall risk of the portfolio.",
+    "evidence": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its…",
+    "evidence_quote": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its…",
     "chunk_index": 15,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "cab7d350d2a57623d3d387d115a690e486c7475809e7ac5db3540c37e151a149",
+    "evidence_quote_chars": 316,
+    "evidence_sha256": "cab7d350d2a57623d3d387d115a690e486c7475809e7ac5db3540c37e151a149",
+    "evidence_chars": 316
   },
   {
     "concept": "correlation",
@@ -255,28 +323,40 @@
     "concept": "mining",
     "slot": "procedures",
     "definition": "Economic incentive structure compensating independent node operators for maintaining distributed consensus through computational work.",
-    "evidence": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure bitcoin transactions, there needs to be a native asset that can be paid out to the miners for their work.",
-    "evidence_quote": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure bitcoin transactions, there needs to be a native asset that can be paid out to the miners for their work.",
+    "evidence": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure…",
+    "evidence_quote": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure…",
     "chunk_index": 11,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "a782fb193d2e443cbd7fa8715be671b73758d7df44e944eb81956765f44a6739",
+    "evidence_quote_chars": 281,
+    "evidence_sha256": "a782fb193d2e443cbd7fa8715be671b73758d7df44e944eb81956765f44a6739",
+    "evidence_chars": 281
   },
   {
     "concept": "mining",
     "slot": "procedures",
     "definition": "Distributed computational process wherein hardware nodes race to discover valid block headers in exchange for newly minted token rewards and fees.",
-    "evidence": "Others worried about bitcoin’s hash function in the proof-ofwork process, because hardware was being created that specialized in this hash function and would lead to increased centralization of the mining network.",
-    "evidence_quote": "Others worried about bitcoin’s hash function in the proof-ofwork process, because hardware was being created that specialized in this hash function and would lead to increased centralization of the mining network.",
+    "evidence": "Others worried about bitcoin’s hash function in the proof-ofwork process, because hardware was being created that specialized in this hash function and would lead to increased…",
+    "evidence_quote": "Others worried about bitcoin’s hash function in the proof-ofwork process, because hardware was being created that specialized in this hash function and would lead to increased…",
     "chunk_index": 12,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "7a495b01feda63b688f927a8074aeeb6e4545cff8c9b1cc4b02b97403350685a",
+    "evidence_quote_chars": 213,
+    "evidence_sha256": "7a495b01feda63b688f927a8074aeeb6e4545cff8c9b1cc4b02b97403350685a",
+    "evidence_chars": 213
   },
   {
     "concept": "mining",
     "slot": "procedures",
     "definition": "Incentivized transaction clearing mechanism converting physical electrical power into tamper-evident economic ledger security.",
-    "evidence": "Similarly, when bitcoin, the first cryptoasset and therefore the cryptoanalogue to the Dutch East India Company, was “issued” through the mining process, there was no market to transact or trade bitcoin.",
-    "evidence_quote": "Similarly, when bitcoin, the first cryptoasset and therefore the cryptoanalogue to the Dutch East India Company, was “issued” through the mining process, there was no market to transact or trade bitcoin.",
+    "evidence": "Similarly, when bitcoin, the first cryptoasset and therefore the cryptoanalogue to the Dutch East India Company, was “issued” through the mining process, there was no market to…",
+    "evidence_quote": "Similarly, when bitcoin, the first cryptoasset and therefore the cryptoanalogue to the Dutch East India Company, was “issued” through the mining process, there was no market to…",
     "chunk_index": 18,
-    "confidence": 0.95
+    "confidence": 0.95,
+    "evidence_quote_sha256": "b6aa9dca33865c7cef119aac6edb585a947c842f279c4b6287ded31a2b6bd3b2",
+    "evidence_quote_chars": 203,
+    "evidence_sha256": "b6aa9dca33865c7cef119aac6edb585a947c842f279c4b6287ded31a2b6bd3b2",
+    "evidence_chars": 203
   },
   {
     "concept": "mining",

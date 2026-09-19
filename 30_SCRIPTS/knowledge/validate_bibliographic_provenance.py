@@ -201,6 +201,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate bibliographic provenance of curriculum notes and manifests.")
     parser.add_argument("target_path", type=Path, help="Path to manifest JSON, note MD, or directory of notes")
     parser.add_argument("--pattern", default="*.md", help="Glob pattern when target_path is a directory")
+    parser.add_argument("--include-archived", action="store_true",
+                        help="validate ARCHIVED notes too, instead of skipping them")
     args = parser.parse_args()
 
     target = args.target_path
@@ -225,19 +227,27 @@ def main() -> int:
     else:
         notes_to_check = [target]
 
-    failed = 0
+    failed = skipped = 0
     for note in notes_to_check:
-        ok, errors = validate_note_provenance(note)
+        ok, errors = validate_note_provenance(note, skip_archived=not args.include_archived)
         if not ok:
             failed += 1
             print(f"FAILED note provenance for {note.name}:", file=sys.stderr)
             for e in errors:
                 print(f"  - {e}", file=sys.stderr)
+        elif any(e.startswith("Skipped") for e in errors):
+            # An archived note is never validated. Printing PASS for it read as a
+            # clean bill of health for notes archived precisely because their
+            # provenance did not hold up — the six `ashby_*` notes, for one.
+            skipped += 1
+            print(f"SKIP: {note.name} (ARCHIVED, not validated; use --include-archived)")
         else:
             print(f"PASS: {note.name}")
 
+    checked = len(notes_to_check) - skipped
+    print(f"\n{checked} validated, {skipped} skipped, {failed} failed.")
     if failed:
-        print(f"\n{failed}/{len(notes_to_check)} notes failed provenance validation.", file=sys.stderr)
+        print(f"{failed}/{checked} notes failed provenance validation.", file=sys.stderr)
         return 1
     return 0
 

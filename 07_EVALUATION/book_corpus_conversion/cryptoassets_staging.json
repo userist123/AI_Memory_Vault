@@ -29,7 +29,7 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [12, 13, 22, 26]",
-    "evidence_quote": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or digital tokens (cryptotokens), provisioning finished digital goods and services.",
+    "evidence_quote": "We would not classify the majority of cryptoassets as currencies, but rather most are either digital commodities (cryptocommodities), provisioning raw digital resources, or…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
@@ -38,7 +38,9 @@
       "Chunk 13",
       "Chunk 22",
       "Chunk 26"
-    ]
+    ],
+    "evidence_quote_sha256": "1c288f03c54566fe575ac3a95c8b586b8a8b38c774495792847727689728f08c",
+    "evidence_quote_chars": 253
   },
   {
     "concept": "cryptotoken",
@@ -49,7 +51,7 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [12, 13, 22]",
-    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games, and more, which are orchestrated by cryptotokens. Just as in the physical world, where currencies and commodities fuel an economy to create finished goods and services, so too in the digital world the infrastructures provided by cryptocurrencies and cryptocommodities are coming together to support the aforementioned finished-product digital goods and services.",
+    "evidence_quote": "Beyond cryptocurrencies and cryptocommodities—and also provisioned via blockchain networks—are “finished-product” digital goods and services like media, social networks, games…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
@@ -57,7 +59,9 @@
     "also_found_in": [
       "Chunk 13",
       "Chunk 22"
-    ]
+    ],
+    "evidence_quote_sha256": "d0732067b453fe7c390efbc1666ac85fbeeeb59599b6382c216bf1a1f345dbab",
+    "evidence_quote_chars": 539
   },
   {
     "concept": "network value",
@@ -88,7 +92,7 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [10, 12, 24]",
-    "evidence_quote": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync. Technobabble? Sure.",
+    "evidence_quote": "What makes this digital ledger special? Bitcoin’s blockchain is a distributed, cryptographic, and immutable database that uses proof-of-work to keep the ecosystem in sync…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
@@ -96,7 +100,9 @@
     "also_found_in": [
       "Chunk 12",
       "Chunk 24"
-    ]
+    ],
+    "evidence_quote_sha256": "9ad38d0d455c0618056316695f3c28c2f45a710dfbcf4acbf56f9e577c06b2e8",
+    "evidence_quote_chars": 191
   },
   {
     "concept": "smart contracts",
@@ -107,7 +113,7 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [12, 13, 23]",
-    "evidence_quote": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of Zcash, both of whom worked at DigiCash for a time.",
+    "evidence_quote": "While DigiCash failed to become a household name, some players will resurface in our story, such as Nick Szabo, the father of “smart contracts,” and Zooko Wilcox, the founder of…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
@@ -115,7 +121,9 @@
     "also_found_in": [
       "Chunk 13",
       "Chunk 23"
-    ]
+    ],
+    "evidence_quote_sha256": "211d1151aea383ae2173268de8468d9b1d9c0cf59fbdc99322f03a666e161979",
+    "evidence_quote_chars": 228
   },
   {
     "concept": "hard fork",
@@ -126,14 +134,16 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [12, 13]",
-    "evidence_quote": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the immutable nature of the blockchain, a use case we’ll address more in the next chapter.",
+    "evidence_quote": "BITCOIN’S FIRST DIGITAL SIBLING Namecoin15 was the first significant fork away from Bitcoin. Interestingly, it was less about creating a new currency and more about utilizing the…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
     "occurrences": 2,
     "also_found_in": [
       "Chunk 13"
-    ]
+    ],
+    "evidence_quote_sha256": "a767dd10b1ee8e1e67720f67d4fd7d8cb25f49b366b4f15c0b56e45b4d0ea2fc",
+    "evidence_quote_chars": 265
   },
   {
     "concept": "volatility",
@@ -144,14 +154,16 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [15, 16]",
-    "evidence_quote": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns per unit of volatility, or risk-reward ratio.",
+    "evidence_quote": "3 We’ll tackle the specifics of quantifying risk shortly, mainly through a discussion of volatility. Similarly, we will dive into how to approach absolute returns and the returns…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
     "occurrences": 2,
     "also_found_in": [
       "Chunk 16"
-    ]
+    ],
+    "evidence_quote_sha256": "f08ffeb5985b844b9d9294cfd2b6bcff2d3691698e78f2a2e4d73a62e536322f",
+    "evidence_quote_chars": 224
   },
   {
     "concept": "correlation",
@@ -162,14 +174,16 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [15, 16]",
-    "evidence_quote": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its behavior differs significantly from the preexisting assets in that portfolio, it can actually decrease the overall risk of the portfolio.",
+    "evidence_quote": "Correlation of Returns and the Efficient Frontier One of the key breakthroughs of modern portfolio theory was to show that a riskier asset can be added to a portfolio, and if its…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
     "occurrences": 2,
     "also_found_in": [
       "Chunk 16"
-    ]
+    ],
+    "evidence_quote_sha256": "cab7d350d2a57623d3d387d115a690e486c7475809e7ac5db3540c37e151a149",
+    "evidence_quote_chars": 316
   },
   {
     "concept": "mining",
@@ -180,7 +194,7 @@
     "confidence_in_literature": 0.95,
     "source_book": "cryptoassets",
     "source_location": "Chapters [11, 12, 18, 23, 24]",
-    "evidence_quote": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure bitcoin transactions, there needs to be a native asset that can be paid out to the miners for their work.",
+    "evidence_quote": "On the other hand, for Bitcoin to incentivize a self-selecting group of global volunteers, known as miners, to deploy capital into the mining machines that validate and secure…",
     "extraction_method": "agent_direct",
     "model": "antigravity",
     "provider": "agent",
@@ -190,6 +204,8 @@
       "Chunk 18",
       "Chunk 23",
       "Chunk 24"
-    ]
+    ],
+    "evidence_quote_sha256": "a782fb193d2e443cbd7fa8715be671b73758d7df44e944eb81956765f44a6739",
+    "evidence_quote_chars": 281
   }
 ]

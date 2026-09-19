@@ -10,9 +10,9 @@ updated: "2026-09-18T19:28:10+00:00"
 provenance:
   source_type: official
   source_ref: "ashby-design-for-a-brain-1960"
-  source_license: "Public Domain / Open Educational Access (wrossashby.info)"
-confidence: very_high
-verification: verified
+  source_license: "claimed: Public Domain / Open Educational Access (wrossashby.info) — not verified against the publisher"
+confidence: low
+verification: unverified
 relations:
   - type: applies_to
     target_id: "knw-ashby-ultrastable-system"
