@@ -1,0 +1,2567 @@
+{
+  "schema_version": "retrieval-benchmark-v3",
+  "labeller": "chatgpt",
+  "vault_commit": "b3ada1b54",
+  "cases": [
+    {
+      "id": "R3-001",
+      "class": "direct",
+      "query": "Which evidence condition corresponds to the highest level defined in the vault?",
+      "expected_answer": "Very High means the information is directly verified by the user, execution, test, or an authoritative primary source.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "Very High Directly verified by the user, execution, test, or authoritative primary source."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-002",
+      "class": "direct",
+      "query": "What four criteria are given for creating a new note?",
+      "expected_answer": "It should be reusable, distinct, stable enough, and relevant to future work.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "Write Rules Create a new note when the information is: - reusable; - distinct; - stable enough; - relevant to future work."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-003",
+      "class": "direct",
+      "query": "Ce nu are voie un agent sa prezinte drept real, indiferent de forma in care a fost obtinut?",
+      "expected_answer": "Date inventate, date demo/exemplu/placeholder prezentate ca reale, rezultate simulate neexecutate efectiv și verificări sau teste neefectuate nu pot fi prezentate drept reale.",
+      "gold_relevant_notes": [
+        "fcd80a74-9192-4fb8-baa2-527c0a61f26e"
+      ],
+      "required_facts": [
+        "Orice agent AI (Claude, GPT/Codex, Gemini, Perplexity, sau orice model viitor) care citește sau scrie în acest vault (\"creierul\") nu are permisiunea, în nicio circumstanță, să prezinte drept reale : - date inventate (\"fabricated data\"), - date de tip demo/exemplu/placeholder prezentate ca fiind reale, - rezultate simulate ale unei execuții care nu a avut loc efectiv, - verificări, teste, sau"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-004",
+      "class": "direct",
+      "query": "Ce trebuie facut cu o informatie care nu a fost verificata?",
+      "expected_answer": "Trebuie sa fie marcata explicit; sursa si data se pastreaza cand sunt disponibile, iar ipotezele nu se transforma in fapte.",
+      "gold_relevant_notes": [
+        "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+      ],
+      "required_facts": [
+        "Daca ceva nu este verificat, marcheaza-l explicit."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-005",
+      "class": "direct",
+      "query": "Which role is responsible for locating canonical cross-cutting knowledge and preserving provenance?",
+      "expected_answer": "It locates relevant canonical knowledge, maps tasks to skills and agents, distinguishes canonical material from raw external imports, detects duplicates/conflicts, and preserves provenance.",
+      "gold_relevant_notes": [
+        "path:00_GOVERNANCE/agents/memory-librarian.md"
+      ],
+      "required_facts": [
+        "locate relevant canonical knowledge; - map tasks to skills and agents; - distinguish canonical material from raw external imports; - detect duplicate/conflicting instructions; - preserve provenance;"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-006",
+      "class": "direct",
+      "query": "What must never happen while discovering an external repository?",
+      "expected_answer": "It must never execute external repository code during discovery.",
+      "gold_relevant_notes": [
+        "path:00_GOVERNANCE/agents/memory-skill-router.md"
+      ],
+      "required_facts": [
+        "Never execute external repository code during discovery."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-007",
+      "class": "direct",
+      "query": "Which evidence sources take precedence when records disagree?",
+      "expected_answer": "GitHub main, committed source, real test output, and CI take precedence.",
+      "gold_relevant_notes": [
+        "multi-agent-execution-protocol-v1"
+      ],
+      "required_facts": [
+        "GitHub main + committed source + real test output + CI have precedence over: - agent reports; - README claims; - previous summaries; - planning documents; - screenshots; - generated"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-008",
+      "class": "direct",
+      "query": "Why does the standard reject merely decorative renaming of modules?",
+      "expected_answer": "Because several cognitively named modules already have zero production consumers, so decorative renaming would add vocabulary without adding function.",
+      "gold_relevant_notes": [
+        "standard-neural-naming-taxonomy"
+      ],
+      "required_facts": [
+        "attention.py , executive.py , global workspace.py and reasoning.py — and every one of them has zero production consumers"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-009",
+      "class": "direct",
+      "query": "How should a durable change be recorded when an equivalent record already exists?",
+      "expected_answer": "Update the canonical record and relevant index/MOC rather than creating parallel copies.",
+      "gold_relevant_notes": [
+        "path:00_GOVERNANCE/skills/memory-sync/SKILL.md"
+      ],
+      "required_facts": [
+        "When a durable change is required, update the canonical record and any relevant index/MOC rather than creating parallel copies."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-010",
+      "class": "direct",
+      "query": "How does the vault distinguish one reusable capability from a generic repository?",
+      "expected_answer": "It distinguishes actual skills, skill collections, agents, instructions, prompts, references, backend references, programming-language references, templates/examples, and irrelevant material; a repository is not automatically a skill.",
+      "gold_relevant_notes": [
+        "path:00_GOVERNANCE/skills/skill-discovery/SKILL.md"
+      ],
+      "required_facts": [
+        "A repository is not automatically a skill."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-011",
+      "class": "direct",
+      "query": "Which long-context evaluation is described as covering trajectories longer than 35 sessions?",
+      "expected_answer": "LoCoMo (Long-Context Dynamic Memory).",
+      "gold_relevant_notes": [
+        "knw-benchmarks-2026-0001"
+      ],
+      "required_facts": [
+        "Benchmark-ul LoCoMo (Long-Context Dynamic Memory) - Scop : Evaluează capacitatea agentului de a păstra, actualiza și recupera memorii pe traiectorii conversaționale cu orizont lung (peste 35 sesiuni conversaționale)."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-012",
+      "class": "direct",
+      "query": "What axiom separates a declaration from what was actually observed?",
+      "expected_answer": "DECLARED is not equal to OBSERVED.",
+      "gold_relevant_notes": [
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "required_facts": [
+        "$$\\mathbf{DECLARED \\neq OBSERVED}$$"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-013",
+      "class": "direct",
+      "query": "What failure was identified between high candidate recall and the information delivered to the model?",
+      "expected_answer": "Packing failure.",
+      "gold_relevant_notes": [
+        "knw-context-packing-p1-0001"
+      ],
+      "required_facts": [
+        "PACKING FAILURE"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-014",
+      "class": "direct",
+      "query": "Ce prioritate este data stabilitatii si trasabilitatii atunci cand se adauga functionalitati?",
+      "expected_answer": "Stabilitatea, trasabilitatea si decuplarea MVVM au prioritate in fata adaugarii de functionalitati nevalidate.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b001"
+      ],
+      "required_facts": [
+        "stabilitatea, trasabilitatea și decuplarea MVVM primează în fața adăugării de funcționalități nevalidate."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-015",
+      "class": "direct",
+      "query": "What question should this interface surface within five seconds?",
+      "expected_answer": "Whether everything is okay and, if not, where the anomaly is.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b005"
+      ],
+      "required_facts": [
+        "Un tablou de bord sau panou de administrare trebuie să răspundă în 5 secunde la întrebarea: „Este totul în regulă? Dacă nu, unde se află anomalia?”."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-016",
+      "class": "direct",
+      "query": "Ce principiu elimina pixelii care nu transmit date?",
+      "expected_answer": "The goal is to maximize the data-to-ink ratio; pixels that do not present data should be removed.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a002"
+      ],
+      "required_facts": [
+        "maximizarea raportului data-to-ink: orice pixel care nu prezintă date se elimină."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-017",
+      "class": "direct",
+      "query": "Ce trebuie stabilit inainte sa fie scris codul interfetei?",
+      "expected_answer": "Strict visual tokens such as semantic colors, typography scale, and spacing.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a001"
+      ],
+      "required_facts": [
+        "Un sistem de design robust impune definirea strictă a tokenilor vizuali (culori semantice, scară tipografică, spațiere fixă) înainte de orice linie de cod UI."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-018",
+      "class": "direct",
+      "query": "What kind of platform is this forensic architecture designed to run as?",
+      "expected_answer": "It is an air-gapped and offline forensic suite for Windows systems.",
+      "gold_relevant_notes": [
+        "b492d001-c841-4e12-b5e1-8890471b8991"
+      ],
+      "required_facts": [
+        "Platforma LogAnalyzer DFIR Enterprise este o suită completă, air-gapped și offline destinată analizei forenzice a sistemelor Windows"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-019",
+      "class": "direct",
+      "query": "Which runtime, networking, and UI constraints are imposed on the transfer-register application?",
+      "expected_answer": "WPF on .NET 10, with zero external network calls and Vault communication strictly via 127.0.0.1.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10c001"
+      ],
+      "required_facts": [
+        "WPF pe .NET 10, MVVM strict (zero logică de business în code-behind), 7 module funcționale."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-020",
+      "class": "direct",
+      "query": "How are operators authenticated and how is the on-device database protected?",
+      "expected_answer": "Use a local numeric PIN hashed with salt and SHA-256, without JWT/sessions, and encrypt the database with SQLCipher with the key protected via DPAPI.",
+      "gold_relevant_notes": [
+        "4c5884fe-f24e-426e-a012-1414dbddae23"
+      ],
+      "required_facts": [
+        "PIN numeric hash-uit cu salt (SHA-256), fara JWT/sesiuni; iar stocarea trebuie criptata cu SQLCipher, cheia protejata via DPAPI."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-021",
+      "class": "direct",
+      "query": "What does the architecture require the program to do with model-generated output?",
+      "expected_answer": "AI proposes while code decides; AI output is treated as unvalidated user input and must pass strict schema validation, with no irreversible action without human confirmation.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b002"
+      ],
+      "required_facts": [
+        "„AI-ul propune, codul dispune” — output-ul AI este tratat ca input nevalidat de utilizator, obligând validarea strictă pe schemă (Pydantic/Zod) și zero acțiuni ireversibile fără confirmare umană."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-022",
+      "class": "direct",
+      "query": "What status does this document assign to its own legal and institutional references?",
+      "expected_answer": "It is a research/proposal document, not a statement of verified current law; legal and institutional references require verification against official Romanian sources.",
+      "gold_relevant_notes": [
+        "romania-classified-information-digital-security-reform"
+      ],
+      "required_facts": [
+        "Status: Research/proposal document, not a statement of verified current law."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-023",
+      "class": "direct",
+      "query": "What national framework does this note describe as being approved under the cited Romanian law?",
+      "expected_answer": "It approves the National Standards for the Protection of Classified Information in Romania, adopted under Law 182/2002.",
+      "gold_relevant_notes": [
+        "knw-leg-hg585-2002-0001"
+      ],
+      "required_facts": [
+        "Hotărârea Guvernului nr. 585/2002 aprobă Standardele naționale de protecție a informațiilor clasificate în România , adoptate în temeiul Legii nr. 182/2002"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-024",
+      "class": "direct",
+      "query": "What institutional scope is given to the order discussed in this note?",
+      "expected_answer": "It establishes the Romanian Ministry of Defence's internal rules for protecting national, NATO, EU, and equivalent classified information.",
+      "gold_relevant_notes": [
+        "knw-leg-m172-2021-0001"
+      ],
+      "required_facts": [
+        "stabilește normele interne ale Ministerului Apărării Naționale (MApN) pentru protecția informațiilor naționale, NATO, UE și Echivalente clasificate."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-025",
+      "class": "direct",
+      "query": "How broad is the linked curated resource collection by category count?",
+      "expected_answer": "It covers more than 25 categories.",
+      "gold_relevant_notes": [
+        "78fe5b4d-0822-4616-8437-fa8a84cedf55"
+      ],
+      "required_facts": [
+        "A large curated link directory of UI/UX resources across 25+ categories"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-026",
+      "class": "direct",
+      "query": "Cate skill-uri specializate integreaza aceasta colectie?",
+      "expected_answer": "130 specialized agent skills.",
+      "gold_relevant_notes": [
+        "60a9210f-eb13-4b64-9347-605ce4792ae2"
+      ],
+      "required_facts": [
+        "Această colecție integrează 130 de skill-uri specializate pentru agenți AI"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-027",
+      "class": "direct",
+      "query": "Which properties are specified for GPU-accelerated animation?",
+      "expected_answer": "transform and opacity.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a003"
+      ],
+      "required_facts": [
+        "se animează exclusiv proprietăți accelerate GPU ( transform , opacity )"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-028",
+      "class": "direct",
+      "query": "What single primary action should a visitor be guided toward in this conversion flow?",
+      "expected_answer": "Guide the user toward one primary action without distracting elements.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a004"
+      ],
+      "required_facts": [
+        "O pagină de landing are un singur obiectiv fundamental: să ghideze utilizatorul către o singură acțiune primară fără elemente care să distragă atenția."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-029",
+      "class": "direct",
+      "query": "Which layer is described as the repository of stable, reusable knowledge?",
+      "expected_answer": "01 KNOWLEDGE.",
+      "gold_relevant_notes": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+      ],
+      "required_facts": [
+        "01 KNOWLEDGE Cunostinte stabile si reutilizabile."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-030",
+      "class": "direct",
+      "query": "What evidence sequence is required before the utility of stored information can be established?",
+      "expected_answer": "An unbroken, empirically observable provenance chain from query/discovery through retrieval and loading to use.",
+      "gold_relevant_notes": [
+        "knw-memory-usage-audit-principles-0001"
+      ],
+      "required_facts": [
+        "Useful memory requires an unbroken, empirically observable provenance chain"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-031",
+      "class": "direct",
+      "query": "What does the P0 document formalize?",
+      "expected_answer": "Empirical findings, mathematical measurements, failure modes, and architectural implications from the P0 Real Pipeline Diagnostic Experiment.",
+      "gold_relevant_notes": [
+        "knw-retrieval-bottleneck-p0-0001"
+      ],
+      "required_facts": [
+        "This knowledge document formalizes the empirical findings, mathematical measurements, failure modes, and architectural implications derived from the P0 Real Pipeline Diagnostic Experime"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-032",
+      "class": "direct",
+      "query": "What is the purpose of the retrieval hypothesis registry?",
+      "expected_answer": "It tracks formalized, testable empirical hypotheses about memory retrieval, candidate generation, and multi-signal fusion.",
+      "gold_relevant_notes": [
+        "reg-retrieval-hypotheses-0001"
+      ],
+      "required_facts": [
+        "This registry tracks formalized, testable empirical hypotheses regarding memory retrieval, candidate generation, and multi-signal fusion for the AI Memory Vault."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-033",
+      "class": "direct",
+      "query": "How is the trading architecture split into modules?",
+      "expected_answer": "Five decoupled modules: data, strategy, risk, execution, and journal.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b004"
+      ],
+      "required_facts": [
+        "data/ , strategy/ , risk/ , execution/ și journal/"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-034",
+      "class": "direct",
+      "query": "Which agent performs research and compliance verification rather than production coding?",
+      "expected_answer": "Perplexity operates as the external research agent, not the execution agent.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d001"
+      ],
+      "required_facts": [
+        "Perplexity operează ca agent de research extern, nu de execuție."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-035",
+      "class": "direct",
+      "query": "What is the requirement for tools in an air-gapped environment?",
+      "expected_answer": "All tools must work offline without cloud dependencies.",
+      "gold_relevant_notes": [
+        "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+      ],
+      "required_facts": [
+        "Mediu air-gapped → toate tool-urile trebuie să funcționeze offline, fără dependențe cloud"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-036",
+      "class": "direct",
+      "query": "Which language is used for AD, GPO automation, and system scripting?",
+      "expected_answer": "PowerShell.",
+      "gold_relevant_notes": [
+        "67e1cb1d-3e5a-45be-b265-67bb126a2cd3"
+      ],
+      "required_facts": [
+        "PowerShell Administrare AD, GPO automation, scripting sistem"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-037",
+      "class": "direct",
+      "query": "What is the North Star goal of the vault?",
+      "expected_answer": "To build an AI system with persistent memory, controlled retrieval, a knowledge graph, verification, and continuity across models and sessions.",
+      "gold_relevant_notes": [
+        "ff8c8d71-06a7-4c60-8e2c-cd5601a7fe07"
+      ],
+      "required_facts": [
+        "Construirea unui sistem AI cu memorie persistenta, retrieval controlat, knowledge graph, verificare si continuitate intre modele si sesiuni."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-038",
+      "class": "direct",
+      "query": "What is the first thing the successor agent is instructed to read?",
+      "expected_answer": "This handoff document itself.",
+      "gold_relevant_notes": [
+        "8c7d5c90-9c29-450b-b5a9-e2b2024db502"
+      ],
+      "required_facts": [
+        "Read this Document First"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-039",
+      "class": "direct",
+      "query": "Which risk-control component is explicitly mentioned in the XAU Kinetic architecture?",
+      "expected_answer": "An isolated risk engine with a circuit breaker.",
+      "gold_relevant_notes": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561"
+      ],
+      "required_facts": [
+        "motor de risc izolat cu circuit breaker"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-040",
+      "class": "direct",
+      "query": "Which storage technology provides FinScope's local-first offline storage?",
+      "expected_answer": "IndexedDB via Dexie.",
+      "gold_relevant_notes": [
+        "finscope-project-core"
+      ],
+      "required_facts": [
+        "IndexedDB via Dexie for offline zero-cloud latency and total data privacy."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-041",
+      "class": "direct",
+      "query": "What is the known issue affecting this project's current state?",
+      "expected_answer": "Resolving $PSScriptRoot can fail or be incorrect when the script runs outside standalone direct execution.",
+      "gold_relevant_notes": [
+        "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d"
+      ],
+      "required_facts": [
+        "problemă cunoscută cu rezolvarea $PSScriptRoot când scriptul rulează în afara contextului de execuție standalone."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-042",
+      "class": "direct",
+      "query": "How many editions does this platform have and what are they?",
+      "expected_answer": "Two editions: LogAnalyzer.AirGapped and LogAnalyzer.Network.",
+      "gold_relevant_notes": [
+        "5d7b785f-221c-48ba-9e7e-557998c9fefa"
+      ],
+      "required_facts": [
+        "structurată în 2 ediții dedicate : 1. LogAnalyzer.AirGapped"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-043",
+      "class": "direct",
+      "query": "Which database mode and encryption are specified as part of the application success criteria?",
+      "expected_answer": "SQLite WAL mode with database encryption, using the stated secure local-storage design.",
+      "gold_relevant_notes": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+      ],
+      "required_facts": [
+        "Criptare completa a bazei de date (SQLite WAL mode + DPAPI)."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-044",
+      "class": "direct",
+      "query": "What local endpoint does the desktop host use for the Python cognitive core?",
+      "expected_answer": "http://127.0.0.1:3000",
+      "gold_relevant_notes": [
+        "path:02_PRODUCT/projects/workspaces/jarvis_desktop/Jarvis_Desktop_WPF_Command_Center_Specification.md"
+      ],
+      "required_facts": [
+        "pe http://127.0.0.1:3000"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-045",
+      "class": "direct",
+      "query": "What is the role of JARVIS relative to the Vault?",
+      "expected_answer": "JARVIS is the visual and operational control plane over the AI Memory Vault V6, not a separate memory system.",
+      "gold_relevant_notes": [
+        "path:02_PRODUCT/projects/workspaces/jarvis_web/Jarvis_Web_Command_Center_Specification.md"
+      ],
+      "required_facts": [
+        "JARVIS este control plane-ul vizual si operational peste AI Memory Vault V6. Arhitectura JARVIS nu este o memorie separata."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-046",
+      "class": "direct",
+      "query": "What endpoint is used to stream chat responses from Ollama?",
+      "expected_answer": "The Ollama /api/chat endpoint.",
+      "gold_relevant_notes": [
+        "path:02_PRODUCT/projects/workspaces/jarvis_web/walkthrough.md"
+      ],
+      "required_facts": [
+        "via the Ollama /api/chat endpoint."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-047",
+      "class": "direct",
+      "query": "What kind of license validation is implemented offline?",
+      "expected_answer": "Validation of an offline RSA-PSS signed license using a public key.",
+      "gold_relevant_notes": [
+        "path:02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md"
+      ],
+      "required_facts": [
+        "Validarea offline a unei licențe semnate RSA-PSS cu cheie publică"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-048",
+      "class": "direct",
+      "query": "How many system modules are listed in the workspace specification?",
+      "expected_answer": "Seven modules.",
+      "gold_relevant_notes": [
+        "path:02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md"
+      ],
+      "required_facts": [
+        "Cele 7 Module ale Sistemului"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-049",
+      "class": "direct",
+      "query": "What should be done before a migration or mass modification to the vault?",
+      "expected_answer": "Keep an independent backup of the vault, including 06 INBOX/RAW IMPORTS/.",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+      ],
+      "required_facts": [
+        "Keep an independent backup of the vault, including 06 INBOX/RAW IMPORTS/ , before a migration or mass modification."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-050",
+      "class": "direct",
+      "query": "Where must the unmodified external export be preserved?",
+      "expected_answer": "Permanently in 06 INBOX/RAW IMPORTS/.",
+      "gold_relevant_notes": [
+        "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+      ],
+      "required_facts": [
+        "Preserve the unmodified export permanently in 06 INBOX/RAW IMPORTS/ ."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-051",
+      "class": "direct",
+      "query": "What is the key first step in the measured book-ingestion recipe?",
+      "expected_answer": "Convert the source, then have an agent read the chunks.",
+      "gold_relevant_notes": [
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "required_facts": [
+        "Convert, then have an agent read the chunks"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-052",
+      "class": "direct",
+      "query": "Which Python version is required by the deployment procedure?",
+      "expected_answer": "Python 3.12 or newer.",
+      "gold_relevant_notes": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "required_facts": [
+        "Python 3.12+ installed."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-053",
+      "class": "direct",
+      "query": "What are the three habits the procedure says mattered most?",
+      "expected_answer": "Run it before believing it, along with the other two evidence-oriented reflexes encoded by the procedure.",
+      "gold_relevant_notes": [
+        "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19"
+      ],
+      "required_facts": [
+        "The three reflexes that mattered Everything useful found in this repository came from three habits, not from insight: Run it before believing it."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-054",
+      "class": "direct",
+      "query": "What role does the hippocampus play in learning according to this note?",
+      "expected_answer": "It is critical for memory processing, helps project information to cortical regions for meaning, and facilitates consolidation of new learning into long-term memory.",
+      "gold_relevant_notes": [
+        "23b3793b-fef3-5536-bfc1-da42d6c8a700"
+      ],
+      "required_facts": [
+        "The hippocampus is a brain structure critical for memory processing, including recognition and spatial memory."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-055",
+      "class": "direct",
+      "query": "What kind of memories is the cerebellum described as essential for?",
+      "expected_answer": "Implicit memories, including procedural memory, motor learning, and classical conditioning.",
+      "gold_relevant_notes": [
+        "37a81ae3-71a3-5bb4-b8e9-351f4edd2450"
+      ],
+      "required_facts": [
+        "The cerebellum is a brain structure essential for the formation of implicit memories, including procedural memory, motor learning, and classical conditioning."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-056",
+      "class": "direct",
+      "query": "How is forgetting defined in the note?",
+      "expected_answer": "As the loss of information from long-term memory.",
+      "gold_relevant_notes": [
+        "67a36e52-a645-57b9-a04e-fb4b1b08fac5"
+      ],
+      "required_facts": [
+        "Forgetting is defined as the loss of information from long-term memory."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-057",
+      "class": "direct",
+      "query": "What does Levels of Processing Theory say about long-term storage?",
+      "expected_answer": "Information processed more deeply is more likely to be stored in long-term memory.",
+      "gold_relevant_notes": [
+        "5fa452dd-c98b-581d-8ee9-24450ae24390"
+      ],
+      "required_facts": [
+        "this theory suggests that information processed more deeply is more likely to be stored in long-term memory."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-058",
+      "class": "direct",
+      "query": "What does episodic memory store for an agent?",
+      "expected_answer": "Past state embeddings and hidden activations that allow retrieval of relevant prior experiences in rare or unseen situations.",
+      "gold_relevant_notes": [
+        "b01db913-6bf2-4b14-a37a-81cb4b336d93"
+      ],
+      "required_facts": [
+        "A non-parametric or semi-parametric long-term storage component that holds past state embeddings and hidden activations"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-059",
+      "class": "direct",
+      "query": "What is the defining content of semantic memory in this ontology note?",
+      "expected_answer": "Generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins.",
+      "gold_relevant_notes": [
+        "84ef8b0f-d457-4741-be32-582ba76e3ab3"
+      ],
+      "required_facts": [
+        "The durable cognitive repository storing generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-060",
+      "class": "direct",
+      "query": "What does associative retrieval do in the cognitive architecture?",
+      "expected_answer": "It scans historical episode traces to retrieve relevant operational context for ongoing agent actions.",
+      "gold_relevant_notes": [
+        "9e6da9df-7fca-4cf5-99bf-03fbdee15170"
+      ],
+      "required_facts": [
+        "Associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-061",
+      "class": "multi_hop",
+      "query": "Ce procedura de evaluare a interfetelor grafice este legata de documentul care foloseste IAsyncEnumerable pentru operatii I/O grele?",
+      "expected_answer": "Procedura sistematica foloseste 10 Euristici Nielsen si WCAG AA, iar fiecare problema primeste severitate 0–4, locatie, euristica si propunere de remediere.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a005"
+      ],
+      "required_facts": [
+        "Procedură sistematică de evaluare euristică (10 Euristici Nielsen + WCAG AA) pentru inspecția interfețelor grafice."
+      ],
+      "hops": [
+        "c1a01101-7291-49fa-9481-22904c10b001",
+        "b4e88f21-7291-49fa-9481-22904c10a005"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-062",
+      "class": "multi_hop",
+      "query": "Ce arhitectura UI si I/O este recomandata de nota asociata cu Squint Test pentru operatii masive?",
+      "expected_answer": "Operatiile I/O si parsarea masiva se executa asincron prin streaming IAsyncEnumerable, iar UI foloseste MVVM strict.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b001"
+      ],
+      "required_facts": [
+        "Orice operațiune I/O sau parsare masivă de loguri EVTX/CSV se execută asincron prin streaming ( IAsyncEnumerable ), protejând UI Thread-ul împotriva blocajelor."
+      ],
+      "hops": [
+        "b4e88f21-7291-49fa-9481-22904c10a005",
+        "c1a01101-7291-49fa-9481-22904c10b001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-063",
+      "class": "multi_hop",
+      "query": "Nota despre KPI-uri 3–5 trimite catre ce proiect si ce tip de stocare locala foloseste acesta?",
+      "expected_answer": "FinScope foloseste IndexedDB prin Dexie pentru stocare locala, offline, fara cloud.",
+      "gold_relevant_notes": [
+        "finscope-project-core"
+      ],
+      "required_facts": [
+        "IndexedDB via Dexie for offline zero-cloud latency and total data privacy."
+      ],
+      "hops": [
+        "c1a01101-7291-49fa-9481-22904c10b005",
+        "finscope-project-core"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-064",
+      "class": "multi_hop",
+      "query": "Pornind de la nota care foloseste Dexie, ce cerinta de prezentare ar trebui sa conduca un panou administrativ?",
+      "expected_answer": "Panoul trebuie sa raspunda in 5 secunde daca totul este in regula si, daca nu, unde este anomalia.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b005"
+      ],
+      "required_facts": [
+        "Un tablou de bord sau panou de administrare trebuie să răspundă în 5 secunde la întrebarea: „Este totul în regulă? Dacă nu, unde se află anomalia?”."
+      ],
+      "hops": [
+        "finscope-project-core",
+        "c1a01101-7291-49fa-9481-22904c10b005"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-065",
+      "class": "multi_hop",
+      "query": "Ce regula vizuala ajunge din proiectul care importa extrageri PDF/Excel/CSV si OCR?",
+      "expected_answer": "Standardul cere maximizarea raportului data-to-ink si eliminarea pixelilor care nu prezinta date.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a002"
+      ],
+      "required_facts": [
+        "maximizarea raportului data-to-ink: orice pixel care nu prezintă date se elimină."
+      ],
+      "hops": [
+        "finscope-project-core",
+        "b4e88f21-7291-49fa-9481-22904c10a002"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-066",
+      "class": "multi_hop",
+      "query": "Ce sistem de design este legat de procedura care foloseste Squint Test si ce cere el inainte de cod?",
+      "expected_answer": "Tokenii vizuali stricti trebuie definiti inainte de orice linie de cod UI.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a001"
+      ],
+      "required_facts": [
+        "Un sistem de design robust impune definirea strictă a tokenilor vizuali (culori semantice, scară tipografică, spațiere fixă) înainte de orice linie de cod UI."
+      ],
+      "hops": [
+        "b4e88f21-7291-49fa-9481-22904c10a005",
+        "b4e88f21-7291-49fa-9481-22904c10a001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-067",
+      "class": "multi_hop",
+      "query": "Ce specificatii de produs rezulta din documentul de conformitate care discuta printare/scanare in medii air-gapped?",
+      "expected_answer": "Produsul este o aplicatie desktop WPF .NET 10 pentru evidenta transferurilor si controlul dispozitivelor, destinata unui mediu air-gapped/militar.",
+      "gold_relevant_notes": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+      ],
+      "required_facts": [
+        "Objective Aplicație desktop WPF .NET 10 pentru evidența transferurilor pe medii de stocare și controlul dispozitivelor"
+      ],
+      "hops": [
+        "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-068",
+      "class": "multi_hop",
+      "query": "Ce obligatii generale sunt descrise in nota de conformitate asociata cu autentificarea PIN Argon2id + salt?",
+      "expected_answer": "Aplicatiile pentru gestionarea documentelor si transferurilor trebuie sa respecte simultan HG 585/2002 si standardele conexe, inclusiv pentru trasabilitate si audit in medii air-gapped.",
+      "gold_relevant_notes": [
+        "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+      ],
+      "required_facts": [
+        "trebuie sa respecte simultan HG 585/2002 (protectia informatiilor clasificate) si standardele conexe MS 111/2024, MS 172, MS 191"
+      ],
+      "hops": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "99522c1a-b212-4571-b4d8-7dbbba2a3462"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-069",
+      "class": "multi_hop",
+      "query": "Ce obiectiv unic este descris in nota asociata cu procedura de audit care foloseste 10 Euristici Nielsen si WCAG AA?",
+      "expected_answer": "O pagina de landing trebuie sa conduca utilizatorul catre o singura actiune primara fara elemente care sa distraga atentia.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a004"
+      ],
+      "required_facts": [
+        "O pagină de landing are un singur obiectiv fundamental: să ghideze utilizatorul către o singură acțiune primară fără elemente care să distragă atenția."
+      ],
+      "hops": [
+        "b4e88f21-7291-49fa-9481-22904c10a005",
+        "b4e88f21-7291-49fa-9481-22904c10a004"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-070",
+      "class": "multi_hop",
+      "query": "Ce regula de integritate este asociata arhitecturii care forteaza format JSON in apelurile Ollama?",
+      "expected_answer": "Vault-ul cere sa nu se inventeze informatii, sa se marcheze ce nu este verificat si sa se pastreze sursa si data cand sunt disponibile.",
+      "gold_relevant_notes": [
+        "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+      ],
+      "required_facts": [
+        "Daca ceva nu este verificat, marcheaza-l explicit."
+      ],
+      "hops": [
+        "c1a01101-7291-49fa-9481-22904c10b002",
+        "e08b0d08-8527-4ddf-a260-09f5f6f7c499"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-071",
+      "class": "multi_hop",
+      "query": "Ce principiu de output structurat se gaseste in documentul legat de regula care cere note atomice si nu permite secrete?",
+      "expected_answer": "AI-ul propune, codul dispune: output-ul AI este tratat ca input nevalidat si trebuie validat strict pe schema; actiunile ireversibile cer confirmare umana.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b002"
+      ],
+      "required_facts": [
+        "„AI-ul propune, codul dispune” — output-ul AI este tratat ca input nevalidat de utilizator"
+      ],
+      "hops": [
+        "e08b0d08-8527-4ddf-a260-09f5f6f7c499",
+        "c1a01101-7291-49fa-9481-22904c10b002"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-072",
+      "class": "multi_hop",
+      "query": "Ce reguli de memorare sunt descrise in nota asociata cu ExplainableAiRiskEngine?",
+      "expected_answer": "Memoria este impartita in clase precum knowledge, project, procedure, decision, experience, error, lesson, preference, resource si hypothesis; o nota noua trebuie sa fie reutilizabila, distincta, suficient de stabila si relevanta.",
+      "gold_relevant_notes": [
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "required_facts": [
+        "knowledge fapt / concept reutilizabil project stare si context de proiect procedure pasi verificati decision alegere si rationale experience eveniment sau experienta error esec analizat"
+      ],
+      "hops": [
+        "b492d001-c841-4e12-b5e1-8890471b8991",
+        "54b48919-d58a-4502-a20f-2717b022d375"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-073",
+      "class": "multi_hop",
+      "query": "Ce platforma de forensics este legata de regulile despre clasele de memorie si crearea notelor?",
+      "expected_answer": "LogAnalyzer DFIR Enterprise este o suita air-gapped si offline pentru analiza forenzica a sistemelor Windows.",
+      "gold_relevant_notes": [
+        "b492d001-c841-4e12-b5e1-8890471b8991"
+      ],
+      "required_facts": [
+        "Platforma LogAnalyzer DFIR Enterprise este o suită completă, air-gapped și offline destinată analizei forenzice a sistemelor Windows"
+      ],
+      "hops": [
+        "54b48919-d58a-4502-a20f-2717b022d375",
+        "b492d001-c841-4e12-b5e1-8890471b8991"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-074",
+      "class": "multi_hop",
+      "query": "Ce nivel de incredere este asociat documentului care discuta ExplainableAiRiskEngine?",
+      "expected_answer": "Very High este rezervat informatiilor verificate direct de utilizator, prin executie, test sau sursa primara autoritativa.",
+      "gold_relevant_notes": [
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "required_facts": [
+        "Very High Directly verified by the user, execution, test, or authoritative primary source."
+      ],
+      "hops": [
+        "b492d001-c841-4e12-b5e1-8890471b8991",
+        "3452fafe-8b80-445e-a742-9ceb68662e69"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-075",
+      "class": "multi_hop",
+      "query": "Ce reguli pentru animatii sunt legate de procedura care clasifica problemele UI pe severitate 0–4?",
+      "expected_answer": "Animatiile trebuie sa serveasca unor scopuri legitime; pentru performanta se folosesc proprietati accelerate GPU precum transform si opacity si se respecta prefers-reduced-motion.",
+      "gold_relevant_notes": [
+        "b4e88f21-7291-49fa-9481-22904c10a003"
+      ],
+      "required_facts": [
+        "se animează exclusiv proprietăți accelerate GPU ( transform , opacity ), respectând cu strictețe media query-ul prefers-reduced-motion"
+      ],
+      "hops": [
+        "b4e88f21-7291-49fa-9481-22904c10a005",
+        "b4e88f21-7291-49fa-9481-22904c10a003"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-076",
+      "class": "multi_hop",
+      "query": "Ce componente concrete ale proiectului sunt descrise in nota legata de interzicerea look-ahead bias?",
+      "expected_answer": "XAU Kinetic este un sistem hibrid Python 3.12+ cu Clean Architecture, integrat cu MetaTrader 5 si o aplicatie desktop C .NET 8 WPF; include Pydantic V2 si un motor de risc cu circuit breaker.",
+      "gold_relevant_notes": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561"
+      ],
+      "required_facts": [
+        "Sistem de trading algoritmic instituțional Hibrid — Python 3.12+ (Clean Architecture Quant Engine) integrat cu MetaTrader 5 + Aplicație Desktop C .NET 8 WPF"
+      ],
+      "hops": [
+        "c1a01101-7291-49fa-9481-22904c10b004",
+        "ae0206df-b0cb-4810-b2a2-cea462600561"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-077",
+      "class": "multi_hop",
+      "query": "Ce separare modulara descrie nota legata de Kill Switch hardware?",
+      "expected_answer": "Arhitectura este impartita in data, strategy, risk, execution si journal, iar modulul de risc are drept de veto asupra semnalelor strategiei.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b004"
+      ],
+      "required_facts": [
+        "data/ , strategy/ , risk/ , execution/ și journal/"
+      ],
+      "hops": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "c1a01101-7291-49fa-9481-22904c10b004"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-078",
+      "class": "multi_hop",
+      "query": "Ce rol are agentul extern asociat aplicatiei de evidenta a transferurilor, in documentul care mentioneaza Argon2id?",
+      "expected_answer": "Perplexity face research extern si verificare de conformitate cu surse citate, nu executie.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d001"
+      ],
+      "required_facts": [
+        "Perplexity operează ca agent de research extern, nu de execuție."
+      ],
+      "hops": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "c1a01101-7291-49fa-9481-22904c10d001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-079",
+      "class": "multi_hop",
+      "query": "Ce reguli de dezvoltare sunt indicate in documentul asociat cu SQLite WAL / SQLCipher?",
+      "expected_answer": "Este specificat WPF pe .NET 10 cu MVVM strict, zero apeluri externe de retea si comunicare cu Vault-ul strict prin 127.0.0.1.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10c001"
+      ],
+      "required_facts": [
+        "Zero apeluri de rețea externe; tema vizuală ObsidianTactical.xaml cu resurse centralizate; 7 module; comunicare cu Vault-ul cognitiv strict pe 127.0.0.1"
+      ],
+      "hops": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "c1a01101-7291-49fa-9481-22904c10c001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-080",
+      "class": "multi_hop",
+      "query": "Ce standarde pentru scripturile de administrare sunt legate de configuratia ObsidianTactical.xaml?",
+      "expected_answer": "Scripturile trebuie sa fie idempotente, complet trasabile prin Start-Transcript, non-distructive asupra originalelor si verificate imediat cu SHA-256.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b003"
+      ],
+      "required_facts": [
+        "Orice script de producție trebuie să fie idempotent, complet trasabil ( Start-Transcript ), non-destructiv asupra originalelor și verificat prin hash-uri SHA-256 imediate."
+      ],
+      "hops": [
+        "c1a01101-7291-49fa-9481-22904c10c001",
+        "c1a01101-7291-49fa-9481-22904c10b003"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-081",
+      "class": "multi_hop",
+      "query": "Ce principii arhitecturale de separare sunt legate de descrierea sistemului cu circuit breaker?",
+      "expected_answer": "XAU Kinetic separa strict entitatile de domeniu, orchestrarea aplicatiei, driverele de infrastructura, managementul riscului si deciziile de strategie.",
+      "gold_relevant_notes": [
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "required_facts": [
+        "separates concerns strictly between core domain entities, application orchestration, infrastructure drivers, risk management, and trading strategy decisions."
+      ],
+      "hops": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "f82194d2-31a8-4c91-a83d-e42109ab7d12"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-082",
+      "class": "multi_hop",
+      "query": "Ce preconditie de mediu este ceruta de procedura legata de motorul cu circuit breaker?",
+      "expected_answer": "Python 3.12+ este instalat, iar pentru modul live terminalul MetaTrader 5 trebuie sa fie instalat, actualizat si conectat la contul brokerului.",
+      "gold_relevant_notes": [
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "required_facts": [
+        "Python 3.12+ installed."
+      ],
+      "hops": [
+        "ae0206df-b0cb-4810-b2a2-cea462600561",
+        "b492a8e1-5c02-4b21-9e12-c7f8a31e9202"
+      ],
+      "relation": "depends_on",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-083",
+      "class": "multi_hop",
+      "query": "Ce identitate de sistem este descrisa in nota asociata aplicatiei FinScope?",
+      "expected_answer": "Vault-ul este memoria externa a sistemului AI si stratul de continuitate intre sesiuni, modele si proiecte.",
+      "gold_relevant_notes": [
+        "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+      ],
+      "required_facts": [
+        "Acest Vault este memoria externa a sistemului AI si stratul de continuitate intre sesiuni, modele si proiecte."
+      ],
+      "hops": [
+        "finscope-project-core",
+        "1bc7f563-35da-4c5e-91cb-9bb789bb28a2"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-084",
+      "class": "multi_hop",
+      "query": "Ce editii sunt descrise de documentul asociat cu ExplainableAiRiskEngine?",
+      "expected_answer": "Platforma LogAnalyzer are doua editii: LogAnalyzer.AirGapped si LogAnalyzer.Network.",
+      "gold_relevant_notes": [
+        "5d7b785f-221c-48ba-9e7e-557998c9fefa"
+      ],
+      "required_facts": [
+        "structurată în 2 ediții dedicate : 1. LogAnalyzer.AirGapped"
+      ],
+      "hops": [
+        "b492d001-c841-4e12-b5e1-8890471b8991",
+        "5d7b785f-221c-48ba-9e7e-557998c9fefa"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-085",
+      "class": "multi_hop",
+      "query": "Ce schema de stocare si autentificare este legata de produsul air-gapped?",
+      "expected_answer": "Autentificarea foloseste un PIN local cu hash si salt, iar baza de date este criptata cu SQLCipher, cu cheia protejata prin DPAPI.",
+      "gold_relevant_notes": [
+        "4c5884fe-f24e-426e-a012-1414dbddae23"
+      ],
+      "required_facts": [
+        "PIN numeric hash-uit cu salt (SHA-256), fara JWT/sesiuni; iar stocarea trebuie criptata cu SQLCipher, cheia protejata via DPAPI."
+      ],
+      "hops": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "4c5884fe-f24e-426e-a012-1414dbddae23"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-086",
+      "class": "multi_hop",
+      "query": "Ce arhitectura de straturi este legata de runbook-ul care discuta Tampermonkey?",
+      "expected_answer": "Structura de baza include 00 CORE, 01 KNOWLEDGE, 02 PROJECTS, 03 PROCEDURES, 04 MEMORY, 05 RESOURCES, 06 INBOX, 90 TEMPLATES si 99 SYSTEM.",
+      "gold_relevant_notes": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+      ],
+      "required_facts": [
+        "00 CORE Regulile si identitatea sistemului. 01 KNOWLEDGE Cunostinte stabile si reutilizabile. 02 PROJECTS Starea proiectelor. 03 PROCEDURES Proceduri verificabile. 04 MEMORY Experiente, erori, lectii, decizii, preferinte."
+      ],
+      "hops": [
+        "proc-browser-ai-0001",
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-087",
+      "class": "multi_hop",
+      "query": "Cum se conecteaza agentii de browser, conform notei legate de arhitectura stratificata a Vault-ului?",
+      "expected_answer": "Una dintre metode este prin prompt de sistem si Markdown Injection fara server; runbook-ul descrie trei metode de conectare.",
+      "gold_relevant_notes": [
+        "proc-browser-ai-0001"
+      ],
+      "required_facts": [
+        "🏗️ 1. Cele 3 Metode de Conectare"
+      ],
+      "hops": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "proc-browser-ai-0001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-088",
+      "class": "multi_hop",
+      "query": "Ce mecanism de activare este descris in documentul legat de structura 05 RESOURCES a Vault-ului?",
+      "expected_answer": "Motorul ACT-R al decaderii activarii foloseste formula indicata cu rata de decadere d = 0.5.",
+      "gold_relevant_notes": [
+        "proc-brain-arch-0001"
+      ],
+      "required_facts": [
+        "cu rata de decădere $d = 0.5$."
+      ],
+      "hops": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "proc-brain-arch-0001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-089",
+      "class": "multi_hop",
+      "query": "Ce dimensiune are consiliul de agenti in nota asociata cu motorul ACT-R?",
+      "expected_answer": "Matricea consiliului descrie 21 de agenti specializati.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d010"
+      ],
+      "required_facts": [
+        "Consiliul de Memorie AI are 21 de agenți specializați"
+      ],
+      "hops": [
+        "proc-brain-arch-0001",
+        "c1a01101-7291-49fa-9481-22904c10d010"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-090",
+      "class": "multi_hop",
+      "query": "Cate intrari are catalogul legat de motorul cu rata de decadere d = 0.5?",
+      "expected_answer": "Catalogul are 3659 intrari, din 3661 directoare reale.",
+      "gold_relevant_notes": [
+        "cat-skills-251-master"
+      ],
+      "required_facts": [
+        "Directoare reale: 3661 Intrări catalog: 3659 Diferență: 2"
+      ],
+      "hops": [
+        "proc-brain-arch-0001",
+        "cat-skills-251-master"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-091",
+      "class": "multi_hop",
+      "query": "Ce niveluri de integrare sunt prevazute in documentul asociat arhitecturii 99 SYSTEM?",
+      "expected_answer": "Documentul enterprise descrie patru niveluri de integrare in proiect.",
+      "gold_relevant_notes": [
+        "proc-enterprise-integration-0001"
+      ],
+      "required_facts": [
+        "Nivelul A: Serviciu Microservice"
+      ],
+      "hops": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "proc-enterprise-integration-0001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-092",
+      "class": "multi_hop",
+      "query": "Ce intrebare apare in nota din slotul legat de procedura de ingestie a cartilor?",
+      "expected_answer": "Intrebarea este: Cum sunt executate operatiile?",
+      "gold_relevant_notes": [
+        "slot-06-procedures"
+      ],
+      "required_facts": [
+        "Question How are operations executed?"
+      ],
+      "hops": [
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+        "slot-06-procedures"
+      ],
+      "relation": "part_of",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-093",
+      "class": "multi_hop",
+      "query": "Ce spune reteta asociata cu slotul de proceduri despre ce ramane in urma masuratorilor?",
+      "expected_answer": "Reteta retine ceea ce a supravietuit masuratorii si include si partile care au esuat, nu doar succesele.",
+      "gold_relevant_notes": [
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "required_facts": [
+        "The recipe below is what survived being measured. Most of what was tried did not, and the parts that failed are listed too"
+      ],
+      "hops": [
+        "slot-06-procedures",
+        "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-094",
+      "class": "multi_hop",
+      "query": "Cum este configurata componenta de research asociata contractelor cu trei agenti de cod?",
+      "expected_answer": "Perplexity nu are fisier auto-incarcat per repository; echivalentul este un Space cu instructiuni custom si fisiere de context incarcate manual.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d003"
+      ],
+      "required_facts": [
+        "Perplexity nu are fișier auto-încărcat per repo (ca AGENTS.md/CLAUDE.md/GEMINI.md). Echivalentul este un Space cu instrucțiuni custom și fișiere de context încărcate manual."
+      ],
+      "hops": [
+        "c1a01101-7291-49fa-9481-22904c10d001",
+        "c1a01101-7291-49fa-9481-22904c10d003"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-095",
+      "class": "multi_hop",
+      "query": "Cum este organizat workflow-ul asociat produsului de transferuri si termenului QuestPDF?",
+      "expected_answer": "Workflow-ul de remodelare are 7 sarcini secventiale; fiecare se planifica, se aproba, se executa si se verifica separat, iar urmatoarea nu incepe fara build verde.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10d002"
+      ],
+      "required_facts": [
+        "Workflow secvențial de 7 sarcini pentru remodelarea completă a interfeței WPF a Registrului de Transferuri."
+      ],
+      "hops": [
+        "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+        "c1a01101-7291-49fa-9481-22904c10d002"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-096",
+      "class": "multi_hop",
+      "query": "Ce configurare este descrisa in nota asociata cu referinta oficiala si sectiunea Source Details?",
+      "expected_answer": "Fluxul necesita IP fix pentru imprimanta, cititor de card USB sau retea, iar dispozitivul foloseste EIP 3.7 compatibil cu PaperCut MF Secure Access.",
+      "gold_relevant_notes": [
+        "3d063fab-d6d1-411b-89b2-d31222f4b937"
+      ],
+      "required_facts": [
+        "Xerox VersaLink C7120 este un dispozitiv EIP 3.7 compatibil PaperCut MF Secure Access; fluxul de printare securizata cere: IP fix pentru imprimanta, card reader (USB sau retea)"
+      ],
+      "hops": [
+        "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+        "3d063fab-d6d1-411b-89b2-d31222f4b937"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-097",
+      "class": "multi_hop",
+      "query": "Ce benchmark de memorie pe termen lung este asociat cu structura 00 CORE / 01 KNOWLEDGE a sistemului?",
+      "expected_answer": "LoCoMo e descris ca benchmark pentru pastrarea, actualizarea si recuperarea memoriei pe traiectorii conversationale de peste 35 de sesiuni.",
+      "gold_relevant_notes": [
+        "knw-benchmarks-2026-0001"
+      ],
+      "required_facts": [
+        "Benchmark-ul LoCoMo (Long-Context Dynamic Memory) - Scop : Evaluează capacitatea agentului de a păstra, actualiza și recupera memorii pe traiectorii conversaționale cu orizont lung (peste 35 sesiuni conversaționale)."
+      ],
+      "hops": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "knw-benchmarks-2026-0001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-098",
+      "class": "multi_hop",
+      "query": "Ce axiom despre dovezi este asociat cu structura de straturi a Vault-ului?",
+      "expected_answer": "Protocolul impune ca DECLARED sa nu fie tratat ca OBSERVED.",
+      "gold_relevant_notes": [
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "required_facts": [
+        "$$\\mathbf{DECLARED \\neq OBSERVED}$$"
+      ],
+      "hops": [
+        "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+        "knw-agent-memory-trace-protocol-0001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-099",
+      "class": "multi_hop",
+      "query": "Ce cere principiul de audit din nota legata de tool call hooks?",
+      "expected_answer": "Utilitatea memoriei necesita un lant de provenienta neîntrerupt si observabil empiric, de la query/discovery pana la retrieve si load.",
+      "gold_relevant_notes": [
+        "knw-memory-usage-audit-principles-0001"
+      ],
+      "required_facts": [
+        "Useful memory requires an unbroken, empirically observable provenance chain"
+      ],
+      "hops": [
+        "knw-agent-memory-trace-protocol-0001",
+        "knw-memory-usage-audit-principles-0001"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-100",
+      "class": "multi_hop",
+      "query": "Ce livrabil central defineste nota despre anti-atribute si pozitionare, legata de fisierele tokens.css/theme.ts?",
+      "expected_answer": "Un Mini Brand Book stabileste pozitionarea, atributele de personalitate, paleta si regulile tipografice.",
+      "gold_relevant_notes": [
+        "c1a01101-7291-49fa-9481-22904c10b006"
+      ],
+      "required_facts": [
+        "Livrabilul central este un Mini Brand Book care stabilește poziționarea, atributele de personalitate, identitatea verbală, paleta restrânsă și regulile tipografice fără ambiguități."
+      ],
+      "hops": [
+        "b4e88f21-7291-49fa-9481-22904c10a001",
+        "c1a01101-7291-49fa-9481-22904c10b006"
+      ],
+      "relation": "related_to",
+      "abstain": false,
+      "language": "ro"
+    },
+    {
+      "id": "R3-101",
+      "class": "conceptual",
+      "query": "In the ontology definition, what does adaptation achieve for the organism's essential variables?",
+      "expected_answer": "An equilibrium in which essential variables experience significantly less disturbance than in an unadapted state.",
+      "gold_relevant_notes": [
+        "21072af8-9792-4faa-9b9c-f15da7618a37"
+      ],
+      "required_facts": [
+        "The achievement of an equilibrium state wherein the essential variables of the living creature experience significantly less disturbance than in an unadapted state."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-102",
+      "class": "conceptual",
+      "query": "How does the described agent use episodic memory when facing rare or novel contexts?",
+      "expected_answer": "It reinstates hidden activations from past rare states into recurrent working-memory layers so previously learned episodic sequences can be executed in novel contexts.",
+      "gold_relevant_notes": [
+        "7986a2c9-0fb7-4282-95fa-3ea39da1ceb1"
+      ],
+      "required_facts": [
+        "reinstates hidden activations from past rare states into the recurrent working memory layers"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-103",
+      "class": "conceptual",
+      "query": "What is the functional role of a buffer in the described architecture?",
+      "expected_answer": "It is a restricted-capacity interface that holds one chunk between an internal cognitive module and the central production system.",
+      "gold_relevant_notes": [
+        "ff28fea6-0138-41b6-acd7-e1c0759966b1"
+      ],
+      "required_facts": [
+        "Restricted capacity interface holding a single chunk that connects an internal cognitive module to the central production system."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-104",
+      "class": "conceptual",
+      "query": "Why does chunking reduce repeated impasses in the Soar formulation?",
+      "expected_answer": "It compiles substate reasoning into immediate production rules, removing the need to repeat the same impasse reasoning.",
+      "gold_relevant_notes": [
+        "a1df3d1c-201c-4217-aa62-f36292b01aa4"
+      ],
+      "required_facts": [
+        "eliminates repetitive impasses by converting substate reasoning into immediate production rules."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-105",
+      "class": "conceptual",
+      "query": "What makes the associative process described here capable of producing synaptic facilitation?",
+      "expected_answer": "It requires precise temporal contiguity between sensory excitation and modulatory feedback.",
+      "gold_relevant_notes": [
+        "d12f2aea-c6fd-456c-a472-7fd3ff786392"
+      ],
+      "required_facts": [
+        "requires precise temporal contiguity between sensory excitation and modulatory feedback"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-106",
+      "class": "conceptual",
+      "query": "What does a cognitive architecture organize into one integrated model?",
+      "expected_answer": "Memory systems, processing mechanisms, and control cycles.",
+      "gold_relevant_notes": [
+        "5ed5f5b1-a936-4b51-a4ef-c9742d14730c"
+      ],
+      "required_facts": [
+        "organizing memory systems, processing mechanisms, and control cycles into an integrated model of general cognition."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-107",
+      "class": "conceptual",
+      "query": "What is the purpose of the stabilization phase called consolidation?",
+      "expected_answer": "It progressively stabilizes newly registered experiential information so it can become permanently fixed in neural tissue.",
+      "gold_relevant_notes": [
+        "b2888875-8546-4d42-b262-2c7f779e3cc9"
+      ],
+      "required_facts": [
+        "A progressive neurobiological stabilization phase during which newly registered experiential information requires protein synthesis to become permanently fixed in neural tissue."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-108",
+      "class": "conceptual",
+      "query": "How does a Markov constraint alter uncertainty in the described model?",
+      "expected_answer": "It restricts transitions so entropy falls below the maximum uncertainty of a uniform distribution.",
+      "gold_relevant_notes": [
+        "f4211085-75c4-4184-a1a9-0c33da73ac74"
+      ],
+      "required_facts": [
+        "A probabilistic restriction in Markov transitions causing entropy to drop below the maximum theoretical uncertainty of uniform distributions."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-109",
+      "class": "conceptual",
+      "query": "What distinguishes declarative memory from a rigid associative routine in this ontology?",
+      "expected_answer": "It supports novel inferential derivations and contextual problem-solving.",
+      "gold_relevant_notes": [
+        "e045ded5-01fd-4a28-8f85-203ebae670de"
+      ],
+      "required_facts": [
+        "A flexible cognitive retention system characterized by enabling novel inferential derivations and contextual problem-solving beyond rigid associative routines."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-110",
+      "class": "conceptual",
+      "query": "Why are blood pressure and temperature examples of essential variables?",
+      "expected_answer": "They are crucial somatic quantities that must remain within viability boundaries.",
+      "gold_relevant_notes": [
+        "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57"
+      ],
+      "required_facts": [
+        "Crucial somatic quantities such as blood pressure, body temperature, and biochemical concentrations whose values must remain within viability boundaries."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-111",
+      "class": "conceptual",
+      "query": "What kind of recall characterizes explicit memory?",
+      "expected_answer": "Conscious recollection of past occurrences, factual knowledge, and personal experiences, requiring deliberate awareness.",
+      "gold_relevant_notes": [
+        "93678180-ff9e-45f5-927e-01320aff8eb9"
+      ],
+      "required_facts": [
+        "Conscious recollection of past occurrences, factual knowledge, and personal experiences that requires deliberate cognitive awareness during recall."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-112",
+      "class": "conceptual",
+      "query": "How does feedback influence subsequent action in the described regulator model?",
+      "expected_answer": "Observed discrepancies between actual output and target patterns are routed back into the regulator to guide later action.",
+      "gold_relevant_notes": [
+        "99280cf1-6eb2-449c-a778-e800c2868e07"
+      ],
+      "required_facts": [
+        "observed discrepancies between actual output and target patterns are routed back into the regulator to guide subsequent action."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-113",
+      "class": "conceptual",
+      "query": "What physical arrangement is associated with Ashby's homeostat?",
+      "expected_answer": "Four interconnected units equipped with magnets and uniselectors.",
+      "gold_relevant_notes": [
+        "2a299363-8d18-48bd-bfa6-fb495686eeba"
+      ],
+      "required_facts": [
+        "consisting of four interconnected units equipped with magnets and uniselectors to study ultrastability."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-114",
+      "class": "conceptual",
+      "query": "What transition in problem solving is triggered by an impasse?",
+      "expected_answer": "It moves the system from reactive execution toward deliberate, reflective reasoning.",
+      "gold_relevant_notes": [
+        "4dcd44ba-c65e-4928-804a-d3d8f0bdd888"
+      ],
+      "required_facts": [
+        "initiates reflective problem solving, allowing the system to shift from reactive execution to deliberate reasoning."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-115",
+      "class": "conceptual",
+      "query": "How is implicit memory expressed differently from deliberate recollection?",
+      "expected_answer": "Through nonconscious retention of abilities and skills that show up directly in behavior rather than intentional recollection.",
+      "gold_relevant_notes": [
+        "ac5e8530-c152-4b81-97ee-549caca0fa75"
+      ],
+      "required_facts": [
+        "Nonconscious retention of motor abilities and perceptual skills manifested directly through behavioral performance rather than intentional mental recollection."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-116",
+      "class": "conceptual",
+      "query": "Where does the described latent memory reside?",
+      "expected_answer": "In compressed historical context represented within transformer activation spaces rather than plaintext.",
+      "gold_relevant_notes": [
+        "e66a94e4-28b6-47d6-90b3-358cd6dcd743"
+      ],
+      "required_facts": [
+        "storing compressed historical context within transformer activation spaces rather than plaintext"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-117",
+      "class": "conceptual",
+      "query": "What does the externalized long-term store provide without consuming continuous attention?",
+      "expected_answer": "Factual archives and operational manuals that guide agent execution.",
+      "gold_relevant_notes": [
+        "11e9fe55-6924-4231-9635-c5629bff6ae3"
+      ],
+      "required_facts": [
+        "The externalized store containing factual archives and operational manuals that guide agent execution without consuming continuous attention."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-118",
+      "class": "conceptual",
+      "query": "What capability is attributed to the mental-imagery component?",
+      "expected_answer": "It constructs depictive internal representations for visual transformations and metric queries.",
+      "gold_relevant_notes": [
+        "c29221d5-4bde-44bb-a482-f8e8d7619214"
+      ],
+      "required_facts": [
+        "constructs depictive internal representations to perform visual transformations and metric queries."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-119",
+      "class": "conceptual",
+      "query": "Which kinds of learning does nondeclarative memory encompass?",
+      "expected_answer": "Nonconscious abilities such as skills, habits, conditioning, and priming that are expressed through performance.",
+      "gold_relevant_notes": [
+        "5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac"
+      ],
+      "required_facts": [
+        "A heterogeneous collection of nonconscious learning abilities, including skills, habits, conditioning, and priming"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-120",
+      "class": "conceptual",
+      "query": "What role does an operator play in a decision cycle?",
+      "expected_answer": "It is the focal element chosen among competing alternatives through preference arbitration to update active representations.",
+      "gold_relevant_notes": [
+        "d4e5337e-122f-402c-84d0-57230976ee0d"
+      ],
+      "required_facts": [
+        "The focal element of decision cycles, chosen among competing alternatives through preference arbitration to update active representations."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-121",
+      "class": "conceptual",
+      "query": "Where is parametric memory located?",
+      "expected_answer": "In the trained synaptic weights of the foundation model.",
+      "gold_relevant_notes": [
+        "519ef025-222f-485e-b7ee-1684078fe6e7"
+      ],
+      "required_facts": [
+        "The internalized understanding of world semantics and language grammar residing within the trained synaptic weights of the foundation model."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-122",
+      "class": "conceptual",
+      "query": "What is the key property of priming in this definition?",
+      "expected_answer": "It is an unconscious facilitation for identifying or producing recently encountered stimuli and is independent of medial-temporal-lobe declarative memory.",
+      "gold_relevant_notes": [
+        "67f5d777-20a7-4464-867c-7a2c1739d18a"
+      ],
+      "required_facts": [
+        "An unconscious facilitation in identifying or producing recently encountered perceptual stimuli"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-123",
+      "class": "conceptual",
+      "query": "What sort of behavior does procedural memory encompass?",
+      "expected_answer": "Motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection.",
+      "gold_relevant_notes": [
+        "6e014224-af01-4011-8050-082d3f9ea35e"
+      ],
+      "required_facts": [
+        "A broad behavioral memory category encompassing motor coordination, perceptual skills, and cognitive algorithms"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-124",
+      "class": "conceptual",
+      "query": "What turns an isolated face acknowledgment into complete personal recognition according to this definition?",
+      "expected_answer": "Full recovery of identifying context and associative facts.",
+      "gold_relevant_notes": [
+        "ac3d2e8a-f55f-404b-ba7d-5157f39ae873"
+      ],
+      "required_facts": [
+        "The full cognitive recovery of identifying context and associative facts"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-125",
+      "class": "conceptual",
+      "query": "How is regulation described in the cybernetic formulation?",
+      "expected_answer": "As coordinating responsive moves mathematically to collapse a large disturbance set into minimally acceptable outcomes.",
+      "gold_relevant_notes": [
+        "90175c6e-32e8-4c7c-8c4c-6661170e34d5"
+      ],
+      "required_facts": [
+        "The mathematical coordination of responsive moves designed to collapse a large disturbance set into minimal acceptable outcomes."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-126",
+      "class": "conceptual",
+      "query": "What formal framework defines the states, actions, and transitions in the reinforcement-learning definition?",
+      "expected_answer": "Markov decision processes, with a discount factor controlling the value of future rewards.",
+      "gold_relevant_notes": [
+        "10664ba8-39ac-4498-8823-f47014a73efc"
+      ],
+      "required_facts": [
+        "A framework formalised by Markov decision processes that defines the set of states, actions, and transition functions governing agent-environment interaction"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-127",
+      "class": "conceptual",
+      "query": "Why is reservoir sampling useful for a stream whose total length is unknown?",
+      "expected_answer": "It lets k items be sampled uniformly from a stream without knowing the final length or explicit stream boundaries.",
+      "gold_relevant_notes": [
+        "d7e9a1bd-341c-4da5-b482-6521c4e37146"
+      ],
+      "required_facts": [
+        "ensuring every item has an equal probability of selection without requiring explicit stream boundaries or prior knowledge of total length."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-128",
+      "class": "conceptual",
+      "query": "What does cybernetic stability mean in the given definition?",
+      "expected_answer": "The ability of a system to keep its essential variables within safe physiological limits.",
+      "gold_relevant_notes": [
+        "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1"
+      ],
+      "required_facts": [
+        "The cybernetic equivalent of biological adaptation, defined as the capacity of a system to keep its essential variables within safe physiological limits."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-129",
+      "class": "conceptual",
+      "query": "What determines future behavior in a state-determined system?",
+      "expected_answer": "Its current internal configuration and incoming environmental inputs, without intrinsic randomness.",
+      "gold_relevant_notes": [
+        "0d68bba6-662b-4633-b065-bf1666889af9"
+      ],
+      "required_facts": [
+        "future behaviors follow inexorably from its current internal configuration and incoming environmental inputs without intrinsic randomness."
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-130",
+      "class": "conceptual",
+      "query": "What distinguishes an ultrastable system from a merely fixed system?",
+      "expected_answer": "It automatically reorganizes its internal parameters when essential variables leave viable limits.",
+      "gold_relevant_notes": [
+        "1a25d3da-57e2-4902-ab35-da8b476d7e7b"
+      ],
+      "required_facts": [
+        "automatically reorganizing its internal parameters whenever those variables leave viable limits"
+      ],
+      "hops": [],
+      "relation": "",
+      "abstain": false,
+      "language": "en"
+    },
+    {
+      "id": "R3-131",
+      "class": "abstain",
+      "query": "Ce topic Kafka este folosit pentru evenimentele de memorie persistenta?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-132",
+      "class": "abstain",
+      "query": "Care este schema PostgreSQL pentru tabela in care sunt stocate memoriile canonice?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-133",
+      "class": "abstain",
+      "query": "Ce broker RabbitMQ este utilizat pentru coordonarea dintre agenti?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-134",
+      "class": "abstain",
+      "query": "Ce politica de expirare NATS este folosita pentru memoria de lucru?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-135",
+      "class": "abstain",
+      "query": "Care este endpointul GraphQL pentru interogarea grafului cognitiv?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-136",
+      "class": "abstain",
+      "query": "Ce algoritm de rotatie a certificatelor TLS este configurat pentru gateway-ul local?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-137",
+      "class": "abstain",
+      "query": "Ce port SMTP foloseste componenta de notificari?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-138",
+      "class": "abstain",
+      "query": "Ce furnizor OpenID Connect este configurat pentru autentificarea browser-agentilor?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-139",
+      "class": "abstain",
+      "query": "What Nomad job name runs the Memory Vault runtime?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-140",
+      "class": "abstain",
+      "query": "Care este numele bucket-ului S3 in care sunt puse artefactele de evaluare?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-141",
+      "class": "abstain",
+      "query": "What exact SSE event name is emitted when a graph edge is promoted?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-142",
+      "class": "abstain",
+      "query": "Care este numele exchange-ului AMQP pentru joburile de ingestie?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-143",
+      "class": "abstain",
+      "query": "Ce domeniu DNS este configurat pentru serviciul cognitiv extern?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-144",
+      "class": "abstain",
+      "query": "Ce versiune de protocol gRPC este folosita intre Memory Controller si Agent Council?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-145",
+      "class": "abstain",
+      "query": "Care este cheia de partitionare din tabela distribuita a jurnalului de memorie?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "ro"
+    },
+    {
+      "id": "R3-146",
+      "class": "abstain",
+      "query": "Which Kafka topic carries canonical-memory mutations?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-147",
+      "class": "abstain",
+      "query": "Which PostgreSQL table stores the canonical ontology history?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-148",
+      "class": "abstain",
+      "query": "Which PostgreSQL table stores the canonical ontology history?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-149",
+      "class": "abstain",
+      "query": "What GraphQL mutation is used to approve a memory candidate?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-150",
+      "class": "abstain",
+      "query": "Which OAuth2 provider is configured for browser-agent login?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-151",
+      "class": "abstain",
+      "query": "What is the exact container image tag used for the memory runtime?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-152",
+      "class": "abstain",
+      "query": "Which S3 bucket stores the frozen retrieval benchmarks?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-153",
+      "class": "abstain",
+      "query": "What is the exact browser event name emitted when a graph edge is promoted?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-154",
+      "class": "abstain",
+      "query": "Which AMQP queue receives book-ingestion jobs?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-155",
+      "class": "abstain",
+      "query": "Which DNS hostname is assigned to the external cognitive gateway?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-156",
+      "class": "abstain",
+      "query": "What exact gRPC method connects the Memory Controller to the Agent Council?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-157",
+      "class": "abstain",
+      "query": "Which TLS cipher suite is mandatory for local service connections?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-158",
+      "class": "abstain",
+      "query": "What is the exact SQLite index name used for lifecycle filtering?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-159",
+      "class": "abstain",
+      "query": "Which vector dimension is configured for the production semantic index?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    },
+    {
+      "id": "R3-160",
+      "class": "abstain",
+      "query": "What is the exact cron expression for nightly memory consolidation?",
+      "expected_answer": "",
+      "gold_relevant_notes": [],
+      "required_facts": [],
+      "hops": [],
+      "relation": "",
+      "abstain": true,
+      "language": "en"
+    }
+  ]
+}
