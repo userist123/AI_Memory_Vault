@@ -1,0 +1,5 @@
+applicability_mode,policy,threshold_accuracy_p_star,delta_nodes_at_threshold,ci_delta_nodes_95,conclusion
+calibrated,v1_uncertainty,0.4,0.31,"[0.080, 0.565]",BENEFIT_ESTABLISHED
+calibrated,v2_verification_action,0.5,0.49,"[0.230, 0.745]",BENEFIT_ESTABLISHED
+uninformative,v1_uncertainty,0.5,0.565,"[0.300, 0.835]",BENEFIT_ESTABLISHED
+uninformative,v2_verification_action,0.7,0.55,"[0.305, 0.780]",BENEFIT_ESTABLISHED

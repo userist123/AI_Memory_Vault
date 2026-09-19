@@ -1,0 +1,5 @@
+policy,mean_nodes,ci_nodes_95,mean_fatals,ci_fatals_95,delta_fatals_vs_baseline,safety_veto_intact
+baseline,2.79,"[2.580, 3.005]",1.01,"[0.895, 1.125]",0.0,True
+advisory,2.79,"[2.580, 3.005]",1.01,"[0.895, 1.125]",0.0,True
+v1_uncertainty,2.79,"[2.580, 3.005]",1.01,"[0.895, 1.125]",0.0,True
+v2_verification_action,2.79,"[2.580, 3.005]",1.01,"[0.895, 1.125]",0.0,True
