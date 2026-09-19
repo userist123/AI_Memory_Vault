@@ -3,6 +3,10 @@ name: R009b Held-out Retrieval Benchmark
 on:
   push:
     branches:
+      # `main` is here because the full suite ran only on pull requests: after a
+      # merge nothing re-ran it, so main could be green on its narrow workflows
+      # while the zero-regression gate was failing.
+      - main
       - 'r009b/**'
   pull_request:
     branches:
