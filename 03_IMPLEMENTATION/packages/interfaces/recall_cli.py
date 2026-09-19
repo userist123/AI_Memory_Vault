@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+import time
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
@@ -15,6 +16,8 @@ if VAULT_ROOT not in sys.path:
     sys.path.insert(0, VAULT_ROOT)
 
 MIN_HMAC_SECRET_LENGTH = 32
+
+from interfaces import vault_runtime  # noqa: E402  (per-user secret + usage log, outside the repo)
 
 
 class MissingHMACSecretError(ValueError):
@@ -152,15 +155,45 @@ def search_markdown_vault(
 
 def main():
     parser = argparse.ArgumentParser(description="Cautare Securizata si Extragere Memorie din Vault (P0-P15 Gated)")
-    parser.add_argument("--query", required=True, help="Termenul sau intrebarea pentru cautare in memorie")
+    parser.add_argument("--query", help="Termenul sau intrebarea pentru cautare in memorie")
     parser.add_argument("--max", type=int, default=3, help="Numar maxim de notite returnate")
+    parser.add_argument("--init-secret", action="store_true",
+                        help="Genereaza o singura data secretul HMAC local (in afara repo-ului) si iese")
+    parser.add_argument("--force", action="store_true", help="Cu --init-secret: inlocuieste un secret existent")
     args = parser.parse_args()
 
+    if args.init_secret:
+        try:
+            path, created = vault_runtime.init_secret(force=args.force)
+        except vault_runtime.VaultSecretInvalid as e:
+            print(f"[!] {e}", file=sys.stderr)
+            sys.exit(2)
+        print(f"[*] Secret HMAC {'creat' if created else 'deja existent, neschimbat'}: {path}")
+        return
+    if not args.query:
+        parser.error("--query este obligatoriu (sau folositi --init-secret)")
+
+    # Variabila de mediu are prioritate; altfel fisierul per-utilizator. Lipsa ambelor
+    # e o problema de configurare, nu o eroare bruta: mesajul spune ce comanda sa rulezi.
     try:
-        matches = search_markdown_vault(args.query, max_results=args.max)
+        vault_runtime.ensure_secret_in_env()
+    except (vault_runtime.VaultSecretMissing, vault_runtime.VaultSecretInvalid) as e:
+        print(f"[!] {e}", file=sys.stderr)
+        sys.exit(2)
+    vault_runtime.configure_runtime_dirs()
+
+    try:
+        with vault_runtime.Timer() as timer:
+            matches = search_markdown_vault(args.query, max_results=args.max)
     except Exception as e:
-        print(f"[!] Eroare la interogarea securizata a memoriei: {e}", file=sys.stderr)
+        vault_runtime.log_usage("recall_cli", "cli", args.query, [], 0, 0.0, outcome="error")
+        print(f"[!] Eroare la interogarea securizata a memoriei: {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(1)
+    lifecycle_counts = {}
+    for m in matches:
+        lifecycle_counts[m["lifecycle"]] = lifecycle_counts.get(m["lifecycle"], 0) + 1
+    vault_runtime.log_usage("recall_cli", "cli", args.query, [m["id"] for m in matches], len(matches), timer.ms,
+                            lifecycle_counts=lifecycle_counts)
 
     if not matches:
         print(f"[*] Nu s-au gasit notite relevante in Vault pentru interogarea: '{args.query}'")
