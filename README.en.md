@@ -345,9 +345,24 @@ Arm 3 — cognitive treatment / memory-derived planner prior
 Arm 4 — stale / contradicted / neutral memory control
 ```
 
-### Current deterministic evidence
+### Current deterministic evidence — ⚠️ RETRACTED (invalid measurement)
 
-The latest local applicability-aware pilot is explicitly **runtime evidence from local reconstructed exact-source execution**, not CI proof:
+> **The pilot below is retracted. It is not a result.** The baseline ↔ treatment comparison was run with a harness that handed the answer to the baseline. The figures stay here only as a record of what was reported, not as evidence of any memory effect.
+
+**The leak.** In `07_EVALUATION/luna/planning_influence_mve.py` (at commit `a51815b88`):
+
+- line 153, `optimal=order[0]` — the optimal branch is always first in the scenario's branch list;
+- line 252, `-branches.index(candidate)` — PUCT selection breaks ties by branch position (lowest index wins).
+
+With uniform priors (the memoryless planner), every branch has exactly the same score on the first step. The positional tie-break picks index 0, which is the optimum. The baseline did not *find* the optimum: it was given it on step one, in every scenario. That is why it cost 30 nodes for 30 scenarios, the minimum possible.
+
+**Why this invalidates the comparison.** The gap to treatment (54 nodes, 12 fatal) does not measure the effect of memory. It measures that the reference arm "knew" the answer by construction, so any arm starting from a different prior can only lose to it. The `7/30` recommendation-matched-optimum finding and the explanation "wrong memory recommendations account for the treatment cost" rest on the same footing and are retracted with it.
+
+**What V3 showed about the baseline.** On the unmerged branch `antigravity/planning-influence-v3`, the V3 harness permutes the branches and breaks ties with a hash unrelated to position. There the baseline rises to roughly 2.9 nodes per scenario. An independent check of the PUCT dynamics gave 2.92. These figures come from that branch's reporting and from that check; they have not been reproduced in this repository.
+
+**V3 status.** V3 is **not validated** and **has not landed on `main`**: its report contained figures that did not match its own tables. Until a clean run exists, the question "does memory help the planner?" is unanswered on `main`.
+
+What was originally reported (kept for traceability, **retracted**):
 
 ```text
 baseline:   30/30 success · 30 nodes · 0 fatal
@@ -356,9 +371,7 @@ treatment:  30/30 success · 54 nodes · 12 fatal
 stale:      30/30 success · 30 nodes · 0 fatal
 ```
 
-The treatment arm is therefore **not yet an efficiency win**. The prior naive treatment was worse still (125 nodes / 15 fatal). The negative result is intentionally retained as falsification evidence rather than tuned away.
-
-The recommendation matched the deterministic optimum in only `7/30` scenarios in the current pilot. Wrong memory recommendations account for the observed treatment cost.
+The earlier naive treatment (125 nodes / 15 fatal) was measured with the same harness and is retracted likewise.
 
 ### Uncertainty policy
 

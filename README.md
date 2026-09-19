@@ -345,9 +345,24 @@ Brațul 3 — tratament cognitiv / prior de planificare derivat din memorie
 Brațul 4 — control cu memorie învechită / contrazisă / neutră
 ```
 
-### Dovada deterministă actuală
+### Dovada deterministă actuală — ⚠️ RETRASĂ (măsurătoare invalidă)
 
-Cel mai recent pilot local, conștient de aplicabilitate, este explicit **dovadă de execuție dintr-o rulare locală reconstruită din sursa exactă**, nu dovadă din CI:
+> **Pilotul de mai jos este retras. Nu este un rezultat.** Comparația bază ↔ tratament a fost făcută cu un harnașament care îi dădea bazei răspunsul. Cifrele rămân aici doar ca urmă a ceea ce s-a raportat, nu ca dovadă a vreunui efect al memoriei.
+
+**Mecanismul scurgerii.** În `07_EVALUATION/luna/planning_influence_mve.py` (la commit-ul `a51815b88`):
+
+- linia 153, `optimal=order[0]` — ramura optimă este mereu prima în lista de ramuri a scenariului;
+- linia 252, `-branches.index(candidate)` — selecția PUCT departajează egalitățile după poziția ramurii (indexul cel mai mic câștigă).
+
+Cu priori uniformi (planificatorul fără memorie), la primul pas toate ramurile au exact același scor. Departajarea după poziție alege indexul 0, adică tocmai optimul. Baza nu a *găsit* optimul: l-a primit din primul pas, în fiecare scenariu. De aceea a costat 30 de noduri pentru 30 de scenarii, minimul posibil.
+
+**De ce invalidează comparația.** Diferența față de tratament (54 de noduri, 12 fatale) nu măsoară efectul memoriei. Măsoară faptul că brațul de referință „știa" răspunsul din construcție, iar orice braț care pornește dintr-un prior diferit poate doar să piardă față de el. Concluzia despre `7/30` recomandări coincidente cu optimul și explicația „recomandările greșite explică costul tratamentului" stau pe aceeași bază și sunt retrase odată cu ea.
+
+**Ce a arătat V3 despre bază.** Pe ramura nemerge-uită `antigravity/planning-influence-v3`, harnașamentul V3 permută ramurile și departajează egalitățile printr-un hash, fără legătură cu poziția. Acolo baza urcă la aproximativ 2,9 noduri pe scenariu. O verificare independentă a dinamicii PUCT a dat 2,92. Cifrele acestea vin din raportarea acelei ramuri și a verificării ei; nu au fost reproduse în acest depozit.
+
+**Starea V3.** V3 **nu este validat** și **nu a intrat pe `main`**: raportul ei conținea cifre care nu corespundeau propriilor tabele. Până la o rulare curată, întrebarea „ajută memoria planificatorul?" rămâne fără răspuns pe `main`.
+
+Ce s-a raportat inițial (păstrat pentru trasabilitate, **retras**):
 
 ```text
 bază:        30/30 succes · 30 noduri · 0 fatale
@@ -356,9 +371,7 @@ tratament:   30/30 succes · 54 noduri · 12 fatale
 învechit:    30/30 succes · 30 noduri · 0 fatale
 ```
 
-Brațul de tratament **nu este, prin urmare, încă un câștig de eficiență**. Tratamentul naiv anterior era și mai prost (125 noduri / 15 fatale). Rezultatul negativ este păstrat intenționat ca dovadă de falsificare, în loc să fie ajustat până dispare.
-
-Recomandarea a coincis cu optimul determinist în doar `7/30` scenarii în pilotul curent. Recomandările greșite de memorie explică costul observat al tratamentului.
+Tratamentul naiv anterior (125 noduri / 15 fatale) a fost măsurat cu același harnașament și e retras la fel.
 
 ### Politica de incertitudine
 
