@@ -124,6 +124,12 @@ def _sanitize_untrusted(text: str, max_len: int = 300) -> str:
 SPURIOUS_ENTITIES = frozenset({
     # Dunders & python internals
     "__init__", "__file__", "__code__", "__name__", "__doc__",
+    "__future__", "__main__", "__all__", "__dict__", "__class__",
+    "__module__", "__annotations__", "__builtins__",
+    # Python standard modules & testing tokens
+    "sys", "os", "pathlib", "typing", "datetime", "subprocess",
+    "argparse", "hashlib", "collections", "itertools", "functools",
+    "unittest", "pytest",
     # Generic versions & IPs
     "1.0.0", "2.0.0", "3.0.0", "3.14.2", "9.0.2", "127.0.0",
     # Dataview query keywords
@@ -168,6 +174,30 @@ FILLER_RE = re.compile(r"^[_=.\-\s]+$")
 #: regulations together purely by their citation headers.
 DATE_LIKE_RE = re.compile(r"^\d{1,2}\.\d{1,2}\.\d{4}$|^\d{4}$")
 
+#: Version numbers, semver tags, and IP address literals (e.g. 5.0.45, 127.0.0.1, v1.2.3)
+VERSION_OR_IP_RE = re.compile(r"^v?\d+(\.\d+)+$")
+
+#: Python dunders (__future__, __main__, etc.)
+DUNDER_RE = re.compile(r"^__[a-zA-Z0-9_]+__$")
+
+
+def is_spurious_entity(e: str) -> bool:
+    """Predicate evaluating whether an entity token is spurious / boilerplate."""
+    e_low = e.lower().strip()
+    if not e_low or len(e_low) <= 2:
+        return True
+    if e_low in SPURIOUS_ENTITIES:
+        return True
+    if DUNDER_RE.match(e_low):
+        return True
+    if VERSION_OR_IP_RE.match(e_low):
+        return True
+    if DATE_LIKE_RE.match(e_low):
+        return True
+    if FILLER_RE.match(e_low):
+        return True
+    return False
+
 # Notes that are session dumps or transient agent scratchpads rather than
 # durable knowledge. Measured on the r007 sample, these accounted for 37% of
 # proposals and were judged FALSE in every case a human reviewed: takeover
@@ -190,14 +220,6 @@ RARE_ENTITY_DF_MAX = 5
 
 #: Minimum normalised overlap between two notes' entity sets, as the geometric
 #: mean of |shared|/|A| and |shared|/|B|.
-#:
-#: The pair score is a sum of IDF divided by a CONSTANT, so it never accounted
-#: for document length. Entity counts in this vault run from a median of 3 to
-#: 1079 (Master_Skills_Catalog_251), and that one note appeared in 7 of 25
-#: sampled proposals, judged wrong in 6: a note listing a thousand entities
-#: shares some with everything. Six shared entities mean something different
-#: for a 20-entity note than for a 1000-entity catalogue, and the geometric
-#: mean separates the two — 0.30 versus 0.04 in that exact case.
 MIN_OVERLAP_COVERAGE = 0.10
 
 
@@ -217,11 +239,9 @@ def build_entity_df(index: VaultIndex) -> Tuple[Dict[str, set], Counter]:
     df: Counter = Counter()
     for note in index.notes:
         ents = {
-            e.lower()
+            e.lower().strip()
             for e in (entities(note.text) | set(note.tags))
-            if e.lower() not in SPURIOUS_ENTITIES and len(e) > 2
-            and not DATE_LIKE_RE.match(e)
-            and not FILLER_RE.match(e)
+            if not is_spurious_entity(e)
         }
         ent_by_note[note.id] = ents
         df.update(ents)
@@ -248,26 +268,28 @@ def _weight_for(relation: str, confidence: float) -> float:
     return round(base, 4)
 
 
-def extract_evidence_quote(text: str, target_entities: Iterable[str], max_len: int = 240) -> str:
-    """Finds an exact representative sentence from text containing one of the target entities."""
+def extract_evidence_quote(text: str, target_entities: Iterable[str], max_len: int = 300) -> str:
+    """Finds an exact verbatim sentence from text containing at least one target entity.
+    Returns empty string if no qualifying sentence containing a target entity is found.
+    The returned quote is guaranteed to be a verbatim substring of text."""
     if not text:
         return ""
     sentences = re.split(r"(?<=[.!?\n])\s+", text)
     ent_lower = [e.lower() for e in target_entities if len(e) >= 3]
+    if not ent_lower:
+        return ""
     for s in sentences:
         s_clean = s.strip()
         if not s_clean or len(s_clean) < 15:
             continue
         s_low = s_clean.lower()
         if any(e in s_low for e in ent_lower):
-            if len(s_clean) > max_len:
-                return s_clean[:max_len - 3] + "..."
-            return s_clean
-    for s in sentences:
-        s_clean = s.strip()
-        if len(s_clean) >= 20:
-            return s_clean[:max_len - 3] + "..." if len(s_clean) > max_len else s_clean
-    return text[:max_len].strip()
+            if s_clean in text:
+                return s_clean
+            idx = text.find(s_clean)
+            if idx != -1:
+                return text[idx:idx + len(s_clean)]
+    return ""
 
 
 def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str, str]:
