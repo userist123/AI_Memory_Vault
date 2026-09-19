@@ -1,0 +1,1046 @@
+{
+  "client": "claude-sonnet-mcp-sdk-driver",
+  "limit": 5,
+  "results": [
+    {
+      "id": 1,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "enumerate and remove remaining tracked files under 06_INBOX/RAW_IMPORTS",
+      "question": "Cum se elimină fișierele urmărite din 06_INBOX/RAW_IMPORTS și ce reguli protejează inbox-ul brut?",
+      "returned": [
+        {
+          "id": "moc-home-0001",
+          "title": "🌐 Obsidian Knowledge Graph Home",
+          "path": "01_ARCHITECTURE/graphs/Knowledge Graph Home.md",
+          "type": "moc",
+          "lifecycle": "ACTIVE",
+          "verification": "verified",
+          "score": 0.027565
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.02692
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026256
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.025774
+        },
+        {
+          "id": "proc-browser-ai-0001",
+          "title": "🌐 Runbook Canonic: Sincronizarea și Conectarea Agenților AI din Browser",
+          "path": "10_DOCUMENTATION/procedures/Browser_AI_Agent_Integration_Runbook.md",
+          "type": "procedure",
+          "lifecycle": "ACTIVE",
+          "verification": "verified",
+          "score": 0.025665
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "inspect and harden workflow paths affected by the inbox change",
+      "question": "Ce workflow-uri GitHub Actions depind de 06_INBOX sau de căile din depozit și cum se întăresc?",
+      "returned": [
+        {
+          "id": "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+          "title": "Windows Hardening & Debloat Scripts Ecosystem (PowerShell)",
+          "path": "01_ARCHITECTURE/knowledge/Windows_Hardening_Scripts_Ecosystem.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.02785
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026893
+        },
+        {
+          "id": "idx-leg-eu-gdpr-2016-679",
+          "title": "Index Structurat: Regulamentul (UE) 2016/679 (GDPR)",
+          "path": "01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_index",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026827
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026783
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026399
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "create the 00-99 structural migration inventory before moving production code",
+      "question": "Structura folderelor 00-99 a depozitului: inventarul de migrare și contractele fiecărui folder",
+      "returned": [
+        {
+          "id": "leg-ro-mapn-m172-2021",
+          "title": "Ordinul Ministrului Apărării Naționale nr. M.17...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Ordinul_M172_2021.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028988
+        },
+        {
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.025561
+        },
+        {
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "path": "01_ARCHITECTURE/memory/policy-lesson_00ac0842.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.023451
+        },
+        {
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00ad356a.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.023138
+        },
+        {
+          "id": "00c46560-b27b-4e96-ae81-8f0b637920ad",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00c46560.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.022834
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "run exact MVE and hygiene tests on the latest main source",
+      "question": "Cum se rulează testele de igienă ale depozitului și ce verifică repository_hygiene",
+      "returned": [
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028893
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028083
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028055
+        },
+        {
+          "id": "leg-eu-aiact-2024-1689",
+          "title": "Regulamentul (UE) 2024/1689 de Stabilire a Unor...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2024_1689_AI_Act.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027994
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027933
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "external credential rotation/revocation is outside repository access and still lacks owner evidence",
+      "question": "Politica de secrete: scanarea cu gitleaks și rotirea credențialelor compromise",
+      "returned": [
+        {
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.029032
+        },
+        {
+          "id": "leg-ro-mapn-m172-2021",
+          "title": "Ordinul Ministrului Apărării Naționale nr. M.17...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Ordinul_M172_2021.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028499
+        },
+        {
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "path": "01_ARCHITECTURE/memory/policy-lesson_00ac0842.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.026032
+        },
+        {
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00ad356a.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.025658
+        },
+        {
+          "id": "00c46560-b27b-4e96-ae81-8f0b637920ad",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00c46560.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.025295
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "source_file": "00_GOVERNANCE/coordination/agents/CLAUDE_SONNET/CURRENT.md",
+      "source_quote": "owner decision needed before WP-6 can start",
+      "question": "Ce înseamnă ca o muchie propusă de edge proposer să intre în lifecycle REVIEW și cum se promovează în SynapseStore?",
+      "returned": [
+        {
+          "id": "a6cd6aa4-910a-462b-8659-341a183536a8",
+          "title": "Recording a solved problem so the next agent can reuse the method",
+          "path": "10_DOCUMENTATION/procedures/Recording_A_Solved_Problem.md",
+          "type": "procedure",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.027821
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.022845
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.022832
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.022771
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.022428
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "source_file": "00_GOVERNANCE/coordination/agents/CLAUDE_SONNET/CURRENT.md",
+      "source_quote": "re-run R016 graph arms",
+      "question": "Măsurătoarea R016 graph on versus graph off cu run_production_arms și expansiunea grafului",
+      "returned": [
+        {
+          "id": "llm-antihallucination-techniques",
+          "title": "LLM Anti-Hallucination Techniques (2024-2026 Research Synthesis)",
+          "path": "01_ARCHITECTURE/knowledge/LLM_Antihallucination_Techniques_Research.md",
+          "type": "knowledge",
+          "lifecycle": "raw",
+          "verification": "unverified",
+          "score": 0.026212
+        },
+        {
+          "id": "romania-classified-information-digital-security-reform",
+          "title": "Romanian Classified-Information Digital Security Reform — Research Summary",
+          "path": "01_ARCHITECTURE/knowledge/Romania_Classified_Information_Digital_Security_Reform.md",
+          "type": "knowledge",
+          "lifecycle": "raw",
+          "verification": "unverified",
+          "score": 0.025561
+        },
+        {
+          "id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+          "title": "Multi-Agent Pipeline Architecture",
+          "path": "01_ARCHITECTURE/knowledge/Multi_Agent_Pipeline_Architecture.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.025098
+        },
+        {
+          "id": "04e86b85-4346-4c5f-a495-c5a43231b61e",
+          "title": "test",
+          "path": "10_DOCUMENTATION/procedures/test_04e86b85.md",
+          "type": "procedure",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.021289
+        },
+        {
+          "id": "jarvis-cognitive-fortress-pattern",
+          "title": "JARVIS Cognitive Fortress — Autonomous Agent Prompt Pattern",
+          "path": "01_ARCHITECTURE/knowledge/JARVIS_Cognitive_Fortress_Prompt_Pattern.md",
+          "type": "knowledge",
+          "lifecycle": "raw",
+          "verification": "unverified",
+          "score": 0.020928
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "source_file": "00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md",
+      "source_quote": "run real tests/runtime evidence and commit directly to main",
+      "question": "Ce dovezi de rulare reală sunt cerute înainte ca o sarcină să fie declarată terminată?",
+      "returned": [
+        {
+          "id": "leg-eu-aiact-2024-1689",
+          "title": "Regulamentul (UE) 2024/1689 de Stabilire a Unor...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2024_1689_AI_Act.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028069
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027885
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027746
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027459
+        },
+        {
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.025679
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "source_file": "00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md",
+      "source_quote": "do not claim causality from non-causal benchmarks",
+      "question": "Benchmark-uri cauzale față de necauzale pentru memoria agentică: ce se poate afirma",
+      "returned": [
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028373
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027506
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027459
+        },
+        {
+          "id": "leg-eu-aiact-2024-1689",
+          "title": "Regulamentul (UE) 2024/1689 de Stabilire a Unor...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2024_1689_AI_Act.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026646
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026587
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/NEXT_TASK.md",
+      "source_quote": "occurrences",
+      "question": "Cum se calculează occurrences la extragerea conceptelor din cărți, pe secțiuni distincte",
+      "returned": [
+        {
+          "id": "cat-skills-251-master",
+          "title": "📦 Catalog Canonic: Skills reale din `.agents/sk...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/Master_Skills_Catalog_251.md",
+          "type": "knowledge",
+          "lifecycle": "ACTIVE",
+          "verification": "verified",
+          "score": 0.019365
+        },
+        {
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "path": "01_ARCHITECTURE/memory/policy-lesson_00ac0842.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.019114
+        },
+        {
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00ad356a.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.018871
+        },
+        {
+          "id": "00c46560-b27b-4e96-ae81-8f0b637920ad",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00c46560.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.018635
+        },
+        {
+          "id": "01948766-0019-45b6-bbd6-c3df9020feae",
+          "title": "policy-lesson",
+          "path": "01_ARCHITECTURE/memory/policy-lesson_01948766.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.018405
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/NEXT_TASK.md",
+      "source_quote": "verify_agent_submission.py",
+      "question": "Verificatorul pentru extragerea conceptelor: dovadă verbatim, definiții copiate, low_prose",
+      "returned": [
+        {
+          "id": "idx-leg-eu-mica-2023-1114",
+          "title": "Index Structurat: Regulamentul (UE) 2023/1114 (MiCA)",
+          "path": "01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_index",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028323
+        },
+        {
+          "id": "idx-leg-ro-hg-585-2002",
+          "title": "Index Structurat: Hotărârea Guvernului nr. 585/2002 (Standardele Naționale)",
+          "path": "01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_HG_585_2002.md",
+          "type": "legal_index",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027652
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.025274
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.025127
+        },
+        {
+          "id": "knw-leg-l153-2017-0001",
+          "title": "Legea-cadru nr. 153/2017 privind Salarizarea Personalului Plătit din Fonduri Publice",
+          "path": "01_ARCHITECTURE/knowledge/Legislatie_Legea_Cadru_153_2017_Salarizare_Publica.md",
+          "type": "knowledge",
+          "lifecycle": "NORMALIZED",
+          "verification": "unverified",
+          "score": 0.024951
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Repository-wide write-path inventory",
+      "question": "Inventarul căilor de scriere din depozit și granițele de încredere ale controlerului de memorie",
+      "returned": [
+        {
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00ad356a.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.020046
+        },
+        {
+          "id": "04e86b85-4346-4c5f-a495-c5a43231b61e",
+          "title": "test",
+          "path": "10_DOCUMENTATION/procedures/test_04e86b85.md",
+          "type": "procedure",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.01996
+        },
+        {
+          "id": "00c46560-b27b-4e96-ae81-8f0b637920ad",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00c46560.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.019791
+        },
+        {
+          "id": "04a60639-b8f3-4d37-a1bc-ad7ca536a4b2",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_04a60639.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.017709
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.017329
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Proposal lifecycle boundary is not yet fully uniform",
+      "question": "Limita lifecycle la propunerea de note de către principalul AI_AGENT: ce stări de creare sunt permise",
+      "returned": [
+        {
+          "id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+          "title": "Lesson: Trust Boundary Hardening Requires a Dedicated Attest Path, Not Field Overlay Sanitization",
+          "path": "01_ARCHITECTURE/memory/Lessons/Trust_Boundary_Hardening_Requires_Attest_Not_Overlay.md",
+          "type": "lesson",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.029297
+        },
+        {
+          "id": "idx-leg-eu-gdpr-2016-679",
+          "title": "Index Structurat: Regulamentul (UE) 2016/679 (GDPR)",
+          "path": "01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_index",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028827
+        },
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027692
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027565
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026916
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Read-path lifecycle/verification semantics need end-to-end validation",
+      "question": "Care note poate citi un agent: ACTIVE, REVIEW, semantica verification pe calea de citire",
+      "returned": [
+        {
+          "id": "a6cd6aa4-910a-462b-8659-341a183536a8",
+          "title": "Recording a solved problem so the next agent can reuse the method",
+          "path": "10_DOCUMENTATION/procedures/Recording_A_Solved_Problem.md",
+          "type": "procedure",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.02874
+        },
+        {
+          "id": "atm-l190-art4-cnp-garantii",
+          "title": "Notă Derivată Atomică: Garanții Tehnice la Prelucrarea Numărului de Identificare Național (CNP)",
+          "path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_L190_Art4_Garantii_Prelucrare_CNP.md",
+          "type": "legal_atomic_obligation",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.025052
+        },
+        {
+          "id": "atm-l153-anexavi-spor-clasificate",
+          "title": "Notă Derivată Atomică: Drepturi Salariale și Compensarea Gestionării Informațiilor Clasificate",
+          "path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_L153_AnexaVI_Spor_Informatii_Clasificate.md",
+          "type": "legal_atomic_obligation",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.024962
+        },
+        {
+          "id": "atm-m172-art51-evidenta-electronica",
+          "title": "Notă Derivată Atomică: Ținerea Registrelor de Evidență în Format Electronic Omologat",
+          "path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_M172_Art51_Evidenta_Electronica_Omologata.md",
+          "type": "legal_atomic_obligation",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.024751
+        },
+        {
+          "id": "atm-m172-art193-199-medii-stocare",
+          "title": "Notă Derivată Atomică: Evidența Mediilor Fizice de Stocare și Marcarea cu Seria Hardware Unică",
+          "path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_M172_Art193_199_Hardware_Serial_Medii_Stocare.md",
+          "type": "legal_atomic_obligation",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.023116
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Final CI evidence is still pending",
+      "question": "Ce dovezi CI sunt cerute și cum se raportează rezultatele testelor fără să se inventeze execuții",
+      "returned": [
+        {
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Legea_190_2018.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028055
+        },
+        {
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2022_2554_DORA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027822
+        },
+        {
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2016_679_GDPR.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027746
+        },
+        {
+          "id": "leg-eu-aiact-2024-1689",
+          "title": "Regulamentul (UE) 2024/1689 de Stabilire a Unor...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2024_1689_AI_Act.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.027088
+        },
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026984
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/P5_SEARCH_INTEGRATION_REPORT.md",
+      "source_quote": "Retrieval Bypasses",
+      "question": "Ocolirile căutării de producție: motorul financiar, interogarea de admin și adaptorul intern",
+      "returned": [
+        {
+          "id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+          "title": "Lesson: Trust Boundary Hardening Requires a Dedicated Attest Path, Not Field Overlay Sanitization",
+          "path": "01_ARCHITECTURE/memory/Lessons/Trust_Boundary_Hardening_Requires_Attest_Not_Overlay.md",
+          "type": "lesson",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.023753
+        },
+        {
+          "id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+          "title": "Multi-Agent Pipeline Architecture",
+          "path": "01_ARCHITECTURE/knowledge/Multi_Agent_Pipeline_Architecture.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.022519
+        },
+        {
+          "id": "moc-master-brain-0001",
+          "title": "🧠 Sinteza Canonică: Creierul Cognitiv AI Perfect (v5.0.0 Architecture)",
+          "path": "01_ARCHITECTURE/graphs/Master_Cognitive_Brain_Synthesis.md",
+          "type": "moc",
+          "lifecycle": "ACTIVE",
+          "verification": "verified",
+          "score": 0.022407
+        },
+        {
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.019257
+        },
+        {
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "path": "01_ARCHITECTURE/memory/policy-lesson_00ac0842.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.018443
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "source_file": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "source_quote": "Anti-laundering",
+      "question": "Anti-laundering pentru proveniență: source_reviewed și source_sha256 pe notele din RAW",
+      "returned": []
+    },
+    {
+      "id": 18,
+      "source_file": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "source_quote": "Baseline BM25/grep",
+      "question": "Baseline BM25 și evaluarea retrieval pe benchmark-ul held-out",
+      "returned": [
+        {
+          "id": "knw-retrieval-bottleneck-p0-0001",
+          "title": "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification",
+          "path": "01_ARCHITECTURE/knowledge/Retrieval_Bottleneck_P0_Empirical_Findings.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.027988
+        },
+        {
+          "id": "reg-retrieval-hypotheses-0001",
+          "title": "Retrieval Hypothesis Registry",
+          "path": "01_ARCHITECTURE/knowledge/Retrieval_Hypothesis_Registry.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.027813
+        },
+        {
+          "id": "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+          "title": "retrieval",
+          "path": "01_ARCHITECTURE/knowledge/Promoted_retrieval.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "unverified",
+          "score": 0.026813
+        },
+        {
+          "id": "multi-agent-execution-protocol-v1",
+          "title": "AI Memory Vault — Multi-Agent Execution Protocol V1",
+          "path": "00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md",
+          "type": "core",
+          "lifecycle": null,
+          "verification": null,
+          "score": 0.025278
+        },
+        {
+          "id": "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+          "title": "System Architecture",
+          "path": "01_ARCHITECTURE/System_Architecture.md",
+          "type": "core",
+          "lifecycle": null,
+          "verification": null,
+          "score": 0.024779
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "source_file": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "source_quote": "DEAD_OR_ORPHAN",
+      "question": "Module orfane sau neconectate la producție: regula grep pentru consumatori de producție",
+      "returned": [
+        {
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.02589
+        },
+        {
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "path": "01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md",
+          "type": "legal_source",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.021311
+        },
+        {
+          "id": "276d1940-c948-4feb-902f-bd6c74958594",
+          "title": "~/.claude/CLAUDE.md",
+          "path": "01_ARCHITECTURE/knowledge/Global_Claude_Code_Profile.md",
+          "type": "knowledge",
+          "lifecycle": "REVIEW",
+          "verification": "inferred",
+          "score": 0.01925
+        },
+        {
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "path": "01_ARCHITECTURE/memory/policy-lesson_00ac0842.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.0178
+        },
+        {
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "path": "01_ARCHITECTURE/memory/test_00ad356a.md",
+          "type": "lesson",
+          "lifecycle": "ARCHIVED",
+          "verification": "unverified",
+          "score": 0.017576
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/ADR_DRAFT_lifecycle_transition.md",
+      "source_quote": "Decision Options for Codex",
+      "question": "Tranziția REVIEW la ACTIVE față de REVIEW la VERIFIED la ACTIVE: decizia de arhitectură",
+      "returned": [
+        {
+          "id": "idx-leg-eu-aiact-2024-1689",
+          "title": "Index Structurat: Regulamentul (UE) 2024/1689 (AI Act)",
+          "path": "01_ARCHITECTURE/knowledge/legal/legal_indexes/Index_Regulament_UE_2024_1689_AI_Act.md",
+          "type": "legal_index",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.028571
+        },
+        {
+          "id": "proc-brain-arch-0001",
+          "title": "🧠 Specificație Canonică: Arhitectura Cognitivă Bio-Inspirată (v4.5.0 Brain Core)",
+          "path": "10_DOCUMENTATION/procedures/Cognitive_Brain_Architecture_Specification.md",
+          "type": "procedure",
+          "lifecycle": "ACTIVE",
+          "verification": "verified",
+          "score": 0.027746
+        },
+        {
+          "id": "atm-aiact-art14-human-oversight",
+          "title": "Notă Derivată Atomică: Supravegherea Umană (Human-in-the-Loop & Kill-Switch) a Sistemelor de IA",
+          "path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_AIACT_Art14_Supraveghere_Umana.md",
+          "type": "legal_atomic_obligation",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026993
+        },
+        {
+          "id": "atm-aiact-art12-logging",
+          "title": "Notă Derivată Atomică: Jurnalizarea Automată a Evenimentelor (Audit Trail & Logging) pentru Sisteme de IA",
+          "path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_AIACT_Art12_Inregistrare_Automata_Evenimente.md",
+          "type": "legal_atomic_obligation",
+          "lifecycle": "REVIEW",
+          "verification": "verified_source",
+          "score": 0.026988
+        },
+        {
+          "id": "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+          "title": "Import Sanitization",
+          "path": "10_DOCUMENTATION/procedures/Import_Sanitization.md",
+          "type": "procedure",
+          "lifecycle": "ACTIVE",
+          "verification": "partially_verified",
+          "score": 0.025773
+        }
+      ]
+    }
+  ],
+  "gets": [
+    {
+      "question_id": 1,
+      "id": "moc-home-0001",
+      "title": "🌐 Obsidian Knowledge Graph Home",
+      "lifecycle": "ACTIVE",
+      "unverified": false,
+      "content_chars": 1093
+    },
+    {
+      "question_id": 2,
+      "id": "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+      "title": "Windows Hardening & Debloat Scripts Ecosystem (PowerShell)",
+      "lifecycle": "REVIEW",
+      "unverified": true,
+      "content_chars": 1288
+    },
+    {
+      "question_id": 3,
+      "id": "leg-ro-mapn-m172-2021",
+      "title": "Ordinul Ministrului Apărării Naționale nr. M.17...[PARTIAL]",
+      "lifecycle": "REVIEW",
+      "unverified": true,
+      "content_chars": 62
+    }
+  ]
+}

@@ -83,11 +83,22 @@ whole-corpus retrieval numbers.
 
 ## 5. Known open defects
 
-- **The write path was never migrated.** `storage/path_resolver.py` still sends
-  a `knowledge` note to `01_KNOWLEDGE` while the corpus lives in
-  `01_ARCHITECTURE`. New notes land in the legacy tree. Existing notes are
-  pinned in place so an update cannot relocate them (`db08b847`), but the
-  taxonomy split is unresolved and is an architecture decision, not a constant.
+- **The write path is migrated for six types, not for the rest.** New notes of type
+  `knowledge`, `lesson`, `error`, `preference`, `procedure` and `project` now go where the
+  existing notes of that type already are (`01_ARCHITECTURE/knowledge`, `01_ARCHITECTURE/memory`,
+  `10_DOCUMENTATION/procedures`, `02_PRODUCT/projects`), when the vault has that folder
+  (`storage/path_resolver.py`, `CONTENT_TREE_FOR_TYPE`). Other types still go to the legacy tree, and
+  an existing note in the legacy tree keeps its legacy destination on update; existing notes in the
+  content roots stay pinned in place (`db08b847`). Nothing has been moved: the legacy folders are not
+  migrated, only new writes are redirected.
+- **The memory is reachable by agents, but only just, and the results are weak.** `.mcp.json` registers
+  the MCP server `vault-memory` (`interfaces/memory_mcp_server.py`: `memory_search`, `memory_get`,
+  `memory_propose`); `python -m cognitive_core.recall_cli` is the CLI fallback. There is no REST
+  server at `localhost:8000`. Claude Code 2.1.277 loaded the registration and connected, but no
+  Claude Code model turn has used it yet (the standalone CLI was not logged in). 20 real work
+  questions from `00_GOVERNANCE/coordination/` were put through the server: 5 of the 57 first-three
+  results were relevant, and none of the 8 coordination files behind them is an indexed note. Evidence
+  and the computed report: `07_EVALUATION/memory_usage/`.
 - **`FileStorageEngine` hard-fails on duplicate UUIDs.** That is deliberate
   integrity behaviour, and stays that way — the legacy/content root union
   still makes collisions possible in general. The specific recurring instance
