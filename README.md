@@ -28,20 +28,23 @@ Un substrat de memorie externă persistentă pentru agenți AI: memorie cu prove
 |---|---|---|
 | Vault canonic | memorie în Markdown, cunoștințe, competențe, agenți, proceduri, proveniență | **IMPLEMENTAT** |
 | Memory V6 | extragere, propuneri, detectare de conflicte, ciclu de viață, consolidare, întreținerea regăsirii | **IMPLEMENTAT / ACTIV** |
-| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT / PARȚIAL** |
+| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT ȘI TESTAT — NECONECTAT LA CĂUTAREA DIN PRODUCȚIE** (activarea prin difuzie e în spatele unui flag oprit; `executive` și spațiul global de lucru nu au niciun consumator în producție) |
 | Memory Controller | granița de stocare, politica de citire/scriere, pachete de context, dezvăluire progresivă, control pe ciclu de viață | **IMPLEMENTAT** |
 | Execuția modelelor | abstracții de furnizor fake, local/Ollama, OpenAI, rutare pe niveluri, telemetrie de consum | **IMPLEMENTAT** |
 | Ingestia de competențe externe | descoperire, proveniență, clasificare, validare, promovare controlată | **IMPLEMENTAT** |
 | Conversie carte → text | segmentare după cuprins / tipografie / pagini, detectare OCR, metrici per carte | **IMPLEMENTAT** |
 | Extragerea conceptelor din cărți | asistată de model, cu porți de ancorare, parafrază, formă și schemă | **IMPLEMENTAT / PORȚI DEMONSTRATE** |
 | *Selectivitatea* conceptelor | a distinge un concept portant de mobilierul experimental | **MĂSURAT, NEREZOLVAT** |
-| Poarta de promovare în ontologie | un merge trebuie să consulte un manifest de verdicte; rândurile nejudecate sunt reținute și numărate | **IMPLEMENTAT** |
-| Dispoziția rândurilor | fiecare dintre cele 213 rânduri de slot are o decizie și un temei | **DECIS, NEEXECUTAT** |
+| Curriculum din cărți | ingestie cu citate verificate, apoi benchmark control ↔ tratament pe întrebări scrise de autorii cărții | **PRIMUL TRANSFER DEMONSTRAT — UN SINGUR CAPITOL** |
+| Poarta de promovare în ontologie | fără manifest de verdicte, scrierea în sloturile ontologiei e refuzată (merge și promovare); rândurile nejudecate sunt reținute și numărate | **IMPLEMENTAT / OBLIGATORIU** |
+| Dispoziția rândurilor | 213 rânduri de slot, fiecare cu o decizie și un temei; au rămas 93 | **EXECUTAT — 7 RÂNDURI AȘTEAPTĂ DECIZIA PROPRIETARULUI** |
+| Expansiunea prin graf | 521 de sinapse, activare prin difuzie, buget de noduri noi pe interogare | **PRACTIC OPRITĂ LA BUGETUL IMPLICIT — DECIZIE ÎN AȘTEPTARE** |
+| Garda de date personale | CNP, IBAN și carduri validate, nume de documente personale; raportează calea, nu valoarea | **IMPLEMENTAT / ÎN CI** |
 | Predicție Polymarket | instantanee, consiliu, calibrare, avantaj față de piață, abstenție, dimensionare Kelly, backtest, ablație, contract temporal | **IMPLEMENTAT / NEVALIDAT PE DATE REALE** |
 | Proveniența rezoluțiilor Polymarket | momentul în care un rezultat a devenit cognoscibil | **STABILIT CA INDISPONIBIL** |
 | Memoria persistentă a agenților | stare reluabilă `CURRENT.md` în `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTAT** |
-| Planning Influence | MVE determinist izolat, cu patru brațe și priori slabi | **EXPERIMENTAL** |
-| Politica de incertitudine | contract de aplicabilitate + forța dovezii + contradicție + cost de verificare | **PROIECTAT / PREÎNREGISTRAT** |
+| Planning Influence | simulare V3 fără scurgere de oracol, veto de contradicție cu prioritate absolută, reper al bazei derivat prin simulare | **VALIDAT CA SIMULARE — NU CA AGENT REAL** |
+| Politica de incertitudine | contract de aplicabilitate + forța dovezii + contradicție + cost de verificare | **MĂSURAT ÎN SIMULAREA V3** |
 | Influență cognitivă susținută de model | MVE cauzal pereche pe execuție reală de model | **ÎNCĂ NEDEMONSTRAT** |
 | Învățare continuă complet închisă | bucla rezultat → dovadă → învățare → mutație canonică | **PARȚIAL / DESCHIS** |
 
@@ -521,8 +524,41 @@ rânduri din staging → manifest de verdicte → poartă → fișiere de slot
 `30_SCRIPTS/ingestion/slot_rows.py` este singurul cititor al acelor fișiere și **aruncă o eroare la un status pe care niciun tool nu îl declară**. Zece rânduri cu `unverified_source` au stat nevăzute cinci zile pentru că fiecare audit filtra pe cele două statusuri pe care le știa toată lumea, iar mai multe instrumente independente au dat 203 față de 213 reale — nu dintr-un bug comun, ci dintr-o presupunere comună.
 
 Dispoziția tuturor celor 213 rânduri se află în
-[`07_EVALUATION/book_corpus_conversion/`](07_EVALUATION/book_corpus_conversion/).
-Executarea ei este o decizie umană și nu a fost luată.
+[`07_EVALUATION/book_corpus_conversion/`](07_EVALUATION/book_corpus_conversion/)
+și **a fost executată**: au rămas 93 de rânduri, iar cele 43 de concepte deja promovate au rămas neatinse. Șapte rânduri — șase nedecise și `familiarity`, care ascunde două concepte sub același cuvânt — așteaptă o decizie a proprietarului și nu sunt atinse de niciun script.
+
+### Poarta a devenit obligatorie
+
+Manifestul a fost introdus opțional, ca apelurile existente să nu se strice — ceea ce însemna că poarta ținea doar pentru cine alegea s-o folosească. O parte din săptămână, parametrul nici nu a existat pe `main`: o ramură veche, merge-uită peste cod mai nou, îl ștersese, iar niciun test nu a picat, pentru că nimic nu îl cerea.
+
+Acum o scriere în sloturile canonice **fără manifest este refuzată** cu `UngatedCanonicalWrite`, înainte de prima scriere, atât la merge (`merge_candidate_concepts.py`), cât și la promovare (`promote_candidate_concept.py`). Orice alt director rămâne permis: așa se face o rulare de probă pe o copie a sloturilor.
+
+Inventarul tuturor căilor de scriere în sloturi, cu poarta fiecăreia, e generat în
+[`07_EVALUATION/ontology_write_paths/WRITE_PATHS.md`](07_EVALUATION/ontology_write_paths/WRITE_PATHS.md),
+iar un test pică la orice scriitor nou care nu e pe listă. O cale rămâne deschisă și e marcată ca atare acolo: `purge_rejected_rows.py --apply` poate șterge rânduri fără manifest.
+
+---
+
+# 📚 Curriculum din cărți
+
+O carte nu devine cunoaștere pentru că a fost citită. Devine cunoaștere dacă, după ingestie, vault-ul poate răspunde la întrebări la care înainte nu putea — iar întrebările nu le-a scris cine a extras notele.
+
+```text
+sursă cu licență verificabilă → text + hash → extragere cu citate verificate → REVIEW
+        → întrebări înghețate înainte de extragere → control ↔ tratament → rezultat
+```
+
+Primul capitol trecut prin tot lanțul: OpenStax *Psychology 2e*, capitolul 8 („Memory"), licență CC BY 4.0. Întrebările sunt cele de recapitulare ale autorilor cărții, cu cheia lor de răspuns, înghețate într-un commit anterior extragerii. Capcanele au răspunsul absent din capitol și nicio variantă care să indice ieșirea. Un cititor-model primește doar notele recuperate de vault și trebuie să răspundă cu o variantă **plus o propoziție citată textual dintr-o notă**, sau `INSUFFICIENT`.
+
+| Braț | Întrebări susținute | Abțineri la capcane | Răspunsuri greșite |
+|---|---|---|---|
+| control — fără notele capitolului | 0/12 | 10/10 | 0/12 |
+| tratament — cu notele în `REVIEW` | 6/12 | 10/10 | 0/12 |
+
+Raportul complet, cu tabel pe întrebare, se află în
+[`07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md`](07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md).
+
+Limitele sunt parte din rezultat: un singur capitol, 12 întrebări, deci o diferență de una-două întrebări ar fi zgomot. Notele rămân `REVIEW` până le atestă proprietarul. Trei cifre raportate anterior pentru același capitol („7/12", „5/5 abțineri", „audit 50/50") au fost **retrase**, iar secțiunea DEVIATIONS a raportului spune de ce: extragere țintită pe întrebări, capcane judecate după un șir care nu putea apărea, un auto-audit.
 
 ---
 
@@ -542,6 +578,13 @@ Prin urmare, `SOURCE_ONCHAIN_SETTLEMENT` este inaccesibil fără un nod Polygon 
 
 **Niciun rezultat de predicție de aici nu a fost validat împotriva unor rezultate reale de piață.** Capturile sunt ștanțate cu proveniență — URL, marcă temporală UTC, cod HTTP, număr de înregistrări și SHA-256 — și nimic nu este curățat sau reordonat.
 
+### Câte observații sunt de fapt
+
+Setul extins are 483 de piețe, dar **doar 63 de rezultate independente**: un meci de fotbal american dă 56 de piețe, o zi de Bitcoin 117, și toate se rezolvă împreună. Un interval de încredere calculat pe 483 ar pretinde de aproape opt ori mai multă informație decât există. După corectarea dependenței, intervalul devine prea larg ca să susțină un avantaj exploatabil
+([`ANTIGRAVITY_RESEARCH_PROGRAM_V1.md`](07_EVALUATION/polymarket/ANTIGRAVITY_RESEARCH_PROGRAM_V1.md)).
+
+În România, Polymarket și Kalshi figurează pe lista ONJN a operatorilor neautorizați. Pachetul rămâne exclusiv cercetare: nicio tranzacție cu bani reali.
+
 ---
 
 # 🔐 Securitate și siguranță epistemică
@@ -559,27 +602,29 @@ Principii fundamentale:
 - memoria contradictorie nu trebuie să câștige mai multă influență doar pentru că este contradictorie.
 - controalele de benchmark nu trebuie să depindă în tăcere de cunoașterea oracolului.
 
+Depozitul este public, așa că datele personale au propria poartă, separată de scanarea de secrete: `30_SCRIPTS/verification/personal_data_guard.py` refuză documentele numite după ce sunt (factură, extras de cont, buletin…) și conținutul cu un CNP, un IBAN românesc sau un număr de card **validate** (cifră de control, mod-97, Luhn). Raportează calea, regula și numărul de apariții — niciodată valoarea — și rulează în CI.
+
 Depozitul conține și material de securitate și forensic despre granițele de încredere ale memoriei, igiena corpusurilor externe, constatările Defender și liniile de bază de curățare la nivel de depozit.
 
 ---
 
 # 🛡️ CI / automatizare
 
-Suprafețele actuale de workflow includ:
+Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce verifică:
 
-```text
-.github/workflows/
-├── memory-v6-tests.yml
-├── planning-influence-mve.yml
-├── memory-consolidation.yml
-├── regenerate-skill-catalog.yml
-├── import-external-skills.yml
-├── process-raw-books.yml
-├── codeql.yml
-├── fortify.yml
-├── apisec-scan.yml
-└── jarvis-command-center.yml
-```
+| Ce verifică | Workflow-uri |
+|---|---|
+| suita completă de teste și structura depozitului | `r001-enforcement.yml`, `memory-v6-tests.yml` |
+| igiena depozitului: căi absolute, fișiere nepermise în rădăcină, date personale | `repository-hygiene.yml` |
+| regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
+| căile de scriere ale runtime-ului | `write-path-audit.yml` |
+| securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
+| cercetare: Planning Influence V3 și fazele Polymarket | `planning-influence-mve.yml`, `polymarket-phase*.yml` (câte unul pe fază) |
+| rulări programate și ingestie | `memory-consolidation.yml` (consolidarea de noapte), `import-external-skills.yml`, `jarvis-command-center.yml` |
+
+Un test (`20_TESTS/test_readme_references.py`) pică dacă README-ul numește un workflow sau o cale care nu există — lista de dinainte rămăsese în urmă cu 22 de fișiere și cita două workflow-uri șterse.
+
+Consolidarea de noapte a picat zilnic după reorganizare: întâi apela un modul mutat, apoi nu își instala dependențele. Nimeni nu a observat, pentru că testele rulau într-un mediu care le avea. Acum un test verifică faptul că fiecare workflow care rulează cod din depozit își instalează dependențele înainte.
 
 Proiectul distinge **verificarea în CI** de execuția locală. Un workflow în așteptare nu este o trecere. O rulare locală nu este promovată în tăcere la dovadă din CI.
 
@@ -610,14 +655,15 @@ Rapoartele, capturile de ecran, textul din README și rezumatele agenților nu a
 Secțiunea aceasta nu este o slăbiciune a README-ului. Face parte din contractul proiectului.
 
 1. Regăsirea implicită se sprijină încă substanțial pe comportament determinist lexical, de suprapunere de tokeni; generarea semantică de candidați nu este cablată universal în calea implicită `MemoryController.search()`.
-2. Clasificarea conștientă de graf există, dar integrarea în producție a avut istoric căi de eșec care au cerut reparații și diagnostice explicite; comportamentul grafului nu este tratat ca automat autoritar.
-3. Telemetria de rezultat nu constituie încă o buclă de învățare autonomă complet închisă.
-4. Planning Influence este un harnașament experimental izolat; nu este încă o integrare de planificator în producție.
-5. Cel mai recent pilot de tratament arată în continuare eficiență negativă față de controlul consultativ pereche.
+2. **Expansiunea prin graf e practic oprită în producție.** Bugetul implicit de noduri noi este `min(2·n, 20) − n`, adică zero ori de câte ori căutarea lexicală găsește cel puțin 20 de note — iar limita lexicală a urcat la 200. Pe benchmark-ul reținut, expansiunea e imposibilă în 25 din 32 de interogări, iar rezultatele sunt identice cu graful oprit; orice buget fix între 5 și 20 aduce aceleași 2 cazuri în plus, la limita zgomotului ([`07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md`](07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md)). Orice concluzie mai veche de tipul „graful nu ajută" a fost măsurată cu un graf care nu adăuga nimic. Valoarea implicită este o decizie a proprietarului, încă neluată.
+3. **Majoritatea notelor nu au nicio legătură.** Din 948 de note indexate, doar 157 au o muchie de ieșire și 145 una de intrare (`00_GOVERNANCE/VAULT_STATE.md`): restul nu poate fi atins prin graf, oricât de mare ar fi bugetul.
+4. Telemetria de rezultat nu constituie încă o buclă de învățare autonomă complet închisă.
+5. Planning Influence V3 este o simulare deterministă cu un oracol de scenariu. Demonstrează mecanica — izolare, priori, veto — nu că un agent real, cu un model real, planifică mai bine. Pilotul inițial e retras.
 6. Execuția în CI observată în lanțul curent de lucru poate rămâne în așteptare; în așteptare înseamnă **neverificat**.
 7. Unele artefacte de cercetare sunt ținte de proiectare, nu garanții de implementare.
-8. Ingestia de cărți extrage și filtrează corect, dar nu poate clasifica. Încrederea modelului este `1.00` pe fiecare candidat, inclusiv pe cei a căror dovadă a fost fabricată; `claim_type` este constant; `occurrences` este 1 pentru 47 din 48 de concepte dintr-o lucrare întreagă; o listă de excludere la nivel de prompt este ignorată de model. Aproximativ jumătate din ieșire este mobilier experimental — `validation set`, `SGD optimizer`, `Rot-MNIST`. Măsurat, nu estimat: [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md).
-9. Două cărți din corpus sunt scanări fără strat de text și nu pot fi ingerate fără OCR, pe care acest depozit nu îl are.
+8. **Selectivitatea conceptelor rămâne nerezolvată.** Primele măsurători, pe modele locale, au arătat o încredere a modelului constantă (`1.00` inclusiv pe dovezi fabricate) și cam jumătate din ieșire mobilier experimental — `validation set`, `SGD optimizer`, `Rot-MNIST`. Recurența pe secțiuni distincte (`occurrences ≥ 3`) a rămas singurul semnal care funcționează; niciunul dintre cele cinci semnale noi testate ulterior nu l-a depășit, iar măsurătoarea s-a făcut pe eșantioane mici. Măsurat, nu estimat: [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md).
+9. Cele două cărți scanate au fost convertite prin OCR, dar calitatea nu e uniformă: la Ashby, 13% din pagini au coloanele în ordine amestecată.
+10. Două căi pot încă scrie în ontologie pe lângă manifestul de verdicte: `purge_rejected_rows.py --apply` și calea generică de scriere a controlerului către notele `slot-*`. Sunt documentate, nu închise.
 
 Expunerea acestor lacune este intenționată. Proiectul este întărit prin falsificare, nu prin lustruirea afirmațiilor lui.
 
@@ -628,24 +674,35 @@ Una dintre ele a fost cât pe ce să fie lustruită și merită spusă pe șleau
 # 🧭 Foaie de parcurs
 
 ```text
+FĂCUT
+ │
+ ├─ Planning Influence V3: simulare fără scurgere, veto reparat, reper derivat
+ ├─ primul transfer demonstrat dintr-o carte (un capitol, 12 întrebări)
+ ├─ poarta de verdicte obligatorie la merge și la promovare
+ ├─ garda de date personale în CI
+ │
+ ▼
 ACUM
  │
- ├─ verifică în CI cel mai recent MVE conștient de aplicabilitate
- ├─ implementează ruta explicită de verificare în harnașamentul izolat
- ├─ rulează politica de incertitudine înghețată, fără ajustări ulterioare
+ ├─ profil curricular pe domeniu, obligatoriu înainte de ingestie
+ ├─ proveniență bibliografică obligatorie înainte de promovare
+ ├─ benchmark de transfer general + a doua carte, din alt domeniu
+ ├─ auditul independent al relațiilor propuse în graf
+ ├─ decizia bugetului de expansiune a grafului
  │
  ▼
 APOI
  │
- ├─ acceptă / falsifică / reproiectează politica deterministă de influență
- ├─ adaugă pereche susținută de model, cu set reținut și memorie învechită/adversă
+ ├─ legarea notelor izolate: majoritatea memoriei nu are nicio sinapsă
+ ├─ de la carte la procedură și poartă, pentru cărțile de metodă
+ ├─ pereche susținută de model: agent real, căutare, acțiune, rezultat verificat
+ ├─ nucleul cognitiv conectat la calea reală și măsurat — sau retras dacă nu ajută
  │
  ▼
 MAI TÂRZIU
  │
  ├─ măsurarea influenței asupra reprezentării
  ├─ poartă epistemică de acțiune/verificare/abstenție
- ├─ experimente de portal determinist de execuție
  ├─ compilarea tiparelor legate de dovezi
  └─ buclă de învățare închisă, protejată de regresie
 ```
@@ -674,9 +731,23 @@ pytest -q 20_TESTS/test_planning_influence_isolation.py
 python 07_EVALUATION/luna/run_all_v3.py
 ```
 
-### Exemple de CLI pentru Memory V6
+### Verificările cerute la fiecare PR
 
 ```bash
+python -m pytest 20_TESTS -q
+python 30_SCRIPTS/verification/validate_repository_layout.py
+python 30_SCRIPTS/verification/repository_hygiene.py
+python 30_SCRIPTS/verification/personal_data_guard.py
+```
+
+Suita completă, nu un subset: rezultatele raportate din subseturi au ascuns în trecut eșecuri pe care CI-ul le-a găsit imediat.
+
+### Exemple de CLI pentru Memory V6
+
+Modulele stau în `03_IMPLEMENTATION/packages`, deci CLI-ul are nevoie de el în `PYTHONPATH`:
+
+```bash
+export PYTHONPATH=03_IMPLEMENTATION/packages   # PowerShell: $env:PYTHONPATH = "03_IMPLEMENTATION/packages"
 python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
 python -m cognitive_core.memory_v6_cli review --show-conflicts
 python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
@@ -684,7 +755,7 @@ python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```
 
-Pentru dependențele exacte de execuție într-un checkout local, folosește fișierele de mediu / requirements ale depozitului.
+Dependențele: `pip install -e .` și `pip install -r requirements-memory-v6.txt`, la fel ca în CI.
 
 ---
 
@@ -700,9 +771,18 @@ Pentru dependențele exacte de execuție într-un checkout local, folosește fi�
 
 ### MVE / cercetare
 
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_RESULTS_V3.md) — rezultatele valide, generate din tabele
 - [`07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_UNCERTAINTY_POLICY_V1.md)
-- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md)
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_MVE_V2_VALIDATED.md) — istoric
+- [`07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md`](07_EVALUATION/luna/PLANNING_INFLUENCE_APPLICABILITY_PILOT_LOCAL_20260904.md) — retras
+- [`07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md`](07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md) — bugetul de expansiune a grafului
+
+### Curriculum și ontologie
+
+- [`07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md`](07_EVALUATION/neural_plasticity/NEURAL_PLASTICITY_REPORT.md) — benchmark-ul de transfer OpenStax
+- [`07_EVALUATION/curriculum/`](07_EVALUATION/curriculum/) — proveniență, text-sursă cu atribuire, setul de test înghețat
+- [`07_EVALUATION/book_corpus_conversion/FINDINGS.md`](07_EVALUATION/book_corpus_conversion/FINDINGS.md) — măsurătorile de extragere, cu retractările lor
+- [`07_EVALUATION/ontology_write_paths/WRITE_PATHS.md`](07_EVALUATION/ontology_write_paths/WRITE_PATHS.md) — cine poate scrie în ontologie
 - [`07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md`](07_EVALUATION/luna/LUNA_INDEPENDENT_MEMORY_ENGINE_AUDIT_V2.md)
 - [`07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md`](07_EVALUATION/luna/PERPLEXITY_COGNITIVE_MEMORY_V2_ADVERSARIAL_VALIDATION.md)
 
