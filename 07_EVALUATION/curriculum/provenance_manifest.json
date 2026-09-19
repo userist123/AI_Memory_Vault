@@ -7,9 +7,17 @@
     "Marilyn D. Lovett"
   ],
   "publisher": "OpenStax, Rice University",
+  "edition": "2nd Edition",
+  "year": 2020,
+  "isbn_or_doi": "ISBN-13: 978-1-951693-23-7",
+  "source_type": "manual",
   "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
   "license_url": "https://creativecommons.org/licenses/by/4.0/",
   "book_url": "https://openstax.org/details/books/psychology-2e",
+  "extraction_method": {
+    "model": "gemini-3.1-flash-lite",
+    "prompt_version": "1.0"
+  },
   "conversion_note": "Converted from original OpenStax HTML to plain text fixture using BeautifulSoup for test repeatability and CC BY 4.0 distribution.",
   "files": [
     {
