@@ -254,12 +254,20 @@ def run_curriculum_ingestion(
         raise FileNotFoundError(f"Manifest not found: {manifest_path}")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
-    raw_dir_rel = source_cfg.get("raw_dir") or source_cfg.get("source_text_dir")
-    raw_dir = REPO_ROOT / raw_dir_rel
-    if not raw_dir.exists():
-        raise FileNotFoundError(f"Raw source directory not found: {raw_dir}")
-
+    raw_dir_rel = source_cfg.get("raw_dir")
+    source_text_dir_rel = source_cfg.get("source_text_dir")
     content_files = source_cfg["content_files"]
+
+    content_dir = None
+    content_dir_rel = None
+    if source_text_dir_rel and (REPO_ROOT / source_text_dir_rel).exists() and (REPO_ROOT / source_text_dir_rel / content_files[0]).exists():
+        content_dir = REPO_ROOT / source_text_dir_rel
+        content_dir_rel = source_text_dir_rel
+    elif raw_dir_rel and (REPO_ROOT / raw_dir_rel).exists() and (REPO_ROOT / raw_dir_rel / content_files[0]).exists():
+        content_dir = REPO_ROOT / raw_dir_rel
+        content_dir_rel = raw_dir_rel
+    else:
+        raise FileNotFoundError(f"Content files not found in source_text_dir ({source_text_dir_rel}) or raw_dir ({raw_dir_rel})")
     frozen_test_set_path = REPO_ROOT / eval_cfg["frozen_test_set"]
     telemetry_path = REPO_ROOT / "08_OBSERVABILITY" / "reports" / f"curriculum_ingestion_telemetry_{module_id}.json"
 
@@ -286,7 +294,7 @@ def run_curriculum_ingestion(
     aggregated_full_text = []
 
     for fname in content_files:
-        fpath = raw_dir / fname
+        fpath = content_dir / fname
         if not fpath.exists():
             raise FileNotFoundError(f"Content file not found: {fpath}")
         page_text, sections = partition_page(fpath)
@@ -393,9 +401,14 @@ def run_curriculum_ingestion(
             "",
             "## 1. Sursă & Proveniență",
             f"- **Manual**: *{source_cfg.get('work_title')}*, {manifest.get('publisher', 'OpenStax')}.",
+            f"- **Ediție**: {manifest.get('edition', '2nd Edition')}.",
+            f"- **Autori**: {', '.join(manifest.get('authors', []))}.",
+            f"- **ISBN**: {manifest.get('isbn_or_doi', 'N/A')}.",
+            f"- **Tip sursă**: {manifest.get('source_type', 'manual')}.",
             f"- **Capitol / Temă**: {source_cfg.get('chapter_or_topic')}.",
             f"- **Secțiune**: {sec_title}.",
             f"- **Licență**: {manifest.get('license', 'CC BY 4.0')}.",
+            f"- **URL Licență**: {manifest.get('license_url', 'https://creativecommons.org/licenses/by/4.0/')}.",
             f"- **Manifest**: `{provenance_manifest_rel}`.",
             "",
             "---",
@@ -425,7 +438,7 @@ def run_curriculum_ingestion(
                 "source_type": "ai",
                 "source_ref": f"{module_id}-{sec_slug}",
                 "source_date": today_iso,
-                "original_path": f"{raw_dir_rel}/{sec_slug}",
+                "original_path": f"{content_dir_rel}/{sec_slug}",
                 "extraction_date": today_iso,
                 "redaction": "none",
                 "provenance_status": "complete",
@@ -436,10 +449,6 @@ def run_curriculum_ingestion(
             "lifecycle": "REVIEW",
         }
 
-        # Propose strictly through MemoryController
-        proposal_id = controller.propose(Principal.AI_AGENT, note_data)
-
-        # Write to knowledge directory with REVIEW lifecycle
         frontmatter = [
             "---",
             f'id: "{note_uuid}"',
@@ -453,7 +462,7 @@ def run_curriculum_ingestion(
             "  source_type: ai",
             f'  source_ref: "{module_id}-{sec_slug}"',
             f'  source_date: "{today_iso}"',
-            f'  original_path: "{raw_dir_rel}/{sec_slug}"',
+            f'  original_path: "{content_dir_rel}/{sec_slug}"',
             f'  extraction_date: "{today_iso}"',
             "  redaction: none",
             "  provenance_status: complete",
@@ -467,6 +476,10 @@ def run_curriculum_ingestion(
 
         target_path = OUTPUT_DIR / note_filename
         target_path.write_text("\n".join(frontmatter), encoding="utf-8", newline="\n")
+
+        # Register in storage and propose strictly through MemoryController
+        storage.id_to_path[note_uuid] = str(target_path)
+        proposal_id = controller.propose(Principal.AI_AGENT, note_data)
 
         notes_created.append({
             "id": note_uuid,

@@ -1,0 +1,176 @@
+{
+  "timestamp": "2026-09-19T14:42:20.791302+00:00",
+  "module_id": "statistics-confidence-intervals-v1",
+  "curriculum_book": {
+    "title": "Introductory Statistics 2e",
+    "chapter": "Chapter 8: Confidence Intervals",
+    "publisher": "OpenStax, Rice University",
+    "license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "provenance_manifest": "07_EVALUATION/curriculum/statistics_provenance_manifest.json",
+    "frozen_test_set": "07_EVALUATION/curriculum/openstax_statistics_frozen_test_set.json"
+  },
+  "character_coverage": {
+    "total_content_pages": 5,
+    "pages": [
+      {
+        "filename": "8_0_introduction.txt",
+        "page_characters": 6494,
+        "sent_characters": 6494,
+        "exact_match": true,
+        "section_count": 1
+      },
+      {
+        "filename": "8_1_a_single_population_mean_using_the_normal_distribution.txt",
+        "page_characters": 19578,
+        "sent_characters": 19578,
+        "exact_match": true,
+        "section_count": 1
+      },
+      {
+        "filename": "8_2_a_single_population_mean_using_the_student_t_distribution.txt",
+        "page_characters": 10875,
+        "sent_characters": 10875,
+        "exact_match": true,
+        "section_count": 1
+      },
+      {
+        "filename": "8_3_a_population_proportion.txt",
+        "page_characters": 16602,
+        "sent_characters": 16602,
+        "exact_match": true,
+        "section_count": 1
+      },
+      {
+        "filename": "8_4_confidence_interval_calculating_sample_size.txt",
+        "page_characters": 4120,
+        "sent_characters": 4120,
+        "exact_match": true,
+        "section_count": 1
+      }
+    ],
+    "total_page_characters": 57669,
+    "total_sent_characters": 57669,
+    "coverage_percentage": 100.0,
+    "truncation_applied": false
+  },
+  "anti_leak_guard": {
+    "guard_status": "PASS",
+    "negative_control_verified": true,
+    "prompts_saved_count": 5,
+    "prompts_artifacts": [
+      {
+        "section_slug": "8_0_introduction",
+        "section_title": "8 0 Introduction",
+        "sha256": "a478039d722340804c639392c586e3f37b282f19e26a667ca2f98db88ad02953",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_statistics-confidence-intervals-v1_8_0_introduction.txt",
+        "character_count": 7434
+      },
+      {
+        "section_slug": "8_1_a_single_population_mean_using_the_normal_distribution",
+        "section_title": "8 1 A Single Population Mean Using The Normal Distribution",
+        "sha256": "44c40b66283fbe601566cff0c6c9d2654acc018819f0728accff19360e44a856",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_statistics-confidence-intervals-v1_8_1_a_single_population_mean_using_the_normal_distribution.txt",
+        "character_count": 20560
+      },
+      {
+        "section_slug": "8_2_a_single_population_mean_using_the_student_t_distribution",
+        "section_title": "8 2 A Single Population Mean Using The Student T Distribution",
+        "sha256": "fc476ab705f44c33a88917635f3df1f9dc4a9eb8f444687e47ea3a1b7f9750c1",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_statistics-confidence-intervals-v1_8_2_a_single_population_mean_using_the_student_t_distribution.txt",
+        "character_count": 11860
+      },
+      {
+        "section_slug": "8_3_a_population_proportion",
+        "section_title": "8 3 A Population Proportion",
+        "sha256": "66e72b37ea336f16df15e1248a6313a70117821ef05a5eb09bcc0c5714a620a7",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_statistics-confidence-intervals-v1_8_3_a_population_proportion.txt",
+        "character_count": 17553
+      },
+      {
+        "section_slug": "8_4_confidence_interval_calculating_sample_size",
+        "section_title": "8 4 Confidence Interval Calculating Sample Size",
+        "sha256": "e69a32904a5065a77421eff1a1a233da0183838f93ca00e6ef0add98df43d1f0",
+        "artifact_path": "08_OBSERVABILITY/artifacts/prompts/prompt_statistics-confidence-intervals-v1_8_4_confidence_interval_calculating_sample_size.txt",
+        "character_count": 5091
+      }
+    ]
+  },
+  "model_telemetry": {
+    "model_name": "gemini (with fallback)",
+    "total_sections_processed": 5,
+    "total_prompt_tokens": 17890,
+    "total_completion_tokens": 2878,
+    "total_tokens": 20768,
+    "total_latency_seconds": 14.165,
+    "elapsed_pipeline_seconds": 26.716,
+    "total_cost_usd": 0.002205,
+    "pricing_schedule": {
+      "prompt_per_1m": 0.075,
+      "completion_per_1m": 0.3
+    }
+  },
+  "citation_verification": {
+    "total_claims_extracted": 25,
+    "total_claims_verified": 24,
+    "total_claims_rejected": 1,
+    "verification_pass_fraction": "24/25",
+    "verification_pass_rate_pct": 96.0
+  },
+  "trust_boundary_compliance": {
+    "invoked_via": "MemoryController.propose",
+    "principal": "Principal.AI_AGENT",
+    "source_type": "ai",
+    "lifecycle": "REVIEW",
+    "verification": "unverified",
+    "p0_invariants_preserved": [
+      "I-001",
+      "I-002",
+      "I-003",
+      "I-004",
+      "I-005"
+    ]
+  },
+  "notes_proposed": [
+    {
+      "id": "1ee292c4-d86b-5927-8242-3bdf0124ab9e",
+      "filename": "statistics-confidence-intervals-v1_8_0_introduction.md",
+      "path": "01_ARCHITECTURE/knowledge/statistics-confidence-intervals-v1_8_0_introduction.md",
+      "section_title": "8 0 Introduction",
+      "verified_claims": 5,
+      "proposal_id": "1ee292c4-d86b-5927-8242-3bdf0124ab9e"
+    },
+    {
+      "id": "327bd878-c580-59ca-bfbc-5e09579d61b4",
+      "filename": "statistics-confidence-intervals-v1_8_1_a_single_population_mean_using_the_normal_distribution.md",
+      "path": "01_ARCHITECTURE/knowledge/statistics-confidence-intervals-v1_8_1_a_single_population_mean_using_the_normal_distribution.md",
+      "section_title": "8 1 A Single Population Mean Using The Normal Distribution",
+      "verified_claims": 6,
+      "proposal_id": "327bd878-c580-59ca-bfbc-5e09579d61b4"
+    },
+    {
+      "id": "ed784073-5394-5c11-ab3b-64039db99692",
+      "filename": "statistics-confidence-intervals-v1_8_2_a_single_population_mean_using_the_student_t_distribution.md",
+      "path": "01_ARCHITECTURE/knowledge/statistics-confidence-intervals-v1_8_2_a_single_population_mean_using_the_student_t_distribution.md",
+      "section_title": "8 2 A Single Population Mean Using The Student T Distribution",
+      "verified_claims": 4,
+      "proposal_id": "ed784073-5394-5c11-ab3b-64039db99692"
+    },
+    {
+      "id": "7834b61e-a595-5960-852f-6c4ba439e743",
+      "filename": "statistics-confidence-intervals-v1_8_3_a_population_proportion.md",
+      "path": "01_ARCHITECTURE/knowledge/statistics-confidence-intervals-v1_8_3_a_population_proportion.md",
+      "section_title": "8 3 A Population Proportion",
+      "verified_claims": 5,
+      "proposal_id": "7834b61e-a595-5960-852f-6c4ba439e743"
+    },
+    {
+      "id": "229a36c7-2275-52e9-a6a1-3a613db845c0",
+      "filename": "statistics-confidence-intervals-v1_8_4_confidence_interval_calculating_sample_size.md",
+      "path": "01_ARCHITECTURE/knowledge/statistics-confidence-intervals-v1_8_4_confidence_interval_calculating_sample_size.md",
+      "section_title": "8 4 Confidence Interval Calculating Sample Size",
+      "verified_claims": 4,
+      "proposal_id": "229a36c7-2275-52e9-a6a1-3a613db845c0"
+    }
+  ]
+}
