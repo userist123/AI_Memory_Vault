@@ -47,3 +47,15 @@ def isolate_audit_log(monkeypatch, tmp_path_factory):
     """Ensure audit logger defaults to a temporary directory instead of repository root."""
     tmp_art = tmp_path_factory.mktemp("artifacts")
     monkeypatch.setenv("ANTIGRAVITY_ARTIFACT_DIR", str(tmp_art))
+
+
+@pytest.fixture(autouse=True)
+def isolate_vault_runtime_home(monkeypatch, tmp_path_factory):
+    """Keep the tests away from the owner's real per-user directory.
+
+    The HMAC secret, the usage log and the audit trail of the vault interfaces live in
+    %APPDATA%/ai-memory-vault (or the XDG equivalent). A test that runs the CLI or the MCP server
+    must never write a line into the real usage log: it would count as real use in
+    memory_usage_report.py. Tests that need a specific directory set AI_MEMORY_VAULT_HOME themselves.
+    """
+    monkeypatch.setenv("AI_MEMORY_VAULT_HOME", str(tmp_path_factory.mktemp("vault_home")))

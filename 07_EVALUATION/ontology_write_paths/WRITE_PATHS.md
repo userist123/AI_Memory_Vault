@@ -12,10 +12,12 @@ conclusion column says whether it really writes into them.
 
 | file | function : line | call | kind | gate | conclusion |
 |---|---|---|---|---|---|
+| `20_TESTS/memory_vault_fixture.py` | make_vault : 51 (+1 more) | shutil.copytree | test | n/a (temporary directories) | Reviewed: copies the real slots INTO a temporary vault and writes seed notes there; the real slots are only read. |
 | `20_TESTS/test_book_ingestion_pipeline.py` | test_canonical_slot_validation : 84 (+2 more) | open(write) | test | n/a (temporary directories) | Reviewed: writes only into `tmp_path` copies; the one call with the canonical directory expects a ValueError before any write. |
 | `20_TESTS/test_canonical_write_requires_verdicts.py` | ontology : 40 (+4 more) | write_text | test | n/a (temporary directories) | Reviewed: the merge gate's own tests; the canonical directory is patched to a temporary one. |
 | `20_TESTS/test_controller_slot_path.py` | vault : 36 | shutil.copytree | test | n/a (temporary directories) | Reviewed: copies the slots into a temporary vault before calling the controller; the real slots are never touched (a control test checks it). |
 | `20_TESTS/test_curriculum_provenance.py` | TestCurriculumBibliographicProvenance.test_negative_control_note_without_edition_fails : 77 (+2 more) | write_text | test | n/a (temporary directories) | Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory. |
+| `20_TESTS/test_memory_usage_evidence.py` | test_negative_control_a_question_whose_passage_is_not_in_the_file_is_refused : 57 | write_text | test | n/a (temporary directories) | Reviewed: writes a temporary questions file for a negative control; never touches the slots. |
 | `20_TESTS/test_promote_candidate_concept_gate.py` | _manifest : 48 (+2 more) | write_text | test | n/a (temporary directories) | Reviewed: the promotion gate's tests; the canonical directory is patched to a temporary one. |
 | `20_TESTS/test_promoter_emits_graph_relations.py` | vault : 48 | write_text | test | n/a (temporary directories) | Reviewed: promotes into a `tmp_path` slots directory. |
 | `20_TESTS/test_purge_canonical_gate.py` | world : 50 (+1 more) | write_text | test | n/a (temporary directories) | Reviewed: the purge gate's tests; the canonical directory is patched to a temporary one. |
@@ -39,5 +41,5 @@ conclusion column says whether it really writes into them.
 ## Totals (from the scan)
 
 - read_only: 4
-- test: 9
+- test: 11
 - writer: 4

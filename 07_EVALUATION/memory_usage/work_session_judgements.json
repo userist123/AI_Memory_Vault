@@ -1,0 +1,504 @@
+{
+  "evaluator": "claude-sonnet",
+  "rule": "Only the first three results of each question are judged (what an agent would read); a result is relevant only if it would help do the task the question was taken from. Judgement is manual and single-evaluator.",
+  "judgements": [
+    {
+      "question_id": 1,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "moc-home-0001",
+          "title": "🌐 Obsidian Knowledge Graph Home",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 2,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+          "title": "Windows Hardening & Debloat Scripts Ecosystem (PowerShell)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "idx-leg-eu-gdpr-2016-679",
+          "title": "Index Structurat: Regulamentul (UE) 2016/679 (GDPR)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 3,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-ro-mapn-m172-2021",
+          "title": "Ordinul Ministrului Apărării Naționale nr. M.17...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 4,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 5,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-ro-mapn-m172-2021",
+          "title": "Ordinul Ministrului Apărării Naționale nr. M.17...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 6,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "a6cd6aa4-910a-462b-8659-341a183536a8",
+          "title": "Recording a solved problem so the next agent can reuse the method",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 7,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "llm-antihallucination-techniques",
+          "title": "LLM Anti-Hallucination Techniques (2024-2026 Research Synthesis)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "romania-classified-information-digital-security-reform",
+          "title": "Romanian Classified-Information Digital Security Reform — Research Summary",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+          "title": "Multi-Agent Pipeline Architecture",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 8,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-eu-aiact-2024-1689",
+          "title": "Regulamentul (UE) 2024/1689 de Stabilire a Unor...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 9,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 10,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "cat-skills-251-master",
+          "title": "📦 Catalog Canonic: Skills reale din `.agents/sk...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "00ac0842-2c43-4a9d-a579-a83bfa271995",
+          "title": "policy-lesson",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 11,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "idx-leg-eu-mica-2023-1114",
+          "title": "Index Structurat: Regulamentul (UE) 2023/1114 (MiCA)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "idx-leg-ro-hg-585-2002",
+          "title": "Index Structurat: Hotărârea Guvernului nr. 585/2002 (Standardele Naționale)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 12,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "00ad356a-a850-4ca8-a29a-a4150b3ad133",
+          "title": "test",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "04e86b85-4346-4c5f-a495-c5a43231b61e",
+          "title": "test",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "00c46560-b27b-4e96-ae81-8f0b637920ad",
+          "title": "test",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 13,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+          "title": "Lesson: Trust Boundary Hardening Requires a Dedicated Attest Path, Not Field Overlay Sanitization",
+          "relevant": true,
+          "reason": "Lesson on a dedicated attest path: the trust boundary that decides which lifecycle states an agent can create"
+        },
+        {
+          "rank": 2,
+          "id": "idx-leg-eu-gdpr-2016-679",
+          "title": "Index Structurat: Regulamentul (UE) 2016/679 (GDPR)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 14,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "a6cd6aa4-910a-462b-8659-341a183536a8",
+          "title": "Recording a solved problem so the next agent can reuse the method",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "atm-l190-art4-cnp-garantii",
+          "title": "Notă Derivată Atomică: Garanții Tehnice la Prelucrarea Numărului de Identificare Național (CNP)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "atm-l153-anexavi-spor-clasificate",
+          "title": "Notă Derivată Atomică: Drepturi Salariale și Compensarea Gestionării Informațiilor Clasificate",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 15,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-ro-legea-190-2018",
+          "title": "Legea nr. 190/2018 privind Măsuri de Punere în ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-eu-dora-2022-2554",
+          "title": "Regulamentul (UE) 2022/2554 privind Reziliența ...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "leg-eu-gdpr-2016-679",
+          "title": "Regulamentul (UE) 2016/679 privind Protecția Da...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 16,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+          "title": "Lesson: Trust Boundary Hardening Requires a Dedicated Attest Path, Not Field Overlay Sanitization",
+          "relevant": true,
+          "reason": "Trust-boundary lesson: what an agent path cannot bypass"
+        },
+        {
+          "rank": 2,
+          "id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+          "title": "Multi-Agent Pipeline Architecture",
+          "relevant": true,
+          "reason": "Pipeline architecture note states no agent bypasses the shared controller's trust boundary"
+        },
+        {
+          "rank": 3,
+          "id": "moc-master-brain-0001",
+          "title": "🧠 Sinteza Canonică: Creierul Cognitiv AI Perfect (v5.0.0 Architecture)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 17,
+      "judged": []
+    },
+    {
+      "question_id": 18,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "knw-retrieval-bottleneck-p0-0001",
+          "title": "Retrieval Bottleneck — P0 Empirical Findings & Architectural Specification",
+          "relevant": true,
+          "reason": "P0 findings: the retrieval bottleneck measured on the held-out set"
+        },
+        {
+          "rank": 2,
+          "id": "reg-retrieval-hypotheses-0001",
+          "title": "Retrieval Hypothesis Registry",
+          "relevant": true,
+          "reason": "Registry of retrieval hypotheses, including BM25 / lexical results"
+        },
+        {
+          "rank": 3,
+          "id": "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+          "title": "retrieval",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 19,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "leg-eu-mica-2023-1114",
+          "title": "Regulamentul (UE) 2023/1114 privind Piețele Cri...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "leg-ro-hg-585-2002",
+          "title": "Hotărârea Guvernului nr. 585/2002 pentru Aproba...[PARTIAL]",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "276d1940-c948-4feb-902f-bd6c74958594",
+          "title": "~/.claude/CLAUDE.md",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    },
+    {
+      "question_id": 20,
+      "judged": [
+        {
+          "rank": 1,
+          "id": "idx-leg-eu-aiact-2024-1689",
+          "title": "Index Structurat: Regulamentul (UE) 2024/1689 (AI Act)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 2,
+          "id": "proc-brain-arch-0001",
+          "title": "🧠 Specificație Canonică: Arhitectura Cognitivă Bio-Inspirată (v4.5.0 Brain Core)",
+          "relevant": false,
+          "reason": "does not help with this task"
+        },
+        {
+          "rank": 3,
+          "id": "atm-aiact-art14-human-oversight",
+          "title": "Notă Derivată Atomică: Supravegherea Umană (Human-in-the-Loop & Kill-Switch) a Sistemelor de IA",
+          "relevant": false,
+          "reason": "does not help with this task"
+        }
+      ]
+    }
+  ]
+}

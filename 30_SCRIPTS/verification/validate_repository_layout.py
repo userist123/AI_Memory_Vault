@@ -20,7 +20,7 @@ ROOT_ALLOWLIST = {
     #: translation in a subdirectory is one nobody finds. Any further
     #: translation belongs here by the same rule.
     "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
-    ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", "pytest.ini",
+    ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
     "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests", "docs",
     ".github", ".agents", ".claude-plugin", ".obsidian",
     *NUMBERED_ROOTS,

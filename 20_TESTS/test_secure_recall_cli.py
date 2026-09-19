@@ -57,9 +57,14 @@ def test_recall_cli_valid_secret_succeeds(monkeypatch):
     assert isinstance(results, list)
 
 
-def test_recall_cli_cli_subprocess_missing_secret_fails_closed():
-    """A2: Subprocess execution without HMAC secret fails closed with non-zero exit."""
+def test_recall_cli_cli_subprocess_missing_secret_fails_closed(tmp_path):
+    """A2: Subprocess execution without HMAC secret fails closed with non-zero exit.
+
+    The CLI now also reads a per-user secret file, so the test points AI_MEMORY_VAULT_HOME at an
+    empty directory: the outcome must not depend on whether the developer has run --init-secret.
+    """
     env = {k: v for k, v in os.environ.items() if k != "MEMORY_CONTROLLER_HMAC_SECRET"}
+    env["AI_MEMORY_VAULT_HOME"] = str(tmp_path / "no-secret-here")
     cmd = [os.sys.executable, "cognitive_core/recall_cli.py", "--query", "knowledge"]
     res = subprocess.run(cmd, capture_output=True, text=True, env=env)
     assert res.returncode != 0

@@ -1,0 +1,17 @@
+{
+  "proposal": {
+    "id": "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "path": "01_ARCHITECTURE/knowledge/prima-masurare-a-cautarii-de-productie-pe-intrebari-reale-de_13ce9272.md",
+    "lifecycle": "REVIEW",
+    "verification": "unverified"
+  },
+  "file_exists": true,
+  "found_by_memory_search": true,
+  "search_rank": 1,
+  "search_query_is_the_title": true,
+  "memory_get": {
+    "lifecycle": "REVIEW",
+    "unverified": true,
+    "content_chars": 1409
+  }
+}

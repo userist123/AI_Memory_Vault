@@ -184,7 +184,10 @@ class FileStorageEngine:
         top = rel.replace("\\", "/").split("/")[0]
         if top in CONTENT_ROOTS:
             return existing_path
-        return resolved
+        # An existing note in the legacy tree keeps its legacy destination: new notes go
+        # to the content tree (path_resolver.CONTENT_TREE_FOR_TYPE), old ones are not moved
+        # by an update.
+        return resolve_path(self.vault_root, data, prefer_content_tree=False)
 
     def set(self, note_id: str, data: Dict[str, Any]) -> None:
         yaml_id = data.get("id")

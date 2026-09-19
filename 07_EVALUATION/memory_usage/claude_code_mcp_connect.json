@@ -1,0 +1,16 @@
+{
+  "claude_code_version": "2.1.277",
+  "mcp_servers": [
+    {
+      "name": "vault-memory",
+      "status": "connected",
+      "source": "dynamic"
+    }
+  ],
+  "vault_memory_tools": [
+    "mcp__vault-memory__memory_get",
+    "mcp__vault-memory__memory_propose",
+    "mcp__vault-memory__memory_search"
+  ],
+  "note": "Standalone claude.exe (Claude Code) started in the repository with --mcp-config .mcp.json --strict-mcp-config. The server was started by the client and reported connected with its three tools. The model call then failed with 'Not logged in' (the standalone CLI has no login on this machine), so no agent turn was produced."
+}

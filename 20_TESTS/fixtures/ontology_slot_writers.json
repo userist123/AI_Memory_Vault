@@ -26,6 +26,12 @@
       "conclusion": "Gated. Was OPEN: `--apply` deleted rows with no manifest, and `--disposition-manifest ''` switched the only protection off. Gate added in this change, shared with the merge and promotion gates."
     },
     {
+      "path": "20_TESTS/memory_vault_fixture.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: copies the real slots INTO a temporary vault and writes seed notes there; the real slots are only read."
+    },
+    {
       "path": "20_TESTS/ontology/test_row_disposition_applied.py",
       "role": "test",
       "gate": "n/a (temporary directories)",
@@ -54,6 +60,12 @@
       "role": "test",
       "gate": "n/a (temporary directories)",
       "conclusion": "Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory."
+    },
+    {
+      "path": "20_TESTS/test_memory_usage_evidence.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: writes a temporary questions file for a negative control; never touches the slots."
     },
     {
       "path": "20_TESTS/test_promote_candidate_concept_gate.py",

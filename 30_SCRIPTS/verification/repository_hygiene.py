@@ -13,6 +13,9 @@ ROOT_ALLOWED = {
     ".gitattributes",
     ".gitignore",
     ".gitleaks.toml",
+    #: MCP server registration read by Claude Code / Antigravity / Gemini CLI (vault-memory).
+    #: Mirrors ROOT_ALLOWLIST in validate_repository_layout.py.
+    ".mcp.json",
     ".pre-commit-config.yaml",
     "AGENTS.md",
     "CLAUDE.md",

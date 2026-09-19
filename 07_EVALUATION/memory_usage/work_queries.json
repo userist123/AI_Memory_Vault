@@ -1,0 +1,125 @@
+{
+  "purpose": "20 work questions chosen from the open tasks in 00_GOVERNANCE/coordination/. Each carries the file and the verbatim passage it comes from; run_memory_worklist.py verifies the passage exists before asking.",
+  "queries": [
+    {
+      "id": 1,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "enumerate and remove remaining tracked files under 06_INBOX/RAW_IMPORTS",
+      "question": "Cum se elimină fișierele urmărite din 06_INBOX/RAW_IMPORTS și ce reguli protejează inbox-ul brut?"
+    },
+    {
+      "id": 2,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "inspect and harden workflow paths affected by the inbox change",
+      "question": "Ce workflow-uri GitHub Actions depind de 06_INBOX sau de căile din depozit și cum se întăresc?"
+    },
+    {
+      "id": 3,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "create the 00-99 structural migration inventory before moving production code",
+      "question": "Structura folderelor 00-99 a depozitului: inventarul de migrare și contractele fiecărui folder"
+    },
+    {
+      "id": 4,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "run exact MVE and hygiene tests on the latest main source",
+      "question": "Cum se rulează testele de igienă ale depozitului și ce verifică repository_hygiene"
+    },
+    {
+      "id": 5,
+      "source_file": "00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md",
+      "source_quote": "external credential rotation/revocation is outside repository access and still lacks owner evidence",
+      "question": "Politica de secrete: scanarea cu gitleaks și rotirea credențialelor compromise"
+    },
+    {
+      "id": 6,
+      "source_file": "00_GOVERNANCE/coordination/agents/CLAUDE_SONNET/CURRENT.md",
+      "source_quote": "owner decision needed before WP-6 can start",
+      "question": "Ce înseamnă ca o muchie propusă de edge proposer să intre în lifecycle REVIEW și cum se promovează în SynapseStore?"
+    },
+    {
+      "id": 7,
+      "source_file": "00_GOVERNANCE/coordination/agents/CLAUDE_SONNET/CURRENT.md",
+      "source_quote": "re-run R016 graph arms",
+      "question": "Măsurătoarea R016 graph on versus graph off cu run_production_arms și expansiunea grafului"
+    },
+    {
+      "id": 8,
+      "source_file": "00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md",
+      "source_quote": "run real tests/runtime evidence and commit directly to main",
+      "question": "Ce dovezi de rulare reală sunt cerute înainte ca o sarcină să fie declarată terminată?"
+    },
+    {
+      "id": 9,
+      "source_file": "00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md",
+      "source_quote": "do not claim causality from non-causal benchmarks",
+      "question": "Benchmark-uri cauzale față de necauzale pentru memoria agentică: ce se poate afirma"
+    },
+    {
+      "id": 10,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/NEXT_TASK.md",
+      "source_quote": "occurrences",
+      "question": "Cum se calculează occurrences la extragerea conceptelor din cărți, pe secțiuni distincte"
+    },
+    {
+      "id": 11,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/NEXT_TASK.md",
+      "source_quote": "verify_agent_submission.py",
+      "question": "Verificatorul pentru extragerea conceptelor: dovadă verbatim, definiții copiate, low_prose"
+    },
+    {
+      "id": 12,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Repository-wide write-path inventory",
+      "question": "Inventarul căilor de scriere din depozit și granițele de încredere ale controlerului de memorie"
+    },
+    {
+      "id": 13,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Proposal lifecycle boundary is not yet fully uniform",
+      "question": "Limita lifecycle la propunerea de note de către principalul AI_AGENT: ce stări de creare sunt permise"
+    },
+    {
+      "id": 14,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Read-path lifecycle/verification semantics need end-to-end validation",
+      "question": "Care note poate citi un agent: ACTIVE, REVIEW, semantica verification pe calea de citire"
+    },
+    {
+      "id": 15,
+      "source_file": "00_GOVERNANCE/coordination/chatgpt/RUNTIME_SECURITY_REMAINING_GAPS.md",
+      "source_quote": "Final CI evidence is still pending",
+      "question": "Ce dovezi CI sunt cerute și cum se raportează rezultatele testelor fără să se inventeze execuții"
+    },
+    {
+      "id": 16,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/P5_SEARCH_INTEGRATION_REPORT.md",
+      "source_quote": "Retrieval Bypasses",
+      "question": "Ocolirile căutării de producție: motorul financiar, interogarea de admin și adaptorul intern"
+    },
+    {
+      "id": 17,
+      "source_file": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "source_quote": "Anti-laundering",
+      "question": "Anti-laundering pentru proveniență: source_reviewed și source_sha256 pe notele din RAW"
+    },
+    {
+      "id": 18,
+      "source_file": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "source_quote": "Baseline BM25/grep",
+      "question": "Baseline BM25 și evaluarea retrieval pe benchmark-ul held-out"
+    },
+    {
+      "id": 19,
+      "source_file": "00_GOVERNANCE/coordination/remediation_v7/todo.md",
+      "source_quote": "DEAD_OR_ORPHAN",
+      "question": "Module orfane sau neconectate la producție: regula grep pentru consumatori de producție"
+    },
+    {
+      "id": 20,
+      "source_file": "00_GOVERNANCE/coordination/antigravity/ADR_DRAFT_lifecycle_transition.md",
+      "source_quote": "Decision Options for Codex",
+      "question": "Tranziția REVIEW la ACTIVE față de REVIEW la VERIFIED la ACTIVE: decizia de arhitectură"
+    }
+  ]
+}
