@@ -12,8 +12,6 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-  - type: related_to
-    target_id: knw-retrieval-bottleneck-p0-0001
   - "evaluation/retrieval_fusion_experiment_spec.md"
   - type: related_to
     target_id: c754b481-44a2-4e2f-9cb2-0be36aebb498

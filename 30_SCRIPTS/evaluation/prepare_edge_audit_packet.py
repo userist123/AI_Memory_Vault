@@ -11,6 +11,7 @@ Requirements:
 """
 from __future__ import annotations
 
+import argparse
 import json
 import random
 from datetime import datetime, timezone
@@ -27,11 +28,11 @@ STRONG_RELATIONS = frozenset({"depends_on", "supersedes", "applies_to", "verifie
 WEAK_RELATIONS = frozenset({"related_to", "part_of"})
 
 
-def build_audit_packet(seed: int = 42) -> tuple[dict, str]:
-    if not PROPOSALS_PATH.exists():
-        raise FileNotFoundError(f"Proposals file not found: {PROPOSALS_PATH}")
+def build_audit_packet(proposals_path: Path = PROPOSALS_PATH, seed: int = 42, target_total: int = 50) -> tuple[dict, str]:
+    if not proposals_path.exists():
+        raise FileNotFoundError(f"Proposals file not found: {proposals_path}")
 
-    data = json.loads(PROPOSALS_PATH.read_text(encoding="utf-8"))
+    data = json.loads(proposals_path.read_text(encoding="utf-8"))
     proposals = data.get("proposals", [])
 
     strong_pool = [p for p in proposals if p.get("relation") in STRONG_RELATIONS]
@@ -39,10 +40,10 @@ def build_audit_packet(seed: int = 42) -> tuple[dict, str]:
 
     rng = random.Random(seed)
     n_strong = min(25, len(strong_pool))
-    n_weak = min(25, len(weak_pool))
+    n_weak = min(target_total - n_strong, len(weak_pool))
 
-    sampled_strong = rng.sample(strong_pool, n_strong) if len(strong_pool) >= n_strong else list(strong_pool)
-    sampled_weak = rng.sample(weak_pool, n_weak) if len(weak_pool) >= n_weak else list(weak_pool)
+    sampled_strong = rng.sample(strong_pool, n_strong) if len(strong_pool) > n_strong else list(strong_pool)
+    sampled_weak = rng.sample(weak_pool, n_weak) if len(weak_pool) > n_weak else list(weak_pool)
 
     # Sort each group deterministically by (relation, source_id, target_id)
     sampled_strong.sort(key=lambda p: (p.get("relation", ""), p.get("source_id", ""), p.get("target_id", "")))
@@ -148,18 +149,35 @@ def build_audit_packet(seed: int = 42) -> tuple[dict, str]:
 
 
 def main() -> int:
-    AUDIT_DIR.mkdir(parents=True, exist_ok=True)
-    OBS_SAMPLE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(description="Prepare stratified edge audit packet")
+    parser.add_argument("--proposals", default=str(PROPOSALS_PATH), help="Path to input proposals JSON")
+    parser.add_argument("--out-json", default=str(AUDIT_JSON_PATH), help="Output audit sample JSON")
+    parser.add_argument("--out-md", default=str(AUDIT_MD_PATH), help="Output audit packet MD")
+    parser.add_argument("--obs-json", default=str(OBS_SAMPLE_PATH), help="Observability sample JSON (optional)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--target-total", type=int, default=50, help="Target total sample size")
+    args = parser.parse_args()
 
-    audit_data, md_content = build_audit_packet(seed=42)
+    proposals_path = Path(args.proposals)
+    out_json = Path(args.out_json)
+    out_md = Path(args.out_md)
+    obs_json = Path(args.obs_json) if args.obs_json else None
 
-    AUDIT_JSON_PATH.write_text(json.dumps(audit_data, indent=2, ensure_ascii=False), encoding="utf-8")
-    AUDIT_MD_PATH.write_text(md_content, encoding="utf-8")
-    OBS_SAMPLE_PATH.write_text(json.dumps(audit_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_md.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"Generated {AUDIT_JSON_PATH} ({audit_data['sample_size']} items)")
-    print(f"Generated {AUDIT_MD_PATH} ({len(md_content)} bytes)")
-    print(f"Updated {OBS_SAMPLE_PATH}")
+    audit_data, md_content = build_audit_packet(proposals_path=proposals_path, seed=args.seed, target_total=args.target_total)
+
+    out_json.write_text(json.dumps(audit_data, indent=2, ensure_ascii=False), encoding="utf-8")
+    out_md.write_text(md_content, encoding="utf-8")
+    if obs_json:
+        obs_json.parent.mkdir(parents=True, exist_ok=True)
+        obs_json.write_text(json.dumps(audit_data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    print(f"Generated {out_json} ({audit_data['sample_size']} items)")
+    print(f"Generated {out_md} ({len(md_content)} bytes)")
+    if obs_json:
+        print(f"Updated {obs_json}")
     return 0
 
 

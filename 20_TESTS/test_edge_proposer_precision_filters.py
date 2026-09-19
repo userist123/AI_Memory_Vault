@@ -312,3 +312,99 @@ def test_negative_control_missing_quote_prevents_proposal():
     proposals, _ = ep.deterministic_candidates(_MockIndex())
     assert len(proposals) == 0, "NEGATIVE CONTROL: proposal must be blocked when target quote is missing"
 
+
+# --- PR #168 audit regression tests (Partea 2 filters) ---------------------
+
+
+@pytest.mark.parametrize("token", ["sic", "ads", "cee", "das", "abc", "x"])
+def test_entities_under_4_chars_are_spurious(token):
+    """Entities under 4 characters produce noise and spurious overlap."""
+    assert ep.is_spurious_entity(token)
+
+
+@pytest.mark.parametrize("token", [
+    "delete_canonical", "high", "risk", "policy", "lesson", "audit",
+    "wrong_type", "context", "system", "architecture", "procedure",
+    "evaluation", "report", "evidence", "sample", "metric",
+])
+def test_pr168_audit_failure_entities_are_spurious(token):
+    """Tokens from audit failure categories must not create spurious links."""
+    assert ep.is_spurious_entity(token)
+
+
+def test_quote_matching_requires_word_boundaries():
+    """Verify that substring match inside longer word does NOT qualify as quote."""
+    text = "The system administrator checked the asterisk symbol in the configuration file."
+    # 'risk' is a substring of 'asterisk', but NOT a whole word
+    quote = ep.extract_evidence_quote(text, ["asterisk"])
+    assert quote != ""
+    # With word boundary, searching for 'risk' must NOT match 'asterisk'
+    quote_no_match = ep.extract_evidence_quote(text, ["risk"])
+    assert quote_no_match == ""
+
+
+def test_duplicate_content_is_skipped():
+    """Two notes with identical body >= 100 chars are duplicates, not semantic relations."""
+    class _MockDocA:
+        id = "doc-dup-a"
+        title = "Policy Template Copy 1"
+        path = Path("01_ARCHITECTURE/DocA.md")
+        body = "This is a substantial identical policy template document meant to test duplicate detection across vaults. It has more than one hundred characters."
+        text = body + " uniqueident1 uniqueident2 uniqueident3"
+        tags = []
+        type = "knowledge"
+        updated = "2026-09-01"
+
+    class _MockDocB:
+        id = "doc-dup-b"
+        title = "Policy Template Copy 2"
+        path = Path("01_ARCHITECTURE/DocB.md")
+        body = "This is a substantial identical policy template document meant to test duplicate detection across vaults. It has more than one hundred characters."
+        text = body + " uniqueident1 uniqueident2 uniqueident3"
+        tags = []
+        type = "knowledge"
+        updated = "2026-09-02"
+
+    class _MockIndex:
+        notes = [_MockDocA(), _MockDocB()]
+        by_id = {"doc-dup-a": _MockDocA(), "doc-dup-b": _MockDocB()}
+        def __len__(self):
+            return 2
+
+    proposals, _ = ep.deterministic_candidates(_MockIndex())
+    assert len(proposals) == 0, "Duplicate content notes must NOT produce proposals"
+
+
+def test_strong_relation_depends_on_requires_explicit_reference():
+    """Notes containing dependency words like 'requires' or 'depends on' but lacking
+    explicit reference (wikilink, markdown link, id citation) must NOT receive 'depends_on'."""
+    class _NoteA:
+        id = "note-unrelated-req-a"
+        title = "Security Policy"
+        path = Path("01_ARCHITECTURE/Policy.md")
+        body = "This procedure requires strict compliance with organizational safeguards."
+        meta = {}
+        type = "procedure"
+        updated = "2026-09-01"
+
+    class _NoteB:
+        id = "note-unrelated-req-b"
+        title = "Storage Backend"
+        path = Path("01_ARCHITECTURE/Storage.md")
+        body = "The storage engine uses sqlite wal mode for concurrency."
+        meta = {}
+        type = "knowledge"
+        updated = "2026-09-01"
+
+    rel, src, dst = ep.classify_relation(_NoteA(), _NoteB(), {"safeguards"})
+    # Without explicit reference, it must NOT be depends_on
+    assert rel != "depends_on"
+    assert rel == "related_to"
+
+    # Now add explicit wikilink reference from A to B:
+    _NoteA.body = "This procedure requires [[note-unrelated-req-b]] for operation."
+    rel2, src2, dst2 = ep.classify_relation(_NoteA(), _NoteB(), {"safeguards"})
+    assert rel2 == "depends_on"
+    assert src2 == "note-unrelated-req-a"
+    assert dst2 == "note-unrelated-req-b"
+

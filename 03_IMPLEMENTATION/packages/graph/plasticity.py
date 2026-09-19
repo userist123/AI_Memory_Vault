@@ -280,6 +280,17 @@ class RollbackResult:
     error: Optional[str] = None
 
 
+@dataclass
+class PruneResult:
+    """Outcome of a transactional graph pruning operation."""
+    run_id: str
+    dry_run: bool
+    edges_pruned: int
+    pruned_synapses: List[Dict[str, Any]] = field(default_factory=list)
+    journal_entry_ids: List[str] = field(default_factory=list)
+    reason: Optional[str] = None
+
+
 class PlasticityJournal:
     """Append-only, thread-safe telemetry journal for synaptic weight changes."""
 
@@ -325,18 +336,18 @@ class PlasticityJournal:
         return entries
 
     def rollback(self, run_id: str, synapse_store: Any) -> RollbackResult:
-        """Reverses all weight updates made for `run_id` on the given `synapse_store`.
+        """Reverses all weight updates and pruning operations made for `run_id` on the given `synapse_store`.
         
         Maintains append-only integrity by writing compensating rollback audit records.
         """
         all_entries = self.load_entries()
-        run_entries = [e for e in all_entries if e.run_id == run_id and e.action in {"reinforce", "depress"}]
+        run_entries = [e for e in all_entries if e.run_id == run_id and e.action in {"reinforce", "depress", "prune"}]
 
         if not run_entries:
             return RollbackResult(run_id=run_id, success=True, edges_reverted=0)
 
         # Check if already rolled back
-        rollback_entries = [e for e in all_entries if e.run_id == run_id and e.action == "rollback"]
+        rollback_entries = [e for e in all_entries if e.run_id == run_id and e.action in {"rollback", "rollback_prune"}]
         already_rolled_back_keys = {(e.source_id, e.target_id, e.relation) for e in rollback_entries}
 
         active_updates = [
@@ -353,7 +364,44 @@ class PlasticityJournal:
         now_ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
         for entry in active_updates:
-            # Find synapse in store
+            if entry.action == "prune":
+                # Restore pruned synapse from metadata
+                syn_state = entry.metadata.get("synapse_state")
+                if syn_state:
+                    try:
+                        from graph.synapse_store import Synapse
+                    except ImportError:
+                        from cognitive_core.synapse_store import Synapse
+                    restored_syn = Synapse(**syn_state)
+                    synapse_store.add(restored_syn)
+                    reverted_count += 1
+                    rollback_record = JournalEntry(
+                        entry_id=f"plj_rbpr_{uuid.uuid4().hex[:10]}",
+                        run_id=run_id,
+                        timestamp=now_ts,
+                        action="rollback_prune",
+                        source_id=restored_syn.source_id,
+                        target_id=restored_syn.target_id,
+                        relation=restored_syn.relation,
+                        old_weight=0.0,
+                        new_weight=restored_syn.weight,
+                        delta=restored_syn.weight,
+                        outcome="rollback_prune",
+                        verification_method="rollback",
+                        attribution_state=entry.attribution_state,
+                        metadata={"target_entry_id": entry.entry_id, "synapse_state": syn_state},
+                    )
+                    self.append(rollback_record)
+                    reverted_details.append({
+                        "source": restored_syn.source_id,
+                        "target": restored_syn.target_id,
+                        "relation": restored_syn.relation,
+                        "restored_weight": restored_syn.weight,
+                        "action": "restored",
+                    })
+                continue
+
+            # Find synapse in store for weight adjustments
             matched_synapses = []
             for syn in synapse_store.all():
                 if syn.source_id == entry.source_id and syn.target_id == entry.target_id:
@@ -616,4 +664,86 @@ class PlasticityEngine:
             updated_edges=updated_edges,
             attribution=attribution,
             journal_entry_ids=journal_ids,
+        )
+
+    def prune_edges(
+        self,
+        synapse_store: Any,
+        edges_to_prune: Iterable[Tuple[str, str, Optional[str]] | Tuple[str, str] | Dict[str, Any]],
+        run_id: Optional[str] = None,
+        dry_run: bool = False,
+        reason: str = "audit_rejection",
+    ) -> PruneResult:
+        """Transactionally prunes specific edges from synapse_store with full rollback support.
+        
+        If dry_run is True, simulates the removal without mutating the store or writing to journal.
+        If dry_run is False, removes the matching synapses, updates store adjacency, and writes
+        complete synapse state to the append-only journal for bit-for-bit rollback.
+        """
+        resolved_run_id = run_id or f"prune_{uuid.uuid4().hex[:12]}"
+        now_ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+        # Parse and normalize edges to prune
+        targets: List[Tuple[str, str, Optional[str]]] = []
+        for item in edges_to_prune:
+            if isinstance(item, dict):
+                src = item.get("source") or item.get("source_id") or ""
+                tgt = item.get("target") or item.get("target_id") or ""
+                rel = item.get("relation")
+                targets.append((str(src), str(tgt), str(rel) if rel else None))
+            elif isinstance(item, (list, tuple)):
+                if len(item) == 2:
+                    targets.append((str(item[0]), str(item[1]), None))
+                elif len(item) >= 3:
+                    targets.append((str(item[0]), str(item[1]), str(item[2]) if item[2] else None))
+
+        matching_keys = []
+        for syn in synapse_store.all():
+            for src, tgt, rel in targets:
+                if syn.source_id == src and syn.target_id == tgt:
+                    if rel is None or syn.relation == rel:
+                        matching_keys.append(syn.key)
+
+        matching_keys = sorted(set(matching_keys))
+        pruned_synapses: List[Dict[str, Any]] = []
+        journal_ids: List[str] = []
+
+        for key in matching_keys:
+            syn = synapse_store._by_key.get(key)
+            if syn is None:
+                continue
+            syn_dict = asdict(syn)
+            pruned_synapses.append(syn_dict)
+
+            if not dry_run:
+                del synapse_store._by_key[key]
+                entry = JournalEntry(
+                    entry_id=f"plj_pr_{uuid.uuid4().hex[:12]}",
+                    run_id=resolved_run_id,
+                    timestamp=now_ts,
+                    action="prune",
+                    source_id=syn.source_id,
+                    target_id=syn.target_id,
+                    relation=syn.relation,
+                    old_weight=syn.weight,
+                    new_weight=0.0,
+                    delta=-syn.weight,
+                    outcome="pruned",
+                    verification_method=reason,
+                    attribution_state=MemoryAttributionState.PLAUSIBLY_CAUSED.value,
+                    metadata={"synapse_state": syn_dict, "reason": reason},
+                )
+                jid = self.journal.append(entry)
+                journal_ids.append(jid)
+
+        if not dry_run and matching_keys:
+            synapse_store._rebuild_adjacency()
+
+        return PruneResult(
+            run_id=resolved_run_id,
+            dry_run=dry_run,
+            edges_pruned=len(matching_keys),
+            pruned_synapses=pruned_synapses,
+            journal_entry_ids=journal_ids,
+            reason=reason,
         )

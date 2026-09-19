@@ -26,8 +26,6 @@ lifecycle: NORMALIZED
 provenance_status: complete
 relations:
   - type: related_to
-    target_id: knw-leg-hg585-2002-0001
-  - type: related_to
     target_id: knw-leg-m172-2021-0001
   - type: related_to
     target_id: 99522c1a-b212-4571-b4d8-7dbbba2a3462

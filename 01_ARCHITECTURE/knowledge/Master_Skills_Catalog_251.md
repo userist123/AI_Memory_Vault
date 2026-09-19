@@ -11,8 +11,6 @@ provenance:
 confidence: very_high
 verification: verified
 relations:
-  - type: related_to
-    target_id: c1a01101-7291-49fa-9481-22904c10d010
   - "00_CORE/GRAPH/14 Subagents Council Map.md"
 ---
 

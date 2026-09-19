@@ -65,13 +65,13 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 948 |
-| Notes visible to `FileStorageEngine` | 853 |
-| Graph edges | 521 |
-| — declared / inferred / wikilink | 224 / 222 / 75 |
-| Notes usable as a graph **seed** (out-edge) | 157 |
-| Notes reachable as graph **gold** (in-edge) | 145 |
-| Graph cases with pairwise-disjoint nodes | 33 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 954 |
+| Notes visible to `FileStorageEngine` | 858 |
+| Graph edges | 511 |
+| — declared / inferred / wikilink | 219 / 217 / 75 |
+| Notes usable as a graph **seed** (out-edge) | 155 |
+| Notes reachable as graph **gold** (in-edge) | 144 |
+| Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
 and storage requires a frontmatter `id`. Do not treat 842 and 738 as the same
