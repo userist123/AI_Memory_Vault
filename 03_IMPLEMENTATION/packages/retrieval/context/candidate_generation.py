@@ -86,6 +86,8 @@ class CandidateTrace:
     candidates_considered: int
     per_generator: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     fused_ranking: List[Dict[str, Any]] = field(default_factory=list)
+    cut_candidates: List[Dict[str, Any]] = field(default_factory=list)
+    raw_scores_by_signal: Dict[str, Dict[str, float]] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -94,6 +96,8 @@ class CandidateTrace:
             "candidates_considered": self.candidates_considered,
             "per_generator": self.per_generator,
             "fused_ranking": self.fused_ranking,
+            "cut_candidates": self.cut_candidates,
+            "raw_scores_by_signal": self.raw_scores_by_signal,
         }
 
 
@@ -173,6 +177,7 @@ def generate_candidates(
     order = _rank_all(fused_scores, ids)
     limit = max(0, int(candidate_limit))
     top = order[:limit]
+    cut = order[limit:]
 
     per_generator = {
         "bm25": [{"id": ids[i], "score": round(bm25_scores[i], 6)} for i in bm25_rank[:limit]],
@@ -182,6 +187,17 @@ def generate_candidates(
         {"rank": rank, "id": ids[i], "fused_score": round(fused_scores[i], 6), "signals": signals[i]}
         for rank, i in enumerate(top, start=1)
     ]
+    cut_candidates = [
+        {"rank": rank, "id": ids[i], "fused_score": round(fused_scores[i], 6), "signals": signals[i]}
+        for rank, i in enumerate(cut, start=limit + 1)
+    ]
+    raw_scores_by_signal = {
+        ids[i]: {
+            "bm25": round(bm25_scores[i], 6),
+            "entity": round(entity_scores[i], 6),
+        }
+        for i in range(len(notes))
+    }
 
     trace = CandidateTrace(
         query=query,
@@ -189,5 +205,7 @@ def generate_candidates(
         candidates_considered=len(notes),
         per_generator=per_generator,
         fused_ranking=fused_ranking,
+        cut_candidates=cut_candidates,
+        raw_scores_by_signal=raw_scores_by_signal,
     )
     return [notes[i] for i in top], trace

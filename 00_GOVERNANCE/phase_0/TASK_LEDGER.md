@@ -29,7 +29,7 @@ reviewer = who falsifies. They are never the same agent.
 | SEC-002 | Prompt-injection suite | `20_TESTS/security/` | LUNA | CLAUDE | SEC-001 | attack visible in trace; action blocked even when retrieved | — | BLOCKED |
 | RET-001 | Map the real path | — | CLAUDE | — | — | done in `RETRIEVAL_PATH_CURRENT.md` | — | ACCEPTED |
 | RET-002 | `reasoning` / `executive`: make them real or take them out | `memory/controller.py` | CODEX | LUNA | RET-001 | either the output is consumed and measured, or the hook is gone | a hook stays that only writes a trace | READY |
-| OBS-001 | Versioned `RetrievalTrace` | `memory/controller.py`, new schema | ANTIGRAVITY | CLAUDE | RET-001 | every exclusion carries a reason code; no raw query logged | — | READY |
+| OBS-001 | Versioned `RetrievalTrace` | `memory/controller.py`, new schema | ANTIGRAVITY | CLAUDE | RET-001 | every exclusion carries a reason code; no raw query logged | — | DONE |
 | CORP-001 | 5 duplicate groups, 13 notes | `01_ARCHITECTURE/knowledge/` | ANTIGRAVITY | LUNA | — | each group classified; nothing deleted automatically | a deletion based on similarity alone | READY |
 | CORP-002 | Near-duplicates | new script | ANTIGRAVITY | LUNA | CORP-001 | threshold declared and justified on a labelled set first | threshold tuned after seeing results | BLOCKED |
 | GRAPH-002 | Proposer: strong relations need an explicit citation | `edge_proposer.py` | ANTIGRAVITY | LUNA | — | entity overlap alone can no longer produce `depends_on` | — | READY |

@@ -36,6 +36,16 @@ from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntity
 from .planning import Planner, ActivePlan
 from .plan_complexity_analyzer import PlanComplexityAnalyzer, PlanComplexity, ExecutionMode
 from .council_budget_controller import CouncilBudgetController, CouncilTier, CouncilBudgetDecision
+import uuid
+from observability.retrieval_trace import (
+    RetrievalTrace,
+    RetrievalTraceCollector,
+    SafeTraceCollectorProxy,
+    TraceEvent,
+    ExclusionReason,
+    InclusionReason,
+    SCHEMA_VERSION,
+)
 
 class StorageEngine:
     def __init__(self):
@@ -481,6 +491,25 @@ class MemoryController:
             budget = load_agent_budget(principal.value)
             disclosure_level = getattr(self, 'default_disclosure', 'metadata')
 
+            # Initialize versioned retrieval trace collector (OBS-001)
+            trace_id = str(uuid.uuid4())
+            corpus_ver = getattr(self, "corpus_version", "10224498c")
+            index_ver = str(getattr(self.index, "version", len(getattr(self.index, "notes", {})))) if getattr(self, "index", None) else "unknown"
+            config_ver = str(getattr(self, "ranking_arm", "1.0.0"))
+            trace_collector = SafeTraceCollectorProxy(
+                RetrievalTraceCollector(
+                    trace_id=trace_id,
+                    query_hash=query_fp,
+                    corpus_version=corpus_ver,
+                    index_version=index_ver,
+                    config_version=config_ver,
+                )
+            )
+            trace_collector.start_stage("query_validation")
+            trace_collector.record_event(TraceEvent.QUERY_RECEIVED, {"fingerprint": query_fp[:16]})
+            trace_collector.record_event(TraceEvent.QUERY_SANITIZED)
+            trace_collector.end_stage("query_validation")
+
             # Cognitive Core planning & complexity analysis
             active_enable_cognitive_core = (
                 enable_cognitive_core
@@ -519,6 +548,7 @@ class MemoryController:
             # unconditional in storage.query() regardless of this flag and
             # is never in scope for any arm below; only the classifier's
             # OWN inferred lifecycle/type filters are ever softened.
+            trace_collector.start_stage("classification")
             classified = self.query_classifier.classify(sanitized)
             classified['lifecycle_filters_source'] = 'inferred' if classified.get('lifecycle_filters') else 'none'
             classified['target_types_source'] = 'inferred' if classified.get('target_types') else 'none'
@@ -528,6 +558,9 @@ class MemoryController:
             if types is not None:
                 classified['target_types'] = types
                 classified['target_types_source'] = 'explicit'
+            trace_collector.set_query_class(classified.get('intent', 'general'))
+            trace_collector.end_stage("classification")
+
             # Handle pagination token decoding if provided
             offset = 0
             if page_token:
@@ -557,6 +590,59 @@ class MemoryController:
             # Retrieval -- `sanitized` drives candidate selection (BM25 + entity
             # overlap over notes already filtered by lifecycle/type/RAW; see
             # RetrievalEngine.retrieve() / candidate_generation.py).
+            trace_collector.start_stage("policy_and_retrieval")
+            try:
+                if hasattr(self.storage, "store") and isinstance(self.storage.store, dict):
+                    all_storage_notes = list(self.storage.store.values())
+                elif hasattr(self.storage, "all_notes") and callable(self.storage.all_notes):
+                    all_storage_notes = self.storage.all_notes()
+                else:
+                    all_storage_notes = []
+
+                allowed_lcs_set = set(classified.get("lifecycle_filters") or [])
+                allowed_types_set = set(classified.get("target_types") or [])
+
+                for snote in all_storage_notes:
+                    sn_id = snote.get("id")
+                    if not sn_id:
+                        continue
+                    sn_lc = snote.get("lifecycle")
+                    sn_type = snote.get("type")
+
+                    sn_lc_norm = str(sn_lc).upper() if sn_lc else ""
+                    allowed_lcs_norm = {str(x).upper() for x in allowed_lcs_set}
+                    allowed_types_norm = {str(x).lower() for x in allowed_types_set}
+                    sn_type_norm = str(sn_type).lower() if sn_type else ""
+
+                    if sn_lc_norm == "RAW":
+                        trace_collector.record_decision(
+                            sn_id, "EXCLUDED", ExclusionReason.RAW_EXCLUDED, "storage_policy",
+                            {"lifecycle": sn_lc}
+                        )
+                    elif agent_floor_applied and sn_lc_norm not in [l.value.upper() for l in AGENT_LIFECYCLE_FLOOR]:
+                        trace_collector.record_decision(
+                            sn_id, "EXCLUDED", ExclusionReason.AGENT_LIFECYCLE_FLOOR_EXCLUDED, "storage_policy",
+                            {"lifecycle": sn_lc, "floor": [l.value for l in AGENT_LIFECYCLE_FLOOR]}
+                        )
+                    elif allowed_lcs_norm and sn_lc_norm not in allowed_lcs_norm:
+                        trace_collector.record_decision(
+                            sn_id, "EXCLUDED", ExclusionReason.LIFECYCLE_FILTERED, "storage_policy",
+                            {"lifecycle": sn_lc, "allowed": list(allowed_lcs_set)}
+                        )
+                    elif allowed_types_norm and sn_type_norm not in allowed_types_norm:
+                        trace_collector.record_decision(
+                            sn_id, "EXCLUDED", ExclusionReason.TYPE_FILTERED, "storage_policy",
+                            {"type": sn_type, "allowed": list(allowed_types_set)}
+                        )
+            except Exception:
+                pass
+
+            trace_collector.record_event(TraceEvent.POLICY_FILTERED, {
+                "lifecycles": classified.get("lifecycle_filters", []),
+                "types": classified.get("target_types", []),
+                "agent_floor_applied": agent_floor_applied,
+            })
+
             candidate_trace: Dict[str, Any] = {}
             candidate_trace['agent_lifecycle_floor_applied'] = agent_floor_applied
             candidate_trace['lifecycles_requested'] = [
@@ -572,13 +658,55 @@ class MemoryController:
                 classifier_filter_arm=active_classifier_filter_arm,
             )
 
+            try:
+                trace_collector.record_event(TraceEvent.CANDIDATES_GENERATED, {
+                    "candidates_considered": candidate_trace.get("candidates_considered", 0),
+                    "candidate_limit": candidate_trace.get("candidate_limit"),
+                })
+                for gen_name, gen_list in candidate_trace.get("per_generator", {}).items():
+                    gen_ids = [entry.get("id") for entry in gen_list if isinstance(entry, dict) and entry.get("id")]
+                    trace_collector.record_generator_candidates(gen_name, gen_ids)
+
+                for n_id, sig_scores in candidate_trace.get("raw_scores_by_signal", {}).items():
+                    for sig_name, sig_val in sig_scores.items():
+                        trace_collector.record_raw_score(n_id, sig_name, sig_val)
+
+                trace_collector.set_fused_rank(candidate_trace.get("fused_ranking", []))
+                trace_collector.record_event(TraceEvent.CANDIDATES_MERGED, {
+                    "merged_count": len(candidate_trace.get("fused_ranking", [])),
+                })
+
+                for cut_cand in candidate_trace.get("cut_candidates", []):
+                    c_id = cut_cand.get("id")
+                    if c_id:
+                        trace_collector.record_decision(
+                            c_id, "EXCLUDED", ExclusionReason.CANDIDATE_LIMIT_CUT, "candidate_generation",
+                            {"fused_score": cut_cand.get("fused_score"), "rank": cut_cand.get("rank")}
+                        )
+            except Exception:
+                pass
+            trace_collector.end_stage("policy_and_retrieval")
+
             # Score relevance of initial retrieved notes. Confidence stays in
             # the returned note/trace regardless of ranking arm (r024 WP-1
             # requirement 3) -- score() is unchanged and still runs; only the
             # SORT KEY below may use a different combination of the same
             # components (see RelevanceScorer.score_components()).
+            trace_collector.start_stage("scoring")
             initial_scored = self.scorer.score(sanitized, notes)
             initial_score_map = {s['id']: float(s['score']) for s in initial_scored if s.get('id')}
+            try:
+                for snote in notes:
+                    sn_id = snote.get('id')
+                    if sn_id:
+                        trace_collector.record_verdict(sn_id, "verification", snote.get("verification", "unverified"))
+                        trace_collector.record_verdict(sn_id, "lifecycle", snote.get("lifecycle", "unknown"))
+                        trace_collector.record_verdict(sn_id, "confidence", snote.get("confidence", "unknown"))
+                        if snote.get("provenance"):
+                            trace_collector.record_verdict(sn_id, "source_type", snote.get("provenance", {}).get("source_type", "unknown"))
+            except Exception:
+                pass
+            trace_collector.end_stage("scoring")
 
             # Optional graph expansion stage (r009)
             is_expansion_enabled = (
@@ -876,6 +1004,21 @@ class MemoryController:
                         "so this arm is identical to the baseline"
                     )
                 candidate_trace['graph_hub_nodes_skipped'] = hub_nodes_skipped
+                try:
+                    trace_collector.record_graph_contribution({
+                        "status": candidate_trace.get("graph_expansion_status", "disabled"),
+                        "seed_ids": candidate_trace.get("graph_seed_ids", []),
+                        "expanded_ids": candidate_trace.get("graph_expanded_ids", []),
+                        "hub_nodes_skipped": candidate_trace.get("graph_hub_nodes_skipped", []),
+                        "edges_traversed_count": len(candidate_trace.get("graph_edges_traversed", [])),
+                    })
+                    for h_id in hub_nodes_skipped:
+                        trace_collector.record_decision(h_id, "EXCLUDED", ExclusionReason.GRAPH_HUB_SKIPPED, "graph_expansion")
+                    trace_collector.record_event(TraceEvent.GRAPH_EXPANDED, {
+                        "expanded_count": len(candidate_trace.get("graph_expanded_ids", []))
+                    })
+                except Exception:
+                    pass
 
                 if expanded_notes:
                     all_notes = list(notes) + expanded_notes
@@ -924,6 +1067,7 @@ class MemoryController:
                         notes = winning_notes + other_notes
 
             # Apply progressive disclosure
+            trace_collector.start_stage("pagination")
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata':
                 disclosed = pd.metadata_only(notes)
@@ -938,6 +1082,19 @@ class MemoryController:
             effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
             end = min(offset + effective_page_size, total)
             page_results = disclosed[offset:end]
+
+            try:
+                for p_idx, p_note in enumerate(disclosed):
+                    if p_idx < offset or p_idx >= end:
+                        pn_id = p_note.get("id")
+                        if pn_id:
+                            trace_collector.record_decision(
+                                pn_id, "EXCLUDED", ExclusionReason.PAGINATION_CUT, "pagination",
+                                {"position": p_idx + 1, "offset": offset, "page_size": effective_page_size}
+                            )
+            except Exception:
+                pass
+            trace_collector.end_stage("pagination")
 
             if active_enable_reasoning and not getattr(self, '_in_reasoning_synthesize', False):
                 try:
@@ -983,6 +1140,7 @@ class MemoryController:
                 'soft': budget.soft_context_budget,
                 'hard': budget.hard_context_budget,
             }
+            trace_collector.start_stage("context_pack")
             try:
                 pack = self.pack_builder.build(
                     request_id='search',
@@ -1003,6 +1161,23 @@ class MemoryController:
                     'results': [],
                 }
             pack['next_page_token'] = next_token
+
+            try:
+                final_res_ids = {r.get("id") for r in pack.get("results", []) if isinstance(r, dict) and r.get("id")}
+                for p_note in page_results:
+                    pn_id = p_note.get("id")
+                    if pn_id and pn_id not in final_res_ids:
+                        trace_collector.record_decision(
+                            pn_id, "EXCLUDED", ExclusionReason.BUDGET_EXCEEDED, "context_pack",
+                            {"budget": pack_budget}
+                        )
+                trace_collector.record_event(TraceEvent.CONTEXT_PACKED, {
+                    "result_count": len(pack.get("results", [])),
+                })
+            except Exception:
+                pass
+            trace_collector.end_stage("context_pack")
+
             # Structured per-query candidate-generation trace (requirement:
             # query -> candidates considered -> per-generator scores -> fused
             # score -> what actually entered the final context). IDs and
@@ -1040,6 +1215,19 @@ class MemoryController:
                     'enabled': False,
                 }
             pack['candidate_trace'] = candidate_trace
+
+            try:
+                token_estimate = pack_budget.get("soft_tokens", 0) if isinstance(pack_budget, dict) else 0
+                retrieval_trace_obj = trace_collector.finalize(
+                    final_notes=pack.get("results", []),
+                    token_estimate=token_estimate,
+                    result_link=f"pack://{query_fp[:16]}",
+                )
+                pack["retrieval_trace"] = retrieval_trace_obj.to_dict()
+            except Exception as trace_err:
+                trace_collector.trace.status = f"degraded_telemetry_error: {str(trace_err)}"
+                pack["retrieval_trace"] = trace_collector.trace.to_dict()
+
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
         except Exception as e:
