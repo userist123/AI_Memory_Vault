@@ -55,6 +55,10 @@ in its constructor. Corrected 2026-09-06.
 | Cognitive core (`PlanComplexityAnalyzer`, `CouncilBudgetController`, `ContextPackBuilder`) | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on heldout v2 in `07_EVALUATION/cognitive_core/EVALUATION_REPORT.md` (52% envelope token reduction, zero recall loss); `enable_cognitive_core=False` |
 | `graph/plasticity.py` | real, **wired in production** | wired into `synapse_store.py` and `controller.py`; transactional prune and byte-for-byte rollback active |
 | `executive`, `global_workspace`, `reasoning`, `working_memory` | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on benchmark v3 in `07_EVALUATION/cognitive_core/MODULE_EVALUATION_REPORT.md`; OFF by default |
+| `RetrievalTrace` v1.1.0 | real, in production | `observability/retrieval_trace.py`; every note carries a reason code; 16.7 KB per search, verified on 8 benchmark queries |
+| Agent lifecycle floor | real, in production | `controller.py`; `AI_AGENT` asking for no lifecycle gets ACTIVE + REVIEW. Measured cost before adoption: 1 case in 130 |
+| Untrusted content guard | real, in CI | `30_SCRIPTS/verification/untrusted_content_guard.py`; 4 blocking rules, 3 report-only; 27 reviewed allowlist entries |
+| Typed relations in the graph | **audited, 20/49 accepted** | Perplexity, independent; 29 rejected rows purged at source; **65 still unaudited** |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
@@ -113,10 +117,21 @@ whole-corpus retrieval numbers.
 - **86% of notes have no semantic edge.** Many are connected only to
   navigation hubs, which look connected in Obsidian and carry no retrieval
   signal.
-- **`prune()` semantics** were tightened in r009a so wikilink edges survive,
-  but plasticity is still uncalled, so the interaction is untested in anger.
+- **`prune()` semantics** were tightened in r009a so wikilink edges survive.
+  Plasticity is no longer uncalled: the audited purge of 29 typed relations ran
+  through it, with a journal and a rollback proved field for field. One caveat
+  worth keeping in mind — **that rollback restores the in-memory synapse store,
+  not the repository.** The purge that happened rewrote 29 notes' frontmatter,
+  and undoing that is `git revert`, not `PlasticityEngine.rollback()`.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
+- **65 of the graph's 85 typed relations have never been audited.** The 49 that
+  were came back at 20 accepted. No claim about the graph's overall precision is
+  supported until the rest are labelled; 49 rows is what was measured, not 114.
+- **Where the 91 missed benchmark cases are lost is still unknown.** Reason
+  codes now exist for every note, but nothing has yet connected them to the
+  benchmark. Until that runs, choosing between a reranker and better candidate
+  generation is a guess.
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads
