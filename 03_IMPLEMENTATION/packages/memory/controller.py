@@ -76,6 +76,11 @@ class Lifecycle(str, enum.Enum):
     SUPERSEDED = "SUPERSEDED"
     ARCHIVED = "ARCHIVED"
 
+#: What an AI agent sees when it asks for no lifecycle in particular. ARCHIVED
+#: notes and notes with no lifecycle at all are excluded: they are the vault's
+#: history and its unclassified backlog, not what it stands behind.
+AGENT_LIFECYCLE_FLOOR = (Lifecycle.ACTIVE, Lifecycle.REVIEW)
+
 _ALLOWED_PROVENANCE_SOURCE_TYPES = {
     Principal.AI_AGENT: {"execution", "ai", "inference", "unknown"},
     Principal.HUMAN: {"user", "official", "execution", "experience", "inference", "import", "unknown"},
@@ -453,6 +458,22 @@ class MemoryController:
             check_query_size(query)
             # Sanitize query
             sanitized = sanitize_query(query)
+            # An AI agent that asks for nothing in particular gets the notes the
+            # vault stands behind. Until r0xx every entry point -- the MCP
+            # server, recall_cli, tool_router -- passed no lifecycle at all, so
+            # an agent's search covered 569 ARCHIVED notes (including ones
+            # archived precisely because their provenance did not hold up) and
+            # 148 notes carrying no lifecycle. Measured on the v3 benchmark
+            # before this default was added: the floor costs 1 case out of 130
+            # (38 -> 37 context recall). Principal.HUMAN is unfiltered -- the
+            # owner can see everything -- and an explicit `lifecycles` argument
+            # always wins, so benchmarks and migrations are unaffected.
+            if lifecycles is None and principal == Principal.AI_AGENT:
+                lifecycles = list(AGENT_LIFECYCLE_FLOOR)
+                agent_floor_applied = True
+            else:
+                agent_floor_applied = False
+
             # Compute fingerprint of current sanitized query
             query_fp = hashlib.sha256(sanitized.encode()).hexdigest()
             target_id = query_fp
@@ -537,6 +558,10 @@ class MemoryController:
             # overlap over notes already filtered by lifecycle/type/RAW; see
             # RetrievalEngine.retrieve() / candidate_generation.py).
             candidate_trace: Dict[str, Any] = {}
+            candidate_trace['agent_lifecycle_floor_applied'] = agent_floor_applied
+            candidate_trace['lifecycles_requested'] = [
+                getattr(l, 'value', str(l)) for l in (lifecycles or [])
+            ]
             active_classifier_filter_arm = (
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)

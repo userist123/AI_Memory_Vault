@@ -24,8 +24,8 @@ reversible was decided and is recorded in `PROPOSED_EXECUTION_PLAN.md`.
 | # | Decision | Options | Recommendation |
 |---|---|---|---|
 | **D1** | Sync the local repository | fast-forward / rebase / fresh clone | **Fast-forward.** Tree is clean, nothing local to lose. Decided and applied; listed for the record. |
-| **D2** | The 148 notes with no lifecycle | (a) treat a missing lifecycle as REVIEW and filter them out of agent results; (b) classify them one by one; (c) leave as is | **(a) now, (b) over time.** Today they are returned to agents by default. |
-| **D3** | Lifecycle floor at the entry points | (a) `search()` refuses to return REVIEW to `AI_AGENT` unless asked; (b) each caller passes its own filter; (c) leave open | **(a).** A default that has to be remembered at every call site is not a control. |
+| **D2** | The 148 notes with no lifecycle | (a) keep them out of agent results until classified; (b) classify them one by one; (c) leave as is | **(a), applied by the D3 floor; (b) still open.** They are no longer returned to agents. |
+| **D3** | Lifecycle floor at the entry points | (a) a default floor inside `search()`; (b) each caller passes its own filter; (c) leave open | **(a), decided and implemented in Wave A.** Measured first, see below. A default that has to be remembered at every call site is not a control. |
 | **D4** | The 7 pending ontology rows | dispose / keep pending | Owner's, untouched. Blocks the ontology work only. |
 | **D5** | Graph expansion default | keep off / turn on at budget 5 | **Keep off.** The preregistered rule rejected budget 5: 1 win, 14 losses, p = 0.00098. |
 | **D6** | Strong relations in the live graph | purge the rejected ones / keep and re-audit | **Purge through `plasticity.py`, with journal and rollback.** 3/25 precision on strong edges, 0/5 on `supersedes`. |
@@ -42,3 +42,22 @@ reversible was decided and is recorded in `PROPOSED_EXECUTION_PLAN.md`.
 - `module_v3_results.json` keeps no note ids, so its recall values cannot be
   re-derived.
 - `verified` and `verified_source` are two spellings of one state.
+
+## What the lifecycle floor costs, measured before it was imposed
+
+`Principal.AI_AGENT`, 130 measurable cases of benchmark v3, graph off:
+
+| Policy | Context recall | Cost against today |
+|---|---:|---:|
+| no filter (what every entry point did) | 38/130 | — |
+| exclude RAW only | 37/130 | 1 case |
+| **ACTIVE + REVIEW (adopted)** | **37/130** | **1 case** |
+| ACTIVE only | 7/130 | 31 cases |
+
+Excluding 569 ARCHIVED notes and 148 with no lifecycle costs one case in 130.
+Restricting to the 57 ACTIVE notes would cost 31 and was rejected on the
+evidence, not on principle.
+
+`Principal.HUMAN` is unfiltered, and an explicit `lifecycles` argument always
+wins, so the owner still sees everything and the benchmarks are unaffected.
+
