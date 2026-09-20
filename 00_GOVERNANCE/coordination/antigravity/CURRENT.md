@@ -1,15 +1,23 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-20T16:45:00Z
+last_updated_utc: 2026-09-20T20:10:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: antigravity/retrieval-trace-contract
+working_branch: antigravity/measurement-program
 base_branch: origin/main
-base_sha: 3482e8dff
+base_sha: 909bd6ddf
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-current_task: OBS-001_RETRIEVAL_TRACE_CONTRACT_AND_CI-002_CORPUS_HEALTH_GATE
+current_task: MEASUREMENT_PROGRAM_PART_1_OBS_001_CLOSURE
 status: COMPLETE
 completed:
+  - "Measurement Program Partea 1 — Închide OBS-001 (Economic RetrievalTrace & Stage Latencies):
+     1. Schema version upgraded to '1.1.0' with dual stage latency exposure: both stage_latency_ms and stage_latencies_ms populated across all 6 pipeline stages (query_validation, classification, policy_and_retrieval, scoring, pagination, context_pack).
+     2. Economic trace representation implemented: individual detailed DecisionRecords preserved for competitive candidate notes (disclosed pool and final pack), while non-competitive storage policy and mass pagination/candidate cuts are compactly aggregated into aggregated_exclusions by reason_code with counts, criteria, and sample IDs.
+     3. Added get_decision() resolving decisions seamlessly from either competitive decisions or aggregated_exclusions.
+     4. Empirical trace size benchmark: measured on 10 benchmark v3 queries via 30_SCRIPTS/evaluation/measure_trace_size.py. Average trace size dropped from ~250-255 KB down to 16.69 KB (93.3% net space reduction, well under the 20.0 KB ceiling).
+     5. Zero reason codes lost: all failure modes (RAW_EXCLUDED, AGENT_LIFECYCLE_FLOOR_EXCLUDED, CANDIDATE_LIMIT_CUT, PAGINATION_CUT, TYPE_FILTERED) fully preserved and auditable.
+     6. Comprehensive test suite: 20_TESTS/test_retrieval_trace_contract.py (9/9 PASS).
+     7. Full test suite validation: 2517 passed, 13 skipped, 9 xfailed in 307s with zero regressions across the entire repository."
   - "OBS-001 RetrievalTrace Contract Completed:
      1. Strongly-typed, versioned RetrievalTrace contract (schema_version = '1.0.0') with schema fingerprint validation and drift protection.
      2. Complete explainability: every candidate note carries an explicit machine-readable reason code across all pipeline stages (RAW_EXCLUDED, AGENT_LIFECYCLE_FLOOR_EXCLUDED, LIFECYCLE_FILTERED, TYPE_FILTERED, CANDIDATE_LIMIT_CUT, GRAPH_HUB_SKIPPED, PAGINATION_CUT, BUDGET_EXCEEDED, INCLUDED_IN_FINAL_PACK).

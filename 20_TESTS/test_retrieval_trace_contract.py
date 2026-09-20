@@ -85,7 +85,7 @@ def rich_storage():
 
 
 def test_retrieval_trace_attached_and_structured(rich_storage):
-    """Verifies that every search produces a structured RetrievalTrace adhering to schema v1.0.0."""
+    """Verifies that every search produces a structured RetrievalTrace adhering to schema v1.1.0."""
     controller = MemoryController(storage=rich_storage, ranking_arm=RANKING_ARM_BASELINE)
     pack = controller.search(Principal.HUMAN, "architectural principles telemetry", page_size=5)
 
@@ -94,6 +94,7 @@ def test_retrieval_trace_attached_and_structured(rich_storage):
 
     # Required fields
     assert trace["schema_version"] == SCHEMA_VERSION
+    assert trace["schema_version"] == "1.1.0"
     assert trace["status"] == "ok"
     assert "trace_id" in trace and len(trace["trace_id"]) > 0
     assert "query_hash" in trace and len(trace["query_hash"]) == 64
@@ -104,9 +105,20 @@ def test_retrieval_trace_attached_and_structured(rich_storage):
     assert "verdicts" in trace
     assert "graph_contribution" in trace
     assert "decisions" in trace
+    assert "aggregated_exclusions" in trace
     assert "final_rank" in trace
     assert "stage_latencies_ms" in trace
+    assert "stage_latency_ms" in trace
     assert "events" in trace
+
+    # Stage latencies dual exposure verification
+    assert isinstance(trace["stage_latency_ms"], dict)
+    assert isinstance(trace["stage_latencies_ms"], dict)
+    assert len(trace["stage_latency_ms"]) > 0
+    assert trace["stage_latency_ms"] == trace["stage_latencies_ms"]
+    for stage, lat in trace["stage_latency_ms"].items():
+        assert isinstance(lat, (int, float))
+        assert lat >= 0.0
 
     # Events timeline
     event_names = [e["event"] for e in trace["events"]]
@@ -247,3 +259,82 @@ def test_telemetry_latency_overhead(rich_storage):
 
     # The entire search should be fast (< 20ms in mock storage)
     assert avg_time_ms < 50.0, f"Average search latency {avg_time_ms:.2f} ms exceeds 50ms"
+
+
+def test_aggregated_exclusions_and_get_decision():
+    """Verifies that aggregated bulk exclusions record properly and get_decision resolves correctly."""
+    collector = RetrievalTraceCollector(trace_id="test_agg_t1", query_hash="a" * 64)
+    collector.record_bulk_exclusion(
+        reason_code=ExclusionReason.RAW_EXCLUDED.value,
+        stage="storage_policy",
+        count=150,
+        sample_ids=["raw_01", "raw_02", "raw_03"],
+        details={"criteria": "raw_content_excluded"},
+    )
+    collector.record_decision(
+        note_id="comp_01",
+        decision="EXCLUDED",
+        reason_code=ExclusionReason.PAGINATION_CUT.value,
+        stage="pagination",
+        details={"rank": 6},
+    )
+
+    trace = collector.finalize(final_notes=[{"id": "note_win_01"}])
+    assert "RAW_EXCLUDED" in trace.aggregated_exclusions
+    agg = trace.aggregated_exclusions["RAW_EXCLUDED"]
+    assert agg["count"] == 150
+    assert len(agg["sample_ids"]) == 3
+    assert "raw_01" in agg["sample_ids"]
+
+    # Resolution via get_decision
+    dec_comp = trace.get_decision("comp_01")
+    assert dec_comp is not None
+    assert dec_comp["reason_code"] == ExclusionReason.PAGINATION_CUT.value
+
+    dec_sample = trace.get_decision("raw_02")
+    assert dec_sample is not None
+    assert dec_sample["reason_code"] == ExclusionReason.RAW_EXCLUDED.value
+    assert dec_sample["aggregated"] is True
+
+    dec_missing = trace.get_decision("non_existent")
+    assert dec_missing is None
+
+    # Roundtrip serialization
+    d = trace.to_dict()
+    assert "aggregated_exclusions" in d
+    assert "stage_latency_ms" in d
+    reconstituted = RetrievalTrace.from_dict(d)
+    assert reconstituted.schema_version == "1.1.0"
+    assert "RAW_EXCLUDED" in reconstituted.aggregated_exclusions
+
+
+def test_trace_size_under_20_kb():
+    """Verifies that an evaluated corpus with 150+ notes produces a trace comfortably below 20 KB."""
+    storage = StorageEngine()
+    for i in range(150):
+        storage.set(
+            f"note_{i:03d}",
+            {
+                "id": f"note_{i:03d}",
+                "lifecycle": "active" if i % 3 != 0 else "raw",
+                "type": "knowledge" if i % 2 == 0 else "decision",
+                "title": f"Note {i} on System Design and Telemetry",
+                "content": f"Telemetry content for evaluation of memory retrieval trace {i}.",
+                "verification": "verified" if i % 3 != 0 else "unverified",
+                "confidence": 0.85,
+                "source_type": "official" if i % 3 != 0 else "unknown",
+            },
+        )
+
+    controller = MemoryController(storage=storage, ranking_arm=RANKING_ARM_BASELINE)
+    pack = controller.search(Principal.AI_AGENT, "telemetry system design", page_size=5)
+
+    trace = pack["retrieval_trace"]
+    serialized = json.dumps(trace)
+    size_kb = len(serialized.encode("utf-8")) / 1024.0
+
+    print(f"\n[BENCHMARK] Trace size with 150 notes: {size_kb:.2f} KB (Target: < 20.0 KB)")
+    assert size_kb < 20.0, f"Trace size {size_kb:.2f} KB exceeds 20.0 KB ceiling!"
+    assert len(trace["stage_latency_ms"]) > 0
+    assert "aggregated_exclusions" in trace
+

@@ -63,7 +63,7 @@ class SchemaVersionMismatchError(RuntimeError):
 
 
 # Canonical schema fields frozen for version 1.0.0
-_SCHEMA_V1_FIELDS: Tuple[str, ...] = (
+_SCHEMA_V1_0_FIELDS: Tuple[str, ...] = (
     "trace_id",
     "schema_version",
     "query_hash",
@@ -87,6 +87,35 @@ _SCHEMA_V1_FIELDS: Tuple[str, ...] = (
     "status",
 )
 
+# Canonical schema fields for version 1.1.0 (with economic aggregation & dual latency naming)
+_SCHEMA_V1_1_FIELDS: Tuple[str, ...] = (
+    "trace_id",
+    "schema_version",
+    "query_hash",
+    "query_class",
+    "corpus_version",
+    "index_version",
+    "config_version",
+    "candidate_ids_by_generator",
+    "raw_scores_by_signal",
+    "fused_rank",
+    "rerank_displacement",
+    "verdicts",
+    "graph_contribution",
+    "decisions",
+    "aggregated_exclusions",
+    "abstention_reason",
+    "final_rank",
+    "stage_latencies_ms",
+    "stage_latency_ms",
+    "token_estimate",
+    "result_link",
+    "events",
+    "status",
+)
+
+SCHEMA_VERSION: str = "1.1.0"
+
 
 def compute_schema_fingerprint(fields: Tuple[str, ...]) -> str:
     """Computes a deterministic SHA-256 fingerprint of schema field names."""
@@ -95,7 +124,8 @@ def compute_schema_fingerprint(fields: Tuple[str, ...]) -> str:
 
 
 SCHEMA_FINGERPRINTS: Dict[str, str] = {
-    "1.0.0": compute_schema_fingerprint(_SCHEMA_V1_FIELDS),
+    "1.0.0": compute_schema_fingerprint(_SCHEMA_V1_0_FIELDS),
+    "1.1.0": compute_schema_fingerprint(_SCHEMA_V1_1_FIELDS),
 }
 
 
@@ -139,15 +169,19 @@ class RetrievalTrace:
     # Graph contribution details
     graph_contribution: Dict[str, Any] = field(default_factory=dict)
 
-    # Decisions for EVERY note (included or excluded)
+    # Decisions for competitive notes (included, scored, cut, paginated, packed)
     decisions: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+    # Aggregated mass exclusions for storage policy (preserves reason codes & counts without per-note bloat)
+    aggregated_exclusions: Dict[str, Dict[str, Any]] = field(default_factory=dict)
 
     # Abstention
     abstention_reason: Optional[str] = None
 
-    # Final outputs and latency
+    # Final outputs and latency (both stage_latencies_ms and stage_latency_ms exposed)
     final_rank: List[str] = field(default_factory=list)
     stage_latencies_ms: Dict[str, float] = field(default_factory=dict)
+    stage_latency_ms: Dict[str, float] = field(default_factory=dict)
     token_estimate: int = 0
     result_link: Optional[str] = None
 
@@ -157,10 +191,33 @@ class RetrievalTrace:
     # Execution telemetry status
     status: str = "ok"
 
+    def get_decision(self, note_id: str) -> Optional[Dict[str, Any]]:
+        """Resolves decision record for any note across competitive and aggregated records."""
+        if note_id in self.decisions:
+            return self.decisions[note_id]
+        for code_val, agg in self.aggregated_exclusions.items():
+            sample_ids = agg.get("sample_ids", [])
+            if note_id in sample_ids:
+                return {
+                    "decision": "EXCLUDED",
+                    "reason_code": code_val,
+                    "stage": agg.get("stage", "storage_policy"),
+                    "details": agg.get("details", {}),
+                    "aggregated": True,
+                }
+        return None
+
     def to_dict(self) -> Dict[str, Any]:
         """Serializes the trace to a dictionary, validating privacy invariants."""
         res = asdict(self)
         return res
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> RetrievalTrace:
+        """Constructs a RetrievalTrace from a dictionary."""
+        valid_fields = set(cls.__dataclass_fields__.keys())
+        filtered = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered)
 
     def to_json(self) -> str:
         """Serializes the trace to JSON format."""
@@ -218,7 +275,9 @@ class RetrievalTraceCollector:
         try:
             if stage_name in self._stage_starts:
                 duration_ms = (time.perf_counter() - self._stage_starts[stage_name]) * 1000.0
-                self.trace.stage_latencies_ms[stage_name] = round(duration_ms, 3)
+                val = round(duration_ms, 3)
+                self.trace.stage_latencies_ms[stage_name] = val
+                self.trace.stage_latency_ms[stage_name] = val
         except Exception:
             pass
 
@@ -298,6 +357,34 @@ class RetrievalTraceCollector:
             }
         except Exception:
             pass
+
+    def record_bulk_exclusion(
+        self,
+        reason_code: ExclusionReason | str,
+        stage: str,
+        count: int,
+        sample_ids: Optional[List[str]] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Records mass exclusions compactly by reason code without bloating individual note decisions."""
+        try:
+            code_val = reason_code.value if hasattr(reason_code, "value") else str(reason_code)
+            self.trace.aggregated_exclusions[code_val] = {
+                "reason_code": code_val,
+                "stage": stage,
+                "count": count,
+                "sample_ids": sample_ids[:5] if sample_ids else [],
+                "details": details or {},
+            }
+        except Exception:
+            pass
+
+    def get_decision(self, note_id: str) -> Optional[Dict[str, Any]]:
+        """Resolves decision record for any note."""
+        try:
+            return self.trace.get_decision(note_id)
+        except Exception:
+            return None
 
     def set_abstention(self, reason: str) -> None:
         """Sets abstention reason if retrieval abstained."""
