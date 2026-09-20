@@ -626,7 +626,15 @@ class MemoryController:
                 try:
                     self._in_executive_loop = True
                     exec_instance = self._get_executive()
+                    # Annotation only: the parsed intent goes into the trace and
+                    # nothing downstream reads it, so this flag cannot change
+                    # what search() returns. Measured on benchmark v3 it scored
+                    # 0 wins and 0 losses against baseline -- which was settled
+                    # before the run, not discovered by it. Anything that wants
+                    # to claim the executive helps retrieval has to consume this
+                    # value first.
                     candidate_trace['executive_intent'] = exec_instance._parse_intent(sanitized)
+                    candidate_trace['executive_is_annotation_only'] = True
                 finally:
                     self._in_executive_loop = False
 
@@ -936,6 +944,10 @@ class MemoryController:
                     self._in_reasoning_synthesize = True
                     re_engine = self._get_reasoning_engine()
                     reasoning_res = re_engine.synthesize(principal, page_results, sanitized)
+                    # Annotation only, like `executive_intent` above: the
+                    # synthesis is recorded and never consumed, so its 0/0
+                    # result on benchmark v3 says nothing about the module.
+                    candidate_trace['reasoning_is_annotation_only'] = True
                     candidate_trace['reasoning_synthesis'] = reasoning_res.get('synthesis')
                     candidate_trace['reasoning_mode'] = reasoning_res.get('mode')
                 finally:

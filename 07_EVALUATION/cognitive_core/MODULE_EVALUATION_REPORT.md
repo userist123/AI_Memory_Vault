@@ -87,3 +87,34 @@
 Fiecare dintre cele 5 module testate (`spreading_activation`, `working_memory`, `global_workspace`, `reasoning`, `executive`) are acum un consumator de producție verificat prin `grep`, cablat în `MemoryController.search()`. Toate modulele stau în spatele unor flag-uri explicite, având valoarea implicită **oprit** (`False`).
 
 Conform regulii preînregistrate comise în git înaintea măsurătorii, niciunul dintre module nu atinge pragul statistic preînregistrat de adoptare pe cele 130 de cazuri măsurabile ale benchmark-ului v3. Prin urmare, toate modulele **rămân oprite implicit (`False`), cu dovada empirică documentată** în acest raport.
+
+---
+
+## Correction, 2026-09-20
+
+Recomputed from `module_v3_results.json` on `10224498c`: the table above
+reproduces exactly — 4 wins and 14 losses for `working_memory`, 0/0 for the
+other four. The arithmetic is sound. Two of the verdicts are not.
+
+- **`reasoning` and `executive` could not have won or lost a case.** Both write
+  into `candidate_trace` — a synthesis string and a parsed intent — and neither
+  touches `results`. Their 0/0 outcome was settled before the run, so
+  "does not win — stays off, with the evidence" reads as a fair test that was
+  failed, when no test took place. `20_TESTS/test_annotation_only_modules.py`
+  now pins that contract: with either flag on, the returned ids are identical
+  to baseline.
+- **`spreading_activation` ran at the default graph budget**, which adds 0 new
+  nodes whenever a query has 20 or more lexical seeds — 153 of the 160 cases.
+  The arm reduces to the baseline, so its 0/0 is a property of the budget, not
+  of spreading activation.
+- **`global_workspace`** reorders notes already returned, which recall at k=5
+  cannot observe.
+- **`working_memory` is the one real measurement**, and its verdict stands: it
+  replaces the note list and made retrieval worse.
+
+The artefact also records no note ids, only the per-case recall booleans, so a
+recall value cannot be re-derived from it. Aggregation is auditable;
+measurement is not.
+
+Claiming "a production consumer verified by grep" is true literally and
+misleading practically: for two of the five, the consumer is a log line.
