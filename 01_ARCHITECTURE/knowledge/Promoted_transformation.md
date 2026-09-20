@@ -14,16 +14,14 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: "slot-06-procedures"
+relations: []
 ---
 
 # transformation
 
 ## Canonical Definition
 
-A probability-conserving transition operator driving stochastic Markov chains step-by-step toward their invariant terminal equilibrium distributions.
+A probability-conserving transition operator driving stochastic Markov chains step-by-step toward their invariant terminal equilibrium distributions, governing state transitions in a [[state-determined system]].
 
 ## Judgment & Evaluation
 

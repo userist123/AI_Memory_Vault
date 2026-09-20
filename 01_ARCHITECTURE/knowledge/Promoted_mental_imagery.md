@@ -17,13 +17,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-02-map
-- type: applies_to
-  target_id: c67c2beb-e722-4155-ad31-66a48823aa20
-- type: related_to
-  target_id: 5ed5f5b1-a936-4b51-a4ef-c9742d14730c
+  - type: part_of
+    target_id: "slot-02-map"
+  - type: related_to
+    target_id: "5ed5f5b1-a936-4b51-a4ef-c9742d14730c"
 ---
+
 # mental imagery
 
 ## Canonical Definition

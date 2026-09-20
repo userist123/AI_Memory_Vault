@@ -1476,12 +1476,34 @@ class MemoryController:
                 audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
                 raise
 
+    def prune_synapses(
+        self,
+        edges_to_prune: Any,
+        run_id: Optional[str] = None,
+        dry_run: bool = False,
+        reason: str = "audit_rejection",
+    ) -> Any:
+        """Prunes specific edges from the controller's synapse store transactionally."""
+        if self.synapse_store is None:
+            raise RuntimeError("SynapseStore not initialized on MemoryController")
+        return self.synapse_store.prune_specific_edges(
+            edges_to_prune, run_id=run_id, dry_run=dry_run, reason=reason
+        )
+
+    def rollback_synapses(self, run_id: str) -> Any:
+        """Rolls back a prune operation on the controller's synapse store."""
+        if self.synapse_store is None:
+            raise RuntimeError("SynapseStore not initialized on MemoryController")
+        return self.synapse_store.rollback_prune(run_id=run_id)
+
+
 
 # Cognitive core modules wired in production path behind explicit flags (OFF by default)
 from cognitive_core.working_memory import WorkingMemory
 from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
 from cognitive_core.reasoning import ReasoningEngine
 from cognitive_core.executive import Executive
+from graph.plasticity import PlasticityEngine
 
 # Export singleton
 from .storage.file_engine import FileStorageEngine

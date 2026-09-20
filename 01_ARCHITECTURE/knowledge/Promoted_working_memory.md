@@ -19,11 +19,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-05-state
-- type: related_to
-  target_id: 64b95fc3-bf65-4b06-87c1-f84129396a23
+  - type: related_to
+    target_id: "64b95fc3-bf65-4b06-87c1-f84129396a23"
 ---
+
 # working memory
 
 ## Canonical Definition

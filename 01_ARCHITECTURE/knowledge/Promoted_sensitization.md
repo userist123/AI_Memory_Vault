@@ -17,13 +17,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-03-ontology
-- type: part_of
-  target_id: 5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac
-- type: related_to
-  target_id: d12f2aea-c6fd-456c-a472-7fd3ff786392
+  - type: part_of
+    target_id: "5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac"
+  - type: related_to
+    target_id: "d12f2aea-c6fd-456c-a472-7fd3ff786392"
 ---
+
 # sensitization
 
 ## Canonical Definition

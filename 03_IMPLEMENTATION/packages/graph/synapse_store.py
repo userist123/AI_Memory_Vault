@@ -52,7 +52,9 @@ import math
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple, Any
+
+from graph.plasticity import PlasticityEngine, PruneResult
 
 STRONG_RELATIONS = frozenset({
     "depends_on", "contradicts", "supersedes", "caused", "verified_by", "applies_to",
@@ -446,3 +448,20 @@ class SynapseStore:
                 removed += 1
         self._rebuild_adjacency()
         return removed
+
+    def prune_specific_edges(
+        self,
+        edges_to_prune: Iterable[Any],
+        run_id: Optional[str] = None,
+        dry_run: bool = False,
+        reason: str = "audit_rejection",
+    ) -> PruneResult:
+        """Prunes specific edges transactionally through PlasticityEngine."""
+        engine = PlasticityEngine()
+        return engine.prune_edges(self, edges_to_prune, run_id=run_id, dry_run=dry_run, reason=reason)
+
+    def rollback_prune(self, run_id: str) -> Any:
+        """Rolls back a prune operation transactionally through PlasticityEngine."""
+        engine = PlasticityEngine()
+        return engine.rollback(run_id=run_id, synapse_store=self)
+
