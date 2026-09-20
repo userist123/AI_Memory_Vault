@@ -3,83 +3,11 @@
   "note": "Every entry was read before it was listed. An entry means: this file trips the rule for a reason a person checked, not that the rule is wrong. Adding a path here without reading it defeats the guard.",
   "entries": [
     {
-      "path": ".agents/skills/aws-sst-development/SKILL.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/copilot-cli-quickstart/SKILL.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/editorconfig/SKILL.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/elevenlabs-tts/SKILL.md",
-      "rules": [
-        "exfiltration_request"
-      ],
-      "reason": "Documents how an official API takes its key (ElevenLabs, MUAPI, Latchshot) or, for pci-compliance, shows sending a Stripe token instead of card details. The rule fires on the sentence, not on an attempt.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/find-complementary-founders/references/moltbook.md",
-      "rules": [
-        "exfiltration_request"
-      ],
-      "reason": "Documents how an official API takes its key (ElevenLabs, MUAPI, Latchshot) or, for pci-compliance, shows sending a Stripe token instead of card details. The rule fires on the sentence, not on an attempt.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/gitmoji/references/gitmoji-reference.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/hig-foundations/references/icons.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
-      "reviewed": "2026-09-20"
-    },
-    {
       "path": ".agents/skills/latchshot-page-capture/SKILL.md",
       "rules": [
         "exfiltration_request"
       ],
       "reason": "Documents how an official API takes its key (ElevenLabs, MUAPI, Latchshot) or, for pci-compliance, shows sending a Stripe token instead of card details. The rule fires on the sentence, not on an attempt.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/llm-security/SKILL.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
-      "reviewed": "2026-09-20"
-    },
-    {
-      "path": ".agents/skills/llm-security/references/prompt-injection-methodology.md",
-      "rules": [
-        "hidden_characters"
-      ],
-      "reason": "Zero-width characters used for rendering (a markdown table, an interpolation example, emoji joiners) except the llm-security files, which demonstrate the injection technique on purpose.",
       "reviewed": "2026-09-20"
     },
     {
