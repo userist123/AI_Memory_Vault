@@ -84,3 +84,18 @@ After the fix, on this branch:
 
 and `python -m cognitive_core.recall_cli --query "ontology gate"` returns notes
 with no `PYTHONPATH` set.
+
+## Re-run after PRs #176, #177 and #178, 2026-09-20
+
+```
+2482 passed, 13 skipped, 9 xfailed in 264.79s
+```
+
+No collection errors, no regression against the 2444 that followed the shim
+fix; the growth is the tests added by each wave.
+
+PR #178's report states 2485 passed and 10 skipped. On the same commit, in a
+clean worktree, I measure 2482 passed and 13 skipped. The difference is three
+tests counted as passed there and skipped here, not a failure on either side —
+worth knowing before anyone quotes a total.
+

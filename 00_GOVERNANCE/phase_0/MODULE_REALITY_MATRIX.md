@@ -35,7 +35,7 @@ imported skills.
 | `reasoning` | 2 (`controller.py`, `executive`) | **no** — writes to `candidate_trace` only | none by construction | TRACE_ONLY |
 | `executive` | 1 (`controller.py`) | **no** — writes `executive_intent` only | none by construction | TRACE_ONLY |
 | `spreading_activation` | 1 (`ranked_search.py`) | only when graph expansion is on | forced off when expansion is off (`controller.py:624`) | BLOCKED |
-| `graph/plasticity` | 2 (`__init__`, `plasticity_update`) | not from `search()` | none | DORMANT |
+| `graph/plasticity` | 4, incl. `synapse_store.py` and `controller.py` | yes, on a purge | removes edges, with a journal | INTEGRATED_UNVERIFIED |
 | `attention` | 1 (`working_memory`) | indirect | unmeasured | PARTIAL |
 | `brain_pack` | **0** | no | none | DEAD_CODE |
 | `consolidator` | **0** by import | no | none | DORMANT |
@@ -73,3 +73,29 @@ appear); the returned ids are identical to baseline in every case.
 recall booleans, latency and error. It does not record which notes were
 returned, so no one can re-derive a recall value from the artefact. The
 aggregation is auditable; the measurement is not.
+
+---
+
+## Re-checked after PRs #177 and #178, 2026-09-20
+
+**`graph/plasticity` left DORMANT.** It had zero production importers at Phase
+0. The audited purge now runs through it: `synapse_store.py` calls
+`prune_specific_edges` and `rollback_prune`, `controller.py` exposes
+`prune_synapses` and `rollback_synapses`. Verified by import scan, not by a
+grep for the word.
+
+Its status is `INTEGRATED_UNVERIFIED` rather than `PROVEN_PRODUCTION` for one
+reason, and the reason matters more than the label: **the rollback restores the
+in-memory synapse store, not the repository.** The purge that actually happened
+was a rewrite of 29 notes' frontmatter, and `rollback()` does not touch files.
+Undoing it means `git revert`. A test that prunes a re-synthesised store and
+compares field by field proves the plasticity layer; it does not prove the
+change on disk is reversible.
+
+**`reasoning` and `executive` stay TRACE_ONLY**, now pinned by
+`20_TESTS/test_annotation_only_modules.py`: with either flag on, the ids
+returned are identical to baseline, and the trace says so.
+
+**`brain_pack` is still DEAD_CODE** and `consolidator` still has no importer.
+Neither was touched by any wave so far.
+
