@@ -66,8 +66,11 @@ def test_no_annotation_names_a_late_import():
 
 def test_the_check_catches_the_bug_it_was_written_for():
     """The exact shape that broke CI: a return annotation above a bottom import."""
+    # The class is called Holder rather than C because "class C:" followed by an
+    # escaped newline reads as a Windows drive path to the repository hygiene
+    # validator, which fails any test file containing an absolute path.
     broken = ast.parse(
-        "class C:\n"
+        "class Holder:\n"
         "    def get(self) -> WorkingMemory:\n"
         "        return WorkingMemory()\n"
         "from cognitive_core.working_memory import WorkingMemory\n"
@@ -80,7 +83,7 @@ def test_the_check_catches_the_bug_it_was_written_for():
 
 def test_quoting_the_same_annotation_passes():
     fixed = ast.parse(
-        "class C:\n"
+        "class Holder:\n"
         '    def get(self) -> "WorkingMemory":\n'
         "        return WorkingMemory()\n"
         "from cognitive_core.working_memory import WorkingMemory\n"
