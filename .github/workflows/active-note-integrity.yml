@@ -1,0 +1,33 @@
+name: ACTIVE note integrity
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# The job only reads the checked-out tree.
+permissions:
+  contents: read
+
+jobs:
+  verify-active-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pyyaml
+      - name: Verify the ACTIVE notes against the recorded digests
+        run: python 30_SCRIPTS/verification/active_note_integrity.py
+      - name: Guard tests
+        run: python -m pytest 20_TESTS/test_active_note_integrity.py -q
