@@ -67,3 +67,20 @@ from the outside.
 One line: export `working_memory`, `global_workspace`, `reasoning` and
 `executive` from the `cognitive_core` shim, or import them by their real path
 in `controller.py`. Owner decision not required; it is a defect, not a choice.
+
+## Fixed in this branch
+
+The shim at the repository root now carries the same `__path__` as its twin
+under `03_IMPLEMENTATION/packages`, so `cognitive_core.<module>` resolves no
+matter which directory the entry point starts from. The relative imports inside
+those modules — `attention` imports `.motivation`, which lives in `learning` —
+resolve for the same reason.
+
+After the fix, on this branch:
+
+```
+2444 passed, 13 skipped, 9 xfailed
+```
+
+and `python -m cognitive_core.recall_cli --query "ontology gate"` returns notes
+with no `PYTHONPATH` set.
