@@ -26,7 +26,7 @@ reversible was decided and is recorded in `PROPOSED_EXECUTION_PLAN.md`.
 | **D3** | Lifecycle floor at the entry points | (a) a default floor inside `search()`; (b) each caller passes its own filter; (c) leave open | **(a), decided and implemented in Wave A.** Measured first, see below. A default that has to be remembered at every call site is not a control. |
 | **D4** | The 7 pending ontology rows | dispose / keep pending | Owner's, untouched. Blocks the ontology work only. |
 | **D5** | Graph expansion default | keep off / turn on at budget 5 | **Keep off.** The preregistered rule rejected budget 5: 1 win, 14 losses, p = 0.00098. |
-| **D6** | Strong relations in the live graph | purge the rejected ones / keep and re-audit | **Purge through `plasticity.py`, with journal and rollback.** 3/25 precision on strong edges, 0/5 on `supersedes`. |
+| **D6** | Typed relations in the live graph | purge the rejected ones / keep and re-audit | **Done, PR #178.** 29 of 49 audited rows rejected by an independent evaluator and purged at source, through `plasticity.py`. The other 65 typed relations are unaudited and were left alone. |
 | **D7** | Repository visibility | public / private | Owner's. It is public, which is why the quoting budget in #174 exists. |
 | **D8** | Book licences | verify against publishers / mark every book-derived note as licence-unverified | **Mark them.** Verification is legal work, not a script. |
 | **D9** | Stale PRs #135 and #90 | close / rebase | Owner's. Both predate several rewrites of the files they touch. |
