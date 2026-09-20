@@ -110,7 +110,7 @@ def test_traversal_is_still_single_hop(state_text):
 
 
 @pytest.mark.parametrize("module,wired", [
-    ("graph.plasticity", False),
+    ("graph.plasticity", True),
     ("memory.global_workspace", True),
     ("memory.executive", True),
 ])

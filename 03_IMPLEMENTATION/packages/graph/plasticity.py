@@ -747,3 +747,8 @@ class PlasticityEngine:
             journal_entry_ids=journal_ids,
             reason=reason,
         )
+
+    def rollback(self, run_id: str, synapse_store: Any) -> RollbackResult:
+        """Reverses operations associated with run_id on synapse_store via its journal."""
+        return self.journal.rollback(run_id=run_id, synapse_store=synapse_store)
+

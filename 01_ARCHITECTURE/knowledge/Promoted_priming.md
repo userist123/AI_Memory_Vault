@@ -14,9 +14,7 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: "slot-15-retrieval"
+relations: []
 ---
 
 # priming

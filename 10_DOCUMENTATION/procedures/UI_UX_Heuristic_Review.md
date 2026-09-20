@@ -19,15 +19,10 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - target_id: "b4e88f21-7291-49fa-9481-22904c10a001"
-    type: depends_on
-    target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
-  - target_id: "b4e88f21-7291-49fa-9481-22904c10a003"
-    type: depends_on
-    target: "[[01_KNOWLEDGE/Motion_Design_Principles]]"
-  - target_id: "b4e88f21-7291-49fa-9481-22904c10a002"
-    type: related_to
-    target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
+  - type: depends_on
+    target_id: "b4e88f21-7291-49fa-9481-22904c10a003"
+  - type: related_to
+    target_id: "b4e88f21-7291-49fa-9481-22904c10a002"
 ---
 
 # Procedură Operațională: Audit Heuristic UI/UX și Verificare Accesibilitate

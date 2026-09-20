@@ -20,13 +20,12 @@ provenance:
   provenance_status: complete
 confidence: high
 verification: unverified
-relations:
-- type: depends_on
-  target_id: a86eefed-3ea3-5f13-bccf-9f59e3095a24
+relations: []
 lifecycle: ARCHIVED
 archive_reason: extragere cu prompt tintit pe intrebarile de test; retrasa conform ordinului de corectie runda 3
 id: 13fbebce-897e-579c-8d82-04368506cb7b
 ---
+
 # 📖 Optimizarea Memoriei: Strategii Mnemonice și Învățare Eficientă (OpenStax)
 
 ## 1. Proveniență și Citate Verificate

@@ -17,11 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-14-routing
-- type: applies_to
-  target_id: d5ee32c8-67be-4c08-b6a4-5f60f0456fb1
+  - type: applies_to
+    target_id: "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1"
 ---
+
 # feedback
 
 ## Canonical Definition

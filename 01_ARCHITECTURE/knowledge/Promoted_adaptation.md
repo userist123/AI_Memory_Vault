@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-06-procedures
-- type: depends_on
-  target_id: df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57
-- type: applies_to
-  target_id: d5ee32c8-67be-4c08-b6a4-5f60f0456fb1
+  - type: depends_on
+    target_id: "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57"
 ---
+
 # adaptation
 
 ## Canonical Definition
