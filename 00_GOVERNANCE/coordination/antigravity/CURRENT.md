@@ -1,15 +1,28 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-20T20:50:00Z
+last_updated_utc: 2026-09-20T21:55:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
 working_branch: antigravity/loss-funnel
 base_branch: origin/main
-base_sha: 4761dde9d
+base_sha: 770dfeafc
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-current_task: MEASUREMENT_PROGRAM_PART_2_PR_1_PREREGISTRATION
-status: IN_PROGRESS
+current_task: MEASUREMENT_PROGRAM_PART_2_PR_2_DIAGNOSTIC_HARNESS_AND_NEGATIVE_CONTROLS
+status: COMPLETE
 completed:
+  - "Measurement Program Partea 2, PR 2 — Diagnostic Harness & Negative Controls:
+     1. Implemented diagnostic harness 30_SCRIPTS/evaluation/retrieval_loss_funnel.py diagnosing all 130 non-abstain benchmark cases into canonical categories: AGENT_LIFECYCLE_FLOOR_EXCLUDED, RAW_EXCLUDED, CANDIDATE_LIMIT_CUT, PAGINATION_CUT, NEVER_CANDIDATE, and UNDETERMINED.
+     2. Negative Control A (Shuffled labels in-memory): Mean recall 2.77% across 5 seeds (target: < 5.0%), std dev 0.62%, frozen benchmark SHA-256 bit-for-bit unmodified on disk.
+     3. Negative Control B (Gold injection): 130/130 (100.0%) exact detection rate.
+     4. Negative Control C (Determinism): 130/130 cases identical across 3 independent runs, 0 varying cases, hit std dev 0.0000.
+     5. Synthetic cases negative control: Verified exact classification for rank 7 (PAGINATION_CUT), missing/no-match (NEVER_CANDIDATE), RAW_EXCLUDED, and AGENT_LIFECYCLE_FLOOR_EXCLUDED.
+     6. Comprehensive test suite: 20_TESTS/test_retrieval_loss_funnel.py (5/5 PASS).
+     7. Runtime performance: 275.29s (4.59 minutes, well within the 20 minute limit).
+     8. Blind validation invariant preserved: zero loss funnel aggregate distributions disclosed or committed in PR 2."
+  - "Measurement Program Partea 2, PR 1 — Preînregistrare:
+     1. Formal pre-registration committed in 07_EVALUATION/loss_funnel/PREREGISTRATION.md prior to any execution.
+     2. Pre-registered hypotheses H1–H4, decision thresholds (≥40% PAGINATION/CANDIDATE_LIMIT_CUT with median rank ≤30 vs ≥40% NEVER_CANDIDATE), Holm–Bonferroni correction, and Wilson score intervals.
+     3. Merged into main via PR #186 (commit 11ae8cbc9)."
   - "Measurement Program Partea 1 — Închide OBS-001 (Economic RetrievalTrace & Stage Latencies):
      1. Schema version upgraded to '1.1.0' with dual stage latency exposure: both stage_latency_ms and stage_latencies_ms populated across all 6 pipeline stages (query_validation, classification, policy_and_retrieval, scoring, pagination, context_pack).
      2. Economic trace representation implemented: individual detailed DecisionRecords preserved for competitive candidate notes (disclosed pool and final pack), while non-competitive storage policy and mass pagination/candidate cuts are compactly aggregated into aggregated_exclusions by reason_code with counts, criteria, and sample IDs.
