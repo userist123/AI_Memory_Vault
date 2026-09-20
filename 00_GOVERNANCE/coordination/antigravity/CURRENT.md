@@ -1,15 +1,38 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-20T22:55:00Z
+last_updated_utc: 2026-09-20T23:30:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: antigravity/loss-funnel
+working_branch: antigravity/tokenizer-and-reranker-envelope
 base_branch: origin/main
-base_sha: 7d7be9616
+base_sha: 0685d87b7
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-current_task: MEASUREMENT_PROGRAM_PART_2_PR_3_LOSS_FUNNEL_DIAGNOSTIC_REPORT
+current_task: MEASUREMENT_PROGRAM_PART_3_PR_1_TOKENIZER_EXPERIMENT
 status: COMPLETE
 completed:
+  - "Measurement Program Partea 3, PR 1 — Normalizarea Tokenizatorului (EXP-TOKEN-001):
+     1. Pre-registration committed alone in commit f3a19bc59 (07_EVALUATION/tokenizer_experiment/PREREGISTRATION.md):
+        - H-TOKEN-1: Delta_RO >= +5.00 pp (>= 3 net cases won out of 61).
+        - English non-regression: Delta_EN >= -1.45 pp (<= 1 case lost out of 69, p > 0.10).
+        - Pre-registered decision rule: adopt new tokenizer iff Delta_RO >= +5.00 pp AND Delta_EN >= -1.45 pp AND Delta_Total >= +1.54 pp. Otherwise maintain baseline.
+     2. Implemented evaluation harness 30_SCRIPTS/evaluation/eval_tokenizer_experiment.py testing 3 arms across all 130 non-abstain benchmark v3 cases (Principal.AI_AGENT, page_size=5, Floor: ACTIV):
+        - Arm 1 (Baseline): TOKEN_RE = [a-z0-9][a-z0-9_\\-\\.]* (21/130 hits, 16.15%, RO 9/61 14.75%, EN 12/69 17.39%, Top 200 RO: 46/61).
+        - Arm 2 (Unicode Preserving): UNICODE_TOKEN_RE (ăâîșț preserved) (21/130 hits, 16.15%, RO 9/61 14.75%, EN 12/69 17.39%, Top 200 RO: 46/61).
+        - Arm 3 (Diacritics Stripped): NFKD accent folding (21/130 hits, 16.15%, RO 9/61 14.75%, EN 12/69 17.39%, Top 200 RO: 46/61).
+     3. Discordant pair & McNemar exact test:
+        - Arm 2 vs Baseline: b = 0, c = 0, discordant = 0, p_mcnemar = 1.000000.
+        - Arm 3 vs Baseline: b = 0, c = 0, discordant = 0, p_mcnemar = 1.000000.
+        - Zero flipped cases across all 130 benchmark queries.
+     4. Empirical findings & pre-registered rule execution:
+        - H-TOKEN-1: INFIRMATĂ (Delta_RO = 0.00 pp vs >= +5.00 pp required).
+        - Non-Regresie EN: CONFIRMATĂ (Delta_EN = 0.00 pp).
+        - Câștig Net Total: INFIRMATĂ (Delta_Total = 0.00 pp).
+        - Pre-registered verdict: MENȚINERE BASELINE (RESPINGERE ADOPTARE TOKENIZATOR NOU).
+        - Production hybrid_retrieval.py remains unmodified on main, avoiding zero-benefit code churn and index invalidation.
+     5. Generated artifacts and test suite:
+        - 07_EVALUATION/tokenizer_experiment/tokenizer_experiment_cases.json (24 KB).
+        - 07_EVALUATION/tokenizer_experiment/TOKENIZER_EXPERIMENT_REPORT.md (6.2 KB).
+        - 20_TESTS/test_tokenizer_experiment_accuracy.py (9/9 PASS) validating bit-for-bit rendering, report & JSON tampering negative controls, operating point headers, McNemar exact mathematics, and frozen benchmark SHA-256."
   - "Measurement Program Partea 2, PR 3 — Diagnosticul Propriu-Zis al Pâlniei Pierderilor:
      1. Evaluated all 130 non-abstain benchmark cases across production and reference operating points:
         - Production: Principal.AI_AGENT, page_size=5, Floor ACTIV (21/130 hits, 16.15%, Wilson CI [10.82%, 23.44%]).
