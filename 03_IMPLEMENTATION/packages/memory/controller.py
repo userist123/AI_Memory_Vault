@@ -218,10 +218,10 @@ class MemoryController:
         self.enable_global_workspace = bool(enable_global_workspace)
         self.enable_reasoning = bool(enable_reasoning)
         self.enable_executive = bool(enable_executive)
-        self.working_memory: Optional[WorkingMemory] = None
-        self.global_workspace: Optional[GlobalWorkspace] = None
-        self.reasoning_engine: Optional[ReasoningEngine] = None
-        self.executive: Optional[Executive] = None
+        self.working_memory: Optional["WorkingMemory"] = None
+        self.global_workspace: Optional["GlobalWorkspace"] = None
+        self.reasoning_engine: Optional["ReasoningEngine"] = None
+        self.executive: Optional["Executive"] = None
         self._in_reasoning_synthesize = False
         self._in_executive_loop = False
         # Counter for generating review note IDs (r2, r3, ...)
@@ -258,22 +258,22 @@ class MemoryController:
         #: requirement 3. See CLASSIFIER_FILTER_ARMS and RetrievalEngine.retrieve().
         self.classifier_filter_arm = classifier_filter_arm
 
-    def _get_working_memory(self, capacity: int = 10) -> WorkingMemory:
+    def _get_working_memory(self, capacity: int = 10) -> "WorkingMemory":
         if self.working_memory is None:
             self.working_memory = WorkingMemory(capacity=capacity)
         return self.working_memory
 
-    def _get_global_workspace(self, max_slots: int = 5) -> GlobalWorkspace:
+    def _get_global_workspace(self, max_slots: int = 5) -> "GlobalWorkspace":
         if self.global_workspace is None:
             self.global_workspace = GlobalWorkspace(max_slots=max_slots)
         return self.global_workspace
 
-    def _get_reasoning_engine(self) -> ReasoningEngine:
+    def _get_reasoning_engine(self) -> "ReasoningEngine":
         if self.reasoning_engine is None:
             self.reasoning_engine = ReasoningEngine(self)
         return self.reasoning_engine
 
-    def _get_executive(self) -> Executive:
+    def _get_executive(self) -> "Executive":
         if self.executive is None:
             self.executive = Executive(self)
         return self.executive
@@ -1498,7 +1498,14 @@ class MemoryController:
 
 
 
-# Cognitive core modules wired in production path behind explicit flags (OFF by default)
+# Cognitive core modules wired in production path behind explicit flags (OFF by
+# default). They are imported at the bottom because `reasoning` and `executive`
+# take the controller itself, so importing them at the top is circular. Every
+# annotation above that names one of them is therefore a string: Python 3.11
+# evaluates a return annotation when the `def` runs, which is long before this
+# line, and CI failed with `NameError: name 'WorkingMemory' is not defined`
+# while a local 3.14 passed -- PEP 649 made annotations lazy there.
+# `20_TESTS/test_controller_late_imports.py` keeps this from coming back.
 from cognitive_core.working_memory import WorkingMemory
 from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
 from cognitive_core.reasoning import ReasoningEngine
