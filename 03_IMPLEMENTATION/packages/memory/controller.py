@@ -602,6 +602,16 @@ class MemoryController:
                 allowed_lcs_set = set(classified.get("lifecycle_filters") or [])
                 allowed_types_set = set(classified.get("target_types") or [])
 
+                raw_excluded: List[str] = []
+                floor_excluded: List[str] = []
+                lifecycle_excluded: List[str] = []
+                type_excluded: List[str] = []
+
+                is_small_storage = len(all_storage_notes) <= 20
+                allowed_lcs_norm = {str(x).upper() for x in allowed_lcs_set}
+                allowed_types_norm = {str(x).lower() for x in allowed_types_set}
+                floor_lcs_norm = [l.value.upper() for l in AGENT_LIFECYCLE_FLOOR]
+
                 for snote in all_storage_notes:
                     sn_id = snote.get("id")
                     if not sn_id:
@@ -610,30 +620,57 @@ class MemoryController:
                     sn_type = snote.get("type")
 
                     sn_lc_norm = str(sn_lc).upper() if sn_lc else ""
-                    allowed_lcs_norm = {str(x).upper() for x in allowed_lcs_set}
-                    allowed_types_norm = {str(x).lower() for x in allowed_types_set}
                     sn_type_norm = str(sn_type).lower() if sn_type else ""
 
                     if sn_lc_norm == "RAW":
-                        trace_collector.record_decision(
-                            sn_id, "EXCLUDED", ExclusionReason.RAW_EXCLUDED, "storage_policy",
-                            {"lifecycle": sn_lc}
-                        )
-                    elif agent_floor_applied and sn_lc_norm not in [l.value.upper() for l in AGENT_LIFECYCLE_FLOOR]:
-                        trace_collector.record_decision(
-                            sn_id, "EXCLUDED", ExclusionReason.AGENT_LIFECYCLE_FLOOR_EXCLUDED, "storage_policy",
-                            {"lifecycle": sn_lc, "floor": [l.value for l in AGENT_LIFECYCLE_FLOOR]}
-                        )
+                        raw_excluded.append(sn_id)
+                        if is_small_storage:
+                            trace_collector.record_decision(
+                                sn_id, "EXCLUDED", ExclusionReason.RAW_EXCLUDED, "storage_policy",
+                                {"lifecycle": sn_lc}
+                            )
+                    elif agent_floor_applied and sn_lc_norm not in floor_lcs_norm:
+                        floor_excluded.append(sn_id)
+                        if is_small_storage:
+                            trace_collector.record_decision(
+                                sn_id, "EXCLUDED", ExclusionReason.AGENT_LIFECYCLE_FLOOR_EXCLUDED, "storage_policy",
+                                {"lifecycle": sn_lc, "floor": [l.value for l in AGENT_LIFECYCLE_FLOOR]}
+                            )
                     elif allowed_lcs_norm and sn_lc_norm not in allowed_lcs_norm:
-                        trace_collector.record_decision(
-                            sn_id, "EXCLUDED", ExclusionReason.LIFECYCLE_FILTERED, "storage_policy",
-                            {"lifecycle": sn_lc, "allowed": list(allowed_lcs_set)}
-                        )
+                        lifecycle_excluded.append(sn_id)
+                        if is_small_storage:
+                            trace_collector.record_decision(
+                                sn_id, "EXCLUDED", ExclusionReason.LIFECYCLE_FILTERED, "storage_policy",
+                                {"lifecycle": sn_lc, "allowed": list(allowed_lcs_set)}
+                            )
                     elif allowed_types_norm and sn_type_norm not in allowed_types_norm:
-                        trace_collector.record_decision(
-                            sn_id, "EXCLUDED", ExclusionReason.TYPE_FILTERED, "storage_policy",
-                            {"type": sn_type, "allowed": list(allowed_types_set)}
-                        )
+                        type_excluded.append(sn_id)
+                        if is_small_storage:
+                            trace_collector.record_decision(
+                                sn_id, "EXCLUDED", ExclusionReason.TYPE_FILTERED, "storage_policy",
+                                {"type": sn_type, "allowed": list(allowed_types_set)}
+                            )
+
+                if raw_excluded:
+                    trace_collector.record_bulk_exclusion(
+                        ExclusionReason.RAW_EXCLUDED, "storage_policy", len(raw_excluded), raw_excluded,
+                        {"lifecycle": "RAW"}
+                    )
+                if floor_excluded:
+                    trace_collector.record_bulk_exclusion(
+                        ExclusionReason.AGENT_LIFECYCLE_FLOOR_EXCLUDED, "storage_policy", len(floor_excluded), floor_excluded,
+                        {"floor": [l.value for l in AGENT_LIFECYCLE_FLOOR]}
+                    )
+                if lifecycle_excluded:
+                    trace_collector.record_bulk_exclusion(
+                        ExclusionReason.LIFECYCLE_FILTERED, "storage_policy", len(lifecycle_excluded), lifecycle_excluded,
+                        {"allowed": list(allowed_lcs_set)}
+                    )
+                if type_excluded:
+                    trace_collector.record_bulk_exclusion(
+                        ExclusionReason.TYPE_FILTERED, "storage_policy", len(type_excluded), type_excluded,
+                        {"allowed": list(allowed_types_set)}
+                    )
             except Exception:
                 pass
 
@@ -663,26 +700,34 @@ class MemoryController:
                     "candidates_considered": candidate_trace.get("candidates_considered", 0),
                     "candidate_limit": candidate_trace.get("candidate_limit"),
                 })
+                trace_comp_limit = max(25, page_size * 3)
+
                 for gen_name, gen_list in candidate_trace.get("per_generator", {}).items():
-                    gen_ids = [entry.get("id") for entry in gen_list if isinstance(entry, dict) and entry.get("id")]
+                    gen_ids = [entry.get("id") for entry in gen_list[:trace_comp_limit] if isinstance(entry, dict) and entry.get("id")]
                     trace_collector.record_generator_candidates(gen_name, gen_ids)
 
-                for n_id, sig_scores in candidate_trace.get("raw_scores_by_signal", {}).items():
-                    for sig_name, sig_val in sig_scores.items():
-                        trace_collector.record_raw_score(n_id, sig_name, sig_val)
+                fused_all = candidate_trace.get("fused_ranking", [])
+                fused_comp = fused_all[:trace_comp_limit]
+                comp_ids = {entry.get("id") for entry in fused_comp if entry.get("id")}
 
-                trace_collector.set_fused_rank(candidate_trace.get("fused_ranking", []))
+                for n_id, sig_scores in candidate_trace.get("raw_scores_by_signal", {}).items():
+                    if n_id in comp_ids:
+                        for sig_name, sig_val in sig_scores.items():
+                            trace_collector.record_raw_score(n_id, sig_name, sig_val)
+
+                trace_collector.set_fused_rank(fused_comp)
                 trace_collector.record_event(TraceEvent.CANDIDATES_MERGED, {
-                    "merged_count": len(candidate_trace.get("fused_ranking", [])),
+                    "merged_count": len(fused_all),
+                    "competitive_count": len(fused_comp),
                 })
 
-                for cut_cand in candidate_trace.get("cut_candidates", []):
-                    c_id = cut_cand.get("id")
-                    if c_id:
-                        trace_collector.record_decision(
-                            c_id, "EXCLUDED", ExclusionReason.CANDIDATE_LIMIT_CUT, "candidate_generation",
-                            {"fused_score": cut_cand.get("fused_score"), "rank": cut_cand.get("rank")}
-                        )
+                cut_candidates = candidate_trace.get("cut_candidates", [])
+                if cut_candidates:
+                    trace_collector.record_bulk_exclusion(
+                        ExclusionReason.CANDIDATE_LIMIT_CUT, "candidate_generation", len(cut_candidates),
+                        [c.get("id") for c in cut_candidates[:5] if isinstance(c, dict)],
+                        {"candidate_limit": candidate_trace.get("candidate_limit")},
+                    )
             except Exception:
                 pass
             trace_collector.end_stage("policy_and_retrieval")
@@ -696,7 +741,7 @@ class MemoryController:
             initial_scored = self.scorer.score(sanitized, notes)
             initial_score_map = {s['id']: float(s['score']) for s in initial_scored if s.get('id')}
             try:
-                for snote in notes:
+                for snote in notes[:trace_comp_limit]:
                     sn_id = snote.get('id')
                     if sn_id:
                         trace_collector.record_verdict(sn_id, "verification", snote.get("verification", "unverified"))
@@ -1084,14 +1129,25 @@ class MemoryController:
             page_results = disclosed[offset:end]
 
             try:
+                pagination_cut_ids: List[str] = []
+                comp_cutoff = max(20, end + 10)
                 for p_idx, p_note in enumerate(disclosed):
                     if p_idx < offset or p_idx >= end:
                         pn_id = p_note.get("id")
                         if pn_id:
-                            trace_collector.record_decision(
-                                pn_id, "EXCLUDED", ExclusionReason.PAGINATION_CUT, "pagination",
-                                {"position": p_idx + 1, "offset": offset, "page_size": effective_page_size}
-                            )
+                            pagination_cut_ids.append(pn_id)
+                            # Record detailed individual decision for runner-up candidates or small batches
+                            if p_idx < comp_cutoff or len(disclosed) <= 20:
+                                trace_collector.record_decision(
+                                    pn_id, "EXCLUDED", ExclusionReason.PAGINATION_CUT, "pagination",
+                                    {"position": p_idx + 1, "offset": offset, "page_size": effective_page_size}
+                                )
+                if pagination_cut_ids:
+                    trace_collector.record_bulk_exclusion(
+                        ExclusionReason.PAGINATION_CUT, "pagination", len(pagination_cut_ids),
+                        pagination_cut_ids[:5],
+                        {"offset": offset, "page_size": effective_page_size}
+                    )
             except Exception:
                 pass
             trace_collector.end_stage("pagination")
