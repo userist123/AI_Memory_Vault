@@ -14,7 +14,7 @@ class SQLiteStorageEngine:
     CREATE TABLE IF NOT EXISTS notes (
         id TEXT PRIMARY KEY,
         type TEXT NOT NULL CHECK(type IN ('knowledge', 'project', 'procedure', 'decision', 'experience', 'error', 'lesson', 'preference', 'resource', 'hypothesis', 'system', 'core', 'index')),
-        lifecycle TEXT NOT NULL CHECK(lifecycle IN ('RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW', 'VERIFIED', 'ACTIVE', 'SUPERSEDED', 'ARCHIVED')),
+        lifecycle TEXT NOT NULL CHECK(lifecycle IN ('RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW', 'VERIFIED', 'ACTIVE', 'RECONSOLIDATING', 'SUPERSEDED', 'ARCHIVED')),
         category TEXT NOT NULL,
         tags TEXT NOT NULL,
         created TEXT NOT NULL,
@@ -56,6 +56,45 @@ class SQLiteStorageEngine:
         conn = self._get_connection()
         with conn:
             conn.executescript(self.SCHEMA)
+            self._migrate_lifecycle_check(conn)
+
+    #: States the CHECK above accepts. Kept beside the DDL because the enum
+    #: lives in `memory/controller.py`, which imports this module: importing it
+    #: back would be circular. `20_TESTS/test_lifecycle_schema_parity.py` fails
+    #: if this set and the enum ever drift apart again.
+    LIFECYCLE_STATES = (
+        "RAW", "CLASSIFIED", "NORMALIZED", "REVIEW", "VERIFIED",
+        "ACTIVE", "RECONSOLIDATING", "SUPERSEDED", "ARCHIVED",
+    )
+
+    def _migrate_lifecycle_check(self, conn: sqlite3.Connection) -> bool:
+        """Rebuild `notes` when an existing database predates a lifecycle state.
+
+        `CREATE TABLE IF NOT EXISTS` leaves an older table untouched, so a
+        database created before RECONSOLIDATING existed keeps a CHECK that
+        rejects it: `Consolidator.challenge()` sets that state, and the write
+        fails on a constraint the code has no way to see. SQLite cannot ALTER a
+        CHECK, so the table is rebuilt and the rows copied.
+
+        Returns True when a migration ran.
+        """
+        row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='notes'"
+        ).fetchone()
+        if not row or not row[0]:
+            return False
+        missing = [s for s in self.LIFECYCLE_STATES if f"'{s}'" not in row[0]]
+        if not missing:
+            return False
+        columns = [r[1] for r in conn.execute("PRAGMA table_info(notes)")]
+        column_list = ", ".join(columns)
+        conn.execute("ALTER TABLE notes RENAME TO notes_pre_lifecycle_migration")
+        conn.executescript(self.SCHEMA)
+        conn.execute(
+            f"INSERT INTO notes ({column_list}) SELECT {column_list} FROM notes_pre_lifecycle_migration"
+        )
+        conn.execute("DROP TABLE notes_pre_lifecycle_migration")
+        return True
 
     def _get_connection(self) -> sqlite3.Connection:
         """Returns a thread-local SQLite connection configured with required PRAGMAs."""
