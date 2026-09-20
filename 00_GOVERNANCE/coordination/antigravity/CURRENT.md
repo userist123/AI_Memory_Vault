@@ -1,15 +1,48 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-20T21:55:00Z
+last_updated_utc: 2026-09-20T22:55:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
 working_branch: antigravity/loss-funnel
 base_branch: origin/main
-base_sha: 770dfeafc
+base_sha: 7d7be9616
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-current_task: MEASUREMENT_PROGRAM_PART_2_PR_2_DIAGNOSTIC_HARNESS_AND_NEGATIVE_CONTROLS
+current_task: MEASUREMENT_PROGRAM_PART_2_PR_3_LOSS_FUNNEL_DIAGNOSTIC_REPORT
 status: COMPLETE
 completed:
+  - "Measurement Program Partea 2, PR 3 — Diagnosticul Propriu-Zis al Pâlniei Pierderilor:
+     1. Evaluated all 130 non-abstain benchmark cases across production and reference operating points:
+        - Production: Principal.AI_AGENT, page_size=5, Floor ACTIV (21/130 hits, 16.15%, Wilson CI [10.82%, 23.44%]).
+        - Reference: Principal.HUMAN, page_size=10, Floor INACTIV (38/130 hits, 29.23%, Wilson CI [22.10%, 37.56%]).
+        - Control: Principal.HUMAN, page_size=5, Floor INACTIV (21/130 hits, 16.15%, Wilson CI [10.82%, 23.44%]).
+     2. Forensic resolution of the 21 vs 39 hits gap:
+        - 16 cases lost to pagination budget (page_size 5 vs 10 under agent).
+        - 0 cases lost to lifecycle floor at page_size=5 (net impact 0; all 15 floor-excluded notes ranked >= 6).
+        - 1 case lost to lifecycle floor at page_size=10 (R3-039).
+        - 1 case lost to corpus note growth (R3-052 moved from rank 10 to rank 14).
+     3. Complete causal loss attribution on 109 misses:
+        - PAGINATION_CUT: 78 cases (71.56%, Wilson CI [62.47%, 79.18%]).
+        - AGENT_LIFECYCLE_FLOOR_EXCLUDED: 15 cases (13.76%, Wilson CI [8.52%, 21.47%]).
+        - NEVER_CANDIDATE: 13 cases (11.93%, Wilson CI [7.10%, 19.34%]).
+        - CANDIDATE_LIMIT_CUT: 2 cases (1.83%, Wilson CI [0.50%, 6.44%]).
+        - RAW_EXCLUDED: 1 case (0.92%, Wilson CI [0.16%, 5.01%]).
+        - UNDETERMINED: 0 cases (0.00%, Wilson CI [0.00%, 3.40%]), strictly meeting the < 10% threshold.
+     4. Rank distribution & Oracle ceiling:
+        - Median rank on ranked misses: 20.5.
+        - Oracle ceiling: Recall@5=33.08%, @10=40.77%, @20=46.92%, @50=65.38%, @100=70.77%, @200=76.15% (+60.00 pp max ceiling over current 16.15%).
+     5. NEVER_CANDIDATE breakdown: 9 vocabulary mismatch (69.23%) vs 4 sub-threshold BM25 score (30.77%).
+     6. Statistical hypotheses evaluation with Holm-Bonferroni correction:
+        - H1 (NEVER_CANDIDATE >= 40%): INFIRMATĂ (11.93%, p_adj = 0.000000).
+        - H2 (multi_hop NEVER_CANDIDATE >= 60%): INFIRMATĂ (3.12%, p_adj = 0.000000; dominated by PAGINATION_CUT 75.0%).
+        - H3 (Romanian recall < English recall): INFIRMATĂ (EN 17.39% vs RO 14.75%, diff +2.64 pp, p_adj = 1.000000). Tokenizer regex mechanical flaw identified and disclosed. Non-independence of H1/H2 formally declared.
+        - H4 (Hits in Top 3 >= 75%): CONFIRMATĂ (16/21 = 76.19%, p_adj = 1.000000).
+     7. Pre-registered decision threshold verdict: ADOPTARE RERANKER (73.39% ranking/candidate cuts >= 40% AND median miss rank 20.5 <= 30).
+     8. Cost of failure: policy_and_retrieval stage latency identical between hits (350.68 ms) and misses (354.33 ms); failure is not costlier, merely useless.
+     9. Artifacts & Tests:
+        - Generated 07_EVALUATION/loss_funnel/loss_funnel_cases.json (360 KB).
+        - Rendered 07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md (22 KB).
+        - Added 20_TESTS/test_loss_funnel_report_accuracy.py (9/9 PASS) with bit-for-bit rendering verification, report tampering negative control, and contract assertions.
+        - All negative controls passing (shuffled labels, gold injection, determinism, synthetic cases)."
   - "Measurement Program Partea 2, PR 2 — Diagnostic Harness & Negative Controls:
      1. Implemented diagnostic harness 30_SCRIPTS/evaluation/retrieval_loss_funnel.py diagnosing all 130 non-abstain benchmark cases into canonical categories: AGENT_LIFECYCLE_FLOOR_EXCLUDED, RAW_EXCLUDED, CANDIDATE_LIMIT_CUT, PAGINATION_CUT, NEVER_CANDIDATE, and UNDETERMINED.
      2. Negative Control A (Shuffled labels in-memory): Mean recall 2.77% across 5 seeds (target: < 5.0%), std dev 0.62%, frozen benchmark SHA-256 bit-for-bit unmodified on disk.
@@ -92,6 +125,11 @@ next_actions:
 blockers: []
 risks: []
 Evidence_refs:
+  - 07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md
+  - 07_EVALUATION/loss_funnel/loss_funnel_cases.json
+  - 20_TESTS/test_loss_funnel_report_accuracy.py
+  - 20_TESTS/test_retrieval_loss_funnel.py
+  - 30_SCRIPTS/evaluation/retrieval_loss_funnel.py
   - 20_TESTS/test_retrieval_trace_contract.py
   - 20_TESTS/test_corpus_health_gate.py
   - 03_IMPLEMENTATION/packages/observability/retrieval_trace.py
