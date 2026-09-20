@@ -1,0 +1,1001 @@
+{
+  "schema": "lifecycle-decision-matrix.v1",
+  "allowed_transitions": [
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "SUPERSEDED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "RAW",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "SUPERSEDED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "archive",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "attest",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "create",
+      "principal": "admin",
+      "from": null,
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "create",
+      "principal": "admin",
+      "from": null,
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "create",
+      "principal": "admin",
+      "from": null,
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "create",
+      "principal": "admin",
+      "from": null,
+      "to": "RAW"
+    },
+    {
+      "mutation": "create",
+      "principal": "admin",
+      "from": null,
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "create",
+      "principal": "admin",
+      "from": null,
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "create",
+      "principal": "ai_agent",
+      "from": null,
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "create",
+      "principal": "ai_agent",
+      "from": null,
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "create",
+      "principal": "ai_agent",
+      "from": null,
+      "to": "RAW"
+    },
+    {
+      "mutation": "create",
+      "principal": "ai_agent",
+      "from": null,
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "create",
+      "principal": "human",
+      "from": null,
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "create",
+      "principal": "human",
+      "from": null,
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "create",
+      "principal": "human",
+      "from": null,
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "create",
+      "principal": "human",
+      "from": null,
+      "to": "RAW"
+    },
+    {
+      "mutation": "create",
+      "principal": "human",
+      "from": null,
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "create",
+      "principal": "human",
+      "from": null,
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "promote",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "promote",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "promote",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "promote",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "reconsolidate_challenge",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "reconsolidate_challenge",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "reconsolidate_challenge",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "reconsolidate_challenge",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "reconsolidate_resolve",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "reconsolidate_resolve",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "reconsolidate_resolve",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "reconsolidate_resolve",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "human",
+      "from": "RAW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "review",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "ACTIVE",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "ACTIVE",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "CLASSIFIED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "NORMALIZED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "RAW",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "REVIEW",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "VERIFIED",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "ai_agent",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "RAW",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "structural_rewrite",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "ACTIVE",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "CLASSIFIED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "NORMALIZED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "RAW",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "RECONSOLIDATING",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "REVIEW",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "ai_agent",
+      "from": "VERIFIED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "RAW",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "supersede",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "update",
+      "principal": "admin",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "update",
+      "principal": "ai_agent",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "ACTIVE",
+      "to": "ACTIVE"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "ARCHIVED",
+      "to": "ARCHIVED"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "CLASSIFIED",
+      "to": "CLASSIFIED"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "NORMALIZED",
+      "to": "NORMALIZED"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "RAW",
+      "to": "RAW"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "RECONSOLIDATING",
+      "to": "RECONSOLIDATING"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "REVIEW",
+      "to": "REVIEW"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "SUPERSEDED",
+      "to": "SUPERSEDED"
+    },
+    {
+      "mutation": "update",
+      "principal": "human",
+      "from": "VERIFIED",
+      "to": "VERIFIED"
+    }
+  ]
+}
