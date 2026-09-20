@@ -149,3 +149,21 @@ def test_every_referenced_path_exists(state_text):
         if "/" in r and not (REPO / r).exists() and not list(REPO.rglob(Path(r).name))
     ]
     assert not missing, f"VAULT_STATE.md references paths that do not exist: {missing}"
+
+
+def test_plasticity_prune_still_has_no_production_caller(state_text):
+    """`import` is not `call`. The card says nothing outside tests invokes the
+    controller's prune entry points (the store methods are only reached through
+    them); if something starts to, the card has to be rewritten."""
+    callers = []
+    for base in ("03_IMPLEMENTATION", "30_SCRIPTS"):
+        for path in (REPO / base).rglob("*.py"):
+            s = str(path)
+            if "test" in s or "benchmark" in s:
+                continue
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            for name in ("prune_synapses", "rollback_synapses"):
+                for m in re.finditer(rf"\.{name}\(", text):
+                    callers.append(f"{path.name}:{name}")
+    assert not callers, f"production callers appeared: {callers}; update VAULT_STATE.md section 3"
+    assert "not called in production" in state_text

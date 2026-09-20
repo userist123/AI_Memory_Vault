@@ -53,7 +53,7 @@ in its constructor. Corrected 2026-09-06.
 | `FileStorageEngine` | real, repaired | scanned 7 dead folders and loaded **0** notes until `da99af0` |
 | Graph expansion in `search()` | **implemented, OFF by default** | `controller.py:118` builds the store, `:406` traverses; `enable_graph_expansion=False` |
 | Cognitive core (`PlanComplexityAnalyzer`, `CouncilBudgetController`, `ContextPackBuilder`) | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on heldout v2 in `07_EVALUATION/cognitive_core/EVALUATION_REPORT.md` (52% envelope token reduction, zero recall loss); `enable_cognitive_core=False` |
-| `graph/plasticity.py` | real, **wired in production** | wired into `synapse_store.py` and `controller.py`; transactional prune and byte-for-byte rollback active |
+| `graph/plasticity.py` | real, **importable but not called in production** | `SynapseStore.prune_specific_edges` / `MemoryController.prune_synapses` delegate to it, but nothing outside tests calls them; the one real use was the one-off `30_SCRIPTS/knowledge/audit_edge_purge.py`. Rollback is tested to restore the same (source, target, relation, weight, origin, evidence) tuples, not serialized bytes |
 | `executive`, `global_workspace`, `reasoning`, `working_memory` | **wired, OFF by default** | `03_IMPLEMENTATION/packages/memory/controller.py`; evaluated on benchmark v3 in `07_EVALUATION/cognitive_core/MODULE_EVALUATION_REPORT.md`; OFF by default |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
