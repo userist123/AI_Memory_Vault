@@ -650,6 +650,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | repository hygiene: absolute paths, disallowed root files, personal data | `repository-hygiene.yml` |
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
+| ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |
 | security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
