@@ -23,14 +23,13 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: depends_on
-  target_id: f96cf593-6ff1-5671-8498-2d5bda03b414
-- type: related_to
-  target_id: 73f5b12e-ba89-5e2d-b147-a3a866c6edbb
+  - type: related_to
+    target_id: "73f5b12e-ba89-5e2d-b147-a3a866c6edbb"
 lifecycle: ARCHIVED
 archive_reason: extragere cu prompt tintit pe intrebarile de test; retrasa conform ordinului de corectie runda 3
 id: fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54
 ---
+
 # 📖 Stocarea și Recuperarea Memoriei: Modelul Atkinson-Shiffrin (OpenStax)
 
 ## 1. Proveniență și Citate Verificate

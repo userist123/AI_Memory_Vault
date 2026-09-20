@@ -17,13 +17,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-16-consolidation
-- type: applies_to
-  target_id: d4e5337e-122f-402c-84d0-57230976ee0d
-- type: part_of
-  target_id: b2888875-8546-4d42-b262-2c7f779e3cc9
+  - type: part_of
+    target_id: "slot-16-consolidation"
+  - type: applies_to
+    target_id: "d4e5337e-122f-402c-84d0-57230976ee0d"
 ---
+
 # reinforcement learning
 
 ## Canonical Definition

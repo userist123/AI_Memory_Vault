@@ -17,13 +17,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-05-state
-- type: part_of
-  target_id: c67c2beb-e722-4155-ad31-66a48823aa20
-- type: applies_to
-  target_id: be1863da-7db4-48b7-9486-ad13b1a74152
+  - type: part_of
+    target_id: "slot-05-state"
+  - type: applies_to
+    target_id: "be1863da-7db4-48b7-9486-ad13b1a74152"
 ---
+
 # buffer
 
 ## Canonical Definition

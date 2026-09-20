@@ -18,13 +18,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-16-consolidation
-- type: applies_to
-  target_id: c67c2beb-e722-4155-ad31-66a48823aa20
-- type: related_to
-  target_id: 39a37abc-5f60-4fd0-aa2c-9338a922dc43
+  - type: part_of
+    target_id: "slot-16-consolidation"
+  - type: related_to
+    target_id: "39a37abc-5f60-4fd0-aa2c-9338a922dc43"
 ---
+
 # consolidation
 
 ## Canonical Definition

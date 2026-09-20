@@ -11,9 +11,7 @@ provenance:
   source_ref: 'phase 0 reconciliation measured on origin/main 10224498c, 2026-09-20'
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: slot-06-procedures
+relations: []
 ---
 
 # Phase 0 — reconciliation

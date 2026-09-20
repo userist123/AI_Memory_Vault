@@ -1,0 +1,232 @@
+# Prompt de Audit și Etichetare: Relații Tipizate de Graf (Wave C — Tranșa 1/7)
+
+Ești un evaluator de cunoștințe și arhitect de grafuri semantice.
+Sarcina ta este să auditezi o tranșă de relații tipizate declarate (`part_of`, `depends_on`, `applies_to`, `caused`, `contradicts`, `supersedes`) extrase din graful viu al depozitului `AI_Memory_Vault`.
+
+---
+
+## 1. Reguli Semantice de Judecată
+
+O relație între o notă-Sursă (`source`) și o notă-Țintă (`target`) trebuie judecată strict pe baza conținutului real al notelor (vezi `source_excerpt` și `target_excerpt`):
+
+1. **`part_of` (meronimie / incluziune)**:
+   - Sursa este o sub-componentă structurală, un modul sau un sub-proces aparținând țintei.
+   - REJECT dacă:
+     - Este doar un termen generic sau asociat tematic (`wrong_type` sau `unrelated`).
+     - Sursa este doar un document de audit sau plan și ținta e un slot ontologic (`wrong_type`).
+     - Relația e inversă (ținta e parte din sursă) (`wrong_direction`).
+2. **`depends_on` (dependență ontologică sau execuțională)**:
+   - Sursa nu poate funcționa, nu poate fi înțeleasă sau nu se poate executa fără concepte/mecanisme definite specific în țintă.
+   - REJECT dacă sunt doar descrieri paralele sau concepte complementare fără dependență strictă (`unrelated` sau `wrong_direction`).
+3. **`applies_to` (aplicabilitate / domeniu)**:
+   - Mecanismul, regula sau modelul din sursă se aplică activ asupra domeniului descris în țintă.
+   - REJECT dacă sunt două definiții paralele sau dacă ținta nu este deloc guvernată de sursă (`wrong_type` sau `unsupported`).
+
+---
+
+## 2. Categorii de Respingere Permise
+
+Dacă decizia este `REJECT`, trebuie să atribui exact una din următoarele 5 categorii:
+- `wrong_type`: Relația semantică există, dar tipul ales este greșit (ex: e asociere liberă sau compoziție, nu incluziune `part_of`).
+- `wrong_direction`: Direcția relației este inversată (ținta depinde/se aplică sursei, nu invers).
+- `unsupported`: Textul notei sursă nu menționează și nu susține mecanismul țintei.
+- `unrelated`: Conceptele sunt complet paralele sau nelegate structural.
+- `shared_terms_only`: Singura legătură este că ambele note folosesc cuvinte comune (ex: cuvântul "memory").
+
+---
+
+## 3. Formatul de Răspuns Așteptat
+
+Te rog să răspunzi **EXCLUSIV** cu un bloc JSON valid conform următoarei scheme:
+
+```json
+{
+  "batch_id": "batch_01",
+  "evaluated_count": 10,
+  "verdicts": [
+    {
+      "index": 1,
+      "relation": "tip_relatie",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Sursa descrie o componentă structurală direct inclusă în arhitectura țintei."
+    },
+    {
+      "index": 2,
+      "relation": "tip_relatie",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Sursa este un concept paralel; nu există incluziune part_of."
+    }
+  ]
+}
+```
+
+---
+
+## 4. Datele Tranșei 1 (10 cazuri de evaluat)
+
+```json
+[
+  {
+    "index": 1,
+    "source_id": "10664ba8-39ac-4498-8823-f47014a73efc",
+    "target_id": "d4e5337e-122f-402c-84d0-57230976ee0d",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "reinforcement learning",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_reinforcement_learning.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "reinforcement learning\n# reinforcement learning\n\n## Canonical Definition\n\nA framework formalised by Markov decision processes that defines the set of states, actions, and transition functions governing agent-environment interaction, with a discount factor controlling the value of future rewards.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across 2504.05840v1. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "operator",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_operator.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "operator\n# operator\n\n## Canonical Definition\n\nThe focal element of decision cycles, chosen among competing alternatives through preference arbitration to update active representations.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across laird_soar_cognitive_architecture. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 2,
+    "source_id": "735c6b3e-bf68-49db-8746-95cc2660ead4",
+    "target_id": "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "step-mechanism",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_step_mechanism.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "step-mechanism\n# step-mechanism\n\n## Canonical Definition\n\nDiscontinuous parameter-modifying devices that remain constant during normal trajectories but jump abruptly to new values when essential variables leave limits.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across ashby_design_for_a_brain. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "stability",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_stability.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "stability\n# stability\n\n## Canonical Definition\n\nThe cybernetic equivalent of biological adaptation, defined as the capacity of a system to keep its essential variables within safe physiological limits.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across ashby_design_for_a_brain and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 3,
+    "source_id": "911ffebf-ab09-4d79-8aac-247781c673a4",
+    "target_id": "0d68bba6-662b-4633-b065-bf1666889af9",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "variety",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_variety.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "variety\n# variety\n\n## Canonical Definition\n\nThe statistical spread of states across stochastic sequences which diminishes as conditional probabilities deviate from uniformity.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across ashby_intro_to_cybernetics and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "state-determined system",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_state_determined_system.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "state-determined system\n# state-determined system\n\n## Canonical Definition\n\nA dynamical system whose future behaviors follow inexorably from its current internal configuration and incoming environmental inputs without intrinsic randomness.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across ashby_design_for_a_brain and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 4,
+    "source_id": "99280cf1-6eb2-449c-a778-e800c2868e07",
+    "target_id": "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "feedback",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_feedback.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "feedback\n# feedback\n\n## Canonical Definition\n\nA circular transmission path wherein observed discrepancies between actual output and target patterns are routed back into the regulator to guide subsequent action.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across wiener_cybernetics and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "stability",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_stability.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "stability\n# stability\n\n## Canonical Definition\n\nThe cybernetic equivalent of biological adaptation, defined as the capacity of a system to keep its essential variables within safe physiological limits.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across ashby_design_for_a_brain and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 5,
+    "source_id": "a1df3d1c-201c-4217-aa62-f36292b01aa4",
+    "target_id": "6e014224-af01-4011-8050-082d3f9ea35e",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "chunking",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_chunking.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "chunking\n# chunking\n\n## Canonical Definition\n\nThe experience-based compilation system in Soar that eliminates repetitive impasses by converting substate reasoning into immediate production rules.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across laird_soar_cognitive_architecture. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "procedural memory",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_procedural_memory.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "procedural memory\n# procedural memory\n\n## Canonical Definition\n\nA broad behavioral memory category encompassing motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across schacter_tulving_memory_systems_1994 and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 6,
+    "source_id": "bdd2358e-e305-454e-9cf0-f044eb5c4244",
+    "target_id": "99280cf1-6eb2-449c-a778-e800c2868e07",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "transducer",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_transducer.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "transducer\n# transducer\n\n## Canonical Definition\n\nA determinate machine with designated input and output variables that converts incoming signal sequences into transformed output streams.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across ashby_intro_to_cybernetics. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "feedback",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_feedback.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "feedback\n# feedback\n\n## Canonical Definition\n\nA circular transmission path wherein observed discrepancies between actual output and target patterns are routed back into the regulator to guide subsequent action.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across wiener_cybernetics and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 7,
+    "source_id": "f4211085-75c4-4184-a1a9-0c33da73ac74",
+    "target_id": "0d68bba6-662b-4633-b065-bf1666889af9",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "constraint",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_constraint.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "constraint\n# constraint\n\n## Canonical Definition\n\nA probabilistic restriction in Markov transitions causing entropy to drop below the maximum theoretical uncertainty of uniform distributions.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across ashby_intro_to_cybernetics. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "state-determined system",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_state_determined_system.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "state-determined system\n# state-determined system\n\n## Canonical Definition\n\nA dynamical system whose future behaviors follow inexorably from its current internal configuration and incoming environmental inputs without intrinsic randomness.\n\n## Judgment & Evaluation\n\nCore cognitive architecture concept recurrent across ashby_design_for_a_brain and canonical literature. Promoted to REVIEW status for ontology grounding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 8,
+    "source_id": "ff28fea6-0138-41b6-acd7-e1c0759966b1",
+    "target_id": "be1863da-7db4-48b7-9486-ad13b1a74152",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "buffer",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_buffer.md",
+    "source_lifecycle": "REVIEW",
+    "source_excerpt": "buffer\n# buffer\n\n## Canonical Definition\n\nRestricted capacity interface holding a single chunk that connects an internal cognitive module to the central production system.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across wcs_1488. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package.",
+    "target_title": "state",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\Promoted_state.md",
+    "target_lifecycle": "REVIEW",
+    "target_excerpt": "state\n# state\n\n## Canonical Definition\n\nAn observation provided by the environment at each time step, together with the subsequent state produced after the agent selects an action, forming the trajectory elements formalised in Markov decision process notation.\n\n## Judgment & Evaluation\n\nTier 2 cognitive concept with recurrence occurrences 10-19 across 2504.05840v1. Promoted to REVIEW status for ontology scaffolding.\n\n## Code Cross-References\n\nPotentially relevant to implementation modules in `03_IMPLEMENTATION/` or procedures in `10_DOCUMENTATION/procedures/`, not independently verified this package."
+  },
+  {
+    "index": 9,
+    "source_id": "knw-ashby-habituation-and-plasticity",
+    "target_id": "knw-ashby-multistable-systems",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "🧪 Obișnuință, Reflex și Plasticitate Neuronală (Ashby)",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\ashby_habituation_and_plasticity.md",
+    "source_lifecycle": "ARCHIVED",
+    "source_excerpt": "🧪 Obișnuință, Reflex și Plasticitate Neuronală (Ashby)\n# 🧪 Obișnuință, Reflex și Plasticitate Neuronală (Ashby)\n\n## 1. Sursă & Proveniență\n- **Autor**: W. Ross Ashby.\n- **Lucrare**: *Design for a Brain*, Capitolul 14 (Repetitive Stimuli and Habituation, §14/1–14/15).\n- **Licență**: Domeniu Public / W. Ross Ashby Estate.\n\n---\n\n## 2. Mecanismul Cibernetic al Obișnuinței (Habituation)\n\nAshby explică habituarea (cea mai simplă formă de învățare neuronală) nu ca pe o epuizare a transmițătorilor sinaptici, ci ca pe un proces de **progresivă constricție a câmpului de stabilitate**:\n1. Când un stimul perturbator se repetă identic, orice treaptă de parametri care menține variabila esențială în limite",
+    "target_title": "🧱 Sisteme Multistabile și Izolare Locală (Ashby)",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\ashby_multistable_systems.md",
+    "target_lifecycle": "ARCHIVED",
+    "target_excerpt": "🧱 Sisteme Multistabile și Izolare Locală (Ashby)\n# 🧱 Sisteme Multistabile și Izolare Locală (Ashby)\n\n## 1. Sursă & Proveniență\n- **Autor**: W. Ross Ashby.\n- **Lucrare**: *Design for a Brain*, Capitolele 12, 13 și 16 (§16/1–16/15).\n- **Licență**: Domeniu Public / W. Ross Ashby Estate.\n\n---\n\n## 2. Deficiența Sistemului Complet Conectat (Fully-Joined System)\n\nDacă un sistem format din $N$ variabile este complet interconectat (fiecare variabilă depinde de toate celelalte), probabilitatea de a găsi un set stabil de parametri prin căutare aleatoare scade exponențial:\n$$P(\\text{Stabilitate Globală}) \\approx p^N$$\nunde $p < 1$ este șansa de stabilitate a unei singure conexiuni. Pentru $N > 100$, tim"
+  },
+  {
+    "index": 10,
+    "source_id": "knw-ashby-homeostasis-and-stability",
+    "target_id": "knw-ashby-ultrastable-system",
+    "relation": "applies_to",
+    "origin": "declared",
+    "weight": 0.7,
+    "source_title": "🧠 Homeostazie, Variabile Esențiale și Câmpuri de Stabilitate (Ashby)",
+    "source_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\ashby_homeostasis_and_stability.md",
+    "source_lifecycle": "ARCHIVED",
+    "source_excerpt": "🧠 Homeostazie, Variabile Esențiale și Câmpuri de Stabilitate (Ashby)\n# 🧠 Homeostazie, Variabile Esențiale și Câmpuri de Stabilitate (Ashby)\n\n## 1. Sursă & Proveniență\n- **Autor**: W. Ross Ashby (1903–1972), psihiatru și pionier al ciberneticii.\n- **Lucrare**: *Design for a Brain: The Origin of Adaptive Behaviour* (Chapman & Hall, 1952; Ed. a 2-a revizuită 1960).\n- **Licență**: Domeniu Public / Acces Educațional Deschis (Estate of W. Ross Ashby, wrossashby.info).\n- **Referință Sursă**: Capitolul 4 (Stability, §4/1–4/12) și Capitolul 5 (Adaptation as Stability, §5/1–5/14).\n\n---\n\n## 2. Concepte Fundamentale\n\n### A. Variabile Esențiale (Essential Variables)\nFiecare organism sau sistem autonom po",
+    "target_title": "⚙️ Sistemul Ultrastabil și Bucla Dublă de Feedback (Ashby)",
+    "target_path": "C:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\01_ARCHITECTURE\\knowledge\\ashby_ultrastable_system.md",
+    "target_lifecycle": "ARCHIVED",
+    "target_excerpt": "⚙️ Sistemul Ultrastabil și Bucla Dublă de Feedback (Ashby)\n# ⚙️ Sistemul Ultrastabil și Bucla Dublă de Feedback (Ashby)\n\n## 1. Sursă & Proveniență\n- **Autor**: W. Ross Ashby.\n- **Lucrare**: *Design for a Brain*, Capitolul 7 (The Ultrastable System, §7/1–7/26) & Capitolul 9.\n- **Licență**: Domeniu Public / W. Ross Ashby Estate.\n\n---\n\n## 2. Arhitectura Buclei Duble (Two-Tiered Feedback)\n\nSistemele reactive simple cu o singură buclă de feedback (precum regulatorul centrifugal Watt sau termostatul) eșuează când dinamica internă a mediului se modifică structural. Ashby a conceput arhitectura **ultrastabilă**, care combină două bucle concurente de feedback:\n\n```text\n                  +------------"
+  }
+]
+```

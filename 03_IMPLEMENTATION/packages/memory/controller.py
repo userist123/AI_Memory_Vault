@@ -76,6 +76,11 @@ class Lifecycle(str, enum.Enum):
     SUPERSEDED = "SUPERSEDED"
     ARCHIVED = "ARCHIVED"
 
+#: What an AI agent sees when it asks for no lifecycle in particular. ARCHIVED
+#: notes and notes with no lifecycle at all are excluded: they are the vault's
+#: history and its unclassified backlog, not what it stands behind.
+AGENT_LIFECYCLE_FLOOR = (Lifecycle.ACTIVE, Lifecycle.REVIEW)
+
 _ALLOWED_PROVENANCE_SOURCE_TYPES = {
     Principal.AI_AGENT: {"execution", "ai", "inference", "unknown"},
     Principal.HUMAN: {"user", "official", "execution", "experience", "inference", "import", "unknown"},
@@ -453,6 +458,22 @@ class MemoryController:
             check_query_size(query)
             # Sanitize query
             sanitized = sanitize_query(query)
+            # An AI agent that asks for nothing in particular gets the notes the
+            # vault stands behind. Until r0xx every entry point -- the MCP
+            # server, recall_cli, tool_router -- passed no lifecycle at all, so
+            # an agent's search covered 569 ARCHIVED notes (including ones
+            # archived precisely because their provenance did not hold up) and
+            # 148 notes carrying no lifecycle. Measured on the v3 benchmark
+            # before this default was added: the floor costs 1 case out of 130
+            # (38 -> 37 context recall). Principal.HUMAN is unfiltered -- the
+            # owner can see everything -- and an explicit `lifecycles` argument
+            # always wins, so benchmarks and migrations are unaffected.
+            if lifecycles is None and principal == Principal.AI_AGENT:
+                lifecycles = list(AGENT_LIFECYCLE_FLOOR)
+                agent_floor_applied = True
+            else:
+                agent_floor_applied = False
+
             # Compute fingerprint of current sanitized query
             query_fp = hashlib.sha256(sanitized.encode()).hexdigest()
             target_id = query_fp
@@ -537,6 +558,10 @@ class MemoryController:
             # overlap over notes already filtered by lifecycle/type/RAW; see
             # RetrievalEngine.retrieve() / candidate_generation.py).
             candidate_trace: Dict[str, Any] = {}
+            candidate_trace['agent_lifecycle_floor_applied'] = agent_floor_applied
+            candidate_trace['lifecycles_requested'] = [
+                getattr(l, 'value', str(l)) for l in (lifecycles or [])
+            ]
             active_classifier_filter_arm = (
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)
@@ -601,7 +626,15 @@ class MemoryController:
                 try:
                     self._in_executive_loop = True
                     exec_instance = self._get_executive()
+                    # Annotation only: the parsed intent goes into the trace and
+                    # nothing downstream reads it, so this flag cannot change
+                    # what search() returns. Measured on benchmark v3 it scored
+                    # 0 wins and 0 losses against baseline -- which was settled
+                    # before the run, not discovered by it. Anything that wants
+                    # to claim the executive helps retrieval has to consume this
+                    # value first.
                     candidate_trace['executive_intent'] = exec_instance._parse_intent(sanitized)
+                    candidate_trace['executive_is_annotation_only'] = True
                 finally:
                     self._in_executive_loop = False
 
@@ -911,6 +944,10 @@ class MemoryController:
                     self._in_reasoning_synthesize = True
                     re_engine = self._get_reasoning_engine()
                     reasoning_res = re_engine.synthesize(principal, page_results, sanitized)
+                    # Annotation only, like `executive_intent` above: the
+                    # synthesis is recorded and never consumed, so its 0/0
+                    # result on benchmark v3 says nothing about the module.
+                    candidate_trace['reasoning_is_annotation_only'] = True
                     candidate_trace['reasoning_synthesis'] = reasoning_res.get('synthesis')
                     candidate_trace['reasoning_mode'] = reasoning_res.get('mode')
                 finally:
@@ -1439,12 +1476,34 @@ class MemoryController:
                 audit_event('supersede', principal, new_id, success=False, details={'old_id': old_id, 'evidence': evidence, 'error': str(e)})
                 raise
 
+    def prune_synapses(
+        self,
+        edges_to_prune: Any,
+        run_id: Optional[str] = None,
+        dry_run: bool = False,
+        reason: str = "audit_rejection",
+    ) -> Any:
+        """Prunes specific edges from the controller's synapse store transactionally."""
+        if self.synapse_store is None:
+            raise RuntimeError("SynapseStore not initialized on MemoryController")
+        return self.synapse_store.prune_specific_edges(
+            edges_to_prune, run_id=run_id, dry_run=dry_run, reason=reason
+        )
+
+    def rollback_synapses(self, run_id: str) -> Any:
+        """Rolls back a prune operation on the controller's synapse store."""
+        if self.synapse_store is None:
+            raise RuntimeError("SynapseStore not initialized on MemoryController")
+        return self.synapse_store.rollback_prune(run_id=run_id)
+
+
 
 # Cognitive core modules wired in production path behind explicit flags (OFF by default)
 from cognitive_core.working_memory import WorkingMemory
 from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
 from cognitive_core.reasoning import ReasoningEngine
 from cognitive_core.executive import Executive
+from graph.plasticity import PlasticityEngine
 
 # Export singleton
 from .storage.file_engine import FileStorageEngine

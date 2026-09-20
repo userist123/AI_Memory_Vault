@@ -17,11 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-05-state
-- type: depends_on
-  target_id: df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57
+  - type: depends_on
+    target_id: "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57"
 ---
+
 # stability
 
 ## Canonical Definition

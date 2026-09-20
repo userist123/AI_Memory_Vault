@@ -19,15 +19,10 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T23:00:00Z
 relations:
-  - target_id: "b4e88f21-7291-49fa-9481-22904c10a002"
-    type: related_to
-    target: "[[01_KNOWLEDGE/Data_Visualization_Standards]]"
-  - target_id: "b4e88f21-7291-49fa-9481-22904c10a001"
-    type: depends_on
-    target: "[[01_KNOWLEDGE/Design_System_Foundation]]"
-  - target_id: "finscope-project-core"
-    type: implements
-    target: "[[02_PROJECTS/FinScope]]"
+  - type: related_to
+    target_id: "b4e88f21-7291-49fa-9481-22904c10a002"
+  - type: implements
+    target_id: "finscope-project-core"
 ---
 
 # Arhitectura Panourilor de Administrare și Tablourilor de Bord (Dashboard & Admin UI)

@@ -357,6 +357,45 @@ def _has_explicit_reference(src_note: Any, target_note: Any) -> bool:
     return False
 
 
+#: A keyword only states a relation when it sits in the same passage as the
+#: reference to the other note. "Same passage" is the line plus the two lines
+#: around it: enough for a bullet, a table row or a sentence that wraps,
+#: narrow enough that a word in section 2 cannot bind a link in section 9.
+_PASSAGE_RADIUS = 2
+
+
+def _references_near(src_note: Any, target_note: Any, keywords: List[str]) -> bool:
+    """True when src_note names target_note within two lines of a keyword."""
+    if not _has_explicit_reference(src_note, target_note):
+        return False
+    body = (getattr(src_note, "body", "") or "")
+    lines = body.splitlines()
+    identifiers = [
+        str(x).lower()
+        for x in (
+            getattr(target_note, "id", ""),
+            getattr(getattr(target_note, "path", None), "stem", ""),
+            getattr(target_note, "title", ""),
+        )
+        if x and len(str(x)) >= 4
+    ]
+    if not identifiers:
+        return False
+    hit_lines = [
+        i for i, line in enumerate(lines)
+        if any(ident in line.lower() for ident in identifiers)
+    ]
+    if not hit_lines:
+        # The reference came from frontmatter, which has no passage of its own;
+        # a declared relation is evidence enough without a keyword nearby.
+        return True
+    for i in hit_lines:
+        window = " ".join(lines[max(0, i - _PASSAGE_RADIUS): i + _PASSAGE_RADIUS + 1]).lower()
+        if any(k in window for k in keywords):
+            return True
+    return False
+
+
 def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str, str]:
     """Classify relation between two notes into ALLOWED_RELATIONS with direction.
     Strong relations (depends_on, supersedes, verified_by) require explicit evidence."""
@@ -377,8 +416,13 @@ def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str
             return rel_type, b, a
 
     # 1. Supersedes (temporal/versioned replacement)
-    # Strong relation: requires same-subject versioning or explicit reference
-    if _same_subject(na.title, nb.title):
+    # Two notes sharing a subject and carrying different timestamps used to be
+    # enough. The 50-edge audit found 0 of 5 sampled `supersedes` edges correct:
+    # a similar title and a newer date say nothing about replacement. One of the
+    # notes now has to point at the other.
+    if _same_subject(na.title, nb.title) and (
+        _has_explicit_reference(na, nb) or _has_explicit_reference(nb, na)
+    ):
         ua, ub = na.updated, nb.updated
         if ua and ub and ua != ub:
             (src, dst) = (a, b) if ua > ub else (b, a)
@@ -390,9 +434,11 @@ def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str
         return "supersedes", b, a
 
     # 2. Applies_to (lessons applied to procedures/rules)
-    if na.type in LESSON_TYPES and nb.type in PROCEDURE_TYPES:
+    # Being a lesson and a procedure is not a relationship: every lesson would
+    # apply to every procedure. The lesson has to name the procedure.
+    if na.type in LESSON_TYPES and nb.type in PROCEDURE_TYPES and _has_explicit_reference(na, nb):
         return "applies_to", a, b
-    if nb.type in LESSON_TYPES and na.type in PROCEDURE_TYPES:
+    if nb.type in LESSON_TYPES and na.type in PROCEDURE_TYPES and _has_explicit_reference(nb, na):
         return "applies_to", b, a
 
     # 3. Verified_by (tests verifying architecture/knowledge)
@@ -409,37 +455,44 @@ def classify_relation(na: Any, nb: Any, shared_ents: set[str]) -> Tuple[str, str
     # 4. Depends_on (prerequisites and dependencies)
     # Strong relation: requires explicit reference between notes
     dep_keywords = ["depends on", "prerequisite", "cerință prealabilă", "requires", "depinde de", "bazează pe"]
-    a_refs_b = _has_explicit_reference(na, nb)
-    b_refs_a = _has_explicit_reference(nb, na)
-    if a_refs_b and any(k in body_a_low for k in dep_keywords):
+    # The keyword has to appear in the same passage as the reference. A note
+    # that says "requires" in one section and links the other note three pages
+    # down states no dependency; that produced 17 of the 20 rejected
+    # `depends_on` edges in the audit.
+    if _references_near(na, nb, dep_keywords):
         return "depends_on", a, b
-    if b_refs_a and any(k in body_b_low for k in dep_keywords):
+    if _references_near(nb, na, dep_keywords):
         return "depends_on", b, a
 
     # 5. Caused (causal progression)
+    # These fired on a keyword appearing anywhere in one note, with nothing
+    # tying it to the other note. Same passage rule as `depends_on`.
     cause_keywords = ["caused by", "cauzat de", "a dus la", "consequence of", "rezultat din"]
-    if any(k in body_a_low for k in cause_keywords):
+    if _references_near(na, nb, cause_keywords):
         return "caused", a, b
-    if any(k in body_b_low for k in cause_keywords):
+    if _references_near(nb, na, cause_keywords):
         return "caused", b, a
 
     # 6. Contradicts (opposing findings, contrast)
     contra_keywords = ["contradicts", "în contradicție", "disputes", "contrazice", "spre deosebire de"]
-    if any(k in body_a_low for k in contra_keywords):
+    if _references_near(na, nb, contra_keywords):
         return "contradicts", a, b
-    if any(k in body_b_low for k in contra_keywords):
+    if _references_near(nb, na, contra_keywords):
         return "contradicts", b, a
 
     # 7. Part_of (containment, chapter/section, subproject)
+    # `na.type == "project"` alone made every note that shared a word with a
+    # project a part of it, in the wrong direction; that is audit case #26.
+    # Containment now needs the containing note to name the contained one.
     part_keywords = ["part of", "parte din", "capitol", "chapter", "subsystem", "component"]
-    if any(k in body_a_low for k in part_keywords) or (na.type == "project" and nb.type != "project"):
-        if na.type == "project" and nb.type != "project":
-            return "part_of", b, a
+    if _references_near(na, nb, part_keywords):
         return "part_of", a, b
-    if any(k in body_b_low for k in part_keywords) or (nb.type == "project" and na.type != "project"):
-        if nb.type == "project" and na.type != "project":
-            return "part_of", a, b
+    if _references_near(nb, na, part_keywords):
         return "part_of", b, a
+    if na.type == "project" and nb.type != "project" and _has_explicit_reference(na, nb):
+        return "part_of", b, a
+    if nb.type == "project" and na.type != "project" and _has_explicit_reference(nb, na):
+        return "part_of", a, b
 
     return "related_to", a, b
 
@@ -498,6 +551,16 @@ def deterministic_candidates(index: VaultIndex, limit: int = 2000) -> Tuple[List
         if len(norm_body_a) >= 100 and norm_body_a == norm_body_b:
             duplicate_pairs_skipped += 1
             continue
+        # Byte equality missed the auto-generated policy lessons: they differ
+        # only by an embedded id, and the audit rejected 6 sampled edges as
+        # duplicate content. Near-identity over word multisets catches those
+        # without touching notes that merely share vocabulary.
+        if len(norm_body_a) >= 100 and len(norm_body_b) >= 100:
+            wa, wb = Counter(norm_body_a.split()), Counter(norm_body_b.split())
+            overlap = sum((wa & wb).values())
+            if overlap / max(sum(wa.values()), sum(wb.values())) >= 0.98:
+                duplicate_pairs_skipped += 1
+                continue
 
         # At least one shared entity must be genuinely rare.
         if min(df[e] for e in pair_shared[(a, b)]) > RARE_ENTITY_DF_MAX:
