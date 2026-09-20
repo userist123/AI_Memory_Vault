@@ -1,0 +1,33 @@
+name: Untrusted content guard
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# CodeQL flagged the workflow for not limiting the token. The job only reads
+# the checked-out tree, so read access to contents is all it ever needs.
+permissions:
+  contents: read
+
+jobs:
+  scan-imported-material:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Scan imported material for injected instructions
+        run: python 30_SCRIPTS/verification/untrusted_content_guard.py
+      - name: Guard tests
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pyyaml
+          python -m pytest 20_TESTS/test_untrusted_content_guard.py -q

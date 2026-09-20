@@ -617,6 +617,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | suita completă de teste și structura depozitului | `r001-enforcement.yml`, `memory-v6-tests.yml` |
 | igiena depozitului: căi absolute, fișiere nepermise în rădăcină, date personale | `repository-hygiene.yml` |
 | regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
+| materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
 | securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
 | cercetare: Planning Influence V3 și fazele Polymarket | `planning-influence-mve.yml`, `polymarket-phase*.yml` (câte unul pe fază) |
