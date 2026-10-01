@@ -148,6 +148,38 @@ Mai tarziu: AR, IFC, enterprise si multi-country.
 
 Roadmap-ul nu reprezinta capabilitati implementate.
 
+
+## Matrice de evidenta
+
+| Nivel | Sursa | Ce sustine |
+|---|---|---|
+| F0 | `CONSTITUTION.md`, `AUDIT.md`, `core/layout.js`, `data/catalog.v1.json`, `data/floor.v1.json`, migrari/teste | reguli constitutionale, motor geometric, schema, catalog si rezultate F0 |
+| F1 | aplicatia Next.js, editor 2D/3D, API, DB/PGlite/Postgres, revision history, undo/redo, validare, teste | persistenta, editor, revizii si validare |
+| F2 | `core/boq.ts`, `core/rules.boq.ts`, `BudgetPanel.tsx`, catalog materiale | BOQ, cantitati, costuri, manopera si provenance |
+| F3 | `core/brief`, `core/proposal`, `core/proposer-rules`, `lib/ai.ts`, DesignPanel si teste | Design Brief, propuneri, contract AI, validare si Apply/Reject |
+| F4 | discutia de proiect furnizata de utilizator | design/test mode si roadmap; nu dovada de implementare |
+
+## Gaps cunoscute si limite de continuitate
+
+- F0 a avut probleme initiale privind ferestre/circulatie, ID-uri dependente de ordine, variante globale per grup, efecte secundare de placement, camere dreptunghiulare/pereti neconectati, zona fixa pentru usa si lipsa undo/redo. F1 documenteaza ca problemele 1-5 si 8 au fost remediate; camerele L-shape, legarea automata perete-camera si joystick-ul mobil au ramas in afara fazei.
+- F1 nu trebuie interpretat ca avand auth completa sau colaborare multi-user.
+- F2 nu reprezinta un feed comercial live si nu acopera toate categoriile de lucrari/materiale; valorile necunoscute trebuie pastrate ca UNKNOWN.
+- F3 are integrarea AI reala configurata, dar fara `ANTHROPIC_API_KEY` executia modelului nu a fost runtime-verificata; fallback-ul rules engine si testele de siguranta sunt cele verificate.
+- F4 ramane test mode pana cand exista implementare si dovezi pentru redirect, tracking, provenance si fluxurile comerciale.
+- Orice informatie comerciala sau de afiliere din conversatii trebuie revalidata inainte de a deveni fapt curent.
+
+## Gate-uri de faza
+
+- **F0 gate:** geometria, schema si catalogul trebuie sa ramana deterministe si testate.
+- **F1 gate:** modificarile persistente trebuie sa treaca prin validare si revision history.
+- **F2 gate:** cantitatile si costurile trebuie derivate din Digital Twin si sa pastreze provenance/UNKNOWN unde lipsesc date.
+- **F3 gate:** AI poate propune doar semantic; serverul revalideaza proiectul curent inainte de Apply.
+- **F4 gate:** monetizarea nu devine productie doar din documentatie; fiecare integrare comerciala necesita dovada tehnica si provenance.
+
+## Criteriu de actualizare a memoriei
+
+La fiecare faza noua, memoria Casa3D trebuie actualizata numai dupa ce exista artefacte identificabile si dovezi de verificare. Conversatia poate actualiza intentia si roadmap-ul, dar nu poate promova singura o capabilitate in categoria "implementat".
+
 ## Regula de continuitate pentru agenti
 
 Ordinea autoritatii este:
