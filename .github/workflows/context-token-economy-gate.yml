@@ -1,0 +1,43 @@
+name: Context Token Economy Gate
+
+on:
+  pull_request:
+    paths:
+      - "03_IMPLEMENTATION/packages/retrieval/context/**"
+      - "security/context_compression.py"
+      - "security/tests/test_context_token_economy_gate.py"
+      - ".github/workflows/context-token-economy-gate.yml"
+  push:
+    branches:
+      - main
+      - "codex/skill-exfiltration-scanner"
+    paths:
+      - "03_IMPLEMENTATION/packages/retrieval/context/**"
+      - "security/context_compression.py"
+      - "security/tests/test_context_token_economy_gate.py"
+      - ".github/workflows/context-token-economy-gate.yml"
+
+jobs:
+  context-token-economy:
+    name: Context Token Economy Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest
+
+      - name: Run executable token economy gate
+        env:
+          PYTHONPATH: .
+        run: python -m pytest security/tests/test_context_token_economy_gate.py -q
