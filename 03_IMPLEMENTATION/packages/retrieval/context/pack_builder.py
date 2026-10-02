@@ -182,6 +182,15 @@ class ContextPackBuilder:
         return pack
 
     @staticmethod
+    def _protected_result(item: Dict[str, Any]) -> bool:
+        if bool(item.get("do_not_compress")) or bool(item.get("protected_content")):
+            return True
+        content = str(item.get("content", item.get("snippet", "")))
+        return bool(item.get("code") or item.get("signature") or item.get("dependencies") or item.get("identifiers")) or bool(
+            __import__("re").search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
+            or "```" in content
+        )
+    @staticmethod
     def _json_safe(value: Any) -> Any:
         """Convert compressed note payloads into transport-safe JSON values."""
         if isinstance(value, bytes):
@@ -258,7 +267,11 @@ class ContextPackBuilder:
                 except Exception:
                     pass
                 return pack
-            safe_results = safe_results[:-1]
+            removable = next((idx for idx in range(len(safe_results) - 1, -1, -1)
+                              if not self._protected_result(safe_results[idx])), None)
+            if removable is None:
+                raise BudgetExceededError("Protected context cannot fit within hard budget")
+            safe_results.pop(removable)
 
         # Empty result pack is always the last safe representation. If even the
         # envelope exceeds the configured hard budget, fail closed.
