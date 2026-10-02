@@ -46,7 +46,7 @@ class ProgressiveDisclosure:
             return True
         content = str(note.get("content", ""))
         return bool(
-            re.search(r"(?im)^.*\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b.*$", content)
+            re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
             or "```" in content
             or any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
         )
@@ -55,7 +55,7 @@ class ProgressiveDisclosure:
     def _protected_lines(content: str) -> List[str]:
         return [
             line for line in content.split("\n")
-            if re.search(r"(?i)\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b", line)
+            if re.search(r"(?i)\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b", line)
             or "```" in line
         ]
     def _within_budget(self, usage: int) -> bool:
