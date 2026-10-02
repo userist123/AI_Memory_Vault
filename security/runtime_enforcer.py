@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
+from uuid import uuid4
 
 from .tool_capabilities import CapabilitySet
 from .trust_gate import TrustDecision, TrustState
@@ -25,6 +26,7 @@ class ExecutionRequest:
     parameters: dict[str, Any]
     side_effect: bool = False
     data_export: bool = False
+    correlation_id: str = field(default_factory=lambda: uuid4().hex)
 
     def parameters_sha256(self) -> str:
         payload = json.dumps(
