@@ -170,19 +170,3 @@ class MemoryDataRouter:
             source=route,
             principal=str(principal),
         )
-
-    # Compatibility seam for callers that already hold a completed pack.
-    # New model-facing entrypoints should use dispatch() so route ownership is
-    # explicit and auditable.
-    def route_to_model(
-        self,
-        pack: Dict[str, Any],
-        *,
-        source: str,
-        principal: str,
-    ) -> Dict[str, Any]:
-        return self.egress_gate.route_to_model(
-            pack,
-            source=source,
-            principal=principal,
-        )
