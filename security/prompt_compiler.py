@@ -153,7 +153,7 @@ class VerifiedPromptCompiler:
         translated = self.translate(request, source_language)
         verification = self.verify_translation(translated, request)
 
-        stable_prefix, dynamic_suffix = self._assemble_sections(
+        stable_prefix, dynamic_prefix, reducible_context, task_suffix = self._assemble_sections(
             task=translated.text,
             verified_context=verified_context,
             requirements=requirements,
@@ -163,19 +163,22 @@ class VerifiedPromptCompiler:
             owner=owner,
         )
         stable_prefix = self._compact(stable_prefix)
-        dynamic_suffix = self._compact(dynamic_suffix)
-        before_text = stable_prefix + dynamic_suffix
+        dynamic_prefix = self._compact(dynamic_prefix)
+        reducible_context = self._compact(reducible_context)
+        task_suffix = self._compact(task_suffix)
+        fixed_text = stable_prefix + dynamic_prefix + task_suffix
+        before_text = stable_prefix + dynamic_prefix + reducible_context + task_suffix
         token_before = self._estimate_tokens(before_text)
 
         if token_before <= 0:
             raise PromptCompilationError("empty_compiled_prompt")
         if hard_token_budget < 1 or soft_token_budget < 1:
             raise PromptCompilationError("invalid_token_budget")
-        if self._estimate_tokens(stable_prefix) > hard_token_budget:
-            raise PromptCompilationError("stable_prefix_exceeds_hard_token_budget")
+        if self._estimate_tokens(fixed_text) > hard_token_budget:
+            raise PromptCompilationError("fixed_prompt_exceeds_hard_token_budget")
 
         item = {
-            "content": dynamic_suffix,
+            "content": reducible_context,
             "verification": verification,
             "security": {
                 "trust_state": verification["status"],
@@ -186,20 +189,20 @@ class VerifiedPromptCompiler:
             "forbidden": forbidden,
             "acceptance": acceptance,
         }
-        dynamic_limit = max(1, int(max_chars) - len(stable_prefix))
+        dynamic_limit = max(1, int(max_chars) - len(fixed_text))
         result = self.reducer.reduce(item, verified=True, max_chars=dynamic_limit)
         if not result.allowed:
             raise PromptCompilationError(result.reason)
 
-        dynamic_suffix = result.content
-        prompt = stable_prefix + dynamic_suffix
+        reducible_context = result.content
+        prompt = stable_prefix + dynamic_prefix + reducible_context + task_suffix
         if self._estimate_tokens(prompt) > soft_token_budget:
-            target_budget = max(soft_token_budget, self._estimate_tokens(stable_prefix))
-            dynamic_suffix = self._fit_dynamic_to_budget(
-                stable_prefix, dynamic_suffix, target_budget, verification,
-                requirements, forbidden, acceptance
+            target_budget = max(soft_token_budget, self._estimate_tokens(fixed_text))
+            reducible_context = self._fit_context_to_budget(
+                fixed_text, dynamic_prefix + reducible_context, target_budget,
+                verification, requirements, forbidden, acceptance
             )
-            prompt = stable_prefix + dynamic_suffix
+            prompt = stable_prefix + dynamic_prefix + reducible_context + task_suffix
 
         token_after = self._estimate_tokens(prompt)
         if token_after > hard_token_budget:
@@ -235,36 +238,34 @@ class VerifiedPromptCompiler:
     def _compact(text: str) -> str:
         return "\n".join(line.rstrip() for line in text.strip().splitlines()).strip() + "\n\n"
 
-    def _fit_dynamic_to_budget(
-        self, stable_prefix: str, dynamic_suffix: str, hard_token_budget: int,
+    def _fit_context_to_budget(
+        self, fixed_text: str, context_text: str, target_token_budget: int,
         verification: Mapping[str, object], requirements: list[str],
         forbidden: list[str], acceptance: list[str],
     ) -> str:
-        if self._estimate_tokens(stable_prefix + dynamic_suffix) <= hard_token_budget:
-            return dynamic_suffix
-        low, high, best = 1, len(dynamic_suffix), ""
+        if self._estimate_tokens(fixed_text + context_text) <= target_token_budget:
+            return context_text
+        low, high, best = 1, len(context_text), ""
         while low <= high:
             mid = (low + high) // 2
             candidate = self.reducer.reduce(
-                {"content": dynamic_suffix, "verification": verification,
+                {"content": context_text, "verification": verification,
                  "requirements": requirements, "forbidden": forbidden,
                  "acceptance": acceptance},
                 verified=True, max_chars=mid,
             )
-            if candidate.allowed and self._estimate_tokens(stable_prefix + candidate.content) <= hard_token_budget:
+            if candidate.allowed and self._estimate_tokens(fixed_text + candidate.content) <= target_token_budget:
                 best = candidate.content
                 low = mid + 1
             else:
                 high = mid - 1
-        if not best:
-            raise PromptCompilationError("compiled_prompt_exceeds_hard_token_budget")
         return best
 
     @staticmethod
     def _assemble_sections(
         *, task: str, verified_context: str, requirements: list[str],
         forbidden: list[str], acceptance: list[str], branch: str, owner: str,
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str, str, str]:
         req = "\n".join(f"{i}. {v}" for i, v in enumerate(requirements, 1))
         forb = "\n".join(f"- {v}" for v in forbidden)
         acc = "\n".join(f"{i}. {v}" for i, v in enumerate(acceptance, 1))
@@ -277,11 +278,9 @@ class VerifiedPromptCompiler:
             "## Forbidden\n\n" + forb + "\n\n"
             "## Acceptance\n\n" + acc + "\n\n"
         )
-        dynamic_suffix = (
+        dynamic_prefix = (
             "## Execution context\n\n"
             f"Branch: {branch}\nOwner: {owner}\n\n"
-            f"{verified_context}\n\n"
-            "## Task\n\n"
-            f"{task.strip()}\n\n"
         )
-        return stable_prefix, dynamic_suffix
+        task_suffix = "## Task\n\n" + task.strip() + "\n\n"
+        return stable_prefix, dynamic_prefix, verified_context, task_suffix
