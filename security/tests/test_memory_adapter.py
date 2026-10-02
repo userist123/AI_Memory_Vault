@@ -40,3 +40,29 @@ def test_memory_adapter_requires_approval_for_review():
     assert denied.reason == "memory_approval_required"
     assert allowed.allowed is True
     assert len(writes) == 1
+
+
+def test_memory_adapter_preserves_empty_ledger_when_persist_fails():
+    def persist(namespace, payload):
+        raise RuntimeError("backend unavailable")
+
+    adapter = MemoryAdapter(persist)
+
+    try:
+        adapter.write("agent", {"fact": "verified"}, TrustState.TRUSTED)
+    except RuntimeError:
+        pass
+
+    assert adapter.boundary.ledger.records == []
+
+
+def test_memory_adapter_rejects_non_mapping_payload():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append((namespace, payload)))
+
+    try:
+        adapter.write("agent", ["not", "a", "mapping"], TrustState.TRUSTED)
+    except (TypeError, AttributeError):
+        pass
+
+    assert writes == []
