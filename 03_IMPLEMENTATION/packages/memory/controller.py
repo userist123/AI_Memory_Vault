@@ -222,6 +222,9 @@ class MemoryController:
         self.pack_builder = ContextPackBuilder()
         self.data_router = MemoryDataRouter()
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
+        self.data_router.register("read", self._read_impl)
+        self.data_router.register("cognitive_read", self._cognitive_read_impl)
+        self.data_router.register("search", self._search_impl)
         self.planner = Planner()
         self.complexity_analyzer = PlanComplexityAnalyzer()
         self.council_budget = CouncilBudgetController()
@@ -342,7 +345,9 @@ class MemoryController:
         return self.data_router.dispatch(
             source="read",
             principal=principal.value,
-            producer=lambda: self._read_impl(principal, note_id, include_provenance),
+            principal=principal,
+            note_id=note_id,
+            include_provenance=include_provenance,
         )
 
     def _read_impl(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
@@ -424,7 +429,8 @@ class MemoryController:
         return self.data_router.dispatch(
             source="cognitive_read",
             principal=principal.value,
-            producer=lambda: self._cognitive_read_impl(principal, note_id),
+            principal=principal,
+            note_id=note_id,
         )
 
     def _cognitive_read_impl(self, principal: Principal, note_id: str) -> Dict[str, Any]:
@@ -478,7 +484,23 @@ class MemoryController:
         return self.data_router.dispatch(
             source="search",
             principal=principal.value,
-            producer=lambda: self._search_impl(principal, query, page_size, page_token, lifecycles, types, enable_graph_expansion, strict_graph_expansion, graph_expansion_budget, ranking_arm, classifier_filter_arm, enable_spreading_activation, enable_cognitive_core, enable_working_memory, enable_global_workspace, enable_reasoning, enable_executive),
+            principal=principal,
+            query=query,
+            page_size=page_size,
+            page_token=page_token,
+            lifecycles=lifecycles,
+            types=types,
+            enable_graph_expansion=enable_graph_expansion,
+            strict_graph_expansion=strict_graph_expansion,
+            graph_expansion_budget=graph_expansion_budget,
+            ranking_arm=ranking_arm,
+            classifier_filter_arm=classifier_filter_arm,
+            enable_spreading_activation=enable_spreading_activation,
+            enable_cognitive_core=enable_cognitive_core,
+            enable_working_memory=enable_working_memory,
+            enable_global_workspace=enable_global_workspace,
+            enable_reasoning=enable_reasoning,
+            enable_executive=enable_executive,
         )
 
     def _search_impl(
