@@ -240,7 +240,8 @@ class ContextPackBuilder:
         disclosure = ProgressiveDisclosure(resolved)
         if disclosure_level == "full":
             disclosure_level = "full_document"
-        if disclosure_level == "metadata_only":
+        if disclosure_level in {"metadata", "metadata_only"}:
+            disclosure_level = "metadata_only"
             safe_results = disclosure.metadata_only(safe_results)
         elif disclosure_level == "snippet":
             safe_results = disclosure.snippet(safe_results)
