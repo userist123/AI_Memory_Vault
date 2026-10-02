@@ -145,6 +145,12 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
     invisible_unicode = any(e.active and e.category == "invisible_unicode" for e in findings)
     source_sink_chain = _has_source_sink_chain(findings, data_categories, network_categories)
 
+    explicit_data_access = any(
+        e.active
+        and e.category in data_categories
+        and re.search(r"\b(?:read|collect|copy|extract|access|retrieve|harvest)\b", e.text, re.I)
+        for e in findings
+    )
     browser_credential_exfiltration = (
         "browser_credentials" in active_data
         and bool(active_network)
@@ -152,7 +158,7 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
 
     if browser_credential_exfiltration:
         verdict, score = "BLOCK", 95
-    elif source_sink_chain and "browser_credentials" in active_data:
+    elif source_sink_chain and explicit_data_access:
         verdict, score = "BLOCK", 95
     elif active_override and active_network:
         verdict, score = "REVIEW", 80
