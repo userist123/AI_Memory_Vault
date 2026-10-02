@@ -145,7 +145,14 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
     invisible_unicode = any(e.active and e.category == "invisible_unicode" for e in findings)
     source_sink_chain = _has_source_sink_chain(findings, data_categories, network_categories)
 
-    if source_sink_chain:
+    browser_credential_exfiltration = (
+        "browser_credentials" in active_data
+        and bool(active_network)
+    )
+
+    if browser_credential_exfiltration:
+        verdict, score = "BLOCK", 95
+    elif source_sink_chain and "browser_credentials" in active_data:
         verdict, score = "BLOCK", 95
     elif active_override and active_network:
         verdict, score = "REVIEW", 80
