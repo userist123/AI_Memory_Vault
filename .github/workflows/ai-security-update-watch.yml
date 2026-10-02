@@ -35,8 +35,18 @@ jobs:
               raise SystemExit("Unsupported security update catalog schema")
           if "minimum_runtime_version" not in data:
               raise SystemExit("Catalog is missing minimum_runtime_version")
+          from security.security_version import SECURITY_BOUNDARY_VERSION
+
+          def version(value):
+              return tuple(int(x) for x in value.split("."))
+
+          minimum = data["minimum_runtime_version"]
+          if version(SECURITY_BOUNDARY_VERSION) < version(minimum):
+              print(f"::error::Security boundary {SECURITY_BOUNDARY_VERSION} is below mandatory catalog version {minimum}.")
+              raise SystemExit(2)
+
           for item in data.get("updates", []):
-              required = {"update_id", "version", "severity", "released_at", "min_runtime_version", "package_sha256"}
+              required = {"update_id", "version", "severity", "released_at", "min_runtime_version", "package_sha256", "signature"}
               missing = required - item.keys()
               if missing:
                   raise SystemExit(f"Update entry missing fields: {sorted(missing)}")
