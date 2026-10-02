@@ -26,12 +26,15 @@ def _sha256(value: Any) -> str:
     if isinstance(value, str):
         raw = value.encode("utf-8")
     else:
-        raw = json.dumps(
-            value,
-            sort_keys=True,
-            separators=(",", ":"),
-            ensure_ascii=True,
-        ).encode("utf-8")
+        try:
+            raw = json.dumps(
+                value,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=True,
+            ).encode("utf-8")
+        except (TypeError, ValueError):
+            raw = repr(value).encode("utf-8")
     return hashlib.sha256(raw).hexdigest()
 
 
