@@ -10,7 +10,7 @@ def test_untrusted_external_content_cannot_authorize_tool():
         human_approved=True,
     )
     assert not result.allowed
-    assert result.reason == "untrusted_content"
+    assert result.reason == "external_content_not_authority"
 
 
 def test_review_requires_explicit_human_approval():
