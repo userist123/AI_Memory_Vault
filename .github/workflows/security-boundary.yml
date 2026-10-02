@@ -1,0 +1,26 @@
+name: Security Boundary Tests
+
+on:
+  pull_request:
+    paths:
+      - "security/**"
+      - ".github/workflows/security-boundary.yml"
+  push:
+    branches:
+      - main
+      - "codex/skill-exfiltration-scanner"
+
+jobs:
+  security-boundary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile security modules
+        run: python -m compileall -q security
+      - name: Run security tests
+        run: python -m unittest discover -s security/tests -p "test_*.py" -v
