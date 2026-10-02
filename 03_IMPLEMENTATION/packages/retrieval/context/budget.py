@@ -141,7 +141,7 @@ class ContextBudget:
     def enforce_max_full(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         ordered = sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]
         for index, note in enumerate(ordered):
-            if index >= self.max_full_documents:
+            if index >= self.max_full_documents and not self._protected_content(note):
                 note["content"] = ""
         return ordered
 
