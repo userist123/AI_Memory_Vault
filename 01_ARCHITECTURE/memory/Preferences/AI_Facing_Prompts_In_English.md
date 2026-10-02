@@ -74,3 +74,36 @@ Context reduction is allowed only after trust is established. Budget degradation
 and progressive disclosure may shorten or remove task content, but must preserve
 verification, security, provenance, integrity, requirements, forbidden
 constraints and acceptance evidence.
+
+## Prompt token-economy architecture
+
+Token economy means maximizing task-relevant information density, not merely
+minimizing character count. The compiler therefore separates the handoff into
+a reusable stable prefix and a dynamic suffix:
+
+- **stable prefix:** agent contract, security boundary, requirements, forbidden
+  constraints and acceptance criteria;
+- **dynamic suffix:** repository, branch, owner, measured context and current task.
+
+This ordering is compatible with LLM providers that cache exact prompt prefixes:
+dynamic state must not be placed inside the cacheable prefix. The compiler
+exposes both sections while retaining the complete combined `text` for callers
+that do not support segmented prompts.
+
+The compiler also supports an optional injected tokenizer. Without one, token
+counts are explicitly heuristic (`~3 characters/token`); with one, the supplied
+counter becomes the authoritative budget measurement for the compiled prompt.
+An optional hard `max_tokens` budget triggers further verified reduction rather
+than silently truncating security or acceptance metadata.
+
+Transport compression is not counted as LLM token savings. zlib can reduce
+stored/transmitted bytes, but the model receives decompressed text, so only
+semantic/textual reduction counts toward `tokens_saved`.
+
+The desired optimization order is therefore:
+
+`trust -> structured requirements -> relevance/reduction -> token budget ->
+progressive disclosure -> minimal sufficient context`
+
+Never optimize by deleting the evidence that makes content trusted or the
+constraints that define what a correct result means.
