@@ -48,7 +48,7 @@ def test_hard_limit_enforcement():
 def test_injected_token_counter_is_used_for_budget_estimates():
     budget = ContextBudget({
         "hard_limit_tokens": 10,
-        "token_counter": lambda text: len(text.split()),
+        "tokenizer": lambda text: len(text.split()),
     })
     assert budget.estimate_tokens({"content": "one two three four"}) == 5
 
