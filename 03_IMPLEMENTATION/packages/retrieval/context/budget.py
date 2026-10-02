@@ -1,6 +1,7 @@
 import json
 import math
 import zlib
+import re
 from typing import Dict, Any, List, Callable
 
 
@@ -26,6 +27,8 @@ class ContextBudget:
         self.hard_limit_tokens = max(1, int(config.get("hard_limit_tokens", config.get("hard_tokens", 3000))))
         self.chars_per_token = max(1.0, float(config.get("chars_per_token", 3.0)))
         self.tokenizer: Callable[[str], int] | None = config.get("tokenizer") or config.get("token_counter")
+        self.cost_per_input_token = config.get("cost_per_input_token")
+        self.latency_ms_per_input_token = config.get("latency_ms_per_input_token")
 
     @property
     def soft_context_budget(self) -> int:
@@ -82,10 +85,21 @@ class ContextBudget:
     def check_budget(self, usage: int) -> None:
         self.check_hard_limit(usage)
 
+    @staticmethod
+    def _protected_content(note: Dict[str, Any]) -> bool:
+        if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
+            return True
+        content = str(note.get("content", ""))
+        if re.search(r"(?im)^.*\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b.*$", content):
+            return True
+        if "```" in content:
+            return True
+        return any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
+
     def apply_degradation(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         ordered = [dict(n) for n in sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]]
         for index, note in enumerate(ordered):
-            if index >= self.max_full_documents:
+            if index >= self.max_full_documents and not self._protected_content(note):
                 note["content"] = ""
 
         while len(ordered) > 1 and (self.usage(ordered) > self.soft_limit_bytes or self.serialized_size(ordered) > self.hard_limit_bytes):
@@ -93,6 +107,8 @@ class ContextBudget:
 
         if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in ordered:
+                if self._protected_content(note):
+                    continue
                 content = note.get("content", "")
                 if isinstance(content, str) and len(content) > 50:
                     note["content"] = content[:50] + "...[PARTIAL]"
@@ -101,6 +117,8 @@ class ContextBudget:
 
         if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in reversed(ordered):
+                if self._protected_content(note):
+                    continue
                 note["content"] = ""
                 if self.usage(ordered) <= self.soft_limit_bytes:
                     break
