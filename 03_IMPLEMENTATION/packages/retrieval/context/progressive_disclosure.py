@@ -157,7 +157,8 @@ class ProgressiveDisclosure:
                 if protected:
                     raise BudgetExceededError("Protected content exceeds hard disclosure budget")
                 continue
-            candidate = {"id": note.get("id"), "content": content, **self._security_metadata(note)}
+            candidate = dict(note)
+            candidate["content"] = content
             if protected:
                 candidate["protected_content"] = True
             if hasattr(self.budget, "estimate_tokens"):
