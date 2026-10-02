@@ -150,7 +150,7 @@ class MemoryDataRouter:
         *,
         source: str,
         principal: str,
-        **kwargs: Any,
+        handler_kwargs: Mapping[str, Any] | None = None,
     ) -> Dict[str, Any]:
         route = str(source).strip()
         if route not in self.ROUTES:
@@ -159,6 +159,7 @@ class MemoryDataRouter:
         if handler is None:
             raise DataRouteViolation(f"source: route '{route}' has no registered handler")
 
+        kwargs = dict(handler_kwargs or {})
         pack = handler(**kwargs)
         if not isinstance(pack, dict):
             raise DataRouteViolation(
