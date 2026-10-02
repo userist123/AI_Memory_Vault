@@ -25,6 +25,7 @@ class ContextBudget:
         self.soft_limit_tokens = max(1, int(config.get("soft_limit_tokens", config.get("soft_tokens", 1800))))
         self.hard_limit_tokens = max(1, int(config.get("hard_limit_tokens", config.get("hard_tokens", 3000))))
         self.chars_per_token = max(1.0, float(config.get("chars_per_token", 3.0)))
+        self.token_counter = config.get("token_counter")
 
     @property
     def soft_context_budget(self) -> int:
@@ -57,6 +58,8 @@ class ContextBudget:
 
     def estimate_tokens(self, value: Any) -> int:
         text = json.dumps(value, ensure_ascii=False, default=str, separators=(",", ":"))
+        if callable(self.token_counter):
+            return max(1, int(self.token_counter(text)))
         return max(1, math.ceil(len(text) / self.chars_per_token))
 
     def usage(self, notes: List[Dict[str, Any]]) -> int:
@@ -99,6 +102,7 @@ class ContextBudget:
         for note in ordered:
             content = note.get("content", "")
             if isinstance(content, str) and len(content.encode("utf-8")) > 1024:
+                # Compression saves transport/storage bytes, not LLM tokens.
                 note["content"] = zlib.compress(content.encode("utf-8"))
 
         while len(ordered) > 1 and self.serialized_size(ordered) > self.hard_limit_bytes:
