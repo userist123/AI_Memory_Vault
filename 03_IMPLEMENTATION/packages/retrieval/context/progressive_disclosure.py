@@ -172,7 +172,44 @@ class ProgressiveDisclosure:
                 if self.budget.estimate_tokens(result + [candidate]) > self.budget.hard_token_budget:
                     if protected:
                         raise BudgetExceededError("Protected content exceeds hard token budget")
-                    continue
+                    # Reduction diagnostics are useful but secondary to the
+                    # model-facing content and trust/provenance evidence.
+                    # Under a tight token budget, keep the compact decision
+                    # contract and drop verbose per-item diagnostics first.
+                    compact_candidate = dict(candidate)
+                    compression = compact_candidate.get("compression")
+                    if isinstance(compression, dict):
+                        compact_candidate["compression"] = {
+                            key: compression[key]
+                            for key in (
+                                "action",
+                                "reason",
+                                "original_tokens",
+                                "estimated_tokens",
+                                "protected_spans",
+                                "fallback",
+                                "validation",
+                                "tokenizer_mode",
+                                "net_tokens_saved",
+                                "cost_saved",
+                                "latency_saved_ms",
+                            )
+                            if key in compression
+                        }
+                    reduction = compact_candidate.get("reduction")
+                    if isinstance(reduction, dict):
+                        compact_candidate["reduction"] = {
+                            key: reduction[key]
+                            for key in (
+                                "token_estimate_before",
+                                "token_estimate_after",
+                                "tokens_saved",
+                            )
+                            if key in reduction
+                        }
+                    if self.budget.estimate_tokens(result + [compact_candidate]) > self.budget.hard_token_budget:
+                        continue
+                    candidate = compact_candidate
             result.append(candidate)
             usage += size
         return result
