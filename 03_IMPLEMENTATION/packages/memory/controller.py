@@ -32,6 +32,7 @@ from .context.relevance_scoring import RelevanceScorer
 from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.budget import ContextBudget, load_agent_budget, BudgetExceededError
 from .context.pack_builder import ContextPackBuilder
+from .data_router import MemoryDataRouter
 from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntityResolver
 from .planning import Planner, ActivePlan
 from .plan_complexity_analyzer import PlanComplexityAnalyzer, PlanComplexity, ExecutionMode
@@ -219,6 +220,7 @@ class MemoryController:
         self.retrieval_engine = RetrievalEngine(storage, cache=self.cache)
         self.scorer = RelevanceScorer()
         self.pack_builder = ContextPackBuilder()
+        self.data_router = MemoryDataRouter()
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
         self.planner = Planner()
         self.complexity_analyzer = PlanComplexityAnalyzer()
@@ -401,6 +403,7 @@ class MemoryController:
                 request_id="read", agent_id=principal.value, budget={}, results=disclosed,
                 disclosure_level=disclosure_level, minimal_provenance=None, next_page_token=None, audit_ref=None
             )
+            pack = self.data_router.route_to_model(pack, source='read', principal=principal.value)
             audit_event('read', principal, note_id, success=True)
             return pack
         except Exception as e:
@@ -433,6 +436,7 @@ class MemoryController:
                 results=[result], disclosure_level='full',
                 minimal_provenance=None, next_page_token=None, audit_ref=None
             )
+            pack = self.data_router.route_to_model(pack, source='cognitive_read', principal=principal.value)
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
         except Exception as e:
@@ -1284,6 +1288,7 @@ class MemoryController:
                 trace_collector.trace.status = f"degraded_telemetry_error: {str(trace_err)}"
                 pack["retrieval_trace"] = trace_collector.trace.to_dict()
 
+            pack = self.data_router.route_to_model(pack, source='search', principal=principal.value)
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
         except Exception as e:
@@ -1318,7 +1323,7 @@ class MemoryController:
         """
         self._check_auth(principal, Operation.SEARCH)
         effective_disclosure = disclosure_level or getattr(self, 'default_disclosure', 'metadata')
-        return self.financial_search_engine.execute_search(
+        result = self.financial_search_engine.execute_search(
             principal=principal,
             query=query,
             symbol=symbol,
@@ -1339,6 +1344,7 @@ class MemoryController:
             page_token=page_token,
             disclosure_level=effective_disclosure,
         )
+        return self.data_router.route_to_model(result, source='search_financial', principal=principal.value)
 
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
         with self._mutation_lock:
