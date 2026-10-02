@@ -29,6 +29,7 @@ class ContextBudget:
         self.tokenizer: Callable[[str], int] | None = config.get("tokenizer") or config.get("token_counter")
         self.cost_per_input_token = config.get("cost_per_input_token")
         self.latency_ms_per_input_token = config.get("latency_ms_per_input_token")
+        self.estimated_overhead_tokens = max(0, int(config.get("estimated_overhead_tokens", 120)))
 
     @property
     def soft_context_budget(self) -> int:
@@ -125,12 +126,18 @@ class ContextBudget:
 
         for note in ordered:
             content = note.get("content", "")
+            if self._protected_content(note):
+                continue
             if isinstance(content, str) and len(content.encode("utf-8")) > 1024:
                 # Compression saves transport/storage bytes, not LLM tokens.
                 note["content"] = zlib.compress(content.encode("utf-8"))
 
         while len(ordered) > 1 and self.serialized_size(ordered) > self.hard_limit_bytes:
-            ordered.pop()
+            removable = next((idx for idx in range(len(ordered) - 1, -1, -1)
+                              if not self._protected_content(ordered[idx])), None)
+            if removable is None:
+                break
+            ordered.pop(removable)
 
         if ordered and self.serialized_size(ordered) > self.hard_limit_bytes:
             raise BudgetExceededError(f"Context usage exceeds hard limit {self.hard_limit_bytes} bytes")
