@@ -199,7 +199,7 @@ class VerifiedPromptCompiler:
         if self._estimate_tokens(prompt) > soft_token_budget:
             target_budget = max(soft_token_budget, self._estimate_tokens(fixed_text))
             reducible_context = self._fit_context_to_budget(
-                fixed_text, dynamic_prefix + reducible_context, target_budget,
+                fixed_text, reducible_context, target_budget,
                 verification, requirements, forbidden, acceptance
             )
             prompt = stable_prefix + dynamic_prefix + reducible_context + task_suffix
