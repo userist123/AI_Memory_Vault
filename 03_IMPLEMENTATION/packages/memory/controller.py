@@ -345,9 +345,11 @@ class MemoryController:
         return self.data_router.dispatch(
             source="read",
             principal=principal.value,
-            principal=principal,
-            note_id=note_id,
-            include_provenance=include_provenance,
+            handler_kwargs={
+                "principal": principal,
+                "note_id": note_id,
+                "include_provenance": include_provenance,
+            },
         )
 
     def _read_impl(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
@@ -429,8 +431,10 @@ class MemoryController:
         return self.data_router.dispatch(
             source="cognitive_read",
             principal=principal.value,
-            principal=principal,
-            note_id=note_id,
+            handler_kwargs={
+                "principal": principal,
+                "note_id": note_id,
+            },
         )
 
     def _cognitive_read_impl(self, principal: Principal, note_id: str) -> Dict[str, Any]:
@@ -484,23 +488,25 @@ class MemoryController:
         return self.data_router.dispatch(
             source="search",
             principal=principal.value,
-            principal=principal,
-            query=query,
-            page_size=page_size,
-            page_token=page_token,
-            lifecycles=lifecycles,
-            types=types,
-            enable_graph_expansion=enable_graph_expansion,
-            strict_graph_expansion=strict_graph_expansion,
-            graph_expansion_budget=graph_expansion_budget,
-            ranking_arm=ranking_arm,
-            classifier_filter_arm=classifier_filter_arm,
-            enable_spreading_activation=enable_spreading_activation,
-            enable_cognitive_core=enable_cognitive_core,
-            enable_working_memory=enable_working_memory,
-            enable_global_workspace=enable_global_workspace,
-            enable_reasoning=enable_reasoning,
-            enable_executive=enable_executive,
+            handler_kwargs={
+                "principal": principal,
+                "query": query,
+                "page_size": page_size,
+                "page_token": page_token,
+                "lifecycles": lifecycles,
+                "types": types,
+                "enable_graph_expansion": enable_graph_expansion,
+                "strict_graph_expansion": strict_graph_expansion,
+                "graph_expansion_budget": graph_expansion_budget,
+                "ranking_arm": ranking_arm,
+                "classifier_filter_arm": classifier_filter_arm,
+                "enable_spreading_activation": enable_spreading_activation,
+                "enable_cognitive_core": enable_cognitive_core,
+                "enable_working_memory": enable_working_memory,
+                "enable_global_workspace": enable_global_workspace,
+                "enable_reasoning": enable_reasoning,
+                "enable_executive": enable_executive,
+            },
         )
 
     def _search_impl(
