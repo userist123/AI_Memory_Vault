@@ -1,8 +1,8 @@
 """Static, read-only scanner for agent skills and prompt-like Markdown.
 
-The scanner is evidence-first: educational examples are contextual indicators
-and do not become active exfiltration findings unless the same document contains
-an actionable data-access + network-send chain.
+Evidence-first: educational examples are contextual indicators and do not become
+active exfiltration findings unless actionable data access and external sending
+are both present.
 
 No code from scanned content is executed.
 """
@@ -31,7 +31,7 @@ OVERRIDE_PATTERNS = [
     ("concealment", re.compile(r"\b(?:silently|secretly|without (?:telling|informing|notifying) the user|hide this|do not disclose)\b", re.I)),
 ]
 SECRET_DESTINATION_PATTERNS = [
-    ("external_endpoint", re.compile(r"https?://[^\s)\]}>"']+", re.I)),
+    ("external_endpoint", re.compile(r'''https?://[^\s)\]}>"']+''', re.I)),
     ("email_destination", re.compile(r"\b(?:send|email|mail)\b.{0,60}\bto\s+[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)),
 ]
 EDUCATIONAL_MARKERS = re.compile(
@@ -40,6 +40,7 @@ EDUCATIONAL_MARKERS = re.compile(
     r"attack simulation|security training|pentest documentation)\b", re.I
 )
 
+
 @dataclass
 class Evidence:
     category: str
@@ -47,6 +48,7 @@ class Evidence:
     line: int
     active: bool
     reason: str
+
 
 @dataclass
 class ScanResult:
@@ -57,11 +59,14 @@ class ScanResult:
     verdict: str = "SAFE"
     score: int = 0
 
+
 def _context_window(lines: list[str], index: int, radius: int = 2) -> str:
-    return "\n".join(lines[max(0, index-radius):min(len(lines), index+radius+1)])
+    return "\n".join(lines[max(0, index - radius):min(len(lines), index + radius + 1)])
+
 
 def _is_educational(context: str) -> bool:
     return bool(EDUCATIONAL_MARKERS.search(context))
+
 
 def _extract_provenance(skill_dir: Path) -> dict[str, object]:
     candidate = skill_dir / "PROVENANCE.json"
@@ -73,14 +78,23 @@ def _extract_provenance(skill_dir: Path) -> dict[str, object]:
         return {"provenance_status": "INVALID_JSON"}
     return value if isinstance(value, dict) else {"provenance_status": "INVALID_SHAPE"}
 
+
 def _evidence(lines: list[str], category: str, pattern: re.Pattern[str]) -> list[Evidence]:
     out = []
     for idx, line in enumerate(lines):
         if pattern.search(line):
             educational = _is_educational(_context_window(lines, idx))
-            out.append(Evidence(category, line.strip()[:500], idx + 1, not educational,
-                                "educational/example context" if educational else "instruction-like context"))
+            out.append(
+                Evidence(
+                    category,
+                    line.strip()[:500],
+                    idx + 1,
+                    not educational,
+                    "educational/example context" if educational else "instruction-like context",
+                )
+            )
     return out
+
 
 def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None) -> ScanResult:
     lines = text.splitlines()
@@ -91,6 +105,7 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
     data_categories = {x[0] for x in DATA_PATTERNS}
     network_categories = {x[0] for x in NETWORK_PATTERNS + SECRET_DESTINATION_PATTERNS}
     override_categories = {x[0] for x in OVERRIDE_PATTERNS}
+
     active_data = {e.category for e in findings if e.active and e.category in data_categories}
     active_network = {e.category for e in findings if e.active and e.category in network_categories}
     active_override = {e.category for e in findings if e.active and e.category in override_categories}
@@ -106,8 +121,15 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
     else:
         verdict, score = "SAFE", 0
 
-    return ScanResult(str(path), hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                      provenance or {}, findings, verdict, score)
+    return ScanResult(
+        str(path),
+        hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        provenance or {},
+        findings,
+        verdict,
+        score,
+    )
+
 
 def scan_path(path: Path) -> list[ScanResult]:
     if path.is_file():
@@ -115,9 +137,12 @@ def scan_path(path: Path) -> list[ScanResult]:
     else:
         candidates = sorted(
             p for p in path.rglob("*")
-            if p.is_file() and p.suffix.lower() in {".md", ".markdown", ".txt", ".prompt"}
-            and ".git" not in p.parts and "node_modules" not in p.parts
+            if p.is_file()
+            and p.suffix.lower() in {".md", ".markdown", ".txt", ".prompt"}
+            and ".git" not in p.parts
+            and "node_modules" not in p.parts
         )
+
     results = []
     for candidate in candidates:
         try:
@@ -127,13 +152,16 @@ def scan_path(path: Path) -> list[ScanResult]:
         results.append(scan_text(candidate, text, _extract_provenance(candidate.parent)))
     return results
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Read-only skill/prompt exfiltration scanner")
     parser.add_argument("path", type=Path)
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()
+
     results = scan_path(args.path)
     payload = [asdict(result) for result in results]
+
     if args.json_output:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
@@ -143,6 +171,7 @@ def main() -> int:
                 marker = "ACTIVE" if finding.active else "CONTEXT"
                 print(f"  [{marker}] L{finding.line} {finding.category}: {finding.text}")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
