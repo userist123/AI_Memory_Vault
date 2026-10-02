@@ -46,7 +46,7 @@ INVISIBLE_UNICODE_PATTERN = re.compile(
     "[\u200b-\u200f\u202a-\u202e\u2060\u2061\u2062\u2063\u2064\u2066-\u206f\ufeff]"
 )
 EDUCATIONAL_MARKERS = re.compile(
-    r"\b(?:example|example only|for educational purposes|educational|demonstration|"
+    r"\b(?:example only|for educational purposes|educational|demonstration|"
     r"hypothetical|sample|illustration|do not execute|not intended to|toy example|"
     r"attack simulation|security training|pentest documentation)\b", re.I
 )
