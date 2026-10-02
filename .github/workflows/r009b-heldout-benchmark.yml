@@ -28,10 +28,8 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest pyyaml
       - name: Zero-regression gate
-        env:
-          PYTHONPATH: .
         run: |
-          python -m pytest 20_TESTS -q -o pythonpath=.:03_IMPLEMENTATION/packages:03_IMPLEMENTATION
+          python -m pytest 20_TESTS -q
       # v1 is not run. 07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md
       # records why: every one of v1's 36 held-out and 12 dev cases referenced
       # one of two gold notes that do not exist in the vault, so its recall is
