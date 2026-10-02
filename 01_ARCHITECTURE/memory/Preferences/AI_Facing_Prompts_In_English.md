@@ -55,9 +55,11 @@ in re-explanation, once by the receiver in rediscovery.
 ## Current compiler boundary
 
 The compiler now accepts an explicit translation provider for non-English source
-requests. The provider must return English plus verified provenance and a SHA-256
-binding to the exact source request; the translated artifact is scanned and
-trust-gated before reduction.
+requests. The provider must return English plus verified provenance, a SHA-256 binding to
+the exact source request, and a semantic-completeness declaration with extracted
+requirements, forbidden constraints and acceptance criteria. The complete
+translated artifact, including those structured fields, is scanned and trust-gated
+before reduction.
 
 The deterministic CLI still accepts English directly. It does not silently
 translate Romanian when no provider is injected. This is deliberate: silently
@@ -65,8 +67,10 @@ guessing a translation would make semantic loss invisible.
 
 Intent-specific requirements, forbidden constraints and acceptance criteria are
 assembled into the English handoff rather than emitted as TODO placeholders.
-For non-English requests, the translation capability remains an explicit host
-integration point.
+For non-English requests, translator-extracted constraints are merged with the
+intent contract and deduplicated. The translation capability remains an explicit
+host integration point; a prose-only translation is rejected because semantic
+loss would otherwise be invisible.
 
 ## Token-economy invariant
 
