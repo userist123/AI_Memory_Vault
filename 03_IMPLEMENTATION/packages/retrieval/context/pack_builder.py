@@ -51,7 +51,7 @@ class ContextPackBuilder:
             "results": [],
             "reduction": {
                 "verified_first": True,
-                "stage_order": ["verification", "reduction", "budget", "progressive_disclosure"],
+                "stage_order": ["verification", "compression_router", "protected_spans", "query_selection", "reduction", "budget", "progressive_disclosure", "validation"],
                 "tokens_saved": 0,
                 "items_reduced": 0,
                 "items_rejected_unverified": 0,
