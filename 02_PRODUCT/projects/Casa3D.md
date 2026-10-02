@@ -180,6 +180,65 @@ Roadmap-ul nu reprezinta capabilitati implementate.
 
 La fiecare faza noua, memoria Casa3D trebuie actualizata numai dupa ce exista artefacte identificabile si dovezi de verificare. Conversatia poate actualiza intentia si roadmap-ul, dar nu poate promova singura o capabilitate in categoria "implementat".
 
+
+## Implementare continua — Digital Twin / AI Designer
+
+Dupa F3, implementarea Casa3D a fost continuata in artefactul de lucru al proiectului si este urmarita de acest PR pentru continuitate.
+
+### Core Digital Twin
+
+Implementat:
+- model canonic Digital Twin v1.0;
+- Geometry Engine deterministic;
+- revalidare la persistenta si revision;
+- ViewerState comun pentru 2D/3D;
+- share read-only pe revizie;
+- stale protection pentru propuneri.
+
+### AI Design DSL 1.1
+
+AI-ul lucreaza declarativ, fara coordonate:
+- ADD / REMOVE / REPLACE / MOVE;
+- constrangeri semantice: near, againstWall, alignedWith, keepClear, orientation;
+- Solver deterministic pentru candidate geometry;
+- Geometry Engine ramane autoritatea finala.
+
+### AI Design Approval
+
+Propunerea AI este separata de proiectul curent:
+- preview-ul nu modifica proiectul;
+- fiecare propunere are baza/fingerprint;
+- daca Digital Twin-ul s-a schimbat, propunerea devine stale si nu poate fi aplicata;
+- Accept creeaza revision numai dupa revalidare;
+- ERROR blocheaza;
+- WARNING cere confirmare.
+
+### Alternative de design
+
+Sunt suportate pana la 3 alternative DSL pentru acelasi brief. Comparatorul raporteaza masuratori si probleme, fara sa aleaga automat o varianta castigatoare.
+
+### BOQ-aware evaluation
+
+Fiecare alternativa poate fi evaluata prin motorul oficial de buget:
+- cantitati;
+- subtotal/total;
+- costuri cunoscute;
+- UNKNOWN;
+- furnizor;
+- provenance;
+- diferenta fata de bugetul tinta.
+
+Nu se inventeaza preturi sau date comerciale.
+
+### Dovezi si limite
+
+Au fost executate compilari izolate si smoke tests pentru Digital Twin, ViewerState, DSL, semantic Solver, approval si BOQ search. Testele Vitest complete si `next build` nu sunt declarate ca trecute deoarece mediul de lucru nu are o instalare npm completa, iar incercarile de instalare au expirat.
+
+Ledger-ul de implementare si hash-urile artefactelor sunt pastrate in:
+`03_IMPLEMENTATION/projects/Casa3D/CORE_IMPLEMENTATION_v8.md`
+
+Aceste informatii actualizeaza starea tehnica a proiectului; nu transforma automat F4 sau capabilitatile comerciale in productie.
+
 ## Regula de continuitate pentru agenti
 
 Ordinea autoritatii este:
