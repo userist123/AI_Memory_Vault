@@ -85,9 +85,16 @@ class ContextPackBuilder:
                 continue
 
             content = str(item.get("content", ""))
-            compression = self.compressor.compress(
+            compressor = AdaptiveContextCompressor(
+                router=__import__("security.context_compression", fromlist=["CompressionRouter"]).CompressionRouter(
+                    tokenizer=resolved.tokenizer,
+                    chars_per_token=resolved.chars_per_token,
+                )
+            )
+            compression = compressor.compress(
                 content, query=query,
                 target_chars=reduction_chars,
+                do_not_compress=bool(item.get("do_not_compress", False)),
             )
             if not compression.validation.get("passed", False):
                 rejected += 1
