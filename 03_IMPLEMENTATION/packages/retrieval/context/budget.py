@@ -90,7 +90,7 @@ class ContextBudget:
         if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
             return True
         content = str(note.get("content", ""))
-        if re.search(r"(?im)^.*\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b.*$", content):
+        if re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content):
             return True
         if "```" in content:
             return True
