@@ -1,3 +1,5 @@
+from threading import Thread
+
 from security.memory_adapter import MemoryAdapter
 from security.trust_gate import TrustState
 
@@ -66,3 +68,24 @@ def test_memory_adapter_rejects_non_mapping_payload():
         pass
 
     assert writes == []
+
+
+def test_memory_adapter_serializes_concurrent_writes():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append(payload))
+
+    threads = [
+        Thread(
+            target=adapter.write,
+            args=("agent", {"index": index}, TrustState.TRUSTED),
+        )
+        for index in range(10)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert len(writes) == 10
+    assert adapter.boundary.ledger.verify() is True
+    assert len(adapter.boundary.ledger.records) == 10
