@@ -66,7 +66,7 @@ def test_real_tokenizer_is_used_when_supplied():
     tokenizer = lambda value: len(value.split())
     router = CompressionRouter(min_tokens=3, min_redundancy=0.0, tokenizer=tokenizer)
     result = AdaptiveContextCompressor(router=router).compress(
-        "alpha beta gamma\nalpha beta gamma\ndelta epsilon zeta",
+        ("alpha beta gamma\n" * 6) + "delta epsilon zeta",
         query="alpha",
     )
     assert result.decision.tokenizer_mode == "real"
@@ -91,7 +91,7 @@ def test_compression_with_insufficient_net_benefit_is_no_op():
     tokenizer = lambda value: len(value.split())
     router = CompressionRouter(
         min_tokens=3, min_redundancy=0.0, tokenizer=tokenizer,
-        estimated_overhead_tokens=100,
+        estimated_overhead_tokens=19,
     )
     result = AdaptiveContextCompressor(router=router).compress(
         "alpha beta gamma\nalpha beta gamma\ndelta epsilon zeta",
