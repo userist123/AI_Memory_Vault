@@ -208,6 +208,7 @@ class ContextPackBuilder:
         request_id: str,
         agent_id: str,
         disclosure_level: str,
+        query: str,
     ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """Fit optional representation details before considering result removal.
 
@@ -257,7 +258,7 @@ class ContextPackBuilder:
             )
             result = AdaptiveContextCompressor(router=router).compress(
                 content,
-                query="",
+                query=query,
                 target_chars=target_chars,
                 do_not_compress=False,
             )
@@ -353,6 +354,7 @@ class ContextPackBuilder:
                     request_id,
                     agent_id,
                     disclosure_level,
+                    effective_query,
                 )
                 compact_pack = self._build_pack(
                     request_id, agent_id, resolved, compact_results, disclosure_level,
