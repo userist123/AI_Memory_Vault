@@ -32,6 +32,7 @@ DATA_PATTERNS = [
     ("secrets", re.compile(r"\b(?:API[_ -]?keys?|access tokens?|auth tokens?|session tokens?|credentials?|secrets?|environment variables?|\.env)\b", re.I)),
     ("files", re.compile(r"\b(?:read|collect|copy|archive|zip|tar)\b.{0,80}\b(?:files?|documents?|Desktop|Downloads|AppData|home directory)\b", re.I | re.S)),
     ("memory_context", re.compile(r"\b(?:conversation|chat history|memory|context|prompt|system prompt)\b.{0,80}\b(?:send|upload|forward|POST|exfiltrat)\b", re.I | re.S)),
+    ("secret_to_external_endpoint", re.compile(r"\b(?:send|upload|forward|POST|exfiltrat(?:e|ion)|collect)\b.{0,100}\b(?:credentials?|secrets?|cookies?|passwords?|tokens?|API[_ -]?keys?)\b.{0,100}https?://", re.I | re.S)),
 ]
 OVERRIDE_PATTERNS = [
     ("instruction_override", re.compile(r"\b(?:ignore|disregard|override|do not follow)\b.{0,80}\b(?:previous|prior|user|system|developer)\b.{0,80}\b(?:instructions?|commands?)\b", re.I | re.S)),
