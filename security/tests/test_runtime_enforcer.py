@@ -100,3 +100,21 @@ def test_blocked_content_cannot_execute_even_with_valid_approval():
     result = enforcer.authorize(request, decision, approval=token, now=token.issued_at)
     assert not result.allowed
     assert result.reason == "blocked_content"
+
+
+def test_execute_never_calls_executor_when_authorization_fails():
+    enforcer = RuntimeEnforcer()
+    request = ExecutionRequest(
+        actor="agent-1",
+        tool_name="artifact.write",
+        target="project/Casa3D",
+        parameters={"path": "security/policy.py", "operation": "write"},
+        side_effect=True,
+    )
+    decision = TrustDecision(TrustState.BLOCKED, ("blocked",))
+    called = []
+
+    result = enforcer.execute(request, decision, lambda req: called.append(req))
+    assert not result.authorization.allowed
+    assert result.authorization.reason == "blocked_content"
+    assert called == []
