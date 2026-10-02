@@ -25,9 +25,7 @@ def test_production_context_pack_reduces_actual_model_input_tokens():
     }
     raw_content = (
         ("irrelevant history " * 160)
-        + "
-MUST NOT bypass verification.
-"
+        + "\nMUST NOT bypass verification.\n"
         + ("token economy " * 160)
     )
     item = {
