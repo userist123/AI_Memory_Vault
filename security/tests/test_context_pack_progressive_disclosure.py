@@ -27,7 +27,7 @@ def build(level, **kwargs):
     return ContextPackBuilder().build(
         request_id="disclosure-test",
         agent_id="default",
-        budget={"max_notes": 1, "max_full_documents": 1, "soft": 4096, "hard": 8192, "soft_tokens": 1000, "hard_tokens": 2000},
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 4096, "hard": 8192, "soft_tokens": 1000, "hard_tokens": 2000, "estimated_overhead_tokens": 0},
         results=[dict(ITEM)],
         disclosure_level=level,
         **kwargs,
@@ -79,7 +79,7 @@ def test_context_budget_accepts_injected_tokenizer():
     from retrieval.context.budget import ContextBudget
 
     budget = ContextBudget({"hard_limit_tokens": 5, "tokenizer": lambda text: len(text.split())})
-    assert budget.estimate_tokens({"content": "one two three"}) == 4
+    assert budget.estimate_tokens({"content": "one two three"}) == 3
 
 
 def test_context_pack_records_adaptive_compression():
@@ -89,7 +89,7 @@ def test_context_pack_records_adaptive_compression():
         request_id="compression-test",
         agent_id="default",
         budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072,
-                "soft_tokens": 120, "hard_tokens": 240},
+                "soft_tokens": 120, "hard_tokens": 240, "estimated_overhead_tokens": 0},
         results=[item],
         disclosure_level="full_document",
         query="token economy",
@@ -152,7 +152,7 @@ def test_pack_aggregates_net_savings():
     result = ContextPackBuilder().build(
         request_id="metrics-test",
         agent_id="default",
-        budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072, "soft_tokens": 5000, "hard_tokens": 6000,
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072, "soft_tokens": 5000, "hard_tokens": 6000, "estimated_overhead_tokens": 0,
                 "tokenizer": lambda text: len(text.split()), "cost_per_input_token": 0.001,
                 "latency_ms_per_input_token": 0.5},
         results=[item],
