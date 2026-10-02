@@ -25,8 +25,7 @@ class ContextBudget:
         self.soft_limit_tokens = max(1, int(config.get("soft_limit_tokens", config.get("soft_tokens", 1800))))
         self.hard_limit_tokens = max(1, int(config.get("hard_limit_tokens", config.get("hard_tokens", 3000))))
         self.chars_per_token = max(1.0, float(config.get("chars_per_token", 3.0)))
-        self.tokenizer: Callable[[str], int] | None = config.get("tokenizer")
-        self.token_counter = config.get("token_counter")
+        self.tokenizer: Callable[[str], int] | None = config.get("tokenizer") or config.get("token_counter")
 
     @property
     def soft_context_budget(self) -> int:
@@ -68,6 +67,7 @@ class ContextBudget:
                 raise ContextBudgetError("tokenizer_returned_negative")
             return tokens
         return max(1, math.ceil(len(text) / self.chars_per_token))
+
     def usage(self, notes: List[Dict[str, Any]]) -> int:
         return sum(self._size_of(n) for n in notes)
 
