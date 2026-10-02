@@ -32,6 +32,9 @@ class ContextPackBuilder:
             "soft_limit_tokens": int(budget.get("soft_tokens", configured.soft_token_budget)),
             "hard_limit_tokens": int(budget.get("hard_tokens", configured.hard_token_budget)),
             "chars_per_token": float(budget.get("chars_per_token", configured.chars_per_token)),
+            "tokenizer": budget.get("tokenizer", configured.tokenizer),
+            "cost_per_input_token": budget.get("cost_per_input_token", configured.cost_per_input_token),
+            "latency_ms_per_input_token": budget.get("latency_ms_per_input_token", configured.latency_ms_per_input_token),
         })
 
     @staticmethod
@@ -55,6 +58,10 @@ class ContextPackBuilder:
                 "tokens_saved": 0,
                 "items_reduced": 0,
                 "items_rejected_unverified": 0,
+                "net_tokens_saved": 0,
+                "cost_saved": 0.0,
+                "latency_saved_ms": 0.0,
+                "tokenizer_mode": "heuristic_fallback",
             },
         }
 
@@ -64,10 +71,14 @@ class ContextPackBuilder:
         resolved: ContextBudget,
         *,
         query: str = "",
-    ) -> tuple[List[Dict[str, Any]], Dict[str, int]]:
+    ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         reduced: List[Dict[str, Any]] = []
         tokens_saved = 0
         rejected = 0
+        net_tokens_saved = 0
+        cost_saved = 0.0
+        latency_saved_ms = 0.0
+        tokenizer_mode = "real" if resolved.tokenizer is not None else "heuristic_fallback"
         reduction_chars = max(128, int(resolved.soft_token_budget * resolved.chars_per_token))
 
         for raw in results:
@@ -89,6 +100,8 @@ class ContextPackBuilder:
                 router=CompressionRouter(
                     tokenizer=resolved.tokenizer,
                     chars_per_token=resolved.chars_per_token,
+                    cost_per_input_token=resolved.cost_per_input_token,
+                    latency_ms_per_input_token=resolved.latency_ms_per_input_token,
                 )
             )
             compression = compressor.compress(
@@ -112,6 +125,10 @@ class ContextPackBuilder:
                 "removed_segments": len(compression.removed_segments),
                 "fallback": compression.fallback,
                 "validation": dict(compression.validation),
+                "tokenizer_mode": compression.decision.tokenizer_mode,
+                "net_tokens_saved": compression.decision.net_tokens_saved,
+                "cost_saved": compression.decision.cost_saved,
+                "latency_saved_ms": compression.decision.latency_saved_ms,
             }
             compact["reduction"] = {
                 "original_chars": len(content),
@@ -123,10 +140,18 @@ class ContextPackBuilder:
             }
             reduced.append(compact)
             tokens_saved += max(0, compression.decision.original_tokens - compression.decision.estimated_tokens)
+            net_tokens_saved += max(0, compression.decision.net_tokens_saved)
+            cost_saved += max(0.0, compression.decision.cost_saved or 0.0)
+            latency_saved_ms += max(0.0, compression.decision.latency_saved_ms or 0.0)
+            tokenizer_mode = compression.decision.tokenizer_mode
         return reduced, {
             "tokens_saved": tokens_saved,
             "items_reduced": len(reduced),
             "items_rejected_unverified": rejected,
+            "net_tokens_saved": net_tokens_saved,
+            "cost_saved": cost_saved,
+            "latency_saved_ms": latency_saved_ms,
+            "tokenizer_mode": tokenizer_mode,
         }
 
     def _build_pack(
@@ -139,7 +164,7 @@ class ContextPackBuilder:
         minimal_provenance: Optional[List[Dict[str, Any]]],
         next_page_token: Optional[str],
         audit_ref: Optional[str],
-        reduction_metrics: Optional[Dict[str, int]] = None,
+        reduction_metrics: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         pack = self._base_pack(request_id, agent_id, resolved, disclosure_level)
         pack["results"] = [self._json_safe(dict(item)) for item in results]
