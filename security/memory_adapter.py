@@ -7,6 +7,7 @@ should be treated as data by the caller.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from threading import RLock
 from typing import Any, Callable
 
 from .memory_boundary import MemoryWriteBoundary, MemoryWriteDecision
@@ -31,6 +32,7 @@ class MemoryAdapter:
             raise TypeError("persist must be callable")
         self._persist = persist
         self.boundary = boundary or MemoryWriteBoundary()
+        self._lock = RLock()
 
     def write(
         self,
@@ -40,18 +42,19 @@ class MemoryAdapter:
         *,
         human_approved: bool = False,
     ) -> MemoryWriteDecision:
-        record, denied = self.boundary.prepare(
+        with self._lock:
+            record, denied = self.boundary.prepare(
             namespace,
             payload,
             trust_state,
-            human_approved=human_approved,
-        )
-        if denied is not None:
-            return denied
+                human_approved=human_approved,
+            )
+            if denied is not None:
+                return denied
 
-        self._persist(namespace, dict(payload))
-        return self.boundary.commit(
-            record,
-            trust_state,
-            human_approved=human_approved,
-        )
+            self._persist(namespace, dict(payload))
+            return self.boundary.commit(
+                record,
+                trust_state,
+                human_approved=human_approved,
+            )
