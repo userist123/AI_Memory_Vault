@@ -49,3 +49,40 @@ def test_protected_detector_marks_code_and_versions():
     reasons = {span.reason for span in spans}
     assert "version" in reasons
     assert "cli_identifier" in reasons
+
+
+def test_do_not_compress_is_hard_no_op():
+    text = "\n".join(["repeated context " * 50, "MUST NOT bypass security."])
+    result = AdaptiveContextCompressor(
+        router=CompressionRouter(min_tokens=5, min_redundancy=0.0),
+    ).compress(text, do_not_compress=True)
+    assert result.decision.action == "NO_OP"
+    assert result.decision.reason == "DO_NOT_COMPRESS"
+    assert result.content == text
+    assert result.decision.net_tokens_saved == 0
+
+
+def test_real_tokenizer_is_used_when_supplied():
+    tokenizer = lambda value: len(value.split())
+    router = CompressionRouter(min_tokens=3, min_redundancy=0.0, tokenizer=tokenizer)
+    result = AdaptiveContextCompressor(router=router).compress(
+        "alpha beta gamma\nalpha beta gamma\ndelta epsilon zeta",
+        query="alpha",
+    )
+    assert result.decision.tokenizer_mode == "real"
+
+
+def test_net_cost_and_latency_savings_are_reported():
+    tokenizer = lambda value: len(value.split())
+    router = CompressionRouter(
+        min_tokens=3, min_redundancy=0.0, tokenizer=tokenizer,
+        cost_per_input_token=0.01, latency_ms_per_input_token=2.0,
+    )
+    result = AdaptiveContextCompressor(router=router).compress(
+        "alpha beta gamma\nalpha beta gamma\nalpha beta gamma\ndelta epsilon zeta",
+        query="alpha",
+        target_chars=40,
+    )
+    assert result.decision.net_tokens_saved >= 0
+    assert result.decision.cost_saved is not None
+    assert result.decision.latency_saved_ms is not None
