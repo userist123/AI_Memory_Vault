@@ -1,5 +1,7 @@
 """Tests for the verified translation -> trust -> reduction compiler."""
 
+import hashlib
+
 import pytest
 
 from security.prompt_compiler import (
@@ -16,6 +18,7 @@ def _trusted_translator(text):
         source_language="ro",
         target_language="en",
         provenance={"verified": True, "method": "test-translator"},
+        source_sha256=hashlib.sha256(text.strip().encode("utf-8")).hexdigest(),
     )
 
 
@@ -36,6 +39,16 @@ def _compile(compiler, task="construieste un test"):
 def test_non_english_requires_translation_provider():
     with pytest.raises(PromptTranslationError, match="translation_provider_required"):
         VerifiedPromptCompiler().translate("Construieste asta", source_language="ro")
+
+
+def test_translation_source_binding_is_required():
+    def wrong_source(_):
+        return TranslationResult(
+            "translated", "ro", "en", {"verified": True}, "0" * 64
+        )
+
+    with pytest.raises(PromptTranslationError, match="source_binding_invalid"):
+        VerifiedPromptCompiler(translator=wrong_source).translate("ceva", source_language="ro")
 
 
 def test_translation_must_return_english():
