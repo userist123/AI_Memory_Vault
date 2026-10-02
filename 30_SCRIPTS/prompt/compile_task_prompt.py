@@ -257,6 +257,7 @@ def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement"
         branch=branch,
         owner=owner,
         max_chars=12000,
+        max_tokens=max_tokens,
         soft_token_budget=soft_token_budget,
         hard_token_budget=hard_token_budget,
     )
@@ -279,6 +280,7 @@ def main() -> int:
     )
     ap.add_argument("--soft-tokens", type=int, default=1200, help="target prompt input-token budget")
     ap.add_argument("--hard-tokens", type=int, default=1800, help="hard prompt input-token budget")
+    ap.add_argument("--max-tokens", type=int, help="optional hard token budget for the compiled AI-facing prompt")
     ap.add_argument("--out", help="write here instead of stdout")
     args = ap.parse_args()
 
