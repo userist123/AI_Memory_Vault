@@ -24,6 +24,10 @@ class TranslationResult:
     target_language: str
     provenance: Mapping[str, object]
     source_sha256: str | None = None
+    requirements: tuple[str, ...] = ()
+    forbidden: tuple[str, ...] = ()
+    acceptance: tuple[str, ...] = ()
+    semantic_complete: bool = False
 
 
 @dataclass(frozen=True)
@@ -90,13 +94,21 @@ class VerifiedPromptCompiler:
         expected_source_sha256 = hashlib.sha256(request.strip().encode("utf-8")).hexdigest()
         if result.source_sha256 != expected_source_sha256:
             raise PromptTranslationError("translator_source_binding_invalid")
+        if source_language.lower() != "en" and not result.semantic_complete:
+            raise PromptTranslationError("semantic_completeness_required")
         return result
 
     def verify_translation(self, translated: TranslationResult, source: str) -> dict[str, object]:
         path = Path("<translated-task>")
+        semantic_payload = "\n".join([
+            translated.text,
+            *translated.requirements,
+            *translated.forbidden,
+            *translated.acceptance,
+        ])
         scan = scan_text(
             path,
-            translated.text,
+            semantic_payload,
             {
                 "source": "translation-boundary",
                 "source_language": translated.source_language,
@@ -152,6 +164,9 @@ class VerifiedPromptCompiler:
     ) -> CompiledPrompt:
         translated = self.translate(request, source_language)
         verification = self.verify_translation(translated, request)
+        requirements = self._merge_unique(requirements, translated.requirements)
+        forbidden = self._merge_unique(forbidden, translated.forbidden)
+        acceptance = self._merge_unique(acceptance, translated.acceptance)
 
         stable_prefix, dynamic_prefix, reducible_context, task_suffix = self._assemble_sections(
             task=translated.text,
@@ -234,6 +249,19 @@ class VerifiedPromptCompiler:
         if value < 0:
             raise PromptCompilationError("tokenizer_returned_negative")
         return value
+
+    @staticmethod
+    def _merge_unique(primary: list[str], translated: tuple[str, ...]) -> list[str]:
+        result: list[str] = []
+        seen: set[str] = set()
+        for value in [*primary, *translated]:
+            normalized = str(value).strip()
+            key = normalized.casefold()
+            if not normalized or key in seen:
+                continue
+            seen.add(key)
+            result.append(normalized)
+        return result
 
     @staticmethod
     def _compact(text: str) -> str:
