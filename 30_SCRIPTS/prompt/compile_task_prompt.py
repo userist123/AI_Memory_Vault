@@ -28,6 +28,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from security.prompt_compiler import VerifiedPromptCompiler
+
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
 
@@ -305,8 +307,31 @@ def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement"
         f"- `{c}`" for c in SKILL_CATALOGUES if (REPO / c).exists()
     ) or "- no skill catalogue found in the indexed roots"
     requirements, forbidden, deliverables = intent_block(intent)
-    n_req = len(INTENTS[intent]["requirements"])
-    n_del = len(INTENTS[intent]["deliverables"])
+    acceptance = list(INTENTS[intent]["deliverables"]) + [
+        "Zero regression against the stated baseline; explain any deviation with evidence.",
+        "State remaining gaps explicitly, including when there are none.",
+        "Record the method when it transfers to future work.",
+    ]
+    compiler = VerifiedPromptCompiler()
+    compiled = compiler.compile(
+        task,
+        source_language="en",
+        verified_context=(
+            "Current commit: " + head() + "\n" + state
+            + "\n\nRead 00_GOVERNANCE/VAULT_STATE.md before anything else. "
+            "Measured repository state outranks stale descriptive guidance.\n\n"
+            "## Methods already recorded\n" + methods
+            + "\n\n## Standing traps\n" + traps
+            + "\n\n## Skills and data to consult\n" + skills
+        ),
+        requirements=[str(x) for x in INTENTS[intent]["requirements"]],
+        forbidden=[str(x) for x in INTENTS[intent]["forbidden"]],
+        acceptance=acceptance,
+        branch=branch,
+        owner=owner,
+        max_chars=12000,
+    )
+    return compiled.text
     return TEMPLATE.format(
         head=head(), branch=branch, owner=owner, task=task.strip(),
         state=state, methods=methods, traps=traps, skills=skills,
@@ -319,7 +344,7 @@ def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement"
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--task", required=True, help="what must be achieved, in English")
+    ap.add_argument("--task", required=True, help="task text; this deterministic CLI accepts English only unless a translation provider is injected")
     ap.add_argument("--branch", default="rXXX/describe-the-work")
     ap.add_argument("--owner", default="TBD")
     ap.add_argument(
