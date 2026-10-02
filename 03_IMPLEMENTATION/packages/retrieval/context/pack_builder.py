@@ -42,6 +42,7 @@ class ContextPackBuilder:
             "tokenizer": budget.get("tokenizer", configured.tokenizer),
             "cost_per_input_token": budget.get("cost_per_input_token", configured.cost_per_input_token),
             "latency_ms_per_input_token": budget.get("latency_ms_per_input_token", configured.latency_ms_per_input_token),
+            "estimated_overhead_tokens": budget.get("estimated_overhead_tokens", configured.estimated_overhead_tokens),
         })
 
     @staticmethod
@@ -109,6 +110,7 @@ class ContextPackBuilder:
                     chars_per_token=resolved.chars_per_token,
                     cost_per_input_token=resolved.cost_per_input_token,
                     latency_ms_per_input_token=resolved.latency_ms_per_input_token,
+                    estimated_overhead_tokens=resolved.estimated_overhead_tokens,
                 )
             )
             protected_artifact = any(item.get(key) is not None for key in ("code", "signature", "dependencies", "identifiers"))
