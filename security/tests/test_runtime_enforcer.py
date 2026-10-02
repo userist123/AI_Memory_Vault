@@ -65,6 +65,7 @@ def test_expired_or_replayed_approval_is_denied():
         tool_name="artifact.write",
         target="project/Casa3D",
         parameters={"path": "src/a.ts", "operation": "write"},
+        side_effect=True,
     )
     token = _token(
         parameters_sha256=request.parameters_sha256(),
