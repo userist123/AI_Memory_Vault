@@ -8,7 +8,9 @@ be returned to an agent/model-facing caller.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any, Dict, Mapping
+
+from .context.budget import ContextBudget
 
 
 class DataRouteViolation(RuntimeError):
@@ -46,14 +48,12 @@ class MemoryDataRouter:
                 raise DataRouteViolation(f"verification: result {index} is not a mapping")
 
             verification = result.get("verification")
-            if not isinstance(verification, dict):
-                raise DataRouteViolation(
-                    f"verification: result {index} has no structured verification record"
-                )
-
-            status = str(
-                verification.get("status", verification.get("state", ""))
-            ).upper()
+            if isinstance(verification, Mapping):
+                status = str(
+                    verification.get("status", verification.get("state", ""))
+                ).upper()
+            else:
+                status = str(verification or "").upper()
             if status in {"", "UNVERIFIED", "REJECTED", "BLOCKED", "DENIED"}:
                 raise DataRouteViolation(
                     f"verification: result {index} is not trusted ({status or 'missing'})"
@@ -84,4 +84,19 @@ class MemoryDataRouter:
             "model_egress": True,
         }
         routed["data_route"] = route
+
+        # Measure the complete model-facing envelope, including route metadata.
+        try:
+            hard_tokens = int(budget["hard_tokens"])
+            final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(routed)
+        except (KeyError, TypeError, ValueError) as exc:
+            raise DataRouteViolation(
+                "security_boundary: invalid final token budget envelope"
+            ) from exc
+        if final_tokens > hard_tokens:
+            raise DataRouteViolation(
+                f"security_boundary: final routed context exceeds hard token budget "
+                f"({final_tokens}>{hard_tokens})"
+            )
+        routed["data_route"]["final_model_input_tokens"] = final_tokens
         return routed
