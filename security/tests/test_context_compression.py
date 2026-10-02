@@ -79,7 +79,7 @@ def test_net_cost_and_latency_savings_are_reported():
         cost_per_input_token=0.01, latency_ms_per_input_token=2.0,
     )
     result = AdaptiveContextCompressor(router=router).compress(
-        "alpha beta gamma\nalpha beta gamma\nalpha beta gamma\ndelta epsilon zeta",
+        ("alpha beta gamma\n" * 60) + "delta epsilon zeta",
         query="alpha",
         target_chars=40,
     )
