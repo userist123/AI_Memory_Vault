@@ -110,6 +110,16 @@ class SecurityUpdatePolicy:
             reason=reason,
         )
 
+    def mark_installed(self, version: str) -> SecurityUpdateState:
+        if _version(version) < _version(self.current_version):
+            raise ValueError("installed version cannot move backwards")
+        self.current_version = version
+        if self._active_update and _version(version) >= _version(self._active_update.version):
+            self._active_update = None
+        if _version(version) > _version(self._required_min_version):
+            self._required_min_version = version
+        return self.state()
+
     def enforce(self, *, protected_operation: bool = True) -> None:
         state = self.state()
         if protected_operation and state.blocked:
