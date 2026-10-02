@@ -51,12 +51,15 @@ exception messages are deliberately excluded.
 
 Records are append-only through AuditTrail.record(). Every record commits the
 hash of the preceding record. AuditTrail.verify() detects modified records,
-deleted records, reordered records, or broken links.
+interior deletion, reordered records, or broken links. To detect truncation of
+the chain, persist AuditTrail.checkpoint() in infrastructure outside the
+agent-controlled process and pass that value to verify(expected_head_sha256=...).
 
 This is tamper evidence, not a claim of non-repudiation. The process or host
 holding the in-memory trail can still destroy it. Production deployments should
-ship the exported audit stream to infrastructure outside the agent's control,
-with restricted write/delete access and appropriate retention.
+ship the exported audit stream and its external checkpoint to infrastructure
+outside the agent's control, with restricted write/delete access and appropriate
+retention.
 
 ## Correlation
 
