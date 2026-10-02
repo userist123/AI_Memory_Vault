@@ -158,7 +158,14 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
 
     if browser_credential_exfiltration:
         verdict, score = "BLOCK", 95
-    elif source_sink_chain and explicit_data_access:
+    elif source_sink_chain and (
+        explicit_data_access
+        or any(
+            e.active and e.category == "secrets"
+            and re.search(r"\b(?:API[_ -]?keys?|access tokens?|auth tokens?|session tokens?)\b", e.text, re.I)
+            for e in findings
+        )
+    ):
         verdict, score = "BLOCK", 95
     elif active_override and active_network:
         verdict, score = "REVIEW", 80
