@@ -1,13 +1,20 @@
 import base64
 import zlib
-from typing import List, Dict, Any, Optional
+from typing import Callable, List, Dict, Any, Optional, Mapping
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
 from ..memory_trace import record_observed_memory_trace
+from security.knowledge_handoff import VerifiedKnowledgeHandoff
 
 
 class ContextPackBuilder:
-    """Build the final context payload and enforce byte + token budgets."""
+    """Build final context only from verified, reduced knowledge."""
+
+    def __init__(self, verifier: Optional[Callable[[Dict[str, Any]], Mapping[str, Any]]] = None):
+        # A verifier may enrich an item with a trusted verification record.
+        # Without one, the item must already carry an explicit trusted record.
+        self.verifier = verifier
+        self.handoff = VerifiedKnowledgeHandoff()
 
     @staticmethod
     def _resolve_budget(agent_id: str, budget: Dict[str, Any]) -> ContextBudget:
@@ -39,6 +46,69 @@ class ContextPackBuilder:
             },
             "disclosureLevel": disclosure_level,
             "results": [],
+            "reduction": {
+                "verified_first": True,
+                "stage_order": ["verification", "reduction", "budget", "progressive_disclosure"],
+                "tokens_saved": 0,
+                "items_reduced": 0,
+                "items_rejected_unverified": 0,
+            },
+        }
+
+    def _verify_and_reduce(
+        self,
+        results: List[Dict[str, Any]],
+        resolved: ContextBudget,
+    ) -> tuple[List[Dict[str, Any]], Dict[str, int]]:
+        reduced: List[Dict[str, Any]] = []
+        tokens_saved = 0
+        rejected = 0
+        reduction_chars = max(128, int(resolved.soft_token_budget * resolved.chars_per_token))
+
+        for raw in results:
+            item = dict(raw)
+            if self.verifier is not None:
+                verification = self.verifier(dict(item))
+                if not isinstance(verification, Mapping):
+                    rejected += 1
+                    continue
+                item["verification"] = dict(verification)
+
+            verification = item.get("verification")
+            if not isinstance(verification, Mapping):
+                rejected += 1
+                continue
+
+            try:
+                result = self.handoff.reduce(item, max_chars=reduction_chars)
+            except (PermissionError, TypeError, ValueError):
+                rejected += 1
+                continue
+
+            if not result.allowed:
+                rejected += 1
+                continue
+
+            compact = dict(item)
+            compact["content"] = result.content
+            compact["reduction"] = {
+                "original_chars": result.original_chars,
+                "final_chars": result.final_chars,
+                "bytes_saved": result.bytes_saved,
+                "token_estimate_before": result.token_estimate_before,
+                "token_estimate_after": result.token_estimate_after,
+                "tokens_saved": result.tokens_saved,
+            }
+            # Preserve policy/evidence and knowledge fields separately from the
+            # compact body so truncation cannot erase them.
+            compact.update(result.metadata)
+            reduced.append(compact)
+            tokens_saved += result.tokens_saved
+
+        return reduced, {
+            "tokens_saved": tokens_saved,
+            "items_reduced": len(reduced),
+            "items_rejected_unverified": rejected,
         }
 
     def _build_pack(
@@ -51,9 +121,12 @@ class ContextPackBuilder:
         minimal_provenance: Optional[List[Dict[str, Any]]],
         next_page_token: Optional[str],
         audit_ref: Optional[str],
+        reduction_metrics: Optional[Dict[str, int]] = None,
     ) -> Dict[str, Any]:
         pack = self._base_pack(request_id, agent_id, resolved, disclosure_level)
         pack["results"] = [self._json_safe(dict(item)) for item in results]
+        if reduction_metrics:
+            pack["reduction"].update(reduction_metrics)
         if minimal_provenance:
             for res, prov in zip(pack["results"], minimal_provenance):
                 res.setdefault("provenance", {})
@@ -92,13 +165,17 @@ class ContextPackBuilder:
     ) -> Dict[str, Any]:
         resolved = self._resolve_budget(agent_id, budget or {})
         safe_results = [dict(item) for item in (results or [])]
+
+        # Mandatory order: verification -> semantic reduction -> token/byte budget.
+        # Unverified content never reaches apply_degradation() or the final pack.
+        safe_results, reduction_metrics = self._verify_and_reduce(safe_results, resolved)
         safe_results = resolved.apply_degradation(safe_results)
 
         # Keep the highest-value results until BOTH transport and token budgets fit.
         while safe_results:
             pack = self._build_pack(
                 request_id, agent_id, resolved, safe_results, disclosure_level,
-                minimal_provenance, next_page_token, audit_ref
+                minimal_provenance, next_page_token, audit_ref, reduction_metrics
             )
             serialized_size = resolved.serialized_size(pack)
             estimated_tokens = resolved.estimate_tokens(pack)
@@ -119,7 +196,7 @@ class ContextPackBuilder:
         # envelope exceeds the configured hard budget, fail closed.
         pack = self._build_pack(
             request_id, agent_id, resolved, [], disclosure_level,
-            None, next_page_token, audit_ref
+            None, next_page_token, audit_ref, reduction_metrics
         )
         serialized_size = resolved.serialized_size(pack)
         estimated_tokens = resolved.estimate_tokens(pack)
@@ -141,4 +218,3 @@ class ContextPackBuilder:
         except Exception:
             pass
         return pack
-
