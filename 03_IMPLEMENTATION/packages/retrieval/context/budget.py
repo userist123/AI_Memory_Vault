@@ -93,6 +93,8 @@ class ContextBudget:
         content = str(note.get("content", ""))
         if "```" in content:
             return True
+        if re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content):
+            return True
         return any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
 
     def apply_degradation(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
