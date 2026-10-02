@@ -163,6 +163,8 @@ class ContextPackBuilder:
         minimal_provenance: List[Dict[str, Any]] = None,
         next_page_token: Optional[str] = None,
         audit_ref: Optional[str] = None,
+        disclosure_query: str = "",
+        provenance_storage_engine: Any = None,
     ) -> Dict[str, Any]:
         resolved = self._resolve_budget(agent_id, budget or {})
         safe_results = [dict(item) for item in (results or [])]
@@ -180,11 +182,16 @@ class ContextPackBuilder:
         elif disclosure_level == "full_document":
             safe_results = disclosure.full_document(safe_results)
         elif disclosure_level == "sections":
-            # Section selection needs the caller's query; the legacy builder
-            # has no query argument, so retain the verified budgeted form.
-            # Callers needing query-aware sections should use ProgressiveDisclosure
-            # directly rather than silently guessing a query.
-            pass
+            if not disclosure_query.strip():
+                raise ValueError("sections disclosure requires disclosure_query")
+            safe_results = disclosure.sections(safe_results, disclosure_query)
+        elif disclosure_level == "provenance_on_demand":
+            if provenance_storage_engine is None:
+                raise ValueError("provenance_on_demand requires provenance_storage_engine")
+            ids = [str(item.get("id")) for item in safe_results if item.get("id") is not None]
+            provenance = disclosure.provenance_on_demand(ids, provenance_storage_engine)
+            for item, raw in zip(safe_results, provenance):
+                item["provenance_on_demand"] = raw
         elif disclosure_level != "provenance_on_demand":
             raise ValueError(f"unknown disclosure level: {disclosure_level}")
         
