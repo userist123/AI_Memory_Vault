@@ -81,3 +81,44 @@ def test_untrusted_translation_never_reaches_reduction():
 
     with pytest.raises(PromptCompilationError, match="translation_verification_failed"):
         _compile(VerifiedPromptCompiler(translator=untrusted))
+
+
+def test_prompt_exposes_stable_prefix_and_dynamic_suffix_for_cache_aware_handoffs():
+    result = _compile(
+        VerifiedPromptCompiler(translator=_trusted_translator),
+        task="Implement the dynamic task details.",
+    )
+
+    assert result.stable_prefix
+    assert result.dynamic_suffix
+    assert result.text == result.stable_prefix + result.dynamic_suffix
+    assert "## Security rule" in result.stable_prefix
+    assert "## Requirements" in result.stable_prefix
+    assert "Implement the dynamic task details." in result.dynamic_suffix
+    assert result.cacheable_prefix_sha256 == hashlib.sha256(
+        result.stable_prefix.encode("utf-8")
+    ).hexdigest()
+
+
+def test_prompt_budget_uses_tokenizer_and_preserves_constraint_sections():
+    result = VerifiedPromptCompiler(
+        translator=_trusted_translator,
+        tokenizer=lambda text: len(text.split()),
+    ).compile(
+        "Build the feature.",
+        source_language="ro",
+        verified_context="A " * 1000,
+        requirements=["MUST preserve verification."],
+        forbidden=["MUST NOT bypass the trust gate."],
+        acceptance=["MUST pass the regression test."],
+        branch="r999/test",
+        owner="TEST",
+        max_chars=5000,
+        soft_token_budget=100,
+        hard_token_budget=140,
+    )
+
+    assert result.token_estimate_after <= 140
+    assert "MUST preserve verification." in result.text
+    assert "MUST NOT bypass the trust gate." in result.text
+    assert "MUST pass the regression test." in result.text
