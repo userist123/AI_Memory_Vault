@@ -6,6 +6,7 @@ from .budget import ContextBudget, BudgetExceededError, load_agent_budget
 from .progressive_disclosure import ProgressiveDisclosure
 from ..memory_trace import record_observed_memory_trace
 from security.knowledge_handoff import VerifiedKnowledgeHandoff
+from security.context_compression import AdaptiveContextCompressor
 
 
 class ContextPackBuilder:
@@ -16,6 +17,7 @@ class ContextPackBuilder:
         # Without one, the item must already carry an explicit trusted record.
         self.verifier = verifier
         self.handoff = VerifiedKnowledgeHandoff()
+        self.compressor = AdaptiveContextCompressor()
 
     @staticmethod
     def _resolve_budget(agent_id: str, budget: Dict[str, Any]) -> ContextBudget:
@@ -60,6 +62,8 @@ class ContextPackBuilder:
         self,
         results: List[Dict[str, Any]],
         resolved: ContextBudget,
+        *,
+        query: str = "",
     ) -> tuple[List[Dict[str, Any]], Dict[str, int]]:
         reduced: List[Dict[str, Any]] = []
         tokens_saved = 0
@@ -80,32 +84,38 @@ class ContextPackBuilder:
                 rejected += 1
                 continue
 
-            try:
-                result = self.handoff.reduce(item, max_chars=reduction_chars)
-            except (PermissionError, TypeError, ValueError):
-                rejected += 1
-                continue
-
-            if not result.allowed:
+            content = str(item.get("content", ""))
+            compression = self.compressor.compress(
+                content, query=query,
+                target_chars=reduction_chars,
+            )
+            if not compression.validation.get("passed", False):
                 rejected += 1
                 continue
 
             compact = dict(item)
-            compact["content"] = result.content
-            compact["reduction"] = {
-                "original_chars": result.original_chars,
-                "final_chars": result.final_chars,
-                "bytes_saved": result.bytes_saved,
-                "token_estimate_before": result.token_estimate_before,
-                "token_estimate_after": result.token_estimate_after,
-                "tokens_saved": result.tokens_saved,
+            compact["content"] = compression.content
+            compact["compression"] = {
+                "action": compression.decision.action,
+                "reason": compression.decision.reason,
+                "original_tokens": compression.decision.original_tokens,
+                "estimated_tokens": compression.decision.estimated_tokens,
+                "redundancy": compression.decision.redundancy,
+                "protected_spans": len(compression.protected_spans),
+                "removed_segments": len(compression.removed_segments),
+                "fallback": compression.fallback,
+                "validation": dict(compression.validation),
             }
-            # Preserve policy/evidence and knowledge fields separately from the
-            # compact body so truncation cannot erase them.
-            compact.update(result.metadata)
+            compact["reduction"] = {
+                "original_chars": len(content),
+                "final_chars": len(compression.content),
+                "bytes_saved": max(0, len(content.encode("utf-8")) - len(compression.content.encode("utf-8"))),
+                "token_estimate_before": compression.decision.original_tokens,
+                "token_estimate_after": compression.decision.estimated_tokens,
+                "tokens_saved": max(0, compression.decision.original_tokens - compression.decision.estimated_tokens),
+            }
             reduced.append(compact)
-            tokens_saved += result.tokens_saved
-
+            tokens_saved += max(0, compression.decision.original_tokens - compression.decision.estimated_tokens)
         return reduced, {
             "tokens_saved": tokens_saved,
             "items_reduced": len(reduced),
@@ -163,6 +173,7 @@ class ContextPackBuilder:
         minimal_provenance: List[Dict[str, Any]] = None,
         next_page_token: Optional[str] = None,
         audit_ref: Optional[str] = None,
+        query: str = "",
         disclosure_query: str = "",
         provenance_storage_engine: Any = None,
     ) -> Dict[str, Any]:
@@ -171,7 +182,8 @@ class ContextPackBuilder:
 
         # Mandatory order: verification -> semantic reduction -> token/byte budget.
         # Unverified content never reaches apply_degradation() or the final pack.
-        safe_results, reduction_metrics = self._verify_and_reduce(safe_results, resolved)
+        effective_query = query.strip() or disclosure_query.strip()
+        safe_results, reduction_metrics = self._verify_and_reduce(safe_results, resolved, query=effective_query)
         safe_results = resolved.apply_degradation(safe_results)
 
         disclosure = ProgressiveDisclosure(resolved)
