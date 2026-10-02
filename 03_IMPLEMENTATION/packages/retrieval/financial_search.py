@@ -1286,8 +1286,10 @@ class MultiLayeredFinancialSearchEngine:
                 "candidates_count": 0,
             }
             audit_event("search_financial", principal, query_fp, success=True, details={"matched": 0})
-            return self.data_router.route_to_model(
-                pack, source="search_financial", principal=principal.value
+            return self.data_router.dispatch(
+                source="financial_search",
+                principal=principal.value,
+                producer=lambda: pack,
             )
 
         # BM25 Lexical Scoring
@@ -1444,8 +1446,10 @@ class MultiLayeredFinancialSearchEngine:
             "page_size": effective_page_size,
             "offset": offset,
         })
-        return self.data_router.route_to_model(
-            pack, source="search_financial", principal=principal.value
+        return self.data_router.dispatch(
+            source="financial_search",
+            principal=principal.value,
+            producer=lambda: pack,
         )
 
     def _extract_note_symbols(self, note: Dict[str, Any]) -> Set[str]:
