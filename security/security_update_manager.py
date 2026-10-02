@@ -95,6 +95,7 @@ class SecurityUpdateManager:
             raise ValueError("security update failed integrity/signature verification")
 
         self._install(candidate.update, candidate.package)
+        self.policy.mark_installed(candidate.update.version)
 
         if self._audit:
             self._audit.record(
