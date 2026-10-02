@@ -295,7 +295,7 @@ def main() -> int:
         print(f"\nRe-run with --intent {result.intent} to compile the brief.")
         return 0
 
-    text = compile_prompt(args.task, args.branch, args.owner, args.intent)
+    text = compile_prompt(args.task, args.branch, args.owner, args.intent, args.soft_tokens, args.hard_tokens)
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8", newline="\n")
         print(f"written to {args.out}")
