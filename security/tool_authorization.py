@@ -40,11 +40,11 @@ def authorize_tool(
     *,
     human_approved: bool = False,
 ) -> ToolAuthorization:
-    if request.requested_by == "external_content":
-        return ToolAuthorization(False, AuthorizationReason.EXTERNAL_CONTENT_NOT_AUTHORITY.value)
-
     if decision.state is TrustState.BLOCKED:
         return ToolAuthorization(False, AuthorizationReason.BLOCKED_CONTENT.value)
+
+    if request.requested_by == "external_content":
+        return ToolAuthorization(False, AuthorizationReason.EXTERNAL_CONTENT_NOT_AUTHORITY.value)
 
     if decision.state is TrustState.UNTRUSTED:
         return ToolAuthorization(False, AuthorizationReason.UNTRUSTED_CONTENT.value)
