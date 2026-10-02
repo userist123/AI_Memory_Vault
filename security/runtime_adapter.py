@@ -17,6 +17,7 @@ from .security_event import SecurityEvent
 from .tool_integrity import ToolDefinition, ToolPin, pin_tool, verify_tool
 from .tool_response_boundary import validate_tool_response
 from .trust_gate import TrustDecision
+from .supply_chain_policy import ComponentDecision, ComponentProvenance, SoftwareAISupplyChainPolicy
 
 
 @dataclass(frozen=True)
@@ -34,21 +35,34 @@ class RuntimeAdapter:
         *,
         event_sink: Callable[[SecurityEvent], None] | None = None,
         audit_trail: AuditTrail | None = None,
+        supply_chain_policy: SoftwareAISupplyChainPolicy | None = None,
     ) -> None:
         self._enforcer = enforcer or RuntimeEnforcer()
         self._event_sink = event_sink
         self._audit_trail = audit_trail
+        self._supply_chain_policy = supply_chain_policy
         self._registered: dict[str, tuple[RegisteredTool, Callable[[ExecutionRequest], Any]]] = {}
 
     def register(
         self,
         definition: ToolDefinition,
         executor: Callable[[ExecutionRequest], Any],
+        *,
+        provenance: ComponentProvenance | None = None,
     ) -> ToolPin:
         if definition.name in self._registered:
             raise ValueError(f"tool already registered: {definition.name}")
         if not callable(executor):
             raise TypeError("executor must be callable")
+
+        if self._supply_chain_policy is not None:
+            if provenance is None:
+                raise PermissionError("tool provenance is required")
+            if provenance.component_type.value != "tool":
+                raise ValueError("tool registration requires component_type=tool")
+            decision = self._supply_chain_policy.evaluate(provenance)
+            if decision.disposition.value != "VERIFIED":
+                raise PermissionError(decision.reason)
 
         pin = pin_tool(definition)
         self._registered[definition.name] = (RegisteredTool(definition, pin), executor)
