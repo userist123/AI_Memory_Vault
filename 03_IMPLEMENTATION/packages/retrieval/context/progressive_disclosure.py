@@ -60,6 +60,7 @@ class ProgressiveDisclosure:
             note.get("do_not_compress")
             or note.get("protected_content")
             or any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
+            or ProgressiveDisclosure._protected_lines(content)
         )
 
     @staticmethod
