@@ -82,6 +82,7 @@ def test_untrusted_translation_never_reaches_reduction():
             "en",
             {"verified": False},
             hashlib.sha256(text.strip().encode("utf-8")).hexdigest(),
+            (), (), (), False,
         )
 
     with pytest.raises(PromptCompilationError, match="translation_verification_failed"):
