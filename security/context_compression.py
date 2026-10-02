@@ -191,16 +191,26 @@ class AdaptiveContextCompressor:
             return CompressionResult(
                 text,
                 CompressionDecision("FALLBACK", "compressed_context_failed_validation",
-                                    decision.original_tokens, self.router.estimate_tokens(text), decision.redundancy),
+                                    decision.original_tokens, self.router.estimate_tokens(text), decision.redundancy,
+                                    decision.tokenizer_mode, 0, None, None),
                 protected, removed, fallback_validation, True)
         after = self.router.estimate_tokens(candidate)
-        saved = max(0, decision.original_tokens - after)
+        gross_saved = max(0, decision.original_tokens - after)
+        net_saved = max(0, gross_saved - self.router.estimated_overhead_tokens)
         cost_rate = cost_per_input_token if cost_per_input_token is not None else self.router.cost_per_input_token
         latency_rate = latency_ms_per_input_token if latency_ms_per_input_token is not None else self.router.latency_ms_per_input_token
+        if net_saved <= 0:
+            noop = CompressionDecision(
+                "NO_OP", "net_benefit_below_overhead", decision.original_tokens, decision.original_tokens,
+                decision.redundancy, decision.tokenizer_mode, 0, 0.0, 0.0
+            )
+            return CompressionResult(text, noop, protected, removed, self.validator.validate(
+                text, text, protected, downstream_validator=downstream_validator
+            ), False)
         return CompressionResult(
             candidate,
             CompressionDecision("COMPRESS", decision.reason, decision.original_tokens, after, decision.redundancy,
-                                decision.tokenizer_mode, saved,
-                                saved * cost_rate if cost_rate is not None else None,
-                                saved * latency_rate if latency_rate is not None else None),
+                                decision.tokenizer_mode, net_saved,
+                                net_saved * cost_rate if cost_rate is not None else None,
+                                net_saved * latency_rate if latency_rate is not None else None),
             protected, removed, validation, False)
