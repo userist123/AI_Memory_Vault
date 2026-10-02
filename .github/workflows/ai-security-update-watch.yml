@@ -13,6 +13,7 @@ jobs:
   security-update-watch:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Check configured security catalog
         env:
           CATALOG_URL: ${{ vars.AI_SECURITY_UPDATE_CATALOG_URL }}
