@@ -339,6 +339,13 @@ class MemoryController:
                     raise ValueError(_structural.reason)
 
     def read(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="read",
+            principal=principal.value,
+            producer=lambda: self._read_impl(principal, note_id, include_provenance),
+        )
+
+    def _read_impl(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
         try:
             self._check_auth(principal, Operation.READ)
             check_path_traversal(note_id)
@@ -415,6 +422,13 @@ class MemoryController:
     _COGNITIVE_ELIGIBLE = {Lifecycle.ACTIVE, Lifecycle.REVIEW}
 
     def cognitive_read(self, principal: Principal, note_id: str) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="cognitive_read",
+            principal=principal.value,
+            producer=lambda: self._cognitive_read_impl(principal, note_id),
+        )
+
+    def _cognitive_read_impl(self, principal: Principal, note_id: str) -> Dict[str, Any]:
         """Read a note for cognitive operations. Returns ACTIVE and REVIEW notes.
         REVIEW notes are tagged with _cognitive_unverified=True.
         RAW and other restricted lifecycle states are excluded.
@@ -444,6 +458,32 @@ class MemoryController:
             raise
 
     def search(
+        self,
+        principal: Principal,
+        query: str,
+        page_size: int = 10,
+        page_token: Optional[str] = None,
+        lifecycles: Optional[List[Lifecycle]] = None,
+        types: Optional[List[str]] = None,
+        enable_graph_expansion: Optional[bool] = None,
+        strict_graph_expansion: Optional[bool] = None,
+        graph_expansion_budget: Optional[int] = None,
+        ranking_arm: Optional[str] = None,
+        classifier_filter_arm: Optional[str] = None,
+        enable_spreading_activation: Optional[bool] = None,
+        enable_cognitive_core: Optional[bool] = None,
+        enable_working_memory: Optional[bool] = None,
+        enable_global_workspace: Optional[bool] = None,
+        enable_reasoning: Optional[bool] = None,
+        enable_executive: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="search",
+            principal=principal.value,
+            producer=lambda: self._search_impl(principal, query, page_size, page_token, lifecycles, types, enable_graph_expansion, strict_graph_expansion, graph_expansion_budget, ranking_arm, classifier_filter_arm, enable_spreading_activation, enable_cognitive_core, enable_working_memory, enable_global_workspace, enable_reasoning, enable_executive),
+        )
+
+    def _search_impl(
         self,
         principal: Principal,
         query: str,
