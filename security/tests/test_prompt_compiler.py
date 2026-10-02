@@ -136,7 +136,7 @@ def test_prompt_sections_keep_dynamic_state_out_of_stable_prefix():
 def test_prompt_hard_token_budget_uses_injected_counter():
     compiler = VerifiedPromptCompiler(
         translator=_trusted_translator,
-        token_counter=lambda text: len(text.split()),
+        tokenizer=lambda text: len(text.split()),
     )
     result = compiler.compile(
         "construieste un test",
@@ -148,8 +148,9 @@ def test_prompt_hard_token_budget_uses_injected_counter():
         branch="r999/test",
         owner="TEST",
         max_chars=2000,
-        max_tokens=120,
+        soft_token_budget=120,
+        hard_token_budget=120,
     )
-    assert result.token_budget == 120
+    assert result.hard_token_budget == 120
     assert result.token_estimate_after <= 120
     assert result.tokens_saved >= 0
