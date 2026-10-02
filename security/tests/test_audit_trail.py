@@ -124,3 +124,17 @@ def test_memory_adapter_audits_backend_failure_without_exception_message():
     assert record.error_type == "RuntimeError"
     assert "credential" not in str(record.to_dict())
     assert trail.verify() is True
+
+
+def test_audit_trail_allowlists_metadata():
+    trail = AuditTrail()
+    trail.record(
+        event_type="TEST",
+        actor="agent",
+        correlation_id="corr",
+        outcome="OK",
+        metadata={"score": "1", "api_key": "must-not-appear"},
+    )
+
+    data = trail.records[0].to_dict()
+    assert data["metadata"] == {"score": "1"}
