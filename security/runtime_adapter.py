@@ -17,6 +17,7 @@ from .security_event import SecurityEvent
 from .tool_integrity import ToolDefinition, ToolPin, pin_tool, verify_tool
 from .tool_response_boundary import validate_tool_response
 from .trust_gate import TrustDecision
+from .supply_chain_policy import ComponentProvenance, SoftwareAISupplyChainPolicy
 from .supply_chain_policy import ComponentDecision, ComponentProvenance, SoftwareAISupplyChainPolicy
 
 
