@@ -9,6 +9,7 @@ from uuid import uuid4
 from .audit_trail import AuditTrail
 from .memory_boundary import MemoryWriteBoundary, MemoryWriteDecision
 from .trust_gate import TrustState
+from .security_update_policy import SecurityUpdatePolicy, SecurityUpdateRequired
 
 
 @dataclass(frozen=True)
@@ -26,12 +27,14 @@ class MemoryAdapter:
         boundary: MemoryWriteBoundary | None = None,
         *,
         audit_trail: AuditTrail | None = None,
+        update_policy: SecurityUpdatePolicy | None = None,
     ) -> None:
         if not callable(persist):
             raise TypeError("persist must be callable")
         self._persist = persist
         self.boundary = boundary or MemoryWriteBoundary()
         self._audit_trail = audit_trail
+        self._update_policy = update_policy
         self._lock = RLock()
 
     def write(
@@ -46,6 +49,21 @@ class MemoryAdapter:
         correlation = correlation_id or uuid4().hex
         state = trust_state.value if isinstance(trust_state, TrustState) else trust_state
         with self._lock:
+            if self._update_policy is not None:
+                try:
+                    self._update_policy.enforce(protected_operation=True)
+                except SecurityUpdateRequired:
+                    denied = MemoryWriteDecision(False, "security_update_required")
+                    self._audit(
+                        "MEMORY_WRITE_DENIED",
+                        correlation,
+                        state,
+                        denied.reason,
+                        payload=payload,
+                        namespace=namespace,
+                    )
+                    return denied
+
             record, denied = self.boundary.prepare(
                 namespace,
                 payload,
