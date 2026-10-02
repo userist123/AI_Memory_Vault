@@ -5,7 +5,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 from .tool_capabilities import CapabilitySet
 from .trust_gate import TrustDecision, TrustState
@@ -52,6 +52,12 @@ class ApprovalToken:
 class RuntimeAuthorization:
     allowed: bool
     reason: str
+
+
+@dataclass(frozen=True)
+class ExecutionResult:
+    authorization: RuntimeAuthorization
+    value: Any = None
 
 
 class RuntimeEnforcer:
@@ -110,3 +116,22 @@ class RuntimeEnforcer:
 
         self._used_approvals.add(approval.approval_id)
         return RuntimeAuthorization(True, "allowed")
+
+    def execute(
+        self,
+        request: ExecutionRequest,
+        decision: TrustDecision,
+        executor: Callable[[ExecutionRequest], Any],
+        *,
+        approval: ApprovalToken | None = None,
+        now: datetime | None = None,
+    ) -> ExecutionResult:
+        authorization = self.authorize(
+            request,
+            decision,
+            approval=approval,
+            now=now,
+        )
+        if not authorization.allowed:
+            return ExecutionResult(authorization)
+        return ExecutionResult(authorization, executor(request))
