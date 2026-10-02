@@ -1,5 +1,6 @@
 import re
 from typing import List, Dict, Any
+from .budget import BudgetExceededError
 
 
 SECURITY_FIELDS = (
@@ -92,8 +93,13 @@ class ProgressiveDisclosure:
             if not self._verified(note):
                 continue
             content = str(note.get("content", ""))
-            snippet = content if self._protected_content(note) else content[:chars]
+            protected = self._protected_content(note)
+            snippet = content if protected else content[:chars]
+            if protected and len(snippet.encode("utf-8")) > self.budget.hard_context_budget:
+                raise BudgetExceededError("Protected content exceeds hard disclosure budget")
             entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note)}
+            if protected:
+                entry["protected_content"] = True
             result.append(entry)
             usage += len(snippet)
             if not self._within_budget(usage):
@@ -110,11 +116,20 @@ class ProgressiveDisclosure:
             content = str(note.get("content", ""))
             lines = content.split("\n")
             matched = [ln for ln in lines if any(tok in ln.lower() for tok in tokens)]
-            if self._protected_content(note):
-                matched = list(dict.fromkeys(self._protected_lines(content) + matched))
-            entry = {"id": note.get("id"), "sections": matched[:5], **self._security_metadata(note)}
+            protected = self._protected_content(note)
+            protected_lines = self._protected_lines(content) if protected else []
+            if protected:
+                selected = list(dict.fromkeys(protected_lines + matched[:5]))
+                protected_size = sum(len(line.encode("utf-8")) for line in protected_lines)
+                if protected_size > self.budget.hard_context_budget:
+                    raise BudgetExceededError("Protected sections exceed hard disclosure budget")
+            else:
+                selected = matched[:5]
+            entry = {"id": note.get("id"), "sections": selected, **self._security_metadata(note)}
+            if protected:
+                entry["protected_content"] = True
             result.append(entry)
-            usage += sum(len(line) for line in matched[:5])
+            usage += sum(len(line) for line in selected)
             if not self._within_budget(usage):
                 break
         return result
@@ -127,11 +142,18 @@ class ProgressiveDisclosure:
                 continue
             content = note.get("content", "")
             size = len(content.encode("utf-8"))
+            protected = self._protected_content(note)
             if not self._within_budget(usage + size):
+                if protected:
+                    raise BudgetExceededError("Protected content exceeds hard disclosure budget")
                 continue
             candidate = {"id": note.get("id"), "content": content, **self._security_metadata(note)}
+            if protected:
+                candidate["protected_content"] = True
             if hasattr(self.budget, "estimate_tokens"):
                 if self.budget.estimate_tokens(result + [candidate]) > self.budget.hard_token_budget:
+                    if protected:
+                        raise BudgetExceededError("Protected content exceeds hard token budget")
                     continue
             result.append(candidate)
             usage += size
