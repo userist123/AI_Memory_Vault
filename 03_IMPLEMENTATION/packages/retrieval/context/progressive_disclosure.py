@@ -1,4 +1,5 @@
 import re
+import zlib
 from typing import List, Dict, Any
 from .budget import BudgetExceededError
 
@@ -42,10 +43,19 @@ class ProgressiveDisclosure:
         }
 
     @staticmethod
+    def _content_text(value: Any) -> str:
+        if isinstance(value, bytes):
+            try:
+                return zlib.decompress(value).decode("utf-8")
+            except (zlib.error, UnicodeDecodeError):
+                return value.decode("utf-8", errors="replace")
+        return str(value)
+
+    @staticmethod
     def _protected_content(note: Dict[str, Any]) -> bool:
         if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
             return True
-        content = str(note.get("content", ""))
+        content = self._content_text(note.get("content", ""))
         return bool(
             re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
             or "```" in content
@@ -140,7 +150,7 @@ class ProgressiveDisclosure:
         for note in notes:
             if not self._verified(note):
                 continue
-            content = note.get("content", "")
+            content = self._content_text(note.get("content", ""))
             size = len(content.encode("utf-8"))
             protected = self._protected_content(note)
             if not self._within_budget(usage + size):
