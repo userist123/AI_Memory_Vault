@@ -25,4 +25,4 @@ jobs:
       - name: Install test runner
         run: python -m pip install --disable-pip-version-check pytest
       - name: Run security tests
-        run: python -m pytest security/tests -q
+        run: python -m pytest security/tests -q -o pythonpath=.
