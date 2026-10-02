@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "security/**"
+      - "03_IMPLEMENTATION/packages/retrieval/context/**"
       - ".github/workflows/security-boundary.yml"
   push:
     branches:
