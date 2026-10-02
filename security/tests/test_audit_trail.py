@@ -41,12 +41,13 @@ def test_audit_trail_is_hash_chained_and_tamper_evident():
         timestamp=datetime(2026, 10, 2, 0, 0, 1, tzinfo=timezone.utc),
     )
 
-    assert trail.verify() is True
+    checkpoint = trail.checkpoint()
+    assert trail.verify(expected_head_sha256=checkpoint) is True
     assert trail.records[1].previous_sha256 == trail.records[0].sha256
 
     tampered = trail.records[0]
     object.__setattr__(tampered, "outcome", "FORGED")
-    assert trail.verify() is False
+    assert trail.verify(expected_head_sha256=checkpoint) is False
 
 
 def test_runtime_adapter_audits_request_decision_and_response():
