@@ -1344,7 +1344,7 @@ class MemoryController:
             page_token=page_token,
             disclosure_level=effective_disclosure,
         )
-        return self.data_router.route_to_model(result, source='search_financial', principal=principal.value)
+        return result
 
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
         with self._mutation_lock:
