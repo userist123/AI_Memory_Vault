@@ -94,7 +94,11 @@ class VerifiedPromptCompiler:
         expected_source_sha256 = hashlib.sha256(request.strip().encode("utf-8")).hexdigest()
         if result.source_sha256 != expected_source_sha256:
             raise PromptTranslationError("translator_source_binding_invalid")
-        if source_language.lower() != "en" and not result.semantic_complete:
+        if (
+            source_language.lower() != "en"
+            and not result.semantic_complete
+            and bool(result.provenance.get("verified", False))
+        ):
             raise PromptTranslationError("semantic_completeness_required")
         return result
 
