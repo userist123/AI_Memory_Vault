@@ -41,4 +41,4 @@ jobs:
       - name: Run Memory V6 controller tests
         env:
           PYTHONPATH: .
-        run: pytest 20_TESTS/memory_controller -v -o pythonpath=.:03_IMPLEMENTATION/packages:03_IMPLEMENTATION
+        run: pytest 20_TESTS/memory_controller -v
