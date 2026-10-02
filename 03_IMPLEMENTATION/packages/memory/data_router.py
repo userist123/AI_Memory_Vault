@@ -17,8 +17,12 @@ class DataRouteViolation(RuntimeError):
     """Raised when a model-facing context bypasses a mandatory route stage."""
 
 
-class MemoryDataRouter:
-    """Enforce the canonical verified-memory -> model data route."""
+class MemoryDataEgressGate:
+    """Enforce the final verified-memory -> model egress boundary.
+
+    This component does not choose a retrieval path. It validates the final
+    context pack immediately before model-facing return.
+    """
 
     STAGES = (
         "source",
@@ -77,15 +81,20 @@ class MemoryDataRouter:
             raise DataRouteViolation("security_boundary: hard token budget is missing")
 
         routed = deepcopy(pack)
-        route = {
+        routed["data_route"] = {
             "source": str(source),
             "principal": str(principal),
-            "stages": list(self.STAGES),
+            "stages": [
+                "source",
+                "verification",
+                "provenance",
+                "security_boundary",
+                "token_economy",
+                "model_egress",
+            ],
             "model_egress": True,
         }
-        routed["data_route"] = route
 
-        # Measure the complete model-facing envelope, including route metadata.
         try:
             hard_tokens = int(budget["hard_tokens"])
             final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(routed)
@@ -100,3 +109,62 @@ class MemoryDataRouter:
             )
         routed["data_route"]["final_model_input_tokens"] = final_tokens
         return routed
+
+
+class MemoryDataRouter:
+    """Canonical memory-data router for model-facing context production.
+
+    Routing decides which registered memory-data producer owns a request.
+    Producers remain responsible for retrieval, ranking and context construction.
+    The resulting pack is always passed through the dedicated egress gate.
+    """
+
+    ROUTES = frozenset({
+        "search",
+        "read",
+        "cognitive_read",
+        "financial_search",
+    })
+
+    def __init__(self, egress_gate: MemoryDataEgressGate | None = None) -> None:
+        self.egress_gate = egress_gate or MemoryDataEgressGate()
+
+    def dispatch(
+        self,
+        *,
+        source: str,
+        principal: str,
+        producer: Any,
+    ) -> Dict[str, Any]:
+        route = str(source).strip()
+        if route not in self.ROUTES:
+            raise DataRouteViolation(f"source: unsupported memory data route '{route}'")
+        if not callable(producer):
+            raise DataRouteViolation(f"source: route '{route}' has no callable producer")
+
+        pack = producer()
+        if not isinstance(pack, dict):
+            raise DataRouteViolation(
+                f"source: route '{route}' producer did not return a context pack"
+            )
+        return self.egress_gate.route_to_model(
+            pack,
+            source=route,
+            principal=str(principal),
+        )
+
+    # Compatibility seam for callers that already hold a completed pack.
+    # New model-facing entrypoints should use dispatch() so route ownership is
+    # explicit and auditable.
+    def route_to_model(
+        self,
+        pack: Dict[str, Any],
+        *,
+        source: str,
+        principal: str,
+    ) -> Dict[str, Any]:
+        return self.egress_gate.route_to_model(
+            pack,
+            source=source,
+            principal=principal,
+        )
