@@ -154,3 +154,26 @@ def test_prompt_hard_token_budget_uses_injected_counter():
     assert result.hard_token_budget == 120
     assert result.token_estimate_after <= 120
     assert result.tokens_saved >= 0
+
+
+def test_prompt_budget_reduces_context_before_task():
+    task = "PRESERVE THIS COMPLETE TASK"
+    result = VerifiedPromptCompiler(
+        translator=_trusted_translator,
+        tokenizer=lambda text: len(text.split()),
+    ).compile(
+        task,
+        source_language="ro",
+        verified_context="context " * 1200,
+        requirements=["MUST preserve verification."],
+        forbidden=["MUST NOT bypass the trust gate."],
+        acceptance=["MUST pass the regression test."],
+        branch="r999/test",
+        owner="TEST",
+        max_chars=8000,
+        soft_token_budget=110,
+        hard_token_budget=140,
+    )
+
+    assert task in result.text
+    assert result.token_estimate_after <= 140
