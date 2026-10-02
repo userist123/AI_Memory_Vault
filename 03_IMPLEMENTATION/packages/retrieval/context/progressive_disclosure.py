@@ -57,8 +57,7 @@ class ProgressiveDisclosure:
             return True
         content = ProgressiveDisclosure._content_text(note.get("content", ""))
         return bool(
-            re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
-            or "```" in content
+            "```" in content
             or any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
         )
 
