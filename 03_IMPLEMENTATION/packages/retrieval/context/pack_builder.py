@@ -5,7 +5,13 @@ from typing import Callable, List, Dict, Any, Optional, Mapping
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
 from .progressive_disclosure import ProgressiveDisclosure
-from ..memory_trace import record_observed_memory_trace
+try:
+    from ..memory_trace import record_observed_memory_trace
+except ModuleNotFoundError:
+    # Memory tracing is optional observability; context packing must remain usable
+    # when the optional trace provider is not installed in this checkout.
+    def record_observed_memory_trace(**_: Any) -> None:
+        return None
 from security.knowledge_handoff import VerifiedKnowledgeHandoff
 from security.context_compression import AdaptiveContextCompressor, CompressionRouter
 
