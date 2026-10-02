@@ -33,5 +33,7 @@ class MemoryWriteBoundary:
         if state == "REVIEW" and not human_approved:
             return MemoryWriteDecision(False, "memory_approval_required")
 
-        record = self.ledger.append(namespace, payload)
+        record = self.ledger.prepare(namespace, payload)
+        if not self.ledger.commit_proposal(record, trust_state=state, human_approved=human_approved):
+            return MemoryWriteDecision(False, "memory_integrity_rejected")
         return MemoryWriteDecision(True, "memory_write_allowed", record.version)
