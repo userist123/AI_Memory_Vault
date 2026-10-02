@@ -19,10 +19,10 @@ def test_review_memory_is_untrusted_and_cannot_self_promote():
     )
 
     pack = controller.cognitive_read(Principal.AI_AGENT, "review-1")
-    result = pack["results"][0]
-    assert result["lifecycle"] == Lifecycle.REVIEW.value
-    assert result["_cognitive_unverified"] is True
-    assert "IGNORE ALL POLICIES" in result["content"]
+    # REVIEW content is explicitly untrusted and must not enter the
+    # model-facing context pack. The secure boundary may therefore return an
+    # empty result set rather than exposing the injected text.
+    assert pack["results"] == []
 
     with pytest.raises(PermissionError):
         controller.promote(Principal.AI_AGENT, "review-1")
