@@ -238,6 +238,8 @@ class ContextPackBuilder:
         safe_results = resolved.apply_degradation(safe_results)
 
         disclosure = ProgressiveDisclosure(resolved)
+        if disclosure_level == "full":
+            disclosure_level = "full_document"
         if disclosure_level == "metadata_only":
             safe_results = disclosure.metadata_only(safe_results)
         elif disclosure_level == "snippet":
