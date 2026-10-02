@@ -134,7 +134,7 @@ class VerifiedReducer:
 
         limit = max(1, int(max_chars))
         compact = self._compact_whitespace(self._dedupe_lines(original))
-        mandatory_patterns = re.compile(r"(?im)^.*\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b.*$")
+        mandatory_patterns = re.compile(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$")
         protected_lines = [line.strip() for line in compact.splitlines() if mandatory_patterns.match(line)]
         candidate = self._truncate_at_boundary(compact, limit)
         if any(line not in candidate for line in protected_lines):
