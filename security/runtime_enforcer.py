@@ -10,6 +10,7 @@ from uuid import uuid4
 
 from .tool_capabilities import CapabilitySet
 from .trust_gate import TrustDecision, TrustState
+from .security_update_policy import SecurityUpdatePolicy, SecurityUpdateRequired
 
 
 def _utc(value: datetime) -> datetime:
@@ -63,8 +64,13 @@ class ExecutionResult:
 
 
 class RuntimeEnforcer:
-    def __init__(self, capabilities: CapabilitySet | None = None) -> None:
+    def __init__(
+        self,
+        capabilities: CapabilitySet | None = None,
+        update_policy: SecurityUpdatePolicy | None = None,
+    ) -> None:
         self._capabilities = capabilities
+        self._update_policy = update_policy
         self._used_approvals: set[str] = set()
 
     def authorize(
@@ -76,6 +82,12 @@ class RuntimeEnforcer:
         now: datetime | None = None,
     ) -> RuntimeAuthorization:
         current = _utc(now or datetime.now(timezone.utc))
+
+        if self._update_policy is not None:
+            try:
+                self._update_policy.enforce(protected_operation=True)
+            except SecurityUpdateRequired:
+                return RuntimeAuthorization(False, "security_update_required")
 
         if decision.state is TrustState.BLOCKED:
             return RuntimeAuthorization(False, "blocked_content")
