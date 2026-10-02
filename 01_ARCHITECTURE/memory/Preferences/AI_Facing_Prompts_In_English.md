@@ -52,9 +52,25 @@ Handing work to any agent, human or otherwise. Detail lost in translation is
 detail lost, and an under-specified brief is paid for twice: once by the sender
 in re-explanation, once by the receiver in rediscovery.
 
-## Still open
+## Current compiler boundary
 
-The compiler fills context, traps and acceptance. Task, requirements and
-forbidden remain `TODO` markers for the sender to complete — deliberately, since
-those require judgement about the specific work. A brief shipped with `TODO`
-left in it is unfinished.
+The compiler now accepts an explicit translation provider for non-English source
+requests. The provider must return English plus verified provenance and a SHA-256
+binding to the exact source request; the translated artifact is scanned and
+trust-gated before reduction.
+
+The deterministic CLI still accepts English directly. It does not silently
+translate Romanian when no provider is injected. This is deliberate: silently
+guessing a translation would make semantic loss invisible.
+
+Intent-specific requirements, forbidden constraints and acceptance criteria are
+assembled into the English handoff rather than emitted as TODO placeholders.
+For non-English requests, the translation capability remains an explicit host
+integration point.
+
+## Token-economy invariant
+
+Context reduction is allowed only after trust is established. Budget degradation
+and progressive disclosure may shorten or remove task content, but must preserve
+verification, security, provenance, integrity, requirements, forbidden
+constraints and acceptance evidence.
