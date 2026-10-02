@@ -36,6 +36,7 @@ from .security.pagination_token import (
 from .context.budget import ContextBudget, load_agent_budget
 from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.pack_builder import ContextPackBuilder
+from memory.data_router import MemoryDataRouter
 
 
 # ============================================================================
@@ -1044,6 +1045,7 @@ class MultiLayeredFinancialSearchEngine:
         self.graph = FinancialKnowledgeGraph(self.resolver)
         self.k_rrf = k_rrf
         self.pack_builder = ContextPackBuilder()
+        self.data_router = MemoryDataRouter()
         self.warm_up()
 
     def warm_up(self):
@@ -1284,7 +1286,9 @@ class MultiLayeredFinancialSearchEngine:
                 "candidates_count": 0,
             }
             audit_event("search_financial", principal, query_fp, success=True, details={"matched": 0})
-            return pack
+            return self.data_router.route_to_model(
+                pack, source="search_financial", principal=principal.value
+            )
 
         # BM25 Lexical Scoring
         bm25_scores = self.bm25_ranker.score_corpus(sanitized, candidates, boost_symbols=list(target_symbols))
@@ -1440,7 +1444,9 @@ class MultiLayeredFinancialSearchEngine:
             "page_size": effective_page_size,
             "offset": offset,
         })
-        return pack
+        return self.data_router.route_to_model(
+            pack, source="search_financial", principal=principal.value
+        )
 
     def _extract_note_symbols(self, note: Dict[str, Any]) -> Set[str]:
         """Extracts canonical financial symbols associated with a given note."""
