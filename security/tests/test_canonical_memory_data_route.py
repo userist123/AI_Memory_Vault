@@ -17,6 +17,8 @@ def test_model_egress_route_is_canonical_and_auditable():
     pack = {
         "requestId": "route-test",
         "agentId": "AI_AGENT",
+        "budget": {"hard_tokens": 240},
+        "reduction": {"tokenizer_mode": "test", "net_tokens_saved": 10},
         "results": [
             {
                 "id": "n1",
@@ -52,6 +54,8 @@ def test_model_egress_route_rejects_unverified_data():
     pack = {
         "requestId": "route-test",
         "agentId": "AI_AGENT",
+        "budget": {"hard_tokens": 240},
+        "reduction": {"tokenizer_mode": "test", "net_tokens_saved": 0},
         "results": [{"id": "n1", "content": "unverified"}],
     }
 
