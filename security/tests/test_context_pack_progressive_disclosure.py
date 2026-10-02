@@ -5,7 +5,7 @@ from pathlib import Path
 
 PACKAGES = Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION" / "packages"
 if str(PACKAGES) not in sys.path:
-    sys.path.insert(0, str(PACKAGES))
+    sys.path.append(str(PACKAGES))
 
 from retrieval.context.pack_builder import ContextPackBuilder
 
