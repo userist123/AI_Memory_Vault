@@ -168,7 +168,12 @@ class AuditTrail:
             self._records.append(record)
             return record
 
-    def verify(self) -> bool:
+    def checkpoint(self) -> str:
+        """Return the current chain head for external durable anchoring."""
+        with self._lock:
+            return self._records[-1].sha256 if self._records else ""
+
+    def verify(self, expected_head_sha256: str | None = None) -> bool:
         with self._lock:
             previous = None
             for record in self._records:
@@ -185,6 +190,8 @@ class AuditTrail:
                 if record.sha256 != expected:
                     return False
                 previous = record.sha256
+            if expected_head_sha256 is not None and previous != expected_head_sha256:
+                return False
             return True
 
     def export(self) -> list[dict[str, Any]]:
