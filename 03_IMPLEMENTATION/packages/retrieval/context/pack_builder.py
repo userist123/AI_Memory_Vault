@@ -262,12 +262,11 @@ class ContextPackBuilder:
             )
             if result.validation.get("passed", False):
                 candidate["content"] = result.content
+                # Keep the original verified compression decision. The
+                # second pass is only a budget-fitting representation step and
+                # must not rewrite the semantic compression metric.
                 if isinstance(compression, dict):
-                    candidate["compression"] = {
-                        **compression,
-                        "action": result.decision.action,
-                        "reason": result.decision.reason,
-                    }
+                    candidate["compression"] = compression
         compact_metrics = {
             key: reduction_metrics[key]
             for key in ("verified_first", "tokens_saved", "net_tokens_saved")
