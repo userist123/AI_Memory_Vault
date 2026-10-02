@@ -1,15 +1,11 @@
-"""Host integration seam that makes runtime security checks mandatory.
-
-The adapter owns registered tool executors. Callers cannot supply an executor at
-execution time, so a host integration cannot accidentally bypass the registry,
-tool pin, runtime authorization, or tool-output trust boundary.
-"""
+"""Host integration seam that makes runtime security checks mandatory."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Callable
 
+from .audit_trail import AuditTrail
 from .runtime_enforcer import (
     ApprovalToken,
     ExecutionRequest,
@@ -37,9 +33,11 @@ class RuntimeAdapter:
         enforcer: RuntimeEnforcer | None = None,
         *,
         event_sink: Callable[[SecurityEvent], None] | None = None,
+        audit_trail: AuditTrail | None = None,
     ) -> None:
         self._enforcer = enforcer or RuntimeEnforcer()
         self._event_sink = event_sink
+        self._audit_trail = audit_trail
         self._registered: dict[str, tuple[RegisteredTool, Callable[[ExecutionRequest], Any]]] = {}
 
     def register(
@@ -54,6 +52,15 @@ class RuntimeAdapter:
 
         pin = pin_tool(definition)
         self._registered[definition.name] = (RegisteredTool(definition, pin), executor)
+        if self._audit_trail is not None:
+            self._audit_trail.record(
+                event_type="TOOL_REGISTERED",
+                actor="host",
+                correlation_id=f"register:{definition.name}",
+                outcome="REGISTERED",
+                tool_name=definition.name,
+                target=definition.server_id,
+            )
         return pin
 
     def execute(
@@ -65,6 +72,15 @@ class RuntimeAdapter:
         approval: ApprovalToken | None = None,
         now: datetime | None = None,
     ) -> ExecutionResult:
+        self._audit(
+            "TOOL_REQUEST",
+            request,
+            decision,
+            "STARTED",
+            parameters_sha256=request.parameters_sha256(),
+            approval_id=approval.approval_id if approval else None,
+        )
+
         registered = self._registered.get(request.tool_name)
         if registered is None:
             return self._deny(request, decision, "tool_not_registered")
@@ -83,16 +99,51 @@ class RuntimeAdapter:
             approval=approval,
             now=now,
         )
+        self._audit(
+            "TOOL_AUTHORIZATION",
+            request,
+            decision,
+            "ALLOWED" if result.authorization.allowed else "DENIED",
+            decision_reason=result.authorization.reason,
+            approval_id=approval.approval_id if approval else None,
+        )
         if not result.authorization.allowed:
             self._emit(request, decision, result.authorization)
             return result
 
-        response = validate_tool_response(request.tool_name, result.value)
+        try:
+            response = validate_tool_response(request.tool_name, result.value)
+        except Exception as exc:
+            self._audit(
+                "TOOL_RESPONSE_ERROR",
+                request,
+                decision,
+                "ERROR",
+                error=exc,
+            )
+            raise
+
         if not response.allowed:
             authorization = RuntimeAuthorization(False, response.reason)
+            self._audit(
+                "TOOL_RESPONSE",
+                request,
+                decision,
+                "DENIED",
+                decision_reason=response.reason,
+                scanner_verdict=response.verdict,
+            )
             self._emit(request, decision, authorization)
             return ExecutionResult(authorization)
 
+        self._audit(
+            "TOOL_RESPONSE",
+            request,
+            decision,
+            "ALLOWED",
+            scanner_verdict=response.verdict,
+            payload=response.data,
+        )
         self._emit(request, decision, result.authorization)
         return ExecutionResult(result.authorization, response.data)
 
@@ -103,8 +154,47 @@ class RuntimeAdapter:
         reason: str,
     ) -> ExecutionResult:
         authorization = RuntimeAuthorization(False, reason)
+        self._audit(
+            "TOOL_AUTHORIZATION",
+            request,
+            decision,
+            "DENIED",
+            decision_reason=reason,
+        )
         self._emit(request, decision, authorization)
         return ExecutionResult(authorization)
+
+    def _audit(
+        self,
+        event_type: str,
+        request: ExecutionRequest,
+        decision: TrustDecision,
+        outcome: str,
+        *,
+        parameters_sha256: str | None = None,
+        approval_id: str | None = None,
+        decision_reason: str | None = None,
+        scanner_verdict: str | None = None,
+        payload: Any = None,
+        error: BaseException | None = None,
+    ) -> None:
+        if self._audit_trail is None:
+            return
+        self._audit_trail.record(
+            event_type=event_type,
+            actor=request.actor,
+            correlation_id=request.correlation_id,
+            outcome=outcome,
+            trust_state=decision.state.value,
+            tool_name=request.tool_name,
+            target=request.target,
+            parameters_sha256=parameters_sha256,
+            payload=payload,
+            approval_id=approval_id,
+            decision_reason=decision_reason,
+            scanner_verdict=scanner_verdict,
+            error=error,
+        )
 
     def _emit(
         self,
@@ -119,7 +209,7 @@ class RuntimeAdapter:
                 event_type="tool_execution",
                 source="runtime_adapter",
                 actor=request.actor,
-                correlation_id=request.tool_name,
+                correlation_id=request.correlation_id,
                 trust_state=decision.state.value,
                 tool_name=request.tool_name,
                 tool_allowed=authorization.allowed,
