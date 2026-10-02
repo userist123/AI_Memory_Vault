@@ -89,7 +89,7 @@ class ProgressiveDisclosure:
             if not self._verified(note):
                 continue
             content = note.get("content", "")
-            lines = content.split("\\n")
+            lines = content.split("\n")
             matched = [ln for ln in lines if any(tok in ln.lower() for tok in tokens)]
             entry = {"id": note.get("id"), "sections": matched[:5], **self._security_metadata(note)}
             result.append(entry)
