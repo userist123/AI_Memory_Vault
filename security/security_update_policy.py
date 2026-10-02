@@ -29,6 +29,7 @@ class SecurityUpdate:
     mandatory_after: datetime | None
     min_runtime_version: str
     package_sha256: str
+    signature: str = ""
     notes: str = ""
 
     @classmethod
@@ -44,6 +45,7 @@ class SecurityUpdate:
             ),
             min_runtime_version=str(data["min_runtime_version"]),
             package_sha256=str(data["package_sha256"]),
+            signature=str(data.get("signature", "")),
             notes=str(data.get("notes", "")),
         )
 
@@ -59,6 +61,7 @@ class SecurityUpdate:
             ),
             "min_runtime_version": self.min_runtime_version,
             "package_sha256": self.package_sha256,
+            "signature": self.signature,
             "notes": self.notes,
         }
         return json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
