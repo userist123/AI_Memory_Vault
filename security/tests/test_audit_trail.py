@@ -58,9 +58,10 @@ def test_runtime_adapter_audits_request_decision_and_response():
     result = adapter.execute(request, _tool(), _trusted())
 
     assert result.authorization.allowed is True
-    event_types = [record.event_type for record in trail.records]
+    scoped = [record for record in trail.records if record.correlation_id == "corr-runtime"]
+    event_types = [record.event_type for record in scoped]
     assert event_types == ["TOOL_REQUEST", "TOOL_AUTHORIZATION", "TOOL_RESPONSE"]
-    assert all(record.correlation_id == "corr-runtime" for record in trail.records)
+    assert all(record.correlation_id == "corr-runtime" for record in scoped)
     assert trail.verify() is True
 
 
@@ -102,4 +103,24 @@ def test_memory_adapter_audits_denial_persistence_and_commit():
         "MEMORY_COMMIT",
     ]
     assert all(r.correlation_id for r in trail.records)
+    assert trail.verify() is True
+
+
+def test_memory_adapter_audits_backend_failure_without_exception_message():
+    trail = AuditTrail()
+
+    def persist(namespace, payload):
+        raise RuntimeError("credential=do-not-log")
+
+    adapter = MemoryAdapter(persist, audit_trail=trail)
+
+    try:
+        adapter.write("agent", {"fact": "verified"}, TrustState.TRUSTED, correlation_id="corr-memory-fail")
+    except RuntimeError:
+        pass
+
+    record = trail.records[-1]
+    assert record.event_type == "MEMORY_PERSIST_ERROR"
+    assert record.error_type == "RuntimeError"
+    assert "credential" not in str(record.to_dict())
     assert trail.verify() is True
