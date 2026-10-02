@@ -55,7 +55,7 @@ def test_injected_token_counter_is_used_for_budget_estimates():
 
 def test_compression_is_not_reported_as_llm_token_savings():
     text = "repeated " * 1000
-    budget = ContextBudget({"soft_limit_bytes": 5000, "hard_limit_bytes": 100000})
+    budget = ContextBudget({"soft_limit_bytes": 20000, "hard_limit_bytes": 100000})
     notes = [{"id": "n1", "content": text, "relevance": 1}]
     degraded = budget.apply_degradation(notes)
     assert isinstance(degraded[0]["content"], bytes)
