@@ -58,3 +58,19 @@ def test_unknown_disclosure_level_fails_closed():
         assert str(exc) == "unknown disclosure level: invented"
     else:
         raise AssertionError("unknown disclosure levels must fail closed")
+
+
+def test_sections_disclosure_matches_lines_and_retains_security():
+    item = dict(ITEM)
+    item["content"] = "architecture\nsecurity boundary\ntoken economy\n"
+    result = ContextPackBuilder().build(
+        request_id="sections-test",
+        agent_id="default",
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 4096, "hard": 8192, "soft_tokens": 1000, "hard_tokens": 2000},
+        results=[item],
+        disclosure_level="sections",
+        disclosure_query="token economy",
+    )
+    entry = result["results"][0]
+    assert entry["sections"] == ["token economy"]
+    assert entry["verification"]["status"] == "TRUSTED"
