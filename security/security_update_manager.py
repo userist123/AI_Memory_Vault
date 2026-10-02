@@ -107,12 +107,14 @@ class SecurityUpdateManager:
         self,
         candidate: UpdateCandidate,
         *,
+        provenance: CatalogProvenance | None = None,
         actor: str = "security-update-service",
         correlation_id: str = "security-update",
     ) -> None:
         if not self.evaluate(
             candidate.update,
             candidate.package,
+            provenance=provenance,
             actor=actor,
             correlation_id=correlation_id,
         ):
