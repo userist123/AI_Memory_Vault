@@ -1,0 +1,47 @@
+name: AI Security Update Watch
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  security-update-watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check configured security catalog
+        env:
+          CATALOG_URL: ${{ vars.AI_SECURITY_UPDATE_CATALOG_URL }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CATALOG_URL}" ]; then
+            echo "::warning::AI_SECURITY_UPDATE_CATALOG_URL is not configured; external catalog monitoring is not active."
+            exit 0
+          fi
+
+          curl --fail --location --silent --show-error --max-time 30 "${CATALOG_URL}" -o /tmp/security-update-catalog.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(Path("/tmp/security-update-catalog.json").read_text())
+          if data.get("schema_version") != 1:
+              raise SystemExit("Unsupported security update catalog schema")
+          if "minimum_runtime_version" not in data:
+              raise SystemExit("Catalog is missing minimum_runtime_version")
+          for item in data.get("updates", []):
+              required = {"update_id", "version", "severity", "released_at", "min_runtime_version", "package_sha256"}
+              missing = required - item.keys()
+              if missing:
+                  raise SystemExit(f"Update entry missing fields: {sorted(missing)}")
+          print(f"Validated catalog with {len(data.get('updates', []))} update(s).")
+          PY
+
+          gh issue list --repo "${GITHUB_REPOSITORY}" --label security-update --state open --limit 1 >/dev/null 2>&1 || true
+          echo "Catalog is structurally valid. Installation remains subject to signature, hash, tests and runtime policy."
