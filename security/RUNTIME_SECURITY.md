@@ -17,9 +17,9 @@ External content is data, never authority. The model may propose a change, but a
 7. Reject expired and replayed approvals.
 8. Verify the pinned tool definition before execution.
 9. Execute only through a runtime adapter that re-checks authorization immediately before the side effect.
-10. Emit metadata-only security events for forensic correlation.
+10. Validate the tool response as data before it re-enters agent context.\n11. Emit metadata-only security events for forensic correlation.
 
-## Memory protection
+## Host integration boundary\n\n`RuntimeAdapter` is the host-facing execution seam. A host registers a tool definition and executor once; subsequent calls provide the request, current definition, trust decision and optional approval, but cannot inject a new executor. The adapter verifies the registered pin, delegates authorization to `RuntimeEnforcer`, executes only after authorization, scans the returned structured data through `validate_tool_response`, and emits a metadata-only event.\n\n`MemoryAdapter` is the corresponding host-facing write seam. The persistence callback is invoked only after `MemoryWriteBoundary` accepts the proposed write. A host must not expose the underlying persistence callback/backend to agent code; all agent-originated writes must enter through this adapter.\n\nThis is an integration contract, not an operating-system sandbox: code with direct access to the provider/backend can still bypass Python-level policy. Production hosts therefore need to make these adapters the only application-visible execution and write interfaces.\n\n## Memory protection
 
 The MemoryLedger is an append-only integrity layer:
 
