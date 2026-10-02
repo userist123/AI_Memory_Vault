@@ -56,11 +56,13 @@ class ProgressiveDisclosure:
         if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
             return True
         content = ProgressiveDisclosure._content_text(note.get("content", ""))
+        # Textual constraints are protected spans, not a reason to make the
+        # entire document indivisible. Budget reduction may compact surrounding
+        # content while preserving those spans.
         return bool(
             note.get("do_not_compress")
             or note.get("protected_content")
             or any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
-            or ProgressiveDisclosure._protected_lines(content)
         )
 
     @staticmethod
