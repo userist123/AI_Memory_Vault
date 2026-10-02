@@ -55,7 +55,7 @@ class ProgressiveDisclosure:
     def _protected_content(note: Dict[str, Any]) -> bool:
         if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
             return True
-        content = self._content_text(note.get("content", ""))
+        content = ProgressiveDisclosure._content_text(note.get("content", ""))
         return bool(
             re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
             or "```" in content
