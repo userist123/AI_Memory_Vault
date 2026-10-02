@@ -1,8 +1,7 @@
-"""Static, read-only scanner for agent skills and prompt-like Markdown.
+"""Static, read-only scanner for agent skills, prompts, scripts and code.
 
 Evidence-first: educational examples are contextual indicators and do not become
-active exfiltration findings unless actionable data access and external sending
-are both present.
+active exfiltration findings solely because they contain attack phrases.
 
 No code from scanned content is executed.
 """
@@ -14,6 +13,14 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
+SCANNABLE_EXTENSIONS = {
+    ".md", ".markdown", ".txt", ".prompt",
+    ".py", ".ps1", ".psm1", ".psd1", ".sh", ".bash",
+    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+    ".json", ".yaml", ".yml", ".toml", ".ini", ".cfg",
+}
+MAX_SOURCE_SINK_DISTANCE = 30
 
 NETWORK_PATTERNS = [
     ("http_request", re.compile(r"\b(?:curl|wget|Invoke-WebRequest|Invoke-RestMethod|requests\.(?:get|post|put|request)|fetch\s*\(|axios\.(?:get|post|request)|httpx\.(?:get|post|request)|urllib\.request)\b", re.I)),
@@ -34,6 +41,9 @@ SECRET_DESTINATION_PATTERNS = [
     ("external_endpoint", re.compile(r'''https?://[^\s)\]}>"']+''', re.I)),
     ("email_destination", re.compile(r"\b(?:send|email|mail)\b.{0,60}\bto\s+[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.I)),
 ]
+INVISIBLE_UNICODE_PATTERN = re.compile(
+    "[\u200b-\u200f\u202a-\u202e\u2060\u2061\u2062\u2063\u2064\u2066-\u206f\ufeff]"
+)
 EDUCATIONAL_MARKERS = re.compile(
     r"\b(?:example|example only|for educational purposes|educational|demonstration|"
     r"hypothetical|sample|illustration|do not execute|not intended to|toy example|"
@@ -80,7 +90,7 @@ def _extract_provenance(skill_dir: Path) -> dict[str, object]:
 
 
 def _evidence(lines: list[str], category: str, pattern: re.Pattern[str]) -> list[Evidence]:
-    out = []
+    out: list[Evidence] = []
     for idx, line in enumerate(lines):
         if pattern.search(line):
             educational = _is_educational(_context_window(lines, idx))
@@ -96,26 +106,50 @@ def _evidence(lines: list[str], category: str, pattern: re.Pattern[str]) -> list
     return out
 
 
+def _unicode_evidence(lines: list[str]) -> list[Evidence]:
+    out: list[Evidence] = []
+    for idx, line in enumerate(lines):
+        if INVISIBLE_UNICODE_PATTERN.search(line):
+            out.append(
+                Evidence(
+                    "invisible_unicode",
+                    line.strip()[:500],
+                    idx + 1,
+                    True,
+                    "zero-width, bidi or format-control character detected",
+                )
+            )
+    return out
+
+
+def _has_source_sink_chain(findings: list[Evidence], data_categories: set[str], network_categories: set[str]) -> bool:
+    data_lines = [e.line for e in findings if e.active and e.category in data_categories]
+    network_lines = [e.line for e in findings if e.active and e.category in network_categories]
+    return any(abs(a - b) <= MAX_SOURCE_SINK_DISTANCE for a in data_lines for b in network_lines)
+
+
 def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None) -> ScanResult:
     lines = text.splitlines()
-    findings = []
+    findings: list[Evidence] = []
     for category, pattern in NETWORK_PATTERNS + DATA_PATTERNS + OVERRIDE_PATTERNS + SECRET_DESTINATION_PATTERNS:
         findings.extend(_evidence(lines, category, pattern))
+    findings.extend(_unicode_evidence(lines))
 
     data_categories = {x[0] for x in DATA_PATTERNS}
     network_categories = {x[0] for x in NETWORK_PATTERNS + SECRET_DESTINATION_PATTERNS}
     override_categories = {x[0] for x in OVERRIDE_PATTERNS}
-
     active_data = {e.category for e in findings if e.active and e.category in data_categories}
     active_network = {e.category for e in findings if e.active and e.category in network_categories}
     active_override = {e.category for e in findings if e.active and e.category in override_categories}
+    invisible_unicode = any(e.active and e.category == "invisible_unicode" for e in findings)
+    source_sink_chain = _has_source_sink_chain(findings, data_categories, network_categories)
 
-    if active_data and active_network:
-        verdict, score = "BLOCK", 90
+    if source_sink_chain:
+        verdict, score = "BLOCK", 95
     elif active_override and active_network:
-        verdict, score = "REVIEW", 75
-    elif active_override:
-        verdict, score = "REVIEW", 55
+        verdict, score = "REVIEW", 80
+    elif invisible_unicode or active_override:
+        verdict, score = "REVIEW", 60
     elif active_network or active_data:
         verdict, score = "REVIEW", 35
     else:
@@ -133,17 +167,17 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
 
 def scan_path(path: Path) -> list[ScanResult]:
     if path.is_file():
-        candidates = [path] if path.suffix.lower() in {".md", ".markdown", ".txt", ".prompt"} else []
+        candidates = [path] if path.suffix.lower() in SCANNABLE_EXTENSIONS else []
     else:
         candidates = sorted(
             p for p in path.rglob("*")
             if p.is_file()
-            and p.suffix.lower() in {".md", ".markdown", ".txt", ".prompt"}
+            and p.suffix.lower() in SCANNABLE_EXTENSIONS
             and ".git" not in p.parts
             and "node_modules" not in p.parts
         )
 
-    results = []
+    results: list[ScanResult] = []
     for candidate in candidates:
         try:
             text = candidate.read_text(encoding="utf-8")
@@ -154,14 +188,12 @@ def scan_path(path: Path) -> list[ScanResult]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Read-only skill/prompt exfiltration scanner")
+    parser = argparse.ArgumentParser(description="Read-only skill/prompt/code exfiltration scanner")
     parser.add_argument("path", type=Path)
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args()
-
     results = scan_path(args.path)
     payload = [asdict(result) for result in results]
-
     if args.json_output:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
