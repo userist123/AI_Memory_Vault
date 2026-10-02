@@ -44,9 +44,9 @@ class MemoryAdapter:
     ) -> MemoryWriteDecision:
         with self._lock:
             record, denied = self.boundary.prepare(
-            namespace,
-            payload,
-            trust_state,
+                namespace,
+                payload,
+                trust_state,
                 human_approved=human_approved,
             )
             if denied is not None:
