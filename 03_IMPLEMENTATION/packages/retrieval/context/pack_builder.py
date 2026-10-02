@@ -3,6 +3,7 @@ import zlib
 from typing import Callable, List, Dict, Any, Optional, Mapping
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
+from .progressive_disclosure import ProgressiveDisclosure
 from ..memory_trace import record_observed_memory_trace
 from security.knowledge_handoff import VerifiedKnowledgeHandoff
 
@@ -171,6 +172,22 @@ class ContextPackBuilder:
         safe_results, reduction_metrics = self._verify_and_reduce(safe_results, resolved)
         safe_results = resolved.apply_degradation(safe_results)
 
+        disclosure = ProgressiveDisclosure(resolved)
+        if disclosure_level == "metadata_only":
+            safe_results = disclosure.metadata_only(safe_results)
+        elif disclosure_level == "snippet":
+            safe_results = disclosure.snippet(safe_results)
+        elif disclosure_level == "full_document":
+            safe_results = disclosure.full_document(safe_results)
+        elif disclosure_level == "sections":
+            # Section selection needs the caller's query; the legacy builder
+            # has no query argument, so retain the verified budgeted form.
+            # Callers needing query-aware sections should use ProgressiveDisclosure
+            # directly rather than silently guessing a query.
+            pass
+        elif disclosure_level != "provenance_on_demand":
+            raise ValueError(f"unknown disclosure level: {disclosure_level}")
+        
         # Keep the highest-value results until BOTH transport and token budgets fit.
         while safe_results:
             pack = self._build_pack(
