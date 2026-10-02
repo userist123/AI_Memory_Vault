@@ -105,10 +105,11 @@ class ContextPackBuilder:
                     latency_ms_per_input_token=resolved.latency_ms_per_input_token,
                 )
             )
+            protected_artifact = any(item.get(key) is not None for key in ("code", "signature", "dependencies", "identifiers"))
             compression = compressor.compress(
                 content, query=query,
                 target_chars=reduction_chars,
-                do_not_compress=bool(item.get("do_not_compress", False)),
+                do_not_compress=bool(item.get("do_not_compress", False)) or protected_artifact,
             )
             if not compression.validation.get("passed", False):
                 rejected += 1
