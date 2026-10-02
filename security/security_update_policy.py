@@ -31,6 +31,22 @@ class SecurityUpdate:
     package_sha256: str
     notes: str = ""
 
+    @classmethod
+    def from_dict(cls, data: dict[str, object]) -> "SecurityUpdate":
+        return cls(
+            update_id=str(data["update_id"]),
+            version=str(data["version"]),
+            severity=UpdateSeverity(str(data["severity"])),
+            released_at=datetime.fromisoformat(str(data["released_at"]).replace("Z", "+00:00")),
+            mandatory_after=(
+                datetime.fromisoformat(str(data["mandatory_after"]).replace("Z", "+00:00"))
+                if data.get("mandatory_after") else None
+            ),
+            min_runtime_version=str(data["min_runtime_version"]),
+            package_sha256=str(data["package_sha256"]),
+            notes=str(data.get("notes", "")),
+        )
+
     def canonical_bytes(self) -> bytes:
         payload = {
             "update_id": self.update_id,
