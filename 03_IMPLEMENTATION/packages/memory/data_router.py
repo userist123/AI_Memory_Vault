@@ -10,7 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any, Callable, Dict, Mapping
 
-from .context.budget import ContextBudget
+from retrieval.context.budget import ContextBudget
 
 
 class DataRouteViolation(RuntimeError):
