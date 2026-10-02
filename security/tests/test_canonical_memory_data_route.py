@@ -74,6 +74,7 @@ def test_model_egress_route_rejects_unverified_data():
 def test_controller_context_entrypoints_use_canonical_route(method_name):
     source = inspect.getsource(getattr(MemoryController, method_name))
     assert "data_router.dispatch" in source
+    assert "route_to_model" not in source
 
 
 def test_financial_engine_uses_canonical_route():
