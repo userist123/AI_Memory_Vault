@@ -22,6 +22,10 @@ class CompressionDecision:
     original_tokens: int
     estimated_tokens: int
     redundancy: float
+    tokenizer_mode: str = "heuristic_fallback"
+    net_tokens_saved: int = 0
+    cost_saved: float | None = None
+    latency_saved_ms: float | None = None
 
 @dataclass(frozen=True)
 class CompressionResult:
@@ -34,14 +38,34 @@ class CompressionResult:
 
 class CompressionRouter:
     def __init__(self, *, min_tokens: int = 800, min_redundancy: float = 0.15,
-                 estimated_overhead_tokens: int = 120, chars_per_token: float = 4.0) -> None:
+                 estimated_overhead_tokens: int = 120, chars_per_token: float = 4.0,
+                 tokenizer: Callable[[str], int] | None = None,
+                 cost_per_input_token: float | None = None,
+                 latency_ms_per_input_token: float | None = None) -> None:
         self.min_tokens = max(1, int(min_tokens))
         self.min_redundancy = max(0.0, min(1.0, float(min_redundancy)))
         self.estimated_overhead_tokens = max(0, int(estimated_overhead_tokens))
         self.chars_per_token = max(1.0, float(chars_per_token))
+        self.tokenizer = tokenizer
+        self.cost_per_input_token = cost_per_input_token
+        self.latency_ms_per_input_token = latency_ms_per_input_token
+
+    @property
+    def tokenizer_mode(self) -> str:
+        return "real" if self.tokenizer is not None else "heuristic_fallback"
 
     def estimate_tokens(self, text: str) -> int:
-        return 0 if not text else max(1, round(len(text) / self.chars_per_token))
+        if not text:
+            return 0
+        if self.tokenizer is not None:
+            try:
+                value = int(self.tokenizer(text))
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ValueError("tokenizer_invalid") from exc
+            if value < 0:
+                raise ValueError("tokenizer_returned_negative")
+            return value
+        return max(1, round(len(text) / self.chars_per_token))
 
     @staticmethod
     def redundancy(text: str) -> float:
@@ -50,16 +74,18 @@ class CompressionRouter:
             return 0.0
         return max(0.0, 1.0 - len(set(lines)) / len(lines))
 
-    def decide(self, text: str, *, query: str = "") -> CompressionDecision:
+    def decide(self, text: str, *, query: str = "", do_not_compress: bool = False) -> CompressionDecision:
         original_tokens = self.estimate_tokens(text)
         redundancy = self.redundancy(text)
+        if do_not_compress:
+            return CompressionDecision("NO_OP", "DO_NOT_COMPRESS", original_tokens, original_tokens, redundancy, self.tokenizer_mode)
         if original_tokens < self.min_tokens:
-            return CompressionDecision("NO_OP", "context_below_compression_threshold", original_tokens, original_tokens, redundancy)
+            return CompressionDecision("NO_OP", "context_below_compression_threshold", original_tokens, original_tokens, redundancy, self.tokenizer_mode)
         if original_tokens <= self.estimated_overhead_tokens:
-            return CompressionDecision("NO_OP", "compressor_overhead_not_justified", original_tokens, original_tokens, redundancy)
+            return CompressionDecision("NO_OP", "compressor_overhead_not_justified", original_tokens, original_tokens, redundancy, self.tokenizer_mode)
         if redundancy < self.min_redundancy and not query.strip():
-            return CompressionDecision("NO_OP", "low_redundancy_without_query", original_tokens, original_tokens, redundancy)
-        return CompressionDecision("COMPRESS", "long_or_query_relevant_context", original_tokens, original_tokens, redundancy)
+            return CompressionDecision("NO_OP", "low_redundancy_without_query", original_tokens, original_tokens, redundancy, self.tokenizer_mode)
+        return CompressionDecision("COMPRESS", "long_or_query_relevant_context", original_tokens, original_tokens, redundancy, self.tokenizer_mode)
 
 class ProtectedSpanDetector:
     _PATTERNS = (
@@ -148,8 +174,11 @@ class AdaptiveContextCompressor:
         self.validator = validator or CompressionValidator()
 
     def compress(self, text: str, *, query: str = "", target_chars: int | None = None,
-                 downstream_validator: Callable[[str], bool] | None = None) -> CompressionResult:
-        decision = self.router.decide(text, query=query)
+                 downstream_validator: Callable[[str], bool] | None = None,
+                 do_not_compress: bool = False,
+                 cost_per_input_token: float | None = None,
+                 latency_ms_per_input_token: float | None = None) -> CompressionResult:
+        decision = self.router.decide(text, query=query, do_not_compress=do_not_compress)
         protected = self.protector.detect(text)
         if decision.action == "NO_OP":
             validation = self.validator.validate(text, text, protected, downstream_validator=downstream_validator)
@@ -165,7 +194,13 @@ class AdaptiveContextCompressor:
                                     decision.original_tokens, self.router.estimate_tokens(text), decision.redundancy),
                 protected, removed, fallback_validation, True)
         after = self.router.estimate_tokens(candidate)
+        saved = max(0, decision.original_tokens - after)
+        cost_rate = cost_per_input_token if cost_per_input_token is not None else self.router.cost_per_input_token
+        latency_rate = latency_ms_per_input_token if latency_ms_per_input_token is not None else self.router.latency_ms_per_input_token
         return CompressionResult(
             candidate,
-            CompressionDecision("COMPRESS", decision.reason, decision.original_tokens, after, decision.redundancy),
+            CompressionDecision("COMPRESS", decision.reason, decision.original_tokens, after, decision.redundancy,
+                                decision.tokenizer_mode, saved,
+                                saved * cost_rate if cost_rate is not None else None,
+                                saved * latency_rate if latency_rate is not None else None),
             protected, removed, validation, False)
