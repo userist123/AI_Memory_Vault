@@ -1,0 +1,51 @@
+"""Tests for adaptive prompt/context compression."""
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from security.context_compression import AdaptiveContextCompressor, CompressionRouter, ProtectedSpanDetector
+
+
+def test_short_context_is_no_op():
+    router = CompressionRouter(min_tokens=100)
+    result = AdaptiveContextCompressor(router=router).compress("short context")
+    assert result.decision.action == "NO_OP"
+    assert result.content == "short context"
+
+
+def test_query_aware_compression_keeps_protected_constraint():
+    text = "\n".join([
+        "irrelevant architecture detail " * 4,
+        "MUST NOT bypass the security gate.",
+        "token economy is measured by final model input.",
+        "unrelated deployment history " * 4,
+    ])
+    result = AdaptiveContextCompressor(
+        router=CompressionRouter(min_tokens=10, min_redundancy=0.0),
+    ).compress(text, query="token economy")
+    assert result.decision.action == "COMPRESS"
+    assert "MUST NOT bypass the security gate." in result.content
+    assert result.validation["protected_recall"] == 1.0
+
+
+def test_failed_validation_falls_back_to_original():
+    text = "\n".join(["token economy " * 10, "MUST preserve this constraint."])
+    result = AdaptiveContextCompressor(
+        router=CompressionRouter(min_tokens=5, min_redundancy=0.0),
+    ).compress(text, query="token", downstream_validator=lambda _: False)
+    assert result.decision.action == "FALLBACK"
+    assert result.fallback is True
+    assert result.content == text
+
+
+def test_protected_detector_marks_code_and_versions():
+    text = "Use v2.4.1 and run --safe-mode."
+    code = "python print('x')"
+    text = text + "\n" + code
+    spans = ProtectedSpanDetector().detect(text)
+    reasons = {span.reason for span in spans}
+    assert "version" in reasons
+    assert "cli_identifier" in reasons
