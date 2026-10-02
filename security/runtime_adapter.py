@@ -92,13 +92,24 @@ class RuntimeAdapter:
         ):
             return self._deny(request, decision, "tool_definition_mismatch")
 
-        result = self._enforcer.execute(
-            request,
-            decision,
-            executor,
-            approval=approval,
-            now=now,
-        )
+        try:
+            result = self._enforcer.execute(
+                request,
+                decision,
+                executor,
+                approval=approval,
+                now=now,
+            )
+        except Exception as exc:
+            self._audit(
+                "TOOL_EXECUTION_ERROR",
+                request,
+                decision,
+                "ERROR",
+                error=exc,
+            )
+            raise
+
         self._audit(
             "TOOL_AUTHORIZATION",
             request,
