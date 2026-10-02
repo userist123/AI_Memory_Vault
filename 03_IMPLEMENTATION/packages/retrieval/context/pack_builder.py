@@ -200,16 +200,21 @@ class ContextPackBuilder:
             re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
             or "```" in content
         )
-    @staticmethod
     def _compact_for_token_budget(
+        self,
         results: List[Dict[str, Any]],
         reduction_metrics: Dict[str, Any],
+        resolved: ContextBudget,
+        request_id: str,
+        agent_id: str,
+        disclosure_level: str,
     ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
-        """Drop only optional reduction diagnostics when the model budget is tight.
+        """Fit optional representation details before considering result removal.
 
-        Trust, provenance, requirements, acceptance and protected content remain
-        untouched. This is an adaptive metadata disclosure step, not a security
-        bypass and not content reduction.
+        This is a model-facing budget optimization, not a trust decision.
+        Verification, provenance, requirements, acceptance data, protected spans,
+        and mandatory content are never discarded. If content itself cannot fit
+        after adaptive reduction, the caller still fails closed.
         """
         compact_results: List[Dict[str, Any]] = []
         for item in results:
@@ -221,15 +226,49 @@ class ContextPackBuilder:
                     for key in ("action", "reason")
                     if key in compression
                 }
-            reduction = candidate.get("reduction")
-            if isinstance(reduction, dict):
-                candidate["reduction"] = {
-                    key: reduction[key]
-                    for key in ("token_estimate_before", "token_estimate_after", "tokens_saved")
-                    if key in reduction
-                }
+            candidate.pop("reduction", None)
             compact_results.append(candidate)
 
+        # Reserve the actual envelope + trust metadata, then give remaining
+        # capacity to content. This avoids a fixed compression target that can
+        # fit the document but not the final context pack.
+        for candidate in compact_results:
+            if "content" not in candidate:
+                continue
+            probe = dict(candidate)
+            probe["content"] = ""
+            probe_pack = self._build_pack(
+                request_id, agent_id, resolved, [probe], disclosure_level,
+                None, None, None, {"verified_first": True}
+            )
+            envelope_tokens = resolved.estimate_tokens(probe_pack)
+            available_tokens = max(1, resolved.hard_token_budget - envelope_tokens)
+            target_chars = max(1, int(available_tokens * resolved.chars_per_token))
+            content = str(candidate.get("content", ""))
+            if len(content) <= target_chars:
+                continue
+            router = CompressionRouter(
+                min_tokens=1,
+                tokenizer=resolved.tokenizer,
+                chars_per_token=resolved.chars_per_token,
+                cost_per_input_token=resolved.cost_per_input_token,
+                latency_ms_per_input_token=resolved.latency_ms_per_input_token,
+                estimated_overhead_tokens=resolved.estimated_overhead_tokens,
+            )
+            result = AdaptiveContextCompressor(router=router).compress(
+                content,
+                query="",
+                target_chars=target_chars,
+                do_not_compress=False,
+            )
+            if result.validation.get("passed", False):
+                candidate["content"] = result.content
+                if isinstance(compression, dict):
+                    candidate["compression"] = {
+                        **compression,
+                        "action": result.decision.action,
+                        "reason": result.decision.reason,
+                    }
         compact_metrics = {
             key: reduction_metrics[key]
             for key in ("verified_first", "tokens_saved", "net_tokens_saved")
@@ -308,7 +347,12 @@ class ContextPackBuilder:
             estimated_tokens = resolved.estimate_tokens(pack)
             if estimated_tokens > resolved.hard_token_budget:
                 compact_results, compact_metrics = self._compact_for_token_budget(
-                    safe_results, reduction_metrics
+                    safe_results,
+                    reduction_metrics,
+                    resolved,
+                    request_id,
+                    agent_id,
+                    disclosure_level,
                 )
                 compact_pack = self._build_pack(
                     request_id, agent_id, resolved, compact_results, disclosure_level,
