@@ -43,7 +43,7 @@ def test_context_builder_has_verified_reduction_before_budget_degradation():
         n.lineno for n in calls
         if isinstance(n, ast.Call)
         and isinstance(n.func, ast.Attribute)
-        and n.func.attr in {"reduce", "compile"}
+        and n.func.attr in {"_verify_and_reduce", "reduce", "compile"}
     ]
     budget_lines = [
         n.lineno for n in calls
