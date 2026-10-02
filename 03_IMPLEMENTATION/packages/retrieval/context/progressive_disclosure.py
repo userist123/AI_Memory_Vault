@@ -57,8 +57,8 @@ class ProgressiveDisclosure:
             return True
         content = ProgressiveDisclosure._content_text(note.get("content", ""))
         return bool(
-            re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
-            or "```" in content
+            note.get("do_not_compress")
+            or note.get("protected_content")
             or any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
         )
 
@@ -104,7 +104,8 @@ class ProgressiveDisclosure:
                 continue
             content = str(note.get("content", ""))
             protected = self._protected_content(note)
-            snippet = content if protected else content[:chars]
+            has_protected_spans = bool(self._protected_lines(content))
+            snippet = content if (protected or has_protected_spans) else content[:chars]
             if protected and len(snippet.encode("utf-8")) > self.budget.hard_context_budget:
                 raise BudgetExceededError("Protected content exceeds hard disclosure budget")
             entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note)}
