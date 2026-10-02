@@ -124,9 +124,22 @@ class VerifiedReducer:
                 tokens_saved=self.estimate_tokens(original),
             )
 
+        if bool(item.get("do_not_compress", False)):
+            return ReductionResult(
+                allowed=True, reason="DO_NOT_COMPRESS", content=original, metadata={
+                    field: item[field] for field in PRESERVED_FIELDS if field in item
+                }, original_chars=len(original), final_chars=len(original), bytes_saved=0,
+                token_estimate_before=self.estimate_tokens(original), token_estimate_after=self.estimate_tokens(original), tokens_saved=0,
+            )
+
         limit = max(1, int(max_chars))
         compact = self._compact_whitespace(self._dedupe_lines(original))
-        compact = self._truncate_at_boundary(compact, limit)
+        mandatory_patterns = re.compile(r"(?im)^.*\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b.*$")
+        protected_lines = [line.strip() for line in compact.splitlines() if mandatory_patterns.match(line)]
+        candidate = self._truncate_at_boundary(compact, limit)
+        if any(line not in candidate for line in protected_lines):
+            candidate = compact
+        compact = candidate
 
         metadata = {
             field: item[field]
