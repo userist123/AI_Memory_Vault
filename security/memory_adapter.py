@@ -40,14 +40,18 @@ class MemoryAdapter:
         *,
         human_approved: bool = False,
     ) -> MemoryWriteDecision:
-        decision = self.boundary.propose(
+        record, denied = self.boundary.prepare(
             namespace,
             payload,
             trust_state,
             human_approved=human_approved,
         )
-        if not decision.allowed:
-            return decision
+        if denied is not None:
+            return denied
 
         self._persist(namespace, dict(payload))
-        return decision
+        return self.boundary.commit(
+            record,
+            trust_state,
+            human_approved=human_approved,
+        )
