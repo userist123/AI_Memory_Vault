@@ -19,6 +19,10 @@ def _trusted_translator(text):
         target_language="en",
         provenance={"verified": True, "method": "test-translator"},
         source_sha256=hashlib.sha256(text.strip().encode("utf-8")).hexdigest(),
+        requirements=("translated requirement",),
+        forbidden=("translated forbidden",),
+        acceptance=("translated acceptance",),
+        semantic_complete=True,
     )
 
 
@@ -177,3 +181,24 @@ def test_prompt_budget_reduces_context_before_task():
 
     assert task in result.text
     assert result.token_estimate_after <= 140
+
+
+def test_non_english_translation_requires_semantic_completeness():
+    def incomplete(text):
+        return TranslationResult(
+            text=f"Implement this task: {text}",
+            source_language="ro",
+            target_language="en",
+            provenance={"verified": True},
+            source_sha256=hashlib.sha256(text.strip().encode("utf-8")).hexdigest(),
+        )
+
+    with pytest.raises(PromptTranslationError, match="semantic_completeness_required"):
+        VerifiedPromptCompiler(translator=incomplete).translate("ceva", source_language="ro")
+
+
+def test_translated_constraints_are_carried_into_compiled_prompt():
+    result = _compile(VerifiedPromptCompiler(translator=_trusted_translator))
+    assert "translated requirement" in result.text
+    assert "translated forbidden" in result.text
+    assert "translated acceptance" in result.text
