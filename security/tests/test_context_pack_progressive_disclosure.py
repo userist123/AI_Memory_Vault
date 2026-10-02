@@ -113,3 +113,53 @@ def test_context_pack_allows_safe_no_op():
     )
     assert result["results"][0]["compression"]["action"] == "NO_OP"
     assert result["results"][0]["content"] == "short context"
+
+def test_budget_degradation_never_truncates_mandatory_content():
+    from retrieval.context.budget import ContextBudget
+    budget = ContextBudget({"soft_limit_bytes": 80, "hard_limit_bytes": 4096, "max_full_documents": 0})
+    mandatory = "MUST NOT remove security evidence. " + ("history " * 100)
+    notes = [{"id": "protected", "content": mandatory, "relevance": 10}]
+    degraded = budget.apply_degradation(notes)
+    assert degraded[0]["content"] == mandatory
+
+
+def test_do_not_compress_survives_budget_degradation():
+    from retrieval.context.budget import ContextBudget
+    budget = ContextBudget({"soft_limit_bytes": 80, "hard_limit_bytes": 4096, "max_full_documents": 0})
+    content = "opaque artifact " * 100
+    notes = [{"id": "protected", "content": content, "relevance": 10, "do_not_compress": True}]
+    degraded = budget.apply_degradation(notes)
+    assert degraded[0]["content"] == content
+
+
+def test_snippet_preserves_mandatory_content():
+    item = dict(ITEM)
+    item["content"] = "MUST NOT bypass verification. " + ("history " * 100)
+    result = build("snippet")
+    result = ContextPackBuilder().build(
+        request_id="protected-snippet",
+        agent_id="default",
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072, "soft_tokens": 1000, "hard_tokens": 2000},
+        results=[item],
+        disclosure_level="snippet",
+    )
+    assert result["results"][0]["snippet"] == item["content"]
+
+
+def test_pack_aggregates_net_savings():
+    item = dict(ITEM)
+    item["content"] = "repeat line\\n" * 600
+    result = ContextPackBuilder().build(
+        request_id="metrics-test",
+        agent_id="default",
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072, "soft_tokens": 5000, "hard_tokens": 6000,
+                "tokenizer": lambda text: len(text.split()), "cost_per_input_token": 0.001,
+                "latency_ms_per_input_token": 0.5},
+        results=[item],
+        disclosure_level="full_document",
+    )
+    reduction = result["reduction"]
+    assert reduction["tokenizer_mode"] == "real"
+    assert reduction["net_tokens_saved"] >= 0
+    assert reduction["cost_saved"] >= 0
+    assert reduction["latency_saved_ms"] >= 0
