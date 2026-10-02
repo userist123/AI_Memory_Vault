@@ -8,6 +8,7 @@ before any reduction or token budgeting.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 from typing import Callable, Mapping
 
@@ -22,6 +23,7 @@ class TranslationResult:
     source_language: str
     target_language: str
     provenance: Mapping[str, object]
+    source_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -65,17 +67,22 @@ class VerifiedPromptCompiler:
                 raise PromptTranslationError(
                     "translation_provider_required_for_non_english_input"
                 )
+            normalized = request.strip()
             return TranslationResult(
-                request.strip(),
+                normalized,
                 "en",
                 "en",
                 {"method": "caller_declared_english", "verified": True},
+                hashlib.sha256(normalized.encode("utf-8")).hexdigest(),
             )
         result = self.translator(request)
         if not isinstance(result, TranslationResult):
             raise PromptTranslationError("translator_return_type_invalid")
         if result.target_language.lower() != "en":
             raise PromptTranslationError("translator_must_return_english")
+        expected_source_sha256 = hashlib.sha256(request.strip().encode("utf-8")).hexdigest()
+        if result.source_sha256 != expected_source_sha256:
+            raise PromptTranslationError("translator_source_binding_invalid")
         return result
 
     def verify_translation(self, translated: TranslationResult, source: str) -> dict[str, object]:
