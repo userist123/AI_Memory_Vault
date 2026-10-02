@@ -74,3 +74,9 @@ def test_sections_disclosure_matches_lines_and_retains_security():
     entry = result["results"][0]
     assert entry["sections"] == ["token economy"]
     assert entry["verification"]["status"] == "TRUSTED"
+
+def test_context_budget_accepts_injected_tokenizer():
+    from retrieval.context.budget import ContextBudget
+
+    budget = ContextBudget({"hard_limit_tokens": 5, "tokenizer": lambda text: len(text.split())})
+    assert budget.estimate_tokens({"content": "one two three"}) == 4
