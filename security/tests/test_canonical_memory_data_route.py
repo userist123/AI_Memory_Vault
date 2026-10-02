@@ -53,6 +53,7 @@ def test_model_egress_route_is_canonical_and_auditable():
     ]
     assert routed["data_route"]["model_egress"] is True
     assert routed["results"][0]["id"] == "n1"
+    assert not hasattr(router, "route_to_model")
 
 
 def test_model_egress_route_rejects_unverified_data():
