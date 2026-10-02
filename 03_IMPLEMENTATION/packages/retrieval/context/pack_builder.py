@@ -1,5 +1,6 @@
 import base64
 import zlib
+import re
 from typing import Callable, List, Dict, Any, Optional, Mapping
 
 from .budget import ContextBudget, BudgetExceededError, load_agent_budget
@@ -187,7 +188,7 @@ class ContextPackBuilder:
             return True
         content = str(item.get("content", item.get("snippet", "")))
         return bool(item.get("code") or item.get("signature") or item.get("dependencies") or item.get("identifiers")) or bool(
-            __import__("re").search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
+            re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content)
             or "```" in content
         )
     @staticmethod
