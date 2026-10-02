@@ -46,5 +46,5 @@ def test_security_event_defaults_to_utc_timestamp():
         correlation_id="corr-3",
         trust_state="TRUSTED",
     )
-    parsed = datetime.fromisoformat(event.timestamp.replace("Z", "+00:00"))
+    parsed = datetime.fromisoformat(event.to_dict()["timestamp"].replace("Z", "+00:00"))
     assert parsed.tzinfo is not None
