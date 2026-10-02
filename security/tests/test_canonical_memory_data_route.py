@@ -1,6 +1,5 @@
 """Canonical memory data-route gate tests."""
 
-import inspect
 import sys
 from pathlib import Path
 
@@ -11,7 +10,6 @@ if str(PACKAGES) not in sys.path:
 import pytest
 
 from memory.data_router import MemoryDataEgressGate, MemoryDataRouter, DataRouteViolation
-from memory.controller import MemoryController
 from retrieval.financial_search import MultiLayeredFinancialSearchEngine
 
 
@@ -73,7 +71,14 @@ def test_model_egress_route_rejects_unverified_data():
 
 @pytest.mark.parametrize("method_name", ["search", "read", "cognitive_read"])
 def test_controller_context_entrypoints_use_canonical_route(method_name):
-    source = inspect.getsource(getattr(MemoryController, method_name))
+    controller_source = (
+        PACKAGES / "memory" / "controller.py"
+    ).read_text(encoding="utf-8")
+    marker = f"def {method_name}("
+    start = controller_source.find(marker)
+    assert start >= 0
+    next_def = controller_source.find("\ndef ", start + len(marker))
+    source = controller_source[start:] if next_def < 0 else controller_source[start:next_def]
     assert "data_router.dispatch" in source
     assert "route_to_model" not in source
 
