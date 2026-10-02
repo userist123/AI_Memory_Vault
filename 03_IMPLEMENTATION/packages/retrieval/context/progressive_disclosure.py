@@ -208,7 +208,10 @@ class ProgressiveDisclosure:
                             if key in reduction
                         }
                     if self.budget.estimate_tokens(result + [compact_candidate]) > self.budget.hard_token_budget:
-                        continue
+                        minimal_candidate = {"id": compact_candidate.get("id"), "content": compact_candidate.get("content", ""), **self._security_metadata(note), "compression": {"action": compression.get("action", "NO_OP"), "reason": compression.get("reason", "budget_compaction"), "tokenizer_mode": compression.get("tokenizer_mode", "heuristic_fallback"), "protected_spans": compression.get("protected_spans", 0), "net_tokens_saved": compression.get("net_tokens_saved", 0)}}
+                        if self.budget.estimate_tokens(result + [minimal_candidate]) > self.budget.hard_token_budget:
+                            continue
+                        compact_candidate = minimal_candidate
                     candidate = compact_candidate
             result.append(candidate)
             usage += size
