@@ -94,11 +94,11 @@ def test_compression_with_insufficient_net_benefit_is_no_op():
         estimated_overhead_tokens=19,
     )
     result = AdaptiveContextCompressor(router=router).compress(
-        "alpha beta gamma\nalpha beta gamma\ndelta epsilon zeta",
+        ("alpha beta gamma\n" * 6) + "delta epsilon zeta",
         query="alpha",
         target_chars=20,
     )
     assert result.decision.action == "NO_OP"
     assert result.decision.reason == "net_benefit_below_overhead"
-    assert result.content == "alpha beta gamma\nalpha beta gamma\ndelta epsilon zeta"
+    assert result.content == ("alpha beta gamma\n" * 6) + "delta epsilon zeta"
     assert result.decision.net_tokens_saved == 0
