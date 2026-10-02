@@ -44,14 +44,17 @@ class MemoryLedger:
     def __init__(self) -> None:
         self.records: list[MemoryRecord] = []
 
-    def append(self, namespace: str, payload: dict[str, Any]) -> MemoryRecord:
+    def prepare(self, namespace: str, payload: dict[str, Any]) -> MemoryRecord:
         previous = self.records[-1].sha256 if self.records else None
-        record = MemoryRecord(
+        return MemoryRecord(
             version=len(self.records) + 1,
             namespace=namespace,
             payload=dict(payload),
             previous_sha256=previous,
         ).with_hash()
+
+    def append(self, namespace: str, payload: dict[str, Any]) -> MemoryRecord:
+        record = self.prepare(namespace, payload)
         self.records.append(record)
         return record
 
