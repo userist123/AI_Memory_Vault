@@ -122,3 +122,34 @@ def test_prompt_budget_uses_tokenizer_and_preserves_constraint_sections():
     assert "MUST preserve verification." in result.text
     assert "MUST NOT bypass the trust gate." in result.text
     assert "MUST pass the regression test." in result.text
+
+
+def test_prompt_sections_keep_dynamic_state_out_of_stable_prefix():
+    compiler = VerifiedPromptCompiler(translator=_trusted_translator)
+    result = _compile(compiler, task="construieste un test")
+    assert "Branch:" not in result.stable_prefix
+    assert "Owner:" not in result.stable_prefix
+    assert "## Task" in result.dynamic_suffix
+    assert result.stable_prefix + result.dynamic_suffix == result.text
+
+
+def test_prompt_hard_token_budget_uses_injected_counter():
+    compiler = VerifiedPromptCompiler(
+        translator=_trusted_translator,
+        token_counter=lambda text: len(text.split()),
+    )
+    result = compiler.compile(
+        "construieste un test",
+        source_language="ro",
+        verified_context="stable context",
+        requirements=["Preserve security."],
+        forbidden=["Do not bypass verification."],
+        acceptance=["Tests pass."],
+        branch="r999/test",
+        owner="TEST",
+        max_chars=2000,
+        max_tokens=120,
+    )
+    assert result.token_budget == 120
+    assert result.token_estimate_after <= 120
+    assert result.tokens_saved >= 0
