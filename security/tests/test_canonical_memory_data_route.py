@@ -33,10 +33,10 @@ def test_model_egress_route_is_canonical_and_auditable():
     }
 
     called = []
+    router.register("search", lambda: called.append(True) or pack)
     routed = router.dispatch(
         source="search",
         principal="AI_AGENT",
-        producer=lambda: called.append(True) or pack,
     )
 
     assert called == [True]
@@ -65,8 +65,9 @@ def test_model_egress_route_rejects_unverified_data():
         "results": [{"id": "n1", "content": "unverified"}],
     }
 
+    router.register("search", lambda: pack)
     with pytest.raises(DataRouteViolation, match="verification"):
-        router.dispatch(source="search", principal="AI_AGENT", producer=lambda: pack)
+        router.dispatch(source="search", principal="AI_AGENT")
 
 
 @pytest.mark.parametrize("method_name", ["search", "read", "cognitive_read"])
