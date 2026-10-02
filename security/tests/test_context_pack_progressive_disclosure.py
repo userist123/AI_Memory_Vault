@@ -163,3 +163,19 @@ def test_pack_aggregates_net_savings():
     assert reduction["net_tokens_saved"] >= 0
     assert reduction["cost_saved"] >= 0
     assert reduction["latency_saved_ms"] >= 0
+
+def test_code_artifact_is_never_compressed():
+    item = dict(ITEM)
+    item["code"] = "python"
+    item["content"] = "code " * 1000
+    result = ContextPackBuilder().build(
+        request_id="code-protected",
+        agent_id="default",
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072, "soft_tokens": 5000, "hard_tokens": 6000},
+        results=[item],
+        disclosure_level="full_document",
+    )
+    entry = result["results"][0]
+    assert entry["compression"]["action"] == "NO_OP"
+    assert entry["compression"]["reason"] == "DO_NOT_COMPRESS"
+    assert entry["content"] == item["content"]
