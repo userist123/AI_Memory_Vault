@@ -14,6 +14,14 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+_ALLOWED_METADATA = frozenset({
+    "finding_count",
+    "score",
+    "verification_type",
+    "confidence",
+    "evidence_ref",
+})
+
 
 def _utc(value: datetime | None) -> str:
     current = value or datetime.now(timezone.utc)
@@ -142,7 +150,11 @@ class AuditTrail:
                 decision_reason=decision_reason,
                 scanner_verdict=scanner_verdict,
                 error_type=type(error).__name__ if error is not None else None,
-                metadata=dict(metadata or {}),
+                metadata={
+                    key: str(value)
+                    for key, value in (metadata or {}).items()
+                    if key in _ALLOWED_METADATA
+                },
             )
             digest = hashlib.sha256(
                 json.dumps(
