@@ -31,8 +31,9 @@ injected host boundary and is responsible for applying a verified package.
 
 When the installed security-boundary version is below the required version and
 the mandatory deadline has passed, SecurityUpdatePolicy.enforce() raises
-SecurityUpdateRequired. Protected tool execution and other sensitive host
-operations must call this gate before execution.
+SecurityUpdateRequired. The runtime execution gate and memory adapter now call this policy before
+protected operations. A stale security version therefore cannot be bypassed by
+the agent's normal tool or memory paths.
 
 ## Trust model
 
