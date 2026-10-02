@@ -6,7 +6,7 @@ from .budget import ContextBudget, BudgetExceededError, load_agent_budget
 from .progressive_disclosure import ProgressiveDisclosure
 from ..memory_trace import record_observed_memory_trace
 from security.knowledge_handoff import VerifiedKnowledgeHandoff
-from security.context_compression import AdaptiveContextCompressor
+from security.context_compression import AdaptiveContextCompressor, CompressionRouter
 
 
 class ContextPackBuilder:
@@ -86,7 +86,7 @@ class ContextPackBuilder:
 
             content = str(item.get("content", ""))
             compressor = AdaptiveContextCompressor(
-                router=__import__("security.context_compression", fromlist=["CompressionRouter"]).CompressionRouter(
+                router=CompressionRouter(
                     tokenizer=resolved.tokenizer,
                     chars_per_token=resolved.chars_per_token,
                 )
