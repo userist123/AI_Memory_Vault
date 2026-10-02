@@ -223,10 +223,8 @@ class ContextPackBuilder:
             compression = candidate.get("compression")
             if isinstance(compression, dict):
                 candidate["compression"] = {
-                    key: compression[key]
-                    for key in ("action", "reason")
-                    if key in compression
-                }
+                    "action": compression["action"]
+                } if "action" in compression else {}
             candidate.pop("reduction", None)
             compact_results.append(candidate)
 
@@ -360,6 +358,14 @@ class ContextPackBuilder:
                     request_id, agent_id, resolved, compact_results, disclosure_level,
                     minimal_provenance, next_page_token, audit_ref, compact_metrics
                 )
+                # Under an extremely small model budget, trim only optional
+                # envelope diagnostics. Trust/security evidence in each result
+                # remains mandatory and is never removed here.
+                compact_pack["budget"] = {
+                    "hard": resolved.hard_context_budget,
+                    "hard_tokens": resolved.hard_token_budget,
+                }
+                compact_pack["reduction"] = {"verified_first": True}
                 compact_size = resolved.serialized_size(compact_pack)
                 compact_tokens = resolved.estimate_tokens(compact_pack)
                 if compact_size <= resolved.hard_context_budget and compact_tokens <= resolved.hard_token_budget:
