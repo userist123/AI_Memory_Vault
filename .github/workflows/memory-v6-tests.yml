@@ -39,4 +39,6 @@ jobs:
           pip install -r requirements-memory-v6.txt
 
       - name: Run Memory V6 controller tests
+        env:
+          PYTHONPATH: .
         run: pytest 20_TESTS/memory_controller -v
