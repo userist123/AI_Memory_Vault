@@ -208,6 +208,7 @@ class VerifiedPromptCompiler:
         if token_after > hard_token_budget:
             raise PromptCompilationError("compiled_prompt_exceeds_hard_token_budget")
 
+        dynamic_suffix = dynamic_prefix + reducible_context + task_suffix
         return CompiledPrompt(
             text=prompt,
             trust_state=TrustState.TRUSTED,
