@@ -91,11 +91,15 @@ class QueryAwareSelector:
             return text, ()
         terms = self._terms(query)
         protected_text = {span.text.strip() for span in protected}
+        protected_segments = {
+            segment for segment in segments
+            if segment in protected_text or any(segment in span.text for span in protected)
+        }
         scored = []
         for index, segment in enumerate(segments):
             lowered = segment.casefold()
             score = sum(1 for term in terms if term in lowered)
-            if segment in protected_text:
+            if segment in protected_segments:
                 score += 1000
             scored.append((score, -index, segment))
         scored.sort(reverse=True)
