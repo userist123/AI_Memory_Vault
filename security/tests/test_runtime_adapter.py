@@ -104,3 +104,45 @@ def test_runtime_adapter_scans_tool_output_before_returning_it():
     assert result.authorization.allowed is False
     assert result.authorization.reason == "tool_output_requires_review"
     assert result.value is None
+
+
+def test_runtime_adapter_emits_metadata_only_event_for_denial():
+    events = []
+    adapter = RuntimeAdapter(event_sink=events.append)
+    adapter.register(_tool(), lambda request: {"ok": True})
+
+    request = ExecutionRequest("agent-1", "lookup", "record:42", {"id": "42"})
+    result = adapter.execute(request, _tool(), _review())
+
+    assert result.authorization.reason == "approval_required"
+    assert len(events) == 1
+    payload = events[0].to_dict()
+    assert payload["tool"]["allowed"] is False
+    assert "payload" not in payload
+    assert "parameters" not in payload
+
+
+def test_runtime_adapter_consumes_single_use_approval():
+    adapter = RuntimeAdapter()
+    calls = []
+    adapter.register(_tool(), lambda request: calls.append(request) or {"ok": True})
+
+    request = ExecutionRequest("agent-1", "lookup", "record:42", {"id": "42"})
+    now = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    approval = ApprovalToken(
+        "approval-once",
+        "agent-1",
+        "lookup",
+        "record:42",
+        request.parameters_sha256(),
+        now,
+        now + timedelta(minutes=5),
+        "nonce-once",
+    )
+
+    first = adapter.execute(request, _tool(), _review(), approval=approval, now=now)
+    second = adapter.execute(request, _tool(), _review(), approval=approval, now=now)
+
+    assert first.authorization.allowed is True
+    assert second.authorization.reason == "approval_replayed"
+    assert len(calls) == 1
