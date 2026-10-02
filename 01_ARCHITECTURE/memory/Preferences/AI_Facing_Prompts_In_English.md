@@ -112,3 +112,24 @@ progressive disclosure -> minimal sufficient context`
 
 Never optimize by deleting the evidence that makes content trusted or the
 constraints that define what a correct result means.
+
+
+## Adaptive prompt economy contract
+
+Prompt economy is an adaptive context-management system, not a fixed compression percentage.
+
+The model-facing pipeline is:
+
+user input -> semantic translation -> security/provenance verification -> trust decision -> compression-necessity router -> structural parsing -> protected-span detection -> query-aware selection -> deterministic deduplication -> extractive compression -> token budget -> progressive disclosure -> downstream validation -> minimal sufficient context -> agent.
+
+The router may return NO_OP when context is too short, redundancy is too low, or compressor overhead is unlikely to be recovered. NO_OP is a valid successful outcome.
+
+Protected material includes security constraints, MUST/MUST NOT/NEVER requirements, code blocks, hashes, versions, CLI identifiers and other task-critical spans. Compression must never be used to establish trust and must never remove protected material silently.
+
+For long context, selection is query-aware. Whole segments are preferred over arbitrary token deletion. Compression records the decision, redundancy estimate, protected-span count, removed segments, token estimates and validation result. If validation fails, the system returns the original verified context as a safe fallback.
+
+Code and structured artifacts require stricter policies than prose. Future artifact-specific compressors should preserve executable code, signatures, dependencies and machine-readable structure while allowing comments/docstrings or irrelevant files to be reduced separately.
+
+Net token economy must account for compressor overhead, model-input tokens, latency and cache effects. Transport compression such as zlib is not LLM token savings because the model-facing text is restored before the final token-budget check.
+
+Evaluation must measure compression ratio together with constraint recall, information preservation, grounding, code validity, downstream task utility, latency, cost and cache behavior. A fixed compression target is not an acceptance criterion.
