@@ -80,3 +80,36 @@ def test_context_budget_accepts_injected_tokenizer():
 
     budget = ContextBudget({"hard_limit_tokens": 5, "tokenizer": lambda text: len(text.split())})
     assert budget.estimate_tokens({"content": "one two three"}) == 4
+
+
+def test_context_pack_records_adaptive_compression():
+    item = dict(ITEM)
+    item["content"] = ("irrelevant history " * 120) + "\nMUST NOT bypass verification.\n" + ("token economy " * 120)
+    result = ContextPackBuilder().build(
+        request_id="compression-test",
+        agent_id="default",
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 65536, "hard": 131072,
+                "soft_tokens": 120, "hard_tokens": 240},
+        results=[item],
+        disclosure_level="full_document",
+        query="token economy",
+    )
+    entry = result["results"][0]
+    assert entry["compression"]["action"] in {"COMPRESS", "FALLBACK"}
+    assert entry["verification"]["status"] == "TRUSTED"
+    assert "MUST NOT bypass verification." in entry["content"]
+
+
+def test_context_pack_allows_safe_no_op():
+    item = dict(ITEM)
+    item["content"] = "short context"
+    result = ContextPackBuilder().build(
+        request_id="noop-test",
+        agent_id="default",
+        budget={"max_notes": 1, "max_full_documents": 1, "soft": 4096, "hard": 8192,
+                "soft_tokens": 1000, "hard_tokens": 2000},
+        results=[item],
+        disclosure_level="full_document",
+    )
+    assert result["results"][0]["compression"]["action"] == "NO_OP"
+    assert result["results"][0]["content"] == "short context"
