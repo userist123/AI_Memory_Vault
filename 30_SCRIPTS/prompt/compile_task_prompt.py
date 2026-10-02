@@ -28,10 +28,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from security.prompt_compiler import VerifiedPromptCompiler
-
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
+
+from security.prompt_compiler import VerifiedPromptCompiler
 
 STATE_CARD = REPO / "00_GOVERNANCE" / "VAULT_STATE.md"
 LESSONS = REPO / "01_ARCHITECTURE" / "memory" / "Lessons"
@@ -224,81 +225,6 @@ def intent_block(intent: str) -> tuple[str, str, str]:
     return req, forb, deliv
 
 
-TEMPLATE = """Repository: https://github.com/userist123/AI_Memory_Vault_CODEX_READY
-Base: current main ({head})
-Create: {branch}
-Owner: {owner}
-
-## Verified context — measured, do not re-derive
-
-{state}
-
-Read `00_GOVERNANCE/VAULT_STATE.md` before anything else. It records what is
-verified true right now and outranks README, CLAUDE.md and AGENTS.md wherever
-they disagree.
-
-## Task
-
-{task}
-
-## Requirements — {intent_name}
-
-{requirements}
-{n_plus_one}. Zero regression against the stated baseline. Any deviation is
-   explained commit by commit.
-{n_plus_two}. TODO — anything specific to this task that the kind alone does not cover.
-
-## Forbidden
-
-{forbidden}
-- Do not modify a benchmark, threshold or gate to make a result pass. If a gate
-  blocks the work, report it blocked.
-- TODO — anything out of scope for this task specifically.
-
-## Methods already recorded — read before diagnosing
-
-{methods}
-
-## Standing traps
-
-{traps}
-
-## Skills and data to consult
-
-{skills}
-
-If the task needs a capability none of these cover, say so explicitly rather
-than improvising one.
-
-## Method
-
-Isolated worktree at a short path, cherry-pick your commits onto the baseline,
-run the suite in both, and diff the FAILED name sets:
-
-    git worktree add --detach C:/Users/user/Documents/Codex/<name> <base-sha>
-    git -C C:/Users/user/Documents/Codex/<name> config core.longpaths true
-
-## Deliverables
-
-{deliverables}
-{d_plus_one}. Measurement against the baseline, reported as numbers with an n.
-{d_plus_two}. Remaining gaps, stated as gaps.
-
-## Acceptance — a task is finished when all five hold
-
-1. Implemented and committed.
-2. Verified by something that would have failed if the change were wrong. A
-   green suite is not this on its own.
-3. Regressions measured against a stated baseline, in isolation.
-4. What remains open written down explicitly, including "nothing".
-5. The method recorded per
-   `10_DOCUMENTATION/procedures/Recording_A_Solved_Problem.md` if it transfers.
-
-Anything less is unfinished and must be reported as unfinished, with the
-remainder named.
-"""
-
-
 def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement") -> str:
     state = "\n".join(f"- {k}: {v}" for k, v in measured_state().items())
     methods = "\n".join(f"- `{p}` — {t}" for p, t in recorded_methods()) or "- none recorded yet"
@@ -332,14 +258,6 @@ def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement"
         max_chars=12000,
     )
     return compiled.text
-    return TEMPLATE.format(
-        head=head(), branch=branch, owner=owner, task=task.strip(),
-        state=state, methods=methods, traps=traps, skills=skills,
-        intent_name=INTENTS[intent]["summary"], requirements=requirements,
-        forbidden=forbidden, deliverables=deliverables,
-        n_plus_one=n_req + 1, n_plus_two=n_req + 2,
-        d_plus_one=n_del + 1, d_plus_two=n_del + 2,
-    )
 
 
 def main() -> int:
