@@ -1,20 +1,21 @@
-"""Compile an informal request into a complete English task prompt.
+"""Compile a verified English task prompt from deterministic repository state.
 
-The user states an intent in one line, in Romanian. What reaches another agent
-must be a full English brief: verified context, explicit requirements, the
-traps that already cost this repository time, the method for measuring, and
-acceptance criteria that can fail.
+The CLI boundary accepts English task text. Non-English input must be translated by
+an explicit provider before it enters the verified compiler; this script does not
+silently guess or perform language translation. The compiler then verifies the
+translated artifact, preserves security/provenance requirements, and reduces the
+result only after trust is established.
 
-This script does the deterministic half. It reads the vault's live state and
-emits a skeleton already populated with facts nobody should have to look up
-again: the current commit, the test baseline, corpus and graph sizes, the
-recorded methods, and the standing traps. The agent fills in the parts that
-require judgement — the task itself, its requirements, what is forbidden, and
-what "done" looks like.
+The deterministic half reads the vault's live state and emits facts that should not
+have to be rediscovered: the current commit, measured corpus/graph state, recorded
+methods, standing traps, and available skill catalogues. Intent-specific
+requirements, forbidden constraints, and acceptance criteria are supplied by the
+compiler caller.
 
-Everything emitted is English regardless of the language of the request, per
+Everything emitted is English, per
 `01_ARCHITECTURE/memory/Preferences/AI_Facing_Prompts_In_English.md`. Detail
-lost in translation is detail lost.
+lost in translation is detail lost; use an explicit translation provider when the
+source request is not already English.
 
     python 30_SCRIPTS/prompt/compile_task_prompt.py \
         --branch r022/some-work --owner "CLAUDE SONNET" \
