@@ -115,3 +115,27 @@ For production, use:
 The current implementation supplies the policy and host seams; it does not
 pretend that an external catalog, signing infrastructure or installer exists
 until the deployment configures those components.
+
+
+## Catalog provenance policy
+
+Catalog provenance is evaluated independently of package content.
+
+The deployment may configure a hard block list for countries or jurisdictions
+that it does not permit as security-update origins. The current repository
+configuration lists Russia, China, India and North Korea as blocked origins,
+per the deployment policy requested for this system.
+
+This is deliberately modeled as a local security policy rather than as a
+technical claim that every artifact from those locations is malicious. All
+other origins still require the same cryptographic integrity, signer,
+provenance and adversarial validation controls. A non-blocked origin is never
+automatically trusted.
+
+The policy also supports signer allowlisting. An unknown signer is REVIEW and a
+missing signer is BLOCKED. Geographic origin cannot override a cryptographic
+failure or an untrusted signer.
+
+This layered approach follows OWASP guidance to maintain allowlists of trusted
+sources, verify provenance and integrity, and avoid trusting external
+content merely because it appears legitimate.
