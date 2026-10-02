@@ -1,18 +1,43 @@
 from typing import List, Dict, Any
 
-class ProgressiveDisclosure:
-    """Utility to progressively disclose memory content based on budget.
 
-    The workflow:
-        1. metadata_only – returns identifiers and minimal metadata.
-        2. snippet – returns a short excerpt (e.g., first 200 chars).
-        3. sections – returns relevant sections based on query highlights.
-        4. full_document – returns the full note content.
-        5. provenance_on_demand – fetches raw provenance when requested.
+SECURITY_FIELDS = (
+    "verification",
+    "security",
+    "provenance",
+    "integrity",
+    "requirements",
+    "forbidden",
+    "constraints",
+    "acceptance",
+)
+
+
+class ProgressiveDisclosure:
+    """Disclose only already-verified memory at the smallest useful level.
+
+    Disclosure is not a trust boundary. Every note must carry an explicit
+    trusted verification record before any representation is returned, and
+    security/provenance evidence is retained even when content is reduced.
     """
 
     def __init__(self, budget):
-        self.budget = budget  # Instance of ContextBudget or similar
+        self.budget = budget
+
+    @staticmethod
+    def _verified(note: Dict[str, Any]) -> bool:
+        verification = note.get("verification")
+        if not isinstance(verification, dict):
+            return False
+        return verification.get("status") in {"TRUSTED", "VERIFIED", "SAFE"}
+
+    @staticmethod
+    def _security_metadata(note: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            key: note[key]
+            for key in SECURITY_FIELDS
+            if key in note
+        }
 
     def _within_budget(self, usage: int) -> bool:
         try:
@@ -22,21 +47,21 @@ class ProgressiveDisclosure:
             return False
 
     def metadata_only(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        # Return only id, type, lifecycle, and confidence
         result = []
         usage = 0
         for note in notes:
+            if not self._verified(note):
+                continue
             entry = {
                 "id": note.get("id"),
                 "type": note.get("type"),
                 "lifecycle": note.get("lifecycle"),
                 "confidence": note.get("confidence"),
-                "verification": note.get("verification"),
-                "provenance": note.get("provenance", {}),
-                "relations": note.get("relations", [])
+                "relations": note.get("relations", []),
+                **self._security_metadata(note),
             }
             result.append(entry)
-            usage += 1  # Count each metadata as 1 unit
+            usage += 1
             if not self._within_budget(usage):
                 break
         return result
@@ -45,43 +70,45 @@ class ProgressiveDisclosure:
         result = []
         usage = 0
         for note in notes:
+            if not self._verified(note):
+                continue
             content = note.get("content", "")
             snippet = content[:chars]
-            entry = {"id": note.get("id"), "snippet": snippet}
+            entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note)}
             result.append(entry)
-            usage += chars
+            usage += len(snippet)
             if not self._within_budget(usage):
                 break
         return result
 
     def sections(self, notes: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
-        # Very naive: return lines containing any query token
         tokens = set(query.lower().split())
         result = []
         usage = 0
         for note in notes:
+            if not self._verified(note):
+                continue
             content = note.get("content", "")
-            lines = content.split("\n")
+            lines = content.split("\\n")
             matched = [ln for ln in lines if any(tok in ln.lower() for tok in tokens)]
-            entry = {"id": note.get("id"), "sections": matched[:5]}
+            entry = {"id": note.get("id"), "sections": matched[:5], **self._security_metadata(note)}
             result.append(entry)
-            usage += len(matched)
+            usage += sum(len(line) for line in matched[:5])
             if not self._within_budget(usage):
                 break
         return result
 
     def full_document(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        # Return full content respecting hard budget (bytes)
         result = []
         usage = 0
         for note in notes:
+            if not self._verified(note):
+                continue
             content = note.get("content", "")
             size = len(content.encode("utf-8"))
             if not self._within_budget(usage + size):
-                # A single oversized high-ranked note must not prevent smaller
-                # later candidates from being disclosed.
                 continue
-            candidate = {"id": note.get("id"), "content": content}
+            candidate = {"id": note.get("id"), "content": content, **self._security_metadata(note)}
             if hasattr(self.budget, "estimate_tokens"):
                 if self.budget.estimate_tokens(result + [candidate]) > self.budget.hard_token_budget:
                     continue
@@ -90,8 +117,4 @@ class ProgressiveDisclosure:
         return result
 
     def provenance_on_demand(self, note_ids: List[str], storage_engine) -> List[Dict[str, Any]]:
-        # Retrieve raw provenance records for given ids via storage engine
-        prov = []
-        for nid in note_ids:
-            prov.append(storage_engine.get_provenance(nid))
-        return prov
+        return [storage_engine.get_provenance(nid) for nid in note_ids]
