@@ -35,6 +35,11 @@ class CompiledPrompt:
     token_estimate_after: int
     tokens_saved: int
     reduction_reason: str
+    stable_prefix: str = ""
+    dynamic_suffix: str = ""
+    cacheable_prefix_sha256: str = ""
+    soft_token_budget: int = 0
+    hard_token_budget: int = 0
 
 
 class PromptTranslationError(ValueError):
@@ -52,9 +57,11 @@ class VerifiedPromptCompiler:
         self,
         translator: Callable[[str], TranslationResult] | None = None,
         reducer: VerifiedReducer | None = None,
+        tokenizer: Callable[[str], int] | None = None,
     ):
         self.translator = translator
         self.reducer = reducer or VerifiedReducer()
+        self.tokenizer = tokenizer
 
     def translate(self, request: str, source_language: str = "auto") -> TranslationResult:
         if not request.strip():
