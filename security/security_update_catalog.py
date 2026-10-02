@@ -16,10 +16,10 @@ class Catalog:
     updates: tuple[SecurityUpdate, ...]
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any], parser) -> "Catalog":
+    def from_dict(cls, data: dict[str, Any]) -> "Catalog":
         if data.get("schema_version") != 1:
             raise ValueError("unsupported security update catalog schema")
-        updates = tuple(parser(item) for item in data.get("updates", []))
+        updates = tuple(SecurityUpdate.from_dict(item) for item in data.get("updates", []))
         return cls(
             schema_version=1,
             generated_at=str(data["generated_at"]),
@@ -28,8 +28,8 @@ class Catalog:
         )
 
     @classmethod
-    def from_json(cls, raw: bytes, parser) -> "Catalog":
+    def from_json(cls, raw: bytes) -> "Catalog":
         value = json.loads(raw.decode("utf-8"))
         if not isinstance(value, dict):
             raise ValueError("catalog must be an object")
-        return cls.from_dict(value, parser)
+        return cls.from_dict(value)
