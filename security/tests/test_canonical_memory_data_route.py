@@ -10,7 +10,6 @@ if str(PACKAGES) not in sys.path:
 import pytest
 
 from memory.data_router import MemoryDataEgressGate, MemoryDataRouter, DataRouteViolation
-from retrieval.financial_search import MultiLayeredFinancialSearchEngine
 
 
 def test_model_egress_route_is_canonical_and_auditable():
@@ -84,5 +83,12 @@ def test_controller_context_entrypoints_use_canonical_route(method_name):
 
 
 def test_financial_engine_uses_canonical_route():
-    source = inspect.getsource(MultiLayeredFinancialSearchEngine.execute_search)
+    financial_source = (
+        PACKAGES / "retrieval" / "financial_search.py"
+    ).read_text(encoding="utf-8")
+    marker = "def execute_search("
+    start = financial_source.find(marker)
+    assert start >= 0
+    next_def = financial_source.find("\ndef ", start + len(marker))
+    source = financial_source[start:] if next_def < 0 else financial_source[start:next_def]
     assert "data_router.dispatch" in source
