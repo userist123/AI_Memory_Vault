@@ -15,7 +15,7 @@ def test_untrusted_external_content_cannot_authorize_tool():
 
 def test_review_requires_explicit_human_approval():
     decision = TrustDecision(TrustState.REVIEW, ("review",), True)
-    request = ToolRequest("network.request", side_effect=True, requested_by="external_content")
+    request = ToolRequest("network.request", side_effect=True, requested_by="policy")
     denied = authorize_tool(decision, request, human_approved=False)
     assert not denied.allowed
     assert denied.reason == "human_approval_required"
