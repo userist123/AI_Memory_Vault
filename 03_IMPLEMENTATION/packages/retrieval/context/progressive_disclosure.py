@@ -1,3 +1,4 @@
+import re
 from typing import List, Dict, Any
 
 
@@ -39,6 +40,24 @@ class ProgressiveDisclosure:
             if key in note
         }
 
+    @staticmethod
+    def _protected_content(note: Dict[str, Any]) -> bool:
+        if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
+            return True
+        content = str(note.get("content", ""))
+        return bool(
+            re.search(r"(?im)^.*\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b.*$", content)
+            or "```" in content
+            or any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
+        )
+
+    @staticmethod
+    def _protected_lines(content: str) -> List[str]:
+        return [
+            line for line in content.split("\n")
+            if re.search(r"(?i)\\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\\b", line)
+            or "```" in line
+        ]
     def _within_budget(self, usage: int) -> bool:
         try:
             self.budget.check_budget(usage)
@@ -72,8 +91,8 @@ class ProgressiveDisclosure:
         for note in notes:
             if not self._verified(note):
                 continue
-            content = note.get("content", "")
-            snippet = content[:chars]
+            content = str(note.get("content", ""))
+            snippet = content if self._protected_content(note) else content[:chars]
             entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note)}
             result.append(entry)
             usage += len(snippet)
@@ -88,9 +107,11 @@ class ProgressiveDisclosure:
         for note in notes:
             if not self._verified(note):
                 continue
-            content = note.get("content", "")
+            content = str(note.get("content", ""))
             lines = content.split("\n")
             matched = [ln for ln in lines if any(tok in ln.lower() for tok in tokens)]
+            if self._protected_content(note):
+                matched = list(dict.fromkeys(self._protected_lines(content) + matched))
             entry = {"id": note.get("id"), "sections": matched[:5], **self._security_metadata(note)}
             result.append(entry)
             usage += sum(len(line) for line in matched[:5])
