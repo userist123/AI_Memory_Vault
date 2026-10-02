@@ -5,6 +5,8 @@ on:
     paths:
       - "security/**"
       - "03_IMPLEMENTATION/packages/retrieval/context/**"
+      - "03_IMPLEMENTATION/packages/memory/**"
+      - "03_IMPLEMENTATION/packages/retrieval/financial_search.py"
       - ".github/workflows/security-boundary.yml"
   push:
     branches:
@@ -27,3 +29,20 @@ jobs:
         run: python -m pip install --disable-pip-version-check pytest
       - name: Run security tests
         run: python -m pytest security/tests -q -o pythonpath=.
+
+  memory-data-route:
+    name: Memory Data Route Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Run canonical memory data route gate
+        env:
+          PYTHONPATH: .
+        run: python -m pytest security/tests/test_canonical_memory_data_route.py -q
