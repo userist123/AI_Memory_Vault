@@ -226,7 +226,7 @@ def intent_block(intent: str) -> tuple[str, str, str]:
     return req, forb, deliv
 
 
-def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement") -> str:
+def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement", soft_token_budget: int = 1200, hard_token_budget: int = 1800) -> str:
     state = "\n".join(f"- {k}: {v}" for k, v in measured_state().items())
     methods = "\n".join(f"- `{p}` — {t}" for p, t in recorded_methods()) or "- none recorded yet"
     traps = "\n".join(f"- {t}" for t in standing_traps())
@@ -257,6 +257,8 @@ def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement"
         branch=branch,
         owner=owner,
         max_chars=12000,
+        soft_token_budget=soft_token_budget,
+        hard_token_budget=hard_token_budget,
     )
     return compiled.text
 
@@ -275,6 +277,8 @@ def main() -> int:
         "--intent", default="implement", choices=sorted(INTENTS),
         help="what kind of work this is; selects the mandatory requirements",
     )
+    ap.add_argument("--soft-tokens", type=int, default=1200, help="target prompt input-token budget")
+    ap.add_argument("--hard-tokens", type=int, default=1800, help="hard prompt input-token budget")
     ap.add_argument("--out", help="write here instead of stdout")
     args = ap.parse_args()
 
