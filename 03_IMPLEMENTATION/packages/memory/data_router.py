@@ -8,7 +8,7 @@ be returned to an agent/model-facing caller.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Dict, Mapping
+from typing import Any, Callable, Dict, Mapping
 
 from .context.budget import ContextBudget
 
@@ -114,9 +114,10 @@ class MemoryDataEgressGate:
 class MemoryDataRouter:
     """Canonical memory-data router for model-facing context production.
 
-    Routing decides which registered memory-data producer owns a request.
-    Producers remain responsible for retrieval, ranking and context construction.
-    The resulting pack is always passed through the dedicated egress gate.
+    The router owns route registration and dispatch. Registered producers remain
+    responsible for retrieval, ranking and context construction. Every producer
+    result is passed through the dedicated egress gate before it can leave the
+    data plane.
     """
 
     ROUTES = frozenset({
@@ -128,24 +129,40 @@ class MemoryDataRouter:
 
     def __init__(self, egress_gate: MemoryDataEgressGate | None = None) -> None:
         self.egress_gate = egress_gate or MemoryDataEgressGate()
+        self._handlers: Dict[str, Callable[..., Dict[str, Any]]] = {}
+
+    def register(
+        self,
+        source: str,
+        handler: Callable[..., Dict[str, Any]],
+    ) -> None:
+        route = str(source).strip()
+        if route not in self.ROUTES:
+            raise DataRouteViolation(f"source: unsupported memory data route '{route}'")
+        if not callable(handler):
+            raise DataRouteViolation(f"source: route '{route}' has no callable handler")
+        if route in self._handlers:
+            raise DataRouteViolation(f"source: route '{route}' is already registered")
+        self._handlers[route] = handler
 
     def dispatch(
         self,
         *,
         source: str,
         principal: str,
-        producer: Any,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         route = str(source).strip()
         if route not in self.ROUTES:
             raise DataRouteViolation(f"source: unsupported memory data route '{route}'")
-        if not callable(producer):
-            raise DataRouteViolation(f"source: route '{route}' has no callable producer")
+        handler = self._handlers.get(route)
+        if handler is None:
+            raise DataRouteViolation(f"source: route '{route}' has no registered handler")
 
-        pack = producer()
+        pack = handler(**kwargs)
         if not isinstance(pack, dict):
             raise DataRouteViolation(
-                f"source: route '{route}' producer did not return a context pack"
+                f"source: route '{route}' handler did not return a context pack"
             )
         return self.egress_gate.route_to_model(
             pack,
