@@ -201,6 +201,43 @@ class ContextPackBuilder:
             or "```" in content
         )
     @staticmethod
+    def _compact_for_token_budget(
+        results: List[Dict[str, Any]],
+        reduction_metrics: Dict[str, Any],
+    ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
+        """Drop only optional reduction diagnostics when the model budget is tight.
+
+        Trust, provenance, requirements, acceptance and protected content remain
+        untouched. This is an adaptive metadata disclosure step, not a security
+        bypass and not content reduction.
+        """
+        compact_results: List[Dict[str, Any]] = []
+        for item in results:
+            candidate = dict(item)
+            compression = candidate.get("compression")
+            if isinstance(compression, dict):
+                candidate["compression"] = {
+                    key: compression[key]
+                    for key in ("action", "reason")
+                    if key in compression
+                }
+            reduction = candidate.get("reduction")
+            if isinstance(reduction, dict):
+                candidate["reduction"] = {
+                    key: reduction[key]
+                    for key in ("token_estimate_before", "token_estimate_after", "tokens_saved")
+                    if key in reduction
+                }
+            compact_results.append(candidate)
+
+        compact_metrics = {
+            key: reduction_metrics[key]
+            for key in ("verified_first", "tokens_saved", "net_tokens_saved")
+            if key in reduction_metrics
+        }
+        return compact_results, compact_metrics
+
+    @staticmethod
     def _json_safe(value: Any) -> Any:
         """Convert compressed note payloads into transport-safe JSON values."""
         if isinstance(value, bytes):
@@ -269,6 +306,27 @@ class ContextPackBuilder:
             )
             serialized_size = resolved.serialized_size(pack)
             estimated_tokens = resolved.estimate_tokens(pack)
+            if estimated_tokens > resolved.hard_token_budget:
+                compact_results, compact_metrics = self._compact_for_token_budget(
+                    safe_results, reduction_metrics
+                )
+                compact_pack = self._build_pack(
+                    request_id, agent_id, resolved, compact_results, disclosure_level,
+                    minimal_provenance, next_page_token, audit_ref, compact_metrics
+                )
+                compact_size = resolved.serialized_size(compact_pack)
+                compact_tokens = resolved.estimate_tokens(compact_pack)
+                if compact_size <= resolved.hard_context_budget and compact_tokens <= resolved.hard_token_budget:
+                    try:
+                        record_observed_memory_trace(
+                            run_id=request_id,
+                            results=compact_pack.get("results", []),
+                            context_size_bytes=compact_size,
+                            estimated_tokens=compact_tokens,
+                        )
+                    except Exception:
+                        pass
+                    return compact_pack
             if serialized_size <= resolved.hard_context_budget and estimated_tokens <= resolved.hard_token_budget:
                 try:
                     record_observed_memory_trace(
