@@ -410,7 +410,6 @@ class MemoryController:
                 request_id="read", agent_id=principal.value, budget={}, results=disclosed,
                 disclosure_level=disclosure_level, minimal_provenance=None, next_page_token=None, audit_ref=None
             )
-            pack = self.data_router.route_to_model(pack, source='read', principal=principal.value)
             audit_event('read', principal, note_id, success=True)
             return pack
         except Exception as e:
@@ -450,7 +449,6 @@ class MemoryController:
                 results=[result], disclosure_level='full',
                 minimal_provenance=None, next_page_token=None, audit_ref=None
             )
-            pack = self.data_router.route_to_model(pack, source='cognitive_read', principal=principal.value)
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
         except Exception as e:
@@ -1328,7 +1326,6 @@ class MemoryController:
                 trace_collector.trace.status = f"degraded_telemetry_error: {str(trace_err)}"
                 pack["retrieval_trace"] = trace_collector.trace.to_dict()
 
-            pack = self.data_router.route_to_model(pack, source='search', principal=principal.value)
             audit_event('search', principal, target_id, success=True, details={'page_size': page_size, 'offset': offset})
             return pack
         except Exception as e:
