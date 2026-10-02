@@ -90,11 +90,12 @@ dynamic state must not be placed inside the cacheable prefix. The compiler
 exposes both sections while retaining the complete combined `text` for callers
 that do not support segmented prompts.
 
-The compiler also supports an optional injected tokenizer. Without one, token
-counts are explicitly heuristic (`~3 characters/token`); with one, the supplied
-counter becomes the authoritative budget measurement for the compiled prompt.
-An optional hard `max_tokens` budget triggers further verified reduction rather
-than silently truncating security or acceptance metadata.
+The compiler also supports an optional injected tokenizer. Without one, prompt
+counts use the reducer's heuristic (`~4 characters/token`); context-pack budgets
+use their own configurable fallback (`~3 characters/token`). With an injected
+tokenizer, the supplied counter becomes the authoritative budget measurement for
+that boundary. Soft and hard token budgets trigger further verified reduction
+rather than silently truncating security or acceptance metadata.
 
 Transport compression is not counted as LLM token savings. zlib can reduce
 stored/transmitted bytes, but the model receives decompressed text, so only
