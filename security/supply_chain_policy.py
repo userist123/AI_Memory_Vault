@@ -54,7 +54,7 @@ class SoftwareAISupplyChainPolicy:
     def __init__(
         self,
         *,
-        blocked_countries: set[str] | frozenset[str] = frozenset(),
+        blocked_countries: set[str] | frozenset[str] = frozenset({"Russia", "China", "India", "North Korea"}),
         blocked_jurisdictions: set[str] | frozenset[str] = frozenset(),
         approved_signers: set[str] | frozenset[str] = frozenset(),
     ) -> None:
