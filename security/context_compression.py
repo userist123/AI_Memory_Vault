@@ -38,7 +38,7 @@ class CompressionResult:
 
 class CompressionRouter:
     def __init__(self, *, min_tokens: int = 800, min_redundancy: float = 0.15,
-                 estimated_overhead_tokens: int = 120, chars_per_token: float = 4.0,
+                 estimated_overhead_tokens: int = 0, chars_per_token: float = 4.0,
                  tokenizer: Callable[[str], int] | None = None,
                  cost_per_input_token: float | None = None,
                  latency_ms_per_input_token: float | None = None) -> None:
