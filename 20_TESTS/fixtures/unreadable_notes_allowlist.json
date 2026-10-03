@@ -294,6 +294,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Governance policy document, not a storage-engine memory note. Adding note frontmatter would assign lifecycle and verification metadata to policy text and could change retrieval semantics."
     }
   ]
 }
