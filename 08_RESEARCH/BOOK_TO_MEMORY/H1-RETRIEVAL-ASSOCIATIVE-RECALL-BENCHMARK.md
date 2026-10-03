@@ -112,6 +112,6 @@ The validator checks:
 - distractor integrity;
 - duplicate gold-target reuse (warning during drafting, blocking error for final freeze).
 
-The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. That evidence must come from an execution against the exact production retrieval path and be frozen with the baseline.
+The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. Runtime stage evidence must follow `08_RESEARCH/BOOK_TO_MEMORY/H1-RUNTIME-EVIDENCE-CONTRACT.md` and be frozen with the baseline.
 
 A validator warning is not evidence of successful associative retrieval. A validator error blocks the corpus from baseline measurement.
