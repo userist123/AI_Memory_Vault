@@ -91,9 +91,9 @@ The final arrow remains intentionally blocked until the experiment has a frozen,
 
 As documented in `SOURCE_RECOVERY_AUDIT.md`, `CORPUS_FREEZE.md`, and `BLOCKER_REGISTER.md`:
 - The local filesystem copies under `06_INBOX/Carti` were forensically audited across all 20 manifest entries.
-- 14 sources are fully available and verified on disk.
-- 3 sources are partial fragments/jackets/tertiary tables (`7688_jkt_au`, `wiener_cybernetics`, `comparison_cognitive_architectures`).
-- 3 sources require attribution or secondary-summary reconciliation (`newell_how_can_human_mind_occur`, `why_we_forget`, `quantum_consciousness_framework`).
-- The corpus is frozen as `PARTIAL_SOURCE_CORPUS` with canonical SHA-256 hash `d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5`.
-- Active blockers are formally tracked under `B-0001` through `B-0006` in `BLOCKER_REGISTER.md` and validated by `validate_blocker_registry.py`.
+- 15 sources are fully available and verified on disk.
+- 5 sources are marked SOURCE_UNAVAILABLE (`7688_jkt_au`, `comparison_cognitive_architectures`, `newell_how_can_human_mind_occur`, `why_we_forget`, `wiener_cybernetics`).
+- 0 sources require verification.
+- The corpus is frozen as `PARTIAL_SOURCE_CORPUS` with canonical SHA-256 hash `4d8b77543350f02411e3bb9eb2d765f39dd39891a542c95823010bb2bc5cc59a`.
+- Active blockers are formally tracked under `B-0001` through `B-0006` in `BLOCKER_REGISTER.md` (where `B-0002`, `B-0004`, `B-0005` are CLOSED, and `B-0001`, `B-0003`, `B-0006` remain active HARD_BLOCKERs) and validated by `validate_blocker_registry.py`.
 

@@ -11,11 +11,11 @@ Acest audit rezolvă poarta de disponibilitate a surselor (`SOURCE-COPY GATE`) i
 
 ### Clasificare generală a celor 20 de surse:
 - **AVAILABLE (Complet & Verificabil)**: 15 surse
-- **SOURCE_UNAVAILABLE (Fragmentar / Jacket / Tabel Web)**: 3 surse
-- **NEEDS_VERIFICATION (Rezumat comercial Bookey / Reconciliere autor)**: 2 surse
+- **SOURCE_UNAVAILABLE (Decomisionat / Fragmentar / Rezumat Bookey / Scrap)**: 5 surse (`7688_jkt_au`, `comparison_cognitive_architectures`, `newell_how_can_human_mind_occur`, `why_we_forget`, `wiener_cybernetics`)
+- **NEEDS_VERIFICATION**: 0 surse
 
 Corpusul este înghețat sub denumirea deterministă `PARTIAL_SOURCE_CORPUS` cu hash-ul canonic:
-`d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5`
+`4d8b77543350f02411e3bb9eb2d765f39dd39891a542c95823010bb2bc5cc59a`
 
 ## 2. Tabel Canonic de Audit al Surselor
 
@@ -57,3 +57,36 @@ Conform contractului de operare:
 - Nu se promovează note în ACTIVE pe baza surselor fragmentare sau a rezumatelor terțe.
 - Ipotezele experimentale H1 se derivează exclusiv din sursele marcate `AVAILABLE` cu secțiuni și pagini exacte.
 - Corpusul este marcat `PARTIAL_SOURCE_CORPUS` și nu se consideră echivalent cu un corpus complet de 20 de cărți integrale până la rezolvarea blockerelor externe.
+
+## 5. Auditul Exhaustiv al Rutelor de Recuperare pentru B-0001 și B-0003
+
+### 5.1 Blocker B-0001: Norbert Wiener — *Cybernetics* (2nd ed. 1961, MIT Press)
+- **Căutare pe mașina locală / workspace**:
+  - Scanare completă executată recursiv pe partițiile `C:\` (`c:\Users\user\Documents`, `Downloads`, `AppData`) și `D:\` (`D:\AI_Memory_Vault_CODEX_READY`, `D:\user`).
+  - Singurul artefact existent local este fișierul `06_INBOX/Carti/Creier cibernetic/ilide.info-wiener-cybernetics-pr_14c41245c1e661efb9361d53417d2473.pdf` (2,589,693 bytes) și `.txt` (7.7 KB).
+  - Inspecția criminalistică directă prin `pypdf` a stabilit: PDF-ul conține exact 8 pagini (`Num pages: 8`), reprezentând exclusiv note academice/citate studențești (ex. `(WIENER, 1961, p. 01)`), nu monografia completă de 212 pagini.
+- **Căutare în istoricul Git**:
+  - Interogare `git log --all -i --grep="wiener"`: toate referințele istorice (R027, R036) trimit la același extras din Inbox. Nu există o copie completă în commit-uri sau stashes.
+- **Căutare în depozite autorizate externe / Open Access**:
+  - *Internet Archive*: Înregistrarea `https://archive.org/details/cyberneticsorcon00wien` conține ediția 1961 (212 p.), dar este restricționată la *Controlled Digital Lending (CDL)* cu împrumut patron și token LCP/Adobe DRM. Cererea directă pe endpoint-ul fișierelor a returnat `HTTP Error 401: Unauthorized`.
+  - *MIT Press Direct*: Endpoint-ul DOI `10.7551/mitpress/11810.001.0001` expune o ediție modernă (2019) cu prefețe adăugate, sub licență CC BY-NC-ND 4.0; accesul automat prin script este blocat (HTTP 403 Forbidden de către mecanismul anti-bot Silverchair/Cloudflare) și nu corespunde paginării ediției 1961.
+  - Drepturi de autor: Ediția 1961 este protejată de copyright și nu poate fi descărcată din surse neautorizate.
+- **Verdict B-0001**: Sursa exactă nu este disponibilă prin canale autorizate accesibile automat fără încălcarea politicii de copyright. Blockerul `B-0001` rămâne deschis (`AWAITING_EXTERNAL_EVIDENCE`). Nicio dovadă sintetică nu este fabricată.
+
+### 5.2 Blocker B-0003: Andrew E. Budson & Elizabeth A. Kensinger — *Why We Forget and How To Remember Better* (2023, Oxford University Press)
+- **Căutare pe mașina locală / workspace**:
+  - Scanare recursivă pe `C:\` și `D:\`.
+  - Fișierul local existent: `06_INBOX/Carti/Ontologie+Memorie-episodică-semantică-procedurală/Why We Forget and How To Remember Better PDF.pdf` (2,722,713 bytes, 251 pagini) și `.txt` (165,133 bytes).
+  - Inspecția criminalistică a extrasului (Pagina 2): textul menționează explicit *"Written by Bookey. Check more about Why We Forget and How To Remember Better Summary. Listen Why We Forget and How To Remember Better Audiobook"*.
+  - Este un ghid/rezumat comercial produs de Bookey, nu monografia canonică publicată de Oxford University Press (320 pagini, 25 capitole).
+- **Căutare în istoricul Git**:
+  - Nu există nicio altă copie a cărții în arborele sau istoricul Git.
+- **Căutare în canale autorizate externe**:
+  - Oxford University Press confirmă că lucrarea este o monografie comercială sub drepturi de autor exclusive (2023), nefiind publicată în regim Open Access.
+  - Accesul legal este posibil exclusiv prin împrumut de bibliotecă autorizat (OverDrive / Libby) sau achiziție comercială.
+- **Verdict B-0003**: Ghidul Bookey este respins ca sursă de dovezi primare. Sursa originală OUP 2023 nu este accesibilă legal în mod gratuit/automat. Blockerul `B-0003` rămâne deschis (`AWAITING_EXTERNAL_EVIDENCE`).
+
+### 5.3 Starea Blockerului B-0006
+- Deoarece `B-0001` și `B-0003` rămân deschise, `B-0006` rămâne activ în starea `MITIGATION_IN_PROGRESS`.
+- Restricția de lucru H1 pe corpusul parțial validat (`PARTIAL_SOURCE_CORPUS`, 15 surse disponibile, 5 indisponibile) rămâne în vigoare conform contractului metodologic.
+

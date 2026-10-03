@@ -6,7 +6,8 @@
 - Publisher: Oxford University Press
 - Year: 2007
 - Corpus relation: cognitive-architecture source associated with ACT-R; use only as comparative evidence
-- Research status: source map; no active promotion
+- Research status: source map; spurious local download decommissioned under B-0002; empirical ACT-R evidence re-grounded to verified primary source wcs_1488 (Ritter et al. 2019)
+- Blocker B-0002 status: CLOSED
 
 ## Verified contents
 - Cognitive Architecture — p. 3
