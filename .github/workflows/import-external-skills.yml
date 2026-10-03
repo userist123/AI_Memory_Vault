@@ -61,5 +61,6 @@ jobs:
         run: |
           set -euo pipefail
           # Explicitly approved side effect: workflow_dispatch -> isolated skills-import/* branch only.
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push origin "HEAD:${BRANCH}"
           gh pr create --base main --head "${BRANCH}" --title "feat(skills): import pinned external skill libraries" --body-file 01_KNOWLEDGE/EXTERNAL_SKILLS/IMPORT_PR_DESCRIPTION.md
