@@ -430,7 +430,7 @@ closure:
   resolved_by: null
   resolution_evidence: []
 integrity:
-  record_hash: e17f2f6cf19e7ee529fcbd649a01060c195e59c58cf2e66ac6fce6a6aace5a89
+  record_hash: 55359435a2e80370d03139a662657325f09204cda3750468adbe7957633ebd67
   previous_record_hash: 5a762edf52a4987e35c267b7366952f1716009f36839329eec738b12d7aaf865
 transition_history_ref: BLOCKER_HISTORY.md
 notes: Maintained active (MITIGATION_IN_PROGRESS) strictly under PARTIAL_SOURCE_CORPUS
