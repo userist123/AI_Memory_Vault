@@ -1,6 +1,6 @@
 from pathlib import Path
 import importlib.util
-ROOT=Path(__file__).parent.parent
+ROOT=Path(__file__).parents[2]
 s=importlib.util.spec_from_file_location('wsa',ROOT/'30_SCRIPTS/verification/workflow_security_audit.py'); m=importlib.util.module_from_spec(s); s.loader.exec_module(m)
 def check(tmp,text):
  p=tmp/'x.yml'; p.write_text(text); return m.audit_file(p)
