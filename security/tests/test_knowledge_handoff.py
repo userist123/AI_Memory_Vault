@@ -74,6 +74,20 @@ def test_provenance_trust_status_requires_provenance_record():
     assert result.reason == "verification_required"
 
 
+def test_provenance_status_with_only_memory_id_is_not_trusted():
+    reducer = VerifiedReducer()
+    item = {
+        "id": "memory-123",
+        "content": "A note with an identifier but no provenance record.",
+        "verification": {"status": "VERIFIED_SOURCE"},
+    }
+
+    result = reducer.reduce(item, verified=True, max_chars=200)
+
+    assert result.allowed is False
+    assert result.reason == "verification_required"
+
+
 def test_reduction_reports_relearning_signal():
     reducer = VerifiedReducer()
     item = {
