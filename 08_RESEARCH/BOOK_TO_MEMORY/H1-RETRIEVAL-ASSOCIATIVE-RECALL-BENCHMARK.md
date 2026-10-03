@@ -56,7 +56,7 @@ Secondary:
 - output consistency across repetitions
 
 For any success metric S, Delta = (S_variant - S_baseline) / S_baseline.
-When the denominator is zero, report absolute difference instead of inventing a percentage.
+When the denominator is zero, report absolute difference instead of inventing a percentage. Relative Delta must never be the sole decision criterion.
 
 ## Controls
 The baseline and variant must use:
@@ -68,7 +68,7 @@ The baseline and variant must use:
 - identical lifecycle/security gates
 - identical output budget
 
-Only the candidate-generation/retrieval mechanism under test may differ.
+Only the candidate-generation/retrieval mechanism under test may differ. Pair baseline and variant by case, model, and repetition; retain degraded/failed runs in the evidence set and report their causes.
 
 ## Variant boundary
 The first experimental variant may add associative/context-aware candidate generation.
@@ -82,7 +82,7 @@ It must not:
 - introduce a biological mechanism merely because a source describes one
 
 ## Decision rule
-A retrieval change is justified only if the benchmark shows a repeatable improvement on the predefined target family without unacceptable regression in false retrieval, conflict handling, latency, token cost, consistency, or security/lifecycle behavior.
+A retrieval change is justified only if the benchmark shows a predefined, paired and reproducible improvement on the target family without unacceptable regression in protected metrics. Aggregate averages alone are insufficient; report per-case direction, primary deltas, uncertainty where applicable, degraded-run counts, and the exact decision criterion.
 
 If the baseline performs adequately, do not implement the variant.
 
