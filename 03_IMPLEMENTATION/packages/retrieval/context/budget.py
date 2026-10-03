@@ -124,6 +124,11 @@ class ContextBudget:
                 if self.usage(ordered) <= self.soft_limit_bytes:
                     break
 
+        # Enforce the hard content-byte budget before transport compression.
+        # Compression may reduce serialized transport size, but it must not
+        # turn an oversized logical context into an apparent budget success.
+        self.check_hard_limit(self.usage(ordered))
+
         for note in ordered:
             content = note.get("content", "")
             if self._protected_content(note):
