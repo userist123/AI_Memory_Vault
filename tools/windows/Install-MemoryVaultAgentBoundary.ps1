@@ -30,7 +30,7 @@ if ($admins | Where-Object { $_.Name -ieq "$env:COMPUTERNAME\$AgentAccount" }) {
 
 # Strong local boundary: the agent may inspect the repository but cannot modify it.
 # An explicit DENY beats inherited Modify/Write grants.
-icacls.exe $RepoPath /deny "$AgentAccount:(OI)(CI)(M)" | Out-Null
+icacls.exe $RepoPath /deny "${AgentAccount}:(OI)(CI)(M)" | Out-Null
 
 $gitPath = Join-Path $RepoPath ".git"
 if (Test-Path -LiteralPath $gitPath -PathType Container) {
