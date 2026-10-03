@@ -458,7 +458,14 @@ class MemoryController:
                 request_id="cognitive_read", agent_id=principal.value, budget={},
                 results=[result], disclosure_level='full',
                 minimal_provenance=None, next_page_token=None, audit_ref=None,
-                allow_unverified=(principal in {Principal.HUMAN, Principal.ADMIN}),
+                allow_unverified=(
+                    principal in {Principal.HUMAN, Principal.ADMIN}
+                    or (
+                        principal == Principal.AI_AGENT
+                        and isinstance(result.get("provenance"), dict)
+                        and result.get("provenance", {}).get("source_type") == "inference"
+                    )
+                ),
             )
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
