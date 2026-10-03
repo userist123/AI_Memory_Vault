@@ -11,7 +11,7 @@ This ledger separates historical benchmark evidence from the current main branch
 - The same report showed that graph expansion can move a previously retrieved correct memory out of the final context. This is evidence against assuming that more associative expansion is automatically better.
 
 ## Why this does not close H1
-main is 92 commits ahead of b3ada1b54, so the old numeric results cannot be presented as the current state.
+The historical snapshot `b3ada1b54` is not the current branch state, so the old numeric results cannot be presented as the current state. Any current comparison must identify and freeze its own corpus commit/hash.
 The current retrieval code also contains an experimental HybridRetriever with BM25, entity matching, optional dense embeddings, and RRF, but its module explicitly states that it is not wired into MemoryController.search().
 Therefore H1 must measure the actual current production path first, then compare any variant against that frozen baseline.
 
