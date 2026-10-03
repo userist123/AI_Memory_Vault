@@ -190,7 +190,17 @@ def validate_corpus(cases_payload: Dict[str, Any], corpus: Dict[str, Any], final
         if count > 1:
             warnings.append(f"gold_target_reused:{gid}:{count}")
             if final:
-                errors.append(f"gold_target_reused_in_final:{gid}:{count}")
+                reused_cases = [
+                    case for case in cases
+                    if gid in [str(x) for x in (case.get("gold_relevant_notes") or [])]
+                ]
+                allowed = all(
+                    case.get("family") in {"conflict", "distractor"}
+                    and str(case.get("gold_reuse_reason", "")).strip()
+                    for case in reused_cases
+                )
+                if not allowed:
+                    errors.append(f"gold_target_reused_in_final:{gid}:{count}")
 
     return {
         "valid": not errors,
