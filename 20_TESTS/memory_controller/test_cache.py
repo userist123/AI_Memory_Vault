@@ -187,7 +187,7 @@ def test_debug_retrieval_trust_diagnostics(tmp_path):
     pack = controller.search(Principal.AI_AGENT, "consolidarea nocturna instaleaza dependentele", page_size=3)
     assert pack["results"], {
         "results": pack.get("results"),
-        "candidate_trace": pack.get("candidate_trace"),
+        "trace": {k: (pack.get("candidate_trace") or {}).get(k) for k in ("source", "query", "candidate_limit", "candidates_considered", "per_generator", "fused_ranking", "classifier_filter_arm")},
         "reduction": pack.get("reduction"),
     }
 
@@ -216,7 +216,7 @@ def test_debug_owner_archived_diagnostics(tmp_path):
     pack = controller.search(Principal.HUMAN, "ashby ultrastable homeostat", page_size=3)
     assert pack["results"], {
         "results": pack.get("results"),
-        "candidate_trace": pack.get("candidate_trace"),
+        "trace": {k: (pack.get("candidate_trace") or {}).get(k) for k in ("source", "query", "candidate_limit", "candidates_considered", "per_generator", "fused_ranking", "classifier_filter_arm")},
         "reduction": pack.get("reduction"),
     }
 
