@@ -27,6 +27,7 @@ jobs:
 
     steps:
       - name: Check APIsec configuration
+        if: github.event_name != 'pull_request'
         id: config
         shell: bash
         env:
