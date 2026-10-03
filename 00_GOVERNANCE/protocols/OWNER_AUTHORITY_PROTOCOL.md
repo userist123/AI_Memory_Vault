@@ -17,17 +17,18 @@ the operation is denied.
 
 ## Repository requirements
 
-All pull requests require explicit approval by @userist123 through the owner-approval
-workflow. CODEOWNERS identifies the owner.
+All changes to main must pass the protected GitHub Actions environment named owner-approval.
+That environment must list @userist123 as a required reviewer and must allow the owner to
+approve the job even when the owner initiated the workflow. The environment must not permit
+an administrator bypass. CODEOWNERS identifies the owner for protected files.
 
-The owner must configure GitHub branch/ruleset protection with:
-- pull request required before merge;
-- required owner review;
-- required status check owner-approval;
-- no administrator/automation bypass;
-- force-push and branch deletion disabled on protected branches.
+The repository setup script tools/github/configure-owner-authority.sh configures the owner
+approval environment and protected main branch. These settings are intentionally outside
+normal repository content: committed files cannot safely enforce their own GitHub security
+settings.
 
-Committed files cannot safely enforce these GitHub repository settings by themselves.
+GitHub supports required environment reviewers and can prevent bypass of environment
+protection; required checks can then be made mandatory for a protected branch.
 
 ## Agent tools
 
