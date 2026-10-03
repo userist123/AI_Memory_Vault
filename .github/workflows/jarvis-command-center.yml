@@ -2,7 +2,7 @@ name: JARVIS Command Center
 
 on:
   push:
-    timeout-minutes: 20
+
     branches: [main]
     paths:
       - '02_PRODUCT/projects/workspaces/jarvis_web/**'
