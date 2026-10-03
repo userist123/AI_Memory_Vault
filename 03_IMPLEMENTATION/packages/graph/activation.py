@@ -195,8 +195,19 @@ class ActivationEngine:
                         res = pack.get("results", [])
                         if res:
                             node = res[0]
-                            active_nodes[next_id] = {"node": node, "activation": next_activation}
-                            queue.append((next_id, depth + 1, next_activation))
+                        else:
+                            # Cognitive-core traversal may consume an explicitly
+                            # REVIEW/unverified node as read-only data, but the
+                            # public cognitive_read route remains fail-closed.
+                            stored = self.controller.storage.get(next_id)
+                            if not isinstance(stored, dict):
+                                continue
+                            if stored.get("lifecycle") != "REVIEW" or stored.get("verification") != "unverified":
+                                continue
+                            node = stored.copy()
+                            node["_cognitive_unverified"] = True
+                        active_nodes[next_id] = {"node": node, "activation": next_activation}
+                        queue.append((next_id, depth + 1, next_activation))
                     except (ValueError, AttributeError):
                         pass
                 elif next_id in active_nodes:
