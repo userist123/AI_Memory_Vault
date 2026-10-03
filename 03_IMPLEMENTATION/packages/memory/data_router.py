@@ -11,6 +11,7 @@ from copy import deepcopy
 from typing import Any, Callable, Dict, Mapping
 
 from retrieval.context.budget import ContextBudget
+from security.verified_reduction import TRUSTED_STATUSES
 
 
 class DataRouteViolation(RuntimeError):
@@ -58,7 +59,7 @@ class MemoryDataEgressGate:
                 ).upper()
             else:
                 status = str(verification or "").upper()
-            if status not in {"TRUSTED", "VERIFIED", "SAFE"}:
+            if status not in TRUSTED_STATUSES:
                 raise DataRouteViolation(
                     f"verification: result {index} is not trusted ({status or 'missing'})"
                 )
