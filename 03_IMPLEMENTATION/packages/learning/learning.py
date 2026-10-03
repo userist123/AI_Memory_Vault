@@ -67,9 +67,6 @@ class LearningEngine:
             lifecycle=[Lifecycle.ACTIVE.value],
             types=["knowledge"],
         )
-        if not isinstance(candidates, list):
-            pack = self.controller.search(principal, "knowledge", page_size=20)
-            candidates = pack.get("results", []) if isinstance(pack, dict) else []
 
         promoted_ids = []
 
