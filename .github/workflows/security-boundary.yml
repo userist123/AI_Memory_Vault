@@ -36,7 +36,6 @@ jobs:
   memory-data-route:
     name: Memory Data Route Gate
     timeout-minutes: 20
-    name: Memory Data Route Gate
     runs-on: ubuntu-latest
     permissions:
       contents: read
