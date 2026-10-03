@@ -11,7 +11,7 @@ This is an audit artifact only. It does not authorize a production retrieval cha
 - PR: #206
 - PR #204 is out of scope.
 - Branch comparison: 35 commits ahead of main, 0 behind at the time of this audit.
-- PR #206 contains 22 changed files: 20 research artifacts under `08_RESEARCH/BOOK_TO_MEMORY/` (including the research test), plus one governance policy and one integrity manifest.
+- PR #206 contains 23 changed files: 21 research artifacts under `08_RESEARCH/BOOK_TO_MEMORY/` (including the research test), plus one governance policy and one integrity manifest.
 - No production retrieval/consolidation implementation file is changed by PR #206.
 
 ## Audited production path
