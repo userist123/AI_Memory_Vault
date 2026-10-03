@@ -2,7 +2,7 @@ name: Polymarket Phase 6 Tests
 
 on:
   push:
-    timeout-minutes: 20
+
     branches:
       - r052-pm-phase6-market-model-edge
     paths:
