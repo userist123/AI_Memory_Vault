@@ -7,6 +7,7 @@ _MOD = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_MOD)
 validate_corpus = _MOD.validate_corpus
 canonical_hash = _MOD.canonical_hash
+benchmark_hash = _MOD.benchmark_hash
 
 
 def _corpus():
@@ -43,7 +44,9 @@ def _base_case(**overrides):
 
 
 def _payload(*cases):
-    return {"corpus_commit": "abc", "corpus_hash": canonical_hash(_corpus()), "cases": list(cases)}
+    payload = {"corpus_commit": "abc", "corpus_hash": canonical_hash(_corpus()), "cases": list(cases)}
+    payload["benchmark_hash"] = benchmark_hash(payload)
+    return payload
 
 
 def test_missing_gold_blocks_corpus():
@@ -139,6 +142,7 @@ def test_ai_agent_cannot_use_classified_gold_under_default_search_floor():
     corpus["notes"][0]["lifecycle"] = "CLASSIFIED"
     case = _base_case(principal="AI_AGENT")
     payload = {"corpus_commit": "abc", "corpus_hash": canonical_hash(corpus), "cases": [dict(case, corpus_hash=canonical_hash(corpus))]}
+    payload["benchmark_hash"] = benchmark_hash(payload)
     result = validate_corpus(payload, corpus)
     assert not result["valid"]
     assert any("ineligible_gold_for_principal:A:AI_AGENT:CLASSIFIED" in error for error in result["errors"])
@@ -209,3 +213,18 @@ def test_final_duplicate_query_is_rejected():
     result = validate_corpus(_payload(case1, case2), _corpus(), final=True)
     assert not result["valid"]
     assert any(error.startswith("duplicate_final_query:") for error in result["errors"])
+
+
+def test_benchmark_hash_changes_when_case_changes():
+    payload = _payload(_base_case())
+    changed = dict(payload)
+    changed["cases"] = [dict(payload["cases"][0], query="changed frozen query")]
+    assert benchmark_hash(payload) != benchmark_hash(changed)
+
+
+def test_benchmark_hash_mismatch_blocks_corpus():
+    payload = _payload(_base_case())
+    payload["benchmark_hash"] = "wrong"
+    result = validate_corpus(payload, _corpus())
+    assert not result["valid"]
+    assert "benchmark_hash_mismatch" in result["errors"]
