@@ -23,6 +23,8 @@ jobs:
         run: python3 30_SCRIPTS/verification/write_path_audit.py --root . --json > write-path-audit.json
 
       - name: Publish summary
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python3 - <<'PY'
           import json
@@ -35,7 +37,7 @@ jobs:
 
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as out:
               out.write("## Write-path audit\n\n")
-              out.write(f"Audited revision: `{os.environ.get('GITHUB_SHA', 'unknown')}`\n\n")
+              out.write(f"Audited revision: `{os.environ.get('PR_HEAD_SHA') or os.environ.get('GITHUB_SHA', 'unknown')}`\n\n")
               out.write(f"Total findings: **{len(findings)}**\n\n")
               for key in sorted(by_class):
                   out.write(f"- `{key}`: {by_class[key]}\n")
