@@ -2,7 +2,7 @@ name: ACTIVE note integrity
 
 on:
   push:
-    timeout-minutes: 20
+
     branches:
       - main
   pull_request:
