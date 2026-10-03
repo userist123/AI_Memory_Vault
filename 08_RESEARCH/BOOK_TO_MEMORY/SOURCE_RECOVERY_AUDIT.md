@@ -3,7 +3,7 @@
 Date: 2026-10-03
 Branch: `research/book-to-memory`
 PR: #206
-Base Commit: `77ff539a514f1293056798cf01076c43025742cb`
+Audit Snapshot Commit: `acc6a027ee275fe208a25adaa8f541d2e10f5cca`
 
 ## 1. Executive Summary
 
