@@ -59,7 +59,11 @@ class MemoryDataEgressGate:
                 ).upper()
             else:
                 status = str(verification or "").upper()
-            if status not in TRUSTED_STATUSES:
+            quarantined_owner_view = (
+                str(principal) == "human"
+                and result.get("trust_state") == "UNVERIFIED_QUARANTINED"
+            )
+            if status not in TRUSTED_STATUSES and not quarantined_owner_view:
                 raise DataRouteViolation(
                     f"verification: result {index} is not trusted ({status or 'missing'})"
                 )
@@ -104,7 +108,14 @@ class MemoryDataEgressGate:
                 "token_economy",
                 "model_egress",
             ],
-            "model_egress": True,
+            "model_egress": not any(
+                isinstance(result, dict) and result.get("trust_state") == "UNVERIFIED_QUARANTINED"
+                for result in results
+            ),
+            "quarantine": any(
+                isinstance(result, dict) and result.get("trust_state") == "UNVERIFIED_QUARANTINED"
+                for result in results
+            ),
         }
 
         try:
