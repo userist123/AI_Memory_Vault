@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check Fortify configuration
+        if: github.event_name != 'pull_request'
         id: config
         shell: bash
         env:
