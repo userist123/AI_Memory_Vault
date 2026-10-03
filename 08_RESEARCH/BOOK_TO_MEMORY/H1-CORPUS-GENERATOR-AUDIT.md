@@ -86,3 +86,10 @@ The canonical validator hash still sorts JSON object keys and intentionally reta
 No associative retrieval implementation is justified by the current corpus state alone.
 
 Next gate is construction of a frozen current corpus packet, followed by runtime reachability audit. Only cases surviving that gate may enter H1 baseline measurement.
+
+
+### G9 — Selection bias must be blocked at the runtime-analysis layer
+
+The corpus contract correctly requires runtime reachability, but reachability alone does not prevent post-hoc deletion of inconvenient cases. The benchmark now treats reachability as a reported stratum and requires the complete frozen parent denominator to remain visible. Any associative subgroup must be declared before baseline/variant results are inspected.
+
+Disposition: FIXED in the H1 runtime evidence and benchmark contracts.
