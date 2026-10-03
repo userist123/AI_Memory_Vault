@@ -67,7 +67,13 @@ class FilteredStorage(StorageEngine):
     def __init__(self, seed_notes: List[Dict[str, Any]], other_notes: List[Dict[str, Any]] = None):
         super().__init__()
         for n in seed_notes + (other_notes or []):
-            self.set(n["id"], n)
+            fixture = dict(n)
+            fixture.setdefault("verification", "verified")
+            fixture.setdefault(
+                "provenance",
+                {"source_type": "user", "source_ref": "graph-test-fixture"},
+            )
+            self.set(fixture["id"], fixture)
         self.seed_ids = {n["id"] for n in seed_notes}
 
     def query(self, intent: str = None, lifecycle: List[str] = None, types: List[str] = None) -> List[Dict[str, Any]]:
