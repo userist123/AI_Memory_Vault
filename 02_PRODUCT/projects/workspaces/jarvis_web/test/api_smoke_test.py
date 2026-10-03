@@ -25,7 +25,7 @@ def main()->int:
                 status,data=get('/status')
                 if status==200 and data.get('status')=='online': ready=True;break
             except Exception: time.sleep(.1)
-        if not ready: print('FAIL: API did not start');return 1
+        if not ready:\n            stderr=proc.stderr.read().strip() if proc.stderr else ''\n            if stderr: print('API STDERR:\\n'+stderr)\n            print('FAIL: API did not start');return 1
         checks=[]
         status,data=get('/metrics');checks.append((status==200 and data.get('engine')=='V6','metrics'))
         status,data=get('/agents');checks.append((status==200 and len(data.get('agents',[]))>=21,'agents'))
