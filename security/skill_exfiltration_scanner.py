@@ -45,6 +45,8 @@ SECRET_DESTINATION_PATTERNS = [
 INVISIBLE_UNICODE_PATTERN = re.compile(
     "[\u200b-\u200f\u202a-\u202e\u2060\u2061\u2062\u2063\u2064\u2066-\u206f\ufeff]"
 )
+PROSE_EXTENSIONS = frozenset({".md", ".markdown", ".txt", ".prompt"})
+
 EDUCATIONAL_MARKERS = re.compile(
     r"\b(?:example only|for educational purposes|educational|demonstration|"
     r"hypothetical|sample|illustration|do not execute|not intended to|toy example|"
@@ -90,11 +92,17 @@ def _extract_provenance(skill_dir: Path) -> dict[str, object]:
     return value if isinstance(value, dict) else {"provenance_status": "INVALID_SHAPE"}
 
 
-def _evidence(lines: list[str], category: str, pattern: re.Pattern[str]) -> list[Evidence]:
+def _evidence(
+    lines: list[str],
+    category: str,
+    pattern: re.Pattern[str],
+    *,
+    allow_educational_context: bool,
+) -> list[Evidence]:
     out: list[Evidence] = []
     for idx, line in enumerate(lines):
         if pattern.search(line):
-            educational = _is_educational(_context_window(lines, idx))
+            educational = allow_educational_context and _is_educational(_context_window(lines, idx))
             out.append(
                 Evidence(
                     category,
@@ -133,7 +141,14 @@ def scan_text(path: Path, text: str, provenance: dict[str, object] | None = None
     lines = text.splitlines()
     findings: list[Evidence] = []
     for category, pattern in NETWORK_PATTERNS + DATA_PATTERNS + OVERRIDE_PATTERNS + SECRET_DESTINATION_PATTERNS:
-        findings.extend(_evidence(lines, category, pattern))
+        findings.extend(
+            _evidence(
+                lines,
+                category,
+                pattern,
+                allow_educational_context=path.suffix.lower() in PROSE_EXTENSIONS,
+            )
+        )
     findings.extend(_unicode_evidence(lines))
 
     data_categories = {x[0] for x in DATA_PATTERNS}
