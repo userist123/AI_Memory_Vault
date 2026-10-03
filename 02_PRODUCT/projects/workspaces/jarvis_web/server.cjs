@@ -18,7 +18,7 @@ const MIME = {
 function safePath(urlPath) {
   let decoded;
   try { decoded = decodeURIComponent(urlPath); } catch { return null; }
-  const normalized = path.normalize(decoded).replace(/^([.][.][\\/])+/, '');
+  const rawSegments = decoded.split(/[\\/]+/);\n  if (rawSegments.some(segment => segment === '..')) return null;\n  const normalized = path.normalize(decoded);
   const candidate = path.resolve(ROOT, `.${path.sep}${normalized.replace(/^[/\\]+/, '')}`);
   if (candidate !== ROOT && !candidate.startsWith(`${ROOT}${path.sep}`)) return null;
   return candidate;
