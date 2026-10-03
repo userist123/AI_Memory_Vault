@@ -13,6 +13,7 @@ except ModuleNotFoundError:
     def record_observed_memory_trace(**_: Any) -> None:
         return None
 from security.knowledge_handoff import VerifiedKnowledgeHandoff
+from security.verified_reduction import TRUSTED_STATUSES
 from security.context_compression import AdaptiveContextCompressor, CompressionRouter
 
 
@@ -112,7 +113,7 @@ class ContextPackBuilder:
             # while richer callers may provide a verification record. Normalize
             # both representations, but keep the trust boundary fail-closed:
             # only explicitly trusted states can enter reduction.
-            if status not in {"TRUSTED", "VERIFIED", "SAFE", "VERIFIED_SOURCE", "DERIVED_FROM_VERIFIED_SOURCE"}:
+            if status not in TRUSTED_STATUSES:
                 rejected += 1
                 continue
             item["verification"] = verification_record
