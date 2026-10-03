@@ -92,3 +92,27 @@ def test_financial_engine_uses_canonical_route():
     next_def = financial_source.find("\ndef ", start + len(marker))
     source = financial_source[start:] if next_def < 0 else financial_source[start:next_def]
     assert "data_router.dispatch" in source
+
+
+def test_egress_gate_does_not_count_observability_traces_as_model_input():
+    router = MemoryDataRouter()
+    pack = {
+        "requestId": "route-observability",
+        "agentId": "AI_AGENT",
+        "budget": {"hard_tokens": 240},
+        "reduction": {"tokenizer_mode": "test", "net_tokens_saved": 10},
+        "results": [{
+            "id": "n1",
+            "content": "trusted memory",
+            "verification": {"status": "TRUSTED"},
+            "provenance": {"source_type": "user", "source_ref": "test"},
+        }],
+        "candidate_trace": {"events": ["trace"] * 1000},
+        "retrieval_trace": {"events": ["trace"] * 1000},
+    }
+
+    router.register("search", lambda: pack)
+    routed = router.dispatch(source="search", principal="AI_AGENT")
+
+    assert routed["results"][0]["id"] == "n1"
+    assert routed["data_route"]["final_model_input_tokens"] <= 240
