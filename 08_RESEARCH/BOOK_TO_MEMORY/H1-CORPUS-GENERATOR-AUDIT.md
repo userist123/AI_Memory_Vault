@@ -73,6 +73,14 @@ Before baseline:
 12. contamination notes;
 13. frozen query and gold.
 
+### G8 — Generator ordering was not previously explicit
+
+The labeling generator iterated the index notes and graph store in their native iteration order. Because the corpus hash is computed over arrays whose order is semantically part of the JSON payload, equivalent corpus content could otherwise produce different hashes across environments or implementation changes.
+
+Disposition: FIXED. Notes are sorted by `(id, path)` and links by `(source, target, relation, origin)` before serialization. This makes the generated packet byte-order deterministic for the same loaded corpus content.
+
+The canonical validator hash still sorts JSON object keys and intentionally retains array order, so generator determinism remains part of the reproducibility contract.
+
 ## Decision
 
 No associative retrieval implementation is justified by the current corpus state alone.
