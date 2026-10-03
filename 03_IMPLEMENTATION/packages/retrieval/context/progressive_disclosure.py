@@ -30,9 +30,11 @@ class ProgressiveDisclosure:
     @staticmethod
     def _verified(note: Dict[str, Any]) -> bool:
         verification = note.get("verification")
-        if not isinstance(verification, dict):
-            return False
-        return verification.get("status") in {"TRUSTED", "VERIFIED", "SAFE"}
+        if isinstance(verification, dict):
+            status = verification.get("status", verification.get("state", ""))
+        else:
+            status = verification
+        return str(status or "").upper() in {"TRUSTED", "VERIFIED", "SAFE"}
 
     @staticmethod
     def _security_metadata(note: Dict[str, Any]) -> Dict[str, Any]:
