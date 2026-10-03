@@ -191,6 +191,13 @@ def test_debug_retrieval_trust_diagnostics(tmp_path):
         allow_unverified=True, agent_id="ai_agent",
     )
     assert reduced, {"raw_note": raw_note, "reduced_metrics": reduced_metrics}
+    from memory_controller.context.progressive_disclosure import ProgressiveDisclosure
+    disclosed = ProgressiveDisclosure(resolved).metadata_only(reduced, allow_unverified=True)
+    direct_pack = controller.pack_builder.build(
+        request_id="debug", agent_id="ai_agent", budget={}, results=disclosed,
+        disclosure_level="metadata", allow_unverified=True,
+    )
+    assert direct_pack["results"], {"disclosed": disclosed, "direct_pack": direct_pack}
     pack = controller.search(Principal.AI_AGENT, "consolidarea nocturna instaleaza dependentele", page_size=3)
     assert pack["results"], {
         "results": pack.get("results"),
