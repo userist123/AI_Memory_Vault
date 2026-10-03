@@ -34,6 +34,7 @@ def _base_case(**overrides):
         "abstain": False,
         "principal": "HUMAN",
         "intended_boundary": "candidate_generation",
+        "split": "development",
         "corpus_commit": "abc",
         "corpus_hash": canonical_hash(_corpus()),
     }
@@ -185,3 +186,24 @@ def test_final_gold_reuse_is_allowed_only_for_documented_conflict_design():
     )
     final = validate_corpus(_payload(case1, case2), _corpus(), final=True)
     assert final["valid"]
+
+
+def test_final_requires_held_out_split():
+    result = validate_corpus(_payload(_base_case()), _corpus(), final=True)
+    assert not result["valid"]
+    assert "final_case_not_held_out:H1-001" in result["errors"]
+
+
+def test_held_out_cannot_carry_expected_baseline():
+    case = _base_case(split="held_out", expected_baseline={"rank": 1})
+    result = validate_corpus(_payload(case), _corpus())
+    assert not result["valid"]
+    assert "H1-001:held_out_case_has_expected_baseline" in result["errors"]
+
+
+def test_final_duplicate_query_is_rejected():
+    case1 = _base_case(id="H1-001", split="held_out")
+    case2 = _base_case(id="H1-002", split="held_out")
+    result = validate_corpus(_payload(case1, case2), _corpus(), final=True)
+    assert not result["valid"]
+    assert any(error.startswith("duplicate_final_query:") for error in result["errors"])
