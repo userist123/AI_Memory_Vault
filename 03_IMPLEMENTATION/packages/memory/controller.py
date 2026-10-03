@@ -797,9 +797,10 @@ class MemoryController:
                 and not classified.get("target_types")
             ):
                 try:
-                    owner_pool = self.storage.query(
-                        intent=classified.get("intent"), lifecycle=None, types=None
-                    )
+                    owner_pool = [
+                        note for note in all_storage_notes
+                        if str(note.get("lifecycle", "")).upper() != Lifecycle.RAW.value
+                    ]
                     owner_limit = max(page_size, int(getattr(budget, "max_notes", page_size) * 40))
                     notes, owner_trace = generate_candidates(sanitized, owner_pool, owner_limit)
                     candidate_trace.update(owner_trace.to_dict())
