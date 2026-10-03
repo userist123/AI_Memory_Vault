@@ -764,8 +764,8 @@ class MemoryController:
             # constraint was supplied. Classifier inference must not hide the
             # owner's archived history.
             if (
-                active_classifier_filter_arm is None
-                and principal == Principal.HUMAN
+                classifier_filter_arm is None
+                and principal == Principal.AI_AGENT
                 and lifecycles is None
                 and types is None
             ):
