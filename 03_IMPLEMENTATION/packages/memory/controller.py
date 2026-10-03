@@ -458,7 +458,7 @@ class MemoryController:
                 request_id="cognitive_read", agent_id=principal.value, budget={},
                 results=[result], disclosure_level='full',
                 minimal_provenance=None, next_page_token=None, audit_ref=None,
-                allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
+                allow_unverified=(principal in {Principal.HUMAN, Principal.ADMIN}),
             )
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
