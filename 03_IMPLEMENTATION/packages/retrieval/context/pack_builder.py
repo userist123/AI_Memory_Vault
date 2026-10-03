@@ -81,6 +81,7 @@ class ContextPackBuilder:
         *,
         query: str = "",
         allow_unverified: bool = False,
+        agent_id: str = "human",
     ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         reduced: List[Dict[str, Any]] = []
         tokens_saved = 0
