@@ -103,6 +103,8 @@ The frozen case set must pass 08_RESEARCH/BOOK_TO_MEMORY/validate_h1_corpus.py b
 
 The validator checks:
 - unique case IDs and frozen corpus commit/hash;
+- immutable benchmark packet hash;
+- final held-out split and duplicate-query protection;
 - gold ID existence;
 - required facts in gold evidence;
 - RAW/ARCHIVED exclusion under the normal H1 contract;
@@ -112,6 +114,6 @@ The validator checks:
 - distractor integrity;
 - duplicate gold-target reuse (warning during drafting, blocking error for final freeze).
 
-The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. Runtime stage evidence must follow `08_RESEARCH/BOOK_TO_MEMORY/H1-RUNTIME-EVIDENCE-CONTRACT.md` and be frozen with the baseline.
+The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. Runtime stage evidence must follow `08_RESEARCH/BOOK_TO_MEMORY/H1-RUNTIME-EVIDENCE-CONTRACT.md` and be frozen with the baseline. Reachability is a reported stratum, not a post-hoc case-selection filter; associative subgroup criteria must be preregistered and the full parent denominator retained.
 
 A validator warning is not evidence of successful associative retrieval. A validator error blocks the corpus from baseline measurement.
