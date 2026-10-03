@@ -41,7 +41,9 @@ negative_result_policy: "If threshold not met, record as HYPOTHESIS_NOT_SUPPORTE
 
 ---
 
-### H1-BOOK-002 (Anderson 2007 — Human Associative Memory Activation Spreading)
+### H1-BOOK-002 (Ritter, Tehranchi & Oury 2019 — ACT-R / associative-memory hypothesis)
+
+> Source identity note: the recorded `wcs_1488` source is **ACT-R: A cognitive architecture for modeling cognition**, by Frank E. Ritter, Farnaz Tehranchi, and Jacob D. Oury, WIREs Cognitive Science 10:e1488 (2019; first published online 2018), DOI 10.1002/wcs.1488. The repository's engineering hypothesis must not be treated as directly established by the source until the exact cited passage is verified.
 
 ```yaml
 hypothesis_id: H1-BOOK-002
