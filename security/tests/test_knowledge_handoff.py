@@ -45,6 +45,22 @@ def test_verified_reduction_preserves_handoff_knowledge_classes():
         assert result.metadata[field] == item[field]
 
 
+def test_provenance_verified_statuses_are_trusted_for_reduction():
+    reducer = VerifiedReducer()
+    for status in ("VERIFIED_SOURCE", "DERIVED_FROM_VERIFIED_SOURCE"):
+        item = {
+            "content": f"Verified provenance note: {status}.",
+            "verification": {"status": status},
+            "provenance": {"source_ref": "trusted-source", "provenance_status": status.lower()},
+        }
+
+        result = reducer.reduce(item, verified=True, max_chars=200)
+
+        assert result.allowed is True
+        assert result.content
+        assert result.metadata["verification"]["status"] == status
+
+
 def test_reduction_reports_relearning_signal():
     reducer = VerifiedReducer()
     item = {
@@ -57,3 +73,4 @@ def test_reduction_reports_relearning_signal():
 
     assert result.tokens_saved > 0
     assert result.original_chars > result.final_chars
+}
