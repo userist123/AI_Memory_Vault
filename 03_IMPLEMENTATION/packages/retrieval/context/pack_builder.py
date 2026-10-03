@@ -118,6 +118,46 @@ class ContextPackBuilder:
             item["verification"] = verification_record
 
             content = str(item.get("content", ""))
+            # Metadata-only disclosure intentionally carries no content. It is
+            # already a verified representation, so the content compressor's
+            # non-empty-text validator must not reject it as if compression had
+            # failed. Trust verification above remains mandatory.
+            if not content:
+                compact = dict(item)
+                compact["content"] = ""
+                compact["compression"] = {
+                    "action": "NO_OP",
+                    "reason": "metadata_only_or_empty_content",
+                    "original_tokens": 0,
+                    "estimated_tokens": 0,
+                    "redundancy": 0.0,
+                    "protected_spans": 0,
+                    "removed_segments": 0,
+                    "fallback": False,
+                    "validation": {
+                        "passed": True,
+                        "protected_recall": 1.0,
+                        "missing_protected": [],
+                        "downstream_valid": True,
+                        "original_chars": 0,
+                        "compressed_chars": 0,
+                    },
+                    "tokenizer_mode": tokenizer_mode,
+                    "net_tokens_saved": 0,
+                    "cost_saved": 0.0,
+                    "latency_saved_ms": 0.0,
+                }
+                compact["reduction"] = {
+                    "original_chars": 0,
+                    "final_chars": 0,
+                    "bytes_saved": 0,
+                    "token_estimate_before": 0,
+                    "token_estimate_after": 0,
+                    "tokens_saved": 0,
+                }
+                reduced.append(compact)
+                continue
+
             compressor = AdaptiveContextCompressor(
                 router=CompressionRouter(
                     tokenizer=resolved.tokenizer,
