@@ -115,7 +115,7 @@ class MemoryDataEgressGate:
             model_input = {
                 key: value
                 for key, value in routed.items()
-                if key not in {"candidate_trace", "retrieval_trace"}
+                if key not in {"candidate_trace", "retrieval_trace", "data_route"}
             }
             final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(model_input)
         except (KeyError, TypeError, ValueError) as exc:
