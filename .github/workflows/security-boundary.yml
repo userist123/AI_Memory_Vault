@@ -29,6 +29,8 @@ jobs:
       - name: Install test runner
         run: python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3
       - name: Run security tests
+        env:
+          PYTHONPATH: .
         run: python -m pytest security/tests -q -o pythonpath=.
       - name: Audit workflow security boundary
         run: python 30_SCRIPTS/verification/workflow_security_audit.py
