@@ -26,6 +26,7 @@ on:
       - '04_CONFIG/**'
       - '06_INBOX/**'
       - '09_SECURITY/**'
+      - 'security/**'
       - '20_TESTS/**'
       - '30_SCRIPTS/verification/**'
       - '40_EXPERIMENTS/**'
