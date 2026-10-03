@@ -50,6 +50,7 @@ Focused tests:
 Files:
 - Modify: 08_RESEARCH/BOOK_TO_MEMORY/H1-RETRIEVAL-ASSOCIATIVE-RECALL-BENCHMARK.md
 - Modify: 08_RESEARCH/BOOK_TO_MEMORY/H1-BENCHMARK-CORPUS-AUDIT.md
+- Create: 08_RESEARCH/BOOK_TO_MEMORY/H1-RUNTIME-EVIDENCE-CONTRACT.md
 
 Unresolved externally observable decisions:
 - Multiple gold IDs are allowed only with an explicit reason.
