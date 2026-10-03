@@ -167,36 +167,3 @@ class ReflectionPipeline:
             return None
         except Exception:
             return None
-            source_node = getter(source_id)
-            target_node = getter(target_id)
-            if not isinstance(source_node, dict) or not isinstance(target_node, dict):
-                return None
-
-            relations = source_node.get("relations", [])
-            if not isinstance(relations, list):
-                relations = []
-            else:
-                relations = list(relations)
-
-            for rel in relations:
-                if isinstance(rel, dict) and rel.get("target_id") == target_id:
-                    if rel.get("relation") == relation_type or rel.get("type") == relation_type:
-                        return None
-
-            target_type = target_node.get("type", "knowledge")
-            if not isinstance(target_type, str):
-                target_type = "knowledge"
-
-            canonical_relation = {
-                "relation": relation_type,
-                "target": target_type,
-                "target_id": target_id
-            }
-            relations.append(canonical_relation)
-
-            if hasattr(self.controller, "update"):
-                self.controller.update(principal, source_id, {"relations": relations})
-                return source_id
-            return None
-        except Exception:
-            return None
