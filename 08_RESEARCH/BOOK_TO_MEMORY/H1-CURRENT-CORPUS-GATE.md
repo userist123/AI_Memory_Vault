@@ -9,9 +9,9 @@ Main base: `427b44edbb9b113b87a582b8b49734f195c2363f`
 
 **STATUS: BLOCKED before benchmark instantiation.**
 
-The research branch contains the corpus manifest, validator, and book maps, but the manifest's referenced Raw Inbox book files are not present in the Git repository tree accessible from this branch. Therefore a reproducible current-vault labeling corpus cannot be generated from the repository alone at this point.
+The research branch contains the corpus manifest, validator, and book maps, but the Raw Inbox book files are not versioned in the Git repository tree. The forensic audit confirms 15 verified source files are available in the local execution workspace, while 5 manifest items are SOURCE_UNAVAILABLE. Therefore a reproducible current-vault labeling corpus cannot be generated from the repository alone; benchmark execution requires the exact external/local source snapshot plus its frozen manifest and hashes.
 
-This is a data-availability gate, not a retrieval failure.
+This is a reproducibility/data-availability gate, not a retrieval failure.
 
 ## Evidence
 
