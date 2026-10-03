@@ -73,14 +73,25 @@ class MemoryDataEgressGate:
         reduction = pack.get("reduction")
         if not isinstance(budget, dict):
             raise DataRouteViolation("security_boundary: final budget envelope is missing")
+        # An empty result envelope is a legitimate fail-closed outcome after
+        # budget filtering. It still needs a valid budget, but it has no
+        # per-result reduction metrics to validate.
         if not isinstance(reduction, dict):
-            raise DataRouteViolation("token_economy: reduction metrics are missing")
+            if results:
+                raise DataRouteViolation("token_economy: reduction metrics are missing")
+            reduction = {"verified_first": True, "items_reduced": 0, "items_rejected_unverified": 0}
+            routed_reduction = True
+        else:
+            routed_reduction = False
 
         hard_tokens = budget.get("hard_tokens")
         if hard_tokens is None:
             raise DataRouteViolation("security_boundary: hard token budget is missing")
 
         routed = deepcopy(pack)
+        if routed_reduction:
+            routed["reduction"] = reduction
+
         routed["data_route"] = {
             "source": str(source),
             "principal": str(principal),
