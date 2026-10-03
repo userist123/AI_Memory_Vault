@@ -4,8 +4,8 @@
   "freeze_status": "frozen",
   "source_count": 20,
   "available_sources": 15,
-  "unavailable_sources": 3,
-  "needs_verification_sources": 2,
+  "unavailable_sources": 5,
+  "needs_verification_sources": 0,
   "sources": [
     {
       "source_id": "2504.05840v1",
@@ -137,7 +137,8 @@
       "sha256": "a697868c0077aff357f38d87dbc6464d4891ae4d949fe0f6d8faf26c34484e52",
       "pdf_sha256": "c7cf204a99d960c8a5cd0ae182b321e4bb1d32464d13ce254bfadbac3b66efd8",
       "size_bytes": 600127,
-      "status": "needs_verification"
+      "status": "source_unavailable",
+      "notes": "Corrupted download artifact (pages 6-460 Harper's Round Table 1896 scrap). Decommissioned per B-0002."
     },
     {
       "source_id": "newell_unified_theories_of_cognition",
@@ -214,7 +215,8 @@
       "sha256": "baeb5480e3c945b7795e0dcac92c416bfbf5c51d9b39dc7e5d2442eac7a9a546",
       "pdf_sha256": "fdd3f2166970e440af8686a6950e8124300d7a4c44045f424dfa8c472d0fbb48",
       "size_bytes": 165133,
-      "status": "needs_verification"
+      "status": "source_unavailable",
+      "notes": "Bookey commercial summary (165 KB), not unabridged OUP 2023 monograph. Retained as source_unavailable per B-0003."
     },
     {
       "source_id": "wiener_cybernetics",
@@ -228,5 +230,5 @@
       "status": "source_unavailable"
     }
   ],
-  "canonical_corpus_hash": "d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5"
+  "canonical_corpus_hash": "4d8b77543350f02411e3bb9eb2d765f39dd39891a542c95823010bb2bc5cc59a"
 }

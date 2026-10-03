@@ -1,14 +1,11 @@
-# Book-to-Memory Central Blocker Register
+# Central Blocker Registry
 
-Schema Version: 1.0  
-Track: BOOK_TO_MEMORY  
-PR: 206  
-Branch: `research/book-to-memory`  
-Base Commit: `77ff539a514f1293056798cf01076c43025742cb`  
+**Registry Schema**: `1.0`  
+**Specification Ref**: `00_GOVERNANCE/RESEARCH-TRACK-CONTRACT.md`  
+**Verification Engine**: `30_SCRIPTS/verification/validate_blocker_registry.py`  
+**Transition Log**: `08_RESEARCH/BOOK_TO_MEMORY/BLOCKER_HISTORY.md`  
 
-Source of truth for all Book-to-Memory blockers. Validated deterministically by `30_SCRIPTS/verification/validate_blocker_registry.py`.
-
-## Active Blockers
+---
 
 ### Blocker `B-0001`: Missing exact unabridged source copy for Wiener Cybernetics (fragmentary quotes only)
 
@@ -72,11 +69,12 @@ closure:
   resolved_by: null
   resolution_evidence: []
 integrity:
-  record_hash: 3c885fbd1ca195c410f63a88cf32bec2b6dc17404cd1db40136bb4147e2a3c08
-  previous_record_hash: null
+  record_hash: c163ee9a4458e7562347a4086e755c204b15ec404b9ab11c1a3bc6b5616d1c86
+  previous_record_hash: '0000000000000000000000000000000000000000000000000000000000000000'
 transition_history_ref: BLOCKER_HISTORY.md
-notes: Source remains unavailable for page-level derivation; general cybernetics claims
-  must not enter ACTIVE memory.
+notes: Full 1961 2nd edition monograph (~212 pages, MIT Press) is unavailable in workspace
+  and cannot be retrieved without external acquisition; remains AWAITING_EXTERNAL_EVIDENCE
+  per rule 6.
 ```
 
 ### Blocker `B-0002`: Source identity misattribution in corpus manifest for newell_how_can_human_mind_occur
@@ -86,7 +84,7 @@ blocker_id: B-0002
 schema_version: '1.0'
 title: Source identity misattribution in corpus manifest for newell_how_can_human_mind_occur
 severity: HARD_BLOCKER
-status: TRIAGED
+status: CLOSED
 scope:
   track: BOOK_TO_MEMORY
   pr: 206
@@ -133,18 +131,25 @@ dependencies:
   supersedes: []
 closure:
   criteria:
-  - Bibliographic record corrected to John R. Anderson
-  - Research hypotheses and book maps correctly attribute ACT-R principles
+  - Bibliographic record corrected and spurious download artifact decommissioned
+  - Research hypotheses and book maps correctly attribute ACT-R principles to verified
+    primary sources
   evidence_required:
-  - Reconciled metadata in SOURCE_RECOVERY_AUDIT.md
-  resolved_at: null
-  resolved_by: null
-  resolution_evidence: []
+  - Reconciled metadata in SOURCE_RECOVERY_AUDIT.md and re-grounded H1-BOOK-002 in
+    BOOK_TO_HYPOTHESIS_MAPPING.md
+  resolved_at: '2026-10-03T16:15:00Z'
+  resolved_by: antigravity
+  resolution_evidence:
+  - 08_RESEARCH/BOOK_TO_MEMORY/SOURCE_RECOVERY_AUDIT.md
+  - 08_RESEARCH/BOOK_TO_MEMORY/BOOK_TO_HYPOTHESIS_MAPPING.md
+  - 08_RESEARCH/BOOK_TO_MEMORY/CORPUS_FREEZE.json
 integrity:
-  record_hash: fd89041a54fb9ea4990b99b16317177beb421ec67357bbf7a2cd0939319933a0
-  previous_record_hash: 3c885fbd1ca195c410f63a88cf32bec2b6dc17404cd1db40136bb4147e2a3c08
+  record_hash: d09d5529991c7e53d3b832770b0c7b11dacb05892b8debd1eee6677316d1636f
+  previous_record_hash: c163ee9a4458e7562347a4086e755c204b15ec404b9ab11c1a3bc6b5616d1c86
 transition_history_ref: BLOCKER_HISTORY.md
-notes: Book content is complete and verified; only attribution key requires reconciliation.
+notes: Attribution ambiguity and corrupted download artifact resolved. Source marked
+  SOURCE_UNAVAILABLE; ACT-R declarative recall re-grounded in primary source wcs_1488
+  (Ritter et al. 2019).
 ```
 
 ### Blocker `B-0003`: Incomplete secondary Bookey summary guide for why_we_forget instead of primary text
@@ -209,10 +214,12 @@ closure:
   resolved_by: null
   resolution_evidence: []
 integrity:
-  record_hash: 1952124bb81d77449483b2a40fc9aad2f5ca1bbbd30e1e5424ba8e2b5847e902
-  previous_record_hash: fd89041a54fb9ea4990b99b16317177beb421ec67357bbf7a2cd0939319933a0
+  record_hash: 0231943fe7a1924a9f566cfe8d05ad7be63cc109a9e542b3bbed4033afcf1564
+  previous_record_hash: d09d5529991c7e53d3b832770b0c7b11dacb05892b8debd1eee6677316d1636f
 transition_history_ref: BLOCKER_HISTORY.md
-notes: Secondary summary cannot substitute for primary neurobiological evidence.
+notes: Full unabridged monograph (Oxford University Press, 2023, 25 chapters, 320
+  pages) is unavailable in workspace; Bookey summary cannot substitute; remains AWAITING_EXTERNAL_EVIDENCE
+  per rule 4.
 ```
 
 ### Blocker `B-0004`: Fragmentary single-page jacket blurb for 7688_jkt_au
@@ -222,7 +229,7 @@ blocker_id: B-0004
 schema_version: '1.0'
 title: Fragmentary single-page jacket blurb for 7688_jkt_au
 severity: HARD_BLOCKER
-status: TRIAGED
+status: CLOSED
 scope:
   track: BOOK_TO_MEMORY
   pr: 206
@@ -268,14 +275,17 @@ closure:
   - Documentation clarifies 7688_jkt_au is jacket blurb superseded by laird_soar_cognitive_architecture
   evidence_required:
   - Cross-reference in SOURCE_RECOVERY_AUDIT.md
-  resolved_at: null
-  resolved_by: null
-  resolution_evidence: []
+  resolved_at: '2026-10-03T16:15:00Z'
+  resolved_by: antigravity
+  resolution_evidence:
+  - 08_RESEARCH/BOOK_TO_MEMORY/SOURCE_RECOVERY_AUDIT.md
+  - 08_RESEARCH/BOOK_TO_MEMORY/CORPUS_FREEZE.md
 integrity:
-  record_hash: c807045815b8cf1a7a6e74b977dfa1f7cc25c2609a63faa9ab1b502ea78cf810
-  previous_record_hash: 1952124bb81d77449483b2a40fc9aad2f5ca1bbbd30e1e5424ba8e2b5847e902
+  record_hash: 345d35c850fc7269d817f9573f1768deada4c37087793f7be173c58bcbbaefea
+  previous_record_hash: 0231943fe7a1924a9f566cfe8d05ad7be63cc109a9e542b3bbed4033afcf1564
 transition_history_ref: BLOCKER_HISTORY.md
-notes: Redundant artifact; full text already available under laird_soar_cognitive_architecture.
+notes: 7688_jkt_au verified as 1-page promotional dust jacket containing zero unique
+  scientific evidence; consolidated under verified primary monograph laird_soar_cognitive_architecture.
 ```
 
 ### Blocker `B-0005`: Secondary non-peer-reviewed source comparison_cognitive_architectures (Wikipedia table excerpt)
@@ -286,7 +296,7 @@ schema_version: '1.0'
 title: Secondary non-peer-reviewed source comparison_cognitive_architectures (Wikipedia
   table excerpt)
 severity: SOFT_BLOCKER
-status: TRIAGED
+status: CLOSED
 scope:
   track: BOOK_TO_MEMORY
   pr: 206
@@ -333,14 +343,18 @@ closure:
   - Primary sources identified for all architectural comparisons
   evidence_required:
   - Mapping in BOOK_TO_HYPOTHESIS_MAPPING.md
-  resolved_at: null
-  resolved_by: null
-  resolution_evidence: []
+  resolved_at: '2026-10-03T16:15:00Z'
+  resolved_by: antigravity
+  resolution_evidence:
+  - 08_RESEARCH/BOOK_TO_MEMORY/SOURCE_RECOVERY_AUDIT.md
+  - 08_RESEARCH/BOOK_TO_MEMORY/BOOK_TO_HYPOTHESIS_MAPPING.md
 integrity:
-  record_hash: 8a9d0b8cb95af5b965505bb89277f92f9f2f52335622a065da1b9041bc75bd41
-  previous_record_hash: c807045815b8cf1a7a6e74b977dfa1f7cc25c2609a63faa9ab1b502ea78cf810
+  record_hash: 5a762edf52a4987e35c267b7366952f1716009f36839329eec738b12d7aaf865
+  previous_record_hash: 345d35c850fc7269d817f9573f1768deada4c37087793f7be173c58bcbbaefea
 transition_history_ref: BLOCKER_HISTORY.md
-notes: Tertiary material excluded from formal hypothesis derivation.
+notes: comparison_cognitive_architectures classified as tertiary overview; excluded
+  from hypothesis derivation; primary architectural sources established as Laird 2012,
+  Newell 1990, Ritter et al. 2019.
 ```
 
 ### Blocker `B-0006`: Partial source corpus precludes declaring full 20-source H1 benchmark completion
@@ -416,10 +430,9 @@ closure:
   resolved_by: null
   resolution_evidence: []
 integrity:
-  record_hash: 2ff52acb077641bc91817d71be4a8dffb0214d4533d0b4e7374a743f1db22f3b
-  previous_record_hash: 8a9d0b8cb95af5b965505bb89277f92f9f2f52335622a065da1b9041bc75bd41
+  record_hash: e17f2f6cf19e7ee529fcbd649a01060c195e59c58cf2e66ac6fce6a6aace5a89
+  previous_record_hash: 5a762edf52a4987e35c267b7366952f1716009f36839329eec738b12d7aaf865
 transition_history_ref: BLOCKER_HISTORY.md
-notes: Allows independent experimental research on 14 verified sources under PARTIAL_SOURCE_CORPUS
-  designation.
+notes: Maintained active (MITIGATION_IN_PROGRESS) strictly under PARTIAL_SOURCE_CORPUS
+  designation; blocked by external evidence resolution on B-0001 and B-0003.
 ```
-

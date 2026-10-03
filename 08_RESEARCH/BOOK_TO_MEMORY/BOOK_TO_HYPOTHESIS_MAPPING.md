@@ -3,7 +3,7 @@
 **Track**: Book-to-Memory  
 **Status**: Pre-registered experimental mapping  
 **Corpus ID**: `book-to-memory-raw-inbox` (`PARTIAL_SOURCE_CORPUS`)  
-**Corpus SHA-256**: `d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5`  
+**Corpus SHA-256**: `4d8b77543350f02411e3bb9eb2d765f39dd39891a542c95823010bb2bc5cc59a`  
 
 ## 1. Operating Policy
 
@@ -45,10 +45,10 @@ negative_result_policy: "If threshold not met, record as HYPOTHESIS_NOT_SUPPORTE
 
 ```yaml
 hypothesis_id: H1-BOOK-002
-source_id: newell_how_can_human_mind_occur # Content verified as John R. Anderson 2007
-source_location: "Chapter 3 (Human Associative Memory, pp. 91-134)"
-source_sha256: a697868c0077aff357f38d87dbc6464d4891ae4d949fe0f6d8faf26c34484e52
-edition: "Oxford University Press, 2007"
+source_id: wcs_1488 # Re-grounded from corrupted artifact newell_how_can_human_mind_occur per B-0002 resolution
+source_location: "Section 1-3 (Lineage to Human Associative Memory & Spreading Activation Model, pp. 2-8)"
+source_sha256: ce1b7c0265c5bbe9265d7e168acc4910927627004a39bbc2bd2ddb459e38464c
+edition: "WIREs Cognitive Science, 2019, 10(2):e1488 (Ritter, Tehranchi & Oury)"
 principle: "Associative recall in declarative memory operates via activation spreading across network links based on contextual cues rather than direct surface word matching."
 engineering_hypothesis: "1-hop graph neighbor expansion from initial top-3 lexical candidates will recover gold notes in indirect-cue queries where query tokens have zero lexical overlap with the gold note."
 mechanism_variant: "BM25 candidate retrieval + 1-hop typed edge expansion (isolated research runner)."

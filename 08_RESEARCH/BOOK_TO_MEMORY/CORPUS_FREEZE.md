@@ -4,11 +4,11 @@
 **Classification**: `PARTIAL_SOURCE_CORPUS`  
 **Freeze Status**: `frozen`  
 **Deterministic Order**: Sorted by `source_id` ascending  
-**Canonical Corpus SHA-256**: `d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5`  
+**Canonical Corpus SHA-256**: `4d8b77543350f02411e3bb9eb2d765f39dd39891a542c95823010bb2bc5cc59a`  
 **Total Declared Sources**: 20  
-**Available (Full & Verified)**: 14  
-**Source Unavailable (Fragment/Jacket/Wiki)**: 3  
-**Needs Verification (Bookey Summary / Reconciled Attribution)**: 3  
+**Available (Full & Verified)**: 15  
+**Source Unavailable (Fragment/Jacket/Wiki/Corrupted)**: 5  
+**Needs Verification (Preprint)**: 0  
 
 ## Machine-Readable Manifest Reference
 
@@ -21,7 +21,7 @@ The canonical machine-readable representation is frozen in:
 corpus_id: book-to-memory-raw-inbox
 corpus_type: PARTIAL_SOURCE_CORPUS
 freeze_status: frozen
-canonical_corpus_hash: "d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5"
+canonical_corpus_hash: "4d8b77543350f02411e3bb9eb2d765f39dd39891a542c95823010bb2bc5cc59a"
 sources:
   - source_id: 2504.05840v1
     title: Momentum Boosted Episodic Memory for Improving Learning in Long-Tailed RL Environments
@@ -106,7 +106,7 @@ sources:
     edition: 2007 (Oxford University Press, ISBN 978-0-19-532425-9)
     file: 06_INBOX/Carti/Memorie procedurală+Judecatăheuristici+Routing/ilide.info-how-can-the-human-mind-occur-in-the-physical-universe-pr_926d879337b6016eac9eaf30756bbcc4.txt
     sha256: a697868c0077aff357f38d87dbc6464d4891ae4d949fe0f6d8faf26c34484e52
-    status: needs_verification
+    status: source_unavailable
   - source_id: newell_unified_theories_of_cognition
     title: Unified Theories of Cognition
     author: Allen Newell
@@ -155,7 +155,7 @@ sources:
     edition: 2023 (Rezumat comercial Bookey)
     file: 06_INBOX/Carti/Ontologie+Memorie-episodică-semantică-procedurală/Why We Forget and How To Remember Better PDF.txt
     sha256: baeb5480e3c945b7795e0dcac92c416bfbf5c51d9b39dc7e5d2442eac7a9a546
-    status: needs_verification
+    status: source_unavailable
   - source_id: wiener_cybernetics
     title: "Cybernetics: or Control and Communication in the Animal and the Machine (Quotes/Excerpts)"
     author: Norbert Wiener
