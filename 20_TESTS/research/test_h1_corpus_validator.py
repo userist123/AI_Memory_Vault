@@ -99,3 +99,35 @@ def test_target_reuse_is_warning_during_draft_and_error_in_final():
     assert any("gold_target_reused:A:2" in w for w in draft["warnings"])
     assert not final["valid"]
     assert any("gold_target_reused_in_final:A:2" in e for e in final["errors"])
+
+
+def test_query_and_principal_are_required_and_valid():
+    missing = validate_corpus(_payload(_base_case(query="", principal="")), _corpus())
+    assert not missing["valid"]
+    assert "H1-001:missing_query" in missing["errors"]
+    assert "H1-001:invalid_principal" in missing["errors"]
+
+    invalid = validate_corpus(_payload(_base_case(principal="ROOT")), _corpus())
+    assert not invalid["valid"]
+    assert "H1-001:invalid_principal" in invalid["errors"]
+
+
+def test_answerable_case_requires_required_facts():
+    result = validate_corpus(_payload(_base_case(required_facts=[])), _corpus())
+    assert not result["valid"]
+    assert "H1-001:answerable_case_has_no_required_facts" in result["errors"]
+
+
+def test_multihop_path_must_be_connected():
+    case = _base_case(
+        family="multi_hop_associative",
+        gold_relevant_notes=["C"],
+        required_facts=["target fact"],
+        graph_path=[
+            {"source": "A", "target": "B", "relation": "depends_on"},
+            {"source": "A", "target": "C", "relation": "related_to"},
+        ],
+    )
+    result = validate_corpus(_payload(case), _corpus())
+    assert not result["valid"]
+    assert any("disconnected_graph_path:1:B->A" in error for error in result["errors"])
