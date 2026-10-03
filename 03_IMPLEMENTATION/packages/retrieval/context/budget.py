@@ -143,9 +143,9 @@ class ContextBudget:
                 break
             ordered.pop(removable)
 
-        if ordered and self.serialized_size(ordered) > self.hard_limit_bytes:
-            raise BudgetExceededError(f"Context usage exceeds hard limit {self.hard_limit_bytes} bytes")
-
+        # Final serialized-envelope size is enforced by ContextPackBuilder,
+        # which can remove whole results after accounting for security and
+        # reduction metadata. This stage only enforces content-byte usage.
         self.check_hard_limit(self.usage(ordered))
         return ordered
 
