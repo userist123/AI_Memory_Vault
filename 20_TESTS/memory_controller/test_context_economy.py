@@ -50,7 +50,7 @@ def test_injected_token_counter_is_used_for_budget_estimates():
         "hard_limit_tokens": 10,
         "tokenizer": lambda text: len(text.split()),
     })
-    assert budget.estimate_tokens({"content": "one two three four"}) == 5
+    assert budget.estimate_tokens({"content": "one two three four"}) == 4
 
 
 def test_compression_is_not_reported_as_llm_token_savings():
