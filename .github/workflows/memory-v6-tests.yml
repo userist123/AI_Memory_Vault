@@ -2,7 +2,7 @@ name: Memory V6 Tests
 
 on:
   push:
-    timeout-minutes: 20
+
     paths:
       - '03_IMPLEMENTATION/**'
       - '20_TESTS/memory_controller/**'
