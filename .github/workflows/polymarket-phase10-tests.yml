@@ -2,6 +2,7 @@ name: Polymarket Phase 10 Tests
 
 on:
   push:
+    timeout-minutes: 20
     branches:
       - r062-paper-simulation
     paths:
@@ -16,6 +17,10 @@ on:
       - '07_EVALUATION/polymarket/**'
       - '.github/workflows/polymarket-phase10-tests.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
