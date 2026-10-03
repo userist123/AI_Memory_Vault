@@ -17,9 +17,10 @@ on:
 jobs:
   Fortify-AST-Scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
-      actions: read
       contents: read
+      actions: read
       security-events: write
 
     steps:
@@ -53,7 +54,7 @@ jobs:
           fi
 
       - name: Run Fortify Scan
-        if: steps.config.outputs.configured == 'true'
+        if: steps.config.outputs.configured == 'true' && github.event_name != 'pull_request'
         uses: fortify/github-action@ef5539bf4bd9c45c0bd971978f635a69eae55297
         with:
           sast-scan: true
