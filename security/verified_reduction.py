@@ -33,7 +33,13 @@ PRESERVED_FIELDS = (
     "next_actions",
 )
 
-TRUSTED_STATUSES = frozenset({"TRUSTED", "VERIFIED", "SAFE"})
+TRUSTED_STATUSES = frozenset({
+    "TRUSTED",
+    "VERIFIED",
+    "SAFE",
+    "VERIFIED_SOURCE",
+    "DERIVED_FROM_VERIFIED_SOURCE",
+})
 
 
 @dataclass(frozen=True)
