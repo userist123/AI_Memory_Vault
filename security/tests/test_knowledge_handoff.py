@@ -72,5 +72,4 @@ def test_reduction_reports_relearning_signal():
     result = reducer.reduce(item, verified=True, max_chars=160)
 
     assert result.tokens_saved > 0
-    assert result.original_chars > result.final_chars
-}
+    assert result.original_chars > result.final_chars 
