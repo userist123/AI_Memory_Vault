@@ -194,6 +194,16 @@ def test_debug_retrieval_trust_diagnostics(tmp_path):
     from memory_controller.context.progressive_disclosure import ProgressiveDisclosure
     disclosed = ProgressiveDisclosure(resolved).metadata_only(reduced, allow_unverified=True)
     assert disclosed, {"reduced": reduced, "disclosed": disclosed}
+    probe = controller.pack_builder._build_pack(
+        "debug", "ai_agent", resolved, disclosed, "metadata_only", None, None, None, reduced_metrics
+    )
+    probe_size = resolved.serialized_size(probe)
+    probe_tokens = resolved.estimate_tokens(probe)
+    assert probe_size <= resolved.hard_context_budget and probe_tokens <= resolved.hard_token_budget, {
+        "disclosed": disclosed, "probe_size": probe_size, "probe_tokens": probe_tokens,
+        "hard_bytes": resolved.hard_context_budget, "hard_tokens": resolved.hard_token_budget,
+        "probe": probe,
+    }
     direct_pack = controller.pack_builder.build(
         request_id="debug", agent_id="ai_agent", budget={}, results=disclosed,
         disclosure_level="metadata", allow_unverified=True,
