@@ -54,7 +54,8 @@ def audit_file(path):
    if re.search(r'(^|[;&|])\s*git\s+push\b',command):
     approved=('workflow_dispatch' in on and 'skills-import/' in command and 'github.event_name' in command)
     if not approved: findings.append('git push without explicit workflow_dispatch isolated-branch approval')
- if not any(isinstance(j,dict) and 'timeout-minutes' in j for j in _jobs(data).values()): findings.append('workflow has no job timeout-minutes')
+ jobs=_jobs(data)
+ if jobs and any(isinstance(j,dict) and 'timeout-minutes' not in j for j in jobs.values()): findings.append('job missing timeout-minutes')
  return findings
 
 def audit_all(root=ROOT/'.github/workflows'):
