@@ -10,8 +10,8 @@ const PORT = 3001;
 const BASE = `http://127.0.0.1:${PORT}`;
 const TIMEOUT = 5000;
 const LANDMARKS = [
-  'class="shell"','AI MEMORY VAULT','JARVIS','Memory Retrieval','AGENT ROUTER',
-  'AGENT COUNCIL','SKILL REGISTRY','EXECUTION TIMELINE','New memory proposal'
+  'class="shell"','AI COMMAND CENTER','JARVIS','DASHBOARD','MEMORY','AGENTS','SKILLS','COUNCIL',
+  'AGENT COUNCIL','SKILLS REGISTRY','EXECUTION TIMELINE','New memory proposal'
 ];
 const JS_ENDPOINTS = ['/js/app.js','/js/hologram.js','/js/voice_engine.js','/js/vault_client.js'];
 let passed = 0;
