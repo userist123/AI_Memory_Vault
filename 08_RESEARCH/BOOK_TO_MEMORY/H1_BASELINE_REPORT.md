@@ -13,7 +13,7 @@
 - **Principal**: `Principal.HUMAN`
 - **Page Size**: `10`
 - **Graph Expansion**: `False` (Off, production baseline)
-- **Deterministic**: `True` (100% identical outputs across 3 repetitions)
+- **Repetitions per case**: `1` (single execution; cross-repetition determinism is **not established** by this artifact)
 - **Overall All-Gold Recall@10**: **50.0%** (35/70)
 - **Overall Any-Gold Recall@10**: **54.3%** (38/70)
 - **Overall Any-Gold Recall@1**: **24.3%** (17/70)
@@ -79,8 +79,8 @@ Based on the empirical baseline data across the 70 benchmark cases:
 - **Empirical Evidence**: In queries with competing or overlapping scopes, the baseline typically retrieves only one side of the conflict (the one with stronger lexical overlap), failing to surface both perspectives in the top context.
 
 ### Q5: Is the baseline deterministic and reproducible?
-- **Determinism across 3 repetitions**: `100%` (Zero divergence in retrieved IDs, scores, or rank ordering).
-- **Performance**: Sub-10ms mean search latency (360.91 ms), confirming fast execution suitable for iterative benchmarking.
+- **Current artifact**: one repetition per case (`total_repetitions_per_case=1`), so cross-repetition determinism is **not established** by this run.
+- **Observed execution**: the benchmark completed all 70 cases without an exception. Mean latency is `360.91 ms` for this run.
 
 ### Q6: Does empirical data justify designing an associative/context-aware retrieval mechanism?
 - **Conclusion**: **YES**. The baseline data proves that lexical candidate generation is strong for direct lexical queries, but exhibits severe drops on `indirect_cue`, `multi_hop_associative`, `distractor`, and `conflict`. A targeted associative recall mechanism is empirically justified to address these specific failure modes.
