@@ -38,7 +38,7 @@ Minimum initial corpus:
 - 30 target memories
 - 10 tasks per family
 - 3 repetitions per task
-- 2 independently evaluated models
+- 2 independently evaluated retrieval models, if model variability is part of the experiment; otherwise one fixed retrieval model plus 2 independent evaluators must be preregistered explicitly
 
 ## Metrics
 Primary:
@@ -117,3 +117,8 @@ The validator checks:
 The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. Runtime stage evidence must follow `08_RESEARCH/BOOK_TO_MEMORY/H1-RUNTIME-EVIDENCE-CONTRACT.md` and be frozen with the baseline. Reachability is a reported stratum, not a post-hoc case-selection filter; associative subgroup criteria must be preregistered and the full parent denominator retained.
 
 A validator warning is not evidence of successful associative retrieval. A validator error blocks the corpus from baseline measurement.
+
+
+## Model/evaluator identity
+
+`model_id` refers to the model actually executing the retrieval task. `evaluator_id` refers to an independent evaluator applying the correctness rubric, when evaluator models are used. These identities must never be conflated, and changing either after results are inspected constitutes a new benchmark revision.
