@@ -72,9 +72,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip
           python -m pip install -e .
           python -m pip install -r requirements-memory-v6.txt
+          python -m pip install pytest==9.1.1 pyyaml==6.0.3 numpy==2.2.6
           python -m pip check
 
       - name: Validate repository layout
