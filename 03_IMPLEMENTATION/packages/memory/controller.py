@@ -1191,13 +1191,13 @@ class MemoryController:
             trace_collector.start_stage("pagination")
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata':
-                disclosed = pd.metadata_only(notes)
+                disclosed = pd.metadata_only(notes, allow_unverified=True)
             elif disclosure_level == 'snippet':
-                disclosed = pd.snippet(notes)
+                disclosed = pd.snippet(notes, allow_unverified=True)
             elif disclosure_level == 'sections':
-                disclosed = pd.sections(notes, sanitized)
+                disclosed = pd.sections(notes, sanitized, allow_unverified=True)
             else:
-                disclosed = pd.full_document(notes)
+                disclosed = pd.full_document(notes, allow_unverified=True)
             # Pagination slicing
             total = len(disclosed)
             effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
