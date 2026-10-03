@@ -43,6 +43,7 @@ def assess_artifact(a: ArtifactAssessment) -> TrustDecision:
         reasons.append("contains an active instruction-override indicator")
     if a.has_active_data_access and a.has_active_network:
         reasons.append("contains an active data-access-to-network chain")
+        return TrustDecision(TrustState.BLOCKED, tuple(reasons))
     if a.scanner_verdict == "BLOCK":
         reasons.append("static scanner verdict is BLOCK")
         return TrustDecision(TrustState.BLOCKED, tuple(reasons))
