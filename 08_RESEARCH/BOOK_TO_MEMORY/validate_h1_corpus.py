@@ -22,6 +22,7 @@ FAMILIES = {
     "distractor",
 }
 BOUNDARIES = {"candidate_generation", "ranking", "graph", "context_pack", "end_to_end"}
+PRINCIPALS = {"HUMAN", "AI_AGENT", "ADMIN"}
 BLOCKING_LIFECYCLES = {"RAW", "ARCHIVED"}
 
 
@@ -57,6 +58,13 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
     cid = str(case.get("id", ""))
     if not cid:
         errors.append("missing_case_id")
+    query = str(case.get("query", "")).strip()
+    if not query:
+        errors.append("missing_query")
+    principal = str(case.get("principal", "")).upper()
+    if principal not in PRINCIPALS:
+        errors.append("invalid_principal")
+
     family = case.get("family")
     if family not in FAMILIES:
         errors.append("invalid_family")
@@ -77,6 +85,8 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
         errors.append("abstain_case_has_gold")
     if not abstain and not gold:
         errors.append("answerable_case_has_no_gold")
+    if not abstain and not required:
+        errors.append("answerable_case_has_no_required_facts")
     if len(gold) > 1 and not case.get("multi_gold_reason"):
         errors.append("multiple_gold_requires_reason")
 
@@ -97,12 +107,16 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
         path = case.get("graph_path") or []
         if len(path) < 2:
             errors.append("multi_hop_requires_graph_path")
-        for step in path:
+        for index, step in enumerate(path):
             source = str(step.get("source", ""))
             target = str(step.get("target", ""))
             relation = str(step.get("relation", ""))
             if (source, target, relation) not in edges:
                 errors.append(f"missing_or_reversed_edge:{source}:{target}:{relation}")
+            if index > 0:
+                previous_target = str(path[index - 1].get("target", ""))
+                if source != previous_target:
+                    errors.append(f"disconnected_graph_path:{index}:{previous_target}->{source}")
         if gold and path and str(path[-1].get("target")) not in gold:
             errors.append("graph_path_target_not_gold")
 
