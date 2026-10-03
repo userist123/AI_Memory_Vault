@@ -226,3 +226,12 @@ Before converting any candidate into a registered H1 hypothesis:
 10. record positive, negative, and inconclusive results.
 
 No candidate in this document is an implementation instruction.
+
+
+### B-0007 — H1-BOOK-002 source-grounding verification
+
+**Status:** `AWAITING_EXACT_SOURCE_EVIDENCE`
+
+The `wcs_1488` artifact is bibliographically verified as Ritter, Tehranchi & Oury, *ACT-R: A cognitive architecture for modeling cognition* (WIREs Cognitive Science, 2019, e1488), but the current H1 mapping states a stronger principle about associative recall via spreading activation and cites a specific section range. That exact source passage has not yet been independently verified from the full source text in this track. The engineering hypothesis therefore remains a candidate and must not be presented as source-established until the exact passage is recovered and checked.
+
+**Disposition:** do not change production retrieval; do not promote H1-BOOK-002; recover the exact source text/location, then either substantiate the mapping or revise/retire the hypothesis before any new H1 run.
