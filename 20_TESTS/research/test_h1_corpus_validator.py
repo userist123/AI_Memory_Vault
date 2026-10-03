@@ -1,6 +1,12 @@
-import pytest
+import importlib.util
+from pathlib import Path
 
-from validate_h1_corpus import validate_corpus
+_MODULE = Path(__file__).parents[2] / "08_RESEARCH" / "BOOK_TO_MEMORY" / "validate_h1_corpus.py"
+_SPEC = importlib.util.spec_from_file_location("validate_h1_corpus", _MODULE)
+_MOD = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_MOD)
+validate_corpus = _MOD.validate_corpus
+canonical_hash = _MOD.canonical_hash
 
 
 def _corpus():
@@ -29,64 +35,57 @@ def _base_case(**overrides):
         "principal": "HUMAN",
         "intended_boundary": "candidate_generation",
         "corpus_commit": "abc",
-        "corpus_hash": "hash",
+        "corpus_hash": canonical_hash(_corpus()),
     }
     case.update(overrides)
     return case
 
 
+def _payload(*cases):
+    return {"corpus_commit": "abc", "corpus_hash": canonical_hash(_corpus()), "cases": list(cases)}
+
+
 def test_missing_gold_blocks_corpus():
-    payload = {"corpus_commit": "abc", "corpus_hash": "hash", "cases": [_base_case(gold_relevant_notes=["MISSING"])]}
-    result = validate_corpus(payload, _corpus())
+    result = validate_corpus(_payload(_base_case(gold_relevant_notes=["MISSING"])), _corpus())
     assert not result["valid"]
     assert any("missing_gold:MISSING" in error for error in result["errors"])
 
 
 def test_required_fact_must_exist_in_gold_evidence():
-    payload = {"corpus_commit": "abc", "corpus_hash": "hash", "cases": [_base_case(required_facts=["not present"])]}
-    result = validate_corpus(payload, _corpus())
+    result = validate_corpus(_payload(_base_case(required_facts=["not present"])), _corpus())
     assert not result["valid"]
     assert any("missing_required_fact:A:not present" in error for error in result["errors"])
 
 
 def test_raw_gold_is_rejected():
-    payload = {"corpus_commit": "abc", "corpus_hash": "hash", "cases": [_base_case(gold_relevant_notes=["RAW"])]}
-    result = validate_corpus(payload, _corpus())
+    result = validate_corpus(_payload(_base_case(gold_relevant_notes=["RAW"])), _corpus())
     assert not result["valid"]
     assert any("ineligible_gold_lifecycle:RAW:RAW" in error for error in result["errors"])
 
 
 def test_multihop_requires_directionally_exact_edges():
-    payload = {
-        "corpus_commit": "abc",
-        "corpus_hash": "hash",
-        "cases": [_base_case(
-            family="multi_hop_associative",
-            gold_relevant_notes=["C"],
-            required_facts=["target fact"],
-            graph_path=[
-                {"source": "A", "target": "B", "relation": "depends_on"},
-                {"source": "C", "target": "B", "relation": "related_to"}
-            ],
-        )],
-    }
-    result = validate_corpus(payload, _corpus())
+    case = _base_case(
+        family="multi_hop_associative",
+        gold_relevant_notes=["C"],
+        required_facts=["target fact"],
+        graph_path=[
+            {"source": "A", "target": "B", "relation": "depends_on"},
+            {"source": "C", "target": "B", "relation": "related_to"},
+        ],
+    )
+    result = validate_corpus(_payload(case), _corpus())
     assert not result["valid"]
     assert any("missing_or_reversed_edge:C:B:related_to" in error for error in result["errors"])
 
 
 def test_duplicate_case_ids_are_rejected():
-    case = _base_case()
-    case2 = _base_case(id="H1-001")
-    payload = {"corpus_commit": "abc", "corpus_hash": "hash", "cases": [case, case2]}
-    result = validate_corpus(payload, _corpus())
+    result = validate_corpus(_payload(_base_case(), _base_case(id="H1-001")), _corpus())
     assert not result["valid"]
     assert any("duplicate_case_id:H1-001" in error for error in result["errors"])
 
 
 def test_multiple_gold_requires_reason():
-    payload = {"corpus_commit": "abc", "corpus_hash": "hash", "cases": [_base_case(gold_relevant_notes=["A", "B"])]}
-    result = validate_corpus(payload, _corpus())
+    result = validate_corpus(_payload(_base_case(gold_relevant_notes=["A", "B"])), _corpus())
     assert not result["valid"]
     assert "H1-001:multiple_gold_requires_reason" in result["errors"]
 
@@ -94,9 +93,8 @@ def test_multiple_gold_requires_reason():
 def test_target_reuse_is_warning_during_draft_and_error_in_final():
     case1 = _base_case(id="H1-001")
     case2 = _base_case(id="H1-002")
-    payload = {"corpus_commit": "abc", "corpus_hash": "hash", "cases": [case1, case2]}
-    draft = validate_corpus(payload, _corpus(), final=False)
-    final = validate_corpus(payload, _corpus(), final=True)
+    draft = validate_corpus(_payload(case1, case2), _corpus(), final=False)
+    final = validate_corpus(_payload(case1, case2), _corpus(), final=True)
     assert draft["valid"]
     assert any("gold_target_reused:A:2" in w for w in draft["warnings"])
     assert not final["valid"]
