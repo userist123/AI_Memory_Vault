@@ -4,65 +4,62 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   import:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    timeout-minutes: 20
     steps:
       - name: Checkout vault
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      - name: Import skill sources
-        shell: bash
+      - name: Prepare isolated import branch
+        id: branch
+        env:
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
-          mkdir -p 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources
-          git clone --depth 1 https://github.com/github/awesome-copilot.git /tmp/awesome-copilot
-          git clone --depth 1 https://github.com/addyosmani/web-quality-skills.git /tmp/web-quality-skills
-          git clone --depth 1 https://github.com/gbrasil720/ui-sensei.git /tmp/ui-sensei
-          git clone --depth 1 https://github.com/ConardLi/garden-skills.git /tmp/garden-skills
-          git clone --depth 1 https://github.com/xiaopu-ai/web-design.git /tmp/xiaopu-web-design
-          git clone --depth 1 https://github.com/bergside/awesome-design-skills.git /tmp/awesome-design-skills
+          branch="skills-import/${RUN_ID}"
+          git checkout -b "${branch}"
+          echo "branch=${branch}" >> "${GITHUB_OUTPUT}"
 
-          rm -rf 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/*
+      - name: Clone pinned external sources
+        run: python 30_SCRIPTS/verification/import_external_skills.py clone
 
-          cp -a /tmp/awesome-copilot/skills 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/github-awesome-copilot
-          cp -a /tmp/web-quality-skills/skills 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/web-quality-skills
-          cp -a /tmp/ui-sensei 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/ui-sensei
-          mkdir -p 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/garden-web-design-engineer
-          cp -a /tmp/garden-skills/skills/web-design-engineer/. 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/garden-web-design-engineer/
-          cp /tmp/xiaopu-web-design/SKILL.md 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/xiaopu-web-design-SKILL.md
-          if [ -d /tmp/xiaopu-web-design/references ]; then cp -a /tmp/xiaopu-web-design/references 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/xiaopu-web-design-references; fi
-          cp -a /tmp/awesome-design-skills/skills 01_KNOWLEDGE/EXTERNAL_SKILLS/_sources/awesome-design-skills
+      - name: Filter and stage imported material
+        run: python 30_SCRIPTS/verification/import_external_skills.py filter
 
-          python - <<'PY'
-          import hashlib, json, os, re
-          from datetime import datetime, timezone
-          root='01_KNOWLEDGE/EXTERNAL_SKILLS/_sources'
-          skills=[]
-          for dirpath, _, files in os.walk(root):
-              if 'SKILL.md' not in files: continue
-              path=os.path.join(dirpath,'SKILL.md')
-              text=open(path,encoding='utf-8',errors='replace').read()
-              name=os.path.basename(dirpath)
-              desc=''
-              m=re.search(r'^description:\s*["\']?(.*?)["\']?\s*$',text,re.I|re.M)
-              if m: desc=m.group(1).strip()
-              sha=hashlib.sha256(open(path,'rb').read()).hexdigest()
-              skills.append({'id':re.sub(r'[^a-z0-9._-]+','-',name.lower()),'name':name,'description':desc,'source_path':path,'content_sha256':sha,'status':'raw'})
-          out={'schema_version':'1.0','generated_at':datetime.now(timezone.utc).isoformat(),'skills':skills}
-          os.makedirs('01_KNOWLEDGE/EXTERNAL_SKILLS',exist_ok=True)
-          json.dump(out,open('01_KNOWLEDGE/EXTERNAL_SKILLS/SKILL_REGISTRY.json','w',encoding='utf-8'),ensure_ascii=False,indent=2)
-          PY
+      - name: Scan imported material before commit
+        env:
+          PYTHONPATH: .
+        run: python 30_SCRIPTS/verification/import_external_skills.py scan
+
+      - name: Build registry with SHA-256 evidence
+        run: python 30_SCRIPTS/verification/import_external_skills.py registry
 
       - name: Commit imported skills
-        shell: bash
         run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add 01_KNOWLEDGE/EXTERNAL_SKILLS
-          git diff --cached --quiet || git commit -m 'feat(skills): import external skill libraries'
-          git push
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat(skills): import pinned external skill libraries'
+
+      - name: Push isolated import branch and open PR
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
+        run: |
+          set -euo pipefail
+          # Explicitly approved side effect: workflow_dispatch -> isolated skills-import/* branch only.
+          git push origin "HEAD:${BRANCH}"
+          gh pr create --base main --head "${BRANCH}" --title "feat(skills): import pinned external skill libraries" --body-file 01_KNOWLEDGE/EXTERNAL_SKILLS/IMPORT_PR_DESCRIPTION.md
