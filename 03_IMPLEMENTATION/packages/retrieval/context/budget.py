@@ -132,7 +132,11 @@ class ContextBudget:
                 # Compression saves transport/storage bytes, not LLM tokens.
                 note["content"] = zlib.compress(content.encode("utf-8"))
 
-        while len(ordered) > 1 and self.serialized_size(ordered) > self.hard_limit_bytes:
+        # Hard transport budget is an envelope limit, not a reason to keep an
+        # oversized unprotected item just because it is the last remaining
+        # candidate. Remove the least-relevant removable item until the
+        # envelope itself fits. Protected content still fails closed.
+        while ordered and self.serialized_size(ordered) > self.hard_limit_bytes:
             removable = next((idx for idx in range(len(ordered) - 1, -1, -1)
                               if not self._protected_content(ordered[idx])), None)
             if removable is None:
