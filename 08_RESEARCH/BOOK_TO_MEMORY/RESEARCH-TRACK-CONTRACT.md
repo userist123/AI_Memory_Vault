@@ -43,6 +43,34 @@ No track may skip directly from `SOURCE_PENDING` or `HYPOTHESIS_READY` to a prod
 | H14 | Provenance / epistemic state | EXPERIMENT_READY | Can every promoted memory retain sufficient evidence and conflict state for later audit? | write/governance |
 | H15 | Token economy / disclosure | HYPOTHESIS_READY | Can disclosure preserve task correctness while reducing unnecessary memory/context tokens? | disclosure/context |
 
+## Problem-to-track coverage
+
+The problem matrix contains broader literature/problem labels than the initial experiment tracks. Multiple matrix rows may map to one track when they share the same falsifiable boundary; that grouping must be explicit.
+
+| Matrix problem | Track | Grouping rationale |
+|---|---|---|
+| Retrieval / indirect cues | H1 | Same candidate-generation/retrieval question |
+| Candidate generation / recall | H1 | Same candidate-generation boundary |
+| Consolidation | H2 | Distinct write/lifecycle behavior |
+| Forgetting | H3 | Distinct retention/decay behavior |
+| Interference | H4 | Conflict between competing memories |
+| Reconsolidation | H5 | Distinct update/rewrite semantics |
+| Context | H1, H6 | H1 tests retrieval context; H6 tests context-budget representation |
+| Working memory | H6 | Context-budget behavior |
+| Episodic vs semantic | H7 | Memory-type separation |
+| Procedural memory | H8 | Task-state/procedure retrieval |
+| Salience / attention | H9 | Ranking priority signal |
+| Confidence / familiarity | H10 | Evidence-confidence calibration |
+| Conflict | H4 | Same competing-memory boundary |
+| Decay | H3 | Same retention/decay boundary |
+| Meta-memory | H11 | Uncertainty/availability response contract |
+| Agent routing | H12 | Principal/task routing |
+| Feedback / stability | H13 | Learning feedback and stability |
+| Provenance / epistemic state | H14 | Evidence/write governance |
+| Token economy / disclosure | H15 | Disclosure/context budget |
+
+A track may cover multiple matrix problems only when the shared primary boundary and controls remain explicit. If a proposed experiment changes the boundary, it must become a separate track or a separately registered variant.
+
 ## Required evidence for every track
 
 Before a track can enter `EVIDENCE_AVAILABLE`, it must identify:
