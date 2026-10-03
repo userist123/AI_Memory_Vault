@@ -85,6 +85,11 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
     gold = [str(x) for x in (case.get("gold_relevant_notes") or [])]
     required = [str(x) for x in (case.get("required_facts") or [])]
     abstain = bool(case.get("abstain", False))
+    split = str(case.get("split", "")).lower()
+    if split not in {"development", "calibration", "held_out"}:
+        errors.append("invalid_split")
+    if split == "held_out" and case.get("expected_baseline") is not None:
+        errors.append("held_out_case_has_expected_baseline")
 
     if abstain and gold:
         errors.append("abstain_case_has_gold")
@@ -142,6 +147,8 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
         warnings.append("expected_baseline_is_unmeasured_until_runtime_run")
 
     warnings.append("lexical_entity_reachability_not_measured_by_structural_validator")
+    if split == "held_out" and case.get("contamination_notes"):
+        warnings.append("held_out_case_has_contamination_note")
     return {
         "id": cid,
         "valid": not errors,
@@ -180,6 +187,16 @@ def validate_corpus(cases_payload: Dict[str, Any], corpus: Dict[str, Any], final
     for result in results:
         errors.extend(f"{result['id']}:{e}" for e in result["errors"])
         warnings.extend(f"{result['id']}:{w}" for w in result["warnings"])
+
+    query_counts = Counter(str(case.get("query", "")).strip() for case in cases if str(case.get("query", "")).strip())
+    for query, count in sorted(query_counts.items()):
+        if count > 1 and final:
+            errors.append(f"duplicate_final_query:{query}")
+
+    if final:
+        for case in cases:
+            if str(case.get("split", "")).lower() != "held_out":
+                errors.append(f"final_case_not_held_out:{case.get("id", "")}")
 
     target_counts = Counter(
         str(g)
