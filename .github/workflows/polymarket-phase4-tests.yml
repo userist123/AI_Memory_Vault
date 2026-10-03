@@ -2,6 +2,7 @@ name: Polymarket Phase 4 Tests
 
 on:
   push:
+    timeout-minutes: 20
     branches:
       - 'r050-pm-phase4-prediction-council'
     paths:
@@ -23,7 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          with:
+            persist-credentials: false
       - name: Install test runner
         run: |
           python -m pip install --upgrade pip
