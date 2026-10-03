@@ -142,6 +142,20 @@ class ReflectionPipeline:
 
             source_node = getter(source_id)
             target_node = getter(target_id)
+            # Compatibility fallback for controller doubles that expose the
+            # public read seam but do not provide a concrete storage object.
+            if not isinstance(source_node, dict) or not isinstance(target_node, dict):
+                reader = getattr(self.controller, "read", None)
+                if callable(reader):
+                    try:
+                        source_pack = reader(principal, source_id)
+                        target_pack = reader(principal, target_id)
+                        source_results = source_pack.get("results", []) if isinstance(source_pack, dict) else []
+                        target_results = target_pack.get("results", []) if isinstance(target_pack, dict) else []
+                        source_node = source_results[0] if source_results else None
+                        target_node = target_results[0] if target_results else None
+                    except Exception:
+                        source_node = target_node = None
             if not isinstance(source_node, dict) or not isinstance(target_node, dict):
                 return None
 
