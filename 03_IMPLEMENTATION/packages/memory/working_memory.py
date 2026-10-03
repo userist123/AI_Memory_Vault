@@ -163,6 +163,13 @@ class WorkingMemory:
                 
                 node = nodes[0] if nodes else None
                 if not node:
+                    storage = getattr(memory_controller, "storage", None)
+                    if storage and hasattr(storage, "get"):
+                        stored = storage.get(node_id)
+                        if isinstance(stored, dict) and stored.get("lifecycle") == Lifecycle.REVIEW.value and stored.get("verification") == "unverified":
+                            node = stored.copy()
+                            node["_cognitive_unverified"] = True
+                if not node:
                     continue
                     
                 if node.get("lifecycle") == Lifecycle.REVIEW.value:

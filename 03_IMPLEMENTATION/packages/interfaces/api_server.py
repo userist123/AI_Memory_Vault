@@ -34,7 +34,7 @@ def _skill_catalog(root:Path):
         skills.append({'id':rel,'name':name,'path':f.as_posix()})
     return skills
 
-def _agents(root:Path): return _read_json(root/'projects'/'jarvis_web'/'data'/'agents.json',{'agents':[]}).get('agents',[])
+def _agents(root:Path): return _read_json(root/'02_PRODUCT'/'projects'/'workspaces'/'jarvis_web'/'data'/'agents.json',{'agents':[]}).get('agents',[])
 
 def _route_agents(root:Path,task:str):
     tokens={t for t in task.lower().replace('/',' ').replace('-',' ').split() if len(t)>2}; scored=[]
@@ -106,7 +106,7 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
             agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); counts=self.queue.status(); self._json(200,{'memory_items':len(self.storage.id_to_path),'agents_online':sum(1 for a in agents if a.get('status')=='ONLINE'),'agents_total':len(agents),'skills_operational':len(skills),'proposals_pending':counts.get('PENDING_REVIEW',0),'engine':'V6','retrieval':'MemoryController'}); return
         if path=='/api/v1/models':
             models=_ollama_models(); self._json(200,{'available':bool(models),'models':models,'default':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
-        if path=='/api/v1/agents': self._json(200,_read_json(self.vault_root/'projects'/'jarvis_web'/'data'/'agents.json',{'agents':[]})); return
+        if path=='/api/v1/agents': self._json(200,_read_json(self.vault_root/'02_PRODUCT'/'projects'/'workspaces'/'jarvis_web'/'data'/'agents.json',{'agents':[]})); return
         if path=='/api/v1/skills':
             skills=_skill_catalog(self.vault_root); term=q.get('q',[''])[0].lower().strip();
             if term: skills=[s for s in skills if term in s['id'].lower() or term in s['name'].lower()]

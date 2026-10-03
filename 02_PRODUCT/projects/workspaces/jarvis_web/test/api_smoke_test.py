@@ -4,7 +4,7 @@ import json, os, subprocess, sys, time
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
-ROOT=Path(__file__).resolve().parents[3]; PORT='8001'; BASE=f'http://127.0.0.1:{PORT}/api/v1'
+ROOT=Path(__file__).resolve().parents[5]; PORT='8001'; BASE=f'http://127.0.0.1:{PORT}/api/v1'
 
 def get(path):
     with urlopen(f'{BASE}{path}',timeout=5) as r:return r.status,json.loads(r.read().decode('utf-8'))
@@ -17,7 +17,7 @@ def post(path,payload,timeout=10):
 
 def main()->int:
     env=dict(os.environ);env['AI_MEMORY_VAULT_ROOT']=str(ROOT)
-    proc=subprocess.Popen([sys.executable,'-m','memory_controller.api_server',PORT],cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+    proc=subprocess.Popen([sys.executable,'-m','interfaces.api_server',PORT],cwd=ROOT/'03_IMPLEMENTATION'/'packages',env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
     try:
         ready=False
         for _ in range(50):
@@ -25,7 +25,10 @@ def main()->int:
                 status,data=get('/status')
                 if status==200 and data.get('status')=='online': ready=True;break
             except Exception: time.sleep(.1)
-        if not ready: print('FAIL: API did not start');return 1
+        if not ready:
+            stderr=proc.stderr.read().strip() if proc.stderr else ''
+            if stderr: print('API STDERR:\n'+stderr)
+            print('FAIL: API did not start');return 1
         checks=[]
         status,data=get('/metrics');checks.append((status==200 and data.get('engine')=='V6','metrics'))
         status,data=get('/agents');checks.append((status==200 and len(data.get('agents',[]))>=21,'agents'))

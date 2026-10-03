@@ -188,7 +188,8 @@ def test_search_markdown_vault_p0_p15_raw_lifecycle_excluded():
         "type": "knowledge",
         "lifecycle": Lifecycle.ACTIVE.value,
         "content": "Canonical documentation about architecture patterns",
-        "verification": "verified"
+        "verification": "verified",
+        "provenance": {"source_type": "user", "source_ref": "unit-test"}
     })
     storage.set("note-raw-secret-002", {
         "id": "note-raw-secret-002",

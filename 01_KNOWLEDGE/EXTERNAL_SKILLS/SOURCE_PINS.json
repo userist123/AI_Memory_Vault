@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "sources": [
+    {
+      "id": "github-awesome-copilot",
+      "repository": "github/awesome-copilot",
+      "url": "https://github.com/github/awesome-copilot.git",
+      "ref": "143a3d976b3c1603cc8932984d5e1f28501cb5fc"
+    },
+    {
+      "id": "web-quality-skills",
+      "repository": "addyosmani/web-quality-skills",
+      "url": "https://github.com/addyosmani/web-quality-skills.git",
+      "ref": "afa8da942115f2961fdbfa80807ea0b232ff6c00"
+    },
+    {
+      "id": "ui-sensei",
+      "repository": "gbrasil720/ui-sensei",
+      "url": "https://github.com/gbrasil720/ui-sensei.git",
+      "ref": "5ce3e6e51ef57f05ecb6ff73120d30ea60d04d3c"
+    },
+    {
+      "id": "garden-skills",
+      "repository": "ConardLi/garden-skills",
+      "url": "https://github.com/ConardLi/garden-skills.git",
+      "ref": "aaf9a82f5efd73e87cc0998edc398e75bfc35901"
+    },
+    {
+      "id": "xiaopu-web-design",
+      "repository": "xiaopu-ai/web-design",
+      "url": "https://github.com/xiaopu-ai/web-design.git",
+      "ref": "22a4f482cc4caa2394391c0c31ff0aefd1908774"
+    },
+    {
+      "id": "awesome-design-skills",
+      "repository": "bergside/awesome-design-skills",
+      "url": "https://github.com/bergside/awesome-design-skills.git",
+      "ref": "f631a09b4fcc0166f2e2c1a8c81906ef680c57e8"
+    }
+  ]
+}

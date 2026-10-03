@@ -1,0 +1,48 @@
+name: AI Security Update Watch
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  security-update-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check signed configured security catalog
+        env:
+          CATALOG_URL: ${{ vars.AI_SECURITY_UPDATE_CATALOG_URL }}
+          CATALOG_SIGNATURE_URL: ${{ vars.AI_SECURITY_UPDATE_CATALOG_SIGNATURE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CATALOG_URL}" ]; then
+            echo "::warning::AI_SECURITY_UPDATE_CATALOG_URL is not configured; external catalog monitoring is not active."
+            exit 0
+          fi
+          case "${CATALOG_URL}" in https://*) ;; *) echo "::error::Catalog URL must use HTTPS"; exit 0;; esac
+          if ! curl --fail --location --silent --show-error --max-time 30 "${CATALOG_URL}" -o /tmp/security-update-catalog.json; then
+            echo "::error::Unable to retrieve the configured catalog; merge is not blocked."
+            exit 0
+          fi
+          python -m pip install --disable-pip-version-check packaging==26.3
+          if ! python security/verify_security_catalog.py; then
+            echo "::error::Catalog verification failed; merge is not blocked."
+            exit 0
+          fi
+
+      - name: Report invalid catalog without blocking merges
+        if: ${{ always() }}
+        run: |
+          echo "Catalog validation is advisory: invalid or unverified catalogs alert but do not block repository merges."
