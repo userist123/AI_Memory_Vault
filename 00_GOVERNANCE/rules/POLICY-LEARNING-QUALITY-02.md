@@ -1,16 +1,3 @@
----
-id: POLICY-LEARNING-QUALITY-02
-type: policy
-title: Reguli de calitate pentru invatarea din carti
-version: 2.0.0
-lifecycle: active
-audience: all_agents_and_llms
-governance: MemoryController
-auto_promote: false
-applies_to: [books, courses, documentation, articles]
-last_reviewed: 2026-10-03
----
-
 # Reguli de calitate pentru invatarea din carti
 
 > Scop: in vault intra doar idei distilate, scrise in cuvintele mele, legate de o problema reala si verificate in practica. Nimic nu devine memorie activa doar pentru ca a fost citit.
