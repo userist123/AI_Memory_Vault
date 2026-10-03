@@ -72,3 +72,29 @@ Each H1 case should store:
 
 ## Current conclusion
 The production path is sufficiently instrumented to perform a diagnostic H1 experiment, but the H1 corpus must be constructed with these controls. No associative mechanism should be implemented before those controls are satisfied and the current production baseline is measured.
+
+## Principal/lifecycle gate audit — 2026-10-03
+
+The H1 structural validator now validates principal against the production principal enum and applies the default retrieval eligibility contract before admitting a gold note.
+
+Production alignment:
+- AI_AGENT receives the default lifecycle floor ACTIVE + REVIEW when no explicit lifecycle filter is supplied.
+- HUMAN and ADMIN do not receive that agent floor; normal H1 still excludes RAW and ARCHIVED.
+- CLASSIFIED and NORMALIZED therefore remain eligible for human/admin H1 cases but are invalid gold targets for an AI-agent case unless the benchmark contract is explicitly extended to model a different lifecycle request.
+- This prevents a benchmark from labeling a note as retrievable for an AI agent merely because the note exists in the corpus.
+
+This is a benchmark eligibility rule, not a change to production retrieval behavior.
+
+## Current snapshot rule
+
+A final H1 corpus must freeze:
+1. repository/vault commit;
+2. canonical corpus hash;
+3. case wording;
+4. gold IDs;
+5. required facts;
+6. graph paths and exact directed relations;
+7. principal;
+8. intended boundary.
+
+No baseline result is admissible if any of these differ between labeling and execution.
