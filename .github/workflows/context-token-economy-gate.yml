@@ -2,7 +2,7 @@ name: Context Token Economy Gate
 
 on:
   pull_request:
-    timeout-minutes: 20
+
     paths:
       - "03_IMPLEMENTATION/packages/retrieval/context/**"
       - "security/context_compression.py"
