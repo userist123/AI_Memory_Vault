@@ -39,6 +39,14 @@ def canonical_hash(payload: Dict[str, Any]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+
+def benchmark_hash(payload: Dict[str, Any]) -> str:
+    """Hash the frozen benchmark case packet, excluding its self-hash."""
+    data = dict(payload)
+    data.pop("benchmark_hash", None)
+    raw = json.dumps(data, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
 def _note_map(corpus: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     return {str(n.get("id")): n for n in corpus.get("notes", []) if n.get("id")}
 
@@ -161,6 +169,7 @@ def validate_corpus(cases_payload: Dict[str, Any], corpus: Dict[str, Any], final
     cases = cases_payload.get("cases") or []
     expected_commit = str(cases_payload.get("corpus_commit", ""))
     expected_hash = str(cases_payload.get("corpus_hash", ""))
+    expected_benchmark_hash = str(cases_payload.get("benchmark_hash", ""))
 
     errors: List[str] = []
     warnings: List[str] = []
@@ -175,10 +184,15 @@ def validate_corpus(cases_payload: Dict[str, Any], corpus: Dict[str, Any], final
         errors.append("corpus_commit_not_frozen")
     if not expected_hash or expected_hash.startswith("REPLACE_"):
         errors.append("corpus_hash_not_frozen")
+    if not expected_benchmark_hash or expected_benchmark_hash.startswith("REPLACE_"):
+        errors.append("benchmark_hash_not_frozen")
 
     actual_hash = canonical_hash(corpus)
+    actual_benchmark_hash = benchmark_hash(cases_payload)
     if expected_hash and not expected_hash.startswith("REPLACE_") and expected_hash != actual_hash:
         errors.append("corpus_hash_mismatch")
+    if expected_benchmark_hash and not expected_benchmark_hash.startswith("REPLACE_") and expected_benchmark_hash != actual_benchmark_hash:
+        errors.append("benchmark_hash_mismatch")
 
     results = [
         validate_case(c, corpus, expected_commit, expected_hash)
@@ -225,6 +239,7 @@ def validate_corpus(cases_payload: Dict[str, Any], corpus: Dict[str, Any], final
         "warnings": sorted(set(warnings)),
         "case_results": results,
         "actual_corpus_hash": actual_hash,
+        "actual_benchmark_hash": actual_benchmark_hash,
         "case_count": len(cases),
     }
 
