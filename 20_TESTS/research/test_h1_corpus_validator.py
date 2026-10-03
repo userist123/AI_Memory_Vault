@@ -168,3 +168,20 @@ def test_duplicate_gold_ids_are_rejected():
     )
     assert not result["valid"]
     assert "H1-001:duplicate_gold_id" in result["errors"]
+
+
+def test_final_gold_reuse_is_allowed_only_for_documented_conflict_design():
+    case1 = _base_case(
+        id="H1-001",
+        family="conflict",
+        gold_reuse_reason="Same target is intentionally tested against two contextual conflict prompts.",
+        rationale="Conflict case one.",
+    )
+    case2 = _base_case(
+        id="H1-002",
+        family="distractor",
+        gold_reuse_reason="Same target is intentionally reused to test distractor competition.",
+        rationale="Distractor case two.",
+    )
+    final = validate_corpus(_payload(case1, case2), _corpus(), final=True)
+    assert final["valid"]
