@@ -50,7 +50,9 @@ A candidate case is accepted only if:
 7. graph path, direction and relation are recorded for associative cases;
 8. target is not already a trivial baseline hit when the case is intended to test association;
 9. distractors and conflicts are explicitly identified;
-10. case wording and gold labels are frozen before results are observed.
+10. case wording and gold labels are frozen before results are observed;
+11. final evaluation cases are held-out and were not selected, rewritten, or relabeled after observing baseline/variant outputs;
+12. exact query strings are unique in the held-out evaluation packet unless an explicit repeated-measurement design is documented.
 
 ## Required per-case evidence
 Each H1 case should store:
