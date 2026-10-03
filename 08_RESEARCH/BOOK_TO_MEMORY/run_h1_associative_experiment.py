@@ -21,7 +21,7 @@ os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 os.environ["ANTIGRAVITY_ARTIFACT_DIR"] = str(REPO_ROOT / "artifacts" / "h1")
 
 from memory_controller.authorizer import Principal
-from memory_controller.controller import MemoryController, RANKING_ARM_FUSED_SCORE
+from memory_controller.controller import MemoryController, RANKING_ARM_FUSED_SCORE, GraphExpansionDegraded
 from retrieval.vault_index import VaultIndex
 from memory_controller.storage.file_engine import FileStorageEngine
 
@@ -113,7 +113,45 @@ def main() -> int:
                                strict_graph_expansion=True)
 
     baseline_rows = run_arm(baseline, cases, args.reps)
-    variant_rows = run_arm(variant, cases, args.reps)
+    try:
+        variant_rows = run_arm(variant, cases, args.reps)
+    except GraphExpansionDegraded as exc:
+        result = {
+            "experiment_id": "H1-BOOK-002",
+            "variant_id": "graph_1hop_typed_strict",
+            "status": "BLOCKED",
+            "run_id": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"),
+            "frozen": {
+                "corpus_commit": FROZEN_CORPUS_COMMIT,
+                "corpus_hash": FROZEN_CORPUS_HASH,
+                "benchmark_hash": FROZEN_BENCHMARK_HASH,
+            },
+            "repetitions": args.reps,
+            "controls": {
+                "principal": "HUMAN",
+                "page_size": 10,
+                "ranking_arm": "fused_score",
+                "lifecycle_and_authorization": "unchanged",
+                "token_budget": "unchanged",
+                "case_set": "identical paired cases",
+            },
+            "block_reason": str(exc),
+            "baseline": baseline_rows,
+            "variant": None,
+            "scientific_disposition": (
+                "No paired variant result is reported. The strict graph guard "
+                "correctly detected that graph expansion produced no new nodes; "
+                "treating this as a zero-effect result would be invalid."
+            ),
+        }
+        RESULTS_PATH.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(json.dumps({
+            "status": result["status"],
+            "block_reason": result["block_reason"],
+            "scientific_disposition": result["scientific_disposition"],
+        }, indent=2))
+        print(f"saved {RESULTS_PATH}")
+        return 0
 
     primary_b = aggregate(baseline_rows, family="indirect_cue", split="held_out")
     primary_v = aggregate(variant_rows, family="indirect_cue", split="held_out")
