@@ -162,6 +162,65 @@ def test_budget_mismatch(monkeypatch, controller):
     controller.search(Principal.HUMAN, "budget query")
     assert query_calls == 1
 
+
+def test_debug_retrieval_trust_diagnostics(tmp_path):
+    from memory_controller.authorizer import Principal
+    from memory_controller.controller import MemoryController
+    from memory_controller.storage.file_engine import FileStorageEngine
+    from memory_controller.storage.serializer import serialize
+
+    root = tmp_path / "vault"
+    knowledge = root / "01_ARCHITECTURE" / "knowledge"
+    knowledge.mkdir(parents=True)
+    note = {
+        "id": "debug-review",
+        "type": "knowledge",
+        "lifecycle": "REVIEW",
+        "verification": "unverified",
+        "provenance": {"source_type": "user", "source_ref": "debug"},
+        "confidence": "high",
+        "relations": [],
+        "content": "Consolidarea nocturna ruleaza si instaleaza dependentele proiectului.",
+    }
+    (knowledge / "debug.md").write_text(serialize(note), encoding="utf-8")
+    controller = MemoryController(FileStorageEngine(str(root)))
+    pack = controller.search(Principal.AI_AGENT, "consolidarea nocturna instaleaza dependentele", page_size=3)
+    assert pack["results"], {
+        "results": pack.get("results"),
+        "candidate_trace": pack.get("candidate_trace"),
+        "reduction": pack.get("reduction"),
+    }
+
+
+def test_debug_owner_archived_diagnostics(tmp_path):
+    from memory_controller.authorizer import Principal
+    from memory_controller.controller import MemoryController
+    from memory_controller.storage.file_engine import FileStorageEngine
+    from memory_controller.storage.serializer import serialize
+
+    root = tmp_path / "vault"
+    knowledge = root / "01_ARCHITECTURE" / "knowledge"
+    knowledge.mkdir(parents=True)
+    note = {
+        "id": "debug-archived",
+        "type": "knowledge",
+        "lifecycle": "ARCHIVED",
+        "verification": "unverified",
+        "provenance": {"source_type": "official", "source_ref": "debug"},
+        "confidence": "low",
+        "relations": [],
+        "content": "Ashby ultrastable homeostat double feedback system.",
+    }
+    (knowledge / "debug.md").write_text(serialize(note), encoding="utf-8")
+    controller = MemoryController(FileStorageEngine(str(root)))
+    pack = controller.search(Principal.HUMAN, "ashby ultrastable homeostat", page_size=3)
+    assert pack["results"], {
+        "results": pack.get("results"),
+        "candidate_trace": pack.get("candidate_trace"),
+        "reduction": pack.get("reduction"),
+    }
+
+
 def test_mutation_invalidation_propose(controller):
     cache = controller.cache
     controller.search(Principal.HUMAN, "propose query")
