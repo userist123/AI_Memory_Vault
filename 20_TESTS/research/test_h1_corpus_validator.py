@@ -131,3 +131,22 @@ def test_multihop_path_must_be_connected():
     result = validate_corpus(_payload(case), _corpus())
     assert not result["valid"]
     assert any("disconnected_graph_path:1:B->A" in error for error in result["errors"])
+
+
+def test_ai_agent_cannot_use_classified_gold_under_default_search_floor():
+    corpus = _corpus()
+    corpus["notes"][0]["lifecycle"] = "CLASSIFIED"
+    case = _base_case(principal="AI_AGENT")
+    payload = {"corpus_commit": "abc", "corpus_hash": canonical_hash(corpus), "cases": [dict(case, corpus_hash=canonical_hash(corpus))]}
+    result = validate_corpus(payload, corpus)
+    assert not result["valid"]
+    assert any("ineligible_gold_for_principal:A:AI_AGENT:CLASSIFIED" in error for error in result["errors"])
+
+
+def test_human_can_use_normalized_gold():
+    corpus = _corpus()
+    corpus["notes"][0]["lifecycle"] = "NORMALIZED"
+    case = _base_case()
+    payload = {"corpus_commit": "abc", "corpus_hash": canonical_hash(corpus), "cases": [dict(case, corpus_hash=canonical_hash(corpus))]}
+    result = validate_corpus(payload, corpus)
+    assert result["valid"]
