@@ -2,6 +2,7 @@ name: Context Token Economy Gate
 
 on:
   pull_request:
+    timeout-minutes: 20
     paths:
       - "03_IMPLEMENTATION/packages/retrieval/context/**"
       - "security/context_compression.py"
@@ -17,6 +18,13 @@ on:
       - "security/tests/test_context_token_economy_gate.py"
       - ".github/workflows/context-token-economy-gate.yml"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   context-token-economy:
     name: Context Token Economy Gate
@@ -25,12 +33,13 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          persist-credentials: false
         with:
           submodules: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
 
