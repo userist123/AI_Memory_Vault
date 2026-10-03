@@ -202,8 +202,9 @@ def test_four_candidate_exclusion_hardening(tmp_path, monkeypatch):
         request_id="run-four-cand",
         agent_id="test_agent",
         budget=budget,
-        results=candidates,
+        results=trusted_results(candidates),
         disclosure_level="sections",
+        disclosure_query="M1 M2 M3 M4",
     )
 
     packed_ids = [r.get("id") for r in pack["results"]]
