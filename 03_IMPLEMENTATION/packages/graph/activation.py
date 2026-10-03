@@ -199,9 +199,12 @@ class ActivationEngine:
                             queue.append((next_id, depth + 1, next_activation))
                     except (ValueError, AttributeError):
                         pass
-                else:
+                elif next_id in active_nodes:
                     old_act = active_nodes[next_id]["activation"]
                     active_nodes[next_id]["activation"] = min(1.0, old_act + next_activation)
+                # A visited id can be absent from active_nodes when its prior
+                # cognitive_read was filtered by the trust boundary. Do not
+                # index a non-admitted node; it remains safely excluded.
                     
         sorted_nodes = sorted(
             active_nodes.items(),
