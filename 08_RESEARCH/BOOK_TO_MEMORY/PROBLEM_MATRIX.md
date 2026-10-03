@@ -2,13 +2,13 @@
 
 | Problem | Priority sources | Status | Chapter verification |
 |---|---|---|---|
-| Retrieval / indirect cues | Why We Forget; Soar; WCS; Laird; Minsky; Anderson | high | TOC/chapter evidence verified; repository page evidence pending |
-| Candidate generation / recall | Soar; cognitive architectures; Why We Forget | high | partial |
-| Consolidation | Kandel; Squire/Kandel; Sarfraz; 2504.05840v1 | very high | Squire/Kandel TOC verified; exact repository pages pending |
-| Forgetting | Why We Forget; Squire/Kandel; Kandel | very high | TOC verified |
-| Interference | Schacter/Tulving; Why We Forget; Squire/Kandel | very high | Schacter/Tulving and Squire/Kandel chapter evidence verified; exact repository pages pending |
+| Retrieval / indirect cues | Why We Forget; Soar; WCS; Laird; Minsky; Anderson | high | H1 candidate-generation family; source page evidence pending |
+| Candidate generation / recall | Soar; cognitive architectures; Why We Forget | high | H1 candidate-generation boundary; partial source evidence |
+| Consolidation | Kandel; Squire/Kandel; Sarfraz; 2504.05840v1 | very high | No H1 experiment yet; requires separate hypothesis/evidence track |
+| Forgetting | Why We Forget; Squire/Kandel; Kandel | very high | No H1 experiment yet; requires retention/decay experiment |
+| Interference | Schacter/Tulving; Why We Forget; Squire/Kandel | very high | Separate conflict/interference experiment required |
 | Reconsolidation | Kandel; Squire/Kandel; Why We Forget | high | partial |
-| Context | Why We Forget; Schacter/Tulving; Soar | very high | partial |
+| Context | Why We Forget; Schacter/Tulving; Soar | very high | H1 entity/context family; broader context-memory experiment required |
 | Working memory | Why We Forget; Soar; Newell; Minsky | high | Newell/Soar source evidence verified; exact repository pages pending |
 | Episodic vs semantic | Schacter/Tulving; Squire/Kandel; Soar | very high | source/chapter evidence verified; exact repository pages pending |
 | Procedural memory | Soar; Why We Forget; Schacter/Tulving; Squire/Kandel | very high | source/chapter evidence verified; exact repository pages pending |
