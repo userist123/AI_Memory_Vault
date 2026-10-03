@@ -588,16 +588,18 @@ def test_ast_call_path_proof_no_filter_bypassed():
     controller_path = PACKAGES / "memory" / "controller.py"
     tree = ast.parse(controller_path.read_text(encoding="utf-8"))
 
-    # Find MemoryController.search
+    # The production search seam is now a thin data-router wrapper; the
+    # executable graph/trust path lives in _search_impl. Inspect that method
+    # so the proof follows the real implementation rather than the dispatcher.
     search_func = None
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef) and node.name == "MemoryController":
             for item in node.body:
-                if isinstance(item, ast.FunctionDef) and item.name == "search":
+                if isinstance(item, ast.FunctionDef) and item.name == "_search_impl":
                     search_func = item
                     break
 
-    assert search_func is not None, "MemoryController.search must exist in AST"
+    assert search_func is not None, "MemoryController._search_impl must exist in AST"
 
     # Extract all string constants and attribute accesses inside search()
     code_text = ast.unparse(search_func)
