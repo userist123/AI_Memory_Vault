@@ -97,3 +97,21 @@ The benchmark is the required bridge between literature and implementation.
 - baseline run: not yet executed
 - variant: not implemented
 - ACTIVE promotion: prohibited
+
+## Corpus gate
+The frozen case set must pass 08_RESEARCH/BOOK_TO_MEMORY/validate_h1_corpus.py before any baseline measurement is admitted.
+
+The validator checks:
+- unique case IDs and frozen corpus commit/hash;
+- gold ID existence;
+- required facts in gold evidence;
+- RAW/ARCHIVED exclusion under the normal H1 contract;
+- abstention/gold consistency;
+- multi-gold justification;
+- exact directed graph edges for multi-hop cases;
+- distractor integrity;
+- duplicate gold-target reuse (warning during drafting, blocking error for final freeze).
+
+The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. That evidence must come from an execution against the exact production retrieval path and be frozen with the baseline.
+
+A validator warning is not evidence of successful associative retrieval. A validator error blocks the corpus from baseline measurement.
