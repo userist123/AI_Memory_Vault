@@ -406,7 +406,7 @@ impact:
   affects_ci: false
 remediation:
   required_action: Freeze corpus strictly as PARTIAL_SOURCE_CORPUS; restrict H1 hypotheses
-    and benchmark cases to verified available sources (14 items); do not declare full
+    and benchmark cases to verified available sources (15 items); do not declare full
     20-source H1 completion without all unabridged sources.
   proposed_action: Implement pre-registered PARTIAL_SOURCE_CORPUS freeze and testable
     hypothesis subset.
