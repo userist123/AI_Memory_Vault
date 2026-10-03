@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      R001_DIR: ${{ runner.temp }}/r001
+      R001_DIR: ${{ github.workspace }}/.r001
     steps:
       - name: Checkout exact evaluated revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -153,8 +153,8 @@ jobs:
         with:
           name: r001-enforcement-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
-            ${{ runner.temp }}/r001/r001_*.txt
-            ${{ runner.temp }}/r001/r001_gitleaks_current.json
-            ${{ runner.temp }}/r001/r001_gitleaks_history.json
+            ${{ github.workspace }}/.r001/r001_*.txt
+            ${{ github.workspace }}/.r001/r001_gitleaks_current.json
+            ${{ github.workspace }}/.r001/r001_gitleaks_history.json
             03_IMPLEMENTATION/products/xau_kinetic/repository_map/R001_RUNTIME_MIGRATION_INVENTORY.json
           if-no-files-found: warn
