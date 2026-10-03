@@ -122,7 +122,7 @@ class ContextPackBuilder:
             # the nested provenance record; never fabricate provenance without
             # an id/source reference.
             if not isinstance(item.get("provenance"), Mapping):
-                source_ref = item.get("source_ref") or item.get("id")
+                source_ref = item.get("source_ref")
                 if source_ref is None:
                     rejected += 1
                     continue
