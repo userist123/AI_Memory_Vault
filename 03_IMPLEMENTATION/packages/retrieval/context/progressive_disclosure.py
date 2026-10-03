@@ -2,6 +2,7 @@ import re
 import zlib
 from typing import List, Dict, Any
 from .budget import BudgetExceededError
+from security.verified_reduction import TRUSTED_STATUSES
 
 
 SECURITY_FIELDS = (
@@ -34,7 +35,7 @@ class ProgressiveDisclosure:
             status = verification.get("status", verification.get("state", ""))
         else:
             status = verification
-        return str(status or "").upper() in {"TRUSTED", "VERIFIED", "SAFE", "VERIFIED_SOURCE", "DERIVED_FROM_VERIFIED_SOURCE"}
+        return str(status or "").upper() in TRUSTED_STATUSES
 
     @staticmethod
     def _security_metadata(note: Dict[str, Any]) -> Dict[str, Any]:
