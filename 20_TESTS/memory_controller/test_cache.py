@@ -19,7 +19,7 @@ def controller():
         "confidence": "high",
         "created": "2026-08-09",
         "updated": "2026-08-09",
-        "verification": "unverified",
+        "verification": "verified",
         "tags": [],
         "relations": [],
         "provenance": {"source_type": "user", "source_ref": "unit"}
