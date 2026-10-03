@@ -58,7 +58,17 @@ class LearningEngine:
         """Scans for memories that meet the promotion criteria and updates them.
         Returns a list of node IDs that were promoted.
         """
-        pack = self.controller.search(principal, "knowledge", page_size=20)
+        # "knowledge" is a type, not necessarily lexical content. Use the
+        # explicit type filter with an empty query so promotion scans the
+        # complete eligible knowledge pool instead of silently missing notes
+        # whose body does not contain the word "knowledge".
+        pack = self.controller.search(
+            principal,
+            "",
+            page_size=20,
+            lifecycles=[Lifecycle.ACTIVE],
+            types=["knowledge"],
+        )
         candidates = pack.get("results", [])
 
         promoted_ids = []
