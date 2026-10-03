@@ -372,7 +372,7 @@ def generate_report(results: Dict[str, Any]) -> str:
         f"- **Principal**: `Principal.HUMAN`",
         f"- **Page Size**: `10`",
         f"- **Graph Expansion**: `False` (Off, production baseline)",
-        f"- **Deterministic**: `{perf['all_deterministic']}` (100% identical outputs across 3 repetitions)",
+        f"- **Repetitions per case**: `{perf['total_repetitions_per_case']}` (cross-repetition determinism is established only when repetitions > 1)",
         f"- **Overall All-Gold Recall@10**: **{results['overall_recall_all_at_10'] * 100:.1f}%** ({results['reachable_count']}/{results['total_cases']})",
         f"- **Overall Any-Gold Recall@10**: **{results['overall_recall_at_10'] * 100:.1f}%** ({results['overall_hits_at_10']}/{results['total_cases']})",
         f"- **Overall Any-Gold Recall@1**: **{results['overall_recall_at_1'] * 100:.1f}%** ({results['overall_hits_at_1']}/{results['total_cases']})",
