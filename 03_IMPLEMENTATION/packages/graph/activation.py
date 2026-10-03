@@ -189,12 +189,12 @@ class ActivationEngine:
                     continue
                     
                 if next_id not in visited:
+                    visited.add(next_id)
                     try:
                         pack = self.controller.cognitive_read(principal, next_id)
                         res = pack.get("results", [])
                         if res:
                             node = res[0]
-                            visited.add(next_id)
                             active_nodes[next_id] = {"node": node, "activation": next_activation}
                             queue.append((next_id, depth + 1, next_activation))
                     except (ValueError, AttributeError):
