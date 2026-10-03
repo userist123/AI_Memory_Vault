@@ -457,7 +457,8 @@ class MemoryController:
             pack = self.pack_builder.build(
                 request_id="cognitive_read", agent_id=principal.value, budget={},
                 results=[result], disclosure_level='full',
-                minimal_provenance=None, next_page_token=None, audit_ref=None
+                minimal_provenance=None, next_page_token=None, audit_ref=None,
+                allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
             )
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
@@ -759,6 +760,17 @@ class MemoryController:
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)
             )
+            # The owner has an unfiltered view unless an explicit lifecycle/type
+            # constraint was supplied. Classifier inference must not hide the
+            # owner's archived history.
+            if (
+                active_classifier_filter_arm is None
+                and principal == Principal.HUMAN
+                and lifecycles is None
+                and types is None
+            ):
+                from retrieval.context.retrieval import CLASSIFIER_FILTER_ARM_BOOST
+                active_classifier_filter_arm = CLASSIFIER_FILTER_ARM_BOOST
             notes = self.retrieval_engine.retrieve(
                 classified, principal, query_fp, disclosure_level, budget,
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
@@ -1184,14 +1196,15 @@ class MemoryController:
             # Apply progressive disclosure
             trace_collector.start_stage("pagination")
             pd = ProgressiveDisclosure(budget)
+            allow_quarantined = principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}
             if disclosure_level == 'metadata':
-                disclosed = pd.metadata_only(notes)
+                disclosed = pd.metadata_only(notes, allow_unverified=allow_quarantined)
             elif disclosure_level == 'snippet':
-                disclosed = pd.snippet(notes)
+                disclosed = pd.snippet(notes, allow_unverified=allow_quarantined)
             elif disclosure_level == 'sections':
-                disclosed = pd.sections(notes, sanitized)
+                disclosed = pd.sections(notes, sanitized, allow_unverified=allow_quarantined)
             else:
-                disclosed = pd.full_document(notes)
+                disclosed = pd.full_document(notes, allow_unverified=allow_quarantined)
             # Pagination slicing
             total = len(disclosed)
             effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
