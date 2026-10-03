@@ -96,11 +96,11 @@ class ProgressiveDisclosure:
         except Exception:
             return False
 
-    def metadata_only(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def metadata_only(self, notes: List[Dict[str, Any]], *, allow_unverified: bool = False) -> List[Dict[str, Any]]:
         result = []
         usage = 0
         for note in notes:
-            if not self._verified(note):
+            if not self._verified(note) and not allow_unverified:
                 continue
             entry = {
                 "id": note.get("id"),
@@ -117,7 +117,7 @@ class ProgressiveDisclosure:
                 break
         return result
 
-    def snippet(self, notes: List[Dict[str, Any]], chars: int = 200) -> List[Dict[str, Any]]:
+    def snippet(self, notes: List[Dict[str, Any]], chars: int = 200, *, allow_unverified: bool = False) -> List[Dict[str, Any]]:
         result = []
         usage = 0
         for note in notes:
@@ -138,7 +138,7 @@ class ProgressiveDisclosure:
                 break
         return result
 
-    def sections(self, notes: List[Dict[str, Any]], query: str) -> List[Dict[str, Any]]:
+    def sections(self, notes: List[Dict[str, Any]], query: str, *, allow_unverified: bool = False) -> List[Dict[str, Any]]:
         tokens = set(query.lower().split())
         result = []
         usage = 0
@@ -166,7 +166,7 @@ class ProgressiveDisclosure:
                 break
         return result
 
-    def full_document(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def full_document(self, notes: List[Dict[str, Any]], *, allow_unverified: bool = False) -> List[Dict[str, Any]]:
         result = []
         usage = 0
         for note in notes:
