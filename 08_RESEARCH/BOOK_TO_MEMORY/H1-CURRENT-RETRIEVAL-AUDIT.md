@@ -5,14 +5,12 @@ Audit of the current research/book-to-memory branch against the production retri
 This is an audit artifact only. It does not authorize a production retrieval change and does not promote any research mechanism.
 
 ## Repository state audited
-- Branch: research/book-to-memory
-- Base: main
-- Current audited head: 01140633155089fc4cb90a32e7e5805654578f26
+- Branch: `research/book-to-memory`
+- Base: `main`
 - PR: #206
 - PR #204 is out of scope.
-- Branch comparison: 35 commits ahead of main, 0 behind at the time of this audit.
-- PR #206 contains 23 changed files: 21 research artifacts under `08_RESEARCH/BOOK_TO_MEMORY/` (including the research test), plus one governance policy and one integrity manifest.
-- No production retrieval/consolidation implementation file is changed by PR #206.
+- The exact PR HEAD is intentionally not duplicated here because this document is a research audit, not a CI status record; GitHub PR metadata is the source of truth for the current revision.
+- The audit covers the production retrieval path without changing production retrieval/consolidation implementation.
 
 ## Audited production path
 MemoryController.search() -> validation/sanitization -> principal lifecycle floor -> QueryClassifier -> RetrievalEngine.retrieve() -> StorageEngine hard gate -> generate_candidates() -> RelevanceScorer -> ranking arm -> optional graph expansion -> optional cognitive stages -> ProgressiveDisclosure -> pagination -> ContextPackBuilder -> candidate_trace/retrieval_trace.
