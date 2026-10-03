@@ -1,0 +1,27 @@
+name: H1 Associative Experiment
+
+on:
+  push:
+    branches:
+      - research/book-to-memory
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paired-experiment:
+    name: H1-002 paired graph experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Run frozen paired experiment
+        run: python 08_RESEARCH/BOOK_TO_MEMORY/run_h1_associative_experiment.py --reps 3
+
+      - name: Verify research artifact exists
+        run: test -s artifacts/h1/h1_associative_experiment_results.json
