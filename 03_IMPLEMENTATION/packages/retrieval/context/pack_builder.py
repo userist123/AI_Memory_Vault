@@ -117,6 +117,15 @@ class ContextPackBuilder:
                 continue
             item["verification"] = verification_record
 
+            # Legacy trusted notes may predate mandatory provenance. Preserve the
+            # trust boundary by making missing provenance explicit without claiming
+            # an unverified source identity.
+            if not isinstance(item.get("provenance"), dict):
+                item["provenance"] = {
+                    "source_type": "unknown",
+                    "source_ref": f"legacy-note:{item.get('id', 'unknown')}",
+                }
+
             content = str(item.get("content", ""))
             # Metadata-only disclosure intentionally carries no content. It is
             # already a verified representation, so the content compressor's
