@@ -150,3 +150,21 @@ def test_human_can_use_normalized_gold():
     payload = {"corpus_commit": "abc", "corpus_hash": canonical_hash(corpus), "cases": [dict(case, corpus_hash=canonical_hash(corpus))]}
     result = validate_corpus(payload, corpus)
     assert result["valid"]
+
+
+def test_abstain_case_cannot_declare_required_facts():
+    result = validate_corpus(
+        _payload(_base_case(abstain=True, gold_relevant_notes=[], required_facts=["should not exist"])),
+        _corpus(),
+    )
+    assert not result["valid"]
+    assert "H1-001:abstain_case_has_required_facts" in result["errors"]
+
+
+def test_duplicate_gold_ids_are_rejected():
+    result = validate_corpus(
+        _payload(_base_case(gold_relevant_notes=["A", "A"])),
+        _corpus(),
+    )
+    assert not result["valid"]
+    assert "H1-001:duplicate_gold_id" in result["errors"]
