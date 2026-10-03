@@ -1,7 +1,7 @@
 {
   "schema": "active-note-integrity.v1",
   "note": "SHA-256 per ACTIVE note, line endings normalised. Drift means the file changed after it was recorded; it is a question, not a verdict.",
-  "count": 57,
+  "count": 58,
   "notes": {
     "0c4c8b76-85c4-4fde-a14a-4bde0b840009": "b7ec7800e69b394733f01f33250e0944af2849c5d833bfb991bbc64d146db1ba",
     "0c4c8b76-85c4-4fde-a14a-4bde0b840010": "ac680d14f6a64b20524f12ef088814c71b923811f63a7894bc6ce22bc54bd75f",
@@ -59,6 +59,7 @@
     "slot-16-consolidation": "91bf15efb3e056265c7b95efa19ece0a668418f8310e33402aa40b4a95e204d1",
     "vault-architecture-map-0001": "e1a340eb532f7043bc1dce1fc5b84f9ac0e48019433807f023c1a7c07568e77f",
     "vault-master-index-0001": "a495e9983708ea63d0cfb31cfcb5ae6cbfd4823130006999a03b964e00fdd62a",
-    "vault-memory-mesh-architecture-0001": "a73b8d430e89e58a90eede37075ef65312d3aae3e1b95d367e762ec3cac8de59"
+    "vault-memory-mesh-architecture-0001": "a73b8d430e89e58a90eede37075ef65312d3aae3e1b95d367e762ec3cac8de59",
+    "POLICY-LEARNING-QUALITY-02": "4f375fd4b4c2371ed6e975140a56dc52458ed015635d53aa010681c1c90fc8b4"
   }
 }
