@@ -23,6 +23,7 @@ jobs:
       security-events: write
       actions: read
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Check APIsec configuration
@@ -41,7 +42,7 @@ jobs:
           echo "configured=$configured" >> "$GITHUB_OUTPUT"
 
       - name: APIsec scan
-        if: steps.config.outputs.configured == 'true'
+        if: steps.config.outputs.configured == 'true' && github.event_name != 'pull_request'
         uses: apisec-inc/apisec-run-scan@025432089674a28ba8fb55f8ab06c10215e772ea
         with:
           apisec-username: ${{ secrets.apisec_username }}
@@ -50,7 +51,7 @@ jobs:
           sarif-result-file: "apisec-results.sarif"
 
       - name: Import results
-        if: steps.config.outputs.configured == 'true'
+        if: steps.config.outputs.configured == 'true' && github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ./apisec-results.sarif
