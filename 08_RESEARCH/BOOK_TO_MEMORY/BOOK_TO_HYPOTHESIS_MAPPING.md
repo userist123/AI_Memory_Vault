@@ -55,11 +55,12 @@ mechanism_variant: "BM25 candidate retrieval + 1-hop typed edge expansion (isola
 baseline: "Pure lexical BM25 candidate retrieval (0-hop)."
 control: "Exact same token budget (max 2500 synthesis tokens) and evaluation dataset."
 metric: "Recall@10 on indirect_cue family cases (split=development/held_out)"
-success_threshold: "Recall@10 >= 0.70 on indirect_cue family (baseline expected <= 0.20)"
+success_threshold: "Recall@10 >= 0.70 on indirect_cue family (pre-registered baseline expectation <= 0.20; observed current baseline = 0.40)"
 failure_condition: "Recall@10 < 0.50 on indirect_cue family"
 leakage_risk: "Graph edges constructed specifically around benchmark queries"
 selection_bias_risk: "Selecting only highly-connected hub nodes as gold targets"
 repetitions: 3
+baseline_observation: "The frozen current H1 artifact measures indirect_cue Recall@10 = 0.40. The pre-registered <=0.20 baseline expectation is retained unchanged and is not retrofitted to the observed result." 
 negative_result_policy: "Record as HYPOTHESIS_NOT_SUPPORTED; document graph density limitations."
 ```
 
