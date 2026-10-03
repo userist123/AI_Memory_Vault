@@ -18,6 +18,7 @@ Required fields:
 - intended_boundary: candidate_generation, ranking, graph, context_pack, or end_to_end
 - corpus_commit: frozen corpus revision
 - corpus_hash: hash of the frozen corpus packet
+- split: benchmark partition; final H1 cases must use `held_out` for evaluation
 
 Optional fields:
 
@@ -28,7 +29,7 @@ Optional fields:
 - distractor_ids: known plausible non-gold notes
 - contamination_notes: documented unavoidable contamination
 - gold_reuse_reason: mandatory when a final conflict/distractor case intentionally reuses a gold target
-- expected_baseline: descriptive expectation, never a measured result
+- expected_baseline: descriptive expectation, never a measured result; prohibited for `held_out` cases
 
 ## Acceptance rules
 
@@ -42,8 +43,12 @@ Optional fields:
 8. A graph path may not silently reverse an edge.
 9. The corpus commit and hash must be identical across the frozen case set.
 10. A final benchmark cannot contain duplicate gold-target reuse unless every case reusing that target is explicitly a conflict/distractor design and each case documents `gold_reuse_reason`.
-11. Lexical/entity reachability is not assumed by this validator. It must be measured separately against the exact production path before a case is labelled associative.
-12. The validator never changes or repairs a case.
+11. Final evaluation cases must declare `split: held_out`; development/calibration cases must never be silently relabeled after baseline inspection.
+12. `held_out` cases must not declare `expected_baseline`; no observed baseline result may be used to construct, rewrite, or select a held-out case.
+13. Exact query strings must be unique in a final evaluation packet unless an explicit repeated-measurement design documents why repetition is intentional.
+14. Contamination from prior benchmark labels, outputs, or evaluator decisions must be documented in `contamination_notes`; unresolved contamination blocks final admission.
+15. Lexical/entity reachability is not assumed by this validator. It must be measured separately against the exact production path before a case is labelled associative.
+16. The validator never changes or repairs a case.
 
 ## Failure semantics
 
