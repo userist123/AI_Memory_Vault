@@ -389,7 +389,7 @@ detected:
 evidence:
   primary:
   - '08_RESEARCH/BOOK_TO_MEMORY/CORPUS_FREEZE.json: corpus_type: PARTIAL_SOURCE_CORPUS,
-    available_sources: 14/20'
+    available_sources: 15/20'
   supporting:
   - 08_RESEARCH/BOOK_TO_MEMORY/SOURCE_RECOVERY_AUDIT.md
   - 08_RESEARCH/BOOK_TO_MEMORY/H1-CURRENT-CORPUS-GATE.md
