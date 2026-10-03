@@ -7,11 +7,12 @@ This is an audit artifact only. It does not authorize a production retrieval cha
 ## Repository state audited
 - Branch: research/book-to-memory
 - Base: main
-- Current audited head: fecc72576231698b9176c636831174e69e9582c4
+- Current audited head: 01140633155089fc4cb90a32e7e5805654578f26
 - PR: #206
 - PR #204 is out of scope.
-- Branch comparison: 11 commits ahead of main, 0 behind.
-- All 10 changed files in the branch are under 08_RESEARCH/BOOK_TO_MEMORY/; no production implementation file is changed by PR #206.
+- Branch comparison: 35 commits ahead of main, 0 behind at the time of this audit.
+- PR #206 contains 22 changed files: 20 research artifacts under `08_RESEARCH/BOOK_TO_MEMORY/` (including the research test), plus one governance policy and one integrity manifest.
+- No production retrieval/consolidation implementation file is changed by PR #206.
 
 ## Audited production path
 MemoryController.search() -> validation/sanitization -> principal lifecycle floor -> QueryClassifier -> RetrievalEngine.retrieve() -> StorageEngine hard gate -> generate_candidates() -> RelevanceScorer -> ranking arm -> optional graph expansion -> optional cognitive stages -> ProgressiveDisclosure -> pagination -> ContextPackBuilder -> candidate_trace/retrieval_trace.
