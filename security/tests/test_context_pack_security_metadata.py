@@ -84,7 +84,7 @@ def test_real_vault_trusted_provenance_states_reach_agent_context():
 
     for note in knowledge_root.rglob("*.md"):
         text = note.read_text(encoding="utf-8")
-        match = re.search(r"^verification:\s*[""']?([A-Za-z_]+)[""']?\s*$", text, re.MULTILINE)
+        match = re.search(r"^verification:\s*([A-Za-z_]+)\s*$", text, re.MULTILINE)
         if match:
             status = match.group(1).upper()
             if status in {"VERIFIED_SOURCE", "DERIVED_FROM_VERIFIED_SOURCE"}:
