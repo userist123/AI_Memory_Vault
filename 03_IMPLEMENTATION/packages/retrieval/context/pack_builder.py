@@ -116,6 +116,21 @@ class ContextPackBuilder:
             if status not in TRUSTED_STATUSES:
                 rejected += 1
                 continue
+            # The canonical egress contract requires provenance for every
+            # model-facing trusted result. Preserve legacy notes that already
+            # expose a stable source identity by normalizing that identity into
+            # the nested provenance record; never fabricate provenance without
+            # an id/source reference.
+            if not isinstance(item.get("provenance"), Mapping):
+                source_ref = item.get("source_ref") or item.get("id")
+                if source_ref is None:
+                    rejected += 1
+                    continue
+                item["provenance"] = {
+                    "source_type": str(item.get("source_type") or "memory_record"),
+                    "source_ref": str(source_ref),
+                    "derived": True,
+                }
             if status in PROVENANCE_REQUIRED_STATUSES and not isinstance(item.get("provenance"), Mapping):
                 rejected += 1
                 continue
