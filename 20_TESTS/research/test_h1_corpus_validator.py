@@ -177,12 +177,14 @@ def test_final_gold_reuse_is_allowed_only_for_documented_conflict_design():
         family="conflict",
         gold_reuse_reason="Same target is intentionally tested against two contextual conflict prompts.",
         rationale="Conflict case one.",
+        query="conflict context question",
     )
     case2 = _base_case(
         id="H1-002",
         family="distractor",
         gold_reuse_reason="Same target is intentionally reused to test distractor competition.",
         rationale="Distractor case two.",
+        query="distractor competition question",
     )
     final = validate_corpus(_payload(case1, case2), _corpus(), final=True)
     assert final["valid"]
