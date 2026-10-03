@@ -1,4 +1,6 @@
 {
+  "template_status": "EXAMPLE_ONLY_NOT_EXECUTABLE",
+  "template_note": "Replace corpus_commit and corpus_hash only in a separately frozen benchmark packet; this example must never be used as a baseline corpus.",
   "schema_version": 1,
   "corpus_commit": "REPLACE_WITH_FROZEN_COMMIT",
   "corpus_hash": "REPLACE_WITH_FROZEN_CORPUS_HASH",
