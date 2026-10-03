@@ -86,3 +86,14 @@ The current work remains:
 `BIOLOGICAL FACT -> ENGINEERING HYPOTHESIS -> EXPERIMENT -> VAULT MECHANISM`
 
 The final arrow remains intentionally blocked until the experiment has a frozen, reproducible corpus and a measured production baseline.
+
+## Source-Copy Gate Resolution Note (PR #206 Update)
+
+As documented in `SOURCE_RECOVERY_AUDIT.md`, `CORPUS_FREEZE.md`, and `BLOCKER_REGISTER.md`:
+- The local filesystem copies under `06_INBOX/Carti` were forensically audited across all 20 manifest entries.
+- 14 sources are fully available and verified on disk.
+- 3 sources are partial fragments/jackets/tertiary tables (`7688_jkt_au`, `wiener_cybernetics`, `comparison_cognitive_architectures`).
+- 3 sources require attribution or secondary-summary reconciliation (`newell_how_can_human_mind_occur`, `why_we_forget`, `quantum_consciousness_framework`).
+- The corpus is frozen as `PARTIAL_SOURCE_CORPUS` with canonical SHA-256 hash `d7d6e25b77608598befb2812a7b93397286bdf0912c060bb12fb4efa5c409ce5`.
+- Active blockers are formally tracked under `B-0001` through `B-0006` in `BLOCKER_REGISTER.md` and validated by `validate_blocker_registry.py`.
+
