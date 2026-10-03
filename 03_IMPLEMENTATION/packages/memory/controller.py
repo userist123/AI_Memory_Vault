@@ -28,6 +28,7 @@ from .security.pagination_token import PaginationToken, MissingHMACSecretError, 
 # Context components
 from .context.query_classifier import QueryClassifier
 from .context.retrieval import RetrievalEngine
+from .context.candidate_generation import generate_candidates
 from .context.relevance_scoring import RelevanceScorer
 from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.budget import ContextBudget, load_agent_budget, BudgetExceededError
@@ -783,6 +784,30 @@ class MemoryController:
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
                 classifier_filter_arm=active_classifier_filter_arm,
             )
+
+            # Owner historical view: when there is no explicit lifecycle/type
+            # constraint and the classifier inferred no such constraint either,
+            # search the canonical non-RAW corpus directly. This is intentionally
+            # owner-only and does not change the production HARD classifier arm.
+            if (
+                principal == Principal.HUMAN
+                and lifecycles is None
+                and types is None
+                and not classified.get("lifecycle_filters")
+                and not classified.get("target_types")
+            ):
+                try:
+                    owner_pool = self.storage.query(
+                        intent=classified.get("intent"), lifecycle=None, types=None
+                    )
+                    owner_limit = max(page_size, int(getattr(budget, "max_notes", page_size) * 40))
+                    notes, owner_trace = generate_candidates(sanitized, owner_pool, owner_limit)
+                    candidate_trace.update(owner_trace.to_dict())
+                    candidate_trace["owner_historical_view"] = True
+                except Exception:
+                    # Keep the normal retrieval result if the optional owner view
+                    # cannot be constructed; never bypass the hard storage policy.
+                    candidate_trace["owner_historical_view"] = False
 
             try:
                 trace_collector.record_event(TraceEvent.CANDIDATES_GENERATED, {
