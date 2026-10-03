@@ -88,6 +88,10 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
 
     if abstain and gold:
         errors.append("abstain_case_has_gold")
+    if abstain and required:
+        errors.append("abstain_case_has_required_facts")
+    if len(gold) != len(set(gold)):
+        errors.append("duplicate_gold_id")
     if not abstain and not gold:
         errors.append("answerable_case_has_no_gold")
     if not abstain and not required:
