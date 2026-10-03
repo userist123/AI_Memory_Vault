@@ -42,6 +42,7 @@ jobs:
             20_TESTS/polymarket/test_paper_pipeline.py \
             20_TESTS/polymarket/test_historical_paper_replay.py
       - name: Live public-data smoke and mechanical paper control
+        if: github.event_name == 'workflow_dispatch'
         run: |
           mkdir -p artifacts/phase11
           python - <<'PY'
@@ -79,7 +80,7 @@ jobs:
               raise SystemExit(f"UNVERIFIED: only {len(bundles)} suitable resolved markets collected; need 3")
           PY
       - name: Upload Phase 11 evidence
-        if: ${{ always() }}
+        if: ${{ always() && github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: polymarket-phase11-real-historical-paper-replay
