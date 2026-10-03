@@ -1279,12 +1279,31 @@ class MemoryController:
                     audit_ref=None
                 )
             except BudgetExceededError:
+                # Preserve the canonical egress envelope even when the final
+                # representation cannot fit the requested hard budget. The
+                # data router must be able to validate this safe empty pack.
+                fallback_hard_tokens = int(pack_budget.get('hard_tokens', budget.hard_token_budget))
+                fallback_soft_tokens = int(pack_budget.get('soft_tokens', budget.soft_token_budget))
                 pack = {
                     'requestId': 'search',
                     'agentId': principal.value,
-                    'budget': pack_budget,
+                    'budget': {
+                        **pack_budget,
+                        'soft_tokens': fallback_soft_tokens,
+                        'hard_tokens': fallback_hard_tokens,
+                    },
                     'disclosureLevel': disclosure_level,
                     'results': [],
+                    'reduction': {
+                        'verified_first': True,
+                        'items_reduced': 0,
+                        'items_rejected_unverified': 0,
+                        'tokens_saved': 0,
+                        'net_tokens_saved': 0,
+                        'cost_saved': 0.0,
+                        'latency_saved_ms': 0.0,
+                        'tokenizer_mode': 'fallback',
+                    },
                 }
             pack['next_page_token'] = next_token
 
