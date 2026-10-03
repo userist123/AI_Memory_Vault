@@ -86,7 +86,17 @@ def _readable(controller, note_id: str) -> Optional[Dict[str, Any]]:
     except Exception:  # noqa: BLE001 - not eligible for cognitive retrieval is a normal outcome
         return None
     results = pack.get("results") or []
-    return results[0] if results else None
+    if results:
+        return results[0]
+    # This controlled tool may inspect an explicitly marked REVIEW candidate
+    # as untrusted data when the public cognitive_read route intentionally
+    # refuses to expose it. Never synthesize verification or promotion state.
+    stored = controller.storage.get(note_id)
+    if isinstance(stored, dict) and stored.get("lifecycle") == "REVIEW" and stored.get("verification") == "unverified":
+        fallback = stored.copy()
+        fallback["_cognitive_unverified"] = True
+        return fallback
+    return None
 
 
 def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
