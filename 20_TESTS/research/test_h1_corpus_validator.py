@@ -12,10 +12,10 @@ canonical_hash = _MOD.canonical_hash
 def _corpus():
     return {
         "notes": [
-            {"id": "A", "title": "Alpha", "excerpt": "required fact"},
+            {"id": "A", "title": "Alpha", "excerpt": "required fact", "lifecycle": "ACTIVE"},
             {"id": "RAW", "title": "Raw", "excerpt": "required fact", "lifecycle": "RAW"},
-            {"id": "B", "title": "Beta", "excerpt": "other fact"},
-            {"id": "C", "title": "Gamma", "excerpt": "target fact"},
+            {"id": "B", "title": "Beta", "excerpt": "other fact", "lifecycle": "ACTIVE"},
+            {"id": "C", "title": "Gamma", "excerpt": "target fact", "lifecycle": "ACTIVE"},
         ],
         "links": [
             {"source": "A", "target": "B", "relation": "depends_on"},
