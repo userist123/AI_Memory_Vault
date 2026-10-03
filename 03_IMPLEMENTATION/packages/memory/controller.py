@@ -461,6 +461,7 @@ class MemoryController:
                 minimal_provenance=None, next_page_token=None, audit_ref=None,
                 allow_unverified=(
                     principal in {Principal.HUMAN, Principal.ADMIN}
+                    or lc == Lifecycle.ACTIVE.value
                     or (
                         principal == Principal.AI_AGENT
                         and isinstance(result.get("provenance"), dict)
@@ -1323,7 +1324,10 @@ class MemoryController:
                     minimal_provenance=None,
                     next_page_token=next_token,
                     audit_ref=None,
-                    # REVIEW/unverified results may be returned only as explicitly\n                    # quarantined data; the egress gate keeps them out of the\n                    # trusted model context while preserving lifecycle visibility.\n                    allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
+                    # REVIEW/unverified results may be returned only as explicitly
+                    # quarantined data; the egress gate keeps them out of the
+                    # trusted model context while preserving lifecycle visibility.
+                    allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
                 )
             except BudgetExceededError:
                 # Preserve the canonical egress envelope even when the final

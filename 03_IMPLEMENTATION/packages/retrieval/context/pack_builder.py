@@ -143,7 +143,7 @@ class ContextPackBuilder:
                 # Non-owner callers may observe that a REVIEW item exists, but
                 # must not receive its unverified content through the model-facing
                 # route. The owner may inspect the quarantined content explicitly.
-                if str(agent_id) != "human":
+                if str(agent_id) != "human" and str(item.get("lifecycle")).upper() == "REVIEW":
                     item["content"] = ""
 
             content = str(item.get("content", ""))
