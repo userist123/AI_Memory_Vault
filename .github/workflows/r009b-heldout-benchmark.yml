@@ -2,7 +2,7 @@ name: R009b Held-out Retrieval Benchmark
 
 on:
   push:
-    timeout-minutes: 20
+
     branches:
       # `main` is here because the full suite ran only on pull requests: after a
       # merge nothing re-ran it, so main could be green on its narrow workflows
