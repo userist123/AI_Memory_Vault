@@ -97,6 +97,26 @@ Research tracks must not:
 - use historical benchmark numbers as a current baseline without a frozen current corpus;
 - implement a mechanism before the experiment establishes a measurable need.
 
+## Destructive-mechanism safety
+
+Tracks that can delete, suppress, overwrite, demote, or materially rewrite stored memory must be evaluated in **shadow mode** first.
+
+This applies at minimum to:
+- H3 forgetting/decay;
+- H5 reconsolidation;
+- any future consolidation mechanism that mutates existing notes;
+- any variant that changes lifecycle state or removes retrieval eligibility.
+
+Shadow-mode requirements:
+1. operate on a frozen copy or simulation layer, never the authoritative corpus;
+2. preserve before/after identities and provenance;
+3. record every proposed mutation;
+4. compare retrieval/task outcomes against an unchanged control;
+5. define rollback before execution;
+6. do not promote the mechanism to production from shadow evidence alone.
+
+A research experiment must never make the authoritative corpus worse merely to obtain a measurable effect.
+
 ## H1 special case
 
 H1 already has dedicated artifacts:
