@@ -40,6 +40,10 @@ TRUSTED_STATUSES = frozenset({
     "VERIFIED_SOURCE",
     "DERIVED_FROM_VERIFIED_SOURCE",
 })
+PROVENANCE_REQUIRED_STATUSES = frozenset({
+    "VERIFIED_SOURCE",
+    "DERIVED_FROM_VERIFIED_SOURCE",
+})
 
 
 @dataclass(frozen=True)
@@ -105,7 +109,12 @@ class VerifiedReducer:
         record = item.get("verification")
         if not isinstance(record, Mapping):
             return False
-        return str(record.get("status", "")).upper() in TRUSTED_STATUSES
+        status = str(record.get("status", "")).upper()
+        if status not in TRUSTED_STATUSES:
+            return False
+        if status in PROVENANCE_REQUIRED_STATUSES:
+            return isinstance(item.get("provenance"), Mapping)
+        return True
 
     def reduce(
         self,
