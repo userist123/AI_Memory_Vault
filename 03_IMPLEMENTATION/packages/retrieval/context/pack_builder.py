@@ -396,6 +396,7 @@ class ContextPackBuilder:
         effective_query = query.strip() or disclosure_query.strip()
         safe_results, reduction_metrics = self._verify_and_reduce(
             safe_results, resolved, query=effective_query, allow_unverified=allow_unverified,
+            agent_id=agent_id,
         )
         safe_results = resolved.apply_degradation(safe_results)
 
