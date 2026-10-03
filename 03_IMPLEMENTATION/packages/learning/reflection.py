@@ -131,12 +131,20 @@ class ReflectionPipeline:
 
     def propose_synapse(self, principal: Principal, source_id: str, target_id: str, relation_type: str = "related_to") -> Optional[str]:
         try:
-            pack = self.controller.read(principal, source_id)
-            results = pack.get("results", []) if isinstance(pack, dict) else []
-            if not results:
+            # This is an internal write proposal, not a model-facing read.
+            # REVIEW/unverified nodes must remain eligible for proposal work,
+            # but their content must never be exposed merely to discover the
+            # source/target metadata needed for the edge.
+            storage = getattr(self.controller, "storage", None)
+            getter = getattr(storage, "get", None)
+            if not callable(getter):
                 return None
 
-            source_node = results[0]
+            source_node = getter(source_id)
+            target_node = getter(target_id)
+            if not isinstance(source_node, dict) or not isinstance(target_node, dict):
+                return None
+
             relations = source_node.get("relations", [])
             if not isinstance(relations, list):
                 relations = []
@@ -148,11 +156,7 @@ class ReflectionPipeline:
                     if rel.get("relation") == relation_type or rel.get("type") == relation_type:
                         return None
 
-            # Retrieve target node type if available to comply with canonical schema
-            target_pack = self.controller.read(principal, target_id)
-            target_results = target_pack.get("results", []) if isinstance(target_pack, dict) else []
-            target_node = target_results[0] if target_results else {}
-            target_type = target_node.get("type", "knowledge") if isinstance(target_node, dict) else "knowledge"
+            target_type = target_node.get("type", "knowledge")
             if not isinstance(target_type, str):
                 target_type = "knowledge"
 
