@@ -58,7 +58,7 @@ class MemoryDataEgressGate:
                 ).upper()
             else:
                 status = str(verification or "").upper()
-            if status in {"", "UNVERIFIED", "REJECTED", "BLOCKED", "DENIED"}:
+            if status not in {"TRUSTED", "VERIFIED", "SAFE"}:
                 raise DataRouteViolation(
                     f"verification: result {index} is not trusted ({status or 'missing'})"
                 )
