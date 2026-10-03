@@ -105,6 +105,27 @@ Record:
 
 Performance changes are secondary outcomes; they must not be used to redefine correctness. Failed, timed-out, or degraded executions remain part of the evidence denominator and must be classified rather than silently discarded.
 
+## Selection and denominator integrity
+
+Every structurally valid case in the frozen benchmark packet must produce a runtime record for every planned baseline/variant repetition, unless execution infrastructure fails. A case may not be removed after observing retrieval results because its lexical/entity reachability is inconvenient, trivial, or unfavorable.
+
+Reachability is an observed attribute, not a post-hoc inclusion filter:
+- `BASELINE_REACHABLE` — gold is reachable through the declared baseline candidate path;
+- `BASELINE_NOT_REACHABLE` — eligible gold is absent from baseline candidate generation;
+- `BASELINE_REACHABILITY_UNMEASURABLE` — the trace is insufficient or execution degraded.
+
+For families intended to isolate associative recovery, the preregistration may define a subset such as `BASELINE_NOT_REACHABLE`, but that subset must be declared before results are inspected and its full parent denominator must remain reported. Cases failing the subset criterion are exclusions from that specific subgroup analysis, not deletions from the benchmark.
+
+The benchmark report must publish:
+- total frozen cases;
+- structurally valid cases;
+- executed cases;
+- degraded/failed cases;
+- cases in each reachability stratum;
+- cases excluded from any subgroup and the predeclared exclusion rule.
+
+No subgroup may be defined from the observed variant outcome.
+
 ## Derived miss classification
 
 Classification is computed after raw evidence is frozen:
@@ -117,6 +138,7 @@ Classification is computed after raw evidence is frozen:
 6. `CONTEXT_PACK_MISS` — gold reaches the disclosed set but is removed by final context budgeting.
 7. `RETRIEVED_CORRECTLY` — gold reaches the required final boundary.
 8. `UNMEASURABLE` — evidence is incomplete or execution degraded; do not convert this into success or failure.
+9. `BASELINE_REACHABILITY_UNMEASURABLE` — baseline reachability cannot be established; retain the case in the denominator and report the missing evidence.
 
 The classification must be deterministic from the frozen trace.
 
