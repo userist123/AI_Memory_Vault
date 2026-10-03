@@ -181,6 +181,9 @@ class ProgressiveDisclosure:
                 continue
             candidate = {
                 "id": note.get("id"),
+                "type": note.get("type"),
+                "lifecycle": note.get("lifecycle"),
+                "confidence": note.get("confidence"),
                 "content": content,
                 **self._security_metadata(note),
                 **self._result_metadata(note),
