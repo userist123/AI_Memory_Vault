@@ -61,6 +61,19 @@ def test_provenance_verified_statuses_are_trusted_for_reduction():
         assert result.metadata["verification"]["status"] == status
 
 
+def test_provenance_trust_status_requires_provenance_record():
+    reducer = VerifiedReducer()
+    item = {
+        "content": "A provenance-derived note without its provenance record.",
+        "verification": {"status": "VERIFIED_SOURCE"},
+    }
+
+    result = reducer.reduce(item, verified=True, max_chars=200)
+
+    assert result.allowed is False
+    assert result.reason == "verification_required"
+
+
 def test_reduction_reports_relearning_signal():
     reducer = VerifiedReducer()
     item = {
