@@ -1277,7 +1277,7 @@ class MemoryController:
                     minimal_provenance=None,
                     next_page_token=next_token,
                     audit_ref=None,
-                    allow_unverified=(principal == Principal.HUMAN),
+                    # REVIEW/unverified results may be returned only as explicitly\n                    # quarantined data; the egress gate keeps them out of the\n                    # trusted model context while preserving lifecycle visibility.\n                    allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
                 )
             except BudgetExceededError:
                 # Preserve the canonical egress envelope even when the final
