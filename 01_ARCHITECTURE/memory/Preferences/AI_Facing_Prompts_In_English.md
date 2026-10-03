@@ -133,3 +133,8 @@ Code and structured artifacts require stricter policies than prose. Future artif
 Net token economy must account for compressor overhead, model-input tokens, latency and cache effects. Transport compression such as zlib is not LLM token savings because the model-facing text is restored before the final token-budget check.
 
 Evaluation must measure compression ratio together with constraint recall, information preservation, grounding, code validity, downstream task utility, latency, cost and cache behavior. A fixed compression target is not an acceptance criterion.
+
+
+## Still open
+
+The host still owns the translation provider integration for non-English requests. The deterministic compiler will not silently translate or invent missing semantic constraints.
