@@ -20,7 +20,7 @@ def _step_values(obj):
 def audit_file(path):
  data=yaml.safe_load(path.read_text(encoding='utf-8')) or {}
  findings=[]
- if 'permissions' not in data and True not in data:
+ if 'permissions' not in data:
   jobs=_jobs(data)
   if not jobs or any('permissions' not in (job or {}) for job in jobs.values() if isinstance(job,dict)):
    findings.append('missing permissions at workflow or every job')
@@ -64,6 +64,7 @@ def audit_all(root=ROOT/'.github/workflows'):
   f=audit_file(path)
   if f: failures[str(path.relative_to(ROOT))]=f
  return failures
+
 if __name__=='__main__':
  failures=audit_all()
  for p,items in failures.items():
