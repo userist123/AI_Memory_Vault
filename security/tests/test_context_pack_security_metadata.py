@@ -54,3 +54,22 @@ def test_budget_degradation_cannot_erase_trust_evidence():
     assert result["provenance"]["verified"] is True
     assert result["requirements"] == item["requirements"]
     assert result["acceptance"] == item["acceptance"]
+
+
+def test_controller_style_trusted_verification_string_is_normalized():
+    item = {
+        "id": "trusted-string",
+        "content": "Controller-produced trusted memory",
+        "verification": "verified",
+        "provenance": {"source_type": "test", "source_ref": "controller"},
+    }
+
+    pack = ContextPackBuilder().build(
+        request_id="test-trusted-string",
+        agent_id="default",
+        budget={"hard": 2048, "hard_tokens": 512},
+        results=[item],
+        disclosure_level="metadata_only",
+    )
+
+    assert pack["results"][0]["verification"] == {"status": "VERIFIED"}
