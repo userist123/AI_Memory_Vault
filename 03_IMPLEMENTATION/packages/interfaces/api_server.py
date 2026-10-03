@@ -34,7 +34,7 @@ def _skill_catalog(root:Path):
         skills.append({'id':rel,'name':name,'path':f.as_posix()})
     return skills
 
-def _agents(root:Path): return _read_json(root/'projects'/'jarvis_web'/'data'/'agents.json',{'agents':[]}).get('agents',[])
+def _agents(root:Path): return _read_json(root/'02_PRODUCT'/'projects'/'workspaces'/'jarvis_web'/'data'/'agents.json',{'agents':[]}).get('agents',[])
 
 def _route_agents(root:Path,task:str):
     tokens={t for t in task.lower().replace('/',' ').replace('-',' ').split() if len(t)>2}; scored=[]
