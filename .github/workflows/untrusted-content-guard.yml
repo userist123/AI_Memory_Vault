@@ -36,5 +36,5 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest pyyaml
+          pip install pytest==9.1.1 pyyaml==6.0.3
           python -m pytest 20_TESTS/test_untrusted_content_guard.py -q
