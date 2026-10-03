@@ -35,10 +35,16 @@ def audit_file(path):
   if 'github.event.pull_request.head.sha' in text or 'github.event.pull_request.head.ref' in text:
    findings.append('pull_request_target checks out PR head code')
  if 'pull_request' in on:
-  for key,value in _step_values(data):
-   if isinstance(value,str):
-    for secret in SECRET_RE.findall(value):
-     if secret!='GITHUB_TOKEN': findings.append('secret transmitted on pull_request: '+secret)
+  for job in _jobs(data).values():
+   if not isinstance(job,dict): continue
+   for step in job.get('steps',[]) or []:
+    if not isinstance(step,dict): continue
+    condition=str(step.get('if',''))
+    if 'github.event_name !=' in condition and 'pull_request' in condition: continue
+    for value in step.values():
+     if isinstance(value,str):
+      for secret in SECRET_RE.findall(value):
+       if secret!='GITHUB_TOKEN': findings.append('secret transmitted on pull_request: '+secret)
  for job_name,job in _jobs(data).items():
   if not isinstance(job,dict): continue
   commands=[]
