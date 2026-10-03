@@ -49,6 +49,8 @@ def rich_storage():
                 "title": f"Active Note {i} on Architecture",
                 "content": f"Detailed architectural principles and distributed telemetry patterns {i}.",
                 "verification": "verified",
+
+                "provenance": {"source_type": "user", "source_ref": "test-fixture"},
                 "confidence": 0.9,
                 "source_type": "official",
             },
@@ -77,6 +79,8 @@ def rich_storage():
             "title": "ADR 001 Architecture Decision",
             "content": "Decision record concerning telemetry and observability.",
             "verification": "verified",
+
+            "provenance": {"source_type": "user", "source_ref": "test-fixture"},
             "confidence": 0.95,
             "source_type": "official",
         },
