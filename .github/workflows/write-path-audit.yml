@@ -2,7 +2,7 @@ name: Write Path Audit
 
 on:
   pull_request:
-    timeout-minutes: 20
+
     branches: [main]
   workflow_dispatch:
 
