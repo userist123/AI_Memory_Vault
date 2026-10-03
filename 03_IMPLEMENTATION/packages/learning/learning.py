@@ -67,6 +67,12 @@ class LearningEngine:
             lifecycle=[Lifecycle.ACTIVE.value],
             types=["knowledge"],
         )
+        # Lightweight controller doubles used by integrations may not expose
+        # a real storage query. Keep the canonical-storage path in production,
+        # but preserve the public search seam as a compatibility fallback.
+        if not isinstance(candidates, list):
+            pack = self.controller.search(principal, "knowledge", page_size=20)
+            candidates = pack.get("results", []) if isinstance(pack, dict) else []
 
         promoted_ids = []
 
