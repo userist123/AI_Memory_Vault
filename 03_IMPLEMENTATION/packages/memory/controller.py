@@ -457,8 +457,7 @@ class MemoryController:
             pack = self.pack_builder.build(
                 request_id="cognitive_read", agent_id=principal.value, budget={},
                 results=[result], disclosure_level='full',
-                minimal_provenance=None, next_page_token=None, audit_ref=None,
-                allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN})
+                minimal_provenance=None, next_page_token=None, audit_ref=None
             )
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
@@ -621,11 +620,6 @@ class MemoryController:
             # OWN inferred lifecycle/type filters are ever softened.
             trace_collector.start_stage("classification")
             classified = self.query_classifier.classify(sanitized)
-            # Human owner visibility is unrestricted unless filters are explicit.
-            if principal == Principal.HUMAN and lifecycles is None:
-                classified['lifecycle_filters'] = []
-            if principal == Principal.HUMAN and types is None:
-                classified['target_types'] = []
             classified['lifecycle_filters_source'] = 'inferred' if classified.get('lifecycle_filters') else 'none'
             classified['target_types_source'] = 'inferred' if classified.get('target_types') else 'none'
             if lifecycles is not None:
@@ -698,7 +692,7 @@ class MemoryController:
                     sn_lc_norm = str(sn_lc).upper() if sn_lc else ""
                     sn_type_norm = str(sn_type).lower() if sn_type else ""
 
-                    raw_lifecycle = Lifecycle.RAW.value.upper()\n                    if sn_lc_norm == raw_lifecycle:
+                    if sn_lc_norm == "RAW":
                         raw_excluded.append(sn_id)
                         if is_small_storage:
                             trace_collector.record_decision(
@@ -1191,13 +1185,13 @@ class MemoryController:
             trace_collector.start_stage("pagination")
             pd = ProgressiveDisclosure(budget)
             if disclosure_level == 'metadata':
-                disclosed = pd.metadata_only(notes, allow_unverified=True)
+                disclosed = pd.metadata_only(notes)
             elif disclosure_level == 'snippet':
-                disclosed = pd.snippet(notes, allow_unverified=True)
+                disclosed = pd.snippet(notes)
             elif disclosure_level == 'sections':
-                disclosed = pd.sections(notes, sanitized, allow_unverified=True)
+                disclosed = pd.sections(notes, sanitized)
             else:
-                disclosed = pd.full_document(notes, allow_unverified=True)
+                disclosed = pd.full_document(notes)
             # Pagination slicing
             total = len(disclosed)
             effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
