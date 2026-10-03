@@ -18,7 +18,7 @@ from security.context_compression import AdaptiveContextCompressor, CompressionR
 
 
 class ContextPackBuilder:
-    """Build final context only from verified, reduced knowledge."""
+    """Build trusted model context, with an explicit owner-only quarantine view."""
 
     def __init__(self, verifier: Optional[Callable[[Dict[str, Any]], Mapping[str, Any]]] = None):
         # A verifier may enrich an item with a trusted verification record.
@@ -80,6 +80,7 @@ class ContextPackBuilder:
         resolved: ContextBudget,
         *,
         query: str = "",
+        allow_unverified: bool = False,
     ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         reduced: List[Dict[str, Any]] = []
         tokens_saved = 0
@@ -113,7 +114,8 @@ class ContextPackBuilder:
             # while richer callers may provide a verification record. Normalize
             # both representations, but keep the trust boundary fail-closed:
             # only explicitly trusted states can enter reduction.
-            if status not in TRUSTED_STATUSES:
+            quarantined_unverified = status not in TRUSTED_STATUSES
+            if quarantined_unverified and not allow_unverified:
                 rejected += 1
                 continue
             # The canonical egress contract requires provenance for every
@@ -135,6 +137,8 @@ class ContextPackBuilder:
                 rejected += 1
                 continue
             item["verification"] = verification_record
+            if quarantined_unverified:
+                item["trust_state"] = "UNVERIFIED_QUARANTINED"
 
             content = str(item.get("content", ""))
             # Metadata-only disclosure intentionally carries no content. It is
@@ -374,14 +378,19 @@ class ContextPackBuilder:
         query: str = "",
         disclosure_query: str = "",
         provenance_storage_engine: Any = None,
+        allow_unverified: bool = False,
     ) -> Dict[str, Any]:
         resolved = self._resolve_budget(agent_id, budget or {})
         safe_results = [dict(item) for item in (results or [])]
 
         # Mandatory order: verification -> semantic reduction -> token/byte budget.
-        # Unverified content never reaches apply_degradation() or the final pack.
+        # Unverified content is accepted only when the caller explicitly requests
+        # the owner quarantine view; it remains marked UNVERIFIED_QUARANTINED and
+        # is never promoted into TRUSTED_STATUSES.
         effective_query = query.strip() or disclosure_query.strip()
-        safe_results, reduction_metrics = self._verify_and_reduce(safe_results, resolved, query=effective_query)
+        safe_results, reduction_metrics = self._verify_and_reduce(
+            safe_results, resolved, query=effective_query, allow_unverified=allow_unverified,
+        )
         safe_results = resolved.apply_degradation(safe_results)
 
         disclosure = ProgressiveDisclosure(resolved)
@@ -389,15 +398,15 @@ class ContextPackBuilder:
             disclosure_level = "full_document"
         if disclosure_level in {"metadata", "metadata_only"}:
             disclosure_level = "metadata_only"
-            safe_results = disclosure.metadata_only(safe_results)
+            safe_results = disclosure.metadata_only(safe_results, allow_unverified=allow_unverified)
         elif disclosure_level == "snippet":
-            safe_results = disclosure.snippet(safe_results)
+            safe_results = disclosure.snippet(safe_results, allow_unverified=allow_unverified)
         elif disclosure_level == "full_document":
-            safe_results = disclosure.full_document(safe_results)
+            safe_results = disclosure.full_document(safe_results, allow_unverified=allow_unverified)
         elif disclosure_level == "sections":
             if not disclosure_query.strip():
                 raise ValueError("sections disclosure requires disclosure_query")
-            safe_results = disclosure.sections(safe_results, disclosure_query)
+            safe_results = disclosure.sections(safe_results, disclosure_query, allow_unverified=allow_unverified)
         elif disclosure_level == "provenance_on_demand":
             if provenance_storage_engine is None:
                 raise ValueError("provenance_on_demand requires provenance_storage_engine")
