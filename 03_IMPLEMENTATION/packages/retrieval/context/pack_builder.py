@@ -112,7 +112,7 @@ class ContextPackBuilder:
             # while richer callers may provide a verification record. Normalize
             # both representations, but keep the trust boundary fail-closed:
             # only explicitly trusted states can enter reduction.
-            if status not in {"TRUSTED", "VERIFIED", "SAFE"}:
+            if status not in {"TRUSTED", "VERIFIED", "SAFE", "VERIFIED_SOURCE", "DERIVED_FROM_VERIFIED_SOURCE"}:
                 rejected += 1
                 continue
             item["verification"] = verification_record
