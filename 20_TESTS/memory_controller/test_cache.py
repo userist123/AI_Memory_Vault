@@ -184,6 +184,13 @@ def test_debug_retrieval_trust_diagnostics(tmp_path):
     }
     (knowledge / "debug.md").write_text(serialize(note), encoding="utf-8")
     controller = MemoryController(FileStorageEngine(str(root)))
+    raw_note = controller.storage.get("debug-review")
+    resolved = controller.pack_builder._resolve_budget("ai_agent", {})
+    reduced, reduced_metrics = controller.pack_builder._verify_and_reduce(
+        [raw_note], resolved, query="consolidarea nocturna instaleaza dependentele",
+        allow_unverified=True, agent_id="ai_agent",
+    )
+    assert reduced, {"raw_note": raw_note, "reduced_metrics": reduced_metrics}
     pack = controller.search(Principal.AI_AGENT, "consolidarea nocturna instaleaza dependentele", page_size=3)
     assert pack["results"], {
         "results": pack.get("results"),
