@@ -20,6 +20,13 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Materialize frozen benchmark packet
+        run: |
+          mkdir -p artifacts/h1
+          cp 08_RESEARCH/BOOK_TO_MEMORY/current_labeling_corpus.json artifacts/h1/current_labeling_corpus.json
+          python 08_RESEARCH/BOOK_TO_MEMORY/build_h1_cases.py
+          python 08_RESEARCH/BOOK_TO_MEMORY/validate_h1_corpus.py
+
       - name: Run frozen paired experiment
         run: python 08_RESEARCH/BOOK_TO_MEMORY/run_h1_associative_experiment.py --reps 3
 
