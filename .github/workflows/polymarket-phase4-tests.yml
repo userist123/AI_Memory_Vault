@@ -10,7 +10,14 @@ on:
       - '20_TESTS/polymarket/**'
       - '07_EVALUATION/polymarket/**'
       - '.github/workflows/polymarket-phase4-tests.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
