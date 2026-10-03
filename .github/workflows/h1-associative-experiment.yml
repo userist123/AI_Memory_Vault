@@ -1,9 +1,9 @@
 name: H1 Associative Experiment
 
 on:
-  push:
+  pull_request:
     branches:
-      - research/book-to-memory
+      - main
   workflow_dispatch:
 
 permissions:
