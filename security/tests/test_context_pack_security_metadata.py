@@ -99,7 +99,7 @@ def test_real_vault_trusted_provenance_states_reach_agent_context():
             budget={"hard": 8192, "hard_tokens": 2048},
             results=[{
                 "id": note.stem,
-                "content": text,
+                "content": text[:512],
                 "verification": {"status": status},
                 "provenance": {"source_ref": str(note.relative_to(repo_root))},
             }],
