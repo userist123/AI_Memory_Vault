@@ -6,13 +6,13 @@ on:
     branches: [main]
     paths:
       - '02_PRODUCT/projects/workspaces/jarvis_web/**'
-      - 'memory_controller/**'
+      - '03_IMPLEMENTATION/packages/memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
   pull_request:
     paths:
       - '02_PRODUCT/projects/workspaces/jarvis_web/**'
-      - 'memory_controller/**'
+      - '03_IMPLEMENTATION/packages/memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
 
@@ -39,5 +39,7 @@ jobs:
         run: python -m compileall -q 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
       - name: Web smoke test
         run: node 02_PRODUCT/projects/workspaces/jarvis_web/test/smoke_test.cjs
+      - name: Install API runtime dependency
+        run: python -m pip install --disable-pip-version-check pyyaml==6.0.3
       - name: API smoke test
         run: python 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
