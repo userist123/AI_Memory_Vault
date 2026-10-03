@@ -3,7 +3,7 @@ name: "CodeQL Advanced"
 
 on:
   push:
-    timeout-minutes: 20
+
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
