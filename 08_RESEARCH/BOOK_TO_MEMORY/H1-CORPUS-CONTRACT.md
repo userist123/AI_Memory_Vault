@@ -27,6 +27,7 @@ Optional fields:
 - conflict_group: identifier for an explicitly conflicting evidence set
 - distractor_ids: known plausible non-gold notes
 - contamination_notes: documented unavoidable contamination
+- gold_reuse_reason: mandatory when a final conflict/distractor case intentionally reuses a gold target
 - expected_baseline: descriptive expectation, never a measured result
 
 ## Acceptance rules
@@ -40,7 +41,7 @@ Optional fields:
 7. Multi-hop cases require graph_path and every declared edge must exist with the same direction and relation.
 8. A graph path may not silently reverse an edge.
 9. The corpus commit and hash must be identical across the frozen case set.
-10. A final benchmark cannot contain duplicate gold-target reuse unless the case explicitly belongs to a conflict or distractor design and documents the reason.
+10. A final benchmark cannot contain duplicate gold-target reuse unless every case reusing that target is explicitly a conflict/distractor design and each case documents `gold_reuse_reason`.
 11. Lexical/entity reachability is not assumed by this validator. It must be measured separately against the exact production path before a case is labelled associative.
 12. The validator never changes or repairs a case.
 
