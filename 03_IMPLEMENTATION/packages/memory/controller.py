@@ -1276,7 +1276,8 @@ class MemoryController:
                     disclosure_level=disclosure_level,
                     minimal_provenance=None,
                     next_page_token=next_token,
-                    audit_ref=None
+                    audit_ref=None,
+                    allow_unverified=(principal == Principal.HUMAN),
                 )
             except BudgetExceededError:
                 # Preserve the canonical egress envelope even when the final
