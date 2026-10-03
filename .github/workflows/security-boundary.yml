@@ -27,7 +27,7 @@ jobs:
       - name: Compile security modules
         run: python -m compileall -q security
       - name: Install test runner
-        run: python -m pip install --disable-pip-version-check pytest==9.1.1
+        run: python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3
       - name: Run security tests
         run: python -m pytest security/tests -q -o pythonpath=.
       - name: Audit workflow security boundary
