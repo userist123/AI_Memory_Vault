@@ -5,13 +5,13 @@ on:
     timeout-minutes: 20
     branches: [main]
     paths:
-      - 'projects/jarvis_web/**'
+      - '02_PRODUCT/projects/workspaces/jarvis_web/**'
       - 'memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
   pull_request:
     paths:
-      - 'projects/jarvis_web/**'
+      - '02_PRODUCT/projects/workspaces/jarvis_web/**'
       - 'memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
@@ -36,8 +36,8 @@ jobs:
         with:
           node-version: '20'
       - name: Python syntax
-        run: python -m compileall -q memory_controller projects/jarvis_web/test/api_smoke_test.py
+        run: python -m compileall -q memory_controller 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
       - name: Web smoke test
-        run: node projects/jarvis_web/test/smoke_test.cjs
+        run: node 02_PRODUCT/projects/workspaces/jarvis_web/test/smoke_test.cjs
       - name: API smoke test
-        run: python projects/jarvis_web/test/api_smoke_test.py
+        run: python 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
