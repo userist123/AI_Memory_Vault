@@ -102,7 +102,7 @@ Record:
 - timeout status
 - deterministic/repeatability status
 
-Performance changes are secondary outcomes; they must not be used to redefine correctness.
+Performance changes are secondary outcomes; they must not be used to redefine correctness. Failed, timed-out, or degraded executions remain part of the evidence denominator and must be classified rather than silently discarded.
 
 ## Derived miss classification
 
