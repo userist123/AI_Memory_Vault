@@ -97,7 +97,15 @@ class MemoryDataEgressGate:
 
         try:
             hard_tokens = int(budget["hard_tokens"])
-            final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(routed)
+            # Retrieval traces are audit/observability metadata, not model input.
+            # They remain available to callers without consuming the model context
+            # budget already satisfied by the producer.
+            model_input = {
+                key: value
+                for key, value in routed.items()
+                if key not in {"candidate_trace", "retrieval_trace"}
+            }
+            final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(model_input)
         except (KeyError, TypeError, ValueError) as exc:
             raise DataRouteViolation(
                 "security_boundary: invalid final token budget envelope"
