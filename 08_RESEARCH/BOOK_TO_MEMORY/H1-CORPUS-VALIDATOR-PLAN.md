@@ -14,7 +14,7 @@
 - Required facts must exist in gold evidence.
 - Query classification, lexical/entity reachability, graph direction/path, and baseline rank must be recorded in the runtime evidence packet; the structural validator checks only the parts it can prove from the frozen packet.
 - Association cases cannot already be trivial lexical/entity hits.
-- Duplicate target leakage must be detectable.
+- Duplicate target leakage must be detectable; intentional final reuse is allowed only for conflict/distractor designs with an explicit `gold_reuse_reason`.
 - Corpus commit/hash must be frozen before measurement.
 - No accepted case proves a mechanism by itself.
 
