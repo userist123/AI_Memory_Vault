@@ -56,9 +56,9 @@ def test_final_context_only_acceptance_test(tmp_path, monkeypatch):
     # Provide 3 candidates: M1, M2, M3
     # Craft large note M2 so it gets pruned by degradation or budget
     candidates = [
-        {"id": "M1", "content": "Short M1 content", "score": 0.9},
-        {"id": "M2", "content": "Large M2 " * 500, "score": 0.5},
-        {"id": "M3", "content": "Short M3 content", "score": 0.8},
+        {"id": "M1", "content": "Short M1 content", "score": 0.9, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "trace"}},
+        {"id": "M2", "content": "Large M2 " * 500, "score": 0.5, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "trace"}},
+        {"id": "M3", "content": "Short M3 content", "score": 0.8, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "trace"}},
     ]
 
     # Set hard byte budget to fit only M1 and M3
@@ -69,6 +69,7 @@ def test_final_context_only_acceptance_test(tmp_path, monkeypatch):
         budget=budget,
         results=candidates,
         disclosure_level="sections",
+        disclosure_query="M1 M2 M3",
     )
 
     packed_ids = [r.get("id") for r in pack["results"]]
