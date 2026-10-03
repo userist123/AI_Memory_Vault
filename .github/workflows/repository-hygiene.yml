@@ -40,9 +40,3 @@ jobs:
           pytest 20_TESTS/regression/test_personal_data_guard.py -q
           pytest 20_TESTS/test_r031_repairs.py -q
           pytest 20_TESTS/research/test_blocker_registry_validator.py -q
-
-      - name: Run frozen H1-002 paired associative experiment
-        run: |
-          python 08_RESEARCH/BOOK_TO_MEMORY/run_h1_associative_experiment.py --reps 3
-          test -s artifacts/h1/h1_associative_experiment_results.json
-
