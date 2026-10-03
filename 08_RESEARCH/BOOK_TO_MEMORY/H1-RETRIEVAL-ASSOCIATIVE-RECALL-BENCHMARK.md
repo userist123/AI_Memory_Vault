@@ -93,6 +93,10 @@ The benchmark is the required bridge between literature and implementation.
 
 ## Status
 - benchmark definition: prepared
+- task corpus: instantiated (70 cases; development/calibration/held_out splits)
+- baseline run: executed and frozen
+- variant: blocked by strict runtime guard because the current production candidate pool supplied 200 graph seeds and zero new graph nodes
+- ACTIVE promotion: prohibited
 - task corpus: not yet instantiated
 - baseline run: not yet executed
 - variant: not implemented
