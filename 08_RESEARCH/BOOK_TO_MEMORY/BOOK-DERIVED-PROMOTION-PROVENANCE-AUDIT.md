@@ -19,7 +19,27 @@ The existing derived Vault corpus, however, contains historical records whose me
 - Newell / Unified Theories of Cognition
 - AI-agent memory survey sources
 
-The search evidence is from the Library's derived `vault_corpus.json`, not from the current Raw Inbox source snapshots. Therefore it proves that the derived corpus contains these historical provenance claims, but it does not prove that each promotion was performed by PR #206.
+The Library-derived `vault_corpus.json` proves that these historical provenance claims exist in the derived corpus. It does not by itself prove that each promotion was performed by PR #206.
+
+## Historical promotion evidence
+
+Repository history independently confirms that a prior ingestion/promotion track made explicit judgments over book-derived concepts.
+
+Commit `6b3c2eacbf8b85135c803800ec1f7d57d93f505f` records the promotion-verdict gate and states that `PROMOTION_REVIEW.md` contained 91 judgments argued from book text:
+- 91 total verdicts;
+- 48 PROMOTE;
+- 28 REJECT;
+- 8 MERGE;
+- 6 UNSURE;
+- 1 SPLIT.
+
+The same historical record states that the verdicts were independently checked against the filesystem, that merge targets existed, and that reasons were required.
+
+Commit `a5d017a96ae8a070b76d589809cbe9a7aa3c973e` contains the same historical promotion-verdict chain as part of the R064 merge-semantics work. This establishes an attributable historical decision process, but it does not by itself establish that every current book-derived record still has complete provenance under today's learning-quality policy.
+
+Commit `6a596beeeac1802590580daeec8ec83bddd61d7b` documents an earlier R032 ingestion/promotion track and records a corpus pre-flight over 20 books, including Kandel, Why We Forget, Soar, and other sources. It also documents a promoter change and graph-relation verification.
+
+These commits are historical evidence only. They do not authorize any lifecycle change in PR #206.
 
 ## Why this matters
 
