@@ -41,6 +41,8 @@ htmlcov/
 node_modules/
 dist/
 build/
+artifacts/
+
 
 # Generated retrieval and graph artifacts (not canonical vault content)
 .rag/
