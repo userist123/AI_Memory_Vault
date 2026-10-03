@@ -12,7 +12,7 @@
 - RAW and ARCHIVED targets are rejected for normal H1 retrieval cases.
 - Gold IDs must resolve in the frozen corpus.
 - Required facts must exist in gold evidence.
-- Query classification, lexical/entity reachability, graph direction/path, and baseline rank must be recorded.
+- Query classification, lexical/entity reachability, graph direction/path, and baseline rank must be recorded in the runtime evidence packet; the structural validator checks only the parts it can prove from the frozen packet.
 - Association cases cannot already be trivial lexical/entity hits.
 - Duplicate target leakage must be detectable.
 - Corpus commit/hash must be frozen before measurement.
@@ -30,9 +30,11 @@ Interfaces:
 Files:
 - Create: 08_RESEARCH/BOOK_TO_MEMORY/validate_h1_corpus.py
 - Test: 20_TESTS/research/test_h1_corpus_validator.py
+
+The validator remains dependency-light and does not import production retrieval components; this prevents the structural gate from changing behavior when production retrieval changes.
 Interfaces:
-- Consumes: case JSON and a corpus packet compatible with build_labeling_corpus.py.
-- Produces: deterministic JSON findings with errors, warnings, and per-case diagnostics.
+- Consumes: case JSON and a frozen corpus packet compatible with the labeling-corpus shape.
+- Produces: deterministic JSON findings with errors, warnings, and per-case structural diagnostics. Runtime reachability and baseline-rank evidence are external prerequisites, not validator outputs.
 
 Focused tests:
 - missing gold IDs
@@ -41,7 +43,7 @@ Focused tests:
 - invalid abstention/gold combinations
 - duplicate case IDs
 - graph paths with missing edges
-- lexical/entity reachability diagnostics
+- abstention/gold consistency
 - duplicate target leakage
 
 ## Task 3: Integrate documentation and freeze semantics
