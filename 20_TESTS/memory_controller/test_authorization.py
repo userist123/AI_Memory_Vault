@@ -32,7 +32,7 @@ def test_ai_read_allowed(controller):
     assert pack["results"][0]["id"] == "11111111-1111-1111-1111-111111111111"
 
 def test_human_read_allowed(controller):
-    note = {"id": "22222222-2222-2222-2222-222222222222", "lifecycle": Lifecycle.ACTIVE, "content": "data"}
+    note = {"id": "22222222-2222-2222-2222-222222222222", "lifecycle": Lifecycle.ACTIVE, "content": "data", "verification": "verified"}
     controller.storage.set("22222222-2222-2222-2222-222222222222", note)
     pack = controller.read(Principal.HUMAN, "22222222-2222-2222-2222-222222222222")
     assert pack["results"][0]["id"] == "22222222-2222-2222-2222-222222222222"
