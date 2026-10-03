@@ -12,6 +12,7 @@ Every runtime record must bind:
 
 - `corpus_commit`
 - `corpus_hash`
+- `benchmark_hash`
 - `case_id`
 - `run_id`
 - `model_id`
@@ -20,7 +21,7 @@ Every runtime record must bind:
 - `principal`
 - exact frozen query
 
-The record is invalid if corpus identity does not match the frozen H1 case set.
+The record is invalid if corpus or benchmark identity does not match the frozen H1 case set.
 
 ## Request contract
 
