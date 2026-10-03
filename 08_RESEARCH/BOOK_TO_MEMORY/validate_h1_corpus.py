@@ -24,6 +24,11 @@ FAMILIES = {
 BOUNDARIES = {"candidate_generation", "ranking", "graph", "context_pack", "end_to_end"}
 PRINCIPALS = {"HUMAN", "AI_AGENT", "ADMIN"}
 BLOCKING_LIFECYCLES = {"RAW", "ARCHIVED"}
+DEFAULT_SEARCH_LIFECYCLES = {
+    "HUMAN": {"CLASSIFIED", "NORMALIZED", "REVIEW", "VERIFIED", "ACTIVE", "RECONSOLIDATING", "SUPERSEDED"},
+    "ADMIN": {"CLASSIFIED", "NORMALIZED", "REVIEW", "VERIFIED", "ACTIVE", "RECONSOLIDATING", "SUPERSEDED"},
+    "AI_AGENT": {"REVIEW", "ACTIVE"},
+}
 
 
 def canonical_hash(payload: Dict[str, Any]) -> str:
@@ -98,6 +103,8 @@ def validate_case(case: Dict[str, Any], corpus: Dict[str, Any], expected_commit:
         lifecycle = str(note.get("lifecycle", "")).upper()
         if lifecycle in BLOCKING_LIFECYCLES:
             errors.append(f"ineligible_gold_lifecycle:{gid}:{lifecycle}")
+        elif lifecycle not in DEFAULT_SEARCH_LIFECYCLES.get(principal, set()):
+            errors.append(f"ineligible_gold_for_principal:{gid}:{principal}:{lifecycle}")
         evidence = " ".join(str(note.get(k, "")) for k in ("title", "excerpt", "content")).lower()
         for fact in required:
             if fact.lower() not in evidence:
