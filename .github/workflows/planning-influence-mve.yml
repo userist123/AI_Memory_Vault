@@ -2,7 +2,7 @@ name: Planning Influence MVE
 
 on:
   push:
-    timeout-minutes: 20
+
     paths:
       - '07_EVALUATION/luna/**'
       - '20_TESTS/test_planning_influence_isolation.py'
