@@ -142,17 +142,6 @@ class ReflectionPipeline:
 
             source_node = getter(source_id)
             target_node = getter(target_id)
-            # Lightweight test doubles may expose read() but no real storage.
-            # Production still uses canonical storage first, preserving the
-            # trust boundary while keeping the proposal API compatible.
-            if not isinstance(source_node, dict) or not isinstance(target_node, dict):
-                reader = getattr(self.controller, "read", None)
-                if not callable(reader):
-                    return None
-                source_pack = reader(principal, source_id)
-                target_pack = reader(principal, target_id)
-                source_node = (source_pack.get("results") or [None])[0] if isinstance(source_pack, dict) else None
-                target_node = (target_pack.get("results") or [None])[0] if isinstance(target_pack, dict) else None
             if not isinstance(source_node, dict) or not isinstance(target_node, dict):
                 return None
 
