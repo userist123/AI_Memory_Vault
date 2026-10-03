@@ -26,7 +26,7 @@ def controller():
 
 # READ permissions
 def test_ai_read_allowed(controller):
-    note = {"id": "11111111-1111-1111-1111-111111111111", "lifecycle": Lifecycle.ACTIVE, "content": "data"}
+    note = {"id": "11111111-1111-1111-1111-111111111111", "lifecycle": Lifecycle.ACTIVE, "content": "data", "verification": "verified", "provenance": {"source_type": "test", "source_ref": "authorization"}}
     controller.storage.set("11111111-1111-1111-1111-111111111111", note)
     pack = controller.read(Principal.AI_AGENT, "11111111-1111-1111-1111-111111111111")
     assert pack["results"][0]["id"] == "11111111-1111-1111-1111-111111111111"
