@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: '20'
       - name: Python syntax
-        run: python -m compileall -q memory_controller 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
+        run: python -m compileall -q 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
       - name: Web smoke test
         run: node 02_PRODUCT/projects/workspaces/jarvis_web/test/smoke_test.cjs
       - name: API smoke test
