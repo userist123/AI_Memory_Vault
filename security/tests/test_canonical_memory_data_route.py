@@ -116,3 +116,23 @@ def test_egress_gate_does_not_count_observability_traces_as_model_input():
 
     assert routed["results"][0]["id"] == "n1"
     assert routed["data_route"]["final_model_input_tokens"] <= 240
+
+
+@pytest.mark.parametrize("status", ["REVIEW", "UNTRUSTED", "BLOCKED", "DENIED", "UNKNOWN"])
+def test_model_egress_route_rejects_non_trusted_verification_states(status):
+    router = MemoryDataRouter()
+    pack = {
+        "requestId": "route-test-state",
+        "agentId": "AI_AGENT",
+        "budget": {"hard_tokens": 240},
+        "reduction": {"tokenizer_mode": "test", "net_tokens_saved": 0},
+        "results": [{
+            "id": "n1",
+            "content": "memory",
+            "verification": {"status": status},
+            "provenance": {"source_type": "user", "source_ref": "test"},
+        }],
+    }
+    router.register("search", lambda: pack)
+    with pytest.raises(DataRouteViolation, match="verification"):
+        router.dispatch(source="search", principal="AI_AGENT")
