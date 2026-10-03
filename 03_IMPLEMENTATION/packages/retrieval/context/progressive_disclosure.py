@@ -143,7 +143,7 @@ class ProgressiveDisclosure:
         result = []
         usage = 0
         for note in notes:
-            if not self._verified(note):
+            if not self._verified(note) and not allow_unverified:
                 continue
             content = str(note.get("content", ""))
             lines = content.split("\n")
@@ -170,7 +170,7 @@ class ProgressiveDisclosure:
         result = []
         usage = 0
         for note in notes:
-            if not self._verified(note):
+            if not self._verified(note) and not allow_unverified:
                 continue
             content = self._content_text(note.get("content", ""))
             size = len(content.encode("utf-8"))
