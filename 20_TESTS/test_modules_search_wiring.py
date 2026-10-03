@@ -35,6 +35,8 @@ def test_storage():
                 "title": f"Cognitive architecture note {i}",
                 "content": f"Detailed content of note {i} explaining memory, global workspace, and reasoning.",
                 "verification": "verified",
+
+                "provenance": {"source_type": "user", "source_ref": "test-fixture"},
             }
         )
     return storage

@@ -2,33 +2,44 @@ name: JARVIS Command Center
 
 on:
   push:
+
     branches: [main]
     paths:
-      - 'projects/jarvis_web/**'
-      - 'memory_controller/**'
+      - '02_PRODUCT/projects/workspaces/jarvis_web/**'
+      - '03_IMPLEMENTATION/packages/memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
   pull_request:
     paths:
-      - 'projects/jarvis_web/**'
-      - 'memory_controller/**'
+      - '02_PRODUCT/projects/workspaces/jarvis_web/**'
+      - '03_IMPLEMENTATION/packages/memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   jarvis-web:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '20'
       - name: Python syntax
-        run: python -m compileall -q memory_controller projects/jarvis_web/test/api_smoke_test.py
+        run: python -m compileall -q 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
       - name: Web smoke test
-        run: node projects/jarvis_web/test/smoke_test.cjs
+        run: node 02_PRODUCT/projects/workspaces/jarvis_web/test/smoke_test.cjs
+      - name: Install API runtime dependency
+        run: python -m pip install --disable-pip-version-check pyyaml==6.0.3 jsonschema==4.26.0
       - name: API smoke test
-        run: python projects/jarvis_web/test/api_smoke_test.py
+        run: python 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py

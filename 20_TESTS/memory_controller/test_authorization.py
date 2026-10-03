@@ -26,19 +26,19 @@ def controller():
 
 # READ permissions
 def test_ai_read_allowed(controller):
-    note = {"id": "11111111-1111-1111-1111-111111111111", "lifecycle": Lifecycle.ACTIVE, "content": "data"}
+    note = {"id": "11111111-1111-1111-1111-111111111111", "lifecycle": Lifecycle.ACTIVE, "content": "data", "verification": "verified", "provenance": {"source_type": "test", "source_ref": "authorization"}, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "authorization"}}
     controller.storage.set("11111111-1111-1111-1111-111111111111", note)
     pack = controller.read(Principal.AI_AGENT, "11111111-1111-1111-1111-111111111111")
     assert pack["results"][0]["id"] == "11111111-1111-1111-1111-111111111111"
 
 def test_human_read_allowed(controller):
-    note = {"id": "22222222-2222-2222-2222-222222222222", "lifecycle": Lifecycle.ACTIVE, "content": "data"}
+    note = {"id": "22222222-2222-2222-2222-222222222222", "lifecycle": Lifecycle.ACTIVE, "content": "data", "verification": "verified", "provenance": {"source_type": "test", "source_ref": "authorization"}}
     controller.storage.set("22222222-2222-2222-2222-222222222222", note)
     pack = controller.read(Principal.HUMAN, "22222222-2222-2222-2222-222222222222")
     assert pack["results"][0]["id"] == "22222222-2222-2222-2222-222222222222"
 
 def test_admin_read_allowed(controller):
-    note = {"id": "33333333-3333-3333-3333-333333333333", "lifecycle": Lifecycle.ACTIVE, "content": "data"}
+    note = {"id": "33333333-3333-3333-3333-333333333333", "lifecycle": Lifecycle.ACTIVE, "content": "data", "verification": "verified", "provenance": {"source_type": "test", "source_ref": "authorization"}}
     controller.storage.set("33333333-3333-3333-3333-333333333333", note)
     pack = controller.read(Principal.ADMIN, "33333333-3333-3333-3333-333333333333")
     assert pack["results"][0]["id"] == "33333333-3333-3333-3333-333333333333"

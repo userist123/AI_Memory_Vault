@@ -1,0 +1,10 @@
+{
+  "blocked_countries": [
+    "Russia",
+    "China",
+    "India",
+    "North Korea"
+  ],
+  "blocked_jurisdictions": [],
+  "approved_signers": []
+}

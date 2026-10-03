@@ -28,10 +28,12 @@ from .security.pagination_token import PaginationToken, MissingHMACSecretError, 
 # Context components
 from .context.query_classifier import QueryClassifier
 from .context.retrieval import RetrievalEngine
+from .context.candidate_generation import generate_candidates
 from .context.relevance_scoring import RelevanceScorer
 from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.budget import ContextBudget, load_agent_budget, BudgetExceededError
 from .context.pack_builder import ContextPackBuilder
+from .data_router import MemoryDataRouter
 from .financial_search import MultiLayeredFinancialSearchEngine, FinancialEntityResolver
 from .planning import Planner, ActivePlan
 from .plan_complexity_analyzer import PlanComplexityAnalyzer, PlanComplexity, ExecutionMode
@@ -219,7 +221,11 @@ class MemoryController:
         self.retrieval_engine = RetrievalEngine(storage, cache=self.cache)
         self.scorer = RelevanceScorer()
         self.pack_builder = ContextPackBuilder()
+        self.data_router = MemoryDataRouter()
         self.financial_search_engine = MultiLayeredFinancialSearchEngine(self.storage)
+        self.data_router.register("read", self._read_impl)
+        self.data_router.register("cognitive_read", self._cognitive_read_impl)
+        self.data_router.register("search", self._search_impl)
         self.planner = Planner()
         self.complexity_analyzer = PlanComplexityAnalyzer()
         self.council_budget = CouncilBudgetController()
@@ -337,6 +343,17 @@ class MemoryController:
                     raise ValueError(_structural.reason)
 
     def read(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="read",
+            principal=principal.value,
+            handler_kwargs={
+                "principal": principal,
+                "note_id": note_id,
+                "include_provenance": include_provenance,
+            },
+        )
+
+    def _read_impl(self, principal: Principal, note_id: str, include_provenance: bool = False) -> Dict[str, Any]:
         try:
             self._check_auth(principal, Operation.READ)
             check_path_traversal(note_id)
@@ -412,6 +429,16 @@ class MemoryController:
     _COGNITIVE_ELIGIBLE = {Lifecycle.ACTIVE, Lifecycle.REVIEW}
 
     def cognitive_read(self, principal: Principal, note_id: str) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="cognitive_read",
+            principal=principal.value,
+            handler_kwargs={
+                "principal": principal,
+                "note_id": note_id,
+            },
+        )
+
+    def _cognitive_read_impl(self, principal: Principal, note_id: str) -> Dict[str, Any]:
         """Read a note for cognitive operations. Returns ACTIVE and REVIEW notes.
         REVIEW notes are tagged with _cognitive_unverified=True.
         RAW and other restricted lifecycle states are excluded.
@@ -431,7 +458,16 @@ class MemoryController:
             pack = self.pack_builder.build(
                 request_id="cognitive_read", agent_id=principal.value, budget={},
                 results=[result], disclosure_level='full',
-                minimal_provenance=None, next_page_token=None, audit_ref=None
+                minimal_provenance=None, next_page_token=None, audit_ref=None,
+                allow_unverified=(
+                    principal in {Principal.HUMAN, Principal.ADMIN}
+                    or lc == Lifecycle.ACTIVE.value
+                    or (
+                        principal == Principal.AI_AGENT
+                        and isinstance(result.get("provenance"), dict)
+                        and result.get("provenance", {}).get("source_type") == "inference"
+                    )
+                ),
             )
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
@@ -440,6 +476,50 @@ class MemoryController:
             raise
 
     def search(
+        self,
+        principal: Principal,
+        query: str,
+        page_size: int = 10,
+        page_token: Optional[str] = None,
+        lifecycles: Optional[List[Lifecycle]] = None,
+        types: Optional[List[str]] = None,
+        enable_graph_expansion: Optional[bool] = None,
+        strict_graph_expansion: Optional[bool] = None,
+        graph_expansion_budget: Optional[int] = None,
+        ranking_arm: Optional[str] = None,
+        classifier_filter_arm: Optional[str] = None,
+        enable_spreading_activation: Optional[bool] = None,
+        enable_cognitive_core: Optional[bool] = None,
+        enable_working_memory: Optional[bool] = None,
+        enable_global_workspace: Optional[bool] = None,
+        enable_reasoning: Optional[bool] = None,
+        enable_executive: Optional[bool] = None,
+    ) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="search",
+            principal=principal.value,
+            handler_kwargs={
+                "principal": principal,
+                "query": query,
+                "page_size": page_size,
+                "page_token": page_token,
+                "lifecycles": lifecycles,
+                "types": types,
+                "enable_graph_expansion": enable_graph_expansion,
+                "strict_graph_expansion": strict_graph_expansion,
+                "graph_expansion_budget": graph_expansion_budget,
+                "ranking_arm": ranking_arm,
+                "classifier_filter_arm": classifier_filter_arm,
+                "enable_spreading_activation": enable_spreading_activation,
+                "enable_cognitive_core": enable_cognitive_core,
+                "enable_working_memory": enable_working_memory,
+                "enable_global_workspace": enable_global_workspace,
+                "enable_reasoning": enable_reasoning,
+                "enable_executive": enable_executive,
+            },
+        )
+
+    def _search_impl(
         self,
         principal: Principal,
         query: str,
@@ -689,11 +769,47 @@ class MemoryController:
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)
             )
+            # The owner has an unfiltered view unless an explicit lifecycle/type
+            # constraint was supplied. Classifier inference must not hide the
+            # owner's archived history.
+            if (
+                classifier_filter_arm is None
+                and principal == Principal.AI_AGENT
+                and lifecycles is None
+                and types is None
+            ):
+                from retrieval.context.retrieval import CLASSIFIER_FILTER_ARM_BOOST
+                active_classifier_filter_arm = CLASSIFIER_FILTER_ARM_BOOST
             notes = self.retrieval_engine.retrieve(
                 classified, principal, query_fp, disclosure_level, budget,
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
                 classifier_filter_arm=active_classifier_filter_arm,
             )
+
+            # Owner historical view: when there is no explicit lifecycle/type
+            # constraint and the classifier inferred no such constraint either,
+            # search the canonical non-RAW corpus directly. This is intentionally
+            # owner-only and does not change the production HARD classifier arm.
+            if (
+                principal == Principal.HUMAN
+                and lifecycles is None
+                and types is None
+                and not classified.get("lifecycle_filters")
+                and not classified.get("target_types")
+            ):
+                try:
+                    owner_pool = [
+                        note for note in all_storage_notes
+                        if str(note.get("lifecycle", "")).upper() != Lifecycle.RAW.value
+                    ]
+                    owner_limit = max(page_size, int(getattr(budget, "max_notes", page_size) * 40))
+                    notes, owner_trace = generate_candidates(sanitized, owner_pool, owner_limit)
+                    candidate_trace.update(owner_trace.to_dict())
+                    candidate_trace["owner_historical_view"] = True
+                except Exception:
+                    # Keep the normal retrieval result if the optional owner view
+                    # cannot be constructed; never bypass the hard storage policy.
+                    candidate_trace["owner_historical_view"] = False
 
             try:
                 trace_collector.record_event(TraceEvent.CANDIDATES_GENERATED, {
@@ -1114,14 +1230,15 @@ class MemoryController:
             # Apply progressive disclosure
             trace_collector.start_stage("pagination")
             pd = ProgressiveDisclosure(budget)
+            allow_quarantined = principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}
             if disclosure_level == 'metadata':
-                disclosed = pd.metadata_only(notes)
+                disclosed = pd.metadata_only(notes, allow_unverified=allow_quarantined)
             elif disclosure_level == 'snippet':
-                disclosed = pd.snippet(notes)
+                disclosed = pd.snippet(notes, allow_unverified=allow_quarantined)
             elif disclosure_level == 'sections':
-                disclosed = pd.sections(notes, sanitized)
+                disclosed = pd.sections(notes, sanitized, allow_unverified=allow_quarantined)
             else:
-                disclosed = pd.full_document(notes)
+                disclosed = pd.full_document(notes, allow_unverified=allow_quarantined)
             # Pagination slicing
             total = len(disclosed)
             effective_page_size = min(page_size, tier_max_notes) if active_enable_cognitive_core else page_size
@@ -1206,15 +1323,38 @@ class MemoryController:
                     disclosure_level=disclosure_level,
                     minimal_provenance=None,
                     next_page_token=next_token,
-                    audit_ref=None
+                    audit_ref=None,
+                    # REVIEW/unverified results may be returned only as explicitly
+                    # quarantined data; the egress gate keeps them out of the
+                    # trusted model context while preserving lifecycle visibility.
+                    allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN}),
                 )
             except BudgetExceededError:
+                # Preserve the canonical egress envelope even when the final
+                # representation cannot fit the requested hard budget. The
+                # data router must be able to validate this safe empty pack.
+                fallback_hard_tokens = int(pack_budget.get('hard_tokens', budget.hard_token_budget))
+                fallback_soft_tokens = int(pack_budget.get('soft_tokens', budget.soft_token_budget))
                 pack = {
                     'requestId': 'search',
                     'agentId': principal.value,
-                    'budget': pack_budget,
+                    'budget': {
+                        **pack_budget,
+                        'soft_tokens': fallback_soft_tokens,
+                        'hard_tokens': fallback_hard_tokens,
+                    },
                     'disclosureLevel': disclosure_level,
                     'results': [],
+                    'reduction': {
+                        'verified_first': True,
+                        'items_reduced': 0,
+                        'items_rejected_unverified': 0,
+                        'tokens_saved': 0,
+                        'net_tokens_saved': 0,
+                        'cost_saved': 0.0,
+                        'latency_saved_ms': 0.0,
+                        'tokenizer_mode': 'fallback',
+                    },
                 }
             pack['next_page_token'] = next_token
 
@@ -1318,7 +1458,7 @@ class MemoryController:
         """
         self._check_auth(principal, Operation.SEARCH)
         effective_disclosure = disclosure_level or getattr(self, 'default_disclosure', 'metadata')
-        return self.financial_search_engine.execute_search(
+        result = self.financial_search_engine.execute_search(
             principal=principal,
             query=query,
             symbol=symbol,
@@ -1339,6 +1479,7 @@ class MemoryController:
             page_token=page_token,
             disclosure_level=effective_disclosure,
         )
+        return result
 
     def propose(self, principal: Principal, note_data: Dict[str, Any]) -> str:
         with self._mutation_lock:

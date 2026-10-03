@@ -33,7 +33,7 @@ def _note(note_id, content, lifecycle=Lifecycle.ACTIVE.value):
         "id": note_id, "type": "knowledge", "lifecycle": lifecycle,
         "category": "test", "tags": [], "created": "2026-01-01", "updated": "2026-01-01",
         "provenance": {"source_type": "user", "source_ref": "unit"},
-        "confidence": "medium", "verification": "unverified", "relations": [],
+        "confidence": "medium", "verification": "verified", "relations": [],
         "content": content,
     }
 

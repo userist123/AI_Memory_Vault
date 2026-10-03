@@ -10,8 +10,8 @@ const PORT = 3001;
 const BASE = `http://127.0.0.1:${PORT}`;
 const TIMEOUT = 5000;
 const LANDMARKS = [
-  'class="shell"','AI MEMORY VAULT','JARVIS','Memory Retrieval','AGENT ROUTER',
-  'AGENT COUNCIL','SKILL REGISTRY','EXECUTION TIMELINE','New memory proposal'
+  'class="shell"','AI COMMAND CENTER','JARVIS','DASHBOARD','MEMORY','AGENTS','SKILLS','COUNCIL',
+  'AGENT COUNCIL','SKILLS REGISTRY','EXECUTION TIMELINE','New memory proposal'
 ];
 const JS_ENDPOINTS = ['/js/app.js','/js/hologram.js','/js/voice_engine.js','/js/vault_client.js'];
 let passed = 0;
@@ -20,6 +20,7 @@ function log(icon,msg){console.log(`  ${icon} ${msg}`)}
 function pass(msg){passed++;log('✅',msg)}
 function fail(msg){failed++;log('❌',msg)}
 function get(url){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error(`Timeout: ${url}`)),TIMEOUT);http.get(url,res=>{clearTimeout(timer);let body='';res.on('data',c=>body+=c);res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body}))}).on('error',e=>{clearTimeout(timer);reject(e)})})}
+function getRawPath(rawPath){return new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error(`Timeout: ${rawPath}`)),TIMEOUT);http.get({hostname:'127.0.0.1',port:PORT,path:rawPath},res=>{clearTimeout(timer);let body='';res.on('data',c=>body+=c);res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body}))}).on('error',e=>{clearTimeout(timer);reject(e)})})}
 async function runSmoke(serverProcess){
   try{
     const root=await get(`${BASE}/`);
@@ -28,7 +29,7 @@ async function runSmoke(serverProcess){
     for(const endpoint of JS_ENDPOINTS){const res=await get(`${BASE}${endpoint}`);if(res.status!==200){fail(`GET ${endpoint} → HTTP ${res.status}`);continue}pass(`GET ${endpoint} → HTTP 200`);const ct=String(res.headers['content-type']||'').toLowerCase();ct.includes('application/javascript')?pass(`${endpoint} MIME is JavaScript`):fail(`${endpoint} wrong MIME: ${ct}`)}
     const manifest=await get(`${BASE}/data/agents.json`);manifest.status===200?pass('Agent Council registry available'):fail(`Agent Council registry returned ${manifest.status}`);
     const missing=await get(`${BASE}/nonexistent_file_xyz.js`);missing.status===404?pass('404 handling'):fail(`404 handling returned ${missing.status}`);
-    const traversal=await get(`${BASE}/%2e%2e/%2e%2e/README.md`);traversal.status===403?pass('Path traversal blocked'):fail(`Path traversal returned ${traversal.status}`);
+    const traversal=await getRawPath('/%2e%2e/%2e%2e/README.md');traversal.status===403?pass('Path traversal blocked'):fail(`Path traversal returned ${traversal.status}`);
   }catch(error){fail(`Unexpected error: ${error.message}`)}
   finally{serverProcess.kill()}
   console.log(`  ─────────────────────────────────────`);console.log(`  Results: ${passed} passed, ${failed} failed`);if(failed)process.exit(1);console.log('  ✅ ALL SMOKE TESTS PASSED');process.exit(0)

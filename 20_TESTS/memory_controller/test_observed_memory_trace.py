@@ -16,6 +16,10 @@ from pathlib import Path
 import pytest
 
 from memory_controller.context.pack_builder import ContextPackBuilder
+
+
+def trusted_results(results):
+    return [dict(item, verification="verified", provenance={"source_type": "test", "source_ref": "observed-trace"}) for item in results]
 from memory_controller.memory_trace import (
     ObservedMemoryTrace,
     load_observed_memory_traces,
@@ -56,9 +60,9 @@ def test_final_context_only_acceptance_test(tmp_path, monkeypatch):
     # Provide 3 candidates: M1, M2, M3
     # Craft large note M2 so it gets pruned by degradation or budget
     candidates = [
-        {"id": "M1", "content": "Short M1 content", "score": 0.9},
-        {"id": "M2", "content": "Large M2 " * 500, "score": 0.5},
-        {"id": "M3", "content": "Short M3 content", "score": 0.8},
+        {"id": "M1", "content": "Short M1 content", "score": 0.9, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "trace"}},
+        {"id": "M2", "content": "Large M2 " * 500, "score": 0.5, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "trace"}},
+        {"id": "M3", "content": "Short M3 content", "score": 0.8, "verification": "verified", "provenance": {"source_type": "test", "source_ref": "trace"}},
     ]
 
     # Set hard byte budget to fit only M1 and M3
@@ -67,8 +71,9 @@ def test_final_context_only_acceptance_test(tmp_path, monkeypatch):
         request_id="run-budget-test",
         agent_id="test_agent",
         budget=budget,
-        results=candidates,
+        results=trusted_results(candidates),
         disclosure_level="sections",
+        disclosure_query="M1 M2 M3",
     )
 
     packed_ids = [r.get("id") for r in pack["results"]]
@@ -93,7 +98,7 @@ def test_real_runtime_pack_builder_integration(tmp_path, monkeypatch):
         request_id="run-real-001",
         agent_id="test_agent",
         budget={"soft": 2000, "hard": 4000},
-        results=results,
+        results=trusted_results(results),
         disclosure_level="full",
     )
 
@@ -154,7 +159,7 @@ def test_telemetry_failure_safety(monkeypatch):
         request_id="run-fail-safe",
         agent_id="test_agent",
         budget={"soft": 1000, "hard": 2000},
-        results=[{"id": "M1", "content": "Safe content"}],
+        results=trusted_results([{"id": "M1", "content": "Safe content"}]),
         disclosure_level="metadata",
     )
     # Context pack must build without raising any error
@@ -197,8 +202,9 @@ def test_four_candidate_exclusion_hardening(tmp_path, monkeypatch):
         request_id="run-four-cand",
         agent_id="test_agent",
         budget=budget,
-        results=candidates,
+        results=trusted_results(candidates),
         disclosure_level="sections",
+        disclosure_query="M1 M2 M3 M4",
     )
 
     packed_ids = [r.get("id") for r in pack["results"]]
@@ -224,7 +230,7 @@ def test_concurrency_multi_thread_traces(tmp_path, monkeypatch):
             request_id=run_id,
             agent_id=f"agent_{worker_id}",
             budget={"soft": 2000, "hard": 4000},
-            results=notes,
+            results=trusted_results(notes),
             disclosure_level="metadata",
         )
         return run_id
@@ -257,7 +263,7 @@ def test_score_integrity_no_recalculation(tmp_path, monkeypatch):
         request_id="run-score-test",
         agent_id="test_agent",
         budget={"soft": 2000, "hard": 4000},
-        results=candidates,
+        results=trusted_results(candidates),
         disclosure_level="full",
     )
 

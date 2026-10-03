@@ -30,6 +30,10 @@ def isolated_runtime_vault(request: pytest.FixtureRequest, tmp_path_factory, mon
             "category": "test",
             "lifecycle": "ACTIVE",
             "verification": "verified",
+            "provenance": {
+                "source_type": "user",
+                "source_ref": "pytest-fixture",
+            },
             "created": "2026-01-01T00:00:00Z",
             "updated": "2026-01-01T00:00:00Z",
             "tags": ["circuit", "breaker", "retrieval"],

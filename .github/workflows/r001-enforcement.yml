@@ -8,6 +8,7 @@ on:
       - '04_CONFIG/**'
       - '06_INBOX/**'
       - '09_SECURITY/**'
+      - 'security/**'
       - '20_TESTS/**'
       - '30_SCRIPTS/verification/**'
       - '40_EXPERIMENTS/**'
@@ -25,6 +26,7 @@ on:
       - '04_CONFIG/**'
       - '06_INBOX/**'
       - '09_SECURITY/**'
+      - 'security/**'
       - '20_TESTS/**'
       - '30_SCRIPTS/verification/**'
       - '40_EXPERIMENTS/**'
@@ -43,36 +45,49 @@ jobs:
   enforce:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      R001_DIR: ${{ github.workspace }}/.r001
     steps:
       - name: Checkout exact evaluated revision
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
+          persist-credentials: false
+      - name: Neutralize stale gitlink before checkout cleanup
+        shell: bash
+        run: git update-index --force-remove -- '04_CONFIG/obsidian/AI_Memory_Vault_OBSIDIAN' 2>/dev/null || true
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
 
       - name: Runtime evidence header
         shell: bash
         run: |
           set -euo pipefail
-          printf 'sha=%s\n' "$(git rev-parse HEAD)" | tee r001_sha.txt
-          printf 'timestamp_utc=%s\n' "$(date -u +%FT%TZ)" | tee -a r001_sha.txt
-          python --version | tee r001_python.txt
-          uname -a | tee r001_platform.txt
+          mkdir -p "$R001_DIR"
+          printf 'sha=%s\n' "$(git rev-parse HEAD)" | tee "$R001_DIR/r001_sha.txt"
+          printf 'timestamp_utc=%s\n' "$(date -u +%FT%TZ)" | tee -a "$R001_DIR/r001_sha.txt"
+          python --version | tee "$R001_DIR/r001_python.txt"
+          uname -a | tee "$R001_DIR/r001_platform.txt"
 
       - name: Install project
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip==26.2.1 setuptools==84.0.0 wheel==0.46.2
           python -m pip install -e .
           python -m pip install -r requirements-memory-v6.txt
+          python -m pip install pytest==9.1.1 pyyaml==6.0.3 numpy==2.2.6
           python -m pip check
 
       - name: Validate repository layout
         shell: bash
         run: |
           set -euo pipefail
-          python 30_SCRIPTS/verification/validate_repository_layout.py | tee r001_layout.txt
+          python 30_SCRIPTS/verification/validate_repository_layout.py | tee "$R001_DIR/r001_layout.txt"
 
       - name: Clean import smoke
         shell: bash
@@ -84,19 +99,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py 20_TESTS/regression/test_repository_hygiene.py | tee r001_targeted_tests.txt
+          pytest -q 20_TESTS/regression/test_spreading_activation_edge_weights.py 20_TESTS/adversarial/test_review_memory_instruction_injection.py 20_TESTS/integration/test_repository_layout.py 20_TESTS/integration/test_memory_vault_import.py 20_TESTS/regression/test_repository_hygiene.py | tee "$R001_DIR/r001_targeted_tests.txt"
 
       - name: Full test suite
         shell: bash
         run: |
           set -euo pipefail
-          pytest -q | tee r001_full_pytest.txt
+          pytest -q | tee "$R001_DIR/r001_full_pytest.txt"
 
       - name: Current-tree gitleaks (fail closed)
         shell: bash
         run: |
           set +e
-          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 detect --source=/repo --config=/repo/.gitleaks.toml --no-git --no-banner --redact --verbose --report-format json --report-path /repo/r001_gitleaks_current.json 2>&1 | tee r001_gitleaks_current.txt
+          docker run --rm -v "$PWD:/repo" -v "$R001_DIR:/evidence" ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f detect --source=/repo --config=/repo/.gitleaks.toml --no-git --no-banner --redact --verbose --report-format json --report-path /evidence/r001_gitleaks_current.json 2>&1 | tee "$R001_DIR/r001_gitleaks_current.txt"
           status=${PIPESTATUS[0]}
           set -e
           test "$status" -eq 0
@@ -110,20 +125,21 @@ jobs:
           # does not emit the default diff.renameLimit warning.
           git config --global diff.renameLimit 100000
           git config --global diff.renames true
-          docker run --rm -w /repo -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git --config=/repo/.gitleaks.toml --report-format json --report-path /repo/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee r001_gitleaks_history.txt
+          docker run --rm -w /repo -v "$PWD:/repo" -v "$R001_DIR:/evidence" ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git --config=/repo/.gitleaks.toml --report-format json --report-path /evidence/r001_gitleaks_history.json --redact --exit-code 1 2>&1 | tee "$R001_DIR/r001_gitleaks_history.txt"
 
       - name: Dependency audit
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install pip-audit
-          pip-audit -r requirements-memory-v6.txt | tee r001_pip_audit.txt
+          python -m pip install pip-audit==2.10.1
+          pip-audit -r requirements-memory-v6.txt | tee "$R001_DIR/r001_pip_audit.txt"
+          pip-audit | tee "$R001_DIR/r001_pip_audit_environment.txt"
 
       - name: Build machine-readable inventory
         shell: bash
         run: |
           set -euo pipefail
-          python 30_SCRIPTS/verification/build_r001_inventory.py | tee r001_inventory.txt
+          python 30_SCRIPTS/verification/build_r001_inventory.py | tee "$R001_DIR/r001_inventory.txt"
 
       - name: Evidence manifest
         shell: bash
@@ -135,16 +151,16 @@ jobs:
             echo "python=$(python --version 2>&1)"
             echo "platform=$(uname -a)"
             echo "tracked_files=$(git ls-files | wc -l)"
-          } | tee r001_evidence_manifest.txt
+          } | tee "$R001_DIR/r001_evidence_manifest.txt"
 
       - name: Upload R001 evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: r001-enforcement-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
-            r001_*.txt
-            r001_gitleaks_current.json
-            r001_gitleaks_history.json
+            ${{ github.workspace }}/.r001/r001_*.txt
+            ${{ github.workspace }}/.r001/r001_gitleaks_current.json
+            ${{ github.workspace }}/.r001/r001_gitleaks_history.json
             03_IMPLEMENTATION/products/xau_kinetic/repository_map/R001_RUNTIME_MIGRATION_INVENTORY.json
           if-no-files-found: warn

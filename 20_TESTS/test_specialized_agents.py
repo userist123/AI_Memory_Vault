@@ -35,7 +35,8 @@ def test_retrieval_agent():
         "lifecycle": "ACTIVE",
         "content": "PostgreSQL replication configuration guide",
         "confidence": "high",
-        "verification": "verified"
+        "verification": "verified",
+        "provenance": {"source_type": "user", "source_ref": "specialized-agent-test"}
     })
 
     res = agent.process_task(Principal.AI_AGENT, {"query": "PostgreSQL replication"})

@@ -26,6 +26,7 @@ ALLOWED_OUTSIDE = {
     "02_PRODUCT/projects/": "imported project working copies",
     "80_ARCHIVE/": "archived",
     "20_TESTS/": "the collected suite itself",
+    "security/tests/": "dedicated security-boundary suite with its own CI workflow",
 }
 
 

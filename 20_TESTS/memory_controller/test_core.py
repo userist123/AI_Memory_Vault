@@ -65,7 +65,7 @@ def test_retrieval_engine_respects_max_notes():
 
 def test_progressive_disclosure_limits():
     notes = [{"id": f"n{i}", "type": "knowledge", "lifecycle": "ACTIVE", "confidence": 0.9,
-              "content": "a " * 100} for i in range(3)]
+              "verification": "verified", "content": "a " * 100} for i in range(3)]
     from memory_controller.context.budget import ContextBudget
     budget = ContextBudget({"soft_context_budget": 10, "hard_context_budget": 1000})
     pd = ProgressiveDisclosure(budget)
