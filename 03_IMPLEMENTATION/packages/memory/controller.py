@@ -457,7 +457,8 @@ class MemoryController:
             pack = self.pack_builder.build(
                 request_id="cognitive_read", agent_id=principal.value, budget={},
                 results=[result], disclosure_level='full',
-                minimal_provenance=None, next_page_token=None, audit_ref=None
+                minimal_provenance=None, next_page_token=None, audit_ref=None,
+                allow_unverified=(principal in {Principal.HUMAN, Principal.AI_AGENT, Principal.ADMIN})
             )
             audit_event('cognitive_read', principal, note_id, success=True)
             return pack
@@ -620,6 +621,11 @@ class MemoryController:
             # OWN inferred lifecycle/type filters are ever softened.
             trace_collector.start_stage("classification")
             classified = self.query_classifier.classify(sanitized)
+            # Human owner visibility is unrestricted unless filters are explicit.
+            if principal == Principal.HUMAN and lifecycles is None:
+                classified['lifecycle_filters'] = []
+            if principal == Principal.HUMAN and types is None:
+                classified['target_types'] = []
             classified['lifecycle_filters_source'] = 'inferred' if classified.get('lifecycle_filters') else 'none'
             classified['target_types_source'] = 'inferred' if classified.get('target_types') else 'none'
             if lifecycles is not None:
@@ -692,7 +698,7 @@ class MemoryController:
                     sn_lc_norm = str(sn_lc).upper() if sn_lc else ""
                     sn_type_norm = str(sn_type).lower() if sn_type else ""
 
-                    if sn_lc_norm == "RAW":
+                    raw_lifecycle = Lifecycle.RAW.value.upper()\n                    if sn_lc_norm == raw_lifecycle:
                         raw_excluded.append(sn_id)
                         if is_small_storage:
                             trace_collector.record_decision(
