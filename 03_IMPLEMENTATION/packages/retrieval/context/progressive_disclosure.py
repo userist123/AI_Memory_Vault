@@ -2,7 +2,7 @@ import re
 import zlib
 from typing import List, Dict, Any
 from .budget import BudgetExceededError
-from security.verified_reduction import TRUSTED_STATUSES
+from security.verified_reduction import PROVENANCE_REQUIRED_STATUSES, TRUSTED_STATUSES
 
 
 SECURITY_FIELDS = (
@@ -35,7 +35,12 @@ class ProgressiveDisclosure:
             status = verification.get("status", verification.get("state", ""))
         else:
             status = verification
-        return str(status or "").upper() in TRUSTED_STATUSES
+        normalized = str(status or "").upper()
+        if normalized not in TRUSTED_STATUSES:
+            return False
+        if normalized in PROVENANCE_REQUIRED_STATUSES:
+            return isinstance(note.get("provenance"), dict)
+        return True
 
     @staticmethod
     def _security_metadata(note: Dict[str, Any]) -> Dict[str, Any]:
