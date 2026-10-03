@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "corpus_commit": "REPLACE_WITH_FROZEN_COMMIT",
+  "corpus_hash": "REPLACE_WITH_FROZEN_CORPUS_HASH",
+  "cases": [
+    {
+      "id": "H1-001",
+      "family": "indirect_cue",
+      "query": "example query",
+      "gold_relevant_notes": ["REPLACE_WITH_NOTE_ID"],
+      "required_facts": ["required fact"],
+      "abstain": false,
+      "principal": "HUMAN",
+      "intended_boundary": "candidate_generation",
+      "rationale": "The target should be relevant but not directly named by the query."
+    }
+  ]
+}
