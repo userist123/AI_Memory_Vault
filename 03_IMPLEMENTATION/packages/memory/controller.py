@@ -759,6 +759,18 @@ class MemoryController:
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)
             )
+            # The agent lifecycle floor is intentionally restricted to
+            # AI_AGENT. An owner/human search with no explicit lifecycle/type
+            # filter must not inherit classifier-inferred hard exclusions:
+            # the classifier is a relevance hint for the owner, not an
+            # authorization boundary. Explicit caller filters remain hard.
+            if (
+                active_classifier_filter_arm is None
+                and principal == Principal.HUMAN
+                and lifecycles is None
+                and types is None
+            ):
+                active_classifier_filter_arm = "boost"
             notes = self.retrieval_engine.retrieve(
                 classified, principal, query_fp, disclosure_level, budget,
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
