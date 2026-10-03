@@ -99,9 +99,23 @@ class ContextPackBuilder:
                 item["verification"] = dict(verification)
 
             verification = item.get("verification")
-            if not isinstance(verification, Mapping):
+            if isinstance(verification, Mapping):
+                verification_record = dict(verification)
+                status = str(
+                    verification_record.get("status", verification_record.get("state", ""))
+                ).upper()
+            else:
+                status = str(verification or "").upper()
+                verification_record = {"status": status} if status else {}
+
+            # The controller stores the canonical verification state as a string,
+            # while richer callers may provide a verification record. Normalize
+            # both representations, but keep the trust boundary fail-closed:
+            # only explicitly trusted states can enter reduction.
+            if status not in {"TRUSTED", "VERIFIED", "SAFE"}:
                 rejected += 1
                 continue
+            item["verification"] = verification_record
 
             content = str(item.get("content", ""))
             compressor = AdaptiveContextCompressor(
