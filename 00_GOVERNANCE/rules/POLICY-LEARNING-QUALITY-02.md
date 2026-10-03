@@ -9,7 +9,6 @@ governance: MemoryController
 auto_promote: false
 applies_to: [books, courses, documentation, articles]
 last_reviewed: 2026-10-03
-supersedes: POLICY-LEARNING-QUALITY-01
 ---
 
 # Reguli de calitate pentru invatarea din carti
