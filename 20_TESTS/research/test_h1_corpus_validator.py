@@ -153,6 +153,7 @@ def test_human_can_use_normalized_gold():
     corpus["notes"][0]["lifecycle"] = "NORMALIZED"
     case = _base_case()
     payload = {"corpus_commit": "abc", "corpus_hash": canonical_hash(corpus), "cases": [dict(case, corpus_hash=canonical_hash(corpus))]}
+    payload["benchmark_hash"] = benchmark_hash(payload)
     result = validate_corpus(payload, corpus)
     assert result["valid"]
 
