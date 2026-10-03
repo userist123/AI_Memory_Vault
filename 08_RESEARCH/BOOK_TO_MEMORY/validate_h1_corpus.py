@@ -210,7 +210,7 @@ def validate_corpus(cases_payload: Dict[str, Any], corpus: Dict[str, Any], final
     if final:
         for case in cases:
             if str(case.get("split", "")).lower() != "held_out":
-                errors.append(f"final_case_not_held_out:{case.get("id", "")}")
+                errors.append(f"final_case_not_held_out:{case.get('id', '')}")
 
     target_counts = Counter(
         str(g)
