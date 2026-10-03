@@ -56,3 +56,6 @@ The only changed variable should be the candidate-generation/retrieval mechanism
 - H1: do not claim baseline failure yet.
 - Next research action: instantiate and integrity-audit the H1 corpus, then execute the current production path before implementing any associative mechanism.
 - No ACTIVE promotion and no production retrieval modification is justified by the current evidence.
+
+## Validator status
+A research-only corpus contract and deterministic validator now exist. Structural invalidity is blocking; lexical/entity reachability remains an explicit runtime measurement prerequisite because the labeling corpus uses shortened excerpts and must not be mistaken for the production retrieval corpus.
