@@ -85,6 +85,36 @@ Before a track can enter `EVIDENCE_AVAILABLE`, it must identify:
 8. reproducibility information;
 9. a decision record stating whether production change is justified.
 
+## Evaluation anti-gaming rules
+
+A research result must not be declared an improvement from aggregate averages alone.
+
+For paired baseline/variant experiments:
+
+1. compare the same case, repetition and model whenever possible;
+2. report absolute and relative deltas; relative deltas are invalid as the sole decision criterion;
+3. report the per-case direction of change, not only the mean;
+4. report uncertainty or a paired confidence interval when the sample size permits;
+5. report all predefined primary metrics, including regressions;
+6. never drop failed, timed-out, or degraded runs because they make the variant look worse;
+7. a variant cannot qualify as a win by improving a secondary metric while regressing a protected primary metric;
+8. zero-denominator metrics use absolute differences, never fabricated percentages;
+9. evaluator/model disagreement must be reported rather than silently averaged away;
+10. the decision record must state which predefined criterion triggered the decision.
+
+### Minimum decision record
+
+Every evidence-backed track must record:
+
+- baseline and variant identifiers;
+- exact sample/case counts;
+- paired observations or explicit reason pairing was impossible;
+- primary metric deltas;
+- protected-regression results;
+- uncertainty estimate where applicable;
+- excluded/degraded run count and reasons;
+- final decision criterion and outcome.
+
 ## Safety and governance invariants
 
 Research tracks must not:
