@@ -150,30 +150,14 @@ class Consolidator:
         Finds multiple 'lesson' nodes in REVIEW lifecycle and attempts to consolidate them.
         Returns the ID of the new consolidated knowledge node, if any.
         """
-        # Consolidation is a maintenance operation over canonical storage,
-        # not a model-facing retrieval. Going through search would apply the
-        # model egress trust gate and hide REVIEW/unverified lessons before this
-        # routine has a chance to consolidate them.
-        storage = getattr(self.controller, "storage", None)
-        query = getattr(storage, "query", None)
-        results = (
-            query(intent="lesson", lifecycle=[Lifecycle.REVIEW.value], types=["lesson"])
-            if callable(query) else []
-        )
-
-        # Compatibility for lightweight controller doubles that do not expose
-        # a usable storage query; production uses canonical storage above.
-        if not isinstance(results, list):
-            pack = self.controller.search(principal, "lesson", page_size=20)
-            results = pack.get("results", []) if isinstance(pack, dict) else []
-
-        lessons_to_consolidate = [
-            node for node in results
-            if isinstance(node, dict)
-            and node.get("type") == "lesson"
-            and node.get("lifecycle") == Lifecycle.REVIEW.value
-        ]
-
+        pack = self.controller.search(principal, "lesson", page_size=20)
+        results = pack.get("results", [])
+        
+        lessons_to_consolidate = []
+        for node in results:
+            if node.get("type") == "lesson" and node.get("lifecycle") == Lifecycle.REVIEW.value:
+                lessons_to_consolidate.append(node)
+                
         if len(lessons_to_consolidate) < 2:
             return None
             
