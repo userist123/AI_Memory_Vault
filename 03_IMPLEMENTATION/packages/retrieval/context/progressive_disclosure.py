@@ -45,6 +45,15 @@ class ProgressiveDisclosure:
         }
 
     @staticmethod
+    def _result_metadata(note: Dict[str, Any]) -> Dict[str, Any]:
+        """Preserve non-content retrieval signals across disclosure levels."""
+        return {
+            key: note[key]
+            for key in ("confidence", "score", "relevance", "relevance_score")
+            if key in note
+        }
+
+    @staticmethod
     def _content_text(value: Any) -> str:
         if isinstance(value, bytes):
             try:
@@ -94,6 +103,7 @@ class ProgressiveDisclosure:
                 "confidence": note.get("confidence"),
                 "relations": note.get("relations", []),
                 **self._security_metadata(note),
+                **self._result_metadata(note),
             }
             result.append(entry)
             usage += 1
@@ -113,7 +123,7 @@ class ProgressiveDisclosure:
             snippet = content if (protected or has_protected_spans) else content[:chars]
             if protected and len(snippet.encode("utf-8")) > self.budget.hard_context_budget:
                 raise BudgetExceededError("Protected content exceeds hard disclosure budget")
-            entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note)}
+            entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note), **self._result_metadata(note)}
             if protected:
                 entry["protected_content"] = True
             result.append(entry)
@@ -141,7 +151,7 @@ class ProgressiveDisclosure:
                     raise BudgetExceededError("Protected sections exceed hard disclosure budget")
             else:
                 selected = matched[:5]
-            entry = {"id": note.get("id"), "sections": selected, **self._security_metadata(note)}
+            entry = {"id": note.get("id"), "sections": selected, **self._security_metadata(note), **self._result_metadata(note)}
             if protected:
                 entry["protected_content"] = True
             result.append(entry)
@@ -167,6 +177,7 @@ class ProgressiveDisclosure:
                 "id": note.get("id"),
                 "content": content,
                 **self._security_metadata(note),
+                **self._result_metadata(note),
             }
             for key in ("compression", "reduction"):
                 if key in note:
