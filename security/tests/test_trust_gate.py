@@ -24,3 +24,15 @@ def test_side_effect_requires_human_approval():
     d = assess_artifact(ArtifactAssessment("https://example.invalid", True, "SAFE", requested_side_effect=True))
     assert d.state is TrustState.REVIEW
     assert d.requires_human_approval
+
+
+def test_data_to_network_flags_block_even_if_caller_claims_safe():
+    d = assess_artifact(ArtifactAssessment(
+        "https://example.invalid",
+        True,
+        "SAFE",
+        has_active_data_access=True,
+        has_active_network=True,
+    ))
+    assert d.state is TrustState.BLOCKED
+    assert not can_execute_instruction(d)
