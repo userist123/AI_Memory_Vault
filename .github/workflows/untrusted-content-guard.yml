@@ -2,7 +2,7 @@ name: Untrusted content guard
 
 on:
   push:
-    timeout-minutes: 20
+
     branches:
       - main
   pull_request:
