@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using LogAnalyzer.Core.Interfaces;
@@ -16,6 +17,18 @@ namespace LogAnalyzer.UI
 {
     public partial class App : Application
     {
+        private static void OnGridRowDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.Handled || sender is not System.Windows.Controls.DataGridRow { Item: { } item } row) return;
+            if (item == System.Windows.Data.CollectionView.NewItemPlaceholder) return;
+            if (System.Windows.Controls.ItemsControl.ItemsControlFromItemContainer(row) is not System.Windows.Controls.DataGrid grid) return;
+            // Grids with their own double-click command, alerts (opened on selection) and the detail window's own grids are left alone.
+            if (grid.InputBindings.OfType<System.Windows.Input.MouseBinding>().Any(b => b.MouseAction == System.Windows.Input.MouseAction.LeftDoubleClick)) return;
+            if (item is LogAnalyzer.Core.Models.DetectedIssue || Window.GetWindow(grid) is GenericDetailWindow) return;
+            GenericDetailWindow.ShowFor(item);
+            e.Handled = true;
+        }
+
         public static IServiceProvider? ServiceProvider { get; private set; }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -44,6 +57,10 @@ namespace LogAnalyzer.UI
                     MessageBox.Show($"Eroare critică internă:\n{args.Exception.Message}", "Crash", MessageBoxButton.OK, MessageBoxImage.Error);
                     args.Handled = true;
                 };
+
+                // Double-click on a row of ANY grid opens the full detail of that item (event, artifact, incident…).
+                EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), System.Windows.Controls.Control.MouseDoubleClickEvent,
+                    new System.Windows.Input.MouseButtonEventHandler(OnGridRowDoubleClick));
 
                 var services = new ServiceCollection();
                 

@@ -551,6 +551,8 @@ namespace LogAnalyzer.UI.ViewModels
             PopulateMitreMatrix();
 
             OperatorName = $"{Environment.UserName.ToUpper()} @ {Environment.MachineName.ToUpper()}";
+            // Detail windows look for related events among the events loaded in this session.
+            LogAnalyzer.Core.Services.Details.DetailSheetBuilder.EventCorpus = () => Events.ToList();
             if (IsNetworkMode)
             {
                 LicenseTier = "Enterprise Network SOC (Live EDR)";
@@ -1414,11 +1416,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void OpenGenericDetail(object item)
         {
             if (item == null) return;
-            Application.Current.Dispatcher.InvokeAsync(() => 
-            {
-                var window = new LogAnalyzer.UI.Views.GenericDetailWindow(item, EscalateToAlert) { Owner = Application.Current.MainWindow };
-                window.ShowDialog();
-            });
+            Application.Current.Dispatcher.InvokeAsync(() => LogAnalyzer.UI.Views.GenericDetailWindow.ShowFor(item, EscalateToAlert));
         }
 
         private void EscalateToAlert(object item)
