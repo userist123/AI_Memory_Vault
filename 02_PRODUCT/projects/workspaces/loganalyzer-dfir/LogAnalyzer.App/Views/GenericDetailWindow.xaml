@@ -44,7 +44,7 @@
             </TabItem>
 
             <TabItem Header="Ce înseamnă" Style="{StaticResource InspectorTabItemStyle}">
-                <TextBox x:Name="MeaningBox" Margin="8" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                <TextBox x:Name="MeaningBox" Margin="8" VerticalContentAlignment="Top" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
             </TabItem>
 
@@ -64,7 +64,7 @@
             </TabItem>
 
             <TabItem Header="XML / brut" Style="{StaticResource InspectorTabItemStyle}">
-                <TextBox x:Name="RawBox" Margin="8" IsReadOnly="True" TextWrapping="NoWrap" AcceptsReturn="True"
+                <TextBox x:Name="RawBox" Margin="8" VerticalContentAlignment="Top" IsReadOnly="True" TextWrapping="NoWrap" AcceptsReturn="True"
                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource CodeTextBrush}" BorderThickness="0"
                          FontFamily="{StaticResource CodeFontFamily}" FontSize="12" Padding="12"/>

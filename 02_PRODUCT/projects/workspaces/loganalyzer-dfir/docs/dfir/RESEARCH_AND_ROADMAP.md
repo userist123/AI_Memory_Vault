@@ -11,7 +11,7 @@ Data: 2026-10-04. Documentul pleacă de la cerințele proprietarului, formulate 
 | 3 | Cercetarea altor suite de forensics, pentru rețea și pentru PC-uri conectate | **Acest document** |
 | 4 | Într-un domeniu: cercetare pe utilizatori, e-mailuri și alte module | Etapa D |
 | 5 | Pe o stație izolată (un singur PC, fără domeniu): ce pot face utilizatorii și administratorii, pentru verificările de control | Etapa C |
-| 6 | Click pe orice eveniment deschide fișa lui completă, cu toate detaliile, ca în analiza făcută manual | Etapa B |
+| 6 | Click pe orice eveniment deschide fișa lui completă, cu toate detaliile, ca în analiza făcută manual | **Făcut** (Etapa B: dublu-click pe orice rând → fișa completă, cu PDF) |
 | 7 | Aplicația să poată reface investigația de pe LAB-PC: achiziție, parsare, timeline, corelare, findings, raport | Etapa E (fazele 3–10 din spec) |
 
 ## 2. Ce fac alte suite și ce preluăm
