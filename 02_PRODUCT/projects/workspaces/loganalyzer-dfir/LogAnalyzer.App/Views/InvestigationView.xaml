@@ -1,0 +1,95 @@
+<UserControl x:Class="LogAnalyzer.UI.Views.InvestigationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="Folder caz" Command="{Binding OpenCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                <Button Content="Raport PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Investigație completă" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Colectează (sau importă) probele, le parsează, construiește cronologia, corelează și reconstituie lanțul incidentului. Totul se păstrează într-un caz cu SHA-256 și lanț de custodie."
+                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <WrapPanel Margin="0,0,0,6">
+                        <TextBlock Text="Nume caz:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280" Margin="0,0,10,0"/>
+                        <TextBlock Text="Profil:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <ComboBox ItemsSource="{Binding Profiles}" SelectedIndex="{Binding ProfileIndex}" Width="230"/>
+                    </WrapPanel>
+                    <CheckBox Content="Colectează de pe această stație (jurnale, Prefetch, SRUM, stare live)" IsChecked="{Binding CollectFromThisStation}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                    <WrapPanel>
+                        <Button Content="Adaugă fișiere de probă…" Command="{Binding AddFilesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Adaugă folder de probe…" Command="{Binding AddFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Golește lista" Command="{Binding ClearFilesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                        <Button Content="Pornește investigația" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Oprește" Command="{Binding CancelCommand}" Style="{StaticResource DangerButtonStyle}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding ImportFiles.Count, StringFormat='{}{0} fișiere de importat'}" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+                <TextBox Grid.Column="2" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                         FontFamily="Consolas" FontSize="11" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8"/>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+            <TabItem Header="Lanțul incidentului" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding Chains, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                             Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Constatări" Style="{StaticResource InspectorTabItemStyle}">
+                <DataGrid Margin="8" ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="85"/>
+                        <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="90"/>
+                        <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
+                        <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
+                        <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
+                        <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBlock Text="Filtru (text, proces, cale, utilizator, IP, ID eveniment):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBox Text="{Binding TimelineFilter, UpdateSourceTrigger=PropertyChanged, Delay=400}"/>
+                    </DockPanel>
+                    <DataGrid ItemsSource="{Binding Timeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding Time.Utc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
+                            <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="1.3*"/>
+                            <DataGridTextColumn Header="ID" Binding="{Binding EventId}" Width="55"/>
+                            <DataGridTextColumn Header="Proces" Binding="{Binding Process}" Width="*"/>
+                            <DataGridTextColumn Header="Utilizator" Binding="{Binding User}" Width="*"/>
+                            <DataGridTextColumn Header="Rezumat" Binding="{Binding Summary}" Width="4*"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding EvidenceId}" Width="85"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Goluri de probă" Style="{StaticResource InspectorTabItemStyle}">
+                <TextBox Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                         Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12"/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

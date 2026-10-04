@@ -1,0 +1,118 @@
+<UserControl x:Class="LogAnalyzer.UI.Views.DomainInvestigationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </UserControl.Resources>
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+            <Button DockPanel.Dock="Right" Content="Raport PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Center"/>
+            <StackPanel>
+                <TextBlock Text="Investigație domeniu și e-mail" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="{Binding ModeNote}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </DockPanel>
+
+        <TabControl Grid.Row="1" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+            <TabItem Header="Domeniu" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBlock Text="Controler de domeniu (opțional):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding DomainServer, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,10,0"/>
+                        <Button Content="Inventar și verificări domeniu" Command="{Binding InventoryDomainCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        <TextBlock Text="{Binding DomainStatus}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </WrapPanel>
+                    <DataGrid ItemsSource="{Binding DomainChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
+                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55"/>
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="55"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="Utilizator" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <TextBlock Text="Utilizator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,10,0"/>
+                        <TextBlock Text="Controlere (jurnale):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding DomainControllers, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,10,0"/>
+                        <TextBlock Text="Zile:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding Days, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,0,10,0"/>
+                        <Button Content="Investighează utilizatorul" Command="{Binding InvestigateUserCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                    </WrapPanel>
+                    <TextBox DockPanel.Dock="Top" Text="{Binding UserSummary, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="140" VerticalScrollBarVisibility="Auto"
+                             Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8" Margin="0,0,0,8" VerticalContentAlignment="Top"/>
+                    <DataGrid ItemsSource="{Binding UserTimeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
+                            <DataGridTextColumn Header="Ce" Binding="{Binding Action}" Width="1.5*"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding Source}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="E-mail" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <TextBlock Text="Cutia poștală:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding Mailbox, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,10,0"/>
+                        <TextBlock Text="Domenii interne:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding InternalDomains, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,10,0"/>
+                        <TextBlock Text="Zile:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding Days, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,0,10,0"/>
+                    </WrapPanel>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button Content="1a. Script Exchange Online" Command="{Binding GenerateOnlineScriptCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="1b. Script Exchange local" Command="{Binding GenerateOnPremScriptCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="2. Importă exportul și analizează" Command="{Binding ImportMailCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        <TextBlock Text="{Binding MailSummary}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" FontSize="11" Margin="0,0,0,8"
+                               Text="Aplicația nu cere și nu păstrează parole de e-mail: scriptul folosește comenzile oficiale Microsoft și se autentifică în fereastra Microsoft a administratorului."/>
+                    <Grid>
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" MinHeight="120"/><RowDefinition Height="8"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                        <DataGrid Grid.Row="0" ItemsSource="{Binding MailChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
+                                <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
+                                <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
+                                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding MailMessages}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
+                                <DataGridTextColumn Header="Expeditor" Binding="{Binding Sender}" Width="1.5*"/>
+                                <DataGridTextColumn Header="Destinatari" Binding="{Binding Recipients}" Width="2*"/>
+                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*"/>
+                                <DataGridTextColumn Header="IP" Binding="{Binding ClientIp}" Width="*"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+
+        <DockPanel Grid.Row="2" Margin="0,10,0,0">
+            <ProgressBar DockPanel.Dock="Left" Width="120" Height="6" IsIndeterminate="True" Margin="0,0,10,0" VerticalAlignment="Center"
+                         Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+        </DockPanel>
+    </Grid>
+</UserControl>

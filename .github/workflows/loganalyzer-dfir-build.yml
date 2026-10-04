@@ -1,7 +1,7 @@
 name: LogAnalyzer DFIR Build & Package
 
 # Recovered from LogAnalyzer.UI 137a626 ("MVP export foundation") and adapted to the
-# vault workspace: two editions (AirGapped, Network), DFIR projects, pinned actions.
+# vault workspace: one application (mode chosen at startup), DFIR projects, pinned actions.
 
 on:
   push:
@@ -63,13 +63,12 @@ jobs:
           retention-days: 30
 
   package:
-    name: Package ${{ matrix.edition }}
+    name: Package LogAnalyzer
     needs: build-test
     runs-on: windows-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        edition: [LogAnalyzer.AirGapped, LogAnalyzer.Network]
+    env:
+      EDITION: LogAnalyzer
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -82,12 +81,10 @@ jobs:
           dotnet-version: '10.x'
 
       - name: Publish (win-x64 single-file)
-        run: dotnet publish ${{ matrix.edition }}/${{ matrix.edition }}.csproj -c Release -p:PublishProfile=win-x64-singlefile
+        run: dotnet publish LogAnalyzer.App/LogAnalyzer.App.csproj -c Release -p:PublishProfile=win-x64-singlefile
 
       - name: Verify publish output
         shell: pwsh
-        env:
-          EDITION: ${{ matrix.edition }}
         run: |
           $out = "publish/$env:EDITION/win-x64"
           $exe = Get-ChildItem "$out/$env:EDITION.exe" -ErrorAction SilentlyContinue
@@ -99,6 +96,6 @@ jobs:
       - name: Upload package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: ${{ matrix.edition }}-win-x64
-          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/${{ matrix.edition }}/win-x64
+          name: LogAnalyzer-win-x64
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/LogAnalyzer/win-x64
           retention-days: 30

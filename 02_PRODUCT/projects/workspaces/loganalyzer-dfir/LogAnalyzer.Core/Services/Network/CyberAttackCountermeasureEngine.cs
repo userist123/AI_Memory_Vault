@@ -370,7 +370,7 @@ namespace LogAnalyzer.Core.Services.Network
             }
             else
             {
-                intel.SourceIpOrDomain = "Local Process / Subrețea Internă (127.0.0.1 / SMB)";
+                intel.SourceIpOrDomain = "nedeterminată (alerta nu conține o adresă)";
             }
 
             // 2. Extract Process
@@ -379,46 +379,40 @@ namespace LogAnalyzer.Core.Services.Network
             else if (rawContent.Contains("powershell", StringComparison.OrdinalIgnoreCase)) intel.AttackProcessPath = "powershell.exe (ScriptBlock Execution)";
             else if (rawContent.Contains("mshta", StringComparison.OrdinalIgnoreCase)) intel.AttackProcessPath = "mshta.exe (HTML Application Host)";
             else if (rawContent.Contains("curl", StringComparison.OrdinalIgnoreCase)) intel.AttackProcessPath = "curl.exe (Web Payload Downloader)";
-            else intel.AttackProcessPath = "cmd.exe / powershell.exe";
+            else intel.AttackProcessPath = "nedeterminat (alerta nu numește procesul)";
 
-            // 3. Compute SHA256 of command
-            using var sha = SHA256.Create();
-            byte[] bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(rawContent));
-            intel.AttackHashSha256 = BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
+            // 3. No file is available here: the alert text is not a sample, so no "malware hash" is reported.
+            intel.AttackHashSha256 = "";
 
-            // 4. Attribution based on technique
+            // 4. Attribution is NOT inferred from a technique: the same MITRE technique is used by many unrelated actors.
+            //    Only typical tools and a defensive recommendation are given; attribution needs confirmed infrastructure,
+            //    malware and context, established by the investigator.
             string tech = (alert.MitreTechniqueId ?? string.Empty).ToUpperInvariant();
+            intel.LikelyActorName = "Neatribuit (tehnica nu identifică un actor; atribuirea cere probe confirmate)";
+            intel.ActorCountryOrOrigin = "necunoscută";
             if (tech.Contains("T1490") || rawContent.Contains("ransomware", StringComparison.OrdinalIgnoreCase))
             {
-                intel.LikelyActorName = "LockBit 3.0 / BlackCat (ALPHV) Syndicate";
-                intel.ActorCountryOrOrigin = "Grupare Cybercrime / Europa de Est";
-                intel.Motivation = "Extorcare Financiară & Criptare Date";
-                intel.KnownToolsUsed = "vssadmin, bcdedit, Cobalt Strike Beacon, PSExec";
-                intel.DefenseRecommendation = "Izolare imediată a stației din rețea pentru protejarea share-urilor.";
+                intel.Motivation = "posibil: extorcare prin criptare (tipar de ransomware)";
+                intel.KnownToolsUsed = "unelte tipice tehnicii: vssadmin, wbadmin, bcdedit";
+                intel.DefenseRecommendation = "Izolați stația de share-uri și verificați copiile de rezervă offline.";
             }
             else if (tech.Contains("T1566") || rawContent.Contains("phishing", StringComparison.OrdinalIgnoreCase))
             {
-                intel.LikelyActorName = "Storm-0539 / TA558 (Cartel Phishing & Initial Access)";
-                intel.ActorCountryOrOrigin = "Infrastructură Bulletproof / IP Proxy Olanda";
-                intel.Motivation = "Furt de Credențiale / Sesiuni & Vânzare Acces Rețea";
-                intel.KnownToolsUsed = "CertUtil LOLBAS, HTA Stager, Evilginx, PowerShell WebRequest";
-                intel.DefenseRecommendation = "Blocare URL pe firewall și resetare forțată a token-urilor.";
+                intel.Motivation = "posibil: furt de credențiale / acces inițial";
+                intel.KnownToolsUsed = "unelte tipice tehnicii: atașamente sau linkuri, certutil, mshta, PowerShell";
+                intel.DefenseRecommendation = "Blocați URL-ul/adresa din alertă și resetați sesiunile utilizatorului.";
             }
             else if (tech.Contains("T1003") || rawContent.Contains("lsass", StringComparison.OrdinalIgnoreCase))
             {
-                intel.LikelyActorName = "APT28 (Fancy Bear) / Lazarus Group";
-                intel.ActorCountryOrOrigin = "Actor Statal / Advanced Persistent Threat (APT)";
-                intel.Motivation = "Spionaj Cibernetic & Escaladare Privilegii Administrative";
-                intel.KnownToolsUsed = "Mimikatz, Procdump, Sekurlsa, Nanodump";
-                intel.DefenseRecommendation = "Activare LSA Protection (RunAsPPL) și resetare conturi administrative.";
+                intel.Motivation = "posibil: obținerea de credențiale";
+                intel.KnownToolsUsed = "unelte tipice tehnicii: mimikatz, procdump, comsvcs.dll MiniDump";
+                intel.DefenseRecommendation = "Activați LSA Protection (RunAsPPL) și schimbați parolele conturilor privilegiate.";
             }
             else
             {
-                intel.LikelyActorName = "Actor Cibernetic Necunoscut / Script Automatizat";
-                intel.ActorCountryOrOrigin = "Infrastructură Externă Anonimizată";
-                intel.Motivation = "Reconnoaștere & Escaladare Privilegii";
-                intel.KnownToolsUsed = "Living-off-the-Land (LOLBAS)";
-                intel.DefenseRecommendation = "Inspectare procese active și blocare porturi neutilizate.";
+                intel.Motivation = "nedeterminată";
+                intel.KnownToolsUsed = "nedeterminate";
+                intel.DefenseRecommendation = "Analizați procesul și conexiunile în fila „Izolare procese suspecte”.";
             }
 
             return intel;

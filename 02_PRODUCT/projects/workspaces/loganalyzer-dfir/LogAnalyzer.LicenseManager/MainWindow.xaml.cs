@@ -89,7 +89,7 @@ public partial class MainWindow : Window
         };
         if (dlg.ShowDialog(this) != true) return;
         File.WriteAllText(dlg.FileName, _current.License);
-        ShowStatus($"Salvat: {dlg.FileName}. Fișierul trebuie pus în același folder cu LogAnalyzer.AirGapped.exe / LogAnalyzer.Network.exe.", ok: true);
+        ShowStatus($"Salvat: {dlg.FileName}. Fișierul trebuie pus în același folder cu LogAnalyzer.exe.", ok: true);
     }
 
     private void OpenLedger_Click(object sender, RoutedEventArgs e)

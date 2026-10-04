@@ -1,17 +1,17 @@
 # Checklist de release — LogAnalyzer
 
-Se parcurge în ordine, înainte de orice distribuție externă. Recuperat din LogAnalyzer.UI 137a626 și adaptat pentru edițiile AirGapped și Network.
+Se parcurge în ordine, înainte de orice distribuție externă. Recuperat din LogAnalyzer.UI 137a626 și adaptat pentru aplicația unică `LogAnalyzer.exe` (modul AirGapped / Network se alege la pornire).
 
 ## 1. Build și teste
 
 - [ ] `dotnet build LogAnalyzer.slnx -c Release`: zero erori și niciun warning nou
 - [ ] `dotnet test LogAnalyzer.slnx -c Release`: toate testele trec
 - [ ] Testele pe corpusul real trec local, cu `LADFIR_CORPUS` setat
-- [ ] CI verde pe PR-ul de release (`loganalyzer-dfir-build.yml`: `build-test` și `package` pentru ambele ediții)
+- [ ] CI verde pe PR-ul de release (`loganalyzer-dfir-build.yml`: `build-test` și `package`)
 
 ## 2. Artefacte
 
-- [ ] Publish cu `win-x64-singlefile` reușit pentru AirGapped și Network, local și în CI
+- [ ] Publish cu `win-x64-singlefile` reușit local și în CI
 - [ ] Executabilul pornește pe o mașină Windows curată, fără .NET instalat
 - [ ] `Categories/*.json`, `Data/` și `LatoFont/` sunt prezente în output și se încarcă în UI
 - [ ] Niciun `license.lic`, `.pdb` sau instrument de emitere a licențelor în pachet
@@ -19,6 +19,9 @@ Se parcurge în ordine, înainte de orice distribuție externă. Recuperat din L
 
 ## 3. Fluxuri funcționale (smoke test pe mașină curată)
 
+- [ ] Pe o stație cu Internet pornește în modul Network; pe o stație fără Internet (sau doar LAN) pornește în AirGapped
+- [ ] `--mode=airgapped` și fișierul `LogAnalyzer.mode` forțează modul; în AirGapped receptorul Syslog și integrările online sunt refuzate
+- [ ] Stație pornită în AirGapped, conectată apoi la rețea: apare avertizarea, modul rămâne AirGapped
 - [ ] Activare offline: licența emisă din `LogAnalyzer.LicenseManager` pentru Hardware ID-ul afișat este acceptată
 - [ ] Aceeași licență este acceptată și când e generată cu `LogAnalyzer.KeyGen` și cu `Generate-LicenseKey.ps1` (`CoreLicenseKeyTests` fixează formatul)
 - [ ] O licență expirată sau emisă pentru alt Hardware ID este respinsă

@@ -30,6 +30,20 @@ public sealed class EvtxParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
+        // The Windows API refuses the whole file when one chunk is corrupt: check first, and parse a repaired copy if needed.
+        var damaged = LogAnalyzer.Dfir.IO.EvtxRepair.Inspect(fullPath).Where(c => !c.Valid && !c.Problem.StartsWith("chunk gol", StringComparison.Ordinal)).ToList();
+        if (damaged.Count > 0)
+        {
+            var repaired = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "evtx_repair", $"{item.EvidenceId}_{Path.GetFileName(fullPath)}");
+            var r = LogAnalyzer.Dfir.IO.EvtxRepair.Repair(fullPath, repaired);
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
+                $"{damaged.Count} chunk-uri corupte eliminate: " + string.Join("; ", damaged.Take(20).Select(c => $"#{c.Index} ({c.Problem}, RecordID {c.FirstRecordId}–{c.LastRecordId})")),
+                "Înregistrările din aceste intervale lipsesc din cronologie (corupere sau alterare a jurnalului)",
+                "Copii VSS ale jurnalului, SIEM, alte surse (SRUM, Prefetch)", "Doar din alte copii",
+                $"Fișierul original nu a fost modificat; s-a parsat copia reparată {repaired} ({r.KeptChunks}/{r.TotalChunks} chunk-uri)."));
+            result.MalformedRecords += damaged.Count;
+            fullPath = repaired;
+        }
         using var reader = new EventLogReader(fullPath, PathType.FilePath);
         int consecutiveErrors = 0;
         while (true)
