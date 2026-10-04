@@ -1,0 +1,599 @@
+{
+  "schema": "declared-edge-audit-verdicts.v1",
+  "evaluator": "perplexity",
+  "evaluator_kind": "independent model: wrote neither the notes, the proposer, nor the sampling script",
+  "evaluated_at": "2026-10-04",
+  "sample_file": "07_EVALUATION/edge_audit_v2_remaining/audit_sample_declared_remaining_65.json",
+  "sample_sha256": "06bfd856e4b794bec75bd4a6b9e0e8474e74722e103893cfdeb8638a80d928f5",
+  "population_size": 65,
+  "evaluated_count": 65,
+  "accepted_count": 10,
+  "rejected_count": 55,
+  "verdicts": [
+    {
+      "index": 1,
+      "source_id": "10664ba8-39ac-4498-8823-f47014a73efc",
+      "target_id": "d4e5337e-122f-402c-84d0-57230976ee0d",
+      "relation": "applies_to",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Fragmentul despre reinforcement learning definește interacțiunea agent–mediu prin stări, acțiuni și tranziții, dar nu susține că acest cadru guvernează direct operatorii sau arbitrarea preferințelor din ciclul decizional."
+    },
+    {
+      "index": 2,
+      "source_id": "735c6b3e-bf68-49db-8746-95cc2660ead4",
+      "target_id": "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+      "relation": "applies_to",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Step-mechanism modifică parametrii când variabilele esențiale ies din limite, acționând direct pentru restabilirea stabilității sistemului."
+    },
+    {
+      "index": 3,
+      "source_id": "911ffebf-ab09-4d79-8aac-247781c673a4",
+      "target_id": "0d68bba6-662b-4633-b065-bf1666889af9",
+      "relation": "applies_to",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Variety este definită aici ca dispersie statistică în secvențe stocastice, în timp ce sistemul țintă este determinist și exclude aleatorietatea intrinsecă; primul concept nu îl guvernează pe al doilea."
+    },
+    {
+      "index": 4,
+      "source_id": "99280cf1-6eb2-449c-a778-e800c2868e07",
+      "target_id": "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1",
+      "relation": "applies_to",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Feedback-ul corectiv transmite abaterea către regulator și guvernează direct menținerea ieșirilor sau variabilelor esențiale în limite stabile."
+    },
+    {
+      "index": 5,
+      "source_id": "a1df3d1c-201c-4217-aa62-f36292b01aa4",
+      "target_id": "6e014224-af01-4011-8050-082d3f9ea35e",
+      "relation": "applies_to",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Chunking-ul compilează experiența în reguli de producție reutilizabile, constituind un mecanism direct de formare și actualizare a memoriei procedurale din Soar."
+    },
+    {
+      "index": 6,
+      "source_id": "bdd2358e-e305-454e-9cf0-f044eb5c4244",
+      "target_id": "99280cf1-6eb2-449c-a778-e800c2868e07",
+      "relation": "applies_to",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Un transductor poate transforma semnalele utilizate într-o buclă de feedback, dar nu guvernează mecanismul de feedback; cel mult poate fi o componentă instrumentală într-o implementare particulară."
+    },
+    {
+      "index": 7,
+      "source_id": "f4211085-75c4-4184-a1a9-0c33da73ac74",
+      "target_id": "0d68bba6-662b-4633-b065-bf1666889af9",
+      "relation": "applies_to",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Constrângerea descrisă este o restricție probabilistică asupra tranzițiilor Markov, în timp ce ținta descrie determinarea completă a evoluției de către stare și intrări; relația directă de guvernare nu există."
+    },
+    {
+      "index": 8,
+      "source_id": "ff28fea6-0138-41b6-acd7-e1c0759966b1",
+      "target_id": "be1863da-7db4-48b7-9486-ad13b1a74152",
+      "relation": "applies_to",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Bufferul este o interfață de capacitate limitată pentru chunk-uri într-o arhitectură cognitivă, iar ținta este o stare dintr-un proces decizional Markov; conceptele aparțin unor niveluri și formalizări diferite."
+    },
+    {
+      "index": 9,
+      "source_id": "knw-ashby-habituation-and-plasticity",
+      "target_id": "knw-ashby-multistable-systems",
+      "relation": "applies_to",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Fragmentul sursă explică habituarea prin restrângerea progresivă a câmpului de stabilitate, dar nu afirmă că acest mecanism guvernează sistemele multistabile sau principiul izolării locale prezentat în țintă."
+    },
+    {
+      "index": 10,
+      "source_id": "knw-ashby-homeostasis-and-stability",
+      "target_id": "knw-ashby-ultrastable-system",
+      "relation": "applies_to",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Homeostazia, limitele variabilelor esențiale și câmpul de stabilitate definesc direct obiectivul regulator pe care bucla primară și mecanismul ultrastabil încearcă să îl mențină."
+    },
+    {
+      "index": 11,
+      "source_id": "11e9fe55-6924-4231-9635-c5629bff6ae3",
+      "target_id": "b2888875-8546-4d42-b262-2c7f779e3cc9",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Sursa definește un depozit extern de informații pentru agent, nu memoria biologică. Funcționarea acestui depozit nu necesită consolidarea neuronală prin sinteză proteică descrisă în țintă."
+    },
+    {
+      "index": 12,
+      "source_id": "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+      "target_id": "2a299363-8d18-48bd-bfa6-fb495686eeba",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Homeostatul este o implementare experimentală particulară a ultrastabilității, nu un mecanism indispensabil oricărui sistem ultrastabil. Relația este de exemplificare, nu de dependență."
+    },
+    {
+      "index": 13,
+      "source_id": "21072af8-9792-4faa-9b9c-f15da7618a37",
+      "target_id": "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57",
+      "relation": "depends_on",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Adaptarea este definită explicit prin reducerea perturbării variabilelor esențiale. În sensul specific al sursei, conceptul nu poate fi definit sau evaluat fără aceste variabile și limitele lor de viabilitate."
+    },
+    {
+      "index": 14,
+      "source_id": "73f5b12e-ba89-5e2d-b147-a3a866c6edbb",
+      "target_id": "fc6fd29b-f62b-5b87-ba0d-98b51eb4ab54",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Identificarea engramei și ipoteza echipotențialității privesc substratul cerebral al memoriei, iar modelul Atkinson–Shiffrin descrie organizarea funcțională a stocării. Fragmentul sursă nu stabilește o dependență între aceste explicații."
+    },
+    {
+      "index": 15,
+      "source_id": "90175c6e-32e8-4c7c-8c4c-6661170e34d5",
+      "target_id": "99280cf1-6eb2-449c-a778-e800c2868e07",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Sursa definește reglarea prin reducerea efectelor perturbărilor, fără să impună o buclă de feedback. Reglarea poate utiliza și feedforward, deci feedback-ul nu este o condiție necesară pentru conceptul general."
+    },
+    {
+      "index": 16,
+      "source_id": "a1df3d1c-201c-4217-aa62-f36292b01aa4",
+      "target_id": "4dcd44ba-c65e-4928-804a-d3d8f0bdd888",
+      "relation": "depends_on",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Chunking-ul descris compilează rezultatele raționamentului din substări, iar substările Soar sunt generate de impasse-uri. Dependența este indirectă, dar structurală; crearea unui chunk necesită un rezultat în substare, nu neapărat rezolvarea completă a impasse-ului."
+    },
+    {
+      "index": 17,
+      "source_id": "a86eefed-3ea3-5f13-bccf-9f59e3095a24",
+      "target_id": "7baa7791-77cc-5d1d-95fa-92f7ac855db0",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Fragmentul sursă definește amnezia în general, iar ținta descrie amnezia anterogradă ca formă particulară. Relația este de specializare taxonomică, nu de dependență a conceptului general de subtip."
+    },
+    {
+      "index": 18,
+      "source_id": "a8a64a3e-1d72-4971-9f2b-64b14a3ea916",
+      "target_id": "4dcd44ba-c65e-4928-804a-d3d8f0bdd888",
+      "relation": "depends_on",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Fragmentul sursă identifică explicit impasse-ul drept condiția care declanșează generarea automată a substării; aceasta nu este creată prin mecanismul descris fără apariția unui impasse."
+    },
+    {
+      "index": 19,
+      "source_id": "b4e88f21-7291-49fa-9481-22904c10a005",
+      "target_id": "b4e88f21-7291-49fa-9481-22904c10a003",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Procedura își declară bazele în euristicile Nielsen și WCAG AA, fără să necesite principiile specifice de motion design din țintă. Evaluarea poate fi executată și pentru interfețe fără animații."
+    },
+    {
+      "index": 20,
+      "source_id": "knw-ashby-habituation-and-plasticity",
+      "target_id": "knw-ashby-step-mechanisms",
+      "relation": "depends_on",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "În explicația Ashby prezentată, habituarea rezultă din selectarea și păstrarea treptelor de parametri care mențin variabilele esențiale în limite. Mecanismul discret definit în țintă este necesar acestei explicații, fără a implica o dependență universală a habituării biologice."
+    },
+    {
+      "index": 21,
+      "source_id": "knw-ashby-homeostat-apparatus",
+      "target_id": "knw-ashby-ultrastable-system",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Fragmentul sursă descrie componentele fizice ale aparatului, fără să stabilească necesitatea celor două bucle. Dependența funcționării ultrastabile de această arhitectură nu poate fi confirmată numai din descrierea furnizată."
+    },
+    {
+      "index": 22,
+      "source_id": "knw-ashby-multistable-systems",
+      "target_id": "knw-ashby-ultrastable-system",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Dificultatea căutării unor parametri stabili într-un sistem complet conectat nu presupune, prin ea însăși, existența arhitecturii cu două bucle. Fragmentul nu stabilește dependența strictă."
+    },
+    {
+      "index": 23,
+      "source_id": "knw-ashby-step-mechanisms",
+      "target_id": "knw-ashby-homeostasis-and-stability",
+      "relation": "depends_on",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Definiția unui mecanism în trepte necesită salturi discrete și un prag de comutare, dar nu identifică obligatoriu acel prag cu limitele unor variabile esențiale biologice sau cu un câmp de stabilitate."
+    },
+    {
+      "index": 24,
+      "source_id": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Registrul de vulnerabilități este un document de audit, nu o componentă structurală sau un sub-proces al slotului Procedures."
+    },
+    {
+      "index": 25,
+      "source_id": "10664ba8-39ac-4498-8823-f47014a73efc",
+      "target_id": "slot-16-consolidation",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Definiția reinforcement learning nu demonstrează că acest mecanism este implementat ca sub-proces al consolidării din graph/plasticity.py."
+    },
+    {
+      "index": 26,
+      "source_id": "11e9fe55-6924-4231-9635-c5629bff6ae3",
+      "target_id": "slot-15-retrieval",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Depozitul de memorie este obiectul asupra căruia operează retrieval-ul, nu o sub-componentă structurală a slotului care descrie găsirea informației."
+    },
+    {
+      "index": 27,
+      "source_id": "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+      "target_id": "slot-05-state",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Ultrastabilitatea descrie reorganizarea adaptivă a unui sistem, iar slotul State înregistrează situația implementării curente. Nu este demonstrată o incluziune structurală."
+    },
+    {
+      "index": 28,
+      "source_id": "2a299363-8d18-48bd-bfa6-fb495686eeba",
+      "target_id": "slot-01-identity",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Aparatul experimental al lui Ashby nu este o componentă a identității declarate a AI Memory Vault. Fragmentele nu stabilesc o asemenea integrare."
+    },
+    {
+      "index": 29,
+      "source_id": "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Sursa este un document procedural de ingestie. Încadrarea sa în categoria Procedures ar necesita o relație de clasificare, nu meronimie structurală."
+    },
+    {
+      "index": 30,
+      "source_id": "4dcd44ba-c65e-4928-804a-d3d8f0bdd888",
+      "target_id": "slot-11-history",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Impasse-ul este un declanșator al raționamentului, nu o componentă a arhivei istorice. Eventuala înregistrare a unui impasse în istoric nu transformă mecanismul în parte a acesteia."
+    },
+    {
+      "index": 31,
+      "source_id": "519ef025-222f-485e-b7ee-1684078fe6e7",
+      "target_id": "11e9fe55-6924-4231-9635-c5629bff6ae3",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Sursa definește informația din ponderile interne ale modelului, iar ținta definește explicit un depozit externalizat. Memoria parametrică nu este o componentă a acestui depozit."
+    },
+    {
+      "index": 32,
+      "source_id": "519ef025-222f-485e-b7ee-1684078fe6e7",
+      "target_id": "slot-03-ontology",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Memoria parametrică poate fi un concept descris de ontologie, dar nu devine astfel o componentă structurală a slotului Ontology."
+    },
+    {
+      "index": 33,
+      "source_id": "5ed5f5b1-a936-4b51-a4ef-c9742d14730c",
+      "target_id": "slot-01-identity",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Arhitectura cognitivă poate informa descrierea identității sistemului. Această relație descriptivă nu demonstrează că arhitectura este parte structurală a slotului Identity."
+    },
+    {
+      "index": 34,
+      "source_id": "64b95fc3-bf65-4b06-87c1-f84129396a23",
+      "target_id": "slot-05-state",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Stadiul celular al memoriei de scurtă durată nu este un modul al evidenței empirice despre implementarea curentă a depozitului."
+    },
+    {
+      "index": 35,
+      "source_id": "6e014224-af01-4011-8050-082d3f9ea35e",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Categoria cognitivă procedural memory și categoria documentară Procedures au o afinitate funcțională, dar nu constituie o relație parte–întreg."
+    },
+    {
+      "index": 36,
+      "source_id": "735c6b3e-bf68-49db-8746-95cc2660ead4",
+      "target_id": "1a25d3da-57e2-4902-ab35-da8b476d7e7b",
+      "relation": "part_of",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "În arhitectura Ashby descrisă, mecanismul în trepte este componenta care comută parametrii când variabilele esențiale ies din limite, realizând reorganizarea sistemului ultrastabil. [web:154][web:157]"
+    },
+    {
+      "index": 37,
+      "source_id": "735c6b3e-bf68-49db-8746-95cc2660ead4",
+      "target_id": "slot-14-routing",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Fragmentul nu arată că rutarea agenților utilizează sau include mecanisme în trepte. O analogie între comutarea parametrilor și selectarea agenților nu demonstrează integrarea structurală."
+    },
+    {
+      "index": 38,
+      "source_id": "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Sursa este un raport de inspecție a codului pentru retrieval, nu o componentă executabilă sau un sub-proces al slotului Procedures."
+    },
+    {
+      "index": 39,
+      "source_id": "911ffebf-ab09-4d79-8aac-247781c673a4",
+      "target_id": "slot-05-state",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "shared_terms_only",
+      "rationale": "Stările statistice din definiția variety nu sunt starea implementării din slotul State. Asemănarea lexicală nu indică meronimie."
+    },
+    {
+      "index": 40,
+      "source_id": "9a16789d-0d21-44da-8df3-a83a100f6160",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Un plan propus de execuție este un document de planificare, nu o componentă structurală a slotului Procedures."
+    },
+    {
+      "index": 41,
+      "source_id": "9e6da9df-7fca-4cf5-99bf-03fbdee15170",
+      "target_id": "slot-15-retrieval",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Sursa definește funcția de retrieval, iar ținta este slotul care documentează aceeași funcție. Corespondența conceptuală nu stabilește o relație sub-proces–proces."
+    },
+    {
+      "index": 42,
+      "source_id": "a8a64a3e-1d72-4971-9f2b-64b14a3ea916",
+      "target_id": "slot-14-routing",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Substate-ul este un context de rezolvare a unui impasse. Nu există în fragmente dovada că este implementat ca modul al rutării agenților."
+    },
+    {
+      "index": 43,
+      "source_id": "ac3d2e8a-f55f-404b-ba7d-5157f39ae873",
+      "target_id": "b01db913-6bf2-4b14-a37a-81cb4b336d93",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Sursa descrie recunoașterea contextuală umană, iar ținta un depozit de embeddings și activări pentru agent. Nu este demonstrată includerea procesului uman ca sub-proces al acestei componente software."
+    },
+    {
+      "index": 44,
+      "source_id": "ac3d2e8a-f55f-404b-ba7d-5157f39ae873",
+      "target_id": "slot-15-retrieval",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Nu este demonstrat că mecanismul uman de recollection este implementat în memory/controller.py sau constituie un sub-proces al retrieval-ului din depozit."
+    },
+    {
+      "index": 45,
+      "source_id": "ac5e8530-c152-4b81-97ee-549caca0fa75",
+      "target_id": "slot-03-ontology",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Implicit memory este un tip de memorie care poate fi definit în ontologie. Relația adecvată este de descriere sau clasificare, nu de componentă structurală a slotului."
+    },
+    {
+      "index": 46,
+      "source_id": "b01db913-6bf2-4b14-a37a-81cb4b336d93",
+      "target_id": "e045ded5-01fd-4a28-8f85-203ebae670de",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Sursa descrie un modul software de stocare a experiențelor, iar ținta un sistem cognitiv de retenție și inferență. Fragmentele nu demonstrează că modulul software este inclus structural în sistemul țintă."
+    },
+    {
+      "index": 47,
+      "source_id": "b01db913-6bf2-4b14-a37a-81cb4b336d93",
+      "target_id": "slot-11-history",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Stocarea embeddings-urilor experiențelor trecute nu demonstrează apartenența modulului la arhiva Lessons sau la slotul History. Este necesară dovada integrării concrete."
+    },
+    {
+      "index": 48,
+      "source_id": "b2888875-8546-4d42-b262-2c7f779e3cc9",
+      "target_id": "slot-16-consolidation",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Consolidarea neuronală prin sinteză proteică poate oferi inspirație teoretică, dar nu este un sub-proces executat de modulul software graph/plasticity.py."
+    },
+    {
+      "index": 49,
+      "source_id": "be1863da-7db4-48b7-9486-ad13b1a74152",
+      "target_id": "c67c2beb-e722-4155-ad31-66a48823aa20",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "O stare MDP poate fi reprezentată în memoria de lucru, dar relația posibilă este de conținut menținut, nu de componentă structurală a mecanismului cognitiv."
+    },
+    {
+      "index": 50,
+      "source_id": "be1863da-7db4-48b7-9486-ad13b1a74152",
+      "target_id": "slot-05-state",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "shared_terms_only",
+      "rationale": "Starea formală a unui MDP și starea implementării depozitului au sensuri diferite. Denumirea comună nu susține o relație parte–întreg."
+    },
+    {
+      "index": 51,
+      "source_id": "c29221d5-4bde-44bb-a482-f8e8d7619214",
+      "target_id": "slot-02-map",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Mental imagery produce reprezentări vizuale interne, iar slotul Map descrie localizarea informației în repository. Nu există o incluziune structurală între aceste mecanisme."
+    },
+    {
+      "index": 52,
+      "source_id": "cce3323b-2701-4907-ba4c-e5854fcd2bf8",
+      "target_id": "5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac",
+      "relation": "part_of",
+      "verdict": "ACCEPT",
+      "category": null,
+      "rationale": "Sensitizarea este un proces de învățare neasociativă exprimat prin modificarea comportamentului și aparține ansamblului de procese ale memoriei nondeclarative. [web:155][web:159]"
+    },
+    {
+      "index": 53,
+      "source_id": "d12f2aea-c6fd-456c-a472-7fd3ff786392",
+      "target_id": "6e014224-af01-4011-8050-082d3f9ea35e",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Condiționarea clasică și învățarea abilităților procedurale sunt forme distincte din ansamblul memoriei nondeclarative; condiționarea nu este o componentă a memoriei procedurale definite prin abilități. [web:148][web:150]"
+    },
+    {
+      "index": 54,
+      "source_id": "d12f2aea-c6fd-456c-a472-7fd3ff786392",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Procesul biologic de condiționare asociativă nu este o componentă a procedurilor operaționale ale depozitului. Fragmentele nu indică o implementare comună."
+    },
+    {
+      "index": 55,
+      "source_id": "d4e5337e-122f-402c-84d0-57230976ee0d",
+      "target_id": "6e014224-af01-4011-8050-082d3f9ea35e",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Operatorul este definit ca element selectat într-un ciclu decizional. Fragmentul nu stabilește că acest element este stocat ca o componentă a memoriei procedurale."
+    },
+    {
+      "index": 56,
+      "source_id": "d4e5337e-122f-402c-84d0-57230976ee0d",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Rolul operatorului în decizie nu demonstrează apartenența lui structurală la slotul Procedures al depozitului."
+    },
+    {
+      "index": 57,
+      "source_id": "d7e9a1bd-341c-4da5-b482-6521c4e37146",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Reservoir Sampling este o procedură algoritmică și poate fi clasificat ca atare, dar definiția nu îl face sub-componentă a slotului Procedures. Nu este demonstrată integrarea în operațiile depozitului."
+    },
+    {
+      "index": 58,
+      "source_id": "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57",
+      "target_id": "slot-08-constraints",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Variabilele fiziologice și limitele lor de viabilitate nu sunt componente ale registrului de restricții și riscuri software. Analogia cu invariantele de securitate nu constituie meronimie."
+    },
+    {
+      "index": 59,
+      "source_id": "e045ded5-01fd-4a28-8f85-203ebae670de",
+      "target_id": "slot-03-ontology",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Declarative memory este un concept pe care slotul Ontology îl poate defini sau clasifica, nu o componentă structurală a acelui slot."
+    },
+    {
+      "index": 60,
+      "source_id": "e66a94e4-28b6-47d6-90b3-358cd6dcd743",
+      "target_id": "slot-05-state",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unsupported",
+      "rationale": "Definiția unei memorii în spații de activare nu demonstrează că aceasta este implementată în depozit sau inclusă structural în evidența stării sale curente."
+    },
+    {
+      "index": 61,
+      "source_id": "fce00714-05aa-44ac-84e3-432c6ca70bd1",
+      "target_id": "slot-06-procedures",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Sursa raportează rezultatele unei execuții de teste și o eroare identificată. Este un document de măsurare, nu un sub-proces al slotului Procedures."
+    },
+    {
+      "index": 62,
+      "source_id": "ff28fea6-0138-41b6-acd7-e1c0759966b1",
+      "target_id": "slot-05-state",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Bufferul este o interfață a arhitecturii cognitive. Slotul State este o evidență a implementării, nu arhitectura care ar conține structural bufferul."
+    },
+    {
+      "index": 63,
+      "source_id": "knw-ashby-homeostasis-and-stability",
+      "target_id": "knw-ashby-multistable-systems",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_type",
+      "rationale": "Homeostazia și variabilele esențiale oferă un cadru conceptual pentru analiza stabilității. Un cadru explicativ nu este, prin această asociere, o sub-componentă structurală a sistemelor multistabile."
+    },
+    {
+      "index": 64,
+      "source_id": "knw-ashby-homeostat-apparatus",
+      "target_id": "knw-ashby-step-mechanisms",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "wrong_direction",
+      "rationale": "În implementarea Ashby, mecanismele de comutare sunt componente ale homeostatului; aparatul complet nu este o componentă a mecanismului în trepte. [web:154][web:157]"
+    },
+    {
+      "index": 65,
+      "source_id": "knw-ashby-multistable-systems",
+      "target_id": "knw-ashby-habituation-and-plasticity",
+      "relation": "part_of",
+      "verdict": "REJECT",
+      "category": "unrelated",
+      "rationale": "Analiza conectivității și a căutării stabilității, respectiv explicația habituării, sunt teme conexe. Fragmentele nu arată că sistemele multistabile constituie un sub-proces sau modul al habituării."
+    }
+  ]
+}

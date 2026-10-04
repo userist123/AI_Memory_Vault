@@ -58,7 +58,7 @@ in its constructor. Corrected 2026-09-06.
 | `RetrievalTrace` v1.1.0 | real, in production | `observability/retrieval_trace.py`; every note carries a reason code; 16.7 KB per search, verified on 8 benchmark queries |
 | Agent lifecycle floor | real, in production | `controller.py`; `AI_AGENT` asking for no lifecycle gets ACTIVE + REVIEW. Measured cost before adoption: 1 case in 130 |
 | Untrusted content guard | real, in CI | `30_SCRIPTS/verification/untrusted_content_guard.py`; 4 blocking rules, 3 report-only; 27 reviewed allowlist entries |
-| Typed relations in the graph | **audited, 20/49 accepted** | Perplexity, independent; 29 rejected rows purged at source; **65 still unaudited** |
+| Typed relations in the graph | **100% audited (30/114 accepted)** | Perplexity, independent; Wave 1: 20/49 accepted, 29 purged; Wave 2: 10/65 accepted, 55 rejected; `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
@@ -125,9 +125,11 @@ whole-corpus retrieval numbers.
   and undoing that is `git revert`, not `PlasticityEngine.rollback()`.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
-- **65 of the graph's 85 typed relations have never been audited.** The 49 that
-  were came back at 20 accepted. No claim about the graph's overall precision is
-  supported until the rest are labelled; 49 rows is what was measured, not 114.
+- **[RESOLVED] All 114 declared typed relations in the live graph are now 100% audited.** The remaining 65
+  relations were independently evaluated by Perplexity in Wave 2: 10 accepted, 55 rejected (15.4% precision).
+  Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
+  documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
+  `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
 - **Where the 91 missed benchmark cases are lost is still unknown.** Reason
   codes now exist for every note, but nothing has yet connected them to the
   benchmark. Until that runs, choosing between a reranker and better candidate
