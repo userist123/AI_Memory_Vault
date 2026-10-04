@@ -17,7 +17,7 @@ The audit revealed that prior security claims ("fail-closed", "unforgeable appro
 5. **Supply Chain Gaps & Incomplete CI Reporting**: Missing provenance could be ignored when policies were configured, while CI jobs masked unconfigured scans as successful.
 6. **Synthetic Metrics & Semantic Body Rewriting**: B01–B10/B12 flaws on PR #206 branches relied on synthetic evaluation fallbacks; B11 on `main` rewrote note body prose to avoid graph islands.
 
-All issues present on `main` have been remediated with fail-closed cryptographic and transactional boundaries, backed by **192 passing unit and integration tests** (including 17 dedicated regression and adversarial self-audit tests).
+All issues present on `main` have been remediated with fail-closed cryptographic and transactional boundaries, backed by **208 passing security/regression tests** (including 20 dedicated regression and adversarial self-audit tests) and **536 passing tests** across the wider vault test suite.
 
 ---
 
@@ -127,11 +127,9 @@ No semantic phrases (e.g. `[[state-determined system]]`) are injected.
 
 Automated tests executed directly on Windows with Python 3.14.2:
 ```text
-pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py
-============================= 192 passed in 2.03s =============================
+pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py 20_TESTS/test_cognitive_core_search_wiring.py 20_TESTS/test_end_to_end_workflow.py 20_TESTS/regression/test_workflow_security_audit.py
+============================= 208 passed in 1.89s =============================
 ```
-- Total tests executed: **192**
-- Total passed: **192** (100%)
-- Total failed: **0**
-- Total skipped: **0**
-- Total unverified: **0**
+- Total security & regression tests: **208 passed, 0 failed, 0 skipped** (100%)
+- Total memory controller invariant tests: **328 passed, 0 failed, 0 skipped** (100%)
+- Combined verified suite: **536 passed, 0 failed, 0 skipped, 0 errors**
