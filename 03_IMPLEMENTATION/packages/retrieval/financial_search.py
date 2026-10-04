@@ -36,6 +36,7 @@ from .security.pagination_token import (
 from .context.budget import ContextBudget, load_agent_budget
 from .context.progressive_disclosure import ProgressiveDisclosure
 from .context.pack_builder import ContextPackBuilder
+from memory.data_router import MemoryDataRouter
 
 
 # ============================================================================
@@ -1044,6 +1045,8 @@ class MultiLayeredFinancialSearchEngine:
         self.graph = FinancialKnowledgeGraph(self.resolver)
         self.k_rrf = k_rrf
         self.pack_builder = ContextPackBuilder()
+        self.data_router = MemoryDataRouter()
+        self.data_router.register("financial_search", self._execute_search_impl)
         self.warm_up()
 
     def warm_up(self):
@@ -1092,6 +1095,54 @@ class MultiLayeredFinancialSearchEngine:
         return pack.get("results", [])
 
     def execute_search(
+        self,
+        principal: Principal,
+        query: str = "",
+        symbol: Optional[str] = None,
+        symbols: Optional[List[str]] = None,
+        asset_symbol: Optional[str] = None,
+        category: Optional[str] = None,
+        asset_classes: Optional[List[str]] = None,
+        min_confidence: Optional[str] = None,
+        confidence_min: Optional[str] = None,
+        verification_state: Optional[str] = None,
+        verification_states: Optional[List[str]] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        types: Optional[List[str]] = None,
+        lifecycles: Optional[List[Any]] = None,
+        page_size: int = 10,
+        limit: Optional[int] = None,
+        page_token: Optional[str] = None,
+        disclosure_level: str = "metadata",
+    ) -> Dict[str, Any]:
+        return self.data_router.dispatch(
+            source="financial_search",
+            principal=principal.value,
+            handler_kwargs={
+                "principal": principal,
+                "query": query,
+                "symbol": symbol,
+                "symbols": symbols,
+                "asset_symbol": asset_symbol,
+                "category": category,
+                "asset_classes": asset_classes,
+                "min_confidence": min_confidence,
+                "confidence_min": confidence_min,
+                "verification_state": verification_state,
+                "verification_states": verification_states,
+                "date_from": date_from,
+                "date_to": date_to,
+                "types": types,
+                "lifecycles": lifecycles,
+                "page_size": page_size,
+                "limit": limit,
+                "page_token": page_token,
+                "disclosure_level": disclosure_level,
+            },
+        )
+
+    def _execute_search_impl(
         self,
         principal: Principal,
         query: str = "",

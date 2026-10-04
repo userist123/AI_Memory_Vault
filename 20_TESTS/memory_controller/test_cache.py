@@ -19,7 +19,7 @@ def controller():
         "confidence": "high",
         "created": "2026-08-09",
         "updated": "2026-08-09",
-        "verification": "unverified",
+        "verification": "verified",
         "tags": [],
         "relations": [],
         "provenance": {"source_type": "user", "source_ref": "unit"}
@@ -161,6 +161,90 @@ def test_budget_mismatch(monkeypatch, controller):
     # Tight budget will reject cached result because size > 10 bytes
     controller.search(Principal.HUMAN, "budget query")
     assert query_calls == 1
+
+
+def test_debug_retrieval_trust_diagnostics(tmp_path):
+    from memory_controller.authorizer import Principal
+    from memory_controller.controller import MemoryController
+    from memory_controller.storage.file_engine import FileStorageEngine
+    from memory_controller.storage.serializer import serialize
+
+    root = tmp_path / "vault"
+    knowledge = root / "01_ARCHITECTURE" / "knowledge"
+    knowledge.mkdir(parents=True)
+    note = {
+        "id": "debug-review",
+        "type": "knowledge",
+        "lifecycle": "REVIEW",
+        "verification": "unverified",
+        "provenance": {"source_type": "user", "source_ref": "debug"},
+        "confidence": "high",
+        "relations": [],
+        "content": "Consolidarea nocturna ruleaza si instaleaza dependentele proiectului.",
+    }
+    (knowledge / "debug.md").write_text(serialize(note), encoding="utf-8")
+    controller = MemoryController(FileStorageEngine(str(root)))
+    raw_note = controller.storage.get("debug-review")
+    resolved = controller.pack_builder._resolve_budget("ai_agent", {})
+    reduced, reduced_metrics = controller.pack_builder._verify_and_reduce(
+        [raw_note], resolved, query="consolidarea nocturna instaleaza dependentele",
+        allow_unverified=True, agent_id="ai_agent",
+    )
+    assert reduced, {"raw_note": raw_note, "reduced_metrics": reduced_metrics}
+    from memory_controller.context.progressive_disclosure import ProgressiveDisclosure
+    disclosed = ProgressiveDisclosure(resolved).metadata_only(reduced, allow_unverified=True)
+    assert disclosed, {"reduced": reduced, "disclosed": disclosed}
+    probe = controller.pack_builder._build_pack(
+        "debug", "ai_agent", resolved, disclosed, "metadata_only", None, None, None, reduced_metrics
+    )
+    probe_size = resolved.serialized_size(probe)
+    probe_tokens = resolved.estimate_tokens(probe)
+    assert probe_size <= resolved.hard_context_budget and probe_tokens <= resolved.hard_token_budget, {
+        "disclosed": disclosed, "probe_size": probe_size, "probe_tokens": probe_tokens,
+        "hard_bytes": resolved.hard_context_budget, "hard_tokens": resolved.hard_token_budget,
+        "probe": probe,
+    }
+    direct_pack = controller.pack_builder.build(
+        request_id="debug", agent_id="ai_agent", budget={}, results=disclosed,
+        disclosure_level="metadata", allow_unverified=True,
+    )
+    assert direct_pack["results"], {"disclosed": disclosed, "direct_pack": direct_pack}
+    pack = controller.search(Principal.AI_AGENT, "consolidarea nocturna instaleaza dependentele", page_size=3)
+    assert pack["results"], {
+        "results": pack.get("results"),
+        "trace": {k: (pack.get("candidate_trace") or {}).get(k) for k in ("source", "query", "candidate_limit", "candidates_considered", "per_generator", "fused_ranking", "classifier_filter_arm")},
+        "reduction": pack.get("reduction"),
+    }
+
+
+def test_debug_owner_archived_diagnostics(tmp_path):
+    from memory_controller.authorizer import Principal
+    from memory_controller.controller import MemoryController
+    from memory_controller.storage.file_engine import FileStorageEngine
+    from memory_controller.storage.serializer import serialize
+
+    root = tmp_path / "vault"
+    knowledge = root / "01_ARCHITECTURE" / "knowledge"
+    knowledge.mkdir(parents=True)
+    note = {
+        "id": "debug-archived",
+        "type": "knowledge",
+        "lifecycle": "ARCHIVED",
+        "verification": "unverified",
+        "provenance": {"source_type": "official", "source_ref": "debug"},
+        "confidence": "low",
+        "relations": [],
+        "content": "Ashby ultrastable homeostat double feedback system.",
+    }
+    (knowledge / "debug.md").write_text(serialize(note), encoding="utf-8")
+    controller = MemoryController(FileStorageEngine(str(root)))
+    pack = controller.search(Principal.HUMAN, "ashby ultrastable homeostat", page_size=3)
+    assert pack["results"], {
+        "results": pack.get("results"),
+        "trace": {k: (pack.get("candidate_trace") or {}).get(k) for k in ("source", "query", "candidate_limit", "candidates_considered", "per_generator", "fused_ranking", "classifier_filter_arm")},
+        "reduction": pack.get("reduction"),
+    }
+
 
 def test_mutation_invalidation_propose(controller):
     cache = controller.cache

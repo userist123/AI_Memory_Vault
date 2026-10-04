@@ -1,20 +1,21 @@
-"""Compile an informal request into a complete English task prompt.
+"""Compile a verified English task prompt from deterministic repository state.
 
-The user states an intent in one line, in Romanian. What reaches another agent
-must be a full English brief: verified context, explicit requirements, the
-traps that already cost this repository time, the method for measuring, and
-acceptance criteria that can fail.
+The CLI boundary accepts English task text. Non-English input must be translated by
+an explicit provider before it enters the verified compiler; this script does not
+silently guess or perform language translation. The compiler then verifies the
+translated artifact, preserves security/provenance requirements, and reduces the
+result only after trust is established.
 
-This script does the deterministic half. It reads the vault's live state and
-emits a skeleton already populated with facts nobody should have to look up
-again: the current commit, the test baseline, corpus and graph sizes, the
-recorded methods, and the standing traps. The agent fills in the parts that
-require judgement — the task itself, its requirements, what is forbidden, and
-what "done" looks like.
+The deterministic half reads the vault's live state and emits facts that should not
+have to be rediscovered: the current commit, measured corpus/graph state, recorded
+methods, standing traps, and available skill catalogues. Intent-specific
+requirements, forbidden constraints, and acceptance criteria are supplied by the
+compiler caller.
 
-Everything emitted is English regardless of the language of the request, per
+Everything emitted is English, per
 `01_ARCHITECTURE/memory/Preferences/AI_Facing_Prompts_In_English.md`. Detail
-lost in translation is detail lost.
+lost in translation is detail lost; use an explicit translation provider when the
+source request is not already English.
 
     python 30_SCRIPTS/prompt/compile_task_prompt.py \
         --branch r022/some-work --owner "CLAUDE SONNET" \
@@ -29,7 +30,10 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
+
+from security.prompt_compiler import VerifiedPromptCompiler
 
 STATE_CARD = REPO / "00_GOVERNANCE" / "VAULT_STATE.md"
 LESSONS = REPO / "01_ARCHITECTURE" / "memory" / "Lessons"
@@ -222,82 +226,7 @@ def intent_block(intent: str) -> tuple[str, str, str]:
     return req, forb, deliv
 
 
-TEMPLATE = """Repository: https://github.com/userist123/AI_Memory_Vault_CODEX_READY
-Base: current main ({head})
-Create: {branch}
-Owner: {owner}
-
-## Verified context — measured, do not re-derive
-
-{state}
-
-Read `00_GOVERNANCE/VAULT_STATE.md` before anything else. It records what is
-verified true right now and outranks README, CLAUDE.md and AGENTS.md wherever
-they disagree.
-
-## Task
-
-{task}
-
-## Requirements — {intent_name}
-
-{requirements}
-{n_plus_one}. Zero regression against the stated baseline. Any deviation is
-   explained commit by commit.
-{n_plus_two}. TODO — anything specific to this task that the kind alone does not cover.
-
-## Forbidden
-
-{forbidden}
-- Do not modify a benchmark, threshold or gate to make a result pass. If a gate
-  blocks the work, report it blocked.
-- TODO — anything out of scope for this task specifically.
-
-## Methods already recorded — read before diagnosing
-
-{methods}
-
-## Standing traps
-
-{traps}
-
-## Skills and data to consult
-
-{skills}
-
-If the task needs a capability none of these cover, say so explicitly rather
-than improvising one.
-
-## Method
-
-Isolated worktree at a short path, cherry-pick your commits onto the baseline,
-run the suite in both, and diff the FAILED name sets:
-
-    git worktree add --detach C:/Users/user/Documents/Codex/<name> <base-sha>
-    git -C C:/Users/user/Documents/Codex/<name> config core.longpaths true
-
-## Deliverables
-
-{deliverables}
-{d_plus_one}. Measurement against the baseline, reported as numbers with an n.
-{d_plus_two}. Remaining gaps, stated as gaps.
-
-## Acceptance — a task is finished when all five hold
-
-1. Implemented and committed.
-2. Verified by something that would have failed if the change were wrong. A
-   green suite is not this on its own.
-3. Regressions measured against a stated baseline, in isolation.
-4. What remains open written down explicitly, including "nothing".
-5. The method recorded per
-   `10_DOCUMENTATION/procedures/Recording_A_Solved_Problem.md` if it transfers.
-
-Anything less is unfinished and must be reported as unfinished, with the
-remainder named.
-"""
-
-
-def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement") -> str:
+def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement", soft_token_budget: int = 1200, hard_token_budget: int = 1800) -> str:
     state = "\n".join(f"- {k}: {v}" for k, v in measured_state().items())
     methods = "\n".join(f"- `{p}` — {t}" for p, t in recorded_methods()) or "- none recorded yet"
     traps = "\n".join(f"- {t}" for t in standing_traps())
@@ -305,21 +234,38 @@ def compile_prompt(task: str, branch: str, owner: str, intent: str = "implement"
         f"- `{c}`" for c in SKILL_CATALOGUES if (REPO / c).exists()
     ) or "- no skill catalogue found in the indexed roots"
     requirements, forbidden, deliverables = intent_block(intent)
-    n_req = len(INTENTS[intent]["requirements"])
-    n_del = len(INTENTS[intent]["deliverables"])
-    return TEMPLATE.format(
-        head=head(), branch=branch, owner=owner, task=task.strip(),
-        state=state, methods=methods, traps=traps, skills=skills,
-        intent_name=INTENTS[intent]["summary"], requirements=requirements,
-        forbidden=forbidden, deliverables=deliverables,
-        n_plus_one=n_req + 1, n_plus_two=n_req + 2,
-        d_plus_one=n_del + 1, d_plus_two=n_del + 2,
+    acceptance = list(INTENTS[intent]["deliverables"]) + [
+        "Zero regression against the stated baseline; explain any deviation with evidence.",
+        "State remaining gaps explicitly, including when there are none.",
+        "Record the method when it transfers to future work.",
+    ]
+    compiler = VerifiedPromptCompiler()
+    compiled = compiler.compile(
+        task,
+        source_language="en",
+        verified_context=(
+            "Current commit: " + head() + "\n" + state
+            + "\n\nRead 00_GOVERNANCE/VAULT_STATE.md before anything else. "
+            "Measured repository state outranks stale descriptive guidance.\n\n"
+            "## Methods already recorded\n" + methods
+            + "\n\n## Standing traps\n" + traps
+            + "\n\n## Skills and data to consult\n" + skills
+        ),
+        requirements=[str(x) for x in INTENTS[intent]["requirements"]],
+        forbidden=[str(x) for x in INTENTS[intent]["forbidden"]],
+        acceptance=acceptance,
+        branch=branch,
+        owner=owner,
+        max_chars=12000,
+        soft_token_budget=soft_token_budget,
+        hard_token_budget=hard_token_budget,
     )
+    return compiled.text
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--task", required=True, help="what must be achieved, in English")
+    ap.add_argument("--task", required=True, help="task text; this deterministic CLI accepts English only unless a translation provider is injected")
     ap.add_argument("--branch", default="rXXX/describe-the-work")
     ap.add_argument("--owner", default="TBD")
     ap.add_argument(
@@ -331,6 +277,8 @@ def main() -> int:
         "--intent", default="implement", choices=sorted(INTENTS),
         help="what kind of work this is; selects the mandatory requirements",
     )
+    ap.add_argument("--soft-tokens", type=int, default=1200, help="target prompt input-token budget")
+    ap.add_argument("--hard-tokens", type=int, default=1800, help="hard prompt input-token budget")
     ap.add_argument("--out", help="write here instead of stdout")
     args = ap.parse_args()
 
@@ -347,7 +295,7 @@ def main() -> int:
         print(f"\nRe-run with --intent {result.intent} to compile the brief.")
         return 0
 
-    text = compile_prompt(args.task, args.branch, args.owner, args.intent)
+    text = compile_prompt(args.task, args.branch, args.owner, args.intent, args.soft_tokens, args.hard_tokens)
     if args.out:
         Path(args.out).write_text(text, encoding="utf-8", newline="\n")
         print(f"written to {args.out}")

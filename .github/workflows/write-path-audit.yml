@@ -2,20 +2,27 @@ name: Write Path Audit
 
 on:
   pull_request:
+
     branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   write-path-audit:
     name: Inventory runtime write paths
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout exact revision
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 1
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
@@ -23,6 +30,8 @@ jobs:
         run: python3 30_SCRIPTS/verification/write_path_audit.py --root . --json > write-path-audit.json
 
       - name: Publish summary
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           python3 - <<'PY'
           import json
@@ -35,7 +44,7 @@ jobs:
 
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as out:
               out.write("## Write-path audit\n\n")
-              out.write(f"Audited revision: `{os.environ.get('GITHUB_SHA', 'unknown')}`\n\n")
+              out.write(f"Audited revision: `{os.environ.get('PR_HEAD_SHA') or os.environ.get('GITHUB_SHA', 'unknown')}`\n\n")
               out.write(f"Total findings: **{len(findings)}**\n\n")
               for key in sorted(by_class):
                   out.write(f"- `{key}`: {by_class[key]}\n")
@@ -43,7 +52,7 @@ jobs:
           PY
 
       - name: Upload audit evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: write-path-audit-${{ github.event.pull_request.head.sha || github.sha }}
           path: write-path-audit.json

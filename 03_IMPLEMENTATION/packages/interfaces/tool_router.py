@@ -36,34 +36,57 @@ class ToolRouter:
         
     def _check_knowledge_reconciliation_boundary(self, principal: Principal, action: str, kwargs: Dict[str, Any]) -> None:
         """
-        BRAIN-13: Prevents automatic modification or archiving of human-verified memories.
+        BRAIN-13: Prevent automatic modification or archiving of human-verified
+        memories. Inspect the canonical storage record directly so this
+        security boundary does not depend on model-facing disclosure or egress.
         """
-        if action in ("update", "archive", "supersede"):
-            node_id = None
-            if action == "archive":
-                node_id = kwargs.get("note_id") # Note: signature might be note_id or id depending on controller
-                if not node_id and len(kwargs) == 1:
-                    node_id = list(kwargs.values())[0]
-            elif action == "update":
-                node_id = kwargs.get("note_id")
-                if not node_id and "id" in kwargs:
-                    node_id = kwargs["id"]
-            elif action == "supersede":
-                node_id = kwargs.get("old_id")
-                    
-            if node_id:
-                try:
-                    pack = self.controller.read(principal, node_id)
-                    results = pack.get("results", [])
-                    if results:
-                        node = results[0]
-                        if node.get("verification") == "verified":
-                            raise ApprovalRequiredError(f"Action '{action}' targets a human-verified memory (id={node_id}) and requires explicit user approval.")
-                except ApprovalRequiredError:
-                    raise
-                except Exception:
-                    pass
-        
+        if action not in ("update", "archive", "supersede"):
+            return
+
+        if action == "archive":
+            node_id = kwargs.get("note_id") or kwargs.get("id")
+        elif action == "update":
+            node_id = kwargs.get("note_id") or kwargs.get("id")
+        else:
+            node_id = kwargs.get("old_id")
+
+        if not node_id:
+            raise ApprovalRequiredError(
+                f"Action '{action}' requires explicit user approval because its target could not be resolved safely."
+            )
+
+        storage = getattr(self.controller, "storage", None)
+        getter = getattr(storage, "get", None)
+        if not callable(getter):
+            raise ApprovalRequiredError(
+                f"Action '{action}' requires explicit user approval because the target could not be verified safely."
+            )
+
+        try:
+            node = getter(node_id)
+        except Exception as exc:
+            raise ApprovalRequiredError(
+                f"Action '{action}' requires explicit user approval because the target could not be verified safely."
+            ) from exc
+
+        if not isinstance(node, dict):
+            raise ApprovalRequiredError(
+                f"Action '{action}' requires explicit user approval because the target could not be verified safely."
+            )
+
+        verification = node.get("verification")
+        if isinstance(verification, dict):
+            status = str(
+                verification.get("status", verification.get("state", ""))
+            ).lower()
+        else:
+            status = str(verification or "").lower()
+
+        if status == "verified":
+            raise ApprovalRequiredError(
+                f"Action '{action}' targets a human-verified memory (id={node_id}) and requires explicit user approval."
+            )
+
     def execute(self, principal: Principal, action: str, kwargs: Dict[str, Any]) -> Any:
         """
         Executes a mapped action on the MemoryController.

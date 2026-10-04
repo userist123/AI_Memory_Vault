@@ -1,7 +1,8 @@
 import json
 import math
 import zlib
-from typing import Dict, Any, List
+import re
+from typing import Dict, Any, List, Callable
 
 
 class ContextBudgetError(RuntimeError):
@@ -25,6 +26,10 @@ class ContextBudget:
         self.soft_limit_tokens = max(1, int(config.get("soft_limit_tokens", config.get("soft_tokens", 1800))))
         self.hard_limit_tokens = max(1, int(config.get("hard_limit_tokens", config.get("hard_tokens", 3000))))
         self.chars_per_token = max(1.0, float(config.get("chars_per_token", 3.0)))
+        self.tokenizer: Callable[[str], int] | None = config.get("tokenizer") or config.get("token_counter")
+        self.cost_per_input_token = config.get("cost_per_input_token")
+        self.latency_ms_per_input_token = config.get("latency_ms_per_input_token")
+        self.estimated_overhead_tokens = max(0, int(config.get("estimated_overhead_tokens", 120)))
 
     @property
     def soft_context_budget(self) -> int:
@@ -57,6 +62,14 @@ class ContextBudget:
 
     def estimate_tokens(self, value: Any) -> int:
         text = json.dumps(value, ensure_ascii=False, default=str, separators=(",", ":"))
+        if self.tokenizer is not None:
+            try:
+                tokens = int(self.tokenizer(text))
+            except (TypeError, ValueError, OverflowError) as exc:
+                raise ContextBudgetError("tokenizer_invalid") from exc
+            if tokens < 0:
+                raise ContextBudgetError("tokenizer_returned_negative")
+            return tokens
         return max(1, math.ceil(len(text) / self.chars_per_token))
 
     def usage(self, notes: List[Dict[str, Any]]) -> int:
@@ -73,10 +86,21 @@ class ContextBudget:
     def check_budget(self, usage: int) -> None:
         self.check_hard_limit(usage)
 
+    @staticmethod
+    def _protected_content(note: Dict[str, Any]) -> bool:
+        if bool(note.get("do_not_compress")) or bool(note.get("protected_content")):
+            return True
+        content = str(note.get("content", ""))
+        if "```" in content:
+            return True
+        if re.search(r"(?im)^.*\b(?:MUST(?: NOT)?|NEVER|SHALL|REQUIRED|FORBIDDEN|DO_NOT_COMPRESS)\b.*$", content):
+            return True
+        return any(key in note for key in ("code", "signature", "dependencies", "identifiers"))
+
     def apply_degradation(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         ordered = [dict(n) for n in sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]]
         for index, note in enumerate(ordered):
-            if index >= self.max_full_documents:
+            if index >= self.max_full_documents and not self._protected_content(note):
                 note["content"] = ""
 
         while len(ordered) > 1 and (self.usage(ordered) > self.soft_limit_bytes or self.serialized_size(ordered) > self.hard_limit_bytes):
@@ -84,6 +108,8 @@ class ContextBudget:
 
         if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in ordered:
+                if self._protected_content(note):
+                    continue
                 content = note.get("content", "")
                 if isinstance(content, str) and len(content) > 50:
                     note["content"] = content[:50] + "...[PARTIAL]"
@@ -92,28 +118,46 @@ class ContextBudget:
 
         if ordered and self.usage(ordered) > self.soft_limit_bytes:
             for note in reversed(ordered):
+                if self._protected_content(note):
+                    continue
                 note["content"] = ""
                 if self.usage(ordered) <= self.soft_limit_bytes:
                     break
 
+        # Enforce the hard content-byte budget before transport compression.
+        # Compression may reduce serialized transport size, but it must not
+        # turn an oversized logical context into an apparent budget success.
+        self.check_hard_limit(self.usage(ordered))
+
         for note in ordered:
             content = note.get("content", "")
+            if self._protected_content(note):
+                continue
             if isinstance(content, str) and len(content.encode("utf-8")) > 1024:
+                # Compression saves transport/storage bytes, not LLM tokens.
                 note["content"] = zlib.compress(content.encode("utf-8"))
 
-        while len(ordered) > 1 and self.serialized_size(ordered) > self.hard_limit_bytes:
-            ordered.pop()
+        # Hard transport budget is an envelope limit, not a reason to keep an
+        # oversized unprotected item just because it is the last remaining
+        # candidate. Remove the least-relevant removable item until the
+        # envelope itself fits. Protected content still fails closed.
+        while ordered and self.serialized_size(ordered) > self.hard_limit_bytes:
+            removable = next((idx for idx in range(len(ordered) - 1, -1, -1)
+                              if not self._protected_content(ordered[idx])), None)
+            if removable is None:
+                break
+            ordered.pop(removable)
 
-        if ordered and self.serialized_size(ordered) > self.hard_limit_bytes:
-            raise BudgetExceededError(f"Context usage exceeds hard limit {self.hard_limit_bytes} bytes")
-
+        # Final serialized-envelope size is enforced by ContextPackBuilder,
+        # which can remove whole results after accounting for security and
+        # reduction metadata. This stage only enforces content-byte usage.
         self.check_hard_limit(self.usage(ordered))
         return ordered
 
     def enforce_max_full(self, notes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         ordered = sorted(notes, key=lambda n: n.get("relevance", 0), reverse=True)[:self.max_notes]
         for index, note in enumerate(ordered):
-            if index >= self.max_full_documents:
+            if index >= self.max_full_documents and not self._protected_content(note):
                 note["content"] = ""
         return ordered
 

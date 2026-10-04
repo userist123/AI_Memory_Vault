@@ -14,11 +14,6 @@ NUMBERED_ROOTS = {
     "50_ARTIFACTS", "60_DEPLOYMENT", "70_INTEGRATIONS", "80_ARCHIVE", "90_RELEASE", "99_META",
 }
 ROOT_ALLOWLIST = {
-    #: README.en.md is the English README. GitHub renders README.md on the
-    #: repository page and has no language negotiation, so a second language
-    #: has to be a second root file with a link between the two — a
-    #: translation in a subdirectory is one nobody finds. Any further
-    #: translation belongs here by the same rule.
     "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
     "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests", "docs", "security",
@@ -54,8 +49,6 @@ def validate(paths: Iterable[str], root: Path | None = None) -> list[str]:
         for path in members:
             rel = path[len(prefix):]
             if "/" not in rel and rel not in ROOT_FILE_ALLOWLIST:
-                # Direct files are allowed for concise contracts, indexes,
-                # configuration and reports; executable implementation is not.
                 suffix = Path(rel).suffix.lower()
                 if suffix in {".py", ".ps1", ".sh", ".exe", ".dll", ".so", ".bat", ".cmd"}:
                     if numeric_root not in {"20_TESTS", "07_EVALUATION"}:

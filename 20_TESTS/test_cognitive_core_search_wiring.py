@@ -36,6 +36,8 @@ def mock_storage():
                 "title": f"Test Note {i}",
                 "content": f"Content of test note {i} discussing systems and architecture.",
                 "verification": "verified",
+
+                "provenance": {"source_type": "user", "source_ref": "test-fixture"},
             }
         )
     return storage

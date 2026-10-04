@@ -1,0 +1,82 @@
+[
+  {
+    "claim_id": "claim_architecture_patterns_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/architecture_patterns.md",
+    "source_skill": "api-patterns",
+    "source_path": ".agents/skills/api-patterns/SKILL.md",
+    "source_sha1": "c7b16b47b7f40703a2434e46bce8bde013f62946",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_system_design_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/system_design.md",
+    "source_skill": "architecture",
+    "source_path": ".agents/skills/architecture/SKILL.md",
+    "source_sha1": "efe1d4feff4a45cf4f5004c8b5f43fb0e59d1b12",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_backend_concurrency_services_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/backend_concurrency_services.md",
+    "source_skill": "adobe-illustrator-scripting",
+    "source_path": ".agents/skills/adobe-illustrator-scripting/SKILL.md",
+    "source_sha1": "17834d47deaa59334387923f05859e1efa8c2184",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_api_design_patterns_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/api_design_patterns.md",
+    "source_skill": "api-analyzer",
+    "source_path": ".agents/skills/api-analyzer/SKILL.md",
+    "source_sha1": "2ec7262424eab749d7bc28524f63251428671e9e",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_relational_databases_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/relational_databases.md",
+    "source_skill": "claimable-postgres",
+    "source_path": ".agents/skills/claimable-postgres/SKILL.md",
+    "source_sha1": "6e4e741a17d7590b68f6532f0e51b5258193f997",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_nosql_vector_databases_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/nosql_vector_databases.md",
+    "source_skill": "application-performance-performance-optimization",
+    "source_path": ".agents/skills/application-performance-performance-optimization/SKILL.md",
+    "source_sha1": "4365768627ef6af611fcba0ed68b3b93316d4c14",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_caching_data_pipelines_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/caching_data_pipelines.md",
+    "source_skill": "data-engineering-data-pipeline",
+    "source_path": ".agents/skills/data-engineering-data-pipeline/SKILL.md",
+    "source_sha1": "f664a4094d9486424bbc26adb99b1ebab4372ab6",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_systems_programming_languages_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/systems_programming_languages.md",
+    "source_skill": "akf-trust-metadata",
+    "source_path": ".agents/skills/akf-trust-metadata/SKILL.md",
+    "source_sha1": "c0cb66c8d0dea2fac8711b839a33bfbbc86f09b8",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_enterprise_languages_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/enterprise_languages.md",
+    "source_skill": "async-python-patterns",
+    "source_path": ".agents/skills/async-python-patterns/SKILL.md",
+    "source_sha1": "b3091a0bfc343ad63cd4d804af1d82d8f0396b23",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "claim_compilers_ast_tooling_primary",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/01_architecture_backend_data/playbooks/compilers_ast_tooling.md",
+    "source_skill": "fastapi-pro",
+    "source_path": ".agents/skills/fastapi-pro/SKILL.md",
+    "source_sha1": "29324b5b275741abcf5074a6c46189d1020165cc",
+    "evidence_type": "desc"
+  }
+]

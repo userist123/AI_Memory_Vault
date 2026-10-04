@@ -646,7 +646,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 
 | What it checks | Workflows |
 |---|---|
-| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml` |
+| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml` |
 | repository hygiene: absolute paths, disallowed root files, personal data | `repository-hygiene.yml` |
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
