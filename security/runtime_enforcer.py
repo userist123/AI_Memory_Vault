@@ -312,13 +312,11 @@ class RuntimeEnforcer:
             if approval.operation_type != request.operation_type:
                 return RuntimeAuthorization(False, "approval_operation_mismatch")
 
-            if approval.revision_id is not None and request.revision_id is not None:
-                if approval.revision_id != request.revision_id:
-                    return RuntimeAuthorization(False, "approval_revision_mismatch")
+            if approval.revision_id != request.revision_id:
+                return RuntimeAuthorization(False, "approval_revision_mismatch")
 
-            if approval.content_sha256 is not None and request.content_sha256 is not None:
-                if approval.content_sha256 != request.content_sha256:
-                    return RuntimeAuthorization(False, "approval_content_mismatch")
+            if approval.content_sha256 != request.content_sha256:
+                return RuntimeAuthorization(False, "approval_content_mismatch")
 
             self._used_approvals.add(approval.approval_id)
             if self._nonce_store is not None:

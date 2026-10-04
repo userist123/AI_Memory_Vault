@@ -53,6 +53,8 @@ class RuntimeAdapter:
         return self._enforcer.broker
 
     def issue_approval(self, **kwargs: Any) -> ApprovalToken:
+        if self._production_mode:
+            raise PermissionError("issue_approval is forbidden on RuntimeAdapter in production mode; approvals must originate from the external authority broker")
         return self._enforcer.issue_approval(**kwargs)
 
     def register(

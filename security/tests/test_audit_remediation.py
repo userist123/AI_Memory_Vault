@@ -132,6 +132,53 @@ def test_m01_b02_revision_binding_mismatch_rejected():
     assert res.reason == "approval_revision_mismatch"
 
 
+def test_m01_b02_omitted_revision_or_content_rejected():
+    """Red Team: Attacker attempts to bypass revision/content check by omitting them from request."""
+    broker = ApprovalBroker("secret-production-broker-key-32bytes!")
+    enforcer = RuntimeEnforcer(broker=broker)
+    now = datetime.now(timezone.utc)
+
+    token = broker.issue_approval(
+        approval_id="app-strict-rev",
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-42",
+        parameters_sha256=ExecutionRequest(actor="operator", tool_name="memory_patch", target="note-42", parameters={"op": "update"}).parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-rev-strict-1",
+        revision_id="rev-exact-1",
+        content_sha256=hashlib.sha256(b"exact-content").hexdigest(),
+    )
+    decision = TrustDecision(TrustState.REVIEW, ("review",), True)
+
+    # 1. Request with omitted revision_id (None) -> rejected fail-closed
+    req_no_rev = ExecutionRequest(
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-42",
+        parameters={"op": "update"},
+        revision_id=None,
+        content_sha256=hashlib.sha256(b"exact-content").hexdigest(),
+    )
+    res_no_rev = enforcer.authorize(req_no_rev, decision, approval=token, now=now)
+    assert not res_no_rev.allowed
+    assert res_no_rev.reason == "approval_revision_mismatch"
+
+    # 2. Request with omitted content_sha256 (None) -> rejected fail-closed
+    req_no_hash = ExecutionRequest(
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-42",
+        parameters={"op": "update"},
+        revision_id="rev-exact-1",
+        content_sha256=None,
+    )
+    res_no_hash = enforcer.authorize(req_no_hash, decision, approval=token, now=now)
+    assert not res_no_hash.allowed
+    assert res_no_hash.reason == "approval_content_mismatch"
+
+
 def test_m01_b02_replay_attack_rejected():
     broker = ApprovalBroker("secret-production-broker-key-32bytes!")
     enforcer = RuntimeEnforcer(broker=broker)
@@ -672,5 +719,19 @@ def test_m07_security_update_manager_production_mode():
             install=lambda u, p: None,
             production_mode=True,
         )
+
+
+def test_runtime_adapter_production_mode_forbids_self_approval():
+    from security.supply_chain_policy import SoftwareAISupplyChainPolicy
+    policy = SoftwareAISupplyChainPolicy()
+    adapter = RuntimeAdapter(supply_chain_policy=policy, production_mode=True)
+    with pytest.raises(PermissionError, match="issue_approval is forbidden on RuntimeAdapter in production mode"):
+        adapter.issue_approval(
+            actor="agent",
+            tool_name="shell",
+            target="exec",
+            parameters_sha256="abc",
+        )
+
 
 
