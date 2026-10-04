@@ -93,14 +93,14 @@ The benchmark is the required bridge between literature and implementation.
 
 ## Status
 - benchmark definition: prepared
-- task corpus: instantiated (70 cases; development/calibration/held_out splits)
-- baseline run: executed and frozen
-- variant: blocked by strict runtime guard because the current production candidate pool supplied 200 graph seeds and zero new graph nodes
+- candidate task packet: materialized by the CI research runner as 70 cases across development/calibration/held_out splits
+- repository reproducibility gate: BLOCKED because the exact Raw Inbox source snapshot is not versioned in Git and five manifest sources remain unavailable
+- baseline evidence admission: BLOCKED until the exact source snapshot, frozen manifest, and canonical corpus hash are independently reproducible
+- latest CI H1 runner: SUCCESS at workflow level, but its associative arm was runtime-BLOCKED because the production candidate pool supplied 200 graph seeds and zero new graph nodes
+- no paired baseline-vs-variant result is admitted from that blocked arm
 - ACTIVE promotion: prohibited
-- task corpus: not yet instantiated
-- baseline run: not yet executed
-- variant: not implemented
-- ACTIVE promotion: prohibited
+- variant implementation: not performed
+- production retrieval changes: none
 
 ## Corpus gate
 The frozen case set must pass 08_RESEARCH/BOOK_TO_MEMORY/validate_h1_corpus.py before any baseline measurement is admitted.
@@ -121,7 +121,6 @@ The validator checks:
 The validator deliberately does not infer lexical/entity reachability from shortened labeling excerpts. Runtime stage evidence must follow `08_RESEARCH/BOOK_TO_MEMORY/H1-RUNTIME-EVIDENCE-CONTRACT.md` and be frozen with the baseline. Reachability is a reported stratum, not a post-hoc case-selection filter; associative subgroup criteria must be preregistered and the full parent denominator retained.
 
 A validator warning is not evidence of successful associative retrieval. A validator error blocks the corpus from baseline measurement.
-
 
 ## Model/evaluator identity
 
