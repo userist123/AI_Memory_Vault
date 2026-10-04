@@ -166,9 +166,9 @@
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
                                     <Ellipse Width="6" Height="6" Fill="{StaticResource SuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="LIVE EDR STREAM ACTIVE" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}"/>
+                                    <TextBlock Text="MONITORIZARE LIVE JURNALE" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}"/>
                                 </StackPanel>
-                                <TextBlock Text="Kernel ETW interceptor active in memory." FontSize="9" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="9" Foreground="{StaticResource TextSecondaryBrush}"/>
                             </StackPanel>
                         </Border>
                         <Button Content="Export Live Report" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"/>

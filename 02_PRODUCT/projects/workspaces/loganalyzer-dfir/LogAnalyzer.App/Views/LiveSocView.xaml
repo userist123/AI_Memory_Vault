@@ -18,34 +18,12 @@
                     <Button Content="⏹ STOP" Command="{Binding StopLiveMonitoringCommand}" Style="{StaticResource DangerButtonStyle}" Padding="12,5" Margin="0,0,8,0"/>
 
                     <!-- Attack Simulation Dropdown -->
-                    <Button Content="Simulate Attack (11 Scenarios) ▾" Click="SimulateMenuButton_Click" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" Foreground="{StaticResource PrimaryAccentBrush}" FontWeight="Bold" Padding="12,5" Margin="0,0,8,0">
-                        <Button.ContextMenu>
-                            <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
-                                <MenuItem Header="1. Generic SOC Signature Match" Command="{Binding SimulateLiveAlertCommand}"/>
-                                <MenuItem Header="2. Phishing &amp; Dropper (T1566)" Command="{Binding SimulatePhishingAttackCommand}"/>
-                                <MenuItem Header="3. Lateral Movement PsExec (T1021.002)" Command="{Binding SimulateLateralMovementAttackCommand}"/>
-                                <MenuItem Header="4. BYOVD Kernel Ring 0 Exploit (T1068)" Command="{Binding SimulateByovdAttackCommand}"/>
-                                <MenuItem Header="5. Process Hollowing Injection (T1055.012)" Command="{Binding SimulateProcessHollowingAttackCommand}"/>
-                                <MenuItem Header="6. Physical BadUSB / Rubber Ducky (T1052.001)" Command="{Binding SimulateBadUsbAttackCommand}"/>
-                                <MenuItem Header="7. Infostealer &amp; Session Hijacking (T1539)" Command="{Binding SimulateMfaBypassStealerAttackCommand}"/>
-                                <MenuItem Header="8. LLMNR / NTLM Network Poisoning (T1557.001)" Command="{Binding SimulateLlmnrPoisoningAttackCommand}"/>
-                                <MenuItem Header="9. Potato Privilege Escalation (T1134.001)" Command="{Binding SimulatePotatoPrivEscAttackCommand}"/>
-                                <MenuItem Header="10. CPU Silicon &amp; Rowhammer (T1499)" Command="{Binding SimulateCpuSiliconAttackCommand}"/>
-                                <MenuItem Header="11. Acoustic Fan Exfiltration (T1048)" Command="{Binding SimulateAcousticFanAttackCommand}"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
 
                     <!-- Remediation Action Dropdown -->
-                    <Button Content="Remediation Playbook ▾" Click="SimulateMenuButton_Click" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource SuccessBrush}" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" Padding="12,5" Margin="0,0,8,0">
+                    <Button Content="Restaurare rețea ▾" Click="SimulateMenuButton_Click" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource SuccessBrush}" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" Padding="12,5" Margin="0,0,8,0">
                         <Button.ContextMenu>
                             <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
-                                <MenuItem Header="1. De-Isolate Network (Flush Containment Rules)" Command="{Binding ExecuteRestoreNetworkCommand}"/>
-                                <MenuItem Header="2. Purge Remote PsExec Services" Command="{Binding RemediateServicesActionCommand}"/>
-                                <MenuItem Header="3. Clean Vulnerable BYOVD Drivers" Command="{Binding RemediateDriversActionCommand}"/>
-                                <MenuItem Header="4. Enforce LSA Protection (RunAsPPL &amp; HVCI)" Command="{Binding RemediateLsaProtectionActionCommand}"/>
-                                <MenuItem Header="5. Reset Acoustic Fan Policy (TEMPEST)" Command="{Binding RemediateHardwareCoolingActionCommand}"/>
-                                <MenuItem Header="6. Total Containment Flush" Command="{Binding RemediateResetAllRulesActionCommand}"/>
+                                <MenuItem Header="Ridică izolarea întregii stații (regula LogAnalyzer din firewall)" Command="{Binding ExecuteRestoreNetworkCommand}"/>
                             </ContextMenu>
                         </Button.ContextMenu>
                     </Button>

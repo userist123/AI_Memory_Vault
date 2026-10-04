@@ -120,7 +120,7 @@ namespace LogAnalyzer.Core.Services
                     SignatureTechniques = actor.SignatureTechniques,
                     MatchedTechniques = matched,
                     MatchScore = Math.Round(score, 1),
-                    MatchLevel = score >= 70 ? "RIDICAT (Probabilitate Mare)" : score >= 40 ? "MODERAT" : "SCĂZUT",
+                    MatchLevel = (score >= 70 ? "suprapunere mare" : score >= 40 ? "suprapunere moderată" : "suprapunere mică") + " de tehnici — NU este atribuire",
                     MatchColor = score >= 70 ? "#ef4444" : score >= 40 ? "#f97316" : "#38bdf8"
                 };
 
