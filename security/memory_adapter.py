@@ -114,11 +114,54 @@ class MemoryAdapter:
                 payload=payload,
                 namespace=namespace,
             )
-            decision = self.boundary.commit(
-                record,
-                trust_state,
-                human_approved=human_approved,
-            )
+            try:
+                decision = self.boundary.commit(
+                    record,
+                    trust_state,
+                    human_approved=human_approved,
+                )
+            except Exception as commit_exc:
+                if staged:
+                    if self._rollback is not None:
+                        try:
+                            self._rollback(namespace, dict(payload))
+                            self._audit(
+                                "MEMORY_ROLLBACK",
+                                correlation,
+                                state,
+                                "ROLLED_BACK",
+                                payload=payload,
+                                namespace=namespace,
+                                decision_reason="commit_exception",
+                            )
+                        except Exception as rb_exc:
+                            self._audit(
+                                "MEMORY_ROLLBACK_ERROR",
+                                correlation,
+                                state,
+                                "INTEGRITY_FAILURE",
+                                payload=payload,
+                                namespace=namespace,
+                                error=rb_exc,
+                            )
+                            raise MemoryIntegrityError(
+                                f"INTEGRITY_FAILURE: persist succeeded but commit raised exception and rollback failed: {rb_exc}"
+                            ) from rb_exc
+                    else:
+                        self._audit(
+                            "MEMORY_ROLLBACK_ERROR",
+                            correlation,
+                            state,
+                            "INTEGRITY_FAILURE",
+                            payload=payload,
+                            namespace=namespace,
+                            error="missing_rollback_handler",
+                        )
+                        raise MemoryIntegrityError(
+                            "INTEGRITY_FAILURE: persist succeeded but commit raised exception and no rollback handler was configured"
+                        )
+                raise
+
             if not decision.allowed:
                 if staged:
                     if self._rollback is not None:

@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Tuple
 from .attention import AttentionModel
 from memory_controller.controller import Lifecycle
+from memory_controller.authorizer import Principal
 
 class WorkingMemory:
     """

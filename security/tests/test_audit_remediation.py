@@ -593,3 +593,84 @@ def test_hard_token_cap_guaranteed_fail_closed():
     except BudgetExceededError:
         pass  # Fail closed is explicitly permitted and required if content cannot fit
 
+
+def test_m01_concurrent_replay_race_condition():
+    import concurrent.futures
+
+    broker = ApprovalBroker("secret-concurrent-broker-key-32b!!")
+    enforcer = RuntimeEnforcer(broker=broker)
+    now = datetime.now(timezone.utc)
+
+    req = ExecutionRequest(
+        actor="operator",
+        tool_name="system_tool",
+        target="target-concurrent",
+        parameters={"action": "clean"},
+    )
+    token = broker.issue_approval(
+        approval_id="app-concurrent-replay",
+        actor="operator",
+        tool_name="system_tool",
+        target="target-concurrent",
+        parameters_sha256=req.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-concurrent-1",
+    )
+    decision = TrustDecision(TrustState.REVIEW, ("review",), True)
+
+    def attempt_authorize():
+        return enforcer.authorize(req, decision, approval=token, now=now)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        futures = [pool.submit(attempt_authorize) for _ in range(8)]
+        results = [f.result() for f in futures]
+
+    allowed_count = sum(1 for r in results if r.allowed)
+    replayed_count = sum(1 for r in results if not r.allowed and r.reason == "approval_replayed")
+
+    # Exactly 1 request allowed, exactly 7 rejected due to thread-safe lock!
+    assert allowed_count == 1
+    assert replayed_count == 7
+
+
+def test_b01_nested_provenance_synthetic_blocked():
+    boundary = MemoryWriteBoundary()
+
+    # Nested dict provenance claiming source_type synthetic
+    payload_nested_prov = {
+        "id": "exp-synth-nested-1",
+        "provenance": {"source_type": "synthetic"},
+        "verification": {"status": "verified"},
+        "content": "synthetic benchmark dataset",
+    }
+    rec, dec = boundary.prepare("knowledge", payload_nested_prov, TrustState.TRUSTED)
+    assert dec is not None
+    assert not dec.allowed
+    assert dec.reason == "synthetic_evidence_promotion_blocked"
+
+    # Nested dict provenance claiming synthetic boolean
+    payload_nested_bool = {
+        "id": "exp-synth-nested-2",
+        "provenance": {"synthetic": True},
+        "lifecycle": "ACTIVE",
+        "content": "synthetic reasoning traces",
+    }
+    rec2, dec2 = boundary.prepare("knowledge", payload_nested_bool, TrustState.TRUSTED)
+    assert dec2 is not None
+    assert not dec2.allowed
+    assert dec2.reason == "synthetic_evidence_promotion_blocked"
+
+
+def test_m07_security_update_manager_production_mode():
+    policy = SecurityUpdatePolicy(current_version="1.0.0")
+    # In production_mode without provenance_policy, must raise PermissionError fail-closed
+    with pytest.raises(PermissionError, match="production runtime requires mandatory provenance_policy"):
+        SecurityUpdateManager(
+            policy=policy,
+            verify_signature=lambda u: True,
+            install=lambda u, p: None,
+            production_mode=True,
+        )
+
+

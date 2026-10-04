@@ -43,12 +43,16 @@ class SecurityUpdateManager:
         install: PackageInstaller,
         audit_trail: AuditTrail | None = None,
         provenance_policy: CatalogProvenancePolicy | None = None,
+        production_mode: bool = False,
     ) -> None:
+        if production_mode and provenance_policy is None:
+            raise PermissionError("production runtime requires mandatory provenance_policy")
         self.policy = policy
         self._verify_signature = verify_signature
         self._install = install
         self._audit = audit_trail
         self._provenance_policy = provenance_policy
+        self._production_mode = production_mode
 
     def evaluate(
         self,

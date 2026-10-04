@@ -174,12 +174,19 @@ class PersistentNonceStore:
                     return True
             return False
 
-    def mark_seen(self, identifier: str) -> None:
+    def check_and_mark(self, identifier: str) -> bool:
+        """Atomically checks if identifier was seen. If already seen, returns False. If new, marks and returns True."""
         if not identifier:
-            return
+            return False
         with self._lock:
+            if not self.path.exists():
+                self.path.write_text("", encoding="utf-8")
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                if line.strip() == identifier:
+                    return False
             with open(self.path, "a", encoding="utf-8") as f:
                 f.write(f"{identifier}\n")
+            return True
 
 
 @dataclass(frozen=True)
@@ -209,6 +216,7 @@ class RuntimeEnforcer:
         self._capabilities = capabilities
         self._update_policy = update_policy
         self._require_authenticated_approval = require_authenticated_approval
+        self._lock = threading.RLock()
         if broker is not None:
             self._broker = broker
         elif approval_secret is not None:
@@ -238,84 +246,85 @@ class RuntimeEnforcer:
         approval: ApprovalToken | None = None,
         now: datetime | None = None,
     ) -> RuntimeAuthorization:
-        current = _utc(now or datetime.now(timezone.utc))
+        with self._lock:
+            current = _utc(now or datetime.now(timezone.utc))
 
-        if self._update_policy is not None:
-            try:
-                self._update_policy.enforce(protected_operation=True)
-            except SecurityUpdateRequired:
-                return RuntimeAuthorization(False, "security_update_required")
+            if self._update_policy is not None:
+                try:
+                    self._update_policy.enforce(protected_operation=True)
+                except SecurityUpdateRequired:
+                    return RuntimeAuthorization(False, "security_update_required")
 
-        if decision.state is TrustState.BLOCKED:
-            return RuntimeAuthorization(False, "blocked_content")
-        if decision.state is TrustState.UNTRUSTED:
-            return RuntimeAuthorization(False, "untrusted_content")
+            if decision.state is TrustState.BLOCKED:
+                return RuntimeAuthorization(False, "blocked_content")
+            if decision.state is TrustState.UNTRUSTED:
+                return RuntimeAuthorization(False, "untrusted_content")
 
-        if self._capabilities is not None and not self._capabilities.allows(
-            request.actor, request.tool_name, request.target, current
-        ):
-            return RuntimeAuthorization(False, "capability_denied")
+            if self._capabilities is not None and not self._capabilities.allows(
+                request.actor, request.tool_name, request.target, current
+            ):
+                return RuntimeAuthorization(False, "capability_denied")
 
-        approval_required = (
-            decision.state is TrustState.REVIEW
-            or decision.requires_human_approval
-            or request.side_effect
-            or request.data_export
-        )
-
-        if not approval_required:
-            return RuntimeAuthorization(True, "allowed")
-
-        if approval is None:
-            return RuntimeAuthorization(False, "approval_required")
-
-        if not approval.nonce or not approval.nonce.strip():
-            return RuntimeAuthorization(False, "approval_missing_nonce")
-
-        if self._require_authenticated_approval:
-            if not approval.signature:
-                return RuntimeAuthorization(False, "approval_unauthenticated")
-            if not self._broker.verify(approval):
-                return RuntimeAuthorization(False, "approval_invalid_signature")
-
-        if approval.approval_id in self._used_approvals or (
-            self._nonce_store is not None
-            and (
-                self._nonce_store.has_seen(approval.approval_id)
-                or self._nonce_store.has_seen(approval.nonce)
+            approval_required = (
+                decision.state is TrustState.REVIEW
+                or decision.requires_human_approval
+                or request.side_effect
+                or request.data_export
             )
-        ):
-            return RuntimeAuthorization(False, "approval_replayed")
 
-        if current >= _utc(approval.expires_at):
-            return RuntimeAuthorization(False, "approval_expired")
-        if current < _utc(approval.issued_at):
-            return RuntimeAuthorization(False, "approval_not_yet_valid")
+            if not approval_required:
+                return RuntimeAuthorization(True, "allowed")
 
-        if (
-            approval.actor != request.actor
-            or approval.tool_name != request.tool_name
-            or approval.target != request.target
-            or approval.parameters_sha256 != request.parameters_sha256()
-        ):
-            return RuntimeAuthorization(False, "approval_parameter_mismatch")
+            if approval is None:
+                return RuntimeAuthorization(False, "approval_required")
 
-        if approval.operation_type != request.operation_type:
-            return RuntimeAuthorization(False, "approval_operation_mismatch")
+            if not approval.nonce or not approval.nonce.strip():
+                return RuntimeAuthorization(False, "approval_missing_nonce")
 
-        if approval.revision_id is not None and request.revision_id is not None:
-            if approval.revision_id != request.revision_id:
-                return RuntimeAuthorization(False, "approval_revision_mismatch")
+            if self._require_authenticated_approval:
+                if not approval.signature:
+                    return RuntimeAuthorization(False, "approval_unauthenticated")
+                if not self._broker.verify(approval):
+                    return RuntimeAuthorization(False, "approval_invalid_signature")
 
-        if approval.content_sha256 is not None and request.content_sha256 is not None:
-            if approval.content_sha256 != request.content_sha256:
-                return RuntimeAuthorization(False, "approval_content_mismatch")
+            if approval.approval_id in self._used_approvals or (
+                self._nonce_store is not None
+                and (
+                    self._nonce_store.has_seen(approval.approval_id)
+                    or self._nonce_store.has_seen(approval.nonce)
+                )
+            ):
+                return RuntimeAuthorization(False, "approval_replayed")
 
-        self._used_approvals.add(approval.approval_id)
-        if self._nonce_store is not None:
-            self._nonce_store.mark_seen(approval.approval_id)
-            self._nonce_store.mark_seen(approval.nonce)
-        return RuntimeAuthorization(True, "allowed")
+            if current >= _utc(approval.expires_at):
+                return RuntimeAuthorization(False, "approval_expired")
+            if current < _utc(approval.issued_at):
+                return RuntimeAuthorization(False, "approval_not_yet_valid")
+
+            if (
+                approval.actor != request.actor
+                or approval.tool_name != request.tool_name
+                or approval.target != request.target
+                or approval.parameters_sha256 != request.parameters_sha256()
+            ):
+                return RuntimeAuthorization(False, "approval_parameter_mismatch")
+
+            if approval.operation_type != request.operation_type:
+                return RuntimeAuthorization(False, "approval_operation_mismatch")
+
+            if approval.revision_id is not None and request.revision_id is not None:
+                if approval.revision_id != request.revision_id:
+                    return RuntimeAuthorization(False, "approval_revision_mismatch")
+
+            if approval.content_sha256 is not None and request.content_sha256 is not None:
+                if approval.content_sha256 != request.content_sha256:
+                    return RuntimeAuthorization(False, "approval_content_mismatch")
+
+            self._used_approvals.add(approval.approval_id)
+            if self._nonce_store is not None:
+                if not self._nonce_store.check_and_mark(approval.approval_id) or not self._nonce_store.check_and_mark(approval.nonce):
+                    return RuntimeAuthorization(False, "approval_replayed")
+            return RuntimeAuthorization(True, "allowed")
 
     def execute(
         self,

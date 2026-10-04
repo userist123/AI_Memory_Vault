@@ -124,16 +124,17 @@ class MemoryDataEgressGate:
             for result in routed.get("results", []):
                 if isinstance(result, dict) and result.get("trust_state") == "UNVERIFIED_QUARANTINED":
                     result["content"] = ""
+                    result["snippet"] = ""
 
         try:
             hard_tokens = int(budget["hard_tokens"])
-            # Retrieval traces are audit/observability metadata, not model input.
+            # Retrieval traces and transport pagination tokens are metadata, not model prompt input.
             # They remain available to callers without consuming the model context
             # budget already satisfied by the producer.
             model_input = {
                 key: value
                 for key, value in routed.items()
-                if key not in {"candidate_trace", "retrieval_trace", "data_route"}
+                if key not in {"candidate_trace", "retrieval_trace", "data_route", "nextPageToken", "next_page_token"}
             }
             final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(model_input)
         except (KeyError, TypeError, ValueError) as exc:

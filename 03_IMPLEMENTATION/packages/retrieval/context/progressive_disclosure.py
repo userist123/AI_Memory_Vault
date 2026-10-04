@@ -127,6 +127,8 @@ class ProgressiveDisclosure:
             protected = self._protected_content(note)
             has_protected_spans = bool(self._protected_lines(content))
             snippet = content if (protected or has_protected_spans) else content[:chars]
+            if note.get("trust_state") == "UNVERIFIED_QUARANTINED" and note.get("model_egress") is False:
+                snippet = ""
             if protected and len(snippet.encode("utf-8")) > self.budget.hard_context_budget:
                 raise BudgetExceededError("Protected content exceeds hard disclosure budget")
             entry = {"id": note.get("id"), "snippet": snippet, **self._security_metadata(note), **self._result_metadata(note)}
@@ -157,6 +159,8 @@ class ProgressiveDisclosure:
                     raise BudgetExceededError("Protected sections exceed hard disclosure budget")
             else:
                 selected = matched[:5]
+            if note.get("trust_state") == "UNVERIFIED_QUARANTINED" and note.get("model_egress") is False:
+                selected = []
             entry = {"id": note.get("id"), "sections": selected, **self._security_metadata(note), **self._result_metadata(note)}
             if protected:
                 entry["protected_content"] = True
@@ -173,6 +177,8 @@ class ProgressiveDisclosure:
             if not self._verified(note) and not allow_unverified:
                 continue
             content = self._content_text(note.get("content", ""))
+            if note.get("trust_state") == "UNVERIFIED_QUARANTINED" and note.get("model_egress") is False:
+                content = ""
             size = len(content.encode("utf-8"))
             protected = self._protected_content(note)
             if not self._within_budget(usage + size):

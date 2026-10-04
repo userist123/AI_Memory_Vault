@@ -39,14 +39,20 @@ class MemoryWriteBoundary:
         if not isinstance(payload, dict):
             raise TypeError("payload must be a mapping")
         # B01 Synthetic evidence cannot be promoted to verified or active knowledge
+        prov = payload.get("provenance")
+        prov_dict = prov if isinstance(prov, dict) else {}
         is_synthetic = (
             payload.get("synthetic") is True
             or payload.get("source_type") == "synthetic"
-            or payload.get("provenance") == "synthetic"
+            or prov == "synthetic"
+            or prov_dict.get("source_type") == "synthetic"
+            or prov_dict.get("synthetic") is True
             or str(payload.get("corpus", "")).lower() == "synthetic"
         )
+        ver = payload.get("verification")
+        ver_status = (ver.get("status", "") if isinstance(ver, dict) else str(ver or "")).lower()
         claims_empirical = (
-            payload.get("verification") == "verified"
+            ver_status in ("verified", "active")
             or payload.get("lifecycle") == "ACTIVE"
             or payload.get("status") == "ACTIVE"
             or payload.get("empirically_confirmed") is True

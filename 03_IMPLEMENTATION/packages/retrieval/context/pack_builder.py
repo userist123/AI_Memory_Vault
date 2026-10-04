@@ -145,6 +145,7 @@ class ContextPackBuilder:
                 # route. The owner may inspect the quarantined content explicitly.
                 if str(agent_id) != "human":
                     item["content"] = ""
+                    item["snippet"] = ""
                     item["model_egress"] = False
             else:
                 item["model_egress"] = True
