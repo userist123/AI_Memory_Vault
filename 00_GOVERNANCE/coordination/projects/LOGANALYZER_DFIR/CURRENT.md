@@ -16,13 +16,15 @@ done_on_branch:
   - real parsers validated on the real incident corpus: MAM Prefetch, SRUM network usage (ESE), raw EVTX, PCAPNG (incl. Wi-Fi 802.11 frames)
   - phase 3 start: collector contract + safe external tool runner
   - licensing: LogAnalyzer.LicenseManager (WPF issuer + %APPDATA% ledger); KeyGen rewired to Core LicenseService (HWID mismatch fixed, stdin sanitised); Core VerifyLicenseString/BuildLicenseString; CoreLicenseKeyTests pin the key format
+  - consolidation: release docs (README, SECURITY, Documentation/RELEASE-CHECKLIST, MVP-DECISIONS, ENGINEERING-PLAYBOOK) and win-x64 single-file publish profiles recovered from LogAnalyzer.UI 137a626 and adapted per edition; CI moved to root .github/workflows/loganalyzer-dfir-build.yml (pinned, path-filtered); unique never-committed files preserved in _recovered/ with SHA-256 provenance
 verification:
   - dotnet build LogAnalyzer.slnx: 0 errors
   - LogAnalyzer.Dfir.Tests: 27/27 (corpus tests skip when the local corpus is absent)
   - LogAnalyzer.UI.Tests: 74/75; the failure (SecurityEventIngestionServiceTests.ReadsValidMetadataOnlyEvent) is pre-existing on main since fe4936510 (#204), not caused by this branch
   - personal_data_guard, validate_repository_layout, repository_hygiene, exempt_area_secret_scan: PASS
 next:
-  - recover release docs/publish profile/CI from origin/release/mvp-export-foundation (137a626) and unique never-committed files into _recovered/ with provenance
+  - port LogIntegrityService (1102/104, RecordID gaps) from _recovered prototype into Dfir findings
+  - owner decisions pending: untrack legacy root license.lic and root-level duplicate csproj files; RSA-PSS license migration (invalidates issued keys)
   - phase 3 collectors, phase 4-9 analysis/timeline/findings, phase 10 reports and core export, phase 12 UI integration
 notes:
   - the real incident corpus (D:\FORENSIC_CASE) is local evidence and must never be committed; tests read it only through targets.json + LADFIR_CORPUS
