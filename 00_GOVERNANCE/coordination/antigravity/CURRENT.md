@@ -1,15 +1,29 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-09-20T23:30:00Z
+last_updated_utc: 2026-10-04T14:45:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
-working_branch: antigravity/tokenizer-and-reranker-envelope
+working_branch: research/book-to-memory
 base_branch: origin/main
-base_sha: 0685d87b7
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-current_task: MEASUREMENT_PROGRAM_PART_3_PR_1_TOKENIZER_EXPERIMENT
+current_task: BOOK_TO_MEMORY_RESEARCH_TRACK_PHASES_1_THROUGH_11
 status: COMPLETE
 completed:
+  - "Book-to-Memory Research Track (Phases 1 to 11 Complete):
+     1. Phase 1 (Schema & Ontology): Canonical schemas for 11 note types, frontmatter parity, passive data plane, injection rejection (35/35 PASS).
+     2. Phase 2 (Lifecycle Gates): State machine enforcing GATE-01..GATE-08, cryptographic HMAC SHA-256 OwnerApprovalToken (28/28 PASS).
+     3. Phase 3 (Conflict Registry): Deterministic CONFLICT-<domain>-<slug> identity, dual claim preservation, severity gating (38/38 PASS).
+     4. Phase 4 (Usage Test Engine): Source-isolated task validation without book access, >= 8/10 score threshold (33/33 PASS).
+     5. Phase 5 (Paired Ablation Engine): WITH_NOTE vs WITHOUT_NOTE ablation delta measurement and degradation protection (24/24 PASS).
+     6. Phase 6 (Retrieval & Working Memory): Query-sensitive retrieval, similarity reranking, lifecycle filtering, budget bounds (23/23 PASS).
+     7. Phase 7 (End-to-End Pipeline & Pilot): Complete ingestion pipeline producing BookIngestionAuditReport (16/16 PASS).
+     8. Phase 8 (Corpus Catalog & Reversible Consolidation): 20-book raw corpus registration, chapter coverage, and reversible unpublishing (14/14 PASS).
+     9. Phase 9 (Problem Matrix & Hypotheses): Canonical vault bottlenecks and hypothesis lifecycle tracking (14/14 PASS).
+     10. Phase 10 (Controlled Experimentation Harness): Multi-sample shadow mode testing, statistical significance, and owner decision attestation (15/15 PASS).
+     11. Phase 11 (Unified Research Facade & Master Closure): BookToMemoryFacade orchestrating all phases with master SHA-256 state digest (7/7 PASS).
+     - Full test suite: 247/247 PASS across all 11 suites.
+     - Root security tests: 152/152 PASS; zero regressions.
+     - Pushed to remote research/book-to-memory; PR #206 updated with empirical proof receipts."
   - "Measurement Program Partea 3, PR 1 — Normalizarea Tokenizatorului (EXP-TOKEN-001):
      1. Pre-registration committed alone in commit f3a19bc59 (07_EVALUATION/tokenizer_experiment/PREREGISTRATION.md):
         - H-TOKEN-1: Delta_RO >= +5.00 pp (>= 3 net cases won out of 61).
