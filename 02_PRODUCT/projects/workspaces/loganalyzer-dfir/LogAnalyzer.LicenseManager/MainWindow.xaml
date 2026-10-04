@@ -13,7 +13,7 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,18">
             <TextBlock Text="Manager Licențe LogAnalyzer" FontSize="22" FontWeight="SemiBold"/>
-            <TextBlock Text="Emite chei pentru edițiile AirGapped și Network. Cheia e legată de Hardware ID-ul afișat în fereastra de activare a aplicației."
+            <TextBlock Text="Emite chei pentru LogAnalyzer (ambele moduri, AirGapped și Network). Cheia e legată de Hardware ID-ul afișat în fereastra de activare a aplicației."
                        Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
 

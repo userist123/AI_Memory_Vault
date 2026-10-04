@@ -2,14 +2,20 @@
 
 Aplicație desktop WPF (.NET 10) pentru analiză DFIR locală pe Windows: achiziție și import de probe, parsere de artefacte, timeline, corelare, findings, rapoarte și export — cu SHA-256, chain of custody și raportarea explicită a golurilor de probă.
 
-Există două ediții, construite din aceeași bază de cod:
+O singură aplicație, `LogAnalyzer.exe`, care își alege singură modul de lucru la pornire:
 
-| Ediție | Proiect | Scop |
+| Mod | Când | Ce face |
 |---|---|---|
-| **AirGapped** | `LogAnalyzer.AirGapped/` | Stații izolate, fără rețea; compilată cu `AIR_GAPPED_EDITION` |
-| **Network** | `LogAnalyzer.Network/` | Stații conectate (funcții care folosesc rețeaua) |
+| **Network** | Windows raportează conexiune la Internet | Monitorizare live, fluxul SOC, audit Active Directory / domeniu, receptor Syslog, integrări online |
+| **AirGapped** | Fără Internet: doar rețea locală, nicio rețea sau stare nedeterminată | Analiză offline, audit local SAM & USB, conformitate pentru stații izolate. Orice funcție care ar deschide o conexiune este blocată (`NetworkPolicy`) |
 
-Ambele ediții sunt licențiate per stație (Hardware ID).
+Cum se decide:
+- **Detectarea este pasivă.** Aplicația citește starea din Windows Network List Manager (rezultatul verificării pe care o face deja sistemul de operare) și nu trimite niciun pachet.
+- **La nesiguranță alege AirGapped.** Dacă starea nu poate fi determinată, se folosește modul sigur.
+- **Modul se poate forța:** `LogAnalyzer.exe --mode=airgapped|network|auto` sau fișierul `LogAnalyzer.mode` lângă executabil, care conține `airgapped`, `network` sau `auto`. Ordinea de prioritate: argumentul din linia de comandă, apoi fișierul, apoi detectarea.
+- **Modul nu se schimbă singur în timpul rulării.** Dacă o stație pornită în AirGapped primește conexiune, aplicația afișează avertizarea „STAȚIE IZOLATĂ CONECTATĂ LA REȚEA”, iar funcțiile de rețea rămân blocate.
+
+Aplicația este licențiată per stație (Hardware ID).
 
 ## Funcționalități principale
 
@@ -37,12 +43,11 @@ Testele pe corpusul real (`LogAnalyzer.Dfir.Tests`, `[CorpusFact]`) rulează doa
 ## Publicare
 
 ```powershell
-dotnet publish LogAnalyzer.AirGapped/LogAnalyzer.AirGapped.csproj -c Release -p:PublishProfile=win-x64-singlefile
-dotnet publish LogAnalyzer.Network/LogAnalyzer.Network.csproj   -c Release -p:PublishProfile=win-x64-singlefile
+dotnet publish LogAnalyzer.App/LogAnalyzer.App.csproj -c Release -p:PublishProfile=win-x64-singlefile
 ```
 
-Rezultatul ajunge în `publish\<Ediție>\win-x64\`: un singur executabil (~150 MB), împreună cu `Categories\`, `Data\` și `LatoFont\`.
-CI-ul (`.github/workflows/loganalyzer-dfir-build.yml`, la rădăcina vault-ului) produce aceleași artefacte la PR-uri și la push pe `main`.
+Rezultatul: `publish\LogAnalyzer\win-x64\` — `LogAnalyzer.exe` (~150 MB, single-file, self-contained) plus `Categories\`, `Data\` și `LatoFont\`.
+CI-ul (`.github/workflows/loganalyzer-dfir-build.yml`, la rădăcina vault-ului) produce același artefact la PR-uri și la push pe `main`.
 
 ## Licențe
 
@@ -59,7 +64,7 @@ Emiterea unei licențe:
    - **`LogAnalyzer.LicenseManager`** (recomandat, interfață grafică). Introduci clientul, Hardware ID-ul, valabilitatea (1/3/10 ani sau o dată aleasă) și note. Licența este verificată automat cu logica aplicației și trecută în registrul `%APPDATA%\LogAnalyzer\LicenseManager\issued_licenses.csv`. O poți copia sau salva direct ca `license.lic`.
    - `LogAnalyzer.KeyGen` (consolă): `LogAnalyzer.KeyGen <HWID> <YYYY-MM-DD>` sau interactiv.
    - `Generate-LicenseKey.ps1 -HardwareId <HWID> -ExpiryDate <YYYY-MM-DD>` (fără build).
-3. Clientul lipește șirul `CHEIE|YYYY-MM-DD` în fereastra de activare sau pune `license.lic` lângă `.exe`.
+3. Clientul lipește șirul `CHEIE|YYYY-MM-DD` în fereastra de activare sau pune `license.lic` lângă `LogAnalyzer.exe`.
 
 > Limitare: schema actuală este hash cu salt inclus în binar. Oprește copierea ocazională, dar nu și pe cineva care decompilează aplicația. Trecerea la semnătură asimetrică (RSA-PSS, cu cheia privată ținută doar pe stația de emitere) este planificată. Vezi `Documentation/MVP-DECISIONS.md`, decizia 9. Atenție: această trecere invalidează licențele deja emise.
 
@@ -67,8 +72,8 @@ Emiterea unei licențe:
 
 | Cale | Rol |
 |---|---|
-| `LogAnalyzer.AirGapped/`, `LogAnalyzer.Network/` | Edițiile WPF (Views, ViewModels, Services, Themes, Categories) |
-| `LogAnalyzer.Core/` | Modele, interfețe, servicii de domeniu, licențiere |
+| `LogAnalyzer.App/` | Aplicația WPF (Views, ViewModels, Services, Themes, Categories); modul AirGapped/Network se alege la pornire |
+| `LogAnalyzer.Core/` | Modele, interfețe, servicii de domeniu, licențiere, detectarea modului (`Services/Connectivity`) |
 | `LogAnalyzer.Infrastructure/` | Parsere, motoare de detecție, acces la date |
 | `LogAnalyzer.Dfir.Core/`, `LogAnalyzer.Dfir.Windows/` | Platforma DFIR: caz, probe, custodie, parsere reale, colectoare |
 | `LogAnalyzer.Dfir.Tests/`, `LogAnalyzer.UI.Tests/` | Teste (xUnit) |
