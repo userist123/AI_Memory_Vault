@@ -64,6 +64,25 @@ Fila **„Control stație”** (`LogAnalyzer.exe --tab=14`) pregătește verific
   - **NEDETERMINAT**: sursa nu a putut fi citită. Nu înseamnă că activitatea nu a avut loc.
 - **Raportul** conține verificările, cu probele fiecăreia (jurnal, RecordID, ora), activitatea pe utilizator, cronologia acțiunilor (cine, ce, când) și golurile de probă. Se salvează în cazul stației (`Control/CONTROL_<dată>/`), ca JSON și PDF înregistrate cu SHA-256.
 - Pentru jurnalul Security și politica de audit, aplicația trebuie rulată ca administrator.
+## Investigație în domeniu și e-mail
+
+Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are trei părți:
+
+- **Domeniu.** Inventar LDAP doar în citire, făcut cu contul Windows curent. Verificările sunt implementate de noi, după modelul PingCastle:
+  - conturi cu SPN (Kerberoasting) și conturi fără pre-autentificare (AS-REP roasting);
+  - PASSWD_NOTREQD, criptare reversibilă, DES;
+  - membrii recursivi ai grupurilor privilegiate (dezactivați, neutilizați, cu parolă care nu expiră);
+  - conturi și calculatoare neutilizate, vechimea parolei krbtgt, delegare neconstrânsă, adminCount orfan;
+  - sisteme de operare fără suport, politica de parole și de blocare.
+- **Utilizator.** Profilul din AD, grupurile privilegiate și traseul autentificărilor din jurnalele Security ale controlerelor de domeniu (4624/4625/4740/4768/4769/4771/4776 și modificările de cont), plus sursele de autentificare.
+- **E-mail.** Aplicația generează scriptul oficial Microsoft: Exchange Online (`Get-MessageTraceV2`, `Get-InboxRule`, redirecționări) sau Exchange local (`Get-MessageTrackingLog`). Administratorul de e-mail îl rulează și se autentifică el însuși, deci aplicația nu primește parole. Exportul se importă și se analizează pentru:
+  - rafale de mesaje trimise (cont compromis folosit pentru spam);
+  - adresele IP de pe care s-a trimis;
+  - reguli de inbox care redirecționează, șterg sau ascund mesaje;
+  - redirecționarea automată a cutiei poștale;
+  - mesaje trimise în afara organizației.
+
+Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
 ## Cerințe
 
 - Rulare: Windows 10/11 x64. Pachetul este self-contained și nu necesită .NET instalat.
