@@ -20,7 +20,7 @@ done_on_branch:
 verification:
   - dotnet build LogAnalyzer.slnx: 0 errors
   - LogAnalyzer.Dfir.Tests: 27/27 (corpus tests skip when the local corpus is absent)
-  - LogAnalyzer.UI.Tests: 74/75; the failure (SecurityEventIngestionServiceTests.ReadsValidMetadataOnlyEvent) is pre-existing on main since fe4936510 (#204), not caused by this branch
+  - LogAnalyzer.UI.Tests: 75/75 (SecurityEventIngestionService now maps the snake_case event contract; the test had been failing on main since fe4936510 / #204)
   - personal_data_guard, validate_repository_layout, repository_hygiene, exempt_area_secret_scan: PASS
 next:
   - port LogIntegrityService (1102/104, RecordID gaps) from _recovered prototype into Dfir findings
