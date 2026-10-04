@@ -300,6 +300,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Governance policy document, not a storage-engine memory note. Adding note frontmatter would assign lifecycle and verification metadata to policy text and could change retrieval semantics."
+    },
+    {
+      "path": "01_KNOWLEDGE/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
     }
   ]
 }
