@@ -7,7 +7,7 @@ Data: 2026-10-04. Documentul pleacă de la cerințele proprietarului, formulate 
 | # | Cerința | Status |
 |---|---|---|
 | 1 | O singură aplicație. Detectează dacă PC-ul are Internet: dacă are, rulează Network; dacă nu, rulează AirGapped, cu tot ce trebuie pe o stație izolată | **Făcut** (`LogAnalyzer.App`, `Core/Services/Connectivity`) |
-| 2 | Când detectează un proces terț suspect, îi taie accesul la Internet **doar lui**, nu întregului PC. Îl izolează, îl scanează și verifică tot ce voia să facă. Datele se stochează pe evenimentul respectiv, iar la click se pot exporta ca PDF, inclusiv unde voia să ajungă procesul | Etapa A |
+| 2 | Când detectează un proces terț suspect, îi taie accesul la Internet **doar lui**, nu întregului PC. Îl izolează, îl scanează și verifică tot ce voia să facă. Datele se stochează pe evenimentul respectiv, iar la click se pot exporta ca PDF, inclusiv unde voia să ajungă procesul | **Făcut** (Etapa A: fila „Izolare procese suspecte”) |
 | 3 | Cercetarea altor suite de forensics, pentru rețea și pentru PC-uri conectate | **Acest document** |
 | 4 | Într-un domeniu: cercetare pe utilizatori, e-mailuri și alte module | Etapa D |
 | 5 | Pe o stație izolată (un singur PC, fără domeniu): ce pot face utilizatorii și administratorii, pentru verificările de control | Etapa C |

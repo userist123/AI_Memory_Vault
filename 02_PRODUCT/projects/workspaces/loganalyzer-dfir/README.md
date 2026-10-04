@@ -26,6 +26,24 @@ Aplicația este licențiată per stație (Hardware ID).
 - **Criminalistică**: SHA-256 la intake, chain of custody append-only, probe brute read-only
 - **Securitate**: SQLCipher pentru date la rest, Windows DPAPI pentru secrete
 
+## Izolarea proceselor suspecte
+
+Fila **„Izolare procese suspecte”** (sau `LogAnalyzer.exe --tab=13`) funcționează în ambele moduri, fără să deschidă nicio conexiune:
+
+1. **Caută procese suspecte.** Încredere mare înseamnă un program nesemnat, care rulează dintr-o locație în care orice utilizator poate scrie (AppData, Temp, ProgramData, Downloads) și are conexiuni în Internet. Este tiparul din cazul NanAgent.
+2. **Izolează și scanează.**
+   - O regulă Windows Firewall (ieșire și intrare) blochează **doar programul**; restul PC-ului rămâne conectat.
+   - Opțional, procesul se suspendă.
+   - Urmează scanarea, fără să se modifice nimic: SHA-256, semnătura (inclusiv cea din cataloagele Windows), PE și importuri, IOC-uri din conținut, procesul părinte și linia de comandă, conexiunile active, autostart, Prefetch și Defender (cu remedierea dezactivată, ca proba să rămână intactă).
+3. **Unde a încercat să meargă.** După activarea auditului „Filtering Platform Connection”, butonul „Reîmprospătează încercările blocate” citește evenimentele Security 5157 ale programului.
+4. **Incidentul** se salvează în cazul live (`%LOCALAPPDATA%\LogAnalyzer\Cases\LIVE-<stație>\Incidents\INC-nnnn`), cu copia programului ca probă (SHA-256 și custodie), jurnalul acțiunilor și constatările. **Export PDF** produce raportul complet.
+5. **Ridică izolarea** anulează regulile și suspendarea.
+
+Câteva reguli de funcționare:
+- **Izolarea automată** (comutatorul din antet) acționează la fiecare minut, doar pe procesele cu încredere mare care nu sunt aprobate. Nu suspendă procese.
+- **„E de încredere”** aprobă un program după SHA-256. Dacă fișierul se schimbă, aprobarea trebuie confirmată din nou.
+- Pentru firewall, Prefetch și autostart complet, aplicația trebuie rulată ca administrator.
+
 ## Cerințe
 
 - Rulare: Windows 10/11 x64. Pachetul este self-contained și nu necesită .NET instalat.

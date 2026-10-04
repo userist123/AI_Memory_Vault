@@ -16,19 +16,16 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
+                    <!-- Colours come from the style (TemplateBinding) so Accent/Danger/Success variants render as designed. -->
                     <Border x:Name="border"
-                            Background="{StaticResource Surface2Brush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="6"
-                            Padding="12,6">
+                            Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="{StaticResource Surface3Brush}"/>
-                            <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryAccentBrush}"/>
-                        </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="border" Property="Background" Value="{StaticResource PrimaryAccentBrush}"/>
                             <Setter Property="Foreground" Value="{StaticResource CanvasBrush}"/>
@@ -40,6 +37,12 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource Surface3Brush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource PrimaryAccentBrush}"/>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- Outline / Secondary Action Button -->

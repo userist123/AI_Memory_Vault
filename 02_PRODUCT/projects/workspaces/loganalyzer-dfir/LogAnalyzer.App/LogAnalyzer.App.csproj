@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

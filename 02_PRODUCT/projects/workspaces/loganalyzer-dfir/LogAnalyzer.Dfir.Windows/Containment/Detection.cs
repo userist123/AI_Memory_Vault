@@ -6,7 +6,12 @@ using LogAnalyzer.Dfir.Windows.Native;
 
 namespace LogAnalyzer.Dfir.Windows.Containment;
 
-public sealed record SuspectProcess(int Pid, string Name, string Path, IReadOnlyList<string> Reasons, IReadOnlyList<string> RemoteEndpoints, bool HighConfidence);
+public sealed record SuspectProcess(int Pid, string Name, string Path, IReadOnlyList<string> Reasons, IReadOnlyList<string> RemoteEndpoints, bool HighConfidence,
+                                    bool Trusted = false)
+{
+    /// <summary>Only these may be contained without asking: high confidence and not vouched for by the operator.</summary>
+    public bool EligibleForAutoContainment => HighConfidence && !Trusted;
+}
 
 /// <summary>
 /// Finds third-party processes worth containing. The pattern is the one seen in the NanAgent case: an unsigned
@@ -44,7 +49,7 @@ public static class SuspiciousProcessDetector
     }
 
     /// <summary>Scans running processes; never touches them.</summary>
-    public static IReadOnlyList<SuspectProcess> Scan()
+    public static IReadOnlyList<SuspectProcess> Scan(TrustedProgramStore? trusted = null)
     {
         var byPid = TcpTable.All().Where(c => c.State != "LISTEN" && !IsPrivateOrLocal(c.Remote.Address.ToString()))
                                   .GroupBy(c => c.Pid).ToDictionary(g => g.Key, g => g.Select(c => $"{c.Remote.Address}:{c.Remote.Port}").Distinct().ToList());
@@ -73,10 +78,12 @@ public static class SuspiciousProcessDetector
                 if (unsigned) reasons.Add(sig.IsSigned ? $"semnătură invalidă ({sig.Status})" : "fără semnătură digitală");
                 if (!unsigned && !(writable && internet)) continue;
 
-                result.Add(new SuspectProcess(p.Id, p.ProcessName, path, reasons, remotes ?? [], unsigned && writable && internet));
+                bool isTrusted = trusted?.IsTrusted(path) == true;
+                if (isTrusted) reasons.Add("marcat de operator ca program de încredere (SHA-256)");
+                result.Add(new SuspectProcess(p.Id, p.ProcessName, path, reasons, remotes ?? [], unsigned && writable && internet, isTrusted));
             }
         }
-        return result.OrderByDescending(s => s.HighConfidence).ThenByDescending(s => s.Reasons.Count).ToList();
+        return result.OrderByDescending(s => s.EligibleForAutoContainment).ThenByDescending(s => s.HighConfidence).ThenByDescending(s => s.Reasons.Count).ToList();
     }
 }
 

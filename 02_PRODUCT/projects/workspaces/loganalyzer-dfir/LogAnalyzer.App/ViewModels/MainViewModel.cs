@@ -90,6 +90,9 @@ namespace LogAnalyzer.UI.ViewModels
         public bool HasConnectivityWarning => !string.IsNullOrEmpty(ConnectivityWarningText);
         partial void OnConnectivityWarningTextChanged(string value) => OnPropertyChanged(nameof(HasConnectivityWarning));
 
+        /// <summary>Per-program containment ("Izolare procese suspecte" tab).</summary>
+        public ContainmentViewModel Containment { get; } = new();
+
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
 

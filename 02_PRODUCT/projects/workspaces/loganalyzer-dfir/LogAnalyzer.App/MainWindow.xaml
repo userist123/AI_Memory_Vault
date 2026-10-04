@@ -146,6 +146,7 @@
                             <!-- GROUP 4: TELEMETRY & AUDIT -->
                             <TextBlock Text="GOVERNANCE" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
                             <RadioButton Content="Telemetry &amp; Collector" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="12"/>
+                            <RadioButton Content="Izolare procese suspecte" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="13"/>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -213,6 +214,7 @@
                     <TabItem><views:LiveSocView/></TabItem>
                     <!-- 12: Telemetry & Forensic Triage Collector -->
                     <TabItem><views:DataCollectionView/></TabItem>
+                <TabItem><views:ProcessContainmentView DataContext="{Binding Containment}"/></TabItem>
                 </TabControl>
             </Grid>
         </Grid>

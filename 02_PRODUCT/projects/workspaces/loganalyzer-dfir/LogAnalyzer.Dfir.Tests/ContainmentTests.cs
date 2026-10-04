@@ -162,6 +162,21 @@ public class ContainmentTests : IDisposable
         Assert.True(new FileInfo(pdf).Length > 5_000);
     }
 
+    [Fact]
+    public void Trust_is_bound_to_the_file_hash_not_to_the_path()
+    {
+        var store = new TrustedProgramStore(Path.Combine(_root, "trusted.json"));
+        var path = UnsignedSample();
+        Assert.False(store.IsTrusted(path));
+        store.Trust(path, "tool", "tester");
+        Assert.True(new TrustedProgramStore(Path.Combine(_root, "trusted.json")).IsTrusted(path)); // persisted
+        File.AppendAllText(path, " replaced by something else");
+        File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddMinutes(1));
+        Assert.False(store.IsTrusted(path));
+        Assert.False(new SuspectProcess(1, "x", path, [], [], HighConfidence: true, Trusted: true).EligibleForAutoContainment);
+        Assert.True(new SuspectProcess(1, "x", path, [], [], HighConfidence: true).EligibleForAutoContainment);
+    }
+
     [AdminFact]
     public void Real_firewall_rule_is_created_and_removed()
     {

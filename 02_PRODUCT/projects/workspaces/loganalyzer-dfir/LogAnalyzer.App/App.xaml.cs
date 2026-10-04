@@ -111,6 +111,11 @@ namespace LogAnalyzer.UI
                 this.MainWindow = mainWindow;
                 File.AppendAllText(debugLogPath, "Showing MainWindow...\n");
                 mainWindow.Show();
+
+                // --tab=<n> opens a given tab at startup (e.g. 13 = "Izolare procese suspecte").
+                var tabArg = Array.Find(e.Args, a => a.StartsWith("--tab=", StringComparison.OrdinalIgnoreCase));
+                if (tabArg is not null && int.TryParse(tabArg[6..], out var tab) && mainWindow.DataContext is MainViewModel mvm)
+                    mvm.SelectedTabIndex = tab;
                 File.AppendAllText(debugLogPath, "MainWindow shown. Closing SplashWindow...\n");
                 splash.Close();
                 File.AppendAllText(debugLogPath, "Startup complete.\n");
