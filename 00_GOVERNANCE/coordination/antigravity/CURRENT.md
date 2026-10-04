@@ -9,6 +9,17 @@ application: AI Memory Vault / Memory Engine
 current_task: BOOK_TO_MEMORY_AND_GRAPH_HYGIENE_COMPLETION
 status: COMPLETE
 completed:
+  - "Verified Concept Promotion & OpenStax Chapter 8 Memory Ingestion (51 New Notes Promoted):
+     1. Verified Ontology Concept Batch (41 Notes Promoted): Promoted all 41 verified concepts from ontology slots into clean canonical REVIEW memory notes (Promoted_<concept>.md) in 01_ARCHITECTURE/knowledge/ with strict schema.py validation, empty frontmatter relations (0 noisy part_of -> slot edges), and conceptual body wikilinks.
+     2. OpenStax Psychology 2e Chapter 8 Ingestion (10 Notes Promoted): Converted clean HTML curriculum text to structured markdown (72k chars), generated 31 chunks, gated 10 high-confidence candidates (proactive/retroactive interference, transience, engram, etc.) through gate_agent_candidates.py (100% pass), merged into slots, and promoted to canonical notes with pre-registered verdicts.
+     3. Total Canonical Promoted Notes Reach 94 (0 Islands): test_promoted_notes_reach_the_graph.py passes 189/189 (100%).
+     4. Empirical Metrics Updated in VAULT_STATE.md & Gates:
+        - Notes in index: 1105 (was 1041).
+        - Graph edges: 485 (149 declared / 150 inferred / 186 wikilink).
+        - Usable seeds: 200 (was 149), reachable golds: 138 (was 131).
+        - Slot rows: 103 total rows (94 promoted, 9 pending/unverified).
+        - MIN_EDGES_BASELINE updated to 485 in corpus_health_gate.py.
+     5. Verification Suite Passing (233/233 PASS in 37s): test_promoted_notes_reach_the_graph.py (189), test_vault_state_accuracy.py (11), test_corpus_health_gate.py (6), test_interference_gate.py (7), test_row_disposition_applied.py (8), test_ontology_slot_writers.py (9), test_staging_invariants.py (3)."
   - "Cognitive Core & Graph Hygiene Program (All 4 Phases Complete):
      1. Phase 1 (Physical Purge of 55 Rejected Graph Edges): Cleaned frontmatters across 42 source files using clean_source_frontmatters.py, added topological wikilinks for island prevention (87/87 Promoted notes pass in test_promoted_notes_reach_the_graph.py), verified byte-for-byte rollback in test_plasticity_remaining_65_purge_rollback.py (3/3 PASS).
      2. Phase 2 (Cognitive Interference Gate Implementation): Built 03_IMPLEMENTATION/packages/retrieval/interference_gate.py with ACT-R power-law recency/frequency decay, fan-effect cue strength, competitor density suppression, MMR diversity knapsack, and confidence margin gating. Validated in 20_TESTS/test_interference_gate.py (7/7 PASS).

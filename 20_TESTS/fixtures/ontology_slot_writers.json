@@ -20,6 +20,12 @@
       "conclusion": "Was ungated: flipped any `proposed` row to `promoted` with no manifest. Gated here, with tests and a control."
     },
     {
+      "path": "30_SCRIPTS/ingestion/promote_verified_batch.py",
+      "role": "writer",
+      "gate": "verdict manifest (`07_EVALUATION/book_corpus_conversion/promotion_verdicts.json`)",
+      "conclusion": "Gated. Reads pre-registered human/expert promotion verdicts before updating slots or emitting notes."
+    },
+    {
       "path": "30_SCRIPTS/ingestion/purge_rejected_rows.py",
       "role": "writer",
       "gate": "disposition manifest (`UngatedCanonicalWrite`): `--apply` on the canonical slots needs targets that carry a manifest-supplied disposition; dry run and copies stay free",
