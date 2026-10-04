@@ -1876,6 +1876,7 @@ namespace LogAnalyzer.UI.ViewModels
             _databaseService.ClearDatabase();
 
             var acceptedFiles = new List<string>();
+            var importErrors = new List<string>();
             var rejectedFiles = new List<string>();
 
             await Task.Run(async () =>
@@ -2000,8 +2001,16 @@ namespace LogAnalyzer.UI.ViewModels
                             _databaseService.SaveTimeline(timelineBatch);
                             totalEvtxProcessed += batch.Count;
                         }
+                        if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
+                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
+                        if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
+                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
                     } 
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // Never skip a file silently: the operator must know what is missing from the analysis.
+                        importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
+                    }
                 }
 
                 // 2.2 Parsare Registru .REG
@@ -2036,7 +2045,11 @@ namespace LogAnalyzer.UI.ViewModels
                             totalRegProcessed += batch.Count;
                         }
                     } 
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // Never skip a file silently: the operator must know what is missing from the analysis.
+                        importErrors.Add($"{Path.GetFileName(file)} (registru .reg): {ex.Message}");
+                    }
                 }
 
                 // 2.3 Parsare NTUSER.DAT
@@ -2070,7 +2083,11 @@ namespace LogAnalyzer.UI.ViewModels
                             totalRegProcessed += batch.Count;
                         }
                     } 
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // Never skip a file silently: the operator must know what is missing from the analysis.
+                        importErrors.Add($"{Path.GetFileName(file)} (hive): {ex.Message}");
+                    }
                 }
 
                 // 2.4 Parsare CSV Triage
@@ -2115,7 +2132,11 @@ namespace LogAnalyzer.UI.ViewModels
                             _databaseService.SaveTimeline(timelineBatch);
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        // Never skip a file silently: the operator must know what is missing from the analysis.
+                        importErrors.Add($"{Path.GetFileName(file)} (CSV triere): {ex.Message}");
+                    }
                 }
 
                 // ==========================================
@@ -2192,6 +2213,15 @@ namespace LogAnalyzer.UI.ViewModels
             StatusMessage = rejectedFiles.Count == 0
                 ? $"✅ Procesare completă: {TotalEventsCount:N0} loguri și {TotalRegistryCount:N0} artefacte registru salvate."
                 : $"✅ Procesare completă: {TotalEventsCount:N0} loguri și {TotalRegistryCount:N0} artefacte salvate ({rejectedFiles.Count} fișiere ignorate/respinse).";
+            if (importErrors.Count > 0)
+            {
+                StatusMessage += $" ATENȚIE: {importErrors.Count} probleme la import.";
+                _auditService.LogAction("IMPORT_ERRORS", string.Join(" | ", importErrors));
+                MessageBox.Show("Unele fișiere nu au fost importate complet:\n\n" + string.Join("\n", importErrors.Take(30)) +
+                                (importErrors.Count > 30 ? $"\n… și încă {importErrors.Count - 30}" : "") +
+                                "\n\nPentru probe EVTX/Prefetch/SRUM folosiți și fila „Investigație completă”, care raportează golurile de probă.",
+                    "Import incomplet", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private bool FilterIssues(object obj) => !(HideVerifiedAlerts && ((DetectedIssue)obj).IsVerified);
