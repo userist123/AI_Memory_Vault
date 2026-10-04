@@ -83,6 +83,28 @@ Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.exe --tab=15`) are
   - mesaje trimise în afara organizației.
 
 Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
+## Investigația completă (caz)
+
+Fila **„Investigație completă (caz)”** (`LogAnalyzer.exe --tab=16`) reface cap-coadă o investigație ca cea de pe LAB-PC:
+
+1. **Colectare de pe stație.**
+   - Jurnalele de evenimente sunt exportate brut cu `wevtutil` (17 canale).
+   - Prefetch se copiază.
+   - SRUM se copiază prin VSS, pentru că fișierul e blocat de sistem.
+   - Se fotografiază starea live: procese cu părinte, linie de comandă și semnătură; conexiuni; servicii; task-uri; autostart.
+   - Pe lângă colectare sau în locul ei, se pot **importa** probe dintr-un folder (EVTX, `.pf`, `SRUDB.dat`, `.pcapng`), de exemplu de pe o stație izolată.
+2. **Parsare** cu parserele reale (EVTX, Prefetch MAM, SRUM ESE, PCAPNG) într-o singură cronologie: `Analysis/timeline.csv`.
+3. **Corelare.** Fiecare constatare are clasificarea DIRECT / CORRELATED / CANDIDATE și probele pe care se sprijină (dovadă și locator):
+   - detecții Defender și dezactivarea lui;
+   - jurnale șterse și goluri de RecordID;
+   - servicii și task-uri din locații scriabile;
+   - scripturi rulate prin unelte Windows abuzate frecvent;
+   - trafic de rețea al acestor unelte (SRUM, confirmat de Prefetch);
+   - încercări repetate de ghicire a parolei, RDP de pe IP-uri publice, PowerShell suspect.
+4. **Lanțul incidentului (INCIDENT-CHAIN).** Constatările grave apropiate în timp sunt legate într-o poveste ordonată.
+5. **Raport PDF**, cu lanțurile la început, apoi constatările cu probe, starea colectării și golurile de probă.
+
+Validare pe cazul real NanAgent: 348.000 de evenimente procesate în circa 19 secunde. Lanțul din 19.09.2026, 14:53–15:21 UTC (`SETUP.EXE` SamFW → detecții Defender → comportament `NanAgent32.exe` → `msiexec` cu `bootstrap_7d57.cmd` → trafic `msbuild.exe`) este găsit automat. Testul de regresie `InvestigationTests` verifică acest rezultat.
 ## Cerințe
 
 - Rulare: Windows 10/11 x64. Pachetul este self-contained și nu necesită .NET instalat.

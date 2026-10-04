@@ -149,6 +149,7 @@
                             <RadioButton Content="Izolare procese suspecte" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="13"/>
                             <RadioButton Content="Control stație (utilizatori și admini)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="14"/>
                             <RadioButton Content="Investigație domeniu și e-mail" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="15"/>
+                            <RadioButton Content="Investigație completă (caz)" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="16"/>
                         </StackPanel>
                     </ScrollViewer>
 
@@ -219,6 +220,7 @@
                 <TabItem><views:ProcessContainmentView DataContext="{Binding Containment}"/></TabItem>
                 <TabItem><views:StationControlView DataContext="{Binding StationControl}"/></TabItem>
                 <TabItem><views:DomainInvestigationView DataContext="{Binding DomainInvestigation}"/></TabItem>
+                <TabItem><views:InvestigationView DataContext="{Binding Investigation}"/></TabItem>
                 </TabControl>
             </Grid>
         </Grid>

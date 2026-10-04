@@ -99,6 +99,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Domain users / e-mail investigation ("Investigație domeniu și e-mail" tab).</summary>
         public DomainInvestigationViewModel DomainInvestigation { get; } = new();
 
+        /// <summary>Full investigation pipeline ("Investigație completă" tab).</summary>
+        public InvestigationViewModel Investigation { get; } = new();
+
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
 
