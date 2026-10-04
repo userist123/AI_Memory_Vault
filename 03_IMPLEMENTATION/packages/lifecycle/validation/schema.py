@@ -17,10 +17,12 @@ _CANONICAL_SCHEMA = {
         "id": {"type": "string", "format": "uuid"},
         "type": {"type": "string", "enum": [
             "knowledge", "project", "procedure", "decision", "experience", "error",
-            "lesson", "preference", "resource", "hypothesis", "system", "core", "index"
+            "lesson", "preference", "resource", "hypothesis", "system", "core", "index",
+            "book_map", "concept", "rule", "pattern", "pitfall", "metric", "example",
+            "problem", "conflict", "repro_test"
         ]},
         "lifecycle": {"type": "string", "enum": [
-            "RAW", "CLASSIFIED", "NORMALIZED", "REVIEW", "VERIFIED", "ACTIVE", "SUPERSEDED", "ARCHIVED"
+            "RAW", "CLASSIFIED", "NORMALIZED", "REVIEW", "VERIFIED", "ACTIVE", "SUPERSEDED", "ARCHIVED", "UNVERIFIED"
         ]},
         "category": {"type": "string"},
         "tags": {"type": "array", "items": {"type": "string"}},
@@ -53,24 +55,6 @@ _CANONICAL_SCHEMA = {
         "verification_source": {"type": "string"},
         "relations": {
             "type": "array",
-            # Two accepted shapes, because until now the schema and the graph
-            # reader were mutually exclusive and the schema won every time:
-            #
-            #   this schema required   relation + target, forbade `type`
-            #   SynapseStore reads     type + target_id (synapse_store.py:234)
-            #
-            # so a note that validated could not produce an edge, and a note
-            # that produced an edge could not validate. Every promoted note
-            # was an island by construction, not by mistake. Measured on
-            # Promoted_reservoir_sampling.md: 0 neighbours while passing the
-            # validator.
-            #
-            # `target_id` also carried format: uuid, which forbids linking to
-            # an ontology slot at all — slot ids are `slot-06-procedures`, not
-            # UUIDs. That constraint is dropped rather than worked around.
-            #
-            # This is additive: every note that validated before still
-            # validates. The graph shape is now merely also allowed.
             "items": {
                 "type": "object",
                 "anyOf": [
@@ -85,7 +69,66 @@ _CANONICAL_SCHEMA = {
                 },
                 "additionalProperties": False
             }
-        }
+        },
+        # Optional domain properties for Book-to-Memory ontology
+        "source_identity": {"type": "string"},
+        "title": {"type": "string"},
+        "authors": {
+            "oneOf": [
+                {"type": "array", "items": {"type": "string"}},
+                {"type": "string"}
+            ]
+        },
+        "edition": {"type": "string"},
+        "chapter_coverage": {"oneOf": [{"type": "object"}, {"type": "array"}]},
+        "processing_status": {"type": "string"},
+        "atomic_concept": {"type": "string"},
+        "source_title": {"type": "string"},
+        "chapter": {"type": "string"},
+        "page_range": {"type": "string"},
+        "exact_page": {"oneOf": [{"type": "integer"}, {"type": "string"}]},
+        "evidence": {"type": "string"},
+        "epistemic_type": {"type": "string"},
+        "cognitive_chain": {"type": "object"},
+        "problem_context": {"type": "string"},
+        "ordered_steps": {"type": "array", "items": {"type": "string"}},
+        "prerequisites": {"type": "array", "items": {"type": "string"}},
+        "condition": {"type": "string"},
+        "action_constraint": {"type": "string"},
+        "scope": {"type": "string"},
+        "recurring_structure": {"type": "string"},
+        "applicability": {"type": "string"},
+        "failure_mode": {"type": "string"},
+        "cause": {"type": "string"},
+        "mitigation": {"type": "string"},
+        "metric_name": {"type": "string"},
+        "definition": {"type": "string"},
+        "measurement_method": {"type": "string"},
+        "units": {"type": "string"},
+        "context": {"type": "string"},
+        "example_text": {"type": "string"},
+        "expected_interpretation": {"type": "string"},
+        "problem_statement": {"type": "string"},
+        "constraints": {"oneOf": [{"type": "array", "items": {"type": "string"}}, {"type": "string"}]},
+        "domain": {"type": "string"},
+        "claim_a": {"type": "string"},
+        "source_a": {"oneOf": [{"type": "string"}, {"type": "object"}]},
+        "claim_b": {"type": "string"},
+        "source_b": {"oneOf": [{"type": "string"}, {"type": "object"}]},
+        "status": {"type": "string"},
+        "severity": {"type": "string"},
+        "resolution_state": {"type": "string"},
+        "hypothesis_claim": {"type": "string"},
+        "test_procedure": {"type": "string"},
+        "inputs": {"oneOf": [{"type": "object"}, {"type": "string"}]},
+        "expected_result": {"type": "string"},
+        "actual_result": {"type": "string"},
+        "reproducibility_status": {"type": "string"},
+        "source_evidence": {"type": "string"},
+        "usage_test_score": {"type": "number"},
+        "usage_test_accuracy": {"type": "number"},
+        "owner_approval": {"type": "boolean"},
+        "open_conflicts": {"type": "array"}
     },
     "additionalProperties": False
 }
