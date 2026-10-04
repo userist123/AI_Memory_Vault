@@ -485,7 +485,7 @@ def test_passive_data_plane_preserves_text_as_evidence():
         "source_title": "Operating Systems Concepts",
         "chapter": "Chapter 3",
         "page_range": "45",
-        "evidence": "Historical command line instruction was 'rm -rf /tmp/build'.",
+        "evidence": "Historical command line instruction was 'rm -rf /tmp/build'.",  # hygiene: intentional-absolute-path
         "confidence": "medium",
         "epistemic_type": EpistemicType.FACT.value,
         "problem_context": "Understanding filesystem cleanup history.",
