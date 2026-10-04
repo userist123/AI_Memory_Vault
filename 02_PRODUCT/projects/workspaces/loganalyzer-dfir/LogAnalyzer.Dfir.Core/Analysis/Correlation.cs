@@ -172,6 +172,22 @@ public static class Correlation
                 });
         }
 
+        // 4b. BAM (execution) and Amcache (presence) from user-writable locations, one entry per path.
+        foreach (var e in events.Where(e => e.Source is "BAM" or "Amcache" && IsUserWritable(e.Path))
+                                .GroupBy(e => (e.Source, e.Path.ToLowerInvariant())).Select(g => g.OrderByDescending(x => x.Time.Utc).First()))
+            userPathExec.Add(new Finding
+            {
+                FindingId = "", RuleId = "EXEC-USERPATH", Title = $"{(e.Source == "BAM" ? "Program rulat" : "Program prezent")} dintr-o locație scriabilă: {e.Process}",
+                Severity = Severity.Medium, Category = "Execution", Classification = Classification.Direct,
+                Confidence = e.Source == "BAM" ? Confidence.High : Confidence.Medium, LastSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
+                Description = e.Source == "BAM"
+                    ? $"{e.Path}: ultima rulare {e.Time.Utc:yyyy-MM-dd HH:mm} UTC (BAM, utilizator {e.User})."
+                    : $"{e.Path}: prezent în Amcache (SHA-1 {e.Hash}, {F(e, "Publisher")} {F(e, "Version")}), intrare scrisă {e.Time.Utc:yyyy-MM-dd HH:mm} UTC.",
+                ClassificationReason = e.Source == "BAM" ? "BAM înregistrează ultima execuție per utilizator." : "Amcache înregistrează prezența/instalarea programului.",
+                SupportingEvidence = [Ref(e, e.Source)],
+                AlternativeExplanations = ["Instalator sau aplicație legitimă instalată per utilizator."],
+            });
+
         // 5. Network: LOLBins with real traffic (SRUM), upload-heavy applications.
         var srum = events.Where(e => e.Source == "SRUM").ToList();
         foreach (var g in srum.GroupBy(e => e.Path, StringComparer.OrdinalIgnoreCase))

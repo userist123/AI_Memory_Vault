@@ -31,10 +31,10 @@ public sealed class InvestigationResult
 /// </summary>
 public sealed class InvestigationPipeline
 {
-    private readonly IEvidenceParser[] _parsers = [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser()];
+    private readonly IEvidenceParser[] _parsers = [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser()];
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new SrumCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector()];
 
     public static CaseWorkspace NewCase(string casesRoot, string name)
     {
@@ -59,6 +59,8 @@ public sealed class InvestigationPipeline
             {
                 ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng",
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
+                _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) => "system_hive",
+                _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ => null,
             };
             if (type is null) continue;

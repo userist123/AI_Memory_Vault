@@ -1,0 +1,169 @@
+using System.Buffers.Binary;
+using System.Text;
+using DiscUtils.Registry;
+using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Parsing;
+
+namespace LogAnalyzer.Dfir.Windows.Parsers;
+
+/// <summary>
+/// Offline SYSTEM hive: BAM (Background Activity Moderator: last execution per user, an EXECUTION artifact) and
+/// ShimCache/AppCompatCache (paths the system examined, with the FILE's last-modified time: PRESENCE, not execution,
+/// on Windows 10/11). Works on a hive saved from this station (reg save) or imported from another one.
+/// </summary>
+public sealed class SystemHiveExecutionParser : EvidenceParserBase
+{
+    public override string Name => "SystemHiveExecutionParser";
+    public override string Version => "1.0";
+    public override bool CanParse(EvidenceItem item) =>
+        item.SourceType == "system_hive" || Path.GetFileName(item.StoredPath).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase);
+
+    protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
+    {
+        using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var hive = new RegistryHive(fs);
+        var root = hive.Root;
+        int current = root.OpenSubKey("Select")?.GetValue("Current") is int c ? c : 1;
+        var cs = $"ControlSet{current:D3}";
+
+        // BAM: ControlSet\Services\bam\State\UserSettings\<SID> (older builds: bam\UserSettings).
+        var bam = root.OpenSubKey($@"{cs}\Services\bam\State\UserSettings") ?? root.OpenSubKey($@"{cs}\Services\bam\UserSettings");
+        if (bam is null)
+            result.Gaps.Add(new EvidenceGap("BAM", EvidenceStatus.NotAvailable, "cheia bam lipsește din hive (Windows mai vechi de 10 1709 sau dezactivat)",
+                "Ultima execuție per utilizator nu este disponibilă din BAM", "Prefetch, Amcache, jurnalul 4688", "Nu"));
+        else
+            foreach (var sid in bam.GetSubKeyNames())
+            {
+                ct.ThrowIfCancellationRequested();
+                var k = bam.OpenSubKey(sid);
+                if (k is null) continue;
+                foreach (var name in k.GetValueNames())
+                {
+                    if (k.GetValue(name) is not byte[] data || data.Length < 8 || !name.Contains('\\')) continue;
+                    long ft = BinaryPrimitives.ReadInt64LittleEndian(data);
+                    if (ft <= 0) continue;
+                    var path = DevicePathToDisplay(name);
+                    sink.Add(new TimelineEvent
+                    {
+                        Time = Timestamp.FromFileTime(ft, "BAM FILETIME"),
+                        Source = "BAM", EvidenceId = item.EvidenceId, User = sid, Path = path,
+                        Process = Path.GetFileName(path),
+                        Summary = $"BAM: {Path.GetFileName(path)} rulat ultima dată de utilizatorul {sid}",
+                        TimeSemantics = "last execution (BAM)", TemporalType = TemporalType.Historical,
+                        Classification = Classification.Direct, Confidence = Confidence.High,
+                        Locator = $@"SYSTEM\{cs}\Services\bam\...\{sid}\{name}",
+                        Fields = { ["Sid"] = sid, ["DevicePath"] = name },
+                    });
+                    result.Records++;
+                }
+            }
+
+        // ShimCache.
+        var acc = root.OpenSubKey($@"{cs}\Control\Session Manager\AppCompatCache")?.GetValue("AppCompatCache") as byte[];
+        if (acc is null)
+            result.Gaps.Add(new EvidenceGap("ShimCache", EvidenceStatus.NotAvailable, "valoarea AppCompatCache lipsește", "Fără listă ShimCache", "Amcache", "Nu"));
+        else
+        {
+            int n = 0;
+            foreach (var (path, modified, order) in ShimCache.Parse(acc))
+            {
+                sink.Add(new TimelineEvent
+                {
+                    Time = modified is long ft && ft > 0 ? Timestamp.FromFileTime(ft, "ShimCache last modified") : Timestamp.Unknown(),
+                    Source = "ShimCache", EvidenceId = item.EvidenceId, Path = path, Process = Path.GetFileName(path),
+                    Summary = $"ShimCache: {path} (prezență; ora = ultima modificare a fișierului, nu rularea)",
+                    TimeSemantics = "file last modified (ShimCache) — not execution",
+                    TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+                    Locator = $@"SYSTEM\{cs}\Control\Session Manager\AppCompatCache #{order}",
+                    Fields = { ["CacheOrder"] = order.ToString() },
+                });
+                n++;
+            }
+            result.Records += n;
+            if (n == 0)
+                result.Gaps.Add(new EvidenceGap("ShimCache", EvidenceStatus.Partial, $"format necunoscut (antet 0x{(acc.Length >= 4 ? BinaryPrimitives.ReadUInt32LittleEndian(acc) : 0):X})",
+                    "Intrările ShimCache nu au fost decodate", "Analiză cu alt instrument", "Da"));
+        }
+    }
+
+    /// <summary>"\Device\HarddiskVolume3\Windows\x.exe" → "\Windows\x.exe" (the volume letter is not recorded).</summary>
+    public static string DevicePathToDisplay(string p) =>
+        p.StartsWith(@"\Device\HarddiskVolume", StringComparison.OrdinalIgnoreCase) && p.IndexOf('\\', 22) is int i and > 0 ? p[i..] : p;
+}
+
+/// <summary>AppCompatCache decoder for Windows 8.1/10/11 ("10ts" entries).</summary>
+public static class ShimCache
+{
+    public static IEnumerable<(string Path, long? Modified, int Order)> Parse(byte[] d)
+    {
+        if (d.Length < 0x34) yield break;
+        int offset = BinaryPrimitives.ReadInt32LittleEndian(d);          // header size: 0x30 (Win10 1507) or 0x34 (later)
+        if (offset is not (0x30 or 0x34) || offset >= d.Length) yield break;
+        int order = 0;
+        while (offset + 12 <= d.Length)
+        {
+            if (Encoding.ASCII.GetString(d, offset, 4) != "10ts") yield break;
+            int entrySize = BinaryPrimitives.ReadInt32LittleEndian(d.AsSpan(offset + 8));
+            int p = offset + 12;
+            if (entrySize <= 0 || p + entrySize > d.Length) yield break;
+            int pathLen = BinaryPrimitives.ReadUInt16LittleEndian(d.AsSpan(p));
+            if (p + 2 + pathLen + 8 > d.Length) yield break;
+            var path = Encoding.Unicode.GetString(d, p + 2, pathLen);
+            long modified = BinaryPrimitives.ReadInt64LittleEndian(d.AsSpan(p + 2 + pathLen));
+            yield return (path, modified, order++);
+            offset = p + entrySize;
+        }
+    }
+}
+
+/// <summary>
+/// Amcache.hve: Root\InventoryApplicationFile — programs present on the station with SHA-1, publisher, version and
+/// PE link date. Presence (and usually installation/first run), not proof of each execution.
+/// </summary>
+public sealed class AmcacheParser : EvidenceParserBase
+{
+    public override string Name => "AmcacheParser";
+    public override string Version => "1.0";
+    public override bool CanParse(EvidenceItem item) =>
+        item.SourceType == "amcache" || Path.GetFileName(item.StoredPath).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase);
+
+    protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
+    {
+        using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var hive = new RegistryHive(fs);
+        var inv = hive.Root.OpenSubKey(@"Root\InventoryApplicationFile");
+        if (inv is null)
+        {
+            result.Gaps.Add(new EvidenceGap("Amcache InventoryApplicationFile", EvidenceStatus.NotAvailable, "cheia lipsește (format Amcache vechi)",
+                "Inventarul aplicațiilor nu este disponibil", "Root\\File (format Windows 8)", "Parțial"));
+            return;
+        }
+        foreach (var keyName in inv.GetSubKeyNames())
+        {
+            ct.ThrowIfCancellationRequested();
+            var k = inv.OpenSubKey(keyName);
+            if (k is null) { result.MalformedRecords++; continue; }
+            string V(string n) => k.GetValue(n)?.ToString() ?? "";
+            var path = V("LowerCaseLongPath");
+            var sha1 = V("FileId") is { Length: 44 } fid && fid.StartsWith("0000") ? fid[4..].ToUpperInvariant() : V("FileId");
+            sink.Add(new TimelineEvent
+            {
+                Time = Timestamp.FromUtc(k.Timestamp.ToUniversalTime(), k.Timestamp.ToString("o"), "registry key LastWriteTime"),
+                Source = "Amcache", EvidenceId = item.EvidenceId, Path = path, Process = V("Name"), Hash = sha1,
+                Summary = $"Amcache: {V("Name")} ({V("Publisher")} {V("Version")}) prezent la {path}",
+                TimeSemantics = "Amcache entry last written (≈ first seen / install)",
+                TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+                Locator = $@"Amcache.hve\Root\InventoryApplicationFile\{keyName}",
+                Fields =
+                {
+                    ["SHA1"] = sha1, ["Publisher"] = V("Publisher"), ["Version"] = V("Version"), ["ProductName"] = V("ProductName"),
+                    ["LinkDate"] = V("LinkDate"), ["Size"] = V("Size"), ["IsOsComponent"] = V("IsOsComponent"),
+                },
+            });
+            result.Records++;
+        }
+        if (File.Exists(fullPath + ".LOG1") is false && File.Exists(Path.Combine(Path.GetDirectoryName(fullPath)!, "Amcache.hve.LOG1")) is false)
+            result.Gaps.Add(new EvidenceGap("Amcache transaction logs", EvidenceStatus.Partial, "jurnalele de tranzacții .LOG1/.LOG2 nu au fost aplicate",
+                "Cele mai recente intrări pot lipsi dacă hive-ul era „murdar” la copiere", "Copiere împreună cu .LOG1/.LOG2", "Parțial"));
+    }
+}
