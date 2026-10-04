@@ -6,6 +6,7 @@
   <Project Path="LogAnalyzer.Dfir.Windows/LogAnalyzer.Dfir.Windows.csproj" />
   <Project Path="LogAnalyzer.Infrastructure/LogAnalyzer.Infrastructure.csproj" />
   <Project Path="LogAnalyzer.KeyGen/LogAnalyzer.KeyGen.csproj" />
+  <Project Path="LogAnalyzer.LicenseManager/LogAnalyzer.LicenseManager.csproj" />
   <Project Path="LogAnalyzer.Network/LogAnalyzer.Network.csproj" />
   <Project Path="LogAnalyzer.UI.Tests/LogAnalyzer.UI.Tests.csproj" />
 </Solution>
