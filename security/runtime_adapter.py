@@ -36,12 +36,24 @@ class RuntimeAdapter:
         event_sink: Callable[[SecurityEvent], None] | None = None,
         audit_trail: AuditTrail | None = None,
         supply_chain_policy: SoftwareAISupplyChainPolicy | None = None,
+        broker: ApprovalBroker | None = None,
+        production_mode: bool = False,
     ) -> None:
-        self._enforcer = enforcer or RuntimeEnforcer()
+        if production_mode and supply_chain_policy is None:
+            raise PermissionError("production runtime requires mandatory supply_chain_policy")
+        self._enforcer = enforcer or (RuntimeEnforcer(broker=broker) if broker else RuntimeEnforcer())
         self._event_sink = event_sink
         self._audit_trail = audit_trail
         self._supply_chain_policy = supply_chain_policy
+        self._production_mode = production_mode
         self._registered: dict[str, tuple[RegisteredTool, Callable[[ExecutionRequest], Any]]] = {}
+
+    @property
+    def broker(self) -> ApprovalBroker:
+        return self._enforcer.broker
+
+    def issue_approval(self, **kwargs: Any) -> ApprovalToken:
+        return self._enforcer.issue_approval(**kwargs)
 
     def register(
         self,
@@ -55,7 +67,9 @@ class RuntimeAdapter:
         if not callable(executor):
             raise TypeError("executor must be callable")
 
-        if self._supply_chain_policy is not None:
+        if self._supply_chain_policy is not None or self._production_mode:
+            if self._supply_chain_policy is None:
+                raise PermissionError("supply chain policy is required in production mode")
             if provenance is None:
                 raise PermissionError("tool provenance is required")
             if provenance.component_type.value != "tool":

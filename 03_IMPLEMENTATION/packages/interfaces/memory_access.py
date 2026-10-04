@@ -88,9 +88,9 @@ def _readable(controller, note_id: str) -> Optional[Dict[str, Any]]:
     results = pack.get("results") or []
     if results:
         return results[0]
-    # This controlled tool may inspect an explicitly marked REVIEW candidate
-    # as untrusted data when the public cognitive_read route intentionally
-    # refuses to expose it. Never synthesize verification or promotion state.
+    # Controlled tool inspection of an explicitly marked REVIEW candidate
+    # as untrusted data when cognitive_read route keeps it in quarantine.
+    # Never synthesize verification or promotion state.
     stored = controller.storage.get(note_id)
     if isinstance(stored, dict) and stored.get("lifecycle") == "REVIEW" and stored.get("verification") == "unverified":
         fallback = stored.copy()
@@ -114,11 +114,15 @@ def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
         ver = (stored or item).get("verification", "unverified")
         if isinstance(ver, dict):
             ver = ver.get("status", "unverified").lower()
+        title_source = stored or readable or item
+        raw_snippet_text = readable.get("content", "") if readable else ""
+        if not raw_snippet_text and stored:
+            raw_snippet_text = stored.get("content", "")
         results.append({
             "id": note_id,
-            "title": _title(readable or stored or item),
+            "title": _title(title_source),
             "path": _relative_path(controller, note_id),
-            "snippet": _snippet(readable.get("content", "")) if readable else "",
+            "snippet": _snippet(raw_snippet_text),
             "score": item.get("relevance_score", item.get("score", fused.get(note_id))),
             "type": item.get("type"),
             "lifecycle": item.get("lifecycle"),

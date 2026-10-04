@@ -140,11 +140,14 @@ class ContextPackBuilder:
             item["verification"] = verification_record
             if quarantined_unverified:
                 item["trust_state"] = "UNVERIFIED_QUARANTINED"
-                # Non-owner callers may observe that a REVIEW item exists, but
+                # Non-owner callers may observe that an unverified item exists, but
                 # must not receive its unverified content through the model-facing
                 # route. The owner may inspect the quarantined content explicitly.
-                if str(agent_id) != "human" and str(item.get("lifecycle")).upper() == "REVIEW":
+                if str(agent_id) != "human":
                     item["content"] = ""
+                    item["model_egress"] = False
+            else:
+                item["model_egress"] = True
 
             content = str(item.get("content", ""))
             # Metadata-only disclosure intentionally carries no content. It is

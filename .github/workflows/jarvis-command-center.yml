@@ -6,12 +6,14 @@ on:
     branches: [main]
     paths:
       - '02_PRODUCT/projects/workspaces/jarvis_web/**'
+      - '03_IMPLEMENTATION/packages/memory/**'
       - '03_IMPLEMENTATION/packages/memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'
   pull_request:
     paths:
       - '02_PRODUCT/projects/workspaces/jarvis_web/**'
+      - '03_IMPLEMENTATION/packages/memory/**'
       - '03_IMPLEMENTATION/packages/memory_controller/**'
       - '.agents/skills/jarvis-command-center/**'
       - '.github/workflows/jarvis-command-center.yml'

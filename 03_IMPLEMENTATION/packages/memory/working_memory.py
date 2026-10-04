@@ -172,8 +172,11 @@ class WorkingMemory:
                 if not node:
                     continue
                     
-                if node.get("lifecycle") == Lifecycle.REVIEW.value:
+                if node.get("lifecycle") == Lifecycle.REVIEW.value or node.get("_cognitive_unverified"):
                     node["_cognitive_unverified"] = True
+                    if principal == Principal.AI_AGENT:
+                        node = dict(node)
+                        node["content"] = ""
                 
                 self.buffer[node_id] = {
                     "node": node,

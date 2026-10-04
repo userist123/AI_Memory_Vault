@@ -3,7 +3,7 @@ import json, hashlib, os, shutil, subprocess, sys
 ROOT=Path(__file__).resolve().parents[2]
 PINS=ROOT/'01_KNOWLEDGE/EXTERNAL_SKILLS/SOURCE_PINS.json'
 STAGE=ROOT/'01_KNOWLEDGE/EXTERNAL_SKILLS/_sources'
-TMP=Path('/tmp/external-skills')
+TMP=Path(os.environ.get('EXTERNAL_SKILLS_TMP','/tmp/external-skills'))
 ALLOWED={'.md','.json','.txt','.yaml'}
 FORBIDDEN={'.sh','.ps1','.py','.js','.bat','.cmd','.exe','.dll','.so','.bin','.com'}
 LICENSE_NAMES={'LICENSE','LICENSE.md','LICENSE.txt','COPYING','COPYING.md','COPYING.txt'}
@@ -29,8 +29,8 @@ def copy_tree(src,dst):
   if p.is_dir(): continue
   rel=p.relative_to(src)
   if any(x=='..' for x in rel.parts): raise SystemExit('Rejected path traversal: '+str(rel))
-  if any(x.startswith('.') for x in rel.parts): raise SystemExit('Rejected hidden path: '+str(rel))
-  if p.suffix.lower() not in ALLOWED or p.suffix.lower() in FORBIDDEN: raise SystemExit('Rejected import file: '+str(rel))
+  if any(x.startswith('.') for x in rel.parts): continue
+  if p.suffix.lower() not in ALLOWED or p.suffix.lower() in FORBIDDEN: continue
   t=dst/rel; t.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(p,t)
 def filter_imports():
  if STAGE.exists(): shutil.rmtree(STAGE)

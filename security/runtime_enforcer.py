@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
+import secrets
+import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Callable
 from uuid import uuid4
 
@@ -28,6 +32,9 @@ class ExecutionRequest:
     side_effect: bool = False
     data_export: bool = False
     correlation_id: str = field(default_factory=lambda: uuid4().hex)
+    operation_type: str = "execute"
+    revision_id: str | None = None
+    content_sha256: str | None = None
 
     def parameters_sha256(self) -> str:
         payload = json.dumps(
@@ -49,6 +56,130 @@ class ApprovalToken:
     issued_at: datetime
     expires_at: datetime
     nonce: str
+    signature: str = ""
+    issuer: str = "external-authority-broker"
+    operation_type: str = "execute"
+    revision_id: str | None = None
+    content_sha256: str | None = None
+
+    def canonical_bytes(self) -> bytes:
+        payload = json.dumps(
+            {
+                "approval_id": self.approval_id,
+                "actor": self.actor,
+                "content_sha256": self.content_sha256,
+                "expires_at": _utc(self.expires_at).isoformat(),
+                "issued_at": _utc(self.issued_at).isoformat(),
+                "issuer": self.issuer,
+                "nonce": self.nonce,
+                "operation_type": self.operation_type,
+                "parameters_sha256": self.parameters_sha256,
+                "revision_id": self.revision_id,
+                "target": self.target,
+                "tool_name": self.tool_name,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=True,
+        ).encode("utf-8")
+        return payload
+
+
+class ApprovalBroker:
+    """External authority broker issuing cryptographically signed approval tokens."""
+
+    def __init__(self, secret: str | bytes, issuer: str = "external-authority-broker") -> None:
+        if not secret:
+            raise ValueError("secret must be non-empty")
+        self._secret = secret.encode("utf-8") if isinstance(secret, str) else bytes(secret)
+        self.issuer = issuer
+
+    def issue_approval(
+        self,
+        *,
+        actor: str,
+        tool_name: str,
+        target: str,
+        parameters_sha256: str,
+        issued_at: datetime | None = None,
+        expires_at: datetime | None = None,
+        duration_seconds: int = 300,
+        nonce: str | None = None,
+        operation_type: str = "execute",
+        revision_id: str | None = None,
+        content_sha256: str | None = None,
+        approval_id: str | None = None,
+    ) -> ApprovalToken:
+        now = _utc(issued_at or datetime.now(timezone.utc))
+        exp = _utc(expires_at or (now + timedelta(seconds=duration_seconds)))
+        token_id = approval_id or uuid4().hex
+        tok_nonce = nonce or uuid4().hex
+        unsigned = ApprovalToken(
+            approval_id=token_id,
+            actor=actor,
+            tool_name=tool_name,
+            target=target,
+            parameters_sha256=parameters_sha256,
+            issued_at=now,
+            expires_at=exp,
+            nonce=tok_nonce,
+            issuer=self.issuer,
+            operation_type=operation_type,
+            revision_id=revision_id,
+            content_sha256=content_sha256,
+            signature="",
+        )
+        sig = hmac.new(self._secret, unsigned.canonical_bytes(), hashlib.sha256).hexdigest()
+        return ApprovalToken(
+            approval_id=unsigned.approval_id,
+            actor=unsigned.actor,
+            tool_name=unsigned.tool_name,
+            target=unsigned.target,
+            parameters_sha256=unsigned.parameters_sha256,
+            issued_at=unsigned.issued_at,
+            expires_at=unsigned.expires_at,
+            nonce=unsigned.nonce,
+            signature=sig,
+            issuer=unsigned.issuer,
+            operation_type=unsigned.operation_type,
+            revision_id=unsigned.revision_id,
+            content_sha256=unsigned.content_sha256,
+        )
+
+    def verify(self, token: ApprovalToken) -> bool:
+        if not token.signature:
+            return False
+        expected = hmac.new(self._secret, token.canonical_bytes(), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(expected, token.signature)
+
+
+class PersistentNonceStore:
+    """Thread-safe persistent store to prevent approval replay across process restarts."""
+
+    def __init__(self, storage_path: str | Path) -> None:
+        self.path = Path(storage_path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        if not self.path.exists():
+            self.path.write_text("", encoding="utf-8")
+        self._lock = threading.Lock()
+
+    def has_seen(self, identifier: str) -> bool:
+        if not identifier:
+            return False
+        with self._lock:
+            if not self.path.exists():
+                return False
+            for line in self.path.read_text(encoding="utf-8").splitlines():
+                if line.strip() == identifier:
+                    return True
+            return False
+
+    def mark_seen(self, identifier: str) -> None:
+        if not identifier:
+            return
+        with self._lock:
+            with open(self.path, "a", encoding="utf-8") as f:
+                f.write(f"{identifier}\n")
 
 
 @dataclass(frozen=True)
@@ -68,10 +199,36 @@ class RuntimeEnforcer:
         self,
         capabilities: CapabilitySet | None = None,
         update_policy: SecurityUpdatePolicy | None = None,
+        *,
+        broker: ApprovalBroker | None = None,
+        approval_secret: str | bytes | None = None,
+        require_authenticated_approval: bool = True,
+        nonce_store: PersistentNonceStore | None = None,
+        nonce_store_path: str | Path | None = None,
     ) -> None:
         self._capabilities = capabilities
         self._update_policy = update_policy
+        self._require_authenticated_approval = require_authenticated_approval
+        if broker is not None:
+            self._broker = broker
+        elif approval_secret is not None:
+            self._broker = ApprovalBroker(approval_secret)
+        else:
+            self._broker = ApprovalBroker(secrets.token_hex(32))
         self._used_approvals: set[str] = set()
+        if nonce_store is not None:
+            self._nonce_store: PersistentNonceStore | None = nonce_store
+        elif nonce_store_path is not None:
+            self._nonce_store = PersistentNonceStore(nonce_store_path)
+        else:
+            self._nonce_store = None
+
+    @property
+    def broker(self) -> ApprovalBroker:
+        return self._broker
+
+    def issue_approval(self, **kwargs: Any) -> ApprovalToken:
+        return self._broker.issue_approval(**kwargs)
 
     def authorize(
         self,
@@ -112,7 +269,22 @@ class RuntimeEnforcer:
         if approval is None:
             return RuntimeAuthorization(False, "approval_required")
 
-        if approval.approval_id in self._used_approvals:
+        if not approval.nonce or not approval.nonce.strip():
+            return RuntimeAuthorization(False, "approval_missing_nonce")
+
+        if self._require_authenticated_approval:
+            if not approval.signature:
+                return RuntimeAuthorization(False, "approval_unauthenticated")
+            if not self._broker.verify(approval):
+                return RuntimeAuthorization(False, "approval_invalid_signature")
+
+        if approval.approval_id in self._used_approvals or (
+            self._nonce_store is not None
+            and (
+                self._nonce_store.has_seen(approval.approval_id)
+                or self._nonce_store.has_seen(approval.nonce)
+            )
+        ):
             return RuntimeAuthorization(False, "approval_replayed")
 
         if current >= _utc(approval.expires_at):
@@ -128,7 +300,21 @@ class RuntimeEnforcer:
         ):
             return RuntimeAuthorization(False, "approval_parameter_mismatch")
 
+        if approval.operation_type != request.operation_type:
+            return RuntimeAuthorization(False, "approval_operation_mismatch")
+
+        if approval.revision_id is not None and request.revision_id is not None:
+            if approval.revision_id != request.revision_id:
+                return RuntimeAuthorization(False, "approval_revision_mismatch")
+
+        if approval.content_sha256 is not None and request.content_sha256 is not None:
+            if approval.content_sha256 != request.content_sha256:
+                return RuntimeAuthorization(False, "approval_content_mismatch")
+
         self._used_approvals.add(approval.approval_id)
+        if self._nonce_store is not None:
+            self._nonce_store.mark_seen(approval.approval_id)
+            self._nonce_store.mark_seen(approval.nonce)
         return RuntimeAuthorization(True, "allowed")
 
     def execute(

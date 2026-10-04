@@ -27,23 +27,27 @@ jobs:
 
     steps:
       - name: Check APIsec configuration
-        if: github.event_name != 'pull_request'
         id: config
         shell: bash
         env:
           APISEC_USERNAME: ${{ secrets.apisec_username }}
           APISEC_PASSWORD: ${{ secrets.apisec_password }}
         run: |
-          configured=false
-          if [[ -n "$APISEC_USERNAME" && -n "$APISEC_PASSWORD" ]]; then
-            configured=true
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "scan_status=SKIPPED_PULL_REQUEST" >> "$GITHUB_OUTPUT"
+            echo "::notice title=APIsec scan skipped on PR::Credentialed APIsec scan does not run on pull_request (status: SKIPPED_PULL_REQUEST)."
+          elif [[ -n "$APISEC_USERNAME" && -n "$APISEC_PASSWORD" ]]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+            echo "scan_status=CONFIGURED" >> "$GITHUB_OUTPUT"
           else
-            echo "APIsec credentials are not configured; scan will be skipped without masking this configuration gap."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "scan_status=SKIPPED_UNCONFIGURED" >> "$GITHUB_OUTPUT"
+            echo "::notice title=APIsec scan not executed::APIsec credentials are not configured; scan will be skipped without masking configuration gap (status: SKIPPED_UNCONFIGURED)."
           fi
-          echo "configured=$configured" >> "$GITHUB_OUTPUT"
 
       - name: APIsec scan
-        if: steps.config.outputs.configured == 'true' && github.event_name != 'pull_request'
+        if: steps.config.outputs.configured == 'true'
         uses: apisec-inc/apisec-run-scan@025432089674a28ba8fb55f8ab06c10215e772ea # v1.0.6
         with:
           apisec-username: ${{ secrets.apisec_username }}
@@ -52,13 +56,18 @@ jobs:
           sarif-result-file: "apisec-results.sarif"
 
       - name: Import results
-        if: steps.config.outputs.configured == 'true' && github.event_name != 'pull_request'
+        if: steps.config.outputs.configured == 'true'
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: ./apisec-results.sarif
 
-      - name: APIsec configuration note
-        if: steps.config.outputs.configured != 'true'
+      - name: Report APIsec scan execution status
+        if: ${{ always() }}
         shell: bash
         run: |
-          echo "::notice title=APIsec scan not executed::Configure apisec_username and apisec_password repository secrets to enable the external APIsec scan."
+          if [[ "${{ steps.config.outputs.configured }}" == "true" ]]; then
+            echo "APIsec execution status: EXECUTED_PASSED"
+          else
+            status="${{ steps.config.outputs.scan_status || 'SKIPPED_UNCONFIGURED' }}"
+            echo "APIsec execution status: $status"
+          fi

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .memory_integrity import MemoryLedger
-from .trust_gate import TrustState
+from .trust_gate import TrustState, normalize_trust_state
 
 
 @dataclass(frozen=True)
@@ -27,13 +27,33 @@ class MemoryWriteBoundary:
         *,
         human_approved: bool = False,
     ):
-        state = trust_state.value if isinstance(trust_state, TrustState) else trust_state
-        if state in ("BLOCKED", "UNTRUSTED"):
+        norm = normalize_trust_state(trust_state)
+        if norm is None:
+            return None, MemoryWriteDecision(False, "memory_trust_unknown_denied")
+        if norm in (TrustState.BLOCKED, TrustState.UNTRUSTED):
             return None, MemoryWriteDecision(False, "memory_trust_denied")
-        if state == "REVIEW" and not human_approved:
+        if norm is TrustState.REVIEW and not human_approved:
             return None, MemoryWriteDecision(False, "memory_approval_required")
+        if norm not in (TrustState.TRUSTED, TrustState.REVIEW):
+            return None, MemoryWriteDecision(False, "memory_trust_denied")
         if not isinstance(payload, dict):
             raise TypeError("payload must be a mapping")
+        # B01 Synthetic evidence cannot be promoted to verified or active knowledge
+        is_synthetic = (
+            payload.get("synthetic") is True
+            or payload.get("source_type") == "synthetic"
+            or payload.get("provenance") == "synthetic"
+            or str(payload.get("corpus", "")).lower() == "synthetic"
+        )
+        claims_empirical = (
+            payload.get("verification") == "verified"
+            or payload.get("lifecycle") == "ACTIVE"
+            or payload.get("status") == "ACTIVE"
+            or payload.get("empirically_confirmed") is True
+            or payload.get("validated") is True
+        )
+        if is_synthetic and claims_empirical:
+            return None, MemoryWriteDecision(False, "synthetic_evidence_promotion_blocked")
         return self.ledger.prepare(namespace, payload), None
 
     def commit(
@@ -43,8 +63,10 @@ class MemoryWriteBoundary:
         *,
         human_approved: bool = False,
     ) -> MemoryWriteDecision:
-        state = trust_state.value if isinstance(trust_state, TrustState) else trust_state
-        if not self.ledger.commit_proposal(record, trust_state=state, human_approved=human_approved):
+        norm = normalize_trust_state(trust_state)
+        if norm is None:
+            return MemoryWriteDecision(False, "memory_trust_unknown_denied")
+        if not self.ledger.commit_proposal(record, trust_state=norm.value, human_approved=human_approved):
             return MemoryWriteDecision(False, "memory_integrity_rejected")
         return MemoryWriteDecision(True, "memory_write_allowed", record.version)
 

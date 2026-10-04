@@ -118,6 +118,13 @@ class MemoryDataEgressGate:
             ),
         }
 
+        # Model-facing egress isolation: non-human callers must never receive
+        # quarantined unverified payload content into the model context.
+        if str(principal) not in {"human", "admin"}:
+            for result in routed.get("results", []):
+                if isinstance(result, dict) and result.get("trust_state") == "UNVERIFIED_QUARANTINED":
+                    result["content"] = ""
+
         try:
             hard_tokens = int(budget["hard_tokens"])
             # Retrieval traces are audit/observability metadata, not model input.

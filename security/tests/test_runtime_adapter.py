@@ -73,15 +73,15 @@ def test_runtime_adapter_requires_approval_for_review_and_binds_it_to_request():
 
     request = ExecutionRequest("agent-1", "lookup", "record:42", {"id": "42"})
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    approval = ApprovalToken(
-        "approval-1",
-        "agent-1",
-        "lookup",
-        "record:42",
-        request.parameters_sha256(),
-        now,
-        now + timedelta(minutes=5),
-        "nonce-1",
+    approval = adapter.issue_approval(
+        actor="agent-1",
+        tool_name="lookup",
+        target="record:42",
+        parameters_sha256=request.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-1",
+        approval_id="approval-1",
     )
 
     denied = adapter.execute(request, _tool(), _review(), now=now)
@@ -129,15 +129,15 @@ def test_runtime_adapter_consumes_single_use_approval():
 
     request = ExecutionRequest("agent-1", "lookup", "record:42", {"id": "42"})
     now = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    approval = ApprovalToken(
-        "approval-once",
-        "agent-1",
-        "lookup",
-        "record:42",
-        request.parameters_sha256(),
-        now,
-        now + timedelta(minutes=5),
-        "nonce-once",
+    approval = adapter.issue_approval(
+        actor="agent-1",
+        tool_name="lookup",
+        target="record:42",
+        parameters_sha256=request.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-once",
+        approval_id="approval-once",
     )
 
     first = adapter.execute(request, _tool(), _review(), approval=approval, now=now)
