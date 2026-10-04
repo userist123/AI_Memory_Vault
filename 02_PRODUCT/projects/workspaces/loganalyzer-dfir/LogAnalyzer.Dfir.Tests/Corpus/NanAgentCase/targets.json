@@ -1,0 +1,43 @@
+{
+  "_comment": "TEST FIXTURE ONLY (spec §73). Expected results from the real 2026-09-19 LAB-PC incident. Never referenced by production code.",
+  "corpusRoot": "D:\\FORENSIC_CASE",
+  "corpusRootEnvVar": "LADFIR_CORPUS",
+  "prefetch": {
+    "file": "09_PREFETCH\\Prefetch\\SETUP.EXE-C0F23475.pf",
+    "exeName": "SETUP.EXE",
+    "runCount": 4,
+    "lastRunUtc": "2026-09-19T14:56:26",
+    "pathContains": "302044\\SETUP.EXE"
+  },
+  "prefetchMsiexec": {
+    "file": "09_PREFETCH\\Prefetch\\MSIEXEC.EXE-8FFB1633.pf",
+    "referencedFileContains": "CONEXANT\\CXUTILSVC HELPER\\BOOTSTRAP_7D57.CMD"
+  },
+  "srum": {
+    "file": "07_EXECUTION\\SRUM\\SRUDB.dat",
+    "appContains": "framework\\v4.0.30319\\msbuild.exe",
+    "timestampUtc": "2026-09-19T15:15:00",
+    "bytesSent": 7764746,
+    "bytesRecvd": 100581358
+  },
+  "defenderEvtx": {
+    "file": "01_RAW_EVENTLOGS\\Microsoft-Windows-Windows Defender%4Operational.evtx",
+    "eventId": "1116",
+    "pathContains": "NanAgent32.exe",
+    "threatName": "Behavior:Win32/GenCodeInjected.H"
+  },
+  "msiEvtx": {
+    "file": "01_RAW_EVENTLOGS\\Application.evtx",
+    "provider": "MsiInstaller",
+    "eventId": "1033",
+    "messageContains": "CxUtilSvc Helper"
+  },
+  "pcapng": {
+    "file": "20_NETWORK\\PCAP\\pktmon_20261003_2347341.pcapng",
+    "minFlows": 700,
+    "dnsNameContains": "napps-1.com",
+    "sniContains": "chatgpt.com"
+  },
+  "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
+                  "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
+}

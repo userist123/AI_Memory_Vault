@@ -1,0 +1,321 @@
+<Window x:Class="LogAnalyzer.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Centrul de Operatiuni Securitate (SOC) - Analiza Endpoint"
+        Height="900" Width="1500"
+        WindowStartupLocation="CenterScreen"
+        Background="#0D1117" Foreground="#C9D1D9">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#238636"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2EA043"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Background" Value="#010409"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="BorderBrush" Value="#30363D"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#8B949E"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#8B949E"/>
+            <Setter Property="BorderThickness" Value="0,0,0,2"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Padding" Value="15,10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="#58A6FF"/>
+                    <Setter Property="BorderBrush" Value="#58A6FF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="#0D1117"/>
+            <Setter Property="AlternatingRowBackground" Value="#161B22"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#30363D"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="Foreground" Value="#C9D1D9"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="EnableRowVirtualization" Value="True"/>
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True"/>
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+        </Style>
+
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#161B22"/>
+            <Setter Property="Foreground" Value="#8B949E"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#30363D"/>
+        </Style>
+
+        <Style x:Key="TrimmedText" TargetType="TextBlock">
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="35"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Margin="0,0,0,10" Padding="20,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Incarca Folder Investigatie" Command="{Binding LoadLogsCommand}"/>
+                    <Button Content="Exporta CSV" Background="#1F6FEB" Command="{Binding ExportToCsvCommand}" Margin="10,0,0,0"/>
+                    <Button Content="Exporta Raport Incident (MD)" Background="#8957E5" Command="{Binding ExportRaportIncidentCommand}" Margin="10,0,0,0"/>
+
+                    <TextBlock Text="PROFIL DFIR:" FontSize="11" FontWeight="Bold" Foreground="#8B949E" Margin="30,0,10,0" VerticalAlignment="Center"/>
+                    <ComboBox Width="230" Background="#010409" Foreground="#C9D1D9" DisplayMemberPath="Name"
+                              ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding IntegrityStatusMessage}" FontSize="11" Foreground="#D29922" Margin="0,0,15,0" VerticalAlignment="Center"/>
+                    <CheckBox Content="Ascunde alertele marcate ca verificate" FontSize="13" IsChecked="{Binding HideVerifiedAlerts}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="6.5*"/>
+                <ColumnDefinition Width="15"/>
+                <ColumnDefinition Width="3.5*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Background="#0D1117" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6">
+                <TabControl Background="Transparent" BorderThickness="0">
+
+                    <TabItem Header="Cronologie Incident (Timeline)">
+                        <DataGrid ItemsSource="{Binding TimelineView}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Data / Ora" Width="140" Binding="{Binding Timestamp, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+                                <DataGridTextColumn Header="Sursa" Width="75" Binding="{Binding Source}"/>
+                                <DataGridTextColumn Header="MITRE" Width="80" Binding="{Binding MitreTags}"/>
+                                <DataGridTextColumn Header="Categorie" Width="130" Binding="{Binding Category}" ElementStyle="{StaticResource TrimmedText}"/>
+                                <DataGridTextColumn Header="User / Host" Width="130" Binding="{Binding UserOrHost}" ElementStyle="{StaticResource TrimmedText}"/>
+                                <DataGridTextColumn Header="Severitate" Width="90" Binding="{Binding Severity}"/>
+                                <DataGridTextColumn Header="Descriere" Width="250" Binding="{Binding Description}" ElementStyle="{StaticResource TrimmedText}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </TabItem>
+
+                    <TabItem Header="Evenimente (EVTX)">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="10" Orientation="Horizontal">
+                                <TextBlock Text="Filtru (User, IP, ID):" Foreground="#8B949E" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                <TextBox Width="300" Text="{Binding SearchEventsText, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding EventsView}" SelectedItem="{Binding SelectedEvent}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Data / Ora" Width="150" Binding="{Binding TimeCreated, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}"/>
+                                    <DataGridTextColumn Header="Nivel" Width="90" Binding="{Binding Level}"/>
+                                    <DataGridTextColumn Header="Event ID" Width="80" Binding="{Binding EventId}"/>
+                                    <DataGridTextColumn Header="Sursa" Width="200" Binding="{Binding ProviderName}" ElementStyle="{StaticResource TrimmedText}"/>
+                                    <DataGridTextColumn Header="Mesaj" Width="450" Binding="{Binding Message}" ElementStyle="{StaticResource TrimmedText}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Artefacte Registri (.DAT/.REG)">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Margin="10" Orientation="Horizontal">
+                                <TextBlock Text="Cauta Cheie/Valoare:" Foreground="#8B949E" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                                <TextBox Width="300" Text="{Binding SearchArtifactsText, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding ArtifactsView}" SelectedItem="{Binding SelectedArtifact}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Severitate" Width="90" Binding="{Binding SuspicionLevel}"/>
+                                    <DataGridTextColumn Header="Categorie" Width="150" Binding="{Binding Category}"/>
+                                    <DataGridTextColumn Header="Cheie Registru" Width="250" Binding="{Binding KeyPath}" ElementStyle="{StaticResource TrimmedText}"/>
+                                    <DataGridTextColumn Header="Nume" Width="130" Binding="{Binding ValueName}" ElementStyle="{StaticResource TrimmedText}"/>
+                                    <DataGridTextColumn Header="Valoare" Width="250" Binding="{Binding ValueData}" ElementStyle="{StaticResource TrimmedText}"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem Header="Integritate Loguri">
+                        <DataGrid ItemsSource="{Binding IntegritateFisiere}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Fisier" Width="220" Binding="{Binding NumeFisier}" ElementStyle="{StaticResource TrimmedText}"/>
+                                <DataGridTextColumn Header="Status" Width="130" Binding="{Binding Status}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </TabItem>
+                </TabControl>
+            </Border>
+
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="15"/>
+                    <RowDefinition Height="1.2*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Padding="15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="AMENINTARI SI ALERTE" FontSize="13" FontWeight="Bold" Foreground="#F85149" Margin="0,0,0,10"/>
+                        <TextBox Grid.Row="1" Margin="0,0,0,10" Text="{Binding SearchAlertsText, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <ListBox Grid.Row="2" Background="Transparent" BorderThickness="0" ItemsSource="{Binding IssuesView}" SelectedItem="{Binding SelectedIssue}">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="Margin" Value="0,0,0,8"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border Background="#21262D" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Padding="10">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="{Binding Title}" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Left" MaxWidth="200" TextTrimming="CharacterEllipsis"/>
+                                            <Border Background="#238636" CornerRadius="3" HorizontalAlignment="Right" Padding="4,1"
+                                                    Visibility="{Binding IsVerified, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <TextBlock Text="ANALIZAT" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </Grid>
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                            <TextBlock Text="{Binding Severity}" FontSize="11" FontWeight="Bold" Foreground="#F85149"/>
+                                            <Border Background="#2D2140" BorderBrush="#503770" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="8,0,0,0"
+                                                    Visibility="{Binding HasMitreMapping, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <TextBlock Text="{Binding MitreTechniqueId}" FontSize="9" FontWeight="Bold" Foreground="#D2A8FF"/>
+                                            </Border>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Background="#010409" BorderBrush="#30363D" BorderThickness="1" CornerRadius="6" Padding="15">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+                            <StackPanel DataContext="{Binding SelectedEvent}">
+                                <TextBlock Text="INSPECTOR DE DATE BRUTE" FontSize="12" FontWeight="Bold" Foreground="#58A6FF" Margin="0,0,0,8"/>
+                                <TextBlock Text="MESAJ BRUT (PAYLOAD):" FontSize="10" FontWeight="Bold" Foreground="#3FB950"/>
+                                <TextBox AcceptsReturn="True" Background="Transparent" BorderThickness="0" FontFamily="Consolas" FontSize="11"
+                                         Foreground="#8B949E" IsReadOnly="True" MaxHeight="150" Text="{Binding Message}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <Border Grid.Row="1" Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="4" Margin="0,10,0,0" Padding="10">
+                            <StackPanel>
+                                <TextBlock Text="IOC-uri EXTRASE (PIVOTARE)" FontSize="10" FontWeight="Bold" Foreground="#E3B341" Margin="0,0,0,6"/>
+                                <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding CurrentIocs}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="60"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Type}" FontSize="9" Foreground="#8B949E" VerticalAlignment="Center"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Value}" FontFamily="Consolas" FontSize="11" Foreground="#58A6FF"
+                                                               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                    <Button Grid.Column="2" Content="Pivot" Background="#1F6FEB" FontSize="9" Padding="4,1"
+                                                            Command="{Binding DataContext.PivotIocCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding Value}"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Grid.Row="2" Background="#161B22" BorderBrush="#30363D" BorderThickness="1" CornerRadius="4" Margin="0,10,0,0" Padding="15,0">
+            <TextBlock Text="{Binding StatusMessage}" FontSize="12" FontWeight="SemiBold" Foreground="#8B949E" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</Window>

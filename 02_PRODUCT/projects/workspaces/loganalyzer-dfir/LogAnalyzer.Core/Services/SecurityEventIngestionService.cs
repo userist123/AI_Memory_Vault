@@ -30,8 +30,10 @@ namespace LogAnalyzer.Core.Services
                 "verification_type", "confidence", "evidence_ref"
             };
 
+        // The Memory Vault event contract uses snake_case keys (schema_version, event_type, decision_reason, ...).
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
+            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
             PropertyNameCaseInsensitive = true
         };
 

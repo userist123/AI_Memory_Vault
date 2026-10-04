@@ -1,0 +1,105 @@
+{
+    "EventSignatures": [
+        {
+            "EventId": 4624,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Info",
+            "HumanTitle": "Eveniment 4624",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 5
+        },
+        {
+            "EventId": 4625,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Critical",
+            "HumanTitle": "Eveniment 4625",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 1
+        },
+        {
+            "EventId": 4648,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Warning",
+            "HumanTitle": "Eveniment 4648",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 5
+        },
+        {
+            "EventId": 4672,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Warning",
+            "HumanTitle": "Eveniment 4672",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 5
+        },
+        {
+            "EventId": 4720,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Critical",
+            "HumanTitle": "Eveniment 4720",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 1
+        },
+        {
+            "EventId": 4732,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Info",
+            "HumanTitle": "Eveniment 4732",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 5
+        },
+        {
+            "EventId": 1102,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Critical",
+            "HumanTitle": "Eveniment 1102",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 1
+        },
+        {
+            "EventId": 7045,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Critical",
+            "HumanTitle": "Windows Security Log Events",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 1
+        },
+        {
+            "EventId": 4688,
+            "Provider": "Microsoft-Windows-Security-Auditing",
+            "Severity": "Info",
+            "HumanTitle": "Eveniment 4688",
+            "Explanation": "Descriere nedetectată automat. Necesită revizuire.",
+            "RemediationTemplate": "Investigați logurile asociate acestui eveniment.",
+            "ThresholdForAlert": 5
+        }
+    ],
+    "RegistrySignatures": [
+        {
+            "Category": "Persistență",
+            "KeyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            "Severity": "Warning",
+            "Explanation": "Programe care pornesc automat la logarea utilizatorului."
+        },
+        {
+            "Category": "Persistență",
+            "KeyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\RunOnce",
+            "Severity": "Warning",
+            "Explanation": "Programe care pornesc automat o singură dată la următoarea logare."
+        },
+        {
+            "Category": "Privilege Escalation",
+            "KeyPath": "System\\CurrentControlSet\\Services",
+            "Severity": "Critical",
+            "Explanation": "Configurațiile serviciilor Windows. Modificarea ImagePath poate duce la executarea de cod malițios la nivel de SYSTEM."
+        }
+    ]
+}

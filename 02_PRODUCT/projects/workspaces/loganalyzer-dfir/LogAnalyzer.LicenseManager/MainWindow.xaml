@@ -1,0 +1,90 @@
+<Window x:Class="LogAnalyzer.LicenseManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="LogAnalyzer — Manager Licențe" Height="720" Width="880" MinWidth="760" MinHeight="600"
+        Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,18">
+            <TextBlock Text="Manager Licențe LogAnalyzer" FontSize="22" FontWeight="SemiBold"/>
+            <TextBlock Text="Emite chei pentru edițiile AirGapped și Network. Cheia e legată de Hardware ID-ul afișat în fereastra de activare a aplicației."
+                       Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="{StaticResource Panel}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="6" Padding="18">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="150"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Client / stație" VerticalAlignment="Center"/>
+                <TextBox x:Name="TxtClient" Grid.Column="1" Margin="0,0,0,10" FontFamily="Segoe UI"/>
+
+                <TextBlock Grid.Row="1" Text="Hardware ID" VerticalAlignment="Center"/>
+                <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
+                    <Button DockPanel.Dock="Right" Content="Acest PC" Margin="8,0,0,0" Click="UseLocalHwid_Click"
+                            ToolTip="Hardware ID-ul calculat exact ca în aplicație, pentru stația curentă"/>
+                    <TextBox x:Name="TxtHwid" CharacterCasing="Upper" MaxLength="64"/>
+                </DockPanel>
+
+                <TextBlock Grid.Row="2" Text="Valabilitate" VerticalAlignment="Center"/>
+                <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
+                    <RadioButton x:Name="Rb1" Content="1 an" IsChecked="True" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="Rb3" Content="3 ani" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="Rb10" Content="10 ani" VerticalAlignment="Center"/>
+                    <RadioButton x:Name="RbCustom" Content="Până la:" VerticalAlignment="Center"/>
+                    <DatePicker x:Name="DpCustom" Width="140" SelectedDateFormat="Short"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="3" Text="Note" VerticalAlignment="Center"/>
+                <TextBox x:Name="TxtNotes" Grid.Row="3" Grid.Column="1" Margin="0,0,0,14" FontFamily="Segoe UI"/>
+
+                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Generează licența" Background="{StaticResource Accent}" BorderBrush="{StaticResource Accent}" Click="Generate_Click"/>
+                    <Button x:Name="BtnCopy" Content="Copiază" IsEnabled="False" Click="Copy_Click"/>
+                    <Button x:Name="BtnSave" Content="Salvează license.lic…" IsEnabled="False" Click="Save_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Background="{StaticResource Panel}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="6" Padding="18" Margin="0,14,0,0">
+            <StackPanel>
+                <TextBlock Text="Licență generată (se lipește în fereastra de activare)" Foreground="{StaticResource Muted}"/>
+                <TextBox x:Name="TxtLicense" IsReadOnly="True" FontSize="18" Margin="0,8,0,8"/>
+                <TextBlock x:Name="TxtStatus" TextWrapping="Wrap" Foreground="{StaticResource Muted}"/>
+            </StackPanel>
+        </Border>
+
+        <DockPanel Grid.Row="3" Margin="0,14,0,0">
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                <Button DockPanel.Dock="Right" Content="Deschide folderul registrului" Margin="0" Click="OpenLedger_Click"/>
+                <TextBlock Text="Licențe emise" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+            </DockPanel>
+            <DataGrid x:Name="GridLedger" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      Background="{StaticResource Panel}" Foreground="#111" RowBackground="#F4F6F8" AlternatingRowBackground="#E9EDF1"
+                      BorderBrush="{StaticResource Border}" GridLinesVisibility="Horizontal">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Emisă (UTC)" Binding="{Binding IssuedUtc, StringFormat=yyyy-MM-dd HH:mm}" Width="130"/>
+                    <DataGridTextColumn Header="Client" Binding="{Binding Client}" Width="*"/>
+                    <DataGridTextColumn Header="Hardware ID" Binding="{Binding HardwareId}" Width="160"/>
+                    <DataGridTextColumn Header="Expiră" Binding="{Binding ExpiryDate, StringFormat=yyyy-MM-dd}" Width="90"/>
+                    <DataGridTextColumn Header="Licență" Binding="{Binding License}" Width="230"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </Grid>
+</Window>

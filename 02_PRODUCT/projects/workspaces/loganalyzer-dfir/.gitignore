@@ -14,3 +14,6 @@
 # OS files
 .DS_Store
 Thumbs.db
+
+# dotnet publish output (Properties/PublishProfiles/win-x64-singlefile.pubxml)
+publish/

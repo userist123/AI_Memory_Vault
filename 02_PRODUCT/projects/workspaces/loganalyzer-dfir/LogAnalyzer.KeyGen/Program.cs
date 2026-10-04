@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Globalization;
 using System.IO;
-using System.Management;
-using System.Security.Cryptography;
 using System.Text;
+using LogAnalyzer.Core.Services;
 
 namespace LogAnalyzer.KeyGen;
 
 public static class Program
 {
-    private const string Salt = "INFOSEC_ROMANIA_SOC_2026_SECURE_KEY";
+    // Single source of truth: the same LicenseService the editions use to show the Hardware ID and verify keys.
+    private static readonly LicenseService License = new();
 
     public static void Main(string[] args)
     {
@@ -31,15 +31,15 @@ public static class Program
 
         if (args.Length >= 2)
         {
-            hardwareId = args[0].Trim().ToUpperInvariant();
-            expiryInput = args[1].Trim();
+            hardwareId = Clean(args[0]).ToUpperInvariant();
+            expiryInput = Clean(args[1]);
         }
         else
         {
             var localHwId = GetLocalHardwareId();
             Console.WriteLine($"[+] Hardware ID detectat pe stația locală: {localHwId}");
             Console.Write($"Introduceți Hardware ID [Apăsați ENTER pentru cel local '{localHwId}']: ");
-            var inputHw = Console.ReadLine()?.Trim();
+            var inputHw = Clean(Console.ReadLine());
             hardwareId = string.IsNullOrWhiteSpace(inputHw) ? localHwId : inputHw.ToUpperInvariant();
 
             Console.WriteLine();
@@ -49,7 +49,7 @@ public static class Program
             Console.WriteLine("  3. 10 Ani (Long-Term Air-Gapped Station)");
             Console.WriteLine("  4. Dată Personalizată (Format: YYYY-MM-DD)");
             Console.Write("Alegere [1]: ");
-            var choice = Console.ReadLine()?.Trim();
+            var choice = Clean(Console.ReadLine());
 
             expiryInput = choice switch
             {
@@ -60,7 +60,7 @@ public static class Program
             };
         }
 
-        if (string.IsNullOrWhiteSpace(hardwareId) || hardwareId.Length < 8)
+        if (hardwareId.Length < 8 || !hardwareId.All(Uri.IsHexDigit))
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("[-] Eroare: Hardware ID invalid (trebuie să conțină minim 8 caractere hexazecimale).");
@@ -78,11 +78,16 @@ public static class Program
             return;
         }
 
-        var datePart = expiryDate.ToString("yyyyMMdd");
-        var payload = $"{hardwareId.Trim().ToUpperInvariant()}{datePart}{Salt}";
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(payload));
-        var key = Convert.ToHexString(hash)[..20];
-        var fullLicenseString = $"{key}|{expiryDate:yyyy-MM-dd}";
+        var fullLicenseString = License.BuildLicenseString(hardwareId, expiryDate);
+        var key = fullLicenseString.Split('|')[0];
+        if (!License.VerifyLicenseString(hardwareId, fullLicenseString, DateTime.UtcNow))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("[-] Eroare: licența generată nu trece verificarea aplicației (dată expirată?).");
+            Console.ResetColor();
+            Environment.ExitCode = 1;
+            return;
+        }
 
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Green;
@@ -98,7 +103,7 @@ public static class Program
 
         Console.WriteLine();
         Console.Write("Doriți să salvați licența în fișierul 'license.lic'? [D/n]: ");
-        var saveChoice = Console.ReadLine()?.Trim().ToUpperInvariant();
+        var saveChoice = Clean(Console.ReadLine()).ToUpperInvariant();
         if (string.IsNullOrEmpty(saveChoice) || saveChoice == "D" || saveChoice == "Y" || saveChoice == "DA")
         {
             File.WriteAllText("license.lic", fullLicenseString, Encoding.UTF8);
@@ -111,43 +116,15 @@ public static class Program
     private static string PromptCustomDate()
     {
         Console.Write("Introduceți data de expirare (YYYY-MM-DD): ");
-        return Console.ReadLine()?.Trim() ?? DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd");
+        var d = Clean(Console.ReadLine());
+        return d.Length > 0 ? d : DateTime.UtcNow.AddYears(1).ToString("yyyy-MM-dd");
     }
 
-    private static string GetLocalHardwareId()
-    {
-        try
-        {
-            string cpuId = string.Empty;
-            string boardSerial = string.Empty;
+    private static string GetLocalHardwareId() => License.GetHardwareId();
 
-            using (var searcher = new ManagementObjectSearcher("SELECT ProcessorId FROM Win32_Processor"))
-            {
-                foreach (var obj in searcher.Get())
-                {
-                    cpuId = obj["ProcessorId"]?.ToString() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(cpuId)) break;
-                }
-            }
-
-            using (var searcher = new ManagementObjectSearcher("SELECT SerialNumber FROM Win32_BaseBoard"))
-            {
-                foreach (var obj in searcher.Get())
-                {
-                    boardSerial = obj["SerialNumber"]?.ToString() ?? string.Empty;
-                    if (!string.IsNullOrEmpty(boardSerial)) break;
-                }
-            }
-
-            var combined = $"{cpuId}_{boardSerial}_{Environment.MachineName}";
-            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(combined));
-            return Convert.ToHexString(hash)[..16].ToUpperInvariant();
-        }
-        catch
-        {
-            return "DEFAULT_HWID_0000";
-        }
-    }
+    // Piped/redirected stdin (e.g. from PowerShell) can start with a BOM or carry control characters.
+    private static string Clean(string? s) =>
+        s is null ? string.Empty : new string(s.Where(ch => ch != '\uFEFF' && !char.IsControl(ch)).ToArray()).Trim();
 
     private static void ShowUsage()
     {
