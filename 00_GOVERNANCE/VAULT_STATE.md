@@ -72,10 +72,10 @@ in its constructor. Corrected 2026-09-06.
 |---|---:|
 | Notes in the index (`VaultIndex`, export residue excluded) | 1041 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 483 |
-| — declared / inferred / wikilink | 203 / 203 / 77 |
-| Notes usable as a graph **seed** (out-edge) | 160 |
-| Notes reachable as graph **gold** (in-edge) | 148 |
+| Graph edges | 384 |
+| — declared / inferred / wikilink | 149 / 150 / 85 |
+| Notes usable as a graph **seed** (out-edge) | 149 |
+| Notes reachable as graph **gold** (in-edge) | 131 |
 | Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
@@ -130,10 +130,12 @@ whole-corpus retrieval numbers.
   Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
   documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
   `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
-- **Where the 91 missed benchmark cases are lost is still unknown.** Reason
-  codes now exist for every note, but nothing has yet connected them to the
-  benchmark. Until that runs, choosing between a reranker and better candidate
-  generation is a guess.
+- **[RESOLVED] Causal loss attribution of missed benchmark cases completed.** Evaluated on all 130
+  non-abstain benchmark v3 cases in `07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md` (and `loss_funnel_cases.json`).
+  Under production agent operating point (`AI_AGENT`, `page_size=5`), 71.56% of misses are `PAGINATION_CUT`
+  (ranked > 5; median rank 20.5), 13.76% `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 11.93% `NEVER_CANDIDATE`, 1.83%
+  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). Pre-registered decision rule confirmed
+  adoption of a cross-encoder / reranker rather than blind candidate generator expansion.
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads

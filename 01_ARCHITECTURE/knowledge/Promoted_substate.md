@@ -17,11 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-14-routing
-- type: depends_on
-  target_id: 4dcd44ba-c65e-4928-804a-d3d8f0bdd888
+  - type: depends_on
+    target_id: "4dcd44ba-c65e-4928-804a-d3d8f0bdd888"
 ---
+
 # substate
 
 ## Canonical Definition

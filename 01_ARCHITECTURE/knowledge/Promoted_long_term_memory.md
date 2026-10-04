@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-15-retrieval
-- type: related_to
-  target_id: e045ded5-01fd-4a28-8f85-203ebae670de
-- type: depends_on
-  target_id: b2888875-8546-4d42-b262-2c7f779e3cc9
+  - type: related_to
+    target_id: "e045ded5-01fd-4a28-8f85-203ebae670de"
 ---
+
 # long-term memory
 
 ## Canonical Definition

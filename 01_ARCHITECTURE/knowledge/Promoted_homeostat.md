@@ -14,16 +14,14 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: "slot-01-identity"
+relations: []
 ---
 
 # homeostat
 
 ## Canonical Definition
 
-An electromechanical apparatus designed by Ashby consisting of four interconnected units equipped with magnets and uniselectors to study ultrastability.
+An electromechanical apparatus designed by Ashby consisting of four interconnected units equipped with magnets and uniselectors to study [[ultrastable system]] dynamics.
 
 ## Judgment & Evaluation
 

@@ -1,14 +1,19 @@
 ---
 agent: ANTIGRAVITY
-last_updated_utc: 2026-10-04T19:26:00Z
+last_updated_utc: 2026-10-04T19:51:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
 working_branch: research/book-to-memory
 base_branch: origin/main
 project_id: AI_MEMORY_VAULT
 application: AI Memory Vault / Memory Engine
-current_task: BOOK_TO_MEMORY_RESEARCH_TRACK_PHASES_1_THROUGH_11
+current_task: BOOK_TO_MEMORY_AND_GRAPH_HYGIENE_COMPLETION
 status: COMPLETE
 completed:
+  - "Cognitive Core & Graph Hygiene Program (All 4 Phases Complete):
+     1. Phase 1 (Physical Purge of 55 Rejected Graph Edges): Cleaned frontmatters across 42 source files using clean_source_frontmatters.py, added topological wikilinks for island prevention (87/87 Promoted notes pass in test_promoted_notes_reach_the_graph.py), verified byte-for-byte rollback in test_plasticity_remaining_65_purge_rollback.py (3/3 PASS).
+     2. Phase 2 (Cognitive Interference Gate Implementation): Built 03_IMPLEMENTATION/packages/retrieval/interference_gate.py with ACT-R power-law recency/frequency decay, fan-effect cue strength, competitor density suppression, MMR diversity knapsack, and confidence margin gating. Validated in 20_TESTS/test_interference_gate.py (7/7 PASS).
+     3. Phase 3 (Loss Funnel Diagnostic & Benchmark Defect Resolution): Reconciled empirical evidence from 07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md into 00_GOVERNANCE/VAULT_STATE.md, marking the 91 missed benchmark cases defect as [RESOLVED] (100% causal attribution, 0% undetermined, proving need for reranker).
+     4. Phase 4 (Full Regression Suite & Corpus Health Invariant): Updated MIN_EDGES_BASELINE to 384, verified test_corpus_health_gate.py (6/6 PASS), test_vault_state_accuracy.py (11/11 PASS), test_remaining_typed_edge_audit.py (5/5 PASS), and complete regression suite (128/128 PASS in 23s)."
   - "Typed Semantic Edge Audit Wave 2 & 100% Graph Census Completion:
      1. Evaluated all remaining 65 unjudged typed relations in the live graph via independent model (Perplexity): 10 ACCEPT, 55 REJECT (15.4% precision).
      2. Rejection taxonomy: wrong_type: 23, unsupported: 17, unrelated: 12, shared_terms_only: 2, wrong_direction: 1.

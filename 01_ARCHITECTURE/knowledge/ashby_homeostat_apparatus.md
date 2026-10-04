@@ -14,10 +14,6 @@ provenance:
 confidence: low
 verification: unverified
 relations:
-  - type: depends_on
-    target_id: "knw-ashby-ultrastable-system"
-  - type: part_of
-    target_id: "knw-ashby-step-mechanisms"
   - type: related_to
     target_id: "knw-context-packing-p1-0001"
 ---

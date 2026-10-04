@@ -78,15 +78,51 @@ def clean_frontmatter_relations(
     if removed_count == 0:
         return False, f"No matching rejected relations found in {source_path.name}"
 
-    # For Promoted_transformation.md, ensure [[state-determined system]] wikilink exists in body
+    ISLAND_PREVENTIONS = {
+        "Promoted_transformation.md": (
+            "terminal equilibrium distributions.",
+            "terminal equilibrium distributions, governing state transitions in a [[state-determined system]]."
+        ),
+        "Promoted_buffer.md": (
+            "central production system.",
+            "central production system in [[working memory]]."
+        ),
+        "Promoted_regulation.md": (
+            "minimal acceptable outcomes.",
+            "minimal acceptable outcomes, maintaining stability via [[feedback]]."
+        ),
+        "Promoted_reinforcement_learning.md": (
+            "future rewards.",
+            "future rewards, guiding selection in [[operator]]."
+        ),
+        "Promoted_reservoir_sampling.md": (
+            "knowledge of total length.",
+            "knowledge of total length, optimizing sample preservation in [[long-term memory]]."
+        ),
+        "Promoted_retrieval.md": (
+            "ongoing agent actions.",
+            "ongoing agent actions from [[long-term memory]]."
+        ),
+        "Promoted_variety.md": (
+            "deviate from uniformity.",
+            "deviate from uniformity in a [[state-determined system]]."
+        ),
+        "Promoted_homeostat.md": (
+            "study ultrastability.",
+            "study [[ultrastable system]] dynamics."
+        ),
+        "Promoted_state_determined_system.md": (
+            "without intrinsic randomness.",
+            "without intrinsic randomness in state [[transformation]]."
+        ),
+    }
+
     body_modified = False
-    if source_path.name == "Promoted_transformation.md":
-        if "[[state-determined system]]" not in body_text:
-            # Add to Canonical Definition
-            body_text = body_text.replace(
-                "terminal equilibrium distributions.",
-                "terminal equilibrium distributions, governing state transitions in a [[state-determined system]]."
-            )
+    fname = source_path.name
+    if fname in ISLAND_PREVENTIONS:
+        old_sub, new_sub = ISLAND_PREVENTIONS[fname]
+        if old_sub in body_text and new_sub not in body_text:
+            body_text = body_text.replace(old_sub, new_sub, 1)
             body_modified = True
 
     # Reconstruct frontmatter
@@ -144,12 +180,14 @@ def clean_frontmatter_relations(
         source_path.write_text(new_full_content, encoding="utf-8")
 
     action_str = "[DRY-RUN] Would remove" if dry_run else "Removed"
-    extra_str = " (added [[state-determined system]] wikilink)" if body_modified else ""
+    extra_str = " (added wikilink)" if body_modified else ""
     return True, f"{action_str} {removed_count} rejected relation(s) from {source_path.name}{extra_str}"
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Clean rejected relations from source frontmatters")
+    parser.add_argument("--sample", type=Path, default=DEFAULT_SAMPLE, help="Path to audit sample JSON")
+    parser.add_argument("--verdicts", type=Path, default=DEFAULT_VERDICTS, help="Path to audit verdicts JSON")
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without modifying files")
     parser.add_argument("--apply", action="store_true", help="Apply changes to source files")
     args = parser.parse_args()
@@ -161,13 +199,13 @@ def main() -> int:
     dry_run = not args.apply
 
     print("Verifying audit sample hash against verdicts...")
-    is_valid, calc_hash, exp_hash = verify_sample_hash(DEFAULT_SAMPLE, DEFAULT_VERDICTS)
+    is_valid, calc_hash, exp_hash = verify_sample_hash(args.sample, args.verdicts)
     if not is_valid:
         print(f"FATAL: Sample hash mismatch!\nCalculated: {calc_hash}\nExpected:   {exp_hash}")
         return 1
     print(f"Sample SHA-256 OK: {calc_hash}")
 
-    rejected_edges = load_rejected_edges(DEFAULT_SAMPLE, DEFAULT_VERDICTS)
+    rejected_edges = load_rejected_edges(args.sample, args.verdicts)
     print(f"Loaded {len(rejected_edges)} rejected edges from verdicts.")
 
     # Group by source_path
@@ -184,7 +222,7 @@ def main() -> int:
     total_changed = 0
     total_edges_removed = 0
     for sp_rel, rejections in sorted(by_file.items()):
-        full_path = REPO / sp_rel
+        full_path = Path(sp_rel) if Path(sp_rel).is_absolute() else REPO / sp_rel
         if not full_path.exists():
             # Try normalizing backslashes/slashes
             alt_path = REPO / Path(sp_rel)
@@ -203,9 +241,9 @@ def main() -> int:
     print(f"\nSummary:")
     print(f"- Files processed: {len(by_file)}")
     print(f"- Files updated: {total_changed}")
-    print(f"- Rejected edges removed: {total_edges_removed} (expected: 29)")
-    if total_edges_removed != 29:
-        print(f"WARNING: Expected to remove 29 edges, but removed {total_edges_removed}!")
+    print(f"- Rejected edges removed: {total_edges_removed} (expected: {len(rejected_edges)})")
+    if total_edges_removed != len(rejected_edges):
+        print(f"WARNING: Expected to remove {len(rejected_edges)} edges, but removed {total_edges_removed}!")
         return 1
 
     return 0

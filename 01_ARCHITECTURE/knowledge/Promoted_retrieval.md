@@ -14,16 +14,14 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: "slot-15-retrieval"
+relations: []
 ---
 
 # retrieval
 
 ## Canonical Definition
 
-Associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions.
+Associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions from [[long-term memory]].
 
 ## Judgment & Evaluation
 
