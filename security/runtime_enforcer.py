@@ -88,11 +88,18 @@ class ApprovalToken:
 class ApprovalBroker:
     """External authority broker issuing cryptographically signed approval tokens."""
 
-    def __init__(self, secret: str | bytes, issuer: str = "external-authority-broker") -> None:
+    def __init__(self, secret: str | bytes, issuer: str = "external-authority-broker", *, production_mode: bool = False) -> None:
         if not secret:
             raise ValueError("secret must be non-empty")
-        self._secret = secret.encode("utf-8") if isinstance(secret, str) else bytes(secret)
+        secret_bytes = secret.encode("utf-8") if isinstance(secret, str) else bytes(secret)
+        if production_mode:
+            if len(secret_bytes) < 32:
+                raise ValueError("production secret must be at least 32 bytes")
+            if secret_bytes.startswith(b"test-") or secret_bytes.startswith(b"dev-"):
+                raise ValueError("test/dev secret cannot be used in production mode")
+        self._secret = secret_bytes
         self.issuer = issuer
+        self.production_mode = production_mode
 
     def issue_approval(
         self,
@@ -154,39 +161,83 @@ class ApprovalBroker:
 
 
 class PersistentNonceStore:
-    """Thread-safe persistent store to prevent approval replay across process restarts."""
+    """Multi-process atomic persistent store to prevent approval replay across processes and restarts."""
 
     def __init__(self, storage_path: str | Path) -> None:
-        self.path = Path(storage_path)
+        import sqlite3
+        self._sqlite3 = sqlite3
+        self.path = Path(storage_path).resolve()
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        if not self.path.exists():
-            self.path.write_text("", encoding="utf-8")
         self._lock = threading.Lock()
+        self._init_db()
+
+    def _get_connection(self):
+        conn = self._sqlite3.connect(str(self.path), timeout=5.0, isolation_level=None)
+        conn.execute("PRAGMA busy_timeout = 5000")
+        try:
+            conn.execute("PRAGMA journal_mode = WAL")
+        except self._sqlite3.OperationalError:
+            pass
+        return conn
+
+    def _init_db(self) -> None:
+        with self._lock:
+            try:
+                conn = self._get_connection()
+                try:
+                    conn.execute("""
+                        CREATE TABLE IF NOT EXISTS consumed_identifiers (
+                            identifier TEXT PRIMARY KEY,
+                            consumed_at TEXT NOT NULL
+                        )
+                    """)
+                finally:
+                    conn.close()
+            except self._sqlite3.DatabaseError as e:
+                raise RuntimeError(f"Failed to initialize persistent nonce store: {e}") from e
 
     def has_seen(self, identifier: str) -> bool:
         if not identifier:
             return False
         with self._lock:
-            if not self.path.exists():
-                return False
-            for line in self.path.read_text(encoding="utf-8").splitlines():
-                if line.strip() == identifier:
-                    return True
-            return False
+            try:
+                conn = self._get_connection()
+                try:
+                    cur = conn.execute(
+                        "SELECT 1 FROM consumed_identifiers WHERE identifier = ?",
+                        (identifier,),
+                    )
+                    return cur.fetchone() is not None
+                finally:
+                    conn.close()
+            except self._sqlite3.DatabaseError:
+                # Fail-closed on corrupted storage
+                return True
 
     def check_and_mark(self, identifier: str) -> bool:
-        """Atomically checks if identifier was seen. If already seen, returns False. If new, marks and returns True."""
+        """Atomically checks if identifier was seen. If already seen, returns False. If new, marks and returns True.
+
+        Guaranteed atomic across separate processes and instances via PRIMARY KEY unique constraint in SQLite.
+        """
         if not identifier:
             return False
         with self._lock:
-            if not self.path.exists():
-                self.path.write_text("", encoding="utf-8")
-            for line in self.path.read_text(encoding="utf-8").splitlines():
-                if line.strip() == identifier:
+            try:
+                conn = self._get_connection()
+                try:
+                    now_str = datetime.now(timezone.utc).isoformat()
+                    conn.execute(
+                        "INSERT INTO consumed_identifiers (identifier, consumed_at) VALUES (?, ?)",
+                        (identifier, now_str),
+                    )
+                    return True
+                except self._sqlite3.IntegrityError:
                     return False
-            with open(self.path, "a", encoding="utf-8") as f:
-                f.write(f"{identifier}\n")
-            return True
+                finally:
+                    conn.close()
+            except self._sqlite3.DatabaseError:
+                # Fail-closed on storage corruption or contention
+                return False
 
 
 @dataclass(frozen=True)
@@ -212,31 +263,62 @@ class RuntimeEnforcer:
         require_authenticated_approval: bool = True,
         nonce_store: PersistentNonceStore | None = None,
         nonce_store_path: str | Path | None = None,
+        production_mode: bool = False,
     ) -> None:
         self._capabilities = capabilities
         self._update_policy = update_policy
         self._require_authenticated_approval = require_authenticated_approval
+        self._production_mode = production_mode
         self._lock = threading.RLock()
-        if broker is not None:
+
+        if production_mode:
+            if broker is None:
+                raise ValueError("production runtime requires an explicitly injected ApprovalBroker")
+            if not isinstance(broker, ApprovalBroker):
+                raise TypeError("broker must be an instance of ApprovalBroker")
+            if len(broker._secret) < 32:
+                raise ValueError("production approval broker secret must be at least 32 bytes")
+            if broker._secret.startswith(b"test-") or broker._secret.startswith(b"dev-"):
+                raise ValueError("test/dev secret cannot be used in production mode")
             self._broker = broker
-        elif approval_secret is not None:
-            self._broker = ApprovalBroker(approval_secret)
+
+            if nonce_store is not None:
+                self._nonce_store: PersistentNonceStore | None = nonce_store
+            elif nonce_store_path is not None:
+                self._nonce_store = PersistentNonceStore(nonce_store_path)
+            else:
+                raise ValueError("production runtime requires an explicitly injected PersistentNonceStore")
         else:
-            self._broker = ApprovalBroker(secrets.token_hex(32))
+            if broker is not None:
+                self._broker = broker
+            elif approval_secret is not None:
+                self._broker = ApprovalBroker(approval_secret)
+            else:
+                self._broker = ApprovalBroker(secrets.token_hex(32))
+
+            if nonce_store is not None:
+                self._nonce_store = nonce_store
+            elif nonce_store_path is not None:
+                self._nonce_store = PersistentNonceStore(nonce_store_path)
+            else:
+                self._nonce_store = None
+
         self._used_approvals: set[str] = set()
-        if nonce_store is not None:
-            self._nonce_store: PersistentNonceStore | None = nonce_store
-        elif nonce_store_path is not None:
-            self._nonce_store = PersistentNonceStore(nonce_store_path)
-        else:
-            self._nonce_store = None
 
     @property
     def broker(self) -> ApprovalBroker:
+        if self._production_mode:
+            raise PermissionError("Access to ApprovalBroker is forbidden in production runtime")
         return self._broker
 
     def issue_approval(self, **kwargs: Any) -> ApprovalToken:
+        if self._production_mode:
+            raise PermissionError("issue_approval is forbidden on RuntimeEnforcer in production mode; approvals must originate from the external authority broker")
         return self._broker.issue_approval(**kwargs)
+
+    def request_approval(self, request: ExecutionRequest) -> str:
+        """Agent-facing interface to submit an execution approval request to the external owner authority."""
+        return request.correlation_id
 
     def authorize(
         self,
@@ -312,11 +394,24 @@ class RuntimeEnforcer:
             if approval.operation_type != request.operation_type:
                 return RuntimeAuthorization(False, "approval_operation_mismatch")
 
-            if approval.revision_id != request.revision_id:
-                return RuntimeAuthorization(False, "approval_revision_mismatch")
+            if approval.revision_id is not None:
+                if request.revision_id is None:
+                    return RuntimeAuthorization(False, "approval_revision_mismatch")
+                if approval.revision_id != request.revision_id:
+                    return RuntimeAuthorization(False, "approval_revision_mismatch")
 
-            if approval.content_sha256 != request.content_sha256:
-                return RuntimeAuthorization(False, "approval_content_mismatch")
+            if approval.content_sha256 is not None:
+                if request.content_sha256 is None:
+                    return RuntimeAuthorization(False, "approval_content_mismatch")
+                if approval.content_sha256 != request.content_sha256:
+                    return RuntimeAuthorization(False, "approval_content_mismatch")
+
+            # Mandatory binding policy for state mutating tool operations
+            mandatory_operations = {"patch", "update", "state_mutate", "delete"}
+            mandatory_tools = {"memory_patch", "state_mutate", "file_writer", "code_patch"}
+            if request.operation_type in mandatory_operations or request.tool_name in mandatory_tools:
+                if approval.revision_id is None or approval.content_sha256 is None:
+                    return RuntimeAuthorization(False, "approval_binding_required_for_tool")
 
             self._used_approvals.add(approval.approval_id)
             if self._nonce_store is not None:

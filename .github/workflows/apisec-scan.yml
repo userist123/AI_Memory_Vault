@@ -47,6 +47,7 @@ jobs:
           fi
 
       - name: APIsec scan
+        id: apisec_scan
         if: steps.config.outputs.configured == 'true'
         uses: apisec-inc/apisec-run-scan@025432089674a28ba8fb55f8ab06c10215e772ea # v1.0.6
         with:
@@ -56,7 +57,8 @@ jobs:
           sarif-result-file: "apisec-results.sarif"
 
       - name: Import results
-        if: steps.config.outputs.configured == 'true'
+        id: import_results
+        if: steps.config.outputs.configured == 'true' && steps.apisec_scan.outcome == 'success'
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           sarif_file: ./apisec-results.sarif
@@ -66,8 +68,14 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ steps.config.outputs.configured }}" == "true" ]]; then
-            echo "APIsec execution status: EXECUTED_PASSED"
+            scan_outcome="${{ steps.apisec_scan.outcome }}"
+            import_outcome="${{ steps.import_results.outcome }}"
+            if [[ "$scan_outcome" == "success" && ( "$import_outcome" == "success" || "$import_outcome" == "skipped" ) ]]; then
+              echo "APIsec execution status: EXECUTED_PASSED"
+            else
+              echo "APIsec execution status: EXECUTED_FAILED"
+            fi
           else
-            status="${{ steps.config.outputs.scan_status || 'SKIPPED_UNCONFIGURED' }}"
+            status="${{ steps.config.outputs.scan_status || 'NOT_CONFIGURED_OPTIONAL' }}"
             echo "APIsec execution status: $status"
           fi

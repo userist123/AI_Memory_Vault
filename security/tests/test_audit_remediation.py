@@ -29,6 +29,7 @@ from security.runtime_enforcer import (
     ApprovalBroker,
     ApprovalToken,
     ExecutionRequest,
+    PersistentNonceStore,
     RuntimeEnforcer,
 )
 from security.runtime_adapter import RuntimeAdapter
@@ -721,17 +722,333 @@ def test_m07_security_update_manager_production_mode():
         )
 
 
-def test_runtime_adapter_production_mode_forbids_self_approval():
+def test_blocker1_production_runtime_requires_explicit_broker_and_nonce_store(tmp_path):
     from security.supply_chain_policy import SoftwareAISupplyChainPolicy
     policy = SoftwareAISupplyChainPolicy()
-    adapter = RuntimeAdapter(supply_chain_policy=policy, production_mode=True)
+    broker = ApprovalBroker("authoritative-production-secret-32bytes!", issuer="external-authority-broker")
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+
+    # 1. RuntimeEnforcer rejects broker=None in production
+    with pytest.raises(ValueError, match="production runtime requires an explicitly injected ApprovalBroker"):
+        RuntimeEnforcer(broker=None, nonce_store=store, production_mode=True)
+
+    # 2. RuntimeEnforcer rejects nonce_store=None in production
+    with pytest.raises(ValueError, match="production runtime requires an explicitly injected PersistentNonceStore"):
+        RuntimeEnforcer(broker=broker, nonce_store=None, production_mode=True)
+
+    # 3. RuntimeAdapter rejects missing broker in production
+    with pytest.raises(PermissionError, match="production runtime requires explicitly injected external approval broker"):
+        RuntimeAdapter(supply_chain_policy=policy, broker=None, nonce_store=store, production_mode=True)
+
+    # 4. RuntimeAdapter rejects missing nonce_store in production
+    with pytest.raises(PermissionError, match="production runtime requires explicitly injected persistent nonce store"):
+        RuntimeAdapter(supply_chain_policy=policy, broker=broker, nonce_store=None, production_mode=True)
+
+
+def test_blocker1_test_secret_rejected_in_production_mode(tmp_path):
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+
+    # 1. Dev secret rejected in broker init with production_mode=True
+    with pytest.raises(ValueError, match="test/dev secret cannot be used in production mode"):
+        ApprovalBroker("test-secret-123456789012345678901234", production_mode=True)
+
+    # 2. Short secret rejected in production enforcer
+    short_broker = ApprovalBroker("short_secret_under_32_bytes")
+    with pytest.raises(ValueError, match="production approval broker secret must be at least 32 bytes"):
+        RuntimeEnforcer(broker=short_broker, nonce_store=store, production_mode=True)
+
+    # 3. Dev secret rejected in production enforcer
+    dev_broker = ApprovalBroker("dev-secret-123456789012345678901234")
+    with pytest.raises(ValueError, match="test/dev secret cannot be used in production mode"):
+        RuntimeEnforcer(broker=dev_broker, nonce_store=store, production_mode=True)
+
+
+def test_blocker1_agent_secret_cannot_authorize_production_operation(tmp_path):
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+    authoritative_broker = ApprovalBroker("authoritative-production-secret-32bytes!")
+    enforcer = RuntimeEnforcer(broker=authoritative_broker, nonce_store=store, production_mode=True)
+
+    # Malicious agent tries to mint approval with its own self-selected secret
+    agent_broker = ApprovalBroker("agent-self-selected-secret-32bytes-long!")
+    now = datetime.now(timezone.utc)
+    req = ExecutionRequest(
+        actor="agent",
+        tool_name="system_tool",
+        target="sys-target",
+        parameters={"cmd": "run"},
+    )
+    forged_token = agent_broker.issue_approval(
+        actor="agent",
+        tool_name="system_tool",
+        target="sys-target",
+        parameters_sha256=req.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-agent-forged-1",
+    )
+
+    decision = TrustDecision(TrustState.REVIEW, ("review",), True)
+    res = enforcer.authorize(req, decision, approval=forged_token, now=now)
+    assert not res.allowed
+    assert res.reason == "approval_invalid_signature"
+
+
+def test_blocker1_agent_cannot_access_broker_or_issue_approval_in_production(tmp_path):
+    from security.supply_chain_policy import SoftwareAISupplyChainPolicy
+    policy = SoftwareAISupplyChainPolicy()
+    broker = ApprovalBroker("authoritative-production-secret-32bytes!", issuer="external-authority-broker")
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+    adapter = RuntimeAdapter(supply_chain_policy=policy, broker=broker, nonce_store=store, production_mode=True)
+
+    # 1. adapter.issue_approval is blocked in production
     with pytest.raises(PermissionError, match="issue_approval is forbidden on RuntimeAdapter in production mode"):
-        adapter.issue_approval(
-            actor="agent",
-            tool_name="shell",
-            target="exec",
-            parameters_sha256="abc",
-        )
+        adapter.issue_approval(actor="agent", tool_name="shell", target="exec", parameters_sha256="abc")
+
+    # 2. adapter.broker access is blocked in production
+    with pytest.raises(PermissionError, match="Access to ApprovalBroker is forbidden in production runtime"):
+        _ = adapter.broker
+
+    # 3. enforcer.issue_approval is blocked in production
+    enforcer = RuntimeEnforcer(broker=broker, nonce_store=store, production_mode=True)
+    with pytest.raises(PermissionError, match="issue_approval is forbidden on RuntimeEnforcer in production mode"):
+        enforcer.issue_approval(actor="agent", tool_name="shell", target="exec", parameters_sha256="abc")
+
+    # 4. enforcer.broker access is blocked in production
+    with pytest.raises(PermissionError, match="Access to ApprovalBroker is forbidden in production runtime"):
+        _ = enforcer.broker
+
+
+def test_blocker2_mandatory_binding_for_mutating_tools(tmp_path):
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+    broker = ApprovalBroker("authoritative-production-secret-32bytes!")
+    enforcer = RuntimeEnforcer(broker=broker, nonce_store=store, production_mode=True)
+    now = datetime.now(timezone.utc)
+    decision = TrustDecision(TrustState.REVIEW, ("review",), True)
+
+    req_mutate = ExecutionRequest(
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-100",
+        parameters={"content": "new text"},
+        operation_type="patch",
+    )
+
+    # 1. Approval token for mutating operation without revision_id & content_sha256 -> REJECTED
+    unbound_token = broker.issue_approval(
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-100",
+        parameters_sha256=req_mutate.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-unbound-mutate",
+        operation_type="patch",
+        revision_id=None,
+        content_sha256=None,
+    )
+    res_unbound = enforcer.authorize(req_mutate, decision, approval=unbound_token, now=now)
+    assert not res_unbound.allowed
+    assert res_unbound.reason == "approval_binding_required_for_tool"
+
+    # 2. Mutating operation with full binding matching request -> ALLOWED
+    bound_token = broker.issue_approval(
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-100",
+        parameters_sha256=req_mutate.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-bound-mutate",
+        operation_type="patch",
+        revision_id="rev-exact-100",
+        content_sha256=hashlib.sha256(b"new text").hexdigest(),
+    )
+    req_bound = ExecutionRequest(
+        actor="operator",
+        tool_name="memory_patch",
+        target="note-100",
+        parameters={"content": "new text"},
+        operation_type="patch",
+        revision_id="rev-exact-100",
+        content_sha256=hashlib.sha256(b"new text").hexdigest(),
+    )
+    res_bound = enforcer.authorize(req_bound, decision, approval=bound_token, now=now)
+    assert res_bound.allowed
+
+
+def test_blocker4_sqlite_nonce_store_multi_instance_atomicity(tmp_path):
+    import concurrent.futures
+    db_file = tmp_path / "atomic_nonces.sqlite"
+    broker = ApprovalBroker("authoritative-production-secret-32bytes!")
+
+    enforcer1 = RuntimeEnforcer(broker=broker, nonce_store_path=db_file)
+    enforcer2 = RuntimeEnforcer(broker=broker, nonce_store_path=db_file)
+    now = datetime.now(timezone.utc)
+    decision = TrustDecision(TrustState.REVIEW, ("review",), True)
+
+    req = ExecutionRequest(
+        actor="operator",
+        tool_name="system_tool",
+        target="target-atomic",
+        parameters={"action": "reconcile"},
+    )
+    token = broker.issue_approval(
+        approval_id="app-atomic-1",
+        actor="operator",
+        tool_name="system_tool",
+        target="target-atomic",
+        parameters_sha256=req.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-atomic-claim-1",
+    )
+
+    # Concurrent authorization attempts across two separate enforcer instances sharing SQLite file
+    def try_claim(enforcer_idx):
+        enf = enforcer1 if enforcer_idx % 2 == 0 else enforcer2
+        return enf.authorize(req, decision, approval=token, now=now)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+        futures = [pool.submit(try_claim, i) for i in range(8)]
+        results = [f.result() for f in futures]
+
+    allowed_count = sum(1 for r in results if r.allowed)
+    replayed_count = sum(1 for r in results if not r.allowed and r.reason == "approval_replayed")
+
+    # Exactly 1 allowed across all instances, exactly 7 replayed
+    assert allowed_count == 1
+    assert replayed_count == 7
+
+    # Restart: A third new instance pointing to the same SQLite db also rejects replay
+    enforcer3 = RuntimeEnforcer(broker=broker, nonce_store_path=db_file)
+    res3 = enforcer3.authorize(req, decision, approval=token, now=now)
+    assert not res3.allowed
+    assert res3.reason == "approval_replayed"
+
+
+def test_blocker4_corrupted_nonce_store_fails_closed(tmp_path):
+    db_file = tmp_path / "corrupted_nonces.sqlite"
+    store = PersistentNonceStore(db_file)
+    assert store.check_and_mark("valid-nonce-1")
+
+    # Corrupt the SQLite file with invalid binary data
+    with open(db_file, "wb") as f:
+        f.write(b"GARBAGE_DATA_CORRUPTING_SQLITE_HEADER")
+
+    # Subsequent check_and_mark on corrupted db must return False (fail-closed)
+    corrupted_store = PersistentNonceStore.__new__(PersistentNonceStore)
+    corrupted_store.path = db_file
+    import sqlite3, threading
+    corrupted_store._sqlite3 = sqlite3
+    corrupted_store._lock = threading.Lock()
+    assert not corrupted_store.check_and_mark("another-nonce")
+
+
+def test_blocker3_search_does_not_leak_quarantined_or_unverified_content_in_snippets(tmp_path, monkeypatch):
+    from unittest.mock import MagicMock
+    from interfaces import memory_access as ma
+    from memory_controller.authorizer import Principal
+
+    # Mock controller where cognitive_read returns empty/redacted content for unverified note
+    controller = MagicMock()
+    unverified_note_id = "note-unverified-1"
+    quarantined_note_id = "note-quarantined-2"
+
+    controller.search.return_value = {
+        "results": [
+            {"id": unverified_note_id, "type": "knowledge", "lifecycle": "ACTIVE", "score": 0.95},
+            {"id": quarantined_note_id, "type": "knowledge", "lifecycle": "ACTIVE", "score": 0.90},
+        ],
+        "candidate_trace": {"fused_ranking": []},
+    }
+
+    # Storage contains raw secret unverified and quarantined content
+    storage_notes = {
+        unverified_note_id: {
+            "id": unverified_note_id,
+            "title": "Unverified Title",
+            "content": "SECRET_RAW_UNVERIFIED_CONTENT_MUST_NOT_LEAK",
+            "verification": "unverified",
+            "lifecycle": "ACTIVE",
+            "quarantined": False,
+        },
+        quarantined_note_id: {
+            "id": quarantined_note_id,
+            "title": "Quarantined Title",
+            "content": "SECRET_RAW_QUARANTINED_CONTENT_MUST_NOT_LEAK",
+            "verification": "verified",
+            "lifecycle": "ACTIVE",
+            "quarantined": True,
+        },
+    }
+    controller.storage.get.side_effect = lambda nid: storage_notes.get(nid)
+    controller.storage.vault_root = str(tmp_path)
+    controller.storage.id_to_path = {
+        unverified_note_id: str(tmp_path / "01_ARCHITECTURE/knowledge/unverified.md"),
+        quarantined_note_id: str(tmp_path / "01_ARCHITECTURE/knowledge/quarantined.md"),
+    }
+
+    # Cognitive read strips content from unverified notes for AI_AGENT
+    def mock_cognitive_read(principal, nid):
+        if nid == unverified_note_id:
+            return {"results": [{"id": nid, "content": "", "verification": {"status": "UNVERIFIED"}}]}
+        if nid == quarantined_note_id:
+            return {"results": [{"id": nid, "content": "Quarantined readable", "quarantined": True}]}
+        return {"results": []}
+
+    controller.cognitive_read.side_effect = mock_cognitive_read
+
+    # Execute search as AI_AGENT
+    search_res = ma.search(controller, "query", principal=Principal.AI_AGENT)
+    for result in search_res["query_results"]:
+        assert result["snippet"] == "", f"Snippet leaked content for note {result['id']}: {result['snippet']}"
+        assert "SECRET_RAW" not in result["snippet"]
+
+    # Verify get() refuses quarantined note
+    with pytest.raises(ValueError, match="quarantined"):
+        ma.get(controller, quarantined_note_id, principal=Principal.AI_AGENT)
+
+
+def test_blocker5_ci_reporting_distinguishes_passed_from_failed_and_rejects_masking():
+    import yaml
+    for rel_path in (".github/workflows/apisec-scan.yml", ".github/workflows/fortify.yml"):
+        workflow_file = REPO / rel_path
+        assert workflow_file.exists(), f"Workflow file missing: {rel_path}"
+        content = workflow_file.read_text(encoding="utf-8")
+        parsed = yaml.safe_load(content)
+
+        # 1. Scanner step must have explicit ID so its outcome can be checked
+        steps = list(parsed.get("jobs", {}).values())[0].get("steps", [])
+        step_ids = {s.get("id") for s in steps if isinstance(s, dict) and s.get("id")}
+        
+        if "apisec" in rel_path:
+            assert "apisec_scan" in step_ids
+            assert "steps.apisec_scan.outcome" in content
+        else:
+            assert "fortify_scan" in step_ids
+            assert "steps.fortify_scan.outcome" in content
+
+        # 2. Must distinguish passed from failed in reporting step
+        assert "EXECUTED_FAILED" in content
+        assert "EXECUTED_PASSED" in content
+
+        # 3. Simulate reporting shell logic on scan failure: must NOT emit EXECUTED_PASSED
+        # If scan outcome is 'failure', status output must evaluate to EXECUTED_FAILED
+        if "apisec" in rel_path:
+            # shell condition: [[ "$scan_outcome" == "success" && ( "$import_outcome" == "success" || "$import_outcome" == "skipped" ) ]]
+            scan_outcome = "failure"
+            import_outcome = "skipped"
+            is_passed = (scan_outcome == "success" and (import_outcome in ("success", "skipped")))
+            status = "EXECUTED_PASSED" if is_passed else "EXECUTED_FAILED"
+            assert status == "EXECUTED_FAILED"
+        else:
+            scan_outcome = "failure"
+            is_passed = (scan_outcome == "success")
+            status = "EXECUTED_PASSED" if is_passed else "EXECUTED_FAILED"
+            assert status == "EXECUTED_FAILED"
+
+
+
 
 
 

@@ -151,3 +151,74 @@ def test_get_of_an_unreadable_or_unknown_note_is_an_error(world):
     controller, _ = world
     with pytest.raises(Exception):
         ma.get(controller, "does-not-exist")
+
+
+def test_quarantined_note_has_empty_snippet_in_search_results(world):
+    import uuid
+    controller, vault = world
+    note_id = str(uuid.uuid4())
+    quarantine_path = vault / "01_ARCHITECTURE" / "knowledge" / "quarantine_note.md"
+    quarantine_path.write_text(
+        "---\n"
+        f"id: {note_id}\n"
+        "type: knowledge\n"
+        "category: quarantine-note\n"
+        "tags: [quarantined]\n"
+        "created: 2026-09-01\n"
+        "updated: 2026-09-01\n"
+        "provenance:\n  source_type: user\n  source_ref: fixture\n"
+        "confidence: high\n"
+        "verification: verified\n"
+        "quarantined: true\n"
+        "relations: []\n"
+        "lifecycle: ACTIVE\n"
+        "---\n"
+        "# quarantine note\n\nSensitive quarantined payload that must never leak.\n",
+        encoding="utf-8"
+    )
+    controller.storage.id_to_path.clear()
+    controller.storage._cache.clear()
+    controller.storage._initialize_index()
+    
+    out = ma.search(controller, "Sensitive quarantined payload", limit=5)
+    matching = [r for r in out["query_results"] if r["id"] == note_id]
+    assert len(matching) == 1
+    assert matching[0]["snippet"] == ""
+    
+    # get() must refuse to return quarantined notes to AI_AGENT
+    with pytest.raises(ValueError, match="quarantined"):
+        ma.get(controller, note_id, principal=Principal.AI_AGENT)
+
+
+def test_unverified_redacted_note_does_not_leak_content_via_search_snippet(world):
+    import uuid
+    controller, vault = world
+    note_id = str(uuid.uuid4())
+    unverified_path = vault / "01_ARCHITECTURE" / "knowledge" / "unverified_active.md"
+    unverified_path.write_text(
+        "---\n"
+        f"id: {note_id}\n"
+        "type: knowledge\n"
+        "category: unverified-active\n"
+        "tags: [unverified]\n"
+        "created: 2026-09-01\n"
+        "updated: 2026-09-01\n"
+        "provenance:\n  source_type: user\n  source_ref: fixture\n"
+        "confidence: high\n"
+        "verification: unverified\n"
+        "relations: []\n"
+        "lifecycle: ACTIVE\n"
+        "---\n"
+        "# unverified active\n\nSecret unverified text stripped by cognitive read.\n",
+        encoding="utf-8"
+    )
+    controller.storage.id_to_path.clear()
+    controller.storage._cache.clear()
+    controller.storage._initialize_index()
+    
+    out = ma.search(controller, "Secret unverified text stripped", limit=5)
+    matching = [r for r in out["query_results"] if r["id"] == note_id]
+    assert len(matching) == 1
+    # Must NOT leak stored content when cognitive_read strips readable content
+    assert matching[0]["snippet"] == ""
+

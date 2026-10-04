@@ -37,11 +37,28 @@ class RuntimeAdapter:
         audit_trail: AuditTrail | None = None,
         supply_chain_policy: SoftwareAISupplyChainPolicy | None = None,
         broker: ApprovalBroker | None = None,
+        nonce_store: Any | None = None,
         production_mode: bool = False,
     ) -> None:
-        if production_mode and supply_chain_policy is None:
-            raise PermissionError("production runtime requires mandatory supply_chain_policy")
-        self._enforcer = enforcer or (RuntimeEnforcer(broker=broker) if broker else RuntimeEnforcer())
+        if production_mode:
+            if supply_chain_policy is None:
+                raise PermissionError("production runtime requires mandatory supply_chain_policy")
+            if enforcer is not None:
+                if not getattr(enforcer, "_production_mode", False):
+                    raise PermissionError("production runtime requires an enforcer configured in production mode")
+                self._enforcer = enforcer
+            else:
+                if broker is None:
+                    raise PermissionError("production runtime requires explicitly injected external approval broker")
+                if nonce_store is None:
+                    raise PermissionError("production runtime requires explicitly injected persistent nonce store")
+                self._enforcer = RuntimeEnforcer(
+                    broker=broker,
+                    nonce_store=nonce_store,
+                    production_mode=True,
+                )
+        else:
+            self._enforcer = enforcer or (RuntimeEnforcer(broker=broker, nonce_store=nonce_store) if (broker or nonce_store) else RuntimeEnforcer())
         self._event_sink = event_sink
         self._audit_trail = audit_trail
         self._supply_chain_policy = supply_chain_policy
@@ -50,12 +67,18 @@ class RuntimeAdapter:
 
     @property
     def broker(self) -> ApprovalBroker:
+        if self._production_mode:
+            raise PermissionError("Access to ApprovalBroker is forbidden in production runtime")
         return self._enforcer.broker
 
     def issue_approval(self, **kwargs: Any) -> ApprovalToken:
         if self._production_mode:
             raise PermissionError("issue_approval is forbidden on RuntimeAdapter in production mode; approvals must originate from the external authority broker")
         return self._enforcer.issue_approval(**kwargs)
+
+    def request_approval(self, request: ExecutionRequest) -> str:
+        """Agent-facing method to request an approval from the external owner authority."""
+        return self._enforcer.request_approval(request)
 
     def register(
         self,

@@ -22,7 +22,7 @@ SEED_NOTES = (
 )
 
 
-def note_text(title: str, body: str, note_id: str, lifecycle: str = "ACTIVE") -> str:
+def note_text(title: str, body: str, note_id: str, lifecycle: str = "ACTIVE", verification: str = "verified") -> str:
     return (
         "---\n"
         f"id: {note_id}\n"
@@ -33,7 +33,7 @@ def note_text(title: str, body: str, note_id: str, lifecycle: str = "ACTIVE") ->
         "updated: 2026-09-01\n"
         "provenance:\n  source_type: user\n  source_ref: fixture\n"
         "confidence: high\n"
-        "verification: unverified\n"
+        f"verification: {verification}\n"
         "relations: []\n"
         f"lifecycle: {lifecycle}\n"
         "---\n"

@@ -99,11 +99,11 @@ def _readable(controller, note_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
+def search(controller, query: str, limit: int = 5, principal: Principal = Principal.AI_AGENT) -> Dict[str, Any]:
     if not isinstance(query, str) or not query.strip():
         raise ValueError("query must be a non-empty string")
     limit = max(1, min(int(limit), MAX_LIMIT))
-    pack = controller.search(Principal.AI_AGENT, query, page_size=limit)
+    pack = controller.search(principal, query, page_size=limit)
     fused = {e.get("id"): e.get("fused_score") for e in (pack.get("candidate_trace") or {}).get("fused_ranking") or []
              if isinstance(e, dict)}
     results: List[Dict[str, Any]] = []
@@ -114,15 +114,30 @@ def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
         ver = (stored or item).get("verification", "unverified")
         if isinstance(ver, dict):
             ver = ver.get("status", "unverified").lower()
-        title_source = stored or readable or item
-        raw_snippet_text = readable.get("content", "") if readable else ""
-        if not raw_snippet_text and stored:
-            raw_snippet_text = stored.get("content", "")
+        title_source = readable or stored or item
+        
+        # Invariant: Once a model-facing security boundary strips content, no downstream layer may restore it from storage.
+        raw_snippet_text = ""
+        is_quarantined = bool(
+            (isinstance(stored, dict) and stored.get("quarantined", False))
+            or (isinstance(item, dict) and item.get("quarantined", False))
+            or (isinstance(readable, dict) and (readable.get("quarantined", False) or readable.get("trust_state") == "UNVERIFIED_QUARANTINED"))
+        )
+        if principal == Principal.AI_AGENT:
+            # For AI_AGENT: readable is strictly authoritative for model disclosure.
+            # If readable is None or content is empty or note is quarantined: snippet MUST be empty.
+            if readable and not is_quarantined:
+                raw_snippet_text = readable.get("content", "")
+            # Storage is NEVER consulted as a fallback source for AI_AGENT.
+        else:
+            # Authorized human or admin inspection
+            raw_snippet_text = readable.get("content", "") if (readable and not is_quarantined) else (stored.get("content", "") if stored else "")
+
         results.append({
             "id": note_id,
             "title": _title(title_source),
             "path": _relative_path(controller, note_id),
-            "snippet": _snippet(raw_snippet_text),
+            "snippet": _snippet(raw_snippet_text) if raw_snippet_text else "",
             "score": item.get("relevance_score", item.get("score", fused.get(note_id))),
             "type": item.get("type"),
             "lifecycle": item.get("lifecycle"),
@@ -131,12 +146,16 @@ def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
     return {"query_results": results, "count": len(results), "notice": NOTICE}
 
 
-def get(controller, note_id: str) -> Dict[str, Any]:
+def get(controller, note_id: str, principal: Principal = Principal.AI_AGENT) -> Dict[str, Any]:
     if not isinstance(note_id, str) or not note_id.strip():
         raise ValueError("note_id must be a non-empty string")
-    note = _readable(controller, note_id.strip())
+    clean_id = note_id.strip()
+    stored = controller.storage.get(clean_id)
+    if isinstance(stored, dict) and stored.get("quarantined", False) and principal == Principal.AI_AGENT:
+        raise ValueError(f"Note {clean_id} is quarantined and cannot be retrieved")
+    note = _readable(controller, clean_id)
     if not note:
-        raise ValueError(f"Note {note_id} not found or not eligible for cognitive retrieval")
+        raise ValueError(f"Note {clean_id} not found or not eligible for cognitive retrieval")
     prov = note.get("provenance") or {}
     ver = note.get("verification", "unverified")
     if isinstance(ver, dict):
