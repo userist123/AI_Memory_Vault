@@ -44,6 +44,26 @@ Câteva reguli de funcționare:
 - **„E de încredere”** aprobă un program după SHA-256. Dacă fișierul se schimbă, aprobarea trebuie confirmată din nou.
 - Pentru firewall, Prefetch și autostart complet, aplicația trebuie rulată ca administrator.
 
+## Controlul stației (utilizatori și administratori)
+
+Fila **„Control stație”** (`LogAnalyzer.exe --tab=14`) pregătește verificările de conformitate. Funcționează pe stații izolate (AirGapped) și pe stații conectate. Aplicația doar citește din stație; nu modifică nimic.
+
+- **Ce verifică:**
+  - conturi și administratori, Guest, politica de parole și de blocare;
+  - UAC, autologon, RDP, firewall, Defender (inclusiv excluderile), BitLocker, SMBv1, WDigest, blocarea USB;
+  - politica de audit și dimensiunea jurnalelor;
+  - jurnale șterse, politica de audit sau ora schimbate;
+  - modificări în grupul Administrators și în conturi;
+  - autentificări locale și RDP, serii de parole greșite, sesiuni privilegiate;
+  - dispozitive USB (USBSTOR și Partition/Diagnostic 1006, fără discurile interne);
+  - **conectările la rețele ale unei stații care ar trebui să fie izolată** (NetworkList, WLAN, NetworkProfile);
+  - software instalat, servicii (separat de drivere), task-uri.
+- **Rezultatul fiecărei verificări:**
+  - **CONFORM** sau **NECONFORM**;
+  - **DE VERIFICAT**: faptele sunt prezentate, dar numai organizația poate spune dacă au fost autorizate;
+  - **NEDETERMINAT**: sursa nu a putut fi citită. Nu înseamnă că activitatea nu a avut loc.
+- **Raportul** conține verificările, cu probele fiecăreia (jurnal, RecordID, ora), activitatea pe utilizator, cronologia acțiunilor (cine, ce, când) și golurile de probă. Se salvează în cazul stației (`Control/CONTROL_<dată>/`), ca JSON și PDF înregistrate cu SHA-256.
+- Pentru jurnalul Security și politica de audit, aplicația trebuie rulată ca administrator.
 ## Cerințe
 
 - Rulare: Windows 10/11 x64. Pachetul este self-contained și nu necesită .NET instalat.

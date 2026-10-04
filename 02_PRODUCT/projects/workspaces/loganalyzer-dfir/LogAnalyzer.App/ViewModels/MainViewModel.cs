@@ -93,6 +93,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Per-program containment ("Izolare procese suspecte" tab).</summary>
         public ContainmentViewModel Containment { get; } = new();
 
+        /// <summary>Control audit of this station ("Control stație" tab).</summary>
+        public StationControlViewModel StationControl { get; } = new();
+
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
 

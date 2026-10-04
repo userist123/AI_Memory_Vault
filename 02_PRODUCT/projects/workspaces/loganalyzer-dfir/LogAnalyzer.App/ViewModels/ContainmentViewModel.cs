@@ -71,23 +71,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void EnsureCase()
         {
             if (_service is not null) return;
-            var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LogAnalyzer", "Cases",
-                $"LIVE-{Environment.MachineName}");
-            _case = Directory.Exists(root) && File.Exists(Path.Combine(root, "case.json"))
-                ? CaseWorkspace.Open(root)
-                : CaseWorkspace.Create(root, new CaseInfo
-                {
-                    CaseId = $"LIVE-{Environment.MachineName}",
-                    Name = $"Monitorizare live {Environment.MachineName}",
-                    Host = Environment.MachineName,
-                    User = Environment.UserName,
-                    CreatedAtUtc = DateTimeOffset.UtcNow,
-                    Investigator = Environment.UserName,
-                    Os = Environment.OSVersion.VersionString,
-                    Architecture = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(),
-                    Timezone = TimeZoneInfo.Local.Id,
-                    CollectionMode = "live containment",
-                });
+            _case = LogAnalyzer.UI.Services.LiveCase.Get();
             _service = new ProcessContainmentService(new WindowsFirewallController(), new ProcessScanner(), _case,
                 ProcessSuspension.Suspend, ProcessSuspension.Resume);
             OnPropertyChanged(nameof(CaseRoot));
