@@ -8,6 +8,7 @@ on:
       - '20_TESTS/test_agent_router.py'
       - '20_TESTS/test_agent_dispatcher.py'
       - '20_TESTS/test_secure_agent_bridge.py'
+      - '20_TESTS/test_secure_bridge_handler.py'
       - '03_IMPLEMENTATION/packages/agent_bridge/**'
       - '.github/workflows/agent-routing-tests.yml'
   pull_request:
@@ -16,6 +17,9 @@ on:
       - '04_CONFIG/agent_router.json'
       - '20_TESTS/test_agent_router.py'
       - '20_TESTS/test_agent_dispatcher.py'
+      - '20_TESTS/test_secure_agent_bridge.py'
+      - '20_TESTS/test_secure_bridge_handler.py'
+      - '03_IMPLEMENTATION/packages/agent_bridge/**'
       - '.github/workflows/agent-routing-tests.yml'
 
 permissions:
@@ -36,11 +40,11 @@ jobs:
       - name: Compile routing package
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
-        run: python -m compileall -q 03_IMPLEMENTATION/packages/routing
+        run: python -m compileall -q 03_IMPLEMENTATION/packages/routing 03_IMPLEMENTATION/packages/agent_bridge
       - name: Run routing and bridge tests
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
-        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py 20_TESTS/test_secure_agent_bridge.py
+        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py 20_TESTS/test_secure_agent_bridge.py 20_TESTS/test_secure_bridge_handler.py
       - name: Smoke test route CLI
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
