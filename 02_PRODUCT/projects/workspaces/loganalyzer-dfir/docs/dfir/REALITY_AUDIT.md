@@ -101,7 +101,7 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 |---|---|---|
 | `LogAnalyzer.UI.Tests` | REAL | 94/94 la ultima rulare (#210). |
 | `LogAnalyzer.Dfir.Tests` | REAL | 53 trecute, 1 sărit (doar ca administrator). |
-| Teste pe corpus (`CorpusFact`) | PARTIAL | Când corpusul lipsește, testul apare „Skipped”, iar suita rămâne verde. Nu există un raport explicit `FORENSIC VALIDATION = UNAVAILABLE` (P11). |
+| Teste pe corpus (`CorpusFact`) | REAL | Starea `FORENSIC VALIDATION = AVAILABLE/PARTIAL/UNAVAILABLE` se scrie la fiecare rulare (`forensic_validation.txt`, rezumatul jobului CI). Cu `LADFIR_REQUIRE_CORPUS=1`, lipsa corpusului eșuează rularea (verificat: 9 eșecuri fără corpus). `docs/dfir/FORENSIC_TEST_LAB.md`. |
 | Validare diferențială (alt instrument) | FACADE (inexistent) | Planificat în P12. |
 
 ## 9. Cod moștenit necompilat

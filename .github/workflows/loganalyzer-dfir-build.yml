@@ -53,6 +53,17 @@ jobs:
       - name: Test (Release)
         run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
 
+      # Without the corpus the run is green but NOT a forensic validation; say so in the job summary.
+      - name: Report forensic validation state
+        if: always()
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem -Recurse -Filter forensic_validation.txt -Path LogAnalyzer.Dfir.Tests/bin -ErrorAction SilentlyContinue | Select-Object -First 1
+          $text = if ($f) { Get-Content -Raw $f.FullName } else { "FORENSIC VALIDATION = UNAVAILABLE (raportul nu a fost generat)" }
+          Write-Host $text
+          "## Forensic validation`n``````text`n$text`n``````" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($text -notmatch 'FORENSIC VALIDATION = AVAILABLE') { Write-Host "::warning::$(($text -split "`n")[0])" }
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
