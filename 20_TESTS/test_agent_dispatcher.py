@@ -3,6 +3,7 @@ from routing.models import DispatchResult, DispatchStatus, TaskRequest
 from routing.agent_router import AgentRouter
 from routing.registry import RouteRegistry
 from pathlib import Path
+from routing.dispatcher import CommandAdapter
 
 
 class FakeAdapter:
@@ -54,3 +55,10 @@ def test_blocked_route_cannot_be_dispatched():
             assert False, "expected blocked route to reject packet creation"
         except Exception as exc:
             assert "route" in str(exc).lower()
+
+
+def test_command_adapter_maps_logical_runtime_to_binary(tmp_path, monkeypatch):
+    adapter = CommandAdapter("claude_code", artifact_root=tmp_path, working_directory=tmp_path)
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/usr/bin/claude" if name == "claude" else None)
+    assert adapter.binary == "claude"
+    assert adapter.working_directory == tmp_path.resolve()
