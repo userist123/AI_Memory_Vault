@@ -27,7 +27,7 @@ Canonical implementation:
 
 For substantial work, routing must happen before execution when the router is available.
 
-The router decides metadata, not prose prompts:
+The router decides metadata, then the Dispatcher can turn that decision into a command/work packet for the selected runtime. It does not own the runtime's prompt body.
 
 `task -> policy gates -> capabilities -> agent -> runtime -> model tier -> skills -> memory plan -> verifier -> route receipt`
 
@@ -40,6 +40,8 @@ The router MUST NOT:
 - silently fall back after a hard policy rejection.
 
 Each external runtime keeps its own prompt/profile. The router returns only a `prompt_profile` identifier/reference.
+
+When dispatch is authorized, the Dispatcher creates a bounded work packet and sends it through the selected transport (local command/relay or A2A). The task lifecycle and returned result become separate execution evidence.
 
 A route receipt is a plan/evidence artifact, not proof that execution happened.
 
@@ -240,3 +242,26 @@ Do not auto-merge security/authority-sensitive work.
 `CORRECTNESS > SECURITY > EVIDENCE > VERIFICATION > AUTHORITY > INTEGRITY > MAINTAINABILITY > SPEED`
 
 The objective is a routing and agent ecosystem that can explain why a task was assigned, what evidence it used, what constraints applied, what actually executed, and why the final result is trusted.
+
+
+## 3A. Delegating work to another agent
+
+When the router selects another runtime, do not manually rewrite the task into an improvised prompt.
+
+Use the routing interface:
+
+```text
+python -m routing.route_cli route --goal "<task>"
+python -m routing.route_cli dispatch --goal "<task>" --execute
+```
+
+The dispatcher is the authority for the actual handoff.
+
+Typical lifecycle:
+
+`ROUTE -> CREATE WORK PACKET -> DISPATCH -> SUBMITTED/WORKING -> RESULT -> VERIFY -> RETURN`
+
+A dispatch failure is a real failure. Do not silently perform the task locally and report the remote agent as successful.
+
+For A2A transports, the dispatcher uses the agent task lifecycle. For command transports it records the invoked runtime, exit code, stdout/stderr-derived result and local artifact path.
+
