@@ -56,7 +56,7 @@ public sealed class InvestigationPipeline
         });
     }
 
-    /// <summary>Imports existing evidence files (EVTX, .pf, SRUDB.dat, .pcapng) — copies, never moves.</summary>
+    /// <summary>Imports existing evidence files — copies, never moves. Known artifacts get their type; anything else is type "file".</summary>
     public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files)
     {
         var list = new List<EvidenceItem>();
@@ -75,9 +75,10 @@ public sealed class InvestigationPipeline
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
-                _ => null,
+                // Any other file is still evidence: copied, hashed, listed (no parser → SKIPPED_BY_DESIGN) and available to
+                // hash IOCs and YARA rules.
+                _ => "file",
             };
-            if (type is null) continue;
             var source = type == "evtx" ? Path.GetFileNameWithoutExtension(f).Replace('%', '/') : type;
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
                 notes: "Importat de operator din: " + f));

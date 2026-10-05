@@ -90,6 +90,10 @@
   "firefoxPlaces": {
     "file": "21_BROWSER\\Firefox\\fxwrlv35.default-release\\places.sqlite"
   },
+  "iocInventory": {
+    "file": "29_IOC\\IOC_INVENTORY.csv",
+    "samples": "25_TARGET_MSBUILD\\MSI_CxUtilSvcHelper\\9520444.msi|25_TARGET_MSBUILD\\Conexant_CxUtilSvcHelper_COPY|24_TARGET_NANAGENT\\RenPy_COPY"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }
