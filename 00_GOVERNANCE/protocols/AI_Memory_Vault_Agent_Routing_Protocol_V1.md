@@ -364,3 +364,35 @@ The existing lower-level components remain responsible for their original concer
 - `MemoryDataRouter` — safe memory-data egress.
 
 The new Agent Router coordinates these concerns; it does not replace them with duplicate implementations.
+
+
+## Dispatcher
+
+The Router decides **where** the task should go. The Dispatcher decides **how to deliver the already-approved work packet**.
+
+It must preserve the selected:
+- agent;
+- runtime;
+- prompt-profile ID;
+- route ID;
+- acceptance criteria;
+- constraints;
+- bounded memory references;
+- timeout and execution limits.
+
+Supported transport classes:
+
+### Local command
+
+Used for runtimes exposed by a local CLI or relay. The command is passed as an argument vector, not shell-concatenated text.
+
+### A2A
+
+Used for remote/opaque agents that expose an A2A Agent Card and task endpoint. A2A is the horizontal agent-to-agent layer; MCP remains the tool/data layer. citeturn788616search2turn437219search1
+
+The dispatcher MUST treat:
+`submitted -> working -> input-required/auth-required -> completed/failed/canceled`
+as execution state, not as a model narrative. A result is not success until the expected terminal state and acceptance evidence exist. citeturn788616search0
+
+The dispatcher never rewrites a runtime's native prompt. It sends the router-selected `prompt_profile` reference and a bounded task packet.
+
