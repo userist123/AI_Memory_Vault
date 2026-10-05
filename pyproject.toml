@@ -25,5 +25,6 @@ include = [
   "retrieval*",
   "security*",
   "routing*",
+  "agent_bridge*",
   "xau_kinetic*",
 ]
