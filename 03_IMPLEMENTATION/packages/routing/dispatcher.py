@@ -28,7 +28,7 @@ class CommandAdapter:
         return "\n".join([
             f"ROUTED TASK ID: {p.task_id}",f"ROUTE ID: {p.route_id}",
             f"TARGET AGENT: {p.target_agent}",f"PROMPT PROFILE: {p.prompt_profile}",
-            f"PROMPT PROFILE REF: {p.metadata.get("profile_ref", "")}","",
+            f"PROMPT PROFILE REF: {p.metadata.get('profile_ref', '')}","",
             "GOAL:",p.goal,"","ACCEPTANCE:",*("- "+x for x in p.acceptance_criteria),
             "","CONSTRAINTS:",*("- "+x for x in p.constraints),
             "","MEMORY REFERENCES:",*("- "+x for x in p.memory_refs),
