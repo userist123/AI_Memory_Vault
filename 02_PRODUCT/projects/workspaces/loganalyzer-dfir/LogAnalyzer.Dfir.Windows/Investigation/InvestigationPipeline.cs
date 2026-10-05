@@ -183,6 +183,7 @@ public sealed class InvestigationPipeline
             }
         }
         r.Timeline.AddRange(sink.Events.OrderBy(e => e.Time.Utc ?? DateTimeOffset.MaxValue));
+        r.Gaps.AddRange(AuditCoverage.Gaps(r.Timeline));
 
         // 3. Correlation (timeline) + live state.
         progress?.Report("Corelare");

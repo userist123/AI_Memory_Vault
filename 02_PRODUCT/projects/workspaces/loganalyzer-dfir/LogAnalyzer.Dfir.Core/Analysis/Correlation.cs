@@ -28,8 +28,9 @@ public static class Correlation
 
     /// <summary>Environment variables in task/service commands that resolve to user-writable folders (not expanded on this machine).</summary>
     private static readonly (string Var, string Folder)[] WritableEnvVars =
-        [("%localappdata%", @"\appdata\local\"), ("%appdata%", @"\appdata\roaming\"), ("%temp%", @"\temp\"), ("%tmp%", @"\temp\"),
-         ("%programdata%", @"\programdata\"), ("%public%", @"\users\public\"), ("%allusersprofile%", @"\programdata\")];
+        // No trailing separator: the variable is followed by its own "\" in the path ("%ProgramData%\Microsoft").
+        [("%localappdata%", @"\appdata\local"), ("%appdata%", @"\appdata\roaming"), ("%temp%", @"\temp"), ("%tmp%", @"\temp"),
+         ("%programdata%", @"\programdata"), ("%public%", @"\users\public"), ("%allusersprofile%", @"\programdata")];
 
     public static bool IsUserWritable(string path)
     {
@@ -181,6 +182,25 @@ public static class Correlation
                 SupportingEvidence = [Ref(e, "configurație serviciu")],
                 AlternativeExplanations = ["Unele produse legitime își instalează serviciul în ProgramData."],
                 MissingEvidence = ["Instalarea (System 7045) și pornirile (7036), semnătura binarului."],
+            });
+        }
+
+        // Firewall rules that allow a program from a user-writable folder (Firewall.evtx 2004/2005 older, 2097/2099 Windows 11).
+        // Codes checked on real events: Action 3 = Allow, 2 = Block; Direction 1 = Inbound, 2 = Outbound.
+        foreach (var e in events.Where(e => Ev(e, "Microsoft-Windows-Windows Firewall With Advanced Security/Firewall", 2004, 2005, 2097, 2099)
+                                            && F(e, "Action") == "3" && IsUserWritable(F(e, "ApplicationPath"))))
+        {
+            bool inbound = F(e, "Direction") == "1";
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "FIREWALL-RULE-USERPATH",
+                Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program din locație scriabilă: {Path.GetFileName(F(e, "ApplicationPath"))}",
+                Severity = inbound ? Severity.High : Severity.Medium, Category = "DefenseEvasion", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1562.004", FirstSeenUtc = e.Time.Utc, File = F(e, "ApplicationPath"), User = F(e, "ModifyingUser"),
+                Description = $"Regula „{F(e, "RuleName")}” ({(inbound ? "Inbound" : "Outbound")}, Allow) pentru {F(e, "ApplicationPath")}, adăugată/modificată de {F(e, "ModifyingApplication")}.",
+                ClassificationReason = "Evenimentul de firewall arată o regulă de tip Allow pentru o cale scriabilă de utilizatori.",
+                SupportingEvidence = [Ref(e, "regulă firewall")],
+                AlternativeExplanations = ["Aplicații per utilizator (de ex. jocuri, clienți de chat) își adaugă reguli la instalare."],
             });
         }
 
