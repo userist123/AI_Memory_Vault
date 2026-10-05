@@ -80,10 +80,12 @@ def test_search_propose_get_over_stdio_and_the_usage_log(setup):
                                        body="Aceasta propunere trebuie gasita de cautare in aceeasi sesiune.",
                                        type="knowledge", provenance={"source_type": "ai", "source_ref": "test"})
                 again = await _call(session, "memory_search", query="propunere sesiunea de test MCP gasita in aceeasi sesiune", limit=5)
-                note = await _call(session, "memory_get", note_id=proposed["id"])
-                return info.serverInfo.name, found, proposed, again, note
+                active_id = found["query_results"][0]["id"]
+                note = await _call(session, "memory_get", note_id=active_id)
+                unverified_call = await session.call_tool("memory_get", {"note_id": proposed["id"]})
+                return info.serverInfo.name, found, proposed, again, note, unverified_call.isError
 
-    server_name, found, proposed, again, note = asyncio.run(go())
+    server_name, found, proposed, again, note, unverified_denied = asyncio.run(go())
 
     assert server_name == "vault-memory"
     assert found["count"] >= 1 and "bugetul grafului" in [r["title"] for r in found["query_results"]]
@@ -91,14 +93,16 @@ def test_search_propose_get_over_stdio_and_the_usage_log(setup):
     # the candidate: REVIEW, unverified, in the content tree, on disk
     assert proposed["lifecycle"] == "REVIEW" and proposed["verification"] == "unverified"
     assert proposed["path"].startswith("01_ARCHITECTURE/knowledge/") and (vault / proposed["path"]).exists()
-    # found by search in the same session, and readable
+    # found by search in the same session
     assert proposed["id"] in [r["id"] for r in again["query_results"]]
-    assert note["lifecycle"] == "REVIEW" and note["unverified"] is True
+    assert note["lifecycle"] == "ACTIVE" and note["unverified"] is False
+    assert unverified_denied is True
 
     # the usage log: one line per call, hashes not texts
     rows = vault_runtime.read_usage_log(state / "usage.jsonl")
-    assert [r["tool"] for r in rows] == ["memory_search", "memory_propose", "memory_search", "memory_get"]
-    assert all(r["outcome"] == "ok" and r["client"] for r in rows)
+    assert [r["tool"] for r in rows] == ["memory_search", "memory_propose", "memory_search", "memory_get", "memory_get"]
+    assert all(r["client"] for r in rows)
+    assert rows[-1]["outcome"] == "error"
     assert rows[0]["query_sha256"] == vault_runtime.query_digest(query)
     assert rows[0]["n_results"] == found["count"] and rows[0]["ids"] == [r["id"] for r in found["query_results"]]
     log_text = (state / "usage.jsonl").read_text(encoding="utf-8")

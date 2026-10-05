@@ -1567,9 +1567,7 @@ class MemoryController:
                 note['created'] = note_data.get('created', now_date)
                 note['updated'] = note_data.get('updated', now_date)
 
-                # Build a copy without extra fields for validation
-                validation_note = {k: v for k, v in note.items() if k != "content"}
-                self._validate_note(validation_note)
+                self._validate_note(note)
                 # Store the full note (including possible extra fields like content)
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
@@ -1736,8 +1734,7 @@ class MemoryController:
                 note['last_verified'] = now_date
                 note['updated'] = now_date
 
-                validation_note = {k: v for k, v in note.items() if k != "content"}
-                self._validate_note(validation_note)
+                self._validate_note(note)
                 self.storage.set(note_id, note)
                 self.cache.invalidate_by_event('memory_updated')
 

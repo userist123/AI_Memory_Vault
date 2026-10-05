@@ -7,8 +7,8 @@ import pytest
 
 from memory_controller.authorizer import Principal
 from memory_controller.controller import Lifecycle, MemoryController, StorageEngine
-from lifecycle.proposal_queue import MemoryProposalQueue
-from lifecycle.queue_promoter import QueuePromoter
+from cognitive_core.proposal_queue import MemoryProposalQueue
+from cognitive_core.queue_promoter import QueuePromoter
 from security.runtime_enforcer import PersistentNonceStore
 
 REPO = Path(__file__).resolve().parents[2]
@@ -25,7 +25,7 @@ def _active_note(note_id: str, content: str = "original") -> dict:
         "updated": "2026-10-05",
         "provenance": {"source_type": "user", "source_ref": "test"},
         "confidence": "high",
-        "verification": "verified",
+        "verification": "unverified",
         "relations": [],
         "content": content,
     }
@@ -33,7 +33,7 @@ def _active_note(note_id: str, content: str = "original") -> dict:
 
 def test_u01_ai_agent_cannot_mutate_active_note():
     controller = MemoryController(StorageEngine())
-    note_id = "u01-active"
+    note_id = "11111111-1111-1111-1111-111111111111"
     controller.propose(Principal.HUMAN, _active_note(note_id))
 
     with pytest.raises(PermissionError, match="AI_AGENT.*ACTIVE"):
@@ -68,7 +68,7 @@ def test_u05_queue_promoter_requires_verified_evidence(tmp_path):
 
 def test_u08_controller_rejects_oversized_note():
     controller = MemoryController(StorageEngine())
-    note = _active_note("oversized", "X" * 20001)
+    note = _active_note("22222222-2222-2222-2222-222222222222", "X" * 20001)
 
     with pytest.raises(ValueError, match="maximum note content"):
         controller.propose(Principal.HUMAN, note)

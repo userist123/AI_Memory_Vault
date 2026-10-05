@@ -1279,13 +1279,34 @@ def test_u01_controller_invariants_hold_under_ai_agent_update():
         "content": "Original active content"
     })
 
-    # AI_AGENT attempts to escalate verification via update -> MUST RAISE
-    with pytest.raises(ValueError, match="cannot be escalated via update"):
-        controller.update(Principal.AI_AGENT, nid, {"verification": "verified"})
+    # 1. AI_AGENT attempts to mutate ACTIVE note -> MUST RAISE PermissionError
+    with pytest.raises(PermissionError, match="AI_AGENT cannot update ACTIVE notes"):
+        controller.update(Principal.AI_AGENT, nid, {"content": "tampered content"})
 
-    # AI_AGENT attempts to forge provenance via update -> MUST RAISE
+    # 2. For RAW note where AI updates are permitted, verify security invariants hold:
+    raw_id = str(uuid.uuid4())
+    controller.propose(Principal.AI_AGENT, {
+        "id": raw_id,
+        "type": "knowledge",
+        "lifecycle": Lifecycle.RAW,
+        "category": "u01-raw",
+        "tags": ["u01"],
+        "created": "2026-10-05",
+        "updated": "2026-10-05",
+        "provenance": {"source_type": "inference", "source_ref": "u01-test"},
+        "confidence": "low",
+        "verification": "unverified",
+        "relations": [],
+        "content": "Raw content"
+    })
+
+    # AI_AGENT attempts to escalate verification via update -> MUST RAISE ValueError
+    with pytest.raises(ValueError, match="cannot be escalated via update"):
+        controller.update(Principal.AI_AGENT, raw_id, {"verification": "verified"})
+
+    # AI_AGENT attempts to forge provenance via update -> MUST RAISE ValueError
     with pytest.raises(ValueError, match="Field provenance.source_type is immutable"):
-        controller.update(Principal.AI_AGENT, nid, {"provenance": {"source_type": "official"}})
+        controller.update(Principal.AI_AGENT, raw_id, {"provenance": {"source_type": "official"}})
 
 
 
