@@ -19,17 +19,17 @@ def bridge():
         {"antigravity":lambda p: {"status":"completed","response":"ok"}},bridge_signer),keys,signer,bridge_signer
 
 def request(keys,signer,p,nonce="n1",agent="visual_architect"):
+    response_key=base64.urlsafe_b64encode(keys.public_key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)).decode()
     token=CapabilityToken.issue(signer.private_key,bridge_id="bridge-1",task_id=p.task_id,
-        runtime="antigravity",agent=agent,permissions=("execute",),expires_at=time.time()+60,nonce=nonce,response_public_key=base64.urlsafe_b64encode(keys.public_key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)).decode())
+        runtime="antigravity",agent=agent,permissions=("execute",),expires_at=time.time()+60,nonce=nonce,response_public_key=response_key)
     aad=f"bridge-1:{p.task_id}".encode()
     body=json.dumps(p.__dict__,default=str).encode()
     return {"version":1,"bridge_id":"bridge-1","task_id":p.task_id,"runtime":"antigravity",
         "agent":agent,"nonce":nonce,"capability_token":token,"aad":aad.decode(),
-        "payload":keys.encrypt(body,aad=aad),
-        "response_public_key":base64.urlsafe_b64encode(keys.public_key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)).decode()}
+        "payload":keys.encrypt(body,aad=aad),"response_public_key":response_key}
 
 def test_secure_bridge_executes_encrypted_packet():
-    b,k,s=bridge(); req=request(k,s,packet())
+    b,k,s,_=bridge(); req=request(k,s,packet())
     assert packet().goal.encode() not in json.dumps(req).encode()
     out=b.handle(req)
     assert out["status"]=="completed" and out["task_id"]=="task-1"
@@ -43,16 +43,14 @@ def test_secure_bridge_rejects_scope():
     with pytest.raises(BridgeRequestError): b.handle(req)
 
 def test_secure_bridge_rejects_arbitrary_commands():
-    b,_,_=bridge()
+    b,_,_,_=bridge()
     with pytest.raises(BridgeRequestError): b.handle({"command":"powershell -enc SECRET"})
-
 
 def test_secure_bridge_rejects_replaced_response_public_key():
     b,keys,signer,_=bridge(); p=packet()
     req=request(keys,signer,p,nonce="key-nonce")
     req["response_public_key"]="ATTACKER-KEY"
     with pytest.raises(BridgeRequestError): b.handle(req)
-
 
 def test_secure_bridge_client_rejects_altered_response_signature():
     from agent_bridge.client import SecureBridgeClient, SecureBridgeTransportError
