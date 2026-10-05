@@ -31,7 +31,15 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3
+      - name: Compile routing package
+        env:
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: python -m compileall -q 03_IMPLEMENTATION/packages/routing
       - name: Run routing tests
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
         run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py
+      - name: Smoke test route CLI
+        env:
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: python -m routing.route_cli route --goal "inspect the repository architecture and propose a safe implementation plan"
