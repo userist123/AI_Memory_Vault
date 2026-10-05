@@ -6,6 +6,7 @@ using Xunit;
 
 namespace LogAnalyzer.Dfir.Tests;
 
+[Collection("AppMode")] // one test sets the process-wide operating mode
 public class DomainAndMailTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
