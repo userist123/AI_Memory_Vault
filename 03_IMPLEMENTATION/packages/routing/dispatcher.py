@@ -65,33 +65,65 @@ class CommandAdapter:
         return DispatchResult(p.task_id,p.route_id,status,p.target_runtime,p.target_agent,proc.returncode,final,str(result),metadata={"brief":str(brief)})
 
 class A2AAdapter:
-    def __init__(self, endpoint:str, timeout_seconds:int=3600):
+    def __init__(self, endpoint:str, timeout_seconds:int=3600, protocol_version:str="1.0"):
         self.endpoint=endpoint.rstrip("/")
         self.timeout_seconds=timeout_seconds
+        self.protocol_version=protocol_version
+
+    @staticmethod
+    def _state(value:str) -> DispatchStatus:
+        normalized=value.strip().lower().replace("task_state_", "")
+        aliases={"submitted":"submitted","working":"working","input_required":"input-required",
+                 "auth_required":"auth-required","completed":"completed","failed":"failed",
+                 "canceled":"canceled","rejected":"failed"}
+        return aliases.get(normalized, DispatchStatus.FAILED)
+
     def dispatch(self,p:WorkPacket)->DispatchResult:
-        payload={"jsonrpc":"2.0","id":p.task_id,"method":"message/send","params":{
-            "message":{"role":"user","parts":[{"text":p.goal}]},
-            "configuration":{"blocking":True,"acceptedOutputModes":["text"]},
-            "metadata":{"route_id":p.route_id,"prompt_profile":p.prompt_profile}}}
-        req=urllib.request.Request(self.endpoint,data=json.dumps(payload).encode(),headers={"Content-Type":"application/json"},method="POST")
+        legacy=self.protocol_version.startswith("0.")
+        method="message/send" if legacy else "SendMessage"
+        role="user" if legacy else "ROLE_USER"
+        payload={"jsonrpc":"2.0","id":p.task_id,"method":method,"params":{
+            "message":{"role":role,"parts":[{"text":p.goal}],"messageId":p.task_id},
+            "configuration":{"acceptedOutputModes":["text/plain"],"returnImmediately":False},
+            "metadata":{"route_id":p.route_id,"prompt_profile":p.prompt_profile,
+                        "profile_ref":p.metadata.get("profile_ref","")}}}
+        headers={"Content-Type":"application/json","A2A-Version":self.protocol_version}
+        req=urllib.request.Request(self.endpoint,data=json.dumps(payload).encode(),headers=headers,method="POST")
         try:
-            with urllib.request.urlopen(req,timeout=self.timeout_seconds) as r: data=json.loads(r.read().decode())
+            with urllib.request.urlopen(req,timeout=self.timeout_seconds) as r:
+                data=json.loads(r.read().decode())
         except Exception as exc:
-            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=str(exc))
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",
+                                   error=str(exc),metadata={"transport":"a2a","protocol_version":self.protocol_version})
+        if data.get("error"):
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",
+                                   error=json.dumps(data["error"],ensure_ascii=False),
+                                   metadata={"transport":"a2a","protocol_version":self.protocol_version,"response":data})
         result=data.get("result",{})
-        task=result.get("task",result)
-        state=str(task.get("status",{}).get("state","completed")).lower()
-        states={x.value:x for x in DispatchStatus}
-        status=states.get(state,DispatchStatus.COMPLETED if "error" not in data else DispatchStatus.FAILED)
-        msg=""
-        st=task.get("status",{}) if isinstance(task,dict) else {}
-        for part in (st.get("message") or {}).get("parts",[]) if isinstance(st,dict) else []:
-            if isinstance(part,dict) and "text" in part: msg=str(part["text"])
-        return DispatchResult(p.task_id,p.route_id,status,p.target_runtime,p.target_agent,0 if status==DispatchStatus.COMPLETED else None,msg,metadata={"transport":"a2a","response":data})
+        task=result.get("task") if isinstance(result,dict) else None
+        message=result.get("message") if isinstance(result,dict) else None
+        if task is None and message is not None:
+            parts=message.get("parts",[]) if isinstance(message,dict) else []
+            msg="\n".join(str(part["text"]) for part in parts if isinstance(part,dict) and "text" in part)
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.COMPLETED,p.target_runtime,p.target_agent,0,msg,
+                                   metadata={"transport":"a2a","protocol_version":self.protocol_version,"response":data})
+        if task is None:
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",
+                                   error="A2A response contains neither task nor message",
+                                   metadata={"transport":"a2a","protocol_version":self.protocol_version,"response":data})
+        status_obj=task.get("status",{}) if isinstance(task,dict) else {}
+        status=self._state(str(status_obj.get("state","failed")))
+        msg_parts=(status_obj.get("message") or {}).get("parts",[]) if isinstance(status_obj,dict) else []
+        msg="\n".join(str(part["text"]) for part in msg_parts if isinstance(part,dict) and "text" in part)
+        return DispatchResult(p.task_id,p.route_id,status,p.target_runtime,p.target_agent,
+                               0 if status==DispatchStatus.COMPLETED else None,msg,
+                               metadata={"transport":"a2a","protocol_version":self.protocol_version,
+                                         "remote_task_id":task.get("id"),"response":data})
 
 class AgentDispatcher:
-    def __init__(self,registry:RouteRegistry,adapters:dict[str,RuntimeAdapter]|None=None):
+    def __init__(self,registry:RouteRegistry,adapters:dict[str,RuntimeAdapter]|None=None,artifact_root:str|Path|None=None):
         self.registry=registry; self.adapters=adapters or {}
+        self.artifact_root=Path(artifact_root or tempfile.gettempdir())/"ai-memory-vault-dispatch"
     def make_packet(self,decision:RouteDecision,goal:str,source_agent:str,acceptance_criteria:tuple[str,...]=(),constraints:tuple[str,...]=(),memory_refs:tuple[str,...]=(),timeout_seconds:int=3600)->WorkPacket:
         if decision.status==RouteStatus.BLOCKED or not decision.primary: raise DispatchError("route is not dispatchable")
         agent=self.registry.agents[decision.primary.agent_id]
@@ -100,6 +132,12 @@ class AgentDispatcher:
     def dispatch(self,decision:RouteDecision,packet:WorkPacket)->DispatchResult:
         if decision.status==RouteStatus.BLOCKED: raise DispatchError("BLOCKED routes cannot be dispatched")
         rt=self.registry.runtimes[packet.target_runtime]; adapter=self.adapters.get(packet.target_runtime)
+        run=self.artifact_root/packet.task_id; run.mkdir(parents=True,exist_ok=True)
+        (run/"route.json").write_text(json.dumps({
+            "schema":"agent-route.receipt.v1",
+            "decision":decision.to_dict(),
+            "packet":packet.__dict__
+        },ensure_ascii=False,indent=2,default=str),encoding="utf-8")
         if adapter is None:
             if rt.transport=="command": adapter=CommandAdapter(rt.adapter_ref)
             elif rt.transport=="a2a": adapter=A2AAdapter(rt.adapter_ref,packet.timeout_seconds)
