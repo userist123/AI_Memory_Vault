@@ -13,9 +13,21 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 /// </summary>
 public sealed class EvtxParser : EvidenceParserBase
 {
-    public override string Name => "EvtxParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) => item.SourceType == "evtx" || item.StoredPath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "EvtxParser", Version = "1.0", Artifact = "Jurnal de evenimente Windows (EVTX)",
+        SourceTypes = ["evtx", "EventLog:*"], FileNames = [".evtx"], Fingerprints = ["evtx"],
+        SupportedOs = "Windows (citește prin API-ul EventLog al Windows, PathType.FilePath)",
+        FormatVersions = ["EVTX 3.x (Windows Vista și ulterior)"],
+        Limitations =
+        [
+            "Mesajele sunt randate doar pentru furnizorii a căror descriere conține proba (Defender, MsiInstaller, SCM, PowerShell); restul păstrează câmpurile EventData/UserData.",
+            "Chunk-urile corupte sunt eliminate de EvtxRepair; înregistrările lor lipsesc și sunt raportate ca gol de RecordID.",
+            "Nu recuperează înregistrări din spațiul nealocat (carving).",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "CorpusRegressionTests (defenderEvtx, msiEvtx), InvestigationTests pe corpusul NanAgent, EvtxRepairTests",
+    };
 
     private static readonly HashSet<string> MessageProviders = new(StringComparer.OrdinalIgnoreCase)
     {

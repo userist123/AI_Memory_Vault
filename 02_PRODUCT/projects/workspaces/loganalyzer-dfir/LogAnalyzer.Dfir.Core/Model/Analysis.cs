@@ -79,6 +79,8 @@ public sealed class ParseResult
     public required string EvidenceId { get; init; }
     public required string Parser { get; init; }
     public required string ParserVersion { get; init; }
+    /// <summary>Parser maturity at the time of the run (VALIDATED / TESTED / EXPERIMENTAL), from its descriptor.</summary>
+    public string ParserStatus { get; set; } = "";
     public EvidenceStatus Status { get; set; }
     public string Error { get; set; } = "";
     public int Records { get; set; }

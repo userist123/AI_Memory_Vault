@@ -77,8 +77,11 @@ public static class InvestigationReportPdf
                 col.Item().Text("3. Probe colectate și parsate").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in r.Collection)
                     col.Item().Text($"{c.Collector}: {c.Status.ToSpec()}, {c.EvidenceCount} probe ({L(c.StartUtc)}–{L(c.EndUtc)}) {c.Errors}").FontSize(7.5f);
-                foreach (var g in r.Parsing.GroupBy(p => p.Parser))
-                    col.Item().Text($"{g.Key}: {g.Count()} fișiere, {g.Sum(p => p.Records):N0} înregistrări, statusuri {string.Join(", ", g.Select(p => p.Status.ToSpec()).Distinct())}").FontSize(7.5f);
+                foreach (var g in r.Parsing.Where(p => p.Status != EvidenceStatus.SkippedByDesign).GroupBy(p => (p.Parser, p.ParserVersion, p.ParserStatus)))
+                    col.Item().Text($"{g.Key.Parser} {g.Key.ParserVersion} ({(g.Key.ParserStatus.Length > 0 ? g.Key.ParserStatus : "—")}): {g.Count()} fișiere, {g.Sum(p => p.Records):N0} înregistrări, statusuri {string.Join(", ", g.Select(p => p.Status.ToSpec()).Distinct())}").FontSize(7.5f);
+                foreach (var s in r.Parsing.Where(p => p.Status == EvidenceStatus.SkippedByDesign))
+                    col.Item().Text($"{s.EvidenceId} neparsat (SKIPPED_BY_DESIGN): {s.Error}").FontSize(7.5f).FontColor(Muted);
+                col.Item().Text("VALIDATED = test de regresie pe un corpus real; TESTED = doar teste pe date sintetice; descrierea completă a fiecărui parser: Analysis/parsers.json.").FontSize(7).Italic().FontColor(Muted);
 
                 col.Item().Text("4. Goluri de probă").Bold().FontSize(11).FontColor(Ink);
                 if (r.Gaps.Count == 0) col.Item().Text("Niciun gol raportat.").FontColor(Muted);

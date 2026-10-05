@@ -87,17 +87,21 @@ public class CoreTests
 
     private sealed class ThrowingParser : EvidenceParserBase
     {
-        public override string Name => "Throwing"; public override string Version => "t";
-        public override bool CanParse(EvidenceItem item) => true;
+        public override ParserDescriptor Descriptor { get; } = TestDescriptor("Throwing");
         protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult r, CancellationToken ct) => throw new InvalidDataException("boom");
     }
 
     private sealed class ZeroParser : EvidenceParserBase
     {
-        public override string Name => "Zero"; public override string Version => "t";
-        public override bool CanParse(EvidenceItem item) => true;
+        public override ParserDescriptor Descriptor { get; } = TestDescriptor("Zero");
         protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult r, CancellationToken ct) { }
     }
+
+    private static ParserDescriptor TestDescriptor(string id) => new()
+    {
+        ParserId = id, Version = "t", Artifact = "test", SourceTypes = ["t"], Fingerprints = ["unknown"], SupportedOs = "any",
+        FormatVersions = ["test"], Limitations = ["test only"], Status = ParserMaturity.Experimental, Validation = "none",
+    };
 
     private static EvidenceItem Item() => new() { EvidenceId = "EV-1", CaseId = "C", Source = "s", SourceType = "t" };
 

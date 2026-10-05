@@ -34,7 +34,9 @@ public sealed class InvestigationResult
 /// </summary>
 public sealed class InvestigationPipeline
 {
-    private readonly IEvidenceParser[] _parsers = [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser()];
+    private readonly ParserRegistry _registry;
+
+    public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
         [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector()];
@@ -107,33 +109,45 @@ public sealed class InvestigationPipeline
         var analysisDir = Path.Combine(ws.Root, "Analysis");
         Directory.CreateDirectory(analysisDir);
         var sink = new ListSink();
+        File.WriteAllText(Path.Combine(analysisDir, "parsers.json"), JsonSerializer.Serialize(_registry.Descriptors, new JsonSerializerOptions { WriteIndented = true }));
         foreach (var ev in ws.LoadEvidence())
         {
             ct.ThrowIfCancellationRequested();
-            var parser = _parsers.FirstOrDefault(p => p.CanParse(ev));
-            if (parser is null) continue;
-            progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Name})");
             var full = ws.FullPath(ev.StoredPath);
-            var pre = EvidencePreflight.Check(ev, full);
-            if (!pre.CanParse)
+            var sel = _registry.Select(ev, full);
+            if (!sel.HasCandidate)
             {
+                // Live snapshots are read by LiveStateAnalyzer below; anything else is listed, never silently ignored.
+                if (ev.SourceType != "live_snapshot")
+                    r.Parsing.Add(new ParseResult
+                    {
+                        EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
+                        Error = sel.Problem, ExpectedSha256 = ev.Sha256,
+                    });
+                continue;
+            }
+            if (sel.Parser is not { } parser)
+            {
+                var pre0 = sel.Preflight!;
                 var refused = new ParseResult
                 {
-                    EvidenceId = ev.EvidenceId, Parser = parser.Name, ParserVersion = parser.Version, Status = EvidenceStatus.Failed,
-                    Error = $"{pre.Code}: {pre.Detail}", ExpectedSha256 = ev.Sha256, SourceSha256Before = pre.Sha256, SourceFingerprint = pre.Fingerprint,
+                    EvidenceId = ev.EvidenceId, Parser = string.Join("|", _registry.Candidates(ev).Select(p => p.Descriptor.ParserId)), ParserVersion = "-",
+                    Status = EvidenceStatus.Failed, Error = sel.Problem, ExpectedSha256 = ev.Sha256, SourceSha256Before = pre0.Sha256, SourceFingerprint = pre0.Fingerprint,
                 };
                 r.Parsing.Add(refused);
                 r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
                     "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
-                ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{ev.EvidenceId} {pre.Code} {pre.Detail}");
+                ws.Audit(pre0.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{ev.EvidenceId} {sel.Problem}");
                 continue;
             }
+            var pre = sel.Preflight!;
+            progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Descriptor.ParserId})");
             var mark = sink.Events.Count;
             var pr = parser.Parse(ev, full, sink, ct);
             pr.ExpectedSha256 = ev.Sha256;
             pr.SourceSha256Before = pre.Sha256;
             pr.SourceFingerprint = pre.Fingerprint;
-            var post = EvidencePreflight.Check(ev, full);
+            var post = parser.Preflight(ev, full);
             pr.SourceSha256After = post.Sha256;
             if (!post.CanParse)
             {
@@ -144,9 +158,9 @@ public sealed class InvestigationPipeline
                 ws.Audit("evidence.mutated", $"{ev.EvidenceId} during parse {post.Detail}");
             }
             else
-                ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Name, parser.Version);
+                ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
             r.Parsing.Add(pr);
-            ws.RecordTransformation(ev.EvidenceId, parser.Name, parser.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
+            ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
             r.Gaps.AddRange(pr.Gaps);
             if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
                 r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",

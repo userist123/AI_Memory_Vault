@@ -13,10 +13,21 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 /// </summary>
 public sealed class SystemHiveExecutionParser : EvidenceParserBase
 {
-    public override string Name => "SystemHiveExecutionParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) =>
-        item.SourceType == "system_hive" || Path.GetFileName(item.StoredPath).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "SystemHiveExecutionParser", Version = "1.0", Artifact = "Hive SYSTEM — BAM și ShimCache (AppCompatCache)",
+        SourceTypes = ["system_hive"], FileNames = ["SYSTEM"], Fingerprints = ["regf"],
+        SupportedOs = "Oricare (citire offline cu DiscUtils.Registry)",
+        FormatVersions = ["BAM: Windows 10 1709+ (bam\\State\\UserSettings) și bam\\UserSettings", "ShimCache: intrări 10ts (Windows 8.1 / 10 / 11)"],
+        Limitations =
+        [
+            "Jurnalele de tranzacții ale hive-ului (.LOG1/.LOG2) nu sunt aplicate.",
+            "ShimCache pentru Windows 7 / XP nu este decodat (gol PARTIAL).",
+            "Ora ShimCache este ultima modificare a fișierului, nu rularea; BAM păstrează doar ultima rulare per utilizator.",
+        ],
+        Status = ParserMaturity.Tested,
+        Validation = "ExecutionArtifactParserTests pe hive-uri sintetice (valori exacte); nu există un hive SYSTEM real în corpus",
+    };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
@@ -122,10 +133,21 @@ public static class ShimCache
 /// </summary>
 public sealed class AmcacheParser : EvidenceParserBase
 {
-    public override string Name => "AmcacheParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) =>
-        item.SourceType == "amcache" || Path.GetFileName(item.StoredPath).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "AmcacheParser", Version = "1.0", Artifact = "Amcache.hve — inventarul fișierelor de aplicații",
+        SourceTypes = ["amcache"], FileNames = ["Amcache.hve"], Fingerprints = ["regf"],
+        SupportedOs = "Oricare (citire offline cu DiscUtils.Registry)",
+        FormatVersions = ["Root\\InventoryApplicationFile (Windows 10 / 11)"],
+        Limitations =
+        [
+            "Formatul vechi Root\\File (Windows 8) nu este citit.",
+            "Jurnalele de tranzacții .LOG1/.LOG2 nu sunt aplicate; lipsa lor e raportată ca gol.",
+            "Amcache arată prezența unui fișier (și de obicei instalarea), nu fiecare rulare.",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "ExecutionArtifactParserTests: Amcache.hve real din corpus (peste 6000 de intrări) și hive sintetic",
+    };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {

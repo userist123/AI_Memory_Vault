@@ -86,7 +86,8 @@ public static class EvidencePreflight
 {
     private const int SharingViolation = unchecked((int)0x80070020), LockViolation = unchecked((int)0x80070021);
 
-    public static PreflightResult Check(EvidenceItem item, string fullPath)
+    /// <param name="acceptedFormats">Content formats the reader accepts (a parser's descriptor); null = those implied by the declared type.</param>
+    public static PreflightResult Check(EvidenceItem item, string fullPath, IReadOnlyCollection<string>? acceptedFormats = null)
     {
         if (!File.Exists(fullPath))
             return new(item.EvidenceId, PreflightStatus.Missing, 0, "", item.Sha256, "", $"Fișierul probei lipsește: {fullPath}");
@@ -113,7 +114,7 @@ public static class EvidencePreflight
         if (item.Sha256.Length > 0 && !sha.Equals(item.Sha256, StringComparison.OrdinalIgnoreCase))
             return new(item.EvidenceId, size != item.Size ? PreflightStatus.SizeMismatch : PreflightStatus.HashMismatch, size, sha, item.Sha256, fingerprint,
                 $"SHA-256 la achiziție {item.Sha256} ({item.Size} B), acum {sha} ({size} B): proba a fost modificată după achiziție.", fileTime);
-        var expected = EvidenceFingerprint.Expected(item);
+        var expected = acceptedFormats ?? EvidenceFingerprint.Expected(item);
         if (expected is not null && !expected.Contains(fingerprint))
             return new(item.EvidenceId, PreflightStatus.FormatMismatch, size, sha, item.Sha256, fingerprint,
                 $"Conținutul are formatul „{fingerprint}”, dar proba este declarată {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
