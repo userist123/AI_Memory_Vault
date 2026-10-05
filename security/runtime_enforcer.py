@@ -254,22 +254,32 @@ class PersistentNonceStore:
         if not identifier:
             return False
         with self._lock:
+            conn = None
             try:
                 conn = self._get_connection()
-                try:
-                    now_str = datetime.now(timezone.utc).isoformat()
-                    conn.execute(
-                        "INSERT INTO consumed_identifiers (identifier, consumed_at) VALUES (?, ?)",
-                        (identifier, now_str),
-                    )
-                    return True
-                except self._sqlite3.IntegrityError:
-                    return False
-                finally:
-                    conn.close()
+                conn.execute("BEGIN IMMEDIATE")
+                now_str = datetime.now(timezone.utc).isoformat()
+                conn.execute(
+                    "INSERT INTO consumed_identifiers (identifier, consumed_at) VALUES (?, ?)",
+                    (identifier, now_str),
+                )
+                conn.execute("COMMIT")
+                return True
+            except self._sqlite3.IntegrityError:
+                if conn is not None:
+                    conn.execute("ROLLBACK")
+                return False
             except self._sqlite3.DatabaseError:
+                if conn is not None:
+                    try:
+                        conn.execute("ROLLBACK")
+                    except self._sqlite3.DatabaseError:
+                        pass
                 # Fail-closed on storage corruption or contention
                 return False
+            finally:
+                if conn is not None:
+                    conn.close()
 
 
 @dataclass(frozen=True)
