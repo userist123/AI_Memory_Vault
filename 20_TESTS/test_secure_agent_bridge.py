@@ -54,3 +54,16 @@ def test_canonical_json_is_deterministic():
     value = {"b": 2, "a": {"z": 1, "x": [3, 2, 1]}}
     assert canonical_json(value) == canonical_json(value)
     assert base64.b64encode(canonical_json(value)).decode()
+
+
+
+def test_antigravity_command_is_persistent_and_prompt_free():
+    session = AntigravitySession("C:/workspace", model="gemini-3.8-flash-high", effort="high")
+    command = session.build_command()
+    assert "--input-format" in command
+    assert "stream-json" in command
+    assert "--output-format" in command
+    assert command.count("stream-json") == 2
+    assert "gemini-3.8-flash-high" in command
+    assert "high" in command
+    assert "SECRET PROMPT" not in command
