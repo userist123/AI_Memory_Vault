@@ -1048,6 +1048,193 @@ def test_blocker5_ci_reporting_distinguishes_passed_from_failed_and_rejects_mask
             assert status == "EXECUTED_FAILED"
 
 
+# ============================================================================
+# GATE 1 & GATE 2: Production Authority Proof & Multi-Process Atomicity
+# ============================================================================
+
+def test_gate1_production_mode_fails_closed_if_authenticated_approval_disabled(tmp_path):
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+    broker = ApprovalBroker("authoritative-production-secret-32bytes!")
+
+    # 1. Direct enforcer initialization with require_authenticated_approval=False must fail
+    with pytest.raises(ValueError, match="production runtime strictly forbids disabling authenticated approvals"):
+        RuntimeEnforcer(
+            broker=broker,
+            nonce_store=store,
+            production_mode=True,
+            require_authenticated_approval=False,
+        )
+
+    # 2. None, 0, or any non-True value must fail closed
+    with pytest.raises(ValueError, match="production runtime strictly forbids disabling authenticated approvals"):
+        RuntimeEnforcer(
+            broker=broker,
+            nonce_store=store,
+            production_mode=True,
+            require_authenticated_approval=None,
+        )
+
+    with pytest.raises(ValueError, match="production runtime strictly forbids disabling authenticated approvals"):
+        RuntimeEnforcer(
+            broker=broker,
+            nonce_store=store,
+            production_mode=True,
+            require_authenticated_approval=0,
+        )
+
+    # 3. Adapter wrapping a non-production enforcer in production mode must fail
+    from security.supply_chain_policy import SoftwareAISupplyChainPolicy
+    policy = SoftwareAISupplyChainPolicy()
+    enf_non_prod = RuntimeEnforcer(
+        broker=broker,
+        nonce_store=store,
+        production_mode=False,
+        require_authenticated_approval=False,
+    )
+    with pytest.raises(PermissionError, match="production runtime requires an enforcer configured in production mode"):
+        RuntimeAdapter(enforcer=enf_non_prod, supply_chain_policy=policy, production_mode=True)
+
+    # 4. Adapter wrapping an enforcer with disabled authenticated approval must fail
+    dummy_bypassed_enf = type(
+        "DummyBypassedEnforcer",
+        (),
+        {"_production_mode": True, "_require_authenticated_approval": False},
+    )()
+    with pytest.raises(PermissionError, match="strictly forbids enforcer with disabled authenticated approvals"):
+        RuntimeAdapter(enforcer=dummy_bypassed_enf, supply_chain_policy=policy, production_mode=True)
+
+
+def test_gate1_approval_issuer_mismatch_rejected(tmp_path):
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+    broker = ApprovalBroker("authoritative-production-secret-32bytes!", issuer="trusted-authority-broker")
+    enforcer = RuntimeEnforcer(broker=broker, nonce_store=store, production_mode=True)
+
+    now = datetime.now(timezone.utc)
+    decision = TrustDecision(TrustState.REVIEW, ("review",), True)
+    req = ExecutionRequest(
+        actor="operator",
+        tool_name="system_tool",
+        target="sys-target",
+        parameters={"action": "clean"},
+    )
+
+    # Token issued by broker, but with mismatched issuer
+    token = broker.issue_approval(
+        actor="operator",
+        tool_name="system_tool",
+        target="sys-target",
+        parameters_sha256=req.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="nonce-issuer-mismatch-1",
+    )
+    # Tamper issuer
+    mismatched_token = ApprovalToken(
+        approval_id=token.approval_id,
+        actor=token.actor,
+        tool_name=token.tool_name,
+        target=token.target,
+        parameters_sha256=token.parameters_sha256,
+        issued_at=token.issued_at,
+        expires_at=token.expires_at,
+        nonce=token.nonce,
+        signature=token.signature,
+        issuer="impostor-authority-broker",
+    )
+
+    res = enforcer.authorize(req, decision, approval=mismatched_token, now=now)
+    assert not res.allowed
+    assert res.reason == "approval_issuer_mismatch"
+
+
+def test_gate1_broker_secret_validated_against_host_authority_env(monkeypatch, tmp_path):
+    host_secret = "host-super-secret-key-32bytes-min!"
+    monkeypatch.setenv("VAULT_AUTHORITY_HMAC_SECRET", host_secret)
+
+    store = PersistentNonceStore(tmp_path / "nonces.db")
+
+    # Injected broker with mismatched secret must be rejected
+    mismatched_broker = ApprovalBroker("different-secret-key-32bytes-val!")
+    with pytest.raises(PermissionError, match="broker secret does not match host authority secret"):
+        RuntimeEnforcer(broker=mismatched_broker, nonce_store=store, production_mode=True)
+
+    # Injected broker with matching secret succeeds
+    matching_broker = ApprovalBroker(host_secret)
+    enforcer = RuntimeEnforcer(broker=matching_broker, nonce_store=store, production_mode=True)
+    assert enforcer is not None
+
+
+def test_gate2_real_os_multiprocess_nonce_replay(tmp_path):
+    import subprocess
+    import json
+
+    runner_script = Path(__file__).resolve().parent / "os_multiprocess_nonce_runner.py"
+    assert runner_script.exists(), "os_multiprocess_nonce_runner.py must exist"
+
+    db_path = tmp_path / "os_multiprocess_nonces.sqlite"
+    secret = "production-multiprocess-test-secret-32b!"
+    broker = ApprovalBroker(secret, issuer="external-authority-broker")
+
+    now = datetime.now(timezone.utc)
+    req = ExecutionRequest(
+        actor="operator",
+        tool_name="system_tool",
+        target="target-atomic-multiprocess",
+        parameters={"action": "run_job"},
+    )
+    token = broker.issue_approval(
+        approval_id="app-os-multiprocess-1",
+        actor="operator",
+        tool_name="system_tool",
+        target="target-atomic-multiprocess",
+        parameters_sha256=req.parameters_sha256(),
+        issued_at=now,
+        expires_at=now + timedelta(minutes=5),
+        nonce="shared-nonce-os-atomic-9999",
+    )
+
+    token_json = json.dumps(token.to_dict())
+    req_json = json.dumps(req.to_dict())
+
+    # Launch 8 truly independent OS processes concurrently
+    processes = []
+    num_processes = 8
+    for _ in range(num_processes):
+        p = subprocess.Popen(
+            [sys.executable, str(runner_script), str(db_path), secret, token_json, req_json],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        processes.append(p)
+
+    outputs = []
+    exit_codes = []
+    for p in processes:
+        stdout, stderr = p.communicate(timeout=15)
+        outputs.append(stdout.strip())
+        exit_codes.append(p.returncode)
+
+    # Exactly 1 process should have succeeded (exit code 0, RESULT:ALLOWED)
+    allowed_count = sum(1 for out in outputs if "RESULT:ALLOWED" in out)
+    replayed_count = sum(1 for out in outputs if "RESULT:REJECTED:approval_replayed" in out)
+
+    assert allowed_count == 1, f"Expected exactly 1 ALLOWED process, got {allowed_count}. Outputs: {outputs}"
+    assert replayed_count == num_processes - 1, f"Expected {num_processes - 1} replayed, got {replayed_count}. Outputs: {outputs}"
+    assert sorted(exit_codes) == [0] + [1] * (num_processes - 1)
+
+    # Subsequent 9th independent OS process execution must also be rejected
+    p_restart = subprocess.Popen(
+        [sys.executable, str(runner_script), str(db_path), secret, token_json, req_json],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    stdout_restart, _ = p_restart.communicate(timeout=10)
+    assert p_restart.returncode == 1
+    assert "RESULT:REJECTED:approval_replayed" in stdout_restart
+
+
 
 
 

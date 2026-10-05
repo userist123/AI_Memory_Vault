@@ -22,7 +22,7 @@ SEED_NOTES = (
 )
 
 
-def note_text(title: str, body: str, note_id: str, lifecycle: str = "ACTIVE", verification: str = "verified") -> str:
+def note_text(title: str, body: str, note_id: str, lifecycle: str = "ACTIVE", verification: str = "unverified") -> str:
     return (
         "---\n"
         f"id: {note_id}\n"
@@ -51,5 +51,7 @@ def make_vault(root: Path) -> Path:
     shutil.copytree(REPO / "01_ARCHITECTURE" / "ontology" / "slots", vault / "01_ARCHITECTURE" / "ontology" / "slots")
     for title, body in SEED_NOTES:
         note_id = str(uuid.uuid4())
-        (knowledge / f"{title.replace(' ', '_')}.md").write_text(note_text(title, body, note_id), encoding="utf-8")
+        (knowledge / f"{title.replace(' ', '_')}.md").write_text(
+            note_text(title, body, note_id, verification="verified"), encoding="utf-8"
+        )
     return vault

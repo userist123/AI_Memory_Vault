@@ -79,23 +79,28 @@ def _snippet(text: str) -> str:
     return flat[:MAX_SNIPPET]
 
 
-def _readable(controller, note_id: str) -> Optional[Dict[str, Any]]:
-    """The note as the controller lets an agent read it, or None (archived, raw, ...)."""
+def _readable(controller, note_id: str, principal: Principal = Principal.AI_AGENT) -> Optional[Dict[str, Any]]:
+    """The note as the controller lets a principal read it, or None (archived, raw, ...)."""
     try:
-        pack = controller.cognitive_read(Principal.AI_AGENT, note_id)
+        pack = controller.cognitive_read(principal, note_id)
     except Exception:  # noqa: BLE001 - not eligible for cognitive retrieval is a normal outcome
         return None
     results = pack.get("results") or []
     if results:
         return results[0]
+    
+    # Under NO circumstances may an AI_AGENT fall back to reconstructing raw content from storage.
+    if principal == Principal.AI_AGENT:
+        return None
+
     # Controlled tool inspection of an explicitly marked REVIEW candidate
-    # as untrusted data when cognitive_read route keeps it in quarantine.
-    # Never synthesize verification or promotion state.
-    stored = controller.storage.get(note_id)
-    if isinstance(stored, dict) and stored.get("lifecycle") == "REVIEW" and stored.get("verification") == "unverified":
-        fallback = stored.copy()
-        fallback["_cognitive_unverified"] = True
-        return fallback
+    # for explicitly authorized human/admin reviewers ONLY.
+    if principal in (Principal.HUMAN, Principal.ADMIN):
+        stored = controller.storage.get(note_id)
+        if isinstance(stored, dict) and stored.get("lifecycle") == "REVIEW" and stored.get("verification") == "unverified":
+            fallback = stored.copy()
+            fallback["_cognitive_unverified"] = True
+            return fallback
     return None
 
 
@@ -109,7 +114,7 @@ def search(controller, query: str, limit: int = 5, principal: Principal = Princi
     results: List[Dict[str, Any]] = []
     for item in (pack.get("results") or [])[:limit]:
         note_id = item.get("id")
-        readable = _readable(controller, note_id) if note_id else None
+        readable = _readable(controller, note_id, principal=principal) if note_id else None
         stored = controller.storage.get(note_id) if note_id else None
         ver = (stored or item).get("verification", "unverified")
         if isinstance(ver, dict):
@@ -153,7 +158,7 @@ def get(controller, note_id: str, principal: Principal = Principal.AI_AGENT) -> 
     stored = controller.storage.get(clean_id)
     if isinstance(stored, dict) and stored.get("quarantined", False) and principal == Principal.AI_AGENT:
         raise ValueError(f"Note {clean_id} is quarantined and cannot be retrieved")
-    note = _readable(controller, clean_id)
+    note = _readable(controller, clean_id, principal=principal)
     if not note:
         raise ValueError(f"Note {clean_id} not found or not eligible for cognitive retrieval")
     prov = note.get("provenance") or {}

@@ -12,25 +12,29 @@
 This Pull Request contains the comprehensive security remediation for audit findings across runtime authority, memory trust boundaries, unverified content quarantine, supply chain policies, and CI workflows.
 
 In addition to audit findings **M01–M08** and the independent Red Team and Zero-Trust analysis artifacts (**U01–U08**), this revision specifically resolves the **5 concrete blockers** identified during independent code inspection:
-1. **Blocker 1 (B1 — External Broker & Authority Separation)**: Forbid in-process broker creation, test/dev secrets, and agent self-approval in production mode; require explicitly injected `ApprovalBroker` ($\ge 32$ char secret) and `PersistentNonceStore`.
+1. **Blocker 1 (B1 — External Broker & Authority Separation / Gate 1)**: Forbid in-process broker creation, test/dev secrets, and agent self-approval in production mode; require explicitly injected `ApprovalBroker` ($\ge 32$ byte secret) and `PersistentNonceStore`. Enforce invariant `require_authenticated_approval == True` fail-closed (cannot be disabled). Validate broker secret against `VAULT_AUTHORITY_HMAC_SECRET` when configured. Prevent issuer spoofing (`approval_issuer_mismatch`).
 2. **Blocker 2 (B2 — Revision & Content Binding)**: Mandatory `revision_id` and `content_sha256` binding for state-mutating operations and tools (`patch`, `update`, `state_mutate`, `delete`, `memory_patch`, `file_writer`, etc.).
-3. **Blocker 3 (B3 — Memory Access Quarantine & Snippet Hardening)**: Made `readable` strictly authoritative for model disclosure under `Principal.AI_AGENT`; eliminated fallback to `stored["content"]` in `memory_access.search()`; enforced empty snippet and get denial for quarantined/unverified notes.
-4. **Blocker 4 (B4 — Multi-Process Persistent Nonce Store Atomicity)**: Upgraded `PersistentNonceStore` to SQLite WAL mode with `PRAGMA busy_timeout = 5000` and database-level `PRIMARY KEY` uniqueness, preventing parallel replay races across workers and failing closed on corruption.
-5. **Blocker 5 (B5 — CI Scanner Failure Masking)**: Fixed `.github/workflows/apisec-scan.yml` and `fortify.yml` to inspect scanner step `outcome`, preventing failed or crashed scans from reporting `EXECUTED_PASSED`.
+3. **Blocker 3 (B3 — Memory Access Quarantine & Snippet Hardening / Gate 3)**: Made `readable` strictly authoritative for model disclosure under `Principal.AI_AGENT`; eliminated fallback to storage in `_readable()` for `Principal.AI_AGENT`; enforced empty snippet and get denial for quarantined/unverified notes. Distinct, explicit inspection path preserved for `Principal.HUMAN` / `Principal.ADMIN`.
+4. **Blocker 4 (B4 — Multi-Process Nonce Replay Elimination / Gate 2)**: Upgraded `PersistentNonceStore` to SQLite WAL mode with `PRAGMA busy_timeout = 5000` and `BEGIN IMMEDIATE` atomic check-and-insert. Proved cross-process replay prevention with 8 concurrent independent OS processes (`security/tests/os_multiprocess_nonce_runner.py`).
+5. **Blocker 5 (B5 — CI Scanner Failure Masking & CI Diagnostics)**: Fixed `.github/workflows/apisec-scan.yml` and `fortify.yml` to inspect scanner step `outcome`, preventing failed or crashed scans from reporting `EXECUTED_PASSED`. Diagnosed and resolved repository CI failures in `20_TESTS/memory_vault_fixture.py` and `ontology_slot_writers.json`.
 
 ---
 
-## 2. 5 Concrete Blockers Remediation Matrix
+## 2. 5 Concrete Blockers & Authority Gates Matrix
 
-Detailed regression proofs with adversarial reproduction and negative test results are documented in [`docs/security/PR209_REGRESSION_PROOF.md`](docs/security/PR209_REGRESSION_PROOF.md).
+Detailed proofs and evidence are documented in:
+- [`docs/security/PR209_REGRESSION_PROOF.md`](docs/security/PR209_REGRESSION_PROOF.md)
+- [`docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md`](docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md)
+- [`docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md`](docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md)
+- [`docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md`](docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md)
 
-| Blocker ID | Description | Affected Surface | Status | Enforcement & Verification |
+| Gate / Blocker ID | Description | Affected Surface | Status | Enforcement & Verification |
 |---|---|---|---|---|
-| **Blocker 1** | In-process fallback for `ApprovalBroker` and missing external authority separation | `security/runtime_enforcer.py`, `security/runtime_adapter.py` | **VERIFIED_FIXED** | In `production_mode=True`, strictly requires injected `ApprovalBroker` (secret $\ge 32$ chars, rejects `test-`/`dev-`) and injected `PersistentNonceStore`. `.broker` and `issue_approval` raise `PermissionError` in production mode. Added agent-safe `request_approval(request)`. Validated by 4 adversarial tests (`test_blocker1_*`). |
-| **Blocker 2** | Revision and content bindings omissible on mutating operations | `security/runtime_enforcer.py` | **VERIFIED_FIXED** | When token specifies `revision_id` or `content_sha256`, request must specify and match them. Mandatory binding enforced for all mutating operations (`patch`, `update`, `state_mutate`, `delete`) and tools (`memory_patch`, `state_mutate`, `file_writer`, `code_patch`). Missing bindings return `approval_binding_required_for_tool`. Validated by `test_blocker2_mandatory_binding_for_mutating_tools`. |
-| **Blocker 3** | `memory_access.search()` reintroduces quarantined / unverified content | `03_IMPLEMENTATION/packages/interfaces/memory_access.py` | **VERIFIED_FIXED** | `readable` (from `cognitive_read`) is strictly authoritative for model disclosure under `Principal.AI_AGENT`. For unverified or quarantined notes, snippet is strictly `""`. Zero fallback to `stored["content"]` for `AI_AGENT`. `ma.get()` rejects quarantined notes. Validated by `test_quarantined_note_*`, `test_unverified_redacted_*`, and `test_blocker3_*`. |
-| **Blocker 4** | Persistent nonce store multi-process atomicity and corruption handling | `security/runtime_enforcer.py` (`PersistentNonceStore`) | **VERIFIED_FIXED** | Upgraded to SQLite WAL mode with `PRAGMA busy_timeout = 5000` and atomic `INSERT INTO consumed_identifiers` guarded by `PRIMARY KEY`. Deduplication is enforced by the database engine across all operating system processes. Fails closed (returns `False`) on corrupted DB. Validated by `test_blocker4_sqlite_nonce_store_multi_instance_atomicity` (8-thread race across 2 enforcers) and `test_blocker4_corrupted_nonce_store_fails_closed`. |
-| **Blocker 5** | CI success reporting masks scanner failure | `.github/workflows/apisec-scan.yml`, `fortify.yml` | **VERIFIED_FIXED** | Added explicit step IDs (`id: apisec_scan`, `id: fortify_scan`). Final reporting step inspects step `outcome`: `EXECUTED_PASSED` is emitted ONLY if scanner succeeded (`outcome == 'success'`). Failed scanner emits `EXECUTED_FAILED`. Unconfigured emits `NOT_CONFIGURED_OPTIONAL`. Validated by `test_apisec_and_fortify_scan_outcome_checked_before_reporting_passed` and `test_blocker5_*`. |
+| **Gate 1 / B1** | In-process fallback for `ApprovalBroker` and authority separation | `security/runtime_enforcer.py`, `security/runtime_adapter.py` | **VERIFIED_FIXED** | In `production_mode=True`, strictly requires injected `ApprovalBroker` (secret $\ge 32$ bytes, rejects `test-`/`dev-`) and injected `PersistentNonceStore`. `require_authenticated_approval` must be `True` (cannot be disabled). Validates secret against host env `VAULT_AUTHORITY_HMAC_SECRET`. Rejects issuer mismatch (`approval_issuer_mismatch`). Validated by `test_gate1_*` and `test_blocker1_*`. |
+| **Blocker 2** | Revision and content bindings omissible on mutating operations | `security/runtime_enforcer.py` | **VERIFIED_FIXED** | When token specifies `revision_id` or `content_sha256`, request must specify and match them. Mandatory binding enforced for all mutating operations and tools. Missing bindings return `approval_binding_required_for_tool`. Validated by `test_blocker2_mandatory_binding_for_mutating_tools`. |
+| **Gate 3 / B3** | `memory_access.search()` and `get()` storage fallback for AI Agent | `03_IMPLEMENTATION/packages/interfaces/memory_access.py` | **VERIFIED_FIXED** | `_readable` eliminates raw storage fallback for `Principal.AI_AGENT`. For unverified or quarantined notes, snippet is strictly `""` and `get()` raises `ValueError`. Distinct explicit inspection path for `Principal.HUMAN`/`ADMIN`. Validated by `test_ai_agent_cannot_read_or_get_storage_fallback_*` and `test_blocker3_*`. |
+| **Gate 2 / B4** | Persistent nonce store multi-process atomicity and corruption handling | `security/runtime_enforcer.py` (`PersistentNonceStore`) | **VERIFIED_FIXED** | Upgraded to SQLite WAL mode with `PRAGMA busy_timeout = 5000` and `BEGIN IMMEDIATE` atomic insert guarded by `PRIMARY KEY`. Deduplication proven across 8 concurrent OS child processes (`os_multiprocess_nonce_runner.py`). Fails closed on corruption. Validated by `test_gate2_real_os_multiprocess_nonce_replay` and `test_blocker4_*`. |
+| **Blocker 5** | CI success reporting masks scanner failure | `.github/workflows/apisec-scan.yml`, `fortify.yml` | **VERIFIED_FIXED** | Added explicit step IDs (`id: apisec_scan`, `id: fortify_scan`). Final reporting step inspects step `outcome`: `EXECUTED_PASSED` is emitted ONLY if scanner succeeded (`outcome == 'success'`). Failed scanner emits `EXECUTED_FAILED`. Validated by `test_blocker5_*`. |
 
 ---
 
@@ -45,7 +49,7 @@ Detailed regression proofs with adversarial reproduction and negative test resul
 | **M05** | Memory Disclosure Invariant | P1 | **VERIFIED_FIXED** | Blank content enforced across all disclosure levels & search snippets |
 | **M06** | Skill Exfiltration Scanner | P1 | **VERIFIED_FIXED** | Detects outbound exfiltration regexes in imported skills |
 | **M07** | Mandatory Production Controls | P1 | **VERIFIED_FIXED** | `production_mode=True` blocks bypasses fail-closed |
-| **M08** | In-Memory Replay Persistence | P2 | **VERIFIED_FIXED** | `PersistentNonceStore` tracks nonces across restarts and processes |
+| **M08** | In-Memory Replay Persistence | P2 | **VERIFIED_FIXED** | `PersistentNonceStore` tracks nonces across restarts and OS processes |
 | **B01** | Positive evaluation results can be synthetic | P0 | **PARTIALLY FIXED** | Promotion of synthetic evidence to ACTIVE/verified blocked on `main`. PR #206 isolated. |
 | **B02** | HMAC token revision & content binding | P0 | **VERIFIED_FIXED** | Strict matching + mandatory binding for mutating operations/tools |
 | **B03–B10** | Empirical evaluation gaps on research branch | P1 | **REMAINS OPEN** | Isolated on PR #206 (`research/book-to-memory`); not present on `main` |
@@ -68,13 +72,19 @@ Detailed regression proofs with adversarial reproduction and negative test resul
 .github/workflows/apisec-scan.yml
 .github/workflows/fortify.yml
 03_IMPLEMENTATION/packages/interfaces/memory_access.py
+03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py
+20_TESTS/fixtures/ontology_slot_writers.json
 20_TESTS/memory_vault_fixture.py
 20_TESTS/regression/test_workflow_security_audit.py
 20_TESTS/test_memory_access.py
 docs/security/AUDIT_REMEDIATION.md
+docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md
+docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md
 docs/security/PR209_REGRESSION_PROOF.md
+docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md
 security/runtime_adapter.py
 security/runtime_enforcer.py
+security/tests/os_multiprocess_nonce_runner.py
 security/tests/test_audit_remediation.py
 ```
 
@@ -86,23 +96,27 @@ Automated tests executed directly on Windows with Python 3.14.2:
 
 ```text
 pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py 20_TESTS/test_cognitive_core_search_wiring.py 20_TESTS/test_end_to_end_workflow.py 20_TESTS/regression/test_workflow_security_audit.py
-============================= 221 passed in 2.33s =============================
+============================= 225 passed in 2.45s =============================
 
 pytest 20_TESTS/memory_controller/
 ============================= 328 passed in 7.56s =============================
 
-Total Verified Test Suite:
-============================= 549 passed, 0 failed, 0 skipped, 0 errors =============================
+pytest 20_TESTS/test_memory_mcp_server.py 20_TESTS/test_memory_usage_report.py 20_TESTS/test_ontology_slot_writers.py
+============================= 23 passed in 7.82s =============================
+
+Full 20_TESTS suite:
+============================= 2623 passed, 10 skipped, 9 xfailed, 0 failed in 672s =============================
 ```
 
 ---
 
-## 6. Limitations & Required External Configurations
+## 6. Limitations & Architectural Boundaries
 
-1. **Owner Authority Key Storage**: In production deployments, `ApprovalBroker` requires a secure HMAC secret ($\ge 32$ chars) injected via an environment variable (`VAULT_APPROVAL_SECRET`) or hardware-backed keystore, inaccessible to the agent.
-2. **Persistent Nonce Store Storage**: The SQLite WAL database must reside on local persistent storage accessible across local worker processes, protected with restricted OS permissions (`chmod 600` / NTFS Owner-only ACLs).
-3. **CI External Secrets**: GitHub Actions scanners (`Fortify`, `APIsec`) require credentials configured in repository secrets. When credentials are not configured, workflows report `SKIPPED_UNCONFIGURED` / `NOT_CONFIGURED_OPTIONAL` without failing CI or falsifying passed status.
-4. **PR Isolation**: PRs `#204`, `#206`, `#207`, and `#208` remain completely untouched and open. PR #206 (`research/book-to-memory`) is isolated from `main`.
+1. **Option A (Host-Trusted Broker Architecture)**: The authority broker is host-injected and trusted within the deployment runtime. `RuntimeEnforcer.request_approval()` generates a correlation request placeholder; it does not communicate with a remote server.
+2. **Owner Authority Key Storage**: In production deployments, `ApprovalBroker` requires a secure HMAC secret ($\ge 32$ bytes) injected via an environment variable (`VAULT_AUTHORITY_HMAC_SECRET`) or hardware-backed keystore, strictly inaccessible to the untrusted agent.
+3. **Persistent Nonce Store Storage**: The SQLite WAL database must reside on local persistent storage accessible across local worker processes, protected with restricted OS permissions (`chmod 600` / NTFS Owner-only ACLs).
+4. **CI External Secrets**: GitHub Actions scanners (`Fortify`, `APIsec`) require credentials configured in repository secrets. When credentials are not configured, workflows report `SKIPPED_UNCONFIGURED` / `NOT_CONFIGURED_OPTIONAL` without failing CI or falsifying passed status.
+5. **PR Isolation**: PRs `#204`, `#206`, `#207`, and `#208` remain completely untouched and open. PR #206 (`research/book-to-memory`) is isolated from `main`.
 
 ---
 

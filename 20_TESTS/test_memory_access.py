@@ -90,9 +90,59 @@ def test_a_proposed_note_is_found_by_search_and_readable_in_the_same_session(wor
     assert proposed["id"] in [r["id"] for r in found["query_results"]]
     row = next(r for r in found["query_results"] if r["id"] == proposed["id"])
     assert row["lifecycle"] == "REVIEW" and row["verification"] == "unverified"
-    got = ma.get(controller, proposed["id"])
+    
+    # AI_AGENT cannot retrieve unverified proposal via storage fallback
+    with pytest.raises(ValueError, match="not eligible for cognitive retrieval"):
+        ma.get(controller, proposed["id"], principal=Principal.AI_AGENT)
+    
+    # Authorized HUMAN inspection can read the unverified proposed note
+    got = ma.get(controller, proposed["id"], principal=Principal.HUMAN)
     assert got["lifecycle"] == "REVIEW" and got["unverified"] is True
     assert "Notele propuse apar imediat" in got["content"]
+
+
+def test_ai_agent_cannot_read_or_get_storage_fallback_when_cognitive_read_empty(world):
+    import uuid
+    controller, vault = world
+    note_id = str(uuid.uuid4())
+    review_path = vault / "01_ARCHITECTURE" / "knowledge" / "review_unverified_secret.md"
+    secret_marker = "SECRET_MARKER_FORBIDDEN_CONTENT_9988"
+    review_path.write_text(
+        "---\n"
+        f"id: {note_id}\n"
+        "type: knowledge\n"
+        "category: review-test\n"
+        "tags: [review]\n"
+        "created: 2026-09-01\n"
+        "updated: 2026-09-01\n"
+        "provenance:\n  source_type: ai\n  source_ref: proposal\n"
+        "confidence: low\n"
+        "verification: unverified\n"
+        "relations: []\n"
+        "lifecycle: REVIEW\n"
+        "---\n"
+        f"# review unverified\n\n{secret_marker}\n",
+        encoding="utf-8"
+    )
+    controller.storage.id_to_path.clear()
+    controller.storage._cache.clear()
+    controller.storage._initialize_index()
+
+    # Search by AI_AGENT must not leak secret marker in snippet
+    out = ma.search(controller, "FORBIDDEN_CONTENT", limit=5, principal=Principal.AI_AGENT)
+    matching = [r for r in out["query_results"] if r["id"] == note_id]
+    assert len(matching) == 1
+    assert matching[0]["snippet"] == ""
+    assert secret_marker not in matching[0]["snippet"]
+
+    # get() by AI_AGENT must fail closed and never fall back to storage
+    with pytest.raises(ValueError, match="not eligible for cognitive retrieval"):
+        ma.get(controller, note_id, principal=Principal.AI_AGENT)
+
+    # get() by HUMAN succeeds for administrative/human inspection
+    human_read = ma.get(controller, note_id, principal=Principal.HUMAN)
+    assert human_read is not None
+    assert secret_marker in human_read["content"]
 
 
 def test_nothing_a_proposal_can_do_verifies_it(world):

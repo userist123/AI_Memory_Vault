@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import threading
 from dataclasses import dataclass, field
@@ -45,6 +46,20 @@ class ExecutionRequest:
         ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "actor": self.actor,
+            "tool_name": self.tool_name,
+            "target": self.target,
+            "parameters": self.parameters,
+            "side_effect": self.side_effect,
+            "data_export": self.data_export,
+            "correlation_id": self.correlation_id,
+            "operation_type": self.operation_type,
+            "revision_id": self.revision_id,
+            "content_sha256": self.content_sha256,
+        }
+
 
 @dataclass(frozen=True)
 class ApprovalToken:
@@ -83,6 +98,23 @@ class ApprovalToken:
             ensure_ascii=True,
         ).encode("utf-8")
         return payload
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "approval_id": self.approval_id,
+            "actor": self.actor,
+            "tool_name": self.tool_name,
+            "target": self.target,
+            "parameters_sha256": self.parameters_sha256,
+            "issued_at": _utc(self.issued_at).isoformat(),
+            "expires_at": _utc(self.expires_at).isoformat(),
+            "nonce": self.nonce,
+            "signature": self.signature,
+            "issuer": self.issuer,
+            "operation_type": self.operation_type,
+            "revision_id": self.revision_id,
+            "content_sha256": self.content_sha256,
+        }
 
 
 class ApprovalBroker:
@@ -272,6 +304,8 @@ class RuntimeEnforcer:
         self._lock = threading.RLock()
 
         if production_mode:
+            if require_authenticated_approval is not True:
+                raise ValueError("production runtime strictly forbids disabling authenticated approvals (require_authenticated_approval must be True)")
             if broker is None:
                 raise ValueError("production runtime requires an explicitly injected ApprovalBroker")
             if not isinstance(broker, ApprovalBroker):
@@ -280,6 +314,10 @@ class RuntimeEnforcer:
                 raise ValueError("production approval broker secret must be at least 32 bytes")
             if broker._secret.startswith(b"test-") or broker._secret.startswith(b"dev-"):
                 raise ValueError("test/dev secret cannot be used in production mode")
+            host_secret_str = os.environ.get("VAULT_AUTHORITY_HMAC_SECRET")
+            if host_secret_str:
+                if not hmac.compare_digest(broker._secret, host_secret_str.encode("utf-8")):
+                    raise PermissionError("broker secret does not match host authority secret (VAULT_AUTHORITY_HMAC_SECRET)")
             self._broker = broker
 
             if nonce_store is not None:
@@ -366,6 +404,8 @@ class RuntimeEnforcer:
             if self._require_authenticated_approval:
                 if not approval.signature:
                     return RuntimeAuthorization(False, "approval_unauthenticated")
+                if approval.issuer != self._broker.issuer:
+                    return RuntimeAuthorization(False, "approval_issuer_mismatch")
                 if not self._broker.verify(approval):
                     return RuntimeAuthorization(False, "approval_invalid_signature")
 

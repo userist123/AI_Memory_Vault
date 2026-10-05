@@ -46,6 +46,8 @@ class RuntimeAdapter:
             if enforcer is not None:
                 if not getattr(enforcer, "_production_mode", False):
                     raise PermissionError("production runtime requires an enforcer configured in production mode")
+                if getattr(enforcer, "_require_authenticated_approval", False) is not True:
+                    raise PermissionError("production runtime strictly forbids enforcer with disabled authenticated approvals")
                 self._enforcer = enforcer
             else:
                 if broker is None:
