@@ -69,6 +69,42 @@ Memory types include `knowledge`, `project`, `procedure`, `decision`, `experienc
 
 Raw imports remain under `06_INBOX/RAW_IMPORTS/` and are evidence, not canonical knowledge. Secrets must never be stored.
 
+### Central Agent Routing Contract
+
+The Vault has one canonical provider-neutral Agent Router at `03_IMPLEMENTATION/packages/routing/`.
+
+Before substantial execution, the router may select:
+- task capabilities;
+- agent role;
+- runtime;
+- abstract model tier;
+- minimal skills;
+- bounded memory plan;
+- independent verifier;
+- support agents for justified parallelism.
+
+The router does not execute providers and does not own vendor-specific prompt bodies.
+
+Each runtime keeps its own prompt/profile:
+- Claude / Claude Code;
+- Codex;
+- Antigravity;
+- Perplexity;
+- local LLM;
+- future runtimes.
+
+The router returns a `prompt_profile` identifier, not prompt text.
+
+Route status semantics:
+- `ROUTED`: eligible and runtime availability confirmed by the host;
+- `PLANNED`: eligible, but runtime availability is not confirmed;
+- `BLOCKED`: no policy-compliant route or no required independent verifier.
+
+Hard policy gates execute before ranking. Historical feedback can influence ranking only; it can never override privacy, risk, capability, authority or verification policy.
+
+The central routing protocol is:
+`00_GOVERNANCE/protocols/AI_Memory_Vault_Agent_Routing_Protocol_V1.md`.
+
 ### Unified Secure Retrieval Policy
 
 All agents (Claude Code, Antigravity, Codex, etc.) must access vault memory exclusively through authorized interfaces:
