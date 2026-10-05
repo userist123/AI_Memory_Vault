@@ -13,14 +13,22 @@ class RuntimeAdapter(Protocol):
     def dispatch(self, packet: WorkPacket) -> DispatchResult: ...
 
 class CommandAdapter:
-    def __init__(self, adapter_ref: str, artifact_root: str|Path|None=None):
+    BINARIES = {"claude_code": "claude", "codex": "codex", "antigravity": "agy", "local_llm": "ollama"}
+
+    def __init__(self, adapter_ref: str, artifact_root: str|Path|None=None, working_directory: str|Path|None=None):
         self.adapter_ref=adapter_ref
         self.artifact_root=Path(artifact_root or tempfile.gettempdir())/"ai-memory-vault-dispatch"
+        self.working_directory=Path(working_directory or Path.cwd()).resolve()
+
+    @property
+    def binary(self) -> str:
+        return self.BINARIES.get(self.adapter_ref, self.adapter_ref)
 
     def _brief(self,p:WorkPacket)->str:
         return "\n".join([
             f"ROUTED TASK ID: {p.task_id}",f"ROUTE ID: {p.route_id}",
-            f"TARGET AGENT: {p.target_agent}",f"PROMPT PROFILE: {p.prompt_profile}","",
+            f"TARGET AGENT: {p.target_agent}",f"PROMPT PROFILE: {p.prompt_profile}",
+            f"PROMPT PROFILE REF: {p.metadata.get("profile_ref", "")}","",
             "GOAL:",p.goal,"","ACCEPTANCE:",*("- "+x for x in p.acceptance_criteria),
             "","CONSTRAINTS:",*("- "+x for x in p.constraints),
             "","MEMORY REFERENCES:",*("- "+x for x in p.memory_refs),
@@ -28,23 +36,25 @@ class CommandAdapter:
         ])
 
     def dispatch(self,p:WorkPacket)->DispatchResult:
-        if shutil.which(self.adapter_ref) is None:
-            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"{self.adapter_ref} unavailable")
+        if not self.working_directory.exists():
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"working directory unavailable: {self.working_directory}")
+        if shutil.which(self.binary) is None:
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"{self.binary} unavailable")
         run=self.artifact_root/p.task_id; run.mkdir(parents=True,exist_ok=True)
         brief=run/"brief.txt"; brief.write_text(self._brief(p),encoding="utf-8")
         text=brief.read_text(encoding="utf-8")
         if self.adapter_ref=="codex":
-            cmd=["codex","exec","--json","-o",str(run/"final.txt"),"-"]; stdin=text
+            cmd=[self.binary,"exec","--json","-o",str(run/"final.txt"),"-"]; stdin=text
         elif self.adapter_ref=="claude_code":
-            cmd=["claude","-p","--output-format","text",text]; stdin=None
+            cmd=[self.binary,"-p","--output-format","text",text]; stdin=None
         elif self.adapter_ref=="antigravity":
-            cmd=["agy","--new-project","--print",f"--print-timeout={max(1,p.timeout_seconds//60)}m",f"--print={text}"]; stdin=None
+            cmd=[self.binary,"--new-project","--print",f"--print-timeout={max(1,p.timeout_seconds//60)}m",f"--print={text}"]; stdin=None
         elif self.adapter_ref=="local_llm":
-            cmd=["ollama","run","llama3.2"]; stdin=text
+            cmd=[self.binary,"run","llama3.2"]; stdin=text
         else:
             raise DispatchError(f"unsupported command adapter: {self.adapter_ref}")
         try:
-            proc=subprocess.run(cmd,input=stdin,text=True,capture_output=True,timeout=p.timeout_seconds,check=False)
+            proc=subprocess.run(cmd,input=stdin,text=True,capture_output=True,timeout=p.timeout_seconds,check=False,cwd=self.working_directory)
         except subprocess.TimeoutExpired:
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",str(brief),error="timeout")
         final=(proc.stdout or proc.stderr or "").strip()
@@ -85,7 +95,8 @@ class AgentDispatcher:
     def make_packet(self,decision:RouteDecision,goal:str,source_agent:str,acceptance_criteria:tuple[str,...]=(),constraints:tuple[str,...]=(),memory_refs:tuple[str,...]=(),timeout_seconds:int=3600)->WorkPacket:
         if decision.status==RouteStatus.BLOCKED or not decision.primary: raise DispatchError("route is not dispatchable")
         agent=self.registry.agents[decision.primary.agent_id]
-        return WorkPacket(f"task_{uuid.uuid4().hex[:12]}",decision.route_id,source_agent,agent.id,decision.primary.runtime_id,agent.prompt_profile,decision.primary.transport,goal,acceptance_criteria,constraints,memory_refs,timeout_seconds)
+        return WorkPacket(f"task_{uuid.uuid4().hex[:12]}",decision.route_id,source_agent,agent.id,decision.primary.runtime_id,agent.prompt_profile,decision.primary.transport,goal,acceptance_criteria,constraints,memory_refs,timeout_seconds,
+            metadata={"profile_ref":agent.profile_ref,"selected_skills":list(decision.primary.selected_skills),"route_status":decision.status.value})
     def dispatch(self,decision:RouteDecision,packet:WorkPacket)->DispatchResult:
         if decision.status==RouteStatus.BLOCKED: raise DispatchError("BLOCKED routes cannot be dispatched")
         rt=self.registry.runtimes[packet.target_runtime]; adapter=self.adapters.get(packet.target_runtime)
