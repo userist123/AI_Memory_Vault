@@ -68,6 +68,7 @@ public sealed class InvestigationPipeline
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
+                _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
                 _ => null,
             };
             if (type is null) continue;
@@ -76,6 +77,15 @@ public sealed class InvestigationPipeline
                 notes: "Importat de operator din: " + f));
         }
         return list;
+    }
+
+    /// <summary>Hive kind from the usual file names of saved or copied hives.</summary>
+    public static string? RegistryHiveType(string name)
+    {
+        var n = name.ToUpperInvariant();
+        if (n is "NTUSER.DAT" or "HKCU.HIV" || n.StartsWith("NTUSER", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "ntuser_hive";
+        if (n is "SOFTWARE" or "SOFTWARE.HIV" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";
+        return null;
     }
 
     public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default)

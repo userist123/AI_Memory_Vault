@@ -26,7 +26,11 @@ public sealed class RawRegistry
     }
 
     /// <summary>Value bytes, or null when the key or value does not exist. <paramref name="keyPath"/> is relative to the hive root.</summary>
-    public byte[]? ReadValue(string keyPath, string valueName)
+    public byte[]? ReadValue(string keyPath, string valueName) =>
+        OpenKey(keyPath)?.Values.FirstOrDefault(v => v.Name.Equals(valueName, StringComparison.OrdinalIgnoreCase))?.Data;
+
+    /// <summary>A key with its subkey names, values (raw bytes and type, names decoded as stored) and LastWriteTime; null if absent.</summary>
+    public RawKey? OpenKey(string keyPath)
     {
         int nk = _rootCell;
         foreach (var part in keyPath.Split('\\', StringSplitOptions.RemoveEmptyEntries))
@@ -34,20 +38,51 @@ public sealed class RawRegistry
 
         var key = Cell(nk);
         Expect(key, "nk");
+        var lastWrite = DateTime.FromFileTimeUtc(BinaryPrimitives.ReadInt64LittleEndian(key.AsSpan(4)));
+        var subkeys = new List<string>();
+        if (BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x14)) > 0)
+            foreach (var off in ListOffsets(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x1C))))
+                subkeys.Add(KeyName(off));
+        var values = new List<RawValue>();
         int count = BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x24));
-        if (count <= 0) return null;
-        var list = Cell(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x28)));
-        for (int i = 0; i < count; i++)
+        if (count > 0)
         {
-            var vk = Cell(BinaryPrimitives.ReadInt32LittleEndian(list.AsSpan(i * 4)));
-            Expect(vk, "vk");
-            int nameLen = BinaryPrimitives.ReadUInt16LittleEndian(vk.AsSpan(2));
-            bool ascii = (BinaryPrimitives.ReadUInt16LittleEndian(vk.AsSpan(0x10)) & 1) != 0;
-            var name = ascii ? Encoding.Latin1.GetString(vk, 0x14, nameLen) : Encoding.Unicode.GetString(vk, 0x14, nameLen);
-            if (!name.Equals(valueName, StringComparison.OrdinalIgnoreCase)) continue;
-            return Data(vk);
+            var list = Cell(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x28)));
+            for (int i = 0; i < count; i++)
+            {
+                var vk = Cell(BinaryPrimitives.ReadInt32LittleEndian(list.AsSpan(i * 4)));
+                Expect(vk, "vk");
+                int nameLen = BinaryPrimitives.ReadUInt16LittleEndian(vk.AsSpan(2));
+                bool ascii = (BinaryPrimitives.ReadUInt16LittleEndian(vk.AsSpan(0x10)) & 1) != 0;
+                // A non-compressed name is UTF-16 code units, whatever text they form (some programs store ANSI bytes there).
+                var name = ascii ? Encoding.Latin1.GetString(vk, 0x14, nameLen) : Utf16Units(vk.AsSpan(0x14, nameLen));
+                values.Add(new RawValue(name, BinaryPrimitives.ReadInt32LittleEndian(vk.AsSpan(0x0C)), Data(vk)));
+            }
         }
-        return null;
+        return new RawKey(keyPath, lastWrite, subkeys, values);
+    }
+
+    /// <summary>UTF-16 code units taken as-is (no replacement of unpaired surrogates), as regedit shows them.</summary>
+    private static string Utf16Units(ReadOnlySpan<byte> b)
+    {
+        var chars = new char[b.Length / 2];
+        for (int i = 0; i < chars.Length; i++) chars[i] = (char)BinaryPrimitives.ReadUInt16LittleEndian(b[(i * 2)..]);
+        return new string(chars);
+    }
+
+    private IEnumerable<int> ListOffsets(int listOffset)
+    {
+        var l = Cell(listOffset);
+        var sig = Encoding.ASCII.GetString(l, 0, 2);
+        int n = BinaryPrimitives.ReadUInt16LittleEndian(l.AsSpan(2));
+        int stride = sig is "lf" or "lh" ? 8 : 4;
+        if (sig is not ("lf" or "lh" or "li" or "ri")) throw new InvalidDataException($"Listă de subchei necunoscută: {sig}");
+        for (int i = 0; i < n; i++)
+        {
+            int off = BinaryPrimitives.ReadInt32LittleEndian(l.AsSpan(4 + i * stride));
+            if (sig == "ri") foreach (var o in ListOffsets(off)) yield return o;
+            else yield return off;
+        }
     }
 
     private byte[] Data(byte[] vk)
@@ -132,4 +167,23 @@ public sealed class RawRegistry
         if (cell.Length < 2 || cell[0] != (byte)sig[0] || cell[1] != (byte)sig[1])
             throw new InvalidDataException($"Se aștepta o celulă „{sig}”.");
     }
+}
+
+public sealed record RawValue(string Name, int Type, byte[] Data)
+{
+    public const int RegSz = 1, RegExpandSz = 2, RegBinary = 3, RegDword = 4, RegMultiSz = 7;
+
+    /// <summary>Text of REG_SZ / REG_EXPAND_SZ (not expanded) / REG_MULTI_SZ (joined by spaces); DWORD as decimal; otherwise "".</summary>
+    public string AsText => Type switch
+    {
+        RegSz or RegExpandSz => System.Text.Encoding.Unicode.GetString(Data).TrimEnd('\0'),
+        RegMultiSz => string.Join(" ", System.Text.Encoding.Unicode.GetString(Data).Split('\0', StringSplitOptions.RemoveEmptyEntries)),
+        RegDword when Data.Length >= 4 => System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(Data).ToString(System.Globalization.CultureInfo.InvariantCulture),
+        _ => "",
+    };
+}
+
+public sealed record RawKey(string Path, DateTime LastWriteUtc, IReadOnlyList<string> SubkeyNames, IReadOnlyList<RawValue> Values)
+{
+    public RawValue? Value(string name) => Values.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 }

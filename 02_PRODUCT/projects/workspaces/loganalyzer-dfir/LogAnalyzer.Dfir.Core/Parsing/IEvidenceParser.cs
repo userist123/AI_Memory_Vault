@@ -18,7 +18,7 @@ public sealed record ParserDescriptor
     public required string Artifact { get; init; }
     /// <summary>EvidenceItem.SourceType values this parser reads; an entry ending in '*' is a prefix.</summary>
     public required IReadOnlyList<string> SourceTypes { get; init; }
-    /// <summary>File-name rules for items without a known type: ".ext" suffix or an exact file name.</summary>
+    /// <summary>File-name rules for items without a known type: ".ext" suffix, an exact file name, or a pattern with '*'.</summary>
     public IReadOnlyList<string> FileNames { get; init; } = [];
     /// <summary>Content formats (<see cref="EvidenceFingerprint"/>) this parser can read.</summary>
     public required IReadOnlyList<string> Fingerprints { get; init; }
@@ -37,7 +37,23 @@ public sealed record ParserDescriptor
             if (t.EndsWith('*') ? item.SourceType.StartsWith(t[..^1], StringComparison.Ordinal) : item.SourceType == t)
                 return true;
         var name = Path.GetFileName(item.StoredPath);
-        return FileNames.Any(n => n.StartsWith('.') ? name.EndsWith(n, StringComparison.OrdinalIgnoreCase) : name.Equals(n, StringComparison.OrdinalIgnoreCase));
+        return FileNames.Any(n => n.Contains('*') ? Glob(n, name)
+                                : n.StartsWith('.') ? name.EndsWith(n, StringComparison.OrdinalIgnoreCase)
+                                : name.Equals(n, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool Glob(string pattern, string name)
+    {
+        var parts = pattern.Split('*');
+        if (!name.StartsWith(parts[0], StringComparison.OrdinalIgnoreCase) || !name.EndsWith(parts[^1], StringComparison.OrdinalIgnoreCase)) return false;
+        int pos = parts[0].Length;
+        for (int i = 1; i < parts.Length - 1; i++)
+        {
+            int at = name.IndexOf(parts[i], pos, StringComparison.OrdinalIgnoreCase);
+            if (at < 0) return false;
+            pos = at + parts[i].Length;
+        }
+        return pos <= name.Length - parts[^1].Length;
     }
 }
 

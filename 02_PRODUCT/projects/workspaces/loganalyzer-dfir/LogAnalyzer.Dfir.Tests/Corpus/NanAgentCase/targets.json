@@ -52,6 +52,16 @@
     "folder": "05_TASKS\\Tasks_XML",
     "schtasksCsv": "05_TASKS\\schtasks_csv_v.csv"
   },
+  "userHive": {
+    "file": "06_REGISTRY\\hives\\NTUSER_Owner.hiv",
+    "userAssistExport": "06_REGISTRY\\exports\\27_UserAssist.reg",
+    "runExports": "06_REGISTRY\\exports\\05_Run.reg|06_REGISTRY\\exports\\06_RunOnce.reg"
+  },
+  "softwareHive": {
+    "file": "06_REGISTRY\\hives\\SOFTWARE.hiv",
+    "runExports": "06_REGISTRY\\exports\\01_Run.reg|06_REGISTRY\\exports\\02_RunOnce.reg|06_REGISTRY\\exports\\03_Run.reg|06_REGISTRY\\exports\\04_RunOnce.reg",
+    "winlogonExport": "06_REGISTRY\\exports\\07_Winlogon.reg"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

@@ -166,6 +166,41 @@ public static class Correlation
             });
         }
 
+        // Registry autostarts (Run/RunOnce, Winlogon, IFEO) from saved hives.
+        foreach (var e in events.Where(e => e.Source == "RunKey" && IsUserWritable(e.Path)))
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-RUNKEY-USERPATH", Title = $"Pornire automată din locație scriabilă: {F(e, "ValueName")}",
+                Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1547.001", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process,
+                Description = $"{F(e, "Hive")}\\{F(e, "Key")}: {F(e, "ValueName")} = {F(e, "Command")}",
+                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale scriabilă de utilizatori. Ora este LastWriteTime al cheii.",
+                SupportingEvidence = [Ref(e, "valoare Run")],
+                AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+            });
+        foreach (var e in events.Where(e => e.Source == "IFEO"))
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-IFEO-DEBUGGER", Title = $"Image File Execution Options: {F(e, "Target")} este înlocuit de {e.Process}",
+                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1546.012", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process,
+                Description = $"La pornirea {F(e, "Target")} Windows rulează {F(e, "Command")}.",
+                ClassificationReason = "Valoarea Debugger din IFEO redirecționează pornirea programului țintă.",
+                SupportingEvidence = [Ref(e, "IFEO Debugger")],
+                AlternativeExplanations = ["Depanatoare instalate intenționat de dezvoltatori (de ex. vsjitdebugger.exe)."],
+            });
+        foreach (var e in events.Where(e => e.Source == "Winlogon" && F(e, "NonDefault") == "true"))
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-WINLOGON", Title = $"Winlogon {F(e, "ValueName")} diferit de valoarea implicită",
+                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1547.004", FirstSeenUtc = e.Time.Utc, File = e.Path,
+                Description = $"{F(e, "ValueName")} = {F(e, "Command")}",
+                ClassificationReason = "Shell diferit de explorer.exe sau Userinit cu alte programe decât userinit.exe.",
+                SupportingEvidence = [Ref(e, "Winlogon")],
+                AlternativeExplanations = ["Medii kiosk sau shell-uri înlocuite intenționat de administrator."],
+            });
+
         // 4. Execution from user-writable locations (Prefetch references), scripts launched by installers.
         var userPathExec = new List<Finding>();
         foreach (var e in events.Where(e => e.Source == "Prefetch").GroupBy(e => e.Fields.GetValueOrDefault("PrefetchHash") + e.Process).Select(g => g.OrderByDescending(x => x.Time.Utc).First()))

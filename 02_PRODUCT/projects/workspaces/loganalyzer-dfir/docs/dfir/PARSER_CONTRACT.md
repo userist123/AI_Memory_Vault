@@ -56,6 +56,8 @@ Registrul refuză doi parseri cu același `ParserId`.
 | PcapngParser 1.0 | PCAPNG | PCAPNG 1.0 | VALIDATED | corpus (fluxuri, DNS, SNI) |
 | SystemHiveExecutionParser 1.0 | BAM (inclusiv UWP), ShimCache | BAM Win10 1709+, ShimCache 10ts (inclusiv big-data) | VALIDATED | hive SYSTEM real vs `reg query`: 72 valori BAM, AppCompatCache identic octet cu octet |
 | AmcacheParser 1.0 | Amcache InventoryApplicationFile | Win10/11 | VALIDATED | Amcache.hve real (>6000 intrări) + sintetic |
+| UserHiveParser 1.0 | NTUSER: UserAssist, Run/RunOnce | UserAssist v5/v3 | VALIDATED | NTUSER real vs reg export: fiecare intrare UserAssist (număr de rulări, FILETIME), fiecare valoare Run/RunOnce |
+| SoftwareHiveParser 1.0 | SOFTWARE: Run/RunOnce (+WOW6432Node), Winlogon, IFEO Debugger | — | VALIDATED | SOFTWARE real vs reg export (Run, RunOnce, WOW6432Node, Winlogon Shell/Userinit) |
 | ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.
@@ -64,7 +66,11 @@ Limitările complete sunt în descriptori și în `Analysis/parsers.json`.
 
 DiscUtils.Registry 0.16.13 nu citește celulele `db` (valori peste 16.344 octeți, format hive 1.4+). În loc de valoare întoarce cei 12 octeți ai antetului `db`, fără nicio eroare. Pe hive-ul real, AppCompatCache avea astfel 0 intrări în loc de toate.
 
-`LogAnalyzer.Dfir.Core/IO/RawRegistry` citește o valoare urmând nk → lf/lh/li/ri → vk → db → segmente. Acum ShimCache se citește prin el, iar rezultatul e identic octet cu octet cu `reg query`. Orice parser nou de registru care citește valori mari trebuie să folosească `RawRegistry`.
+`LogAnalyzer.Dfir.Core/IO/RawRegistry` citește o valoare urmând nk → lf/lh/li/ri → vk → db → segmente. Acum ShimCache se citește prin el, iar rezultatul e identic octet cu octet cu `reg query`.
+
+Al doilea defect DiscUtils, găsit la validarea UserAssist: numele de valori stocate ca UTF-16 care nu formează text valid (unele programe scriu octeți ANSI acolo) nu sunt întoarse așa cum le arată regedit. Câteva intrări UserAssist reale nu puteau fi astfel puse în corespondență cu exportul. `RawRegistry` decodează numele exact după flag-ul din vk (Latin-1 pentru nume comprimate, unități UTF-16 neschimbate altfel) și întoarce `REG_EXPAND_SZ` neexpandat.
+
+**Regulă:** parserele noi de registru citesc prin `RawRegistry.OpenKey` (subchei, valori brute cu tip, LastWriteTime), nu prin DiscUtils. `SystemHiveExecutionParser` și `AmcacheParser` folosesc încă DiscUtils pentru chei și valori mici. Validarea lor pe corpus nu arată diferențe, dar trecerea lor pe `RawRegistry` e de făcut.
 
 ## Adăugarea unui parser
 

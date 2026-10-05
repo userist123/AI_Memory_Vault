@@ -47,7 +47,7 @@ public static class EvidenceFingerprint
         if (t == "evtx" || t.StartsWith("EventLog:", StringComparison.Ordinal) || name.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase)) return ["evtx"];
         if (t == "prefetch" || name.EndsWith(".pf", StringComparison.OrdinalIgnoreCase)) return ["prefetch", "prefetch_mam"];
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
-        if (t is "system_hive" or "amcache") return ["regf"];
+        if (t is "system_hive" or "amcache" or "ntuser_hive" or "software_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t == "live_snapshot") return ["json"];
         if (t == "task_xml") return ["task_xml"];
