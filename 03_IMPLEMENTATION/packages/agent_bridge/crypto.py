@@ -52,9 +52,10 @@ class X25519Envelope:
         private = X25519PrivateKey.generate()
         return cls(private, private.public_key())
 
-    def encrypt(self, plaintext: bytes, aad: bytes = b"") -> dict[str, str]:
+    @staticmethod
+    def encrypt_for_public_key(public_key: X25519PublicKey, plaintext: bytes, aad: bytes = b"") -> dict[str, str]:
         ephemeral = X25519PrivateKey.generate()
-        shared = ephemeral.exchange(self.public_key)
+        shared = ephemeral.exchange(public_key)
         key = HKDF(algorithm=hashes.SHA256(), length=32, salt=None, info=b"amv-bridge-v1").derive(shared)
         nonce = os.urandom(12)
         ciphertext = AESGCM(key).encrypt(nonce, plaintext, aad)
@@ -68,6 +69,9 @@ class X25519Envelope:
             "nonce": _b64(nonce),
             "ciphertext": _b64(ciphertext),
         }
+
+    def encrypt(self, plaintext: bytes, aad: bytes = b"") -> dict[str, str]:
+        return self.encrypt_for_public_key(self.public_key, plaintext, aad)
 
     def decrypt(self, envelope: dict[str, str], aad: bytes = b"") -> bytes:
         if envelope.get("version") != "amv-envelope-v1":
