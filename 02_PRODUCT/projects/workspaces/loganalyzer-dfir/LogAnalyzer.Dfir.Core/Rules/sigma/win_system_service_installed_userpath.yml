@@ -1,0 +1,20 @@
+title: Serviciu sau driver instalat dintr-o locație scriabilă de utilizatori
+id: 9e7b1c3d-4a2f-4d8e-b5c6-2e9f0a1d7045
+status: stable
+description: System 7045 cu ImagePath în AppData, Temp sau Users\Public. Instrumentele legitime care își extrag driverul în Temp declanșează și ele regula.
+date: 2026-10-05
+logsource:
+  product: windows
+  service: system
+detection:
+  selection:
+    EventID: '7045'
+  userpath:
+    ImagePath|contains:
+      - '\AppData\'
+      - '\Temp\'
+      - '\Users\Public\'
+  condition: selection and userpath
+level: medium
+tags:
+  - attack.t1543.003

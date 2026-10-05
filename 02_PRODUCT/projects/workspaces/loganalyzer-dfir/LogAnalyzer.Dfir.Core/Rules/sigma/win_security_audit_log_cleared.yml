@@ -1,0 +1,15 @@
+title: Jurnalul de audit Security a fost șters
+id: 5d2e8a7b-9c14-4b3f-a6e2-7f1d3c9b1102
+status: stable
+description: Security 1102 - jurnalul de audit a fost golit.
+date: 2026-10-05
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: '1102'
+  condition: selection
+level: high
+tags:
+  - attack.t1070.001
