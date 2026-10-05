@@ -2,6 +2,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.Detection;
 using LogAnalyzer.Dfir.Graph;
 using LogAnalyzer.Dfir.Integrity;
 using LogAnalyzer.Dfir.IO;
@@ -27,6 +28,10 @@ public sealed class InvestigationResult
     public List<RejectedFinding> RejectedFindings { get; } = [];
     /// <summary>Entities and relationships built from the timeline and findings (Analysis/graph.json).</summary>
     public EvidenceGraph? Graph { get; set; }
+    /// <summary>Rule matches (IOC, Sigma, YARA) with rule identity and evidence (Analysis/detections.json).</summary>
+    public List<DetectionResult> Detections { get; } = [];
+    /// <summary>Rules that were loaded for this run (Analysis/rules.json).</summary>
+    public List<DetectionRule> RulesUsed { get; } = [];
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
 }
@@ -225,6 +230,25 @@ public sealed class InvestigationPipeline
         var (graphJson, graphSha) = r.Graph.Snapshot(ws.Info.CaseId);
         File.WriteAllText(Path.Combine(analysisDir, "graph.json"), graphJson);
         ws.RecordTransformation("CASE", "EvidenceGraph", "1.0", "Analysis/graph.json", $"{r.Graph.Entities.Count} entități, {r.Graph.Relationships.Count} relații, SHA-256 {graphSha}");
+
+        // Detection: rules shipped with the application plus the case's own Rules folder (ioc / yara / sigma).
+        progress?.Report("Detecție (IOC, Sigma, YARA)");
+        var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"));
+        var evidenceItems = ws.LoadEvidence();
+        var scannable = new List<EvidenceItem>();
+        foreach (var e in evidenceItems)
+        {
+            if (e.SourceType != "file") { scannable.Add(e); continue; }
+            var pre = EvidencePreflight.Check(e, ws.FullPath(e.StoredPath));
+            if (pre.CanParse) scannable.Add(e);
+            else r.Gaps.Add(new EvidenceGap(e.OriginalName, EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}", "Fișierul nu a fost scanat cu YARA", "Reachiziție", "Doar prin reachiziție"));
+        }
+        r.Detections.AddRange(engine.Run(r.Timeline, scannable, e => File.ReadAllBytes(ws.FullPath(e.StoredPath))));
+        r.RulesUsed.AddRange(engine.Rules);
+        r.Gaps.AddRange(engine.LoadErrors);
+        File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps");
         return r;
     }

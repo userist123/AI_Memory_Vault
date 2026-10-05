@@ -88,7 +88,18 @@ public static class InvestigationReportPdf
                 foreach (var g in r.Gaps)
                     col.Item().Text($"{g.Artifact} — {g.Status.ToSpec()}: {g.Reason}. Impact: {g.Impact}. Alternativă: {g.AlternativeSource}").FontSize(7.5f);
 
-                col.Item().Text("5. Integritatea probelor (reverificată acum)").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text("5. Detecții (reguli IOC / Sigma / YARA)").Bold().FontSize(11).FontColor(Ink);
+                if (r.Detections.Count == 0) col.Item().Text($"Nicio potrivire ({r.RulesUsed.Count} reguli aplicate).").FontColor(Muted);
+                foreach (var g in r.Detections.GroupBy(d => (d.RuleId, d.RuleVersion, d.RuleSha256, d.Title)).OrderByDescending(g => g.Count()).Take(25))
+                    col.Item().Column(cc =>
+                    {
+                        cc.Item().Text($"{g.Key.Title} — {g.Count()} potriviri").Bold().FontSize(8);
+                        cc.Item().Text($"Regula {g.Key.RuleId} versiunea {g.Key.RuleVersion}, SHA-256 {Short(g.Key.RuleSha256)}").FontSize(7).FontColor(Muted);
+                        foreach (var d in g.Take(3)) cc.Item().Text($"Probă {d.EvidenceId} · {d.Locator} · {d.Match}").FontSize(7).FontColor(Muted);
+                    });
+                col.Item().Text("O potrivire arată că proba îndeplinește criteriile regulii; nu dovedește singură intenția sau rezultatul unei activități.").FontSize(7).Italic().FontColor(Muted);
+
+                col.Item().Text("6. Integritatea probelor (reverificată acum)").Bold().FontSize(11).FontColor(Ink);
                 foreach (var i in integrity.Items)
                 {
                     var e = evidence[i.EvidenceId];

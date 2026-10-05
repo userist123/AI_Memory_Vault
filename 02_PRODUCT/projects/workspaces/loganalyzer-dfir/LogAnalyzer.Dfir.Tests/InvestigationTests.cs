@@ -82,11 +82,15 @@ public class InvestigationTests
         files.AddRange(Directory.GetFiles(Path.Combine(root, "09_PREFETCH", "Prefetch"), "*.pf"));
         files.Add(Path.Combine(root, "07_EXECUTION", "SRUM", "SRUDB.dat"));
         files.Add(Path.Combine(root, "21_BROWSER", "Chrome", "Default", "History"));
+        files.Add(Path.Combine(root, "25_TARGET_MSBUILD", "Conexant_CxUtilSvcHelper_COPY", "CxUtilSvc Helper", "NetworkMonitor.targets"));
         var casesRoot = Path.Combine(Path.GetTempPath(), "la-inv-" + Guid.NewGuid().ToString("N"));
         try
         {
             var ws = InvestigationPipeline.NewCase(casesRoot, "regression");
             InvestigationPipeline.Import(ws, files);
+            // The investigation's IOC inventory as a case rule list (Rules/ioc), next to the rules shipped with the application.
+            Directory.CreateDirectory(Path.Combine(ws.Root, "Rules", "ioc"));
+            File.Copy(Path.Combine(root, "29_IOC", "IOC_INVENTORY.csv"), Path.Combine(ws.Root, "Rules", "ioc", "IOC_INVENTORY.csv"));
             var r = new InvestigationPipeline().Run(ws, CollectionProfile.Standard, collect: false);
 
             Assert.Contains(r.Findings, f => f.RuleId == "DEF-DETECTION" && f.Description.Contains("NanAgent32.exe"));
@@ -114,6 +118,15 @@ public class InvestigationTests
             Assert.Contains(g.Relationships, x => x.Type == RelationType.Loaded && x.TargetEntity.Contains("BOOTSTRAP_7D57.CMD"));
             Assert.Contains(g.Relationships, x => x.Type == RelationType.DerivedFrom && x.SourceEntity.EndsWith(@"\DOWNLOADS\SAMFW_FRP_TOOL_V5.9_SETUP_DOWNLOAD_LATES_ARCHIVE_FILE_302044\SETUP.EXE") && x.Classification == Classification.Correlated);
             Assert.True(File.Exists(Path.Combine(ws.Root, "Analysis", "graph.json")));
+
+            // P5 detection on the real case: Sigma (Defender), IOC path in Prefetch, hash IOC and YARA on the MSBuild loader.
+            Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Sigma && d.RuleId.Contains("8c3e2b4a") && d.EvidenceId.Length > 0);
+            Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Ioc && d.Match.Contains("BOOTSTRAP_7D57.CMD"));
+            Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Hash && d.Match.Contains("NetworkMonitor.targets"));
+            Assert.Contains(r.Detections, d => d.Kind == LogAnalyzer.Dfir.Detection.DetectionKind.Yara && d.RuleId == "YARA:MSBuild_PropertyFunction_EntityObfuscation");
+            Assert.All(r.Detections, d => Assert.True(d.RuleSha256.Length == 64 && d.EvidenceId.Length > 0));
+            Assert.DoesNotContain(r.Gaps, g => g.Artifact.StartsWith("Regulă"));
+            Assert.True(File.Exists(Path.Combine(ws.Root, "Analysis", "rules.json")));
             Assert.True(File.Exists(r.TimelineCsv));
 
             // P1 provenance on the real case: every event and every finding reference carries the acquisition hash.
