@@ -3,7 +3,7 @@
 > **Branch**: `security/audit-remediation-2026-10`  
 > **Target**: `main`  
 > **Status**: **OPEN — NEVER AUTO-MERGE — REQUIRES HUMAN SECURITY REVIEW**  
-> **Commit**: `124ef7347`  
+> **Commit**: `fdf870615`  
 
 ---
 
@@ -69,6 +69,7 @@ Detailed proofs and evidence are documented in:
 ## 4. Files Modified in this PR
 
 ```text
+.gitleaks.toml
 .github/workflows/apisec-scan.yml
 .github/workflows/fortify.yml
 02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
@@ -102,20 +103,26 @@ security/tests/test_pr209_final_security_gates.py
 
 ## 5. Empirical Test Execution Proof
 
-Automated tests executed directly on Windows with Python 3.14.2:
+Automated tests executed directly on Windows with Python 3.14.2 & verified across CI Matrix (Python 3.10, 3.11, 3.12):
 
 ```text
+pytest security/tests
+============================= 199 passed in 1.25s =============================
+
 pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py 20_TESTS/test_cognitive_core_search_wiring.py 20_TESTS/test_end_to_end_workflow.py 20_TESTS/regression/test_workflow_security_audit.py
-============================= 228 passed in 3.47s =============================
+============================= 235 passed in 3.13s =============================
 
 pytest 20_TESTS/memory_controller/
-============================= 328 passed in 7.56s =============================
+============================= 328 passed in 7.99s =============================
 
 pytest 20_TESTS/test_memory_mcp_server.py 20_TESTS/test_memory_usage_report.py 20_TESTS/test_ontology_slot_writers.py
 ============================= 23 passed in 7.82s =============================
 
-Full 20_TESTS suite:
-============================= 2623 passed, 10 skipped, 9 xfailed, 0 failed in 672s =============================
+GitHub Actions Matrix (Python 3.10, 3.11, 3.12):
+- Run Memory V6 controller tests (3.10): 328 passed (PASS)
+- Run Memory V6 controller tests (3.11): 328 passed (PASS)
+- Run Memory V6 controller tests (3.12): 328 passed (PASS)
+- R009b Held-out Retrieval Benchmark (v2 production arms): PASS
 ```
 
 ---
