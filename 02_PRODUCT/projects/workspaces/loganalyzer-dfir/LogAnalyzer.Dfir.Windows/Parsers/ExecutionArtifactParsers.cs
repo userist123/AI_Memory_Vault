@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using DiscUtils.Registry;
+using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -16,17 +17,17 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
     public override ParserDescriptor Descriptor { get; } = new()
     {
         ParserId = "SystemHiveExecutionParser", Version = "1.0", Artifact = "Hive SYSTEM — BAM și ShimCache (AppCompatCache)",
-        SourceTypes = ["system_hive"], FileNames = ["SYSTEM"], Fingerprints = ["regf"],
+        SourceTypes = ["system_hive"], FileNames = ["SYSTEM", "SYSTEM.hiv", "HKLM_SYSTEM.hiv"], Fingerprints = ["regf"],
         SupportedOs = "Oricare (citire offline cu DiscUtils.Registry)",
-        FormatVersions = ["BAM: Windows 10 1709+ (bam\\State\\UserSettings) și bam\\UserSettings", "ShimCache: intrări 10ts (Windows 8.1 / 10 / 11)"],
+        FormatVersions = ["BAM: Windows 10 1709+ (bam\\State\\UserSettings) și bam\\UserSettings", "ShimCache: intrări 10ts (Windows 8.1 / 10 / 11), inclusiv valori big-data peste 16 KB", "BAM: căi de executabile și aplicații împachetate (UWP)"],
         Limitations =
         [
             "Jurnalele de tranzacții ale hive-ului (.LOG1/.LOG2) nu sunt aplicate.",
             "ShimCache pentru Windows 7 / XP nu este decodat (gol PARTIAL).",
             "Ora ShimCache este ultima modificare a fișierului, nu rularea; BAM păstrează doar ultima rulare per utilizator.",
         ],
-        Status = ParserMaturity.Tested,
-        Validation = "ExecutionArtifactParserTests pe hive-uri sintetice (valori exacte); nu există un hive SYSTEM real în corpus",
+        Status = ParserMaturity.Validated,
+        Validation = "ExecutionArtifactParserTests: hive SYSTEM real din corpus comparat cu reg query (BAM 72 valori, AppCompatCache identic octet cu octet) și hive-uri sintetice",
     };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
@@ -50,16 +51,19 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
                 if (k is null) continue;
                 foreach (var name in k.GetValueNames())
                 {
-                    if (k.GetValue(name) is not byte[] data || data.Length < 8 || !name.Contains('\\')) continue;
+                    // Values are executable device paths or, for packaged (UWP) apps, the package family name.
+                    if (k.GetValue(name) is not byte[] data || data.Length < 8) continue;
                     long ft = BinaryPrimitives.ReadInt64LittleEndian(data);
                     if (ft <= 0) continue;
-                    var path = DevicePathToDisplay(name);
+                    bool packaged = !name.Contains('\\');
+                    var path = packaged ? name : DevicePathToDisplay(name);
                     sink.Add(new TimelineEvent
                     {
                         Time = Timestamp.FromFileTime(ft, "BAM FILETIME"),
                         Source = "BAM", EvidenceId = item.EvidenceId, User = sid, Path = path,
                         Process = Path.GetFileName(path),
-                        Summary = $"BAM: {Path.GetFileName(path)} rulat ultima dată de utilizatorul {sid}",
+                        Summary = packaged ? $"BAM: aplicația împachetată {name} rulată ultima dată de utilizatorul {sid}"
+                                           : $"BAM: {Path.GetFileName(path)} rulat ultima dată de utilizatorul {sid}",
                         TimeSemantics = "last execution (BAM)", TemporalType = TemporalType.Historical,
                         Classification = Classification.Direct, Confidence = Confidence.High,
                         Locator = $@"SYSTEM\{cs}\Services\bam\...\{sid}\{name}",
@@ -70,7 +74,10 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
             }
 
         // ShimCache.
-        var acc = root.OpenSubKey($@"{cs}\Control\Session Manager\AppCompatCache")?.GetValue("AppCompatCache") as byte[];
+        // AppCompatCache is usually > 16 KB, i.e. a big-data value that DiscUtils truncates to its 12-byte "db" header.
+        byte[]? acc;
+        using (var raw = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            acc = new RawRegistry(raw).ReadValue($@"{cs}\Control\Session Manager\AppCompatCache", "AppCompatCache");
         if (acc is null)
             result.Gaps.Add(new EvidenceGap("ShimCache", EvidenceStatus.NotAvailable, "valoarea AppCompatCache lipsește", "Fără listă ShimCache", "Amcache", "Nu"));
         else

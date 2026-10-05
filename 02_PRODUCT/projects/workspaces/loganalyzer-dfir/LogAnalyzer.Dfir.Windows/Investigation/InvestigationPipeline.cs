@@ -64,7 +64,8 @@ public sealed class InvestigationPipeline
             {
                 ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng",
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
-                _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) => "system_hive",
+                _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
+                       || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ => null,
             };

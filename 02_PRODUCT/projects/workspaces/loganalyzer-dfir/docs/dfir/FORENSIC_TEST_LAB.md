@@ -46,12 +46,12 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | srum | SrumNetworkParser | msbuild.exe: 7.764.746 B trimiși, 100.581.358 B primiți, la 15:15 UTC |
 | defenderEvtx, msiEvtx | EvtxParser | 1116 GenCodeInjected pe NanAgent32.exe; 1033 MsiInstaller CxUtilSvc Helper |
 | pcapng | PcapngParser | peste 700 de fluxuri, DNS napps-1.com, SNI chatgpt.com |
+| systemHive | SystemHiveExecutionParser, RawRegistry | BAM: 72 valori comparate cu `reg query` (70 identice, 2 mai noi în fereastra de 7 s dintre capturi); AppCompatCache identic octet cu octet cu `reg query` |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 
 ## Ce lipsește (planificat)
 
-- **Hive SYSTEM real** pentru BAM și ShimCache: parserul e doar `TESTED`.
 - **Validare diferențială** cu un instrument independent (P12), de exemplu ieșirea EZTools sau Plaso pe aceleași fișiere.
 - **Laborator anti-forensic** (P13): jurnale șterse, timestomping, Prefetch dezactivat, cu rezultate așteptate.
 - **Teste de corupție** pentru fiecare parser. EVTX are `EvtxRepairTests`; celelalte nu au încă.

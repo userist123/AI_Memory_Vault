@@ -54,10 +54,16 @@ Registrul refuză doi parseri cu același `ParserId`.
 | PrefetchParser 1.0 | Prefetch | SCCA v30/v31, MAM | VALIDATED | corpus (SETUP.EXE, MSIEXEC.EXE) |
 | SrumNetworkParser 1.0 | SRUM Network Data Usage | ESE | VALIDATED | corpus (msbuild.exe, bytes exacți) |
 | PcapngParser 1.0 | PCAPNG | PCAPNG 1.0 | VALIDATED | corpus (fluxuri, DNS, SNI) |
-| SystemHiveExecutionParser 1.0 | BAM, ShimCache | BAM Win10 1709+, ShimCache 10ts | TESTED | doar hive-uri sintetice |
+| SystemHiveExecutionParser 1.0 | BAM (inclusiv UWP), ShimCache | BAM Win10 1709+, ShimCache 10ts (inclusiv big-data) | VALIDATED | hive SYSTEM real vs `reg query`: 72 valori BAM, AppCompatCache identic octet cu octet |
 | AmcacheParser 1.0 | Amcache InventoryApplicationFile | Win10/11 | VALIDATED | Amcache.hve real (>6000 intrări) + sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.
+
+## Defect găsit la validare: valori „big data” trunchiate
+
+DiscUtils.Registry 0.16.13 nu citește celulele `db` (valori peste 16.344 octeți, format hive 1.4+). În loc de valoare întoarce cei 12 octeți ai antetului `db`, fără nicio eroare. Pe hive-ul real, AppCompatCache avea astfel 0 intrări în loc de toate.
+
+`LogAnalyzer.Dfir.Core/IO/RawRegistry` citește o valoare urmând nk → lf/lh/li/ri → vk → db → segmente. Acum ShimCache se citește prin el, iar rezultatul e identic octet cu octet cu `reg query`. Orice parser nou de registru care citește valori mari trebuie să folosească `RawRegistry`.
 
 ## Adăugarea unui parser
 

@@ -144,6 +144,96 @@ public sealed class ExecutionArtifactParserTests : IDisposable
         Assert.Contains(r.Gaps, g => g.Artifact == "Amcache transaction logs");
     }
 
+    /// <summary>
+    /// Real SYSTEM hive (reg save, 22:15:43) against two outputs taken from the live registry by reg query: BAM at 22:15:36,
+    /// AppCompatCache at 22:15:43. Each BAM value and each ShimCache entry must match exactly.
+    /// </summary>
+    [CorpusFact("systemHive")]
+    public void Real_system_hive_matches_reg_query_for_bam_and_shimcache()
+    {
+        var f = Corpus.File("systemHive");
+        var sink = new ListSink();
+        var r = new SystemHiveExecutionParser().Parse(Item(f, "system_hive"), f, sink, default);
+        Assert.Equal(EvidenceStatus.Success, r.Status);
+
+        // BAM: "    <name>    REG_BINARY    <hex>" under "...\UserSettings\<SID>".
+        var expectedBam = new List<(string Sid, string Name, long FileTime)>();
+        string sid = "";
+        foreach (var line in File.ReadLines(Path.Combine(Corpus.Root, Corpus.S("systemHive", "bamRegQuery"))))
+        {
+            if (line.StartsWith("HKEY_", StringComparison.Ordinal)) { sid = line[(line.LastIndexOf('\\') + 1)..]; continue; }
+            var parts = line.Trim().Split("    REG_BINARY    ");
+            if (parts.Length != 2 || parts[1].Length < 16) continue;
+            expectedBam.Add((sid, parts[0], BinaryPrimitives.ReadInt64LittleEndian(Convert.FromHexString(parts[1][..16]))));
+        }
+        Assert.True(expectedBam.Count > 50, $"{expectedBam.Count} valori BAM în reg query");
+        var bam = sink.Events.Where(e => e.Source == "BAM").ToList();
+        Assert.Equal(expectedBam.Count, bam.Count);
+        // reg query ran 7 s before reg save; a program that ran in between legitimately has a newer time in the hive,
+        // which must then fall inside that window. Anything else is a parser error.
+        var savedUtc = File.GetLastWriteTimeUtc(f).AddSeconds(1);
+        int exact = 0;
+        var unexplained = new List<string>();
+        foreach (var x in expectedBam)
+        {
+            var hit = bam.SingleOrDefault(e => e.User == x.Sid && e.Fields["DevicePath"] == x.Name);
+            var queried = DateTime.FromFileTimeUtc(x.FileTime);
+            if (hit?.Time.Raw == x.FileTime.ToString(System.Globalization.CultureInfo.InvariantCulture)) exact++;
+            else if (hit?.Time.Utc is not { } t || t.UtcDateTime <= queried || t.UtcDateTime > savedUtc)
+                unexplained.Add($"{x.Sid} {x.Name} reg query {queried:o} | hive {hit?.Time.Utc:o}");
+        }
+        Assert.True(unexplained.Count == 0, string.Join(Environment.NewLine, unexplained));
+        Assert.True(exact >= expectedBam.Count - 5, $"{exact}/{expectedBam.Count} identice");
+        Assert.Contains(bam, e => !e.Fields["DevicePath"].Contains('\\'));   // packaged (UWP) apps are kept
+
+        // ShimCache: the AppCompatCache value dumped as hex by reg query, decoded the same way, must equal the hive's entries.
+        var hex = File.ReadLines(Path.Combine(Corpus.Root, Corpus.S("systemHive", "shimcacheRegQuery")))
+            .First(l => l.TrimStart().StartsWith("AppCompatCache ", StringComparison.Ordinal)).Trim().Split("    REG_BINARY    ")[1];
+        var expectedShim = ShimCache.Parse(Convert.FromHexString(hex)).ToList();
+        var shim = sink.Events.Where(e => e.Source == "ShimCache").ToList();
+        Assert.True(expectedShim.Count > 100, $"{expectedShim.Count} intrări ShimCache în reg query");
+        Assert.Equal(expectedShim.Select(x => x.Path), shim.Select(e => e.Path));
+        Assert.Empty(r.Gaps);
+    }
+
+    [Fact]
+    public void RawRegistry_reads_small_inline_and_large_values_and_reports_absence()
+    {
+        var path = Path.Combine(_dir, "raw.hive");
+        var big = new byte[40_000];
+        new Random(3).NextBytes(big);
+        using (var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
+        using (var hive = RegistryHive.Create(fs))
+        {
+            var k = hive.Root.CreateSubKey(@"A\B\C");
+            k.SetValue("Big", big, RegistryValueType.Binary);
+            k.SetValue("Small", new byte[] { 1, 2, 3 }, RegistryValueType.Binary);
+            k.SetValue("Dword", 0x11223344, RegistryValueType.Dword);
+            hive.Root.CreateSubKey(@"A\Other");
+        }
+        using var s = File.OpenRead(path);
+        var raw = new LogAnalyzer.Dfir.IO.RawRegistry(s);
+        Assert.Equal(big, raw.ReadValue(@"A\B\C", "Big"));
+        Assert.Equal(new byte[] { 1, 2, 3 }, raw.ReadValue(@"a\b\c", "small"));
+        Assert.Equal(new byte[] { 0x44, 0x33, 0x22, 0x11 }, raw.ReadValue(@"A\B\C", "Dword"));
+        Assert.Null(raw.ReadValue(@"A\B\C", "Missing"));
+        Assert.Null(raw.ReadValue(@"A\Nope", "Big"));
+        Assert.Throws<InvalidDataException>(() => new LogAnalyzer.Dfir.IO.RawRegistry(new MemoryStream(new byte[4096])));
+    }
+
+    /// <summary>DiscUtils returns 12 bytes for this big-data value; RawRegistry must return exactly what reg query dumped.</summary>
+    [CorpusFact("systemHive")]
+    public void RawRegistry_big_data_value_is_byte_identical_to_reg_query()
+    {
+        var hex = File.ReadLines(Path.Combine(Corpus.Root, Corpus.S("systemHive", "shimcacheRegQuery")))
+            .First(l => l.TrimStart().StartsWith("AppCompatCache ", StringComparison.Ordinal)).Trim().Split("    REG_BINARY    ")[1];
+        using var s = File.OpenRead(Corpus.File("systemHive"));
+        var bytes = new LogAnalyzer.Dfir.IO.RawRegistry(s).ReadValue(@"ControlSet001\Control\Session Manager\AppCompatCache", "AppCompatCache");
+        Assert.NotNull(bytes);
+        Assert.True(bytes!.Length > 16344);
+        Assert.Equal(Convert.FromHexString(hex), bytes);
+    }
+
     [CorpusFact("amcache")]
     public void Real_amcache_is_parsed_completely()
     {

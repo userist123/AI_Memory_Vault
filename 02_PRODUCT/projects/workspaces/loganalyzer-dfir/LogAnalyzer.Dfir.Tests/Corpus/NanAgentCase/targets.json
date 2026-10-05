@@ -42,6 +42,11 @@
     "file": "10_AMCACHE\\Programs_attempt\\Amcache.hve",
     "minEntries": 6000
   },
+  "systemHive": {
+    "file": "NanAgent-Forensic-V11_20261003_221532\\24_RAW_REGISTRY\\HKLM_SYSTEM.hiv",
+    "bamRegQuery": "NanAgent-Forensic-V11_20261003_221532\\27_BAM\\bam_all.txt",
+    "shimcacheRegQuery": "NanAgent-Forensic-V11_20261003_221532\\28_APPCOMPAT\\shimcache.txt"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

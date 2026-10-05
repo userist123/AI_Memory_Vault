@@ -46,7 +46,8 @@ public sealed class ParserRegistryTests : IDisposable
         });
         // Maturity is what the tests actually show, not what the parser claims.
         Assert.Equal(ParserMaturity.Validated, all.Single(d => d.ParserId == "EvtxParser").Status);
-        Assert.Equal(ParserMaturity.Tested, all.Single(d => d.ParserId == "SystemHiveExecutionParser").Status);
+        Assert.Equal(ParserMaturity.Validated, all.Single(d => d.ParserId == "SystemHiveExecutionParser").Status);
+        Assert.DoesNotContain(all, d => d.Status == ParserMaturity.Experimental);
     }
 
     [Fact]
@@ -102,7 +103,7 @@ public sealed class ParserRegistryTests : IDisposable
         var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
 
         var pr = Assert.Single(r.Parsing, p => p.EvidenceId == ev.EvidenceId);
-        Assert.Equal("TESTED", pr.ParserStatus);
+        Assert.Equal("VALIDATED", pr.ParserStatus);
         var skipped = Assert.Single(r.Parsing, p => p.EvidenceId == other.EvidenceId);
         Assert.Equal(EvidenceStatus.SkippedByDesign, skipped.Status);
         Assert.Contains("operator_notes", skipped.Error);
