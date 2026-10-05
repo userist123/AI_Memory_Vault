@@ -34,7 +34,7 @@ def main():
     if a.cmd=="probe":
         ids=a.runtime or list(reg.runtimes)
         binary_map={"claude_code":"claude","codex":"codex","antigravity":"agy","local_llm":"ollama"}
-        print(json.dumps({r:(bool(shutil.which(binary_map.get(reg.runtimes[r].adapter_ref,reg.runtimes[r].adapter_ref))) if reg.runtimes[r].transport=="command" else reg.runtimes[r].transport=="a2a") for r in ids},indent=2))
+        print(json.dumps({r:(bool(shutil.which(binary_map.get(reg.runtimes[r].adapter_ref,reg.runtimes[r].adapter_ref))) if reg.runtimes[r].transport=="command" else False) for r in ids},indent=2))
         return
     req=TaskRequest(goal=a.goal,capabilities=tuple(a.capability),risk=RiskLevel[a.risk.upper()],
         min_quality=QualityTier[a.min_quality.upper()],privacy=PrivacyMode.LOCAL_ONLY if a.local_only else PrivacyMode.STANDARD,
