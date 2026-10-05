@@ -421,6 +421,32 @@
       "max_skills": 2,
       "independence_group": "architecture",
       "prompt_profile": "architecture-reviewer"
+    },
+    {
+      "id": "engineering_reviewer",
+      "profile_ref": ".agents/agents/engineering_reviewer/agent.md",
+      "capabilities": [
+        "coding",
+        "repo",
+        "testing",
+        "ci",
+        "debugging",
+        "reasoning",
+        "review"
+      ],
+      "preferred_runtimes": [
+        "antigravity",
+        "claude_code"
+      ],
+      "min_quality": "heavy",
+      "max_risk": "critical",
+      "default_skills": [
+        "code-review",
+        "testing"
+      ],
+      "max_skills": 2,
+      "independence_group": "engineering-review",
+      "prompt_profile": "engineering-reviewer"
     }
   ]
 }
