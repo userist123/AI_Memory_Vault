@@ -11,6 +11,7 @@ from agent_bridge.crypto import (
 )
 from agent_bridge.replay import ReplayGuard
 from agent_bridge.antigravity import AntigravitySession
+from agent_bridge.client import SecureBridgeClient
 from agent_bridge.policy import CapabilityToken, BridgePolicy, PolicyError
 
 
@@ -68,3 +69,29 @@ def test_antigravity_command_is_persistent_and_prompt_free():
     assert "gemini-3.8-flash-high" in command
     assert "high" in command
     assert "SECRET PROMPT" not in command
+
+
+def test_secure_bridge_client_round_trip():
+    bridge_keys = X25519Envelope.generate()
+    caller_keys = X25519Envelope.generate()
+    signer = Ed25519Signer.generate()
+    from agent_bridge.bridge import SecureBridge
+    bridge = SecureBridge(
+        "bridge-1", bridge_keys, signer.public_key,
+        BridgePolicy(("antigravity",), ("visual_architect",)), ReplayGuard(),
+        {"antigravity": lambda p: {"status": "completed", "response": "ok"}},
+    )
+    packet = WorkPacket("task-client", "route-client", "router", "visual_architect",
+                        "antigravity", "v1", "command", "private work", (), (), (), 60, {})
+    token = CapabilityToken.issue(
+        signer.private_key, bridge_id="bridge-1", task_id=packet.task_id,
+        runtime="antigravity", agent="visual_architect", permissions=("execute",),
+        expires_at=time.time() + 60, nonce="client-nonce",
+    )
+    seen = {}
+    def send(request):
+        seen.update(request)
+        return bridge.handle(request)
+    client = SecureBridgeClient("bridge-1", bridge_keys.public_key, caller_keys, send)
+    assert client.dispatch(packet, token, "client-nonce")["response"] == "ok"
+    assert b"private work" not in json.dumps(seen).encode()
