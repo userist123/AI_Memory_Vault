@@ -48,7 +48,7 @@ class CommandAdapter:
         elif self.adapter_ref=="claude_code":
             cmd=[self.binary,"-p","--output-format","text",text]; stdin=None
         elif self.adapter_ref=="antigravity":
-            cmd=[self.binary,"--new-project","--print",f"--print-timeout={max(1,p.timeout_seconds//60)}m",f"--print={text}"]; stdin=None
+            cmd=[self.binary,"--print",f"--print-timeout={max(1,p.timeout_seconds//60)}m",f"--print={text}"]; stdin=None
         elif self.adapter_ref=="local_llm":
             cmd=[self.binary,"run","llama3.2"]; stdin=text
         else:
