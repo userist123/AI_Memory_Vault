@@ -6,3 +6,5 @@ from .replay import ReplayGuard
 from .antigravity import AntigravityExecutionError, AntigravitySession
 
 from .bridge import BridgeRequestError, SecureBridge
+
+from .client import SecureBridgeClient, SecureBridgeTransportError
