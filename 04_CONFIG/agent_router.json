@@ -247,7 +247,8 @@
         "coding",
         "reasoning",
         "memory",
-        "offline"
+        "offline",
+        "repo"
       ],
       "quality": "standard",
       "cost_score": 10,
