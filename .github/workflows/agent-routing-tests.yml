@@ -1,0 +1,37 @@
+name: Agent Routing Tests
+
+on:
+  push:
+    paths:
+      - '03_IMPLEMENTATION/packages/routing/**'
+      - '04_CONFIG/agent_router.json'
+      - '20_TESTS/test_agent_router.py'
+      - '20_TESTS/test_agent_dispatcher.py'
+      - '.github/workflows/agent-routing-tests.yml'
+  pull_request:
+    paths:
+      - '03_IMPLEMENTATION/packages/routing/**'
+      - '04_CONFIG/agent_router.json'
+      - '20_TESTS/test_agent_router.py'
+      - '20_TESTS/test_agent_dispatcher.py'
+      - '.github/workflows/agent-routing-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  routing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check pytest==9.1.1
+      - name: Run routing tests
+        env:
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py
