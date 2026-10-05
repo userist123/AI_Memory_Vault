@@ -31,7 +31,7 @@ public sealed class ParserRegistryTests : IDisposable
     public void Every_registered_parser_describes_itself_completely()
     {
         var all = WindowsParsers.Registry.Descriptors;
-        Assert.Equal(12, all.Count);
+        Assert.Equal(13, all.Count);
         Assert.Equal(all.Count, all.Select(d => d.ParserId).Distinct().Count());
         Assert.All(all, d =>
         {
@@ -68,6 +68,7 @@ public sealed class ParserRegistryTests : IDisposable
     [InlineData("ntuser_hive", "NTUSER_Owner.hiv", "UserHiveParser")]
     [InlineData("software_hive", "SOFTWARE.hiv", "SoftwareHiveParser")]
     [InlineData("system_hive", "SYSTEM", "ServicesParser")]
+    [InlineData("system_hive", "SYSTEM", "UsbDevicesParser")]
     [InlineData("chromium_history", "History", "BrowserHistoryParser")]
     [InlineData("lnk", "SETUP.EXE.lnk", "LnkParser")]
     public void Candidates_follow_the_declared_type(string type, string stored, string expected)
@@ -108,14 +109,14 @@ public sealed class ParserRegistryTests : IDisposable
         var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
 
         // One SYSTEM hive feeds two parsers, each with its own result.
-        Assert.Equal(["ServicesParser", "SystemHiveExecutionParser"], r.Parsing.Where(p => p.EvidenceId == ev.EvidenceId).Select(p => p.Parser).Order().ToArray());
+        Assert.Equal(["ServicesParser", "SystemHiveExecutionParser", "UsbDevicesParser"], r.Parsing.Where(p => p.EvidenceId == ev.EvidenceId).Select(p => p.Parser).Order().ToArray());
         Assert.All(r.Parsing.Where(p => p.EvidenceId == ev.EvidenceId), p => Assert.Equal("VALIDATED", p.ParserStatus));
         var skipped = Assert.Single(r.Parsing, p => p.EvidenceId == other.EvidenceId);
         Assert.Equal(EvidenceStatus.SkippedByDesign, skipped.Status);
         Assert.Contains("operator_notes", skipped.Error);
 
         var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "parsers.json"))).RootElement;
-        Assert.Equal(12, inventory.GetArrayLength());
+        Assert.Equal(13, inventory.GetArrayLength());
         Assert.Contains(inventory.EnumerateArray(), d => d.GetProperty("ParserId").GetString() == "AmcacheParser");
     }
 }

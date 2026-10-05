@@ -55,6 +55,7 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | (investigație + History) | pipeline, DOWNLOAD-THEN-EXEC | lanțul critic din 19.09 începe cu descărcarea `SamFw_FRP_Tool_…_302044.zip` de pe tzd4is.cyou, legată cu încredere ridicată de SETUP.EXE rulat din `Downloads\TOOL_302044` |
 | lnk | LnkParser | toate cele peste 300 de linkuri din Recent parsate (2 fișiere sunt umplute cu zerouri, iar eșecul lor e verificat ca atare); 182 cu cale în LinkInfo comparate cu WScript.Shell: țintă, argumente, folder de lucru identice, cu excepția pierderilor ANSI ale shell-ului, numărate separat |
 | securityEvtx | EvtxParser, AuditCoverage, FIREWALL-RULE-USERPATH | Security.evtx complet: 0 evenimente 5156/5157 (NOT_AVAILABLE) și 902 evenimente 4688 în doar 31 de minute din 6 săptămâni, procese de boot (smss, wininit, lsass ×23), deci PARTIAL; concordă cu auditpol.txt („No Auditing”). Firewall.evtx: peste 500 de modificări de reguli, nicio alarmă falsă pe regulile Defender/Chrome/Store |
+| usbHive | UsbDevicesParser | 2 stick-uri Kingston și SSD-ul Samsung (USBSTOR), același SSD prin UAS („MSFT30…”, producător/model din Enum\SCSI după ContainerID), camera Sony DSC cunoscută doar din MountedDevices (intrarea din Enum lipsește, conectată ultima dată pe 16.06 după jurnal); orele 0066 confirmate de 1006 pentru toate cele 4 cu oră |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 

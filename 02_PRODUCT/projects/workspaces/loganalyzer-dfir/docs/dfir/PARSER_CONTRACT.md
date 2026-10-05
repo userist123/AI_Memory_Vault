@@ -61,6 +61,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | ServicesParser 1.0 | SYSTEM: servicii și drivere (ControlSet curent) | — | VALIDATED | SYSTEM.hiv real vs WMI Win32_Service: nume, StartMode, StartName, PathName pentru toate cele peste 300 de servicii (3 cu StartMode „Unknown” în WMI) |
 | BrowserHistoryParser 1.0 | Istoric Chromium (Chrome, Edge): vizite, descărcări, lanț de URL-uri | schema History cu urls/visits/downloads | VALIDATED | History real (Default) vs extracția independentă din investigația manuală: 5 descărcări identice; toate cele peste 2000 de vizite din 18–20.09 (URL-urile lungi erau trunchiate în referință) |
 | LnkParser 1.0 | Shortcut .lnk (MS-SHLLINK) | antet, LinkInfo, StringData, TrackerDataBlock | VALIDATED | 182 linkuri reale din Recent comparate cu shell-ul Windows (WScript.Shell): țintă, argumente, folder de lucru; shell-ul pierde caracterele non-ANSI („ș” → „?”), parserul păstrează calea Unicode |
+| UsbDevicesParser 1.0 | SYSTEM: stocare USB (USBSTOR, UAS, MountedDevices) | Windows 8 – 11 | VALIDATED | SYSTEM.hiv real vs Partition/Diagnostic 1006: toate cele 5 dispozitive din jurnal găsite cu producător și model identice; fiecare oră de ultimă conectare din hive corespunde unui 1006 (±2 min) |
 | ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.
