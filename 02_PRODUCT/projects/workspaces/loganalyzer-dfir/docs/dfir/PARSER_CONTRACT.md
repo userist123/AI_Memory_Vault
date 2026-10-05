@@ -72,7 +72,7 @@ DiscUtils.Registry 0.16.13 nu citește celulele `db` (valori peste 16.344 octeț
 
 Al doilea defect DiscUtils, găsit la validarea UserAssist: numele de valori stocate ca UTF-16 care nu formează text valid (unele programe scriu octeți ANSI acolo) nu sunt întoarse așa cum le arată regedit. Câteva intrări UserAssist reale nu puteau fi astfel puse în corespondență cu exportul. `RawRegistry` decodează numele exact după flag-ul din vk (Latin-1 pentru nume comprimate, unități UTF-16 neschimbate altfel) și întoarce `REG_EXPAND_SZ` neexpandat.
 
-**Regulă:** parserele noi de registru citesc prin `RawRegistry.OpenKey` (subchei, valori brute cu tip, LastWriteTime), nu prin DiscUtils. `SystemHiveExecutionParser` și `AmcacheParser` folosesc încă DiscUtils pentru chei și valori mici. Validarea lor pe corpus nu arată diferențe, dar trecerea lor pe `RawRegistry` e de făcut.
+**Regulă:** parserele noi de registru citesc prin `RawRegistry.OpenKey` (subchei, valori brute cu tip, LastWriteTime), nu prin DiscUtils. Toate parserele de registru (SYSTEM, servicii, Amcache, NTUSER, SOFTWARE) citesc acum doar prin `RawRegistry`. DiscUtils.Registry a rămas doar în proiectul de teste, pentru a construi hive-uri sintetice; validarea pe corpus a rămas identică după mutare.
 
 ## Adăugarea unui parser
 

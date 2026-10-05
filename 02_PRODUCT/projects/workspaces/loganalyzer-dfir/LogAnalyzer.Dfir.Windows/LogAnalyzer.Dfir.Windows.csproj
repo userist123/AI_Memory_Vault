@@ -12,7 +12,6 @@
     <PackageReference Include="System.DirectoryServices" Version="10.0.9" />
     <PackageReference Include="System.Management" Version="10.0.10" />
     <PackageReference Include="QuestPDF" Version="2026.7.2" />
-    <PackageReference Include="DiscUtils.Registry" Version="0.16.13" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="9.0.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.1.10" />
   </ItemGroup>

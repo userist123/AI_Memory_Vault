@@ -30,12 +30,29 @@ public sealed class RawRegistry
         OpenKey(keyPath)?.Values.FirstOrDefault(v => v.Name.Equals(valueName, StringComparison.OrdinalIgnoreCase))?.Data;
 
     /// <summary>A key with its subkey names, values (raw bytes and type, names decoded as stored) and LastWriteTime; null if absent.</summary>
-    public RawKey? OpenKey(string keyPath)
+    public RawKey? OpenKey(string keyPath) => Locate(keyPath) is int nk ? ReadKey(nk, keyPath) : null;
+
+    /// <summary>Every direct subkey of <paramref name="keyPath"/>, read by offset (linear, for keys with thousands of children).</summary>
+    public IEnumerable<RawKey> SubKeys(string keyPath)
+    {
+        if (Locate(keyPath) is not int nk) yield break;
+        var key = Cell(nk);
+        Expect(key, "nk");
+        if (BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x14)) == 0) yield break;
+        foreach (var off in ListOffsets(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x1C))).ToList())
+            yield return ReadKey(off, $@"{keyPath}\{KeyName(off)}");
+    }
+
+    private int? Locate(string keyPath)
     {
         int nk = _rootCell;
         foreach (var part in keyPath.Split('\\', StringSplitOptions.RemoveEmptyEntries))
             if (FindSubkey(nk, part) is int child) nk = child; else return null;
+        return nk;
+    }
 
+    private RawKey ReadKey(int nk, string keyPath)
+    {
         var key = Cell(nk);
         Expect(key, "nk");
         var lastWrite = DateTime.FromFileTimeUtc(BinaryPrimitives.ReadInt64LittleEndian(key.AsSpan(4)));
@@ -171,7 +188,7 @@ public sealed class RawRegistry
 
 public sealed record RawValue(string Name, int Type, byte[] Data)
 {
-    public const int RegSz = 1, RegExpandSz = 2, RegBinary = 3, RegDword = 4, RegMultiSz = 7;
+    public const int RegSz = 1, RegExpandSz = 2, RegBinary = 3, RegDword = 4, RegMultiSz = 7, RegQword = 11;
 
     /// <summary>Text of REG_SZ / REG_EXPAND_SZ (not expanded) / REG_MULTI_SZ (joined by spaces); DWORD as decimal; otherwise "".</summary>
     public string AsText => Type switch
@@ -179,6 +196,7 @@ public sealed record RawValue(string Name, int Type, byte[] Data)
         RegSz or RegExpandSz => System.Text.Encoding.Unicode.GetString(Data).TrimEnd('\0'),
         RegMultiSz => string.Join(" ", System.Text.Encoding.Unicode.GetString(Data).Split('\0', StringSplitOptions.RemoveEmptyEntries)),
         RegDword when Data.Length >= 4 => System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(Data).ToString(System.Globalization.CultureInfo.InvariantCulture),
+        RegQword when Data.Length >= 8 => System.Buffers.Binary.BinaryPrimitives.ReadUInt64LittleEndian(Data).ToString(System.Globalization.CultureInfo.InvariantCulture),
         _ => "",
     };
 }

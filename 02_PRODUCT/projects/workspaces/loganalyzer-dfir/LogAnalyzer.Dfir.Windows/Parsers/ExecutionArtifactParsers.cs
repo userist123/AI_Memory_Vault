@@ -1,6 +1,5 @@
 using System.Buffers.Binary;
 using System.Text;
-using DiscUtils.Registry;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
@@ -18,7 +17,7 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
     {
         ParserId = "SystemHiveExecutionParser", Version = "1.0", Artifact = "Hive SYSTEM — BAM și ShimCache (AppCompatCache)",
         SourceTypes = ["system_hive"], FileNames = ["SYSTEM", "SYSTEM.hiv", "HKLM_SYSTEM.hiv"], Fingerprints = ["regf"],
-        SupportedOs = "Oricare (citire offline cu DiscUtils.Registry)",
+        SupportedOs = "Oricare (citire offline cu RawRegistry)",
         FormatVersions = ["BAM: Windows 10 1709+ (bam\\State\\UserSettings) și bam\\UserSettings", "ShimCache: intrări 10ts (Windows 8.1 / 10 / 11), inclusiv valori big-data peste 16 KB", "BAM: căi de executabile și aplicații împachetate (UWP)"],
         Limitations =
         [
@@ -33,26 +32,27 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
         using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        using var hive = new RegistryHive(fs);
-        var root = hive.Root;
-        int current = root.OpenSubKey("Select")?.GetValue("Current") is int c ? c : 1;
+        var reg = new RawRegistry(fs);
+        int current = reg.ReadValue("Select", "Current") is { Length: >= 4 } c ? BinaryPrimitives.ReadInt32LittleEndian(c) : 1;
         var cs = $"ControlSet{current:D3}";
 
         // BAM: ControlSet\Services\bam\State\UserSettings\<SID> (older builds: bam\UserSettings).
-        var bam = root.OpenSubKey($@"{cs}\Services\bam\State\UserSettings") ?? root.OpenSubKey($@"{cs}\Services\bam\UserSettings");
-        if (bam is null)
+        var bamPath = reg.OpenKey($@"{cs}\Services\bam\State\UserSettings") is not null ? $@"{cs}\Services\bam\State\UserSettings" : $@"{cs}\Services\bam\UserSettings";
+        var bamKeys = reg.SubKeys(bamPath).ToList();
+        if (reg.OpenKey(bamPath) is null)
             result.Gaps.Add(new EvidenceGap("BAM", EvidenceStatus.NotAvailable, "cheia bam lipsește din hive (Windows mai vechi de 10 1709 sau dezactivat)",
                 "Ultima execuție per utilizator nu este disponibilă din BAM", "Prefetch, Amcache, jurnalul 4688", "Nu"));
         else
-            foreach (var sid in bam.GetSubKeyNames())
+            foreach (var k in bamKeys)
             {
                 ct.ThrowIfCancellationRequested();
-                var k = bam.OpenSubKey(sid);
-                if (k is null) continue;
-                foreach (var name in k.GetValueNames())
+                var sid = k.Path[(k.Path.LastIndexOf('\\') + 1)..];
+                foreach (var v in k.Values)
                 {
                     // Values are executable device paths or, for packaged (UWP) apps, the package family name.
-                    if (k.GetValue(name) is not byte[] data || data.Length < 8) continue;
+                    var name = v.Name;
+                    var data = v.Data;
+                    if (v.Type != RawValue.RegBinary || data.Length < 8) continue;
                     long ft = BinaryPrimitives.ReadInt64LittleEndian(data);
                     if (ft <= 0) continue;
                     bool packaged = !name.Contains('\\');
@@ -75,9 +75,7 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
 
         // ShimCache.
         // AppCompatCache is usually > 16 KB, i.e. a big-data value that DiscUtils truncates to its 12-byte "db" header.
-        byte[]? acc;
-        using (var raw = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            acc = new RawRegistry(raw).ReadValue($@"{cs}\Control\Session Manager\AppCompatCache", "AppCompatCache");
+        var acc = reg.ReadValue($@"{cs}\Control\Session Manager\AppCompatCache", "AppCompatCache");
         if (acc is null)
             result.Gaps.Add(new EvidenceGap("ShimCache", EvidenceStatus.NotAvailable, "valoarea AppCompatCache lipsește", "Fără listă ShimCache", "Amcache", "Nu"));
         else
@@ -144,7 +142,7 @@ public sealed class AmcacheParser : EvidenceParserBase
     {
         ParserId = "AmcacheParser", Version = "1.0", Artifact = "Amcache.hve — inventarul fișierelor de aplicații",
         SourceTypes = ["amcache"], FileNames = ["Amcache.hve"], Fingerprints = ["regf"],
-        SupportedOs = "Oricare (citire offline cu DiscUtils.Registry)",
+        SupportedOs = "Oricare (citire offline cu RawRegistry)",
         FormatVersions = ["Root\\InventoryApplicationFile (Windows 10 / 11)"],
         Limitations =
         [
@@ -159,25 +157,23 @@ public sealed class AmcacheParser : EvidenceParserBase
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
         using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        using var hive = new RegistryHive(fs);
-        var inv = hive.Root.OpenSubKey(@"Root\InventoryApplicationFile");
-        if (inv is null)
+        var reg = new RawRegistry(fs);
+        if (reg.OpenKey(@"Root\InventoryApplicationFile") is null)
         {
             result.Gaps.Add(new EvidenceGap("Amcache InventoryApplicationFile", EvidenceStatus.NotAvailable, "cheia lipsește (format Amcache vechi)",
                 "Inventarul aplicațiilor nu este disponibil", "Root\\File (format Windows 8)", "Parțial"));
             return;
         }
-        foreach (var keyName in inv.GetSubKeyNames())
+        foreach (var k in reg.SubKeys(@"Root\InventoryApplicationFile"))
         {
             ct.ThrowIfCancellationRequested();
-            var k = inv.OpenSubKey(keyName);
-            if (k is null) { result.MalformedRecords++; continue; }
-            string V(string n) => k.GetValue(n)?.ToString() ?? "";
+            var keyName = k.Path[(k.Path.LastIndexOf('\\') + 1)..];
+            string V(string n) => k.Value(n)?.AsText ?? "";
             var path = V("LowerCaseLongPath");
             var sha1 = V("FileId") is { Length: 44 } fid && fid.StartsWith("0000") ? fid[4..].ToUpperInvariant() : V("FileId");
             sink.Add(new TimelineEvent
             {
-                Time = Timestamp.FromUtc(k.Timestamp.ToUniversalTime(), k.Timestamp.ToString("o"), "registry key LastWriteTime"),
+                Time = Hive.KeyTime(k),
                 Source = "Amcache", EvidenceId = item.EvidenceId, Path = path, Process = V("Name"), Hash = sha1,
                 Summary = $"Amcache: {V("Name")} ({V("Publisher")} {V("Version")}) prezent la {path}",
                 TimeSemantics = "Amcache entry last written (≈ first seen / install)",
