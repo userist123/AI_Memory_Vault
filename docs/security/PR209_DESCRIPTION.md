@@ -96,7 +96,7 @@ Automated tests executed directly on Windows with Python 3.14.2:
 
 ```text
 pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py 20_TESTS/test_cognitive_core_search_wiring.py 20_TESTS/test_end_to_end_workflow.py 20_TESTS/regression/test_workflow_security_audit.py
-============================= 225 passed in 2.45s =============================
+============================= 228 passed in 3.47s =============================
 
 pytest 20_TESTS/memory_controller/
 ============================= 328 passed in 7.56s =============================
@@ -122,8 +122,8 @@ Full 20_TESTS suite:
 
 ## 7. Protected PRs Status
 
-- **PR #204**: Intact, unchanged, open.
-- **PR #206**: Intact, unchanged, open.
-- **PR #207**: Intact, unchanged, open.
-- **PR #208**: Intact, unchanged, open.
-- **PR #209**: Remediated, updated, open for human review. **DO NOT AUTO-MERGE.**
+- **PR #204**: `MERGED` on `main` (`codex/skill-exfiltration-scanner`).
+- **PR #206**: `OPEN` (`research/book-to-memory`) — isolated from `main`.
+- **PR #207**: `OPEN` (`codex/owner-authority-guardrail`).
+- **PR #208**: `MERGED` on `main` (`claude/loganalyzer-dfir-platform`).
+- **PR #209**: `OPEN` (`security/audit-remediation-2026-10`) — Remediated, updated, open for human review. **DO NOT AUTO-MERGE.**

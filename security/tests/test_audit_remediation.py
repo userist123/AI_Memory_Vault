@@ -1235,6 +1235,60 @@ def test_gate2_real_os_multiprocess_nonce_replay(tmp_path):
     assert "RESULT:REJECTED:approval_replayed" in stdout_restart
 
 
+def test_u01_ai_agent_mcp_surface_has_no_update_or_mutate_tool():
+    """U01 Analysis: At the external MCP agent interface boundary, ensure
+    no mutating 'update', 'patch', 'delete', or 'attest' tool is exposed to AI agents.
+    Only read/search/propose tools are registered on the FastMCP server.
+    """
+    from interfaces import memory_mcp_server, memory_access
+
+    assert memory_mcp_server.TOOL_NAMES == ("memory_search", "memory_get", "memory_propose")
+    
+    # Verify memory_access module contains no direct update/attest tools for agents
+    exposed_callable_names = [k for k in dir(memory_access) if not k.startswith("_")]
+    assert "update" not in exposed_callable_names
+    assert "patch" not in exposed_callable_names
+    assert "delete" not in exposed_callable_names
+    assert "attest" not in exposed_callable_names
+    assert "promote" not in exposed_callable_names
+
+
+def test_u01_controller_invariants_hold_under_ai_agent_update():
+    """U01 Analysis: Even though MemoryController.update allows AI_AGENT for continual
+    learning updates, verify that I-001 (cannot escalate verification to 'verified')
+    and I-005 (cannot modify provenance source_type) remain strictly enforced.
+    """
+    import uuid
+    from memory_controller.controller import MemoryController, StorageEngine, Lifecycle
+    from memory_controller.authorizer import Principal
+
+    controller = MemoryController(StorageEngine())
+    nid = str(uuid.uuid4())
+    controller.propose(Principal.HUMAN, {
+        "id": nid,
+        "type": "knowledge",
+        "lifecycle": Lifecycle.ACTIVE,
+        "category": "u01-audit",
+        "tags": ["u01"],
+        "created": "2026-10-05",
+        "updated": "2026-10-05",
+        "provenance": {"source_type": "user", "source_ref": "u01-test"},
+        "confidence": "high",
+        "verification": "unverified",
+        "relations": [],
+        "content": "Original active content"
+    })
+
+    # AI_AGENT attempts to escalate verification via update -> MUST RAISE
+    with pytest.raises(ValueError, match="cannot be escalated via update"):
+        controller.update(Principal.AI_AGENT, nid, {"verification": "verified"})
+
+    # AI_AGENT attempts to forge provenance via update -> MUST RAISE
+    with pytest.raises(ValueError, match="Field provenance.source_type is immutable"):
+        controller.update(Principal.AI_AGENT, nid, {"provenance": {"source_type": "official"}})
+
+
+
 
 
 

@@ -147,8 +147,9 @@ No semantic phrases (e.g. `[[state-determined system]]`) are injected.
 Automated tests executed directly on Windows with Python 3.14.2:
 ```text
 pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py 20_TESTS/test_cognitive_core_search_wiring.py 20_TESTS/test_end_to_end_workflow.py 20_TESTS/regression/test_workflow_security_audit.py
-============================= 208 passed in 1.89s =============================
+============================= 228 passed in 3.47s =============================
 ```
-- Total security & regression tests: **208 passed, 0 failed, 0 skipped** (100%)
+- Total security & regression tests: **228 passed, 0 failed, 0 skipped** (100%)
 - Total memory controller invariant tests: **328 passed, 0 failed, 0 skipped** (100%)
-- Combined verified suite: **536 passed, 0 failed, 0 skipped, 0 errors**
+- Total memory interfaces & MCP tests: **23 passed, 0 failed, 0 skipped** (100%)
+- Combined verified suite: **579 passed, 0 failed, 0 skipped, 0 errors**
