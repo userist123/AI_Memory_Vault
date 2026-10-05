@@ -13,6 +13,7 @@ from agent_bridge.replay import ReplayGuard
 from agent_bridge.antigravity import AntigravitySession
 from agent_bridge.client import SecureBridgeClient
 from agent_bridge.policy import CapabilityToken, BridgePolicy, PolicyError
+from routing.models import WorkPacket
 
 
 def test_envelope_encrypts_and_round_trips_without_plaintext():
