@@ -42,4 +42,6 @@ jobs:
       - name: Smoke test route CLI
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
-        run: python -m routing.route_cli route --goal "inspect the repository architecture and propose a safe implementation plan"
+        run: |
+          python -m routing.route_cli probe
+          python -m routing.route_cli route --goal "inspect the repository architecture and propose a safe implementation plan"
