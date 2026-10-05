@@ -1,3 +1,4 @@
+import base64
 import json
 import time
 import pytest
@@ -23,7 +24,8 @@ def request(keys,signer,p,nonce="n1",agent="visual_architect"):
     body=json.dumps(p.__dict__,default=str).encode()
     return {"version":1,"bridge_id":"bridge-1","task_id":p.task_id,"runtime":"antigravity",
         "agent":agent,"nonce":nonce,"capability_token":token,"aad":aad.decode(),
-        "payload":keys.encrypt(body,aad=aad)}
+        "payload":keys.encrypt(body,aad=aad),
+        "response_public_key":base64.urlsafe_b64encode(keys.public_key.public_bytes(__import__("cryptography").hazmat.primitives.serialization.Encoding.Raw, __import__("cryptography").hazmat.primitives.serialization.PublicFormat.Raw)).decode()}
 
 def test_secure_bridge_executes_encrypted_packet():
     b,k,s=bridge(); req=request(k,s,packet())
