@@ -102,6 +102,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Full investigation pipeline ("Investigație completă" tab).</summary>
         public InvestigationViewModel Investigation { get; } = new();
 
+        /// <summary>Owner policies: import, lifecycle, verified application ("Politici" tab).</summary>
+        public PolicyViewModel Policy { get; } = new();
+
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
 

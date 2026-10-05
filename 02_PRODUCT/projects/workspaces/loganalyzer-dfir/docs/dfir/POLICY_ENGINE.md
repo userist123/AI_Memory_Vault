@@ -1,7 +1,7 @@
 # Policy Engine — LogAnalyzer DFIR
 
-Status: **P6 implementat** (model, validare, ciclu de viață, importatoare). Execuția (P7) nu există încă: nicio politică
-nu este aplicată de cod în acest moment.
+Status: **P6 și P7 implementate.** Model, validare, ciclu de viață, importatoare, execuție verificată (registru) și pagina
+„Politici” din aplicație. Politica de audit, de cont și serviciile sunt **doar citite**; aplicarea lor nu este implementată.
 
 ## Formatul nativ
 
@@ -77,7 +77,58 @@ Rezultat pe cele 3 backup-uri furnizate (2026-10-05):
 Limită cunoscută: cele 391 de politici ADMX din gpreport.xml nu conțin calea din registru, deci nu sunt comparate una câte
 una cu controalele; acoperirea lor este dovedită doar indirect, prin contabilitatea completă a intrărilor Registry.pol.
 
-## Ce nu există încă
+## Execuție (P7) — `Dfir.Core/Policy/PolicyExecution.cs`
 
-- Execuția (P7): citire stare curentă, diff, impact, aprobare, aplicare, re-citire, NOT_VERIFIED/FAILED, jurnal de audit.
-- Drepturi de utilizator, ACL-uri, servicii din șabloane, OSCAL (P8).
+| fază | ce face |
+|---|---|
+| CURRENT | fiecare control citit de furnizorul tipului său; o eroare de citire face controlul „Unreadable”, cu mesajul exact |
+| DESIRED / DIFF | `Expectation` + tipul valorii din registru (un DWORD scris ca șir nu este conform) |
+| IMPACT | acțiune `Set` doar dacă remedierea este `set`, există o singură valoare dorită și furnizorul poate scrie; altfel `Manual`, cu motivul |
+| APPROVAL | politica APPROVED/DEPLOYED/VERIFIED în depozit, cu același SHA-256; aprobarea înregistrată pentru acel hash; operatorul confirmă SHA-256-ul exact al planului; planul este pentru această stație |
+| APPLY | re-citește înainte; dacă starea s-a schimbat după plan → `Stale`, nu se suprascrie; scrie |
+| VERIFY | re-citește fiecare valoare scrisă și apoi toată politica |
+| EVIDENCE | `evidence/executions/<id>.json` + `.sha256`; `evidence/audit.jsonl` cu o linie per acțiune (operator, aprobator, politică, hash politică, hash plan, stație, control, înainte, acțiune, după, rezultat), fiecare linie purtând SHA-256 al liniei anterioare |
+
+Rezultate per control: `Compliant`, `Verified`, `NotVerified` (scris, re-citirea a eșuat), `Failed` (scrierea a eșuat sau
+re-citirea arată altă valoare), `Stale`, `ManualRequired`, `Unreadable`, `NotSelected`. Nu există „SUCCESS”. Statusul execuției:
+`FAILED` dacă un control a eșuat, altfel `NOT_VERIFIED` dacă unul nu a putut fi confirmat, altfel `VERIFIED` (sau „nimic aplicat”).
+Politica trece în DEPLOYED doar dacă o scriere a ajuns pe stație și în VERIFIED doar dacă, după re-citire, toate controalele
+sunt conforme.
+
+Rollback: restaurează valoarea „înainte” (sau șterge valoarea care nu exista) pentru fiecare control scris, cu re-citire;
+o valoare schimbată de altcineva după execuție nu este suprascrisă (`Stale`). O înregistrare de execuție modificată
+(SHA-256 diferit) este refuzată și pentru rollback.
+
+### Furnizori (`Dfir.Windows/Policy/SettingProviders.cs`)
+
+| tip | citire | scriere | validare |
+|---|---|---|---|
+| registry | HKLM/HKCU, vizualizarea 64-bit, valori neexpandate | DWORD, QWORD, SZ, EXPAND_SZ; HKLM doar ca administrator; MULTI_SZ și binar nu | test pe HKCU (cheie temporară, ștearsă la final), comparat cu `reg query` după aplicare și după rollback |
+| audit | AuditQuerySystemPolicy | nu (manual, `auditpol /set`) | fără elevare: eroarea 1314 (privilegiu lipsă) → control „Unreadable”; ca administrator: comparat cu `auditpol /get /category:* /r` (test rulat doar elevat) |
+| service | `Services\<nume>\Start` (0 boot, 1 system, 2 automat, 3 manual, 4 dezactivat) | nu | comparat cu WMI `Win32_Service.StartMode` pentru toate serviciile cu mod cunoscut |
+| secpol | NetUserModalsGet nivel 0 și 3, în unitățile șabloanelor (zile, minute, -1 = niciodată) | nu | comparat cu `net accounts` |
+
+`net accounts` folosește aceeași interfață de sistem; comparația validează conversia unităților și a valorilor speciale, nu
+o a doua sursă de date.
+
+### Aplicația — pagina „Politici”
+
+`PolicyWorkbench` (`Dfir.Windows/Policy/PolicyWorkbench.cs`) este consumatorul de producție; pagina „Politici” din
+aplicație (`PolicyViewModel`, `PolicyView.xaml`) îl folosește pentru: deschidere/import (copia nativă se scrie în
+`library\`, iar o copie existentă cu alt text nu este suprascrisă), înregistrare, validare, rulare de probă, aprobare,
+plan, aplicare (după un dialog care arată SHA-256-ul politicii și al planului și lista modificărilor), rollback.
+
+Operatorul și aprobatorul sunt contul Windows al procesului, nu un nume tastat. Aprobarea cere deci un alt cont Windows
+care folosește același depozit (câmpul „Depozit politici” poate indica un folder comun). Testul
+`Lgpo_text_is_imported_approved_by_another_account_applied_and_rolled_back` parcurge tot fluxul cu două identități.
+
+Pagina a fost compilată și fluxul ei este acoperit prin `PolicyWorkbench`; interfața nu a fost exersată manual.
+
+## Limite cunoscute
+
+- Depozitul (`store.json`) și dosarul de probe sunt fișiere protejate doar de permisiunile NTFS. Lanțul de hash-uri din
+  jurnal și `.sha256`-ul execuțiilor fac modificările detectabile, dar cine poate rescrie toate fișierele poate rescrie și
+  hash-urile; nu există o semnătură externă a aprobării.
+- Aplicarea politicii de audit, de cont și a serviciilor nu este implementată (doar citire).
+- În HKCU, un proces elevat scrie în profilul contului cu care rulează.
+- Drepturi de utilizator, ACL-uri, servicii din șabloane, OSCAL: P8.
