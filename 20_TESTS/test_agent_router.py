@@ -41,7 +41,7 @@ def test_external_research_routes_to_perplexity_but_requires_host_confirmation()
 
 
 def test_high_risk_coding_gets_independent_verifier():
-    req = TaskRequest(goal="modify production code and review the security impact", capabilities=("coding","repo"), risk=RiskLevel.HIGH, require_independent_verifier=True, min_quality=QualityTier.HEAVY)
+    req = TaskRequest(goal="modify production code and review the implementation impact", capabilities=("coding","repo"), risk=RiskLevel.HIGH, require_independent_verifier=True, min_quality=QualityTier.HEAVY)
     d = AgentRouter(REG).route(req, {"codex": True, "claude_code": True, "antigravity": True, "perplexity": False})
     assert d.primary is not None
     assert d.verifier is not None
