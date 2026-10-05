@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -8,7 +10,8 @@ namespace LogAnalyzer.Core.Services
     public class SanitizationCertificateData
     {
         public string CertificateId { get; set; } = $"SAN-CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}".Substring(0, 24).ToUpperInvariant();
-        public string StandardCompliance { get; set; } = "NIST SP 800-88r2 / HG 585/2002 Art. 65 / NATO AC/35-D/1022";
+        /// <summary>What was done, not a compliance claim: a file-level overwrite does not certify the device (SSD wear-leveling, copies elsewhere).</summary>
+        public string StandardCompliance { get; set; } = "Suprascriere la nivel de fișier după metoda NIST SP 800-88r2 Clear — NU certifică dispozitivul fizic";
         public string DeviceVendor { get; set; } = string.Empty;
         public string DeviceModel { get; set; } = string.Empty;
         public string HardwareSerialNumber { get; set; } = string.Empty; // P16
@@ -20,9 +23,44 @@ namespace LogAnalyzer.Core.Services
         public string PrimaryOperator { get; set; } = string.Empty;
         public string VerifierOperator { get; set; } = string.Empty; // 4-Eyes
         public string SystemHostId { get; set; } = Environment.MachineName;
-        public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
+        public DateTime TimestampUtc { get; set; }
         public string TamperEvidentAuditHash { get; set; } = string.Empty;
-        public bool IsVerifiedZeroized { get; set; } = true;
+        /// <summary>True only when the engine read every byte back as 0x00 (<see cref="SanitizationResult.ReadBackVerified"/>).</summary>
+        public bool IsVerifiedZeroized { get; set; }
+
+        /// <summary>
+        /// Certificate from a real run. Fields the application cannot know (device serial, second operator) stay empty and are
+        /// printed as NEDECLARAT; the audit hash is SHA-256 over the certificate's own fields, so any later edit shows.
+        /// </summary>
+        public static SanitizationCertificateData FromResult(SanitizationResult result, string targetPath, string primaryOperator)
+        {
+            var c = new SanitizationCertificateData
+            {
+                DeviceVendor = "Fișier",
+                DeviceModel = System.IO.Path.GetFileName(targetPath),
+                DeviceCapacityBytes = result.TotalBytesSanitized,
+                SanitizationMethodName = result.Method.ToString(),
+                TotalPasses = result.TotalPassesExecuted,
+                PreSanitizationSha256 = result.PreSanitizationSha256,
+                PostSanitizationSha256 = result.PostSanitizationSha256,
+                PrimaryOperator = primaryOperator,
+                TimestampUtc = result.CompletedAtUtc,
+                IsVerifiedZeroized = result.Success && result.ReadBackVerified,
+            };
+            c.TamperEvidentAuditHash = c.ComputeAuditHash();
+            return c;
+        }
+
+        public string ComputeAuditHash()
+        {
+            var canonical = string.Join("\n", CertificateId, StandardCompliance, DeviceVendor, DeviceModel, HardwareSerialNumber,
+                DeviceCapacityBytes.ToString(CultureInfo.InvariantCulture), SanitizationMethodName, TotalPasses.ToString(CultureInfo.InvariantCulture),
+                PreSanitizationSha256, PostSanitizationSha256, PrimaryOperator, VerifierOperator, SystemHostId,
+                TimestampUtc.ToString("o", CultureInfo.InvariantCulture), IsVerifiedZeroized ? "1" : "0");
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
+        }
+
+        public static string OrUndeclared(string value) => string.IsNullOrWhiteSpace(value) ? "NEDECLARAT" : value;
     }
 
     public class SanitizationCertificateGenerator
@@ -49,7 +87,7 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine("--------------------------------------------------------------------------------");
             sb.AppendLine($"  Producător (Vendor):        {data.DeviceVendor}");
             sb.AppendLine($"  Model / Produs:             {data.DeviceModel}");
-            sb.AppendLine($"  Număr Serie Fizic (P16):    {data.HardwareSerialNumber}");
+            sb.AppendLine($"  Număr Serie Fizic (P16):    {SanitizationCertificateData.OrUndeclared(data.HardwareSerialNumber)}");
             sb.AppendLine($"  Capacitate Mediu:           {data.DeviceCapacityBytes:N0} bytes ({(double)data.DeviceCapacityBytes / (1024 * 1024 * 1024):F2} GB)");
             sb.AppendLine($"  Sistem Gazdă (Host ID):     {data.SystemHostId}");
             sb.AppendLine();
@@ -60,18 +98,18 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine($"  Număr Treceri Executate:    {data.TotalPasses}");
             sb.AppendLine($"  Hash Pre-Sanitizare:        {data.PreSanitizationSha256}");
             sb.AppendLine($"  Hash Post-Sanitizare:       {data.PostSanitizationSha256}");
-            sb.AppendLine($"  Verificare Zeroizare:       {(data.IsVerifiedZeroized ? "CONFIRMATĂ (Date irecuperabile)" : "NECONFIRMATĂ")}");
+            sb.AppendLine($"  Verificare Zeroizare:       {(data.IsVerifiedZeroized ? "CONFIRMATĂ prin citire (fișierul conține doar 0x00)" : "NECONFIRMATĂ")}");
             sb.AppendLine();
             sb.AppendLine("--------------------------------------------------------------------------------");
             sb.AppendLine(" 3. AUTORIZARE DUALĂ & LANȚ DE CUSTODIE (4-EYES PRINCIPLE)");
             sb.AppendLine("--------------------------------------------------------------------------------");
             sb.AppendLine($"  Operator Principal:         {data.PrimaryOperator}");
-            sb.AppendLine($"  Ofițer Securitate / Martor: {data.VerifierOperator}");
-            sb.AppendLine($"  Hash Audit Tamper-Evident:  {data.TamperEvidentAuditHash}");
+            sb.AppendLine($"  Ofițer Securitate / Martor: {SanitizationCertificateData.OrUndeclared(data.VerifierOperator)}");
+            sb.AppendLine($"  Hash Audit Tamper-Evident:  {SanitizationCertificateData.OrUndeclared(data.TamperEvidentAuditHash)}");
             sb.AppendLine();
             sb.AppendLine("================================================================================");
-            sb.AppendLine(" Prin prezenta se atestă că datele stocate pe mediul menționat au fost distruse");
-            sb.AppendLine(" ireversibil, fără posibilitate de recuperare prin metode forenzice avansate.");
+            sb.AppendLine(" Documentul consemnează suprascrierea fișierului de mai sus și rezultatul verificării prin citire.");
+            sb.AppendLine(" Nu atestă distrugerea datelor de pe dispozitivul fizic (copii, zone remapate, SSD).");
             sb.AppendLine("================================================================================");
 
             return sb.ToString();

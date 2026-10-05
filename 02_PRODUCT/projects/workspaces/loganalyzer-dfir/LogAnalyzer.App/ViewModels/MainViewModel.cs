@@ -374,9 +374,9 @@ namespace LogAnalyzer.UI.ViewModels
             ActiveCountermeasurePlaybook = _countermeasureEngine.GeneratePlaybook(alert, hostname);
             var ev = alert.RelatedEvents?.FirstOrDefault();
             RawEventMessage = ev?.Message ?? alert.Explanation ?? string.Empty;
-            RawEventId = ev != null ? $"EID: {ev.EventId} | Nivel: {ev.Level}" : "EID: 9999 (Security Detection)";
-            RawEventProvider = ev?.ProviderName ?? "LogAnalyzer Real-Time Sensor";
-            RawEventTimestamp = ev?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff") ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            RawEventId = ev != null ? $"EID: {ev.EventId} | Nivel: {ev.Level}" : "EID: nedisponibil (alerta nu are eveniment sursă)";
+            RawEventProvider = ev?.ProviderName ?? "nedisponibil";
+            RawEventTimestamp = ev is null ? "nedisponibil" : ev.TimeCreated == default ? "necunoscut (lipsește din eveniment)" : ev.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff");
             RawEventHost = ev?.MachineName ?? hostname;
             IsCountermeasureModalVisible = true;
         }
@@ -999,7 +999,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void TriggerContainmentPlaybook(string target)
         {
             var res = _actionTriggerService.ExecuteContainmentScript("Izolare Cont / Stație", target ?? "SelectedEntity", IsAirGappedMode);
-            MessageBox.Show(res.OutputLog, "Rezultat Răspuns Incident (Containment Playbook)", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(res.OutputLog, "Acțiune neexecutată (Containment Playbook)", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         [RelayCommand]
@@ -2787,6 +2787,15 @@ namespace LogAnalyzer.UI.ViewModels
             if (openDialog.ShowDialog() == true)
             {
                 string targetFile = openDialog.FileName;
+                var confirm = MessageBox.Show(
+                    $"Fișierul de mai jos va fi SUPRASCRIS ireversibil cu 0x00:\n\n{targetFile}\n({new FileInfo(targetFile).Length:N0} bytes)\n\n" +
+                    "Operația nu se poate anula. Nu folosiți această funcție pe probe nepreluate sau pe fișiere din cazul deschis.\n\nContinuați?",
+                    "Confirmare operație distructivă", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                if (confirm != MessageBoxResult.Yes)
+                {
+                    StatusMessage = "Sanitizare anulată de operator.";
+                    return;
+                }
                 var saveDialog = new SaveFileDialog
                 {
                     Title = "Salvați Certificatul Oficial de Sanitizare PDF",
@@ -2808,29 +2817,17 @@ namespace LogAnalyzer.UI.ViewModels
 
                         if (result.Success)
                         {
-                            var certData = new SanitizationCertificateData
-                            {
-                                CertificateId = $"SAN-CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}".Substring(0, 24).ToUpperInvariant(),
-                                DeviceVendor = "Dispozitiv / Fișier Țintă",
-                                DeviceModel = Path.GetFileName(targetFile),
-                                HardwareSerialNumber = "HD-" + Guid.NewGuid().ToString("N").Substring(0, 12).ToUpperInvariant(),
-                                DeviceCapacityBytes = result.TotalBytesSanitized,
-                                SanitizationMethodName = "NIST SP 800-88r2 Clear (1-Pass Zeroize)",
-                                TotalPasses = result.TotalPassesExecuted,
-                                PreSanitizationSha256 = result.PreSanitizationSha256,
-                                PostSanitizationSha256 = result.PostSanitizationSha256,
-                                PrimaryOperator = OperatorName,
-                                VerifierOperator = "Ofițer Securitate Informatică",
-                                SystemHostId = Environment.MachineName,
-                                TamperEvidentAuditHash = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
-                                IsVerifiedZeroized = true
-                            };
+                            var certData = SanitizationCertificateData.FromResult(result, targetFile, OperatorName);
 
                             _sanitizationPdfGenerator.GeneratePdfCertificate(saveDialog.FileName, certData);
-                            _provenanceLedger.AppendEntry("MEDIA_SANITIZED_CERT_PDF", saveDialog.FileName, result.PostSanitizationSha256, $"Sanitizare NIST SP 800-88r2 finalizată cu succes pe '{Path.GetFileName(targetFile)}'. Emis certificat PDF.");
-                            
-                            MessageBox.Show($"Procedura de sanitizare NIST SP 800-88r2 a fost finalizată cu succes!\n\nCertificatul oficial PDF a fost emis în:\n{saveDialog.FileName}", "Sanitizare & Certificare Reușită", MessageBoxButton.OK, MessageBoxImage.Information);
-                            StatusMessage = "✅ Sanitizare finalizată și Certificat PDF emis cu succes!";
+                            var verdict = result.ReadBackVerified ? "verificată prin citire" : $"NEVERIFICATĂ ({result.ReadBackNote})";
+                            _provenanceLedger.AppendEntry("MEDIA_SANITIZED_CERT_PDF", saveDialog.FileName, result.PostSanitizationSha256,
+                                $"Suprascriere {result.Method} pe '{Path.GetFileName(targetFile)}', {verdict}. Hash audit certificat: {certData.TamperEvidentAuditHash}.");
+
+                            MessageBox.Show($"Fișierul a fost suprascris; zeroizarea este {verdict}.\n\nRaportul PDF a fost salvat în:\n{saveDialog.FileName}\n\n" +
+                                "Seria dispozitivului și al doilea operator nu sunt cunoscute de aplicație și apar ca NEDECLARAT.",
+                                "Sanitizare", MessageBoxButton.OK, result.ReadBackVerified ? MessageBoxImage.Information : MessageBoxImage.Warning);
+                            StatusMessage = result.ReadBackVerified ? "Sanitizare finalizată și verificată prin citire." : "Sanitizare finalizată, dar NEVERIFICATĂ.";
                         }
                         else
                         {
