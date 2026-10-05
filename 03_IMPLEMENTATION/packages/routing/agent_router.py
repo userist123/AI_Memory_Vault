@@ -63,14 +63,19 @@ class AgentRouter:
         cost_score=100.0-rt.cost_score
         latency_score=100.0-rt.latency_score
         pref=20.0 if rt.id in agent.preferred_runtimes else 0.0
+        specialized=0.0
+        if "visual" in caps and rt.visual: specialized += 25.0
+        if "external_research" in caps and rt.research: specialized += 25.0
+        if "offline" in caps and rt.model_local: specialized += 25.0
+        if "repo" in caps and rt.code_execution: specialized += 5.0
         history=0.0
         if self.feedback_store is not None:
             prior=self.feedback_store.prior(agent.id,rt.id)
             history=max(0.0,min(10.0,prior.quality_score*0.05+prior.verification_rate*0.03+prior.success_rate*0.02))
         return RouteCandidate(agent.id,rt.id,tier,skills,
-            round(cap_score*.45+quality_score*.2+cost_score*.1+latency_score*.1+pref+history,3),
+            round(cap_score*.45+quality_score*.2+cost_score*.1+latency_score*.1+pref+specialized+history,3),
             round(cap_score,3),round(quality_score,3),round(cost_score,3),round(latency_score,3),history,
-            ("capability_match","quality_ok","runtime_eligible")+(( "preferred_runtime",) if pref else ()),rt.transport)
+            ("capability_match","quality_ok","runtime_eligible")+(( "preferred_runtime",) if pref else ())+(( "specialized_runtime",) if specialized else ()),agent.independence_group,rt.transport)
 
     def route(self, request:TaskRequest, runtime_available:dict[str,bool]|None=None)->RouteDecision:
         n=self.normalize(request); caps=set(n["capabilities"]); risk=n["risk"]
