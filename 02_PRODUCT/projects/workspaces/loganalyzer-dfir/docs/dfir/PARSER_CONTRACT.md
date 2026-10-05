@@ -63,6 +63,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | LnkParser 1.0 | Shortcut .lnk (MS-SHLLINK) | antet, LinkInfo, StringData, TrackerDataBlock | VALIDATED | 182 linkuri reale din Recent comparate cu shell-ul Windows (WScript.Shell): țintă, argumente, folder de lucru; shell-ul pierde caracterele non-ANSI („ș” → „?”), parserul păstrează calea Unicode |
 | UsbDevicesParser 1.0 | SYSTEM: stocare USB (USBSTOR, UAS, MountedDevices) | Windows 8 – 11 | VALIDATED | SYSTEM.hiv real vs Partition/Diagnostic 1006: toate cele 5 dispozitive din jurnal găsite cu producător și model identice; fiecare oră de ultimă conectare din hive corespunde unui 1006 (±2 min) |
 | JumpListParser 1.0 | Jump List automată (OLE CFB + DestList + linkuri) | DestList v3–v6 | **TESTED** | CFB sintetic cu valori exacte; pe 54 de fișiere reale doar consistență internă (1.880 de intrări, 1.555 de căi identice între DestList și linkuri). Nu există încă o referință independentă, deci nu e VALIDATED |
+| FirefoxHistoryParser 1.0 | Istoric Firefox (places.sqlite): vizite, descărcări | Firefox 57+ | VALIDATED | places.sqlite real comparat cu modulul `sqlite3` din Python (altă implementare SQLite): fiecare vizită (oră brută, URL) și fiecare descărcare |
 | ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.

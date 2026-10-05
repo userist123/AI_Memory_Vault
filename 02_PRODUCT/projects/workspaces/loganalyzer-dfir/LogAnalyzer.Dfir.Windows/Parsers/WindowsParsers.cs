@@ -12,5 +12,5 @@ public static class WindowsParsers
         [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser(),
          new ScheduledTaskParser(), new UserHiveParser(), new SoftwareHiveParser(),
          new ServicesParser(), new BrowserHistoryParser(), new LnkParser(),
-         new UsbDevicesParser(), new JumpListParser()]);
+         new UsbDevicesParser(), new JumpListParser(), new FirefoxHistoryParser()]);
 }

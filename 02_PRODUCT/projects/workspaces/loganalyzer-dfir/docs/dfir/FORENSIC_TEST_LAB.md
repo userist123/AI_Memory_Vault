@@ -60,8 +60,20 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 
+## Validare diferențială cu implementări independente
+
+`DifferentialFact` rulează un test numai dacă există și corpusul, și implementarea de referință de pe mașină. Azi referința e modulul `sqlite3` din Python. Dacă oricare lipsește, testul e sărit cu motivul „DIFFERENTIAL REFERENCE UNAVAILABLE” sau „FORENSIC VALIDATION = UNAVAILABLE”; nu trece niciodată fără ele.
+
+| Secțiune | Parser | Referință independentă |
+|---|---|---|
+| firefoxPlaces | FirefoxHistoryParser | Python `sqlite3` pe o copie: toate vizitele (oră brută µs, URL) și descărcările (dateAdded, URI destinație) |
+| systemHive, servicesHive, userHive, softwareHive | parserele de registru | `reg query` / `reg export` / WMI capturate pe stație |
+| tasks | ScheduledTaskParser | `schtasks /query /v` |
+| lnk | LnkParser | WScript.Shell |
+| usbHive | UsbDevicesParser | jurnalul Partition/Diagnostic 1006 |
+
 ## Ce lipsește (planificat)
 
-- **Validare diferențială** cu un instrument independent (P12), de exemplu ieșirea EZTools sau Plaso pe aceleași fișiere.
+- **Validare diferențială** cu instrumente forensice dedicate (EZTools, Plaso) pentru EVTX, Prefetch, SRUM, Jump Lists. Nu sunt instalate, iar aplicația nu descarcă și nu rulează instrumente externe din proprie inițiativă.
 - **Laborator anti-forensic** (P13): jurnale șterse, timestomping, Prefetch dezactivat, cu rezultate așteptate.
 - **Teste de corupție** pentru fiecare parser. EVTX are `EvtxRepairTests`; celelalte nu au încă.

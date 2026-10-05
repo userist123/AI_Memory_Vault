@@ -54,7 +54,7 @@ public static class EvidenceFingerprint
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t == "live_snapshot") return ["json"];
         if (t == "task_xml") return ["task_xml"];
-        if (t == "chromium_history") return ["sqlite"];
+        if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];
         return null;
