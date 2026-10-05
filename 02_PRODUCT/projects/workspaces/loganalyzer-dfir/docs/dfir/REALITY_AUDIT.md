@@ -38,8 +38,8 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 | `Dfir.Windows/Parsers/PrefetchParser` (MAM/Xpress Huffman) | REAL | `CorpusRegressionTests` (prefetch, prefetchMsiexec). |
 | `Dfir.Windows/Parsers/SrumNetworkParser` (ESE) | REAL | `CorpusRegressionTests` (srum). |
 | `Dfir.Core/Network/PcapngParser` | REAL | `CorpusRegressionTests` (pcapng). |
-| `SystemHiveExecutionParser` (BAM, ShimCache) | PARTIAL | Cod real (DiscUtils.Registry), cu ShimCache etichetat „prezență, nu execuție”. **Fără test** și fără hive SYSTEM în corpus. Validat doar manual. |
-| `AmcacheParser` | PARTIAL | 6.603 intrări parsate din `Amcache.hve` din corpus (manual). **Fără test automat** încă. Raportează gap dacă .LOG1/.LOG2 nu sunt aplicate. |
+| `SystemHiveExecutionParser` (BAM, ShimCache) | PARTIAL | Cod real (DiscUtils.Registry), cu ShimCache etichetat „prezență, nu execuție”. Testat pe hive-uri SYSTEM sintetice, cu valori exacte (`ExecutionArtifactParserTests`): oră BAM, cale, SID, decodare `10ts`, goluri pentru BAM/ShimCache lipsă sau format necunoscut. Rămâne PARTIAL: nu există un hive SYSTEM real în corpus. |
+| `AmcacheParser` | REAL | Test pe corpus (`CorpusFact("amcache")`): peste 6.000 de intrări, 0 corupte, peste 90% cu SHA-1, toate cu oră. Plus test sintetic pentru SHA-1, cale, locator și semnificația „prezență”. Raportează gap dacă .LOG1/.LOG2 lipsesc. |
 | `Infrastructure/Parsers/EvtxParser` (import vechi) | PARTIAL | Folosit de MainViewModel. Acum raportează înregistrările corupte și folosește `EvtxRepair`. Are 2 × `catch {}`. |
 | `Infrastructure/Parsers/AntiForensicsArtifactsParser` | UNSAFE (FACADE ca consumator) | `:91 DateTime launchTime = DateTime.UtcNow;` — ora curentă folosită ca oră a probei. Marcare `ExecutionProven` ×3. Fără consumator în producție. |
 | `Infrastructure/Parsers/{MftParser, UsbForensicsParser, BrowserForensicsParser, SrumParser, AmcacheShimcacheParser, LnkParserPlugin, PrefetchParserPlugin, ShimcacheParserPlugin, UserActivityParser, VolatilityBridgeParser, RdpBitmapCacheParser, CrossPlatformLogsParser, EvtxCarverEngine, M365EntraIdLogsParser, RegistryParser}` | FACADE | `grep -rl` nu găsește niciun consumator în App/Core/Dfir (doar teste sau niciunul). Conțin 16 × `ExecutionProven` și ~20 × `catch {}`. **Nu se construiește nimic peste ele** (regula producție-consumator). |
@@ -72,7 +72,7 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 | COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
 |---|---|---|
 | `Core/Services/Connectivity` (detectare pasivă NLM, fail-closed AirGapped, `NetworkPolicy`) | REAL | `OperatingModeTests`. NLM nu trimite trafic. |
-| Servicii cu ieșire în rețea: `LiveThreatIntelService`, `M365LiveConnectorService`, `SiemForwarderService`, `AuditCollectionService` (UDP), `DirectoryCollector`, `UserInvestigation` | PARTIAL | Toate apelează `NetworkPolicy.EnsureAllowed` înainte de I/O. **Lipsește** testul care injectează un `HttpClient` sau socket și dovedește 0 apeluri în AirGapped (DNS/HTTP/TCP). |
+| Servicii cu ieșire în rețea: `LiveThreatIntelService`, `M365LiveConnectorService`, `SiemForwarderService`, `AuditCollectionService` (UDP), `DirectoryCollector`, `UserInvestigation` | REAL (HTTP/UDP) / PARTIAL (LDAP, jurnale DC) | Toate apelează `NetworkPolicy.EnsureAllowed` înainte de I/O. `AirGappedNoNetworkTests` injectează un handler HTTP care numără cererile: 0 cereri în AirGapped pentru toate cele 5 apeluri HTTP. Testul de control confirmă că în Network cererea ajunge la handler. UDP e acoperit de `OperatingModeTests`. LDAP și jurnalele DC nu au încă un test de interceptare. |
 | `Correlation.cs`, `ProcessScanner.cs`, `YaraRuleEngine.cs` | REAL (fără rețea) | Potrivirile „WebClient/HttpClient” sunt șiruri de detecție, nu apeluri. |
 
 ## 6. Detecție și atribuire

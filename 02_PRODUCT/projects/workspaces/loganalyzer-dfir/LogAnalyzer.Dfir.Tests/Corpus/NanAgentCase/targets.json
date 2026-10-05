@@ -38,6 +38,10 @@
     "dnsNameContains": "napps-1.com",
     "sniContains": "chatgpt.com"
   },
+  "amcache": {
+    "file": "10_AMCACHE\\Programs_attempt\\Amcache.hve",
+    "minEntries": 6000
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }
