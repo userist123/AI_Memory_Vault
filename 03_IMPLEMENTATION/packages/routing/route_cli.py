@@ -15,6 +15,7 @@ def build_parser():
     p=argparse.ArgumentParser(prog="python -m routing.route_cli")
     sub=p.add_subparsers(dest="cmd",required=True)
     q=sub.add_parser("probe"); q.add_argument("--runtime",action="append")
+    q.add_argument("--json",action="store_true")
     for name in ("route","dispatch"):
         x=sub.add_parser(name)
         x.add_argument("--goal",required=True); x.add_argument("--capability",action="append",default=[])
@@ -32,7 +33,8 @@ def main():
     reg=RouteRegistry.from_file(REGISTRY)
     if a.cmd=="probe":
         ids=a.runtime or list(reg.runtimes)
-        print(json.dumps({r:bool(shutil.which(reg.runtimes[r].adapter_ref)) if reg.runtimes[r].transport=="command" else reg.runtimes[r].transport=="a2a" for r in ids},indent=2))
+        binary_map={"claude_code":"claude","codex":"codex","antigravity":"agy","local_llm":"ollama"}
+        print(json.dumps({r:(bool(shutil.which(binary_map.get(reg.runtimes[r].adapter_ref,reg.runtimes[r].adapter_ref))) if reg.runtimes[r].transport=="command" else reg.runtimes[r].transport=="a2a") for r in ids},indent=2))
         return
     req=TaskRequest(goal=a.goal,capabilities=tuple(a.capability),risk=RiskLevel[a.risk.upper()],
         min_quality=QualityTier[a.min_quality.upper()],privacy=PrivacyMode.LOCAL_ONLY if a.local_only else PrivacyMode.STANDARD,
@@ -41,7 +43,7 @@ def main():
         tool_use_required=a.tool_use,require_independent_verifier=a.verify)
     available={}
     for rid,rt in reg.runtimes.items():
-        if rt.transport=="command": available[rid]=bool(shutil.which(rt.adapter_ref))
+        if rt.transport=="command": available[rid]=bool(shutil.which({"claude_code":"claude","codex":"codex","antigravity":"agy","local_llm":"ollama"}.get(rt.adapter_ref,rt.adapter_ref)))
         else: available[rid]=False
     decision=AgentRouter(reg).route(req,available)
     print(json.dumps(decision.to_dict(),ensure_ascii=False,indent=2))
