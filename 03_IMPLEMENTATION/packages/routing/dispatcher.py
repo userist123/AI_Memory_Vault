@@ -53,13 +53,21 @@ class CommandAdapter:
             cmd=[self.binary,"run","llama3.2"]; stdin=text
         else:
             raise DispatchError(f"unsupported command adapter: {self.adapter_ref}")
+        result=run/"result.json"
         try:
             proc=subprocess.run(cmd,input=stdin,text=True,capture_output=True,timeout=p.timeout_seconds,check=False,cwd=self.working_directory)
         except subprocess.TimeoutExpired:
-            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",str(brief),error="timeout")
+            result.write_text(json.dumps({"schema":"agent-dispatch.result.v1","task_id":p.task_id,"route_id":p.route_id,
+                "status":DispatchStatus.FAILED.value,"exit_code":None,"final_message":"","brief_path":str(brief),"error":"timeout"},
+                ensure_ascii=False,indent=2),encoding="utf-8")
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",str(result),error="timeout")
+        except OSError as exc:
+            result.write_text(json.dumps({"schema":"agent-dispatch.result.v1","task_id":p.task_id,"route_id":p.route_id,
+                "status":DispatchStatus.FAILED.value,"exit_code":None,"final_message":"","brief_path":str(brief),"error":str(exc)},
+                ensure_ascii=False,indent=2),encoding="utf-8")
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",str(result),error=str(exc))
         final=(proc.stdout or proc.stderr or "").strip()
         status=DispatchStatus.COMPLETED if proc.returncode==0 else DispatchStatus.FAILED
-        result=run/"result.json"
         result.write_text(json.dumps({"schema":"agent-dispatch.result.v1","task_id":p.task_id,"route_id":p.route_id,
             "status":status.value,"exit_code":proc.returncode,"final_message":final,"brief_path":str(brief)},ensure_ascii=False,indent=2),encoding="utf-8")
         return DispatchResult(p.task_id,p.route_id,status,p.target_runtime,p.target_agent,proc.returncode,final,str(result),metadata={"brief":str(brief)})
