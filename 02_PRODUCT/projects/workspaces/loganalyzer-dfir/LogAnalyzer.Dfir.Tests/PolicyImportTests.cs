@@ -238,6 +238,8 @@ public sealed class PolicyImportTests(Xunit.Abstractions.ITestOutputHelper outpu
             var errors = PolicyValidator.Validate(r.Policy);
             Assert.True(errors.Count == 0, $"{name}: {string.Join(" | ", errors.Take(5))}");
             Assert.Equal(Child(All(rep, "GPO").First(), "Name"), g.DisplayName);
+            // Backup.xml ID is the GPO's own GUID (the backup folder is named after the backup ID, not the GPO).
+            Assert.Equal(All(rep, "Identifier").First(e => !e.HasElements).Value, g.Guid, StringComparer.OrdinalIgnoreCase);
             output.WriteLine($"{g.DisplayName}: {r.Policy.Controls.Count} controale ({string.Join(", ", r.Policy.Controls.GroupBy(c => c.Setting.Type).Select(x => $"{x.Key} {x.Count()}"))}), {r.Unsupported.Count} neacceptate, sha256 {r.Policy.Sha256[..12]}");
             foreach (var u in r.Unsupported.Where(u => !u.Contains("registry.pol"))) output.WriteLine("  " + u);
             output.WriteLine($"  registry.pol neacceptate: {r.Unsupported.Count(u => u.Contains("registry.pol"))}");

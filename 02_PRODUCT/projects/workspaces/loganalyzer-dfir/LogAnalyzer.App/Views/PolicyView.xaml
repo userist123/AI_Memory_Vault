@@ -44,7 +44,9 @@
                 <Button Content="Calculează planul" Command="{Binding ComputePlanCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Aplică planul…" Command="{Binding ApplyPlanCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Rollback ultima execuție…" Command="{Binding RollbackLastCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Folder probe" Command="{Binding OpenEvidenceFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                <Button Content="Folder probe" Command="{Binding OpenEvidenceFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                <Button Content="Conformitate față de politică" Command="{Binding AssessAgainstPolicyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                <Button Content="Conformitate față de benchmark…" Command="{Binding AssessAgainstBenchmarkCommand}" Style="{StaticResource OutlineButtonStyle}"/>
             </WrapPanel>
         </Border>
 
@@ -77,6 +79,19 @@
                         <DataGridTextColumn Header="Acțiune" Binding="{Binding Action}" Width="1.2*"/>
                         <DataGridTextColumn Header="După" Binding="{Binding After.Display}" Width="1.3*"/>
                         <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*">
+                            <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="Conformitate" Style="{StaticResource InspectorTabItemStyle}">
+                <DataGrid Margin="8" ItemsSource="{Binding Compliance}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Control benchmark" Binding="{Binding BenchmarkControl}" Width="130"/>
+                        <DataGridTextColumn Header="Titlu" Binding="{Binding Title}" Width="2*"/>
+                        <DataGridTextColumn Header="Rezultat" Binding="{Binding Result}" Width="110"/>
+                        <DataGridTextColumn Header="Controale de politică" Binding="{Binding Observations.Count}" Width="80"/>
+                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="4*">
                             <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
                     </DataGrid.Columns>

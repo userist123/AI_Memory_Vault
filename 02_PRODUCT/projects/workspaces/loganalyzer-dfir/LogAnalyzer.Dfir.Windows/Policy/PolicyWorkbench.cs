@@ -92,6 +92,17 @@ public sealed class PolicyWorkbench
     public ExecutionRecord Rollback(PolicyDocument p, string executionId) => Executor.Rollback(p, executionId, Operator);
     public PolicyRecord Retire(PolicyDocument p, string reason) => Store.Retire(p, Operator, reason);
 
+    public string ComplianceDir => Path.Combine(EvidenceDir, "compliance");
+
+    /// <summary>Reads the policy on this station and assesses it against an owner benchmark mapping (or the policy itself as baseline).</summary>
+    public (Compliance.ComplianceAssessment Assessment, string AssessmentPath, string OscalPath) Assess(PolicyDocument p, string? benchmarkMappingPath = null)
+    {
+        var b = benchmarkMappingPath is null ? Compliance.BenchmarkLoader.FromPolicy(p) : Compliance.BenchmarkLoader.Parse(File.ReadAllText(benchmarkMappingPath), p);
+        var a = Compliance.ComplianceAssessment.Assess(b, p, Executor.Plan(p));
+        var (ap, op) = a.Save(ComplianceDir);
+        return (a, ap, op);
+    }
+
     /// <summary>Executions recorded for a policy, newest first.</summary>
     public IReadOnlyList<ExecutionRecord> Executions(PolicyDocument p)
     {

@@ -28,6 +28,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> Unsupported { get; } = new();
         public ObservableCollection<PolicyTransition> History { get; } = new();
         public ObservableCollection<ControlResult> Results { get; } = new();
+        public ObservableCollection<LogAnalyzer.Dfir.Compliance.ControlAssessment> Compliance { get; } = new();
 
         [ObservableProperty] private string _storeRoot = PolicyWorkbench.DefaultRoot;
         [ObservableProperty] private string _policyInfo = "Nicio politică deschisă.";
@@ -141,6 +142,34 @@ namespace LogAnalyzer.UI.ViewModels
             ShowResults(rb);
             return $"Rollback {rb.ExecutionId}: {Word(rb.Status)}.";
         });
+
+        [RelayCommand] private Task AssessAgainstPolicy() => Assess(null);
+
+        [RelayCommand]
+        private async Task AssessAgainstBenchmark()
+        {
+            var dlg = new OpenFileDialog { Title = "Maparea benchmark → controale de politică (YAML)", Filter = "Mapare (*.yaml;*.yml)|*.yaml;*.yml|Toate fișierele|*.*" };
+            if (dlg.ShowDialog() == true) await Assess(dlg.FileName);
+        }
+
+        private async Task Assess(string? mapping)
+        {
+            if (_policy is null) { Status = "Deschideți întâi o politică."; return; }
+            var p = _policy;
+            IsBusy = true;
+            try
+            {
+                var (a, assessmentPath, oscalPath) = await Task.Run(() => _bench.Assess(p, mapping));
+                Compliance.Clear();
+                foreach (var c in a.Controls.OrderBy(c => c.Result == LogAnalyzer.Dfir.Compliance.ComplianceResult.Satisfied).ThenBy(c => c.BenchmarkControl)) Compliance.Add(c);
+                Status = $"{a.Statement} Probe: {assessmentPath}; OSCAL: {Path.GetFileName(oscalPath)}";
+            }
+            catch (Exception ex) when (ex is FormatException or IOException or UnauthorizedAccessException or PolicyLifecycleException or YamlDotNet.Core.YamlException)
+            {
+                Status = "Oprit: " + ex.Message;
+            }
+            finally { IsBusy = false; }
+        }
 
         [RelayCommand]
         private void OpenEvidenceFolder()
