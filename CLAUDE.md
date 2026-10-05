@@ -101,8 +101,8 @@ Do not put vendor-specific prompt text into the global Vault routing policy.
 Use plan mode for non-trivial work: architecture, security, multi-step changes, repository changes, CI investigations, refactors and tasks involving multiple tools.
 
 Maintain:
-- `tasks/todo.md` — active plan, progress, blockers, review;
-- `tasks/lessons.md` — durable lessons from real corrections/incidents.
+- `.agents/tasks/todo.md` — active plan, progress, blockers, review;
+- `.agents/tasks/lessons.md` — durable lessons from real corrections/incidents.
 
 A plan should specify:
 - objective;
