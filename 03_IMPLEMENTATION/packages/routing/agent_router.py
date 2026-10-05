@@ -97,8 +97,8 @@ class AgentRouter:
         memory=MemoryPlan(qp,len(request.goal),int(self.registry.defaults.get("max_memory_results",5)),
             3,int(self.registry.defaults.get("max_graph_hops",1)),False,True,"evidence")
         status=RouteStatus.BLOCKED if not primary or (needs_verifier and verifier is None) else RouteStatus.PLANNED
-        if runtime_available and primary and runtime_available.get(primary.runtime_id,False):
-            status=RouteStatus.ROUTED if (not needs_verifier or runtime_available.get(verifier.runtime_id,False)) else RouteStatus.BLOCKED
+        if runtime_available and primary and primary.transport != "manual" and runtime_available.get(primary.runtime_id,False):
+            status=RouteStatus.ROUTED if (not needs_verifier or (verifier and verifier.runtime_id in runtime_available and runtime_available.get(verifier.runtime_id,False))) else RouteStatus.BLOCKED
         if request.requested_runtime and primary is None: status=RouteStatus.BLOCKED
         task_fp=qp
         receipt=RouteDecision(
