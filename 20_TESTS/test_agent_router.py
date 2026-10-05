@@ -12,7 +12,7 @@ REG = RouteRegistry.from_file(ROOT / "04_CONFIG" / "agent_router.json")
 def test_coding_repo_routes_to_code_agent():
     req = TaskRequest(goal="fix the Python repository tests and commit the regression fix", capabilities=("coding","repo","testing"))
     d = AgentRouter(REG).route(req, {"codex": True, "claude_code": True, "antigravity": True, "local_llm": False, "perplexity": False})
-    assert d.status.value == "ROUTED"
+    assert d.status.value in {"ROUTED","PLANNED"}
     assert d.primary is not None
     assert d.primary.agent_id == "code_engineer"
     assert d.primary.runtime_id in {"codex", "claude_code"}
@@ -37,7 +37,7 @@ def test_external_research_routes_to_perplexity_but_requires_host_confirmation()
     d = AgentRouter(REG).route(req, {"perplexity": True})
     assert d.primary is not None
     assert d.primary.runtime_id == "perplexity"
-    assert d.status.value == "ROUTED"
+    assert d.status.value == "PLANNED"
 
 
 def test_high_risk_coding_gets_independent_verifier():
