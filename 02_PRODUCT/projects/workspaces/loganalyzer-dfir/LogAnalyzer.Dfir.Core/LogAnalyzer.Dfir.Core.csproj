@@ -10,4 +10,8 @@
   <ItemGroup>
     <PackageReference Include="System.IO.Hashing" Version="9.0.0" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Detection rules shipped with the application (YARA-lite, Sigma-lite); hashed and versioned when loaded. -->
+    <None Include="Rules\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
