@@ -10,6 +10,7 @@ from agent_bridge.crypto import (
     canonical_json,
 )
 from agent_bridge.replay import ReplayGuard
+from agent_bridge.antigravity import AntigravitySession
 from agent_bridge.policy import CapabilityToken, BridgePolicy, PolicyError
 
 
