@@ -31,6 +31,7 @@ class DispatchStatus(StrEnum):
     WORKING="working"
     INPUT_REQUIRED="input-required"
     AUTH_REQUIRED="auth-required"
+    PENDING_VERIFICATION="pending-verification"
     COMPLETED="completed"
     FAILED="failed"
     CANCELED="canceled"

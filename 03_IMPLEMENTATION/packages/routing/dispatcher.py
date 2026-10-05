@@ -138,7 +138,19 @@ class AgentDispatcher:
         return WorkPacket(f"task_{uuid.uuid4().hex[:12]}",decision.route_id,source_agent,agent.id,decision.primary.runtime_id,agent.prompt_profile,decision.primary.transport,goal,acceptance_criteria,constraints,memory_refs,timeout_seconds,
             metadata={"profile_ref":agent.profile_ref,"selected_skills":list(decision.primary.selected_skills),"route_status":decision.status.value})
     def dispatch(self,decision:RouteDecision,packet:WorkPacket)->DispatchResult:
-        if decision.status==RouteStatus.BLOCKED: raise DispatchError("BLOCKED routes cannot be dispatched")
+        if decision.status != RouteStatus.ROUTED or decision.primary is None:
+            return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,
+                                   packet.target_runtime,packet.target_agent,None,"",
+                                   error=f"route status {decision.status.value} is not executable")
+        primary=decision.primary
+        if packet.route_id != decision.route_id:
+            return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,
+                                   packet.target_runtime,packet.target_agent,None,"",
+                                   error="packet route_id does not match decision")
+        if packet.target_runtime != primary.runtime_id or packet.target_agent != primary.agent_id:
+            return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,
+                                   packet.target_runtime,packet.target_agent,None,"",
+                                   error="packet target does not match decision primary")
         rt=self.registry.runtimes[packet.target_runtime]; adapter=self.adapters.get(packet.target_runtime)
         run=self.artifact_root/packet.task_id; run.mkdir(parents=True,exist_ok=True)
         (run/"route.json").write_text(json.dumps({
@@ -150,4 +162,12 @@ class AgentDispatcher:
             if rt.transport=="command": adapter=CommandAdapter(rt.adapter_ref)
             elif rt.transport=="a2a": adapter=A2AAdapter(rt.adapter_ref,packet.timeout_seconds)
             else: return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,packet.target_runtime,packet.target_agent,None,"",error="no adapter configured")
-        return adapter.dispatch(packet)
+        result=adapter.dispatch(packet)
+        if decision.verifier is not None and result.status == DispatchStatus.COMPLETED:
+            return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.PENDING_VERIFICATION,
+                                   packet.target_runtime,packet.target_agent,result.exit_code,result.final_message,
+                                   result.result_path,result.session_id,result.error,
+                                   metadata={**dict(result.metadata), "verifier_agent":decision.verifier.agent_id,
+                                             "verifier_runtime":decision.verifier.runtime_id,
+                                             "verification_reason":decision.verifier.reason})
+        return result

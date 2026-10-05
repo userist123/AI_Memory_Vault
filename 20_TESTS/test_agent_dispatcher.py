@@ -1,9 +1,9 @@
 from routing.dispatcher import AgentDispatcher
-from routing.models import DispatchResult, DispatchStatus, TaskRequest
+from routing.models import DispatchResult, DispatchStatus, TaskRequest, RouteStatus, VerifierDescriptor
 from routing.agent_router import AgentRouter
 from routing.registry import RouteRegistry
 from pathlib import Path
-from routing.dispatcher import CommandAdapter
+from routing.dispatcher import CommandAdapter, WorkPacket
 
 
 class FakeAdapter:
@@ -107,3 +107,34 @@ def test_dispatcher_persists_route_receipt(tmp_path):
     payload = receipt.read_text(encoding="utf-8")
     assert "agent-route.receipt.v1" in payload
     assert packet.route_id in payload
+
+
+def _routed_dispatch():
+    root = Path(__file__).resolve().parents[1]
+    reg = RouteRegistry.from_file(root / "04_CONFIG" / "agent_router.json")
+    decision = AgentRouter(reg).route(TaskRequest(goal="inspect the UI visually", capabilities=("visual",)), {"antigravity": True})
+    dispatcher = AgentDispatcher(reg, {"antigravity": FakeAdapter()})
+    packet = dispatcher.make_packet(decision, "inspect the UI visually", "claude_code")
+    return decision, packet, dispatcher
+
+
+def test_planned_route_is_blocked_at_dispatch():
+    decision, packet, dispatcher = _routed_dispatch()
+    result = dispatcher.dispatch(__import__("dataclasses").replace(decision, status=RouteStatus.PLANNED), packet)
+    assert result.status is DispatchStatus.BLOCKED
+
+
+def test_forged_packet_route_id_is_blocked():
+    decision, packet, dispatcher = _routed_dispatch()
+    forged = __import__("dataclasses").replace(packet, route_id="forged-route")
+    result = dispatcher.dispatch(decision, forged)
+    assert result.status is DispatchStatus.BLOCKED
+
+
+def test_verifier_gate_returns_pending_verification():
+    decision, packet, dispatcher = _routed_dispatch()
+    verifier = VerifierDescriptor("engineering_reviewer", "antigravity", decision.primary.model_tier, "engineering-review", "independent verification required")
+    gated = __import__("dataclasses").replace(decision, verifier=verifier)
+    result = dispatcher.dispatch(gated, packet)
+    assert result.status is DispatchStatus.PENDING_VERIFICATION
+    assert result.metadata["verifier_agent"] == "engineering_reviewer"
