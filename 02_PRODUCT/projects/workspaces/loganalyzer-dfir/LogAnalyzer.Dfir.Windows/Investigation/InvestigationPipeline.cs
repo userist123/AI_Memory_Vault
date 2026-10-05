@@ -2,6 +2,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.Integrity;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Network;
@@ -110,7 +111,36 @@ public sealed class InvestigationPipeline
             var parser = _parsers.FirstOrDefault(p => p.CanParse(ev));
             if (parser is null) continue;
             progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Name})");
-            var pr = parser.Parse(ev, ws.FullPath(ev.StoredPath), sink, ct);
+            var full = ws.FullPath(ev.StoredPath);
+            var pre = EvidencePreflight.Check(ev, full);
+            if (!pre.CanParse)
+            {
+                var refused = new ParseResult
+                {
+                    EvidenceId = ev.EvidenceId, Parser = parser.Name, ParserVersion = parser.Version, Status = EvidenceStatus.Failed,
+                    Error = $"{pre.Code}: {pre.Detail}", ExpectedSha256 = ev.Sha256, SourceSha256Before = pre.Sha256, SourceFingerprint = pre.Fingerprint,
+                };
+                r.Parsing.Add(refused);
+                r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
+                    "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
+                ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{ev.EvidenceId} {pre.Code} {pre.Detail}");
+                continue;
+            }
+            var mark = sink.Events.Count;
+            var pr = parser.Parse(ev, full, sink, ct);
+            pr.ExpectedSha256 = ev.Sha256;
+            pr.SourceSha256Before = pre.Sha256;
+            pr.SourceFingerprint = pre.Fingerprint;
+            var post = EvidencePreflight.Check(ev, full);
+            pr.SourceSha256After = post.Sha256;
+            if (!post.CanParse)
+            {
+                // The source changed while it was being read: nothing extracted from it can be attributed to the acquired original.
+                sink.Events.RemoveRange(mark, sink.Events.Count - mark);
+                pr.Status = EvidenceStatus.Failed;
+                pr.Error = $"{post.Code} în timpul parsării: {post.Detail}" + (pr.Error.Length > 0 ? $" | {pr.Error}" : "");
+                ws.Audit("evidence.mutated", $"{ev.EvidenceId} during parse {post.Detail}");
+            }
             r.Parsing.Add(pr);
             ws.RecordTransformation(ev.EvidenceId, parser.Name, parser.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
             r.Gaps.AddRange(pr.Gaps);
@@ -124,7 +154,17 @@ public sealed class InvestigationPipeline
         progress?.Report("Corelare");
         r.Findings.AddRange(Correlation.Run(r.Timeline));
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
+        {
+            var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
+            if (!pre.CanParse)
+            {
+                r.Gaps.Add(new EvidenceGap(Path.GetFileName(live.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}",
+                    "Constatările din starea live lipsesc", "O nouă fotografie a stării live", "Doar prin reachiziție"));
+                ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
+                continue;
+            }
             r.Findings.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), r.Findings.Count));
+        }
 
         // 4. Outputs, kept in the case and hashed into custody.
         progress?.Report("Scriere rezultate");

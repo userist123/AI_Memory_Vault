@@ -1,0 +1,120 @@
+# LogAnalyzer — Reality Audit (Faza 0)
+
+Data auditului: 2026-10-05. Bază: `main` după #208 și #210, plus commit-ul local `5a0c3dfb9` (BAM/ShimCache/Amcache).
+Metodă: s-a citit codul și s-au urmărit consumatorii în calea de producție (`grep` după tip/metodă, fără `tests/`).
+S-a rulat și o scanare automată pe 283 de fișiere `.cs`. Un fișier cu nume potrivit **nu** înseamnă REAL.
+REAL cere un consumator în producție și un test care verifică rezultatul real.
+
+Legendă:
+- **REAL** — rulează în aplicație, are test pe date reale sau sintetice cu rezultat verificat.
+- **PARTIAL** — funcționează, dar lipsește o parte din contract (test, gap, proveniență, mod de eșec).
+- **FACADE** — există cod, dar nu are consumator în aplicație sau nu face ce pretinde numele.
+- **UNSAFE** — produce un rezultat fals, raportează succes fără acțiune sau modifică stația fără confirmare explicită.
+
+Proiecte compilate (`LogAnalyzer.slnx`): App, Core, Infrastructure, Dfir.Core, Dfir.Windows, Dfir.Tests, UI.Tests, KeyGen, LicenseManager.
+Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`, `App.xaml.cs`, `*.csproj`) **nu sunt compilate** în aplicație.
+`Services/*.cs` de la rădăcină sunt legate doar în UI.Tests.
+
+## 1. Integritatea probelor și cazul
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Dfir.Core/Case/CaseWorkspace` (import, copiere, SHA-256, read-only, custodie CSV+JSONL, audit) | REAL | `ImportFile` copiază, nu mută; `RegisterStored` calculează SHA-256 și pune ReadOnly; teste în `Dfir.Tests/CoreTests.cs`. |
+| Preflight al sursei înainte de parsare | ~~FACADE~~ → REAL (P0, acest branch) | Înainte: parserul primea calea fără nicio verificare. `EvidenceParserBase.Parse` verifica doar existența. Acum: `EvidencePreflight` în pipeline (vezi `EVIDENCE_MODEL.md`). |
+| Detectarea modificării probei după achiziție | ~~FACADE~~ → REAL (P0) | Înainte: hash-ul din `evidence_index.jsonl` nu era recalculat niciodată. Acum: reverificat înainte și după parsare; la nepotrivire, `FAILED` + gap `EVIDENCE_MUTATED`. |
+| Amprenta formatului sursei (magic bytes) | ~~FACADE~~ → REAL (P0) | Înainte: dispecerizare doar după extensie sau nume (`InvestigationPipeline.Import`). Acum: `EvidenceFingerprint.Detect`. |
+| Identitatea și versiunea parserului în rezultat | REAL | `ParseResult.Parser/ParserVersion` și `CaseWorkspace.RecordTransformation`. |
+| Locator per eveniment | REAL | `TimelineEvent.Locator` este completat de EVTX (RecordID), Prefetch, SRUM (rând), PCAPNG (cadru), BAM, ShimCache, Amcache. |
+| `Dfir.Core/Model/Timestamp` (fără ora curentă ca fallback) | REAL | `Timestamp.Unknown()` este folosit când lipsește ora. Vezi ShimCache în `ExecutionArtifactParsers.cs:72`. |
+| Statusuri SUCCESS/EMPTY/FAILED/NOT_AVAILABLE/PARTIAL/SKIPPED_BY_DESIGN | REAL | `Model/Enums.cs`. Prin `ParseResult.Finish()`, o excepție devine `FAILED`, nu `EMPTY`. |
+| `Core/Services/ProvenanceLedgerService` (aplicația veche) | PARTIAL | Are consumator (MainViewModel), dar are 2 × `catch {}` care înghit erorile de scriere în registru. |
+| `Core/Services/DfirCasePackagingService` | PARTIAL | Are consumator. Un `catch {}` înghite erori. Pachetul nu conține hash-ul probelor originale, ci doar exporturile. |
+
+## 2. Parsere
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Dfir.Windows/Parsers/EvtxParser` + `Dfir.Core/IO/EvtxRepair` | REAL | Corpus: 170 jurnale, 348k evenimente în ~19 s. Un jurnal deteriorat recuperează 25.237 din 25.275 de evenimente, iar golul de RecordID e raportat. Teste: `EvtxRepairTests`, `CorpusRegressionTests`. |
+| `Dfir.Windows/Parsers/PrefetchParser` (MAM/Xpress Huffman) | REAL | `CorpusRegressionTests` (prefetch, prefetchMsiexec). |
+| `Dfir.Windows/Parsers/SrumNetworkParser` (ESE) | REAL | `CorpusRegressionTests` (srum). |
+| `Dfir.Core/Network/PcapngParser` | REAL | `CorpusRegressionTests` (pcapng). |
+| `SystemHiveExecutionParser` (BAM, ShimCache) | PARTIAL | Cod real (DiscUtils.Registry), cu ShimCache etichetat „prezență, nu execuție”. **Fără test** și fără hive SYSTEM în corpus. Validat doar manual. |
+| `AmcacheParser` | PARTIAL | 6.603 intrări parsate din `Amcache.hve` din corpus (manual). **Fără test automat** încă. Raportează gap dacă .LOG1/.LOG2 nu sunt aplicate. |
+| `Infrastructure/Parsers/EvtxParser` (import vechi) | PARTIAL | Folosit de MainViewModel. Acum raportează înregistrările corupte și folosește `EvtxRepair`. Are 2 × `catch {}`. |
+| `Infrastructure/Parsers/AntiForensicsArtifactsParser` | UNSAFE (FACADE ca consumator) | `:91 DateTime launchTime = DateTime.UtcNow;` — ora curentă folosită ca oră a probei. Marcare `ExecutionProven` ×3. Fără consumator în producție. |
+| `Infrastructure/Parsers/{MftParser, UsbForensicsParser, BrowserForensicsParser, SrumParser, AmcacheShimcacheParser, LnkParserPlugin, PrefetchParserPlugin, ShimcacheParserPlugin, UserActivityParser, VolatilityBridgeParser, RdpBitmapCacheParser, CrossPlatformLogsParser, EvtxCarverEngine, M365EntraIdLogsParser, RegistryParser}` | FACADE | `grep -rl` nu găsește niciun consumator în App/Core/Dfir (doar teste sau niciunul). Conțin 16 × `ExecutionProven` și ~20 × `catch {}`. **Nu se construiește nimic peste ele** (regula producție-consumator). |
+| `Core/Models/EvidenceEnums.ExecutionProven` | UNSAFE | Valoarea pretinde „execuție certă” pentru Prefetch/Amcache/BAM. Amcache/ShimCache dovedesc prezența, nu execuția. Folosită doar de parserele FACADE de mai sus. |
+
+## 3. Timestamp-uri și erori înghițite
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Infrastructure/Watchers/LiveEventLogWatcherService.cs:108` | UNSAFE → corectat (P0) | `TimeCreated = rec.TimeCreated ?? DateTime.UtcNow`: un eveniment fără oră primea ora curentă. |
+| `Core/Services/SuperTimelineExportService.cs:72` | UNSAFE → corectat (P0) | `reg.LastWriteTime ?? DateTime.UtcNow` în cronologia exportată. |
+| `App/ViewModels/MainViewModel.cs:379` | UNSAFE → corectat (P0) | `RawEventTimestamp = ... ?? DateTime.Now` pentru alertele live. |
+| `Infrastructure/Parsers/AntiForensicsArtifactsParser.cs:91` | UNSAFE (FACADE) | Vezi secțiunea 2. Fără consumator, deci nu se modifică acum. |
+| `DateTime.Now/UtcNow` în rest (297 de apariții în 87 de fișiere) | PARTIAL | Majoritatea sunt ora acțiunii (audit, custodie, nume de fișier, ferestre de filtrare). Acestea sunt legitime. Doar cele 4 de mai sus erau ore de probă. |
+| `catch {}` în proiectele compilate (88 de apariții în 38 de fișiere) | PARTIAL | Cele mai multe sunt în cod FACADE (Infrastructure/Parsers). În calea reală: `MainViewModel` ×10, `StationFacts` ×3, `ProcessScanner` ×3, `ToolRunner` ×2, `SystemDefenseExecutionService` ×3, `LiveEventLogWatcherService` ×1. Se tratează în P0/P1 pe căile atinse. |
+
+## 4. Acțiuni asupra stației
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Core/Services/AlertActionTriggerService.ExecuteContainmentScript` | UNSAFE → corectat (P0) | Întorcea `Success = true` fără să execute nimic: în AirGapped „[AIR-GAPPED PLAYBOOK SIMULATION] … validată”, iar în Network „Trimis semnal de izolare … PENDING AGENT ACK”, deși nu exista niciun agent. Apelat din `MainViewModel.TriggerContainmentPlaybook`. Acum raportează `NOT_EXECUTED` și comenzile sugerate. |
+| `Core/Services/MediaSanitizationEngine` + certificatul | UNSAFE → corectat (P0) | Suprascrie fișierul ales fără confirmare distructivă. Certificatul avea câmpuri inventate: `HardwareSerialNumber = "HD-"+Guid`, `VerifierOperator = "Ofițer Securitate Informatică"`, `TamperEvidentAuditHash = Guid+Guid`, `IsVerifiedZeroized = true` fără citire de verificare. PDF-ul afișa hash-ul SHA-256 al șirului gol când lipsea hash-ul de audit. |
+| `Dfir.Windows/Containment/*` (firewall per program, suspendare, scanare) | REAL | Confirmare explicită în UI. Izolarea automată e oprită implicit. Programele de încredere sunt identificate prin SHA-256. Teste: `ContainmentTests` (unul doar ca administrator). |
+| `Infrastructure/Services/SystemDefenseExecutionService` (izolare stație, blocare IoC) | PARTIAL | Acțiuni reale, confirmate de operator din #210. Are 3 × `catch {}`. Nu verifică după aplicare (fără VERIFY). |
+| `Core/Services/Network/CyberAttackCountermeasureEngine` | PARTIAL | Atribuirea a fost eliminată în #208. Rămâne cod de contramăsură fără verificare post-aplicare. |
+| `Core/Services/IncidentResponsePlaybookService` | PARTIAL | Scrie fișiere de playbook. Nu modifică stația. |
+
+## 5. Rețea
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Core/Services/Connectivity` (detectare pasivă NLM, fail-closed AirGapped, `NetworkPolicy`) | REAL | `OperatingModeTests`. NLM nu trimite trafic. |
+| Servicii cu ieșire în rețea: `LiveThreatIntelService`, `M365LiveConnectorService`, `SiemForwarderService`, `AuditCollectionService` (UDP), `DirectoryCollector`, `UserInvestigation` | PARTIAL | Toate apelează `NetworkPolicy.EnsureAllowed` înainte de I/O. **Lipsește** testul care injectează un `HttpClient` sau socket și dovedește 0 apeluri în AirGapped (DNS/HTTP/TCP). |
+| `Correlation.cs`, `ProcessScanner.cs`, `YaraRuleEngine.cs` | REAL (fără rețea) | Potrivirile „WebClient/HttpClient” sunt șiruri de detecție, nu apeluri. |
+
+## 6. Detecție și atribuire
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Dfir.Core/Analysis/Correlation` (15 reguli + `INCIDENT-CHAIN`) | REAL | Reconstruiește automat lanțul NanAgent din 19.09.2026 pe corpus (`InvestigationTests`). |
+| `LiveStateAnalyzer` | REAL | Rulează pe fotografia live colectată. Proveniența e dată de `EvidenceRef`. |
+| `Core/Services/AptAttributionEngine` | PARTIAL | Etichetat „suprapunere de tehnici — NU este atribuire” din #208. Încă are consumator în UI. |
+| `Core/Services/{RemoteTriageService, DnsTunnelingClassifier, LivingOffTheCloudEngine, ProcessInjectionDetector, RansomwareDetectionEngine, SysmonCorrelationEngine}` | FACADE | Fără consumator în calea de producție. |
+| `Core/Services/Network/LiveSecurityMonitoringEngine`, `StixMispExportService` | PARTIAL | Au consumator. Conțin încă texte sau valori demo (vezi scanarea „Demo”). |
+
+## 7. Politici, conformitate, domeniu
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `Dfir.Windows/Audit/ControlEvaluator` (C/P/A/U/D/N/S) | REAL | Citire, fără modificare. CONFORM/NECONFORM/DE VERIFICAT/NEDETERMINAT cu probe. `ControlAuditTests`. |
+| Motor de politici (`.lapolicy`, GPO, `Registry.pol`, OSCAL, ciclu DRAFT→RETIRED, APPLY/VERIFY) | FACADE (inexistent) | Nu există cod. Este planificat în P6–P8. |
+| `Dfir.Windows/Domain/*` (LDAP DM01–DM31, jurnale DC, e-mail EM01–EM05) | PARTIAL | Testat doar pe date sintetice (`DomainAndMailTests`). Stația de dezvoltare nu e în domeniu. |
+
+## 8. Teste și validare forensică
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `LogAnalyzer.UI.Tests` | REAL | 94/94 la ultima rulare (#210). |
+| `LogAnalyzer.Dfir.Tests` | REAL | 53 trecute, 1 sărit (doar ca administrator). |
+| Teste pe corpus (`CorpusFact`) | PARTIAL | Când corpusul lipsește, testul apare „Skipped”, iar suita rămâne verde. Nu există un raport explicit `FORENSIC VALIDATION = UNAVAILABLE` (P11). |
+| Validare diferențială (alt instrument) | FACADE (inexistent) | Planificat în P12. |
+
+## 9. Cod moștenit necompilat
+
+| COMPONENT | REAL / PARTIAL / FACADE / UNSAFE | EVIDENCE |
+|---|---|---|
+| `ViewModels/`, `Views/`, `App.xaml.cs`, `*.csproj` de la rădăcina workspace-ului | FACADE | Nu sunt în `LogAnalyzer.slnx`. Conțin încă `AlertActionTriggerService`, 58 × `Now`, 24 × `catch {}`, 11 × demo. Ștergerea lor e decizia proprietarului. |
+
+## Ordinea de remediere (P0, acest branch)
+
+1. `AlertActionTriggerService`: întoarce `NOT_EXECUTED` și nu mai raportează succes fără acțiune.
+2. Sanitizare:
+   - confirmare distructivă explicită;
+   - citire de verificare a zeroizării;
+   - fără câmpuri inventate în certificat (gol = „nedeclarat”);
+   - `IsVerifiedZeroized` numai după citire.
+3. Cele 3 fallback-uri de timestamp din calea de producție.
+4. `EvidencePreflight` (existență, mărime, SHA-256, amprentă) + detectarea modificării înainte și după parsare.

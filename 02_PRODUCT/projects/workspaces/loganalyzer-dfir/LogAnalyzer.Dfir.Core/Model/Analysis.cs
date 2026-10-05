@@ -81,6 +81,13 @@ public sealed class ParseResult
     public List<EvidenceGap> Gaps { get; } = [];
     /// <summary>Case-relative paths of derived files this parser produced (each hashed into custody).</summary>
     public List<string> DerivedOutputs { get; } = [];
+    /// <summary>SHA-256 recorded at acquisition.</summary>
+    public string ExpectedSha256 { get; set; } = "";
+    /// <summary>SHA-256 of the source right before parsing (preflight) and right after; all three must match.</summary>
+    public string SourceSha256Before { get; set; } = "";
+    public string SourceSha256After { get; set; } = "";
+    /// <summary>Format recognised from content (<c>EvidenceFingerprint</c>), e.g. "evtx", "regf", "ese".</summary>
+    public string SourceFingerprint { get; set; } = "";
 
     public ParseResult Finish()
     {
