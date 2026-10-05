@@ -134,6 +134,7 @@ class RouteCandidate:
     latency_score:float
     history_score:float
     reasons:tuple[str,...]
+    independence_group:str=""
     transport:str="manual"
 
     def to_dict(self):
@@ -142,7 +143,7 @@ class RouteCandidate:
                 "score":self.score,"capability_score":self.capability_score,
                 "quality_score":self.quality_score,"cost_score":self.cost_score,
                 "latency_score":self.latency_score,"history_score":self.history_score,
-                "reasons":list(self.reasons),"transport":self.transport}
+                "reasons":list(self.reasons),"independence_group":self.independence_group,"transport":self.transport}
 
 
 @dataclass(frozen=True)
