@@ -90,3 +90,20 @@ def test_a2a_adapter_v1_completed_response(monkeypatch):
     assert result.final_message == "ok"
     assert captured["payload"]["method"] == "SendMessage"
     assert next(v for k,v in captured["headers"].items() if k.lower() == "a2a-version") == "1.0"
+
+
+def test_dispatcher_persists_route_receipt(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    reg = RouteRegistry.from_file(root / "04_CONFIG" / "agent_router.json")
+    decision = AgentRouter(reg).route(
+        TaskRequest(goal="inspect the UI visually", capabilities=("visual",)),
+        {"antigravity": True}
+    )
+    dispatcher = AgentDispatcher(reg, {"antigravity": FakeAdapter()}, artifact_root=tmp_path)
+    packet = dispatcher.make_packet(decision, "inspect the UI visually", "claude_code")
+    dispatcher.dispatch(decision, packet)
+    receipt = tmp_path / "ai-memory-vault-dispatch" / packet.task_id / "route.json"
+    assert receipt.exists()
+    payload = receipt.read_text(encoding="utf-8")
+    assert "agent-route.receipt.v1" in payload
+    assert packet.route_id in payload
