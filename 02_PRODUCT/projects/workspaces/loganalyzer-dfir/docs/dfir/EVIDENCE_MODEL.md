@@ -1,6 +1,6 @@
 # LogAnalyzer — Modelul probei și integritatea ei
 
-Starea la 2026-10-05 (P0). Codul este sursa de adevăr: `LogAnalyzer.Dfir.Core/Model`, `Case/CaseWorkspace.cs`, `Integrity/EvidencePreflight.cs`.
+Starea la 2026-10-05 (P0 + P1). Codul este sursa de adevăr: `LogAnalyzer.Dfir.Core/Model`, `Case/CaseWorkspace.cs`, `Integrity/EvidencePreflight.cs`.
 
 ## Ciclul unei probe
 
@@ -10,14 +10,17 @@ Starea la 2026-10-05 (P0). Codul este sursa de adevăr: `LogAnalyzer.Dfir.Core/M
    - se adaugă un rând în `Evidence/evidence_index.jsonl` și o intrare de custodie (`Logs/chain_of_custody.{csv,jsonl}`).
 2. **Preflight** (`EvidencePreflight.Check`), înainte ca vreun parser să citească proba:
 
-   | Verificare | Rezultat la eșec | Cod |
-   |---|---|---|
-   | fișierul există | `Missing` | `EVIDENCE_MISSING` |
-   | se poate citi | `Unreadable` | `EVIDENCE_UNREADABLE` |
-   | SHA-256 și mărimea sunt cele de la achiziție | `HashMismatch` / `SizeMismatch` | `EVIDENCE_MUTATED` |
-   | formatul recunoscut din conținut (`EvidenceFingerprint`) e cel declarat | `FormatMismatch` | `EVIDENCE_FORMAT_MISMATCH` |
+   | Verificare | Rezultat la eșec | Cod | Status spec §4 |
+   |---|---|---|---|
+   | fișierul există | `Missing` | `EVIDENCE_MISSING` | `NO_EVIDENCE` |
+   | nu e blocat de alt proces | `Locked` | `EVIDENCE_LOCKED` | `READ_ERROR` |
+   | se poate citi | `Unreadable` | `EVIDENCE_UNREADABLE` | `READ_ERROR` |
+   | SHA-256 și mărimea sunt cele de la achiziție | `HashMismatch` / `SizeMismatch` | `EVIDENCE_MUTATED` | `MUTATED` |
+   | formatul recunoscut din conținut (`EvidenceFingerprint`) e cel declarat | `FormatMismatch` | `EVIDENCE_FORMAT_MISMATCH` | `UNVERIFIED` |
+   | există un hash de referință | `Unverified` (se parsează, marcat) | `EVIDENCE_UNVERIFIED` | `UNVERIFIED` |
 
-   Numai `Ok` permite parsarea. Altfel:
+   Totul în regulă = `Ok` / `AVAILABLE`. Se păstrează și `FileTimeUtc` (LastWriteTime al copiei).
+   Numai `Ok` și `Unverified` permit parsarea. Altfel:
    - `ParseResult.Status = FAILED`, cu codul în `Error`;
    - se adaugă un `EvidenceGap`;
    - jurnalul de audit primește `evidence.mutated` sau `evidence.preflight_failed`.
@@ -27,7 +30,12 @@ Starea la 2026-10-05 (P0). Codul este sursa de adevăr: `LogAnalyzer.Dfir.Core/M
 4. **Post-verificare**: SHA-256 se recalculează după parsare. Dacă sursa s-a schimbat în timpul citirii:
    - evenimentele extrase din ea sunt eliminate din cronologie;
    - rezultatul devine `FAILED` cu `EVIDENCE_MUTATED în timpul parsării`.
-5. **Custodie pentru derivate**: `RecordTransformation` înregistrează parserul, versiunea și hash-ul fișierului derivat.
+5. **Legarea provenienței** (`ProvenanceBinder`):
+   - fiecare eveniment din cronologie primește `SourceSha256`, `ParserId`, `ParserVersion` (și în `timeline.csv`);
+   - fiecare `EvidenceRef` dintr-o constatare primește SHA-256 al probei;
+   - o constatare fără probă sau cu o referință către o probă care nu e în caz este **respinsă**: nu apare în raport, se scrie în `findings.json` la `RejectedFindings` și în jurnalul de audit (`finding.rejected`).
+6. **Reverificare la raport** (`ReportIntegrity.Check`): toate probele cazului sunt verificate din nou când se generează PDF-ul. Dacă vreuna s-a schimbat după analiză, raportul începe cu „REZULTATE INVALIDE …”, iar secțiunea 5 listează starea fiecărei probe.
+7. **Custodie pentru derivate**: `RecordTransformation` înregistrează parserul, versiunea și hash-ul fișierului derivat.
 
 ## Ce se păstrează în `ParseResult` (Analysis/parsing.json)
 
@@ -60,4 +68,4 @@ Starea la 2026-10-05 (P0). Codul este sursa de adevăr: `LogAnalyzer.Dfir.Core/M
 
 - Hash-ul de referință este cel calculat la intrarea în caz. Dacă sursa fusese deja modificată înainte de achiziție, preflight-ul nu poate ști.
 - Fișierele derivate (`Analysis/*`) sunt rescrise la fiecare rulare. Integritatea lor se urmărește prin custodie, nu prin ReadOnly.
-- Modelul canonic unificat (P1: EvidenceItem/EvidenceEvent/Finding/Gap/Relationship/ParserResult/PolicyResult/ControlResult cu proveniență comună) nu este încă implementat.
+- `EvidenceItem` are acum `AcquisitionMethod` („acquired”/„imported”) și `ReadOnly`. Câmpurile din spec §3 corespund astfel: SourcePath=`OriginalPath`, SourceSha256=`Sha256`, AcquisitionTimestampUtc=`AcquiredAtUtc`, CollectorId=`Collector`, OriginalSize=`Size`. `Relationship` (graful, P4), `PolicyResult` (P6) și `ControlResult` (P8) nu sunt încă aduse la același contract; nu au fost create tipuri fără consumator.

@@ -97,6 +97,13 @@ public class InvestigationTests
             Assert.Contains("msbuild.exe", chain.Description);
             Assert.True(File.Exists(r.TimelineCsv));
 
+            // P1 provenance on the real case: every event and every finding reference carries the acquisition hash.
+            var hashes = ws.LoadEvidence().ToDictionary(e => e.EvidenceId, e => e.Sha256);
+            Assert.Empty(r.RejectedFindings);
+            Assert.All(r.Timeline, e => { Assert.Equal(hashes[e.EvidenceId], e.SourceSha256); Assert.NotEmpty(e.ParserId); });
+            Assert.All(r.Findings.SelectMany(f => f.SupportingEvidence), x => Assert.Equal(hashes[x.EvidenceId], x.Sha256));
+            Assert.True(ReportIntegrity.Check(r).AllIntact);
+
             var pdf = Path.Combine(ws.Root, "raport.pdf");
             InvestigationReportPdf.Write(r, pdf, "test");
             Assert.True(new FileInfo(pdf).Length > 20_000);

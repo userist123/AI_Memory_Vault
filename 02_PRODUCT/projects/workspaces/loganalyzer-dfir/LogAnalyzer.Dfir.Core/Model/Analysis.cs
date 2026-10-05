@@ -30,10 +30,15 @@ public sealed class TimelineEvent
     public string Locator { get; init; } = "";
     public Dictionary<string, string> Fields { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     public string Notes { get; set; } = "";
+    /// <summary>Provenance bound by the pipeline after parsing: SHA-256 of the source and the parser that produced the row.</summary>
+    public string SourceSha256 { get; set; } = "";
+    public string ParserId { get; set; } = "";
+    public string ParserVersion { get; set; } = "";
 }
 
 /// <summary>A pointer from a finding to the exact evidence behind it.</summary>
-public sealed record EvidenceRef(string EvidenceId, string Locator, string Description);
+/// <remarks><see cref="Sha256"/> is the source hash at acquisition, bound by <c>ProvenanceBinder</c>.</remarks>
+public sealed record EvidenceRef(string EvidenceId, string Locator, string Description, string Sha256 = "");
 
 /// <summary>Finding (spec §52). Severity and confidence are deliberately separate.</summary>
 public sealed class Finding

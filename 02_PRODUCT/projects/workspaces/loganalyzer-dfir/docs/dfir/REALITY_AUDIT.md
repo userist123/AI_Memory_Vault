@@ -24,6 +24,7 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 | Detectarea modificării probei după achiziție | ~~FACADE~~ → REAL (P0) | Înainte: hash-ul din `evidence_index.jsonl` nu era recalculat niciodată. Acum: reverificat înainte și după parsare; la nepotrivire, `FAILED` + gap `EVIDENCE_MUTATED`. |
 | Amprenta formatului sursei (magic bytes) | ~~FACADE~~ → REAL (P0) | Înainte: dispecerizare doar după extensie sau nume (`InvestigationPipeline.Import`). Acum: `EvidenceFingerprint.Detect`. |
 | Identitatea și versiunea parserului în rezultat | REAL | `ParseResult.Parser/ParserVersion` și `CaseWorkspace.RecordTransformation`. |
+| Hash-ul sursei legat de rezultatele derivate (P1) | REAL | `ProvenanceBinder`: fiecare eveniment poartă `SourceSha256`/`ParserId`/`ParserVersion`, fiecare `EvidenceRef` poartă SHA-256. Constatările fără probă sunt respinse. Raportul reverifică probele (`ReportIntegrity`). Test pe corpus în `InvestigationTests` + `EvidenceContractTests`. |
 | Locator per eveniment | REAL | `TimelineEvent.Locator` este completat de EVTX (RecordID), Prefetch, SRUM (rând), PCAPNG (cadru), BAM, ShimCache, Amcache. |
 | `Dfir.Core/Model/Timestamp` (fără ora curentă ca fallback) | REAL | `Timestamp.Unknown()` este folosit când lipsește ora. Vezi ShimCache în `ExecutionArtifactParsers.cs:72`. |
 | Statusuri SUCCESS/EMPTY/FAILED/NOT_AVAILABLE/PARTIAL/SKIPPED_BY_DESIGN | REAL | `Model/Enums.cs`. Prin `ParseResult.Finish()`, o excepție devine `FAILED`, nu `EMPTY`. |

@@ -22,6 +22,8 @@ public sealed class InvestigationResult
     public List<TimelineEvent> Timeline { get; } = [];
     public List<Finding> Findings { get; } = [];
     public List<EvidenceGap> Gaps { get; } = [];
+    /// <summary>Findings refused because they did not point to evidence in the case (kept for review, never reported as findings).</summary>
+    public List<RejectedFinding> RejectedFindings { get; } = [];
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
 }
@@ -141,6 +143,8 @@ public sealed class InvestigationPipeline
                 pr.Error = $"{post.Code} în timpul parsării: {post.Detail}" + (pr.Error.Length > 0 ? $" | {pr.Error}" : "");
                 ws.Audit("evidence.mutated", $"{ev.EvidenceId} during parse {post.Detail}");
             }
+            else
+                ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Name, parser.Version);
             r.Parsing.Add(pr);
             ws.RecordTransformation(ev.EvidenceId, parser.Name, parser.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
             r.Gaps.AddRange(pr.Gaps);
@@ -152,7 +156,7 @@ public sealed class InvestigationPipeline
 
         // 3. Correlation (timeline) + live state.
         progress?.Report("Corelare");
-        r.Findings.AddRange(Correlation.Run(r.Timeline));
+        var found = new List<Finding>(Correlation.Run(r.Timeline));
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
             var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
@@ -163,17 +167,21 @@ public sealed class InvestigationPipeline
                 ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
                 continue;
             }
-            r.Findings.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), r.Findings.Count));
+            found.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), found.Count));
         }
+        var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
+        r.Findings.AddRange(kept);
+        r.RejectedFindings.AddRange(rejected);
+        foreach (var x in rejected) ws.Audit("finding.rejected", $"{x.Finding.FindingId} {x.Finding.RuleId}: {x.Reason}");
 
         // 4. Outputs, kept in the case and hashed into custody.
         progress?.Report("Scriere rezultate");
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
-        using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator"]))
+        using (var w = new CsvWriter(r.TimelineCsv, ["TimeUtc", "TimeSemantics", "Source", "EventId", "Provider", "Host", "User", "Process", "Pid", "Path", "RemoteIp", "RemotePort", "Dns", "Summary", "Classification", "EvidenceId", "Locator", "SourceSha256", "Parser", "ParserVersion"]))
             foreach (var e in r.Timeline)
-                w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator });
+                w.WriteRow(new object?[] { e.Time.Utc?.ToString("o") ?? "", e.TimeSemantics, e.Source, e.EventId, e.Provider, e.Host, e.User, e.Process, e.Pid, e.Path, e.RemoteIp, e.RemotePort, e.Dns, e.Summary, e.Classification.ToSpec(), e.EvidenceId, e.Locator, e.SourceSha256, e.ParserId, e.ParserVersion });
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
-        File.WriteAllText(r.FindingsJson, JsonSerializer.Serialize(new { r.Findings, r.Gaps, r.Collection }, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(r.FindingsJson, JsonSerializer.Serialize(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "parsing.json"), JsonSerializer.Serialize(r.Parsing, new JsonSerializerOptions { WriteIndented = true }));
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps");
         return r;

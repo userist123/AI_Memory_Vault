@@ -110,6 +110,8 @@ public sealed class CaseWorkspace
                 Timezone = Info.Timezone,
                 Collector = collector,
                 CollectorVersion = collectorVersion,
+                AcquisitionMethod = action,
+                ReadOnly = File.GetAttributes(full).HasFlag(FileAttributes.ReadOnly),
                 Status = status,
                 TemporalType = temporal,
                 Sensitivity = sensitivity,

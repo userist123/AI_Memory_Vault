@@ -44,22 +44,36 @@ public static class EvidenceFingerprint
         h.Length >= offset + magic.Length && h.Slice(offset, magic.Length).SequenceEqual(magic);
 }
 
-public enum PreflightStatus { Ok, Missing, Unreadable, SizeMismatch, HashMismatch, FormatMismatch }
+public enum PreflightStatus { Ok, Unverified, Missing, Unreadable, Locked, SizeMismatch, HashMismatch, FormatMismatch }
 
-/// <summary>State of a stored source right before (or after) it is read. Only <see cref="PreflightStatus.Ok"/> may be parsed.</summary>
+/// <summary>State of a stored source right before (or after) it is read. Only Ok and Unverified may be parsed.</summary>
 public sealed record PreflightResult(string EvidenceId, PreflightStatus Status, long Size, string Sha256, string ExpectedSha256,
-                                     string Fingerprint, string Detail)
+                                     string Fingerprint, string Detail, DateTime? FileTimeUtc = null)
 {
-    public bool CanParse => Status == PreflightStatus.Ok;
+    /// <summary>Unverified = readable and of the declared format, but there is no acquisition hash to compare with.</summary>
+    public bool CanParse => Status is PreflightStatus.Ok or PreflightStatus.Unverified;
 
-    /// <summary>Spec name used in errors, gaps and the audit log.</summary>
+    /// <summary>Code used in errors, gaps and the audit log.</summary>
     public string Code => Status switch
     {
         PreflightStatus.Ok => "OK",
+        PreflightStatus.Unverified => "EVIDENCE_UNVERIFIED",
         PreflightStatus.Missing => "EVIDENCE_MISSING",
         PreflightStatus.Unreadable => "EVIDENCE_UNREADABLE",
+        PreflightStatus.Locked => "EVIDENCE_LOCKED",
         PreflightStatus.SizeMismatch or PreflightStatus.HashMismatch => "EVIDENCE_MUTATED",
         PreflightStatus.FormatMismatch => "EVIDENCE_FORMAT_MISMATCH",
+        _ => throw new ArgumentOutOfRangeException(),
+    };
+
+    /// <summary>Source status names from the master spec §4.</summary>
+    public string SpecStatus => Status switch
+    {
+        PreflightStatus.Ok => "AVAILABLE",
+        PreflightStatus.Unverified or PreflightStatus.FormatMismatch => "UNVERIFIED",
+        PreflightStatus.Missing => "NO_EVIDENCE",
+        PreflightStatus.Unreadable or PreflightStatus.Locked => "READ_ERROR",
+        PreflightStatus.SizeMismatch or PreflightStatus.HashMismatch => "MUTATED",
         _ => throw new ArgumentOutOfRangeException(),
     };
 }
@@ -70,17 +84,26 @@ public sealed record PreflightResult(string EvidenceId, PreflightStatus Status, 
 /// </summary>
 public static class EvidencePreflight
 {
+    private const int SharingViolation = unchecked((int)0x80070020), LockViolation = unchecked((int)0x80070021);
+
     public static PreflightResult Check(EvidenceItem item, string fullPath)
     {
         if (!File.Exists(fullPath))
             return new(item.EvidenceId, PreflightStatus.Missing, 0, "", item.Sha256, "", $"Fișierul probei lipsește: {fullPath}");
         long size;
         string sha, fingerprint;
+        DateTime fileTime;
         try
         {
-            size = new FileInfo(fullPath).Length;
+            var fi = new FileInfo(fullPath);
+            size = fi.Length;
+            fileTime = fi.LastWriteTimeUtc;
             sha = Hashing.Sha256File(fullPath);
             fingerprint = EvidenceFingerprint.Detect(fullPath);
+        }
+        catch (IOException ex) when (ex.HResult is SharingViolation or LockViolation)
+        {
+            return new(item.EvidenceId, PreflightStatus.Locked, 0, "", item.Sha256, "", $"Fișierul este blocat de alt proces: {ex.Message}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -89,11 +112,14 @@ public static class EvidencePreflight
 
         if (item.Sha256.Length > 0 && !sha.Equals(item.Sha256, StringComparison.OrdinalIgnoreCase))
             return new(item.EvidenceId, size != item.Size ? PreflightStatus.SizeMismatch : PreflightStatus.HashMismatch, size, sha, item.Sha256, fingerprint,
-                $"SHA-256 la achiziție {item.Sha256} ({item.Size} B), acum {sha} ({size} B): proba a fost modificată după achiziție.");
+                $"SHA-256 la achiziție {item.Sha256} ({item.Size} B), acum {sha} ({size} B): proba a fost modificată după achiziție.", fileTime);
         var expected = EvidenceFingerprint.Expected(item);
         if (expected is not null && !expected.Contains(fingerprint))
             return new(item.EvidenceId, PreflightStatus.FormatMismatch, size, sha, item.Sha256, fingerprint,
-                $"Conținutul are formatul „{fingerprint}”, dar proba este declarată {item.SourceType} (așteptat: {string.Join("/", expected)}).");
-        return new(item.EvidenceId, PreflightStatus.Ok, size, sha, item.Sha256, fingerprint, "");
+                $"Conținutul are formatul „{fingerprint}”, dar proba este declarată {item.SourceType} (așteptat: {string.Join("/", expected)}).", fileTime);
+        if (item.Sha256.Length == 0)
+            return new(item.EvidenceId, PreflightStatus.Unverified, size, sha, "", fingerprint,
+                "Proba nu are un SHA-256 de la achiziție; integritatea nu poate fi verificată.", fileTime);
+        return new(item.EvidenceId, PreflightStatus.Ok, size, sha, item.Sha256, fingerprint, "", fileTime);
     }
 }
