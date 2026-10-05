@@ -3,7 +3,7 @@ project_id: LOGANALYZER_DFIR
 application: LogAnalyzer — local Windows DFIR platform
 repository: userist123/AI_Memory_Vault_CODEX_READY
 workspace: 02_PRODUCT/projects/workspaces/loganalyzer-dfir
-last_updated_utc: 2026-10-05T18:00:00Z
+last_updated_utc: 2026-10-05T23:00:00Z
 base_main_sha: 69afe312a
 status: ACTIVE
 working_branch: claude/loganalyzer-reality-p0 (local, not pushed; stacked on claude/loganalyzer-execution-artifacts; #208 and #210 merged)
@@ -29,14 +29,15 @@ done_on_branch:
   - REAL_DFIR_v2 P2 - ParserDescriptor and ParserRegistry with content-based selection; evidence without a parser listed as SKIPPED_BY_DESIGN; Analysis/parsers.json (docs/dfir/PARSER_CONTRACT.md)
   - REAL_DFIR_v2 P11 partial - FORENSIC VALIDATION AVAILABLE or PARTIAL or UNAVAILABLE reported every run and in CI summary; LADFIR_REQUIRE_CORPUS=1 fails without corpus (docs/dfir/FORENSIC_TEST_LAB.md)
   - REAL_DFIR_v2 P3 - SYSTEM hive validated vs reg query (found and fixed UWP BAM entries skipped and DiscUtils big-data truncation via new RawRegistry); ScheduledTaskParser vs schtasks; UserHiveParser and SoftwareHiveParser vs reg export; persistence correlation rules
+  - REAL_DFIR_v2 P3 - ServicesParser vs WMI Win32_Service; a source can feed several parsers; BrowserHistoryParser vs the manual extraction; DOWNLOAD-THEN-EXEC puts the tzd4is.cyou download at the start of the 19.09 incident chain; LnkParser vs WScript.Shell; all hive parsers on RawRegistry, DiscUtils only in tests
 verification:
-  - 2026-10-05 claude/loganalyzer-reality-p0 - build 0 errors, UI.Tests 121/121, Dfir.Tests 112 pass + 1 admin-only skip (corpus AVAILABLE 11 of 11 sections), vault guards PASS
+  - 2026-10-05 claude/loganalyzer-reality-p0 - build 0 errors, UI.Tests 121/121, Dfir.Tests 134 pass + 1 admin-only skip (corpus AVAILABLE 14 of 14 sections), vault guards PASS
   - dotnet build LogAnalyzer.slnx: 0 errors
   - LogAnalyzer.Dfir.Tests: 27/27 (corpus tests skip when the local corpus is absent)
   - LogAnalyzer.UI.Tests: 94/94; LogAnalyzer.Dfir.Tests - 45 pass + 1 admin-only skip (SecurityEventIngestionService now maps the snake_case event contract; the test had been failing on main since fe4936510 / #204)
   - personal_data_guard, validate_repository_layout, repository_hygiene, exempt_area_secret_scan: PASS
 next:
-  - REAL_DFIR_v2 next - P3 remaining artifacts with corpus references (Services from SYSTEM vs services.csv, USN csv, Chrome History, DNS cache, WFP 5156/5157, LNK, USB); move SystemHive and Amcache parsers to RawRegistry; then P4 evidence graph
+  - REAL_DFIR_v2 next - P3 remaining (Jump Lists, USB/MountedDevices/SetupAPI, Recycle Bin $I, WFP 5156/5157 correlation, Firefox; MFT/USN need raw files not in the corpus); then P4 evidence graph
   - PR #209 is OPEN and needs human security review; not touched by this work
   - next: owner decisions (push/PR of claude/loganalyzer-auto-mode, RSA licensing, legacy root files); remove legacy facade screens that show sample data
   - owner decisions pending: untrack legacy root license.lic and root-level duplicate csproj files; RSA-PSS license migration (invalidates issued keys)
