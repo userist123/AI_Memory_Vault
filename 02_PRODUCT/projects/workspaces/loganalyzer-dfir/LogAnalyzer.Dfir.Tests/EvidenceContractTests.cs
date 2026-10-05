@@ -61,11 +61,12 @@ public sealed class EvidenceContractTests : IDisposable
         var (ws, ev) = CaseWith(SystemHiveWithBam());
         var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
 
-        Assert.Equal(2, r.Timeline.Count);
+        // The hive feeds two parsers: BAM rows come from SystemHiveExecutionParser, the bam service key from ServicesParser.
+        Assert.Equal(2, r.Timeline.Count(e => e.Source == "BAM"));
         Assert.All(r.Timeline, e =>
         {
             Assert.Equal(ev.Sha256, e.SourceSha256);
-            Assert.Equal("SystemHiveExecutionParser", e.ParserId);
+            Assert.Equal(e.Source == "Service" ? "ServicesParser" : "SystemHiveExecutionParser", e.ParserId);
             Assert.Equal("1.0", e.ParserVersion);
         });
         var csv = File.ReadAllLines(r.TimelineCsv);

@@ -3,7 +3,7 @@ namespace LogAnalyzer.Dfir.Analysis;
 /// <summary>Executable part of a command stored in a Run key, service, task or Winlogon value (no environment expansion).</summary>
 public static class CommandLine
 {
-    private static readonly string[] Extensions = [".exe", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".scr", ".msc", ".cpl", ".dll", ".hta"];
+    private static readonly string[] Extensions = [".exe", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".scr", ".msc", ".cpl", ".dll", ".hta", ".sys"];
 
     public static string Executable(string command)
     {

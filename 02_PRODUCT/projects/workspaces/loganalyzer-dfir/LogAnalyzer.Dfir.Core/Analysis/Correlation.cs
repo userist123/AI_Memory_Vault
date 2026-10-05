@@ -166,6 +166,24 @@ public static class Correlation
             });
         }
 
+        // Services and drivers configured in the SYSTEM hive whose binary or ServiceDll is in a user-writable location.
+        foreach (var e in events.Where(e => e.Source == "Service" && (IsUserWritable(e.Path) || IsUserWritable(F(e, "ServiceDll")))))
+        {
+            var file = IsUserWritable(F(e, "ServiceDll")) ? F(e, "ServiceDll") : e.Path;
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-SERVICE-CONFIG", Title = $"Serviciu configurat din locație scriabilă: {e.Service}",
+                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1543.003", FirstSeenUtc = e.Time.Utc, File = file, User = e.User,
+                Description = $"{e.Service} ({F(e, "ServiceType")}, {F(e, "StartMode")}) rulează {F(e, "ImagePath")}" +
+                              (F(e, "ServiceDll").Length > 0 ? $" cu ServiceDll {F(e, "ServiceDll")}" : "") + $" ca {e.User}.",
+                ClassificationReason = "Configurația serviciului din hive-ul SYSTEM indică o cale scriabilă de utilizatori. Arată configurația, nu o rulare.",
+                SupportingEvidence = [Ref(e, "configurație serviciu")],
+                AlternativeExplanations = ["Unele produse legitime își instalează serviciul în ProgramData."],
+                MissingEvidence = ["Instalarea (System 7045) și pornirile (7036), semnătura binarului."],
+            });
+        }
+
         // Registry autostarts (Run/RunOnce, Winlogon, IFEO) from saved hives.
         foreach (var e in events.Where(e => e.Source == "RunKey" && IsUserWritable(e.Path)))
             f.Add(new Finding

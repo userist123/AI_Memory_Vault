@@ -138,7 +138,7 @@ public sealed class InvestigationPipeline
                     });
                 continue;
             }
-            if (sel.Parser is not { } parser)
+            if (sel.Parsers.Count == 0)
             {
                 var pre0 = sel.Preflight!;
                 var refused = new ParseResult
@@ -153,30 +153,33 @@ public sealed class InvestigationPipeline
                 continue;
             }
             var pre = sel.Preflight!;
-            progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Descriptor.ParserId})");
-            var mark = sink.Events.Count;
-            var pr = parser.Parse(ev, full, sink, ct);
-            pr.ExpectedSha256 = ev.Sha256;
-            pr.SourceSha256Before = pre.Sha256;
-            pr.SourceFingerprint = pre.Fingerprint;
-            var post = parser.Preflight(ev, full);
-            pr.SourceSha256After = post.Sha256;
-            if (!post.CanParse)
+            foreach (var parser in sel.Parsers)
             {
-                // The source changed while it was being read: nothing extracted from it can be attributed to the acquired original.
-                sink.Events.RemoveRange(mark, sink.Events.Count - mark);
-                pr.Status = EvidenceStatus.Failed;
-                pr.Error = $"{post.Code} în timpul parsării: {post.Detail}" + (pr.Error.Length > 0 ? $" | {pr.Error}" : "");
-                ws.Audit("evidence.mutated", $"{ev.EvidenceId} during parse {post.Detail}");
+                progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Descriptor.ParserId})");
+                var mark = sink.Events.Count;
+                var pr = parser.Parse(ev, full, sink, ct);
+                pr.ExpectedSha256 = ev.Sha256;
+                pr.SourceSha256Before = pre.Sha256;
+                pr.SourceFingerprint = pre.Fingerprint;
+                var post = parser.Preflight(ev, full);
+                pr.SourceSha256After = post.Sha256;
+                if (!post.CanParse)
+                {
+                    // The source changed while it was being read: nothing extracted from it can be attributed to the acquired original.
+                    sink.Events.RemoveRange(mark, sink.Events.Count - mark);
+                    pr.Status = EvidenceStatus.Failed;
+                    pr.Error = $"{post.Code} în timpul parsării: {post.Detail}" + (pr.Error.Length > 0 ? $" | {pr.Error}" : "");
+                    ws.Audit("evidence.mutated", $"{ev.EvidenceId} during parse {post.Detail}");
+                }
+                else
+                    ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
+                r.Parsing.Add(pr);
+                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
+                r.Gaps.AddRange(pr.Gaps);
+                if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
+                    r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",
+                        "Evenimente lipsă din cronologie", "Alt parser / copie a probei", "Posibil"));
             }
-            else
-                ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
-            r.Parsing.Add(pr);
-            ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
-            r.Gaps.AddRange(pr.Gaps);
-            if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
-                r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",
-                    "Evenimente lipsă din cronologie", "Alt parser / copie a probei", "Posibil"));
         }
         r.Timeline.AddRange(sink.Events.OrderBy(e => e.Time.Utc ?? DateTimeOffset.MaxValue));
 

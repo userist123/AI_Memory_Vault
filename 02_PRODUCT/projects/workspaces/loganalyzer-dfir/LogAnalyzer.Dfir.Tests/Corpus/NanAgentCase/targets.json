@@ -62,6 +62,10 @@
     "runExports": "06_REGISTRY\\exports\\01_Run.reg|06_REGISTRY\\exports\\02_RunOnce.reg|06_REGISTRY\\exports\\03_Run.reg|06_REGISTRY\\exports\\04_RunOnce.reg",
     "winlogonExport": "06_REGISTRY\\exports\\07_Winlogon.reg"
   },
+  "servicesHive": {
+    "file": "06_REGISTRY\\hives\\SYSTEM.hiv",
+    "servicesCsv": "14_SERVICES\\services.csv"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

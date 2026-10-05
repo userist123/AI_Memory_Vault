@@ -50,6 +50,7 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | tasks | ScheduledTaskParser | toate cele 303 definiții din System32\Tasks parsate; fiecare acțiune Exec egală cu „Task To Run” din `schtasks /query /v` (fără ghilimele, cum le afișează schtasks); taskurile cu mai multe acțiuni apar ca „Multiple actions” |
 | userHive | UserHiveParser, RawRegistry | NTUSER salvat la 23:50:59 vs reg export la 23:51:00: fiecare intrare UserAssist (număr de rulări, FILETIME de ultimă rulare, inclusiv numele malformate) și fiecare valoare Run/RunOnce |
 | softwareHive | SoftwareHiveParser, RawRegistry | SOFTWARE vs reg export: Run, RunOnce, WOW6432Node Run/RunOnce, Winlogon Shell și Userinit |
+| servicesHive | ServicesParser | SYSTEM.hiv (23:50:56) vs WMI Win32_Service (23:50:41): fiecare serviciu există, cu StartMode, cont și cale identice după normalizarea făcută de SCM (`%SystemRoot%`, `%ProgramFiles%`, `\SystemRoot\`, `\??\`). WMI dă „Unknown” pentru 3 servicii protejate; testul le numără separat. |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 

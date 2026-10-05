@@ -41,7 +41,7 @@ Statusul vine din testele existente, nu din ce pretinde parserul.
 1. **Candidații:** parserele al căror descriptor acceptă tipul sau numele probei.
 2. **Fără candidat:** proba apare în `parsing.json` ca `SKIPPED_BY_DESIGN`, cu motivul („niciun parser înregistrat pentru tipul …”). Excepție: fotografiile live, care sunt citite de `LiveStateAnalyzer`. Nicio probă nu este ignorată în tăcere.
 3. **Preflight** cu reuniunea formatelor candidaților. Dacă eșuează (lipsă, blocată, modificată, alt format), parsarea este refuzată: `FAILED` + gol + audit.
-4. **Alegerea:** rulează parserul al cărui descriptor conține formatul recunoscut din conținut. Dacă sunt mai mulți, rezultatul e `FAILED` „ambiguu”; nu se alege la întâmplare.
+4. **Alegerea:** rulează **toți** parserii al căror descriptor conține formatul recunoscut din conținut. O sursă poate alimenta mai mulți parseri: un hive SYSTEM dă și artefacte de execuție (`SystemHiveExecutionParser`), și servicii (`ServicesParser`). Fiecare are propriul `ParseResult`, propria post-verificare și propria proveniență pe evenimente.
 5. **Post-verificare:** după parsare, `parser.Preflight` încă o dată. Dacă sursa s-a schimbat, evenimentele ei sunt eliminate.
 
 Registrul refuză doi parseri cu același `ParserId`.
@@ -58,6 +58,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | AmcacheParser 1.0 | Amcache InventoryApplicationFile | Win10/11 | VALIDATED | Amcache.hve real (>6000 intrări) + sintetic |
 | UserHiveParser 1.0 | NTUSER: UserAssist, Run/RunOnce | UserAssist v5/v3 | VALIDATED | NTUSER real vs reg export: fiecare intrare UserAssist (număr de rulări, FILETIME), fiecare valoare Run/RunOnce |
 | SoftwareHiveParser 1.0 | SOFTWARE: Run/RunOnce (+WOW6432Node), Winlogon, IFEO Debugger | — | VALIDATED | SOFTWARE real vs reg export (Run, RunOnce, WOW6432Node, Winlogon Shell/Userinit) |
+| ServicesParser 1.0 | SYSTEM: servicii și drivere (ControlSet curent) | — | VALIDATED | SYSTEM.hiv real vs WMI Win32_Service: nume, StartMode, StartName, PathName pentru toate cele peste 300 de servicii (3 cu StartMode „Unknown” în WMI) |
 | ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.
