@@ -73,9 +73,9 @@ class A2AAdapter:
     @staticmethod
     def _state(value:str) -> DispatchStatus:
         normalized=value.strip().lower().replace("task_state_", "")
-        aliases={"submitted":"submitted","working":"working","input_required":"input-required",
-                 "auth_required":"auth-required","completed":"completed","failed":"failed",
-                 "canceled":"canceled","rejected":"failed"}
+        aliases={"submitted":DispatchStatus.SUBMITTED,"working":DispatchStatus.WORKING,"input_required":DispatchStatus.INPUT_REQUIRED,
+                 "auth_required":DispatchStatus.AUTH_REQUIRED,"completed":DispatchStatus.COMPLETED,"failed":DispatchStatus.FAILED,
+                 "canceled":DispatchStatus.CANCELED,"rejected":DispatchStatus.FAILED}
         return aliases.get(normalized, DispatchStatus.FAILED)
 
     def dispatch(self,p:WorkPacket)->DispatchResult:
