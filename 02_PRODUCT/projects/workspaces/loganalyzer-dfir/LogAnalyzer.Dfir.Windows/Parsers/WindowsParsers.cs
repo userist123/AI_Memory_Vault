@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Network;
 using LogAnalyzer.Dfir.Parsing;
 using LogAnalyzer.Dfir.Persistence;
@@ -10,5 +11,5 @@ public static class WindowsParsers
     public static ParserRegistry Registry { get; } = new(
         [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser(),
          new ScheduledTaskParser(), new UserHiveParser(), new SoftwareHiveParser(),
-         new ServicesParser(), new BrowserHistoryParser()]);
+         new ServicesParser(), new BrowserHistoryParser(), new LnkParser()]);
 }

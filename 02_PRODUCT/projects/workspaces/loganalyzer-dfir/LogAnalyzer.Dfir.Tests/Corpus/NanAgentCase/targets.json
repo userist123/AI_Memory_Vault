@@ -70,6 +70,10 @@
     "file": "21_BROWSER\\Chrome\\Default\\History",
     "reference": "21_BROWSER\\browser_timeline_20260918_20260920.txt"
   },
+  "lnk": {
+    "file": "08_FILESYSTEM\\Recent_LNK\\00_CHAIN_OF_CUSTODY.lnk",
+    "folder": "08_FILESYSTEM\\Recent_LNK"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

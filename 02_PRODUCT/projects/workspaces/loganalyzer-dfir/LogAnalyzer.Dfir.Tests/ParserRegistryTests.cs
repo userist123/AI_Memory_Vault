@@ -31,7 +31,7 @@ public sealed class ParserRegistryTests : IDisposable
     public void Every_registered_parser_describes_itself_completely()
     {
         var all = WindowsParsers.Registry.Descriptors;
-        Assert.Equal(11, all.Count);
+        Assert.Equal(12, all.Count);
         Assert.Equal(all.Count, all.Select(d => d.ParserId).Distinct().Count());
         Assert.All(all, d =>
         {
@@ -69,6 +69,7 @@ public sealed class ParserRegistryTests : IDisposable
     [InlineData("software_hive", "SOFTWARE.hiv", "SoftwareHiveParser")]
     [InlineData("system_hive", "SYSTEM", "ServicesParser")]
     [InlineData("chromium_history", "History", "BrowserHistoryParser")]
+    [InlineData("lnk", "SETUP.EXE.lnk", "LnkParser")]
     public void Candidates_follow_the_declared_type(string type, string stored, string expected)
     {
         Assert.Contains(WindowsParsers.Registry.Candidates(Item(type, stored)), c => c.Descriptor.ParserId == expected);
@@ -114,7 +115,7 @@ public sealed class ParserRegistryTests : IDisposable
         Assert.Contains("operator_notes", skipped.Error);
 
         var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "parsers.json"))).RootElement;
-        Assert.Equal(11, inventory.GetArrayLength());
+        Assert.Equal(12, inventory.GetArrayLength());
         Assert.Contains(inventory.EnumerateArray(), d => d.GetProperty("ParserId").GetString() == "AmcacheParser");
     }
 }

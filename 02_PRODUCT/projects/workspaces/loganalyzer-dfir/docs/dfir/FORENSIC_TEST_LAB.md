@@ -53,6 +53,7 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | servicesHive | ServicesParser | SYSTEM.hiv (23:50:56) vs WMI Win32_Service (23:50:41): fiecare serviciu există, cu StartMode, cont și cale identice după normalizarea făcută de SCM (`%SystemRoot%`, `%ProgramFiles%`, `\SystemRoot\`, `\??\`). WMI dă „Unknown” pentru 3 servicii protejate; testul le numără separat. |
 | chromeHistory | BrowserHistoryParser | History real, citit dintr-o copie de lucru (sursa neatinsă), comparat cu extracția separată din investigația manuală: cele 5 descărcări (ora de start, cale, URL tab, octeți) și fiecare vizită din 18–20.09.2026 UTC; referința trunchia URL-urile lungi, ceea ce testul tratează explicit |
 | (investigație + History) | pipeline, DOWNLOAD-THEN-EXEC | lanțul critic din 19.09 începe cu descărcarea `SamFw_FRP_Tool_…_302044.zip` de pe tzd4is.cyou, legată cu încredere ridicată de SETUP.EXE rulat din `Downloads\TOOL_302044` |
+| lnk | LnkParser | toate cele peste 300 de linkuri din Recent parsate (2 fișiere sunt umplute cu zerouri, iar eșecul lor e verificat ca atare); 182 cu cale în LinkInfo comparate cu WScript.Shell: țintă, argumente, folder de lucru identice, cu excepția pierderilor ANSI ale shell-ului, numărate separat |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 

@@ -62,7 +62,7 @@ public sealed class InvestigationPipeline
             var ext = Path.GetExtension(f).ToLowerInvariant();
             var type = ext switch
             {
-                ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng",
+                ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng", ".lnk" => "lnk",
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
