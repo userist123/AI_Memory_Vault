@@ -28,6 +28,8 @@ public static class AntiForensics
     public const string CorruptChunksMarker = "chunk-uri corupte eliminate";
     /// <summary>Text the EVTX parser puts in the gap of a file shorter than its header says.</summary>
     public const string TruncatedMarker = "EVTX trunchiat";
+    /// <summary>Text the EVTX parser puts in the gap of a file whose RecordID sequence goes back (IDs used twice).</summary>
+    public const string RecordIdReuseMarker = "RecordID reutilizat";
 
     private const string Security = "EventLog:Security", System = "EventLog:System";
     private const string Firewall = "EventLog:Microsoft-Windows-Windows Firewall With Advanced Security/Firewall";
@@ -96,14 +98,30 @@ public static class AntiForensics
             else Add(id, technique, "T1070.001", AntiForensicResult.Undetermined, "Niciun fișier EVTX analizat.");
         }
 
-        // AF04 — RecordID gaps inside one EVTX file: records removed from the middle of a log.
+        // AF04 — RecordID gaps inside one EVTX file (records removed from the middle of a log) and RecordIDs used twice.
         {
             var holes = new List<string>();
             var refs = new List<EvidenceRef>();
+            var unclean = events.Where(e => Ev(e, System, "6008") || e.Source.Equals(System, StringComparison.OrdinalIgnoreCase) && e.EventId == "41"
+                                            && e.Provider.Equals("Microsoft-Windows-Kernel-Power", StringComparison.OrdinalIgnoreCase)).ToList();
+            static long RecordId(TimelineEvent e) =>
+                long.TryParse(e.Locator.Replace("EventRecordID=", "").Split(';')[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : -1;
             foreach (var g in evtxSources.GroupBy(e => (e.EvidenceId, e.Source)))
             {
-                var ids = g.Select(e => (Id: long.TryParse(e.Locator.Replace("EventRecordID=", ""), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : -1, Event: e))
-                           .Where(x => x.Id >= 0).OrderBy(x => x.Id).ToList();
+                // In file order: a step back means IDs were issued twice.
+                var inOrder = g.Where(e => RecordId(e) >= 0).ToList();
+                for (int i = 1; i < inOrder.Count; i++)
+                    if (RecordId(inOrder[i]) <= RecordId(inOrder[i - 1]))
+                    {
+                        var at = inOrder[i].Time.Utc;
+                        var crash = unclean.Where(u => u.Time.Utc is { } t && at is { } a && t >= a.AddMinutes(-10) && t <= a.AddMinutes(2)).ToList();
+                        holes.Add($"{g.Key.Source["EventLog:".Length..]}: RecordID reutilizat — după {RecordId(inOrder[i - 1])} ({inOrder[i - 1].Time.UtcIso}) urmează {RecordId(inOrder[i])} ({inOrder[i].Time.UtcIso})" +
+                                  (crash.Count > 0 ? $"; coincide cu o oprire necurată ({string.Join(", ", crash.Select(c => $"System {c.EventId} {c.Time.UtcIso}"))})" : "; nicio oprire necurată înregistrată în System în jurul acestei ore"));
+                        refs.Add(Ref(inOrder[i - 1], "ultima înregistrare înainte de reluarea numerotării"));
+                        refs.Add(Ref(inOrder[i], "prima înregistrare cu un ID deja folosit"));
+                        refs.AddRange(crash.Select(c => Ref(c, "oprire necurată")));
+                    }
+                var ids = inOrder.Select(e => (Id: RecordId(e), Event: e)).DistinctBy(x => x.Id).OrderBy(x => x.Id).ToList();
                 for (int i = 1; i < ids.Count; i++)
                     if (ids[i].Id > ids[i - 1].Id + 1)
                     {
@@ -114,9 +132,9 @@ public static class AntiForensics
             }
             if (holes.Count > 0)
                 Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.Detected,
-                    $"{holes.Count} goluri: " + string.Join("; ", holes.Take(20)) +
+                    $"{holes.Count} anomalii: " + string.Join("; ", holes.Take(20)) +
                     (gaps.Any(x => x.Reason.Contains(CorruptChunksMarker, StringComparison.Ordinal)) ? ". Unele pot proveni din chunk-urile corupte eliminate (AF02)." : ""), refs);
-            else if (evtxSources.Count > 0) Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.NotDetected, "RecordID continuu în fiecare fișier EVTX analizat.");
+            else if (evtxSources.Count > 0) Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.NotDetected, "RecordID continuu și fără repetări în fiecare fișier EVTX analizat.");
             else Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.Undetermined, "Niciun fișier EVTX analizat.");
         }
 

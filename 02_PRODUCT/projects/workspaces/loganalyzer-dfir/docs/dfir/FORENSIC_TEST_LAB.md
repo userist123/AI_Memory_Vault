@@ -72,8 +72,46 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | lnk | LnkParser | WScript.Shell |
 | usbHive | UsbDevicesParser | jurnalul Partition/Diagnostic 1006 |
 
+## Rularea de laborator (spec §21, §22)
+
+`ForensicLab.cs` este separat de CI-ul de bază: rulează doar cu `LADFIR_LAB=1`.
+
+```powershell
+$env:LADFIR_LAB = "1"
+$env:LADFIR_LAB_OUT = "D:\rapoarte"   # opțional: unde se copiază raportul
+dotnet test LogAnalyzer.Dfir.Tests --filter ForensicLab
+```
+
+Pentru fiecare caz scrie REAL CORPUS, KNOWN TRUTH, EXPECTED, ACTUAL, DIFF și starea, în `forensic_lab_report.md` și `.json`:
+
+| stare | când |
+|---|---|
+| PASS | toate valorile comparate sunt egale |
+| PARTIAL | există diferențe, iar fiecare este explicată de ceva raportat chiar de parser (un gol de probă) |
+| FAIL | există o diferență neexplicată (testul eșuează) |
+| UNVERIFIED | corpusul lipsește; cerut fără corpus, laboratorul **eșuează**, nu trece |
+
+Cazuri:
+- adevăr cunoscut din investigație (`targets.json`): PrefetchParser (SETUP.EXE), SrumNetworkParser (msbuild.exe),
+  EvtxParser (Defender 1116), PcapngParser (fluxuri, DNS, SNI), AmcacheParser;
+- diferențial (§22): **fiecare** fișier EVTX din corpus față de `wevtutil`. Se compară numărul de înregistrări (`gli`),
+  primul și ultimul RecordID (`qe /rd:false|true /c:1`), continuitatea RecordID, cea mai veche și cea mai nouă oră.
+
+Rezultat pe 2026-10-06: **174 PASS, 1 PARTIAL, 0 FAIL, 0 UNVERIFIED (175 de cazuri, 170 de fișiere EVTX, 379 MB)**.
+
+Prima rulare a arătat 58 de FAIL. Cauza era referința, nu parserul: `oldestRecordNumber` din `wevtutil gli /lf` este 1 pentru
+fișierele exportate și nu este un RecordID. Referința a fost înlocuită cu RecordID-ul primei și ultimei înregistrări
+citite de `wevtutil qe`.
+
+Cazul PARTIAL este `Application.evtx`: are 24.517 înregistrări, dar intervalul de RecordID are doar 24.486 de valori.
+Citit în ordine cu `wevtutil`, jurnalul revine o dată, de la 44790 (2026-08-08 17:50:08 UTC) la 44760 (17:51:21 UTC),
+deci 31 de RecordID-uri sunt folosite de două ori. Jurnalul System arată în acel moment o oprire neașteptată: EventLog 6008
+(„The previous system shutdown … was unexpected”), Kernel-Power 41 și repornire la 17:51:05. Parserul EVTX raportează acum
+refolosirea ca gol de probă și face locatorul unic (`EventRecordID=44760;occurrence=2`), iar AF04 o raportează împreună cu
+oprirea necurată.
+
 ## Ce lipsește (planificat)
 
-- **Validare diferențială** cu instrumente forensice dedicate (EZTools, Plaso) pentru EVTX, Prefetch, SRUM, Jump Lists. Nu sunt instalate, iar aplicația nu descarcă și nu rulează instrumente externe din proprie inițiativă.
-- **Laborator anti-forensic** (P13): jurnale șterse, timestomping, Prefetch dezactivat, cu rezultate așteptate.
+- **Validare diferențială** cu instrumente forensice dedicate (EZTools, Plaso) pentru Prefetch, SRUM și Jump Lists. Nu sunt instalate, iar aplicația nu descarcă și nu rulează instrumente externe din proprie inițiativă. EVTX este comparat cu `wevtutil`.
+- Laboratorul anti-forensics: vezi `ANTI_FORENSICS_TESTING.md`.
 - **Teste de corupție** pentru fiecare parser. EVTX are `EvtxRepairTests`; celelalte nu au încă.

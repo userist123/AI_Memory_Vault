@@ -61,6 +61,24 @@ public sealed class AntiForensicsTests : IDisposable
     }
 
     [Fact]
+    public void Record_ids_issued_twice_are_reported_with_the_unclean_shutdown_that_explains_them()
+    {
+        TimelineEvent At(string source, string id, string provider, long rec, int minute, string locator = "") => new()
+        {
+            Time = Timestamp.FromUtc(new DateTime(2026, 8, 8, 17, minute, 0, DateTimeKind.Utc), "t", "test"), Source = source, EventId = id, Provider = provider,
+            EvidenceId = source, Summary = "s", Locator = locator.Length > 0 ? locator : $"EventRecordID={rec}",
+        };
+        var app = new[] { At("EventLog:Application", "1", "A", 44789, 49), At("EventLog:Application", "1", "A", 44790, 50),
+                          At("EventLog:Application", "1", "B", 44760, 51, "EventRecordID=44760;occurrence=2") };
+        var crash = At("EventLog:System", "6008", "EventLog", 9, 51);
+        var af = C(Run([.. app, crash]), "AF04");
+        Assert.Equal(AntiForensicResult.Detected, af.Result);
+        Assert.Contains("după 44790", af.Reason);
+        Assert.Contains("oprire necurată (System 6008", af.Reason);
+        Assert.Contains("nicio oprire necurată", C(Run(app), "AF04").Reason);
+    }
+
+    [Fact]
     public void Clock_changes_by_time_sync_hardware_clock_or_time_zone_are_not_manipulation()
     {
         var sync = E("EventLog:Security", "4616", f: new() { ["ProcessName"] = @"C:\Windows\System32\svchost.exe" });
@@ -191,6 +209,7 @@ public sealed class AntiForensicsTests : IDisposable
             gaps.AddRange(r.Gaps);
         }
         Parse(new EvtxParser(), P("security"), "EV-SEC");
+        Parse(new EvtxParser(), Corpus.File("msiEvtx"), "EV-APP");
         Parse(new EvtxParser(), Corpus.File("antiForensics"), "EV-SYS");
         Parse(new EvtxParser(), P("firewall"), "EV-FW");
         Parse(new ServicesParser(), P("systemHive"), "EV-HIVE");
@@ -235,7 +254,16 @@ public sealed class AntiForensicsTests : IDisposable
         }
 
         // Negatives, each with the source analysed: structure intact, no record holes, no masquerading or renamed utility.
-        foreach (var id in new[] { "AF02", "AF03", "AF04", "AF13", "AF15" }) Assert.Equal(AntiForensicResult.NotDetected, af[id].Result);
+        // AF04: Application.evtx issues RecordIDs twice once; wevtutil, reading the file in order, sees the same step back.
+        var appIds = Wevtutil(Corpus.File("msiEvtx"), "*").Select(e => long.Parse(Regex.Match(e, "<EventRecordID>(\\d+)</EventRecordID>").Groups[1].Value)).ToList();
+        var stepsBack = Enumerable.Range(1, appIds.Count - 1).Where(i => appIds[i] <= appIds[i - 1]).Select(i => $"după {appIds[i - 1]}").ToList();
+        Assert.Equal(Corpus.L("antiForensics", "applicationRecordIdStepsBack"), stepsBack.Count);
+        Assert.Equal(AntiForensicResult.Detected, af["AF04"].Result);
+        foreach (var s in stepsBack) Assert.Contains(s, af["AF04"].Reason);
+        Assert.Contains("coincide cu o oprire necurată", af["AF04"].Reason);   // System 6008 / Kernel-Power 41 at 17:51 on 2026-08-08
+        Assert.Contains(gaps, g => g.Reason.StartsWith(AntiForensics.RecordIdReuseMarker, StringComparison.Ordinal));
+
+        foreach (var id in new[] { "AF02", "AF03", "AF13", "AF15" }) Assert.Equal(AntiForensicResult.NotDetected, af[id].Result);
         Assert.Equal(AntiForensicResult.Undetermined, af["AF06"].Result);   // Prefetch on (EnablePrefetcher = 3); .pf deletion is not visible
         Assert.Contains("EnablePrefetcher = 3", af["AF06"].Reason);
         Assert.Equal(AntiForensicResult.Undetermined, af["AF12"].Result);   // no TaskScheduler/Operational in the corpus

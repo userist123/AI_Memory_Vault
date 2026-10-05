@@ -106,7 +106,8 @@
     "clearedAtUtc": "2026-02-25T22:10:08",
     "auditRemovals": 52,
     "manualTimeChanges4616": 14,
-    "firewallAllRulesDeletedUtc": "2026-09-19T15:17:02"
+    "firewallAllRulesDeletedUtc": "2026-09-19T15:17:02",
+    "applicationRecordIdStepsBack": 1
   },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]

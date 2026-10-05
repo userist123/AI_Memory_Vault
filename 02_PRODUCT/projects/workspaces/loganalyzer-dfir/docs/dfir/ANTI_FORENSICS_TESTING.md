@@ -21,7 +21,7 @@ sau a auditului pot fi legitime; analistul decide.
 | AF01 | EVTX cleared | T1070.001 | Security 1102, System 104 (furnizor Microsoft-Windows-Eventlog) | există evenimentul | Security și System au fost analizate |
 | AF02 | EVTX corrupted | T1070.001 | verificarea CRC a chunk-urilor (`EvtxRepair`) | chunk-uri cu CRC invalid | toate EVTX-urile parsate sunt întregi |
 | AF03 | EVTX truncated | T1070.001 | antetul EVTX (numărul de chunk-uri, offset 42) și lungimea fișierului | fișierul nu se termină la granița unui chunk de 64 KiB sau antetul declară mai multe chunk-uri | idem |
-| AF04 | RecordID gaps | T1070.001 | EventRecordID în fiecare fișier | lipsesc ID-uri în interiorul fișierului | ID-uri continue |
+| AF04 | RecordID gaps | T1070.001 | EventRecordID în fiecare fișier, în ordinea din fișier | lipsesc ID-uri în interiorul fișierului sau numerotarea revine (ID-uri folosite de două ori); se corelează cu System 6008 / Kernel-Power 41 | ID-uri continue și fără repetări |
 | AF05 | timestamp manipulation (ora sistemului) | — | Security 4616, Kernel-General 1 | ora schimbată de alt proces decât svchost (W32Time), cu motivul 1 | System analizat |
 | AF06 | Prefetch deletion | T1070.004 | `EnablePrefetcher` din hive-ul SYSTEM | valoarea 0 | niciodată: ștergerea fișierelor .pf nu se vede fără $MFT/USN |
 | AF07 | USN anomalies | T1070.004 | — | — | jurnalul USN nu este colectat |
@@ -59,7 +59,8 @@ Valorile de mai jos sunt recalculate de test cu `wevtutil`, iar AF11 este compar
 | id | rezultat | ce arată |
 |---|---|---|
 | AF01 | DETECTED | 2026-02-25 22:10:08 UTC: jurnalele System, Application și ForwardedEvents golite de LAB-PC\Owner |
-| AF02, AF03, AF04 | NOT_DETECTED | Security (103.631), System (31.420), Firewall (864): structură intactă, RecordID continuu |
+| AF02, AF03 | NOT_DETECTED | Security (103.631), System (31.420), Application, Firewall (864): structură intactă |
+| AF04 | DETECTED | Application: după RecordID 44790 (2026-08-08 17:50:08 UTC) urmează 44760 (17:51:21); 31 de ID-uri sunt folosite de două ori. Coincide cu oprirea necurată din System (6008, Kernel-Power 41, repornire la 17:51:05). Security, System și Firewall au RecordID continuu |
 | AF05 | DETECTED | 14 schimbări de oră făcute din Setări (SystemSettingsAdminFlows.exe, utilizatorul Owner), în 4616 și în Kernel-General 1 |
 | AF06 | UNDETERMINED | Prefetch activ (`EnablePrefetcher` = 3) |
 | AF09 | NOT_DETECTED | 14 evenimente 4657, niciunul pe cheile de jurnalizare |

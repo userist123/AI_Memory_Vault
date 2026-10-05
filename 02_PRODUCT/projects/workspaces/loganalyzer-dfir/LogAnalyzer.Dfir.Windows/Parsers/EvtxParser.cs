@@ -65,6 +65,11 @@ public sealed class EvtxParser : EvidenceParserBase
         }
         using var reader = new EventLogReader(fullPath, PathType.FilePath);
         int consecutiveErrors = 0;
+        // RecordIDs normally only grow. When one repeats, the locator gets ";occurrence=n" so it stays unique, and the step is reported.
+        var seen = new Dictionary<long, int>();
+        long previous = -1;
+        DateTime? previousTime = null;
+        var steps = new List<string>();
         while (true)
         {
             ct.ThrowIfCancellationRequested();
@@ -79,11 +84,33 @@ public sealed class EvtxParser : EvidenceParserBase
             if (rec is null) break;
             using (rec)
             {
-                sink.Add(ToEvent(item, rec));
+                var e = ToEvent(item, rec);
+                if (rec.RecordId is long id)
+                {
+                    if (id <= previous)
+                        steps.Add($"după RecordID {previous} ({previousTime:yyyy-MM-ddTHH:mm:ssZ}) urmează {id} ({rec.TimeCreated?.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ})");
+                    int n = seen[id] = seen.GetValueOrDefault(id) + 1;
+                    if (n > 1) e = WithLocator(e, $"EventRecordID={id};occurrence={n}");
+                    previous = id;
+                    previousTime = rec.TimeCreated?.ToUniversalTime();
+                }
+                sink.Add(e);
                 result.Records++;
             }
         }
+        if (steps.Count > 0)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
+                $"{LogAnalyzer.Dfir.Analysis.AntiForensics.RecordIdReuseMarker}: {seen.Count(kv => kv.Value > 1)} ID-uri apar de mai multe ori; " + string.Join("; ", steps.Take(10)),
+                "EventRecordID nu identifică unic aceste înregistrări; locatorul celei de-a doua apariții are sufixul ;occurrence=n",
+                "Jurnalul System (6008, Kernel-Power 41) pentru o oprire necurată; alte copii ale jurnalului", "Nu este necesar: toate înregistrările au fost citite"));
     }
+
+    private static TimelineEvent WithLocator(TimelineEvent e, string locator) => new()
+    {
+        Time = e.Time, Source = e.Source, EvidenceId = e.EvidenceId, EventId = e.EventId, Provider = e.Provider, Host = e.Host, User = e.User,
+        Process = e.Process, Pid = e.Pid, Path = e.Path, Summary = e.Summary, TimeSemantics = e.TimeSemantics, TemporalType = e.TemporalType,
+        Classification = e.Classification, Confidence = e.Confidence, Locator = locator, Fields = e.Fields,
+    };
 
     private TimelineEvent ToEvent(EvidenceItem item, EventRecord rec)
     {
