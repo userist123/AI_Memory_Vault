@@ -2,6 +2,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.Graph;
 using LogAnalyzer.Dfir.Integrity;
 using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
@@ -24,6 +25,8 @@ public sealed class InvestigationResult
     public List<EvidenceGap> Gaps { get; } = [];
     /// <summary>Findings refused because they did not point to evidence in the case (kept for review, never reported as findings).</summary>
     public List<RejectedFinding> RejectedFindings { get; } = [];
+    /// <summary>Entities and relationships built from the timeline and findings (Analysis/graph.json).</summary>
+    public EvidenceGraph? Graph { get; set; }
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
 }
@@ -216,6 +219,11 @@ public sealed class InvestigationPipeline
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
         File.WriteAllText(r.FindingsJson, JsonSerializer.Serialize(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "parsing.json"), JsonSerializer.Serialize(r.Parsing, new JsonSerializerOptions { WriteIndented = true }));
+        progress?.Report("Graf de probe");
+        r.Graph = EvidenceGraph.Build(r.Timeline, r.Findings, ws.Info.Host);
+        var (graphJson, graphSha) = r.Graph.Snapshot(ws.Info.CaseId);
+        File.WriteAllText(Path.Combine(analysisDir, "graph.json"), graphJson);
+        ws.RecordTransformation("CASE", "EvidenceGraph", "1.0", "Analysis/graph.json", $"{r.Graph.Entities.Count} entități, {r.Graph.Relationships.Count} relații, SHA-256 {graphSha}");
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps");
         return r;
     }

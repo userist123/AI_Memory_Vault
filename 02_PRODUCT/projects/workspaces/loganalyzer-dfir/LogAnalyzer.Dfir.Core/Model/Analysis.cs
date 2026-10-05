@@ -61,6 +61,8 @@ public sealed class Finding
     public string Domain { get; init; } = "";
     public required string Description { get; init; }
     public List<EvidenceRef> SupportingEvidence { get; init; } = [];
+    /// <summary>Findings this one is built from (an incident chain lists its steps).</summary>
+    public List<string> RelatedFindingIds { get; init; } = [];
     public List<string> ContradictingEvidence { get; init; } = [];
     public List<string> AlternativeExplanations { get; init; } = [];
     public List<string> MissingEvidence { get; init; } = [];

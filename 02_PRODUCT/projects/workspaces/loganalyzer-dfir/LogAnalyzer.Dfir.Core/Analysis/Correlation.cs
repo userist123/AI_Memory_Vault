@@ -448,6 +448,7 @@ public static class Correlation
                     Description = string.Join(" → ", cluster.Select(c => $"[{T(c):HH:mm}] {c.Title}")),
                     ClassificationReason = "Constatări din surse diferite (Prefetch, SRUM, Defender, jurnale) concentrate în aceeași fereastră de timp.",
                     SupportingEvidence = cluster.SelectMany(c => c.SupportingEvidence.Take(3)).ToList(),
+                    RelatedFindingIds = cluster.Select(c => c.FindingId).ToList(),
                     AlternativeExplanations = ["Coincidență temporală a unor activități fără legătură; verificați fiecare pas."],
                     RecommendedNextSteps = ["Reconstituiți fiecare pas din probele indicate.", "Stabiliți ce date au părăsit stația în fereastra lanțului."],
                 });
@@ -464,7 +465,7 @@ public static class Correlation
     }
 
     /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip".</summary>
-    private static string DefenderContainer(string path)
+    public static string DefenderContainer(string path)
     {
         // Behaviour detections list "process:_pid:…" before the file: prefer the container, then the file segment.
         var parts = path.Split(';').Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
@@ -478,7 +479,7 @@ public static class Correlation
     }
 
     /// <summary>Prefetch paths start with \VOLUME{guid}\; compare on the part after the volume.</summary>
-    private static string Normalize(string path)
+    public static string Normalize(string path)
     {
         var p = path.Replace('/', '\\');
         if (p.StartsWith("\\VOLUME{", StringComparison.OrdinalIgnoreCase)) { var i = p.IndexOf('}'); if (i > 0) p = p[(i + 1)..]; }

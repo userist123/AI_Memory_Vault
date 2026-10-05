@@ -1,4 +1,5 @@
 using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Graph;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Acquisition;
 using LogAnalyzer.Dfir.Windows.Investigation;
@@ -102,6 +103,17 @@ public class InvestigationTests
             Assert.Contains("tzd4is.cyou", access.Description);
             Assert.Contains("SETUP.EXE", access.Description);
             Assert.Contains("302044.zip", chain.Description);
+
+            // P4 graph on the real case: direct edges where the evidence shows them, correlation only as derivation.
+            var g = r.Graph!;
+            Assert.All(g.Relationships, x => Assert.True(x.EvidenceId.Length > 0 && x.Locator.Length > 0 || x.Derivation.Length > 0));
+            var domain = g.Find("Domain", "tzd4is.cyou")!;
+            Assert.Contains(g.Edges(domain.Id), x => x.Type == RelationType.Downloaded && x.TargetEntity.Contains("302044.ZIP") && x.Classification == Classification.Direct && x.Reason.Contains("tab"));
+            Assert.Contains(g.Relationships, x => x.Type == RelationType.Downloaded && x.SourceEntity == "Domain:130af8a83568f840a6ae55fd.192169503.com" && x.TargetEntity.Contains("302044.ZIP"));
+            Assert.Contains(g.Relationships, x => x.Type == RelationType.Detected && x.TargetEntity.Contains("NANAGENT32.EXE"));
+            Assert.Contains(g.Relationships, x => x.Type == RelationType.Loaded && x.TargetEntity.Contains("BOOTSTRAP_7D57.CMD"));
+            Assert.Contains(g.Relationships, x => x.Type == RelationType.DerivedFrom && x.SourceEntity.EndsWith(@"\DOWNLOADS\SAMFW_FRP_TOOL_V5.9_SETUP_DOWNLOAD_LATES_ARCHIVE_FILE_302044\SETUP.EXE") && x.Classification == Classification.Correlated);
+            Assert.True(File.Exists(Path.Combine(ws.Root, "Analysis", "graph.json")));
             Assert.True(File.Exists(r.TimelineCsv));
 
             // P1 provenance on the real case: every event and every finding reference carries the acquisition hash.
