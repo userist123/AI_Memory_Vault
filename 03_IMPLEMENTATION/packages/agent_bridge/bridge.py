@@ -18,12 +18,16 @@ class SecureBridge:
                  policy: BridgePolicy, replay_guard: ReplayGuard,
                  executors: Mapping[str, Callable[[WorkPacket], Mapping]],
                  signer,
+                 max_token_ttl: float = 120.0,
+                 clock_skew: float = 30.0,
                  max_packet_bytes: int = 1024 * 1024,
                  max_result_bytes: int = 4 * 1024 * 1024):
         self.bridge_id=bridge_id
         self.recipient=recipient
         self.verifier=verifier
         self.signer=signer
+        self.max_token_ttl=max_token_ttl
+        self.clock_skew=clock_skew
         self.policy=policy
         self.replay_guard=replay_guard
         self.executors=dict(executors)
@@ -68,7 +72,7 @@ class SecureBridge:
             aad=f"{self.bridge_id}:{task_id}".encode()
             if str(request["aad"]).encode()!=aad:
                 raise BridgeRequestError("AAD mismatch")
-            token=CapabilityToken.verify(request["capability_token"],self.verifier)
+            token=CapabilityToken.verify(request["capability_token"],self.verifier,max_ttl=self.max_token_ttl,clock_skew=self.clock_skew)
             if token.get("bridge_id")!=self.bridge_id or token.get("task_id")!=task_id:
                 raise BridgeRequestError("capability identity mismatch")
             if token.get("nonce")!=request["nonce"]:

@@ -29,6 +29,6 @@
     "packet_cipher": "X25519+HKDF-SHA256+AES-256-GCM",
     "signature": "Ed25519",
     "minimum_ttl_seconds": 30,
-    "maximum_ttl_seconds": 900
+    "maximum_ttl_seconds": 120
   }
 }

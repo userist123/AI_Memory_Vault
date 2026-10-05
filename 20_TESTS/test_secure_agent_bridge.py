@@ -77,23 +77,49 @@ def test_secure_bridge_client_round_trip():
     caller_keys = X25519Envelope.generate()
     signer = Ed25519Signer.generate()
     from agent_bridge.bridge import SecureBridge
-    bridge_signer = Ed25519Signer.generate()
     bridge = SecureBridge(
         "bridge-1", bridge_keys, signer.public_key,
         BridgePolicy(("antigravity",), ("visual_architect",)), ReplayGuard(),
-        {"antigravity": lambda p: {"status": "completed", "response": "ok"}}, bridge_signer,
+        {"antigravity": lambda p: {"status": "completed", "response": "ok"}},
     )
     packet = WorkPacket("task-client", "route-client", "router", "visual_architect",
                         "antigravity", "v1", "command", "private work", (), (), (), 60, {})
     token = CapabilityToken.issue(
         signer.private_key, bridge_id="bridge-1", task_id=packet.task_id,
         runtime="antigravity", agent="visual_architect", permissions=("execute",),
-        expires_at=time.time() + 60, nonce="client-nonce", response_public_key=base64.urlsafe_b64encode(caller_keys.public_key.public_bytes(__import__("cryptography").hazmat.primitives.serialization.Encoding.Raw, __import__("cryptography").hazmat.primitives.serialization.PublicFormat.Raw)).decode(),
+        expires_at=time.time() + 60, nonce="client-nonce",
     )
     seen = {}
     def send(request):
         seen.update(request)
         return bridge.handle(request)
-    client = SecureBridgeClient("bridge-1", bridge_keys.public_key, caller_keys, send, bridge_signer.public_key)
+    client = SecureBridgeClient("bridge-1", bridge_keys.public_key, caller_keys, send)
     assert client.dispatch(packet, token, "client-nonce")["response"] == "ok"
     assert b"private work" not in json.dumps(seen).encode()
+
+
+def test_capability_token_rejects_ttl_above_maximum():
+    signer = Ed25519Signer.generate()
+    token = CapabilityToken.issue(
+        signer.private_key, bridge_id="bridge-1", task_id="ttl-1",
+        runtime="antigravity", agent="visual_architect", permissions=("execute",),
+        expires_at=1121, nonce="ttl-nonce", response_public_key="caller", iat=100,
+    )
+    with pytest.raises(PolicyError, match="maximum TTL"):
+        CapabilityToken.verify(token, signer.public_key, now=100, max_ttl=120)
+
+
+def test_replay_guard_rejects_reuse_after_memory_window_but_inside_token_lifetime():
+    guard = ReplayGuard(ttl_seconds=630, max_ttl_seconds=600, clock_skew_seconds=30)
+    assert guard.claim("task-long", "nonce-long", now=1000)
+    assert guard.claim("task-long", "nonce-long", now=1301) is False
+
+
+def test_replay_guard_sqlite_survives_reinstantiation(tmp_path):
+    db = tmp_path / "replay.sqlite"
+    first = ReplayGuard(path=db, ttl_seconds=180)
+    assert first.claim("task-persist", "nonce-persist", now=1000)
+    first.close()
+    second = ReplayGuard(path=db, ttl_seconds=180)
+    assert second.claim("task-persist", "nonce-persist", now=1100) is False
+    second.close()
