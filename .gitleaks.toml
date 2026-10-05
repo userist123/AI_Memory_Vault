@@ -27,6 +27,7 @@ paths = [
   '''(^|/)02_PRODUCT/.*/tests/''',
   '''(^|/)tests/''',
   '''(^|/)projects/.*/tests/''',
+  '''(^|/)security/tests/''',
 ]
 
 # Python bytecode is generated during the test run and is not source material.
@@ -42,6 +43,8 @@ description = "Intentional synthetic API-key fixtures"
 regexes = [
   '''sk-123456789''',
   '''test_secret_for_ablation_harness_32chars''',
+  '''host-super-secret-key-32bytes-min!''',
+  '''production-multiprocess-test-secret-32b!''',
 ]
 
 # Placeholder credentials in imported third-party CI workflows.
