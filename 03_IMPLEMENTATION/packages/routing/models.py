@@ -224,3 +224,13 @@ class RouteFeedback:
     latency_score:float
     task_class:str="unknown"
     failure_class:str|None=None
+
+
+@dataclass(frozen=True)
+class RoutePrior:
+    samples: int
+    success_rate: float
+    verification_rate: float
+    quality_score: float
+    cost_score: float
+    latency_score: float
