@@ -21,10 +21,17 @@ paths = [
   '''(^|/)security/tests/''',
   '''(^|/)__pycache__/''',
   '''(^|/)02_PRODUCT/projects/imported/.*/\.github/workflows/.*\.ya?ml$''',
+  '''(^|/)03_IMPLEMENTATION/packages/agent_bridge/crypto\.py$''',
+]
+commits = [
+  "2c9c1018efad2d019b4801187222fa37cabcd8c2",
 ]
 regexes = [
   '''sk-123456789''',
   '''test_secret_for_ablation_harness_32chars''',
   '''host-super-secret-key-32bytes-min!''',
   '''production-multiprocess-test-secret-32b!''',
+  '''Ed25519PrivateKey''',
+  '''X25519PrivateKey''',
+  '''private_key:\s*(?:Ed25519PrivateKey|X25519PrivateKey)''',
 ]

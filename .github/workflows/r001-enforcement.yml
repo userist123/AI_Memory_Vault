@@ -125,6 +125,8 @@ jobs:
           # does not emit the default diff.renameLimit warning.
           git config --global diff.renameLimit 100000
           git config --global diff.renames true
+          git config diff.renameLimit 100000
+          git config diff.renames true
           docker run --rm -w /repo -v "$PWD:/repo" -v "$R001_DIR:/evidence" ghcr.io/gitleaks/gitleaks@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git --config=/repo/.gitleaks.toml --report-format json --report-path /evidence/r001_gitleaks_history.json --verbose --redact --exit-code 1 2>&1 | tee "$R001_DIR/r001_gitleaks_history.txt"
 
       - name: Dependency audit
