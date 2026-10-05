@@ -15,6 +15,7 @@ public sealed record SettingRef(string Type, string Hive, string Key, string Nam
         "registry" => $@"{Hive}\{Key}\{Name}",
         "audit" => $"audit:{Name}",
         "service" => $"service:{Name}",
+        "secpol" => $"secpol:{Name}",
         _ => $"{Type}:{Name}",
     };
 }
@@ -152,8 +153,12 @@ public static class PolicyValidator
                 case "service":
                     if (c.Setting.Name.Length == 0) e.Add(W("lipsește numele serviciului"));
                     break;
+                case "secpol":
+                    if (!PolicyImport.SecpolNames.Contains(c.Setting.Name, StringComparer.OrdinalIgnoreCase)) e.Add(W($"setarea de cont „{c.Setting.Name}” nu este citită de motor"));
+                    if (c.Desired.Operator != "equals" || !long.TryParse(c.Desired.Values[0], out _)) e.Add(W("desired_state pentru secpol: un număr (equals)"));
+                    break;
                 default:
-                    e.Add(W($"detection.type „{c.Setting.Type}” nu este acceptat (registry, audit, service)"));
+                    e.Add(W($"detection.type „{c.Setting.Type}” nu este acceptat (registry, audit, service, secpol)"));
                     break;
             }
             if (c.Remediation is not ("set" or "manual" or "none")) e.Add(W("remediation trebuie să fie set, manual sau none"));
@@ -170,25 +175,66 @@ public static class AuditSubcategories
 {
     public static readonly IReadOnlyDictionary<string, Guid> ByName = new Dictionary<string, Guid>(StringComparer.OrdinalIgnoreCase)
     {
-        ["Process Creation"] = new("0cce922b-69ae-11d9-bed3-505054503030"),
-        ["Process Termination"] = new("0cce922c-69ae-11d9-bed3-505054503030"),
-        ["Logon"] = new("0cce9215-69ae-11d9-bed3-505054503030"),
-        ["Logoff"] = new("0cce9216-69ae-11d9-bed3-505054503030"),
-        ["Account Lockout"] = new("0cce9217-69ae-11d9-bed3-505054503030"),
-        ["Special Logon"] = new("0cce921b-69ae-11d9-bed3-505054503030"),
+        // Every subcategory listed by auditpol /list /subcategory:* /v (checked by a test against the station).
         ["Security State Change"] = new("0cce9210-69ae-11d9-bed3-505054503030"),
         ["Security System Extension"] = new("0cce9211-69ae-11d9-bed3-505054503030"),
         ["System Integrity"] = new("0cce9212-69ae-11d9-bed3-505054503030"),
+        ["IPsec Driver"] = new("0cce9213-69ae-11d9-bed3-505054503030"),
+        ["Other System Events"] = new("0cce9214-69ae-11d9-bed3-505054503030"),
+        ["Logon"] = new("0cce9215-69ae-11d9-bed3-505054503030"),
+        ["Logoff"] = new("0cce9216-69ae-11d9-bed3-505054503030"),
+        ["Account Lockout"] = new("0cce9217-69ae-11d9-bed3-505054503030"),
+        ["IPsec Main Mode"] = new("0cce9218-69ae-11d9-bed3-505054503030"),
+        ["IPsec Quick Mode"] = new("0cce9219-69ae-11d9-bed3-505054503030"),
+        ["IPsec Extended Mode"] = new("0cce921a-69ae-11d9-bed3-505054503030"),
+        ["Special Logon"] = new("0cce921b-69ae-11d9-bed3-505054503030"),
+        ["Other Logon/Logoff Events"] = new("0cce921c-69ae-11d9-bed3-505054503030"),
+        ["Network Policy Server"] = new("0cce9243-69ae-11d9-bed3-505054503030"),
+        ["User / Device Claims"] = new("0cce9247-69ae-11d9-bed3-505054503030"),
+        ["Group Membership"] = new("0cce9249-69ae-11d9-bed3-505054503030"),
+        ["Access Rights"] = new("0cce924b-69ae-11d9-bed3-505054503030"),
+        ["File System"] = new("0cce921d-69ae-11d9-bed3-505054503030"),
+        ["Registry"] = new("0cce921e-69ae-11d9-bed3-505054503030"),
+        ["Kernel Object"] = new("0cce921f-69ae-11d9-bed3-505054503030"),
+        ["SAM"] = new("0cce9220-69ae-11d9-bed3-505054503030"),
+        ["Certification Services"] = new("0cce9221-69ae-11d9-bed3-505054503030"),
+        ["Application Generated"] = new("0cce9222-69ae-11d9-bed3-505054503030"),
+        ["Handle Manipulation"] = new("0cce9223-69ae-11d9-bed3-505054503030"),
+        ["File Share"] = new("0cce9224-69ae-11d9-bed3-505054503030"),
+        ["Filtering Platform Packet Drop"] = new("0cce9225-69ae-11d9-bed3-505054503030"),
+        ["Filtering Platform Connection"] = new("0cce9226-69ae-11d9-bed3-505054503030"),
+        ["Other Object Access Events"] = new("0cce9227-69ae-11d9-bed3-505054503030"),
+        ["Detailed File Share"] = new("0cce9244-69ae-11d9-bed3-505054503030"),
+        ["Removable Storage"] = new("0cce9245-69ae-11d9-bed3-505054503030"),
+        ["Central Policy Staging"] = new("0cce9246-69ae-11d9-bed3-505054503030"),
+        ["Sensitive Privilege Use"] = new("0cce9228-69ae-11d9-bed3-505054503030"),
+        ["Non Sensitive Privilege Use"] = new("0cce9229-69ae-11d9-bed3-505054503030"),
+        ["Other Privilege Use Events"] = new("0cce922a-69ae-11d9-bed3-505054503030"),
+        ["Process Creation"] = new("0cce922b-69ae-11d9-bed3-505054503030"),
+        ["Process Termination"] = new("0cce922c-69ae-11d9-bed3-505054503030"),
+        ["DPAPI Activity"] = new("0cce922d-69ae-11d9-bed3-505054503030"),
+        ["RPC Events"] = new("0cce922e-69ae-11d9-bed3-505054503030"),
+        ["Plug and Play Events"] = new("0cce9248-69ae-11d9-bed3-505054503030"),
+        ["Token Right Adjusted Events"] = new("0cce924a-69ae-11d9-bed3-505054503030"),
         ["Audit Policy Change"] = new("0cce922f-69ae-11d9-bed3-505054503030"),
         ["Authentication Policy Change"] = new("0cce9230-69ae-11d9-bed3-505054503030"),
+        ["Authorization Policy Change"] = new("0cce9231-69ae-11d9-bed3-505054503030"),
+        ["MPSSVC Rule-Level Policy Change"] = new("0cce9232-69ae-11d9-bed3-505054503030"),
+        ["Filtering Platform Policy Change"] = new("0cce9233-69ae-11d9-bed3-505054503030"),
+        ["Other Policy Change Events"] = new("0cce9234-69ae-11d9-bed3-505054503030"),
         ["User Account Management"] = new("0cce9235-69ae-11d9-bed3-505054503030"),
+        ["Computer Account Management"] = new("0cce9236-69ae-11d9-bed3-505054503030"),
         ["Security Group Management"] = new("0cce9237-69ae-11d9-bed3-505054503030"),
-        ["Filtering Platform Connection"] = new("0cce9226-69ae-11d9-bed3-505054503030"),
-        ["Filtering Platform Packet Drop"] = new("0cce9225-69ae-11d9-bed3-505054503030"),
-        ["Removable Storage"] = new("0cce9245-69ae-11d9-bed3-505054503030"),
-        ["Plug and Play Events"] = new("0cce9248-69ae-11d9-bed3-505054503030"),
-        ["Other Object Access Events"] = new("0cce9227-69ae-11d9-bed3-505054503030"),
+        ["Distribution Group Management"] = new("0cce9238-69ae-11d9-bed3-505054503030"),
+        ["Application Group Management"] = new("0cce9239-69ae-11d9-bed3-505054503030"),
+        ["Other Account Management Events"] = new("0cce923a-69ae-11d9-bed3-505054503030"),
+        ["Directory Service Access"] = new("0cce923b-69ae-11d9-bed3-505054503030"),
+        ["Directory Service Changes"] = new("0cce923c-69ae-11d9-bed3-505054503030"),
+        ["Directory Service Replication"] = new("0cce923d-69ae-11d9-bed3-505054503030"),
+        ["Detailed Directory Service Replication"] = new("0cce923e-69ae-11d9-bed3-505054503030"),
         ["Credential Validation"] = new("0cce923f-69ae-11d9-bed3-505054503030"),
+        ["Kerberos Service Ticket Operations"] = new("0cce9240-69ae-11d9-bed3-505054503030"),
+        ["Other Account Logon Events"] = new("0cce9241-69ae-11d9-bed3-505054503030"),
         ["Kerberos Authentication Service"] = new("0cce9242-69ae-11d9-bed3-505054503030"),
     };
 

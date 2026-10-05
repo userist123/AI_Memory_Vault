@@ -117,6 +117,7 @@ public sealed class PolicyLifecycleTests : IDisposable
         var listed = Regex.Matches(text, @"^\s{2,}(.+?)\s+\{([0-9A-F-]{36})\}", RegexOptions.Multiline)
             .ToDictionary(m => m.Groups[1].Value.Trim(), m => Guid.Parse(m.Groups[2].Value), StringComparer.OrdinalIgnoreCase);
         Assert.True(listed.Count > 40, $"{listed.Count} subcategorii listate de auditpol");
+        Assert.Equal(listed.Count, AuditSubcategories.ByName.Count);
         foreach (var (name, guid) in AuditSubcategories.ByName)
             Assert.True(listed.TryGetValue(name, out var g) && g == guid, $"{name}: tabel {guid}, auditpol {(listed.TryGetValue(name, out var x) ? x : "lipsă")}");
     }
