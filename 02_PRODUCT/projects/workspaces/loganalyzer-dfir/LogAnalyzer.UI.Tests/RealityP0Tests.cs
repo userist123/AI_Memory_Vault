@@ -120,3 +120,45 @@ namespace LogAnalyzer.UI.Tests
         }
     }
 }
+
+namespace LogAnalyzer.UI.Tests
+{
+    public class ProvenanceLedgerFailureTests
+    {
+        [Fact]
+        public void Unreadable_ledger_is_preserved_and_reported_not_overwritten()
+        {
+            var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ledger_" + System.Guid.NewGuid().ToString("N"));
+            System.IO.Directory.CreateDirectory(dir);
+            try
+            {
+                var path = System.IO.Path.Combine(dir, "provenance_ledger.json");
+                System.IO.File.WriteAllText(path, "{ not json");
+                var svc = new LogAnalyzer.Core.Services.ProvenanceLedgerService(path);
+
+                Assert.NotNull(svc.LoadError);
+                svc.AppendEntry("TEST", "x", "aa", "d");
+
+                Assert.Equal("{ not json", System.IO.File.ReadAllText(path));
+                var (ok, msg, _) = svc.ValidateLedgerIntegrity();
+                Assert.False(ok);
+                Assert.Contains("nu a putut fi citit", msg);
+            }
+            finally { System.IO.Directory.Delete(dir, true); }
+        }
+
+        [Fact]
+        public void Failed_save_is_reported_by_validation()
+        {
+            var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "missing_" + System.Guid.NewGuid().ToString("N"), "ledger.json");
+            var svc = new LogAnalyzer.Core.Services.ProvenanceLedgerService(path);
+            Assert.Null(svc.LoadError);
+            svc.AppendEntry("TEST", "x", "aa", "d");
+
+            Assert.NotNull(svc.LastSaveError);
+            var (ok, msg, _) = svc.ValidateLedgerIntegrity();
+            Assert.False(ok);
+            Assert.Contains("nu a fost salvat", msg);
+        }
+    }
+}

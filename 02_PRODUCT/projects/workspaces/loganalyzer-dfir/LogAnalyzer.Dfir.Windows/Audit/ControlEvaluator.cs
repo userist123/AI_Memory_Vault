@@ -175,7 +175,7 @@ public static class ControlEvaluator
 
         var bl = S("BitLocker.SystemDrive");
         Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", bl == "1" ? ControlStatus.Conform : bl == "" ? ControlStatus.Nedeterminat : ControlStatus.Neconform,
-            bl == "1" ? "Protecție activă." : bl == "" ? "Starea nu a putut fi citită." : "Discul de sistem NU este protejat de BitLocker.");
+            bl == "1" ? "Protecție activă." : bl == "" ? $"Starea nu a putut fi citită.{(S("BitLocker.SystemDrive.Error") is { Length: > 0 } blErr ? " " + blErr : "")}" : "Discul de sistem NU este protejat de BitLocker.");
 
         bool smb1 = S("SMB1.Server") == "1" || S("SMB1.ClientDriverStart") is "2" or "3";
         Add(r, "P12", "Politici", "SMBv1 dezactivat", smb1 ? ControlStatus.Neconform : ControlStatus.Conform, smb1 ? "Protocolul învechit SMBv1 este activ." : "Dezactivat.");

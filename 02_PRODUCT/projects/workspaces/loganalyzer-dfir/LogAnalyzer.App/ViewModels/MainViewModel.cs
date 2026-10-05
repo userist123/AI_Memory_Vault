@@ -391,7 +391,7 @@ namespace LogAnalyzer.UI.ViewModels
                     Clipboard.SetText(RawEventMessage);
                     StatusMessage = "📋 Detalii eveniment copiate în Clipboard.";
                 }
-                catch {}
+                catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or System.Runtime.InteropServices.ExternalException) { StatusMessage = $"Clipboard indisponibil: {ex.Message}"; }
             }
         }
 
@@ -549,7 +549,7 @@ namespace LogAnalyzer.UI.ViewModels
                 string categoriesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Categories");
                 _kbService.LoadCategories(categoriesPath);
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { StatusMessage = $"Baza de cunoștințe (Categories) nu a putut fi încărcată: {ex.Message}"; }
 
             IssuesView = CollectionViewSource.GetDefaultView(DetectedIssues);
             IssuesView.Filter = FilterIssues;
@@ -591,7 +591,7 @@ namespace LogAnalyzer.UI.ViewModels
                             StartLiveMonitoring();
                     });
                 }
-                catch { }
+                catch (Exception ex) { StatusMessage = $"Reîncărcarea datelor din baza locală a eșuat: {ex.Message}"; }
             });
         }
 
@@ -608,7 +608,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Events.Clear();
                 Events.AddRange(list);
             }
-            catch { }
+            catch (Exception ex) { StatusMessage = $"Evenimentele nu au putut fi citite din baza locală: {ex.Message}"; }
         }
 
         private void ReloadRegistryFromDb()
@@ -632,7 +632,7 @@ namespace LogAnalyzer.UI.ViewModels
                 RegistryArtifacts.Clear();
                 RegistryArtifacts.AddRange(list);
             }
-            catch { }
+            catch (Exception ex) { StatusMessage = $"Artefactele de registru nu au putut fi citite din baza locală: {ex.Message}"; }
         }
 
         private void ReloadTimelineFromDb()
@@ -666,7 +666,7 @@ namespace LogAnalyzer.UI.ViewModels
 
                 PopulateMitreMatrix();
             }
-            catch { }
+            catch (Exception ex) { StatusMessage = $"Statisticile nu au putut fi calculate: {ex.Message}"; }
         }
 
         [RelayCommand]
@@ -1229,7 +1229,7 @@ namespace LogAnalyzer.UI.ViewModels
                         }
                     }
                 }
-                catch { }
+                catch (RegexMatchTimeoutException ex) { SelectedEventProperties.Add(new("Eroare extragere câmpuri", ex.Message)); }
             }
 
             SelectedEventThreatScenario = assessment.ThreatScenarioRo;
@@ -1733,7 +1733,7 @@ namespace LogAnalyzer.UI.ViewModels
 
                         }
 
-                        try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
+                        try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
 
                         _toastAutoDismissTimer?.Stop();
                         _toastAutoDismissTimer = new System.Timers.Timer(7000);
@@ -1793,9 +1793,9 @@ namespace LogAnalyzer.UI.ViewModels
             var res = SystemDefenseExecutionService.IsolateHostFromNetwork();
             StatusMessage = $"🛡️ {res.Message}";
             IsCountermeasureModalVisible = false;
-            _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message + "\n\n(Puteți ridica izolarea oricând din bara laterală prin butonul de restaurare rețea).", 
-                res.Success ? "Combatere Atac Cibernetic - Succes" : "Avertisment Izolare", 
+            _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
+            MessageBox.Show(res.Message + (res.Success ? "\n\n(Puteți ridica izolarea oricând din bara laterală prin butonul de restaurare rețea)." : $"\n\n{res.ExecutionDetails}"),
+                res.Success ? "Izolare stație — verificată" : $"Izolare stație — {res.Status}",
                 MessageBoxButton.OK, 
                 res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
@@ -1805,8 +1805,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var res = SystemDefenseExecutionService.RestoreNetworkAccess();
             StatusMessage = $"🌐 {res.Message}";
-            _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Restaurare Rețea", MessageBoxButton.OK, MessageBoxImage.Information);
+            _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
+            MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
+                res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
 
 
@@ -1838,13 +1839,15 @@ namespace LogAnalyzer.UI.ViewModels
                 MessageBox.Show("Alerta nu conține nicio adresă IP publică de blocat.", "Blocare IoC", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-            if (MessageBox.Show($"Blocați în Windows Firewall traficul de ieșire către:\n\n{string.Join("\n", ips)}\n\nAdresele provin din textul alertei. Regula se poate șterge din „Restaurare rețea”.",
+            if (MessageBox.Show($"Blocați în Windows Firewall traficul de ieșire către:\n\n{string.Join("\n", ips)}\n\nAdresele provin din textul alertei. Pentru fiecare se creează regula „DFIR_BLOCK_IOC <adresă>”, care se șterge din Windows Defender Firewall.",
                     "Blocare IoC", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             foreach (var ip in ips)
             {
                 var res = SystemDefenseExecutionService.BlockMaliciousIoC(ip);
-                _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, Rezultat: {res.Message}");
+                _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, {res.Status}: {res.Message}");
                 StatusMessage = res.Message;
+                if (!res.Success)
+                    MessageBox.Show($"{res.Message}\n\n{res.ExecutionDetails}", $"Blocare IoC — {res.Status}", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -2757,7 +2760,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var reg = _databaseService.GetRegistryArtifacts(10000, 0, null);
                 _timelineExportService.ExportPlasoCsv(tempCsv, events, new List<ForensicArtifact>(), reg);
                 string csvContent = File.ReadAllText(tempCsv);
-                try { File.Delete(tempCsv); } catch { }
+                try { File.Delete(tempCsv); } catch (IOException) { /* temp copy only; the exported content is already read */ }
 
                 string zipSha = _casePackagingService.PackageAndSealCase(
                     dialog.FileName,

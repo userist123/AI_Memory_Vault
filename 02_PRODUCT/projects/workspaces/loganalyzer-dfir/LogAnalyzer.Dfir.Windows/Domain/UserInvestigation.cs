@@ -79,7 +79,7 @@ public static class UserInvestigation
             foreach (var e in XDocument.Parse(rec.ToXml()).Descendants().Where(e => e.Name.LocalName == "Data" && e.Attribute("Name") is not null))
                 d[e.Attribute("Name")!.Value] = e.Value;
         }
-        catch (System.Xml.XmlException) { }
+        catch (System.Xml.XmlException ex) { d["_XmlError"] = ex.Message; }
         string V(string k) => d.TryGetValue(k, out var v) ? v : "";
         var source = new[] { V("IpAddress"), V("WorkstationName"), V("Workstation") }.FirstOrDefault(s => s.Length > 0 && s != "-" && s != "::1") ?? "";
         if (source.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase)) source = source[7..];
