@@ -1,6 +1,6 @@
 """Local REST API Gateway for AI Memory Vault and JARVIS Command Center."""
 from __future__ import annotations
-import datetime, json, os, sys, urllib.request, urllib.error
+import datetime, hmac, json, os, sys, urllib.request, urllib.error
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
@@ -91,6 +91,15 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     vault_root=Path(os.getenv('AI_MEMORY_VAULT_ROOT',str(project_root))).resolve()
     storage=FileStorageEngine(str(vault_root)); controller=MemoryController(storage); queue=MemoryProposalQueue(vault_root/'06_INBOX'/'memory_proposals.jsonl')
     def log_message(self,format,*args): return
+    def _require_api_auth(self) -> bool:
+        secret = os.getenv("AI_MEMORY_VAULT_API_TOKEN", "")
+        provided = self.headers.get("Authorization", "")
+        expected = f"Bearer {secret}" if secret else ""
+        if not secret or not hmac.compare_digest(provided, expected):
+            self._json(401, {"error": "authentication required"})
+            return False
+        return True
+
     def _set_headers(self,status=200):
         self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Access-Control-Allow-Origin','*'); self.send_header('Access-Control-Allow-Methods','GET,POST,OPTIONS'); self.send_header('Access-Control-Allow-Headers','Content-Type,Authorization,Mcp-Version'); self.send_header('Cache-Control','no-store'); self.send_header('X-Content-Type-Options','nosniff'); self.end_headers()
     def _json(self,status,payload):
@@ -100,6 +109,8 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self): self._set_headers(200)
     def do_GET(self):
         p=urlparse(self.path); path=p.path; q=parse_qs(p.query)
+        if path.startswith('/api/v1/') and path != '/api/v1/status' and not self._require_api_auth():
+            return
         if path in {'/','/api/v1/status'}:
             agents=_agents(self.vault_root); skills=_skill_catalog(self.vault_root); models=_ollama_models(); self._json(200,{'status':'online','service':'AI Memory Vault Browser Gateway','vault_root':str(self.vault_root),'indexed_notes':len(self.storage.id_to_path),'agents':len(agents),'skills':len(skills),'ollama':bool(models),'models':models[:20],'default_model':os.getenv('JARVIS_MODEL',models[0] if models else '')}); return
         if path=='/api/v1/metrics':
@@ -120,6 +131,8 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         self._json(404,{'error':'Endpoint not found'})
     def do_POST(self):
         path=urlparse(self.path).path
+        if path.startswith('/api/v1/') and not self._require_api_auth():
+            return
         try: data=self._body()
         except (UnicodeDecodeError,json.JSONDecodeError): self._json(400,{'error':'Invalid JSON body'}); return
         if path=='/api/v1/propose':
