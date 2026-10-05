@@ -80,6 +80,7 @@ public class InvestigationTests
             .Select(n => Path.Combine(root, "01_RAW_EVENTLOGS", n + ".evtx")).Where(File.Exists).ToList();
         files.AddRange(Directory.GetFiles(Path.Combine(root, "09_PREFETCH", "Prefetch"), "*.pf"));
         files.Add(Path.Combine(root, "07_EXECUTION", "SRUM", "SRUDB.dat"));
+        files.Add(Path.Combine(root, "21_BROWSER", "Chrome", "Default", "History"));
         var casesRoot = Path.Combine(Path.GetTempPath(), "la-inv-" + Guid.NewGuid().ToString("N"));
         try
         {
@@ -95,6 +96,12 @@ public class InvestigationTests
             Assert.Contains("SETUP.EXE", chain.Description);
             Assert.Contains("NanAgent32.exe", chain.Description);
             Assert.Contains("msbuild.exe", chain.Description);
+            // Initial access: the archive downloaded from tzd4is.cyou, then SETUP.EXE run from its extracted folder.
+            var access = Assert.Single(r.Findings, f => f.RuleId == "DOWNLOAD-THEN-EXEC" && f.File.Contains("302044"));
+            Assert.Equal(Confidence.High, access.Confidence);
+            Assert.Contains("tzd4is.cyou", access.Description);
+            Assert.Contains("SETUP.EXE", access.Description);
+            Assert.Contains("302044.zip", chain.Description);
             Assert.True(File.Exists(r.TimelineCsv));
 
             // P1 provenance on the real case: every event and every finding reference carries the acquisition hash.

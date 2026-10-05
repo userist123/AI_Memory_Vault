@@ -42,7 +42,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void AddFiles()
         {
-            var dlg = new OpenFileDialog { Multiselect = true, Filter = "Probe (*.evtx;*.pf;SRUDB.dat;*.pcapng;SYSTEM;*.hiv;Amcache.hve)|*.evtx;*.pf;SRUDB.dat;*.pcapng;SYSTEM;*SYSTEM.hiv;Amcache.hve|Toate fișierele|*.*" };
+            var dlg = new OpenFileDialog { Multiselect = true, Filter = "Probe (*.evtx;*.pf;SRUDB.dat;*.pcapng;hive-uri;Amcache.hve;History)|*.evtx;*.pf;SRUDB.dat;*.pcapng;SYSTEM;SOFTWARE;NTUSER.DAT;*.hiv;Amcache.hve;History|Toate fișierele|*.*" };
             if (dlg.ShowDialog() != true) return;
             foreach (var f in dlg.FileNames) if (!ImportFiles.Contains(f)) ImportFiles.Add(f);
         }

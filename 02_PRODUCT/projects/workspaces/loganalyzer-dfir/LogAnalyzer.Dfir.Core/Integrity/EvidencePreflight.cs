@@ -19,6 +19,7 @@ public static class EvidenceFingerprint
         if (StartsWith(h, 0, "MAM\u0004"u8)) return "prefetch_mam";
         if (StartsWith(h, 4, "SCCA"u8)) return "prefetch";
         if (StartsWith(h, 0, "regf"u8)) return "regf";
+        if (StartsWith(h, 0, "SQLite format 3\0"u8)) return "sqlite";
         if (n >= 8 && BinaryPrimitives.ReadUInt32LittleEndian(h[4..]) == 0x89ABCDEF) return "ese";
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
         if (IsTaskXml(path)) return "task_xml";
@@ -51,6 +52,7 @@ public static class EvidenceFingerprint
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t == "live_snapshot") return ["json"];
         if (t == "task_xml") return ["task_xml"];
+        if (t == "chromium_history") return ["sqlite"];
         return null;
     }
 

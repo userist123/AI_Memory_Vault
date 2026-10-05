@@ -59,6 +59,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | UserHiveParser 1.0 | NTUSER: UserAssist, Run/RunOnce | UserAssist v5/v3 | VALIDATED | NTUSER real vs reg export: fiecare intrare UserAssist (număr de rulări, FILETIME), fiecare valoare Run/RunOnce |
 | SoftwareHiveParser 1.0 | SOFTWARE: Run/RunOnce (+WOW6432Node), Winlogon, IFEO Debugger | — | VALIDATED | SOFTWARE real vs reg export (Run, RunOnce, WOW6432Node, Winlogon Shell/Userinit) |
 | ServicesParser 1.0 | SYSTEM: servicii și drivere (ControlSet curent) | — | VALIDATED | SYSTEM.hiv real vs WMI Win32_Service: nume, StartMode, StartName, PathName pentru toate cele peste 300 de servicii (3 cu StartMode „Unknown” în WMI) |
+| BrowserHistoryParser 1.0 | Istoric Chromium (Chrome, Edge): vizite, descărcări, lanț de URL-uri | schema History cu urls/visits/downloads | VALIDATED | History real (Default) vs extracția independentă din investigația manuală: 5 descărcări identice; toate cele peste 2000 de vizite din 18–20.09 (URL-urile lungi erau trunchiate în referință) |
 | ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.

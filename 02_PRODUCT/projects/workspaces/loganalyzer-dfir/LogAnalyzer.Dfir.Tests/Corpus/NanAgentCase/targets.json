@@ -66,6 +66,10 @@
     "file": "06_REGISTRY\\hives\\SYSTEM.hiv",
     "servicesCsv": "14_SERVICES\\services.csv"
   },
+  "chromeHistory": {
+    "file": "21_BROWSER\\Chrome\\Default\\History",
+    "reference": "21_BROWSER\\browser_timeline_20260918_20260920.txt"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

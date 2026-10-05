@@ -51,6 +51,8 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | userHive | UserHiveParser, RawRegistry | NTUSER salvat la 23:50:59 vs reg export la 23:51:00: fiecare intrare UserAssist (număr de rulări, FILETIME de ultimă rulare, inclusiv numele malformate) și fiecare valoare Run/RunOnce |
 | softwareHive | SoftwareHiveParser, RawRegistry | SOFTWARE vs reg export: Run, RunOnce, WOW6432Node Run/RunOnce, Winlogon Shell și Userinit |
 | servicesHive | ServicesParser | SYSTEM.hiv (23:50:56) vs WMI Win32_Service (23:50:41): fiecare serviciu există, cu StartMode, cont și cale identice după normalizarea făcută de SCM (`%SystemRoot%`, `%ProgramFiles%`, `\SystemRoot\`, `\??\`). WMI dă „Unknown” pentru 3 servicii protejate; testul le numără separat. |
+| chromeHistory | BrowserHistoryParser | History real, citit dintr-o copie de lucru (sursa neatinsă), comparat cu extracția separată din investigația manuală: cele 5 descărcări (ora de start, cale, URL tab, octeți) și fiecare vizită din 18–20.09.2026 UTC; referința trunchia URL-urile lungi, ceea ce testul tratează explicit |
+| (investigație + History) | pipeline, DOWNLOAD-THEN-EXEC | lanțul critic din 19.09 începe cu descărcarea `SamFw_FRP_Tool_…_302044.zip` de pe tzd4is.cyou, legată cu încredere ridicată de SETUP.EXE rulat din `Downloads\TOOL_302044` |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 

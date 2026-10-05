@@ -10,5 +10,5 @@ public static class WindowsParsers
     public static ParserRegistry Registry { get; } = new(
         [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser(),
          new ScheduledTaskParser(), new UserHiveParser(), new SoftwareHiveParser(),
-         new ServicesParser()]);
+         new ServicesParser(), new BrowserHistoryParser()]);
 }

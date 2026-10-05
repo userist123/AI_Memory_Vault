@@ -373,6 +373,44 @@ public static class Correlation
                 SupportingEvidence = rest.SelectMany(x => x.SupportingEvidence).Take(60).ToList(),
             });
 
+        // Initial access: a browser download followed, within 6 hours, by a program run from the same folder (or below it).
+        var execs = events.Where(e => e.Source is "Prefetch" or "BAM" or "UserAssist" && e.Time.Utc is not null).Select(e =>
+        {
+            var path = e.Source == "Prefetch"
+                ? F(e, "ReferencedFiles").Split('|').FirstOrDefault(r => r.EndsWith("\\" + e.Process, StringComparison.OrdinalIgnoreCase)) ?? e.Path
+                : e.Path;
+            return (Event: e, Path: Normalize(path));
+        }).Where(x => x.Path.Length > 0).ToList();
+        foreach (var d in events.Where(e => e.Source == "BrowserDownload" && e.Path.Length > 0 && e.Time.Utc is not null))
+        {
+            var dir = Normalize(Path.GetDirectoryName(d.Path) ?? "");
+            if (dir.Length < 4) continue;
+            var start = d.Time.Utc!.Value;
+            var hits = execs.Where(x => x.Path.StartsWith(dir + "\\", StringComparison.Ordinal) && x.Event.Time.Utc >= start && x.Event.Time.Utc <= start.AddHours(6))
+                            .OrderBy(x => x.Event.Time.Utc).ToList();
+            if (hits.Count == 0) continue;
+            // A distinctive number from the downloaded file's name (5+ digits) found in the program's path ties them closely.
+            var tokens = System.Text.RegularExpressions.Regex.Matches(Path.GetFileNameWithoutExtension(d.Path), @"\d{5,}").Select(m => m.Value).ToList();
+            bool tied = hits.Any(h => tokens.Any(t => h.Path.Contains(t, StringComparison.Ordinal)));
+            var first = hits[0].Event;
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "DOWNLOAD-THEN-EXEC",
+                Title = $"Descărcare urmată de rularea unui program din același folder: {Path.GetFileName(d.Path)} → {first.Process}",
+                Severity = tied ? Severity.High : Severity.Medium, Category = "InitialAccess", Classification = Classification.Correlated,
+                Confidence = tied ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1204.002",
+                FirstSeenUtc = start, LastSeenUtc = first.Time.Utc, File = d.Path, Process = first.Process, Domain = d.Dns,
+                Description = $"{d.Path} descărcat la {start:yyyy-MM-dd HH:mm:ss} UTC din {F(d, "TabUrl")} (lanț: {Trunc(F(d, "UrlChain"), 200)}); " +
+                              $"apoi {string.Join(", ", hits.Take(5).Select(h => $"{h.Event.Process} ({h.Event.Source}, {h.Event.Time.Utc:HH:mm:ss})"))}.",
+                ClassificationReason = tied
+                    ? "Programul rulează din folderul descărcării, în următoarele 6 ore, iar calea lui conține numărul din numele fișierului descărcat."
+                    : "Programul rulează din folderul descărcării, în următoarele 6 ore.",
+                SupportingEvidence = [Ref(d, "descărcare"), .. hits.Take(3).Select(h => Ref(h.Event, h.Event.Source))],
+                AlternativeExplanations = ["Utilizatorul a rulat alt program din folderul Downloads, fără legătură cu descărcarea."],
+                MissingEvidence = ["Zone.Identifier (Mark-of-the-Web) al fișierului extras; jurnalul de extragere al arhivei."],
+            });
+        }
+
         // 9. Incident chain: serious findings close in time are presented as one ordered story.
         var timed = f.Where(x => x.Severity >= Severity.High && T(x) is not null && x.RuleId != "DEF-TAMPER").OrderBy(T).ToList();
         var cluster = new List<Finding>();
