@@ -191,6 +191,9 @@ def _ranking_key_fn(arm, initial_score_map, fused_score_map, components_map):
     return lambda n: (initial_score_map.get(n.get('id'), 0), n.get('id', ''))
 
 
+MAX_NOTE_CONTENT = 20_000
+
+
 class MemoryController:
     _global_review_counter = 2
     def __init__(
@@ -317,6 +320,9 @@ class MemoryController:
         return results
 
     def _validate_note(self, note: Dict[str, Any]) -> None:
+        content = note.get("content")
+        if isinstance(content, str) and len(content) > MAX_NOTE_CONTENT:
+            raise ValueError(f"maximum note content is {MAX_NOTE_CONTENT} characters")
         validation_note = {k: v for k, v in note.items() if k != "content"}
         validate_frontmatter(validation_note)
         # Only validate provenance if present to allow notes without provenance in tests
@@ -1658,6 +1664,8 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
+                if principal == Principal.AI_AGENT and note.get('lifecycle') == Lifecycle.ACTIVE:
+                    raise PermissionError('AI_AGENT cannot update ACTIVE notes')
                 if note['lifecycle'] != Lifecycle.ACTIVE:
                     if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
                         pass
