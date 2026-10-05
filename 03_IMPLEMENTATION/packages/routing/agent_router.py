@@ -10,8 +10,9 @@ from .registry import RouteRegistry, RegistryError
 class RoutingError(ValueError): pass
 
 class AgentRouter:
-    def __init__(self, registry: RouteRegistry):
+    def __init__(self, registry: RouteRegistry, feedback_store=None):
         self.registry=registry
+        self.feedback_store=feedback_store
 
     @staticmethod
     def _fingerprint(text:str)->str:
@@ -50,18 +51,22 @@ class AgentRouter:
     def _candidate(self, agent:AgentDescriptor, rt:RuntimeDescriptor, caps:set[str], req:TaskRequest)->RouteCandidate|None:
         if req.requested_agent and agent.id != req.requested_agent: return None
         if req.risk > agent.max_risk: return None
-        missing=(caps-agent.capabilities) | (caps-rt.capabilities)
+        covered=agent.capabilities | rt.capabilities
+        missing=caps-covered
         hard_missing = missing & {"coding","repo","testing","ci","research","external_research","architecture","visual","security","memory","offline"}
         if hard_missing: return None
         if any(s not in agent.default_skills and s not in req.requested_skills for s in req.requested_skills): return None
         tier=max(rt.quality,agent.min_quality,req.min_quality)
         skills=tuple(dict.fromkeys(list(req.requested_skills)+list(agent.default_skills)))[:agent.max_skills]
-        cap_score=100.0 if not caps else 100.0*len(caps & (agent.capabilities & rt.capabilities))/len(caps)
+        cap_score=100.0 if not caps else 100.0*len(caps & (agent.capabilities | rt.capabilities))/len(caps)
         quality_score=100.0*(1.0-(tier.value-QualityTier.LIGHT.value)/(QualityTier.FRONTIER.value-QualityTier.LIGHT.value))
         cost_score=100.0-rt.cost_score
         latency_score=100.0-rt.latency_score
         pref=20.0 if rt.id in agent.preferred_runtimes else 0.0
         history=0.0
+        if self.feedback_store is not None:
+            prior=self.feedback_store.prior(agent.id,rt.id)
+            history=max(0.0,min(10.0,prior.quality_score*0.05+prior.verification_rate*0.03+prior.success_rate*0.02))
         return RouteCandidate(agent.id,rt.id,tier,skills,
             round(cap_score*.45+quality_score*.2+cost_score*.1+latency_score*.1+pref+history,3),
             round(cap_score,3),round(quality_score,3),round(cost_score,3),round(latency_score,3),history,
