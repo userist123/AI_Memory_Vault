@@ -52,3 +52,14 @@ def test_blocked_when_no_eligible_runtime():
     req = TaskRequest(goal="run browser UI investigation", capabilities=("visual",), min_quality=QualityTier.FRONTIER)
     d = AgentRouter(REG).route(req, {"antigravity": False, "claude_code": False, "codex": False, "local_llm": False, "perplexity": False})
     assert d.status.value in {"PLANNED","BLOCKED"}
+
+
+def test_visual_task_falls_back_to_available_runtime():
+    req = TaskRequest(goal="inspect the UI visually in the browser", capabilities=("visual",))
+    d = AgentRouter(REG).route(
+        req,
+        {"antigravity": False, "claude_code": True, "codex": False, "local_llm": False, "perplexity": False},
+    )
+    assert d.status.value == "ROUTED"
+    assert d.primary is not None
+    assert d.primary.runtime_id == "claude_code"
