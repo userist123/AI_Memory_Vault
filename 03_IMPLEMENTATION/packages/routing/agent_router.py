@@ -87,11 +87,17 @@ class AgentRouter:
                     c=self._candidate(agent,rt,caps,request)
                     if c: candidates.append(c)
         candidates.sort(key=lambda x:x.score,reverse=True)
-        primary=candidates[0] if candidates else None
+        dispatchable = candidates
+        if runtime_available is not None:
+            available_candidates=[x for x in candidates if x.transport != "manual" and runtime_available.get(x.runtime_id,False)]
+            if available_candidates:
+                dispatchable=available_candidates
+        primary=dispatchable[0] if dispatchable else (candidates[0] if candidates else None)
         needs_verifier=request.require_independent_verifier or risk>=RiskLevel.HIGH
         verifier=None
         if primary and needs_verifier:
-            for c in candidates[1:]:
+            verifier_pool=[c for c in dispatchable if not primary or c is not primary]
+            for c in verifier_pool:
                 a=self.registry.agents[c.agent_id]; r=self.registry.runtimes[c.runtime_id]
                 pa=self.registry.agents[primary.agent_id]; pr=self.registry.runtimes[primary.runtime_id]
                 if a.independence_group!=pa.independence_group and r.independence_group!=pr.independence_group:
