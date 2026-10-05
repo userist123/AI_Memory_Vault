@@ -49,12 +49,19 @@ public sealed class EvtxParser : EvidenceParserBase
             var repaired = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "evtx_repair", $"{item.EvidenceId}_{Path.GetFileName(fullPath)}");
             var r = LogAnalyzer.Dfir.IO.EvtxRepair.Repair(fullPath, repaired);
             result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
-                $"{damaged.Count} chunk-uri corupte eliminate: " + string.Join("; ", damaged.Take(20).Select(c => $"#{c.Index} ({c.Problem}, RecordID {c.FirstRecordId}–{c.LastRecordId})")),
+                $"{damaged.Count} {LogAnalyzer.Dfir.Analysis.AntiForensics.CorruptChunksMarker}: " + string.Join("; ", damaged.Take(20).Select(c => $"#{c.Index} ({c.Problem}, RecordID {c.FirstRecordId}–{c.LastRecordId})")),
                 "Înregistrările din aceste intervale lipsesc din cronologie (corupere sau alterare a jurnalului)",
                 "Copii VSS ale jurnalului, SIEM, alte surse (SRUM, Prefetch)", "Doar din alte copii",
                 $"Fișierul original nu a fost modificat; s-a parsat copia reparată {repaired} ({r.KeptChunks}/{r.TotalChunks} chunk-uri)."));
             result.MalformedRecords += damaged.Count;
             fullPath = repaired;
+        }
+        // A file shorter than its header says (or not ending on a chunk boundary) lost its tail: say so before reading it.
+        if (Truncation(fullPath) is { } cut)
+        {
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial, $"{LogAnalyzer.Dfir.Analysis.AntiForensics.TruncatedMarker}: {cut}",
+                "Înregistrările de la sfârșitul jurnalului lipsesc (copiere întreruptă sau alterare)", "Copii VSS ale jurnalului, SIEM", "Doar din alte copii"));
+            result.MalformedRecords++;
         }
         using var reader = new EventLogReader(fullPath, PathType.FilePath);
         int consecutiveErrors = 0;
@@ -126,6 +133,21 @@ public sealed class EvtxParser : EvidenceParserBase
             Locator = $"EventRecordID={rec.RecordId}",
             Fields = fields,
         };
+    }
+
+    /// <summary>EVTX = 4096-byte header + whole 64 KiB chunks; the header's chunk count (offset 42) must fit in the file.</summary>
+    public static string? Truncation(string path)
+    {
+        var len = new FileInfo(path).Length;
+        if (len < 4096) return $"{len} octeți, mai puțin decât antetul de 4096";
+        using var fs = File.OpenRead(path);
+        var header = new byte[128];
+        fs.ReadExactly(header);
+        int declared = BitConverter.ToUInt16(header, 42);
+        long whole = (len - 4096) / 65536, rest = (len - 4096) % 65536;
+        if (rest != 0) return $"{rest} octeți după ultimul chunk complet (fișierul nu se termină la granița unui chunk de 64 KiB)";
+        if (declared > whole) return $"antetul declară {declared} chunk-uri, fișierul conține {whole}";
+        return null;
     }
 
     internal static void ExtractFields(string xml, Dictionary<string, string> fields)

@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -99,7 +100,13 @@ public static class InvestigationReportPdf
                     });
                 col.Item().Text("O potrivire arată că proba îndeplinește criteriile regulii; nu dovedește singură intenția sau rezultatul unei activități.").FontSize(7).Italic().FontColor(Muted);
 
-                col.Item().Text("6. Integritatea probelor (reverificată acum)").Bold().FontSize(11).FontColor(Ink);
+                col.Item().Text("6. Anti-forensics").Bold().FontSize(11).FontColor(Ink);
+                foreach (var a in r.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id))
+                    col.Item().Text($"{a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultText}: {a.Reason}").FontSize(7.5f)
+                       .FontColor(a.Result == AntiForensicResult.Detected ? "#b91c1c" : a.Result == AntiForensicResult.Undetermined ? "#92400e" : "#1e293b");
+                col.Item().Text("DETECTED = urmă observată în probe (nu dovedește singură intenția); NOT_DETECTED = sursa relevantă a fost analizată și nu arată urma; UNDETERMINED = sursa lipsește sau nu e parsată. Nicio verificare nu înseamnă „curat”.").FontSize(7).Italic().FontColor(Muted);
+
+                col.Item().Text("7. Integritatea probelor (reverificată acum)").Bold().FontSize(11).FontColor(Ink);
                 foreach (var i in integrity.Items)
                 {
                     var e = evidence[i.EvidenceId];

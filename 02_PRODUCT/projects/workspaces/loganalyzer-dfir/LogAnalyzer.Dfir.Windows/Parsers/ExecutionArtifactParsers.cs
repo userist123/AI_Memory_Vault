@@ -183,6 +183,7 @@ public sealed class AmcacheParser : EvidenceParserBase
                 {
                     ["SHA1"] = sha1, ["Publisher"] = V("Publisher"), ["Version"] = V("Version"), ["ProductName"] = V("ProductName"),
                     ["LinkDate"] = V("LinkDate"), ["Size"] = V("Size"), ["IsOsComponent"] = V("IsOsComponent"),
+                    ["OriginalFileName"] = V("OriginalFileName"),
                 },
             });
             result.Records++;

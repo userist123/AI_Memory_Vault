@@ -32,6 +32,8 @@ public sealed class InvestigationResult
     public List<DetectionResult> Detections { get; } = [];
     /// <summary>Rules that were loaded for this run (Analysis/rules.json).</summary>
     public List<DetectionRule> RulesUsed { get; } = [];
+    /// <summary>Anti-forensics checks: DETECTED / NOT_DETECTED / UNDETERMINED per technique (Analysis/anti_forensics.json).</summary>
+    public List<AntiForensicCheck> AntiForensics { get; } = [];
     public string TimelineCsv { get; set; } = "";
     public string FindingsJson { get; set; } = "";
 }
@@ -249,6 +251,10 @@ public sealed class InvestigationPipeline
         File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
+        r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps));
+        File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
+            $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps");
         return r;
     }

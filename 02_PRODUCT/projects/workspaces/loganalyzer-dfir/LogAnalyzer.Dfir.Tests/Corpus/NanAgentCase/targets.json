@@ -94,6 +94,20 @@
     "file": "29_IOC\\IOC_INVENTORY.csv",
     "samples": "25_TARGET_MSBUILD\\MSI_CxUtilSvcHelper\\9520444.msi|25_TARGET_MSBUILD\\Conexant_CxUtilSvcHelper_COPY|24_TARGET_NANAGENT\\RenPy_COPY"
   },
+  "antiForensics": {
+    "file": "01_RAW_EVENTLOGS\\System.evtx",
+    "security": "01_RAW_EVENTLOGS\\Security.evtx",
+    "firewall": "01_RAW_EVENTLOGS\\Microsoft-Windows-Windows Firewall With Advanced Security%4Firewall.evtx",
+    "systemHive": "06_REGISTRY\\hives\\SYSTEM.hiv",
+    "amcache": "10_AMCACHE\\Programs_attempt\\Amcache.hve",
+    "servicesCsv": "14_SERVICES\\services.csv",
+    "_truth": "Read with wevtutil and the providers' message texts on 2026-10-06; the test recomputes each value with wevtutil.",
+    "clearedChannels": "System|Application|ForwardedEvents",
+    "clearedAtUtc": "2026-02-25T22:10:08",
+    "auditRemovals": 52,
+    "manualTimeChanges4616": 14,
+    "firewallAllRulesDeletedUtc": "2026-09-19T15:17:02"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

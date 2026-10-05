@@ -43,6 +43,19 @@ public sealed class ServicesParser : EvidenceParserBase
                 "Configurația serviciilor nu este disponibilă", "System 7045, fotografia live", "Nu"));
             return;
         }
+        // Prefetch configuration lives in the same hive; anti-forensics checks whether it was switched off.
+        var prefetch = reg.OpenKey($@"ControlSet{current:D3}\Control\Session Manager\Memory Management\PrefetchParameters");
+        if (prefetch?.Value("EnablePrefetcher") is { Data.Length: >= 4 } ep)
+        {
+            var v = BinaryPrimitives.ReadInt32LittleEndian(ep.Data).ToString(CultureInfo.InvariantCulture);
+            sink.Add(new TimelineEvent
+            {
+                Time = Hive.KeyTime(prefetch), TimeSemantics = "key last written", Source = "SystemConfig", EvidenceId = item.EvidenceId,
+                Summary = $"Prefetch: EnablePrefetcher = {v}", TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct,
+                Confidence = Confidence.High, Locator = $@"SYSTEM\ControlSet{current:D3}\Control\Session Manager\Memory Management\PrefetchParameters\EnablePrefetcher",
+                Fields = { ["EnablePrefetcher"] = v },
+            });
+        }
         foreach (var name in services.SubkeyNames)
         {
             ct.ThrowIfCancellationRequested();
