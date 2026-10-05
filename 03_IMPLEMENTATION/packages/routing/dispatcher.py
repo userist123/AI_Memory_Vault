@@ -49,12 +49,13 @@ class CommandAdapter:
         run=self.artifact_root/p.task_id; run.mkdir(parents=True,exist_ok=True)
         brief=run/"brief.txt"; brief.write_text(self._brief(p),encoding="utf-8")
         text=brief.read_text(encoding="utf-8")
-        if self.adapter_ref=="codex":
+        if self.runtime_id=="codex":
             cmd=[self.binary,"exec","--json","-o",str(run/"final.txt"),"-"]; stdin=text
-        elif self.adapter_ref=="claude_code":
-            cmd=[self.binary,"-p","--output-format","text",text]; stdin=None
-        elif self.adapter_ref=="antigravity":
-            cmd=[self.binary,"--print",f"--print-timeout={max(1,p.timeout_seconds//60)}m",f"--print={text}"]; stdin=None
+        elif self.runtime_id=="claude_code":
+            cmd=[self.binary,"-p","--output-format","text"]; stdin=text
+        elif self.runtime_id=="antigravity":
+            cmd=[self.binary,"--input-format","stream-json","--output-format","stream-json"]
+            stdin=json.dumps({"event":"user","message":{"content":text}},ensure_ascii=False)+"\n"
         elif self.runtime_id=="local_llm":
             if not self.model:
                 return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error="local_llm model is not configured")
@@ -74,7 +75,17 @@ class CommandAdapter:
                 "status":DispatchStatus.FAILED.value,"exit_code":None,"final_message":"","brief_path":str(brief),"error":str(exc)},
                 ensure_ascii=False,indent=2),encoding="utf-8")
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",str(result),error=str(exc))
-        final=(proc.stdout or proc.stderr or "").strip()
+        raw_output=(proc.stdout or proc.stderr or "").strip()
+        if self.runtime_id=="antigravity" and proc.stdout:
+            try:
+                events=[json.loads(line) for line in proc.stdout.splitlines() if line.strip()]
+                result_event=next(event for event in reversed(events) if event.get("event")=="result")
+                final=str(result_event.get("result",{}).get("response","")).strip()
+            except (ValueError, StopIteration, TypeError, AttributeError):
+                return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,proc.returncode,"",
+                                       error="invalid antigravity stream-json response")
+        else:
+            final=raw_output
         status=DispatchStatus.COMPLETED if proc.returncode==0 else DispatchStatus.FAILED
         result.write_text(json.dumps({"schema":"agent-dispatch.result.v1","task_id":p.task_id,"route_id":p.route_id,
             "status":status.value,"exit_code":proc.returncode,"final_message":final,"brief_path":str(brief)},ensure_ascii=False,indent=2),encoding="utf-8")

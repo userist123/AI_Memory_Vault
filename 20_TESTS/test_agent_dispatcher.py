@@ -160,3 +160,22 @@ def test_local_llm_uses_registry_binary_and_model(monkeypatch, tmp_path):
     result = adapter.dispatch(packet)
     assert result.status is DispatchStatus.COMPLETED
     assert captured["cmd"] == ["ollama", "run", "llama3.2"]
+
+
+def test_command_adapters_never_put_goal_in_argv(monkeypatch, tmp_path):
+    captured = {}
+    class Proc:
+        returncode = 0
+        stdout = '{"event":"result","result":{"response":"agy ok"}}\n'
+        stderr = ""
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd; captured["input"] = kwargs["input"]; return Proc()
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
+    for runtime_id, adapter_ref, model in (("claude_code","claude",None),("codex","codex",None),("antigravity","agy",None),("local_llm","ollama","registry-model")):
+        goal=f"UNIQUE SECRET GOAL {runtime_id}"
+        packet=WorkPacket("task-"+runtime_id,"route-"+runtime_id,"router","agent",runtime_id,"profile","command",goal)
+        result=CommandAdapter(runtime_id,adapter_ref,model,working_directory=tmp_path).dispatch(packet)
+        assert result.status is not DispatchStatus.FAILED
+        assert all(goal not in str(arg) for arg in captured["cmd"])
+        assert goal in captured["input"]
