@@ -293,6 +293,48 @@ Each runtime may therefore retain a specialized prompt:
 
 The router passes a `prompt_profile` reference only.
 
+## Secure local execution fabric
+
+The local execution bridge is a security boundary, not a generic remote shell.
+
+### Data path
+
+`RouteDecision -> WorkPacket -> encrypted envelope -> authenticated bridge -> capability authorization -> runtime adapter -> verifier`
+
+### Confidentiality and integrity
+
+Work packets containing task content, constraints, memory references or execution metadata must not be placed in command-line arguments or plaintext transport.
+
+The bridge uses:
+- X25519 ephemeral key agreement;
+- HKDF-SHA256 key derivation;
+- AES-256-GCM authenticated encryption;
+- Ed25519 signatures for capability authorization;
+- short-lived nonces and replay protection.
+
+Bridge private keys are protected at rest using the host operating system's secure key store. On Windows the reference implementation uses DPAPI.
+
+### Least authority
+
+The bridge accepts only:
+- configured runtime identifiers;
+- configured agent identifiers;
+- signed, unexpired capability tokens;
+- matching task and route identifiers;
+- unused nonces.
+
+It never accepts arbitrary shell commands from a WorkPacket.
+
+### Performance
+
+The Antigravity adapter uses a persistent headless `stream-json` session where supported. This avoids process startup and authentication overhead for every task. Requests are serialized per session and can later be scaled with a bounded session pool.
+
+The bridge transport should use Windows named pipes for same-host IPC with an OS ACL restricting the pipe to the intended principal. For distributed operation, the remote hop remains authenticated and encrypted separately.
+
+### Result protection
+
+Execution results are treated as sensitive output. The bridge returns signed structured results and must not persist plaintext prompts, credentials or raw memory context merely for debugging.
+
 ## Feedback loop
 
 ```text
