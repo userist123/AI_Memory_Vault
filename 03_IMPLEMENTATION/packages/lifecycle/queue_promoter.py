@@ -48,6 +48,12 @@ class QueuePromoter:
         for record in self.queue._load():
             if record.get("queue_status") != "APPROVED":
                 continue
+            if record.get("verification") != "verified":
+                raise ValueError("approved candidate lacks verified evidence")
+            if not str(record.get("evidence_reference") or "").strip():
+                raise ValueError("approved candidate lacks verified evidence")
+            if str(record.get("verification_source") or "").lower() not in {"human", "admin"}:
+                raise ValueError("approved candidate lacks verified evidence")
             note = self._note_from_candidate(record)
             new_id = self.controller.propose(self.principal, note)
             self.queue.mark(record["candidate_id"], "PROMOTED", reviewer=self.principal.value)
