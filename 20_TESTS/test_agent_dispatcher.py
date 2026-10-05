@@ -89,4 +89,4 @@ def test_a2a_adapter_v1_completed_response(monkeypatch):
     assert result.status is DispatchStatus.COMPLETED
     assert result.final_message == "ok"
     assert captured["payload"]["method"] == "SendMessage"
-    assert captured["headers"]["A2a-version"] == "1.0"
+    assert next(v for k,v in captured["headers"].items() if k.lower() == "a2a-version") == "1.0"
