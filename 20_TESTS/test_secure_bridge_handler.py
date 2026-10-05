@@ -2,6 +2,7 @@ import base64
 import json
 import time
 import pytest
+from cryptography.hazmat.primitives import serialization
 from agent_bridge.bridge import SecureBridge, BridgeRequestError
 from agent_bridge.crypto import Ed25519Signer, X25519Envelope
 from agent_bridge.policy import BridgePolicy, CapabilityToken
@@ -25,7 +26,7 @@ def request(keys,signer,p,nonce="n1",agent="visual_architect"):
     return {"version":1,"bridge_id":"bridge-1","task_id":p.task_id,"runtime":"antigravity",
         "agent":agent,"nonce":nonce,"capability_token":token,"aad":aad.decode(),
         "payload":keys.encrypt(body,aad=aad),
-        "response_public_key":base64.urlsafe_b64encode(keys.public_key.public_bytes(__import__("cryptography").hazmat.primitives.serialization.Encoding.Raw, __import__("cryptography").hazmat.primitives.serialization.PublicFormat.Raw)).decode()}
+        "response_public_key":base64.urlsafe_b64encode(keys.public_key.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)).decode()}
 
 def test_secure_bridge_executes_encrypted_packet():
     b,k,s=bridge(); req=request(k,s,packet())
