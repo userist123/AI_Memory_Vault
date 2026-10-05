@@ -6,7 +6,9 @@ namespace LogAnalyzer.Dfir.Windows.Audit;
 
 public enum ControlStatus { Conform, Neconform, DeVerificat, Nedeterminat }
 
-public sealed record ControlCheck(string Id, string Area, string Title, ControlStatus Status, string Detail, IReadOnlyList<string> Evidence, string Recommendation);
+/// <param name="Subjects">Accounts or hosts the check is about (sAMAccountName), when the evaluator knows them; null otherwise.</param>
+public sealed record ControlCheck(string Id, string Area, string Title, ControlStatus Status, string Detail, IReadOnlyList<string> Evidence, string Recommendation,
+                                  IReadOnlyList<string>? Subjects = null);
 
 /// <summary>A notable action: who did what, when, according to which record.</summary>
 public sealed record ActionEntry(DateTimeOffset TimeUtc, string Who, string Action, string Detail, string Source);

@@ -12,7 +12,8 @@ Constructorul `Relationship` refuză orice muchie fără niciuna dintre ele. Leg
 
 ## Entități
 
-`Host`, `User`, `File` (cale normalizată: fără `\VOLUME{…}` și fără literă de unitate), `Domain`, `IpAddress`, `Service`, `Task`, `RegistryKey`, `Device`, `Threat`, `Finding`.
+`Host`, `User`, `File` (cale normalizată: fără `\VOLUME{…}` și fără literă de unitate), `Domain`, `IpAddress`, `Service`, `Task`, `RegistryKey`, `Device`, `Threat`, `Finding`;
+din inventarul de domeniu (P9): `AdDomain`, `Account`, `Group`, `Control` și `Host` pentru conturile de calculator.
 
 ## Relații produse azi
 
@@ -29,8 +30,10 @@ Constructorul `Relationship` refuză orice muchie fără niciuna dintre ele. Leg
 | Constatări | entitatea produsă de o probă SUPPORTS Finding | DIRECT (cu proba) |
 | INCIDENT-CHAIN | pas PART_OF lanț | CORRELATED (derivare) |
 | DOWNLOAD-THEN-EXEC | programul DERIVED_FROM fișierul descărcat | CORRELATED (derivare) |
+| Inventar AD (P9) | Account / Host / Group PART_OF AdDomain; Account / Host MEMBER_OF Group (membri recursivi, cum i-a întors LDAP) | DIRECT (proba = inventarul salvat, locatorul = DN-ul sau interogarea LDAP) |
+| Verificări de domeniu NECONFORM (P9) | Account / Host VIOLATES Control, doar pentru conturile numite de evaluator | DIRECT, cu derivarea `DomainEvaluator DMxx` |
 
-DOWNLOADED, OPENED și DETECTED sunt extensii explicite față de lista minimă din spec §7. Restul tipurilor din spec există în enum și se folosesc când o sursă le poate dovedi (de exemplu LOGGED_ON, MEMBER_OF pentru domeniu).
+DOWNLOADED, OPENED și DETECTED sunt extensii explicite față de lista minimă din spec §7. Restul tipurilor din spec există în enum și se folosesc când o sursă le poate dovedi.
 
 ## Interogări
 
@@ -49,8 +52,20 @@ DOWNLOADED, OPENED și DETECTED sunt extensii explicite față de lista minimă 
 
 **Nu există** o muchie directă SETUP.EXE → NanAgent32.exe: nicio probă din corpus nu o arată (Prefetch-ul lui SETUP.EXE nu face referire la NanAgent32.exe). Cele două sunt legate doar prin lanțul de incident, adică o corelare în timp. Graful păstrează această diferență.
 
+## Domeniu (P9)
+
+`DomainGraph.Build` (`Dfir.Windows/Domain/DomainGraph.cs`) primește inventarul LDAP, verificările de domeniu și `EvidenceId`-ul
+inventarului înregistrat în caz; refuză un inventar neînregistrat. Pagina „Investigație domeniu și e-mail” salvează după fiecare
+inventar și `domain_graph_*.json`, înregistrat ca probă derivată (părinte = inventarul).
+
+- Conturile pe care le vizează o verificare vin din evaluator (`ControlCheck.Subjects`), nu din textul probelor.
+- Doar verificările NECONFORM produc VIOLATES; DE VERIFICAT nu este o încălcare.
+- Un cont de calculator devine `Host:<nume>`, același id pe care graful cazului îl dă stației cu acel nume: cele două grafuri se
+  unesc pe el (`DomainGraph.Build(..., into: graful cazului)`).
+- Validat pe un inventar sintetic; **nu a fost rulat pe un domeniu real** (stația de dezvoltare nu face parte dintr-un domeniu).
+
 ## Limite
 
 - Fluxurile SRUM nu au adresă de destinație, deci nu produc CONNECTED_TO.
-- LOGGED_ON / AUTHENTICATED din jurnalul Security nu sunt încă trase în graf.
+- LOGGED_ON / AUTHENTICATED din jurnalul Security și din cronologia utilizatorului de domeniu nu sunt încă trase în graf.
 - Graful nu are încă o vizualizare în aplicație. Există doar JSON-ul și interogările din cod.

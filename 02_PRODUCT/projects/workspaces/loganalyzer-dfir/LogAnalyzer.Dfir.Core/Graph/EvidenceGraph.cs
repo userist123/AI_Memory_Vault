@@ -78,10 +78,15 @@ public sealed class EvidenceGraph
     }
 
     public Relationship Link(Entity from, RelationType type, Entity to, TimelineEvent? evidence, string derivation = "",
+                             Classification classification = Classification.Direct, Confidence confidence = Confidence.High, string reason = "") =>
+        LinkStored(from, type, to, evidence?.Time ?? Timestamp.Unknown(), evidence?.EvidenceId ?? "", evidence?.Locator ?? "", derivation,
+                   classification, confidence, reason);
+
+    /// <summary>An edge whose evidence is a stored item that is not a timeline event (an inventory, a snapshot): its id and the record inside it.</summary>
+    public Relationship LinkStored(Entity from, RelationType type, Entity to, Timestamp time, string evidenceId, string locator, string derivation = "",
                              Classification classification = Classification.Direct, Confidence confidence = Confidence.High, string reason = "")
     {
-        var r = new Relationship($"R-{_relationships.Count + 1:D6}", from.Id, to.Id, type, evidence?.Time ?? Timestamp.Unknown(),
-            evidence?.EvidenceId ?? "", evidence?.Locator ?? "", derivation, classification, confidence, reason);
+        var r = new Relationship($"R-{_relationships.Count + 1:D6}", from.Id, to.Id, type, time, evidenceId, locator, derivation, classification, confidence, reason);
         _relationships.Add(r);
         foreach (var id in new[] { r.SourceEntity, r.TargetEntity })
         {
