@@ -1,0 +1,56 @@
+import base64
+import json
+import time
+
+import pytest
+
+from agent_bridge.crypto import (
+    Ed25519Signer,
+    X25519Envelope,
+    canonical_json,
+)
+from agent_bridge.replay import ReplayGuard
+from agent_bridge.policy import CapabilityToken, BridgePolicy, PolicyError
+
+
+def test_envelope_encrypts_and_round_trips_without_plaintext():
+    recipient = X25519Envelope.generate()
+    plaintext = b"TOP SECRET WORK PACKET"
+    envelope = recipient.encrypt(plaintext, aad=b"task-1")
+    encoded = json.dumps(envelope).encode()
+    assert plaintext not in encoded
+    assert recipient.decrypt(envelope, aad=b"task-1") == plaintext
+
+
+def test_signed_capability_token_is_scoped_and_expires():
+    signer = Ed25519Signer.generate()
+    token = CapabilityToken.issue(
+        signer.private_key,
+        bridge_id="bridge-1",
+        task_id="task-1",
+        runtime="antigravity",
+        agent="visual_architect",
+        permissions=("execute",),
+        expires_at=time.time() + 60,
+        nonce="n1",
+    )
+    verified = CapabilityToken.verify(token, signer.public_key)
+    assert verified["runtime"] == "antigravity"
+    assert verified["agent"] == "visual_architect"
+
+    with pytest.raises(PolicyError):
+        BridgePolicy(("antigravity",), ("visual_architect",)).authorize(
+            verified, runtime="codex", agent="visual_architect"
+        )
+
+
+def test_replay_guard_rejects_second_use():
+    guard = ReplayGuard(ttl_seconds=60)
+    assert guard.claim("task-1", "nonce-1") is True
+    assert guard.claim("task-1", "nonce-1") is False
+
+
+def test_canonical_json_is_deterministic():
+    value = {"b": 2, "a": {"z": 1, "x": [3, 2, 1]}}
+    assert canonical_json(value) == canonical_json(value)
+    assert base64.b64encode(canonical_json(value)).decode()
