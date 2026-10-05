@@ -55,7 +55,22 @@ Classification tiers:
 
 ---
 
-### 2.1 Targeted Remediation of 5 Concrete Blockers
+### 2.2 Independent Red-Team / Zero-Trust Findings (U01–U08)
+
+| Finding ID | Finding Title | Priority | Target Surface | Status | Summary of Fix & Verification |
+|---|---|---|---|---|---|
+| **U01** | AI Agent Direct Active Mutation | P0 | `main` | **FIXED + VERIFIED BY TEST** | Enforced in `MemoryController.update()` fail-closed: `AI_AGENT` cannot update `ACTIVE` notes (`PermissionError`). Verified by `test_u01_ai_agent_cannot_mutate_active_note`. |
+| **U02** | Omitted Hash Check in Enforcer | P1 | `main` | **FIXED + VERIFIED BY TEST** | Parameter hash bound and verified in `RuntimeEnforcer.authorize()`. Verified by `test_m01_b02_*`. |
+| **U03** | `issue_approval` on `RuntimeAdapter` | P1 | `main` | **FIXED + VERIFIED BY TEST** | Blocked in production mode; requires out-of-process authority. Verified by `test_u03_runtime_adapter_issue_approval_blocked_in_production`. |
+| **U04** | Unauthenticated REST API Server | P0 | `main` | **FIXED + VERIFIED BY TEST** | Bearer authentication strictly enforced via `AI_MEMORY_VAULT_API_TOKEN` in `api_server.py`. Unauthenticated calls return 401 fail-closed. Verified by `test_u04_api_mutation_routes_require_authentication` and `api_smoke_test.py`. |
+| **U05** | Promotion Verification Gate Flag | P1 | `main` | **FIXED + VERIFIED BY TEST** | `QueuePromoter.promote_approved()` requires `verification == 'verified'`, non-empty `evidence_reference`, and authorized source type. Verified by `test_u05_queue_promoter_requires_verified_and_evidence`. |
+| **U06** | Unpinned Python Dependencies | P2 | `main` | **FIXED + VERIFIED BY TEST** | Pinned exact versions in `requirements.txt` and `requirements-memory-v6.txt` (Python 3.10-3.12 compatible). Verified by `test_u06_direct_dependencies_are_exactly_version_pinned` (hash-pinning documented as limitation). |
+| **U07** | Windows Host NTFS DENY ACLs | P1 | host OS | **DEPENDENT — NOT PROVEN** | Host-level ACL enforcement depends on PR #207 (`codex/owner-authority-guardrail`), which remains OPEN. |
+| **U08** | Unbounded Note Size DoS | P2 | `main` | **FIXED + VERIFIED BY TEST** | `MAX_NOTE_CONTENT = 20_000` enforced centrally in `MemoryController._validate_note()`. Verified by `test_u08_unbounded_note_size_rejection_at_controller_boundary`. |
+
+---
+
+### 2.3 Targeted Remediation of 5 Concrete Blockers
 
 Detailed regression and adversarial proofs are documented in [`docs/security/PR209_REGRESSION_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_REGRESSION_PROOF.md).
 

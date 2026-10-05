@@ -46,7 +46,7 @@ class MemoryProposalQueue:
     def pending(self) -> List[dict]:
         return [item for item in self._load() if item.get("queue_status") == "PENDING_REVIEW"]
 
-    def mark(self, candidate_id: str, status: str, reviewer: str = "human") -> None:
+    def mark(self, candidate_id: str, status: str, reviewer: str = "human", evidence_reference: str = "") -> None:
         allowed = {"APPROVED", "REJECTED", "PROMOTED"}
         if status not in allowed:
             raise ValueError(f"status must be one of {sorted(allowed)}")
@@ -56,6 +56,10 @@ class MemoryProposalQueue:
                 item["queue_status"] = status
                 item["reviewed_by"] = reviewer
                 item["reviewed_at"] = datetime.now(timezone.utc).isoformat()
+                if status == "APPROVED" and str(reviewer).lower() in {"human", "admin"}:
+                    item["verification"] = "verified"
+                    item["verification_source"] = str(reviewer).lower()
+                    item["evidence_reference"] = evidence_reference or f"attestation:{reviewer}"
                 self._write(records)
                 return
         raise KeyError(f"candidate not found: {candidate_id}")

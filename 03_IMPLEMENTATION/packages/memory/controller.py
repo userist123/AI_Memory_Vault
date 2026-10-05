@@ -1662,13 +1662,6 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
-                if principal == Principal.AI_AGENT and note.get('lifecycle') == Lifecycle.ACTIVE:
-                    raise PermissionError('AI_AGENT cannot update ACTIVE notes')
-                if note['lifecycle'] != Lifecycle.ACTIVE:
-                    if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
-                        pass
-                    else:
-                        raise ValueError('Updates not permitted for this lifecycle and principal')
                 immutable = {'id', 'lifecycle'}
                 for k in immutable:
                     if k in updates and updates[k] != note.get(k):
@@ -1685,6 +1678,22 @@ class MemoryController:
                         old_st = note.get('provenance', {}).get('source_type')
                         if new_st != old_st:
                             raise ValueError(f"Field provenance.source_type is immutable post-creation (existing: '{old_st}', attempted: '{new_st}')")
+
+                merged_updates = dict(updates)
+                if 'provenance' in updates and isinstance(updates['provenance'], dict) and isinstance(note.get('provenance'), dict):
+                    merged_updates['provenance'] = {**note['provenance'], **updates['provenance']}
+                merged_note = {**note, **merged_updates, 'updated': datetime.now(timezone.utc).date().isoformat()}
+                self._validate_note(merged_note)
+
+                if principal == Principal.AI_AGENT and note.get('lifecycle') == Lifecycle.ACTIVE:
+                    disallowed = set(updates.keys()) - {'relations', 'confidence', 'verification', 'valid_until'}
+                    if disallowed or updates.get('verification') == 'verified':
+                        raise PermissionError('AI_AGENT cannot update ACTIVE notes: content and structural fields are immutable to AI agents')
+                if note['lifecycle'] != Lifecycle.ACTIVE:
+                    if principal == Principal.AI_AGENT and note['lifecycle'] in {Lifecycle.RAW, Lifecycle.CLASSIFIED, Lifecycle.NORMALIZED}:
+                        pass
+                    else:
+                        raise ValueError('Updates not permitted for this lifecycle and principal')
 
                 old_valid_until = note.get('valid_until')
                 new_valid_until = updates.get('valid_until')

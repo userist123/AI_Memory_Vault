@@ -55,14 +55,14 @@ Detailed proofs and evidence are documented in:
 | **B03–B10** | Empirical evaluation gaps on research branch | P1 | **REMAINS OPEN** | Isolated on PR #206 (`research/book-to-memory`); not present on `main` |
 | **B11** | Graph cleanup rewrites note body prose | P1 | **VERIFIED_FIXED** | Preserves note body bytes identically; zero semantic injections |
 | **B12** | Severity downgrade from HARD_BLOCKER | P1 | **PARTIALLY FIXED** | `validate_severity_transition()` prevents downgrade on `main` |
-| **U01** | AI Agent Direct Active Mutation | P0 | **VULNERABLE** | Downstream architectural question under review by vault owner |
+| **U01** | AI Agent Direct Active Mutation | P0 | **VERIFIED_FIXED** | Enforced in `MemoryController.update()` fail-closed: `AI_AGENT` cannot update `ACTIVE` notes; validated by `test_u01_ai_agent_cannot_mutate_active_note` |
 | **U02** | Omitted Hash Check in Enforcer | P1 | **VERIFIED_FIXED** | Bound in `RuntimeEnforcer.authorize()` |
 | **U03** | `issue_approval` on `RuntimeAdapter` | P1 | **VERIFIED_FIXED** | Blocked in production mode; requires external authority |
-| **U04** | Unauthenticated REST API Server | P0 | **VULNERABLE** | Unauthenticated port 8000 route marked as retired/unsupported |
-| **U05** | Promotion Verification Gate Flag | P1 | **VULNERABLE** | Architectural flag awaiting owner review |
-| **U06** | Unpinned Python Dependencies | P2 | **VULNERABLE** | Requirements lockfile cryptographic hash pinning open |
-| **U07** | Windows Host NTFS DENY ACLs | P1 | **UNVERIFIED** | Host-level ACL enforcement pending PR #207 merge |
-| **U08** | Unbounded Note Size DoS | P2 | **VULNERABLE** | Input size guard implemented in `memory_access`, core pending |
+| **U04** | Unauthenticated REST API Server | P0 | **VERIFIED_FIXED** | Enforced API bearer authentication in `api_server.py` fail-closed via `AI_MEMORY_VAULT_API_TOKEN`; validated by `test_u04_api_mutation_routes_require_authentication` and `api_smoke_test.py` |
+| **U05** | Promotion Verification Gate Flag | P1 | **VERIFIED_FIXED** | `QueuePromoter.promote_approved()` requires `verification == 'verified'`, non-empty `evidence_reference`, and authorized source type; validated by `test_u05_queue_promoter_requires_verified_and_evidence` |
+| **U06** | Unpinned Python Dependencies | P2 | **VERIFIED_FIXED** | Pinned exact versions in `requirements.txt` and `requirements-memory-v6.txt` (Python 3.10-3.12 compatible); validated by `test_u06_direct_dependencies_are_exactly_version_pinned` (hash-pinning documented as limitation) |
+| **U07** | Windows Host NTFS DENY ACLs | P1 | **DEPENDENT — NOT PROVEN** | Host-level ACL enforcement depends on PR #207 (`codex/owner-authority-guardrail`), which remains OPEN |
+| **U08** | Unbounded Note Size DoS | P2 | **VERIFIED_FIXED** | `MAX_NOTE_CONTENT = 20_000` enforced centrally in `MemoryController._validate_note()`; validated by `test_u08_unbounded_note_size_rejection_at_controller_boundary` |
 
 ---
 
@@ -71,21 +71,31 @@ Detailed proofs and evidence are documented in:
 ```text
 .github/workflows/apisec-scan.yml
 .github/workflows/fortify.yml
+02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py
+03_IMPLEMENTATION/packages/interfaces/api_server.py
 03_IMPLEMENTATION/packages/interfaces/memory_access.py
 03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py
+03_IMPLEMENTATION/packages/memory/controller.py
 20_TESTS/fixtures/ontology_slot_writers.json
+20_TESTS/memory_controller/test_api_server.py
+20_TESTS/memory_controller/test_milestone3_empirical_challenge.py
 20_TESTS/memory_vault_fixture.py
 20_TESTS/regression/test_workflow_security_audit.py
 20_TESTS/test_memory_access.py
+20_TESTS/test_memory_mcp_server.py
 docs/security/AUDIT_REMEDIATION.md
 docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md
 docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md
+docs/security/PR209_DESCRIPTION.md
 docs/security/PR209_REGRESSION_PROOF.md
 docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md
+requirements-memory-v6.txt
+requirements.txt
 security/runtime_adapter.py
 security/runtime_enforcer.py
 security/tests/os_multiprocess_nonce_runner.py
 security/tests/test_audit_remediation.py
+security/tests/test_pr209_final_security_gates.py
 ```
 
 ---
