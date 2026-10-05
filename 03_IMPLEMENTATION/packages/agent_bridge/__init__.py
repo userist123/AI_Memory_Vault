@@ -4,3 +4,5 @@ from .crypto import Ed25519Signer, X25519Envelope, canonical_json
 from .policy import BridgePolicy, CapabilityToken, PolicyError
 from .replay import ReplayGuard
 from .antigravity import AntigravityExecutionError, AntigravitySession
+
+from .bridge import BridgeRequestError, SecureBridge
