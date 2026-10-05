@@ -26,6 +26,7 @@ class CapabilityToken:
         permissions: Iterable[str],
         expires_at: float,
         nonce: str,
+        response_public_key: str,
     ) -> str:
         payload = {
             "v": 1,
@@ -36,6 +37,7 @@ class CapabilityToken:
             "permissions": sorted(set(permissions)),
             "expires_at": float(expires_at),
             "nonce": nonce,
+            "response_public_key": response_public_key,
         }
         signature = private_key.sign(canonical_json(payload))
         envelope = {"payload": payload, "signature": base64.urlsafe_b64encode(signature).decode("ascii")}

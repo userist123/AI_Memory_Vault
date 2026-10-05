@@ -17,11 +17,13 @@ class SecureBridge:
     def __init__(self, bridge_id: str, recipient: X25519Envelope, verifier,
                  policy: BridgePolicy, replay_guard: ReplayGuard,
                  executors: Mapping[str, Callable[[WorkPacket], Mapping]],
+                 signer,
                  max_packet_bytes: int = 1024 * 1024,
                  max_result_bytes: int = 4 * 1024 * 1024):
         self.bridge_id=bridge_id
         self.recipient=recipient
         self.verifier=verifier
+        self.signer=signer
         self.policy=policy
         self.replay_guard=replay_guard
         self.executors=dict(executors)
@@ -71,6 +73,8 @@ class SecureBridge:
                 raise BridgeRequestError("capability identity mismatch")
             if token.get("nonce")!=request["nonce"]:
                 raise BridgeRequestError("capability nonce mismatch")
+            if token.get("response_public_key") != request["response_public_key"]:
+                raise BridgeRequestError("response public key mismatch")
             self.policy.authorize(token,runtime=str(request["runtime"]),agent=str(request["agent"]))
             if not self.replay_guard.claim(task_id,str(request["nonce"])):
                 raise BridgeRequestError("replay detected")
@@ -84,13 +88,15 @@ class SecureBridge:
             encoded=json.dumps(result,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()
             if len(encoded)>self.max_result_bytes:
                 raise BridgeRequestError("execution result exceeds limit")
-            return {
+            response={
                 "version":1,
                 "bridge_id":self.bridge_id,
                 "task_id":task_id,
                 "status":str(result.get("status","completed")),
                 "payload":X25519Envelope.encrypt_for_public_key(self._public_key(str(request["response_public_key"])),encoded,aad=aad),
             }
+            response["signature"]=self.signer.sign(json.dumps(response,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode())
+            return response
         except PolicyError as exc:
             raise BridgeRequestError(str(exc)) from exc
         except BridgeRequestError:

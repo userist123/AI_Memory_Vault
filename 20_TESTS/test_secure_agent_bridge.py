@@ -35,7 +35,7 @@ def test_signed_capability_token_is_scoped_and_expires():
         agent="visual_architect",
         permissions=("execute",),
         expires_at=time.time() + 60,
-        nonce="n1",
+        nonce="n1", response_public_key="caller-key",
     )
     verified = CapabilityToken.verify(token, signer.public_key)
     assert verified["runtime"] == "antigravity"
@@ -77,22 +77,23 @@ def test_secure_bridge_client_round_trip():
     caller_keys = X25519Envelope.generate()
     signer = Ed25519Signer.generate()
     from agent_bridge.bridge import SecureBridge
+    bridge_signer = Ed25519Signer.generate()
     bridge = SecureBridge(
         "bridge-1", bridge_keys, signer.public_key,
         BridgePolicy(("antigravity",), ("visual_architect",)), ReplayGuard(),
-        {"antigravity": lambda p: {"status": "completed", "response": "ok"}},
+        {"antigravity": lambda p: {"status": "completed", "response": "ok"}}, bridge_signer,
     )
     packet = WorkPacket("task-client", "route-client", "router", "visual_architect",
                         "antigravity", "v1", "command", "private work", (), (), (), 60, {})
     token = CapabilityToken.issue(
         signer.private_key, bridge_id="bridge-1", task_id=packet.task_id,
         runtime="antigravity", agent="visual_architect", permissions=("execute",),
-        expires_at=time.time() + 60, nonce="client-nonce",
+        expires_at=time.time() + 60, nonce="client-nonce", response_public_key=base64.urlsafe_b64encode(caller_keys.public_key.public_bytes(__import__("cryptography").hazmat.primitives.serialization.Encoding.Raw, __import__("cryptography").hazmat.primitives.serialization.PublicFormat.Raw)).decode(),
     )
     seen = {}
     def send(request):
         seen.update(request)
         return bridge.handle(request)
-    client = SecureBridgeClient("bridge-1", bridge_keys.public_key, caller_keys, send)
+    client = SecureBridgeClient("bridge-1", bridge_keys.public_key, caller_keys, send, bridge_signer.public_key)
     assert client.dispatch(packet, token, "client-nonce")["response"] == "ok"
     assert b"private work" not in json.dumps(seen).encode()
