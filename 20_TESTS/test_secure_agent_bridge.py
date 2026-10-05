@@ -48,7 +48,7 @@ def test_signed_capability_token_is_scoped_and_expires():
 
 
 def test_replay_guard_rejects_second_use():
-    guard = ReplayGuard(ttl_seconds=60)
+    guard = ReplayGuard(ttl_seconds=180)
     assert guard.claim("task-1", "nonce-1") is True
     assert guard.claim("task-1", "nonce-1") is False
 
@@ -57,7 +57,6 @@ def test_canonical_json_is_deterministic():
     value = {"b": 2, "a": {"z": 1, "x": [3, 2, 1]}}
     assert canonical_json(value) == canonical_json(value)
     assert base64.b64encode(canonical_json(value)).decode()
-
 
 
 def test_antigravity_command_is_persistent_and_prompt_free():
@@ -76,24 +75,35 @@ def test_secure_bridge_client_round_trip():
     bridge_keys = X25519Envelope.generate()
     caller_keys = X25519Envelope.generate()
     signer = Ed25519Signer.generate()
+    bridge_signer = Ed25519Signer.generate()
     from agent_bridge.bridge import SecureBridge
     bridge = SecureBridge(
         "bridge-1", bridge_keys, signer.public_key,
         BridgePolicy(("antigravity",), ("visual_architect",)), ReplayGuard(),
         {"antigravity": lambda p: {"status": "completed", "response": "ok"}},
+        bridge_signer,
     )
     packet = WorkPacket("task-client", "route-client", "router", "visual_architect",
                         "antigravity", "v1", "command", "private work", (), (), (), 60, {})
+    response_public_key = base64.urlsafe_b64encode(
+        caller_keys.public_key.public_bytes(
+            __import__("cryptography").hazmat.primitives.serialization.Encoding.Raw,
+            __import__("cryptography").hazmat.primitives.serialization.PublicFormat.Raw,
+        )
+    ).decode()
     token = CapabilityToken.issue(
         signer.private_key, bridge_id="bridge-1", task_id=packet.task_id,
         runtime="antigravity", agent="visual_architect", permissions=("execute",),
         expires_at=time.time() + 60, nonce="client-nonce",
+        response_public_key=response_public_key,
     )
     seen = {}
     def send(request):
         seen.update(request)
         return bridge.handle(request)
-    client = SecureBridgeClient("bridge-1", bridge_keys.public_key, caller_keys, send)
+    client = SecureBridgeClient(
+        "bridge-1", bridge_keys.public_key, caller_keys, send, bridge_signer.public_key
+    )
     assert client.dispatch(packet, token, "client-nonce")["response"] == "ok"
     assert b"private work" not in json.dumps(seen).encode()
 
