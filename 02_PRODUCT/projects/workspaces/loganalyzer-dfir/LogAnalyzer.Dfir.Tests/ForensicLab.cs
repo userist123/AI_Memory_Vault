@@ -193,11 +193,14 @@ public sealed class ForensicLab(ITestOutputHelper output)
             md.Append('\n');
         }
         var json = JsonSerializer.Serialize(new { Summary = summary, Cases = cases }, new JsonSerializerOptions { WriteIndented = true, Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() } });
-        foreach (var dir in new[] { AppContext.BaseDirectory, Environment.GetEnvironmentVariable("LADFIR_LAB_OUT") }.Where(d => !string.IsNullOrEmpty(d)))
+        // Next to the binaries: JSON and plain text (a .md there would sit inside the vault's tree as an unlisted note).
+        File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "forensic_lab_report.json"), json, new UTF8Encoding(false));
+        File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "forensic_lab_report.txt"), md.ToString(), new UTF8Encoding(false));
+        if (Environment.GetEnvironmentVariable("LADFIR_LAB_OUT") is { Length: > 0 } outDir)
         {
-            Directory.CreateDirectory(dir!);
-            File.WriteAllText(Path.Combine(dir!, "forensic_lab_report.md"), md.ToString(), new UTF8Encoding(false));
-            File.WriteAllText(Path.Combine(dir!, "forensic_lab_report.json"), json, new UTF8Encoding(false));
+            Directory.CreateDirectory(outDir);
+            File.WriteAllText(Path.Combine(outDir, "forensic_lab_report.md"), md.ToString(), new UTF8Encoding(false));
+            File.WriteAllText(Path.Combine(outDir, "forensic_lab_report.json"), json, new UTF8Encoding(false));
         }
         output.WriteLine(summary);
         foreach (var c in cases.Where(c => c.Status != LabStatus.Pass))

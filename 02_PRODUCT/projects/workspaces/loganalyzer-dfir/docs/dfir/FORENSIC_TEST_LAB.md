@@ -82,7 +82,7 @@ $env:LADFIR_LAB_OUT = "D:\rapoarte"   # opțional: unde se copiază raportul
 dotnet test LogAnalyzer.Dfir.Tests --filter ForensicLab
 ```
 
-Pentru fiecare caz scrie REAL CORPUS, KNOWN TRUTH, EXPECTED, ACTUAL, DIFF și starea, în `forensic_lab_report.md` și `.json`:
+Pentru fiecare caz scrie REAL CORPUS, KNOWN TRUTH, EXPECTED, ACTUAL, DIFF și starea, în `forensic_lab_report.json` și `.txt` lângă binarele de test, iar cu `LADFIR_LAB_OUT` și în `.md`:
 
 | stare | când |
 |---|---|

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Graph;
 using LogAnalyzer.Dfir.Model;
@@ -135,6 +136,15 @@ public class InvestigationTests
             Assert.All(r.Timeline, e => { Assert.Equal(hashes[e.EvidenceId], e.SourceSha256); Assert.NotEmpty(e.ParserId); });
             Assert.All(r.Findings.SelectMany(f => f.SupportingEvidence), x => Assert.Equal(hashes[x.EvidenceId], x.Sha256));
             Assert.True(ReportIntegrity.Check(r).AllIntact);
+
+            // P13/P14 on the real case: anti-forensics results and Memory Vault proposals, every finding with evidence and hash.
+            Assert.Equal(16, r.AntiForensics.Count);
+            Assert.True(File.Exists(Path.Combine(ws.Root, "Analysis", "anti_forensics.json")));
+            var vault = File.ReadAllLines(Path.Combine(ws.Root, "Exports", "vault_proposals.jsonl"));
+            var refusedForVault = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Exports", "vault_refused.json"))).RootElement;
+            Assert.DoesNotContain(refusedForVault.EnumerateArray(), x => x.GetProperty("Kind").GetString() is "Finding" or "Incident" or "Inference");
+            Assert.Equal(r.Findings.Count, vault.Count(l => l.Contains(":Finding:F-") || l.Contains(":Incident:F-") || l.Contains(":Inference:F-")));
+            Assert.Contains(vault, l => l.Contains(":Incident:") && l.Contains("NanAgent32.exe"));
 
             var pdf = Path.Combine(ws.Root, "raport.pdf");
             InvestigationReportPdf.Write(r, pdf, "test");
