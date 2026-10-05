@@ -9,6 +9,7 @@ on:
       - '20_TESTS/test_agent_dispatcher.py'
       - '20_TESTS/test_secure_agent_bridge.py'
       - '20_TESTS/test_secure_bridge_handler.py'
+      - '20_TESTS/test_claude_contract.py'
       - '03_IMPLEMENTATION/packages/agent_bridge/**'
       - '.github/workflows/agent-routing-tests.yml'
   pull_request:
@@ -44,7 +45,7 @@ jobs:
       - name: Run routing and bridge tests
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
-        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py 20_TESTS/test_secure_agent_bridge.py 20_TESTS/test_secure_bridge_handler.py
+        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py 20_TESTS/test_secure_agent_bridge.py 20_TESTS/test_secure_bridge_handler.py 20_TESTS/test_claude_contract.py
       - name: Smoke test route CLI
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
