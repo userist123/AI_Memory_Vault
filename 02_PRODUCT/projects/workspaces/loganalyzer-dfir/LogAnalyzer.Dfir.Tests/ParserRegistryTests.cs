@@ -31,7 +31,7 @@ public sealed class ParserRegistryTests : IDisposable
     public void Every_registered_parser_describes_itself_completely()
     {
         var all = WindowsParsers.Registry.Descriptors;
-        Assert.Equal(6, all.Count);
+        Assert.Equal(7, all.Count);
         Assert.Equal(all.Count, all.Select(d => d.ParserId).Distinct().Count());
         Assert.All(all, d =>
         {
@@ -64,6 +64,7 @@ public sealed class ParserRegistryTests : IDisposable
     [InlineData("pcapng", "c.pcapng", "PcapngParser")]
     [InlineData("system_hive", "SYSTEM", "SystemHiveExecutionParser")]
     [InlineData("amcache", "Amcache.hve", "AmcacheParser")]
+    [InlineData("task_xml", "orchestratormaintain", "ScheduledTaskParser")]
     public void Candidates_follow_the_declared_type(string type, string stored, string expected)
     {
         var c = Assert.Single(WindowsParsers.Registry.Candidates(Item(type, stored)));
@@ -109,7 +110,7 @@ public sealed class ParserRegistryTests : IDisposable
         Assert.Contains("operator_notes", skipped.Error);
 
         var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "parsers.json"))).RootElement;
-        Assert.Equal(6, inventory.GetArrayLength());
+        Assert.Equal(7, inventory.GetArrayLength());
         Assert.Contains(inventory.EnumerateArray(), d => d.GetProperty("ParserId").GetString() == "AmcacheParser");
     }
 }

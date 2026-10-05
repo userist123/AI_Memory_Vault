@@ -21,9 +21,22 @@ public static class EvidenceFingerprint
         if (StartsWith(h, 0, "regf"u8)) return "regf";
         if (n >= 8 && BinaryPrimitives.ReadUInt32LittleEndian(h[4..]) == 0x89ABCDEF) return "ese";
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
+        if (IsTaskXml(path)) return "task_xml";
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
+    }
+
+    /// <summary>Scheduled task definition (System32\Tasks): XML, usually UTF-16 LE, root Task element in the task schema namespace.</summary>
+    private static bool IsTaskXml(string path)
+    {
+        var buf = new byte[2048];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        string head = n >= 2 && buf[0] == 0xFF && buf[1] == 0xFE ? System.Text.Encoding.Unicode.GetString(buf, 2, (n - 2) & ~1)
+                    : System.Text.Encoding.UTF8.GetString(buf, 0, n);
+        return head.Contains("<Task", StringComparison.Ordinal) && head.Contains("schemas.microsoft.com/windows/2004/02/mit/task", StringComparison.Ordinal);
     }
 
     /// <summary>Formats an evidence item may legitimately have, from its declared type or name; null when not checked.</summary>
@@ -37,6 +50,7 @@ public static class EvidenceFingerprint
         if (t is "system_hive" or "amcache") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t == "live_snapshot") return ["json"];
+        if (t == "task_xml") return ["task_xml"];
         return null;
     }
 

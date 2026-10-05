@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.Network;
 using LogAnalyzer.Dfir.Parsing;
+using LogAnalyzer.Dfir.Persistence;
 
 namespace LogAnalyzer.Dfir.Windows.Parsers;
 
@@ -7,5 +8,6 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 public static class WindowsParsers
 {
     public static ParserRegistry Registry { get; } = new(
-        [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser()]);
+        [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser(),
+         new ScheduledTaskParser()]);
 }

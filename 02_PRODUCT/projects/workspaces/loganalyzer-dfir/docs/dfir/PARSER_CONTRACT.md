@@ -28,7 +28,7 @@ public interface IEvidenceParser
 | `ParserId`, `Version` | identitatea, scrisă în fiecare eveniment, `ParseResult` și custodie |
 | `Artifact` | ce citește, în cuvinte |
 | `SourceTypes`, `FileNames` | ce probe îi revin după tipul declarat (`EventLog:*` = prefix) sau după nume |
-| `Fingerprints` | formatele de conținut pe care le poate citi (`evtx`, `prefetch`, `prefetch_mam`, `ese`, `regf`, `pcapng`) |
+| `Fingerprints` | formatele de conținut pe care le poate citi (`evtx`, `prefetch`, `prefetch_mam`, `ese`, `regf`, `pcapng`, `task_xml`) |
 | `SupportedOs`, `FormatVersions` | unde rulează și ce versiuni de format înțelege |
 | `Limitations` | ce **nu** face; apare în `Analysis/parsers.json` al fiecărui caz |
 | `Status` | `VALIDATED` (regresie pe corpus real) / `TESTED` (doar date sintetice, valori exacte) / `EXPERIMENTAL` (fără teste) |
@@ -56,6 +56,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | PcapngParser 1.0 | PCAPNG | PCAPNG 1.0 | VALIDATED | corpus (fluxuri, DNS, SNI) |
 | SystemHiveExecutionParser 1.0 | BAM (inclusiv UWP), ShimCache | BAM Win10 1709+, ShimCache 10ts (inclusiv big-data) | VALIDATED | hive SYSTEM real vs `reg query`: 72 valori BAM, AppCompatCache identic octet cu octet |
 | AmcacheParser 1.0 | Amcache InventoryApplicationFile | Win10/11 | VALIDATED | Amcache.hve real (>6000 intrări) + sintetic |
+| ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.
 

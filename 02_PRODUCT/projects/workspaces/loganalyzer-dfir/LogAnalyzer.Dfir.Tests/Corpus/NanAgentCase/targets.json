@@ -47,6 +47,11 @@
     "bamRegQuery": "NanAgent-Forensic-V11_20261003_221532\\27_BAM\\bam_all.txt",
     "shimcacheRegQuery": "NanAgent-Forensic-V11_20261003_221532\\28_APPCOMPAT\\shimcache.txt"
   },
+  "tasks": {
+    "file": "05_TASKS\\Tasks_XML\\Adobe Acrobat Update Task",
+    "folder": "05_TASKS\\Tasks_XML",
+    "schtasksCsv": "05_TASKS\\schtasks_csv_v.csv"
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

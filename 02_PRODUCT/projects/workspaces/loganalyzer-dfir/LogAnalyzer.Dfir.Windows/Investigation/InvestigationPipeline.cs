@@ -67,6 +67,7 @@ public sealed class InvestigationPipeline
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
+                _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
                 _ => null,
             };
             if (type is null) continue;

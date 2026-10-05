@@ -47,6 +47,7 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | defenderEvtx, msiEvtx | EvtxParser | 1116 GenCodeInjected pe NanAgent32.exe; 1033 MsiInstaller CxUtilSvc Helper |
 | pcapng | PcapngParser | peste 700 de fluxuri, DNS napps-1.com, SNI chatgpt.com |
 | systemHive | SystemHiveExecutionParser, RawRegistry | BAM: 72 valori comparate cu `reg query` (70 identice, 2 mai noi în fereastra de 7 s dintre capturi); AppCompatCache identic octet cu octet cu `reg query` |
+| tasks | ScheduledTaskParser | toate cele 303 definiții din System32\Tasks parsate; fiecare acțiune Exec egală cu „Task To Run” din `schtasks /query /v` (fără ghilimele, cum le afișează schtasks); taskurile cu mai multe acțiuni apar ca „Multiple actions” |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 

@@ -26,9 +26,15 @@ public static class Correlation
     private static readonly string[] KnownBenignMarkers =
         [@"\programdata\microsoft\", @"\programdata\package cache\", "__psscriptpolicytest_", @"\appdata\local\microsoft\windowsapps\"];
 
+    /// <summary>Environment variables in task/service commands that resolve to user-writable folders (not expanded on this machine).</summary>
+    private static readonly (string Var, string Folder)[] WritableEnvVars =
+        [("%localappdata%", @"\appdata\local\"), ("%appdata%", @"\appdata\roaming\"), ("%temp%", @"\temp\"), ("%tmp%", @"\temp\"),
+         ("%programdata%", @"\programdata\"), ("%public%", @"\users\public\"), ("%allusersprofile%", @"\programdata\")];
+
     public static bool IsUserWritable(string path)
     {
         var p = path.Replace('/', '\\').ToLowerInvariant();
+        foreach (var (v, folder) in WritableEnvVars) p = p.Replace(v, folder);
         return UserWritableMarkers.Any(p.Contains) && !KnownBenignMarkers.Any(p.Contains);
     }
 
@@ -141,6 +147,24 @@ public static class Correlation
                 ClassificationReason = "Eveniment de creare a taskului; acțiunea indică o cale scriabilă sau un script.",
                 SupportingEvidence = [Ref(e, "creare task")],
             });
+
+        // Task definitions (System32\Tasks XML): configuration that runs a program from a user-writable location.
+        foreach (var e in events.Where(e => e.Source == "ScheduledTask" && e.Path.Length > 0 &&
+                                            (IsUserWritable(e.Path) || ScriptExtensions.Any(x => F(e, "Arguments").Contains(x, StringComparison.OrdinalIgnoreCase) && IsUserWritable(F(e, "Arguments"))))))
+        {
+            bool hidden = F(e, "Hidden") == "true";
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Task programat{(hidden ? " ascuns" : "")} care rulează din locație scriabilă: {e.Task}",
+                Severity = hidden ? Severity.High : Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                MitreTechniqueId = "T1053.005", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
+                Description = $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")} ca {e.User} ({F(e, "RunLevel")}); declanșatori: {F(e, "Triggers")}; autor {F(e, "Author")}.",
+                ClassificationReason = "Definiția taskului (XML din System32\\Tasks) indică o cale scriabilă de utilizatori. Arată configurația, nu o rulare.",
+                SupportingEvidence = [Ref(e, "definiție task")],
+                AlternativeExplanations = ["Actualizatoare legitime instalate per utilizator (AppData) creează astfel de taskuri."],
+                MissingEvidence = ["Rulări ale taskului: TaskScheduler/Operational (200/201) sau Prefetch pentru executabil."],
+            });
+        }
 
         // 4. Execution from user-writable locations (Prefetch references), scripts launched by installers.
         var userPathExec = new List<Finding>();
