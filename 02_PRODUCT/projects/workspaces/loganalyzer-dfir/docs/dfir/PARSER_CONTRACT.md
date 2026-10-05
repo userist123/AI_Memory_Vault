@@ -28,7 +28,7 @@ public interface IEvidenceParser
 | `ParserId`, `Version` | identitatea, scrisă în fiecare eveniment, `ParseResult` și custodie |
 | `Artifact` | ce citește, în cuvinte |
 | `SourceTypes`, `FileNames` | ce probe îi revin după tipul declarat (`EventLog:*` = prefix) sau după nume |
-| `Fingerprints` | formatele de conținut pe care le poate citi (`evtx`, `prefetch`, `prefetch_mam`, `ese`, `regf`, `pcapng`, `task_xml`, `sqlite`, `lnk`) |
+| `Fingerprints` | formatele de conținut pe care le poate citi (`evtx`, `prefetch`, `prefetch_mam`, `ese`, `regf`, `pcapng`, `task_xml`, `sqlite`, `lnk`, `cfb`) |
 | `SupportedOs`, `FormatVersions` | unde rulează și ce versiuni de format înțelege |
 | `Limitations` | ce **nu** face; apare în `Analysis/parsers.json` al fiecărui caz |
 | `Status` | `VALIDATED` (regresie pe corpus real) / `TESTED` (doar date sintetice, valori exacte) / `EXPERIMENTAL` (fără teste) |
@@ -62,6 +62,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | BrowserHistoryParser 1.0 | Istoric Chromium (Chrome, Edge): vizite, descărcări, lanț de URL-uri | schema History cu urls/visits/downloads | VALIDATED | History real (Default) vs extracția independentă din investigația manuală: 5 descărcări identice; toate cele peste 2000 de vizite din 18–20.09 (URL-urile lungi erau trunchiate în referință) |
 | LnkParser 1.0 | Shortcut .lnk (MS-SHLLINK) | antet, LinkInfo, StringData, TrackerDataBlock | VALIDATED | 182 linkuri reale din Recent comparate cu shell-ul Windows (WScript.Shell): țintă, argumente, folder de lucru; shell-ul pierde caracterele non-ANSI („ș” → „?”), parserul păstrează calea Unicode |
 | UsbDevicesParser 1.0 | SYSTEM: stocare USB (USBSTOR, UAS, MountedDevices) | Windows 8 – 11 | VALIDATED | SYSTEM.hiv real vs Partition/Diagnostic 1006: toate cele 5 dispozitive din jurnal găsite cu producător și model identice; fiecare oră de ultimă conectare din hive corespunde unui 1006 (±2 min) |
+| JumpListParser 1.0 | Jump List automată (OLE CFB + DestList + linkuri) | DestList v3–v6 | **TESTED** | CFB sintetic cu valori exacte; pe 54 de fișiere reale doar consistență internă (1.880 de intrări, 1.555 de căi identice între DestList și linkuri). Nu există încă o referință independentă, deci nu e VALIDATED |
 | ScheduledTaskParser 1.0 | Definiții de task (System32\Tasks XML) | schema 1.1–1.6 | VALIDATED | 303 fișiere reale comparate cu `schtasks /query /v` (comanda + argumentele, „Multiple actions”); XML sintetic |
 
 Limitările complete sunt în descriptori și în `Analysis/parsers.json`.

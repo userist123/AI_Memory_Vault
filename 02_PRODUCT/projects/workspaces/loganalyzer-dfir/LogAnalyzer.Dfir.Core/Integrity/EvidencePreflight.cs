@@ -20,6 +20,7 @@ public static class EvidenceFingerprint
         if (StartsWith(h, 4, "SCCA"u8)) return "prefetch";
         if (StartsWith(h, 0, "regf"u8)) return "regf";
         if (StartsWith(h, 0, "SQLite format 3\0"u8)) return "sqlite";
+        if (StartsWith(h, 0, [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])) return "cfb";
         if (StartsWith(h, 0, [0x4C, 0, 0, 0, 0x01, 0x14, 0x02, 0, 0, 0, 0, 0, 0xC0, 0, 0, 0])) return "lnk";
         if (n >= 8 && BinaryPrimitives.ReadUInt32LittleEndian(h[4..]) == 0x89ABCDEF) return "ese";
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
@@ -54,6 +55,7 @@ public static class EvidenceFingerprint
         if (t == "live_snapshot") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == "chromium_history") return ["sqlite"];
+        if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];
         return null;
     }

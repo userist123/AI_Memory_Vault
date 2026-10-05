@@ -31,7 +31,7 @@ public sealed class ParserRegistryTests : IDisposable
     public void Every_registered_parser_describes_itself_completely()
     {
         var all = WindowsParsers.Registry.Descriptors;
-        Assert.Equal(13, all.Count);
+        Assert.Equal(14, all.Count);
         Assert.Equal(all.Count, all.Select(d => d.ParserId).Distinct().Count());
         Assert.All(all, d =>
         {
@@ -48,6 +48,7 @@ public sealed class ParserRegistryTests : IDisposable
         Assert.Equal(ParserMaturity.Validated, all.Single(d => d.ParserId == "EvtxParser").Status);
         Assert.Equal(ParserMaturity.Validated, all.Single(d => d.ParserId == "SystemHiveExecutionParser").Status);
         Assert.DoesNotContain(all, d => d.Status == ParserMaturity.Experimental);
+        Assert.Equal(ParserMaturity.Tested, all.Single(d => d.ParserId == "JumpListParser").Status);   // no independent reference yet
     }
 
     [Fact]
@@ -116,7 +117,7 @@ public sealed class ParserRegistryTests : IDisposable
         Assert.Contains("operator_notes", skipped.Error);
 
         var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "parsers.json"))).RootElement;
-        Assert.Equal(13, inventory.GetArrayLength());
+        Assert.Equal(14, inventory.GetArrayLength());
         Assert.Contains(inventory.EnumerateArray(), d => d.GetProperty("ParserId").GetString() == "AmcacheParser");
     }
 }
