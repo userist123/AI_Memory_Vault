@@ -138,3 +138,25 @@ def test_verifier_gate_returns_pending_verification():
     result = dispatcher.dispatch(gated, packet)
     assert result.status is DispatchStatus.PENDING_VERIFICATION
     assert result.metadata["verifier_agent"] == "engineering_reviewer"
+
+
+def test_local_llm_uses_registry_binary_and_model(monkeypatch, tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    reg = RouteRegistry.from_file(root / "04_CONFIG" / "agent_router.json")
+    runtime = reg.runtimes["local_llm"]
+    assert runtime.adapter_ref == "ollama"
+    assert runtime.model == "llama3.2"
+    captured = {}
+    class Proc:
+        returncode = 0
+        stdout = "local result"
+        stderr = ""
+    monkeypatch.setattr("routing.dispatcher.shutil.which", lambda name: "/mock/" + name)
+    def fake_run(cmd, **kwargs):
+        captured["cmd"] = cmd; captured["input"] = kwargs["input"]; return Proc()
+    monkeypatch.setattr("routing.dispatcher.subprocess.run", fake_run)
+    adapter = CommandAdapter("local_llm", runtime.adapter_ref, runtime.model, working_directory=tmp_path)
+    packet = WorkPacket("local-task","local-route","router","local_ai_engineer","local_llm","local-ai","command","LOCAL GOAL")
+    result = adapter.dispatch(packet)
+    assert result.status is DispatchStatus.COMPLETED
+    assert captured["cmd"] == ["ollama", "run", "llama3.2"]

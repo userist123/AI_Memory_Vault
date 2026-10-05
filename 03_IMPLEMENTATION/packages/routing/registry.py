@@ -50,9 +50,11 @@ class RouteRegistry:
 
         runtimes={}
         for item in raw["runtimes"]:
-            x=_strict_obj(item,"runtime"); _reject_unknown(x,{"id","capabilities","quality","cost_score","latency_score","model_local","network","tool_use","code_execution","visual","research","writable","max_context_tokens","independence_group","transport","adapter_ref","enabled"},"runtime"); rid=str(x.get("id","")).strip()
+            x=_strict_obj(item,"runtime"); _reject_unknown(x,{"id","capabilities","quality","cost_score","latency_score","model_local","network","tool_use","code_execution","visual","research","writable","max_context_tokens","independence_group","transport","adapter_ref","model","enabled"},"runtime"); rid=str(x.get("id","")).strip()
             if not rid or rid in runtimes: raise RegistryError(f"duplicate/empty runtime id: {rid!r}")
             if x.get("transport") not in {"command","a2a","manual"}: raise RegistryError(f"{rid}: invalid transport")
+            if x.get("model") is not None and not str(x.get("model")).strip(): raise RegistryError(f"{rid}: model must not be empty")
+            if rid == "local_llm" and not str(x.get("model","")).strip(): raise RegistryError("local_llm: model is required")
             runtimes[rid]=RuntimeDescriptor(
                 id=rid, capabilities=frozenset(map(str,x.get("capabilities",[]))),
                 quality=_enum(QualityTier,x["quality"],f"{rid}.quality"),
@@ -61,7 +63,9 @@ class RouteRegistry:
                 tool_use=bool(x["tool_use"]), code_execution=bool(x["code_execution"]),
                 visual=bool(x["visual"]), research=bool(x["research"]), writable=bool(x["writable"]),
                 max_context_tokens=int(x["max_context_tokens"]), independence_group=str(x["independence_group"]),
-                transport=str(x["transport"]), adapter_ref=str(x.get("adapter_ref","")), enabled=bool(x.get("enabled",True)))
+                transport=str(x["transport"]), adapter_ref=str(x.get("adapter_ref","")),
+                model=(str(x["model"]).strip() if x.get("model") is not None else None),
+                enabled=bool(x.get("enabled",True)))
         agents={}
         for item in raw["agents"]:
             x=_strict_obj(item,"agent"); _reject_unknown(x,{"id","profile_ref","capabilities","preferred_runtimes","min_quality","max_risk","default_skills","max_skills","independence_group","prompt_profile"},"agent"); aid=str(x.get("id","")).strip()

@@ -84,6 +84,7 @@ class RuntimeDescriptor:
     independence_group:str
     transport:str="manual"
     adapter_ref:str=""
+    model:str|None=None
     enabled:bool=True
 
 

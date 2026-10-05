@@ -15,14 +15,18 @@ class RuntimeAdapter(Protocol):
 class CommandAdapter:
     BINARIES = {"claude_code": "claude", "codex": "codex", "antigravity": "agy", "local_llm": "ollama"}
 
-    def __init__(self, adapter_ref: str, artifact_root: str|Path|None=None, working_directory: str|Path|None=None):
+    def __init__(self, runtime_id: str, adapter_ref: str|None=None, model: str|None=None, artifact_root: str|Path|None=None, working_directory: str|Path|None=None):
+        self.runtime_id=runtime_id
         self.adapter_ref=adapter_ref
+        self.model=model
         self.artifact_root=Path(artifact_root or tempfile.gettempdir())/"ai-memory-vault-dispatch"
         self.working_directory=Path(working_directory or Path.cwd()).resolve()
 
     @property
-    def binary(self) -> str:
-        return self.BINARIES.get(self.adapter_ref, self.adapter_ref)
+    def binary(self) -> str|None:
+        if self.runtime_id not in self.BINARIES:
+            return None
+        return self.adapter_ref or self.BINARIES[self.runtime_id]
 
     def _brief(self,p:WorkPacket)->str:
         return "\n".join([
@@ -38,6 +42,8 @@ class CommandAdapter:
     def dispatch(self,p:WorkPacket)->DispatchResult:
         if not self.working_directory.exists():
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"working directory unavailable: {self.working_directory}")
+        if self.binary is None:
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"unknown command adapter: {self.runtime_id}")
         if shutil.which(self.binary) is None:
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"{self.binary} unavailable")
         run=self.artifact_root/p.task_id; run.mkdir(parents=True,exist_ok=True)
@@ -49,10 +55,12 @@ class CommandAdapter:
             cmd=[self.binary,"-p","--output-format","text",text]; stdin=None
         elif self.adapter_ref=="antigravity":
             cmd=[self.binary,"--print",f"--print-timeout={max(1,p.timeout_seconds//60)}m",f"--print={text}"]; stdin=None
-        elif self.adapter_ref=="local_llm":
-            cmd=[self.binary,"run","llama3.2"]; stdin=text
+        elif self.runtime_id=="local_llm":
+            if not self.model:
+                return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error="local_llm model is not configured")
+            cmd=[self.binary,"run",self.model]; stdin=text
         else:
-            raise DispatchError(f"unsupported command adapter: {self.adapter_ref}")
+            return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"unsupported command adapter: {self.runtime_id}")
         result=run/"result.json"
         try:
             proc=subprocess.run(cmd,input=stdin,text=True,capture_output=True,timeout=p.timeout_seconds,check=False,cwd=self.working_directory)
@@ -159,7 +167,7 @@ class AgentDispatcher:
             "packet":packet.__dict__
         },ensure_ascii=False,indent=2,default=str),encoding="utf-8")
         if adapter is None:
-            if rt.transport=="command": adapter=CommandAdapter(rt.adapter_ref)
+            if rt.transport=="command": adapter=CommandAdapter(packet.target_runtime, rt.adapter_ref, rt.model)
             elif rt.transport=="a2a": adapter=A2AAdapter(rt.adapter_ref,packet.timeout_seconds)
             else: return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,packet.target_runtime,packet.target_agent,None,"",error="no adapter configured")
         result=adapter.dispatch(packet)

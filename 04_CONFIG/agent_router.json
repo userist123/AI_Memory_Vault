@@ -264,7 +264,8 @@
       "independence_group": "local",
       "enabled": true,
       "transport": "command",
-      "adapter_ref": "ollama"
+      "adapter_ref": "ollama",
+      "model": "llama3.2"
     }
   ],
   "agents": [
