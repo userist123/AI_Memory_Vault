@@ -86,6 +86,66 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Anti-forensics" Style="{StaticResource InspectorTabItemStyle}">
+                <DataGrid Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="55"/>
+                        <DataGridTextColumn Header="Tehnică" Binding="{Binding Technique}" Width="1.6*"/>
+                        <DataGridTextColumn Header="ATT&amp;CK" Binding="{Binding Attack}" Width="80"/>
+                        <DataGridTextColumn Header="Rezultat" Binding="{Binding ResultText}" Width="115"/>
+                        <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="55"/>
+                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="4*">
+                            <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <TextBlock Text="Ollama:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding AiEndpoint, UpdateSourceTrigger=PropertyChanged}" Width="190" Margin="0,0,10,0"/>
+                        <TextBlock Text="Model:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding AiModel, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,10,0"/>
+                        <Button Content="Analizează cazul" Command="{Binding AnalyzeWithLocalAiCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding AiStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <Expander DockPanel.Dock="Bottom" Header="Afirmații respinse de verificări (cu motivul)" Foreground="{StaticResource TextPrimaryBrush}">
+                        <DataGrid ItemsSource="{Binding AiRejected}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="180">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="140"/>
+                                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="3*"/>
+                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Expander>
+                    <DataGrid ItemsSource="{Binding AiStatements}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="160"/>
+                            <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="90"/>
+                            <DataGridTextColumn Header="Afirmație" Binding="{Binding Text}" Width="4*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Citări" Binding="{Binding Citations.Count}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Colectare la distanță" Style="{StaticResource InspectorTabItemStyle}">
+                <StackPanel Margin="12">
+                    <WrapPanel Margin="0,0,0,8">
+                        <TextBlock Text="Stația țintă (nume calculator):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding RemoteHost, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,10,0"/>
+                        <TextBlock Text="Justificare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding RemoteJustification, UpdateSourceTrigger=PropertyChanged}" Width="320"/>
+                    </WrapPanel>
+                    <WrapPanel Margin="0,0,0,8">
+                        <Button Content="Autorizează și generează pachetul…" Command="{Binding GenerateRemotePackageCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Verifică și importă pachetul…" Command="{Binding ImportRemotePackageCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding RemoteStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                </StackPanel>
+            </TabItem>
             <TabItem Header="Goluri de probă" Style="{StaticResource InspectorTabItemStyle}">
                 <TextBox Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12"/>
