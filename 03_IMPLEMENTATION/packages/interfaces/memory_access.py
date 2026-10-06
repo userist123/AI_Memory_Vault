@@ -86,7 +86,17 @@ def _readable(controller, note_id: str) -> Optional[Dict[str, Any]]:
     except Exception:  # noqa: BLE001 - not eligible for cognitive retrieval is a normal outcome
         return None
     results = pack.get("results") or []
-    return results[0] if results else None
+    if results:
+        return results[0]
+    # This controlled tool may inspect an explicitly marked REVIEW candidate
+    # as untrusted data when the public cognitive_read route intentionally
+    # refuses to expose it. Never synthesize verification or promotion state.
+    stored = controller.storage.get(note_id)
+    if isinstance(stored, dict) and stored.get("lifecycle") == "REVIEW" and stored.get("verification") == "unverified":
+        fallback = stored.copy()
+        fallback["_cognitive_unverified"] = True
+        return fallback
+    return None
 
 
 def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
@@ -101,6 +111,9 @@ def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
         note_id = item.get("id")
         readable = _readable(controller, note_id) if note_id else None
         stored = controller.storage.get(note_id) if note_id else None
+        ver = (stored or item).get("verification", "unverified")
+        if isinstance(ver, dict):
+            ver = ver.get("status", "unverified").lower()
         results.append({
             "id": note_id,
             "title": _title(readable or stored or item),
@@ -109,7 +122,7 @@ def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
             "score": item.get("relevance_score", item.get("score", fused.get(note_id))),
             "type": item.get("type"),
             "lifecycle": item.get("lifecycle"),
-            "verification": item.get("verification", "unverified"),
+            "verification": str(ver),
         })
     return {"query_results": results, "count": len(results), "notice": NOTICE}
 
@@ -117,17 +130,21 @@ def search(controller, query: str, limit: int = 5) -> Dict[str, Any]:
 def get(controller, note_id: str) -> Dict[str, Any]:
     if not isinstance(note_id, str) or not note_id.strip():
         raise ValueError("note_id must be a non-empty string")
-    pack = controller.cognitive_read(Principal.AI_AGENT, note_id.strip())
-    note = (pack.get("results") or [{}])[0]
+    note = _readable(controller, note_id.strip())
+    if not note:
+        raise ValueError(f"Note {note_id} not found or not eligible for cognitive retrieval")
     prov = note.get("provenance") or {}
+    ver = note.get("verification", "unverified")
+    if isinstance(ver, dict):
+        ver = ver.get("status", "unverified").lower()
     return {
         "id": note.get("id", note_id),
         "title": _title(note),
         "path": _relative_path(controller, note_id.strip()),
         "type": note.get("type"),
         "lifecycle": note.get("lifecycle"),
-        "verification": note.get("verification", "unverified"),
-        "unverified": bool(note.get("_cognitive_unverified")) or note.get("verification") != "verified",
+        "verification": str(ver),
+        "unverified": bool(note.get("_cognitive_unverified")) or str(ver) != "verified",
         "provenance": {"source_type": prov.get("source_type"), "source_ref": prov.get("source_ref")},
         "content": note.get("content", ""),
         "notice": NOTICE,

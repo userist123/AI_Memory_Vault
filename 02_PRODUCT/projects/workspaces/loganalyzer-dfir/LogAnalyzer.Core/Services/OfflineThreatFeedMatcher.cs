@@ -21,17 +21,27 @@ namespace LogAnalyzer.Core.Services
 
         public OfflineThreatFeedMatcher()
         {
-            // Populare semnături de bază cunoscute (offline / air-gapped)
-            RegisterHash("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "Test Sample", "Generic Test");
-            RegisterHash("44d88612fea8a8f36de82e1278abb02f", "WannaCry Ransomware", "WannaCry");
-            RegisterHash("d0cf11e031e4e3b7b2ebf53139369931", "Mimikatz Credential Dumper", "Mimikatz");
+            // Empty by default: no built-in sample indicators (a sample entry would raise false matches).
+            // Indicators come from a feed file supplied by the operator (LoadCsv).
+        }
 
-            RegisterIp("185.220.101.5", "Tor Exit Node", "Tor Network Relay");
-            RegisterIp("198.51.100.24", "Cobalt Strike C2 Server", "CobaltStrike");
-            RegisterIp("203.0.113.88", "LockBit 3.0 Exfiltration Host", "LockBit");
-
-            RegisterDomain("malicious-c2-server.com", "APT29 C2 Infrastructure", "Cozy Bear");
-            RegisterDomain("pastebin-exfil-bot.net", "Exfiltration Endpoint", "DataStealer");
+        /// <summary>Loads indicators from a CSV file: type(hash|ip|domain),value,actor_or_campaign,family. Lines starting with # are ignored.</summary>
+        public int LoadCsv(string path)
+        {
+            int n = 0;
+            foreach (var line in System.IO.File.ReadLines(path))
+            {
+                if (line.Length == 0 || line.StartsWith('#')) continue;
+                var f = line.Split(',');
+                if (f.Length < 4) continue;
+                switch (f[0].Trim().ToLowerInvariant())
+                {
+                    case "hash": RegisterHash(f[1].Trim(), f[2].Trim(), f[3].Trim()); n++; break;
+                    case "ip": RegisterIp(f[1].Trim(), f[2].Trim(), f[3].Trim()); n++; break;
+                    case "domain": RegisterDomain(f[1].Trim(), f[2].Trim(), f[3].Trim()); n++; break;
+                }
+            }
+            return n;
         }
 
         public void RegisterHash(string hash, string threatActor, string family)

@@ -1,0 +1,66 @@
+[
+  {
+    "claim_id": "wpf_core_mvvm_separation",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/wpf_desktop_core.md",
+    "source_skill": "csharp-wpf-desktop",
+    "source_path": ".agents/skills/csharp-wpf-desktop/SKILL.md",
+    "source_sha1": "1343328ff201f3bd96096309e2cb554571a8b268",
+    "evidence_type": "representative_body"
+  },
+  {
+    "claim_id": "wpf_core_ui_threading",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/wpf_desktop_core.md",
+    "source_skill": "csharp-wpf-desktop",
+    "source_path": ".agents/skills/csharp-wpf-desktop/SKILL.md",
+    "source_sha1": "1343328ff201f3bd96096309e2cb554571a8b268",
+    "evidence_type": "use_when"
+  },
+  {
+    "claim_id": "mvvm_toolkit_observable_property",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/mvvm_toolkit.md",
+    "source_skill": "mvvm-toolkit",
+    "source_path": ".agents/skills/mvvm-toolkit/SKILL.md",
+    "source_sha1": "6f2a28ed0b26dae018befb7d1bfa931c2ca56013",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "mvvm_toolkit_di_container",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/mvvm_toolkit.md",
+    "source_skill": "mvvm-toolkit-di",
+    "source_path": ".agents/skills/mvvm-toolkit-di/SKILL.md",
+    "source_sha1": "d9b47b57f7fd807955bd3a8ae3691d882115a6b8",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "mvvm_toolkit_messenger_pubsub",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/mvvm_toolkit.md",
+    "source_skill": "mvvm-toolkit-messenger",
+    "source_path": ".agents/skills/mvvm-toolkit-messenger/SKILL.md",
+    "source_sha1": "8b3cd7b348fcdc704f587b573eae776a9a8b0964",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "async_threading_no_sync_block",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/desktop_async_threading.md",
+    "source_skill": "csharp-async",
+    "source_path": ".agents/skills/csharp-async/SKILL.md",
+    "source_sha1": "ac37326594546243759bad633f19640841306de2",
+    "evidence_type": "representative_body"
+  },
+  {
+    "claim_id": "modern_csharp_records_immutability",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/modern_csharp.md",
+    "source_skill": "csharp-pro",
+    "source_path": ".agents/skills/csharp-pro/SKILL.md",
+    "source_sha1": "af4dfcbde22a16ec6db4a7643b5e0a7e751cd456",
+    "evidence_type": "desc"
+  },
+  {
+    "claim_id": "dotnet_upgrade_framework_validation",
+    "playbook": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/dotnet_packaging_upgrade.md",
+    "source_skill": "dotnet-upgrade",
+    "source_path": ".agents/skills/dotnet-upgrade/SKILL.md",
+    "source_sha1": "6597bcf0e09383adc4aca5e8d4e3bf2718f5b66a",
+    "evidence_type": "use_when"
+  }
+]

@@ -63,17 +63,17 @@ namespace LogAnalyzer.UI.Tests
         public void OfflineThreatFeedMatcher_MatchesHashesAndIpsOffline()
         {
             var matcher = new OfflineThreatFeedMatcher();
-            var hashes = new[] { "44d88612fea8a8f36de82e1278abb02f", "clean_file_hash_123" };
-            var ips = new[] { "185.220.101.5", "192.168.1.1" };
-            var domains = new[] { "malicious-c2-server.com", "microsoft.com" };
+            Assert.Empty(matcher.MatchAllIocs(new[] { "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" }, new[] { "185.220.101.5" }, new[] { "microsoft.com" }));
 
-            var matches = matcher.MatchAllIocs(hashes, ips, domains);
+            var feed = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"feed-{Guid.NewGuid():N}.csv");
+            System.IO.File.WriteAllText(feed, "# test feed\nhash,AAAABBBB,Campaign X,FamilyA\nip,203.0.113.88,Campaign Y,FamilyB\ndomain,bad.example,Campaign Z,FamilyC\n");
+            try { Assert.Equal(3, matcher.LoadCsv(feed)); }
+            finally { System.IO.File.Delete(feed); }
 
-            Assert.NotNull(matches);
+            var matches = matcher.MatchAllIocs(new[] { "aaaabbbb", "clean" }, new[] { "203.0.113.88", "192.168.1.1" }, new[] { "bad.example", "microsoft.com" });
             Assert.Equal(3, matches.Count);
-            Assert.Contains(matches, m => m.MalwareFamily == "WannaCry");
-            Assert.Contains(matches, m => m.ThreatActorOrCampaign == "Tor Exit Node");
-            Assert.Contains(matches, m => m.ThreatActorOrCampaign == "APT29 C2 Infrastructure");
+            Assert.Contains(matches, m => m.MalwareFamily == "FamilyA");
+            Assert.Contains(matches, m => m.ThreatActorOrCampaign == "Campaign Y");
         }
 
         [Fact]

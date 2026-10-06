@@ -31,33 +31,42 @@ namespace LogAnalyzer.Core.Services
             return CalculateSha256(hwId.Trim().ToUpper() + datePart + _salt).Substring(0, 20).ToUpper();
         }
 
+        /// <summary>Șirul de licență complet, în formatul acceptat de fereastra de activare: "CHEIE|AAAA-LL-ZZ".</summary>
+        public string BuildLicenseString(string hwId, DateTime expiryDate)
+            => $"{GenerateKey(hwId, expiryDate)}|{expiryDate:yyyy-MM-dd}";
+
+        /// <summary>
+        /// Verificare pură (fără fișiere, fără WMI): cheia corespunde Hardware ID-ului dat și nu e expirată la <paramref name="utcNow"/>.
+        /// Singura sursă de adevăr folosită de activare, de verificarea la pornire și de generatorul de licențe.
+        /// </summary>
+        public bool VerifyLicenseString(string hwId, string fullInput, DateTime utcNow)
+        {
+            var parts = (fullInput ?? "").Trim().Split('|');
+            if (parts.Length != 2) return false;
+
+            string inputKey = parts[0].Trim();
+            if (!DateTime.TryParseExact(parts[1].Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                                        System.Globalization.DateTimeStyles.None, out DateTime expiryDate)
+                && !DateTime.TryParse(parts[1], out expiryDate)) return false;
+
+            // Licența expirată nu mai este acceptată
+            if (utcNow > expiryDate) return false;
+
+            return inputKey.Equals(GenerateKey(hwId, expiryDate), StringComparison.OrdinalIgnoreCase);
+        }
+
         // Validează formatul introdus de client: "CHEIE|AAAA-LL-ZZ"
         public bool ValidateAndSaveKey(string fullInput)
         {
             try
             {
-                var parts = fullInput.Trim().Split('|');
-                if (parts.Length != 2) return false;
-
-                string inputKey = parts[0].Trim();
-                if (!DateTime.TryParse(parts[1], out DateTime expiryDate)) return false;
-
-                // Verificăm dacă licența introdusă nu este deja expirată
-                if (DateTime.UtcNow > expiryDate) return false;
-
-                string hwId = GetHardwareId();
-                string expectedKey = GenerateKey(hwId, expiryDate);
-
-                if (inputKey.Equals(expectedKey, StringComparison.OrdinalIgnoreCase))
-                {
-                    // Salvăm întregul șir (Cheie + Dată) în fișierul licenței
-                    File.WriteAllText(_licenseFilePath, fullInput.Trim());
-                    return true;
-                }
+                if (!VerifyLicenseString(GetHardwareId(), fullInput, DateTime.UtcNow)) return false;
+                // Salvăm întregul șir (Cheie + Dată) în fișierul licenței
+                File.WriteAllText(_licenseFilePath, fullInput.Trim());
+                return true;
             }
-            catch { }
-
-            return false;
+            catch (IOException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
         }
 
         // Verifică la fiecare pornire dacă licența este validă și în termen
@@ -67,25 +76,10 @@ namespace LogAnalyzer.Core.Services
 
             try
             {
-                string content = File.ReadAllText(_licenseFilePath).Trim();
-                var parts = content.Split('|');
-                if (parts.Length != 2) return false;
-
-                string savedKey = parts[0].Trim();
-                if (!DateTime.TryParse(parts[1], out DateTime expiryDate)) return false;
-
-                // Dacă data curentă a depășit data de expirare, licența devine invalida
-                if (DateTime.UtcNow > expiryDate) return false;
-
-                string hwId = GetHardwareId();
-                string expectedKey = GenerateKey(hwId, expiryDate);
-
-                return savedKey.Equals(expectedKey, StringComparison.OrdinalIgnoreCase);
+                return VerifyLicenseString(GetHardwareId(), File.ReadAllText(_licenseFilePath), DateTime.UtcNow);
             }
-            catch
-            {
-                return false;
-            }
+            catch (IOException) { return false; }
+            catch (UnauthorizedAccessException) { return false; }
         }
 
         private string GetWmiProperty(string wmiClass, string property)

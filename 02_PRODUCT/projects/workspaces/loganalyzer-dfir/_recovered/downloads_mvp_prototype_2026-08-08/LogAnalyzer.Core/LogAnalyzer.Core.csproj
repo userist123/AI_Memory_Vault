@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>LogAnalyzer.Core</RootNamespace>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Protectie: exclude orice copie nested accidentala (ex. extragere gresita a arhivei
+         care a creat un subfolder LogAnalyzer.MVP\... duplicat in interiorul proiectului). -->
+    <Compile Remove="**/bin/**/*.cs" />
+    <Compile Remove="**/obj/**/*.cs" />
+    <Compile Remove="**/LogAnalyzer.MVP/**/*.cs" />
+    <Compile Remove="**/LogAnalyzer.Core/LogAnalyzer.Core/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+  </ItemGroup>
+
+</Project>

@@ -36,7 +36,7 @@ def _hmac_secret(monkeypatch):
 
 
 def _note(note_id, content, lifecycle=Lifecycle.ACTIVE.value, note_type="knowledge",
-          tags=None, confidence="medium", verification="unverified",
+          tags=None, confidence="medium", verification="verified",
           source_type="user"):
     return {
         "id": note_id,

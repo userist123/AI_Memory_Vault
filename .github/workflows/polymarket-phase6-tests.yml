@@ -2,6 +2,7 @@ name: Polymarket Phase 6 Tests
 
 on:
   push:
+
     branches:
       - r052-pm-phase6-market-model-edge
     paths:
@@ -23,17 +24,24 @@ permissions:
 env:
   PYTHONPATH: 03_IMPLEMENTATION
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   phase6-market-model-edge:
     name: Phase 6 market-model edge
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install test runner
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pyyaml
+          python -m pip install pytest==9.1.1 pyyaml==6.0.3
       - name: Run Phase 1-6 Polymarket tests
         run: |
           python -m pytest -q \

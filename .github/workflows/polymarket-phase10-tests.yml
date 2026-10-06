@@ -2,6 +2,7 @@ name: Polymarket Phase 10 Tests
 
 on:
   push:
+
     branches:
       - r062-paper-simulation
     paths:
@@ -17,6 +18,10 @@ on:
       - '.github/workflows/polymarket-phase10-tests.yml'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -27,13 +32,14 @@ jobs:
   phase10-paper-simulation:
     name: Phase 10 paper simulation
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install test runner
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest pyyaml
+          python -m pip install pytest==9.1.1 pyyaml==6.0.3
       - name: Run Phase 1-10 Polymarket tests
         run: |
           python -m pytest -q \

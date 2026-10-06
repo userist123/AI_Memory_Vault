@@ -1,0 +1,2 @@
+# Explicitly approved hosts for the external security-update catalog and its packages.
+# Repository owner must review and maintain this allowlist.

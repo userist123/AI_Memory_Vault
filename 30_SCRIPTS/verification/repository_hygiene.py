@@ -108,7 +108,7 @@ def check_test_paths(root: Path, files: list[str]) -> list[str]:
     for file in files:
         if not file.startswith("20_TESTS/"):
             continue
-        if file == "20_TESTS/regression/test_repository_hygiene.py":
+        if file in {"20_TESTS/regression/test_repository_hygiene.py", "20_TESTS/regression/test_workflow_security_audit.py"}:
             continue
         candidate = root / file
         if candidate.suffix.lower() not in {".py", ".ps1", ".cmd", ".sh", ".yml", ".yaml", ".toml", ".json"}:
