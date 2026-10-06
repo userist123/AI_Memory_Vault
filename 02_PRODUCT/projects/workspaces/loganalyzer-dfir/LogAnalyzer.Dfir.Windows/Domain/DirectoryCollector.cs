@@ -1,0 +1,151 @@
+using System.DirectoryServices;
+using System.Security.Principal;
+using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Dfir.Model;
+
+namespace LogAnalyzer.Dfir.Windows.Domain;
+
+[Flags]
+public enum Uac
+{
+    AccountDisabled = 0x2, PasswordNotRequired = 0x20, ReversibleEncryption = 0x80, NormalAccount = 0x200,
+    WorkstationTrust = 0x1000, ServerTrust = 0x2000, DontExpirePassword = 0x10000, SmartcardRequired = 0x40000,
+    TrustedForDelegation = 0x80000, NotDelegated = 0x100000, UseDesKeyOnly = 0x200000, DontRequirePreauth = 0x400000,
+    TrustedToAuthForDelegation = 0x1000000,
+}
+
+public sealed record DirectoryAccount(
+    string SamAccountName, string DisplayName, string DistinguishedName, string Sid, Uac Flags,
+    DateTimeOffset? LastLogonUtc, DateTimeOffset? PasswordLastSetUtc, DateTimeOffset? CreatedUtc,
+    int AdminCount, IReadOnlyList<string> Spns, IReadOnlyList<string> MemberOf, string Mail, string Description, bool IsComputer, string OperatingSystem)
+{
+    public bool Enabled => !Flags.HasFlag(Uac.AccountDisabled);
+    public bool IsDomainController => Flags.HasFlag(Uac.ServerTrust);
+}
+
+public sealed record DomainPolicy(int MinPasswordLength, int LockoutThreshold, TimeSpan? MaxPasswordAge, int PasswordHistory);
+
+public sealed class DomainSnapshot
+{
+    public string DomainName { get; init; } = "";
+    public string DomainSid { get; init; } = "";
+    public string Server { get; init; } = "";
+    public DateTimeOffset CollectedUtc { get; init; } = DateTimeOffset.UtcNow;
+    public List<DirectoryAccount> Users { get; init; } = [];
+    public List<DirectoryAccount> Computers { get; init; } = [];
+    /// <summary>Privileged group name → recursive members (sAMAccountName).</summary>
+    public Dictionary<string, List<string>> PrivilegedGroups { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+    public DomainPolicy? Policy { get; set; }
+    public List<EvidenceGap> Gaps { get; init; } = [];
+}
+
+/// <summary>
+/// Read-only LDAP inventory of the domain the station belongs to (current Windows credentials). Network access:
+/// gated by <see cref="NetworkPolicy"/>, so it never runs in AirGapped mode.
+/// </summary>
+public static class DirectoryCollector
+{
+    private static readonly string[] AccountAttributes =
+    [
+        "sAMAccountName", "displayName", "distinguishedName", "objectSid", "userAccountControl", "lastLogonTimestamp", "pwdLastSet",
+        "whenCreated", "adminCount", "servicePrincipalName", "memberOf", "mail", "description", "operatingSystem",
+    ];
+
+    /// <summary>Well-known privileged groups: domain-relative RIDs and builtin SIDs.</summary>
+    public static readonly (string Name, string SidSuffixOrSid)[] PrivilegedGroupIds =
+    [
+        ("Domain Admins", "-512"), ("Enterprise Admins", "-519"), ("Schema Admins", "-518"), ("Group Policy Creator Owners", "-520"),
+        ("Administrators", "S-1-5-32-544"), ("Account Operators", "S-1-5-32-548"), ("Server Operators", "S-1-5-32-549"),
+        ("Print Operators", "S-1-5-32-550"), ("Backup Operators", "S-1-5-32-551"),
+    ];
+
+    public static bool IsDomainJoined(out string domain)
+    {
+        domain = System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().DomainName;
+        return !string.IsNullOrEmpty(domain);
+    }
+
+    public static DomainSnapshot Collect(string? server = null, CancellationToken ct = default)
+    {
+        NetworkPolicy.EnsureAllowed("Interogare Active Directory (LDAP)");
+        if (!IsDomainJoined(out var domainName) && server is null)
+            throw new InvalidOperationException("Stația nu face parte dintr-un domeniu Active Directory. Indicați un controler de domeniu.");
+
+        using var rootDse = new DirectoryEntry($"LDAP://{(server is null ? "" : server + "/")}RootDSE");
+        var baseDn = rootDse.Properties["defaultNamingContext"].Value as string ?? throw new InvalidOperationException("RootDSE fără defaultNamingContext.");
+        var dnsHost = rootDse.Properties["dnsHostName"].Value as string ?? server ?? "";
+        using var root = new DirectoryEntry($"LDAP://{(server is null ? "" : server + "/")}{baseDn}");
+        var domainSid = root.Properties["objectSid"].Value is byte[] ds ? new SecurityIdentifier(ds, 0).Value : "";
+
+        var snap = new DomainSnapshot { DomainName = domainName.Length > 0 ? domainName : baseDn, DomainSid = domainSid, Server = dnsHost };
+        snap.Policy = new DomainPolicy(
+            Int(root, "minPwdLength"), Int(root, "lockoutThreshold"),
+            root.Properties["maxPwdAge"].Value is { } mpa ? Interval(mpa) : null, Int(root, "pwdHistoryLength"));
+
+        foreach (var a in Search(root, "(&(objectCategory=person)(objectClass=user))", ct)) snap.Users.Add(a);
+        ct.ThrowIfCancellationRequested();
+        foreach (var a in Search(root, "(objectCategory=computer)", ct)) snap.Computers.Add(a);
+
+        foreach (var (name, id) in PrivilegedGroupIds)
+        {
+            var sid = id.StartsWith("S-1-", StringComparison.Ordinal) ? id : domainSid + id;
+            var groupDn = FindDnBySid(root, sid);
+            if (groupDn is null) continue;
+            var members = Search(root, $"(memberOf:1.2.840.113556.1.4.1941:={Escape(groupDn)})", ct).Select(m => m.SamAccountName).ToList();
+            snap.PrivilegedGroups[name] = members;
+        }
+        return snap;
+    }
+
+    private static IEnumerable<DirectoryAccount> Search(DirectoryEntry root, string filter, CancellationToken ct)
+    {
+        using var s = new DirectorySearcher(root, filter, AccountAttributes, SearchScope.Subtree) { PageSize = 1000 };
+        using var results = s.FindAll();
+        foreach (SearchResult r in results)
+        {
+            ct.ThrowIfCancellationRequested();
+            var p = r.Properties;
+            string S(string k) => p[k].Count > 0 ? p[k][0]?.ToString() ?? "" : "";
+            DateTimeOffset? FT(string k) => p[k].Count > 0 && p[k][0] is long ft && ft > 0 && ft != long.MaxValue ? DateTimeOffset.FromFileTime(ft).ToUniversalTime() : null;
+            yield return new DirectoryAccount(
+                S("sAMAccountName"), S("displayName"), S("distinguishedName"),
+                p["objectSid"].Count > 0 && p["objectSid"][0] is byte[] sid ? new SecurityIdentifier(sid, 0).Value : "",
+                (Uac)(p["userAccountControl"].Count > 0 ? Convert.ToInt32(p["userAccountControl"][0]) : 0),
+                FT("lastLogonTimestamp"), FT("pwdLastSet"),
+                p["whenCreated"].Count > 0 && p["whenCreated"][0] is DateTime wc ? new DateTimeOffset(DateTime.SpecifyKind(wc, DateTimeKind.Utc)) : null,
+                p["adminCount"].Count > 0 ? Convert.ToInt32(p["adminCount"][0]) : 0,
+                p["servicePrincipalName"].Cast<object>().Select(o => o.ToString()!).ToList(),
+                p["memberOf"].Cast<object>().Select(o => o.ToString()!).ToList(),
+                S("mail"), S("description"), S("operatingSystem").Length > 0 || filter.Contains("computer"), S("operatingSystem"));
+        }
+    }
+
+    private static string? FindDnBySid(DirectoryEntry root, string sid)
+    {
+        using var s = new DirectorySearcher(root, $"(objectSid={sid})", ["distinguishedName"]);
+        return s.FindOne()?.Properties["distinguishedName"][0]?.ToString();
+    }
+
+    private static int Int(DirectoryEntry e, string attr) => e.Properties[attr].Value is { } v ? Convert.ToInt32(v) : 0;
+
+    /// <summary>Large-integer interval (negative 100-ns ticks) from ADSI.</summary>
+    private static TimeSpan? Interval(object v)
+    {
+        try
+        {
+            dynamic li = v;
+            long ticks = ((long)(int)li.HighPart << 32) | (uint)(int)li.LowPart;
+            return ticks == long.MinValue || ticks == 0 ? null : TimeSpan.FromTicks(-ticks);
+        }
+        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) { return null; }
+    }
+
+    /// <summary>RFC 4515 escaping for values inserted in LDAP filters.</summary>
+    public static string Escape(string value)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var c in value)
+            sb.Append(c switch { '\\' => @"\5c", '*' => @"\2a", '(' => @"\28", ')' => @"\29", '\0' => @"\00", _ => c.ToString() });
+        return sb.ToString();
+    }
+}

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using LogAnalyzer.Core.Interfaces;
+using LogAnalyzer.Core.Services.Connectivity;
 
 namespace LogAnalyzer.Infrastructure.Services
 {
@@ -80,6 +81,9 @@ namespace LogAnalyzer.Infrastructure.Services
 
         public void StartSyslogListener(int port, string outputDir, string hostname, Action<string> logCallback)
         {
+            // Opening a UDP listener exposes the station on the network: refused in AirGapped mode.
+            NetworkPolicy.EnsureAllowed("Receptor Syslog (UDP)");
+
             if (_isActive)
             {
                 logCallback("[WARN] Ascultătorul Syslog este deja activ.");

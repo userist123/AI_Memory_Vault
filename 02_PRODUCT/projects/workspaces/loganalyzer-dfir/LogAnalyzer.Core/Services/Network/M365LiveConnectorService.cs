@@ -1,4 +1,5 @@
 using System;
+using LogAnalyzer.Core.Services.Connectivity;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -30,6 +31,7 @@ namespace LogAnalyzer.Core.Services.Network
         /// </summary>
         public async Task<string?> GetAccessTokenAsync(M365AuthConfig config, CancellationToken cancellationToken = default)
         {
+            NetworkPolicy.EnsureAllowed("Conector Microsoft 365");
             if (string.IsNullOrWhiteSpace(config.TenantId) || string.IsNullOrWhiteSpace(config.ClientId) || string.IsNullOrWhiteSpace(config.ClientSecret))
             {
                 return null;
@@ -72,6 +74,7 @@ namespace LogAnalyzer.Core.Services.Network
         /// </summary>
         public async Task<List<ParsedEvent>> FetchRecentSignInsAsync(string accessToken, int topCount = 100, CancellationToken cancellationToken = default)
         {
+            NetworkPolicy.EnsureAllowed("Conector Microsoft 365");
             var events = new List<ParsedEvent>();
             if (string.IsNullOrWhiteSpace(accessToken)) return events;
 
