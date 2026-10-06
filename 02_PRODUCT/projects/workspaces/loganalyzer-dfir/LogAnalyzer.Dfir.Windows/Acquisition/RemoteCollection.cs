@@ -105,6 +105,17 @@ public static class RemoteCollection
             $files = Join-Path $out 'files'
             New-Item -ItemType Directory -Path $files -Force | Out-Null
             $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+            # SHA-256 through .NET, not the FileHash cmdlet: that cmdlet lives in a module that fails to load when
+            # Windows PowerShell inherits a PowerShell 7 PSModulePath (a launcher, a CI runner, an admin console),
+            # and a package that cannot hash must stop, not write a manifest without hashes.
+            function Get-Sha256Hex([string]$path) {
+                $stream = [IO.File]::OpenRead($path)
+                try {
+                    $sha = [Security.Cryptography.SHA256]::Create()
+                    try { return ([BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '') }
+                    finally { $sha.Dispose() }
+                } finally { $stream.Dispose() }
+            }
             $steps = New-Object System.Collections.Generic.List[object]
             function Step([string]$name, [scriptblock]$action) {
                 $start = (Get-Date).ToUniversalTime().ToString('o')
@@ -130,9 +141,14 @@ public static class RemoteCollection
                     Step $a { Copy-Item -Path (Join-Path $env:SystemRoot 'System32\Tasks') -Destination (Join-Path $files 'Tasks') -Recurse -ErrorAction Stop }
                 }
             }
-            $list = @(Get-ChildItem -LiteralPath $files -Recurse -File | ForEach-Object {
-                [ordered]@{ path = $_.FullName.Substring($out.Length + 1).Replace('\', '/'); size = $_.Length; sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $_.FullName).Hash }
-            })
+            try {
+                $list = @(Get-ChildItem -LiteralPath $files -Recurse -File -ErrorAction Stop | ForEach-Object {
+                    [ordered]@{ path = $_.FullName.Substring($out.Length + 1).Replace('\', '/'); size = $_.Length; sha256 = (Get-Sha256Hex $_.FullName) }
+                })
+            } catch {
+                Write-Error "Hashing failed: $($_.Exception.Message). The package is incomplete and must not be used."
+                exit 3
+            }
             $manifest = [ordered]@{
                 format = 'loganalyzer-remote-collection/1'; requestId = $RequestId; requestSha256 = $RequestSha256
                 host = $env:COMPUTERNAME; user = [Security.Principal.WindowsIdentity]::GetCurrent().Name; elevated = $isAdmin
@@ -140,7 +156,7 @@ public static class RemoteCollection
             }
             $mp = Join-Path $out 'manifest.json'
             [IO.File]::WriteAllText($mp, ($manifest | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
-            [IO.File]::WriteAllText((Join-Path $out 'manifest.sha256'), (Get-FileHash -Algorithm SHA256 -LiteralPath $mp).Hash + "`n")
+            [IO.File]::WriteAllText((Join-Path $out 'manifest.sha256'), (Get-Sha256Hex $mp) + "`n")
             Write-Output $out
 
             """);

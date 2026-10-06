@@ -34,6 +34,16 @@ public sealed class RemoteCollectionTests : IDisposable
 
     private CaseWorkspace NewCase() => CaseWorkspace.Create(Path.Combine(_root, "case"), new CaseInfo { CaseId = "CASE-REMOTE", Name = "remote", CreatedAtUtc = DateTimeOffset.UtcNow });
 
+    /// <summary>Windows PowerShell 5.1 as an operator starts it. PSModulePath is dropped so a PowerShell 7 parent (the CI
+    /// runner's default shell) cannot hand it PS7-only module paths.</summary>
+    private static ProcessStartInfo PowerShell(string file)
+    {
+        var psi = new ProcessStartInfo("powershell.exe") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
+        foreach (var a in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", file }) psi.ArgumentList.Add(a);
+        psi.Environment.Remove("PSModulePath");
+        return psi;
+    }
+
     /// <summary>Runs the generated package with Windows PowerShell, as an operator would on the target, and returns the package folder.</summary>
     private string RunPackage(string script)
     {
@@ -41,9 +51,7 @@ public sealed class RemoteCollectionTests : IDisposable
         Directory.CreateDirectory(dir);
         var file = Path.Combine(dir, "collect.ps1");
         File.WriteAllText(file, script, new System.Text.UTF8Encoding(true));
-        var psi = new ProcessStartInfo("powershell.exe") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
-        foreach (var a in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", file }) psi.ArgumentList.Add(a);
-        using var p = Process.Start(psi)!;
+        using var p = Process.Start(PowerShell(file))!;
         var stdout = p.StandardOutput.ReadToEnd();
         var stderr = p.StandardError.ReadToEnd();
         p.WaitForExit();
@@ -121,9 +129,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var file = Path.Combine(_root, "t2", "collect.ps1");
         Directory.CreateDirectory(Path.GetDirectoryName(file)!);
         File.WriteAllText(file, script);
-        var psi = new ProcessStartInfo("powershell.exe") { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
-        foreach (var a in new[] { "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", file }) psi.ArgumentList.Add(a);
-        using (var p = Process.Start(psi)!) { p.StandardOutput.ReadToEnd(); p.StandardError.ReadToEnd(); p.WaitForExit(); Assert.Equal(2, p.ExitCode); }
+        using (var p = Process.Start(PowerShell(file))!) { p.StandardOutput.ReadToEnd(); p.StandardError.ReadToEnd(); p.WaitForExit(); Assert.Equal(2, p.ExitCode); }
         Assert.Single(Directory.GetFileSystemEntries(Path.GetDirectoryName(file)!)); // nothing collected
 
         Assert.Throws<ArgumentException>(() => RemoteCollection.Authorize(ws, "host'; Remove-Item C:\\", "op", "j", ["evtx:Application"]));
@@ -139,6 +145,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var ws = NewCase();
         var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", RemoteCollection.KnownArtifacts);
         var script = RemoteCollection.PackageScript(req, sha);
+        Assert.DoesNotContain("Get-FileHash", script, StringComparison.OrdinalIgnoreCase); // hashing must not depend on a module
         foreach (var forbidden in new[] { "Invoke-WebRequest", "Invoke-RestMethod", "Invoke-Command", "New-PSSession", "Enter-PSSession", "Start-BitsTransfer",
                                           "Net.WebClient", "Net.Sockets", "HttpClient", "curl", "wget", "ftp", "Send-MailMessage", "\\\\\\\\", "Copy-Item -ToSession",
                                           "HKLM\\SAM", "HKLM\\SECURITY", "Cookies", "Login Data" })
