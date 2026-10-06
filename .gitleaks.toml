@@ -35,3 +35,14 @@ regexes = [
   '''X25519PrivateKey''',
   '''private_key:\s*(?:Ed25519PrivateKey|X25519PrivateKey)''',
 ]
+
+# Python type annotations of cryptography key classes, flagged by generic-api-key as
+# "private_key: Ed25519PrivateKey" in agent_bridge/crypto.py history (commit 2c9c1018ef,
+# PR #211). The "value" is a class name, not key material. CI scans `--all` refs, so one
+# historical false positive on any branch fails every PR's history scan.
+[[allowlists]]
+description = "Cryptography key type annotations (class names, not keys)"
+regexTarget = "match"
+regexes = [
+  '''(?:private|public)_key:\s*(?:Ed25519|X25519)(?:Private|Public)Key\b''',
+]
