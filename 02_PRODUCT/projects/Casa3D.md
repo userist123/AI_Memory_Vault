@@ -1,16 +1,17 @@
 ---
 id: "casa3d-project-20261001"
 type: project
-lifecycle: ACTIVE
+lifecycle: REVIEW
 category: digital_twin
 tags: [project, casa3d, digital_twin, interior_design, geometry, boq, budget, ai, monetization, romania]
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-07
+review_note: "AI-written continuity record; ACTIVE/verified requires owner attestation (attest()), not self-declaration."
 provenance:
   source_type: user_provided_project_artifacts
   source_ref: "Casa3D Faza 0-3 ZIP artifacts + supplied Claude conversation"
   confidence: high
-  verification: verified
+  verification: unverified
 relations:
   - type: depends_on
     target: "[[AI_Memory_System]]"
