@@ -71,8 +71,10 @@ Before substantial work:
 6. execute only after the route and constraints are understood.
 
 Use only authorized memory interfaces:
-- MCP `vault-memory`: `memory_search`, `memory_get`, `memory_propose`;
+- MCP `vault-memory` (stdio, registered in `.mcp.json`): `memory_search`, `memory_get`, `memory_propose`;
 - CLI fallback: `python -m cognitive_core.recall_cli --query "..."`.
+
+First use on a machine: `python -m cognitive_core.recall_cli --init-secret` (once). The HMAC secret is generated locally, outside the repository.
 
 There is no REST memory API at `localhost:8000`.
 

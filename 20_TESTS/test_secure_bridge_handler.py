@@ -89,7 +89,7 @@ def test_a_token_without_packet_binding_cannot_be_issued():
             response_public_key="k",packet_sha256="")
 
 
-@pytest.mark.parametrize("task_id",["../../x","a/b","..","x"*65,"C:\\x",""])
+@pytest.mark.parametrize("task_id",["../../x","a/b","..","x"*65,"C:\\x",""])  # hygiene: intentional-absolute-path
 def test_unsafe_task_ids_are_refused_everywhere(task_id):
     with pytest.raises(ValueError):
         WorkPacket(task_id,"route-1","router","visual_architect","antigravity","v","command","g")

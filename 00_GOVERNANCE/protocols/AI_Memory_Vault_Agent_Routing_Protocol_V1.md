@@ -1,3 +1,17 @@
+---
+id: "7cd936b5-69d3-4800-bc58-7b098761fda1"
+type: procedure
+lifecycle: REVIEW
+category: agent-routing
+tags: [protocol, routing, dispatcher, agent-bridge]
+created: 2026-10-05
+updated: 2026-10-07
+provenance:
+  source_type: ai
+  source_ref: "PR #211 (chore/claude-workflow-dfir-contract)"
+verification: unverified
+---
+
 # AI Memory Vault — Agent Routing Protocol V1
 
 ## Purpose

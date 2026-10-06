@@ -60,8 +60,8 @@ def test_canonical_json_is_deterministic():
     assert base64.b64encode(canonical_json(value)).decode()
 
 
-def test_antigravity_command_is_persistent_and_prompt_free():
-    session = AntigravitySession("C:/workspace", model="gemini-3.8-flash-high", effort="high")
+def test_antigravity_command_is_persistent_and_prompt_free(tmp_path):
+    session = AntigravitySession(tmp_path, model="gemini-3.8-flash-high", effort="high")
     command = session.build_command()
     assert "--input-format" in command
     assert "stream-json" in command
