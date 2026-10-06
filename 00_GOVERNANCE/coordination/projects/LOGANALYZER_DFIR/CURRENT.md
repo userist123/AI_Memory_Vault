@@ -3,10 +3,10 @@ project_id: LOGANALYZER_DFIR
 application: LogAnalyzer — local Windows DFIR platform
 repository: userist123/AI_Memory_Vault_CODEX_READY
 workspace: 02_PRODUCT/projects/workspaces/loganalyzer-dfir
-last_updated_utc: 2026-10-05T23:00:00Z
+last_updated_utc: 2026-10-06T00:30:00Z
 base_main_sha: 69afe312a
 status: ACTIVE
-working_branch: claude/loganalyzer-reality-p0 (local, not pushed; stacked on claude/loganalyzer-execution-artifacts; #208 and #210 merged)
+working_branch: claude/loganalyzer-reality-p0 (pushed; PR #212 open, not merged; branch does not contain the latest main)
 claimed_by: claude-code (Opus 5.5) — 2026-10-04T11:30:00Z
 active_work:
   - DFIR master spec implementation (phases 0-15) as new projects LogAnalyzer.Dfir.Core / .Windows / .Tests; legacy AirGapped/Network editions left untouched until UI integration (phase 12)
@@ -30,14 +30,22 @@ done_on_branch:
   - REAL_DFIR_v2 P11 partial - FORENSIC VALIDATION AVAILABLE or PARTIAL or UNAVAILABLE reported every run and in CI summary; LADFIR_REQUIRE_CORPUS=1 fails without corpus (docs/dfir/FORENSIC_TEST_LAB.md)
   - REAL_DFIR_v2 P3 - SYSTEM hive validated vs reg query (found and fixed UWP BAM entries skipped and DiscUtils big-data truncation via new RawRegistry); ScheduledTaskParser vs schtasks; UserHiveParser and SoftwareHiveParser vs reg export; persistence correlation rules
   - REAL_DFIR_v2 P3 - ServicesParser vs WMI Win32_Service; a source can feed several parsers; BrowserHistoryParser vs the manual extraction; DOWNLOAD-THEN-EXEC puts the tzd4is.cyou download at the start of the 19.09 incident chain; LnkParser vs WScript.Shell; all hive parsers on RawRegistry, DiscUtils only in tests
+  - REAL_DFIR_v2 P3/P4/P5 - USB, Jump Lists, Firefox, audit coverage; Evidence Graph; IOC/hash, YARA-lite, Sigma-lite (matches wevtutil) in every investigation
+  - REAL_DFIR_v2 P6/P7 - policy model, lifecycle (no DRAFT apply, hash-bound, no self-approval), importers validated on 3 owner GPOs vs gpreport.xml, verified execution with plan hash confirmation, rollback, hash-chained audit; "Politici" page
+  - REAL_DFIR_v2 P8 - compliance model and OSCAL assessment-results (NIST schema not validated); P9 domain inventory in the graph (synthetic data only)
+  - REAL_DFIR_v2 P10 - remote collection package (authorize, hash on target, verify, import), no network from the app; P11/P12 forensic lab LADFIR_LAB=1 (174 PASS, 1 PARTIAL explained, 0 FAIL over 170 EVTX vs wevtutil)
+  - REAL_DFIR_v2 P13 - anti-forensics lab (16 checks, DETECTED/NOT_DETECTED/UNDETERMINED); found RecordID reuse in Application.evtx after the 2026-08-08 unclean shutdown
+  - REAL_DFIR_v2 P14 - Memory Vault proposals validated by the vault's own memory_access.propose(); nothing written to the vault, submission stays on the existing gate
+  - REAL_DFIR_v2 P15 - local AI (Ollama, numeric loopback) with deterministic citation checks; model-as-judge tried and rejected (docs/dfir/AI_FORENSIC_REASONING.md)
 verification:
+  - 2026-10-06 claude/loganalyzer-reality-p0 - Dfir.Tests 236 pass + 4 skip (lab on demand, owner GPO samples, 2 admin-only), UI.Tests 121/121, vault guards PASS; lab run 174 PASS / 1 PARTIAL / 0 FAIL
   - 2026-10-05 claude/loganalyzer-reality-p0 - build 0 errors, UI.Tests 121/121, Dfir.Tests 134 pass + 1 admin-only skip (corpus AVAILABLE 14 of 14 sections), vault guards PASS
   - dotnet build LogAnalyzer.slnx: 0 errors
   - LogAnalyzer.Dfir.Tests: 27/27 (corpus tests skip when the local corpus is absent)
   - LogAnalyzer.UI.Tests: 94/94; LogAnalyzer.Dfir.Tests - 45 pass + 1 admin-only skip (SecurityEventIngestionService now maps the snake_case event contract; the test had been failing on main since fe4936510 / #204)
   - personal_data_guard, validate_repository_layout, repository_hygiene, exempt_area_secret_scan: PASS
 next:
-  - REAL_DFIR_v2 next - P3 remaining (Jump Lists, USB/MountedDevices/SetupAPI, Recycle Bin $I, WFP 5156/5157 correlation, Firefox; MFT/USN need raw files not in the corpus); then P4 evidence graph
+  - REAL_DFIR_v2 next - $MFT/USN collection and parsing (closes AF06-AF08); OSCAL schema validation; admin-only runs (HKLM apply, audit vs auditpol); graph view in the app
   - PR #209 is OPEN and needs human security review; not touched by this work
   - next: owner decisions (push/PR of claude/loganalyzer-auto-mode, RSA licensing, legacy root files); remove legacy facade screens that show sample data
   - owner decisions pending: untrack legacy root license.lic and root-level duplicate csproj files; RSA-PSS license migration (invalidates issued keys)

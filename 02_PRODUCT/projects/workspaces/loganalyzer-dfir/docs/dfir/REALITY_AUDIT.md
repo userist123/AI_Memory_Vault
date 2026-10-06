@@ -131,3 +131,30 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
    - `IsVerifiedZeroized` numai după citire.
 3. Cele 3 fallback-uri de timestamp din calea de producție.
 4. `EvidencePreflight` (existență, mărime, SHA-256, amprentă) + detectarea modificării înainte și după parsare.
+
+## Starea la 2026-10-06 (după P1–P15, ramura `claude/loganalyzer-reality-p0`)
+
+Auditul de mai sus descrie starea inițială (Faza 0) și rămâne neschimbat. Tabelul de mai jos arată ce s-a schimbat. Fiecare
+rând trimite la testul sau documentul care îl dovedește.
+
+| COMPONENT | ÎNAINTE | ACUM | EVIDENCE |
+|---|---|---|---|
+| Motor de politici (`Dfir.Core/Policy`, `Dfir.Windows/Policy`) | FACADE (inexistent) | REAL pentru registru (aplicare + re-citire + rollback); citire pentru audit, cont, servicii | `PolicyExecutionTests`, `PolicyWorkbenchTests`, `POLICY_ENGINE.md` |
+| Importuri GPO / Registry.pol / .inf / audit.csv / LGPO | — | REAL | 3 GPO-uri reale comparate cu `gpreport.xml` (`PolicyImportTests`) |
+| Conformitate + OSCAL assessment-results | FACADE | PARTIAL: modelul și exportul sunt reale; schema NIST nu a fost validată | `ComplianceTests`, `COMPLIANCE_MODEL.md` |
+| Domeniu în Evidence Graph | — | PARTIAL: numai inventar sintetic | `DomainAndMailTests`, `EVIDENCE_GRAPH.md` |
+| Colectare la distanță | FACADE (`RemoteTriageService`, fără consumator) | REAL prin pachet: hash pe țintă, verificare, import cu custodie; aplicația nu folosește rețeaua | `RemoteCollectionTests` (pachetul rulat pe această stație) |
+| Validare diferențială (alt instrument) | FACADE | REAL pentru EVTX (toate cele 170 de fișiere față de `wevtutil`), registru, task-uri, servicii, LNK, USB, browser | `ForensicLab` (`LADFIR_LAB=1`): 174 PASS, 1 PARTIAL explicat, 0 FAIL |
+| Laborator anti-forensics | — | REAL pentru 13 din 16 tehnici; USN, $MFT și ADS rămân UNDETERMINED (necolectate) | `AntiForensicsTests`, `ANTI_FORENSICS_TESTING.md` |
+| Memory Vault | — | PARTIAL: propuneri validate de `memory_access.propose()` din vault; trimiterea se face pe poarta existentă; Control, Policy, Entity, Relationship nu sunt exportate | `VaultExportTests`, `MEMORY_VAULT_INTEGRATION.md` |
+| AI | — | REAL, local (Ollama, loopback), cu validare deterministă; afirmațiile rămân UNPROVEN | `EvidenceReasonerTests`, `AI_FORENSIC_REASONING.md` |
+| `LogAnalyzer.Dfir.Tests` | 53 trecute | 236 trecute, 4 sărite (laboratorul la cerere, mostre GPO, două teste doar ca administrator) | rularea din 2026-10-06 |
+
+Constatări noi pe corpus, făcute în timpul lucrului:
+- `Application.evtx` folosește RecordID-urile 44760–44790 de două ori, după oprirea necurată din 2026-08-08 17:51 UTC
+  (System 6008, Kernel-Power 41).
+- 2026-09-19 15:17:02 UTC: Firewall 2059, „toate regulile au fost șterse”.
+- 52 de eliminări de audit (4719) făcute de utilizatorul Owner începând cu 2026-08-08.
+
+Încă nevalidate: aplicarea politicilor ca administrator (HKLM), citirea auditului ca administrator, un domeniu AD real,
+schema oficială OSCAL, paginile noi ale aplicației exersate manual.
