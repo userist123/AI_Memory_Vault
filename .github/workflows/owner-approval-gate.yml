@@ -10,6 +10,7 @@ jobs:
   owner-approval:
     name: owner-approval
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: owner-approval
     steps:

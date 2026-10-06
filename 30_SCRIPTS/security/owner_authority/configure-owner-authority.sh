@@ -9,21 +9,23 @@ command -v gh >/dev/null || { echo "gh CLI is required."; exit 1; }
 gh auth status >/dev/null
 
 echo "Configuring owner-approval environment for $REPO"
+# deployment_branch_policy is null on purpose: the owner-approval job runs on pull_request
+# events (refs/pull/N/merge), which are never protected branches. A protected-branches-only
+# policy would reject every PR run instead of waiting for the owner's approval.
 gh api --method PUT "repos/$REPO/environments/owner-approval" \
   -H "Accept: application/vnd.github+json" \
   --input - <<JSON
 {
   "prevent_self_review": false,
   "reviewers": [{"type":"User","id":$OWNER_ID}],
-  "deployment_branch_policy": {
-    "protected_branches": true,
-    "custom_branch_policies": false
-  }
+  "deployment_branch_policy": null
 }
 JSON
 
 echo "Configuring protected branch $BRANCH"
-cat > /tmp/mv-branch-protection.json <<JSON
+protection_file="$(mktemp)"
+trap 'rm -f "$protection_file"' EXIT
+cat > "$protection_file" <<JSON
 {
   "required_status_checks": {
     "strict": true,
@@ -44,9 +46,7 @@ JSON
 
 gh api --method PUT "repos/$REPO/branches/$BRANCH/protection" \
   -H "Accept: application/vnd.github+json" \
-  --input /tmp/mv-branch-protection.json
-
-rm -f /tmp/mv-branch-protection.json
+  --input "$protection_file"
 
 echo "Owner-authority repository boundary configured."
 echo "Do not add bypass actors to the protected branch."

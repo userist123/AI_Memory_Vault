@@ -22,7 +22,7 @@ That environment must list @userist123 as a required reviewer and must allow the
 approve the job even when the owner initiated the workflow. The environment must not permit
 an administrator bypass. CODEOWNERS identifies the owner for protected files.
 
-The repository setup script tools/github/configure-owner-authority.sh configures the owner
+The repository setup script `30_SCRIPTS/security/owner_authority/configure-owner-authority.sh` configures the owner
 approval environment and protected main branch. These settings are intentionally outside
 normal repository content: committed files cannot safely enforce their own GitHub security
 settings.
@@ -33,7 +33,10 @@ protection; required checks can then be made mandatory for a protected branch.
 ## Agent tools
 
 .claude/settings.json installs a PreToolUse fail-closed hook. Read-only discovery tools
-are allowed. All other tool calls require an external owner gate.
+are allowed, including the read-only tools of the `vault-memory` MCP server (`memory_search`,
+`memory_get`, `vault_resolve`, `vault_list`, `vault_read`, `vault_search`, `vault_get_metadata`,
+`vault_check_quotes`). Every other tool call — including `memory_propose`, which writes a
+candidate note — requires an external owner gate.
 
 The external gate must authenticate the human owner independently of the LLM and must not
 expose its secret/token to the agent process.
@@ -44,7 +47,7 @@ Repository hooks cannot secure an entire PC against an agent that has unrestrict
 credentials. For genuine PC-level enforcement, run the agent under a dedicated
 least-privilege OS account/container/VM and keep owner credentials outside that boundary.
 
-On Windows, use a dedicated agent account plus NTFS ACLs and application-control policy
+On Windows, use a dedicated agent account plus NTFS ACLs (`30_SCRIPTS/security/owner_authority/Install-MemoryVaultAgentBoundary.ps1`) and application-control policy
 (Windows Defender Application Control/AppLocker where appropriate). Do not grant the
 agent local-administrator rights.
 

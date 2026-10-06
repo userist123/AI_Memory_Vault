@@ -5,6 +5,14 @@ import json, os, subprocess, sys
 from typing import Any
 
 READ_ONLY_TOOLS = {"Read", "Glob", "Grep", "LS", "TaskList", "TaskGet", "WebFetch", "WebSearch"}
+# Read-only tools of the vault-memory MCP server. memory_propose writes a candidate note and is
+# deliberately absent: it goes through the owner gate like any other mutation.
+READ_ONLY_MCP_TOOLS = {
+    f"mcp__vault-memory__{name}" for name in (
+        "memory_search", "memory_get", "vault_resolve", "vault_list", "vault_read",
+        "vault_search", "vault_get_metadata", "vault_check_quotes",
+    )
+}
 
 def deny(reason: str) -> int:
     print(json.dumps({"hookSpecificOutput": {
@@ -41,7 +49,7 @@ def main() -> int:
     except Exception:
         return deny("Blocked: malformed hook input. Owner gate fails closed.")
     event = canonical_event(raw)
-    if event["tool_name"] in READ_ONLY_TOOLS:
+    if event["tool_name"] in READ_ONLY_TOOLS or event["tool_name"] in READ_ONLY_MCP_TOOLS:
         return 0
     if approved(event):
         return 0

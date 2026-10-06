@@ -18,6 +18,8 @@ ROOT_ALLOWLIST = {
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
     "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "security", "scripts", "tests", "docs",
     ".github", ".agents", ".claude-plugin", ".obsidian",
+    # Claude Code project settings and the owner-authority PreToolUse hook.
+    ".claude",
     *NUMBERED_ROOTS,
 }
 ROOT_FILE_ALLOWLIST = {"README.md", ".gitkeep"}
