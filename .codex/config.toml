@@ -1,0 +1,8 @@
+# Codex CLI / IDE — project-scoped MCP (loaded only when this project is trusted in Codex).
+# Same server as every other client; the principal decides what Codex may read
+# (04_CONFIG/access_policy.yaml). Instructions come from AGENTS.md.
+[mcp_servers.vault-memory]
+command = "python"
+args = ["03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py", "--principal", "cloud_cli.codex"]
+startup_timeout_sec = 30
+tool_timeout_sec = 60

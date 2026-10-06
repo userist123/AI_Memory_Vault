@@ -31,6 +31,7 @@ Interfețele reale ale memoriei sunt cele de mai jos. Nu există niciun server R
    - `memory_get(note_id)` — o notă, prin aceleași reguli de încredere (ACTIVE sau REVIEW; REVIEW e marcată neverificată).
    - `memory_propose(title, body, type, provenance)` — vezi „Saving durable memory".
 2. **CLI** (rezervă, aceeași cale prin `MemoryController.search()`): `python -m cognitive_core.recall_cli --query "subiectul_cautat"`.
+3. **Rute directe** (același server MCP, principal `cloud_cli.claude_code`): `vault_resolve` găsește ruta `vault://<domeniu>/<slug>` a oricărui fișier din orice domeniu (`04_CONFIG/vault_domains.yaml`), `vault_read` întoarce textul verbatim cu `sha256` și intervalul exact de linii, `vault_list("*")` listează domeniile. Citează fiecare afirmație cu `cite_as`; `NOT_FOUND`/`DENIED_*` se spun ca atare. CLI: `python -m cognitive_core.vault_cli resolve "..."`. Contractul comun pentru toate AI-urile e în `AGENTS.md` („Direct routes for every AI”).
 
 Prima utilizare pe o mașină: `python -m cognitive_core.recall_cli --init-secret` (o singură dată). Secretul HMAC se generează local, într-un fișier lizibil doar de utilizator, în afara depozitului (`%APPDATA%/ai-memory-vault/hmac.key`, pe Linux `$XDG_CONFIG_HOME/ai-memory-vault/hmac.key`); variabila de mediu `MEMORY_CONTROLLER_HMAC_SECRET` are prioritate. Fiecare apel MCP sau CLI scrie o linie într-un jurnal local din același director (hash-ul întrebării, nu textul ei); `30_SCRIPTS/evaluation/memory_usage_report.py` îl raportează.
 
