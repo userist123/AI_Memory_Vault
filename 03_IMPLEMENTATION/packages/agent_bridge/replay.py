@@ -7,7 +7,13 @@ from pathlib import Path
 
 
 class ReplayGuard:
-    """Replay protection with bounded in-memory or persistent SQLite state."""
+    """Replay protection with bounded in-memory or persistent SQLite state.
+
+    Fail-closed when full: once `max_entries` live (unexpired) claims exist, new claims are
+    REFUSED instead of evicting an old one. Evicting would let an attacker flood the guard with
+    fresh nonces and then replay a captured request whose nonce had been pushed out while its
+    token was still valid.
+    """
 
     def __init__(
         self,
@@ -42,6 +48,10 @@ class ReplayGuard:
         with self._lock:
             if self._db is not None:
                 self._db.execute("DELETE FROM replay_guard WHERE seen_at <= ?", (cutoff,))
+                live = self._db.execute("SELECT COUNT(*) FROM replay_guard").fetchone()[0]
+                if live >= self.max_entries:
+                    self._db.commit()
+                    return False
                 try:
                     self._db.execute(
                         "INSERT INTO replay_guard(task_id, nonce, seen_at) VALUES (?, ?, ?)",
@@ -56,8 +66,7 @@ class ReplayGuard:
             if key in self._entries:
                 return False
             if len(self._entries) >= self.max_entries:
-                oldest = min(self._entries, key=self._entries.get)
-                del self._entries[oldest]
+                return False
             self._entries[key] = current
             return True
 

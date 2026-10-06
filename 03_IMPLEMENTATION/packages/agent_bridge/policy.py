@@ -27,8 +27,16 @@ class CapabilityToken:
         expires_at: float,
         nonce: str,
         response_public_key: str,
+        packet_sha256: str,
         iat: float | None = None,
     ) -> str:
+        """`packet_sha256` binds the token to ONE work packet (agent_bridge.crypto.packet_sha256).
+
+        Without it a captured token could be replayed with a different packet re-encrypted to the
+        bridge's public key; the bridge refuses tokens that do not carry it.
+        """
+        if not isinstance(packet_sha256, str) or len(packet_sha256) != 64:
+            raise PolicyError("capability token requires a 64-hex packet_sha256")
         issued_at = float(time.time() if iat is None else iat)
         payload = {
             "v": 1,
@@ -41,6 +49,7 @@ class CapabilityToken:
             "expires_at": float(expires_at),
             "nonce": nonce,
             "response_public_key": response_public_key,
+            "packet_sha256": packet_sha256,
         }
         signature = private_key.sign(canonical_json(payload))
         envelope = {"payload": payload, "signature": base64.urlsafe_b64encode(signature).decode("ascii")}

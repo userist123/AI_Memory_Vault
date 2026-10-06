@@ -6,12 +6,19 @@ from typing import Callable, Mapping
 
 from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PublicKey
 from routing.models import WorkPacket
+import hashlib
+import hmac
+import re
+
 from .crypto import X25519Envelope
 from .policy import BridgePolicy, CapabilityToken, PolicyError
 from .replay import ReplayGuard
 
 class BridgeRequestError(ValueError):
     pass
+
+
+TASK_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 class SecureBridge:
     def __init__(self, bridge_id: str, recipient: X25519Envelope, verifier,
@@ -69,6 +76,8 @@ class SecureBridge:
             if request["version"]!=1 or request["bridge_id"]!=self.bridge_id:
                 raise BridgeRequestError("bridge identity mismatch")
             task_id=str(request["task_id"])
+            if not TASK_ID_RE.fullmatch(task_id):
+                raise BridgeRequestError("invalid task id")
             aad=f"{self.bridge_id}:{task_id}".encode()
             if str(request["aad"]).encode()!=aad:
                 raise BridgeRequestError("AAD mismatch")
@@ -82,7 +91,13 @@ class SecureBridge:
             self.policy.authorize(token,runtime=str(request["runtime"]),agent=str(request["agent"]))
             if not self.replay_guard.claim(task_id,str(request["nonce"])):
                 raise BridgeRequestError("replay detected")
-            packet=self._packet(self.recipient.decrypt(request["payload"],aad=aad))
+            expected=token.get("packet_sha256")
+            if not isinstance(expected,str) or len(expected)!=64:
+                raise BridgeRequestError("capability token is not bound to a packet")
+            raw=self.recipient.decrypt(request["payload"],aad=aad)
+            if not hmac.compare_digest(hashlib.sha256(raw).hexdigest(),expected):
+                raise BridgeRequestError("packet does not match capability token")
+            packet=self._packet(raw)
             if packet.task_id!=task_id or packet.target_runtime!=request["runtime"] or packet.target_agent!=request["agent"]:
                 raise BridgeRequestError("packet scope mismatch")
             executor=self.executors.get(packet.target_runtime)

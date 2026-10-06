@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 from dataclasses import dataclass
@@ -14,6 +15,17 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 def canonical_json(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def packet_bytes(packet) -> bytes:
+    """The exact plaintext a work packet is sent as: canonical JSON of its fields."""
+    fields = packet.__dict__ if hasattr(packet, "__dict__") else dict(packet)
+    return json.dumps(fields, sort_keys=True, separators=(",", ":"), ensure_ascii=False, default=str).encode("utf-8")
+
+
+def packet_sha256(packet) -> str:
+    """Digest a capability token binds to: SHA-256 of `packet_bytes(packet)`."""
+    return hashlib.sha256(packet_bytes(packet)).hexdigest()
 
 
 def _b64(data: bytes) -> str:

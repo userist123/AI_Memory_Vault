@@ -5,7 +5,7 @@ import json
 import cryptography.hazmat.primitives.serialization as serialization
 from typing import Callable, Mapping
 from routing.models import WorkPacket
-from .crypto import Ed25519Signer, X25519Envelope, canonical_json
+from .crypto import Ed25519Signer, X25519Envelope, canonical_json, packet_bytes
 
 class SecureBridgeTransportError(RuntimeError):
     pass
@@ -24,7 +24,7 @@ class SecureBridgeClient:
         if not packet.task_id or not packet.target_runtime or not packet.target_agent:
             raise SecureBridgeTransportError("packet identity is incomplete")
         aad=f"{self.bridge_id}:{packet.task_id}".encode()
-        body=json.dumps(packet.__dict__,ensure_ascii=False,default=str,separators=(",",":")).encode()
+        body=packet_bytes(packet)
         return {"version":1,"bridge_id":self.bridge_id,"task_id":packet.task_id,
                 "runtime":packet.target_runtime,"agent":packet.target_agent,"nonce":nonce,
                 "capability_token":capability_token,"aad":aad.decode(),
@@ -39,6 +39,11 @@ class SecureBridgeClient:
             aad=f"{self.bridge_id}:{packet.task_id}".encode()
             signed={k:response[k] for k in ("version","bridge_id","task_id","status","payload")}
             Ed25519Signer.verify(self.bridge_signing_public_key,canonical_json(signed),response["signature"])
-            return json.loads(self.caller_keys.decrypt(response["payload"],aad=aad).decode("utf-8"))
+            if response["version"]!=1 or response["bridge_id"]!=self.bridge_id or response["task_id"]!=packet.task_id:
+                raise SecureBridgeTransportError("response is for another bridge or task")
+            result=json.loads(self.caller_keys.decrypt(response["payload"],aad=aad).decode("utf-8"))
+            if str(result.get("status","completed"))!=response["status"]:
+                raise SecureBridgeTransportError("signed status does not match the encrypted result")
+            return result
         except Exception as exc:
             raise SecureBridgeTransportError("invalid encrypted bridge response") from exc
