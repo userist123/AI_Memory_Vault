@@ -109,7 +109,7 @@ def test_search_pagination_success_and_validation(monkeypatch):
             'updated': '2023-01-01',
             'provenance': {'source_type': 'user', 'source_ref': 'unit'},
             'confidence': 'high',
-            'verification': 'unverified',
+            'verification': 'verified',
             'relations': []
         }
         ctrl.storage.set(note['id'], note)

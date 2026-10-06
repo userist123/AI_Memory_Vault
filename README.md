@@ -614,9 +614,10 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 
 | Ce verifică | Workflow-uri |
 |---|---|
-| suita completă de teste și structura depozitului | `r001-enforcement.yml`, `memory-v6-tests.yml` |
+| suita completă de teste și structura depozitului | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml` |
 | igiena depozitului: căi absolute, fișiere nepermise în rădăcină, date personale | `repository-hygiene.yml` |
 | regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
+| LogAnalyzer DFIR (.NET): build, teste și pachetele win-x64 ale edițiilor | `loganalyzer-dfir-build.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |

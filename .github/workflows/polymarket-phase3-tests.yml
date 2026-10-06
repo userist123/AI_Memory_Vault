@@ -2,6 +2,7 @@ name: Polymarket Phase 3 Tests
 
 on:
   push:
+
     branches:
       - 'r049-pm-phase3-prediction-ledger'
     paths:
@@ -9,7 +10,14 @@ on:
       - '20_TESTS/polymarket/**'
       - '07_EVALUATION/polymarket/**'
       - '.github/workflows/polymarket-phase3-tests.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -21,9 +29,12 @@ jobs:
   phase3:
     name: Phase 3 prediction ledger
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install test runner
         run: |
           python -m pip install --upgrade pip

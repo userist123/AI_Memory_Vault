@@ -1,0 +1,91 @@
+from threading import Thread
+
+from security.memory_adapter import MemoryAdapter
+from security.trust_gate import TrustState
+
+
+def test_memory_adapter_blocks_untrusted_before_backend_write():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append((namespace, payload)))
+
+    result = adapter.write("agent", {"fact": "untrusted"}, TrustState.UNTRUSTED)
+
+    assert result.allowed is False
+    assert result.reason == "memory_trust_denied"
+    assert writes == []
+
+
+def test_memory_adapter_commits_trusted_write_through_boundary():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append((namespace, payload)))
+
+    result = adapter.write("agent", {"fact": "verified"}, TrustState.TRUSTED)
+
+    assert result.allowed is True
+    assert writes == [("agent", {"fact": "verified"})]
+    assert adapter.boundary.ledger.verify() is True
+
+
+def test_memory_adapter_requires_approval_for_review():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append((namespace, payload)))
+
+    denied = adapter.write("agent", {"fact": "review"}, TrustState.REVIEW)
+    allowed = adapter.write(
+        "agent",
+        {"fact": "review"},
+        TrustState.REVIEW,
+        human_approved=True,
+    )
+
+    assert denied.allowed is False
+    assert denied.reason == "memory_approval_required"
+    assert allowed.allowed is True
+    assert len(writes) == 1
+
+
+def test_memory_adapter_preserves_empty_ledger_when_persist_fails():
+    def persist(namespace, payload):
+        raise RuntimeError("backend unavailable")
+
+    adapter = MemoryAdapter(persist)
+
+    try:
+        adapter.write("agent", {"fact": "verified"}, TrustState.TRUSTED)
+    except RuntimeError:
+        pass
+
+    assert adapter.boundary.ledger.records == []
+
+
+def test_memory_adapter_rejects_non_mapping_payload():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append((namespace, payload)))
+
+    try:
+        adapter.write("agent", ["not", "a", "mapping"], TrustState.TRUSTED)
+    except (TypeError, AttributeError):
+        pass
+
+    assert writes == []
+
+
+def test_memory_adapter_serializes_concurrent_writes():
+    writes = []
+    adapter = MemoryAdapter(lambda namespace, payload: writes.append(payload))
+
+    threads = [
+        Thread(
+            target=adapter.write,
+            args=("agent", {"index": index}, TrustState.TRUSTED),
+        )
+        for index in range(10)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    assert len(writes) == 10
+    assert adapter.boundary.ledger.verify() is True
+    assert len(adapter.boundary.ledger.records) == 10

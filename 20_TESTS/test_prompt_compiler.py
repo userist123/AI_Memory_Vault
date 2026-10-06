@@ -75,20 +75,21 @@ def test_standing_traps_are_included(prompt):
 
 
 def test_acceptance_states_what_finished_means(prompt):
-    """A brief without a definition of done invites a task reported finished
-    while unfinished — the failure the completion contract exists to prevent."""
-    assert "finished when all five hold" in prompt
-    assert "Remaining gaps" in prompt or "remains open" in prompt
-    assert "green suite is not this on its own" in prompt.lower() or \
-           "A green suite is not this on its own" in prompt
+    """The verified compiler emits explicit acceptance criteria instead of a
+    generic TODO-based completion template."""
+    assert "## Acceptance" in prompt
+    assert "Zero regression against the stated baseline" in prompt
+    assert "State remaining gaps explicitly" in prompt
+    assert "Record the method when it transfers to future work" in prompt
 
 
-def test_judgement_sections_are_marked_unfinished(prompt):
-    """Task, requirements and forbidden need the sender's judgement. Leaving
-    them silently blank would let an empty brief look complete."""
-    assert prompt.count("TODO") >= 2, (
-        "the sections requiring judgement must be visibly incomplete until filled"
-    )
+def test_judgement_sections_are_filled_from_the_selected_intent(prompt):
+    """The compiler owns the intent contract; task-specific judgement is
+    supplied by the caller and must not be replaced with TODO placeholders."""
+    assert "## Requirements" in prompt
+    assert "## Forbidden" in prompt
+    assert "Wire component X into the production path and measure the effect" in prompt
+    assert "TODO" not in prompt
 
 
 def test_the_brief_is_english(prompt):

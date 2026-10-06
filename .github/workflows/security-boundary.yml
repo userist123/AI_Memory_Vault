@@ -1,0 +1,54 @@
+name: Security Boundary Tests
+
+on:
+  pull_request:
+    paths:
+      - "security/**"
+      - "03_IMPLEMENTATION/packages/retrieval/context/**"
+      - "03_IMPLEMENTATION/packages/memory/**"
+      - "03_IMPLEMENTATION/packages/retrieval/financial_search.py"
+      - ".github/workflows/security-boundary.yml"
+  push:
+    branches:
+      - main
+      - "codex/skill-exfiltration-scanner"
+
+jobs:
+  security-boundary:
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Compile security modules
+        run: python -m compileall -q security
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3
+      - name: Run security tests
+        env:
+          PYTHONPATH: .
+        run: python -m pytest security/tests -q -o pythonpath=.
+      - name: Audit workflow security boundary
+        run: python 30_SCRIPTS/verification/workflow_security_audit.py
+
+  memory-data-route:
+    name: Memory Data Route Gate
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Install test runner
+        run: python -m pip install --disable-pip-version-check pytest==9.1.1
+      - name: Run canonical memory data route gate
+        env:
+          PYTHONPATH: .
+        run: python -m pytest security/tests/test_canonical_memory_data_route.py -q

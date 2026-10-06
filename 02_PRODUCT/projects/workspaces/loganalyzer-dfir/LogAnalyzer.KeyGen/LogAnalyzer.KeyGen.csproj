@@ -13,4 +13,9 @@
     <PackageReference Include="System.Management" Version="10.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Key and Hardware ID come from the same LicenseService the editions use at activation. -->
+    <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
+  </ItemGroup>
+
 </Project>

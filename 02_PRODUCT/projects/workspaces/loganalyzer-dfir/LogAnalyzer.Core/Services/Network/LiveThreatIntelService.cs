@@ -1,4 +1,5 @@
 using System;
+using LogAnalyzer.Core.Services.Connectivity;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text.Json;
@@ -32,6 +33,7 @@ namespace LogAnalyzer.Core.Services.Network
         /// </summary>
         public async Task<LiveIocReputation> CheckIpReputationAsync(string ipAddress, string apiKey, CancellationToken cancellationToken = default)
         {
+            NetworkPolicy.EnsureAllowed("Threat Intel online");
             if (string.IsNullOrWhiteSpace(ipAddress)) throw new ArgumentNullException(nameof(ipAddress));
 
             var result = new LiveIocReputation
@@ -87,6 +89,7 @@ namespace LogAnalyzer.Core.Services.Network
         /// </summary>
         public async Task<LiveIocReputation> CheckFileHashReputationAsync(string sha256Hash, string apiKey, CancellationToken cancellationToken = default)
         {
+            NetworkPolicy.EnsureAllowed("Threat Intel online");
             if (string.IsNullOrWhiteSpace(sha256Hash)) throw new ArgumentNullException(nameof(sha256Hash));
 
             var result = new LiveIocReputation

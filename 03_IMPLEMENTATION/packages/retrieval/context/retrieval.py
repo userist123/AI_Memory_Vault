@@ -158,7 +158,11 @@ class RetrievalEngine:
             return sliced
 
         requested_limit = int(classified_query.get("candidate_limit", DEFAULT_CANDIDATE_LIMIT))
-        ceiling = max(budget.max_notes * 4, budget.max_notes) if budget else DEFAULT_CANDIDATE_LIMIT
+        # Candidate generation is deliberately wider than the final context
+        # budget. The old 4x ceiling collapsed the measured 200-candidate
+        # recall budget to 20 notes when max_notes=5, recreating the exact
+        # head-20 recall failure this stage is meant to remove.
+        ceiling = max(budget.max_notes * 40, budget.max_notes) if budget else DEFAULT_CANDIDATE_LIMIT
         candidate_limit = max(1, min(requested_limit, ceiling))
 
         # Fail closed, no silent fallback: generate_candidates() is a pure
