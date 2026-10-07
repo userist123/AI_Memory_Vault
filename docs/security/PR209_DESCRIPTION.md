@@ -185,7 +185,7 @@ node --test test/test_jarvis.js test/test_vault_client_auth.js     (jarvis_web)
 python test/api_smoke_test.py (gateway, with token): 7/7 PASS
 
 gitleaks 8.30.1  detect --no-git (tree)                no leaks found
-gitleaks 8.30.1  detect (history, all refs, 2,663 commits)   no leaks found
+gitleaks 8.30.1  detect (history, all refs, 2,686 commits)   no leaks found
 
 real-vault probe, 10 queries x top 5 through memory_access as AI_AGENT
                      non-empty snippets   memory_get ok

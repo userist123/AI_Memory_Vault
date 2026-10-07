@@ -29,7 +29,7 @@ the branch `security/audit-remediation-2026-10`; the commits are listed in the P
    `[[allowlists]]`. The PR's extra entries were redundant: `security/tests/` is already matched by `(^|/)tests/`, the
    two test secrets occur only there, the commit `2c9c1018` is not in this branch's history, and the narrow
    `regexTarget = "match"` block covers the `private_key: Ed25519PrivateKey` annotation. Verified with gitleaks 8.30.1
-   on the current tree and on the full history of every ref (2,663 commits): no leaks. `20_TESTS/test_gitleaks_config_format.py`.
+   on the current tree and on the full history of every ref (2,686 commits): no leaks. `20_TESTS/test_gitleaks_config_format.py`.
 3. **Memory read contract restored** (blocking regression). `memory_search` / `memory_get` serve ACTIVE and REVIEW notes to
    `AI_AGENT`, REVIEW flagged `unverified`; withheld are `quarantined` notes, ARCHIVED/RAW notes and the body of an
    unverified REVIEW candidate in a trusted context pack. One shared predicate, `security/verified_reduction.py`
