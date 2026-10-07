@@ -145,7 +145,7 @@ rând trimite la testul sau documentul care îl dovedește.
 | Domeniu în Evidence Graph | — | PARTIAL: numai inventar sintetic | `DomainAndMailTests`, `EVIDENCE_GRAPH.md` |
 | Colectare la distanță | FACADE eliminat (`RemoteTriageService` nu avea consumator și interpola gazda nevalidată în script) | REAL prin pachet: hash pe țintă, verificare, import cu custodie; aplicația nu folosește rețeaua | `RemoteCollectionTests` (pachetul rulat pe această stație) |
 | Validare diferențială (alt instrument) | FACADE | REAL pentru EVTX (toate cele 170 de fișiere față de `wevtutil`), registru, task-uri, servicii, LNK, USB, browser | `ForensicLab` (`LADFIR_LAB=1`): 174 PASS, 1 PARTIAL explicat, 0 FAIL |
-| Laborator anti-forensics | — | REAL pentru 13 din 16 tehnici; USN, $MFT și ADS rămân UNDETERMINED (necolectate) | `AntiForensicsTests`, `ANTI_FORENSICS_TESTING.md` |
+| Laborator anti-forensics | — | REAL pentru 15 din 16 tehnici (USN din exportul `fsutil` din 2026-10-07); $MFT (timestomp) și ADS rămân UNDETERMINED | `AntiForensicsTests`, `UsnJournalTests`, `ANTI_FORENSICS_TESTING.md` |
 | Memory Vault | — | PARTIAL: propuneri validate de `memory_access.propose()` din vault; trimiterea se face pe poarta existentă; Control, Policy, Entity, Relationship nu sunt exportate | `VaultExportTests`, `MEMORY_VAULT_INTEGRATION.md` |
 | AI | — | REAL, local (Ollama, loopback), cu validare deterministă; afirmațiile rămân UNPROVEN | `EvidenceReasonerTests`, `AI_FORENSIC_REASONING.md` |
 | `LogAnalyzer.Dfir.Tests` | 53 trecute | 236 trecute, 4 sărite (laboratorul la cerere, mostre GPO, două teste doar ca administrator) | rularea din 2026-10-06 |

@@ -157,21 +157,63 @@ public static class AntiForensics
             else Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.Undetermined, "Lipsește jurnalul System (Kernel-General 1).");
         }
 
-        // AF06 — Prefetch disabled (deletion of .pf files leaves no trace in the parsed sources).
+        // AF06 — Prefetch disabled (registry) or .pf files deleted (change journal).
+        var usn = events.Where(e => e.Source == "USN").ToList();
+        string Window() => usn.Count == 0 ? "" : $"{usn.Min(e => e.Time.Utc):yyyy-MM-dd HH:mm} – {usn.Max(e => e.Time.Utc):yyyy-MM-dd HH:mm} UTC";
         {
             var cfg = events.Where(e => e.Source == "SystemConfig" && e.Fields.ContainsKey("EnablePrefetcher")).ToList();
             var off = cfg.Where(e => F(e, "EnablePrefetcher") == "0").ToList();
-            if (off.Count > 0)
-                Add("AF06", "Prefetch dezactivat / șters", "T1070.004", AntiForensicResult.Detected, "EnablePrefetcher = 0: Windows nu mai creează fișiere Prefetch.", off.Select(e => Ref(e, "EnablePrefetcher")));
+            var pfDeleted = usn.Where(e => F(e, "FileName").EndsWith(".pf", StringComparison.OrdinalIgnoreCase) && F(e, "Reason").Contains("File delete", StringComparison.Ordinal)).ToList();
+            var parts = new List<string>();
+            if (off.Count > 0) parts.Add("EnablePrefetcher = 0: Windows nu mai creează fișiere Prefetch");
+            if (pfDeleted.Count > 0)
+            {
+                // Recreated later under the same name = rewritten by Windows; a burst of distinct names in one second is a bulk deletion.
+                var creates = usn.Where(c => F(c, "Reason").Contains("File create", StringComparison.Ordinal) && c.Time.Utc is not null)
+                                 .GroupBy(c => F(c, "FileName"), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.Max(c => c.Time.Utc!.Value), StringComparer.OrdinalIgnoreCase);
+                var recreated = pfDeleted.Count(d => creates.TryGetValue(F(d, "FileName"), out var last) && d.Time.Utc is { } dt && last > dt);
+                var burst = pfDeleted.GroupBy(e => e.Time.Utc).OrderByDescending(g => g.Count()).First();
+                parts.Add($"{pfDeleted.Count} fișiere .pf șterse (jurnal USN), din care {recreated} recreate ulterior cu același nume; " +
+                          $"cel mai mare grup: {burst.Count()} în aceeași secundă, {burst.Key:yyyy-MM-ddTHH:mm:ssZ}. Jurnalul USN nu arată procesul care a șters.");
+            }
+            if (parts.Count > 0)
+                Add("AF06", "Prefetch dezactivat / șters", "T1070.004", AntiForensicResult.Detected, string.Join(". ", parts),
+                    off.Select(e => Ref(e, "EnablePrefetcher")).Concat(pfDeleted.Select(e => Ref(e, "fișier Prefetch șters"))));
+            else if (usn.Count > 0)
+                Add("AF06", "Prefetch dezactivat / șters", "T1070.004", AntiForensicResult.NotDetected,
+                    $"Jurnalul USN ({Window()}) nu conține ștergeri de fișiere .pf" + (cfg.Count > 0 ? $"; Prefetch activ (EnablePrefetcher = {F(cfg[0], "EnablePrefetcher")})." : ". Ce s-a întâmplat înaintea jurnalului nu se vede."),
+                    cfg.Select(e => Ref(e, "EnablePrefetcher")));
             else
                 Add("AF06", "Prefetch dezactivat / șters", "T1070.004", AntiForensicResult.Undetermined,
                     (cfg.Count > 0 ? $"Prefetch activ (EnablePrefetcher = {F(cfg[0], "EnablePrefetcher")}). " : "Configurația Prefetch (hive SYSTEM) nu a fost analizată. ") +
-                    "Ștergerea fișierelor .pf nu lasă urme în sursele parsate (ar cere $MFT / USN).", cfg.Select(e => Ref(e, "EnablePrefetcher")));
+                    "Ștergerea fișierelor .pf se vede doar în jurnalul USN, care nu a fost analizat.", cfg.Select(e => Ref(e, "EnablePrefetcher")));
         }
 
-        Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Undetermined, "Jurnalul USN ($UsnJrnl:$J) nu este colectat și nu este parsat.");
+        // AF07 — the change journal deleted and recreated: its ID (a FILETIME) is the creation time.
+        {
+            var ids = usn.Select(e => F(e, "JournalId")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var created = ids.Select(i => (Id: i, At: LogAnalyzer.Dfir.FileSystem.UsnJournalParser.JournalCreatedUtc(i))).ToList();
+            var earliestLog = evtxSources.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value).DefaultIfEmpty().Min();
+            if (ids.Count == 0)
+                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Undetermined, "Jurnalul USN nu a fost analizat (export fsutil usn readjournal).");
+            else if (ids.Count > 1)
+                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Detected,
+                    "Exporturi cu ID-uri de jurnal diferite (jurnal șters și recreat între ele): " + string.Join("; ", created.Select(c => $"{c.Id} creat {c.At:yyyy-MM-ddTHH:mm:ssZ}")),
+                    usn.GroupBy(e => F(e, "JournalId")).Select(g => Ref(g.First(), "ID jurnal")));
+            else if (created[0].At is { } at && earliestLog != default && at > earliestLog)
+                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Detected,
+                    $"Jurnalul USN {ids[0]} a fost creat la {at:yyyy-MM-ddTHH:mm:ssZ}, după cea mai veche înregistrare din jurnalele de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}): " +
+                    "a fost șters și recreat (sau volumul este nou).", [Ref(usn[0], "ID jurnal")]);
+            else
+                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.NotDetected,
+                    $"Un singur jurnal, {ids[0]}, creat la {created[0].At:yyyy-MM-ddTHH:mm:ssZ}" +
+                    (earliestLog != default ? $", înaintea celei mai vechi înregistrări din jurnalele de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ})" : "") +
+                    $". Acoperire: {Window()}.", [Ref(usn[0], "ID jurnal")]);
+        }
+
         Add("AF08", "Modificarea marcajelor de timp ale fișierelor (timestomp)", "T1070.006", AntiForensicResult.Undetermined,
-            "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face.");
+            "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
+            (usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : ""));
 
         // AF09 — registry changes to logging and audit configuration, visible only with registry auditing (Sysmon 12–14, Security 4657).
         {

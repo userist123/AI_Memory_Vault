@@ -109,6 +109,19 @@
     "firewallAllRulesDeletedUtc": "2026-09-19T15:17:02",
     "applicationRecordIdStepsBack": 1
   },
+  "usn": {
+    "file": "17_USN_MFT\\usn_readjournal_C.csv",
+    "second": "NanAgent-Forensic-V11_20261003_221532\\19_RECOVERY\\usn_readjournal.txt",
+    "prefetch": "09_PREFETCH\\Prefetch",
+    "softwareHive": "06_REGISTRY\\hives\\SOFTWARE.hiv",
+    "zone": "GTB Standard Time",
+    "_truth": "Read on 2026-10-07: journal ID as FILETIME vs SOFTWARE InstallTime; fsutil local time vs Prefetch run times (+3 h, EEST); the bulk .pf deletion counted in both exports.",
+    "journalId": "0x01dc84b0d77fa447",
+    "journalCreatedUtc": "2026-01-13T17:19:57",
+    "installUtc": "2026-01-13T18:50:53",
+    "prefetchBulkDeleteUtc": "2026-10-03T13:54:27",
+    "prefetchBulkDeleteCount": 349
+  },
   "huntTargets": ["NanAgent32.exe", "Hub-Distributed.exe", "XPFix.exe", "pro_cmd_core", "com_pro_connector", "orchestratormaintain",
                   "MSBuild.exe", "Wacatac.H!ml", "LummaStealer.A", "SuspEtherRpcConn.B", "GenCodeInjected.H", "CxUtilSvc", "NetworkMonitor.csproj"]
 }

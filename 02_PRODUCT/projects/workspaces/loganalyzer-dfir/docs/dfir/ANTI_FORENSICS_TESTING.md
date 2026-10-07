@@ -23,9 +23,9 @@ sau a auditului pot fi legitime; analistul decide.
 | AF03 | EVTX truncated | T1070.001 | antetul EVTX (numărul de chunk-uri, offset 42) și lungimea fișierului | fișierul nu se termină la granița unui chunk de 64 KiB sau antetul declară mai multe chunk-uri | idem |
 | AF04 | RecordID gaps | T1070.001 | EventRecordID în fiecare fișier, în ordinea din fișier | lipsesc ID-uri în interiorul fișierului sau numerotarea revine (ID-uri folosite de două ori); se corelează cu System 6008 / Kernel-Power 41 | ID-uri continue și fără repetări |
 | AF05 | timestamp manipulation (ora sistemului) | — | Security 4616, Kernel-General 1 | ora schimbată de alt proces decât svchost (W32Time), cu motivul 1 | System analizat |
-| AF06 | Prefetch deletion | T1070.004 | `EnablePrefetcher` din hive-ul SYSTEM | valoarea 0 | niciodată: ștergerea fișierelor .pf nu se vede fără $MFT/USN |
-| AF07 | USN anomalies | T1070.004 | — | — | jurnalul USN nu este colectat |
-| AF08 | file timestamp changes | T1070.006 | — | — | $MFT nu este parsat |
+| AF06 | Prefetch deletion | T1070.004 | `EnablePrefetcher` din hive-ul SYSTEM; jurnalul USN (export `fsutil`) | valoarea 0, sau fișiere `.pf` șterse în USN (cu numărul recreat ulterior și cel mai mare grup pe secundă) | jurnalul USN analizat nu conține ștergeri `.pf` (doar pentru fereastra lui) |
+| AF07 | USN anomalies | T1070.004 | ID-ul jurnalului USN, citit ca FILETIME = momentul creării | exporturi cu ID-uri diferite, sau jurnal creat după cea mai veche înregistrare din jurnalele de evenimente (șters și recreat) | un singur jurnal, creat înainte |
+| AF08 | file timestamp changes | T1070.006 | — | — | $MFT nu este parsat; „Basic info change” din USN acoperă și atributele, deci nu dovedește singur o schimbare de ore |
 | AF09 | registry modifications | T1112 | Sysmon 12–14, Security 4657 | modificări pe cheile de jurnalizare/audit | există audit de registru și nu le arată |
 | AF10 | log policy changes | T1562.002 | Security 4719, System 7040 (EventLog), `Start` al serviciului EventLog | audit eliminat (%%8448/%%8450), serviciul EventLog modificat sau dezactivat | niciodată: 4719 depinde de auditarea subcategoriei Audit Policy Change |
 | AF11 | service deletion | T1070.009 | System 7045 față de serviciile din hive-ul SYSTEM | serviciu instalat care nu mai este configurat | toate serviciile instalate există |
@@ -62,7 +62,8 @@ Valorile de mai jos sunt recalculate de test cu `wevtutil`, iar AF11 este compar
 | AF02, AF03 | NOT_DETECTED | Security (103.631), System (31.420), Application, Firewall (864): structură intactă |
 | AF04 | DETECTED | Application: după RecordID 44790 (2026-08-08 17:50:08 UTC) urmează 44760 (17:51:21); 31 de ID-uri sunt folosite de două ori. Coincide cu oprirea necurată din System (6008, Kernel-Power 41, repornire la 17:51:05). Security, System și Firewall au RecordID continuu |
 | AF05 | DETECTED | 14 schimbări de oră făcute din Setări (SystemSettingsAdminFlows.exe, utilizatorul Owner), în 4616 și în Kernel-General 1 |
-| AF06 | UNDETERMINED | Prefetch activ (`EnablePrefetcher` = 3) |
+| AF06 | DETECTED (cu jurnalul USN) | **2026-10-03 13:54:27 UTC: 349 de fișiere `.pf` distincte șterse în aceeași secundă**, în ambele exporturi USN; 84 recreate ulterior cu același nume. USN nu arată procesul; în Prefetch, imediat după, rulează doar `svchost.exe` (13:54:28) și `gh.exe`. Prefetch rămâne activ (`EnablePrefetcher` = 3) |
+| AF07 | NOT_DETECTED | jurnal unic `0x01dc84b0d77fa447`, creat la 2026-01-13 17:19:57 UTC, cu 1,5 h înainte de `InstallTime` din SOFTWARE (2026-01-13 18:50:53 UTC); fereastra exportului: 2026-10-03 13:19–20:51 UTC |
 | AF09 | NOT_DETECTED | 14 evenimente 4657, niciunul pe cheile de jurnalizare |
 | AF10 | DETECTED | 52 de eliminări din politica de audit (4719), făcute de utilizatorul Owner, începând cu 2026-08-08 |
 | AF11 | DETECTED | 41 din 110 servicii instalate nu mai există (versiuni vechi ale Google Updater, drivere Lenovo etc.); niciunul nu apare în WMI |
@@ -75,6 +76,8 @@ firewall-ului. Legătura lui cu incidentul este doar temporală până la o anal
 
 ## Limite
 
-- USN, $MFT și ADS nu sunt colectate și nu sunt parsate (AF07, AF08, AF14 rămân UNDETERMINED).
-- Ștergerea fișierelor Prefetch nu se poate vedea fără ele (AF06).
+- $MFT și ADS nu sunt colectate și nu sunt parsate (AF08, AF14 rămân UNDETERMINED).
+- USN se citește din exportul `fsutil usn readjournal C: csv`, nu din `$UsnJrnl:$J` brut. Jurnalul acoperă doar ultimele ore sau zile (32 MB). În corpus nu include ziua incidentului, 19.09.
+- Ora din `fsutil` este locală. Conversia a fost verificată pe corpus față de orele de rulare din Prefetch: la cel puțin 50 de fișiere `.pf`, scrierea apare în USN în primul minut după rulare (UTC).
+- Citirea ID-ului jurnalului ca FILETIME este verificată empiric pe această stație (data instalării), nu dintr-o specificație Microsoft.
 - Testul de trunchiere folosește o copie a jurnalului System exportat local; corupția este acoperită de `EvtxRepairTests`.

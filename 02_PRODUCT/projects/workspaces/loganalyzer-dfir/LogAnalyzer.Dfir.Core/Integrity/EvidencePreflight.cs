@@ -25,6 +25,7 @@ public static class EvidenceFingerprint
         if (n >= 8 && BinaryPrimitives.ReadUInt32LittleEndian(h[4..]) == 0x89ABCDEF) return "ese";
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
         if (IsTaskXml(path)) return "task_xml";
+        if (IsUsnExport(path)) return "usn_fsutil";
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
@@ -42,6 +43,19 @@ public static class EvidenceFingerprint
         return head.Contains("<Task", StringComparison.Ordinal) && head.Contains("schemas.microsoft.com/windows/2004/02/mit/task", StringComparison.Ordinal);
     }
 
+    /// <summary>Text written by <c>fsutil usn readjournal … csv</c>: it starts with the "USN Journal ID" line.</summary>
+    private static bool IsUsnExport(string path)
+    {
+        var buf = new byte[64];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        // Redirected from Windows PowerShell 5.1 the export is UTF-16 LE with a BOM; from cmd it is ANSI/UTF-8.
+        var head = n >= 2 && buf[0] == 0xFF && buf[1] == 0xFE ? System.Text.Encoding.Unicode.GetString(buf, 2, (n - 2) & ~1)
+                                                             : System.Text.Encoding.UTF8.GetString(buf, 0, n);
+        return head.TrimStart('\uFEFF').StartsWith("USN Journal ID", StringComparison.Ordinal);
+    }
+
     /// <summary>Formats an evidence item may legitimately have, from its declared type or name; null when not checked.</summary>
     public static IReadOnlyCollection<string>? Expected(EvidenceItem item)
     {
@@ -54,6 +68,7 @@ public static class EvidenceFingerprint
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t == "live_snapshot") return ["json"];
         if (t == "task_xml") return ["task_xml"];
+        if (t == "usn_journal") return ["usn_fsutil"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];

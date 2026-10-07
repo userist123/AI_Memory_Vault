@@ -58,6 +58,7 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 | usbHive | UsbDevicesParser | 2 stick-uri Kingston și SSD-ul Samsung (USBSTOR), același SSD prin UAS („MSFT30…”, producător/model din Enum\SCSI după ContainerID), camera Sony DSC cunoscută doar din MountedDevices (intrarea din Enum lipsește, conectată ultima dată pe 16.06 după jurnal); orele 0066 confirmate de 1006 pentru toate cele 4 cu oră |
 | jumpLists | JumpListParser, CompoundFile | 54 de Jump Lists reale: toate se deschid (4 nu au lungimea multiplu de sector, 4 sunt goale, 39 au streamul Windows 11 DestListPropertyStore); 1.880 de intrări DestList, fiecare cu linkul ei, iar 1.555 de căi coincid cu ținta linkului. Este doar o verificare de consistență internă |
 | amcache | AmcacheParser | peste 6000 de intrări, 0 corupte, SHA-1 pe peste 90% |
+| usn | UsnJournalParser | două exporturi `fsutil` făcute la ore diferite: peste 50.000 de USN comune, identice (nume, motiv, oră, ID fișier); orele convertite față de Prefetch (UTC); ID-ul jurnalului = ziua instalării (SOFTWARE `InstallTime`); ștergerea în masă a fișierelor `.pf` în ambele exporturi |
 | (investigație) | pipeline | lanțul INCIDENT-CHAIN critic din 19.09.2026; proveniență completă; 0 constatări respinse |
 
 ## Validare diferențială cu implementări independente

@@ -146,7 +146,7 @@ Fazele 3–10 din master spec, rulate pe corpusul real al cazului NanAgent, unde
 | P15 AI pe probe | făcut, model local | `AI_FORENSIC_REASONING.md` |
 
 Următorii pași, în ordinea valorii:
-1. colectarea și parsarea $MFT / USN (închid AF06–AF08 și timestomp);
+1. $MFT (închide AF08, timestomp). USN este citit din exportul `fsutil` (2026-10-07) și închide AF06 și AF07;
 2. validarea exportului OSCAL cu schema oficială NIST;
 3. testele ca administrator: aplicare HKLM, audit vs `auditpol`;
 4. vizualizarea Evidence Graph în aplicație.
