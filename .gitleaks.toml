@@ -3,9 +3,10 @@ title = "AI Memory Vault secret scanning"
 [extend]
 useDefault = true
 
-# Gitleaks v8 global allowlist
-[allowlist]
-description = "Global allowlist for non-runtime test corpus, imports, and synthetic fixtures"
+# Imported agent/reference corpora are non-runtime source material and are
+# intentionally outside the production credential trust boundary.
+[[allowlists]]
+description = "Imported non-runtime agent/reference corpora"
 paths = [
   '''(^|/)\.agents/''',
   '''(^|/)50_ARTIFACTS/''',
@@ -13,25 +14,69 @@ paths = [
   '''(^|/)06_INBOX/RAW_IMPORTS/''',
   '''(^|/)04_RAW_SKILLS_PART_[123]\.txt$''',
   '''(^|/)NOTEBOOKLM_PART3_[12]_RAW_SKILLS\.txt$''',
+]
+
+# Generated/test-only material is not part of the production runtime trust boundary.
+# Runtime source remains fully scanned; these locations are covered separately
+# by the dedicated Secret Scan workflow and repository tests.
+[[allowlists]]
+description = "Non-runtime test and experiment corpus"
+paths = [
   '''(^|/)20_TESTS/''',
   '''(^|/)40_EXPERIMENTS/''',
   '''(^|/)02_PRODUCT/.*/tests/''',
   '''(^|/)tests/''',
   '''(^|/)projects/.*/tests/''',
-  '''(^|/)security/tests/''',
+]
+
+# Python bytecode is generated during the test run and is not source material.
+[[allowlists]]
+description = "Generated Python bytecode"
+paths = [
   '''(^|/)__pycache__/''',
-  '''(^|/)02_PRODUCT/projects/imported/.*/\.github/workflows/.*\.ya?ml$''',
-  '''(^|/)03_IMPLEMENTATION/packages/agent_bridge/crypto\.py$''',
 ]
-commits = [
-  "2c9c1018efad2d019b4801187222fa37cabcd8c2",
-]
+
+# Deterministic synthetic fixtures used by sanitizer/ablation tests; they are not credentials.
+[[allowlists]]
+description = "Intentional synthetic API-key fixtures"
 regexes = [
   '''sk-123456789''',
   '''test_secret_for_ablation_harness_32chars''',
-  '''host-super-secret-key-32bytes-min!''',
-  '''production-multiprocess-test-secret-32b!''',
-  '''Ed25519PrivateKey''',
-  '''X25519PrivateKey''',
-  '''private_key:\s*(?:Ed25519PrivateKey|X25519PrivateKey)''',
+]
+
+# Placeholder credentials in imported third-party CI workflows.
+#
+# Narrow on purpose: this covers .github/workflows files inside
+# 02_PRODUCT/projects/imported/ and nothing else. Those directories hold whole
+# third-party repositories with their own CI, whose build steps set literal env
+# values so a build can run without secrets.
+#
+# The three findings that prompted this, all from commit b71d849f3
+# (2026-09-06), were the same line in three copies of one imported project:
+#
+#     JWT_SECRET: 'ci-placeholder-must-be-32-chars-long-ok'
+#
+# sitting beside NEXT_PUBLIC_APP_URL: 'https://example.com'. The value states
+# what it is. The files are already gone from the working tree — current-tree
+# gitleaks passes — so only git history retains them, and the alternative to an
+# allowlist was rewriting 1,278 commits on a shared branch.
+#
+# This does NOT allowlist the imported projects generally, only their workflow
+# files. A real credential committed anywhere else under 02_PRODUCT, including
+# elsewhere in those same projects, still fails the scan.
+[[allowlists]]
+description = "Placeholder credentials in imported third-party CI workflows"
+paths = [
+  '''(^|/)02_PRODUCT/projects/imported/.*/\.github/workflows/.*\.ya?ml$''',
+]
+
+# Python type annotations of cryptography key classes, flagged by generic-api-key as
+# "private_key: Ed25519PrivateKey" in agent_bridge/crypto.py history (commit 2c9c1018ef,
+# PR #211). The "value" is a class name, not key material. CI scans `--all` refs, so one
+# historical false positive on any branch fails every PR's history scan.
+[[allowlists]]
+description = "Cryptography key type annotations (class names, not keys)"
+regexTarget = "match"
+regexes = [
+  '''(?:private|public)_key:\s*(?:Ed25519|X25519)(?:Private|Public)Key\b''',
 ]
