@@ -1,7 +1,9 @@
 name: Dependency audit
 
 # Same scope as Dependabot alerts (every committed npm lockfile and .NET project), visible per
-# manifest in the job summary. Reads lockfiles and restores packages; never runs project code.
+# manifest in the job summary. npm: reads lockfiles only. .NET: `dotnet restore` evaluates MSBuild
+# for the imported projects (props/targets can run code), so that job is not code-free; it runs
+# with contents: read and no secrets. No install, build, test or run step is used anywhere.
 
 on:
   pull_request:

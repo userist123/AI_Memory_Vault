@@ -22,13 +22,13 @@ export async function Header() {
 
         <nav className="hidden items-center gap-6 md:flex">
           <Link
-            href="/#features"
+            href={{ pathname: '/', hash: 'features' }}
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             {t('help')}
           </Link>
           <Link
-            href="/#pricing"
+            href={{ pathname: '/', hash: 'pricing' }}
             className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             {t('pricing')}

@@ -45,6 +45,7 @@ export async function POST(req: NextRequest) {
     // Validate credentials FIRST (don't save bad keys)
     const adapter = getAdapter(brokerId);
     const validation = await adapter.validateCredentials({
+      brokerId,
       apiKey,
       apiSecret,
       testnet,

@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     // Create checkout session with Polar
     const checkout = await polar.checkouts.create({
-      productId,
+      products: [productId],
       successUrl: `${appUrl}/dashboard?upgrade=success`,
       customerEmail: user.email,
       customerName: user.name || undefined,

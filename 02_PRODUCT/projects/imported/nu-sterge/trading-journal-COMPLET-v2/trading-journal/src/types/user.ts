@@ -28,7 +28,7 @@ export const UserSchema = z.object({
   passwordHash: z.string(),
   name: z.string().nullable().optional(),
   language: z.enum(['ro', 'en']).default('ro'),
-  plan: z.enum(['free', 'pro', 'elite']).default('free'),
+  plan: z.enum(['free', 'pro', 'elite', 'autopilot']).default('free'),
   createdAt: z.date(),
   updatedAt: z.date(),
   lastLoginAt: z.date().nullable().optional(),
@@ -45,7 +45,7 @@ export type PublicUser = z.infer<typeof PublicUserSchema>;
 export interface JWTPayload {
   sub: string; // user ID
   email: string;
-  plan: 'free' | 'pro' | 'elite';
+  plan: 'free' | 'pro' | 'elite' | 'autopilot';
   iat?: number;
   exp?: number;
 }

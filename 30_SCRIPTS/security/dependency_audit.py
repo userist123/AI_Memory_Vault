@@ -1,8 +1,10 @@
 """Audit every committed npm lockfile and .NET project for known vulnerable dependencies.
 
 Dependabot alerts on the default branch cover the whole tree, including imported snapshots.
-This script gives the same picture from CI, per manifest, without installing or running any
-project code:
+This script gives the same picture from CI, per manifest, without installing, building or
+running the projects (note: ``dotnet restore`` evaluates MSBuild for the imported ``.csproj``
+files, and MSBuild evaluation can execute code through props/targets, so the .NET half is not
+code-free; the CI job has read-only permissions and no secrets):
 
 * npm: ``npm audit --package-lock-only`` (reads the lockfile, never runs install scripts);
 * .NET: ``dotnet restore`` then ``dotnet list package --vulnerable --include-transitive``.

@@ -59,7 +59,7 @@ def test_an_unaudited_manifest_is_reported_not_silently_passed():
     assert not failed and "not audited: restore failed: NU1101 / x" in table
 
 
-def test_the_workflow_never_runs_project_code():
+def test_the_workflow_never_installs_builds_or_runs_projects():
     wf = (REPO / ".github/workflows/dependency-audit.yml").read_text(encoding="utf-8")
     for forbidden in ("npm install", "npm ci", "npm run", "dotnet build", "dotnet test", "dotnet run"):
         assert forbidden not in wf
