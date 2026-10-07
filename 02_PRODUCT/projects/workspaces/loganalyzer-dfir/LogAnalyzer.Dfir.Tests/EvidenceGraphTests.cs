@@ -33,6 +33,29 @@ public sealed class EvidenceGraphTests
     ];
 
     [Fact]
+    public void Explorer_lists_an_entitys_edges_with_their_support_and_the_path_between_two_entities()
+    {
+        var events = Incident();
+        var g = EvidenceGraph.Build(events, Correlation.Run(events), "LAB-PC");
+        var found = GraphExplorer.Search(g, "302044").Select(e => e.Type).ToList();
+        Assert.Contains("File", found);
+        var zip = g.Find("File", "Tool_302044.zip")!;
+        var rows = GraphExplorer.EdgesOf(g, zip.Id);
+        var dl = Assert.Single(rows, r => r.Relation == "DOWNLOADED" && r.OtherType == "Domain" && r.OtherLabel.Contains("tzd4is.cyou") && r.Reason.Contains("final"));
+        Assert.Equal(("←", "OBSERVED", "EV-H · downloads.id=1"), (dl.Direction, dl.Classification, dl.Support));
+        var derived = Assert.Single(rows, r => r.Relation == "DERIVED_FROM");
+        Assert.Equal(("←", "CORRELATED"), (derived.Direction, derived.Classification));
+        Assert.StartsWith("derivat: DOWNLOAD-THEN-EXEC", derived.Support);
+
+        var domain = g.Find("Domain", "tzd4is.cyou")!;
+        var setup = g.Find("File", @"TOOL_302044\SETUP.EXE")!;
+        var path = GraphExplorer.PathBetween(g, domain.Id, setup.Id);
+        Assert.Equal(["DOWNLOADED", "DERIVED_FROM"], path.Select(p => p.Relation));
+        Assert.Equal(setup.Id, path[^1].OtherId);
+        Assert.Empty(GraphExplorer.PathBetween(g, domain.Id, "File:NU-EXISTA"));
+        Assert.Equal(("OBSERVED", "INFERRED", "UNPROVEN"), (GraphExplorer.Wording(Classification.Direct), GraphExplorer.Wording(Classification.Candidate), GraphExplorer.Wording(Classification.Unproven)));
+    }
+    [Fact]
     public void A_relationship_needs_evidence_or_an_explicit_derivation()
     {
         Assert.Throws<ArgumentException>(() => new Relationship("R", "a", "b", RelationType.Executed, Timestamp.Unknown(), "", "", "",

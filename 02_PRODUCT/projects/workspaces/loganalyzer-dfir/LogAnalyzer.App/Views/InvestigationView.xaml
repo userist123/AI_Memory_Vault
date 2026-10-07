@@ -1,6 +1,7 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.InvestigationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
@@ -59,7 +60,7 @@
                 <DataGrid Margin="8" ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="85"/>
-                        <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="90"/>
+                        <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification, Converter={x:Static local:ClassificationWordingConverter.Instance}}" Width="100"/>
                         <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
                         <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
                         <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
@@ -84,6 +85,41 @@
                             <DataGridTextColumn Header="Probă" Binding="{Binding EvidenceId}" Width="85"/>
                         </DataGrid.Columns>
                     </DataGrid>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Graf de probe" Style="{StaticResource InspectorTabItemStyle}">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <TextBlock Text="Caută entitate:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding GraphSearch, UpdateSourceTrigger=PropertyChanged, Delay=300}" Width="220" Margin="0,0,16,0"/>
+                        <TextBlock Text="Drum de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding PathFrom, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,6,0"/>
+                        <TextBlock Text="la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Text="{Binding PathTo, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,6,0"/>
+                        <Button Content="Arată drumul" Command="{Binding FindPathCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding GraphStatus}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="5*"/></Grid.ColumnDefinitions>
+                        <DataGrid Grid.Column="0" ItemsSource="{Binding GraphEntities}" SelectedItem="{Binding SelectedEntity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Tip" Binding="{Binding Type}" Width="90"/>
+                                <DataGridTextColumn Header="Entitate" Binding="{Binding Label}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <DataGrid Grid.Column="2" ItemsSource="{Binding GraphEdges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="" Binding="{Binding Direction}" Width="24"/>
+                                <DataGridTextColumn Header="Relație" Binding="{Binding Relation}" Width="110"/>
+                                <DataGridTextColumn Header="Cu" Binding="{Binding OtherLabel}" Width="2*"/>
+                                <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc}" Width="150"/>
+                                <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="100"/>
+                                <DataGridTextColumn Header="Încredere" Binding="{Binding Confidence}" Width="75"/>
+                                <DataGridTextColumn Header="Probă / derivare" Binding="{Binding Support}" Width="2*"/>
+                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
                 </DockPanel>
             </TabItem>
             <TabItem Header="Anti-forensics" Style="{StaticResource InspectorTabItemStyle}">

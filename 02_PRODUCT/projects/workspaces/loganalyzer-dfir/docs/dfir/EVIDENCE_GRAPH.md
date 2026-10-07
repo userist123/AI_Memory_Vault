@@ -37,6 +37,11 @@ DOWNLOADED, OPENED și DETECTED sunt extensii explicite față de lista minimă 
 
 ## Interogări
 
+În aplicație (fila „Graf de probe”, cod `GraphExplorer`): căutarea unei entități, relațiile ei cu direcția, ora, clasificarea și
+proba (EvidenceId + locator) sau derivarea, plus drumul cel mai scurt între două entități. Clasificarea folosește termenii din
+spec §26: OBSERVED (probă directă), CORRELATED, INFERRED (candidat), UNPROVEN. Aceiași termeni apar și în grila de constatări.
+
+
 - `Edges(id)` — relațiile unei entități.
 - `Neighbors(id)` — vecinii.
 - `Path(a, b)` — cel mai scurt drum, ignorând direcția.
@@ -68,4 +73,4 @@ inventar și `domain_graph_*.json`, înregistrat ca probă derivată (părinte =
 
 - Fluxurile SRUM nu au adresă de destinație, deci nu produc CONNECTED_TO.
 - LOGGED_ON / AUTHENTICATED din jurnalul Security și din cronologia utilizatorului de domeniu nu sunt încă trase în graf.
-- Graful nu are încă o vizualizare în aplicație. Există doar JSON-ul și interogările din cod.
+- Vizualizarea din aplicație este tabelară, nu un desen al grafului: fila „Graf de probe” a paginii „Investigație completă”.

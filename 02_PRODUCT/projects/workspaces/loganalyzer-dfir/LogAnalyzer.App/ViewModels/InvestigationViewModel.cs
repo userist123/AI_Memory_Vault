@@ -28,6 +28,45 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.AI.AiStatement> AiStatements { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.AI.RejectedStatement> AiRejected { get; } = new();
+        public ObservableCollection<LogAnalyzer.Dfir.Graph.Entity> GraphEntities { get; } = new();
+        public ObservableCollection<LogAnalyzer.Dfir.Graph.GraphEdgeRow> GraphEdges { get; } = new();
+
+        // Evidence Graph explorer: find entities, show an entity's edges with their evidence or derivation, the path between two.
+        [ObservableProperty] private string _graphSearch = "";
+        [ObservableProperty] private LogAnalyzer.Dfir.Graph.Entity? _selectedEntity;
+        [ObservableProperty] private string _pathFrom = "";
+        [ObservableProperty] private string _pathTo = "";
+        [ObservableProperty] private string _graphStatus = "Rulați investigația; apoi căutați o entitate (fișier, domeniu, IP, serviciu, constatare…).";
+
+        partial void OnGraphSearchChanged(string value) => FillGraphEntities();
+
+        partial void OnSelectedEntityChanged(LogAnalyzer.Dfir.Graph.Entity? value)
+        {
+            GraphEdges.Clear();
+            if (_result?.Graph is not { } g || value is null) return;
+            foreach (var r in LogAnalyzer.Dfir.Graph.GraphExplorer.EdgesOf(g, value.Id)) GraphEdges.Add(r);
+            GraphStatus = $"{value.Type} {value.Label}: {GraphEdges.Count} relații.";
+        }
+
+        private void FillGraphEntities()
+        {
+            GraphEntities.Clear();
+            if (_result?.Graph is not { } g) return;
+            foreach (var e in LogAnalyzer.Dfir.Graph.GraphExplorer.Search(g, GraphSearch)) GraphEntities.Add(e);
+        }
+
+        [RelayCommand]
+        private void FindPath()
+        {
+            GraphEdges.Clear();
+            if (_result?.Graph is not { } g) { GraphStatus = "Rulați întâi investigația."; return; }
+            var a = LogAnalyzer.Dfir.Graph.GraphExplorer.Search(g, PathFrom, 1).FirstOrDefault();
+            var b = LogAnalyzer.Dfir.Graph.GraphExplorer.Search(g, PathTo, 1).FirstOrDefault();
+            if (a is null || b is null) { GraphStatus = "Nu găsesc una dintre entități."; return; }
+            var path = LogAnalyzer.Dfir.Graph.GraphExplorer.PathBetween(g, a.Id, b.Id);
+            foreach (var r in path) GraphEdges.Add(r);
+            GraphStatus = path.Count == 0 ? $"{a.Label} și {b.Label} nu sunt legate în graf." : $"Drum {a.Label} → {b.Label}: {path.Count} relații (fiecare cu proba sau derivarea ei).";
+        }
 
         // Local model (Ollama on this machine, loopback only) and remote collection packages.
         [ObservableProperty] private string _aiEndpoint = "http://127.0.0.1:11434";
@@ -108,6 +147,8 @@ namespace LogAnalyzer.UI.ViewModels
                 GapsText = string.Join(Environment.NewLine, _result.Gaps.Select(g => $"{g.Artifact}: {g.Status.ToSpec()} — {g.Reason}"));
                 AntiForensics.Clear();
                 foreach (var a in _result.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id)) AntiForensics.Add(a);
+                FillGraphEntities();
+                GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
                 Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
                           $"{_result.Findings.Count(f => f.Severity == Severity.High)} ridicate · {_result.Findings.Count} constatări · {_result.Gaps.Count} goluri · caz {_result.Case.Info.CaseId}";
                 Log += "Gata. Dublu-click pe o constatare sau pe un eveniment pentru detalii." + Environment.NewLine;

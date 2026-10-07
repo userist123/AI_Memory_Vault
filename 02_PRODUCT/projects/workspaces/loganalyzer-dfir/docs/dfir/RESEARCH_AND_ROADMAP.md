@@ -134,7 +134,7 @@ Fazele 3–10 din master spec, rulate pe corpusul real al cazului NanAgent, unde
 |---|---|---|
 | P0 integritate, P1 model canonic și proveniență, P2 registru de parsere | făcut | `REALITY_AUDIT.md`, `EVIDENCE_MODEL.md`, `PARSER_CONTRACT.md` |
 | P3 acoperire de artefacte | făcut pentru artefactele din `FORENSIC_TEST_LAB.md`; USN, $MFT, ADS nu sunt colectate | `FORENSIC_TEST_LAB.md` |
-| P4 Evidence Graph | făcut; fără vizualizare în aplicație | `EVIDENCE_GRAPH.md` |
+| P4 Evidence Graph | făcut; explorator tabelar în aplicație | `EVIDENCE_GRAPH.md` |
 | P5 detecție (IOC, hash, YARA-lite, Sigma-lite, corelare) | făcut | `DETECTION.md` |
 | P6 motor de politici, P7 execuție | făcut pentru registru; audit, cont și servicii doar citire | `POLICY_ENGINE.md` |
 | P8 conformitate / OSCAL | făcut; schema NIST nevalidată; importul de cataloage OSCAL nu există | `COMPLIANCE_MODEL.md` |
@@ -149,4 +149,4 @@ Următorii pași, în ordinea valorii:
 1. $MFT (închide AF08, timestomp). USN este citit din exportul `fsutil` (2026-10-07) și închide AF06 și AF07;
 2. validarea exportului OSCAL cu schema oficială NIST;
 3. testele ca administrator: aplicare HKLM, audit vs `auditpol`;
-4. vizualizarea Evidence Graph în aplicație.
+4. desenul grafului: azi, în fila „Graf de probe”, există căutare, relații cu probă sau derivare și drum între entități, în formă tabelară.
