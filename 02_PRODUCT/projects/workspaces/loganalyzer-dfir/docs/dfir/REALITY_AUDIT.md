@@ -95,7 +95,7 @@ Fișierele de la rădăcina workspace-ului (`Views/`, `ViewModels/`, `Services/`
 | `Dfir.Core/Analysis/Correlation` (15 reguli + `INCIDENT-CHAIN`) | REAL | Reconstruiește automat lanțul NanAgent din 19.09.2026 pe corpus (`InvestigationTests`). |
 | `LiveStateAnalyzer` | REAL | Rulează pe fotografia live colectată. Proveniența e dată de `EvidenceRef`. |
 | `Core/Services/AptAttributionEngine` | PARTIAL | Etichetat „suprapunere de tehnici — NU este atribuire” din #208. Încă are consumator în UI. |
-| `Core/Services/{RemoteTriageService, DnsTunnelingClassifier, LivingOffTheCloudEngine, ProcessInjectionDetector, RansomwareDetectionEngine, SysmonCorrelationEngine}` | FACADE | Fără consumator în calea de producție. |
+| `Core/Services/{DnsTunnelingClassifier, LivingOffTheCloudEngine, ProcessInjectionDetector, RansomwareDetectionEngine, SysmonCorrelationEngine}` | FACADE | Fără consumator în calea de producție. |
 | `Core/Services/Network/LiveSecurityMonitoringEngine`, `StixMispExportService` | PARTIAL | Au consumator. Conțin încă texte sau valori demo (vezi scanarea „Demo”). |
 
 ## 7. Politici, conformitate, domeniu
@@ -143,7 +143,7 @@ rând trimite la testul sau documentul care îl dovedește.
 | Importuri GPO / Registry.pol / .inf / audit.csv / LGPO | — | REAL | 3 GPO-uri reale comparate cu `gpreport.xml` (`PolicyImportTests`) |
 | Conformitate + OSCAL assessment-results | FACADE | PARTIAL: modelul și exportul sunt reale; schema NIST nu a fost validată | `ComplianceTests`, `COMPLIANCE_MODEL.md` |
 | Domeniu în Evidence Graph | — | PARTIAL: numai inventar sintetic | `DomainAndMailTests`, `EVIDENCE_GRAPH.md` |
-| Colectare la distanță | FACADE (`RemoteTriageService`, fără consumator) | REAL prin pachet: hash pe țintă, verificare, import cu custodie; aplicația nu folosește rețeaua | `RemoteCollectionTests` (pachetul rulat pe această stație) |
+| Colectare la distanță | FACADE eliminat (`RemoteTriageService` nu avea consumator și interpola gazda nevalidată în script) | REAL prin pachet: hash pe țintă, verificare, import cu custodie; aplicația nu folosește rețeaua | `RemoteCollectionTests` (pachetul rulat pe această stație) |
 | Validare diferențială (alt instrument) | FACADE | REAL pentru EVTX (toate cele 170 de fișiere față de `wevtutil`), registru, task-uri, servicii, LNK, USB, browser | `ForensicLab` (`LADFIR_LAB=1`): 174 PASS, 1 PARTIAL explicat, 0 FAIL |
 | Laborator anti-forensics | — | REAL pentru 13 din 16 tehnici; USN, $MFT și ADS rămân UNDETERMINED (necolectate) | `AntiForensicsTests`, `ANTI_FORENSICS_TESTING.md` |
 | Memory Vault | — | PARTIAL: propuneri validate de `memory_access.propose()` din vault; trimiterea se face pe poarta existentă; Control, Policy, Entity, Relationship nu sunt exportate | `VaultExportTests`, `MEMORY_VAULT_INTEGRATION.md` |

@@ -97,7 +97,7 @@ Fiecare verificare are un status (CONFORM / NECONFORM / NEDETERMINAT), probele p
 - **E-mail:**
   - Exchange Online: message trace, sign-in-uri, reguli de inbox suspecte (forward extern), prin conectorul M365 existent, cu consimțământul administratorului de tenant;
   - Exchange on-prem: `Get-MessageTrackingLog`.
-- **Stații din domeniu:** colectare la distanță prin WinRM (`RemoteTriageService` există deja ca generator de script). Rezultatele intră în caz ca probe.
+- **Stații din domeniu:** colectare la distanță prin pachetul `Dfir.Windows/Acquisition/RemoteCollection` (cerere autorizată, hash pe țintă, import cu custodie). Rezultatele intră în caz ca probe.
 
 ### Etapa E — Investigația completă (cerința 7)
 
