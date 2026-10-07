@@ -1,9 +1,15 @@
 name: H1 Associative Experiment
 
+# Research experiment: it runs only for changes to this research track (or on demand), not on
+# every pull request to main. Everything else is covered by the regular suites.
 on:
   pull_request:
     branches:
       - main
+    paths:
+      - "08_RESEARCH/BOOK_TO_MEMORY/**"
+      - "08_RESEARCH/RETRIEVAL/**"
+      - ".github/workflows/h1-associative-experiment.yml"
   workflow_dispatch:
 
 permissions:
