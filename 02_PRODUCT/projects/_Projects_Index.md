@@ -15,6 +15,7 @@ index_scope: vault-navigation
 - [[LogAnalyzer_MVP]]
 - [[Elite_Quant_Bot]]
 - [[AI_Memory_System]]
+- [[Casa3D]]
 
 ---
 
