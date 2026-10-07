@@ -32,9 +32,7 @@ if str(impl_path) not in sys.path:
 from graph.synapse_store import SynapseStore
 from retrieval.vault_index import VaultIndex
 
-# 476, down from 485: removing the sentences that a cleanup script had injected into 9 note bodies
-# also removed the 9 wikilink edges they created (PR #209 B11). Those edges were not supported by the notes.
-MIN_EDGES_BASELINE: int = 476
+MIN_EDGES_BASELINE: int = 483
 MAX_DUPLICATE_GROUPS_BASELINE: int = 5
 
 
