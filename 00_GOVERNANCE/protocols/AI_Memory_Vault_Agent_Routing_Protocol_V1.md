@@ -344,7 +344,7 @@ It never accepts arbitrary shell commands from a WorkPacket.
 
 ### Performance
 
-The Antigravity adapter uses a persistent headless `stream-json` session where supported. This avoids process startup and authentication overhead for every task. Requests are serialized per session and can later be scaled with a bounded session pool.
+The Antigravity adapter uses a persistent headless `stream-json` session where supported. This avoids process startup and authentication overhead for every task. Requests are serialized per session and can later be scaled with a bounded session pool. A session is reused only within one task: a prompt for a different task, or without a task id, starts a fresh process, so a task never inherits another task's context (`AntigravitySession.reset()` does this explicitly). Capability tokens must live at least `security.minimum_ttl_seconds` and at most `security.maximum_ttl_seconds`.
 
 The bridge transport should use Windows named pipes for same-host IPC with an OS ACL restricting the pipe to the intended principal. For distributed operation, the remote hop remains authenticated and encrypted separately.
 

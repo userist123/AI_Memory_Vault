@@ -56,7 +56,7 @@ class CapabilityToken:
         return base64.urlsafe_b64encode(canonical_json(envelope)).decode("ascii")
 
     @staticmethod
-    def verify(token: str, public_key: Ed25519PublicKey, now: float | None = None, max_ttl: float = 120.0, clock_skew: float = 30.0) -> dict:
+    def verify(token: str, public_key: Ed25519PublicKey, now: float | None = None, max_ttl: float = 120.0, clock_skew: float = 30.0, min_ttl: float = 0.0) -> dict:
         try:
             raw = base64.urlsafe_b64decode(token.encode("ascii"))
             envelope = json.loads(raw.decode("utf-8"))
@@ -79,6 +79,8 @@ class CapabilityToken:
             raise PolicyError("capability token expired")
         if expires_at - iat > float(max_ttl):
             raise PolicyError("capability token exceeds maximum TTL")
+        if expires_at - iat < float(min_ttl):
+            raise PolicyError("capability token below minimum TTL")
         return payload
 
 

@@ -47,7 +47,7 @@ class BridgeConfig:
         if replay_guard.ttl_seconds < self.max_ttl_seconds + clock_skew:
             raise BridgeConfigError("replay guard TTL must cover max_ttl_seconds plus clock skew")
         return SecureBridge(self.bridge_id, recipient, verifier, self.policy(), replay_guard, executors, signer,
-                            max_token_ttl=self.max_ttl_seconds, clock_skew=clock_skew,
+                            max_token_ttl=self.max_ttl_seconds, min_token_ttl=self.min_ttl_seconds, clock_skew=clock_skew,
                             max_packet_bytes=self.max_packet_bytes, max_result_bytes=self.max_result_bytes)
 
 
