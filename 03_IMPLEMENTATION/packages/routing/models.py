@@ -88,6 +88,7 @@ class RuntimeDescriptor:
     adapter_ref:str=""
     model:str|None=None
     enabled:bool=True
+    executable:str=""
 
 
 @dataclass(frozen=True)

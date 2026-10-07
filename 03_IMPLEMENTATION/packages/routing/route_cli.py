@@ -11,6 +11,10 @@ from .registry import RouteRegistry
 ROOT=Path(__file__).resolve().parents[3]
 REGISTRY=ROOT/"04_CONFIG"/"agent_router.json"
 
+def _runtime_available(rt) -> bool:
+    """A command runtime is available when the registry's `executable` is on PATH (same value the dispatcher runs)."""
+    return rt.transport=="command" and bool(rt.executable) and shutil.which(rt.executable) is not None
+
 def build_parser():
     p=argparse.ArgumentParser(prog="python -m routing.route_cli")
     sub=p.add_subparsers(dest="cmd",required=True)
@@ -33,8 +37,7 @@ def main():
     reg=RouteRegistry.from_file(REGISTRY)
     if a.cmd=="probe":
         ids=a.runtime or list(reg.runtimes)
-        binary_map={"claude_code":"claude","codex":"codex","antigravity":"agy","local_llm":"ollama"}
-        print(json.dumps({r:(bool(shutil.which(binary_map.get(reg.runtimes[r].adapter_ref,reg.runtimes[r].adapter_ref))) if reg.runtimes[r].transport=="command" else False) for r in ids},indent=2))
+        print(json.dumps({r:_runtime_available(reg.runtimes[r]) for r in ids},indent=2))
         return
     req=TaskRequest(goal=a.goal,capabilities=tuple(a.capability),risk=RiskLevel[a.risk.upper()],
         min_quality=QualityTier[a.min_quality.upper()],privacy=PrivacyMode.LOCAL_ONLY if a.local_only else PrivacyMode.STANDARD,
@@ -43,8 +46,7 @@ def main():
         tool_use_required=a.tool_use,require_independent_verifier=a.verify)
     available={}
     for rid,rt in reg.runtimes.items():
-        if rt.transport=="command": available[rid]=bool(shutil.which({"claude_code":"claude","codex":"codex","antigravity":"agy","local_llm":"ollama"}.get(rt.adapter_ref,rt.adapter_ref)))
-        else: available[rid]=False
+        available[rid]=_runtime_available(rt)
     decision=AgentRouter(reg).route(req,available)
     print(json.dumps(decision.to_dict(),ensure_ascii=False,indent=2))
     if a.cmd=="dispatch" and a.execute:

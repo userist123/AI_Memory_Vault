@@ -5,24 +5,32 @@ on:
     paths:
       - '03_IMPLEMENTATION/packages/routing/**'
       - '04_CONFIG/agent_router.json'
+      - '04_CONFIG/agent_bridge.json'
       - '20_TESTS/test_agent_router.py'
       - '20_TESTS/test_agent_dispatcher.py'
       - '20_TESTS/test_secure_agent_bridge.py'
       - '20_TESTS/test_secure_bridge_handler.py'
       - '20_TESTS/test_claude_contract.py'
+      - '20_TESTS/test_agent_dispatch_real_config.py'
+      - '20_TESTS/test_agent_bridge_hardening.py'
       - '03_IMPLEMENTATION/packages/agent_bridge/**'
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+      - '00_GOVERNANCE/protocols/AI_Memory_Vault_Agent_Routing_Protocol_V1.md'
       - '.github/workflows/agent-routing-tests.yml'
   pull_request:
     paths:
       - '03_IMPLEMENTATION/packages/routing/**'
       - '04_CONFIG/agent_router.json'
+      - '04_CONFIG/agent_bridge.json'
       - '20_TESTS/test_agent_router.py'
       - '20_TESTS/test_agent_dispatcher.py'
       - '20_TESTS/test_secure_agent_bridge.py'
       - '20_TESTS/test_secure_bridge_handler.py'
       - '20_TESTS/test_claude_contract.py'
+      - '20_TESTS/test_agent_dispatch_real_config.py'
+      - '20_TESTS/test_agent_bridge_hardening.py'
       - '03_IMPLEMENTATION/packages/agent_bridge/**'
-      - '04_CONFIG/agent_bridge.json'
       - 'CLAUDE.md'
       - 'AGENTS.md'
       - '00_GOVERNANCE/protocols/AI_Memory_Vault_Agent_Routing_Protocol_V1.md'
@@ -50,7 +58,7 @@ jobs:
       - name: Run routing and bridge tests
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages
-        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py 20_TESTS/test_secure_agent_bridge.py 20_TESTS/test_secure_bridge_handler.py 20_TESTS/test_claude_contract.py
+        run: pytest -q 20_TESTS/test_agent_router.py 20_TESTS/test_agent_dispatcher.py 20_TESTS/test_secure_agent_bridge.py 20_TESTS/test_secure_bridge_handler.py 20_TESTS/test_claude_contract.py 20_TESTS/test_agent_dispatch_real_config.py 20_TESTS/test_agent_bridge_hardening.py
       - name: Smoke test route CLI
         env:
           PYTHONPATH: .:03_IMPLEMENTATION/packages

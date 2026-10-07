@@ -164,7 +164,8 @@
       "independence_group": "claude",
       "enabled": true,
       "transport": "command",
-      "adapter_ref": "claude_code"
+      "adapter_ref": "claude_code",
+      "executable": "claude"
     },
     {
       "id": "codex",
@@ -190,7 +191,8 @@
       "independence_group": "codex",
       "enabled": true,
       "transport": "command",
-      "adapter_ref": "codex"
+      "adapter_ref": "codex",
+      "executable": "codex"
     },
     {
       "id": "antigravity",
@@ -215,7 +217,8 @@
       "independence_group": "antigravity",
       "enabled": true,
       "transport": "command",
-      "adapter_ref": "antigravity"
+      "adapter_ref": "antigravity",
+      "executable": "agy"
     },
     {
       "id": "perplexity",
@@ -265,6 +268,7 @@
       "enabled": true,
       "transport": "command",
       "adapter_ref": "ollama",
+      "executable": "ollama",
       "model": "llama3.2"
     }
   ],

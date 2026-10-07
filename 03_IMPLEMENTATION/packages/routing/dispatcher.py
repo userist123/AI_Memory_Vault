@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json, os, shutil, subprocess, tempfile, uuid, urllib.request
+import inspect, json, os, shutil, subprocess, tempfile, uuid, urllib.request
 from pathlib import Path
 from typing import Protocol
 
@@ -44,6 +44,11 @@ def _receipt_packet(packet: WorkPacket) -> dict:
     return fields
 
 
+def dispatch_root(artifact_root: str|Path|None=None) -> Path:
+    """The single place that turns an optional caller-supplied base into the dispatch receipt root."""
+    return Path(artifact_root)/"ai-memory-vault-dispatch" if artifact_root else default_artifact_root()
+
+
 def _run_dir(root: Path, task_id: str) -> Path:
     """root/task_id, refusing anything that is not a plain identifier inside root."""
     if not SAFE_ID_RE.fullmatch(task_id or ""):
@@ -56,23 +61,28 @@ def _run_dir(root: Path, task_id: str) -> Path:
     return run
 
 class RuntimeAdapter(Protocol):
-    def dispatch(self, packet: WorkPacket) -> DispatchResult: ...
+    def dispatch(self, packet: WorkPacket, run_dir: Path|None=None) -> DispatchResult: ...
 
 class CommandAdapter:
+    # Fallback for an adapter built by hand without registry data. The registry
+    # (`04_CONFIG/agent_router.json`, field `executable`) is the source of truth and
+    # a test pins this table to it so the two cannot drift.
     BINARIES = {"claude_code": "claude", "codex": "codex", "antigravity": "agy", "local_llm": "ollama"}
 
-    def __init__(self, runtime_id: str, adapter_ref: str|None=None, model: str|None=None, artifact_root: str|Path|None=None, working_directory: str|Path|None=None):
+    def __init__(self, runtime_id: str, adapter_ref: str|None=None, model: str|None=None, artifact_root: str|Path|None=None, working_directory: str|Path|None=None, executable: str|None=None, dispatch_root_path: str|Path|None=None):
         self.runtime_id=runtime_id
+        # `adapter_ref` is a logical adapter id, never a program name: the program is `executable`.
         self.adapter_ref=adapter_ref
+        self.executable=executable
         self.model=model
-        self.artifact_root=Path(artifact_root)/"ai-memory-vault-dispatch" if artifact_root else default_artifact_root()
+        self.artifact_root=Path(dispatch_root_path) if dispatch_root_path else dispatch_root(artifact_root)
         self.working_directory=Path(working_directory or Path.cwd()).resolve()
 
     @property
     def binary(self) -> str|None:
-        if self.runtime_id not in self.BINARIES:
-            return None
-        return self.adapter_ref or self.BINARIES[self.runtime_id]
+        if self.executable:
+            return self.executable
+        return self.BINARIES.get(self.runtime_id)
 
     @staticmethod
     def _brief(p:WorkPacket)->str:
@@ -86,14 +96,17 @@ class CommandAdapter:
             "","Return evidence, changes, failures and unknowns. Do not claim work was done unless it was executed."
         ])
 
-    def dispatch(self,p:WorkPacket)->DispatchResult:
+    def dispatch(self,p:WorkPacket,run_dir:Path|None=None)->DispatchResult:
         if not self.working_directory.exists():
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"working directory unavailable: {self.working_directory}")
         if self.binary is None:
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"unknown command adapter: {self.runtime_id}")
         if shutil.which(self.binary) is None:
             return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,None,"",error=f"{self.binary} unavailable")
-        run=_run_dir(self.artifact_root,p.task_id)
+        # One output directory per task: when the dispatcher passes its run directory, route.json and
+        # result.json land together; a standalone adapter derives its own from its root.
+        run=Path(run_dir) if run_dir is not None else _run_dir(self.artifact_root,p.task_id)
+        run.mkdir(parents=True,exist_ok=True)
         # The brief holds the goal: it goes to the runtime on stdin and is never persisted.
         # Receipts keep only its digest (protocol: sensitive goal text is not copied into
         # durable receipts).
@@ -132,7 +145,10 @@ class CommandAdapter:
                 result_event=next(event for event in reversed(events) if event.get("event")=="result")
                 final=str(result_event.get("result",{}).get("response","")).strip()
             except (ValueError, StopIteration, TypeError, AttributeError):
-                return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,proc.returncode,"",
+                result.write_text(json.dumps({"schema":"agent-dispatch.result.v1","task_id":p.task_id,"route_id":p.route_id,
+                    "status":DispatchStatus.FAILED.value,"exit_code":proc.returncode,"final_message":"","brief_sha256":brief,
+                    "error":"invalid antigravity stream-json response"},ensure_ascii=False,indent=2),encoding="utf-8")
+                return DispatchResult(p.task_id,p.route_id,DispatchStatus.FAILED,p.target_runtime,p.target_agent,proc.returncode,"",str(result),
                                        error="invalid antigravity stream-json response")
         else:
             final=raw_output
@@ -155,7 +171,7 @@ class A2AAdapter:
                  "canceled":DispatchStatus.CANCELED,"rejected":DispatchStatus.FAILED}
         return aliases.get(normalized, DispatchStatus.FAILED)
 
-    def dispatch(self,p:WorkPacket)->DispatchResult:
+    def dispatch(self,p:WorkPacket,run_dir:Path|None=None)->DispatchResult:
         legacy=self.protocol_version.startswith("0.")
         method="message/send" if legacy else "SendMessage"
         role="user" if legacy else "ROLE_USER"
@@ -205,10 +221,16 @@ class A2AAdapter:
                                metadata={"transport":"a2a","protocol_version":self.protocol_version,
                                          "remote_task_id":task.get("id"),"response":data})
 
+def _accepts_run_dir(adapter: RuntimeAdapter) -> bool:
+    """Caller-supplied adapters may predate `run_dir`; they keep working with `dispatch(packet)`."""
+    try: params=inspect.signature(adapter.dispatch).parameters
+    except (TypeError, ValueError): return False
+    return "run_dir" in params or any(q.kind is inspect.Parameter.VAR_KEYWORD for q in params.values())
+
 class AgentDispatcher:
     def __init__(self,registry:RouteRegistry,adapters:dict[str,RuntimeAdapter]|None=None,artifact_root:str|Path|None=None):
         self.registry=registry; self.adapters=adapters or {}
-        self.artifact_root=Path(artifact_root)/"ai-memory-vault-dispatch" if artifact_root else default_artifact_root()
+        self.artifact_root=dispatch_root(artifact_root)
     def make_packet(self,decision:RouteDecision,goal:str,source_agent:str,acceptance_criteria:tuple[str,...]=(),constraints:tuple[str,...]=(),memory_refs:tuple[str,...]=(),timeout_seconds:int=3600)->WorkPacket:
         if decision.status==RouteStatus.BLOCKED or not decision.primary: raise DispatchError("route is not dispatchable")
         agent=self.registry.agents[decision.primary.agent_id]
@@ -236,10 +258,10 @@ class AgentDispatcher:
             "packet":_receipt_packet(packet)
         },ensure_ascii=False,indent=2,default=str),encoding="utf-8")
         if adapter is None:
-            if rt.transport=="command": adapter=CommandAdapter(packet.target_runtime, rt.adapter_ref, rt.model)
+            if rt.transport=="command": adapter=CommandAdapter(packet.target_runtime, rt.adapter_ref, rt.model, executable=rt.executable or None, dispatch_root_path=self.artifact_root)
             elif rt.transport=="a2a": adapter=A2AAdapter(rt.adapter_ref,packet.timeout_seconds)
             else: return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.BLOCKED,packet.target_runtime,packet.target_agent,None,"",error="no adapter configured")
-        result=adapter.dispatch(packet)
+        result=adapter.dispatch(packet,run_dir=run) if _accepts_run_dir(adapter) else adapter.dispatch(packet)
         if decision.verifier is not None and result.status == DispatchStatus.COMPLETED:
             return DispatchResult(packet.task_id,packet.route_id,DispatchStatus.PENDING_VERIFICATION,
                                    packet.target_runtime,packet.target_agent,result.exit_code,result.final_message,
