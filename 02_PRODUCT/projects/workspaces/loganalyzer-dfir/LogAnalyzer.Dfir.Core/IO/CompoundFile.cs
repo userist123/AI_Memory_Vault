@@ -32,11 +32,18 @@ public sealed class CompoundFile
         uint fatSectors = U(0x2C), firstDir = U(0x30), firstMiniFat = U(0x3C), miniFatSectors = U(0x40), firstDifat = U(0x44), difatSectors = U(0x48);
         _miniCutoff = U(0x38);
 
+        // Counts in the header are claims, not facts: no file has more FAT / DIFAT sectors than sectors, and a DIFAT chain that
+        // returns to a sector it has been through is a loop. Without these checks a header could make this loop run for billions of turns.
+        long sectorsInFile = data.Length / _sectorSize;
+        if (fatSectors > sectorsInFile) throw new InvalidDataException($"Antetul declară {fatSectors} sectoare FAT, dar fișierul are doar {sectorsInFile} sectoare.");
+        if (difatSectors > sectorsInFile) throw new InvalidDataException($"Antetul declară {difatSectors} sectoare DIFAT, dar fișierul are doar {sectorsInFile} sectoare.");
         var difat = new List<uint>();
         for (int i = 0; i < 109 && difat.Count < fatSectors; i++) difat.Add(U(0x4C + i * 4));
         uint next = firstDifat;
+        var seenDifat = new HashSet<uint>();
         for (uint n = 0; n < difatSectors && next is not (EndOfChain or FreeSect); n++)
         {
+            if (!seenDifat.Add(next)) throw new InvalidDataException($"Lanț DIFAT circular la sectorul {next}.");
             var s = Sector(next);
             for (int i = 0; i < _sectorSize / 4 - 1 && difat.Count < fatSectors; i++) difat.Add(BinaryPrimitives.ReadUInt32LittleEndian(s[(i * 4)..]));
             next = BinaryPrimitives.ReadUInt32LittleEndian(s[(_sectorSize - 4)..]);

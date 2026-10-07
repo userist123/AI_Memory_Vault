@@ -12,6 +12,11 @@ namespace LogAnalyzer.Dfir.IO;
 public sealed class RawRegistry
 {
     private const int HbinBase = 0x1000, BigDataSegment = 16344;
+    /// <summary>
+    /// Deepest nesting of subkey index lists accepted (ri → ri → … → lf/lh/li). Windows writes one ri level over leaf lists;
+    /// a few more are tolerated. Anything deeper, or a list reached twice, is a corrupt (or hostile) hive: an error, never recursion.
+    /// </summary>
+    private const int MaxListDepth = 4;
     private readonly Stream _s;
     private readonly int _rootCell;
 
@@ -29,18 +34,35 @@ public sealed class RawRegistry
     public byte[]? ReadValue(string keyPath, string valueName) =>
         OpenKey(keyPath)?.Values.FirstOrDefault(v => v.Name.Equals(valueName, StringComparison.OrdinalIgnoreCase))?.Data;
 
+    /// <summary>
+    /// Runs a read of the hive and turns the exceptions that corrupt structures provoke (offsets, lengths and counts that point
+    /// outside their cell, bad FILETIMEs) into one <see cref="InvalidDataException"/>: a damaged hive is a parse error, not a crash.
+    /// </summary>
+    private static T Guard<T>(Func<T> read)
+    {
+        try { return read(); }
+        catch (Exception ex) when (ex is ArgumentException or IndexOutOfRangeException or OverflowException or EndOfStreamException or FormatException)
+        {
+            throw new InvalidDataException($"Hive corupt: {ex.GetType().Name}: {ex.Message}", ex);
+        }
+    }
+
     /// <summary>A key with its subkey names, values (raw bytes and type, names decoded as stored) and LastWriteTime; null if absent.</summary>
-    public RawKey? OpenKey(string keyPath) => Locate(keyPath) is int nk ? ReadKey(nk, keyPath) : null;
+    public RawKey? OpenKey(string keyPath) => Guard(() => Locate(keyPath) is int nk ? ReadKey(nk, keyPath) : null);
 
     /// <summary>Every direct subkey of <paramref name="keyPath"/>, read by offset (linear, for keys with thousands of children).</summary>
     public IEnumerable<RawKey> SubKeys(string keyPath)
     {
-        if (Locate(keyPath) is not int nk) yield break;
-        var key = Cell(nk);
-        Expect(key, "nk");
-        if (BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x14)) == 0) yield break;
-        foreach (var off in ListOffsets(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x1C))).ToList())
-            yield return ReadKey(off, $@"{keyPath}\{KeyName(off)}");
+        var offsets = Guard(() =>
+        {
+            if (Locate(keyPath) is not int nk) return new List<int>();
+            var key = Cell(nk);
+            Expect(key, "nk");
+            if (BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x14)) == 0) return new List<int>();
+            return ListOffsets(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x1C))).ToList();
+        });
+        foreach (var off in offsets)
+            yield return Guard(() => ReadKey(off, $@"{keyPath}\{KeyName(off)}"));
     }
 
     private int? Locate(string keyPath)
@@ -65,6 +87,7 @@ public sealed class RawRegistry
         if (count > 0)
         {
             var list = Cell(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x28)));
+            if ((long)count * 4 > list.Length) throw new InvalidDataException($"Lista de valori ({count} intrări) depășește celula ({list.Length} octeți).");
             for (int i = 0; i < count; i++)
             {
                 var vk = Cell(BinaryPrimitives.ReadInt32LittleEndian(list.AsSpan(i * 4)));
@@ -87,17 +110,28 @@ public sealed class RawRegistry
         return new string(chars);
     }
 
-    private IEnumerable<int> ListOffsets(int listOffset)
+    private IEnumerable<int> ListOffsets(int listOffset) => WalkList(listOffset, [], 0);
+
+    /// <summary>
+    /// Offsets of the key cells under a subkey index list, in file order. An <c>ri</c> list holds further lists; a list reached
+    /// twice in one walk (a cycle, including a list that points to itself) or nested deeper than <see cref="MaxListDepth"/> is
+    /// <see cref="InvalidDataException"/>, so a crafted hive cannot recurse without end or make the walk loop.
+    /// </summary>
+    private IEnumerable<int> WalkList(int listOffset, HashSet<int> visited, int depth)
     {
+        if (depth > MaxListDepth) throw new InvalidDataException($"Liste de subchei imbricate prea adânc (peste {MaxListDepth} niveluri) la 0x{listOffset:X}.");
+        if (!visited.Add(listOffset)) throw new InvalidDataException($"Listă de subchei circulară: celula 0x{listOffset:X} este întâlnită a doua oară.");
         var l = Cell(listOffset);
+        if (l.Length < 4) throw new InvalidDataException($"Listă de subchei prea scurtă la 0x{listOffset:X}.");
         var sig = Encoding.ASCII.GetString(l, 0, 2);
+        if (sig is not ("lf" or "lh" or "li" or "ri")) throw new InvalidDataException($"Listă de subchei necunoscută: {sig}");
         int n = BinaryPrimitives.ReadUInt16LittleEndian(l.AsSpan(2));
         int stride = sig is "lf" or "lh" ? 8 : 4;
-        if (sig is not ("lf" or "lh" or "li" or "ri")) throw new InvalidDataException($"Listă de subchei necunoscută: {sig}");
+        if (4 + (long)n * stride > l.Length) throw new InvalidDataException($"Lista „{sig}” declară {n} intrări, dar celula 0x{listOffset:X} are doar {l.Length} octeți.");
         for (int i = 0; i < n; i++)
         {
             int off = BinaryPrimitives.ReadInt32LittleEndian(l.AsSpan(4 + i * stride));
-            if (sig == "ri") foreach (var o in ListOffsets(off)) yield return o;
+            if (sig == "ri") foreach (var o in WalkList(off, visited, depth + 1)) yield return o;
             else yield return off;
         }
     }
@@ -112,6 +146,7 @@ public sealed class RawRegistry
         {
             int segments = BinaryPrimitives.ReadUInt16LittleEndian(cell.AsSpan(2));
             var seglist = Cell(BinaryPrimitives.ReadInt32LittleEndian(cell.AsSpan(4)));
+            if ((long)segments * 4 > seglist.Length) throw new InvalidDataException($"Lista de segmente big-data ({segments}) depășește celula ({seglist.Length} octeți).");
             var result = new byte[size];
             int done = 0;
             for (int i = 0; i < segments && done < size; i++)
@@ -138,21 +173,8 @@ public sealed class RawRegistry
 
     private int? FindInList(int listOffset, string name)
     {
-        var l = Cell(listOffset);
-        var sig = Encoding.ASCII.GetString(l, 0, 2);
-        int n = BinaryPrimitives.ReadUInt16LittleEndian(l.AsSpan(2));
-        int stride = sig is "lf" or "lh" ? 8 : 4;
-        for (int i = 0; i < n; i++)
-        {
-            int off = BinaryPrimitives.ReadInt32LittleEndian(l.AsSpan(4 + i * stride));
-            if (sig == "ri")
-            {
-                if (FindInList(off, name) is int hit) return hit;
-                continue;
-            }
-            if (sig is not ("lf" or "lh" or "li")) throw new InvalidDataException($"Listă de subchei necunoscută: {sig}");
+        foreach (var off in ListOffsets(listOffset))
             if (KeyName(off).Equals(name, StringComparison.OrdinalIgnoreCase)) return off;
-        }
         return null;
     }
 
@@ -172,7 +194,7 @@ public sealed class RawRegistry
         _s.Position = HbinBase + (long)offset;
         Span<byte> h = stackalloc byte[4];
         _s.ReadExactly(h);
-        int size = Math.Abs(BinaryPrimitives.ReadInt32LittleEndian(h)) - 4;
+        long size = Math.Abs((long)BinaryPrimitives.ReadInt32LittleEndian(h)) - 4;
         if (size < 0 || _s.Position + size > _s.Length) throw new InvalidDataException($"Celulă coruptă la 0x{offset:X}");
         var b = new byte[size];
         _s.ReadExactly(b);

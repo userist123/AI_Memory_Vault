@@ -70,7 +70,7 @@ public sealed class JumpListParserTests(ITestOutputHelper output) : IDisposable
         return file;
     }
 
-    private static byte[] DestList(params (int EntryNo, string Path, DateTime Used, int Count, bool Pinned)[] entries)
+    internal static byte[] DestList(params (int EntryNo, string Path, DateTime Used, int Count, bool Pinned)[] entries)
     {
         var ms = new MemoryStream();
         var header = new byte[32];

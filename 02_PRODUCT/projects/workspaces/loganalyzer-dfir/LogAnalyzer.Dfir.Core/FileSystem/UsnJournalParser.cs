@@ -54,9 +54,18 @@ public sealed class UsnJournalParser(TimeZoneInfo? zone = null) : EvidenceParser
         throw new InvalidDataException("Exportul nu conține antetul CSV „Usn,File name,…”.");
     }
 
-    private static long ParseNumber(string v) =>
-        v.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? long.Parse(v[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture)
-                                                               : long.Parse(v, CultureInfo.InvariantCulture);
+    private static long ParseNumber(string v)
+    {
+        try
+        {
+            return v.StartsWith("0x", StringComparison.OrdinalIgnoreCase) ? long.Parse(v[2..], NumberStyles.HexNumber, CultureInfo.InvariantCulture)
+                                                                           : long.Parse(v, CultureInfo.InvariantCulture);
+        }
+        catch (Exception ex) when (ex is FormatException or OverflowException)
+        {
+            throw new InvalidDataException($"Antetul exportului USN conține „{v}”, care nu este un număr valid.", ex);
+        }
+    }
 
     /// <summary>The journal ID read as a FILETIME: when the journal was created. Null when it is not a plausible time.</summary>
     public static DateTimeOffset? JournalCreatedUtc(string journalId)
@@ -67,7 +76,7 @@ public sealed class UsnJournalParser(TimeZoneInfo? zone = null) : EvidenceParser
             var t = DateTime.FromFileTimeUtc(ft);
             return t.Year is >= 2000 and <= 2100 ? new DateTimeOffset(t) : null;
         }
-        catch (Exception ex) when (ex is FormatException or ArgumentOutOfRangeException or OverflowException) { return null; }
+        catch (Exception ex) when (ex is InvalidDataException or ArgumentOutOfRangeException) { return null; }
     }
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)

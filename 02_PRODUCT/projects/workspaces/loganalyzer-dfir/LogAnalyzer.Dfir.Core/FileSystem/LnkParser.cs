@@ -63,7 +63,7 @@ public sealed class LnkParser : EvidenceParserBase
         result.Records++;
     }
 
-    private static string Iso(long ft) => ft > 0 ? DateTime.FromFileTimeUtc(ft).ToString("o", CultureInfo.InvariantCulture) : "";
+    private static string Iso(long ft) => ft is > 0 and <= Timestamp.MaxFileTime ? DateTime.FromFileTimeUtc(ft).ToString("o", CultureInfo.InvariantCulture) : "";
 
     public sealed record Link(uint Flags, uint Attributes, long Created, long Accessed, long Modified, uint Size, string Target, string TargetSource,
                               string Name, string RelativePath, string WorkingDir, string Arguments, string Icon, string DriveType, string Serial,

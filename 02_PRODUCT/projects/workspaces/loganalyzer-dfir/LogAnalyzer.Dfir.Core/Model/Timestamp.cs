@@ -14,8 +14,12 @@ public sealed record Timestamp(DateTimeOffset? Utc, string Raw, string Conversio
         return new(new DateTimeOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc)), raw, method);
     }
 
+    /// <summary>The last FILETIME that is a valid calendar time (9999-12-31T23:59:59.9999999Z). Larger values are corrupt, not a time.</summary>
+    public const long MaxFileTime = 2650467743999999999;
+
+    /// <summary>A FILETIME as a time. Zero, negative and beyond-calendar values (damaged or hostile input) are "unknown", with the raw number kept.</summary>
     public static Timestamp FromFileTime(long fileTime, string method)
-        => fileTime <= 0 ? Unknown(fileTime.ToString(System.Globalization.CultureInfo.InvariantCulture))
+        => fileTime <= 0 || fileTime > MaxFileTime ? Unknown(fileTime.ToString(System.Globalization.CultureInfo.InvariantCulture))
                          : FromUtc(DateTime.FromFileTimeUtc(fileTime), fileTime.ToString(System.Globalization.CultureInfo.InvariantCulture), method);
 
     public bool IsKnown => Utc is not null;
