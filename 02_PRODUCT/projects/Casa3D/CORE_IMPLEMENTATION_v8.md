@@ -1,3 +1,24 @@
+---
+id: "d4785be1-7a70-4e45-b7ba-214e460501d4"
+type: resource
+lifecycle: REVIEW
+category: digital_twin
+tags: [casa3d, implementation-ledger, project-ledger]
+created: "2026-10-07"
+updated: "2026-10-07"
+provenance:
+  source_type: user
+  source_ref: "Casa3D v8 source artifacts supplied by the owner (not stored in this repository)"
+  source_date: "2026-10-07"
+  redaction: not_applicable
+  provenance_status: incomplete
+confidence: medium
+verification: unverified
+relations:
+  - type: related_to
+    target_id: "4e17d26a-74a6-408a-b0f4-069dfd20ac95"
+---
+
 # Casa3D implementation ledger — PR #203
 
 This PR is the continuity/source-of-truth record for the Casa3D implementation work performed after the original memory-only PR was opened.

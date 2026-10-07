@@ -1,23 +1,27 @@
 ---
-id: "casa3d-project-20261001"
+id: "4e17d26a-74a6-408a-b0f4-069dfd20ac95"
 type: project
 lifecycle: REVIEW
 category: digital_twin
 tags: [project, casa3d, digital_twin, interior_design, geometry, boq, budget, ai, monetization, romania]
-created: 2026-10-01
-updated: 2026-10-07
-review_note: "AI-written continuity record; ACTIVE/verified requires owner attestation (attest()), not self-declaration."
+created: "2026-10-01"
+updated: "2026-10-07"
 provenance:
-  source_type: user_provided_project_artifacts
+  source_type: user
   source_ref: "Casa3D Faza 0-3 ZIP artifacts + supplied Claude conversation"
-  confidence: high
-  verification: unverified
+  source_date: "2026-10-01"
+  redaction: not_applicable
+  provenance_status: incomplete
+confidence: high
+verification: unverified
 relations:
   - type: depends_on
-    target: "[[AI_Memory_System]]"
+    target_id: "d0f3ac43-9b23-4152-999b-8dee06b43c71"
 ---
 
 # Casa3D
+
+> Nota de revizuire: inregistrare de continuitate scrisa de AI; ACTIVE/verified necesita atestare de catre proprietar (`attest()`), nu auto-declarare.
 
 ## Identitate
 
@@ -236,7 +240,7 @@ Nu se inventeaza preturi sau date comerciale.
 Au fost executate compilari izolate si smoke tests pentru Digital Twin, ViewerState, DSL, semantic Solver, approval si BOQ search. Testele Vitest complete si `next build` nu sunt declarate ca trecute deoarece mediul de lucru nu are o instalare npm completa, iar incercarile de instalare au expirat.
 
 Ledger-ul de implementare si hash-urile artefactelor sunt pastrate in:
-`03_IMPLEMENTATION/projects/Casa3D/CORE_IMPLEMENTATION_v8.md`
+`02_PRODUCT/projects/Casa3D/CORE_IMPLEMENTATION_v8.md`
 
 Aceste informatii actualizeaza starea tehnica a proiectului; nu transforma automat F4 sau capabilitatile comerciale in productie.
 
