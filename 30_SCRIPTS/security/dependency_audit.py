@@ -116,6 +116,26 @@ def summarize(results: dict[str, dict], fail_on: str) -> tuple[str, bool]:
     return "\n".join(lines) + "\n", failed
 
 
+def annotations(results: dict[str, dict]) -> str:
+    """Workflow commands: one totals notice, then one warning per manifest at HIGH+ or not audited.
+
+    Annotations are readable through the checks API, so the result is visible without job logs.
+    """
+    audited = [r for r in results.values() if "error" not in r]
+    total = counts([f for r in audited for f in r["findings"]])
+    lines = [f"::notice title=Dependency audit::audited {len(audited)}/{len(results)} manifests; "
+             + ", ".join(f"{k} {v}" for k, v in total.items())]
+    for manifest, res in results.items():
+        if "error" in res:
+            lines.append(f"::warning file={manifest},title=not audited::{res['error'][:300]}")
+            continue
+        c = counts(res["findings"])
+        if c["critical"] or c["high"]:
+            pkgs = ", ".join(sorted({f["package"] for f in res["findings"] if f["severity"] in ("critical", "high")}))
+            lines.append(f"::warning file={manifest},title=critical {c['critical']} high {c['high']}::{pkgs[:300]}")
+    return "\n".join(line.replace("\r", " ").replace("\n", " ") for line in lines)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--npm", action="store_true")
@@ -141,6 +161,8 @@ def main(argv=None) -> int:
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as fh:
             fh.write("## Dependency audit\n\n" + table)
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(annotations(results))
     if args.report:
         args.report.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
     return 1 if failed else 0

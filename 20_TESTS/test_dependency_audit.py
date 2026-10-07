@@ -65,3 +65,12 @@ def test_the_workflow_never_runs_project_code():
         assert forbidden not in wf
     src = (REPO / "30_SCRIPTS/security/dependency_audit.py").read_text(encoding="utf-8")
     assert '"--package-lock-only"' in src and '"npm", "install"' not in src
+
+
+def test_annotations_carry_totals_and_unaudited_manifests_on_single_lines():
+    out = da.annotations({"a/package-lock.json": {"findings": da.parse_npm_audit(NPM)},
+                          "b.csproj": {"error": "restore failed:\nNU1101"}})
+    lines = out.splitlines()
+    assert lines[0] == "::notice title=Dependency audit::audited 1/2 manifests; critical 1, high 1, moderate 0, low 1"
+    assert "::warning file=a/package-lock.json,title=critical 1 high 1::nodemon, seroval" in lines
+    assert "::warning file=b.csproj,title=not audited::restore failed: NU1101" in lines
