@@ -44,7 +44,7 @@ ordinary commits to the PR's own head branch (no rebase, no force-push, no merge
 - #206: keep as one research PR or split into docs / notes / edges / code.
 
 ## Review
-(2026-10-07, after execution; every head below has local full-suite runs at 0 failures)
+(2026-10-07, after execution. Local full suite at 0 failures on every head except #215, whose 4 local failures came from node_modules/.next left in the worktree; those 4 files pass once removed, the full suite was not re-run there, CI is green.)
 
 | PR | Head | CI | Status |
 |---|---|---|---|
