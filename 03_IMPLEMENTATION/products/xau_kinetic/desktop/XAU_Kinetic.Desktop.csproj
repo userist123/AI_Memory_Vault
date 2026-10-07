@@ -14,7 +14,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
-    <!-- Microsoft.Data.Sqlite 8.0.x brings SQLitePCLRaw 2.1.6 (bundled SQLite with a known HIGH advisory) -->
+    <!-- Latest 2.1.x (same line Microsoft.Data.Sqlite 10 uses). CVE-2025-6965 stays flagged until Microsoft.Data.Sqlite moves to SQLitePCLRaw 3.x (dotnet/efcore#38547). -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
   </ItemGroup>
 
