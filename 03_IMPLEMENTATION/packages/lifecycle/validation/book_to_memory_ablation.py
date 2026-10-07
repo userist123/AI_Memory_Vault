@@ -18,7 +18,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple, Set
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from .book_to_memory_schema import (
     ConflictSeverity,
     ConflictStatus,
@@ -39,6 +39,14 @@ from .book_to_memory_usage_test import (
     EvaluationTamperError,
     UsageTestValidationError,
 )
+
+
+#: Experiment outcome when every paired trial carries real observations.
+DATA_STATUS_COMPLETE = "COMPLETE"
+#: Experiment outcome when one or more trials have no supplied answer/rubric. No effect is
+#: reported: the delta is None and the gate refuses to pass. Missing data is never filled in
+#: with invented scores (PR #209 B01: a positive result must not be built in by default).
+DATA_STATUS_INSUFFICIENT = "INSUFFICIENT_DATA"
 
 
 class AblationCondition(str, Enum):
@@ -104,11 +112,13 @@ class AblationExperimentRecord:
     repetitions: int
     trials: List[AblationTrial]
     model_summaries: Dict[str, Dict[str, float]]
-    aggregate_summary: Dict[str, float]
+    aggregate_summary: Dict[str, Any]
     source_provenance: Dict[str, Any]
     evaluator_id: str
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     signature: str = ""
+    data_status: str = DATA_STATUS_COMPLETE
+    missing_trials: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -124,6 +134,8 @@ class AblationExperimentRecord:
             "evaluator_id": self.evaluator_id,
             "timestamp": self.timestamp,
             "signature": self.signature,
+            "data_status": self.data_status,
+            "missing_trials": self.missing_trials,
         }
 
     def verify_signature(self) -> bool:
@@ -145,6 +157,8 @@ def _compute_ablation_record_hash(record: AblationExperimentRecord) -> str:
         "aggregate_summary": record.aggregate_summary,
         "evaluator_id": record.evaluator_id,
         "timestamp": record.timestamp,
+        "data_status": record.data_status,
+        "missing_trials": sorted(record.missing_trials),
     }
     dumped = json.dumps(canonical_payload, sort_keys=True)
     return hashlib.sha256(dumped.encode("utf-8")).hexdigest()
@@ -213,6 +227,7 @@ class AblationExperimentRunner:
 
         experiment_id = f"EXP-ABL-{note.get('id', 'note')}-{task.task_id}"
         all_trials: List[AblationTrial] = []
+        missing_trials: List[str] = []
         model_scores: Dict[str, Dict[str, List[int]]] = {
             m: {"WITH_NOTE": [], "WITHOUT_NOTE": []} for m in models
         }
@@ -230,22 +245,22 @@ class AblationExperimentRunner:
                 for order_idx, condition in enumerate(order_pattern, start=1):
                     trial_id = f"{experiment_id}-{model}-r{rep}-{condition.value}"
 
-                    # Retrieve simulation / trial data if supplied
+                    # Observations come ONLY from the supplied trial data. A trial with no data is
+                    # recorded as missing; it is never given a default answer or a default score.
                     key = f"{model}:{rep}:{condition.value}"
-                    t_data = (trial_data or {}).get(key, {})
-                    answer = t_data.get("answer", f"Default answer for {condition.value} by {model}")
-                    evidence = t_data.get("evidence", "Default evidence")
-                    rubric = t_data.get("rubric", {
-                        RubricDimension.CORECTITUDINE.value: 2 if condition == AblationCondition.WITH_NOTE else 1,
-                        RubricDimension.COMPLETITUDINE.value: 2 if condition == AblationCondition.WITH_NOTE else 1,
-                        RubricDimension.FARA_GHICIT.value: 2 if condition == AblationCondition.WITH_NOTE else 1,
-                        RubricDimension.FARA_SURSE_EXTERNE.value: 2,
-                        RubricDimension.REPRODUCTIBILITATE.value: 2 if condition == AblationCondition.WITH_NOTE else 1,
-                    })
+                    t_data = (trial_data or {}).get(key) or {}
                     provided_ctx = t_data.get("context", {})
+                    answer = t_data.get("answer")
 
-                    if condition == AblationCondition.WITHOUT_NOTE:
-                        self.validate_without_note_isolation(provided_ctx, answer, note)
+                    # Isolation is checked on whatever was supplied, complete or not.
+                    if condition == AblationCondition.WITHOUT_NOTE and t_data:
+                        self.validate_without_note_isolation(provided_ctx, answer or "", note)
+
+                    rubric = t_data.get("rubric")
+                    if answer is None or rubric is None:
+                        missing_trials.append(key)
+                        continue
+                    evidence = t_data.get("evidence", "")
 
                     attempt = EvaluationAttempt(
                         attempt_number=rep,
@@ -262,7 +277,7 @@ class AblationExperimentRunner:
                         "source_title": note.get("source_title"),
                         "chapter": note.get("chapter"),
                         "page_range": note.get("page_range"),
-                        "lifecycle": "UNVERIFIED",
+                        "lifecycle": "REVIEW",
                         "tags": note.get("tags", []),
                     }
 
@@ -289,6 +304,38 @@ class AblationExperimentRunner:
                     )
                     all_trials.append(trial)
                     model_scores[model][condition.value].append(record.score)
+
+        provenance = {
+            "source_title": note.get("source_title", ""),
+            "chapter": note.get("chapter", ""),
+            "page_range": note.get("page_range", ""),
+            "exact_page": note.get("exact_page"),
+        }
+
+        if missing_trials:
+            expected = len(models) * repetitions * 2
+            insufficient = AblationExperimentRecord(
+                experiment_id=experiment_id,
+                note_id=note.get("id") or note.get("note_id", "unnamed_note"),
+                task_id=task.task_id,
+                models=models,
+                repetitions=repetitions,
+                trials=all_trials,
+                model_summaries={},
+                aggregate_summary={
+                    "aggregate_delta": None,
+                    "total_trials": len(all_trials),
+                    "expected_trials": expected,
+                    "missing_trials": len(missing_trials),
+                    "verdict": DATA_STATUS_INSUFFICIENT,
+                },
+                source_provenance=provenance,
+                evaluator_id=self.evaluator_id,
+                data_status=DATA_STATUS_INSUFFICIENT,
+                missing_trials=list(missing_trials),
+            )
+            insufficient.signature = _compute_ablation_record_hash(insufficient)
+            return insufficient
 
         # Aggregate per model and overall
         model_summaries: Dict[str, Dict[str, float]] = {}
@@ -319,13 +366,6 @@ class AblationExperimentRunner:
             "total_trials": len(all_trials),
         }
 
-        provenance = {
-            "source_title": note.get("source_title", ""),
-            "chapter": note.get("chapter", ""),
-            "page_range": note.get("page_range", ""),
-            "exact_page": note.get("exact_page"),
-        }
-
         rec = AblationExperimentRecord(
             experiment_id=experiment_id,
             note_id=note.get("id") or note.get("note_id", "unnamed_note"),
@@ -350,8 +390,14 @@ def check_ablation_eligibility(
     if not ablation_record.verify_signature():
         return False, "Ablation record signature verification failed: record has been tampered with."
 
-    agg_delta = ablation_record.aggregate_summary.get("aggregate_delta", -1.0)
-    if agg_delta < 0.0:
+    if ablation_record.data_status != DATA_STATUS_COMPLETE:
+        return False, (
+            f"GATE-07 Ablation failed: insufficient data ({len(ablation_record.missing_trials)} "
+            "trial(s) without observations). No effect can be claimed."
+        )
+
+    agg_delta = ablation_record.aggregate_summary.get("aggregate_delta")
+    if agg_delta is None or agg_delta < 0.0:
         return False, f"GATE-07 Ablation failed: Aggregate Delta must be >= 0.0 (got {agg_delta})."
 
     # Check for open high/critical conflict

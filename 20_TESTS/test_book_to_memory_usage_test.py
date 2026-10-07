@@ -8,7 +8,7 @@ Validates all contracts under:
 import pytest
 from dataclasses import FrozenInstanceError
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
     EpistemicType,
@@ -43,7 +43,7 @@ def valid_note():
         "chapter": "Chapter 2: Memory Hierarchy Design",
         "page_range": "78-95",
         "exact_page": 84,
-        "lifecycle": "UNVERIFIED",
+        "lifecycle": "REVIEW",
         "tags": ["architecture", "systems", "memory"],
     }
 
@@ -432,7 +432,7 @@ def test_negative_3_missing_exact_page_for_formula_metric_fails(valid_task, pass
         "chapter": "Chapter 2",
         "page_range": "80-90",
         # missing exact_page
-        "lifecycle": "UNVERIFIED",
+        "lifecycle": "REVIEW",
     }
     validator = TaskBasedValidator()
     attempt = EvaluationAttempt(attempt_number=1, agent_id="agent_alpha", note_id=metric_note["id"], answer="ans", evidence="ev")
@@ -529,8 +529,8 @@ def test_negative_10_autopromotion_attempt_fails(valid_note, valid_task, passing
     record = validator.evaluate_attempt(valid_note, valid_task, attempt, passing_rubric, actor=Principal.HUMAN)
     assert record.status == UsageTestStatus.PASS.value
     
-    # Confirm note lifecycle remains unchanged (UNVERIFIED)
-    assert valid_note["lifecycle"] == "UNVERIFIED"
+    # Confirm note lifecycle remains unchanged (REVIEW)
+    assert valid_note["lifecycle"] == "REVIEW"
     
     # check_lifecycle_eligibility notes formal approval still required
     eligible, reason = check_lifecycle_eligibility(valid_note, record)

@@ -3,7 +3,7 @@
 Orchestrates the full cognitive pipeline according to POLICY-LEARNING-QUALITY-02:
 1. Book Registration & Map Creation (type: book_map)
 2. Schema & Epistemic Gate (11 atomic schemas, provenance, untrusted passive data)
-3. Lifecycle Gate Progression (RAW -> UNVERIFIED -> VERIFIED -> ACTIVE)
+3. Lifecycle Gate Progression (RAW -> REVIEW -> VERIFIED -> ACTIVE)
 4. Conflict Registry Cross-Check (detects open high/critical contradictions)
 5. Task-Based Usage Testing (5 dimensions, score >= 8/10)
 6. Paired Ablation Testing (WITH_NOTE vs WITHOUT_NOTE, Delta >= 0)
@@ -23,7 +23,7 @@ from typing import Any, Dict, List, Optional, Tuple, Set
 # Ensure late import order compatibility: import controller before WorkingMemory
 import memory_controller.controller as _mcc
 from memory_controller.controller import Lifecycle
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 
 from .book_to_memory_schema import (
     BookToMemoryType,
@@ -63,6 +63,7 @@ from .book_to_memory_usage_test import (
 from .book_to_memory_ablation import (
     AblationExperimentRunner,
     AblationExperimentRecord,
+    DATA_STATUS_COMPLETE,
     calculate_ablation_delta,
 )
 from .book_to_memory_retrieval import (
@@ -77,7 +78,7 @@ class PipelineStage(str, Enum):
     """The sequential stages of the Book-to-Memory end-to-end pipeline."""
     BOOK_MAP_REGISTRATION = "BOOK_MAP_REGISTRATION"
     SCHEMA_AND_SECURITY = "SCHEMA_AND_SECURITY"
-    PROMOTION_TO_UNVERIFIED = "PROMOTION_TO_UNVERIFIED"
+    PROMOTION_TO_REVIEW = "PROMOTION_TO_REVIEW"
     CONFLICT_CROSS_CHECK = "CONFLICT_CROSS_CHECK"
     USAGE_TEST = "USAGE_TEST"
     ABLATION_TEST = "ABLATION_TEST"
@@ -240,24 +241,24 @@ class BookToMemoryPipeline:
             return self._build_report(book_title, note_id, initial_lc, initial_lc, stages)
 
         # ---------------------------------------------------------------------
-        # Stage 2: Promotion from RAW to UNVERIFIED (Gate 1..3)
+        # Stage 2: Promotion from RAW to REVIEW (Gate 1..3)
         # ---------------------------------------------------------------------
         if str(note_copy.get("lifecycle", "")).upper() == "RAW":
             try:
                 updated_note = transition_book_to_memory_lifecycle(
                     note=note_copy,
-                    target_state=BookToMemoryLifecycleState.UNVERIFIED,
+                    target_state=BookToMemoryLifecycleState.REVIEW,
                     actor=caller_principal,
                 )
-                note_copy["lifecycle"] = updated_note.get("lifecycle", "UNVERIFIED")
+                note_copy["lifecycle"] = updated_note.get("lifecycle", "REVIEW")
                 stages.append(PipelineStageResult(
-                    stage=PipelineStage.PROMOTION_TO_UNVERIFIED,
+                    stage=PipelineStage.PROMOTION_TO_REVIEW,
                     passed=True,
-                    details={"new_lifecycle": "UNVERIFIED"},
+                    details={"new_lifecycle": "REVIEW"},
                 ))
             except Exception as e:
                 stages.append(PipelineStageResult(
-                    stage=PipelineStage.PROMOTION_TO_UNVERIFIED,
+                    stage=PipelineStage.PROMOTION_TO_REVIEW,
                     passed=False,
                     error=str(e),
                 ))
@@ -285,20 +286,20 @@ class BookToMemoryPipeline:
         # ---------------------------------------------------------------------
         # Stage 4: Task-Based Usage Test (POLICY-02 Section 6: Threshold >= 8/10)
         # ---------------------------------------------------------------------
-        attempt = simulated_attempt or EvaluationAttempt(
-            attempt_number=1,
-            agent_id="evaluator-agent-primary",
-            note_id=note_id,
-            answer=f"Synthesized application of {note_copy.get('atomic_concept', 'concept')} to {task_spec.title}.",
-            evidence=f"Evidence verified from {note_copy.get('source_title', 'book')} {note_copy.get('chapter', '')}.",
-        )
-        active_rubric = rubric or {
-            RubricDimension.CORECTITUDINE.value: 2,
-            RubricDimension.COMPLETITUDINE.value: 2,
-            RubricDimension.FARA_GHICIT.value: 2,
-            RubricDimension.FARA_SURSE_EXTERNE.value: 2,
-            RubricDimension.REPRODUCTIBILITATE.value: 2,
-        }
+        # The attempt and its rubric score must be supplied by a real evaluation. There is no
+        # default answer and no default rubric: a pipeline that invents a 10/10 usage test
+        # would build the positive result in (PR #209 B01).
+        if simulated_attempt is None or rubric is None:
+            stages.append(PipelineStageResult(
+                stage=PipelineStage.USAGE_TEST,
+                passed=False,
+                details={"data_status": "INSUFFICIENT_DATA"},
+                error="Usage test INSUFFICIENT_DATA: no evaluated attempt and rubric were supplied; "
+                      "no score can be claimed.",
+            ))
+            return self._build_report(book_title, note_id, initial_lc, note_copy.get("lifecycle"), stages, conflicts=detected_conflicts)
+        attempt = simulated_attempt
+        active_rubric = rubric
         try:
             usage_record = self.usage_validator.evaluate_attempt(
                 note=note_copy,
@@ -346,7 +347,21 @@ class BookToMemoryPipeline:
                 trial_data=ablation_trial_data,
                 actor=evaluator_principal,
             )
-            ablation_delta = ablation_record.aggregate_summary.get("aggregate_delta", 0.0)
+            ablation_delta = ablation_record.aggregate_summary.get("aggregate_delta")
+            if ablation_record.data_status != DATA_STATUS_COMPLETE or ablation_delta is None:
+                # No observations -> no result. Never a win, never a regression: the gate stays shut.
+                stages.append(PipelineStageResult(
+                    stage=PipelineStage.ABLATION_TEST,
+                    passed=False,
+                    details={
+                        "data_status": ablation_record.data_status,
+                        "missing_trials": len(ablation_record.missing_trials),
+                        "expected_trials": ablation_record.aggregate_summary.get("expected_trials"),
+                    },
+                    error="Ablation INSUFFICIENT_DATA: no paired trial observations were supplied; "
+                          "no effect can be claimed.",
+                ))
+                return self._build_report(book_title, note_id, initial_lc, note_copy.get("lifecycle"), stages, usage_score=usage_score, conflicts=detected_conflicts)
             note_copy["ablation_delta"] = ablation_delta
         except Exception as e:
             stages.append(PipelineStageResult(
@@ -380,7 +395,7 @@ class BookToMemoryPipeline:
         ))
 
         # ---------------------------------------------------------------------
-        # Stage 6: Promotion from UNVERIFIED to VERIFIED
+        # Stage 6: Promotion from REVIEW to VERIFIED
         # ---------------------------------------------------------------------
         try:
             if detected_conflicts:

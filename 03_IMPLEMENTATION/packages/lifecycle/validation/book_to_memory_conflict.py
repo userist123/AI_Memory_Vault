@@ -14,7 +14,7 @@ from enum import Enum
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from .book_to_memory_schema import (
     ConflictSeverity,
     ConflictStatus,

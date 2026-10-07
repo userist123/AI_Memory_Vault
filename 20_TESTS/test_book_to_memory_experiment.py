@@ -7,7 +7,7 @@ Tests strict compliance with:
 
 import pytest
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_hypothesis import (
     BookToMemoryHypothesisRegistry,
     TrackState,

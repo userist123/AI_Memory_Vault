@@ -6,7 +6,7 @@ Validates all contracts under:
 - 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_ablation.py
 """
 import pytest
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
     EpistemicType,
@@ -20,6 +20,8 @@ from lifecycle.validation.book_to_memory_usage_test import (
     UsageTestValidationError,
 )
 from lifecycle.validation.book_to_memory_ablation import (
+    DATA_STATUS_COMPLETE,
+    DATA_STATUS_INSUFFICIENT,
     AblationCondition,
     AblationError,
     AblationPermissionError,
@@ -31,6 +33,30 @@ from lifecycle.validation.book_to_memory_ablation import (
     AblationExperimentRunner,
     check_ablation_eligibility,
 )
+
+
+MODELS = ["model_alpha", "model_beta"]
+
+
+def synthetic_trials(with_dim: int = 2, without_dim: int = 1, models=None, reps: int = 3, overrides=None) -> dict:
+    """Complete, explicitly SYNTHETIC trial data (TEST FIXTURE ONLY, not research evidence).
+
+    The runner has no default scores: every trial must come from supplied observations
+    (PR #209 B01). These tests exercise the gate logic with fabricated numbers on purpose.
+    """
+    data = {}
+    for m in models or MODELS:
+        for r in range(1, reps + 1):
+            data[f"{m}:{r}:WITH_NOTE"] = {
+                "answer": "synthetic answer with note", "evidence": "synthetic",
+                "rubric": {d.value: with_dim for d in RubricDimension},
+            }
+            data[f"{m}:{r}:WITHOUT_NOTE"] = {
+                "answer": "synthetic answer without note", "evidence": "synthetic",
+                "rubric": {d.value: without_dim for d in RubricDimension},
+            }
+    data.update(overrides or {})
+    return data
 
 
 @pytest.fixture
@@ -45,7 +71,7 @@ def valid_note():
         "chapter": "Chapter 2: Memory Hierarchy Design",
         "page_range": "78-95",
         "exact_page": 84,
-        "lifecycle": "UNVERIFIED",
+        "lifecycle": "REVIEW",
         "tags": ["architecture", "systems", "memory"],
     }
 
@@ -113,6 +139,7 @@ def test_ablation_executes_minimum_twelve_trials_and_alternates_order(valid_note
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     # 2 models * 3 reps * 2 conditions = 12 trials
@@ -216,6 +243,7 @@ def test_adversarial_1_note_attempts_to_inflate_delta(valid_note, valid_task):
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     # Delta is computed purely mathematically from trial scores, NOT from injected text
@@ -230,6 +258,7 @@ def test_adversarial_2_note_attempts_to_deflate_without_note_score(valid_note, v
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     # Confirm WITHOUT_NOTE trials executed with their own isolated context
@@ -266,6 +295,7 @@ def test_adversarial_4_note_attempts_to_change_repetitions(valid_note, valid_tas
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     assert record.repetitions == 3
@@ -280,6 +310,7 @@ def test_adversarial_5_note_attempts_to_swap_model(valid_note, valid_task):
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     assert record.models == ["model_alpha", "model_beta"]
@@ -359,12 +390,12 @@ def test_adversarial_9_metadata_contains_note_content(valid_note, valid_task):
 def test_adversarial_10_negative_trials_cannot_be_purged(valid_note, valid_task):
     runner = AblationExperimentRunner()
     # Provide a failing rubric for trial 1 of model_alpha
-    trial_data = {
+    trial_data = synthetic_trials(overrides={
         "model_alpha:1:WITH_NOTE": {
             "answer": "Faulty answer",
             "rubric": {d.value: 0 for d in RubricDimension},
         }
-    }
+    })
     record = runner.run_paired_experiment(
         valid_note,
         valid_task,
@@ -391,6 +422,7 @@ def test_hypothesis_ablation_does_not_convert_to_mechanism(valid_note, valid_tas
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     eligible, reason = check_ablation_eligibility(valid_note, record)
@@ -409,6 +441,7 @@ def test_open_high_conflict_blocks_active_despite_positive_ablation_delta(valid_
         valid_task,
         models=["model_alpha", "model_beta"],
         repetitions=3,
+        trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
     )
     eligible, reason = check_ablation_eligibility(valid_note, record)
@@ -442,3 +475,77 @@ def test_negative_ablation_delta_fails_gate(valid_note, valid_task):
     eligible, reason = check_ablation_eligibility(valid_note, record)
     assert eligible is False
     assert "GATE-07 Ablation failed" in reason
+
+
+# =============================================================================
+# 7. No built-in positive result (PR #209 B01)
+# =============================================================================
+
+def test_no_trial_data_yields_insufficient_data_not_a_win(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, actor=Principal.HUMAN
+    )
+    assert record.data_status == DATA_STATUS_INSUFFICIENT
+    assert record.aggregate_summary["aggregate_delta"] is None
+    assert record.aggregate_summary["verdict"] == DATA_STATUS_INSUFFICIENT
+    assert record.trials == []
+    assert len(record.missing_trials) == 12
+    assert record.verify_signature() is True
+    eligible, reason = check_ablation_eligibility(valid_note, record)
+    assert eligible is False
+    assert "insufficient data" in reason
+
+
+def test_no_trial_data_is_never_scored_with_a_higher_with_note_default(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, trial_data={}, actor=Principal.HUMAN
+    )
+    assert record.data_status == DATA_STATUS_INSUFFICIENT
+    assert "aggregate_mean_with_note" not in record.aggregate_summary
+    assert "aggregate_mean_without_note" not in record.aggregate_summary
+    assert record.model_summaries == {}
+
+
+def test_partial_trial_data_is_insufficient_and_lists_exactly_the_missing_trials(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    data = synthetic_trials()
+    del data["model_beta:3:WITHOUT_NOTE"]
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, trial_data=data, actor=Principal.HUMAN
+    )
+    assert record.data_status == DATA_STATUS_INSUFFICIENT
+    assert record.missing_trials == ["model_beta:3:WITHOUT_NOTE"]
+    assert len(record.trials) == 11  # observations that exist are kept, none are invented
+    assert check_ablation_eligibility(valid_note, record)[0] is False
+
+
+def test_trial_with_answer_but_no_rubric_is_missing_not_defaulted(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    data = synthetic_trials()
+    data["model_alpha:1:WITH_NOTE"] = {"answer": "answer without any score"}
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, trial_data=data, actor=Principal.HUMAN
+    )
+    assert record.data_status == DATA_STATUS_INSUFFICIENT
+    assert "model_alpha:1:WITH_NOTE" in record.missing_trials
+
+
+def test_complete_data_with_no_effect_reports_zero_delta_and_complete(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3,
+        trial_data=synthetic_trials(with_dim=1, without_dim=1), actor=Principal.HUMAN,
+    )
+    assert record.data_status == DATA_STATUS_COMPLETE
+    assert record.aggregate_summary["aggregate_delta"] == 0.0
+
+
+def test_tampering_with_data_status_breaks_the_signature(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, actor=Principal.HUMAN
+    )
+    record.data_status = DATA_STATUS_COMPLETE
+    assert record.verify_signature() is False

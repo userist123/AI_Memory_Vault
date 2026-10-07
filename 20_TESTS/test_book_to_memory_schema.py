@@ -55,12 +55,22 @@ def base_canonical_note(note_type: str, lifecycle: str = "RAW") -> dict:
     }
 
 
+def _production_schema_rejects(note: dict) -> None:
+    """Research notes are validated by book_to_memory_schema only.
+
+    The production write-path schema (`lifecycle.validation.schema`) must NOT be widened for them:
+    it still rejects the research-only types / properties (and an UNVERIFIED lifecycle).
+    """
+    with pytest.raises(ValidationError):
+        validate_frontmatter(note)
+
+
 # -----------------------------------------------------------------------------
 # Phase 1B: Valid payloads for all 11 explicit types
 # -----------------------------------------------------------------------------
 
 def test_valid_book_map():
-    note = base_canonical_note("book_map", lifecycle="UNVERIFIED")
+    note = base_canonical_note("book_map", lifecycle="REVIEW")
     note.update({
         "source_identity": "Wiener-Cybernetics-1961-MIT-Press",
         "title": "Cybernetics: Or Control and Communication in the Animal and the Machine",
@@ -73,11 +83,11 @@ def test_valid_book_map():
         "processing_status": "in_progress",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_concept():
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Feedback Loop Control",
         "source_title": "Cybernetics: Or Control and Communication in the Animal and the Machine",
@@ -89,11 +99,11 @@ def test_valid_concept():
         "problem_context": "Stabilizing system trajectory under unexpected perturbations.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_procedure():
-    note = base_canonical_note("procedure", lifecycle="UNVERIFIED")
+    note = base_canonical_note("procedure", lifecycle="REVIEW")
     note.update({
         "problem_context": "Dampening oscillation in feedback loops",
         "ordered_steps": [
@@ -108,11 +118,11 @@ def test_valid_procedure():
         "evidence": "By damping excessive feedback gain, parasitic oscillations are eliminated.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_rule():
-    note = base_canonical_note("rule", lifecycle="UNVERIFIED")
+    note = base_canonical_note("rule", lifecycle="REVIEW")
     note.update({
         "condition": "System lag exceeds 1/4 of the oscillation period",
         "action_constraint": "Reduce feedback loop gain below critical threshold",
@@ -123,11 +133,11 @@ def test_valid_rule():
         "evidence": "Excessive delay transforms negative feedback into positive feedback.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_pattern():
-    note = base_canonical_note("pattern", lifecycle="UNVERIFIED")
+    note = base_canonical_note("pattern", lifecycle="REVIEW")
     note.update({
         "recurring_structure": "Homeostatic Error Regulator",
         "applicability": "Self-stabilizing dynamic systems encountering environmental variance",
@@ -137,11 +147,11 @@ def test_valid_pattern():
         "evidence": "Homeostasis relies on steady-state equilibrium maintained via continuous monitoring.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_pitfall():
-    note = base_canonical_note("pitfall", lifecycle="UNVERIFIED")
+    note = base_canonical_note("pitfall", lifecycle="REVIEW")
     note.update({
         "failure_mode": "Runaway Positive Feedback Loop",
         "cause": "Phase shift in feedback signal causing reinjection of additive error",
@@ -152,11 +162,11 @@ def test_valid_pitfall():
         "evidence": "Purposive tremors occur when feedback delays turn compensatory actions into oscillations.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_metric():
-    note = base_canonical_note("metric", lifecycle="UNVERIFIED")
+    note = base_canonical_note("metric", lifecycle="REVIEW")
     note.update({
         "metric_name": "Feedback Damping Ratio",
         "definition": "Ratio of actual damping to critical damping in a closed-loop system",
@@ -169,11 +179,11 @@ def test_valid_metric():
         "evidence": "Damping ratio zeta = delta / sqrt(4*pi^2 + delta^2).",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_example():
-    note = base_canonical_note("example", lifecycle="UNVERIFIED")
+    note = base_canonical_note("example", lifecycle="REVIEW")
     note.update({
         "context": "Human motor control when reaching for an object",
         "example_text": "A patient with cerebellar injury exhibits intention tremor as the hand approaches the target.",
@@ -184,11 +194,11 @@ def test_valid_example():
         "evidence": "Intention tremors illustrate the loss of negative feedback stability.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_problem():
-    note = base_canonical_note("problem", lifecycle="UNVERIFIED")
+    note = base_canonical_note("problem", lifecycle="REVIEW")
     note.update({
         "problem_statement": "How to discriminate true message signal from environmental noise in transmission lines?",
         "constraints": [
@@ -202,11 +212,11 @@ def test_valid_problem():
         "evidence": "The statistical problem of separating signal from background noise requires spectral filtering.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_conflict():
-    note = base_canonical_note("conflict", lifecycle="UNVERIFIED")
+    note = base_canonical_note("conflict", lifecycle="REVIEW")
     note.update({
         "domain": "memory_consolidation",
         "claim_a": "Synaptic consolidation is complete within hours and does not involve neocortical reorganization.",
@@ -226,11 +236,11 @@ def test_valid_conflict():
         "resolution_state": "Investigation into temporal scale differences (cellular vs systems consolidation)",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 def test_valid_repro_test():
-    note = base_canonical_note("repro_test", lifecycle="UNVERIFIED")
+    note = base_canonical_note("repro_test", lifecycle="REVIEW")
     note.update({
         "hypothesis_claim": "Increasing negative feedback gain above threshold omega_c causes sustained oscillation.",
         "test_procedure": "Simulate second-order plant with proportional gain k from 1.0 to 10.0 in increments of 0.5.",
@@ -241,7 +251,7 @@ def test_valid_repro_test():
         "source_evidence": "Cybernetics Chapter 4 mathematical appendix, page 114.",
     })
     assert validate_book_to_memory_note(note) is True
-    assert validate_frontmatter(note) is True
+    _production_schema_rejects(note)
 
 
 # -----------------------------------------------------------------------------
@@ -249,7 +259,7 @@ def test_valid_repro_test():
 # -----------------------------------------------------------------------------
 
 def test_provenance_missing_fields_rejected():
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Test concept without provenance",
         # missing source_title, chapter, page_range
@@ -266,7 +276,7 @@ def test_provenance_missing_fields_rejected():
     "Somewhere in Wiener",
 ])
 def test_provenance_lazy_strings_rejected(lazy_string):
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Lazy citation test",
         "source_title": lazy_string,
@@ -279,7 +289,7 @@ def test_provenance_lazy_strings_rejected(lazy_string):
 
 def test_exact_page_required_for_numbers_and_formulas():
     # Metric with formula/critical calculation must supply exact_page
-    note = base_canonical_note("metric", lifecycle="UNVERIFIED")
+    note = base_canonical_note("metric", lifecycle="REVIEW")
     note.update({
         "metric_name": "Feedback Ratio",
         "definition": "Zeta ratio = delta / sqrt(4*pi^2 + delta^2)",
@@ -293,7 +303,7 @@ def test_exact_page_required_for_numbers_and_formulas():
 
 
 def test_own_experience_provenance_allowed():
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Production Cache Invalidation Pattern",
         "source_title": "experienta proprie",
@@ -402,7 +412,7 @@ def test_biological_chain_isolation_blocks_direct_mechanism():
 
 
 def test_biological_chain_valid_progression():
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Sparse Indexing Inspired by Hippocampus",
         "source_title": "Why We Forget and How To Remember Better",
@@ -464,7 +474,7 @@ def test_open_high_conflict_blocks_active_status():
     ("secret_access", "read_secret('HMAC_KEY')"),
 ])
 def test_untrusted_input_rejects_injections(injected_field, value):
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Security Injection Attempt",
         "source_title": "Cybernetics",
@@ -479,7 +489,7 @@ def test_untrusted_input_rejects_injections(injected_field, value):
 
 def test_passive_data_plane_preserves_text_as_evidence():
     # If the text in evidence mentions shell or instructions, it is allowed as passive data
-    note = base_canonical_note("concept", lifecycle="UNVERIFIED")
+    note = base_canonical_note("concept", lifecycle="REVIEW")
     note.update({
         "atomic_concept": "Quoted Historical Command",
         "source_title": "Operating Systems Concepts",
@@ -505,3 +515,53 @@ def test_all_11_types_in_enum():
     }
     actual_types = {t.value for t in BookToMemoryType}
     assert actual_types == expected_types
+
+
+# -----------------------------------------------------------------------------
+# Production schema is not widened by the research track
+# -----------------------------------------------------------------------------
+
+def _canonical_production_note(**overrides) -> dict:
+    note = {
+        "id": str(uuid.uuid4()),
+        "type": "knowledge",
+        "lifecycle": "REVIEW",
+        "category": "test",
+        "tags": ["t"],
+        "created": "2026-10-03",
+        "updated": "2026-10-03",
+        "provenance": {"source_type": "import", "source_ref": "x", "source_date": "2026-10-03"},
+        "confidence": "medium",
+        "verification": "unverified",
+        "relations": [],
+    }
+    note.update(overrides)
+    return note
+
+
+def test_production_schema_still_accepts_a_review_unverified_note():
+    assert validate_frontmatter(_canonical_production_note()) is True
+
+
+def test_production_schema_rejects_unverified_lifecycle():
+    # lifecycle/policy.py is the sole lifecycle authority and has no UNVERIFIED state.
+    with pytest.raises(ValidationError):
+        validate_frontmatter(_canonical_production_note(lifecycle="UNVERIFIED"))
+
+
+@pytest.mark.parametrize("research_type", [t.value for t in BookToMemoryType if t.value != "procedure"])
+def test_production_schema_rejects_research_only_types(research_type):
+    with pytest.raises(ValidationError):
+        validate_frontmatter(_canonical_production_note(type=research_type))
+
+
+def test_production_schema_rejects_research_only_properties():
+    with pytest.raises(ValidationError):
+        validate_frontmatter(_canonical_production_note(atomic_concept="x", usage_test_score=9))
+
+
+def test_production_lifecycle_enum_knows_no_state_outside_the_policy():
+    from lifecycle.policy import LifecycleState
+    from lifecycle.validation.schema import _CANONICAL_SCHEMA
+
+    assert set(_CANONICAL_SCHEMA["properties"]["lifecycle"]["enum"]) <= {s.value for s in LifecycleState}

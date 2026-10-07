@@ -25,7 +25,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_hypothesis import (
     BookToMemoryHypothesisRegistry,
     DecisionRecord,

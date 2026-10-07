@@ -7,7 +7,7 @@ Validates all contracts under:
 - 08_RESEARCH/BOOK_TO_MEMORY/PROBLEM_MATRIX.md
 """
 import pytest
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryValidationError,
     SecurityInjectionError,

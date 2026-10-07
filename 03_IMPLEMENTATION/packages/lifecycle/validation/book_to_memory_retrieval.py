@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional, Tuple, Set
 # Ensure late import order compatibility: import controller before WorkingMemory
 import memory_controller.controller as _mcc
 from memory_controller.controller import Lifecycle
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from cognitive_core.working_memory import WorkingMemory
 from cognitive_core.attention import AttentionModel
 

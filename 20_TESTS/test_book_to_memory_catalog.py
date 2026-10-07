@@ -5,7 +5,7 @@ Validates all contracts under:
 - 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_catalog.py
 """
 import pytest
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
     BookToMemoryValidationError,

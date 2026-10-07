@@ -24,7 +24,7 @@ import json
 from dataclasses import asdict
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryValidationError,
     SecurityInjectionError,
@@ -112,8 +112,17 @@ class BookToMemoryFacade:
         caller_principal: Principal = Principal.AI_AGENT,
         evaluator_principal: Principal = Principal.HUMAN,
         owner_approval_token: Optional[OwnerApprovalToken] = None,
+        simulated_attempt: Optional[Any] = None,
+        rubric: Optional[Dict[str, int]] = None,
+        ablation_models: Optional[List[str]] = None,
+        ablation_repetitions: int = 3,
+        ablation_trial_data: Optional[Dict[str, Any]] = None,
     ) -> BookIngestionAuditReport:
-        """Process a raw extracted concept note through all validation gates."""
+        """Process a raw extracted concept note through all validation gates.
+
+        The usage-test attempt/rubric and the ablation trial data must come from a real evaluation;
+        without them the corresponding gates report INSUFFICIENT_DATA and the note does not advance.
+        """
         # Validate security upfront as front-door gate
         validate_untrusted_security(note_dict)
 
@@ -132,6 +141,11 @@ class BookToMemoryFacade:
             caller_principal=caller_principal,
             evaluator_principal=evaluator_principal,
             owner_approval_token=owner_approval_token,
+            simulated_attempt=simulated_attempt,
+            rubric=rubric,
+            ablation_models=ablation_models,
+            ablation_repetitions=ablation_repetitions,
+            ablation_trial_data=ablation_trial_data,
         )
 
         if report.final_lifecycle in ("VERIFIED", "ACTIVE"):

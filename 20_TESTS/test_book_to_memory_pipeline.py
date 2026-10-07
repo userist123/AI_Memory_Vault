@@ -5,7 +5,7 @@ Validates all contracts under:
 - 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py
 """
 import pytest
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
     EpistemicType,
@@ -35,6 +35,47 @@ from lifecycle.validation.book_to_memory_pipeline import (
     PipelineStage,
     BookIngestionAuditReport,
 )
+
+
+# =============================================================================
+# Synthetic evaluation inputs (TEST FIXTURES ONLY)
+# =============================================================================
+# The pipeline has no default usage-test attempt, rubric or ablation trial data: without a real
+# evaluation its gates report INSUFFICIENT_DATA (PR #209 B01). These tests exercise the gate
+# *logic*, so they hand it explicit, clearly synthetic inputs. They are not research evidence.
+
+_MODELS = ("model_primary", "model_secondary")
+
+
+def _rubric(per_dim: int) -> dict:
+    return {d.value: per_dim for d in RubricDimension}
+
+
+def synthetic_eval(note: dict, usage_rubric: dict = None, with_dim: int = 2, without_dim: int = 1) -> dict:
+    trial_data = {}
+    for model in _MODELS:
+        for rep in range(1, 4):
+            trial_data[f"{model}:{rep}:WITH_NOTE"] = {
+                "answer": "synthetic fixture answer (with note)",
+                "evidence": "synthetic fixture evidence",
+                "rubric": _rubric(with_dim),
+            }
+            trial_data[f"{model}:{rep}:WITHOUT_NOTE"] = {
+                "answer": "synthetic fixture answer (without note)",
+                "evidence": "synthetic fixture evidence",
+                "rubric": _rubric(without_dim),
+            }
+    return {
+        "simulated_attempt": EvaluationAttempt(
+            attempt_number=1,
+            agent_id="synthetic-fixture-evaluator",
+            note_id=note["id"],
+            answer="synthetic fixture answer",
+            evidence="synthetic fixture evidence",
+        ),
+        "rubric": usage_rubric or _rubric(2),
+        "ablation_trial_data": trial_data,
+    }
 
 
 @pytest.fixture
@@ -106,7 +147,7 @@ def test_pipeline_register_book_map_invalid_missing_fields(clean_pipeline):
 
 
 # =============================================================================
-# 2. End-to-End Pipeline Happy Path (RAW -> UNVERIFIED -> VERIFIED)
+# 2. End-to-End Pipeline Happy Path (RAW -> REVIEW -> VERIFIED)
 # =============================================================================
 
 def test_pipeline_e2e_happy_path_stops_at_verified_without_owner_token(
@@ -115,6 +156,7 @@ def test_pipeline_e2e_happy_path_stops_at_verified_without_owner_token(
     report: BookIngestionAuditReport = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
         caller_principal=Principal.AI_AGENT,
         evaluator_principal=Principal.HUMAN,
     )
@@ -128,7 +170,7 @@ def test_pipeline_e2e_happy_path_stops_at_verified_without_owner_token(
     # Verify all passed stages
     stage_names = [s.stage for s in report.stage_results if s.passed]
     assert PipelineStage.SCHEMA_AND_SECURITY in stage_names
-    assert PipelineStage.PROMOTION_TO_UNVERIFIED in stage_names
+    assert PipelineStage.PROMOTION_TO_REVIEW in stage_names
     assert PipelineStage.CONFLICT_CROSS_CHECK in stage_names
     assert PipelineStage.USAGE_TEST in stage_names
     assert PipelineStage.ABLATION_TEST in stage_names
@@ -153,6 +195,7 @@ def test_pipeline_promotes_to_active_with_valid_owner_token(
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
         owner_approval_token=owner_token,
         caller_principal=Principal.AI_AGENT,
         evaluator_principal=Principal.HUMAN,
@@ -176,6 +219,7 @@ def test_pipeline_blocks_active_with_tampered_owner_token(
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
         owner_approval_token=owner_token,
         caller_principal=Principal.AI_AGENT,
         evaluator_principal=Principal.HUMAN,
@@ -254,6 +298,7 @@ def test_pipeline_open_high_conflict_blocks_active_even_with_token(
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
         owner_approval_token=owner_token,
     )
     # Stays in VERIFIED, blocked from ACTIVE
@@ -264,7 +309,7 @@ def test_pipeline_open_high_conflict_blocks_active_even_with_token(
 
 
 # =============================================================================
-# 6. Usage Test Failure Gate (Score < 8 stops at UNVERIFIED)
+# 6. Usage Test Failure Gate (Score < 8 stops at REVIEW)
 # =============================================================================
 
 def test_pipeline_failing_usage_test_blocks_verified(
@@ -281,16 +326,16 @@ def test_pipeline_failing_usage_test_blocks_verified(
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
-        rubric=failing_rubric,
+        **{**synthetic_eval(valid_concept_note), "rubric": failing_rubric},
     )
-    assert report.final_lifecycle == "UNVERIFIED"
+    assert report.final_lifecycle == "REVIEW"
     usage_stage = [s for s in report.stage_results if s.stage == PipelineStage.USAGE_TEST][0]
     assert usage_stage.passed is False
     assert "Score 6/10" in usage_stage.error or "below required threshold" in usage_stage.error
 
 
 # =============================================================================
-# 7. Ablation Negative Delta Gate (Delta < 0 stops at UNVERIFIED)
+# 7. Ablation Negative Delta Gate (Delta < 0 stops at REVIEW)
 # =============================================================================
 
 def test_pipeline_negative_ablation_delta_blocks_verified(
@@ -331,9 +376,9 @@ def test_pipeline_negative_ablation_delta_blocks_verified(
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
-        ablation_trial_data=regression_data,
+        **{**synthetic_eval(valid_concept_note), "ablation_trial_data": regression_data},
     )
-    assert report.final_lifecycle == "UNVERIFIED"
+    assert report.final_lifecycle == "REVIEW"
     ablation_stage = [s for s in report.stage_results if s.stage == PipelineStage.ABLATION_TEST][0]
     assert ablation_stage.passed is False
     assert "negative (performance regression)" in ablation_stage.error
@@ -386,6 +431,7 @@ def test_pipeline_pilot_kahneman_thinking_fast_and_slow(clean_pipeline):
     report = clean_pipeline.process_candidate_note(
         note=pilot_note,
         task_spec=pilot_task,
+        **synthetic_eval(pilot_note),
         caller_principal=Principal.AI_AGENT,
         evaluator_principal=Principal.HUMAN,
     )
@@ -436,6 +482,7 @@ def test_pipeline_pilot_ashby_design_for_a_brain(clean_pipeline):
     report = clean_pipeline.process_candidate_note(
         note=ashby_note,
         task_spec=ashby_task,
+        **synthetic_eval(ashby_note),
         caller_principal=Principal.AI_AGENT,
         evaluator_principal=Principal.HUMAN,
     )
@@ -502,6 +549,7 @@ def test_pipeline_repro_test_processing(clean_pipeline):
     report = clean_pipeline.process_candidate_note(
         note=repro_note,
         task_spec=task,
+        **synthetic_eval(repro_note),
     )
     assert report.final_lifecycle == "VERIFIED"
     assert report.usage_test_score == 10
@@ -512,6 +560,7 @@ def test_pipeline_audit_report_serialization_and_integrity(clean_pipeline, valid
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
     )
     d = report.to_dict()
     assert isinstance(d, dict)
@@ -525,6 +574,7 @@ def test_pipeline_retrieval_negative_query_discrimination(clean_pipeline, valid_
     report = clean_pipeline.process_candidate_note(
         note=valid_concept_note,
         task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
     )
     assert report.retrieval_ready is True
     # Test negative retrieval on the note
@@ -533,3 +583,34 @@ def test_pipeline_retrieval_negative_query_discrimination(clean_pipeline, valid_
     assert score == 0.0
     assert clean_pipeline.retrieval_validator.verify_negative_retrieval(irrelevant_query, valid_concept_note) is True
 
+
+
+# =============================================================================
+# 9. No built-in positive result (PR #209 B01)
+# =============================================================================
+
+def test_pipeline_without_usage_evaluation_reports_insufficient_data(
+    clean_pipeline, valid_concept_note, valid_task
+):
+    report = clean_pipeline.process_candidate_note(note=valid_concept_note, task_spec=valid_task)
+    assert report.final_lifecycle == "REVIEW"
+    usage_stage = [s for s in report.stage_results if s.stage == PipelineStage.USAGE_TEST][0]
+    assert usage_stage.passed is False
+    assert "INSUFFICIENT_DATA" in usage_stage.error
+    assert report.usage_test_score is None or report.usage_test_score == 0
+    assert not any(s.stage == PipelineStage.ABLATION_TEST for s in report.stage_results)
+
+
+def test_pipeline_without_ablation_trial_data_reports_insufficient_data_not_a_win(
+    clean_pipeline, valid_concept_note, valid_task
+):
+    inputs = synthetic_eval(valid_concept_note)
+    inputs.pop("ablation_trial_data")
+    report = clean_pipeline.process_candidate_note(
+        note=valid_concept_note, task_spec=valid_task, **inputs
+    )
+    assert report.final_lifecycle == "REVIEW"
+    ablation_stage = [s for s in report.stage_results if s.stage == PipelineStage.ABLATION_TEST][0]
+    assert ablation_stage.passed is False
+    assert "INSUFFICIENT_DATA" in ablation_stage.error
+    assert not report.ablation_delta

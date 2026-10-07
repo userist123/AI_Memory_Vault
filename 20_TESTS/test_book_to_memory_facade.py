@@ -5,7 +5,7 @@ Validates end-to-end integration of all 10 preceding phases through BookToMemory
 
 import pytest
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
     SecurityInjectionError,
@@ -19,8 +19,35 @@ from lifecycle.validation.book_to_memory_experiment import (
     ExperimentConfig,
     ExperimentValidationError,
 )
-from lifecycle.validation.book_to_memory_usage_test import TaskSpecification
+from lifecycle.validation.book_to_memory_usage_test import (
+    EvaluationAttempt,
+    RubricDimension,
+    TaskSpecification,
+)
 from lifecycle.validation.book_to_memory_facade import BookToMemoryFacade
+
+
+def _synthetic_eval(note_id: str) -> dict:
+    """Explicit, clearly synthetic evaluation inputs (TEST FIXTURE, not research evidence).
+
+    The pipeline has no default attempt, rubric or ablation data (PR #209 B01).
+    """
+    def rubric(n):
+        return {d.value: n for d in RubricDimension}
+
+    trials = {}
+    for model in ("model_primary", "model_secondary"):
+        for rep in range(1, 4):
+            trials[f"{model}:{rep}:WITH_NOTE"] = {"answer": "synthetic", "evidence": "synthetic", "rubric": rubric(2)}
+            trials[f"{model}:{rep}:WITHOUT_NOTE"] = {"answer": "synthetic", "evidence": "synthetic", "rubric": rubric(1)}
+    return {
+        "simulated_attempt": EvaluationAttempt(
+            attempt_number=1, agent_id="synthetic-fixture-evaluator", note_id=note_id,
+            answer="synthetic", evidence="synthetic",
+        ),
+        "rubric": rubric(2),
+        "ablation_trial_data": trials,
+    }
 
 
 @pytest.fixture
@@ -100,6 +127,7 @@ def test_facade_ingest_note_and_link_to_catalog(facade, sample_valid_note):
         caller_principal=Principal.HUMAN,
         evaluator_principal=Principal.HUMAN,
         owner_approval_token=token,
+        **_synthetic_eval("NOTE-SYS-CONS-001"),
     )
     assert report.final_lifecycle == "ACTIVE"
 
@@ -245,3 +273,14 @@ def test_facade_hypothesis_negative_outcome(facade):
         actor=Principal.AI_AGENT,
     )
     assert final_hyp.state == TrackState.CLOSED_NO_CHANGE
+
+
+def test_facade_without_evaluation_data_does_not_advance_note(facade, sample_valid_note):
+    """No usage-test/ablation data means INSUFFICIENT_DATA, never a built-in pass (PR #209 B01)."""
+    report = facade.ingest_note(
+        note_dict=sample_valid_note,
+        caller_principal=Principal.HUMAN,
+        evaluator_principal=Principal.HUMAN,
+    )
+    assert report.final_lifecycle in ("RAW", "REVIEW")
+    assert report.final_lifecycle not in ("VERIFIED", "ACTIVE")

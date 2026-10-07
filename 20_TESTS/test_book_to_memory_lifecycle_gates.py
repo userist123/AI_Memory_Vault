@@ -2,7 +2,7 @@
 
 Verifies the 30 strict no-bypass conditions defined in Phase 2 specification:
 1. direct RAW -> ACTIVE
-2. direct UNVERIFIED -> ACTIVE
+2. direct REVIEW -> ACTIVE
 3. AI_AGENT -> VERIFIED
 4. AI_AGENT -> ACTIVE
 5. fake owner approval
@@ -38,7 +38,7 @@ import uuid
 import pytest
 from datetime import datetime, timezone, timedelta
 
-from security.authorizer import Principal, Operation
+from memory_controller.authorizer import Principal, Operation
 from memory_controller.storage.sqlite_engine import SQLiteStorageEngine
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
@@ -107,15 +107,15 @@ def test_1_direct_raw_to_active_is_impossible():
 
 
 def test_2_direct_unverified_to_active_is_impossible():
-    note = valid_concept_payload("UNVERIFIED")
-    with pytest.raises(LifecycleTransitionError, match="Illegal direct transition: UNVERIFIED -> ACTIVE"):
+    note = valid_concept_payload("REVIEW")
+    with pytest.raises(LifecycleTransitionError, match="Illegal direct transition: REVIEW -> ACTIVE"):
         transition_book_to_memory_lifecycle(
             note, target_state=BookToMemoryLifecycleState.ACTIVE, actor=Principal.HUMAN
         )
 
 
 def test_3_ai_agent_cannot_verify():
-    note = valid_concept_payload("UNVERIFIED")
+    note = valid_concept_payload("REVIEW")
     with pytest.raises(LifecycleTransitionError, match="Principal 'ai_agent' is not authorized to transition into VERIFIED"):
         transition_book_to_memory_lifecycle(
             note, target_state=BookToMemoryLifecycleState.VERIFIED, actor=Principal.AI_AGENT
@@ -157,7 +157,7 @@ def test_6_owner_approval_flag_without_human_actor_rejected():
 # -----------------------------------------------------------------------------
 
 def test_7_usage_score_10_without_provenance_rejected():
-    note = valid_concept_payload("UNVERIFIED")
+    note = valid_concept_payload("REVIEW")
     note.pop("source_title")  # missing provenance
     with pytest.raises(LifecycleTransitionError, match="GATE-02 Provenance failed"):
         transition_book_to_memory_lifecycle(
@@ -166,7 +166,7 @@ def test_7_usage_score_10_without_provenance_rejected():
 
 
 def test_8_complete_provenance_without_usage_test_rejected():
-    note = valid_concept_payload("UNVERIFIED")
+    note = valid_concept_payload("REVIEW")
     note.pop("usage_test_score")  # missing usage test
     with pytest.raises(LifecycleTransitionError, match="GATE-05 Usage Test failed"):
         transition_book_to_memory_lifecycle(
@@ -217,7 +217,7 @@ def test_12_lifecycle_field_injected_in_input():
     note["override_lifecycle"] = "ACTIVE"
     with pytest.raises(LifecycleTransitionError, match="GATE-03 Security failed: prohibited injection"):
         transition_book_to_memory_lifecycle(
-            note, target_state=BookToMemoryLifecycleState.UNVERIFIED, actor=Principal.HUMAN
+            note, target_state=BookToMemoryLifecycleState.REVIEW, actor=Principal.HUMAN
         )
 
 
@@ -414,7 +414,7 @@ def test_27_regression_after_active_demotes_to_unverified():
     demoted = demote_active_note(
         note, reason="Performance regression in ablation suite", actor=Principal.HUMAN
     )
-    assert demoted["lifecycle"] == BookToMemoryLifecycleState.UNVERIFIED.value
+    assert demoted["lifecycle"] == BookToMemoryLifecycleState.REVIEW.value
     assert demoted["verification"] == "unverified"
     assert "demotion_history" in demoted
     assert len(demoted["demotion_history"]) == 1
@@ -426,7 +426,7 @@ def test_28_obsolete_source_triggers_demotion():
     demoted = demote_active_note(
         note, reason="Source edition superseded; claims invalidated", actor=Principal.HUMAN
     )
-    assert demoted["lifecycle"] == BookToMemoryLifecycleState.UNVERIFIED.value
+    assert demoted["lifecycle"] == BookToMemoryLifecycleState.REVIEW.value
     assert "superseded" in demoted["demotion_history"][0]["reason"].lower()
 
 
@@ -438,7 +438,7 @@ def test_29_conflicting_source_demotes_active_note():
         actor=Principal.HUMAN,
         conflict_ref="CONF-002",
     )
-    assert demoted["lifecycle"] == BookToMemoryLifecycleState.UNVERIFIED.value
+    assert demoted["lifecycle"] == BookToMemoryLifecycleState.REVIEW.value
     assert demoted["demotion_history"][0]["conflict_ref"] == "CONF-002"
 
 
@@ -454,3 +454,64 @@ def test_30_security_finding_blocks_promotion():
         transition_book_to_memory_lifecycle(
             note, target_state=BookToMemoryLifecycleState.ACTIVE, actor=Principal.HUMAN, approval_token=token
         )
+
+
+# -----------------------------------------------------------------------------
+# 31: No fallback HMAC secret (fail closed; PR #209 B1 pattern)
+# -----------------------------------------------------------------------------
+
+_OLD_HARDCODED_SECRET = "b2m_default_secure_vault_hmac_key_2026"
+
+
+def _sign_like_the_old_module(note_id: str, approver: str, timestamp: str, secret: str) -> str:
+    import hashlib
+    import hmac
+
+    msg = f"{note_id}:{approver}:{timestamp}".encode("utf-8")
+    return hmac.new(secret.encode("utf-8"), msg, hashlib.sha256).hexdigest()
+
+
+def test_31_missing_secret_refuses_to_issue_token(monkeypatch):
+    monkeypatch.delenv("MEMORY_CONTROLLER_HMAC_SECRET", raising=False)
+    # AI_MEMORY_VAULT_HOME points at an empty temp dir (tests/conftest.py): no key file either.
+    with pytest.raises(OwnerApprovalError, match="No usable HMAC secret"):
+        issue_owner_approval(actor=Principal.HUMAN, note_id=str(uuid.uuid4()))
+
+
+def test_31_missing_secret_refuses_to_verify_token(monkeypatch):
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])  # secret set by fixture
+    monkeypatch.delenv("MEMORY_CONTROLLER_HMAC_SECRET", raising=False)
+    with pytest.raises(OwnerApprovalError, match="No usable HMAC secret"):
+        verify_owner_approval_token(note, token=token)
+
+
+def test_31_token_signed_with_old_hardcoded_secret_is_rejected():
+    note = valid_concept_payload("VERIFIED")
+    ts = datetime.now(timezone.utc).isoformat()
+    forged = OwnerApprovalToken(
+        note_id=note["id"],
+        approver=Principal.HUMAN.value,
+        timestamp=ts,
+        signature=_sign_like_the_old_module(note["id"], Principal.HUMAN.value, ts, _OLD_HARDCODED_SECRET),
+    )
+    with pytest.raises(OwnerApprovalError, match="Signature verification failed"):
+        verify_owner_approval_token(note, token=forged)
+
+
+def test_31_old_hardcoded_secret_is_refused_even_when_configured(monkeypatch):
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", _OLD_HARDCODED_SECRET)
+    with pytest.raises(OwnerApprovalError, match="published in source code"):
+        issue_owner_approval(actor=Principal.HUMAN, note_id=str(uuid.uuid4()))
+
+
+def test_31_too_short_secret_is_refused(monkeypatch):
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", "short")
+    with pytest.raises(OwnerApprovalError, match="No usable HMAC secret"):
+        issue_owner_approval(actor=Principal.HUMAN, note_id=str(uuid.uuid4()))
+
+
+def test_31_token_roundtrips_with_a_real_secret():
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])
+    assert verify_owner_approval_token(note, token=token) is True

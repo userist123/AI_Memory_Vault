@@ -16,7 +16,7 @@ from typing import Dict, Any, List
 
 import memory_controller.controller as mcc
 from memory_controller.controller import Lifecycle
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     BookToMemoryType,
     ConflictSeverity,

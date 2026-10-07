@@ -1,7 +1,9 @@
 """Book-to-Memory Lifecycle Gates Authority.
 
 Implements and strictly enforces:
-- Formal 4-stage lifecycle: RAW -> UNVERIFIED -> VERIFIED -> ACTIVE (with REJECTED)
+- Formal 4-stage lifecycle: RAW -> REVIEW -> VERIFIED -> ACTIVE (with REJECTED). REVIEW + verification
+  "unverified" is the vault's own convention; there is no separate UNVERIFIED state (lifecycle/policy.py
+  is the sole lifecycle authority and does not know one).
 - Actor privilege boundaries (Principal.AI_AGENT vs HUMAN/ADMIN)
 - Gates GATE-01 through GATE-08
 - Non-forgeable cryptographic Owner Approval tokens
@@ -11,13 +13,13 @@ from __future__ import annotations
 
 import hmac
 import hashlib
-import os
 from enum import Enum
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from jsonschema.exceptions import ValidationError
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
+from interfaces import vault_runtime
 from .book_to_memory_schema import (
     BookToMemoryType,
     ConflictSeverity,
@@ -34,13 +36,37 @@ from .book_to_memory_schema import (
 )
 
 
-_HMAC_SECRET = os.environ.get("MEMORY_CONTROLLER_HMAC_SECRET", "b2m_default_secure_vault_hmac_key_2026").encode("utf-8")
+# This string used to be the fallback signing key, so anyone who read the source could forge an
+# owner-approval token. It is kept ONLY so that it can be refused: a secret equal to it is treated
+# as no secret at all.
+_LEAKED_FALLBACK_SECRETS = frozenset({"b2m_default_secure_vault_hmac_key_2026"})
+
+
+def _hmac_secret() -> bytes:
+    """The vault's HMAC secret, resolved the same way the recall CLI and MCP server do it.
+
+    `MEMORY_CONTROLLER_HMAC_SECRET` first, then the per-user key file outside the repository
+    (`python -m cognitive_core.recall_cli --init-secret`). There is no default: with no usable
+    secret the module refuses to issue or verify an owner-approval token (fail closed).
+    """
+    try:
+        value, _source = vault_runtime.load_secret()
+    except (vault_runtime.VaultSecretMissing, vault_runtime.VaultSecretInvalid) as exc:
+        raise OwnerApprovalError(
+            f"No usable HMAC secret: owner approval cannot be issued or verified ({exc})"
+        ) from exc
+    if value.strip() in _LEAKED_FALLBACK_SECRETS:
+        raise OwnerApprovalError(
+            "The configured HMAC secret is a value published in source code; "
+            "refusing to sign or verify owner approval. Generate a fresh secret."
+        )
+    return value.encode("utf-8")
 
 
 class BookToMemoryLifecycleState(str, Enum):
     """The canonical lifecycle states for Book-to-Memory notes."""
     RAW = "RAW"
-    UNVERIFIED = "UNVERIFIED"
+    REVIEW = "REVIEW"
     VERIFIED = "VERIFIED"
     ACTIVE = "ACTIVE"
     REJECTED = "REJECTED"
@@ -79,7 +105,7 @@ class OwnerApprovalToken:
 
         ts = timestamp or datetime.now(timezone.utc).isoformat()
         msg = f"{note_id}:{approver.value}:{ts}".encode("utf-8")
-        sig = hmac.new(_HMAC_SECRET, msg, hashlib.sha256).hexdigest()
+        sig = hmac.new(_hmac_secret(), msg, hashlib.sha256).hexdigest()
         return cls(note_id=note_id, approver=approver.value, timestamp=ts, signature=sig, reason=reason)
 
     def verify(self, note: Dict[str, Any]) -> bool:
@@ -102,7 +128,7 @@ class OwnerApprovalToken:
 
         # Verify HMAC signature
         expected_msg = f"{self.note_id}:{self.approver}:{self.timestamp}".encode("utf-8")
-        expected_sig = hmac.new(_HMAC_SECRET, expected_msg, hashlib.sha256).hexdigest()
+        expected_sig = hmac.new(_hmac_secret(), expected_msg, hashlib.sha256).hexdigest()
         if not hmac.compare_digest(self.signature, expected_sig):
             raise OwnerApprovalError("Signature verification failed: forged or corrupt approval token")
 
@@ -176,15 +202,15 @@ def transition_book_to_memory_lifecycle(
     except ValueError:
         from_state = BookToMemoryLifecycleState.RAW
 
-    # 3. Direct Bypass Check (RAW -> ACTIVE, UNVERIFIED -> ACTIVE, RAW -> VERIFIED)
+    # 3. Direct Bypass Check (RAW -> ACTIVE, REVIEW -> ACTIVE, RAW -> VERIFIED)
     if from_state == BookToMemoryLifecycleState.RAW and norm_target == BookToMemoryLifecycleState.ACTIVE:
-        raise LifecycleTransitionError("Illegal direct transition: RAW -> ACTIVE. Must pass UNVERIFIED and VERIFIED.")
+        raise LifecycleTransitionError("Illegal direct transition: RAW -> ACTIVE. Must pass REVIEW and VERIFIED.")
 
     if from_state == BookToMemoryLifecycleState.RAW and norm_target == BookToMemoryLifecycleState.VERIFIED:
-        raise LifecycleTransitionError("Illegal direct transition: RAW -> VERIFIED. Must pass UNVERIFIED.")
+        raise LifecycleTransitionError("Illegal direct transition: RAW -> VERIFIED. Must pass REVIEW.")
 
-    if from_state == BookToMemoryLifecycleState.UNVERIFIED and norm_target == BookToMemoryLifecycleState.ACTIVE:
-        raise LifecycleTransitionError("Illegal direct transition: UNVERIFIED -> ACTIVE. Must pass VERIFIED.")
+    if from_state == BookToMemoryLifecycleState.REVIEW and norm_target == BookToMemoryLifecycleState.ACTIVE:
+        raise LifecycleTransitionError("Illegal direct transition: REVIEW -> ACTIVE. Must pass VERIFIED.")
 
     # 4. Actor Privilege Matrix
     if actor == Principal.AI_AGENT:
@@ -263,6 +289,10 @@ def transition_book_to_memory_lifecycle(
         note["owner_approval_token"] = approval_token.to_dict()
         note["verification"] = "verified"
 
+    # REVIEW is the vault's pre-trust state; its verification status is always "unverified".
+    if norm_target == BookToMemoryLifecycleState.REVIEW:
+        note["verification"] = "unverified"
+
     # Apply mutation
     note["lifecycle"] = norm_target.value
     now_ts = datetime.now(timezone.utc).date().isoformat()
@@ -276,12 +306,12 @@ def demote_active_note(
     actor: Principal,
     conflict_ref: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Demote an ACTIVE note to UNVERIFIED on regression or conflict without deleting it."""
+    """Demote an ACTIVE note to REVIEW on regression or conflict without deleting it."""
     if not isinstance(actor, Principal):
         raise LifecycleTransitionError(f"Invalid principal object: {actor}")
 
     previous_lifecycle = note.get("lifecycle", "ACTIVE")
-    note["lifecycle"] = BookToMemoryLifecycleState.UNVERIFIED.value
+    note["lifecycle"] = BookToMemoryLifecycleState.REVIEW.value
     note["verification"] = "unverified"
     now_ts = datetime.now(timezone.utc).isoformat()
     note["updated"] = now_ts[:10]
@@ -290,7 +320,7 @@ def demote_active_note(
         "timestamp": now_ts,
         "actor": actor.value,
         "previous_state": previous_lifecycle,
-        "new_state": BookToMemoryLifecycleState.UNVERIFIED.value,
+        "new_state": BookToMemoryLifecycleState.REVIEW.value,
         "reason": reason,
     }
     if conflict_ref:

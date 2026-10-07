@@ -14,7 +14,7 @@ Verifies the formal conflict management invariants:
 from __future__ import annotations
 
 import pytest
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from lifecycle.validation.book_to_memory_schema import (
     ConflictSeverity,
     ConflictStatus,

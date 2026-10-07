@@ -17,7 +17,7 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from security.authorizer import Principal
+from memory_controller.authorizer import Principal
 from .book_to_memory_schema import (
     BookToMemoryType,
     ConflictSeverity,
