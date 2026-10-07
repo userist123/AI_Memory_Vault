@@ -1,5 +1,7 @@
 # Red Team Attack Surface Map: AI Memory Vault
 
+> **Status note (2026-10-07).** This is a point-in-time report. Its `VERIFIED_FIXED` / `FIXED + VERIFIED BY TEST` entries for the runtime-authority layer (B1/Gate 1, B2, B4/Gate 2, M01, M02, M03, M07, U02, U03 and the nonce-persistence part of M08) mean **hardened in the library, not yet wired into production**: `security/runtime_enforcer.py`, `runtime_adapter.py`, `memory_adapter.py`, `memory_boundary.py` and `security_update_manager.py` have no importer outside `security/` and the tests, and nothing runs with `production_mode=True`. The model-facing quarantine described here (M04/M05/B3) was also narrowed afterwards: an ACTIVE note keeps its content whatever its verification label, and an unverified REVIEW candidate is served flagged `unverified` by the controlled `memory_access` tools. The current classification is in [`AUDIT_REMEDIATION.md`](AUDIT_REMEDIATION.md).
+
 **Generated**: 2026-10-05T02:26:00+03:00  
 **Scope**: Full Repository Attack-Surface Enumeration (Authority, Memory, Evidence, CI/CD, Agent Interfaces)  
 **Security Model**: Zero-Trust, Malicious-Agent Threat Model  
