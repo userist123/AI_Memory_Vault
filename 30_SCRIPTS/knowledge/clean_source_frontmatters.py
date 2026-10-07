@@ -4,7 +4,11 @@ Removes the 29 rejected relations from frontmatters of the 27 source files.
 Guarantees:
 1. Verifies sample SHA-256 before modifying any files.
 2. Only removes relations explicitly identified as REJECT by the independent audit.
-3. For Promoted_transformation.md, adds [[state-determined system]] wikilink to prevent it from becoming an island note.
+3. Never touches a note body: the Markdown after the closing `---` is preserved byte for byte.
+   (An earlier version injected sentences such as "... in [[long-term memory]]" into 9 note
+   bodies to keep notes from becoming islands. That is factually unsupported prose written into
+   knowledge notes; PR #209 B11. A note left with no true relation is an island, and stays one
+   until a real, audited relation is declared in its frontmatter.)
 4. Preserves YAML formatting and validates frontmatter after modification.
 5. Supports dry-run and diff preview.
 """
@@ -37,7 +41,7 @@ def clean_frontmatter_relations(
     
     Returns (changed, summary_message).
     """
-    raw_content = source_path.read_text(encoding="utf-8")
+    raw_content = source_path.read_bytes().decode("utf-8")  # bytes in, bytes out: no newline translation
     m = FRONTMATTER_RE.match(raw_content)
     if not m:
         return False, f"ERROR: No frontmatter found in {source_path}"
@@ -77,53 +81,6 @@ def clean_frontmatter_relations(
 
     if removed_count == 0:
         return False, f"No matching rejected relations found in {source_path.name}"
-
-    ISLAND_PREVENTIONS = {
-        "Promoted_transformation.md": (
-            "terminal equilibrium distributions.",
-            "terminal equilibrium distributions, governing state transitions in a [[state-determined system]]."
-        ),
-        "Promoted_buffer.md": (
-            "central production system.",
-            "central production system in [[working memory]]."
-        ),
-        "Promoted_regulation.md": (
-            "minimal acceptable outcomes.",
-            "minimal acceptable outcomes, maintaining stability via [[feedback]]."
-        ),
-        "Promoted_reinforcement_learning.md": (
-            "future rewards.",
-            "future rewards, guiding selection in [[operator]]."
-        ),
-        "Promoted_reservoir_sampling.md": (
-            "knowledge of total length.",
-            "knowledge of total length, optimizing sample preservation in [[long-term memory]]."
-        ),
-        "Promoted_retrieval.md": (
-            "ongoing agent actions.",
-            "ongoing agent actions from [[long-term memory]]."
-        ),
-        "Promoted_variety.md": (
-            "deviate from uniformity.",
-            "deviate from uniformity in a [[state-determined system]]."
-        ),
-        "Promoted_homeostat.md": (
-            "study ultrastability.",
-            "study [[ultrastable system]] dynamics."
-        ),
-        "Promoted_state_determined_system.md": (
-            "without intrinsic randomness.",
-            "without intrinsic randomness in state [[transformation]]."
-        ),
-    }
-
-    body_modified = False
-    fname = source_path.name
-    if fname in ISLAND_PREVENTIONS:
-        old_sub, new_sub = ISLAND_PREVENTIONS[fname]
-        if old_sub in body_text and new_sub not in body_text:
-            body_text = body_text.replace(old_sub, new_sub, 1)
-            body_modified = True
 
     # Reconstruct frontmatter
     # To keep exact clean yaml formatting:
@@ -174,14 +131,17 @@ def clean_frontmatter_relations(
     except Exception as e:
         return False, f"FATAL: Generated frontmatter failed YAML validation: {e}"
 
-    new_full_content = f"---\n{new_fm_text}\n---\n\n{body_text.lstrip()}"
+    # Frontmatter only: splice the new YAML between the original fences and keep every byte of
+    # the opening/closing fence and of the body exactly as read.
+    new_full_content = raw_content[: m.start(1)] + new_fm_text + raw_content[m.end(1):]
+    assert new_full_content[len(new_full_content) - len(raw_content[m.end(1):]):] == raw_content[m.end(1):]
+    assert FRONTMATTER_RE.match(new_full_content).group(2) == body_text, "note body must be byte-identical"
 
     if not dry_run:
-        source_path.write_text(new_full_content, encoding="utf-8")
+        source_path.write_bytes(new_full_content.encode("utf-8"))
 
     action_str = "[DRY-RUN] Would remove" if dry_run else "Removed"
-    extra_str = " (added wikilink)" if body_modified else ""
-    return True, f"{action_str} {removed_count} rejected relation(s) from {source_path.name}{extra_str}"
+    return True, f"{action_str} {removed_count} rejected relation(s) from {source_path.name}"
 
 
 def main() -> int:

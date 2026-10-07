@@ -18,12 +18,11 @@ confidence: high
 verification: unverified
 relations: []
 ---
-
 # reinforcement learning
 
 ## Canonical Definition
 
-A framework formalised by Markov decision processes that defines the set of states, actions, and transition functions governing agent-environment interaction, with a discount factor controlling the value of future rewards, guiding selection in [[operator]].
+A framework formalised by Markov decision processes that defines the set of states, actions, and transition functions governing agent-environment interaction, with a discount factor controlling the value of future rewards.
 
 ## Judgment & Evaluation
 

@@ -21,7 +21,7 @@ relations: []
 
 ## Canonical Definition
 
-A dynamical system whose future behaviors follow inexorably from its current internal configuration and incoming environmental inputs without intrinsic randomness in state [[transformation]].
+A dynamical system whose future behaviors follow inexorably from its current internal configuration and incoming environmental inputs without intrinsic randomness.
 
 ## Judgment & Evaluation
 

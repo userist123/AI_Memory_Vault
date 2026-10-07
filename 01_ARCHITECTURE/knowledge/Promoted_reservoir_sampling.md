@@ -21,7 +21,7 @@ relations: []
 
 ## Canonical Definition
 
-Reservoir sampling is an algorithmic procedure (Vitter, 1985) for randomly choosing a sample of k items from a list or stream of n items containing an unknown total count, ensuring every item has an equal probability of selection without requiring explicit stream boundaries or prior knowledge of total length, optimizing sample preservation in [[long-term memory]].
+Reservoir sampling is an algorithmic procedure (Vitter, 1985) for randomly choosing a sample of k items from a list or stream of n items containing an unknown total count, ensuring every item has an equal probability of selection without requiring explicit stream boundaries or prior knowledge of total length.
 
 ## Judgment & Evaluation
 

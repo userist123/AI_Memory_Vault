@@ -21,7 +21,7 @@ relations: []
 
 ## Canonical Definition
 
-An electromechanical apparatus designed by Ashby consisting of four interconnected units equipped with magnets and uniselectors to study [[ultrastable system]] dynamics.
+An electromechanical apparatus designed by Ashby consisting of four interconnected units equipped with magnets and uniselectors to study ultrastability.
 
 ## Judgment & Evaluation
 

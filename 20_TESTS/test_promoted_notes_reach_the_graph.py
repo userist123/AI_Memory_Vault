@@ -53,9 +53,36 @@ def test_there_is_something_to_check():
     assert PROMOTED, "no Promoted_*.md notes found; this suite proves nothing"
 
 
+# Promoted notes whose every typed relation was rejected by the independent edge audit
+# (Wave 1: 29 relations, Wave 2: 55; `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md`) and
+# which therefore declare `relations: []`. They are genuine islands: no true relation is known.
+# They used to be kept off the island list by sentences injected into their bodies
+# ("... optimizing sample preservation in [[long-term memory]]"); that prose was unsupported and was
+# removed (PR #209 B11), so they are listed here instead of being hidden. Fix an entry by declaring a
+# real, audited relation in its frontmatter and deleting it from this set. The set may only shrink.
+KNOWN_ISLANDS_AFTER_AUDITED_PURGE = frozenset({
+    "Promoted_buffer.md",
+    "Promoted_homeostat.md",
+    "Promoted_regulation.md",
+    "Promoted_reinforcement_learning.md",
+    "Promoted_reservoir_sampling.md",
+    "Promoted_retrieval.md",
+    "Promoted_state_determined_system.md",
+    "Promoted_transformation.md",
+    "Promoted_variety.md",
+})
+
+
 @pytest.mark.parametrize("path", PROMOTED, ids=lambda p: p.name)
 def test_a_promoted_note_reaches_the_graph(path, index, store):
-    """Not 'the frontmatter looks right' — an actual edge in the actual store."""
+    """Not 'the frontmatter looks right' — an actual edge in the actual store.
+
+    Every promoted note outside `KNOWN_ISLANDS_AFTER_AUDITED_PURGE` must have an out-edge. The known
+    islands are not excluded silently: `test_the_set_of_islands_is_pinned` below asserts that the
+    set of promoted notes without an edge is exactly that list.
+    """
+    if path.name in KNOWN_ISLANDS_AFTER_AUDITED_PURGE:
+        pytest.skip("known island after the audited purge; pinned by test_the_set_of_islands_is_pinned")
     note = next((n for n in index.notes if n.path == path or str(n.path) == str(path)), None)
     if note is None:
         note = next((n for n in index.notes if pathlib.Path(str(n.path)).name == path.name), None)
@@ -67,6 +94,24 @@ def test_a_promoted_note_reaches_the_graph(path, index, store):
         "from_index() reads `target_id` and `type`; check for `target`, "
         "`relation`, a file path where a note id belongs, or a relation not "
         f"in {sorted(ALLOWED_RELATIONS)}"
+    )
+
+
+def test_the_set_of_islands_is_pinned(index, store):
+    """Every promoted note without an out-edge is on the known list, and every entry still is one.
+
+    A new island fails here (nothing may quietly join the list's complement); a fixed island must be
+    removed from the list, so the debt only ever shrinks.
+    """
+    islands = set()
+    for path in PROMOTED:
+        note = next((n for n in index.notes if pathlib.Path(str(n.path)).name == path.name), None)
+        assert note is not None, f"{path.name} is not in the index at all"
+        if not store.neighbors(note.id):
+            islands.add(path.name)
+    assert islands == set(KNOWN_ISLANDS_AFTER_AUDITED_PURGE), (
+        f"new islands: {sorted(islands - KNOWN_ISLANDS_AFTER_AUDITED_PURGE)}; "
+        f"fixed but still listed: {sorted(set(KNOWN_ISLANDS_AFTER_AUDITED_PURGE) - islands)}"
     )
 
 

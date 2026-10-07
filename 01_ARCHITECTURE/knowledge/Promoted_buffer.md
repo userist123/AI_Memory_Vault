@@ -18,12 +18,11 @@ confidence: high
 verification: unverified
 relations: []
 ---
-
 # buffer
 
 ## Canonical Definition
 
-Restricted capacity interface holding a single chunk that connects an internal cognitive module to the central production system in [[working memory]].
+Restricted capacity interface holding a single chunk that connects an internal cognitive module to the central production system.
 
 ## Judgment & Evaluation
 

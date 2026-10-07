@@ -21,7 +21,7 @@ relations: []
 
 ## Canonical Definition
 
-Associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions from [[long-term memory]].
+Associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions.
 
 ## Judgment & Evaluation
 

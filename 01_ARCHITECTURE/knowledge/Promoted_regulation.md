@@ -18,12 +18,11 @@ confidence: high
 verification: unverified
 relations: []
 ---
-
 # regulation
 
 ## Canonical Definition
 
-The mathematical coordination of responsive moves designed to collapse a large disturbance set into minimal acceptable outcomes, maintaining stability via [[feedback]].
+The mathematical coordination of responsive moves designed to collapse a large disturbance set into minimal acceptable outcomes.
 
 ## Judgment & Evaluation
 

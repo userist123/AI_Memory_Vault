@@ -18,12 +18,11 @@ confidence: high
 verification: unverified
 relations: []
 ---
-
 # variety
 
 ## Canonical Definition
 
-The statistical spread of states across stochastic sequences which diminishes as conditional probabilities deviate from uniformity in a [[state-determined system]].
+The statistical spread of states across stochastic sequences which diminishes as conditional probabilities deviate from uniformity.
 
 ## Judgment & Evaluation
 
