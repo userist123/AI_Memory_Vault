@@ -1,4 +1,5 @@
 using System;
+using LogAnalyzer.Core.Services.Connectivity;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -35,6 +36,7 @@ namespace LogAnalyzer.Core.Services.Network
             SiemForwarderConfig config,
             CancellationToken cancellationToken = default)
         {
+            NetworkPolicy.EnsureAllowed("Trimitere către SIEM");
             if (string.IsNullOrWhiteSpace(config.SplunkHecUrl) || string.IsNullOrWhiteSpace(config.SplunkHecToken) || issues == null)
             {
                 return false;

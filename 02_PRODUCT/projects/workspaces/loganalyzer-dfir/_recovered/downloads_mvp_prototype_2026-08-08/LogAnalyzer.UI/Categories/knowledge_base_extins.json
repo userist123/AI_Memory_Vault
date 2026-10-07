@@ -1,0 +1,125 @@
+[
+  {
+    "Id": "WIN_BRUTEFORCE_001",
+    "Titlu": "Posibil Brute-Force (Autentificari esuate)",
+    "Descriere": "Detecteaza autentificari esuate repetate pe acelasi host.",
+    "Status": "Activa",
+    "Severitate": "Critical",
+    "SurseLog": [
+      "Security"
+    ],
+    "EventIduri": [
+      4625
+    ],
+    "PragEvenimente": 5,
+    "FereastraMinute": 5,
+    "PatternPseudoSigma": "count(EventID=4625, groupby=Host, timeframe=5m) >= 5",
+    "Mitre": {
+      "TacticaId": "TA0006",
+      "TacticaNume": "Credential Access",
+      "TehnicaId": "T1110.001",
+      "TehnicaNume": "Password Guessing",
+      "Incredere": "High"
+    },
+    "Recomandare": "Verificati sursa IP/host, blocati temporar contul daca este privilegiat."
+  },
+  {
+    "Id": "WIN_NEW_ACCOUNT_001",
+    "Titlu": "Cont Nou Creat",
+    "Descriere": "A fost creat un cont de utilizator nou.",
+    "Status": "Activa",
+    "Severitate": "Medium",
+    "SurseLog": [
+      "Security"
+    ],
+    "EventIduri": [
+      4720
+    ],
+    "PragEvenimente": 1,
+    "FereastraMinute": 0,
+    "PatternPseudoSigma": "EventID=4720",
+    "Mitre": {
+      "TacticaId": "TA0003",
+      "TacticaNume": "Persistence",
+      "TehnicaId": "T1136.001",
+      "TehnicaNume": "Local Account",
+      "Incredere": "Medium"
+    },
+    "Recomandare": "Confirmati ca operatiunea a fost autorizata de un administrator."
+  },
+  {
+    "Id": "WIN_PRIV_GROUP_001",
+    "Titlu": "Adaugare in Grup Privilegiat",
+    "Descriere": "Un cont a fost adaugat intr-un grup de securitate privilegiat.",
+    "Status": "Activa",
+    "Severitate": "High",
+    "SurseLog": [
+      "Security"
+    ],
+    "EventIduri": [
+      4728,
+      4732
+    ],
+    "PragEvenimente": 1,
+    "FereastraMinute": 0,
+    "PatternPseudoSigma": "EventID in (4728, 4732)",
+    "Mitre": {
+      "TacticaId": "TA0004",
+      "TacticaNume": "Privilege Escalation",
+      "TehnicaId": "T1098",
+      "TehnicaNume": "Account Manipulation",
+      "Incredere": "Medium"
+    },
+    "Recomandare": "Verificati daca escaladarea de privilegii a fost aprobata."
+  },
+  {
+    "Id": "WIN_LOG_CLEARED_001",
+    "Titlu": "Anti-Tampering: Jurnal Sters",
+    "Descriere": "Jurnalul de audit a fost sters - posibila incercare de acoperire a urmelor.",
+    "Status": "Activa",
+    "Severitate": "Critical",
+    "SurseLog": [
+      "Security",
+      "System"
+    ],
+    "EventIduri": [
+      1102,
+      104
+    ],
+    "PragEvenimente": 1,
+    "FereastraMinute": 0,
+    "PatternPseudoSigma": "EventID in (1102, 104)",
+    "Mitre": {
+      "TacticaId": "TA0005",
+      "TacticaNume": "Defense Evasion",
+      "TehnicaId": "T1070.001",
+      "TehnicaNume": "Clear Windows Event Logs",
+      "Incredere": "High"
+    },
+    "Recomandare": "Investigati imediat - corelati cu alte activitati din jurul momentului stergerii."
+  },
+  {
+    "Id": "WIN_NEW_SERVICE_001",
+    "Titlu": "Serviciu Nou Instalat (Persistenta)",
+    "Descriere": "A fost instalat un serviciu nou pe sistem.",
+    "Status": "Activa",
+    "Severitate": "Medium",
+    "SurseLog": [
+      "System"
+    ],
+    "EventIduri": [
+      7045
+    ],
+    "PragEvenimente": 1,
+    "FereastraMinute": 0,
+    "PatternPseudoSigma": "EventID=7045",
+    "Mitre": {
+      "TacticaId": "TA0003",
+      "TacticaNume": "Persistence",
+      "TehnicaId": "T1543.003",
+      "TehnicaNume": "Windows Service",
+      "Incredere": "Medium"
+    },
+    "Recomandare": "Verificati numele si calea binarului serviciului nou."
+  }
+]

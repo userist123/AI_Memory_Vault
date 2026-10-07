@@ -5,11 +5,13 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using LogAnalyzer.Core.Models;
+using LogAnalyzer.Core.Services.Connectivity;
 using LogAnalyzer.Core.Services.Network;
 using Xunit;
 
 namespace LogAnalyzer.UI.Tests
 {
+    [Collection(AppModeCollection.Name)]
     public class NetworkEditionServicesTests
     {
         [Fact]
@@ -59,6 +61,7 @@ namespace LogAnalyzer.UI.Tests
         [Fact]
         public async Task LiveThreatIntelService_HandlesEmptyApiKeyGracefully()
         {
+            AppModeTestScope.Use(AppMode.Network);
             var service = new LiveThreatIntelService();
             var rep = await service.CheckIpReputationAsync("198.51.100.24", "");
 

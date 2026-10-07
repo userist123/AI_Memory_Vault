@@ -1,0 +1,101 @@
+name: LogAnalyzer DFIR Build & Package
+
+# Recovered from LogAnalyzer.UI 137a626 ("MVP export foundation") and adapted to the
+# vault workspace: one application (mode chosen at startup), DFIR projects, pinned actions.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
+      - '.github/workflows/loganalyzer-dfir-build.yml'
+  pull_request:
+    paths:
+      - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
+      - '.github/workflows/loganalyzer-dfir-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: 02_PRODUCT/projects/workspaces/loganalyzer-dfir
+
+jobs:
+  build-test:
+    name: Build and test
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.x'
+
+      - name: Restore
+        run: dotnet restore LogAnalyzer.slnx
+
+      - name: Build (Release)
+        run: dotnet build LogAnalyzer.slnx --no-restore --configuration Release
+
+      # The real incident corpus is never in the repository; corpus tests skip without LADFIR_CORPUS.
+      - name: Test (Release)
+        run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: loganalyzer-test-results
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/**/TestResults/**/*.trx
+          if-no-files-found: ignore
+          retention-days: 30
+
+  package:
+    name: Package LogAnalyzer
+    needs: build-test
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      EDITION: LogAnalyzer
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.x'
+
+      - name: Publish (win-x64 single-file)
+        run: dotnet publish LogAnalyzer.App/LogAnalyzer.App.csproj -c Release -p:PublishProfile=win-x64-singlefile
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          $out = "publish/$env:EDITION/win-x64"
+          $exe = Get-ChildItem "$out/$env:EDITION.exe" -ErrorAction SilentlyContinue
+          if (-not $exe) { Write-Host "::error::Nu există $env:EDITION.exe în $out"; exit 1 }
+          Write-Host "OK: $($exe.Name) ($([math]::Round($exe.Length/1MB,1)) MB)"
+          if (-not (Test-Path "$out/Categories")) { Write-Host "::error::Categories lipsește din $out"; exit 1 }
+          if (Test-Path "$out/license.lic") { Write-Host "::error::license.lic nu trebuie livrat în pachet"; exit 1 }
+
+      - name: Upload package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: LogAnalyzer-win-x64
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/LogAnalyzer/win-x64
+          retention-days: 30
