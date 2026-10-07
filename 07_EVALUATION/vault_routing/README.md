@@ -6,7 +6,7 @@ on the working tree of `claude/vault-universal-access` (base commit in the JSON)
 | Measure | Value |
 |---|---:|
 | Routes (files reachable by `vault://`) | 4220 |
-| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 |
+| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 as measured on that working tree; 113 on a clean checkout (`expand: subdirs` adds one domain per sub-directory present locally). `VAULT_STATE.md` states 113 and a test checks it |
 | `vault_resolve(uri)` returns that route | 4220 / 4220 |
 | `vault_resolve(<last slug segment>)` returns that route | 3998 / 4220 (94.7%) |
 | … returns AMBIGUOUS (name shared by several files) | 222 (readme 112, agent 22, current 9, …) |

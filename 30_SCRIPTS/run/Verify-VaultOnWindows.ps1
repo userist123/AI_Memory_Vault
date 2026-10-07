@@ -64,7 +64,7 @@ if ($Full) {
   Invoke-Step 'full test suite' { python -m pytest 20_TESTS -q -p no:cacheprovider } | Out-Null
 } else {
   Invoke-Step 'vault access tests' {
-    python -m pytest -q -p no:cacheprovider 20_TESTS/test_vault_access_core.py 20_TESTS/test_vault_access_ollama_telegram.py 20_TESTS/test_vault_access_clients.py 20_TESTS/test_memory_mcp_server.py
+    python -m pytest -q -p no:cacheprovider 20_TESTS/test_vault_access_core.py 20_TESTS/test_vault_access_ollama_telegram.py 20_TESTS/test_vault_access_clients.py 20_TESTS/test_vault_access_perf.py 20_TESTS/test_memory_mcp_server.py
   } | Out-Null
 }
 

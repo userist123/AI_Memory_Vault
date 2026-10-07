@@ -60,7 +60,9 @@ def test_the_server_exposes_exactly_the_memory_and_route_tools_and_no_attest():
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 return {t.name for t in (await session.list_tools()).tools}
-    env = {**os.environ, vault_runtime.SECRET_ENV: SECRET}
+    # this test only lists tools against the real repository: no background route warm-up (it would
+    # index 4000+ files and write the per-user cache for nothing)
+    env = {**os.environ, vault_runtime.SECRET_ENV: SECRET, "VAULT_ACCESS_WARM": "0"}
     names = asyncio.run(go(env))
     assert names == {"memory_search", "memory_get", "memory_propose",
                      "vault_resolve", "vault_list", "vault_read", "vault_search",

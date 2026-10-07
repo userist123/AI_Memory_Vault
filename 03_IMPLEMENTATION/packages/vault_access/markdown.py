@@ -9,6 +9,11 @@ import yaml
 
 from .canonical import anchor_for
 
+# LibYAML's C loader is ~10x faster than the pure-Python SafeLoader and builds the same safe data
+# model. It is only used when the interpreter's PyYAML was built with it (the PyPI wheels are);
+# otherwise the pure-Python SafeLoader is the fallback, so behaviour never depends on the build.
+_YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
 _HEADING_RE = re.compile(r"^(#{1,6})[ \t]+(.+?)[ \t#]*$")
 _FENCE_RE = re.compile(r"^\s*(```|~~~)")
 
@@ -39,8 +44,10 @@ def parse_frontmatter(text: str) -> Tuple[Dict[str, Any], int, bool]:
     for idx in range(1, len(lines)):
         if lines[idx].strip() in ("---", "..."):
             try:
-                data = yaml.safe_load("\n".join(lines[1:idx]))
-            except yaml.YAMLError:
+                data = yaml.load("\n".join(lines[1:idx]), Loader=_YAML_LOADER)  # noqa: S506 - safe loader
+            except (yaml.YAMLError, ValueError, TypeError, OverflowError):
+                # ValueError: well-formed YAML with an impossible scalar (`date: 2026-13-45`).
+                # One such note must make ITS label unreadable (fail closed), not the whole table.
                 return {}, idx + 1, False
             if data is None:
                 return {}, idx + 1, True
@@ -56,31 +63,50 @@ def split_frontmatter(text: str) -> Tuple[Dict[str, Any], int]:
     return data, lines
 
 
-def sections(text: str) -> List[Section]:
-    lines = text.split("\n")
-    _, fm_lines = split_frontmatter(text)
-    found: List[Tuple[int, int, str]] = []
+Heading = Tuple[int, int, str]  # (1-based line number, level, title)
+
+
+def heading_scan(text: str, fm_lines: Optional[int] = None) -> List[Heading]:
+    """Every ATX heading outside code fences and frontmatter. `fm_lines` is the number of
+    frontmatter lines when the caller has already parsed the text (it then is not parsed again);
+    None parses it here. Cheap: no anchors, no ranges."""
+    if fm_lines is None:
+        _, fm_lines = split_frontmatter(text)
+    found: List[Heading] = []
     in_fence = False
-    for no, line in enumerate(lines, start=1):
+    for no, line in enumerate(text.split("\n"), start=1):
         if no <= fm_lines:
             continue
-        if _FENCE_RE.match(line):
+        # substring/first-char tests are the cheap pre-filters of the two regexes (same matches)
+        if ("```" in line or "~~~" in line) and _FENCE_RE.match(line):
             in_fence = not in_fence
             continue
-        if in_fence:
+        if in_fence or line[:1] != "#":
             continue
         m = _HEADING_RE.match(line)
         if m:
             found.append((no, len(m.group(1)), m.group(2).strip()))
-    total = len(lines)
+    return found
+
+
+def sections(text: str, fm_lines: Optional[int] = None) -> List[Section]:
+    """Headings with line-exact ranges (a section ends before the next heading of the same or a
+    shallower level)."""
+    found = heading_scan(text, fm_lines)
+    total = text.count("\n") + 1
+    # end of heading i = line before the next heading with level <= its own: one backward pass
+    ends = [total] * len(found)
+    stack: List[Tuple[int, int]] = []  # (level, line) of later headings, levels strictly increasing
+    for i in range(len(found) - 1, -1, -1):
+        no, level, _ = found[i]
+        while stack and stack[-1][0] > level:
+            stack.pop()
+        if stack:
+            ends[i] = stack[-1][1] - 1
+        stack.append((level, no))
     out: List[Section] = []
     seen: Dict[str, int] = {}
-    for i, (no, level, title) in enumerate(found):
-        end = total
-        for later_no, later_level, _ in found[i + 1:]:
-            if later_level <= level:
-                end = later_no - 1
-                break
+    for (no, level, title), end in zip(found, ends):
         anchor = anchor_for(title)
         if anchor in seen:
             seen[anchor] += 1
@@ -91,15 +117,18 @@ def sections(text: str) -> List[Section]:
     return out
 
 
-def title_of(text: str, frontmatter: Dict[str, Any], fallback: str) -> str:
+def title_of(text: str, frontmatter: Dict[str, Any], fallback: str,
+             headings: Optional[List[Heading]] = None) -> str:
     title = frontmatter.get("title")
     if isinstance(title, str) and title.strip():
         return title.strip()[:200]
-    for sec in sections(text):
-        if sec.level == 1:
-            return sec.title[:200]
-    for sec in sections(text):
-        return sec.title[:200]
+    if headings is None:
+        headings = heading_scan(text)
+    for _, level, htitle in headings:
+        if level == 1:
+            return htitle[:200]
+    for _, _, htitle in headings:
+        return htitle[:200]
     return fallback
 
 

@@ -26,7 +26,7 @@ import yaml
 from .canonical import (contained_path, domain_id, fold, glob_match, has_glob, slugify,
                         static_prefix)
 from .errors import ErrorCode, VaultAccessError
-from .markdown import aliases_of, parse_frontmatter, sections, title_of
+from .markdown import aliases_of, heading_scan, parse_frontmatter, title_of
 from .policy import TRUST_LEVELS, AccessPolicy
 
 PRIVATE_ROOT_ENV = "AI_MEMORY_VAULT_PRIVATE_ROOT"
@@ -323,6 +323,8 @@ class DomainRouter:
 
     # ── metadata ─────────────────────────────────────────────────────────────────────────
     def _raw_meta(self, route: Route) -> Dict[str, object]:
+        """Parsed metadata of one file. The frontmatter is parsed ONCE and its line count and the
+        heading scan are reused for title and headings (they used to re-parse it ~3 more times)."""
         base_dir = self.base_dir(route.base)
         try:
             path = contained_path(base_dir, route.path)
@@ -333,8 +335,9 @@ class DomainRouter:
         is_md = route.path.lower().endswith(".md")
         text = head.decode("utf-8", errors="ignore")
         fm, fm_ok = {}, True
+        heads: List = []
         if is_md:
-            fm, _, fm_ok = parse_frontmatter(text)
+            fm, head_fm_lines, fm_ok = parse_frontmatter(text)
             if not fm_ok and len(head) == METADATA_BYTES:   # long frontmatter: read further, bounded
                 try:
                     with open(contained_path(base_dir, route.path), "rb") as fh:
@@ -342,15 +345,17 @@ class DomainRouter:
                     fm, _, fm_ok = parse_frontmatter(more)
                 except (OSError, VaultAccessError):
                     fm_ok = False
+            # headings are scanned in the first METADATA_BYTES, skipping the frontmatter lines seen there
+            heads = heading_scan(text, head_fm_lines)
         lifecycle = fm.get("lifecycle")
         declared = fm.get("classification")
         return {
             "frontmatter_error": not fm_ok,
             "size": route.bytes, "mtime_ns": route.mtime_ns,
             "note_id": str(fm["id"]) if fm.get("id") else None,
-            "title": title_of(text, fm, PurePosixPath(route.path).stem) if is_md else PurePosixPath(route.path).name,
+            "title": title_of(text, fm, PurePosixPath(route.path).stem, heads) if is_md else PurePosixPath(route.path).name,
             "aliases": list(aliases_of(fm)),
-            "headings": [s.title[:120] for s in sections(text)[:60]] if is_md else [],
+            "headings": [title[:120] for _, _, title in heads[:60]] if is_md else [],
             "lifecycle": str(lifecycle).upper() if isinstance(lifecycle, str) else None,
             "classification": declared.upper() if isinstance(declared, str) else None,
         }
@@ -388,18 +393,32 @@ class DomainRouter:
     def load_meta(self, route: Route) -> Route:
         if route._meta_loaded:
             return route
-        key = f"{route.base}:{route.path}"
-        cached = self._meta_cache.get(key)
-        if not (cached and cached.get("size") == route.bytes and cached.get("mtime_ns") == route.mtime_ns):
-            cached = self._raw_meta(route)
-            self._meta_cache[key] = cached
-            self._cache_dirty = True
-        return self._apply_meta(route, cached)
+        # Per-route lock: a background warm-up and a request thread never parse (or half-apply) the
+        # same route twice, yet a single-route call does not wait for the whole warm-up.
+        with self._lock:
+            if route._meta_loaded:
+                return route
+            key = f"{route.base}:{route.path}"
+            cached = self._meta_cache.get(key)
+            if not (cached and cached.get("size") == route.bytes and cached.get("mtime_ns") == route.mtime_ns):
+                cached = self._raw_meta(route)
+                self._meta_cache[key] = cached
+                self._cache_dirty = True
+            return self._apply_meta(route, cached)
 
     def load_all_meta(self) -> None:
         for route in list(self.routes.values()):
             self.load_meta(route)
-        self._save_cache()
+        with self._lock:
+            self._save_cache()
+
+    def warm(self) -> int:
+        """Build the route table and the metadata of every route (what the first free-text
+        resolve or `vault_list("*")` needs), so that call does not pay for it. Safe to run in a
+        background thread while requests are served. Returns the number of routes."""
+        self.build()
+        self.load_all_meta()
+        return len(self.routes)
 
     # ── metadata cache (per user, outside the repository) ────────────────────────────────
     def _load_cache(self) -> None:
@@ -419,7 +438,7 @@ class DomainRouter:
         entries = {k: v for k, v in self._meta_cache.items() if k in live}
         try:
             self.cache_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = self.cache_path.with_suffix(".tmp")
+            tmp = self.cache_path.with_suffix(f".{os.getpid()}.tmp")  # one per process: clients start in parallel
             tmp.write_text(json.dumps({"version": CACHE_VERSION, "repo": str(self.repo_root),
                                        "entries": entries}, ensure_ascii=False), encoding="utf-8")
             os.replace(tmp, self.cache_path)

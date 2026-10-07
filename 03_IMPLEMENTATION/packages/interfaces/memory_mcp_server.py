@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -151,7 +152,10 @@ def memory_propose(title: str, body: str, type: str = "knowledge",
 
 # ── vault_* tools: direct routes, policy-gated ────────────────────────────────────────────
 _access = None
+_access_lock = threading.Lock()
+_warm_thread: Optional[threading.Thread] = None
 _principal_arg: Optional[str] = None
+WARM_ENV = "VAULT_ACCESS_WARM"  # "0" disables the background warm-up (tests, debugging)
 
 
 def _search_backend(query: str, limit: int) -> Dict[str, Any]:
@@ -170,10 +174,44 @@ def _note_eligibility(note_id: str) -> Optional[bool]:
 def _get_access():
     global _access
     if _access is None:
-        from vault_access.core import VaultAccess
-        _access = VaultAccess(_principal_arg or os.environ.get(PRINCIPAL_ENV), "mcp",
-                              search_backend=_search_backend, note_eligibility=_note_eligibility)
+        with _access_lock:  # the warm-up thread and the first request may arrive together
+            if _access is None:
+                from vault_access.core import VaultAccess
+                _access = VaultAccess(_principal_arg or os.environ.get(PRINCIPAL_ENV), "mcp",
+                                      search_backend=_search_backend, note_eligibility=_note_eligibility)
     return _access
+
+
+def _warm() -> None:
+    """Build the route table and every route's metadata. The first `vault_list("*")` / free-text
+    `vault_resolve` otherwise pays for it (tens of seconds on a cold cache, against a client tool
+    timeout of 60 s). Failures are not fatal: the first real call repeats the work and reports
+    its own error. stdout belongs to the protocol, so nothing is printed there."""
+    try:
+        _get_access().router.warm()
+    except Exception as exc:  # noqa: BLE001
+        from vault_access.errors import VaultAccessError
+        if isinstance(exc, VaultAccessError):  # e.g. a principal this interface may not assert
+            print(f"vault-memory: vault_* tools refused for this principal ({exc.code.value}: {exc.message}); "
+                  "no route warm-up", file=sys.stderr)
+        else:
+            print(f"vault-memory: route warm-up failed ({type(exc).__name__}); the first call will retry",
+                  file=sys.stderr)
+
+
+def start_warmup() -> Optional[threading.Thread]:
+    """Start the warm-up in a daemon thread, after the MCP handshake can already be served.
+
+    Request threads need no explicit wait: the router serialises metadata loading per route, so a
+    call that needs the whole table (list "*", free-text resolve) completes the remaining work
+    itself while a single-route call (vault_read of a known URI) is not held up at all."""
+    global _warm_thread
+    if os.environ.get(WARM_ENV, "1") == "0":
+        return None
+    if _warm_thread is None:
+        _warm_thread = threading.Thread(target=_warm, name="vault-route-warmup", daemon=True)
+        _warm_thread.start()
+    return _warm_thread
 
 
 @mcp.tool()
@@ -229,6 +267,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                         help="principal from 04_CONFIG/access_policy.yaml (e.g. cloud_cli.claude_code)")
     args = parser.parse_args(argv)
     _principal_arg = args.principal
+    start_warmup()
     mcp.run(transport="stdio")
 
 

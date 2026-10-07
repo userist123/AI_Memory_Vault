@@ -7,6 +7,15 @@ title: CLAUDE_OPUS — current
 
 # CLAUDE_OPUS — current
 
+## 2026-10-07T18:50Z — vault_access cold start and route-count check (PR #214, claude)
+
+Branch `claude/vault-universal-access`. The first `vault_*` call needed the metadata of all routes (15 s measured
+under load, 28 s earlier; Codex `tool_timeout_sec = 60`). Now: LibYAML loader when PyYAML has it, one frontmatter parse
+per file, headings scanned once, and the MCP server warms the route table in a background thread after the handshake
+(`VAULT_ACCESS_WARM=0` disables it). A note with an impossible YAML scalar (`date: 2026-13-45`) used to break the whole
+table; it is now one unreadable (fail-closed) note. VAULT_STATE.md route/domain count is checked by
+`20_TESTS/test_vault_state_accuracy.py` (113 domains on a clean checkout, not 114). Tests: `20_TESTS/test_vault_access_perf.py`.
+
 ## 2026-10-06T19:30Z — Universal vault access (DONE on branch, PR open)
 
 Branch `claude/vault-universal-access`.

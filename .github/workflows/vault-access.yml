@@ -43,5 +43,6 @@ jobs:
             20_TESTS/test_vault_access_core.py \
             20_TESTS/test_vault_access_ollama_telegram.py \
             20_TESTS/test_vault_access_clients.py \
+            20_TESTS/test_vault_access_perf.py \
             20_TESTS/test_agent_docs_memory_interfaces.py \
             20_TESTS/test_memory_mcp_server.py
