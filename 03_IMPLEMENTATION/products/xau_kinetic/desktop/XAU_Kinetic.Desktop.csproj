@@ -14,6 +14,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.2" />
+    <!-- Microsoft.Data.Sqlite 8.0.x brings SQLitePCLRaw 2.1.6 (bundled SQLite with a known HIGH advisory) -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.11" />
   </ItemGroup>
 
 </Project>
