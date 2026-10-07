@@ -83,6 +83,17 @@ REPORT_MD_PATH = (
 )
 
 
+def arm_suffixed(path: Path, ranking_arm: str) -> Path:
+    """Artifacts for a non-baseline arm get their own filename.
+
+    The committed baseline artifacts stay where they are: a second arm must be
+    comparable against them, not silently overwrite them.
+    """
+    if ranking_arm == RANKING_ARM_BASELINE:
+        return path
+    return path.with_name(f"{path.stem}__{ranking_arm}{path.suffix}")
+
+
 def wilson_score_interval(k: int, n: int, confidence: float = 0.95) -> Dict[str, float]:
     """Calculates asymmetric Wilson score confidence interval for a binomial proportion."""
     if n == 0:
@@ -169,11 +180,18 @@ class RetrievalLossFunnel:
         controller: Optional[MemoryController] = None,
         index: Optional[VaultIndex] = None,
         storage: Optional[FileStorageEngine] = None,
+        ranking_arm: str = RANKING_ARM_BASELINE,
     ):
         self.repo_root = Path(repo_root) if repo_root else REPO_ROOT
         self._index = index
         self._storage = storage
         self._controller = controller
+        # The original run hardcoded RANKING_ARM_BASELINE while search() defaults
+        # to RANKING_ARM_FUSED_SCORE, so the whole funnel described a ranking no
+        # caller uses. The default here stays BASELINE so the committed artifact
+        # remains reproducible; `--ranking-arm` measures the production arm and
+        # writes to its own files.
+        self.ranking_arm = ranking_arm
         self._cases: Optional[List[Dict[str, Any]]] = None
 
     @property
@@ -196,7 +214,7 @@ class RetrievalLossFunnel:
                 index=self.index,
                 enable_graph_expansion=False,
                 strict_graph_expansion=False,
-                ranking_arm=RANKING_ARM_BASELINE,
+                ranking_arm=self.ranking_arm,
                 enable_spreading_activation=False,
                 enable_cognitive_core=False,
             )
@@ -1246,6 +1264,11 @@ def main() -> int:
     parser.add_argument("--diagnose", action="store_true", help="Run full diagnostic across operating points and generate artifacts (PR 3)")
     parser.add_argument("--render-only", action="store_true", help="Render LOSS_FUNNEL_REPORT.md from existing loss_funnel_cases.json")
     parser.add_argument("--all", action="store_true", help="Run negative controls and full diagnostic")
+    parser.add_argument(
+        "--ranking-arm", default=RANKING_ARM_BASELINE,
+        help=("Ranking arm to measure. The original run hardcoded 'baseline' while "
+              "search() defaults to 'fused_score'; pass fused_score to measure the "
+              "arm production actually uses. Non-baseline arms write to their own files."))
 
     args = parser.parse_args()
 
@@ -1254,16 +1277,19 @@ def main() -> int:
     run_diagnose = args.diagnose or args.all
     render_only = args.render_only
 
-    harness = RetrievalLossFunnel()
+    harness = RetrievalLossFunnel(ranking_arm=args.ranking_arm)
+    cases_json_path = arm_suffixed(CASES_JSON_PATH, args.ranking_arm)
+    report_md_path = arm_suffixed(REPORT_MD_PATH, args.ranking_arm)
+    print(f"RANKING_ARM={args.ranking_arm}")
 
     if render_only:
-        if not CASES_JSON_PATH.exists():
-            print(f"Error: {CASES_JSON_PATH} not found. Run with --diagnose first.")
+        if not cases_json_path.exists():
+            print(f"Error: {cases_json_path} not found. Run with --diagnose first.")
             return 1
-        data = json.loads(CASES_JSON_PATH.read_text(encoding="utf-8"))
+        data = json.loads(cases_json_path.read_text(encoding="utf-8"))
         report_text = render_report(data)
-        REPORT_MD_PATH.write_text(report_text, encoding="utf-8")
-        print(f"Rendered report written to {REPORT_MD_PATH}")
+        report_md_path.write_text(report_text, encoding="utf-8")
+        print(f"Rendered report written to {report_md_path}")
         return 0
 
     if run_controls:
@@ -1303,13 +1329,16 @@ def main() -> int:
         print("=================================================================")
         t0 = time.perf_counter()
         data = diagnose_operating_points(harness)
-        CASES_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CASES_JSON_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
-        print(f"Diagnostic artifact saved to {CASES_JSON_PATH} ({CASES_JSON_PATH.stat().st_size} bytes)")
+        # Recorded in the artifact, because the first run's numbers were quoted
+        # for weeks without anyone knowing which arm produced them.
+        data["ranking_arm"] = harness.ranking_arm
+        cases_json_path.parent.mkdir(parents=True, exist_ok=True)
+        cases_json_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        print(f"Diagnostic artifact saved to {cases_json_path} ({cases_json_path.stat().st_size} bytes)")
 
         report_text = render_report(data)
-        REPORT_MD_PATH.write_text(report_text, encoding="utf-8")
-        print(f"Rendered report saved to {REPORT_MD_PATH} ({REPORT_MD_PATH.stat().st_size} bytes)")
+        report_md_path.write_text(report_text, encoding="utf-8")
+        print(f"Rendered report saved to {report_md_path} ({report_md_path.stat().st_size} bytes)")
         elapsed = time.perf_counter() - t0
         print(f"Full diagnostic elapsed: {elapsed:.2f} seconds")
 
