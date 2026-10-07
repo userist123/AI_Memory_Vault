@@ -1062,8 +1062,32 @@ def render_report(data: Dict[str, Any]) -> str:
             interp = "Plafonul absolut al pool-ului actual de candidați BM25/fuziune."
         w(f"| $k = {k_str}$ | **{reach} / 130** | **{rec:.2f}%** | [{l:.2f}%, {u:.2f}%] | {interp} |")
     w("")
-    w("> [!TIP]")
-    w(f"> **Plafonul Oracol la k=200 este {agent_op['oracle_ceiling']['200']['recall']*100:.2f}%** ({agent_op['oracle_ceiling']['200']['reachable_cases']}/130). Aceasta demonstrează că generatorul existent identifică nota corectă în peste 3 sferturi din cazuri. Niciun reranker pe acest pool nu poate depăși 76.15%, dar spațiul de creștere de la 16.15% la 76.15% este uriaș (+60 pp).")
+    _oracle200 = agent_op["oracle_ceiling"]["200"]
+    _summary = agent_op["summary"]
+    _lc = agent_op["loss_categories"]
+    _count = lambda name: (_lc[name]["count"] if isinstance(_lc.get(name), dict) else _lc.get(name, 0))
+    _recoverable = _count("PAGINATION_CUT")
+    _generation = _count("NEVER_CANDIDATE") + _count("CANDIDATE_LIMIT_CUT")
+    _policy = _count("AGENT_LIFECYCLE_FLOOR_EXCLUDED") + _count("RAW_EXCLUDED")
+    w("> [!WARNING]")
+    w("> **Acest plafon nu este o proprietate a pool-ului de candidați și nu trebuie citat ca atare.**")
+    w("> `diagnose_case` caută rangul notei de aur mai întâi în pagina returnată și abia")
+    w("> apoi în ordinea de fuziune, deci plafonul se mișcă odată cu brațul de clasare,")
+    w("> pentru un pool identic. La $k$ = `page_size`, pe brațul care sortează chiar după")
+    w("> scorul de fuziune, definiția devine circulară și plafonul coincide cu recall-ul obținut.")
+    w(f"> Cifra măsurată aici, la $k=200$, este {_oracle200['recall'] * 100:.2f}% "
+      f"({_oracle200['reachable_cases']}/{_summary['total_cases']}), "
+      f"față de un recall obținut de {_summary['recall'] * 100:.2f}% "
+      f"({_summary['hits']}/{_summary['total_cases']}).")
+    w(">")
+    w("> Plafonul independent de braț este măsurat separat, din ordinea de fuziune și numai")
+    w("> din ea, de `30_SCRIPTS/evaluation/measure_reranker_ceiling.py`; rezultatul este în")
+    w("> `07_EVALUATION/ranking_formula/reranker_ceiling.json`.")
+    w(">")
+    w("> Marja utilă pentru un reranker nu este diferența dintre recall și plafon, ci numai")
+    w(f"> cazurile care au nota de aur în pool sub rangul returnat: **{_recoverable}**. Celelalte")
+    w(f"> ratări sunt {_generation} eșecuri de generare de candidați și {_policy} excluderi de")
+    w("> politică, pe care reorganizarea listei nu le atinge.")
     w("")
     w("---")
     w("")
@@ -1244,7 +1268,7 @@ def render_report(data: Dict[str, Any]) -> str:
     w("")
     w("Pentru rigoare epistemologică și protecția integrității deciziilor viitoare, consemnăm explicit limitele interpretative ale acestor măsurători:")
     w("")
-    w("1. **Nu se poate concluziona că un reranker va atinge în practică plafonul de 76.15%**: Plafonul oracol presupune un judecător omniscient. Modelele reale de reranking (cum ar fi BGE-Reranker sau MiniLM) au propriile rate de eroare și deplasare negativă a candidaților corecți.")
+    w(f"1. **Nu se poate concluziona că un reranker va atinge în practică plafonul de {agent_op['oracle_ceiling']['200']['recall'] * 100:.2f}%**: Plafonul oracol presupune un judecător omniscient. Modelele reale de reranking (cum ar fi BGE-Reranker sau MiniLM) au propriile rate de eroare și deplasare negativă a candidaților corecți.")
     w("2. **Nu se poate concluziona că Dense Retrieval este lipsit de valoare**: Deși nu este blocajul majoritar în prezent, cele 9 cazuri de nepotrivire totală de vocabular (`lexical_overlap == 0`) nu pot fi rezolvate de niciun reranker pe candidați BM25. Dense Retrieval va rămâne necesar ca a doua etapă de optimizare odată ce problema de clasare este rezolvată.")
     w("3. **Nu se poate extrapola comportamentul la un corpus deschis / neindexat**: Măsurătorile reflectă exact compoziția actuală a celor 969 de note din depozit. Modificări majore în ontologie sau adăugarea de sute de note noi pot schimba dinamica densității lexicale.")
     w("4. **Nu se poate concluziona că limba română este mai dificilă pentru modelele de limbaj**: Deficitul observat este strict un artefact mecanic de tokenizare regex în codul Python (`TOKEN_RE`), nu o incapacitate cognitivă a algoritmilor.")

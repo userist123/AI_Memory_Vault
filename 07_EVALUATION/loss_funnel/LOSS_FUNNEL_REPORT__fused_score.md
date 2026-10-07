@@ -92,8 +92,22 @@ Plafonul oracol reprezintă rata de succes maximă teoretică ce ar putea fi ati
 | $k = 100$ | **87 / 130** | **66.92%** | [58.45%, 74.42%] | Peste 70% din întrebări pot fi rezolvate fără modificarea generării de candidați. |
 | $k = 200$ | **94 / 130** | **72.31%** | [64.06%, 79.28%] | Plafonul absolut al pool-ului actual de candidați BM25/fuziune. |
 
-> [!TIP]
-> **Plafonul Oracol la k=200 este 72.31%** (94/130). Aceasta demonstrează că generatorul existent identifică nota corectă în peste 3 sferturi din cazuri. Niciun reranker pe acest pool nu poate depăși 76.15%, dar spațiul de creștere de la 16.15% la 76.15% este uriaș (+60 pp).
+> [!WARNING]
+> **Acest plafon nu este o proprietate a pool-ului de candidați și nu trebuie citat ca atare.**
+> `diagnose_case` caută rangul notei de aur mai întâi în pagina returnată și abia
+> apoi în ordinea de fuziune, deci plafonul se mișcă odată cu brațul de clasare,
+> pentru un pool identic. La $k$ = `page_size`, pe brațul care sortează chiar după
+> scorul de fuziune, definiția devine circulară și plafonul coincide cu recall-ul obținut.
+> Cifra măsurată aici, la $k=200$, este 72.31% (94/130), față de un recall obținut de 18.46% (24/130).
+>
+> Plafonul independent de braț este măsurat separat, din ordinea de fuziune și numai
+> din ea, de `30_SCRIPTS/evaluation/measure_reranker_ceiling.py`; rezultatul este în
+> `07_EVALUATION/ranking_formula/reranker_ceiling.json`.
+>
+> Marja utilă pentru un reranker nu este diferența dintre recall și plafon, ci numai
+> cazurile care au nota de aur în pool sub rangul returnat: **70**. Celelalte
+> ratări sunt 20 eșecuri de generare de candidați și 16 excluderi de
+> politică, pe care reorganizarea listei nu le atinge.
 
 ---
 
@@ -255,7 +269,7 @@ Investigația empirică directă asupra stocării și pipeline-ului lexical rele
 
 Pentru rigoare epistemologică și protecția integrității deciziilor viitoare, consemnăm explicit limitele interpretative ale acestor măsurători:
 
-1. **Nu se poate concluziona că un reranker va atinge în practică plafonul de 76.15%**: Plafonul oracol presupune un judecător omniscient. Modelele reale de reranking (cum ar fi BGE-Reranker sau MiniLM) au propriile rate de eroare și deplasare negativă a candidaților corecți.
+1. **Nu se poate concluziona că un reranker va atinge în practică plafonul de 72.31%**: Plafonul oracol presupune un judecător omniscient. Modelele reale de reranking (cum ar fi BGE-Reranker sau MiniLM) au propriile rate de eroare și deplasare negativă a candidaților corecți.
 2. **Nu se poate concluziona că Dense Retrieval este lipsit de valoare**: Deși nu este blocajul majoritar în prezent, cele 9 cazuri de nepotrivire totală de vocabular (`lexical_overlap == 0`) nu pot fi rezolvate de niciun reranker pe candidați BM25. Dense Retrieval va rămâne necesar ca a doua etapă de optimizare odată ce problema de clasare este rezolvată.
 3. **Nu se poate extrapola comportamentul la un corpus deschis / neindexat**: Măsurătorile reflectă exact compoziția actuală a celor 969 de note din depozit. Modificări majore în ontologie sau adăugarea de sute de note noi pot schimba dinamica densității lexicale.
 4. **Nu se poate concluziona că limba română este mai dificilă pentru modelele de limbaj**: Deficitul observat este strict un artefact mecanic de tokenizare regex în codul Python (`TOKEN_RE`), nu o incapacitate cognitivă a algoritmilor.
