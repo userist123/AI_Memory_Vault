@@ -117,6 +117,17 @@ pretinde că e owner. Prin CLI și MCP nu se poate pretinde nici canalul local (
 4. `powershell -File 30_SCRIPTS/run/start_telegram_vault_bot.ps1`. Opțional, rulezi botul sub un cont
    read-only: `30_SCRIPTS/run/Install-VaultReaderAccount.ps1`.
 
+Înainte de Telegram, verifici tot lanțul local, fără token și fără allowlist:
+
+    python -m cognitive_core.telegram_vault_bot --ask "citește VAULT_STATE.md"     # extractiv, fără model
+    python -m cognitive_core.telegram_vault_bot --ask "<o întrebare>"              # model + verificare
+
+Iese cu 0 doar dacă răspunsul e ancorat (citire verbatim sau citate verificate), altfel cu 3.
+Toată verificarea pe Windows (teste, rute, Ollama, porțile Telegram, MCP în Claude Code/Codex/Gemini,
+opțional build .NET) se face cu un singur script, care nu instalează nimic:
+
+    powershell -ExecutionPolicy Bypass -File 30_SCRIPTS/run/Verify-VaultOnWindows.ps1 [-Full] [-Build]
+
 **Ce s-a schimbat față de botul care a inventat `VAULT_STATE.md`:**
 - „citește X”, `/read X` și un `vault://` sunt **extractive**: răspunsul e textul verbatim plus citarea, fără niciun apel la model.
 - Întrebările merg pe `/api/chat` nativ, cu `num_ctx` explicit, temperatură 0 și schemă JSON.

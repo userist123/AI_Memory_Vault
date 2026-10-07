@@ -390,7 +390,8 @@ class VaultAssistant:
                 cites, shown = [], []
                 for c in answer["citations"]:
                     ev = evidence[int(c["evidence_id"][1:]) - 1]
-                    cite = f"{ev['uri']} sha256:{ev['sha12']} L{ev['line_start']}-L{ev['line_end']}"
+                    a, b = quote_lines(ev, c["quote"])
+                    cite = f"{ev['uri']} sha256:{ev['sha12']} L{a}-L{b}"
                     cites.append(cite)
                     shown.append(f"— „{c['quote'].strip()}” ({cite})")
                 cites = list(dict.fromkeys(cites))
@@ -416,6 +417,21 @@ class VaultAssistant:
         trace.append(f"[ANSWER] fallback=extractive code={code.value}")
         return Reply(f"{why}; fragmentele relevante din vault sunt:\n\n" + "\n\n".join(parts), code.value,
                      "fallback", cites, trace)
+
+
+def quote_lines(ev: Dict[str, Any], quote: str) -> Tuple[int, int]:
+    """The exact lines a verified quote spans inside its evidence block (file line numbers).
+
+    The verifier matches after normalize_quote, so a quote may cross a line break; the smallest
+    window of consecutive lines (at most 12) that contains it is returned; otherwise the whole block.
+    """
+    lines = ev["text"].split("\n")
+    target = normalize_quote(quote)
+    for width in range(1, min(len(lines), 12) + 1):
+        for i in range(len(lines) - width + 1):
+            if target in normalize_quote("\n".join(lines[i:i + width])):
+                return ev["line_start"] + i, ev["line_start"] + i + width - 1
+    return ev["line_start"], ev["line_end"]
 
 
 def _error_text(env: Dict[str, Any]) -> str:

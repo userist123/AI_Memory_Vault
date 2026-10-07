@@ -285,3 +285,39 @@ def test_split_counts_utf16_units():
     from interfaces.telegram_vault_bot import split_message, tg_len
     parts = split_message("😀" * 3000)
     assert all(tg_len(p) <= 4000 for p in parts) and "".join(parts) == "😀" * 3000
+
+
+def test_ask_once_prints_the_reply_and_exits_by_grounding(vault, capsys):
+    from interfaces.telegram_vault_bot import ask_once
+    model = FakeOllama()
+    assert ask_once(assistant(vault, model), "/read VAULT_STATE") == 0
+    out = capsys.readouterr()
+    assert "1124 notes" in out.out and "[REPLY] mode=extractive code=OK" in out.err
+    assert "[TOOL_CALL] tool=vault_read" in out.err and not model.calls
+    assert ask_once(assistant(vault, model), "citește NU_EXISTA_NICAIERI.md") == 3
+
+
+def test_ask_needs_no_allowlist_and_no_token(monkeypatch, capsys):
+    from interfaces import telegram_vault_bot
+    monkeypatch.delenv("VAULT_TELEGRAM_ALLOWED_IDS", raising=False)
+    monkeypatch.delenv("VAULT_TELEGRAM_TOKEN", raising=False)
+    monkeypatch.setattr(telegram_vault_bot, "telegram_api", lambda token: pytest.fail("Telegram must not be reached"))
+    assert telegram_vault_bot.main(["--ask", "/help"]) == 0
+    assert "[REPLY] mode=help code=OK" in capsys.readouterr().err
+
+
+def test_a_citation_points_at_the_exact_line_of_its_quote(vault):
+    root = vault[0]
+    lines = (root / "00_GOVERNANCE" / "VAULT_STATE.md").read_text(encoding="utf-8").split("\n")
+    n = next(i for i, line in enumerate(lines, 1) if "It has 1124 notes in the index." in line)
+    model = FakeOllama({"status": "ANSWERED", "answer_ro": "Indexul are 1124 de note.",
+                        "citations": [{"evidence_id": "E1", "quote": "It has 1124 notes in the index."}]})
+    reply = assistant(vault, model).handle("Câte note are indexul în vault state?")
+    assert reply.citations[0].endswith(f" L{n}-L{n}"), reply.citations
+
+
+def test_a_quote_across_a_line_break_cites_both_lines():
+    from vault_access.ollama_assistant import quote_lines
+    ev = {"text": "alpha\nbeta gamma\ndelta epsilon\nzeta", "line_start": 10, "line_end": 13}
+    assert quote_lines(ev, "gamma delta") == (11, 12)
+    assert quote_lines(ev, "not there at all") == (10, 13)

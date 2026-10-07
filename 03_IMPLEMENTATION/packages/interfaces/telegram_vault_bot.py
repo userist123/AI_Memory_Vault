@@ -1,6 +1,7 @@
 """Telegram front-end for the local vault assistant (long polling; no webhook is exposed).
 
     python -m cognitive_core.telegram_vault_bot --check     # startup checks only
+    python -m cognitive_core.telegram_vault_bot --ask "citește VAULT_STATE.md"   # one local turn, no Telegram
     python -m cognitive_core.telegram_vault_bot             # run
 
 Security model
@@ -191,9 +192,28 @@ def startup_checks(access, allowed: Set[int]) -> List[str]:
     return lines
 
 
+def ask_once(assistant, text: str) -> int:
+    """One turn on the console: the reply the bot would send, then its trace and citations.
+
+    Exit 0 when the reply is grounded (verified answer, verbatim read, listing, search, help),
+    3 otherwise (refused, not found, fallback to raw fragments, model error).
+    """
+    reply = assistant.handle(text)
+    log(f"[REPLY] mode={reply.mode} code={reply.code}")
+    for line in reply.trace:
+        log(line)
+    for citation in reply.citations:
+        log(f"[CITE] {citation}")
+    print(reply.text, flush=True)
+    grounded = reply.code == "OK" and reply.mode in ("answer", "extractive", "list", "search", "help")
+    return 0 if grounded else 3
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m cognitive_core.telegram_vault_bot")
     ap.add_argument("--check", action="store_true", help="run the startup checks and exit")
+    ap.add_argument("--ask", metavar="TEXT",
+                    help="answer one message locally through the same pipeline (no Telegram, no token) and exit")
     args = ap.parse_args(argv)
     from vault_access.core import VaultAccess
     from vault_access.ollama_assistant import VaultAssistant
@@ -205,6 +225,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not (access.repo_root / "00_GOVERNANCE").is_dir():
         log("[ABORT] vault root has no 00_GOVERNANCE")
         return 1
+    if args.ask is not None:
+        return ask_once(VaultAssistant(access), args.ask)
     if not allowed:
         log(f"[ABORT] empty allowlist: add your numeric Telegram user id to telegram.allowed_user_ids "
             f"in 04_CONFIG/access_policy.yaml or set {ALLOWED_ENV}")

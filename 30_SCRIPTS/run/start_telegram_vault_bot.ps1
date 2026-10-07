@@ -7,7 +7,8 @@
   bot's startup gates, then starts long polling. The token is read from $env:VAULT_TELEGRAM_TOKEN
   or from telegram.token in %APPDATA%\ai-memory-vault (never from the repository).
 
-  Recommended: run it under a dedicated read-only account (see 30_SCRIPTS/run/README.md).
+  Recommended: run it under a dedicated read-only account (Install-VaultReaderAccount.ps1;
+  see 10_DOCUMENTATION/procedures/Connecting_Every_AI_To_The_Vault.md, section 5).
 #>
 [CmdletBinding()]
 param(
