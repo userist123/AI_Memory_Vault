@@ -14,7 +14,7 @@ under load, 28 s earlier; Codex `tool_timeout_sec = 60`). Now: LibYAML loader wh
 per file, headings scanned once, and the MCP server warms the route table in a background thread after the handshake
 (`VAULT_ACCESS_WARM=0` disables it). A note with an impossible YAML scalar (`date: 2026-13-45`) used to break the whole
 table; it is now one unreadable (fail-closed) note. VAULT_STATE.md route/domain count is checked by
-`20_TESTS/test_vault_state_accuracy.py` (113 domains on a clean checkout, not 114). Tests: `20_TESTS/test_vault_access_perf.py`.
+`20_TESTS/test_vault_state_accuracy.py` (4221 routes in 114 domains after PR #203; 113 before it, not the 114 first written). Tests: `20_TESTS/test_vault_access_perf.py`.
 
 ## 2026-10-06T19:30Z — Universal vault access (DONE on branch, PR open)
 
