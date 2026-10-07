@@ -61,3 +61,36 @@ two places: a cache-version string, and the graph-expansion validity check.
 Candidate generation reads the storage pool, not the index. With expansion off,
 passing an index cannot change which notes are returned or in what order. That is
 reasoning about the code, not a measurement, and is recorded as such.
+
+## D-4 — a correction to the preregistration's own text
+
+`PREREGISTRATION.md`, under "What stands", says the ASCII tokenizer is called
+only from `interfaces/benchmarks/retrieval_ab.py` and that its blast radius is a
+benchmark script. **That is wrong, and the error is mine.**
+
+`retrieval/context/candidate_generation.py` imports `tokenize` (line 50) and
+calls it on every document and on the query (lines 155 and 158). That is the
+production candidate-generation path. The tokenizer defect — `învățare` becoming
+`['nv', 'are']` — affects real retrieval.
+
+The preregistration is not rewritten: it was committed before the results and
+stays as it was. The correction lives here.
+
+Why the tokenizer experiment nevertheless measured zero difference across three
+arms, which is the observation I misexplained: the `memory_controller`
+compatibility shim gives `__path__` entries spanning `retrieval/`, `memory/` and
+others, so the same file is imported under two names and becomes two distinct
+module objects.
+
+    memory_controller.context.candidate_generation   <- what the controller uses
+    retrieval.context.candidate_generation           <- what the experiment patched
+    same file on disk, different module objects, id differs, `is` is False
+
+`eval_tokenizer_experiment.py` does `import retrieval.context.candidate_generation
+as cg` and then `cg.tokenize = tok_fn`. The controller's `generate_candidates`
+belongs to the other module object and keeps the original `tokenize`. So the
+patch was inert and all three arms were the same arm — which the experiment's
+report presents as a finding, at 21/130 three times over.
+
+This is a hazard for anything in this repository that monkeypatches a module
+attribute, not just that one script.
