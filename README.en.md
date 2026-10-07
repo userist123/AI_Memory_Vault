@@ -651,6 +651,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
+| owner approval for every change to `main` (protected GitHub environment) | `owner-approval-gate.yml` |
 | ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |
