@@ -6,7 +6,10 @@ Ensures:
 2. Clean relations (no noisy part_of -> slot relations).
 3. Rich body wikilinks to existing promoted notes so every note reaches the graph with 0 islands.
 4. Note length >= 400 chars so usable as graph seeds/golds.
-5. In-place update of ontology slot files (status: promoted, promoted_note_id: <uuid>).
+5. Ontology slot files are NOT modified by default. The slots are ACTIVE notes that the owner has
+   attested (07_EVALUATION/integrity/active_notes.sha256.json); marking a row "promoted" changes
+   them, which is an owner decision. `--update-slots` does it, and must be followed by the owner's
+   `python 30_SCRIPTS/verification/active_note_integrity.py --record`.
 """
 import glob
 import importlib.util
@@ -83,7 +86,7 @@ def slugify(text: str) -> str:
     return re.sub(r'[\s\-]+', '_', cleaned).strip('_')
 
 
-def promote_all():
+def promote_all(update_slots: bool = False):
     verdicts_data = json.loads(VERDICTS_FILE.read_text(encoding="utf-8"))
     verdicts = {v["concept"].lower(): v for v in verdicts_data["verdicts"]}
 
@@ -200,7 +203,7 @@ def promote_all():
                             "path": str(note_path)
                         })
 
-        if modified:
+        if modified and update_slots:
             sfile.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     print(f"Successfully promoted {len(promoted_records)} concepts to {KNOWLEDGE_DIR}.")
@@ -208,5 +211,12 @@ def promote_all():
 
 
 if __name__ == "__main__":
-    records = promote_all()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--update-slots", action="store_true",
+                        help="also rewrite the ACTIVE ontology slots (owner action; re-record the integrity manifest)")
+    cli = parser.parse_args()
+    records = promote_all(update_slots=cli.update_slots)
     print(f"Total promoted: {len(records)}")
+    if not cli.update_slots:
+        print("Ontology slots left unchanged (ACTIVE, owner-attested). Use --update-slots as the owner.")

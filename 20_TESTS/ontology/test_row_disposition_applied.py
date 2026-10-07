@@ -51,11 +51,11 @@ def _clean(s: str) -> str:
 # --- Positive Verification Gate ---
 
 def test_remaining_row_counts_and_disposition():
-    """Verify exactly 103 rows remain on disk with expected categories (93 post-disposition + 10 OpenStax)."""
+    """Verify exactly 93 rows remain on disk with expected categories."""
     manifest = load_manifest(MANIFEST_PATH)
     rows = slot_rows.read_all(SLOTS_DIR)
 
-    assert len(rows) == 103, f"Expected exactly 103 rows remaining, found {len(rows)}"
+    assert len(rows) == 93, f"Expected exactly 93 rows remaining, found {len(rows)}"
 
     # All 112 deleted rows must NOT be present in their respective files (and across slots)
     deleted_manifest_entries = [r for r in manifest.rows if r.disposition == DISPOSITION_DELETE]
@@ -85,15 +85,14 @@ def test_remaining_row_counts_and_disposition():
 
 
 def test_promoted_rows_and_invariant_i003_preserved():
-    """All 94 promoted concepts must remain with status='promoted' and valid note IDs."""
+    """All 43 promoted concepts must remain with status='promoted' and identical note IDs."""
     rows = slot_rows.read_all(SLOTS_DIR)
 
     promoted_rows = [r for r in rows if r.status == slot_rows.STATUS_PROMOTED]
-    assert len(promoted_rows) == 94, f"Expected 94 promoted rows, found {len(promoted_rows)}"
+    assert len(promoted_rows) == 43, f"Expected 43 promoted rows, found {len(promoted_rows)}"
 
     for r in promoted_rows:
         assert r.promoted_note_id, f"Promoted concept '{r.concept}' missing promoted_note_id"
-        assert len(r.promoted_note_id) == 36, f"Invalid UUID for '{r.concept}': {r.promoted_note_id}"
         assert len(r.promoted_note_id) == 36, f"Invalid UUID for '{r.concept}': {r.promoted_note_id}"
 
 
@@ -147,13 +146,13 @@ def test_find_slot_conflicts_zero_on_final_tree():
 
 # --- Negative Controls (B.3) ---
 
-def _verify_slot_tree(slots_path: pathlib.Path, expected_count: int = 103):
+def _verify_slot_tree(slots_path: pathlib.Path, expected_count: int = 93):
     """Core verification function used by the gate and negative controls."""
     rows = slot_rows.read_all(slots_path)
 
     promoted = [r for r in rows if r.status == slot_rows.STATUS_PROMOTED]
-    if len(promoted) != 94:
-        raise ValueError(f"Expected 94 promoted rows, got {len(promoted)}")
+    if len(promoted) != 43:
+        raise ValueError(f"Expected 43 promoted rows, got {len(promoted)}")
 
     if len(rows) != expected_count:
         raise ValueError(f"Expected {expected_count} rows, got {len(rows)}")
@@ -195,8 +194,8 @@ def test_negative_control_planted_deletion_of_promoted(tmp_path):
     lines = [l for l in content.splitlines() if "chunking" not in l]
     target_file.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"Expected 94 promoted rows, got 93"):
-        _verify_slot_tree(fake_slots, expected_count=102)
+    with pytest.raises(ValueError, match=r"Expected 43 promoted rows, got 42"):
+        _verify_slot_tree(fake_slots)
 
 
 def test_negative_control_planted_tampering_of_promoted_note_id(tmp_path):
@@ -238,4 +237,4 @@ def test_negative_control_planted_duplicate_slot_conflict(tmp_path):
     target_file.write_text(content + "\n" + new_line + "\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match=r"Slot conflict detected"):
-        _verify_slot_tree(fake_slots, expected_count=104)
+        _verify_slot_tree(fake_slots, expected_count=94)

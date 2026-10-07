@@ -29,4 +29,4 @@ How does information connect?
 | concept | source_book | confidence | status | date_added | promoted_note_id | evidence | occurrences |
 |---|---|---|---|---|---|---|---|
 | shared memory | memory_in_the_age_of_ai_agents | 0.95 | proposed | 2026-09-12 | | learning with memory systems, multimodal memory, shared memory for multi-agent systems, and trustworthiness issues. We hope this survey serves not only as a reference for existing work, but also as | 9 |
-| collective memory | why_we_forget | 0.95 | promoted | 2026-09-12 | 51edb1be-9b8d-49cb-a8ff-f9ae5d0732e0 | Answer:Collective memory shapes the narratives we share about historical events, such as wars. | 6 | 
+| collective memory | why_we_forget | 0.95 | proposed | 2026-09-12 | | Answer:Collective memory shapes the narratives we share about historical events, such as wars. | 6 |

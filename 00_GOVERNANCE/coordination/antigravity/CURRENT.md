@@ -17,7 +17,7 @@ completed:
         - Notes in index: 1105 (was 1041).
         - Graph edges: 485 (149 declared / 150 inferred / 186 wikilink).
         - Usable seeds: 200 (was 149), reachable golds: 138 (was 131).
-        - Slot rows: 103 total rows (94 promoted, 9 pending/unverified).
+        - Slot rows: 103 total rows (94 promoted, 9 pending/unverified) — REVERTED 2026-10-07 by owner decision: the ACTIVE slots stay as attested (93 rows, 43 promoted); the 51 new concept notes remain REVIEW candidates until the owner promotes them (promote_verified_batch.py --update-slots + active_note_integrity.py --record).
         - MIN_EDGES_BASELINE updated to 485 in corpus_health_gate.py.
      5. Verification Suite Passing (233/233 PASS in 37s): test_promoted_notes_reach_the_graph.py (189), test_vault_state_accuracy.py (11), test_corpus_health_gate.py (6), test_interference_gate.py (7), test_row_disposition_applied.py (8), test_ontology_slot_writers.py (9), test_staging_invariants.py (3)."
   - "Cognitive Core & Graph Hygiene Program (All 4 Phases Complete):
