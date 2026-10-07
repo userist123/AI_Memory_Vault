@@ -5,35 +5,35 @@ Execution is delegated to Sonnet 5.5 agents, one PR (or stacked pair) each, push
 ordinary commits to the PR's own head branch (no rebase, no force-push, no merge to main).
 
 ## Cross-PR constraint
-- [ ] `.gitleaks.toml`: everyone keeps the `[[allowlists]]` format. #209 must not
+- [x] `.gitleaks.toml`: everyone keeps the `[[allowlists]]` format. #209 must not
       reintroduce the legacy `[allowlist]` table (gitleaks rejects a file with both).
 
 ## Per PR
-- [ ] #203 Casa3D memory: fix 7 schema violations in `Casa3D.md` (UUID id, top-level
+- [x] #203 Casa3D memory: fix 7 schema violations in `Casa3D.md` (UUID id, top-level
       confidence/verification, source_type, relation `target_id`, drop `review_note`);
       move ledgers from `03_IMPLEMENTATION/projects/` to `02_PRODUCT/projects/Casa3D/`.
-- [ ] #215 deps audit: update PR body (mongodb 4→6, next-intl 0→4, site build fix),
+- [x] #215 deps audit: update PR body (mongodb 4→6, next-intl 0→4, site build fix),
       reword "never runs project code" (`dotnet restore` runs MSBuild), fix the 13
       trading-journal type errors.
-- [ ] #214 vault:// routes: cut the ~28 s first call (CSafeLoader, parse frontmatter
+- [x] #214 vault:// routes: cut the ~28 s first call (CSafeLoader, parse frontmatter
       once, warm-up at server start); test the VAULT_STATE route count.
-- [ ] #211 + #213 routing: fix `adapter_ref` → program name (one shared resolver, test
+- [x] #211 + #213 routing: fix `adapter_ref` → program name (one shared resolver, test
       against the real `04_CONFIG/agent_router.json`); single output dir for
       route.json/result.json; restore CLAUDE.md sections dropped by the rewrite
       (Protected Core, Production-Consumer rule, provenance/safety) + contract test;
       enforce `min_ttl_seconds`; VAULT_STATE row "not wired"; then #213 → #211.
-- [ ] #209 security audit: `.gitleaks.toml` back to `[[allowlists]]`; restore
+- [x] #209 security audit: `.gitleaks.toml` back to `[[allowlists]]`; restore
       CLAUDE.md quarantine contract (REVIEW readable, marked unverified) in
       `memory_access.py` / `pack_builder.py` + tests on non-verified fixtures; fix
       REST approve→promote; reviewer gate not self-declared; auth token in
       `vault_client.js`; skill import fails closed; honest PR body (unwired findings).
-- [ ] #207 owner-authority hook: truly fail-closed (try/except → deny, `|| exit 2`
+- [x] #207 owner-authority hook: truly fail-closed (try/except → deny, `|| exit 2`
       in settings), protocol stops claiming expiry/authentication it lacks, PR body.
       Gating policy (blocks Bash/Edit/Write without a broker) = owner decision.
-- [ ] #212 LogAnalyzer: guard `RawRegistry` subkey recursion (visited set + depth)
+- [x] #212 LogAnalyzer: guard `RawRegistry` subkey recursion (visited set + depth)
       + crafted-hive regression test; regex match timeouts in SigmaLite/YaraLite;
       malformed-input smoke tests for CFB/LNK/USN/JumpList/pcapng; PR body; CURRENT.md.
-- [ ] #206 Book-to-Memory: remove hardcoded HMAC fallback; drop `UNVERIFIED`
+- [x] #206 Book-to-Memory: remove hardcoded HMAC fallback; drop `UNVERIFIED`
       lifecycle state / schema widening the policy doesn't know; ablation must not
       score "with note" higher without data; stop injecting sentences into note
       bodies (revert the 9 notes); PR body.
@@ -44,4 +44,25 @@ ordinary commits to the PR's own head branch (no rebase, no force-push, no merge
 - #206: keep as one research PR or split into docs / notes / edges / code.
 
 ## Review
-(filled in after execution)
+(2026-10-07, after execution; every head below has local full-suite runs at 0 failures)
+
+| PR | Head | CI | Status |
+|---|---|---|---|
+| #203 Casa3D | d6d8dcc2 | green | **merged by owner** |
+| #215 deps audit | 612c3686 | green | ready; Polar SDK 0.22→0.49 + persisted `autopilot` plan need owner check |
+| #214 vault:// routes | 71432c2b | green | ready; first call 15 s → 5.6–8.8 s (0.2 s once warm) |
+| #212 LogAnalyzer | 3a8aa80a | green (Windows build 252/120) | ready; corpus run + page smoke test on Windows still owner-side |
+| #209 security audit | 73528a22 | green 34/35 (CodeQL neutral) | ready; memory probe 48/48 (main 38/48, before fix 2/48) |
+| #213 → #211 routing | 917ac413 | #213 green 12/12 | #211 turns green only once #213 lands in its branch (push was refused by the permission guard; owner merges #213) |
+| #207 owner guardrail | 0714656c | green | functional; **merging blocks most agent tools until a broker exists** |
+| #206 Book-to-Memory | 2fe1b674 | green | research-only; split recommended |
+
+Every PR still open merges cleanly with main after #203 (trial merge + state test).
+
+Owner decisions collected from the agents:
+- #207: block before a broker exists? separate bot identity for agents; configure-script side effects.
+- #206: split into docs / notes / edge verdicts / code; accept the 9 restored notes as listed islands.
+- #209: keep serving never-stamped REVIEW notes flagged unverified; trim ~1k lines of PR209 docs; wire the runtime-authority layer (separate PR).
+- #212: Sigma stops a rule after its first timeout; YARA 10 s limit vs large files.
+- #215: test Polar checkout in a sandbox.
+- Suggested merge order: #215 → #214 → #212 → #209 → #213→#211 → #207 → #206.
