@@ -37,6 +37,7 @@ from memory_controller.authorizer import Principal
 from memory_controller.controller import (
     AGENT_LIFECYCLE_FLOOR,
     RANKING_ARM_BASELINE,
+    RANKING_ARM_FUSED_SCORE,
     Lifecycle,
     MemoryController,
 )
@@ -104,6 +105,48 @@ def tokenize_stripped(text: str) -> List[str]:
     return [t for t in TOKEN_RE_BASE.findall(clean) if t not in STOP_BASE and len(t) > 1]
 
 
+#: Every module object that holds a `tokenize` the search path can reach.
+#: The `memory_controller` compatibility shim imports the same files under a
+#: second name, so `retrieval.context.candidate_generation` and
+#: `memory_controller.context.candidate_generation` are two distinct module
+#: objects. The first version of this experiment patched only the former; the
+#: controller calls the latter, so every arm ran the production tokenizer.
+_TOKENIZE_MODULE_SUFFIXES = ("hybrid_retrieval", "context.candidate_generation")
+
+
+def _tokenize_holders() -> List[Any]:
+    return [m for name, m in list(sys.modules.items())
+            if m is not None and name.endswith(_TOKENIZE_MODULE_SUFFIXES)
+            and hasattr(m, "tokenize")]
+
+
+ORIGINAL_TOKENIZE = {id(m): m.tokenize for m in _tokenize_holders()}
+
+
+def install_tokenizer(fn: Callable[[str], List[str]]) -> None:
+    """Replace `tokenize` in every alias, then prove the controller sees it."""
+    for module in _tokenize_holders():
+        module.tokenize = fn
+    controller_module = sys.modules[MemoryController.__module__]
+    generator_module = sys.modules[controller_module.generate_candidates.__module__]
+    if generator_module.tokenize is not fn:
+        raise RuntimeError(
+            f"tokenizer patch did not reach {generator_module.__name__}; "
+            "the arm would silently run the production tokenizer")
+
+
+def restore_tokenizer() -> None:
+    for module in _tokenize_holders():
+        original = ORIGINAL_TOKENIZE.get(id(module))
+        if original is not None:
+            module.tokenize = original
+
+
+def tokenize_sabotage(text: str) -> List[str]:
+    """The negative control: no tokens at all. Candidate generation must collapse."""
+    return []
+
+
 def wilson_score_interval(k: int, n: int, confidence: float = 0.95) -> Dict[str, float]:
     """Calculates asymmetric Wilson score confidence interval."""
     if n == 0:
@@ -163,11 +206,10 @@ def evaluate_arm(
     cases: List[Dict[str, Any]],
     storage: FileStorageEngine,
     index: VaultIndex,
+    ranking_arm: str = RANKING_ARM_FUSED_SCORE,
 ) -> ArmResult:
     """Evaluates a single tokenizer arm across all cases."""
-    # Patch tokenizers
-    hr.tokenize = tok_fn
-    cg.tokenize = tok_fn
+    install_tokenizer(tok_fn)
 
     # Fresh controller per arm ensures completely clean cache and isolation
     controller = MemoryController(
@@ -175,7 +217,7 @@ def evaluate_arm(
         index=index,
         enable_graph_expansion=False,
         strict_graph_expansion=False,
-        ranking_arm=RANKING_ARM_BASELINE,
+        ranking_arm=ranking_arm,
         enable_spreading_activation=False,
         enable_cognitive_core=False,
     )
@@ -341,7 +383,7 @@ def render_report(data: Dict[str, Any]) -> str:
     w("> **Depozit**: `userist123/AI_Memory_Vault_CODEX_READY`  ")
     w(f"> **Hash Benchmark Înghețat (SHA-256)**: `{meta['benchmark_sha256']}`  ")
     w(f"> **Cazuri măsurabile**: {meta['measurable_cases']} din {meta['total_benchmark_cases']} ({meta['ro_cases']} română, {meta['en_cases']} engleză)  ")
-    w("> **Stare**: FINALIZAT — EVALUAT CONFORM PREÎNREGISTRĂRII  ")
+    w(f"> **Braț de clasare**: `{meta.get('ranking_arm', 'baseline (nedeclarat)')}`  ")
     w("")
     w("---")
     w("")
@@ -365,64 +407,102 @@ def render_report(data: Dict[str, Any]) -> str:
         a = arms[arm_key]
         w(f"| **{a['arm_name']}** | {a['hits_all']} / 130 | **{a['recall_all']*100:.2f}%** | [{a['ci_all']['lower']*100:.2f}%, {a['ci_all']['upper']*100:.2f}%] | {a['hits_ro']} / 61 | **{a['recall_ro']*100:.2f}%** | {a['hits_en']} / 69 | **{a['recall_en']*100:.2f}%** | {a['reachable_in_top200_ro']} / 61 |")
     w("")
+    def same_hits(x: str, y: str) -> bool:
+        return arms[x]["per_case_hits"] == arms[y]["per_case_hits"]
+
+    identical = same_hits("arm1_baseline", "arm2_unicode") and same_hits("arm1_baseline", "arm3_stripped")
+    base = arms["arm1_baseline"]
     w("> [!IMPORTANT]")
-    w("> **Constatare Empirică Directă**: Toate cele 3 brațe obțin **exact același număr de reușite (21 / 130, 16.15%)**, cu exact aceleași 9 reușite pe română (14.75%) și 12 reușite pe engleză (17.39%).")
+    if identical:
+        w(f"> **Toate cele 3 brațe au exact același set de reușite** ({base['hits_all']} / {base['total_cases']}). "
+          "Înainte de a citi asta ca rezultat, verificați controlul negativ de mai jos: un set identic "
+          "este și semnătura unui braț care nu ajunge în calea de căutare.")
+    else:
+        w("> **Brațele diferă.** Diferențele, pe cazuri, sunt în tabelul 2.")
+    w("")
+
+    ctrl = data.get("negative_control")
+    w("### Control negativ — tokenizator gol")
+    w("")
+    if ctrl is None:
+        w("> [!CAUTION]")
+        w("> **Acest artefact nu are control negativ.** Prima versiune a experimentului a modificat")
+        w("> `tokenize` doar în `retrieval.context.candidate_generation`, în timp ce controllerul folosește")
+        w("> `memory_controller.context.candidate_generation` — același fișier, alt obiect-modul, din cauza")
+        w("> shimului de compatibilitate. Toate brațele au rulat tokenizatorul de producție. Rezultatele de mai")
+        w("> sus nu măsoară nimic despre tokenizare.")
+    else:
+        verdict = "TRECUT" if ctrl["passed"] else "EȘUAT"
+        w(f"Cu `tokenize()` care întoarce `[]` pentru orice text, s-au obținut {ctrl['hits_all']} reușite, "
+          f"iar {ctrl['cases_changed_vs_baseline']} cazuri și-au schimbat rezultatul sau rangul notei de aur "
+          f"față de brațul 1. **Control {verdict}.** "
+          + ("Patch-ul ajunge în calea de căutare, deci brațele sunt reale."
+             if ctrl["passed"] else "Brațele de mai sus sunt nule."))
+        mods = meta.get("patched_modules") or []
+        if mods:
+            w("")
+            w("Module în care a fost înlocuit `tokenize`: " + ", ".join(f"`{m}`" for m in mods) + ".")
     w("")
     w("---")
     w("")
     w("## 3. Tabelul 2 — Analiza Pereche și Testul Exact McNemar")
-    w("### [Punct de operare comparat: Principal.AI_AGENT, page_size=5, Floor: ACTIV]")
+    w(f"### [Punct de operare: Principal.AI_AGENT, page_size=5, braț de clasare `{meta.get('ranking_arm', 'baseline (nedeclarat)')}`]")
     w("")
-    w("| Comparație vs Baseline | Felie | Câștiguri ($b$) | Pierderi ($c$) | Cazuri Discordante | $\\Delta$ Cazuri | $\\Delta$ Procentual (pp) | $p$ McNemar Exact | Semnificație |")
+    w("| Comparație vs Baseline | Felie | Câștiguri ($b$) | Pierderi ($c$) | Cazuri Discordante | $\\Delta$ Cazuri | $\\Delta$ Procentual (pp) | $p$ McNemar Exact | Semnificație la 0.05 |")
     w("|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---|")
     for comp_name, comp in [("Brațul 2 (Unicode)", comp_u), ("Brațul 3 (Stripped)", comp_s)]:
         for slice_name, label in [("ro", "Română (N=61)"), ("en", "Engleză (N=69)"), ("all", "Total (N=130)")]:
             sc = comp[slice_name]
-            w(f"| {comp_name} | `{label}` | {sc['gains_b']} | {sc['losses_c']} | {sc['gains_b'] + sc['losses_c']} | {sc['delta_cases']:+d} | {sc['delta_pp']:+.2f} pp | `{sc['p_mcnemar']:.6f}` | Identic ($p = 1.0$) |")
+            disc = sc["gains_b"] + sc["losses_c"]
+            sig = ("fără cazuri discordante" if disc == 0
+                   else "semnificativ" if sc["p_mcnemar"] < 0.05 else "nesemnificativ")
+            w(f"| {comp_name} | `{label}` | {sc['gains_b']} | {sc['losses_c']} | {disc} | {sc['delta_cases']:+d} | {sc['delta_pp']:+.2f} pp | `{sc['p_mcnemar']:.6f}` | {sig} |")
     w("")
     w("---")
     w("")
-    w("## 4. Tabelul 3 — Evaluarea Formală a Ipotezelor Preînregistrate")
-    w("### [Punct de operare: Principal.AI_AGENT, page_size=5, Floor: ACTIV]")
+    w("## 4. Tabelul 3 — Evaluarea Ipotezelor Preînregistrate")
     w("")
-    w(r"| Criteriu / Ipoteză Preînregistrată | Condiție Formală | Măsurat Brațul 2 (Unicode) | Măsurat Brațul 3 (Stripped) | Verdict |")
-    w("|:---|:---|:---:|:---:|:---:|")
-    w(rf"| **H-TOKEN-1 (Câștig Română)** | $\Delta_{{\text{{RO}}}} \ge +5.00$ pp ($\ge 3$ cazuri) | **{comp_u['ro']['delta_pp']:+.2f} pp** (0 cazuri) | **{comp_s['ro']['delta_pp']:+.2f} pp** (0 cazuri) | **INFIRMATĂ** |")
-    w(rf"| **Non-Regresie Engleză** | $\Delta_{{\text{{EN}}}} \ge -1.45$ pp ($p > 0.10$) | **{comp_u['en']['delta_pp']:+.2f} pp** (0 pierderi) | **{comp_s['en']['delta_pp']:+.2f} pp** (0 pierderi) | **CONFIRMATĂ (Fără regresie)** |")
-    w(rf"| **Câștig Net Total** | $\Delta_{{\text{{Total}}}} \ge +1.54$ pp ($\ge 2$ cazuri) | **{comp_u['all']['delta_pp']:+.2f} pp** (0 cazuri) | **{comp_s['all']['delta_pp']:+.2f} pp** (0 cazuri) | **INFIRMATĂ** |")
+    w("Regula se aplică în cazuri, nu în puncte procentuale: preînregistrarea dă pentru română atât "
+      "„+5.00 pp” cât și „≥ 3 cazuri nete”, iar pe 61 de cazuri trei cazuri înseamnă 4.92 pp. "
+      "Numărul de cazuri este lectura neambiguă.")
     w("")
-    w("---")
+    w("| Criteriu | Condiție | Brațul 2 (Unicode) | Brațul 3 (Stripped) |")
+    w("|:---|:---|:---:|:---:|")
+    per_arm = verdicts.get("per_arm") or {}
+
+    def cell(arm: str, key: str, comp: Dict[str, Any], sl: str) -> str:
+        ok = per_arm.get(arm, {}).get(key)
+        mark = "—" if ok is None else ("da" if ok else "nu")
+        return f"{comp[sl]['delta_cases']:+d} cazuri ({comp[sl]['delta_pp']:+.2f} pp) — {mark}"
+
+    w(f"| H-TOKEN-1, câștig pe română | $\\ge 3$ cazuri nete | {cell('arm2_unicode', 'ro_gain_ge_3_cases', comp_u, 'ro')} | {cell('arm3_stripped', 'ro_gain_ge_3_cases', comp_s, 'ro')} |")
+    w(f"| Non-regresie pe engleză | $\\ge -1$ caz, iar la pierdere $p > 0.10$ | {cell('arm2_unicode', 'en_non_regression', comp_u, 'en')} | {cell('arm3_stripped', 'en_non_regression', comp_s, 'en')} |")
+    w(f"| Câștig net total | $\\ge 2$ cazuri nete | {cell('arm2_unicode', 'total_gain_ge_2_cases', comp_u, 'all')} | {cell('arm3_stripped', 'total_gain_ge_2_cases', comp_s, 'all')} |")
     w("")
-    w("## 5. Tabelul 4 — Aplicarea Regulii Decizionale Preînregistrate")
-    w("### [Punct de operare: Principal.AI_AGENT, page_size=5, Floor: ACTIV]")
-    w("")
-    w(r"| Criteriu Decizional Preînregistrat | Condiție Formală | Valoare Măsurată | Verdict Decizional |")
-    w("|:---|:---|:---:|:---|")
-    w(rf"| **Adoptare Braț Nou** | $\Delta_{{\text{{RO}}}} \ge +5.00$ pp **ȘI** $\Delta_{{\text{{EN}}}} \ge -1.45$ pp **ȘI** $\Delta_{{\text{{Total}}}} \ge +1.54$ pp | $\Delta_{{\text{{RO}}}} = +0.00$ pp, $\Delta_{{\text{{EN}}}} = +0.00$ pp, $\Delta_{{\text{{Total}}}} = +0.00$ pp | **{verdicts['decision']}** |")
-    w(r"| **Menținere Baseline** | Niciun braț nu întrunește condiția pe Română ($\Delta_{\text{RO}} < +5.00$ pp) | Niciun braț nu a produs cazuri noi câștigate | **APLICAT (Baseline Menținut)** |")
-    w("")
-    w("> [!NOTE]")
-    w("> **Explicația Mecanică a Rezultatului**:  ")
-    w("> 1. **Zero cazuri discordante**: Niciun caz din cele 130 nu a trecut de la eșec la succes și niciunul de la succes la eșec ($b=0, c=0$). Setul celor 21 de reușite este identic între toate cele 3 brațe.  ")
-    w("> 2. **Plafonul candidaților pe limba română**: Numărul de note de aur ajunse în top 200 de candidați este identic (46 / 61 = 75.41%).  ")
-    w("> 3. **Confirmarea diagnosticului din Partea 2**: Blocajul primar al sistemului este **clasarea / paginarea (`PAGINATION_CUT`)**, nu segmentarea lexicală. Modificarea tokenizatorului reordonează marginal unii candidați din intervalul 20–100, dar nu ridică notele românești dincolo de pragul paginii ($k=5$) fără un model de reranking.")
+    w(f"H-TOKEN-1: **{verdicts['hypothesis_H_TOKEN_1']}**. Non-regresie pe engleză: **{verdicts['non_regression_english']}**. "
+      f"Câștig net total: **{verdicts['net_total_gain']}**.")
     w("")
     w("---")
     w("")
-    w("## 6. Concluzie și Recomandare Tehnică")
+    w("## 5. Decizia")
     w("")
-    w("Conform contractului din preînregistrare:")
-    w("1. **Tokenizatorul de producție din `hybrid_retrieval.py` rămâne neschimbat pe `main`**.")
-    w("2. Se evită riscul de churn de cod, invalidare a indecșilor și complexitate de mentenanță fără beneficiu empiric.")
-    w("3. Efortul de optimizare a regăsirii trebuie concentrat exclusiv pe construirea și dimensionarea modelului de reordonare (**Cross-Encoder Reranker**), conform verdictului din Partea 2 (PR 3).")
+    w(f"**{verdicts['decision']}**")
+    w("")
+    if verdicts.get("chosen_arm"):
+        w(f"Brațul ales: `{verdicts['chosen_arm']}`. Conform secțiunii 8 a preînregistrării, "
+          "tokenizatorul de producție nu se modifică în acest PR; adoptarea este o schimbare separată.")
+    else:
+        w("Niciun braț nu îndeplinește simultan cele trei condiții preînregistrate; "
+          "tokenizatorul de producție rămâne cum este.")
     w("")
     w("---")
-    w("*Raport generat determinist din `07_EVALUATION/tokenizer_experiment/tokenizer_experiment_cases.json` conform preînregistrării.*")
+    w("*Fiecare cifră și fiecare verdict din acest raport sunt citite din "
+      "`07_EVALUATION/tokenizer_experiment/tokenizer_experiment_cases.json`.*")
     w("")
     return "\n".join(md)
 
 
-def run_experiment() -> Dict[str, Any]:
+def run_experiment(ranking_arm: str = RANKING_ARM_FUSED_SCORE) -> Dict[str, Any]:
     """Runs the full experiment across all 3 arms."""
     print("=================================================================")
     print("   Tokenizer Normalization Experiment (EXP-TOKEN-001)")
@@ -443,6 +523,20 @@ def run_experiment() -> Dict[str, Any]:
     index = VaultIndex.load(REPO_ROOT, include_raw=True, include_archived=True)
 
     t0 = time.perf_counter()
+    print(f"RANKING_ARM={ranking_arm}")
+    print("\nNegative control: a tokenizer that returns no tokens...")
+    res_sabotage = evaluate_arm(
+        "control_sabotage",
+        "Control negativ — tokenizator gol",
+        "tokenize() returnează [] pentru orice text; generarea de candidați trebuie să cedeze",
+        tokenize_sabotage,
+        cases,
+        storage,
+        index,
+        ranking_arm,
+    )
+    print(f"  Sabotage: Total={res_sabotage.hits_all}/130")
+
     print("\nEvaluating Arm 1 (Baseline)...")
     res_arm1 = evaluate_arm(
         "arm1_baseline",
@@ -452,8 +546,19 @@ def run_experiment() -> Dict[str, Any]:
         cases,
         storage,
         index,
+        ranking_arm,
     )
     print(f"  Arm 1: Total={res_arm1.hits_all}/130 ({res_arm1.recall_all*100:.2f}%), RO={res_arm1.hits_ro}/61, EN={res_arm1.hits_en}/69")
+    sabotage_changed = sum(
+        1 for cid in res_arm1.per_case_hits
+        if res_arm1.per_case_hits[cid] != res_sabotage.per_case_hits[cid]
+        or res_arm1.per_case_ranks[cid] != res_sabotage.per_case_ranks[cid])
+    print(f"  Sabotage changed {sabotage_changed} cases (hit or gold rank)")
+    if sabotage_changed == 0:
+        restore_tokenizer()
+        raise RuntimeError(
+            "NEGATIVE_CONTROL_FAILED: an empty tokenizer changed nothing, so the "
+            "patch does not reach the search path and every arm would be void")
 
     print("\nEvaluating Arm 2 (Unicode Preserving)...")
     res_arm2 = evaluate_arm(
@@ -464,6 +569,7 @@ def run_experiment() -> Dict[str, Any]:
         cases,
         storage,
         index,
+        ranking_arm,
     )
     print(f"  Arm 2: Total={res_arm2.hits_all}/130 ({res_arm2.recall_all*100:.2f}%), RO={res_arm2.hits_ro}/61, EN={res_arm2.hits_en}/69")
 
@@ -476,30 +582,43 @@ def run_experiment() -> Dict[str, Any]:
         cases,
         storage,
         index,
+        ranking_arm,
     )
     print(f"  Arm 3: Total={res_arm3.hits_all}/130 ({res_arm3.recall_all*100:.2f}%), RO={res_arm3.hits_ro}/61, EN={res_arm3.hits_en}/69")
 
     elapsed = time.perf_counter() - t0
     print(f"\nExecution elapsed: {elapsed:.2f} seconds")
 
-    # Restore production tokenizer
-    hr.tokenize = tokenize_baseline
-    cg.tokenize = tokenize_baseline
+    restore_tokenizer()
 
     # Comparisons
     comp_u = compute_mcnemar_comparison(res_arm1, res_arm2, cases)
     comp_s = compute_mcnemar_comparison(res_arm1, res_arm3, cases)
 
-    # Decision rule evaluation
-    # Criterion 1: delta_ro >= +5.00 pp
-    # Criterion 2: delta_en >= -1.45 pp
-    # Criterion 3: delta_total >= +1.54 pp
-    pass_u = (comp_u["ro"]["delta_pp"] >= 5.00) and (comp_u["en"]["delta_pp"] >= -1.45) and (comp_u["all"]["delta_pp"] >= 1.54)
-    pass_s = (comp_s["ro"]["delta_pp"] >= 5.00) and (comp_s["en"]["delta_pp"] >= -1.45) and (comp_s["all"]["delta_pp"] >= 1.54)
+    # Decision rule, PREREGISTRATION.md section 7. Counted in cases, because the
+    # text gives both "+5.00 pp" and ">= 3 net cases" for Romanian and on n=61
+    # three cases are 4.92 pp: the case count is the unambiguous reading, and the
+    # percentage-point figures are reported alongside.
+    def judge(comp: Dict[str, Any]) -> Dict[str, Any]:
+        ro_ok = comp["ro"]["delta_cases"] >= 3
+        en_ok = comp["en"]["delta_cases"] >= -1 and (
+            comp["en"]["delta_cases"] >= 0 or comp["en"]["p_mcnemar"] > 0.10)
+        total_ok = comp["all"]["delta_cases"] >= 2
+        return {"ro_gain_ge_3_cases": ro_ok, "en_non_regression": en_ok,
+                "total_gain_ge_2_cases": total_ok, "adopt": ro_ok and en_ok and total_ok}
 
-    decision_verdict = "MENȚINERE BASELINE (RESPINGERE ADOPTARE TOKENIZATOR NOU)"
-    if pass_u or pass_s:
-        decision_verdict = "ADOPTARE TOKENIZATOR NOU"
+    judged = {"arm2_unicode": judge(comp_u), "arm3_stripped": judge(comp_s)}
+    passing = [a for a, j in judged.items() if j["adopt"]]
+    if not passing:
+        decision_verdict = "MENȚINERE BASELINE (RESPINGERE ADOPTARE TOKENIZATOR NOU)"
+        chosen = None
+    else:
+        by_gain = {"arm2_unicode": comp_u["all"]["delta_cases"], "arm3_stripped": comp_s["all"]["delta_cases"]}
+        chosen = max(passing, key=lambda a: by_gain[a])
+        decision_verdict = f"ADOPTARE TOKENIZATOR NOU ({chosen})"
+
+    def status(flag: bool) -> str:
+        return "CONFIRMATĂ" if flag else "INFIRMATĂ"
 
     data = {
         "metadata": {
@@ -510,6 +629,8 @@ def run_experiment() -> Dict[str, Any]:
             "en_cases": res_arm1.total_en,
             "benchmark_sha256": actual_sha,
             "execution_time_seconds": round(elapsed, 2),
+            "ranking_arm": ranking_arm,
+            "patched_modules": sorted(m.__name__ for m in _tokenize_holders()),
         },
         "arms": {
             "arm1_baseline": asdict(res_arm1),
@@ -521,10 +642,18 @@ def run_experiment() -> Dict[str, Any]:
             "arm3_stripped_vs_baseline": comp_s,
         },
         "verdicts": {
-            "hypothesis_H_TOKEN_1": "INFIRMATĂ",
-            "non_regression_english": "CONFIRMATĂ",
-            "net_total_gain": "INFIRMATĂ",
+            "hypothesis_H_TOKEN_1": status(any(j["ro_gain_ge_3_cases"] for j in judged.values())),
+            "non_regression_english": status(all(j["en_non_regression"] for j in judged.values())),
+            "net_total_gain": status(any(j["total_gain_ge_2_cases"] for j in judged.values())),
+            "per_arm": judged,
+            "chosen_arm": chosen,
             "decision": decision_verdict,
+        },
+        "negative_control": {
+            "description": "tokenize() returning [] for every text",
+            "hits_all": res_sabotage.hits_all,
+            "cases_changed_vs_baseline": sabotage_changed,
+            "passed": sabotage_changed > 0,
         },
     }
     return data
@@ -534,6 +663,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate Tokenizer Normalization Experiment")
     parser.add_argument("--run", action="store_true", help="Run the full 3-arm benchmark evaluation")
     parser.add_argument("--render", action="store_true", help="Render markdown report from existing JSON")
+    parser.add_argument("--ranking-arm", default=RANKING_ARM_FUSED_SCORE,
+                        help="Ranking arm; defaults to the production default, fused_score")
     args = parser.parse_args()
 
     if args.render:
@@ -547,7 +678,7 @@ def main() -> int:
         return 0
 
     # Default is run + render
-    data = run_experiment()
+    data = run_experiment(args.ranking_arm)
     ARTIFACT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
     ARTIFACT_JSON_PATH.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"Artifact written to {ARTIFACT_JSON_PATH} ({ARTIFACT_JSON_PATH.stat().st_size} bytes)")
