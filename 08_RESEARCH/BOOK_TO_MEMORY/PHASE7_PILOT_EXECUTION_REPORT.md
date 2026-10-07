@@ -1,5 +1,16 @@
 # Pilot Execution Report — Phase 7: Real Book Corpus Ingestion
 
+> **INVALID AS EVIDENCE (retracted 2026-10-07, PR #209 finding B01).**
+> The usage-test scores (10/10 on every rubric dimension) and the ablation numbers in this report
+> (mean WITH_NOTE 10.00, mean WITHOUT_NOTE 6.00, delta +0.6667) are the **built-in defaults** of the
+> pipeline at the time: a fixed rubric of 2/2/2/2/2 when a note is used and 1/1/1/2/1 when it is not.
+> No model answered any task and no rater scored anything, so these figures describe the code's
+> constants, not the books or the notes. The pipeline no longer has such defaults: without supplied
+> observations its usage-test and ablation gates report `INSUFFICIENT_DATA`. The note names, lifecycle
+> outcomes and "VERIFIED" statuses below were never reached by an evaluation. Treat this document as a
+> description of a mock run only.
+
+
 **Document Version**: 1.0.0  
 **Phase**: Phase 7 — Pilot Ingestion & Validation  
 **Authority**: `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`  

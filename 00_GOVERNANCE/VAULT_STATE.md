@@ -58,7 +58,9 @@ in its constructor. Corrected 2026-09-06.
 | `RetrievalTrace` v1.1.0 | real, in production | `observability/retrieval_trace.py`; every note carries a reason code; 16.7 KB per search, verified on 8 benchmark queries |
 | Agent lifecycle floor | real, in production | `controller.py`; `AI_AGENT` asking for no lifecycle gets ACTIVE + REVIEW. Measured cost before adoption: 1 case in 130 |
 | Untrusted content guard | real, in CI | `30_SCRIPTS/verification/untrusted_content_guard.py`; 4 blocking rules, 3 report-only; 27 reviewed allowlist entries |
-| Typed relations in the graph | **100% audited (30/114 accepted)** | Perplexity, independent; Wave 1: 20/49 accepted, 29 purged; Wave 2: 10/65 accepted, 55 rejected; `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` |
+| Typed relations in the graph | audited once, by a single LLM rater (30/114 accepted) | Perplexity, one rater, no second opinion and no inter-rater agreement; Wave 1: 20/49 accepted, 29 purged; Wave 2: 10/65 accepted, 55 rejected; `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` |
+| Book-to-Memory research modules (`lifecycle/validation/book_to_memory_*.py`, 10 modules) | **present, research-only, NOT wired** | no production consumer: only each other and `20_TESTS/test_book_to_memory_*.py` import them. Their usage-test and ablation gates have no built-in scores: without supplied observations they report `INSUFFICIENT_DATA`. Passing unit tests is not empirical evidence (PR #209 B01, B09) |
+| `retrieval/interference_gate.py` | **present, NOT wired** | no production consumer at all; only `20_TESTS/test_interference_gate.py` imports it |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
@@ -72,9 +74,9 @@ in its constructor. Corrected 2026-09-06.
 |---|---:|
 | Notes in the index (`VaultIndex`, export residue excluded) | 1186 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 485 |
-| — declared / inferred / wikilink | 149 / 150 / 186 |
-| Notes usable as a graph **seed** (out-edge) | 200 |
+| Graph edges | 476 |
+| — declared / inferred / wikilink | 149 / 150 / 177 |
+| Notes usable as a graph **seed** (out-edge) | 191 |
 | Notes reachable as graph **gold** (in-edge) | 138 |
 | Graph cases with pairwise-disjoint nodes | 32 |
 
@@ -125,17 +127,20 @@ whole-corpus retrieval numbers.
   and undoing that is `git revert`, not `PlasticityEngine.rollback()`.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
-- **[RESOLVED] All 114 declared typed relations in the live graph are now 100% audited.** The remaining 65
-  relations were independently evaluated by Perplexity in Wave 2: 10 accepted, 55 rejected (15.4% precision).
+- **All 114 declared typed relations in the live graph have been audited once; the audit is single-rater and unreplicated.** The remaining 65
+  relations were evaluated by one LLM rater (Perplexity) in Wave 2: 10 accepted, 55 rejected (15.4% precision).
+  A second rater, or a sample re-labelled by the owner, has not been run, so "100% audited" means "every edge was
+  judged by one rater", not "every edge is verified".
   Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
   documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
   `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
-- **[RESOLVED] Causal loss attribution of missed benchmark cases completed.** Evaluated on all 130
+- **Causal loss attribution of missed benchmark cases: measured, single run.** Evaluated on all 130
   non-abstain benchmark v3 cases in `07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md` (and `loss_funnel_cases.json`).
   Under production agent operating point (`AI_AGENT`, `page_size=5`), 71.56% of misses are `PAGINATION_CUT`
   (ranked > 5; median rank 20.5), 13.76% `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 11.93% `NEVER_CANDIDATE`, 1.83%
-  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). Pre-registered decision rule confirmed
-  adoption of a cross-encoder / reranker rather than blind candidate generator expansion.
+  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). A pre-registered decision rule
+  *points to* a cross-encoder / reranker rather than blind candidate generator expansion. That is the outcome of the
+  rule on one run, not an adoption: no reranker is built, wired or evaluated.
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads
@@ -143,10 +148,17 @@ whole-corpus retrieval numbers.
   (`synapse_store.py:234`). `Promoted_reservoir_sampling.md` used `target`
   with a file path, `relation` instead of `type`, and `derived_from`, which
   is not in `ALLOWED_RELATIONS` and degrades silently to `related_to`. Three
-  mismatches, zero edges. Fixed, and guarded by
+  mismatches, zero edges. That malformed form is guarded against by
   `20_TESTS/test_promoted_notes_reach_the_graph.py`, which asserts against
   the real store rather than the frontmatter and was confirmed to fail on the
   broken form before being trusted.
+  **Nine promoted notes are genuine islands today** (`buffer`, `homeostat`, `regulation`, `reinforcement_learning`,
+  `reservoir_sampling`, `retrieval`, `state_determined_system`, `transformation`, `variety`): every typed
+  relation they declared was rejected by the edge audit, and a script had hidden that by injecting unsupported
+  sentences into their bodies (e.g. "... in [[long-term memory]]"; PR #209 B11). The injected prose is removed, the
+  original bodies are restored byte for byte, and the notes are listed in
+  `KNOWN_ISLANDS_AFTER_AUDITED_PURGE` in that test, which pins the set so it can only shrink. Giving them a real,
+  audited relation is open work.
 - **Cross-model agreement is a reference set, not the filter.** It was
   briefly recorded here as the only working ranking signal. It is not: it
   separates cleanly on conference papers, where the 1-of-4 tail is

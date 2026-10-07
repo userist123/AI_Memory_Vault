@@ -1,10 +1,18 @@
 # Book-to-Memory Research Track
 
-> **Status**: `TRACK_COMPLETED_AND_VERIFIED`  
+> **Status**: `IMPLEMENTATION_COMPLETE__UNIT_TESTS_PASS__NOT_EMPIRICALLY_VALIDATED`  
 > **Branch**: `research/book-to-memory`  
 > **Pull Request**: [#206](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/206)  
 > **Authority**: `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`  
 > **Master Report**: [`MASTER_RESEARCH_TRACK_CLOSURE_REPORT.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/08_RESEARCH/BOOK_TO_MEMORY/MASTER_RESEARCH_TRACK_CLOSURE_REPORT.md)
+
+> **What this status means.** The code of the track is written and its unit tests pass. No real-model
+> ablation, multi-rater evaluation or calibration on human-attested ground truth has been run; findings
+> B03-B10 of the PR #209 audit are open (see `OPEN_BLOCKERS.md`, "External audit findings"). The modules
+> are research-only and have no production consumer (`00_GOVERNANCE/VAULT_STATE.md`, section 3).
+> Older phase reports speak of a lifecycle state `UNVERIFIED`; the vault has no such state
+> (`lifecycle/policy.py` is the sole authority). The research code now uses `REVIEW` with
+> `verification: unverified`, and the production note schema was not widened for the research types.
 
 ---
 

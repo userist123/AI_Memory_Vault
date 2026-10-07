@@ -1,8 +1,15 @@
 # Book-to-Memory Master Research Track Closure Report
 
+> **Evidence caveat (2026-10-07, PR #209 B01/B09).** "Fully verified" below means the unit tests
+> pass. Any usage-test or ablation figure produced by the pipeline's former built-in defaults (fixed
+> rubric, no model answers, no rater) is **not empirical evidence**; see the retraction in
+> `PHASE7_PILOT_EXECUTION_REPORT.md`. Those defaults are removed: missing data now yields
+> `INSUFFICIENT_DATA`, never a pass.
+
+
 > **Branch**: `research/book-to-memory`  
 > **PR**: [#206](https://github.com/userist123/AI_Memory_Vault_CODEX_READY/pull/206)  
-> **Status**: `TRACK_COMPLETED_AND_VERIFIED`  
+> **Status**: `IMPLEMENTATION_COMPLETE__UNIT_TESTS_PASS__NOT_EMPIRICALLY_VALIDATED`  
 > **Authority**: `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`  
 > **Core Integrity**: Protected cognitive core modules preserved 100% untouched (`Planner`, `Council_Orchestrator.py`, `CouncilBudgetController`, `ContextPackBuilder`, `council_token_telemetry.py`, `MemoryController`).
 

@@ -81,3 +81,26 @@
 * **Affected Component**: `06_INBOX/Carti/Altele/Lucrari/ilide.info-rag-architecture-explained...pdf`.
 * **Required Owner Decision**: Confirm permanent exclusion from canonical scientific ontology corpus.
 * **Remediation Path**: Exclude file from concept extraction.
+
+
+---
+
+## External audit findings (PR #209) that remain open on this track
+
+These come from the independent audit in PR #209 (`docs/security/AUDIT_REMEDIATION.md`). They are
+methodology gaps, not code defects, and none can be closed by editing this branch: each needs real
+data. They are listed here in plain words so that no report on this track reads as empirical evidence.
+They are **not** entries of the hash-chained `BLOCKER_REGISTER.md`; moving them there is an owner decision.
+
+| Finding | Gap | State on this branch |
+|---|---|---|
+| B01 | Positive results could be built in (default scores) | **Fixed in code.** The ablation runner and the pipeline's usage-test stage no longer have default answers, rubrics or scores; missing observations give `INSUFFICIENT_DATA` and a closed gate. Reports produced from the old defaults (`PHASE7_PILOT_EXECUTION_REPORT.md`) are marked invalid. |
+| B03 | No ablation against real models | **Open.** Every ablation in the tests uses fabricated numbers on purpose. |
+| B04 | Prompt bias / leading questions in the harness | **Open.** Task prompts have not been reviewed against counter-factual baselines. |
+| B05 | Single rater | **Open.** One rater (or one LLM) per judgement; no multi-rater consensus, no agreement statistic. |
+| B06 | Metrics calibrated on a synthetic corpus | **Open.** No calibration on human-attested ground truth. |
+| B07 | Possible leakage between evaluation sets | **Open.** Overlap between scenarios and benchmark questions has not been checked. |
+| B08 | Baselines not comparable | **Open.** No identical temperature/seed controls across models. |
+| B09 | Claims exceed evidence | **Partly fixed.** Status lines and the pilot/phase reports now say "unit tests pass", not "verified"; the individual phase reports still use the older wording and should be read with the caveat banners. |
+| B10 | External validity | **Open.** No measurement under production load; the modules are not wired into any production path. |
+| B11 | Cleanup rewrote note bodies | **Fixed.** `clean_source_frontmatters.py` is frontmatter-only; the 9 injected bodies were restored (see `VAULT_STATE.md`, section 5, for the islands this exposes). |

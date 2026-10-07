@@ -149,3 +149,27 @@ def test_every_referenced_path_exists(state_text):
         if "/" in r and not (REPO / r).exists() and not list(REPO.rglob(Path(r).name))
     ]
     assert not missing, f"VAULT_STATE.md references paths that do not exist: {missing}"
+
+
+def test_research_only_modules_stay_unwired():
+    """The card calls the Book-to-Memory research modules and the interference gate "NOT wired".
+
+    Only the research modules themselves may import each other; nothing else in the production
+    package tree may import them, and `interference_gate` has no consumer at all. If one gains a
+    consumer, wire it deliberately and update section 3 of the card.
+    """
+    pattern = re.compile(r"^\s*(from|import)[^#\n]*\b(book_to_memory\w*|interference_gate)\b", re.M)
+    offenders = []
+    for path in (REPO / "03_IMPLEMENTATION").rglob("*.py"):
+        if "test" in str(path) or "benchmark" in str(path):
+            continue
+        if path.name.startswith("book_to_memory_") or path.name == "interference_gate.py":
+            continue
+        if pattern.search(path.read_text(encoding="utf-8", errors="ignore")):
+            offenders.append(str(path.relative_to(REPO)))
+    assert not offenders, (
+        f"research-only modules gained production consumers {offenders}; update VAULT_STATE.md section 3"
+    )
+    # Inside the research modules, nothing may import the interference gate either.
+    for path in (REPO / "03_IMPLEMENTATION" / "packages" / "lifecycle" / "validation").glob("book_to_memory_*.py"):
+        assert "interference_gate" not in path.read_text(encoding="utf-8", errors="ignore")

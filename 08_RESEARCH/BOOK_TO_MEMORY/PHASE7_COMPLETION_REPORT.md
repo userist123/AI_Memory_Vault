@@ -1,5 +1,12 @@
 # Phase 7 Completion Report — Book-to-Memory End-to-End Pipeline & Pilot
 
+> **Evidence caveat (2026-10-07, PR #209 B01/B09).** "Fully verified" below means the unit tests
+> pass. Any usage-test or ablation figure produced by the pipeline's former built-in defaults (fixed
+> rubric, no model answers, no rater) is **not empirical evidence**; see the retraction in
+> `PHASE7_PILOT_EXECUTION_REPORT.md`. Those defaults are removed: missing data now yields
+> `INSUFFICIENT_DATA`, never a pass.
+
+
 **Document Version**: 1.0.0  
 **Phase**: Phase 7 — End-to-End Pipeline & Book Pilot Ingestion  
 **Branch**: `research/book-to-memory-phase7-pipeline`  
