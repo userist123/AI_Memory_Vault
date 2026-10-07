@@ -14,6 +14,10 @@ from cognitive_core.extraction import AtomicMemoryExtractor
 from cognitive_core.proposal_queue import MemoryProposalQueue
 from cognitive_core.queue_promoter import QueuePromoter
 
+#: Display label recorded as `reviewed_by` for a decision made through the web UI. It is only a
+#: label: what makes an approval count is the owner Principal passed to the queue.
+REST_REVIEWER_LABEL='jarvis-web'
+
 class APIJSONEncoder(json.JSONEncoder):
     def default(self,obj):
         if hasattr(obj,'value'): return obj.value
@@ -143,11 +147,23 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         if path.startswith('/api/v1/proposals/') and path.endswith('/decision'):
             cid=path.split('/api/v1/proposals/',1)[1].rsplit('/decision',1)[0]; decision=str(data.get('decision','')).upper()
             if decision not in {'APPROVED','REJECTED'}: self._json(400,{'error':'decision must be APPROVED or REJECTED'}); return
-            try: self.queue.mark(cid,decision,reviewer='jarvis-human'); self._json(200,{'status':decision,'candidate_id':cid})
+            # Reaching this line means the request passed the bearer-token check above: the
+            # token holder is the vault owner. That authenticated request is the owner
+            # attestation (Principal.HUMAN, the person at the web UI); the reviewer name is a
+            # label and the evidence reference is derived from the request, not typed by the caller.
+            reviewer=str(data.get('reviewer') or REST_REVIEWER_LABEL).strip()[:80] or REST_REVIEWER_LABEL
+            evidence=str(data.get('evidence') or '').strip()[:300] or f"rest:POST /api/v1/proposals/{cid}/decision (bearer-authenticated owner request)"
+            try:
+                if decision=='APPROVED': self.queue.mark(cid,decision,reviewer=reviewer,evidence_reference=evidence,approver=Principal.HUMAN)
+                else: self.queue.mark(cid,decision,reviewer=reviewer)
+                self._json(200,{'status':decision,'candidate_id':cid})
             except KeyError as exc: self._json(404,{'error':str(exc)})
+            except (PermissionError,ValueError) as exc: self._json(403,{'error':str(exc)})
             return
         if path=='/api/v1/proposals/promote-approved':
-            try: promoted=QueuePromoter(self.queue,self.controller,Principal.ADMIN).promote_approved(); self._json(200,{'status':'promoted','ids':promoted})
+            try:
+                promoter=QueuePromoter(self.queue,self.controller,Principal.ADMIN); promoted=promoter.promote_approved()
+                self._json(200,{'status':'promoted','ids':promoted,'skipped':promoter.skipped})
             except Exception as exc: self._json(400,{'error':str(exc)})
             return
         if path=='/api/v1/route':

@@ -754,7 +754,7 @@ Modulele stau în `03_IMPLEMENTATION/packages`, deci CLI-ul are nevoie de el în
 export PYTHONPATH=03_IMPLEMENTATION/packages   # PowerShell: $env:PYTHONPATH = "03_IMPLEMENTATION/packages"
 python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
 python -m cognitive_core.memory_v6_cli review --show-conflicts
-python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
+python -m cognitive_core.memory_v6_cli approve <candidate_id> --principal human --reviewer "<nume>" --evidence "<referinta>"   # fara valori implicite: aprobarea este o atestare a proprietarului
 python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```
