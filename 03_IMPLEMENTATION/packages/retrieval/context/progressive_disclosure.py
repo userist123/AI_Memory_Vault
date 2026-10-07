@@ -55,7 +55,7 @@ class ProgressiveDisclosure:
         """Preserve non-content retrieval signals across disclosure levels."""
         return {
             key: note[key]
-            for key in ("confidence", "score", "relevance", "relevance_score", "trust_state", "model_egress")
+            for key in ("confidence", "score", "relevance", "relevance_score", "trust_state", "model_egress", "quarantined")
             if key in note
         }
 

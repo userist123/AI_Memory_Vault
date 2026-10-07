@@ -11,7 +11,7 @@ from copy import deepcopy
 from typing import Any, Callable, Dict, Mapping
 
 from retrieval.context.budget import ContextBudget
-from security.verified_reduction import TRUSTED_STATUSES
+from security.verified_reduction import TRUSTED_STATUSES, content_withheld_from
 
 
 class DataRouteViolation(RuntimeError):
@@ -118,13 +118,19 @@ class MemoryDataEgressGate:
             ),
         }
 
-        # Model-facing egress isolation: non-human callers must never receive
-        # quarantined unverified payload content into the model context.
-        if str(principal) not in {"human", "admin"}:
-            for result in routed.get("results", []):
-                if isinstance(result, dict) and result.get("trust_state") == "UNVERIFIED_QUARANTINED":
-                    result["content"] = ""
-                    result["snippet"] = ""
+        # Model-facing egress isolation, applied again at the final gate with the same
+        # rule the context pack builder uses (one shared predicate, one owner set):
+        # non-owner callers never receive the body of an unverified REVIEW candidate or
+        # of a note flagged quarantined. ACTIVE notes keep their content whatever their
+        # verification label.
+        for result in routed.get("results", []):
+            if not isinstance(result, dict):
+                continue
+            unverified = result.get("trust_state") == "UNVERIFIED_QUARANTINED"
+            if content_withheld_from(principal, result, unverified=unverified):
+                result["content"] = ""
+                result["snippet"] = ""
+                result["model_egress"] = False
 
         try:
             hard_tokens = int(budget["hard_tokens"])

@@ -5,7 +5,7 @@ Covers:
 - M02: Deny-by-default for unknown or missing trust states (zero persistence).
 - M03: Transactional memory writes with rollback on integrity commit failure.
 - M04 & M05: Unverified content quarantine and complete isolation from agent model context.
-- M06: External skills import filtering (.git skipping, extension filtering, symlink/traversal denial).
+- M06: External skills import filtering (VCS metadata pruned; scripts, hidden paths, executables, symlinks, traversal abort the import).
 - M07: Security update supply-chain provenance enforcement fail-closed when policy is active.
 - B11: Graph frontmatter clean preserves markdown body bytes identically without semantic injections.
 """
@@ -307,101 +307,171 @@ def test_m03_rollback_executed_when_commit_fails():
 # M04 & M05: Unverified Content Quarantine & Egress Isolation
 # ============================================================================
 
-def test_m04_m05_unverified_content_stripped_from_agent_context():
-    from retrieval.context.pack_builder import ContextPackBuilder
-    from memory.data_router import MemoryDataEgressGate
+_M04_BUDGET = {
+    "max_notes": 8,
+    "max_full_documents": 4,
+    "soft": 4000,
+    "hard": 8000,
+    "soft_tokens": 1000,
+    "hard_tokens": 2000,
+}
 
-    # Unverified items have empty content and model_egress=False for non-human callers
-    results = [
-        {
-            "id": "unverified-1",
-            "lifecycle": "ACTIVE",
-            "verification": "unverified",
-            "content": "SECRET_OR_UNTRUSTED_CONTENT_NEVER_REACH_MODEL",
-            "source_ref": "source-unverified",
-            "relevance": 0.95,
-        },
-        {
-            "id": "verified-1",
-            "lifecycle": "ACTIVE",
-            "verification": "verified",
-            "content": "SAFE_VERIFIED_CONTENT",
-            "source_ref": "source-verified",
-            "relevance": 0.90,
-        },
+
+def _m04_results():
+    def note(note_id, lifecycle, verification, content, **extra):
+        item = {
+            "id": note_id,
+            "lifecycle": lifecycle,
+            "verification": verification,
+            "content": content,
+            "source_ref": f"source-{note_id}",
+            "relevance": 0.9,
+        }
+        item.update(extra)
+        return item
+
+    return [
+        note("review-unverified", "REVIEW", "unverified", "REVIEW_UNVERIFIED_BODY"),
+        note("active-unverified", "ACTIVE", "unverified", "ACTIVE_UNVERIFIED_BODY"),
+        note("active-verified", "ACTIVE", "verified", "ACTIVE_VERIFIED_BODY"),
+        note("active-quarantined", "ACTIVE", "verified", "QUARANTINED_BODY", quarantined=True),
     ]
 
-    pack = ContextPackBuilder().build(
+
+def _m04_pack(agent_id):
+    from retrieval.context.pack_builder import ContextPackBuilder
+
+    return ContextPackBuilder().build(
         request_id="req-isolation-test",
-        agent_id="subagent_worker",
-        budget={
-            "max_notes": 5,
-            "max_full_documents": 2,
-            "soft": 500,
-            "hard": 2000,
-            "soft_tokens": 200,
-            "hard_tokens": 500,
-        },
-        results=results,
+        agent_id=agent_id,
+        budget=dict(_M04_BUDGET),
+        results=_m04_results(),
         allow_unverified=True,
         disclosure_level="full",
     )
 
-    items = pack.get("results", [])
-    assert len(items) == 2
-    
-    # First item was unverified -> quarantined, content stripped to empty, model_egress is False
-    unverified_item = next(it for it in items if it["id"] == "unverified-1")
-    assert unverified_item["content"] == ""
-    assert unverified_item["model_egress"] is False
-    assert unverified_item["trust_state"] == "UNVERIFIED_QUARANTINED"
 
-    # Second item was verified -> content preserved, model_egress is True
-    verified_item = next(it for it in items if it["id"] == "verified-1")
-    assert verified_item["content"] == "SAFE_VERIFIED_CONTENT"
-    assert verified_item["model_egress"] is True
+def _by_id(pack):
+    return {item["id"]: item for item in pack["results"]}
 
-    # Egress Gate test
+
+def test_m04_m05_withheld_content_is_exactly_review_and_quarantined_for_agents():
+    """M04/M05, restated against the read contract (CLAUDE.md): the model-facing route
+    withholds the body of an unverified REVIEW candidate and of a note flagged quarantined.
+    It does NOT withhold an ACTIVE note merely because it is not verified: that rule hid
+    38 of the 48 notes an agent searched on the real vault."""
+    items = _by_id(_m04_pack("subagent_worker"))
+    assert set(items) == {"review-unverified", "active-unverified", "active-verified", "active-quarantined"}
+
+    for note_id in ("review-unverified", "active-quarantined"):
+        assert items[note_id]["content"] == "", note_id
+        assert items[note_id].get("snippet", "") == "", note_id
+        assert items[note_id]["model_egress"] is False, note_id
+    assert items["review-unverified"]["trust_state"] == "UNVERIFIED_QUARANTINED"
+
+    # ACTIVE content survives whatever its verification label; the label stays visible
+    assert items["active-unverified"]["content"] == "ACTIVE_UNVERIFIED_BODY"
+    assert items["active-unverified"]["model_egress"] is True
+    assert items["active-unverified"]["trust_state"] == "UNVERIFIED_QUARANTINED"
+    assert items["active-verified"]["content"] == "ACTIVE_VERIFIED_BODY"
+    assert items["active-verified"]["model_egress"] is True
+    assert "trust_state" not in items["active-verified"]
+
+
+def test_m04_the_egress_gate_applies_the_same_rule_as_the_pack_builder():
+    from memory.data_router import MemoryDataEgressGate
+
     gate = MemoryDataEgressGate()
-    routed_pack = gate.route_to_model(pack, source="canonical_memory", principal="ai_agent")
-    routed_unverified = next(it for it in routed_pack["results"] if it["id"] == "unverified-1")
-    assert routed_unverified["content"] == ""
-    assert routed_unverified["model_egress"] is False
+    # a pack the builder let through to an owner, then routed to an agent: the gate must
+    # re-apply the withholding rule independently of the builder
+    owner_pack = _m04_pack("human")
+    assert _by_id(owner_pack)["review-unverified"]["content"] == "REVIEW_UNVERIFIED_BODY"
+    routed = _by_id(gate.route_to_model(owner_pack, source="canonical_memory", principal="ai_agent"))
+    assert routed["review-unverified"]["content"] == ""
+    assert routed["review-unverified"]["model_egress"] is False
+    assert routed["active-quarantined"]["content"] == ""
+    assert routed["active-unverified"]["content"] == "ACTIVE_UNVERIFIED_BODY"
+    assert routed["active-verified"]["content"] == "ACTIVE_VERIFIED_BODY"
+
+
+@pytest.mark.parametrize("owner", ["human", "admin"])
+def test_m04_admin_and_human_are_treated_alike_by_the_builder_and_the_gate(owner):
+    """The pack builder used to test `!= "human"` while the data router used {"human", "admin"}:
+    ADMIN lost content in one layer and kept it in the other. One shared owner set now."""
+    from memory.data_router import MemoryDataEgressGate
+    from security.verified_reduction import OWNER_PRINCIPALS, is_owner_principal
+
+    assert OWNER_PRINCIPALS == {"human", "admin"}
+    assert is_owner_principal(owner) and not is_owner_principal("ai_agent")
+
+    built = _by_id(_m04_pack(owner))
+    assert built["review-unverified"]["content"] == "REVIEW_UNVERIFIED_BODY"
+    assert built["active-quarantined"]["content"] == "QUARANTINED_BODY"
+    routed = _by_id(MemoryDataEgressGate().route_to_model(_m04_pack(owner), source="canonical_memory", principal=owner))
+    assert routed["review-unverified"]["content"] == "REVIEW_UNVERIFIED_BODY"
+    assert routed["active-quarantined"]["content"] == "QUARANTINED_BODY"
+
+
+def test_m04_principal_enum_members_are_accepted_by_the_owner_predicate():
+    from memory_controller.authorizer import Principal
+    from security.verified_reduction import is_owner_principal
+
+    assert is_owner_principal(Principal.HUMAN) and is_owner_principal(Principal.ADMIN)
+    assert not is_owner_principal(Principal.AI_AGENT)
 
 
 # ============================================================================
 # M06: External Skills Importer Filtering
 # ============================================================================
 
-def test_m06_importer_skips_git_and_filters_extensions(tmp_path):
+def _load_importer():
     import importlib.util
     importer_path = REPO / "30_SCRIPTS/verification/import_external_skills.py"
     spec = importlib.util.spec_from_file_location("importer", importer_path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
+    return mod
 
+
+def test_m06_importer_prunes_vcs_metadata_and_copies_only_allowed_types(tmp_path):
+    mod = _load_importer()
     src = tmp_path / "cloned_repo"
     src.mkdir()
     (src / ".git").mkdir()
     (src / ".git" / "HEAD").write_text("ref: refs/heads/main")
     (src / "SKILL.md").write_text("# Skill Guide")
     (src / "config.json").write_text('{"name": "test"}')
-    (src / "payload.py").write_text("import os; os.system('calc')")
-    (src / "attack.sh").write_text("#!/bin/bash")
+    (src / "logo.png").write_bytes(b"\x89PNG")
 
     dst = tmp_path / "staged"
-    mod.copy_tree(src, dst)
+    skipped = []
+    mod.copy_tree(src, dst, skipped)
 
-    # Allowed extensions copied
-    assert (dst / "SKILL.md").exists()
-    assert (dst / "config.json").exists()
-    
-    # Hidden files / .git NEVER copied
+    assert (dst / "SKILL.md").exists() and (dst / "config.json").exists()
     assert not (dst / ".git").exists()
-    
-    # Forbidden / non-allowed extensions NEVER copied
-    assert not (dst / "payload.py").exists()
-    assert not (dst / "attack.sh").exists()
+    # a type that is not imported is reported, never dropped silently
+    assert skipped == ["logo.png"] and not (dst / "logo.png").exists()
+
+
+def test_m06_importer_fails_closed_on_scripts_and_lists_every_offender(tmp_path):
+    """M06 asks for filtering, not for silence: a script or binary in an external source aborts
+    the whole import (nothing staged) and every offending path is named in the error."""
+    mod = _load_importer()
+    src = tmp_path / "cloned_repo"
+    src.mkdir()
+    (src / "SKILL.md").write_text("# Skill Guide")
+    (src / "payload.py").write_text("import os; os.system('calc')")
+    (src / "attack.sh").write_text("#!/bin/bash")
+    (src / ".hidden.md").write_text("# hidden")
+
+    dst = tmp_path / "staged"
+    with pytest.raises(SystemExit) as raised:
+        mod.copy_tree(src, dst)
+    message = str(raised.value)
+    assert "fail-closed" in message and "3 offending path(s)" in message
+    for offender in ("payload.py", "attack.sh", ".hidden.md"):
+        assert offender in message
+    assert not dst.exists() or not any(dst.rglob("*"))
 
 
 # ============================================================================

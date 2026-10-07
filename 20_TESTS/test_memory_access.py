@@ -90,59 +90,96 @@ def test_a_proposed_note_is_found_by_search_and_readable_in_the_same_session(wor
     assert proposed["id"] in [r["id"] for r in found["query_results"]]
     row = next(r for r in found["query_results"] if r["id"] == proposed["id"])
     assert row["lifecycle"] == "REVIEW" and row["verification"] == "unverified"
-    
-    # AI_AGENT cannot retrieve unverified proposal via storage fallback
-    with pytest.raises(ValueError, match="not eligible for cognitive retrieval"):
-        ma.get(controller, proposed["id"], principal=Principal.AI_AGENT)
-    
-    # Authorized HUMAN inspection can read the unverified proposed note
-    got = ma.get(controller, proposed["id"], principal=Principal.HUMAN)
-    assert got["lifecycle"] == "REVIEW" and got["unverified"] is True
+
+    # memory_get is part of the same contract: the agent reads its own REVIEW proposal,
+    # explicitly marked unverified (CLAUDE.md: "REVIEW e marcata neverificata").
+    got = ma.get(controller, proposed["id"])
+    assert got["lifecycle"] == "REVIEW" and got["unverified"] is True and got["verification"] == "unverified"
     assert "Notele propuse apar imediat" in got["content"]
+    assert ma.NOTICE in got["notice"]
 
 
-def test_ai_agent_cannot_read_or_get_storage_fallback_when_cognitive_read_empty(world):
-    import uuid
-    controller, vault = world
-    note_id = str(uuid.uuid4())
-    review_path = vault / "01_ARCHITECTURE" / "knowledge" / "review_unverified_secret.md"
-    secret_marker = "SECRET_MARKER_FORBIDDEN_CONTENT_9988"
-    review_path.write_text(
-        "---\n"
-        f"id: {note_id}\n"
-        "type: knowledge\n"
-        "category: review-test\n"
-        "tags: [review]\n"
-        "created: 2026-09-01\n"
-        "updated: 2026-09-01\n"
-        "provenance:\n  source_type: ai\n  source_ref: proposal\n"
-        "confidence: low\n"
-        "verification: unverified\n"
-        "relations: []\n"
-        "lifecycle: REVIEW\n"
-        "---\n"
-        f"# review unverified\n\n{secret_marker}\n",
-        encoding="utf-8"
-    )
-    controller.storage.id_to_path.clear()
-    controller.storage._cache.clear()
-    controller.storage._initialize_index()
+@pytest.fixture
+def distribution(tmp_path, monkeypatch):
+    """A vault holding one note per state of the real vault (ACTIVE/REVIEW, verified or not)."""
+    monkeypatch.setenv("ANTIGRAVITY_ARTIFACT_DIR", str(tmp_path / "artifacts"))
+    monkeypatch.setenv("ANTIGRAVITY_TELEMETRY_DIR", str(tmp_path / "telemetry"))
+    vault = fx.make_vault(tmp_path)
+    seeded = fx.seed_real_distribution(vault)
+    return MemoryController(FileStorageEngine(str(vault))), seeded
 
-    # Search by AI_AGENT must not leak secret marker in snippet
-    out = ma.search(controller, "FORBIDDEN_CONTENT", limit=5, principal=Principal.AI_AGENT)
-    matching = [r for r in out["query_results"] if r["id"] == note_id]
-    assert len(matching) == 1
-    assert matching[0]["snippet"] == ""
-    assert secret_marker not in matching[0]["snippet"]
 
-    # get() by AI_AGENT must fail closed and never fall back to storage
+def _search_row(controller, seeded, kind):
+    note_id, word = seeded[kind]
+    out = ma.search(controller, word, limit=10)
+    rows = [r for r in out["query_results"] if r["id"] == note_id]
+    return rows[0] if rows else None
+
+
+READABLE_KINDS = ("active_verified", "active_partially_verified", "active_unstamped", "review_unverified", "review_unstamped")
+
+
+@pytest.mark.parametrize("kind", READABLE_KINDS)
+def test_read_contract_active_and_review_notes_are_searchable_and_gettable_by_the_agent(distribution, kind):
+    """CLAUDE.md: memory_search returns snippets; memory_get serves ACTIVE or REVIEW notes,
+    REVIEW marked unverified. Whether a note is verified decides the label, never the visibility."""
+    controller, seeded = distribution
+    note_id, word = seeded[kind]
+
+    row = _search_row(controller, seeded, kind)
+    assert row is not None, f"{kind} was not returned by search"
+    assert word in row["snippet"], (kind, row["snippet"])
+
+    got = ma.get(controller, note_id)
+    assert word in got["content"]
+    assert got["lifecycle"] == ("REVIEW" if kind.startswith("review") else "ACTIVE")
+    # only a verified note is served without the unverified flag; a REVIEW one is always flagged
+    assert got["unverified"] is (kind != "active_verified")
+    assert ma.NOTICE in got["notice"]
+
+
+@pytest.mark.parametrize("kind", ("review_quarantined", "active_quarantined"))
+def test_read_contract_a_quarantined_note_is_hidden_from_the_agent(distribution, kind):
+    controller, seeded = distribution
+    note_id, word = seeded[kind]
+    row = _search_row(controller, seeded, kind)
+    # the note may be listed (id/title), but its body never reaches the agent
+    assert row is None or row["snippet"] == ""
+    with pytest.raises(ValueError, match="quarantined"):
+        ma.get(controller, note_id)
+    # the owner can still inspect it
+    assert word in ma.get(controller, note_id, principal=Principal.HUMAN)["content"]
+
+
+def test_read_contract_an_archived_note_is_not_served_to_the_agent(distribution):
+    controller, seeded = distribution
+    note_id, word = seeded["archived"]
+    row = _search_row(controller, seeded, "archived")
+    assert row is None or row["snippet"] == ""
     with pytest.raises(ValueError, match="not eligible for cognitive retrieval"):
-        ma.get(controller, note_id, principal=Principal.AI_AGENT)
+        ma.get(controller, note_id)
 
-    # get() by HUMAN succeeds for administrative/human inspection
-    human_read = ma.get(controller, note_id, principal=Principal.HUMAN)
-    assert human_read is not None
-    assert secret_marker in human_read["content"]
+
+def test_read_contract_the_review_fallback_never_synthesizes_trust(distribution):
+    """Handing over an unverified REVIEW candidate adds no verification and no promotion state."""
+    controller, seeded = distribution
+    note_id, _ = seeded["review_unverified"]
+    before = dict(controller.storage.get(note_id))
+    got = ma.get(controller, note_id)
+    assert got["verification"] == "unverified" and got["lifecycle"] == "REVIEW"
+    after = controller.storage.get(note_id)
+    assert after["verification"] == before["verification"] and after["lifecycle"] == before["lifecycle"]
+
+
+def test_read_contract_distribution_matches_the_real_vault_shape(distribution):
+    """The non-empty-snippet rate over the real distribution of states. On the real vault this
+    was 38/48 on main, fell to 2/48 with the verified-only rule, and must be full again."""
+    controller, seeded = distribution
+    served = 0
+    for kind in READABLE_KINDS:
+        row = _search_row(controller, seeded, kind)
+        served += bool(row and row["snippet"])
+    assert served == len(READABLE_KINDS)
 
 
 def test_nothing_a_proposal_can_do_verifies_it(world):
@@ -240,35 +277,23 @@ def test_quarantined_note_has_empty_snippet_in_search_results(world):
         ma.get(controller, note_id, principal=Principal.AI_AGENT)
 
 
-def test_unverified_redacted_note_does_not_leak_content_via_search_snippet(world):
+def test_an_unverified_active_note_keeps_its_content_in_search_and_get(world):
+    """Not being verified is a label, not a reason to hide an ACTIVE note (it was, once)."""
     import uuid
     controller, vault = world
     note_id = str(uuid.uuid4())
     unverified_path = vault / "01_ARCHITECTURE" / "knowledge" / "unverified_active.md"
     unverified_path.write_text(
-        "---\n"
-        f"id: {note_id}\n"
-        "type: knowledge\n"
-        "category: unverified-active\n"
-        "tags: [unverified]\n"
-        "created: 2026-09-01\n"
-        "updated: 2026-09-01\n"
-        "provenance:\n  source_type: user\n  source_ref: fixture\n"
-        "confidence: high\n"
-        "verification: unverified\n"
-        "relations: []\n"
-        "lifecycle: ACTIVE\n"
-        "---\n"
-        "# unverified active\n\nSecret unverified text stripped by cognitive read.\n",
-        encoding="utf-8"
+        fx.note_text("unverified active", "Unverified but active text served as untrusted data.", note_id, verification="unverified"),
+        encoding="utf-8",
     )
     controller.storage.id_to_path.clear()
     controller.storage._cache.clear()
     controller.storage._initialize_index()
-    
-    out = ma.search(controller, "Secret unverified text stripped", limit=5)
+
+    out = ma.search(controller, "Unverified but active text served", limit=5)
     matching = [r for r in out["query_results"] if r["id"] == note_id]
     assert len(matching) == 1
-    # Must NOT leak stored content when cognitive_read strips readable content
-    assert matching[0]["snippet"] == ""
-
+    assert "Unverified but active text" in matching[0]["snippet"]
+    got = ma.get(controller, note_id)
+    assert got["unverified"] is True and "Unverified but active text" in got["content"]

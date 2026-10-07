@@ -10,7 +10,10 @@ audit trail all stay in the controller and in lifecycle/policy.py:
 * search uses the controller's production defaults: it does not force graph expansion,
   spreading activation or a ranking arm.
 * get reads only what the controller lets an agent read (ACTIVE and REVIEW notes; REVIEW is
-  marked unverified).
+  marked unverified). That is the contract CLAUDE.md documents, and what is hidden is
+  narrow: a note flagged `quarantined`, and anything the controller does not serve
+  (ARCHIVED, RAW, unknown ids). Not being `verified` hides nothing: an ACTIVE note keeps its
+  content and an unverified REVIEW candidate is handed over flagged `unverified`.
 * propose creates a CANDIDATE: lifecycle REVIEW, verification "unverified", a fresh uuid
   id, provenance limited to what an AI agent may claim. Nothing becomes verified here:
   attest() stays with the owner. The note goes where the path resolver puts new notes
@@ -79,29 +82,57 @@ def _snippet(text: str) -> str:
     return flat[:MAX_SNIPPET]
 
 
+def _verification_status(note: Dict[str, Any]) -> str:
+    ver = note.get("verification", "")
+    if isinstance(ver, dict):
+        ver = ver.get("status", "")
+    return str(ver or "").strip().lower()
+
+
+def _is_quarantined(*records: Any) -> bool:
+    """True when any of the records carries the explicit quarantine flag."""
+    return any(isinstance(r, dict) and r.get("quarantined") is True for r in records)
+
+
+def _review_candidate(stored: Any) -> bool:
+    """An unverified REVIEW candidate that the controlled tools may hand to an agent.
+
+    Only lifecycle REVIEW qualifies, only when its verification is "unverified" (or was never
+    stamped, which is the same thing), and never when the note is flagged quarantined.
+    ARCHIVED, RAW and every other state are not candidates: the controller refuses them
+    before this point and they never reach storage here.
+    """
+    if not isinstance(stored, dict) or stored.get("lifecycle") != "REVIEW" or _is_quarantined(stored):
+        return False
+    return _verification_status(stored) in {"", "unverified"}
+
+
 def _readable(controller, note_id: str, principal: Principal = Principal.AI_AGENT) -> Optional[Dict[str, Any]]:
-    """The note as the controller lets a principal read it, or None (archived, raw, ...)."""
+    """The note as the controller lets a principal read it, or None (archived, raw, ...).
+
+    ACTIVE notes come from cognitive_read with their content, whatever their verification
+    label. An unverified REVIEW candidate is withheld by the public cognitive_read route
+    (it never enters a trusted context pack); this controlled tool hands it over, explicitly
+    marked ``_cognitive_unverified``, as untrusted data. Nothing is synthesized: no
+    verification or promotion state is added, and a quarantined note is never restored from
+    storage.
+    """
     try:
         pack = controller.cognitive_read(principal, note_id)
     except Exception:  # noqa: BLE001 - not eligible for cognitive retrieval is a normal outcome
         return None
     results = pack.get("results") or []
-    if results:
-        return results[0]
-    
-    # Under NO circumstances may an AI_AGENT fall back to reconstructing raw content from storage.
-    if principal == Principal.AI_AGENT:
-        return None
-
-    # Controlled tool inspection of an explicitly marked REVIEW candidate
-    # for explicitly authorized human/admin reviewers ONLY.
-    if principal in (Principal.HUMAN, Principal.ADMIN):
-        stored = controller.storage.get(note_id)
-        if isinstance(stored, dict) and stored.get("lifecycle") == "REVIEW" and stored.get("verification") == "unverified":
-            fallback = stored.copy()
-            fallback["_cognitive_unverified"] = True
-            return fallback
-    return None
+    record = results[0] if results else None
+    if record is not None and record.get("model_egress") is not False:
+        return record
+    # The route refused the note, or served it with the body withheld: only an unverified
+    # REVIEW candidate that is not quarantined may be inspected from storage.
+    stored = controller.storage.get(note_id)
+    if _review_candidate(stored):
+        fallback = stored.copy()
+        fallback["_cognitive_unverified"] = True
+        return fallback
+    return record
 
 
 def search(controller, query: str, limit: int = 5, principal: Principal = Principal.AI_AGENT) -> Dict[str, Any]:
@@ -120,20 +151,13 @@ def search(controller, query: str, limit: int = 5, principal: Principal = Princi
         if isinstance(ver, dict):
             ver = ver.get("status", "unverified").lower()
         title_source = readable or stored or item
-        
-        # Invariant: Once a model-facing security boundary strips content, no downstream layer may restore it from storage.
-        raw_snippet_text = ""
-        is_quarantined = bool(
-            (isinstance(stored, dict) and stored.get("quarantined", False))
-            or (isinstance(item, dict) and item.get("quarantined", False))
-            or (isinstance(readable, dict) and (readable.get("quarantined", False) or readable.get("trust_state") == "UNVERIFIED_QUARANTINED"))
-        )
+
+        # A quarantined note never yields a snippet to an agent. Beyond that, the snippet is
+        # whatever `_readable` served: the content cognitive_read returned for an ACTIVE note,
+        # or the flagged unverified REVIEW candidate. Storage is not read for anything else.
+        is_quarantined = _is_quarantined(stored, item, readable)
         if principal == Principal.AI_AGENT:
-            # For AI_AGENT: readable is strictly authoritative for model disclosure.
-            # If readable is None or content is empty or note is quarantined: snippet MUST be empty.
-            if readable and not is_quarantined:
-                raw_snippet_text = readable.get("content", "")
-            # Storage is NEVER consulted as a fallback source for AI_AGENT.
+            raw_snippet_text = readable.get("content", "") if (readable and not is_quarantined) else ""
         else:
             # Authorized human or admin inspection
             raw_snippet_text = readable.get("content", "") if (readable and not is_quarantined) else (stored.get("content", "") if stored else "")
@@ -156,7 +180,7 @@ def get(controller, note_id: str, principal: Principal = Principal.AI_AGENT) -> 
         raise ValueError("note_id must be a non-empty string")
     clean_id = note_id.strip()
     stored = controller.storage.get(clean_id)
-    if isinstance(stored, dict) and stored.get("quarantined", False) and principal == Principal.AI_AGENT:
+    if _is_quarantined(stored) and principal == Principal.AI_AGENT:
         raise ValueError(f"Note {clean_id} is quarantined and cannot be retrieved")
     note = _readable(controller, clean_id, principal=principal)
     if not note:

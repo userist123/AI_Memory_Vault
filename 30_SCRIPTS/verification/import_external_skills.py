@@ -22,29 +22,63 @@ def clone():
   if d.exists(): shutil.rmtree(d)
   run('git','clone','--no-tags',s['url'],str(d)); run('git','checkout','--detach',s['ref'],cwd=d)
   if run('git','rev-parse','HEAD',cwd=d)!=s['ref']: raise SystemExit('source pin mismatch: '+s['id'])
-def copy_tree(src,dst):
+#: Where the report of the files filtered out by design is written, next to the registry.
+SKIPPED=ROOT/'01_KNOWLEDGE/EXTERNAL_SKILLS/SKIPPED_FILES.json'
+#: The checkout's own version-control metadata, at the root of a cloned source. It is not part of the
+#: source tree, so it is pruned; a hidden directory of this name anywhere deeper is rejected like any other.
+VCS_METADATA={'.git'}
+def copy_tree(src,dst,skipped=None):
+ """Copy the importable files of `src` into `dst`, failing closed.
+
+ Rejected, with every offending path listed in one error and nothing copied: symlinks, path traversal,
+ hidden paths (other than the top-level version-control metadata), scripts and binaries (FORBIDDEN
+ extensions) and any file with an executable bit. A file that is none of those but is not an ALLOWED
+ type (an image, a font, LICENSE, ...) is not imported either, but it is never dropped silently: it is
+ appended to `skipped` (relative paths) for the caller to report.
+ """
  if src.is_symlink(): raise SystemExit('Rejected symlink: '+str(src))
- for p in src.rglob('*'):
-  if p.is_symlink(): raise SystemExit('Rejected symlink: '+str(p))
-  if p.is_dir(): continue
+ violations=[]; accepted=[]; filtered=[]
+ for p in sorted(src.rglob('*')):
   rel=p.relative_to(src)
-  if any(x=='..' for x in rel.parts): raise SystemExit('Rejected path traversal: '+str(rel))
-  if any(x.startswith('.') for x in rel.parts): continue
-  if p.suffix.lower() not in ALLOWED or p.suffix.lower() in FORBIDDEN: continue
+  if rel.parts and rel.parts[0] in VCS_METADATA: continue
+  if p.is_symlink(): violations.append('symlink: '+str(rel)); continue
+  if p.is_dir(): continue
+  if any(x=='..' for x in rel.parts): violations.append('path traversal: '+str(rel)); continue
+  if any(x.startswith('.') for x in rel.parts): violations.append('hidden path: '+str(rel)); continue
+  suffix=p.suffix.lower()
+  if suffix in FORBIDDEN: violations.append('script or binary ('+suffix+'): '+str(rel)); continue
+  if p.stat().st_mode & 0o111: violations.append('executable bit: '+str(rel)); continue
+  if suffix not in ALLOWED: filtered.append(str(rel).replace(os.sep,'/')); continue
+  accepted.append((p,rel))
+ if violations:
+  raise SystemExit('Rejected import from '+str(src)+' (fail-closed), '+str(len(violations))+' offending path(s), nothing was copied:\n  '+'\n  '.join(violations))
+ for p,rel in accepted:
   t=dst/rel; t.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(p,t)
+ if skipped is not None: skipped.extend(filtered)
+def write_skipped_report(skipped):
+ """Record, and print, every file the filter left out because it is not an allowed type."""
+ SKIPPED.parent.mkdir(parents=True,exist_ok=True)
+ SKIPPED.write_text(json.dumps({'schema_version':'1.0','reason':'not an allowed type ('+', '.join(sorted(ALLOWED))+'); scripts, binaries, hidden paths, symlinks and executables abort the import instead','skipped':skipped},indent=2,sort_keys=True)+'\n')
+ print('Filtered out '+str(sum(len(v) for v in skipped.values()))+' file(s) of a type that is not imported; listed in '+str(SKIPPED))
+ for name in sorted(skipped):
+  for rel in skipped[name]: print('  skipped '+name+'/'+rel)
 def filter_imports():
  if STAGE.exists(): shutil.rmtree(STAGE)
  STAGE.mkdir(parents=True)
+ skipped={}
  mappings=[('github-awesome-copilot','skills','github-awesome-copilot'),('web-quality-skills','skills','web-quality-skills'),('ui-sensei','.','ui-sensei'),('garden-skills','skills/web-design-engineer','garden-web-design-engineer'),('xiaopu-web-design','SKILL.md','xiaopu-web-design-SKILL.md'),('xiaopu-web-design','references','xiaopu-web-design-references'),('awesome-design-skills','skills','awesome-design-skills')]
  for sid,rel,name in mappings:
   root=TMP/sid
   if not any((root/n).is_file() for n in LICENSE_NAMES): raise SystemExit('License missing for '+sid)
   src=root/rel; dst=STAGE/name
   if not src.exists(): raise SystemExit('Missing expected source path: '+sid+'/'+rel)
-  if src.is_dir(): copy_tree(src,dst)
+  if src.is_dir():
+   filtered=[]; copy_tree(src,dst,filtered)
+   if filtered: skipped[name]=sorted(filtered)
   else:
-   if src.is_symlink() or src.name.startswith('.') or src.suffix.lower() not in ALLOWED: raise SystemExit('Rejected file: '+str(src))
+   if src.is_symlink() or src.name.startswith('.') or src.suffix.lower() not in ALLOWED or src.stat().st_mode & 0o111: raise SystemExit('Rejected file: '+str(src))
    dst.parent.mkdir(parents=True,exist_ok=True); shutil.copyfile(src,dst)
+ write_skipped_report(skipped)
 def scan():
  sys.path.insert(0,str(ROOT)); from security.skill_exfiltration_scanner import scan_text
  for p in STAGE.rglob('*'):
