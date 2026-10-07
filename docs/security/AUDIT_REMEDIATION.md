@@ -166,12 +166,13 @@ No semantic phrases (e.g. `[[state-determined system]]`) are injected.
 
 ## 6. Empirical Test Execution Proof
 
-Automated tests executed directly on Windows with Python 3.14.2:
+Re-measured on 2026-10-07 on Linux (Python 3.13.16, pytest 9.1.1), on the branch merged with `origin/main` @ `66ca490f`. The Windows numbers this section used to quote predate the corrections in section 1.
 ```text
-pytest security/tests 20_TESTS/test_import_external_skills.py 20_TESTS/test_memory_access.py 20_TESTS/test_cognitive_core_search_wiring.py 20_TESTS/test_end_to_end_workflow.py 20_TESTS/regression/test_workflow_security_audit.py
-============================= 228 passed in 3.47s =============================
+pytest -q                          (testpaths = 20_TESTS)   2678 passed, 13 skipped, 9 xfailed   (main @ 609b01bf, before #203: 2611 / 13 / 9)
+pytest -q security/tests                                     204 passed
+node --test test/test_jarvis.js test/test_vault_client_auth.js (jarvis_web)   234 passed
+real-vault probe, 10 queries x top 5 through memory_access as AI_AGENT:
+    non-empty snippets / memory_get ok:  main 38/48 and 38/48; branch before repair 2/48 and 6/48; after repair 48/48 and 48/48
+gitleaks 8.30.1: no leaks on the tree, none on the history of all refs
 ```
-- Total security & regression tests: **228 passed, 0 failed, 0 skipped** (100%)
-- Total memory controller invariant tests: **328 passed, 0 failed, 0 skipped** (100%)
-- Total memory interfaces & MCP tests: **23 passed, 0 failed, 0 skipped** (100%)
-- Combined verified suite: **579 passed, 0 failed, 0 skipped, 0 errors**
+`20_TESTS` and `security/tests` are run separately, as CI does: the two directories each hold a `test_prompt_compiler.py`, which collides when they are collected in one invocation (pre-existing).
