@@ -1,3 +1,18 @@
+---
+id: "a1189bdf-cee5-43e8-a11e-31cb44f97ea5"
+type: protocol
+category: security
+lifecycle: REVIEW
+verification: unverified
+created: 2026-10-07
+updated: 2026-10-07
+provenance:
+  source_type: ai
+  source_ref: "codex/owner-authority-guardrail (PR #207)"
+confidence: medium
+tags: [protocol, owner-authority, security, approval-gate]
+---
+
 # Owner Authority Protocol
 
 ## Purpose
