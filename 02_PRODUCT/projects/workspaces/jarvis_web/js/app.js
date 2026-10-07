@@ -13,7 +13,16 @@ const timeline = [];
 
 function esc(value){return String(value ?? '').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
 function now(){return new Date().toLocaleTimeString('ro-RO',{hour12:false});}
-async function request(base,path,options={}){const r=await fetch(`${base}${path}`,options);if(!r.ok){let detail='';try{detail=await r.text();}catch{}throw new Error(detail||`HTTP ${r.status}`);}return r.json();}
+// The memory gateway wants `Authorization: Bearer <AI_MEMORY_VAULT_API_TOKEN>` on every route except
+// /status. The token is never in this file: it is read from sessionStorage (this tab only), and asked
+// for once, with a prompt, when the gateway answers 401. It is sent to the gateway (API) and nowhere else.
+const TOKEN_KEY='ai_memory_vault_api_token';
+let tokenPromptDeclined=false;
+function apiToken(){try{return String(sessionStorage.getItem(TOKEN_KEY)||'').trim();}catch{return '';}}
+function storeApiToken(token){try{if(token)sessionStorage.setItem(TOKEN_KEY,token);else sessionStorage.removeItem(TOKEN_KEY);}catch{}}
+function askForApiToken(){if(tokenPromptDeclined||typeof window==='undefined'||typeof window.prompt!=='function')return '';let token='';try{token=String(window.prompt('Vault API token (the value of AI_MEMORY_VAULT_API_TOKEN set on the server)')||'').trim();}catch{}if(!token){tokenPromptDeclined=true;return '';}storeApiToken(token);return token;}
+function withApiAuth(base,path,options,token){if(base!==API||!token||path==='/status'||String(path).startsWith('/status?'))return options;const headers={...(options.headers||{})};if(!Object.keys(headers).some(h=>h.toLowerCase()==='authorization'))headers.Authorization=`Bearer ${token}`;return {...options,headers};}
+async function request(base,path,options={}){let r=await fetch(`${base}${path}`,withApiAuth(base,path,options,apiToken()));if(r.status===401&&base===API&&path!=='/status'){if(apiToken())storeApiToken('');const token=askForApiToken();if(token)r=await fetch(`${base}${path}`,withApiAuth(base,path,options,token));}if(!r.ok){let detail='';try{detail=await r.text();}catch{}throw new Error(detail||`HTTP ${r.status}`);}return r.json();}
 function logEvent(type,message,detail=''){timeline.unshift({time:now(),type,message,detail});while(timeline.length>24)timeline.pop();const el=$('timeline');if(!el)return;el.innerHTML=timeline.slice(0,8).map(e=>`<div><b>${esc(e.time)}</b><span>${esc(e.message)}${e.detail?` Â· ${esc(e.detail)}`:''}</span><em class="${esc(e.type)}">${e.type==='error'?'FAILED':e.type==='write'?'QUEUED':e.type==='route'?'ROUTED':'COMPLETED'}</em></div>`).join('')||'<div class="muted">No activity yet.</div>';}
 function setMind(state){const el=$('mind-state');if(el)el.textContent=state;const status=$('chat-status');if(status&&state!=='STANDBY')status.textContent=state;}
 function setOnline(online){const state=$('api-state');if(state){state.textContent=online?'ONLINE':'OFFLINE';state.classList.toggle('online',online);}if($('s-memory'))$('s-memory').textContent=online?'ONLINE':'OFFLINE';if($('core-state'))$('core-state').textContent=online?'ALL SYSTEMS OPERATIONAL':'WAITING FOR VAULT LINK';if($('s-llm')&&!online)$('s-llm').textContent='OFFLINE';}
