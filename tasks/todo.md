@@ -162,7 +162,9 @@ HG 585 accreditation analysis is verified.
         list every external process the app may start and check each exists on supported Windows versions.
       - Collection and interpretation fully deterministic without AI; a test runs the full pipeline with the AI
         layer absent and asserts identical findings.
-      - Replace or report tools that may be missing (e.g. `wmic`); `AuditCollector.ps1` must ship inside the
+      - Supported Windows (decision 15): Win 11 23H2/24H2/25H2, **Win 10 LTSC 2019/2021 (incl. IoT)**, Server 2022/2025
+        fully; Server 2016/2019, Win 10 22H2, LTSB 2016 best effort. Fix list: `tasks/loganalyzer/WINDOWS_TOOLING_COMPAT.md`.
+      - Never use wmic (owner rule); PowerShell 5.1 or in-process APIs. Replace or report tools that may be missing; `AuditCollector.ps1` must ship inside the
         package (today it is missing — see security fixes).
 - [ ] WP3: case field "system category" (air-gapped network / standalone PC / connected × classified / unclassified)
       driving collection, export and retention rules.
