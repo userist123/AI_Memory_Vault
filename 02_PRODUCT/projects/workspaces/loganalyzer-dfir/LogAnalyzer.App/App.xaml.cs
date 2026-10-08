@@ -33,6 +33,10 @@ namespace LogAnalyzer.UI
 
         protected override void OnStartup(StartupEventArgs e)
         {
+            // `--self-test`: prove the published executable runs on a bare machine, then exit without opening any window.
+            if (LogAnalyzer.Dfir.Windows.Investigation.SelfTest.IsRequested(e.Args))
+                Environment.Exit(LogAnalyzer.Dfir.Windows.Investigation.SelfTest.Execute(e.Args, AppContext.BaseDirectory));
+
             string debugLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_debug.log");
             string crashLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_crash.log");
 

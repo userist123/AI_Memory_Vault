@@ -106,8 +106,12 @@ public sealed class InvestigationPipeline
     public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default)
     {
         var r = new InvestigationResult { Case = ws };
-        using var id = WindowsIdentity.GetCurrent();
-        bool elevated = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+        bool elevated = false;
+        if (OperatingSystem.IsWindows())
+        {
+            using var id = WindowsIdentity.GetCurrent();
+            elevated = new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+        }
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
 
         // 1. Acquisition.

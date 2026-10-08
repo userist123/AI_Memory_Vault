@@ -147,12 +147,22 @@ jobs:
           retention-days: 30
 
   package:
-    name: Package LogAnalyzer
+    name: Package ${{ matrix.edition }}
     needs: build-test
     runs-on: windows-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - edition: LogAnalyzer            # unclassified (P2/P3)
+            project: LogAnalyzer.App/LogAnalyzer.App.csproj
+            artifact: LogAnalyzer-win-x64
+          - edition: LogAnalyzer.Classified # classified (P1)
+            project: LogAnalyzer.App.Classified/LogAnalyzer.App.Classified.csproj
+            artifact: LogAnalyzer-Classified-win-x64
     env:
-      EDITION: LogAnalyzer
+      EDITION: ${{ matrix.edition }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -164,8 +174,8 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: Publish (win-x64 single-file)
-        run: dotnet publish LogAnalyzer.App/LogAnalyzer.App.csproj -c Release -p:PublishProfile=win-x64-singlefile
+      - name: Publish (win-x64 self-contained single-file)
+        run: dotnet publish ${{ matrix.project }} -c Release -p:PublishProfile=win-x64-singlefile
 
       - name: Verify publish output
         shell: pwsh
@@ -177,9 +187,24 @@ jobs:
           if (-not (Test-Path "$out/Categories")) { Write-Host "::error::Categories lipsește din $out"; exit 1 }
           if (Test-Path "$out/license.lic") { Write-Host "::error::license.lic nu trebuie livrat în pachet"; exit 1 }
 
+      # Decision 14: the package must run on a bare PC. No .NET on PATH, DOTNET_ROOT unset, outbound traffic blocked for the exe.
+      - name: Smoke test of the published executable (no .NET, no network)
+        shell: pwsh
+        run: |
+          $out = (Resolve-Path "publish/$env:EDITION/win-x64").Path
+          $exe = Join-Path $out "$env:EDITION.exe"
+          Get-ChildItem Env: | Where-Object { $_.Name -like 'DOTNET*' } | ForEach-Object { Remove-Item "Env:$($_.Name)" }
+          $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -and $_ -notmatch 'dotnet' }) -join ';'
+          if (Get-Command dotnet -ErrorAction SilentlyContinue) { Write-Host "::error::dotnet is still on PATH"; exit 1 }
+          New-NetFirewallRule -DisplayName "block-$env:EDITION" -Direction Outbound -Action Block -Program $exe | Out-Null
+          $report = Join-Path $env:RUNNER_TEMP 'self-test.txt'
+          $p = Start-Process -FilePath $exe -ArgumentList '--self-test', "--self-test-out=$report" -Wait -PassThru
+          if (Test-Path $report) { Get-Content $report | ForEach-Object { Write-Host $_ } }
+          if ($p.ExitCode -ne 0) { Write-Host "::error::self-test exited with $($p.ExitCode)"; exit 1 }
+
       - name: Upload package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: LogAnalyzer-win-x64
-          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/LogAnalyzer/win-x64
+          name: ${{ matrix.artifact }}
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/${{ matrix.edition }}/win-x64
           retention-days: 30
