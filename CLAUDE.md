@@ -109,6 +109,15 @@ When multiple AI systems (Claude Code, Antigravity, ChatGPT, Perplexity) collabo
 3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by the cognitive-core protected-boundary tests.
 4. **Empirical Verification**: Run the relevant `pytest` suites and verify zero regressions before closing any task.
 
+## Agent checkpoints and token economy
+
+Owner rule: every agent keeps a short checkpoint file `00_GOVERNANCE/coordination/tasks/todo-<agent-name>.md`
+(task, branch/PR, done, next steps, blockers, key files), updates it at every milestone and before stopping, and
+commits it with its work. On a cold resume, read only that checkpoint and the files it points to, never the whole
+previous conversation; restart work as a new agent from the checkpoint instead of resuming a long transcript.
+Read excerpts rather than whole files, run the full suite once before the final push, and prefer one agent at a
+time. Full protocol and template: `00_GOVERNANCE/coordination/tasks/README.md`.
+
 ## Global Production-Consumer Rule
 
 Before constructing a new layer over a component, verify who consumes that component in the production path:
