@@ -191,3 +191,9 @@ air-gapped networks / standalone PCs. The app's own behaviour and documentation 
 - Station/domain/e-mail stay under Advanced.
 - Classification: NATO CTS/NS/NC/NR + EU TS/S/C/R UE + national HG 585 levels; no unclassified.
 - Tier-3 importers only on demand; **printers now**: PaperCut-MF-style print tracking from PrintService/Operational 307/805 → new WP16a (print), Tier 1 for this owner. Case scope fields mandatory. WP1b approved. Exchange scripts not in P1.
+
+## WP16a — Print tracking (decision 26)
+- [ ] Owner to supply: 3–5 real document-name examples (pattern), printer models + driver type (PCL/PS/XPS, v3/v4),
+      sample PrintService/Operational export, sample spool files (.SPL/.SHD) from a test printer, MFP logs per model.
+- [ ] Job states incl. "nothing came out"; content capture from kept spool files (EMF/XPS → text/PDF), stored as
+      classified case material; naming-standard check; chain print→scan→PDF→USB.
