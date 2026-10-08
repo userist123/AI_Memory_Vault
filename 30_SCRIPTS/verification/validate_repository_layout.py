@@ -18,6 +18,8 @@ ROOT_ALLOWLIST = {
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
     "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests", "docs", "security",
     ".github", ".agents", ".claude-plugin", ".obsidian",
+    # Claude Code project settings and the owner-authority PreToolUse hook.
+    ".claude",
     # Per-client MCP registrations of the same vault-memory server (Codex, Gemini CLI).
     ".codex", ".gemini",
     *NUMBERED_ROOTS,
