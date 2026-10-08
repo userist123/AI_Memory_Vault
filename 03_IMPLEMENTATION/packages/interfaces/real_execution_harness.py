@@ -789,80 +789,80 @@ class RealAgentExecutionHarness:
 
         access = VaultAccess(principal=self.bootstrap_principal, interface="cli")
         source_specs = [
-            ("AGENTS.md", "AGENTS.md"),
-            ("CLAUDE.md", "CLAUDE.md"),
-            ("00_GOVERNANCE/VAULT_STATE.md", "VAULT_STATE.md"),
-            ("00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", "UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md"),
-            ("00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md", "BOOTSTRAP_ALL_AGENTS_V1.md"),
-            ("00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", "AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md"),
-            ("00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md", "AI_MEMORY_VAULT/CURRENT.md"),
-            ("00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md", "CODEX/CURRENT.md"),
+            ("AGENTS.md", "AGENTS.md", [(1, 90), (148, 165)]),
+            ("CLAUDE.md", "CLAUDE.md", [(124, 230), (272, 365)]),
+            ("00_GOVERNANCE/VAULT_STATE.md", "VAULT_STATE.md", [(1, 110)]),
+            ("00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", "UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", [(1, 24), (167, 228)]),
+            ("00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md", "BOOTSTRAP_ALL_AGENTS_V1.md", [(1, 55)]),
+            ("00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", "AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", [(1, 170)]),
+            ("00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md", "AI_MEMORY_VAULT/CURRENT.md", [(1, 65)]),
+            ("00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md", "CODEX/CURRENT.md", [(1, 45)]),
         ]
         documents: List[Dict[str, Any]] = []
 
-        for expected_path, expected_name in source_specs:
+        for expected_path, expected_name, ranges in source_specs:
             resolved = access.resolve(expected_path, limit=5)
             if resolved.get("code") != "OK" or resolved.get("status") != "RESOLVED":
-                raise ExecutionContractError(
-                    f"bootstrap route unresolved: {expected_path}"
-                )
+                raise ExecutionContractError(f"bootstrap route unresolved: {expected_path}")
 
             route = resolved.get("route") or {}
             uri = route.get("uri") if isinstance(route, dict) else None
             if not uri or not uri.endswith(expected_path):
-                raise ExecutionContractError(
-                    f"bootstrap route identity mismatch: {expected_path}"
-                )
+                raise ExecutionContractError(f"bootstrap route identity mismatch: {expected_path}")
 
             metadata = access.metadata(uri)
             meta_integrity = metadata.get("integrity") or {}
             meta_sha = meta_integrity.get("sha256")
             if not meta_sha:
-                raise ExecutionContractError(
-                    f"bootstrap provenance missing: {expected_path}"
-                )
+                raise ExecutionContractError(f"bootstrap provenance missing: {expected_path}")
 
-            read = access.read(uri)
-            if read.get("code") != "OK":
-                raise ExecutionContractError(
-                    f"bootstrap read failed: {expected_path}"
-                )
-
-            evidence = read.get("evidence") or []
-            integrity = read.get("integrity") or {}
-            if not evidence or not integrity.get("sha256"):
-                raise ExecutionContractError(
-                    f"bootstrap evidence missing: {expected_path}"
-                )
-            first = evidence[0]
-            if first.get("truncated") or read.get("next"):
-                raise ExecutionContractError(
-                    f"bootstrap truncated: {expected_path}"
-                )
-            body = first.get("text", "")
-            if not body:
-                raise ExecutionContractError(
-                    f"bootstrap body missing: {expected_path}"
-                )
-            if meta_sha != integrity["sha256"]:
-                raise ExecutionContractError(
-                    f"bootstrap stale/drifted during read: {expected_path}"
-                )
+            chunks: List[str] = []
+            chunk_evidence: List[Dict[str, Any]] = []
+            for line_start, line_end in ranges:
+                read = access.read(uri, line_start=line_start, line_end=line_end)
+                if read.get("code") != "OK":
+                    raise ExecutionContractError(
+                        f"bootstrap read failed: {expected_path}: L{line_start}-L{line_end}"
+                    )
+                evidence = read.get("evidence") or []
+                integrity = read.get("integrity") or {}
+                if not evidence or not integrity.get("sha256"):
+                    raise ExecutionContractError(
+                        f"bootstrap evidence missing: {expected_path}"
+                    )
+                if integrity["sha256"] != meta_sha:
+                    raise ExecutionContractError(
+                        f"bootstrap stale/drifted during read: {expected_path}"
+                    )
+                first = evidence[0]
+                if first.get("truncated") or read.get("next"):
+                    raise ExecutionContractError(
+                        f"bootstrap truncated: {expected_path}: L{line_start}-L{line_end}"
+                    )
+                body = first.get("text", "")
+                if not body:
+                    raise ExecutionContractError(
+                        f"bootstrap body missing: {expected_path}: L{line_start}-L{line_end}"
+                    )
+                chunks.append(body)
+                chunk_evidence.append({
+                    "line_start": first.get("line_start"),
+                    "line_end": first.get("line_end"),
+                    "sha256_chunk": first.get("sha256_chunk"),
+                    "truncated": False,
+                })
 
             documents.append({
                 "name": expected_name,
                 "path": expected_path,
                 "uri": uri,
-                "sha256": integrity["sha256"],
-                "text": body,
+                "sha256": meta_sha,
+                "text": "\n".join(chunks),
                 "evidence_level": "DIRECT",
-                "classification": read.get("classification"),
-                "lifecycle": read.get("lifecycle"),
-                "trust": read.get("trust"),
-                "line_start": first.get("line_start"),
-                "line_end": first.get("line_end"),
-                "truncated": False,
-                "evidence": first,
+                "classification": route.get("classification"),
+                "lifecycle": route.get("lifecycle"),
+                "trust": route.get("trust"),
+                "evidence": chunk_evidence,
             })
 
         governance = self._detect_bootstrap_governance_conflicts(
@@ -875,7 +875,7 @@ class RealAgentExecutionHarness:
             )
 
         total_chars = sum(len(str(d["text"])) for d in documents)
-        if total_chars > 24000:
+        if total_chars > 40000:
             raise ExecutionContractError(
                 f"bootstrap exceeds bounded context budget: {total_chars}"
             )
@@ -887,29 +887,6 @@ class RealAgentExecutionHarness:
             "conflicts": governance["conflicts"],
             "resolved_conflicts": governance["resolved_conflicts"],
         }
-
-    @staticmethod
-    def _contract_for_task(task: AgentTask) -> ExecutionContract:
-        def normalize(value: str) -> str:
-            candidate = str(value or "").replace("\\\\", "/").lstrip("/")
-            if not candidate or candidate.startswith("../") or "/../" in candidate:
-                raise ExecutionContractError("task path escapes scope")
-            return candidate
-
-        allowed = [normalize(task.target_file)]
-        if task.test_file:
-            test_path = normalize(task.test_file)
-            if test_path not in allowed:
-                allowed.append(test_path)
-        return ExecutionContract(
-            allowed_files=tuple(allowed),
-            protected_paths=(".git", ".github", "AGENTS.md", "CLAUDE.md", "00_GOVERNANCE", "04_CONFIG", "security"),
-            allowed_actions=("write_file",),
-            acceptance_criteria=("only allowed files change", "verification exits 0", "required evidence is persisted"),
-            evidence_required=("bootstrap_sources", "context_hash", "contract_hash", "workspace_diff", "verification"),
-            stop_conditions=("bootstrap missing", "out-of-scope mutation", "protected mutation", "model failure", "verification failure", "missing evidence"),
-            max_memory_results=2,
-        )
 
     @staticmethod
     def _detect_bootstrap_governance_conflicts(sources: List[Dict[str, Any]], branch: str) -> Dict[str, Any]:
