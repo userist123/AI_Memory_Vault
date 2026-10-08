@@ -109,3 +109,15 @@ Stage 1 is an audit, **no code changes**:
       CONFORM lines 52/75 unconditional, `Finding.ContradictingEvidence` declared and never set.
 - [x] Owner: answer the 12 questions in §6 (2026-10-08: all 12 final) → audit §8.
 - [ ] Owner: explicit go for stage 2 (WP0 first, then WP1 ∥ WP12).
+
+## STAGE 2 — LogAnalyzer (started 2026-10-08, owner "start etapa 2")
+Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 final owner decisions).
+- [ ] WP0 baseline & governance (PR `loganalyzer/wp0-baseline`): CUR update, audit + contracts copied to docs/dfir, historical banners, Windows CI baseline.
+- [ ] WP1 honest shell (PR `loganalyzer/wp1-honest-shell`): static safety text, CONFORM without evidence → not assessed, APT page renamed, test-alert label, unwired facades marked.
+- [ ] WP12 tests & release gate (PR `loganalyzer/wp12-release-gate`): synthetic corpus in CI, gate script + CI job (report on PRs, enforce on release), waiver format, CodeQL C#, PR212 #3/#4.
+- [ ] Review each PR: Windows CI green, local tests vs main, production-consumer grep; then merge in order WP0 → WP1/WP12.
+- [ ] Next: WP2 (Finding contract + state vocabulary), then WP3/WP4.
+
+## Side deliverable — NIS2 note on audit-data handling (owner request 2026-10-08)
+- [ ] Romanian document with verbatim citations (NIS2 Art. 20/21/23/32-34, Reg. 2024/2690 Annex, OUG 155/2024, DNSC norms, ISO 27001/27037, GDPR) → `tasks/loganalyzer/NIS2_DATE_AUDIT_RESPONSABILITATI.md`.
+- [ ] Orchestrator spot-checks every quote against the fetched source before delivery.
