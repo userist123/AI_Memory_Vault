@@ -1,0 +1,11 @@
+{
+  "model_id": "TO_BE_SET_BY_ORCHESTRATOR",
+  "temperature": 0.0,
+  "seed": 20261008,
+  "max_tokens": 400,
+  "prompt_template_hash": "b14a2c3230fd64edcee072ff0095f59a5189ddc57c687a8b6b2b6a570e9a9815",
+  "controls": {
+    "study": "B03",
+    "trials_per_run": 204
+  }
+}

@@ -14,7 +14,7 @@
 
 It provides:
 1. **Canonical Book Map Management**: Rigorous schema validation and persistent tracking of source identity, authors, edition, chapter coverage, and processing status.
-2. **Bidirectional Concept Linkage**: Associating verified atomic notes with their parent book map and dynamically updating chapter coverage.
+2. **Bidirectional Concept Linkage**: Associating atomic notes in the `VERIFIED` state with their parent book map and dynamically updating chapter coverage.
 3. **Coverage & Gap Analysis**: Quantitative metrics on chapter coverage ratios and identification of unexplored chapters.
 4. **Zero-Trust Untrusted Isolation**: Strict interception of prompt injection directives (`tool_call`, `exec`, `shell_command`) in both book maps and linked notes.
 5. **No Auto-Promotion Enforcement**: Invariant preservation where all cataloged book maps and linked concepts remain strictly in `VERIFIED` state (`AWAITING_OWNER_APPROVAL`).
@@ -47,7 +47,7 @@ It provides:
 
 ---
 
-## 3. Strict Invariant Guarantees
+## 3. Strict Invariants
 
 | Invariant ID | Policy Rule | Catalog Enforcement Mechanism |
 |---|---|---|
@@ -59,7 +59,7 @@ It provides:
 
 ---
 
-## 4. Empirical Test Verification
+## 4. Unit Test Results
 
 The catalog was validated across 14 tests in [test_book_to_memory_catalog.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/20_TESTS/test_book_to_memory_catalog.py):
 - Registration, retrieval, duplicate rejection, and schema validation: PASS

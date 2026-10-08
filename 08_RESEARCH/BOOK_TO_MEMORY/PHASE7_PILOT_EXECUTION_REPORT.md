@@ -132,7 +132,7 @@ To validate the end-to-end functionality of `BookToMemoryPipeline` in realistic 
 
 ## 4. Key Pilot Findings & Invariant Validation
 
-1. **Zero Text Infiltration**: At no point was raw, unindexed book text copied into system instructions or production working memory. All extracted concepts were transformed into structured atomic notes with verified provenance.
+1. **Zero Text Infiltration**: At no point was raw, unindexed book text copied into system instructions or production working memory. All extracted concepts were transformed into structured atomic notes with a provenance record (checked by the schema gate).
 2. **Deterministic Gating**: Every candidate note underwent the exact 8-stage sequence without skipping any verification step.
-3. **No Auto-Promotion Verified**: In both pilot runs under `Principal.AI_AGENT`, the notes stopped strictly at `VERIFIED`. Promotion to `ACTIVE` was deferred to explicit human owner attestation.
-4. **Tamper-Evident Signatures**: Both audit reports contain verified SHA-256 digests reflecting the complete trial ledger.
+3. **No Auto-Promotion Observed (synthetic fixtures)**: In both pilot runs under `Principal.AI_AGENT`, the notes stopped strictly at `VERIFIED`. Promotion to `ACTIVE` was deferred to explicit human owner attestation.
+4. **Tamper-Evident Signatures**: Both audit reports contain SHA-256 digests reflecting the complete trial ledger.

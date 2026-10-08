@@ -3,7 +3,7 @@
 **Repository:** `userist123/AI_Memory_Vault_CODEX_READY`  
 **Branch:** `research/book-to-memory-phase2-lifecycle`  
 **Data:** 2026-10-04  
-**Obiectiv:** Demonstrarea empirică a faptului că nicio cale alternativă de execuție, injecție sau mutație nu poate ocoli porțile ciclului de viață și securitate ale sistemului de memorie.
+**Obiectiv:** Acoperirea prin teste unitare a ipotezei că nicio cale alternativă de execuție, injecție sau mutație nu poate ocoli porțile ciclului de viață și securitate ale sistemului de memorie.
 
 ---
 
@@ -14,7 +14,7 @@ Fișier: `20_TESTS/test_book_to_memory_lifecycle_gates.py`
 
 ### Matricea celor 30 de Condiții Adversariale Testate:
 
-| ID Test | Vector Adversarial Testat | Comportament / Poartă Verificată | Rezultat |
+| ID Test | Vector Adversarial Testat | Comportament / Poartă Testată | Rezultat |
 |---|---|---|---|
 | **01** | `RAW -> ACTIVE` direct | `LifecycleTransitionError`: Tranziție directă ilegală interzisă | **PASS** |
 | **02** | `UNVERIFIED -> ACTIVE` direct | `LifecycleTransitionError`: Tranziție directă ilegală interzisă | **PASS** |

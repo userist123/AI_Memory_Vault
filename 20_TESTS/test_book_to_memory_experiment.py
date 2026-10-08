@@ -367,3 +367,67 @@ def test_harness_full_lifecycle_multi_hypothesis(clean_registry, valid_sample_ca
     ledger = harness.get_experiment_ledger()
     assert len(ledger) == 2
 
+
+
+# =============================================================================
+# Explicit run config (PR #209 B08)
+# =============================================================================
+
+def _config():
+    from lifecycle.validation.book_to_memory_run_config import RunConfig
+    return RunConfig.for_retrieval({"principal": "HUMAN", "page_size": 10})
+
+
+def test_run_config_is_recorded_in_the_result(experiment_harness, valid_sample_cases):
+    cfg = ExperimentConfig(
+        experiment_id="EXP-H1-001-INTERFERENCE",
+        hypothesis_id="H1-BOOK-001",
+        protocol_name="Controlled Proactive Interference Mitigation",
+        sample_cases=valid_sample_cases,
+        run_config=_config().to_dict(),
+    )
+    experiment_harness.configure_experiment(cfg)
+    result = experiment_harness.run_experiment("EXP-H1-001-INTERFERENCE", lambda c: (0.60, 0.85, {}))
+    assert result.run_config == _config().to_dict()
+    assert result.to_dict()["run_config"]["controls"]["page_size"] == 10
+
+
+def test_malformed_run_config_is_refused_at_configuration(valid_sample_cases):
+    from lifecycle.validation.book_to_memory_run_config import RunConfigError
+    with pytest.raises(RunConfigError):
+        ExperimentConfig(
+            experiment_id="EXP-H1-001-INTERFERENCE",
+            hypothesis_id="H1-BOOK-001",
+            protocol_name="Controlled Proactive Interference Mitigation",
+            sample_cases=valid_sample_cases,
+            run_config={"model_id": "x"},
+        )
+
+
+def test_improvement_without_run_config_never_closes_as_validated(experiment_harness, valid_sample_cases):
+    cfg = ExperimentConfig(
+        experiment_id="EXP-H1-001-INTERFERENCE",
+        hypothesis_id="H1-BOOK-001",
+        protocol_name="Controlled Proactive Interference Mitigation",
+        sample_cases=valid_sample_cases,
+    )
+    experiment_harness.configure_experiment(cfg)
+    result = experiment_harness.run_experiment("EXP-H1-001-INTERFERENCE", lambda c: (0.60, 0.85, {}))
+    assert result.is_statistically_improved is True and result.run_config is None
+    decision = experiment_harness.prepare_decision_package("EXP-H1-001-INTERFERENCE", actor=Principal.HUMAN)
+    assert decision.decision_outcome == TrackState.DECISION_PENDING
+    assert "NO RUN CONFIG RECORDED" in decision.rationale
+
+
+def test_improvement_with_run_config_can_close_as_validated_for_the_owner(experiment_harness, valid_sample_cases):
+    cfg = ExperimentConfig(
+        experiment_id="EXP-H1-001-INTERFERENCE",
+        hypothesis_id="H1-BOOK-001",
+        protocol_name="Controlled Proactive Interference Mitigation",
+        sample_cases=valid_sample_cases,
+        run_config=_config(),
+    )
+    experiment_harness.configure_experiment(cfg)
+    experiment_harness.run_experiment("EXP-H1-001-INTERFERENCE", lambda c: (0.60, 0.85, {}))
+    decision = experiment_harness.prepare_decision_package("EXP-H1-001-INTERFERENCE", actor=Principal.HUMAN)
+    assert decision.decision_outcome == TrackState.CLOSED_CHANGE_VALIDATED

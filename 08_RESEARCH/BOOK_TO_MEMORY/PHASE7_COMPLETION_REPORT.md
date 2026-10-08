@@ -11,7 +11,7 @@
 **Phase**: Phase 7 — End-to-End Pipeline & Book Pilot Ingestion  
 **Branch**: `research/book-to-memory-phase7-pipeline`  
 **Parent HEAD**: `7bfc5ff61`  
-**Status**: COMPLETED & FULLY VERIFIED  
+**Status**: COMPLETED; UNIT TESTS PASS; NOT EMPIRICALLY VALIDATED  
 **Date**: 2026-10-04  
 
 ---
@@ -20,7 +20,7 @@
 
 Phase 7 successfully completes the construction, integration, and pilot verification of the **Book-to-Memory End-to-End Pipeline** in strict compliance with `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`.
 
-All individual building blocks developed and verified across Phases 1 through 6:
+All individual building blocks developed, with their unit tests passing, across Phases 1 through 6:
 1. Phase 1: Ontology & 11 Atomic Schemas
 2. Phase 2: Lifecycle Gates (`GATE-01..GATE-08`)
 3. Phase 3: Conflict Registry (`CONFLICT-<domain>-<slug>`)
@@ -46,7 +46,7 @@ have now been united into a single, cohesive, production-ready pipeline class: `
 
 ---
 
-## 3. Empirical Test & Verification Results
+## 3. Unit Test Results
 
 ### 3.1 Phase 7 Pipeline Suite
 ```text

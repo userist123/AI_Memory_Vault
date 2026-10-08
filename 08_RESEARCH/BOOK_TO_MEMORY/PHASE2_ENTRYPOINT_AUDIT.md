@@ -62,7 +62,7 @@
     - Execută `INSERT ... ON CONFLICT(id) DO UPDATE`.
     - Validare mecanică: `CHECK(lifecycle IN ('RAW', 'CLASSIFIED', 'NORMALIZED', 'REVIEW', 'VERIFIED', 'ACTIVE', 'RECONSOLIDATING', 'SUPERSEDED', 'ARCHIVED'))`.
     - *Vulnerabilitate potențială identificată dacă este accesat direct:* `StorageEngine` este un strat tehnic pur, fără conștientizare de `Principal` sau reguli de porți de calitate. Dacă un script sau apelant ocolește `MemoryController` și instanțiază direct `SQLiteStorageEngine`, poate scrie orice stare validă sintactic.
-  - *Mitigare existentă & cerință Faza 2:* Accesul direct la `storage` este interzis în runtime-ul de producție; orice barieră de Book-to-Memory trebuie să verifice că notele din spațiul canonic sunt supuse validatorului `book_to_memory_lifecycle` și verificate la integritate.
+  - *Mitigare existentă & cerință Faza 2:* Accesul direct la `storage` este interzis în runtime-ul de producție; orice barieră de Book-to-Memory trebuie să verifice că notele din spațiul canonic sunt supuse validatorului `book_to_memory_lifecycle` și supuse controlului de integritate.
 
 ---
 
@@ -104,7 +104,7 @@
 | `controller.attest()` | Auto-verificare agent | `Authorizer` permite doar HUMAN/ADMIN | Testat adversarial |
 | Direct `storage.set()` | Ocolire controller | Nu este expus agenților; apelabil doar intern | Barieră `book_to_memory_lifecycle` |
 | Direct filesystem write | Creare fișier `.md` ACTIVE | Monitorizat de `active_note_integrity.py` | Detectat la audit hash |
-| Scripturi de ingestie | Scriere stare greșită | Toate scriu doar `REVIEW` sau `RAW` | Verificat |
+| Scripturi de ingestie | Scriere stare greșită | Toate scriu doar `REVIEW` sau `RAW` | Inspectat în cod |
 
 ---
 

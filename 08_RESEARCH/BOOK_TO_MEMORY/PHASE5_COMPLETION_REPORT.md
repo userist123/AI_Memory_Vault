@@ -20,7 +20,7 @@
 
 ## 1. Obiective Realizate
 
-În conformitate cu specificațiile Fazei 5 și cerințele autoritative din `POLICY-LEARNING-QUALITY-02`, a fost proiectat, implementat și validat sistemul de **With-Note vs Without-Note Ablation** pentru măsurarea empirică a valorii incrementale a notelor extrase din cărți:
+În conformitate cu specificațiile Fazei 5 și cerințele autoritative din `POLICY-LEARNING-QUALITY-02`, a fost proiectat, implementat și validat sistemul de **With-Note vs Without-Note Ablation** pentru măsurarea valorii incrementale (nicio măsurătoare reală nu a fost făcută) a notelor extrase din cărți:
 
 ### 1.1 Cadrul Experimental Pereche (Paired A/B Testing)
 - Fiecare notă este evaluată comparativ în două condiții riguros controlate:

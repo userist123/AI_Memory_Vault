@@ -26,7 +26,7 @@ VAULT MECHANISM
 Under the AI Memory System Operating Contract:
 1. Untrusted biological literature or speculative concepts must **never** be admitted directly into production code or active memory.
 2. A biological finding is merely an inspirational observation; it must be operationalized into a falsifiable engineering hypothesis linked directly to a known vault limitation (one of the canonical problems in `08_RESEARCH/PROBLEM_MATRIX.md`).
-3. Changes to vault mechanisms can only occur if supported by paired empirical evaluations with positive ablation delta ($\Delta \ge 0$), passing usage tests ($\ge 8/10$), and signed Human Owner attestation.
+3. Changes to vault mechanisms can only occur if supported by paired evaluations with positive ablation delta ($\Delta \ge 0$), passing usage tests ($\ge 8/10$), and signed Human Owner attestation.
 
 ---
 
@@ -40,7 +40,7 @@ stateDiagram-v2
     SOURCE_PENDING --> HYPOTHESIS_READY: Source note validated
     HYPOTHESIS_READY --> EXPERIMENT_READY: Operational metrics & harness defined
     EXPERIMENT_READY --> EVIDENCE_PENDING: Experiment execution triggered
-    EVIDENCE_PENDING --> EVIDENCE_AVAILABLE: Empirical data recorded (Ablation / Usage)
+    EVIDENCE_PENDING --> EVIDENCE_AVAILABLE: Observations recorded (Ablation / Usage)
     EVIDENCE_AVAILABLE --> DECISION_PENDING: Evaluation review package assembled
     DECISION_PENDING --> CLOSED_CHANGE_VALIDATED: Owner approves (requires DecisionRecord)
     DECISION_PENDING --> CLOSED_NO_CHANGE: Hypothesis rejected or inconclusive
@@ -53,9 +53,9 @@ stateDiagram-v2
 2. **`HYPOTHESIS_READY`**: Falsifiable engineering claim, mechanism, target problem, and predicted ablation delta explicitly articulated.
 3. **`EXPERIMENT_READY`**: Controlled test harness, evaluation protocol, and success criteria configured and frozen.
 4. **`EVIDENCE_PENDING`**: Multi-run paired evaluation in active progress.
-5. **`EVIDENCE_AVAILABLE`**: Empirical data (both absolute and relative deltas, sample counts, failure counts) collected.
+5. **`EVIDENCE_AVAILABLE`**: Observations (both absolute and relative deltas, sample counts, failure counts) collected.
 6. **`DECISION_PENDING`**: Structured evaluation package prepared for council and owner review.
-7. **`CLOSED_CHANGE_VALIDATED`**: Terminal state where empirical improvement is verified, and changes are sanctioned for implementation. **Requires `Principal.HUMAN` authorization and valid `DecisionRecord`**.
+7. **`CLOSED_CHANGE_VALIDATED`**: Terminal state where a measured improvement has been attested by the owner, and changes are sanctioned for implementation. **Requires `Principal.HUMAN` authorization and valid `DecisionRecord`**.
 8. **`CLOSED_NO_CHANGE`**: Terminal state where the hypothesis failed to demonstrate value or was disproven. Preserves negative evidence to prevent recurring cycles.
 
 ---
@@ -70,7 +70,7 @@ Transitions must advance sequentially through permitted transitions. Attempting 
 ### 3.2 Human Attestation Gate (I-004 Enforcement)
 `Principal.AI_AGENT` is cryptographically barred from transitioning any hypothesis to `CLOSED_CHANGE_VALIDATED`. Only `Principal.HUMAN` or `Principal.ADMIN` possesses the authority to validate engineering changes that impact vault mechanisms.
 
-### 3.3 Anti-Gaming Empirical Constraints
+### 3.3 Anti-Gaming Constraints
 Any `DecisionRecord` attached to a hypothesis must fulfill:
 - **Sample Count Constraint**: `sample_count >= 5` (single-run flukes or cherry-picked examples are rejected).
 - **Paired Evaluation Constraint**: `paired_evaluations == True` (identical tasks evaluated under WITH_NOTE vs. WITHOUT_NOTE conditions).

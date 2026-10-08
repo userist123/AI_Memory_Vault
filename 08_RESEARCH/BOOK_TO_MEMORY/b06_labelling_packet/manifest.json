@@ -1,0 +1,22 @@
+{
+  "rows": 131,
+  "h1_gold_relevance": 80,
+  "candidate_note_faithfulness": 51,
+  "priority_1_rows": 83,
+  "min_labels_per_metric": 20,
+  "allowed": {
+    "h1_gold_relevance": [
+      "yes",
+      "partial",
+      "no"
+    ],
+    "candidate_note_faithfulness": [
+      "faithful",
+      "partial",
+      "unfaithful",
+      "not_a_term"
+    ]
+  },
+  "csv_sha256": "14d9bcb7bd96fde4803adca008966ea976a89e25c9dd4d7ad9d80dc0213e1869",
+  "h1_cases_sha256": "59dc6b0d6b00bf578824c593f7e77dae69a234ddc9e330429bd8354eec227114"
+}

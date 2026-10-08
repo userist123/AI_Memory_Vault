@@ -10,7 +10,7 @@
 
 ## 1. Sinteză Executivă
 
-Faza 6 a proiectului Book-to-Memory a implementat și validat empiric mecanismele de **regăsire (retrieval)** și **admitere în memoria de lucru (Working Memory)** pentru unitățile atomice de cunoaștere derivate din cărți, conform cerințelor din `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`.
+Faza 6 a proiectului Book-to-Memory a implementat mecanismele (testele unitare trec; nu există evaluare empirică)  de **regăsire (retrieval)** și **admitere în memoria de lucru (Working Memory)** pentru unitățile atomice de cunoaștere derivate din cărți, conform cerințelor din `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`.
 
 Toate obiectivele tehnice și porțile de conformitate au fost îndeplinite:
 1. **QUERY MUST MATTER**: Demonstrație formală că modificarea interogării re-clasifică și re-ordonează candidații, determinând nodul de top;
@@ -22,7 +22,7 @@ Toate obiectivele tehnice și porțile de conformitate au fost îndeplinite:
 7. **Pasivitatea Datelor Untrusted**: Conținutul din cărți este izolat în tag-uri pasive, iar orice directivă activă de control este blocată;
 8. **Bugetare Dublă în Working Memory**: Capacitatea numerică de sloturi și plafonul de tokeni (`hard_token_cap`) sunt respectate prin evicțiune deterministă pe bază de atenție (`AttentionModel`);
 9. **Monotonicitate și Deduplicare**: Re-admiterea actualizează activarea și recența fără duplicare de noduri;
-10. **Determinism 100%**: Rulări repetate cu aceleași intrări produc pachete de context byte-identice, verificate prin hash SHA-256.
+10. **Determinism 100%**: Rulări repetate cu aceleași intrări produc pachete de context byte-identice, comparate prin hash SHA-256 în testele unitare.
 
 ---
 
@@ -43,7 +43,7 @@ Toate obiectivele tehnice și porțile de conformitate au fost îndeplinite:
 
 ---
 
-## 3. Matricea de Testare și Rezultate Empirice
+## 3. Matricea de Testare și Rezultate (teste unitare)
 
 ```text
 ============================= test session starts =============================
@@ -65,7 +65,7 @@ collected 181 items
 
 - **Book-to-Memory F1–F6**: **181 / 181 teste PASS**
 - **Securitate Core & Untrusted Content Guard**: **23 / 23 teste PASS**
-- **Total Teste Verificate**: **204 / 204 teste PASS**
+- **Total teste executate**: **204 / 204 teste PASS**
 
 ---
 

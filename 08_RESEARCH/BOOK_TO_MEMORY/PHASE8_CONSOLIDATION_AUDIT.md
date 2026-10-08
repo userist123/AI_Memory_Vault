@@ -17,7 +17,7 @@ La finalul Fazei 7, întregul lanț funcțional prescris de `00_GOVERNANCE/rules
 - **Faza 4 (Test de Utilizare)**: Grila în 5 dimensiuni, prag minim $\ge 8/10$.
 - **Faza 5 (Ablație Pereche)**: Condițiile `WITH_NOTE` vs `WITHOUT_NOTE`, verificare $\text{Delta} \ge 0$.
 - **Faza 6 (Regăsire & Working Memory)**: Bounded context pack, delimitatori pasivi de memorie, excludere texte brute din cărți.
-- **Faza 7 (Pipeline End-to-End & Pilot)**: Clasa orchestratoare `BookToMemoryPipeline` verificată pe *Thinking, Fast and Slow* și *Design for a Brain*.
+- **Faza 7 (Pipeline End-to-End & Pilot)**: Clasa orchestratoare `BookToMemoryPipeline` exercitată în teste pe *Thinking, Fast and Slow* și *Design for a Brain*.
 
 ---
 

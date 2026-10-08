@@ -65,6 +65,7 @@ from .book_to_memory_usage_test import (
 from .book_to_memory_ablation import (
     AblationExperimentRunner,
     AblationExperimentRecord,
+    CONFIG_STATUS_RECORDED,
     DATA_STATUS_COMPLETE,
     calculate_ablation_delta,
 )
@@ -201,6 +202,7 @@ class BookToMemoryPipeline:
         ablation_models: Optional[List[str]] = None,
         ablation_repetitions: int = 3,
         ablation_trial_data: Optional[Dict[str, Any]] = None,
+        ablation_run_configs: Optional[Dict[str, Any]] = None,
         owner_approval_token: Optional[OwnerApprovalToken] = None,
         caller_principal: Principal = Principal.AI_AGENT,
         evaluator_principal: Principal = Principal.HUMAN,
@@ -353,6 +355,7 @@ class BookToMemoryPipeline:
                 repetitions=ablation_repetitions,
                 trial_data=ablation_trial_data,
                 actor=evaluator_principal,
+                run_configs=ablation_run_configs,
             )
             ablation_delta = ablation_record.aggregate_summary.get("aggregate_delta")
             if ablation_record.data_status != DATA_STATUS_COMPLETE or ablation_delta is None:
@@ -367,6 +370,16 @@ class BookToMemoryPipeline:
                     },
                     error="Ablation INSUFFICIENT_DATA: no paired trial observations were supplied; "
                           "no effect can be claimed.",
+                ))
+                return self._build_report(book_title, note_id, initial_lc, note_copy.get("lifecycle"), stages, usage_score=usage_score, conflicts=detected_conflicts)
+            if ablation_record.config_status != CONFIG_STATUS_RECORDED:
+                stages.append(PipelineStageResult(
+                    stage=PipelineStage.ABLATION_TEST,
+                    passed=False,
+                    details={"config_status": ablation_record.config_status, "delta": ablation_delta},
+                    error="Ablation not comparable: no run config (model, temperature, seed, max tokens, "
+                          "prompt template hash) was recorded, so WITH_NOTE and WITHOUT_NOTE cannot be "
+                          "shown to have been run alike (PR #209 B08).",
                 ))
                 return self._build_report(book_title, note_id, initial_lc, note_copy.get("lifecycle"), stages, usage_score=usage_score, conflicts=detected_conflicts)
             note_copy["ablation_delta"] = ablation_delta
