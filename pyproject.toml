@@ -26,5 +26,6 @@ include = [
   "security*",
   "routing*",
   "agent_bridge*",
+  "vault_access*",
   "xau_kinetic*",
 ]

@@ -14,10 +14,12 @@ NUMBERED_ROOTS = {
     "50_ARTIFACTS", "60_DEPLOYMENT", "70_INTEGRATIONS", "80_ARCHIVE", "90_RELEASE", "99_META",
 }
 ROOT_ALLOWLIST = {
-    "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
+    "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "pyproject.toml", ".gitignore", ".gitattributes",
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
     "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "security", "scripts", "tests", "docs",
     ".github", ".agents", ".claude-plugin", ".obsidian",
+    # Per-client MCP registrations of the same vault-memory server (Codex, Gemini CLI).
+    ".codex", ".gemini",
     *NUMBERED_ROOTS,
 }
 ROOT_FILE_ALLOWLIST = {"README.md", ".gitkeep"}

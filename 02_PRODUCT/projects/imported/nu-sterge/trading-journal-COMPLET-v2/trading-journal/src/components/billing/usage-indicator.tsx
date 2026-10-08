@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Sparkles } from 'lucide-react';
 
 interface UsageData {
-  plan: 'free' | 'pro' | 'elite';
+  plan: 'free' | 'pro' | 'elite' | 'autopilot';
   limits: {
     maxTradesPerMonth: number;
     maxVoiceJournalsPerDay: number;

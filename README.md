@@ -618,8 +618,10 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | igiena depozitului: căi absolute, fișiere nepermise în rădăcină, date personale | `repository-hygiene.yml` |
 | regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, teste și pachetele win-x64 ale edițiilor | `loganalyzer-dfir-build.yml` |
+| Audit de dependențe (npm, .NET) pe fiecare manifest; pică la CRITICAL | `dependency-audit.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | routerul central de agenți, dispatcher-ul și bridge-ul securizat | `agent-routing-tests.yml` |
+| rutele directe `vault://`, politica de acces pe canale, adaptoarele MCP/CLI/Ollama/Telegram | `vault-access.yml` |
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
@@ -755,7 +757,7 @@ Modulele stau în `03_IMPLEMENTATION/packages`, deci CLI-ul are nevoie de el în
 export PYTHONPATH=03_IMPLEMENTATION/packages   # PowerShell: $env:PYTHONPATH = "03_IMPLEMENTATION/packages"
 python -m cognitive_core.memory_v6_cli extract --text "Am decis: folosim SQLite WAL." --enqueue
 python -m cognitive_core.memory_v6_cli review --show-conflicts
-python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
+python -m cognitive_core.memory_v6_cli approve <candidate_id> --principal human --reviewer "<nume>" --evidence "<referinta>"   # fara valori implicite: aprobarea este o atestare a proprietarului
 python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```

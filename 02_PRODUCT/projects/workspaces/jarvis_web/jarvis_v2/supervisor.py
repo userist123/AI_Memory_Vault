@@ -52,6 +52,12 @@ def _request_json(path: str, method: str = "GET", payload: dict[str, Any] | None
     if payload is not None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         headers["Content-Type"] = "application/json"
+    # The memory gateway refuses every /api/v1 route except /status without the owner token. This
+    # process is configured with the same variable the gateway reads; it is read per call, never kept
+    # in source, and not sent for /status.
+    token = os.getenv("AI_MEMORY_VAULT_API_TOKEN", "").strip()
+    if token and path.strip("/").split("?")[0] != "status":
+        headers["Authorization"] = f"Bearer {token}"
     request = urllib.request.Request(url, data=body, headers=headers, method=method)
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))

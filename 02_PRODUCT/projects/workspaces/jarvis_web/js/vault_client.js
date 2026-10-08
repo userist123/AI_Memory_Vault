@@ -1,5 +1,43 @@
 const DEFAULT_BASE_URL = typeof window !== 'undefined' ? '/api/v1' : 'http://127.0.0.1:8000/api/v1';
 
+/**
+ * The REST gateway (interfaces/api_server.py) refuses every /api/v1 route except /status unless
+ * the request carries `Authorization: Bearer <AI_MEMORY_VAULT_API_TOKEN>`. The operator sets that
+ * variable on the server; the browser is given the same value at run time and never ships it:
+ * pass `token` / `getToken` to the client, or store it for the tab with `setToken()`. Nothing
+ * here (or anywhere in the page's source) contains a token.
+ */
+export const TOKEN_STORAGE_KEY = 'ai_memory_vault_api_token';
+
+export class VaultAuthError extends Error {
+  constructor(message = 'Vault API 401: the API token is missing or wrong') {
+    super(message);
+    this.name = 'VaultAuthError';
+    this.status = 401;
+    this.code = 'VAULT_AUTH_REQUIRED';
+  }
+}
+
+const readStoredToken = () => {
+  try {
+    return String(globalThis.sessionStorage?.getItem(TOKEN_STORAGE_KEY) || '').trim();
+  } catch {
+    return '';
+  }
+};
+
+const withAuthorization = (headers, token) => {
+  if (typeof Headers === 'function' && headers instanceof Headers) {
+    const copy = new Headers(headers);
+    if (!copy.has('Authorization')) copy.set('Authorization', `Bearer ${token}`);
+    return copy;
+  }
+  const copy = {...(headers || {})};
+  const present = Object.keys(copy).some((name) => name.toLowerCase() === 'authorization');
+  if (!present) copy.Authorization = `Bearer ${token}`;
+  return copy;
+};
+
 const stripDiacritics = (value) => String(value ?? '')
   .normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '')
@@ -134,6 +172,36 @@ export class VaultClient {
     this.fetchImpl = options.fetchImpl || globalThis.fetch?.bind(globalThis);
     this.cache = options.cache || new LRUCache(options.cacheSize || 50, options.cacheTtlMs || 30000);
     this.offlineNotes = [];
+    this.token = typeof options.token === 'string' ? options.token.trim() : '';
+    this.tokenProvider = typeof options.getToken === 'function' ? options.getToken : null;
+  }
+
+  /** The API token for this tab: the provider, else the explicit token, else sessionStorage. */
+  getToken() {
+    if (this.tokenProvider) {
+      try {
+        return String(this.tokenProvider() || '').trim();
+      } catch {
+        return '';
+      }
+    }
+    return this.token || readStoredToken();
+  }
+
+  /** Remember the token for this client and, unless `persist` is false, for the browser tab. */
+  setToken(token, {persist = true} = {}) {
+    this.token = String(token ?? '').trim();
+    if (persist) {
+      try {
+        if (this.token) globalThis.sessionStorage?.setItem(TOKEN_STORAGE_KEY, this.token);
+        else globalThis.sessionStorage?.removeItem(TOKEN_STORAGE_KEY);
+      } catch {
+        /* storage blocked: the token still works for this client instance */
+      }
+    }
+    // results cached while unauthenticated (401 -> offline cache) must not outlive the change
+    this.cache.clear();
+    return this;
   }
 
   async request(path, options = {}) {
@@ -141,6 +209,9 @@ export class VaultClient {
     const controller = typeof AbortController === 'function' ? new AbortController() : null;
     const requestOptions = {...options};
     if (controller) requestOptions.signal = controller.signal;
+    // /status is the one public route; every other route needs the owner token.
+    const token = path === '/status' || String(path).startsWith('/status?') ? '' : this.getToken();
+    if (token) requestOptions.headers = withAuthorization(options.headers, token);
     let timer = null;
     try {
       const requestPromise = this.fetchImpl(`${this.baseUrl}${path}`, requestOptions);
@@ -151,6 +222,11 @@ export class VaultClient {
         }, this.timeoutMs);
       });
       const response = await Promise.race([requestPromise, timeoutPromise]);
+      if (response?.status === 401) {
+        throw new VaultAuthError(token
+          ? 'Vault API 401: the API token was rejected'
+          : 'Vault API 401: an API token is required (AI_MEMORY_VAULT_API_TOKEN)');
+      }
       if (!response?.ok) throw new Error(`Vault API ${response?.status || 0}`);
       return await response.json();
     } finally {
@@ -307,5 +383,5 @@ export class VaultClient {
   }
 }
 
-export default {VaultClient, LRUCache, OFFLINE_KNOWLEDGE_BANK, NoteInspector};
+export default {VaultClient, VaultAuthError, TOKEN_STORAGE_KEY, LRUCache, OFFLINE_KNOWLEDGE_BANK, NoteInspector};
 

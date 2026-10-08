@@ -64,7 +64,7 @@ export default async function LandingPage({
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
-                <Link href="#features">
+                <Link href={{ pathname: '/', hash: 'features' }}>
                   <Button size="lg" variant="outline">
                     {t('hero.ctaSecondary')}
                   </Button>

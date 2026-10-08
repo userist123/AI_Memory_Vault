@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       transcript: transcription.text,
-      language: transcription.language || language,
+      language: (transcription as unknown as { language?: string }).language || language,
       duration: (transcription as unknown as { duration?: number }).duration || null,
       processingTimeMs: durationMs,
       segments: (transcription as unknown as { segments?: unknown[] }).segments || [],

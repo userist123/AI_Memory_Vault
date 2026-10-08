@@ -13,7 +13,7 @@ except ModuleNotFoundError:
     def record_observed_memory_trace(**_: Any) -> None:
         return None
 from security.knowledge_handoff import VerifiedKnowledgeHandoff
-from security.verified_reduction import PROVENANCE_REQUIRED_STATUSES, TRUSTED_STATUSES
+from security.verified_reduction import PROVENANCE_REQUIRED_STATUSES, TRUSTED_STATUSES, content_withheld_from
 from security.context_compression import AdaptiveContextCompressor, CompressionRouter
 
 
@@ -140,11 +140,16 @@ class ContextPackBuilder:
             item["verification"] = verification_record
             if quarantined_unverified:
                 item["trust_state"] = "UNVERIFIED_QUARANTINED"
-                # Non-owner callers may observe that a REVIEW item exists, but
-                # must not receive its unverified content through the model-facing
-                # route. The owner may inspect the quarantined content explicitly.
-                if str(agent_id) != "human" and str(item.get("lifecycle")).upper() == "REVIEW":
-                    item["content"] = ""
+            # Non-owner callers may observe that an unverified REVIEW candidate (or an
+            # explicitly quarantined note) exists, but must not receive its body through
+            # the model-facing route. Owners (human, admin) may inspect it. An ACTIVE note
+            # that is merely not "verified" keeps its content (see content_withheld_from).
+            if content_withheld_from(agent_id, item, unverified=quarantined_unverified):
+                item["content"] = ""
+                item["snippet"] = ""
+                item["model_egress"] = False
+            else:
+                item["model_egress"] = True
 
             content = str(item.get("content", ""))
             # Metadata-only disclosure intentionally carries no content. It is
