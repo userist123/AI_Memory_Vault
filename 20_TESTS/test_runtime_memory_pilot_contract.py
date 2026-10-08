@@ -40,6 +40,21 @@ class StaticBootstrap:
         }
 
 
+class FixtureMemoryController:
+    def search(self, principal, query, page_size=5):
+        return {
+            "results": [{
+                "id": "review-fixture-001",
+                "type": "knowledge",
+                "lifecycle": "REVIEW",
+                "content": "unverified review data",
+                "verification": {"state": "unverified"},
+                "provenance": {"source_type": "ai", "source_ref": "fixture"},
+                "score": 0.9,
+            }]
+        }
+
+
 class MaliciousModelExecutor(AgentModelExecutor):
     def execute_model(self, context, task):
         assert context["retrieved_memories"]
@@ -265,3 +280,25 @@ def test_bootstrap_sensitive_marker_is_not_persisted_in_trace(tmp_path):
     )
     assert result["status"] == "success"
     assert marker not in json.dumps(trace["record"], sort_keys=True)
+
+def test_review_memory_remains_data_only_and_unverified(tmp_path):
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        bootstrap_provider=StaticBootstrap(),
+        memory_controller=FixtureMemoryController(),
+    )
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_review_memory",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="review data",
+        enable_memory=True,
+    )
+    assert result["status"] == "success"
+    memory = trace["record"]["memory"]
+    assert memory["memory_ids"] == ["review-fixture-001"]
+    context = trace["record"]["model"]
+    assert "REVIEW" in json.dumps(trace["record"])
+    assert '"authority": "DATA_ONLY"' in json.dumps(trace["record"])
+    assert '"verification": {"state": "unverified"}' in json.dumps(trace["record"])
