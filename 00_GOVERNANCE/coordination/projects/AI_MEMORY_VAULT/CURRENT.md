@@ -40,8 +40,8 @@ authorization_record:
     - "Is not retroactive approval of prior actions."
   chronology: "This authorization applies from the timestamp above; prior actions remain governed by their prior authority state."
 active_work:
-  - operational Memory Vault pilot: VaultAccess bootstrap -> bounded MemoryController context -> execution contract -> action gate -> verification
-  - pilot evidence classification remains CODE_INSPECTED / CONTRACT_TESTED / LIVE_VERIFIED / NOT_VERIFIED / BLOCKED
+  - 'operational Memory Vault pilot: VaultAccess bootstrap -> bounded MemoryController context -> execution contract -> action gate -> verification'
+  - 'pilot evidence classification remains CODE_INSPECTED / CONTRACT_TESTED / LIVE_VERIFIED / NOT_VERIFIED / BLOCKED'
   - repository remediation, security hardening and structural rebuild on main
   - bounded terminal resolution contract and deterministic MVE calibration
   - single-main sequential execution
