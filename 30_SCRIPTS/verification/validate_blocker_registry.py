@@ -6,6 +6,9 @@ Enforces:
 - Valid lifecycle state transitions (15B, 15C, 15I.5)
 - Close-gate verification and tamper detection (15E, 15K)
 - Output format specification (15I.7)
+- No severity decrease without an owner attestation record (B12): relative to a base version of the
+  registry (`--base-ref`), any blocker whose severity drops, in the register or in OPEN_BLOCKERS.md,
+  needs a matching entry in SEVERITY_ATTESTATIONS.md (typed owner principal + evidence reference).
 """
 from __future__ import annotations
 
@@ -13,11 +16,34 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+# The severity gate lives in `security.trust_gate` (repo root) and the owner-principal rule in the
+# `cognitive_core` shim under 03_IMPLEMENTATION/packages. The repo root goes first so the root
+# `security` package wins over packages/security; packages is appended for everything else.
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+_PACKAGES = str(_REPO_ROOT / "03_IMPLEMENTATION" / "packages")
+if _PACKAGES not in sys.path:
+    sys.path.append(_PACKAGES)
+
+from security.trust_gate import (  # noqa: E402
+    SeverityAttestationError,
+    SeverityDowngradeAttestation,
+    is_severity_decrease,
+    verify_severity_attestation,
+)
+
+DEFAULT_REGISTER = Path("08_RESEARCH/BOOK_TO_MEMORY/BLOCKER_REGISTER.md")
+DEFAULT_HISTORY = Path("08_RESEARCH/BOOK_TO_MEMORY/BLOCKER_HISTORY.md")
+DEFAULT_OPEN_BLOCKERS = Path("08_RESEARCH/BOOK_TO_MEMORY/OPEN_BLOCKERS.md")
+DEFAULT_ATTESTATIONS = Path("08_RESEARCH/BOOK_TO_MEMORY/SEVERITY_ATTESTATIONS.md")
 
 VALID_SEVERITIES = {"HARD_BLOCKER", "SOFT_BLOCKER", "WARNING"}
 
@@ -95,11 +121,152 @@ def extract_yaml_blocks(content: str) -> List[Dict[str, Any]]:
     return blocks
 
 
+# ---------------------------------------------------------------------------
+# B12: severity can only go down with an explicit owner attestation
+# ---------------------------------------------------------------------------
+
+def parse_attestation_ledger(content: str) -> Tuple[List[SeverityDowngradeAttestation], List[str]]:
+    """Parse SEVERITY_ATTESTATIONS.md into typed attestations.
+
+    Every YAML block is one attestation: attestation_id, blocker_id, from_severity, to_severity,
+    principal, attested_by, evidence_ref, attested_at. The principal is turned into the vault's
+    ``Principal`` enum; a value that is not a Principal stays a plain string, which the gate
+    refuses. A block that does not parse as an attestation is an error, not skipped.
+    """
+    from cognitive_core.authorizer import Principal
+
+    attestations: List[SeverityDowngradeAttestation] = []
+    errors: List[str] = []
+    fenced = re.findall(r"```ya?ml\s*\n(.*?)\n```", content, re.DOTALL | re.IGNORECASE)
+    blocks = [d for chunk in fenced for d in yaml.safe_load_all(chunk) if isinstance(d, dict)]
+    for idx, block in enumerate(blocks):
+        label = str(block.get("attestation_id") or f"attestation[{idx}]")
+        missing = [
+            k for k in ("blocker_id", "from_severity", "to_severity", "principal", "attested_by", "evidence_ref", "attested_at")
+            if not block.get(k)
+        ]
+        if missing:
+            errors.append(f"{label}:attestation_missing_fields:{','.join(missing)}")
+            continue
+        raw_principal = str(block["principal"]).strip().lower()
+        try:
+            principal: Any = Principal(raw_principal)
+        except ValueError:
+            principal = raw_principal  # not a Principal: refused when verified
+        attestation = SeverityDowngradeAttestation(
+            principal=principal,
+            evidence_ref=str(block["evidence_ref"]),
+            attested_by=str(block["attested_by"]),
+            blocker_id=str(block["blocker_id"]),
+            from_severity=str(block["from_severity"]),
+            to_severity=str(block["to_severity"]),
+        )
+        try:
+            verify_severity_attestation(
+                attestation, attestation.blocker_id, attestation.from_severity, attestation.to_severity
+            )
+        except SeverityAttestationError as exc:
+            errors.append(f"{label}:invalid_severity_attestation:{exc}")
+            continue
+        attestations.append(attestation)
+    return attestations, errors
+
+
+def parse_open_blockers_severities(content: str) -> Dict[str, str]:
+    """`Blocker ID -> Severity` from the summary table of OPEN_BLOCKERS.md (markup stripped)."""
+    result: Dict[str, str] = {}
+    in_table = False
+    for line in content.splitlines():
+        if not line.lstrip().startswith("|"):
+            if in_table:
+                break
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if not in_table:
+            if len(cells) >= 2 and cells[0].lower() == "blocker id" and cells[1].lower() == "severity":
+                in_table = True
+            continue
+        if set(line.replace("|", "").strip()) <= {"-", ":", " "}:
+            continue
+        ident = cells[0].strip("*` ")
+        severity = cells[1].strip("*` ")
+        if ident:
+            result[ident] = severity
+    return result
+
+
+def check_severity_downgrades(
+    base: Dict[str, str],
+    current: Dict[str, str],
+    attestations: List[SeverityDowngradeAttestation],
+    source: str,
+) -> List[str]:
+    """Errors for every blocker whose severity fell (or that vanished) between `base` and `current`.
+
+    A decrease passes only if an attestation for that blocker and that exact transition verifies.
+    A severity label the scale does not know is refused, and so is deleting a blocker.
+    """
+    errors: List[str] = []
+    for bid, old_sev in sorted(base.items()):
+        if bid not in current:
+            errors.append(f"{source}:{bid}:blocker_removed_without_attestation")
+            continue
+        new_sev = current[bid]
+        if new_sev == old_sev:
+            continue
+        try:
+            decreased = is_severity_decrease(old_sev, new_sev)
+        except ValueError as exc:
+            errors.append(f"{source}:{bid}:unknown_severity_in_change:{old_sev}->{new_sev}:{exc}")
+            continue
+        if not decreased:
+            continue  # raising a severity is always allowed
+        reasons: List[str] = []
+        authorised = False
+        for att in attestations:
+            if att.blocker_id != bid:
+                continue
+            try:
+                verify_severity_attestation(att, bid, old_sev, new_sev)
+                authorised = True
+                break
+            except SeverityAttestationError as exc:
+                reasons.append(str(exc))
+        if not authorised:
+            detail = f" ({reasons[0]})" if reasons else ""
+            errors.append(f"{source}:{bid}:severity_downgrade_without_attestation:{old_sev}->{new_sev}{detail}")
+    return errors
+
+
+def _git_show(ref: str, rel_path: Path, repo: Path) -> Optional[str]:
+    """File content at `ref`, or None if the path does not exist there. A bad ref is an error."""
+    verify = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}"],
+        cwd=repo, capture_output=True, text=True,
+    )
+    if verify.returncode != 0:
+        raise RuntimeError(f"base ref not found: {ref}")
+    spec = f"{ref}:{rel_path.as_posix()}"
+    exists = subprocess.run(["git", "cat-file", "-e", spec], cwd=repo, capture_output=True, text=True)
+    if exists.returncode != 0:
+        return None
+    shown = subprocess.run(["git", "show", spec], cwd=repo, capture_output=True, text=True, encoding="utf-8")
+    if shown.returncode != 0:
+        raise RuntimeError(f"cannot read {spec}: {shown.stderr.strip()}")
+    return shown.stdout
+
+
 def validate_registry_and_history(
     records: List[Dict[str, Any]],
     transitions: List[Dict[str, Any]],
+    base_records: Optional[List[Dict[str, Any]]] = None,
+    attestations: Optional[List[SeverityDowngradeAttestation]] = None,
 ) -> Dict[str, Any]:
-    """Validate full blocker register against immutable transition history."""
+    """Validate full blocker register against immutable transition history.
+
+    With `base_records` (the register as it was on the base branch) every severity decrease must be
+    covered by one of `attestations`.
+    """
     errors: List[str] = []
     warnings: List[str] = []
 
@@ -260,11 +427,8 @@ def validate_registry_and_history(
             errors.append(f"{bid}:status_history_mismatch:register_{rec_status}_vs_history_{last_to_status}")
             status_history_mismatch_count += 1
 
-        # Check severity downgrade guard
-        # If any transition or initial severity was HARD_BLOCKER, register cannot be WARNING
-        had_hard = rec.get("severity") == "HARD_BLOCKER"
-        if had_hard and rec_status != "CLOSED" and rec.get("severity") == "WARNING":
-            errors.append(f"{bid}:hard_blocker_silently_downgraded_to_warning")
+        # Severity downgrades are checked against the base register below (B12): this record alone
+        # cannot show that its severity was lowered.
 
         # Check CLOSED gate requirements
         if rec_status == "CLOSED":
@@ -300,6 +464,12 @@ def validate_registry_and_history(
                 if not ref:
                     errors.append(f"{bid}:closed_missing_owner_approval_reference")
 
+    # 4. Severity downgrade gate (B12): compare with the register on the base branch
+    if base_records is not None:
+        base_sev = {str(r.get("blocker_id")): str(r.get("severity")) for r in base_records if r.get("blocker_id")}
+        cur_sev = {bid: str(rec.get("severity")) for bid, rec in blocker_map.items()}
+        errors.extend(check_severity_downgrades(base_sev, cur_sev, attestations or [], "register"))
+
     # Counts
     total_blockers = len(blocker_map)
     active_hard = sum(1 for r in blocker_map.values() if r.get("severity") == "HARD_BLOCKER" and r.get("status") not in {"CLOSED", "INVALIDATED", "WONT_FIX"})
@@ -323,10 +493,33 @@ def validate_registry_and_history(
     }
 
 
+def _git_toplevel(path: Path) -> Path:
+    """Root of the git work tree that contains `path`."""
+    out = subprocess.run(
+        ["git", "-C", str(path.resolve().parent), "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True,
+    )
+    if out.returncode != 0:
+        raise RuntimeError(f"not inside a git work tree: {path}")
+    return Path(out.stdout.strip())
+
+
+def _repo_relative(path: Path, repo: Path) -> Path:
+    return path.resolve().relative_to(repo.resolve())
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description="Validate Book-to-Memory blocker registry and history.")
-    parser.add_argument("--register", type=Path, default=Path("08_RESEARCH/BOOK_TO_MEMORY/BLOCKER_REGISTER.md"))
-    parser.add_argument("--history", type=Path, default=Path("08_RESEARCH/BOOK_TO_MEMORY/BLOCKER_HISTORY.md"))
+    parser.add_argument("--register", type=Path, default=DEFAULT_REGISTER)
+    parser.add_argument("--history", type=Path, default=DEFAULT_HISTORY)
+    parser.add_argument("--open-blockers", type=Path, default=DEFAULT_OPEN_BLOCKERS)
+    parser.add_argument("--attestations", type=Path, default=DEFAULT_ATTESTATIONS)
+    parser.add_argument(
+        "--base-ref",
+        default=None,
+        help="Git ref of the branch being merged into (e.g. origin/main). When given, any severity "
+        "decrease relative to that ref needs an entry in the attestation ledger (B12).",
+    )
     args = parser.parse_args(argv)
 
     if not args.register.exists():
@@ -342,7 +535,41 @@ def main(argv: Optional[List[str]] = None) -> int:
     records = extract_yaml_blocks(reg_content)
     transitions = extract_yaml_blocks(hist_content)
 
-    res = validate_registry_and_history(records, transitions)
+    # The ledger itself is always validated: an entry signed by anything but an owner principal,
+    # or without evidence, is an error even when nothing relies on it.
+    attestations: List[SeverityDowngradeAttestation] = []
+    ledger_errors: List[str] = []
+    if args.attestations.exists():
+        attestations, ledger_errors = parse_attestation_ledger(args.attestations.read_text(encoding="utf-8"))
+
+    base_records: Optional[List[Dict[str, Any]]] = None
+    extra_errors: List[str] = list(ledger_errors)
+    if args.base_ref:
+        try:
+            repo = _git_toplevel(args.register)
+            base_register = _git_show(args.base_ref, _repo_relative(args.register, repo), repo)
+            base_records = extract_yaml_blocks(base_register) if base_register is not None else None
+            base_open = _git_show(args.base_ref, _repo_relative(args.open_blockers, repo), repo)
+        except (RuntimeError, ValueError) as exc:
+            print(f"BLOCKER_REGISTRY_STATUS=FAIL\nError: {exc}")
+            return 1
+        if base_open is not None:
+            if not args.open_blockers.exists():
+                extra_errors.append("open_blockers:file_removed_without_attestation")
+            else:
+                extra_errors.extend(
+                    check_severity_downgrades(
+                        parse_open_blockers_severities(base_open),
+                        parse_open_blockers_severities(args.open_blockers.read_text(encoding="utf-8")),
+                        attestations,
+                        "open_blockers",
+                    )
+                )
+
+    res = validate_registry_and_history(records, transitions, base_records=base_records, attestations=attestations)
+    if extra_errors:
+        res["errors"] = sorted(set(res["errors"]) | set(extra_errors))
+        res["valid"] = False
 
     status_str = "PASS" if res["valid"] else "FAIL"
     print(f"BLOCKER_REGISTRY_STATUS={status_str}")

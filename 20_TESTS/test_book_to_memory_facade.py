@@ -116,10 +116,26 @@ def test_facade_ingest_note_and_link_to_catalog(facade, sample_valid_note):
         expected_criteria={"specifies_consolidation": True},
     )
 
-    token = issue_owner_approval(
-        actor=Principal.HUMAN,
-        note_id="NOTE-SYS-CONS-001",
+    # The owner approves the content the pipeline produced (a dry run on a throw-away facade),
+    # not the raw input: the token is bound to that exact content.
+    dry = BookToMemoryFacade()
+    dry.register_book(
+        source_identity="squire_kandel_mind_to_molecules",
+        title="Memory: From Mind to Molecules",
+        authors=["Larry Squire", "Eric Kandel"],
+        chapter_coverage={"Chapter 8: Systems Consolidation": ["Systems Consolidation"]},
+        edition="2nd Edition (2008)",
+        linked_problems=["consolidation"],
     )
+    dry_report = dry.ingest_note(
+        note_dict=sample_valid_note,
+        task_spec=task_spec,
+        caller_principal=Principal.HUMAN,
+        evaluator_principal=Principal.HUMAN,
+        **_synthetic_eval("NOTE-SYS-CONS-001"),
+    )
+    assert dry_report.final_lifecycle == "VERIFIED"
+    token = issue_owner_approval(actor=Principal.HUMAN, note=dry_report.candidate_note)
 
     report = facade.ingest_note(
         note_dict=sample_valid_note,

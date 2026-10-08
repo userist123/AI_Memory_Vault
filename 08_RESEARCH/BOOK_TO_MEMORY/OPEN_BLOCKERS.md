@@ -87,14 +87,15 @@
 
 ## External audit findings (PR #209) that remain open on this track
 
-These come from the independent audit in PR #209 (`docs/security/AUDIT_REMEDIATION.md`). They are
-methodology gaps, not code defects, and none can be closed by editing this branch: each needs real
-data. They are listed here in plain words so that no report on this track reads as empirical evidence.
+These come from the independent audit in PR #209 (`docs/security/AUDIT_REMEDIATION.md`). Most are
+methodology gaps, not code defects, and cannot be closed by editing this branch: each needs real
+data. B01, B02, B11 and B12 were code defects and are fixed. They are listed here in plain words so that no report on this track reads as empirical evidence.
 They are **not** entries of the hash-chained `BLOCKER_REGISTER.md`; moving them there is an owner decision.
 
 | Finding | Gap | State on this branch |
 |---|---|---|
 | B01 | Positive results could be built in (default scores) | **Fixed in code.** The ablation runner and the pipeline's usage-test stage no longer have default answers, rubrics or scores; missing observations give `INSUFFICIENT_DATA` and a closed gate. Reports produced from the old defaults (`PHASE7_PILOT_EXECUTION_REPORT.md`) are marked invalid. |
+| B02 | The owner-approval token (HMAC) signed only note id, approver and timestamp: a note could be edited after approval and still be promoted | **Fixed** (commit `db6e42cd7`). Token `b2m-owner-approval-v2` signs the SHA-256 of the canonical note (frontmatter + body; lifecycle state fields excluded), the revision marker if the note has one, and an expiry (max 30 days). `verify()` recomputes the digest from the note being promoted and refuses on content or revision mismatch, replay to another note, expiry, missing fields or an old-format token; secret resolution stays fail-closed. `security/runtime_enforcer.py` was not reused: it binds tool-execution requests (tool, parameters, nonce), has no production consumer, and has no note digest. Tests: `20_TESTS/test_book_to_memory_lifecycle_gates.py::test_32_*` (valid accepted; approve-then-edit body / frontmatter / added field, replay, expired, old format, missing field, revision refused), `20_TESTS/test_book_to_memory_pipeline.py::test_pipeline_blocks_active_when_note_edited_after_owner_approval`. |
 | B03 | No ablation against real models | **Open.** Every ablation in the tests uses fabricated numbers on purpose. |
 | B04 | Prompt bias / leading questions in the harness | **Open.** Task prompts have not been reviewed against counter-factual baselines. |
 | B05 | Single rater | **Open.** One rater (or one LLM) per judgement; no multi-rater consensus, no agreement statistic. |
@@ -104,3 +105,4 @@ They are **not** entries of the hash-chained `BLOCKER_REGISTER.md`; moving them 
 | B09 | Claims exceed evidence | **Partly fixed.** Status lines and the pilot/phase reports now say "unit tests pass", not "verified"; the individual phase reports still use the older wording and should be read with the caveat banners. |
 | B10 | External validity | **Open.** No measurement under production load; the modules are not wired into any production path. |
 | B11 | Cleanup rewrote note bodies | **Fixed.** `clean_source_frontmatters.py` is frontmatter-only; the 9 injected bodies were restored (see `VAULT_STATE.md`, section 5, for the islands this exposes). |
+| B12 | A blocker's severity could be lowered (HARD_BLOCKER to WARNING) by editing the register or this table; `validate_severity_transition` was a library function nothing called | **Fixed** (commit `db6e42cd7`). Any severity decrease, and any deleted blocker, now needs a `SeverityDowngradeAttestation` (typed owner `Principal` checked by `require_owner_principal`, evidence reference, exact blocker and transition) recorded in `SEVERITY_ATTESTATIONS.md`. `validate_blocker_registry.py --base-ref <base>` compares `BLOCKER_REGISTER.md` and the severity table of this file with the base branch; the `Repository Hygiene` workflow runs it on every pull request. Tests: `20_TESTS/research/test_blocker_severity_downgrade.py` (downgrade without attestation fails; owner attestation passes; upgrade allowed; `ai_agent` refused; CLI end to end in a throw-away repository), `security/tests/test_audit_remediation.py::test_b12_severity_downgrade_blocked` unchanged. Limit: the ledger is a file in the pull request, so the attestation is as strong as the owner review of that file (CODEOWNERS `*`). |
