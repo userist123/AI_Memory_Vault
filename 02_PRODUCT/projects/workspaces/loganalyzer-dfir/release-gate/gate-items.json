@@ -1,0 +1,88 @@
+{
+  "schema": "loganalyzer-release-gate-items/1",
+  "note": "Definition of the release gate (contract section 22, owner decisions 7 and 8 of CONTRACT_AUDIT_STAGE1). 'policy' is blocking (never waivable) or waivable (only by a signed owner waiver). 'kind' selects how the gate looks for evidence; an item whose evidence cannot exist yet is reported NOT_IMPLEMENTED and fails the gate in enforce mode. Nothing here is a verdict: the verdict is computed from test results and files at gate time.",
+  "items": [
+    {
+      "id": "tests_passing",
+      "r22": "R22.1",
+      "title": "All automated tests pass",
+      "policy": "blocking",
+      "kind": "all-tests"
+    },
+    {
+      "id": "synthetic_corpus",
+      "r22": "R21.5 / decision 7",
+      "title": "Synthetic corpus regression tests executed and passing",
+      "policy": "blocking",
+      "kind": "test-classes",
+      "classNamePattern": "\\.Synthetic\\.SyntheticCorpusTests$",
+      "minExecuted": 14
+    },
+    {
+      "id": "evidence_integrity",
+      "r22": "R22.4",
+      "title": "Evidence-integrity validation (unit level: hashing, mutation refusal, evidence contract)",
+      "policy": "blocking",
+      "kind": "test-classes",
+      "classNamePattern": "\\.(EvidenceIntegrityTests|EvidenceContractTests)$",
+      "minExecuted": 8,
+      "scope": "Unit tests only. No release artefact yet attests the integrity of the shipped rule set and parsers (audit R22.4)."
+    },
+    {
+      "id": "audit_integrity",
+      "r22": "R22.7",
+      "title": "Audit integrity (tamper-evident case audit and custody)",
+      "policy": "blocking",
+      "kind": "test-classes",
+      "classNamePattern": "\\.(AuditIntegrity|AuditChain|CustodyChain)\\w*Tests$",
+      "minExecuted": 1,
+      "pendingWorkPackage": "WP3 (hash-chained case audit and custody, R16.10)"
+    },
+    {
+      "id": "ai_claim_validation",
+      "r22": "R22.5",
+      "title": "AI claim validation (every AI statement checked against evidence)",
+      "policy": "blocking",
+      "kind": "test-classes",
+      "classNamePattern": "\\.AiClaimValidation\\w*Tests$",
+      "minExecuted": 1,
+      "pendingWorkPackage": "WP4 (verification layer, unsupported and AI claims)",
+      "scope": "EvidenceReasonerTests exist (unit level) but are not a case-level AI claim validation and do not count here."
+    },
+    {
+      "id": "response_verification",
+      "r22": "R22.6",
+      "title": "Response verification (every controlled response re-checked, NOT_VERIFIED when it cannot be)",
+      "policy": "blocking",
+      "kind": "test-classes",
+      "classNamePattern": "\\.ResponseVerification\\w*Tests$",
+      "minExecuted": 1,
+      "pendingWorkPackage": "WP9 (VERIFY / NOT_VERIFIED for process containment, R13.4)"
+    },
+    {
+      "id": "critical_findings",
+      "r22": "R22.8",
+      "title": "No critical unresolved findings",
+      "policy": "blocking",
+      "kind": "findings-register",
+      "path": "release-gate/findings-register.json",
+      "pendingWorkPackage": "owner: create release-gate/findings-register.json (format in docs/dfir/RELEASE_GATE.md); CodeQL alerts are not read by the gate"
+    },
+    {
+      "id": "real_corpus",
+      "r22": "R22.2",
+      "title": "Real-corpus forensic validation (owner machine: FORENSIC VALIDATION = AVAILABLE and corpus tests passing)",
+      "policy": "waivable",
+      "kind": "real-corpus"
+    },
+    {
+      "id": "differential",
+      "r22": "R22.3",
+      "title": "Differential validation against reference tools (ForensicLab, LADFIR_LAB=1)",
+      "policy": "waivable",
+      "kind": "test-classes",
+      "classNamePattern": "\\.ForensicLab$",
+      "minExecuted": 1
+    }
+  ]
+}

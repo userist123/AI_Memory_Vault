@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -58,7 +59,7 @@ public static class Correlation
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "DEF-DETECTION",
-                Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {Path.GetFileName(g.Key.TrimEnd('\\'))}",
+                Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}",
                 Severity = Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = g.Key, User = F(first, "Detection User"),
                 Description = $"{g.Count()} evenimente Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}.",
@@ -194,7 +195,7 @@ public static class Correlation
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "FIREWALL-RULE-USERPATH",
-                Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program din locație scriabilă: {Path.GetFileName(F(e, "ApplicationPath"))}",
+                Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program din locație scriabilă: {WinPath.GetFileName(F(e, "ApplicationPath"))}",
                 Severity = inbound ? Severity.High : Severity.Medium, Category = "DefenseEvasion", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1562.004", FirstSeenUtc = e.Time.Utc, File = F(e, "ApplicationPath"), User = F(e, "ModifyingUser"),
                 Description = $"Regula „{F(e, "RuleName")}” ({(inbound ? "Inbound" : "Outbound")}, Allow) pentru {F(e, "ApplicationPath")}, adăugată/modificată de {F(e, "ModifyingApplication")}.",
@@ -290,7 +291,7 @@ public static class Correlation
         foreach (var g in srum.GroupBy(e => e.Path, StringComparer.OrdinalIgnoreCase))
         {
             long sent = g.Sum(e => long.TryParse(F(e, "BytesSent"), out var s) ? s : 0), recv = g.Sum(e => long.TryParse(F(e, "BytesRecvd"), out var r) ? r : 0);
-            var exe = Path.GetFileName(g.Key.TrimEnd('\\'));
+            var exe = WinPath.GetFileName(g.Key.TrimEnd('\\'));
             if (Lolbins.Contains(exe) && sent + recv > 1_000_000 && !exe.Equals("powershell.exe", StringComparison.OrdinalIgnoreCase) || IsUserWritable(g.Key) && sent > 5_000_000)
             {
                 var prefetch = events.Where(e => e.Source == "Prefetch" && e.Process.Equals(exe, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -362,7 +363,7 @@ public static class Correlation
         var correlated = new HashSet<Finding>();
         foreach (var x in userPathExec)
         {
-            var dir = Path.GetDirectoryName(Normalize(x.File)) ?? "";
+            var dir = WinPath.GetDirectoryName(Normalize(x.File)) ?? "";
             var touching = strong.Where(s =>
                 (s.File.Length > 0 && dir.Length > 3 && Normalize(s.File).StartsWith(dir, StringComparison.OrdinalIgnoreCase)) ||
                 (s.Process.Length > 0 && s.Process.Equals(x.Process, StringComparison.OrdinalIgnoreCase)) ||
@@ -403,20 +404,20 @@ public static class Correlation
         }).Where(x => x.Path.Length > 0).ToList();
         foreach (var d in events.Where(e => e.Source == "BrowserDownload" && e.Path.Length > 0 && e.Time.Utc is not null))
         {
-            var dir = Normalize(Path.GetDirectoryName(d.Path) ?? "");
+            var dir = Normalize(WinPath.GetDirectoryName(d.Path) ?? "");
             if (dir.Length < 4) continue;
             var start = d.Time.Utc!.Value;
             var hits = execs.Where(x => x.Path.StartsWith(dir + "\\", StringComparison.Ordinal) && x.Event.Time.Utc >= start && x.Event.Time.Utc <= start.AddHours(6))
                             .OrderBy(x => x.Event.Time.Utc).ToList();
             if (hits.Count == 0) continue;
             // A distinctive number from the downloaded file's name (5+ digits) found in the program's path ties them closely.
-            var tokens = System.Text.RegularExpressions.Regex.Matches(Path.GetFileNameWithoutExtension(d.Path), @"\d{5,}").Select(m => m.Value).ToList();
+            var tokens = System.Text.RegularExpressions.Regex.Matches(WinPath.GetFileNameWithoutExtension(d.Path), @"\d{5,}").Select(m => m.Value).ToList();
             bool tied = hits.Any(h => tokens.Any(t => h.Path.Contains(t, StringComparison.Ordinal)));
             var first = hits[0].Event;
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "DOWNLOAD-THEN-EXEC",
-                Title = $"Descărcare urmată de rularea unui program din același folder: {Path.GetFileName(d.Path)} → {first.Process}",
+                Title = $"Descărcare urmată de rularea unui program din același folder: {WinPath.GetFileName(d.Path)} → {first.Process}",
                 Severity = tied ? Severity.High : Severity.Medium, Category = "InitialAccess", Classification = Classification.Correlated,
                 Confidence = tied ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1204.002",
                 FirstSeenUtc = start, LastSeenUtc = first.Time.Utc, File = d.Path, Process = first.Process, Domain = d.Dns,

@@ -1,4 +1,5 @@
 using System.Globalization;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 using Microsoft.Data.Sqlite;
@@ -113,7 +114,7 @@ public sealed class BrowserHistoryParser : EvidenceParserBase
                     sink.Add(new TimelineEvent
                     {
                         Time = ChromeTime(L(2), "start_time"), TimeSemantics = "download started (downloads.start_time)",
-                        Source = "BrowserDownload", EvidenceId = item.EvidenceId, Path = target, Process = Path.GetFileName(target),
+                        Source = "BrowserDownload", EvidenceId = item.EvidenceId, Path = target, Process = WinPath.GetFileName(target),
                         Dns = Host(chain.LastOrDefault() ?? S(11)),
                         Summary = $"Descărcare: {target} de pe {S(11)} ({S(4)} octeți, {(state >= 0 && state < States.Length ? States[state] : state.ToString(CultureInfo.InvariantCulture))})",
                         TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.High,

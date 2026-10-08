@@ -10,11 +10,23 @@ on:
     paths:
       - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
       - '.github/workflows/loganalyzer-dfir-build.yml'
+    # A release tag runs the release gate in ENFORCE mode (path filters do not apply to tags).
+    tags:
+      - 'loganalyzer-v*'
   pull_request:
     paths:
       - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
       - '.github/workflows/loganalyzer-dfir-build.yml'
   workflow_dispatch:
+    inputs:
+      enforce_gate:
+        description: 'Run the release gate in ENFORCE mode (fails unless every R22 item is PASS or WAIVED). Currently impossible: see docs/dfir/RELEASE_GATE.md'
+        type: boolean
+        default: false
+      gate_version:
+        description: 'Version the release gate evaluates (selects release-gate/waivers/<version>.json). Empty: DfirInfo.ApplicationVersion'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -85,6 +97,40 @@ jobs:
           Write-Host $text
           "## Forensic validation`n``````text`n$text`n``````" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
           if ($text -notmatch 'FORENSIC VALIDATION = AVAILABLE') { Write-Host "::warning::$(($text -split "`n")[0])" }
+
+      # ---- Release gate (contract section 22; owner decisions 7 and 8) -------------------------------------------------------
+      # Pull requests and pushes to main: REPORT mode (prints the matrix, uploads it, never fails the build). A release tag or a
+      # manual dispatch with enforce_gate: ENFORCE mode, which fails unless every item is PASS or WAIVED.
+      - name: Release gate self-test
+        if: always()
+        shell: pwsh
+        run: ./release-gate/tests/Test-ReleaseGate.ps1
+
+      - name: Release gate (report)
+        if: always() && github.ref_type != 'tag' && !(github.event_name == 'workflow_dispatch' && inputs.enforce_gate)
+        shell: pwsh
+        run: ./release-gate/Invoke-ReleaseGate.ps1 -Mode Report -Commit '${{ github.sha }}'
+
+      - name: Release gate (enforce)
+        if: always() && (github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.enforce_gate))
+        shell: pwsh
+        env:
+          GATE_TAG_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          GATE_INPUT_VERSION: ${{ inputs.gate_version }}
+        run: |
+          $v = if ($env:GATE_TAG_VERSION) { $env:GATE_TAG_VERSION -replace '^loganalyzer-v', '' } elseif ($env:GATE_INPUT_VERSION) { $env:GATE_INPUT_VERSION } else { $null }
+          $gateArgs = @('-Mode', 'Enforce', '-Commit', '${{ github.sha }}')
+          if ($v) { $gateArgs += @('-Version', $v) }
+          ./release-gate/Invoke-ReleaseGate.ps1 @gateArgs
+
+      - name: Upload release gate report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: loganalyzer-release-gate
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/release-gate/out/gate-report.*
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload test results
         if: always()

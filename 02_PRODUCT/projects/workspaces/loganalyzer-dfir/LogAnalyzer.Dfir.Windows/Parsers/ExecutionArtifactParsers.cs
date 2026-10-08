@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 using LogAnalyzer.Dfir.IO;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -61,9 +62,9 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
                     {
                         Time = Timestamp.FromFileTime(ft, "BAM FILETIME"),
                         Source = "BAM", EvidenceId = item.EvidenceId, User = sid, Path = path,
-                        Process = Path.GetFileName(path),
+                        Process = WinPath.GetFileName(path),
                         Summary = packaged ? $"BAM: aplicația împachetată {name} rulată ultima dată de utilizatorul {sid}"
-                                           : $"BAM: {Path.GetFileName(path)} rulat ultima dată de utilizatorul {sid}",
+                                           : $"BAM: {WinPath.GetFileName(path)} rulat ultima dată de utilizatorul {sid}",
                         TimeSemantics = "last execution (BAM)", TemporalType = TemporalType.Historical,
                         Classification = Classification.Direct, Confidence = Confidence.High,
                         Locator = $@"SYSTEM\{cs}\Services\bam\...\{sid}\{name}",
@@ -86,7 +87,7 @@ public sealed class SystemHiveExecutionParser : EvidenceParserBase
                 sink.Add(new TimelineEvent
                 {
                     Time = modified is long ft && ft > 0 ? Timestamp.FromFileTime(ft, "ShimCache last modified") : Timestamp.Unknown(),
-                    Source = "ShimCache", EvidenceId = item.EvidenceId, Path = path, Process = Path.GetFileName(path),
+                    Source = "ShimCache", EvidenceId = item.EvidenceId, Path = path, Process = WinPath.GetFileName(path),
                     Summary = $"ShimCache: {path} (prezență; ora = ultima modificare a fișierului, nu rularea)",
                     TimeSemantics = "file last modified (ShimCache) — not execution",
                     TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,

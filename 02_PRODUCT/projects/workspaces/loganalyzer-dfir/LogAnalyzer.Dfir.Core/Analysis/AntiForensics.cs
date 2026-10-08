@@ -1,4 +1,5 @@
 using System.Globalization;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Policy;
 
@@ -148,8 +149,8 @@ public static class AntiForensics
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.Detected,
                     $"{manual.Count(e => e.EventId == "4616")} în Security 4616 și {manual.Count(e => e.EventId == "1")} în Kernel-General 1 (aceeași schimbare apare în ambele jurnale), făcute de alt proces decât sincronizarea (svchost): " +
                     string.Join("; ", manual.Take(10).Select(e => e.EventId == "4616"
-                        ? $"4616 {F(e, "PreviousTime")} → {F(e, "NewTime")} de {F(e, "SubjectUserName")} ({Path.GetFileName(F(e, "ProcessName"))})"
-                        : $"Kernel-General {F(e, "OldTime")} → {F(e, "NewTime")} ({Path.GetFileName(F(e, "ProcessName"))})")),
+                        ? $"4616 {F(e, "PreviousTime")} → {F(e, "NewTime")} de {F(e, "SubjectUserName")} ({WinPath.GetFileName(F(e, "ProcessName"))})"
+                        : $"Kernel-General {F(e, "OldTime")} → {F(e, "NewTime")} ({WinPath.GetFileName(F(e, "ProcessName"))})")),
                     manual.Select(e => Ref(e, "schimbare a orei sistemului")));
             else if (Has(System))
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.NotDetected,
@@ -307,7 +308,7 @@ public static class AntiForensics
         {
             var amcache = events.Where(e => e.Source == "Amcache").ToList();
             var hits = amcache.Where(e => SystemUtilities.Contains(F(e, "OriginalFileName"))
-                                          && !F(e, "OriginalFileName").Equals(Path.GetFileName(e.Path), StringComparison.OrdinalIgnoreCase)).ToList();
+                                          && !F(e, "OriginalFileName").Equals(WinPath.GetFileName(e.Path), StringComparison.OrdinalIgnoreCase)).ToList();
             if (hits.Count > 0)
                 Add("AF15", "Executabil de sistem redenumit", "T1036.003", AntiForensicResult.Detected,
                     string.Join("; ", hits.Take(15).Select(e => $"{e.Path} (OriginalFileName {F(e, "OriginalFileName")})")), hits.Select(e => Ref(e, "utilitar redenumit")));
@@ -342,7 +343,7 @@ public static class AntiForensics
         var p = Correlation.Normalize(path.Trim().Trim('"'));
         if (p.StartsWith(@"\??\", StringComparison.Ordinal)) p = Correlation.Normalize(p[4..]);
         if (p.StartsWith(@"\DEVICE\HARDDISKVOLUME", StringComparison.Ordinal)) { int i = p.IndexOf('\\', 8); if (i > 0) p = p[i..]; }
-        var name = Path.GetFileName(p);
+        var name = WinPath.GetFileName(p);
         if (!ExpectedDirs.TryGetValue(name, out var dirs)) return false;
         if (ComponentStores.Any(s => p.StartsWith(s, StringComparison.Ordinal))) return false;
         var dir = p[..^(name.Length + 1)];

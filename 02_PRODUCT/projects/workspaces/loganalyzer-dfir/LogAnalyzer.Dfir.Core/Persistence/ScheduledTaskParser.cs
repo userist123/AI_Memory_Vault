@@ -90,7 +90,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
                 Time = time, TimeSemantics = "task registration date (RegistrationInfo/Date, author-supplied)",
                 Source = "ScheduledTask", EvidenceId = item.EvidenceId, Task = uri, User = user,
                 // Path is the executable without the quotes the XML may carry; the raw command stays in Fields["Command"].
-                Path = command.Trim().Trim('"'), Process = command.Length > 0 ? Path.GetFileName(command.Trim().Trim('"')) : "",
+                Path = command.Trim().Trim('"'), Process = command.Length > 0 ? LogAnalyzer.Dfir.FileSystem.WinPath.GetFileName(command.Trim().Trim('"')) : "",
                 Summary = $"Task programat {uri}: {what}" + (common["Hidden"] == "true" ? " (ascuns)" : "") +
                           (triggers.Count > 0 ? $"; declanșatori: {common["Triggers"]}" : ""),
                 TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct, Confidence = Confidence.High,

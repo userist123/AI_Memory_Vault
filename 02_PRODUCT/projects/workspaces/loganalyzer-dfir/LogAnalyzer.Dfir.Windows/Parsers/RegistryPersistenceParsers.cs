@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Globalization;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.IO;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -28,7 +29,7 @@ internal static class Hive
             sink.Add(new TimelineEvent
             {
                 Time = KeyTime(k), TimeSemantics = "Run key last written (not this value's creation)",
-                Source = "RunKey", EvidenceId = item.EvidenceId, Path = exe, Process = Path.GetFileName(exe),
+                Source = "RunKey", EvidenceId = item.EvidenceId, Path = exe, Process = WinPath.GetFileName(exe),
                 Summary = $"Pornire automată ({hiveLabel}\\{keyPath}): {v.Name} = {command}",
                 TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct, Confidence = Confidence.High,
                 Locator = $@"{hiveLabel}\{keyPath}\{v.Name}",
@@ -223,7 +224,7 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
                 sink.Add(new TimelineEvent
                 {
                     Time = Hive.KeyTime(k!), TimeSemantics = "IFEO subkey last written",
-                    Source = "IFEO", EvidenceId = item.EvidenceId, Path = exe, Process = Path.GetFileName(exe),
+                    Source = "IFEO", EvidenceId = item.EvidenceId, Path = exe, Process = WinPath.GetFileName(exe),
                     Summary = $"IFEO: la pornirea {target} rulează în schimb {debugger}",
                     TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct, Confidence = Confidence.High,
                     Locator = $@"SOFTWARE\{ifeoPath}\{target}\Debugger",

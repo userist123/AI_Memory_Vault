@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Globalization;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.IO;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -69,7 +70,7 @@ public sealed class ServicesParser : EvidenceParserBase
             sink.Add(new TimelineEvent
             {
                 Time = Hive.KeyTime(k), TimeSemantics = "service key last written (any change to the key)",
-                Source = "Service", EvidenceId = item.EvidenceId, Service = name, Path = exe, Process = Path.GetFileName(exe),
+                Source = "Service", EvidenceId = item.EvidenceId, Service = name, Path = exe, Process = WinPath.GetFileName(exe),
                 User = k.Value("ObjectName")?.AsText ?? "",
                 Summary = $"Serviciu {name} ({TypeName(type)}, {StartName(start)}): {image}" + (serviceDll.Length > 0 ? $"; ServiceDll {serviceDll}" : ""),
                 TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct, Confidence = Confidence.High,

@@ -1,4 +1,5 @@
 using System.Globalization;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -52,7 +53,7 @@ public static class AuditCoverage
             if (share < IntermittentShare)
                 gaps.Add(new EvidenceGap(c.Artifact, EvidenceStatus.Partial,
                     $"{hits.Count} evenimente {string.Join("/", c.Ids)} în doar {hours.Count} din {activeHours.Count} ore cu activitate ({share:P1}; {span}): auditul nu a fost continuu" +
-                    $" (cele mai frecvente: {string.Join(", ", hits.Select(e => e.Fields.GetValueOrDefault("NewProcessName") ?? "").Where(n => n.Length > 0).Select(Path.GetFileName).GroupBy(n => n, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Take(5).Select(g => $"{g.Key} ×{g.Count()}"))})",
+                    $" (cele mai frecvente: {string.Join(", ", hits.Select(e => e.Fields.GetValueOrDefault("NewProcessName") ?? "").Where(n => n.Length > 0).Select(WinPath.GetFileName).GroupBy(n => n, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Take(5).Select(g => $"{g.Key} ×{g.Count()}"))})",
                     c.Impact + " în afara acestor ore", c.Alternative, "Nu (activați auditul pentru viitor)"));
         }
         return gaps;
