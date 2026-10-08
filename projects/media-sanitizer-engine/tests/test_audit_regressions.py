@@ -172,3 +172,43 @@ def test_device_discovery_does_not_invent_devices_when_empty():
     # Pe un sistem fără /sys/block (ex: Windows sau sandbox), lista trebuie să fie goală
     if not os.path.exists("/sys/block"):
         assert len(devs) == 0
+
+
+def test_tpm_signature_detects_tampering(dummy_device, valid_dual_auth):
+    """
+    AUDIT CONSTATARE 5: Eliminarea verificării prin prefix text.
+    Demonstrează că manifestul este acoperit de o semnătură criptografică reală
+    și că modificarea seriei, verdictului sau hash-ului invalidează manifestul.
+    """
+    from src.windows_registry_app import WindowsRegistryApp
+    from src.tpm_signer import TPMSigner, TPMVerificationError
+
+    sim_adapter = HardwareAdapter(simulation_mode=True)
+    session = SanitizationSession(
+        device=dummy_device,
+        classification=ClassificationLevel.SECRET,
+        hardware_adapter=sim_adapter,
+    )
+    session.confirm_target_safeguard("3456")
+    session.evaluate_and_authorize(dual_auth=valid_dual_auth)
+    session.execute_sanitization()
+    manifest = session.export_manifest()
+
+    app = WindowsRegistryApp()
+    # Manifestul original trebuie să fie validat cu succes
+    assert app.import_and_validate_manifest(manifest) is True
+
+    # ATAC ADVERSARIAL 1: Modificăm serialul discului în manifest
+    tampered_manifest = dict(manifest)
+    tampered_manifest["device"] = dict(manifest["device"])
+    tampered_manifest["device"]["serial_number"] = "MODIFIED-SERIAL-666"
+
+    with pytest.raises(ValueError, match="Validare manifest eșuată"):
+        app.import_and_validate_manifest(tampered_manifest)
+
+    # ATAC ADVERSARIAL 2: Modificăm verdictul din SIMULATED_NOT_SANITIZED în CONFORM_PURGED
+    tampered_verdict = dict(manifest)
+    tampered_verdict["final_disposition"] = "CONFORM_PURGED"
+
+    with pytest.raises(ValueError, match="Validare manifest eșuată"):
+        app.import_and_validate_manifest(tampered_verdict)

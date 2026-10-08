@@ -40,13 +40,15 @@ class WindowsRegistryApp:
             json.dump(self.records, f, indent=2, ensure_ascii=False)
 
     def import_and_validate_manifest(self, manifest_data: Dict[str, Any]) -> bool:
-        """Validează structura și semnătura tehnică a platformei bootabile offline."""
+        """Validează structura și verifică criptografic semnătura asimetrică TPM a manifestului."""
         if "device" not in manifest_data or "integrity" not in manifest_data:
             raise ValueError("Fișierul de manifest este invalid sau corupt.")
 
-        platform_sig = manifest_data.get("signatures", {}).get("platform_signature", "")
-        if not platform_sig.startswith("SIG-TPM"):
-            raise ValueError("Semnătura platformei bootabile offline lipsește sau este nevalidă!")
+        from .tpm_signer import TPMSigner, TPMVerificationError
+        try:
+            TPMSigner.verify_manifest_signature(manifest_data)
+        except TPMVerificationError as v_err:
+            raise ValueError(f"Validare manifest eșuată: {str(v_err)}")
 
         return True
 

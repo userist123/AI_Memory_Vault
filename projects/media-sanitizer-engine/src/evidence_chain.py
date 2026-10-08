@@ -104,4 +104,10 @@ class EvidenceManager:
                 "smartcard_witness_qualified_sig": smartcard_signatures.get("witness", "NOT_SUPPLIED") if smartcard_signatures else "NOT_SUPPLIED",
             }
         }
+
+        # Generare semnătură criptografică reală de platformă (TPM envelope)
+        from .tpm_signer import TPMSigner
+        tpm_envelope = TPMSigner.sign_manifest_payload(manifest_data)
+        manifest_data["signatures"]["tpm_signature_envelope"] = tpm_envelope
+
         return manifest_data
