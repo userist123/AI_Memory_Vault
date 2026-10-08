@@ -628,6 +628,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
 | securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
 | cercetare: Planning Influence V3 și fazele Polymarket | `planning-influence-mve.yml`, `polymarket-phase*.yml` (câte unul pe fază) |
+| cercetare: experiment H1 de recall asociativ | `h1-associative-experiment.yml` |
 | rulări programate și ingestie | `memory-consolidation.yml` (consolidarea de noapte), `import-external-skills.yml`, `jarvis-command-center.yml` |
 
 Un test (`20_TESTS/test_readme_references.py`) pică dacă README-ul numește un workflow sau o cale care nu există — lista de dinainte rămăsese în urmă cu 22 de fișiere și cita două workflow-uri șterse.

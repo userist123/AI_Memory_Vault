@@ -63,3 +63,20 @@ def isolate_vault_runtime_home(monkeypatch, tmp_path_factory):
     memory_usage_report.py. Tests that need a specific directory set AI_MEMORY_VAULT_HOME themselves.
     """
     monkeypatch.setenv("AI_MEMORY_VAULT_HOME", str(tmp_path_factory.mktemp("vault_home")))
+
+
+@pytest.fixture(autouse=True)
+def book_to_memory_test_hmac_secret(request: pytest.FixtureRequest, monkeypatch):
+    """Give the Book-to-Memory approval-token tests a throwaway, per-test HMAC secret.
+
+    `book_to_memory_lifecycle` has no fallback secret: without one it refuses to issue or
+    verify an owner-approval token. These tests need a working signer, so they get a random
+    secret that exists only for the test. Tests that assert the fail-closed behaviour
+    delete it themselves.
+    """
+    module = getattr(request.node, "module", None)
+    if module is None or not module.__name__.split(".")[-1].startswith("test_book_to_memory"):
+        return
+    import secrets
+
+    monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", secrets.token_urlsafe(48))
