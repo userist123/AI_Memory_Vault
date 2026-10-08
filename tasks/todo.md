@@ -189,5 +189,5 @@ air-gapped networks / standalone PCs. The app's own behaviour and documentation 
 - Users/roles + manually entered clearances, one global admin for now → WP14/WP13 + P1 roles.
 - Procedure profile + zones entered manually with paste/import → WP15/WP14.
 - Station/domain/e-mail stay under Advanced.
-- Classification: NATO CTS/NS/NC/NR + EU TS/S/C/R UE, no unclassified (national levels: ask owner).
-- Tier-3 importers only on demand. Case scope fields mandatory. WP1b approved. Exchange scripts not in P1.
+- Classification: NATO CTS/NS/NC/NR + EU TS/S/C/R UE + national HG 585 levels; no unclassified.
+- Tier-3 importers only on demand; **printers now**: PaperCut-MF-style print tracking from PrintService/Operational 307/805 → new WP16a (print), Tier 1 for this owner. Case scope fields mandatory. WP1b approved. Exchange scripts not in P1.
