@@ -40,6 +40,12 @@ defaults:
     - "**/__pycache__/**"
 
 domains:
+  # ── Pilot bootstrap ─────────────────────────────────────────────────────────────────────
+  bootstrap:
+    title: Bootstrap obligatoriu pentru agent — AGENTS, CLAUDE și reguli de pornire
+    roots: ["AGENTS.md", "CLAUDE.md"]
+    keywords: [bootstrap, agent bootstrap, startup contract, cold start, agents, claude]
+
   # ── 00 Governance ────────────────────────────────────────────────────────────────────────
   governance:
     title: Guvernanță — stare verificată, protocoale, reguli, identitate, standarde
