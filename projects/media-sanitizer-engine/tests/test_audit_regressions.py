@@ -160,3 +160,15 @@ def test_regression_simulated_pdf_clearly_marked(dummy_device, valid_dual_auth, 
     assert b"DOCUMENT SIMULAT DE LABORATOR - FARA VALOARE DE DECLASIFICARE" in pdf_bytes
     assert b"SIMULAT - NESANITIZAT HARDWARE" in pdf_bytes
     assert b"Niciun bloc de pe disc nu a fost citit fizic" in pdf_bytes
+
+
+def test_device_discovery_does_not_invent_devices_when_empty():
+    """
+    AUDIT CONSTATARE 2: Sistemul nu are voie să inventeze dispozitive hardcodate.
+    Dacă /sys/block este gol sau inexistent, returnează o listă goală, nu dicționare simulate.
+    """
+    from src.device_discovery import DeviceDiscoveryManager
+    devs = DeviceDiscoveryManager.scan_physical_devices()
+    # Pe un sistem fără /sys/block (ex: Windows sau sandbox), lista trebuie să fie goală
+    if not os.path.exists("/sys/block"):
+        assert len(devs) == 0
