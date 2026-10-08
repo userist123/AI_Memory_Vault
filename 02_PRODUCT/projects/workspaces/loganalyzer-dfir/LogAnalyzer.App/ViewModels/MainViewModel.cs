@@ -15,12 +15,12 @@ using LogAnalyzer.Core.Models;
 using LogAnalyzer.Core.Interfaces;
 using LogAnalyzer.Core.Services;
 using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Core.Services.Network;
 using LogAnalyzer.Infrastructure;
 using LogAnalyzer.Infrastructure.Engines;
 using LogAnalyzer.Infrastructure.Parsers;
 using LogAnalyzer.Infrastructure.Services;
-using LogAnalyzer.Infrastructure.Watchers;
 using Microsoft.Win32;
 using LogAnalyzer.UI.Services;
 
@@ -91,19 +91,22 @@ namespace LogAnalyzer.UI.ViewModels
         partial void OnConnectivityWarningTextChanged(string value) => OnPropertyChanged(nameof(HasConnectivityWarning));
 
         /// <summary>Per-program containment ("Izolare procese suspecte" tab).</summary>
-        public ContainmentViewModel Containment { get; } = new();
+        public object? Containment { get; }
+        /// <summary>True when this edition contains per-program containment.</summary>
+        public bool HasContainment => Containment is not null;
+        public IEditionProfile Edition { get; }
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();
 
         /// <summary>Domain users / e-mail investigation ("Investigație domeniu și e-mail" tab).</summary>
-        public DomainInvestigationViewModel DomainInvestigation { get; } = new();
+        public object? DomainInvestigation { get; }
 
         /// <summary>Full investigation pipeline ("Investigație completă" tab).</summary>
-        public InvestigationViewModel Investigation { get; } = new();
+        public InvestigationViewModel Investigation { get; }
 
         /// <summary>Owner policies: import, lifecycle, verified application ("Politici" tab).</summary>
-        public PolicyViewModel Policy { get; } = new();
+        public PolicyViewModel Policy { get; }
 
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
@@ -314,7 +317,10 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private DfirProfile? _selectedProfile;
 
         // Live Security Monitoring (Real-Time EDR & Streaming)
-        private LiveEventLogWatcherService? _liveWatcher;
+        private ILiveEventSource? _liveWatcher;
+        private readonly ILiveEventSourceFactory _liveSourceFactory;
+        private readonly IHostDefense _hostDefense;
+        private readonly IConnectivityWatcher _connectivityWatcher;
         private readonly LiveSecurityMonitoringEngine _liveEngine = new();
         public ObservableCollection<ParsedEvent> LiveStreamingEvents { get; } = new();
         public ObservableCollection<DetectedIssue> LiveAlerts { get; } = new();
@@ -538,8 +544,19 @@ namespace LogAnalyzer.UI.ViewModels
         public MainViewModel(
             IEventParser eventParser, IAnalysisEngine analysisEngine, IRegistryParser registryParser,
             AuditLogService auditService, KnowledgeBaseService kbService, PluginManagerService pluginManager,
-            IDatabaseService databaseService, IAuditCollectionService collectionService, EvidenceIntakeService evidenceIntake)
+            IDatabaseService databaseService, IAuditCollectionService collectionService, EvidenceIntakeService evidenceIntake,
+            IEditionProfile edition, IFeatureViewFactory featureViews, IHostDefense hostDefense,
+            ILiveEventSourceFactory liveSourceFactory, IConnectivityWatcher connectivityWatcher,
+            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
         {
+            Edition = edition;
+            _hostDefense = hostDefense;
+            _liveSourceFactory = liveSourceFactory;
+            _connectivityWatcher = connectivityWatcher;
+            Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
+            DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
+            Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
+            Policy = new PolicyViewModel(registryWriter);
             _eventParser = eventParser;
             _analysisEngine = analysisEngine;
             _registryParser = registryParser;
@@ -1647,11 +1664,12 @@ namespace LogAnalyzer.UI.ViewModels
         /// An isolated station that gains a network connection is itself an incident. The mode is never switched
         /// automatically (networked features stay blocked); the investigator is warned instead.
         /// </summary>
+        private IDisposable? _connectivitySubscription;
+
         private void WatchIsolatedStationConnectivity()
         {
-            System.Net.NetworkInformation.NetworkChange.NetworkAddressChanged += (_, _) =>
+            _connectivitySubscription = _connectivityWatcher.Watch(snapshot =>
             {
-                var snapshot = new WindowsConnectivityProbe().Probe();
                 if (snapshot.State is ConnectivityState.NoNetwork or ConnectivityState.Unknown) return;
 
                 var warning = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} — stația pornită în modul AirGapped are acum " +
@@ -1662,7 +1680,7 @@ namespace LogAnalyzer.UI.ViewModels
                     ConnectivityWarningText = warning;
                     StatusMessage = "⚠ " + warning;
                 });
-            };
+            });
         }
 
         [RelayCommand]
@@ -1670,7 +1688,12 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (IsLiveMonitoringActive) return;
 
-            _liveWatcher = new LiveEventLogWatcherService();
+            _liveWatcher = _liveSourceFactory.Create();
+            if (_liveWatcher is null)
+            {
+                LiveMonitoringStatusText = EditionText.Unavailable("Monitorizarea în timp real");
+                return;
+            }
             _liveWatcher.OnStatusChanged += status =>
             {
                 Application.Current?.Dispatcher?.Invoke(() => LiveMonitoringStatusText = status);
@@ -1803,7 +1826,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (MessageBox.Show("Izolați ÎNTREAGA stație de rețea (tot traficul de ieșire blocat)?\n\nPentru un singur program suspect folosiți „Izolare procese suspecte”, care lasă restul PC-ului conectat.",
                     "Izolare stație", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-            var res = SystemDefenseExecutionService.IsolateHostFromNetwork();
+            var res = _hostDefense.IsolateHostFromNetwork();
             StatusMessage = $"🛡️ {res.Message}";
             IsCountermeasureModalVisible = false;
             _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
@@ -1816,7 +1839,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExecuteRestoreNetwork()
         {
-            var res = SystemDefenseExecutionService.RestoreNetworkAccess();
+            var res = _hostDefense.RestoreNetworkAccess();
             StatusMessage = $"🌐 {res.Message}";
             _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
@@ -1856,7 +1879,7 @@ namespace LogAnalyzer.UI.ViewModels
                     "Blocare IoC", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             foreach (var ip in ips)
             {
-                var res = SystemDefenseExecutionService.BlockMaliciousIoC(ip);
+                var res = _hostDefense.BlockMaliciousIoC(ip);
                 _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, {res.Status}: {res.Message}");
                 StatusMessage = res.Message;
                 if (!res.Success)

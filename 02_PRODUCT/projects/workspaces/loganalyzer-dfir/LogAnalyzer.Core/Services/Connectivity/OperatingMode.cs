@@ -43,9 +43,9 @@ namespace LogAnalyzer.Core.Services.Connectivity
     }
 
     /// <summary>
-    /// Chooses the operating mode. Precedence: command line (--mode=), then the station's mode file, then detection.
-    /// Detection maps only a confirmed Internet connection to Network; anything else, including Unknown, is AirGapped
-    /// (fail closed: an isolated station must never start networked features because detection failed).
+    /// Legacy entry point kept for callers that only have an unauthenticated request (--mode=, LogAnalyzer.mode, detection).
+    /// None of those can select Network any more: the connected mode comes only from a signed policy
+    /// (<see cref="LogAnalyzer.Core.Services.Edition.EditionPolicyVerifier"/>). Everything here resolves to AirGapped.
     /// </summary>
     public static class OperatingModeResolver
     {
@@ -54,45 +54,20 @@ namespace LogAnalyzer.Core.Services.Connectivity
         public static ModeDecision Resolve(IReadOnlyList<string> args, string? stationOverride, ConnectivitySnapshot snapshot)
         {
             foreach (var arg in args)
-            {
                 if (arg.StartsWith(ArgumentPrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    var value = arg[ArgumentPrefix.Length..];
-                    if (TryParseOverride(value, out var forced))
-                        return forced is AppMode m
-                            ? new ModeDecision(m, true, $"Mod forțat din linia de comandă ({arg}).", snapshot)
-                            : Detect(snapshot);
-                    return new ModeDecision(AppMode.AirGapped, true,
-                        $"Argument necunoscut „{arg}”; se folosește modul sigur AirGapped.", snapshot);
-                }
-            }
-
+                    return new ModeDecision(AppMode.AirGapped, false,
+                        $"Argumentul „{arg}” nu poate schimba modul: doar o politică semnată poate activa modul conectat.", snapshot);
             if (!string.IsNullOrWhiteSpace(stationOverride))
-            {
-                if (TryParseOverride(stationOverride.Trim(), out var forced))
-                    return forced is AppMode m
-                        ? new ModeDecision(m, true, $"Mod fixat pentru această stație (fișier de configurare: {stationOverride.Trim()}).", snapshot)
-                        : Detect(snapshot);
-                return new ModeDecision(AppMode.AirGapped, true,
-                    $"Valoare necunoscută în fișierul de mod („{stationOverride.Trim()}”); se folosește modul sigur AirGapped.", snapshot);
-            }
-
+                return new ModeDecision(AppMode.AirGapped, false,
+                    $"Fișierul de mod („{stationOverride.Trim()}”) nu poate schimba modul: doar o politică semnată poate activa modul conectat.", snapshot);
             return Detect(snapshot);
         }
 
-        public static ModeDecision Detect(ConnectivitySnapshot snapshot) => snapshot.State switch
-        {
-            ConnectivityState.Internet => new ModeDecision(AppMode.Network, false,
-                $"Windows raportează conexiune la Internet ({snapshot.Source}).", snapshot),
-            ConnectivityState.LocalNetworkOnly => new ModeDecision(AppMode.AirGapped, false,
-                $"Rețea locală fără Internet ({snapshot.Source}); stația este tratată ca izolată.", snapshot),
-            ConnectivityState.NoNetwork => new ModeDecision(AppMode.AirGapped, false,
-                $"Nicio rețea conectată ({snapshot.Source}).", snapshot),
-            _ => new ModeDecision(AppMode.AirGapped, false,
-                "Conectivitatea nu a putut fi determinată; se folosește modul sigur AirGapped.", snapshot)
-        };
+        /// <summary>Detection is informational only: even a confirmed Internet connection never switches an isolated station to Network.</summary>
+        public static ModeDecision Detect(ConnectivitySnapshot snapshot) =>
+            new(AppMode.AirGapped, false, $"Fără politică semnată modul este AirGapped (conectivitate observată: {snapshot.State}, {snapshot.Source}).", snapshot);
 
-        /// <summary>Accepts airgapped/air-gapped/offline, network/online and auto. Auto yields a null mode.</summary>
+        /// <summary>Accepts airgapped/air-gapped/offline, network/online and auto; used only to report what was requested.</summary>
         public static bool TryParseOverride(string value, out AppMode? mode)
         {
             switch (value.Trim().ToLowerInvariant())

@@ -26,8 +26,6 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<Finding> Findings { get; } = new();
         public ObservableCollection<TimelineEvent> Timeline { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Analysis.AntiForensicCheck> AntiForensics { get; } = new();
-        public ObservableCollection<LogAnalyzer.Dfir.AI.AiStatement> AiStatements { get; } = new();
-        public ObservableCollection<LogAnalyzer.Dfir.AI.RejectedStatement> AiRejected { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Graph.Entity> GraphEntities { get; } = new();
         public ObservableCollection<LogAnalyzer.Dfir.Graph.GraphEdgeRow> GraphEdges { get; } = new();
 
@@ -68,10 +66,21 @@ namespace LogAnalyzer.UI.ViewModels
             GraphStatus = path.Count == 0 ? $"{a.Label} și {b.Label} nu sunt legate în graf." : $"Drum {a.Label} → {b.Label}: {path.Count} relații (fiecare cu proba sau derivarea ei).";
         }
 
-        // Local model (Ollama on this machine, loopback only) and remote collection packages.
-        [ObservableProperty] private string _aiEndpoint = "http://127.0.0.1:11434";
-        [ObservableProperty] private string _aiModel = "qwen3:30b-a3b";
-        [ObservableProperty] private string _aiStatus = "Analiza AI folosește doar un model local (Ollama, adresă loopback) și doar rezultatele verificate ale cazului. Fiecare afirmație trebuie să citeze probe; rezultatul rămâne UNPROVEN până îl verificați.";
+        // Remote collection packages. The optional AI layer is a separate screen of the unclassified edition (AiAnalysisViewModel).
+        /// <summary>The optional AI screen's view model; null in the classified edition (no AI code in that build).</summary>
+        public object? AiAnalysis { get; private set; }
+
+        /// <summary>The finished investigation, for optional layers that read it (AI explanation). Null before a run.</summary>
+        public InvestigationResult? CurrentResult => _result;
+
+        /// <summary>Raised when a new investigation result is available.</summary>
+        public event EventHandler? ResultChanged;
+
+        public InvestigationViewModel(Func<InvestigationViewModel, object?>? aiFactory = null)
+        {
+            AiAnalysis = aiFactory?.Invoke(this);
+        }
+
         [ObservableProperty] private string _remoteHost = "";
         [ObservableProperty] private string _remoteJustification = "";
         [ObservableProperty] private string _remoteStatus = "Pachetul rulează pe stația țintă (local, fără rețea), calculează SHA-256 acolo; îl aduceți pe suport extern și îl verificați aici înainte de import.";
@@ -139,6 +148,7 @@ namespace LogAnalyzer.UI.ViewModels
                 });
                 Findings.Clear();
                 foreach (var f in _result.Findings) Findings.Add(f);
+                ResultChanged?.Invoke(this, EventArgs.Empty);
                 FillTimeline();
                 var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
                 Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
@@ -186,28 +196,6 @@ namespace LogAnalyzer.UI.ViewModels
             InvestigationReportPdf.Write(_result, dlg.FileName, $"{Environment.UserDomainName}\\{Environment.UserName}");
             _result.Case.Audit("report.pdf", dlg.FileName);
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
-        }
-
-        [RelayCommand]
-        private async Task AnalyzeWithLocalAi()
-        {
-            if (_result is null) { AiStatus = "Rulați întâi investigația."; return; }
-            IsBusy = true;
-            AiStatus = $"Modelul {AiModel} analizează catalogul cazului (poate dura câteva minute)…";
-            try
-            {
-                var ai = await LogAnalyzer.Dfir.Windows.Investigation.AiCaseAnalysis.RunAsync(_result, AiEndpoint.Trim(), AiModel.Trim());
-                AiStatements.Clear();
-                foreach (var s in ai.Accepted) AiStatements.Add(s);
-                AiRejected.Clear();
-                foreach (var s in ai.Rejected) AiRejected.Add(s);
-                AiStatus = $"{ai.Accepted.Count} afirmații acceptate (UNPROVEN, cu citări), {ai.Rejected.Count} respinse de verificări. Model {ai.Model} (digest {ai.ModelDigest[..Math.Min(12, ai.ModelDigest.Length)]}). Salvat în Analysis/ai_reasoning.json.";
-            }
-            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.Net.Http.HttpRequestException or TaskCanceledException or IOException)
-            {
-                AiStatus = "Oprit: " + ex.Message;
-            }
-            finally { IsBusy = false; }
         }
 
         [RelayCommand]

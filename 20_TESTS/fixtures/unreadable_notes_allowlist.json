@@ -462,6 +462,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp-ed.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
     }
   ]
 }

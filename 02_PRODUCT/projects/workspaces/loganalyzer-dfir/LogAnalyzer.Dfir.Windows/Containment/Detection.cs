@@ -113,13 +113,6 @@ public static class BlockedConnectionLog
         return (on, setting);
     }
 
-    /// <summary>Changes the audit policy of the station: call only after the operator has agreed.</summary>
-    public static (bool Ok, string Detail) EnableFailureAudit()
-    {
-        var run = RunAuditpol("/set", $"/subcategory:{FilteringPlatformConnectionGuid}", "/failure:enable");
-        return (run.ExitCode == 0, run.Output.Trim());
-    }
-
     public static IReadOnlyList<BlockedConnection> ForProgram(string programPath, DateTimeOffset sinceUtc, int max = 2000)
     {
         var suffix = DeviceIndependentSuffix(programPath);

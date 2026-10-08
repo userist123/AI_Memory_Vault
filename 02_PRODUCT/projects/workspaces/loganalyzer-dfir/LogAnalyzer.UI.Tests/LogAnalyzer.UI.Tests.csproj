@@ -18,6 +18,8 @@
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Connectors\LogAnalyzer.Connectors.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Response\LogAnalyzer.Response.csproj" />
     <Compile Include="..\Services\*.cs" Link="Services\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

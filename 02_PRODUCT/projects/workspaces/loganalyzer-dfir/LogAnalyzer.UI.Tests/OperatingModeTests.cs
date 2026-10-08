@@ -28,34 +28,25 @@ namespace LogAnalyzer.UI.Tests
         private static ConnectivitySnapshot Snap(ConnectivityState s) => new(s, "test", Array.Empty<string>(), DateTime.UtcNow);
 
         [Theory]
-        [InlineData(ConnectivityState.Internet, AppMode.Network)]
-        [InlineData(ConnectivityState.LocalNetworkOnly, AppMode.AirGapped)]
-        [InlineData(ConnectivityState.NoNetwork, AppMode.AirGapped)]
-        [InlineData(ConnectivityState.Unknown, AppMode.AirGapped)]
-        public void Detection_maps_only_confirmed_internet_to_network(ConnectivityState state, AppMode expected)
+        [InlineData(ConnectivityState.Internet)]
+        [InlineData(ConnectivityState.LocalNetworkOnly)]
+        [InlineData(ConnectivityState.NoNetwork)]
+        [InlineData(ConnectivityState.Unknown)]
+        public void Detection_never_selects_network_any_more(ConnectivityState state)
         {
             var d = OperatingModeResolver.Resolve(Array.Empty<string>(), null, Snap(state));
-            Assert.Equal(expected, d.Mode);
+            Assert.Equal(AppMode.AirGapped, d.Mode);
             Assert.False(d.IsOverride);
         }
 
         [Fact]
-        public void Command_line_beats_station_file_which_beats_detection()
+        public void Command_line_and_station_file_cannot_select_network()
         {
             var online = Snap(ConnectivityState.Internet);
-            Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(new[] { "--mode=airgapped" }, "network", online).Mode);
-            Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(Array.Empty<string>(), " offline\r\n", online).Mode);
-            Assert.Equal(AppMode.Network, OperatingModeResolver.Resolve(new[] { "--MODE=Network" }, null, Snap(ConnectivityState.NoNetwork)).Mode);
-            // auto defers to detection even when a station file exists
-            Assert.Equal(AppMode.Network, OperatingModeResolver.Resolve(new[] { "--mode=auto" }, "airgapped", online).Mode);
-        }
-
-        [Fact]
-        public void Unknown_override_values_fail_closed()
-        {
-            var online = Snap(ConnectivityState.Internet);
+            Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(new[] { "--MODE=Network" }, null, online).Mode);
+            Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(new[] { "--mode=auto" }, "network", online).Mode);
+            Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(Array.Empty<string>(), " online\r\n", online).Mode);
             Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(new[] { "--mode=netwrk" }, null, online).Mode);
-            Assert.Equal(AppMode.AirGapped, OperatingModeResolver.Resolve(Array.Empty<string>(), "maybe", online).Mode);
         }
 
         [Theory]
@@ -85,7 +76,7 @@ namespace LogAnalyzer.UI.Tests
                 () => new LiveThreatIntelService().CheckIpReputationAsync("198.51.100.24", "key"));
             Assert.Contains("AirGapped", ex.Message);
             Assert.Throws<NetworkBlockedException>(() =>
-                new LogAnalyzer.Infrastructure.Services.AuditCollectionService().StartSyslogListener(0, ".", "h", _ => { }));
+                new LogAnalyzer.Connectors.Collection.UdpSyslogReceiver().StartSyslogListener(0, ".", "h", _ => { }));
 
             AppModeTestScope.Use(AppMode.Network);
             NetworkPolicy.EnsureAllowed("test");

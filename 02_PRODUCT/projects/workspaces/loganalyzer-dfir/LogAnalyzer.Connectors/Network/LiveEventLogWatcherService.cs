@@ -1,11 +1,12 @@
 using System;
 using System.Diagnostics.Eventing.Reader;
 using System.Security;
+using LogAnalyzer.Core.Interfaces;
 using LogAnalyzer.Core.Models;
 
 namespace LogAnalyzer.Infrastructure.Watchers
 {
-    public class LiveEventLogWatcherService : IDisposable
+    public class LiveEventLogWatcherService : ILiveEventSource
     {
         private EventLogWatcher? _securityWatcher;
         private EventLogWatcher? _sysmonWatcher;
@@ -19,6 +20,8 @@ namespace LogAnalyzer.Infrastructure.Watchers
         public event Action<Exception>? OnErrorOccurred;
 
         public bool IsRunning => _isRunning;
+
+        void ILiveEventSource.StartWatching(string? remoteHost) => StartWatching(remoteHost);
 
         /// <summary>
         /// Pornește abonarea în timp real la canalele de securitate ale unui host (local sau remote).
@@ -156,6 +159,29 @@ namespace LogAnalyzer.Infrastructure.Watchers
         public void Dispose()
         {
             StopWatching();
+        }
+    }
+
+    /// <summary>Creates live watchers; registered only in the unclassified edition.</summary>
+    public sealed class LiveEventSourceFactory : ILiveEventSourceFactory
+    {
+        public ILiveEventSource? Create() => new LiveEventLogWatcherService();
+    }
+
+    /// <summary>Reports when the isolated station gains a network (passive: reads what Windows already knows).</summary>
+    public sealed class NetworkChangeWatcher : IConnectivityWatcher
+    {
+        public IDisposable Watch(Action<LogAnalyzer.Core.Services.Connectivity.ConnectivitySnapshot> onChange)
+        {
+            System.Net.NetworkInformation.NetworkAddressChangedEventHandler handler =
+                (_, _) => onChange(new LogAnalyzer.Core.Services.Connectivity.WindowsConnectivityProbe().Probe());
+            System.Net.NetworkInformation.NetworkChange.NetworkAddressChanged += handler;
+            return new Subscription(handler);
+        }
+
+        private sealed class Subscription(System.Net.NetworkInformation.NetworkAddressChangedEventHandler handler) : IDisposable
+        {
+            public void Dispose() => System.Net.NetworkInformation.NetworkChange.NetworkAddressChanged -= handler;
         }
     }
 }

@@ -1,7 +1,8 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.InvestigationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
@@ -137,35 +138,7 @@
                 </DataGrid>
             </TabItem>
             <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}">
-                <DockPanel Margin="8">
-                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
-                        <TextBlock Text="Ollama:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding AiEndpoint, UpdateSourceTrigger=PropertyChanged}" Width="190" Margin="0,0,10,0"/>
-                        <TextBlock Text="Model:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding AiModel, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,10,0"/>
-                        <Button Content="Analizează cazul" Command="{Binding AnalyzeWithLocalAiCommand}" Style="{StaticResource AccentButtonStyle}"/>
-                    </WrapPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="{Binding AiStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
-                    <Expander DockPanel.Dock="Bottom" Header="Afirmații respinse de verificări (cu motivul)" Foreground="{StaticResource TextPrimaryBrush}">
-                        <DataGrid ItemsSource="{Binding AiRejected}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="180">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="140"/>
-                                <DataGridTextColumn Header="Text" Binding="{Binding Text}" Width="3*"/>
-                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="2*"/>
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </Expander>
-                    <DataGrid ItemsSource="{Binding AiStatements}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="160"/>
-                            <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="90"/>
-                            <DataGridTextColumn Header="Afirmație" Binding="{Binding Text}" Width="4*">
-                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Citări" Binding="{Binding Citations.Count}" Width="60"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DockPanel>
+                <ctrl:FeaturePlaceholder FeatureKey="AiAnalysis" Title="Analiza AI" ViewModel="{Binding AiAnalysis}"/>
             </TabItem>
             <TabItem Header="Colectare la distanță" Style="{StaticResource InspectorTabItemStyle}">
                 <StackPanel Margin="12">

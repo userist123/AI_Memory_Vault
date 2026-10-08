@@ -9,8 +9,9 @@ namespace LogAnalyzer.Dfir.Windows.Policy;
 /// <summary>The providers the policy executor uses on this station.</summary>
 public static class WindowsSettingProviders
 {
-    public static IReadOnlyList<ISettingProvider> All() =>
-        [new RegistrySettingProvider(), new AuditSettingProvider(), new ServiceStartProvider(), new AccountPolicyProvider()];
+    /// <param name="registryWriter">Null in the classified edition: registry settings can then be read and compared but never written.</param>
+    public static IReadOnlyList<ISettingProvider> All(IRegistryValueWriter? registryWriter = null) =>
+        [new RegistrySettingProvider(registryWriter), new AuditSettingProvider(), new ServiceStartProvider(), new AccountPolicyProvider()];
 
     internal static bool IsElevated()
     {
@@ -23,7 +24,7 @@ public static class WindowsSettingProviders
 /// Registry values in HKLM/HKCU (64-bit view). Values are rendered the way policies state them: DWORD/QWORD as unsigned decimal,
 /// strings unexpanded, REG_MULTI_SZ joined by spaces (read only: the parts cannot be rebuilt from that text), binary as hex.
 /// </summary>
-public sealed class RegistrySettingProvider : ISettingProvider
+public sealed class RegistrySettingProvider(IRegistryValueWriter? writer = null) : ISettingProvider
 {
     public bool Handles(SettingRef s) => s.Type == "registry";
 
@@ -53,30 +54,29 @@ public sealed class RegistrySettingProvider : ISettingProvider
     }
 
     public string? CannotWrite(SettingRef s) =>
-        s.ValueType is not ("dword" or "qword" or "string" or "expand_string") ? $"tipul {s.ValueType} nu este scris de motor"
+        writer is null ? "scrierea în registru nu este disponibilă în ediția clasificată"
+        : s.ValueType is not ("dword" or "qword" or "string" or "expand_string") ? $"tipul {s.ValueType} nu este scris de motor"
         : s.Hive == "HKLM" && !WindowsSettingProviders.IsElevated() ? "HKLM cere un proces rulat ca administrator"
         : null;
 
     public void Write(SettingRef s, string value)
     {
         if (CannotWrite(s) is { } why) throw new InvalidOperationException(why);
-        using var root = Base(s);
-        using var k = root.CreateSubKey(s.Key, writable: true);
-        switch (s.ValueType)
-        {
-            case "dword": k.SetValue(s.Name, unchecked((int)uint.Parse(value, CultureInfo.InvariantCulture)), RegistryValueKind.DWord); break;
-            case "qword": k.SetValue(s.Name, unchecked((long)ulong.Parse(value, CultureInfo.InvariantCulture)), RegistryValueKind.QWord); break;
-            case "string": k.SetValue(s.Name, value, RegistryValueKind.String); break;
-            case "expand_string": k.SetValue(s.Name, value, RegistryValueKind.ExpandString); break;
-        }
+        writer!.Write(s.Hive, s.Key, s.Name, s.ValueType, value);
     }
 
     public void Delete(SettingRef s)
     {
-        using var root = Base(s);
-        using var k = root.OpenSubKey(s.Key, writable: true);
-        k?.DeleteValue(s.Name, throwOnMissingValue: false);
+        if (writer is null) throw new NotSupportedException(CannotWrite(s));
+        writer.Delete(s.Hive, s.Key, s.Name);
     }
+}
+
+/// <summary>Writes registry values for policy application. Implemented in LogAnalyzer.Response (unclassified edition only).</summary>
+public interface IRegistryValueWriter
+{
+    void Write(string hive, string key, string name, string valueType, string value);
+    void Delete(string hive, string key, string name);
 }
 
 /// <summary>Advanced audit policy per subcategory (AuditQuerySystemPolicy). Read only: applying audit policy is not implemented.</summary>

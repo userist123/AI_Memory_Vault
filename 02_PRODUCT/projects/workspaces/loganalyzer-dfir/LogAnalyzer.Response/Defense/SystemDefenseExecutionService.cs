@@ -2,24 +2,10 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using LogAnalyzer.Core.Interfaces;
 
 namespace LogAnalyzer.Infrastructure.Services
 {
-    public class DefenseActionResult
-    {
-        public const string Verified = "VERIFIED";
-        public const string NotVerified = "NOT_VERIFIED";
-        public const string Failed = "FAILED";
-        public const string Rejected = "REJECTED";
-
-        /// <summary>True only when the change was applied AND its effect was checked afterwards.</summary>
-        public bool Success { get; set; }
-        public string Status { get; set; } = Failed;
-        public string Message { get; set; } = string.Empty;
-        /// <summary>Commands run, their exit codes and output, in order.</summary>
-        public string ExecutionDetails { get; set; } = string.Empty;
-    }
-
     public sealed record CommandOutcome(int ExitCode, string Output);
 
     /// <summary>Runs netsh; replaceable so the APPLY/VERIFY logic is tested without touching the firewall.</summary>
@@ -157,5 +143,13 @@ namespace LogAnalyzer.Infrastructure.Services
             Message = message,
             ExecutionDetails = log.ToString(),
         };
+    }
+
+    /// <summary>The unclassified edition's <see cref="IHostDefense"/>.</summary>
+    public sealed class HostDefense : IHostDefense
+    {
+        public DefenseActionResult IsolateHostFromNetwork() => SystemDefenseExecutionService.IsolateHostFromNetwork();
+        public DefenseActionResult RestoreNetworkAccess() => SystemDefenseExecutionService.RestoreNetworkAccess();
+        public DefenseActionResult BlockMaliciousIoC(string iocTarget) => SystemDefenseExecutionService.BlockMaliciousIoC(iocTarget);
     }
 }

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Everything that opens or accepts a network connection (HTTP clients, syslog receiver, LDAP / domain-controller access,
+       remote event-log sessions, connectivity probing). Referenced ONLY by the unclassified edition (LogAnalyzer.App);
+       the classified edition (LogAnalyzer.App.Classified) must not reference it: a test inspects its build output. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LogAnalyzer.Connectors</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.10" />
+    <PackageReference Include="System.DirectoryServices" Version="10.0.9" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Windows\LogAnalyzer.Dfir.Windows.csproj" />
+  </ItemGroup>
+</Project>

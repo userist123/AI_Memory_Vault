@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using LogAnalyzer.Core.Interfaces;
 using LogAnalyzer.Infrastructure.Services;
 using Xunit;
 
