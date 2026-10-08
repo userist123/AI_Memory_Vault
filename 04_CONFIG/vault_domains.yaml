@@ -1,0 +1,249 @@
+# Vault domain registry — the single source of every direct route `vault://<domain>/<slug>`.
+#
+# Edited by the owner. Read by 03_IMPLEMENTATION/packages/vault_access/router.py, which scans
+# ONLY the roots below, applies the excludes and the hard denylist from access_policy.yaml, and
+# builds the route table at runtime (nothing generated is committed, so concurrent agents never
+# conflict on a manifest). `python 30_SCRIPTS/routing/build_route_manifest.py --check` validates
+# this file in CI: unknown keys, overlapping roots, escaping roots and denylisted routes fail.
+#
+# Fields per domain
+#   roots          globs relative to the base (repo or private overlay); a directory means "all
+#                  files below it with an allowed extension"
+#   expand         "subdirs": every immediate subdirectory of the single root becomes its own
+#                  domain <id>.<subdir> (domain packs, project workspaces, evaluation tracks)
+#   base           repo (default) | private  (private = $AI_MEMORY_VAULT_PRIVATE_ROOT, outside git)
+#   extensions     default [".md"]
+#   exclude        globs, relative to the base
+#   classification PUBLIC | INTERNAL | SENSITIVE | RESTRICTED (access label; see access_policy.yaml)
+#   trust          verified | unverified | untrusted | archived
+#   title          human description, also matched by vault_resolve
+#   keywords       Romanian + English words that route a free-text request to this domain
+#
+# The repository is public on GitHub, so nothing in `base: repo` is secret: INTERNAL here means
+# "agents of the owner may read it", not "confidential". Anything genuinely sensitive belongs in
+# the private overlay (base: private), which no cloud principal can ever read.
+
+version: 1
+
+defaults:
+  extensions: [".md"]
+  classification: INTERNAL
+  trust: verified
+  # Test-pollution notes documented in VAULT_STATE.md (section 5); reachable through
+  # memory_search, never offered as a direct route.
+  exclude:
+    - "**/test_[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f].md"
+    - "**/unknown_*.md"
+    - "**/node_modules/**"
+    - "**/bin/**"
+    - "**/obj/**"
+    - "**/__pycache__/**"
+
+domains:
+  # ── 00 Governance ────────────────────────────────────────────────────────────────────────
+  governance:
+    title: Guvernanță — stare verificată, protocoale, reguli, identitate, standarde
+    roots: ["00_GOVERNANCE"]
+    exclude: ["00_GOVERNANCE/coordination/**", "00_GOVERNANCE/skills/**", "00_GOVERNANCE/phase_0/**"]
+    keywords: [guvernanta, governance, protocol, reguli, rules, vault state, stare, invariant, politica, policy, identitate, standard, review queue]
+  governance.phase0:
+    title: Faza 0 — baseline, registre de decizii, gap-uri de securitate, matricea modulelor
+    roots: ["00_GOVERNANCE/phase_0"]
+    keywords: [phase 0, faza 0, baseline, decision register, registru decizii, security gap, module reality, task ledger]
+  coordination:
+    title: Coordonare multi-agent — task-uri curente, handoff-uri, rapoarte per agent și proiect
+    roots: ["00_GOVERNANCE/coordination"]
+    trust: unverified
+    keywords: [coordonare, coordination, handoff, current, next task, agent, antigravity, codex, perplexity, luna, sonnet, opus, remediation]
+  skills.governance:
+    title: Skill-uri de guvernanță ale Vault-ului (memorie, sincronizare, orchestrare)
+    roots: ["00_GOVERNANCE/skills"]
+    keywords: [skill vault, memory sync, obsidian sync, agent orchestration, skill discovery]
+
+  # ── 01 Architecture / knowledge / memory ─────────────────────────────────────────────────
+  architecture:
+    title: Arhitectura sistemului — hărți, specificații, grafuri, ontologie
+    roots: ["01_ARCHITECTURE/*.md", "01_ARCHITECTURE/graphs", "01_ARCHITECTURE/ontology"]
+    keywords: [arhitectura, architecture, ontologie, ontology, graf, graph, spine, folder map, system architecture]
+  knowledge:
+    title: Cunoaștere durabilă — rapoarte, standarde, cercetare, catalog de skill-uri
+    roots: ["01_ARCHITECTURE/knowledge/*.md"]
+    exclude: ["01_ARCHITECTURE/knowledge/Legislatie_*.md", "01_ARCHITECTURE/knowledge/HG585_*.md", "01_ARCHITECTURE/knowledge/Romania_Classified_*.md"]
+    keywords: [knowledge, cunoastere, raport, cercetare, research, standard, tech stack, design, ui, hardening, trading, retrieval, benchmark]
+  knowledge.legal:
+    title: Legislație — informații clasificate (HG 585/2002, Ordin M172), salarizare, transferuri
+    roots: ["01_ARCHITECTURE/knowledge/legal", "01_ARCHITECTURE/knowledge/Legislatie_*.md", "01_ARCHITECTURE/knowledge/HG585_*.md", "01_ARCHITECTURE/knowledge/Romania_Classified_*.md", "05_DATA/legal_sources"]
+    keywords: [legislatie, lege, legal, hg 585, ordin, m172, informatii clasificate, classified, salarizare, 153/2017, mapn]
+  knowledge.external_skills:
+    title: Surse externe de skill-uri (RAW, nepromovate) și pin-urile lor
+    roots: ["01_ARCHITECTURE/knowledge/EXTERNAL_SKILLS", "01_KNOWLEDGE"]
+    extensions: [".md", ".json"]
+    trust: untrusted
+    classification: RESTRICTED
+    keywords: [external skills, raw skills, source pins]
+  domain_packs:
+    title: Pachete de domeniu (indexuri de skill-uri pe domenii tehnice)
+    roots: ["01_ARCHITECTURE/knowledge/domain_packs"]
+    expand: subdirs
+    extensions: [".md", ".json"]
+    classification: PUBLIC
+    keywords: [domain pack, pachet domeniu, index skill]
+  memory:
+    title: Memoria operațională — politici, manifest, modele de plasticitate
+    roots: ["01_ARCHITECTURE/memory/*.md"]
+    keywords: [memorie, memory, policy lesson, plasticity, subsystem]
+  memory.lessons:
+    title: Lecții și metode înregistrate (cum s-au rezolvat probleme)
+    roots: ["01_ARCHITECTURE/memory/Lessons"]
+    keywords: [lectie, lectii, lesson, method, metoda, solved problem]
+  memory.decisions:
+    title: Decizii arhitecturale înregistrate
+    roots: ["01_ARCHITECTURE/memory/Decisions"]
+    keywords: [decizie, decision, adr]
+  memory.errors:
+    title: Erori înregistrate și cauzele lor
+    roots: ["01_ARCHITECTURE/memory/Errors"]
+    keywords: [eroare, error, bug, incident]
+  memory.experiences:
+    title: Experiențe înregistrate
+    roots: ["01_ARCHITECTURE/memory/Experiences"]
+    keywords: [experienta, experience]
+  memory.preferences:
+    title: Preferințele owner-ului pentru agenți
+    roots: ["01_ARCHITECTURE/memory/Preferences"]
+    keywords: [preferinta, preferences, owner preference, limba, language]
+
+  # ── 02 Product / projects ────────────────────────────────────────────────────────────────
+  product:
+    title: Produs — obiective, cerința originală, specificația spine
+    roots: ["02_PRODUCT/*.md"]
+    keywords: [produs, product, goals, obiective, original request]
+  projects:
+    title: Fișele proiectelor (index, AI Memory, Elite Quant Bot/XAU, LogAnalyzer, GPO, JARVIS, FinScope, Registru)
+    roots: ["02_PRODUCT/projects/*.md"]
+    keywords: [proiect, proiecte, project, projects, index proiecte, elite quant, xau, loganalyzer, gpo baseline, jarvis, finscope, registru transferuri, continuity]
+  projects.workspaces:
+    title: Spații de lucru ale proiectelor (cod + documentație)
+    roots: ["02_PRODUCT/projects/workspaces"]
+    expand: subdirs
+    keywords: [workspace, loganalyzer dfir, jarvis web, jarvis desktop, cognitive brain, registru transferuri, otp flight finder]
+  projects.imported:
+    title: Proiecte importate (bot, site, tradingbot, eventloganalyzer, aplicatie transfer)
+    roots: ["02_PRODUCT/projects/imported"]
+    expand: subdirs
+    trust: unverified
+    keywords: [importat, imported, bot, site, tradingbot, eventloganalyzer, market analysis]
+
+  # ── 03 Implementation ────────────────────────────────────────────────────────────────────
+  implementation:
+    title: Implementare — documentația pachetelor Python (memory, retrieval, security, routing)
+    roots: ["03_IMPLEMENTATION/README.md", "03_IMPLEMENTATION/packages"]
+    keywords: [implementare, implementation, cod, package, pachet, controller, retrieval, mcp, interfaces]
+  products.xau_kinetic:
+    title: XAU_Kinetic / Elite Quant Bot — motorul de trading XAUUSD
+    roots: ["03_IMPLEMENTATION/products/xau_kinetic"]
+    keywords: [xau, xauusd, xau kinetic, elite quant, trading bot, mt5, metatrader, gold]
+
+  # ── 04–10 ────────────────────────────────────────────────────────────────────────────────
+  config:
+    title: Configurații non-secrete (bugete agenți, noduri compute, tier-uri model, rutare, politici)
+    roots: ["04_CONFIG"]
+    extensions: [".md", ".json", ".yaml"]
+    keywords: [config, configuratie, model tiers, compute nodes, agent budgets, policy, rutare, routes]
+  data:
+    title: Date (fără surse legale)
+    roots: ["05_DATA"]
+    exclude: ["05_DATA/legal_sources/**"]
+    keywords: [date, data, dataset]
+  inbox:
+    title: Inbox — material brut netrusted (carantină, doar owner)
+    roots: ["06_INBOX"]
+    classification: RESTRICTED
+    trust: untrusted
+    keywords: [inbox, raw imports, carantina, quarantine]
+  evaluation:
+    title: Evaluare — rapoarte, benchmark-uri, măsurători
+    roots: ["07_EVALUATION"]
+    expand: subdirs
+    keywords: [evaluare, evaluation, benchmark, raport, report, masuratoare, heldout, memory usage, polymarket]
+  observability:
+    title: Observabilitate — trasee, prompturi înregistrate, telemetrie
+    roots: ["08_OBSERVABILITY"]
+    keywords: [observabilitate, observability, trace, telemetrie, telemetry]
+  research:
+    title: Cercetare — piste de investigatie, harnese experimentale, planuri (nu e memorie canonica)
+    roots: ["08_RESEARCH"]
+    trust: unverified
+    keywords: [cercetare, research, book to memory, h1, experiment, interference gate, blocker, ablation]
+  security:
+    title: Securitate — registru de incidente, carantină, granițe de încredere, lanț de aprovizionare
+    roots: ["09_SECURITY", "security/*.md"]
+    exclude: ["09_SECURITY/quarantine/**"]
+    keywords: [securitate, security, incident, r001, secret, trust boundary, supply chain, audit trail, runtime security]
+  procedures:
+    title: Proceduri operaționale stabilite (runbook-uri, workflow-uri)
+    roots: ["10_DOCUMENTATION/procedures"]
+    keywords: [procedura, proceduri, procedure, runbook, cum se, how to, deploy, backup, ingest, sanitizare, sanitization]
+  resources:
+    title: Resurse de documentare (exemple, Obsidian, referințe externe)
+    roots: ["10_DOCUMENTATION/resources", "10_DOCUMENTATION/*.md"]
+    keywords: [resurse, resources, documentatie, obsidian, papercut, xerox]
+  plans:
+    title: Planuri de implementare (docs/plans)
+    roots: ["docs"]
+    keywords: [plan, planuri, plans, data plane]
+
+  # ── 20–99 ────────────────────────────────────────────────────────────────────────────────
+  scripts:
+    title: Documentația scripturilor (30_SCRIPTS)
+    roots: ["30_SCRIPTS"]
+    keywords: [script, scripturi, ingestion, verification, prompt compiler]
+  experiments:
+    title: Experimente
+    roots: ["40_EXPERIMENTS"]
+    trust: unverified
+    keywords: [experiment, experimente]
+  artifacts:
+    title: Artefacte produse
+    roots: ["50_ARTIFACTS"]
+    trust: unverified
+    keywords: [artefact, artifact]
+  deployment:
+    title: Deployment
+    roots: ["60_DEPLOYMENT", "70_INTEGRATIONS", "90_RELEASE"]
+    keywords: [deployment, integrare, integration, release, lansare]
+  meta:
+    title: Meta — jurnale de migrare
+    roots: ["99_META"]
+    trust: unverified
+    keywords: [meta, migration log, jurnal migrare]
+  archive:
+    title: Arhivă — material istoric, nu e sursă de adevăr (doar owner)
+    roots: ["80_ARCHIVE"]
+    classification: RESTRICTED
+    trust: archived
+    keywords: [arhiva, archive, legacy]
+
+  # ── Agents and skills ────────────────────────────────────────────────────────────────────
+  agents:
+    title: Definițiile agenților și regulile lor
+    roots: [".agents/agents", ".agents/rules", "00_GOVERNANCE/agents", "00_GOVERNANCE/commands"]
+    keywords: [agent, agenti, agents, rol, role, reguli agent, commands, comenzi]
+  agents.tasks:
+    title: Registrul de task-uri și lecții al agenților
+    roots: [".agents/tasks"]
+    trust: unverified
+    keywords: [todo, task ledger, lessons, lectii agent]
+  skills:
+    title: Skill-uri operaționale promovate (un SKILL.md per skill)
+    roots: [".agents/skills/*/SKILL.md"]
+    classification: PUBLIC
+    keywords: [skill, skills, abilitate, SKILL.md]
+
+  # ── Private overlay (outside git; only local principals) ─────────────────────────────────
+  private:
+    title: Overlay privat local (în afara git) — conținut SENSITIVE
+    base: private
+    roots: ["."]
+    classification: SENSITIVE
+    keywords: [privat, private, sensitive, overlay]

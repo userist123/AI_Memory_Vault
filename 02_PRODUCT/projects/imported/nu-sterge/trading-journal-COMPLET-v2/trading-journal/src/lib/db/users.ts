@@ -129,7 +129,7 @@ export async function updateLastLogin(userId: string): Promise<void> {
 
 export async function updateUserPlan(
   userId: string,
-  plan: 'free' | 'pro' | 'elite'
+  plan: 'free' | 'pro' | 'elite' | 'autopilot'
 ): Promise<void> {
   const now = new Date();
   const col = await getUsers();

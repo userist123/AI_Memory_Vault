@@ -134,6 +134,38 @@ def test_modules_the_card_calls_unwired_really_are(module, wired):
     )
 
 
+@pytest.fixture(scope="module")
+def production_python_sources():
+    """(relative path, text) of every .py file that could be a production consumer: not a test,
+    not evaluation or imported material, not the root `security/` layer itself. One walk, shared."""
+    skipped_parts = {"20_TESTS", "07_EVALUATION", "06_INBOX", "imported", "benchmarks", "tests", "node_modules", "__pycache__"}
+    sources = []
+    for path in REPO.rglob("*.py"):
+        parts = path.relative_to(REPO).parts
+        if parts[0] in {"security", ".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
+            continue
+        sources.append((path.relative_to(REPO).as_posix(), path.stem, path.read_text(encoding="utf-8", errors="ignore")))
+    return sources
+
+
+@pytest.mark.parametrize("module", [
+    "runtime_enforcer", "runtime_adapter", "memory_adapter", "memory_boundary",
+    "memory_integrity", "security_update_manager",
+])
+def test_runtime_authority_layer_has_no_production_consumer(module, state_text, production_python_sources):
+    """The card says the root `security/` runtime-authority layer is implemented and tested but not
+    wired into production (the rule from CLAUDE.md: grep for importers outside tests). Importers
+    inside `security/` are the layer talking to itself. The day a tool-execution path imports one
+    of these modules, this fails, and the card's row (and docs/security) must say it is wired."""
+    importer = re.compile(rf"^\s*(from|import)[^#\n]*\b{module}\b", re.M)
+    hits = [rel for rel, stem, text in production_python_sources if stem != module and importer.search(text)]
+    assert not hits, (
+        f"{module} gained production consumers {hits}: update the runtime-authority row of "
+        "VAULT_STATE.md section 3 and docs/security/AUDIT_REMEDIATION.md"
+    )
+    assert "NOT wired into production" in state_text
+
+
 def test_the_shim_warning_still_applies(state_text):
     """If memory_controller ever becomes a real package, the warning is wrong."""
     shim = REPO / "03_IMPLEMENTATION" / "packages" / "memory_controller" / "__init__.py"
@@ -149,3 +181,105 @@ def test_every_referenced_path_exists(state_text):
         if "/" in r and not (REPO / r).exists() and not list(REPO.rglob(Path(r).name))
     ]
     assert not missing, f"VAULT_STATE.md references paths that do not exist: {missing}"
+
+
+def _production_importers(package: str, allowed_dirs: tuple[str, ...]) -> list[str]:
+    """Non-test .py files outside `allowed_dirs` that import `package` (the CLAUDE.md rule)."""
+    skip = ("20_TESTS", "07_EVALUATION", "benchmarks", ".git", ".claude", "node_modules", ".venv")
+    pat = re.compile(rf"^\s*(from|import)\s+{package}\b", re.M)
+    hits = []
+    for path in REPO.rglob("*.py"):
+        rel = path.relative_to(REPO).as_posix()
+        if any(part in skip for part in rel.split("/")) or "/tests/" in rel or path.name.startswith("test_"):
+            continue
+        if any(f"/{d}/" in f"/{rel}" for d in allowed_dirs):
+            continue
+        if pat.search(path.read_text(encoding="utf-8", errors="ignore")):
+            hits.append(rel)
+    return hits
+
+
+def test_routing_and_agent_bridge_are_still_unwired_as_the_card_says(state_text):
+    """The card says routing is manual-CLI only and agent_bridge has no consumer.
+    If a production module starts importing either, the card must change in the same commit."""
+    assert _production_importers("agent_bridge", ("agent_bridge",)) == [], "agent_bridge gained a consumer; update VAULT_STATE.md section 3"
+    assert _production_importers("routing", ("routing", "agent_bridge")) == [], "routing gained a consumer; update VAULT_STATE.md section 3"
+    assert "NOT wired into production" in state_text
+    assert "no transport" in state_text
+    assert "python -m routing.route_cli" in state_text
+
+
+# ── Direct routes (`vault://`): the route count the card states ──────────────────────────
+@pytest.fixture(scope="module")
+def route_table():
+    """The route table exactly as the MCP server builds it (real registry, real policy), without
+    the per-user metadata cache and without a private overlay: what a clean checkout has."""
+    import os
+
+    from vault_access.policy import AccessPolicy
+    from vault_access.router import PRIVATE_ROOT_ENV, DomainRouter
+
+    saved = os.environ.pop(PRIVATE_ROOT_ENV, None)
+    try:
+        policy = AccessPolicy.load(REPO / "04_CONFIG" / "access_policy.yaml")
+        router = DomainRouter(REPO, REPO / "04_CONFIG" / "vault_domains.yaml", policy, cache_path=False)
+        router.build()
+    finally:
+        if saved is not None:
+            os.environ[PRIVATE_ROOT_ENV] = saved
+    return router
+
+
+def _claimed_routes(text: str):
+    """(routes, domains) from the sentence "<N> routes in <M> domains" of the direct-routes row."""
+    for line in text.splitlines():
+        if line.startswith("|") and "Direct routes" in line:
+            m = re.search(r"(\d[\d,]*) routes in (\d+) domains", line)
+            if m:
+                return int(m.group(1).replace(",", "")), int(m.group(2)), line
+    raise AssertionError('no "<N> routes in <M> domains" claim in the direct-routes row of VAULT_STATE.md')
+
+
+def test_route_and_domain_counts_are_current(state_text, route_table):
+    routes, domains, _ = _claimed_routes(state_text)
+    assert not route_table.problems, f"the route registry reports problems: {route_table.problems[:5]}"
+    assert _within(len(route_table.routes), routes, 0.05), (
+        f"VAULT_STATE.md claims {routes} direct routes, the route table has {len(route_table.routes)}. "
+        "Update the state card (and 07_EVALUATION/vault_routing/README.md) in the same commit."
+    )
+    assert _within(len(route_table.registry.domains), domains, 0.05), (
+        f"VAULT_STATE.md claims {domains} domains, the registry has {len(route_table.registry.domains)}."
+    )
+
+
+def test_the_resolution_claim_is_about_every_route_the_card_counts(state_text):
+    """"by URI N/N" must be the same N as the route count: a measurement of a different population
+    would not support the sentence it sits in."""
+    routes, _, line = _claimed_routes(state_text)
+    m = re.search(r"by URI (\d+)/(\d+)", line)
+    assert m, "the direct-routes row no longer says how many routes resolve by URI"
+    assert int(m.group(1)) == int(m.group(2)) == routes
+
+
+def test_research_only_modules_stay_unwired():
+    """The card calls the Book-to-Memory research modules and the interference gate "NOT wired".
+
+    Only the research modules themselves may import each other; nothing else in the production
+    package tree may import them, and `interference_gate` has no consumer at all. If one gains a
+    consumer, wire it deliberately and update section 3 of the card.
+    """
+    pattern = re.compile(r"^\s*(from|import)[^#\n]*\b(book_to_memory\w*|interference_gate)\b", re.M)
+    offenders = []
+    for path in (REPO / "03_IMPLEMENTATION").rglob("*.py"):
+        if "test" in str(path) or "benchmark" in str(path):
+            continue
+        if path.name.startswith("book_to_memory_") or path.name == "interference_gate.py":
+            continue
+        if pattern.search(path.read_text(encoding="utf-8", errors="ignore")):
+            offenders.append(str(path.relative_to(REPO)))
+    assert not offenders, (
+        f"research-only modules gained production consumers {offenders}; update VAULT_STATE.md section 3"
+    )
+    # Inside the research modules, nothing may import the interference gate either.
+    for path in (REPO / "03_IMPLEMENTATION" / "packages" / "lifecycle" / "validation").glob("book_to_memory_*.py"):
+        assert "interference_gate" not in path.read_text(encoding="utf-8", errors="ignore")

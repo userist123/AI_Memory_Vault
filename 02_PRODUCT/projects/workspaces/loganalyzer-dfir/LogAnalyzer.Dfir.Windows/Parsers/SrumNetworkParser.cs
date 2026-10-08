@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 using LogAnalyzer.Dfir.Windows.Native;
@@ -12,9 +13,21 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 public sealed class SrumNetworkParser : EvidenceParserBase
 {
     public const string NetworkTable = "{973F5D5C-1D90-4944-BE8E-24B94231A174}";
-    public override string Name => "SrumNetworkParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) => item.SourceType == "srum" || item.StoredPath.EndsWith("SRUDB.dat", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "SrumNetworkParser", Version = "1.0", Artifact = "SRUM — utilizarea rețelei per aplicație (SRUDB.dat)",
+        SourceTypes = ["srum"], FileNames = ["SRUDB.dat"], Fingerprints = ["ese"],
+        SupportedOs = "Windows (deschide baza ESE prin esent.dll, pe o copie de lucru)",
+        FormatVersions = ["ESE, tabela Network Data Usage {973F5D5C-1D90-4944-BE8E-24B94231A174}"],
+        Limitations =
+        [
+            "Doar tabela Network Data Usage; celelalte tabele SRUM nu sunt citite.",
+            "Ora unui rând este sfârșitul intervalului de agregare (aproximativ 1 h), nu momentul transferului.",
+            "O bază „murdară” fără jurnalele ESE poate pierde ultimele înregistrări.",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "CorpusRegressionTests (srum), InvestigationTests pe corpusul NanAgent",
+    };
 
     public sealed record SrumNetRow(DateTime TimestampUtc, int AppId, string App, int UserId, string User, long InterfaceLuid, long BytesSent, long BytesRecvd);
 
@@ -76,9 +89,9 @@ public sealed class SrumNetworkParser : EvidenceParserBase
                 EvidenceId = item.EvidenceId,
                 Provider = "SRUM Network Data Usage",
                 User = row.User,
-                Process = System.IO.Path.GetFileName(app),
+                Process = WinPath.GetFileName(app),
                 Path = app,
-                Summary = $"SRUM: {System.IO.Path.GetFileName(app)} sent {row.BytesSent:N0} B / received {row.BytesRecvd:N0} B in the interval ending at this time",
+                Summary = $"SRUM: {WinPath.GetFileName(app)} sent {row.BytesSent:N0} B / received {row.BytesRecvd:N0} B in the interval ending at this time",
                 TimeSemantics = "SRUM interval end (~1h aggregate)",
                 TemporalType = TemporalType.Historical,
                 Classification = Classification.Direct,

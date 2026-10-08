@@ -214,9 +214,12 @@ namespace LogAnalyzer.UI.Tests
             var results = engine.Evaluate(new List<ParsedEvent>(), adSummary, samSummary, 0, 1);
 
             Assert.NotEmpty(results);
-            Assert.Contains(results, r => r.Framework.Contains("585") && r.Status.Contains("CONFORM"));
-            Assert.Contains(results, r => r.Framework.Contains("NIS2") && r.Status.Contains("CONFORM"));
-            Assert.Contains(results, r => r.Framework.Contains("27042") && r.Status == "CONFORM");
+            // Only what the summaries show can set a verdict; nothing here proves conformity, so no CONFORM at all.
+            Assert.DoesNotContain(results, r => r.Status == ComplianceStatus.Conform);
+            Assert.Contains(results, r => r.Framework.Contains("585") && r.Status == ComplianceStatus.NotAssessed);
+            Assert.Contains(results, r => r.Framework.Contains("NIS2") && r.Status == ComplianceStatus.NotAssessed);
+            Assert.Contains(results, r => r.Framework.Contains("27042") && r.Status == ComplianceStatus.NotAssessed);
+            Assert.Contains(results, r => r.Framework.Contains("GDPR") && r.Status == ComplianceStatus.Attention);
         }
 
         [Fact]

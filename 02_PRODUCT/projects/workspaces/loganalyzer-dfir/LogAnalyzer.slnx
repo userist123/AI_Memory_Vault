@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="LogAnalyzer.App/LogAnalyzer.App.csproj" />
+  <Project Path="LogAnalyzer.App.Tests/LogAnalyzer.App.Tests.csproj" />
   <Project Path="LogAnalyzer.Core/LogAnalyzer.Core.csproj" />
   <Project Path="LogAnalyzer.Dfir.Core/LogAnalyzer.Dfir.Core.csproj" />
   <Project Path="LogAnalyzer.Dfir.Tests/LogAnalyzer.Dfir.Tests.csproj" />

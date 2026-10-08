@@ -10,11 +10,23 @@ on:
     paths:
       - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
       - '.github/workflows/loganalyzer-dfir-build.yml'
+    # A release tag runs the release gate in ENFORCE mode (path filters do not apply to tags).
+    tags:
+      - 'loganalyzer-v*'
   pull_request:
     paths:
       - '02_PRODUCT/projects/workspaces/loganalyzer-dfir/**'
       - '.github/workflows/loganalyzer-dfir-build.yml'
   workflow_dispatch:
+    inputs:
+      enforce_gate:
+        description: 'Run the release gate in ENFORCE mode (fails unless every R22 item is PASS or WAIVED). Currently impossible: see docs/dfir/RELEASE_GATE.md'
+        type: boolean
+        default: false
+      gate_version:
+        description: 'Version the release gate evaluates (selects release-gate/waivers/<version>.json). Empty: DfirInfo.ApplicationVersion'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -52,6 +64,73 @@ jobs:
       # The real incident corpus is never in the repository; corpus tests skip without LADFIR_CORPUS.
       - name: Test (Release)
         run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
+
+      # Failed tests become annotations: they are readable from the checks API without
+      # downloading logs or artifacts.
+      - name: Annotate failed tests
+        if: always()
+        shell: pwsh
+        run: |
+          $trx = Get-ChildItem -Recurse -Filter *.trx -ErrorAction SilentlyContinue
+          $n = 0
+          foreach ($file in $trx) {
+            [xml]$doc = Get-Content -Raw $file.FullName
+            $ns = @{ t = 'http://microsoft.com/schemas/VisualStudio/TeamTest/2010' }
+            foreach ($r in (Select-Xml -Xml $doc -Namespace $ns -XPath '//t:UnitTestResult[@outcome="Failed"]')) {
+              $msg = (Select-Xml -Xml $r.Node -Namespace $ns -XPath './/t:Message').Node.InnerText
+              $msg = ($msg -replace "`r?`n", ' ')
+              if ($msg.Length -gt 400) { $msg = $msg.Substring(0, 400) }
+              Write-Host "::error title=Test failed::$($r.Node.testName) :: $msg"
+              $n++
+              if ($n -ge 40) { break }
+            }
+          }
+          Write-Host "Failed tests annotated: $n"
+
+      # Without the corpus the run is green but NOT a forensic validation; say so in the job summary.
+      - name: Report forensic validation state
+        if: always()
+        shell: pwsh
+        run: |
+          $f = Get-ChildItem -Recurse -Filter forensic_validation.txt -Path LogAnalyzer.Dfir.Tests/bin -ErrorAction SilentlyContinue | Select-Object -First 1
+          $text = if ($f) { Get-Content -Raw $f.FullName } else { "FORENSIC VALIDATION = UNAVAILABLE (raportul nu a fost generat)" }
+          Write-Host $text
+          "## Forensic validation`n``````text`n$text`n``````" | Out-File -Append -Encoding utf8 $env:GITHUB_STEP_SUMMARY
+          if ($text -notmatch 'FORENSIC VALIDATION = AVAILABLE') { Write-Host "::warning::$(($text -split "`n")[0])" }
+
+      # ---- Release gate (contract section 22; owner decisions 7 and 8) -------------------------------------------------------
+      # Pull requests and pushes to main: REPORT mode (prints the matrix, uploads it, never fails the build). A release tag or a
+      # manual dispatch with enforce_gate: ENFORCE mode, which fails unless every item is PASS or WAIVED.
+      - name: Release gate self-test
+        if: always()
+        shell: pwsh
+        run: ./release-gate/tests/Test-ReleaseGate.ps1
+
+      - name: Release gate (report)
+        if: always() && github.ref_type != 'tag' && !(github.event_name == 'workflow_dispatch' && inputs.enforce_gate)
+        shell: pwsh
+        run: ./release-gate/Invoke-ReleaseGate.ps1 -Mode Report -Commit '${{ github.sha }}'
+
+      - name: Release gate (enforce)
+        if: always() && (github.ref_type == 'tag' || (github.event_name == 'workflow_dispatch' && inputs.enforce_gate))
+        shell: pwsh
+        env:
+          GATE_TAG_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          GATE_INPUT_VERSION: ${{ inputs.gate_version }}
+        run: |
+          $v = if ($env:GATE_TAG_VERSION) { $env:GATE_TAG_VERSION -replace '^loganalyzer-v', '' } elseif ($env:GATE_INPUT_VERSION) { $env:GATE_INPUT_VERSION } else { $null }
+          $gateArgs = @('-Mode', 'Enforce', '-Commit', '${{ github.sha }}')
+          if ($v) { $gateArgs += @('-Version', $v) }
+          ./release-gate/Invoke-ReleaseGate.ps1 @gateArgs
+
+      - name: Upload release gate report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: loganalyzer-release-gate
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/release-gate/out/gate-report.*
+          if-no-files-found: warn
+          retention-days: 30
 
       - name: Upload test results
         if: always()

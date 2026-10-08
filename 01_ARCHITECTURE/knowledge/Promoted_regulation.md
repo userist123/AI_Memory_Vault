@@ -16,11 +16,8 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-  - type: depends_on
-    target_id: "99280cf1-6eb2-449c-a778-e800c2868e07"
+relations: []
 ---
-
 # regulation
 
 ## Canonical Definition

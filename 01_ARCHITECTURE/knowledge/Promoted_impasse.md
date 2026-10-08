@@ -17,11 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-11-history
-- type: caused
-  target_id: a8a64a3e-1d72-4971-9f2b-64b14a3ea916
+  - type: caused
+    target_id: "a8a64a3e-1d72-4971-9f2b-64b14a3ea916"
 ---
+
 # impasse
 
 ## Canonical Definition

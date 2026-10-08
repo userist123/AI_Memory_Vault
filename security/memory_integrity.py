@@ -65,7 +65,8 @@ class MemoryLedger:
         trust_state: str,
         human_approved: bool = False,
     ) -> bool:
-        if trust_state == "BLOCKED" or trust_state == "UNTRUSTED":
+        # Strict allowlist of permitted commit states
+        if trust_state not in ("TRUSTED", "REVIEW"):
             return False
         if trust_state == "REVIEW" and not human_approved:
             return False

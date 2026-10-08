@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-05-state
-- type: part_of
-  target_id: c67c2beb-e722-4155-ad31-66a48823aa20
-- type: related_to
-  target_id: d5ee32c8-67be-4c08-b6a4-5f60f0456fb1
+  - type: related_to
+    target_id: "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1"
 ---
+
 # state
 
 ## Canonical Definition

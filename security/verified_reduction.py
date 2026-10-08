@@ -45,6 +45,39 @@ PROVENANCE_REQUIRED_STATUSES = frozenset({
     "DERIVED_FROM_VERIFIED_SOURCE",
 })
 
+#: Principals that may inspect content the model-facing route withholds (the owner
+#: views). Every egress layer (context pack builder, data router) reads this one set
+#: so that ADMIN is treated the same everywhere.
+OWNER_PRINCIPALS = frozenset({"human", "admin"})
+
+
+def is_owner_principal(principal: Any) -> bool:
+    """True for the owner principals; accepts a Principal enum member or its string value."""
+    value = getattr(principal, "value", principal)
+    return str(value).strip().lower() in OWNER_PRINCIPALS
+
+
+def content_withheld_from(principal: Any, item: Mapping[str, Any], *, unverified: bool) -> bool:
+    """Whether `item`'s body must not reach a non-owner model-facing caller.
+
+    The contract (CLAUDE.md, ``memory_get``): ACTIVE notes and REVIEW notes are readable
+    by an agent, REVIEW marked unverified. The model-facing context route therefore
+    withholds exactly two things:
+
+    * a note explicitly flagged ``quarantined`` (whatever its verification), and
+    * the body of an unverified REVIEW candidate. It is not hidden from the agent: it is
+      handed over only by the controlled ``memory_access`` tools, explicitly marked
+      unverified and as untrusted data, never inside a trusted context pack.
+
+    An ACTIVE note that is merely not ``verified`` keeps its content: lacking a
+    verification stamp is a label, not a reason to hide a note the vault serves.
+    """
+    if is_owner_principal(principal):
+        return False
+    if item.get("quarantined") is True:
+        return True
+    return bool(unverified) and str(item.get("lifecycle", "")).upper() == "REVIEW"
+
 
 @dataclass(frozen=True)
 class ReductionResult:

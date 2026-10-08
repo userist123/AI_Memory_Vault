@@ -61,7 +61,7 @@ namespace LogAnalyzer.Core.Services
                             AddKpiCard(row, "TOTAL ALERTE", issueList.Count, issueList.Count > 0 ? "#ef4444" : "#10b981", "Corelate în dosar");
                             AddKpiCard(row, "ALERTE CRITICE", issueList.Count(i => i.Severity.Equals("Critical", StringComparison.OrdinalIgnoreCase)), "#ef4444", "Urgență Maximă");
                             AddKpiCard(row, "EVENIMENTE CRONOLOGICE", tlList.Count, "#0284c7", "Înregistrate în Timeline");
-                            AddKpiCard(row, "STATUS CONFORMITATE", 100, "#10b981", "HG 585 & ISO 27037");
+                            AddKpiTextCard(row, "STATUS CONFORMITATE", "NEEVALUAT", "#64748b", "Acest raport nu evaluează conformitatea");
                         });
 
                         // 2. Chain of Custody (SHA-256)
@@ -181,6 +181,21 @@ namespace LogAnalyzer.Core.Services
             });
 
             doc.GeneratePdf(exportPath);
+        }
+
+        private static void AddKpiTextCard(RowDescriptor row, string title, string value, string colorHex, string subtitle)
+        {
+            row.RelativeItem().Container()
+                .Background("#f8fafc")
+                .Border(1).BorderColor("#e2e8f0")
+                .Padding(6)
+                .CornerRadius(4)
+                .Column(c =>
+                {
+                    c.Item().Text(title).Bold().FontSize(7f).FontColor("#64748b");
+                    c.Item().Text(value).Bold().FontSize(13f).FontColor(colorHex);
+                    c.Item().Text(subtitle).FontSize(6.5f).FontColor("#94a3b8");
+                });
         }
 
         private static void AddKpiCard(RowDescriptor row, string title, int value, string colorHex, string subtitle)

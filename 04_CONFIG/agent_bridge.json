@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "bridge": {
+    "id": "local-windows-bridge",
+    "transport": "windows_named_pipe",
+    "pipe_name": "LOCAL\\AI_Memory_Vault_Bridge",
+    "require_authenticated_packet": true,
+    "require_capability_token": true,
+    "require_replay_protection": true,
+    "max_packet_bytes": 1048576,
+    "max_result_bytes": 4194304
+  },
+  "allowed_runtimes": [
+    "antigravity"
+  ],
+  "allowed_agents": [
+    "visual_architect",
+    "architecture_reviewer",
+    "engineering_reviewer"
+  ],
+  "antigravity": {
+    "binary": "agy",
+    "protocol": "stream-json",
+    "persistent_session": true,
+    "dangerously_skip_permissions": false
+  },
+  "security": {
+    "key_store": "windows_dpapi_current_user",
+    "packet_cipher": "X25519+HKDF-SHA256+AES-256-GCM",
+    "signature": "Ed25519",
+    "minimum_ttl_seconds": 30,
+    "maximum_ttl_seconds": 120
+  }
+}

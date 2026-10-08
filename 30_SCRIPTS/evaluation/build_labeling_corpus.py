@@ -35,7 +35,7 @@ def excerpt(body: str) -> str:
 
 notes = []
 ids = set()
-for n in idx.notes:
+for n in sorted(idx.notes, key=lambda note: (str(note.id or ""), Path(str(note.path)).as_posix())):
     if not n.id or clean(n.lifecycle) == "ARCHIVED":
         continue
     ids.add(n.id)
@@ -48,10 +48,13 @@ for n in idx.notes:
         "excerpt": excerpt(n.body),
     })
 
-links = [
-    {"source": s.source_id, "target": s.target_id, "relation": clean(s.relation), "origin": clean(s.origin)}
-    for s in store.all() if s.source_id in ids and s.target_id in ids and s.source_id != s.target_id
-]
+links = sorted(
+    [
+        {"source": s.source_id, "target": s.target_id, "relation": clean(s.relation), "origin": clean(s.origin)}
+        for s in store.all() if s.source_id in ids and s.target_id in ids and s.source_id != s.target_id
+    ],
+    key=lambda edge: (str(edge["source"]), str(edge["target"]), str(edge["relation"]), str(edge["origin"])),
+)
 
 OUT.write_text(json.dumps({
     "vault_commit": COMMIT,

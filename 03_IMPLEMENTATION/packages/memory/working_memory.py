@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Tuple
 from .attention import AttentionModel
 from memory_controller.controller import Lifecycle
+from memory_controller.authorizer import Principal
 
 class WorkingMemory:
     """
@@ -172,8 +173,11 @@ class WorkingMemory:
                 if not node:
                     continue
                     
-                if node.get("lifecycle") == Lifecycle.REVIEW.value:
+                if node.get("lifecycle") == Lifecycle.REVIEW.value or node.get("_cognitive_unverified"):
                     node["_cognitive_unverified"] = True
+                    if principal == Principal.AI_AGENT:
+                        node = dict(node)
+                        node["content"] = ""
                 
                 self.buffer[node_id] = {
                     "node": node,

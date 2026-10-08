@@ -18,6 +18,8 @@ namespace LogAnalyzer.Core.Models
         [ObservableProperty] private bool _isVerified;
         [ObservableProperty] private AlertStatus _status = AlertStatus.Nouă;
         [ObservableProperty] private string _sessionFileHashes = string.Empty;
+        /// <summary>True for the synthetic alert raised by the "test alert" message; it is not a detection and must never be counted or reported as one.</summary>
+        [ObservableProperty] private bool _isTestAlert;
         
         public List<ParsedEvent> RelatedEvents { get; set; } = new();
     }

@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-03-ontology
-- type: part_of
-  target_id: 11e9fe55-6924-4231-9635-c5629bff6ae3
-- type: related_to
-  target_id: 84ef8b0f-d457-4741-be32-582ba76e3ab3
+  - type: related_to
+    target_id: "84ef8b0f-d457-4741-be32-582ba76e3ab3"
 ---
+
 # parametric memory
 
 ## Canonical Definition

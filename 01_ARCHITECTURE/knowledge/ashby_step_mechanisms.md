@@ -14,8 +14,6 @@ provenance:
 confidence: low
 verification: unverified
 relations:
-  - type: depends_on
-    target_id: "knw-ashby-homeostasis-and-stability"
   - type: applies_to
     target_id: "knw-ashby-habituation-and-plasticity"
   - type: related_to

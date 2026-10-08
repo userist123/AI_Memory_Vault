@@ -12,9 +12,21 @@ namespace LogAnalyzer.Dfir.Network;
 /// </summary>
 public sealed class PcapngParser : EvidenceParserBase
 {
-    public override string Name => "PcapngParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) => item.SourceType == "pcapng" || item.StoredPath.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "PcapngParser", Version = "1.0", Artifact = "Captură de rețea PCAPNG",
+        SourceTypes = ["pcapng"], FileNames = [".pcapng"], Fingerprints = ["pcapng"],
+        SupportedOs = "Oricare (cod gestionat, fără dependențe de sistem)",
+        FormatVersions = ["PCAPNG 1.0 (Ethernet, 802.11, pktmon)"],
+        Limitations =
+        [
+            "Formatul pcap clasic (libpcap) nu este citit.",
+            "Fără atribuire la proces: pachetele nu au PID.",
+            "Conținutul TLS nu este decriptat; se extrag doar SNI, DNS, HTTP în clar și sumarul fluxurilor.",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "CorpusRegressionTests (pcapng)",
+    };
 
     private sealed class Flow
     {

@@ -83,8 +83,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
         [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "🛡️ AIR-GAPPED STANDALONE" : "🌐 NETWORK SOC";
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
-            ? "IZOLARE FIZICĂ STRICTĂ — PROTOCOL AIR-GAPPED CONFORM HG 585 / NATO"
-            : "SCUT DE SECURITATE DISPOZITIV & REȚEA ACTIV";
+            ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
+            : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";
         [ObservableProperty] private string _modeReasonText = AppModeContext.Current.Reason;
         [ObservableProperty] private string _connectivityWarningText = string.Empty;
         public bool HasConnectivityWarning => !string.IsNullOrEmpty(ConnectivityWarningText);
@@ -101,6 +101,9 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Full investigation pipeline ("Investigație completă" tab).</summary>
         public InvestigationViewModel Investigation { get; } = new();
+
+        /// <summary>Owner policies: import, lifecycle, verified application ("Politici" tab).</summary>
+        public PolicyViewModel Policy { get; } = new();
 
         // Session / Module Management
         [ObservableProperty] private int _selectedModuleIndex = 0; // 0 for Forensics, 1 for Collection
@@ -141,7 +144,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ProvenanceLedgerEntry> ProvenanceEntries { get; set; } = new();
         public ObservableCollection<MitreTacticColumn> MitreTacticColumns { get; set; } = new();
         public ObservableCollection<MultiEventCorrelationFinding> MultiEventCorrelations { get; set; } = new();
-        [ObservableProperty] private string _provenanceStatusMessage = "✅ Lanț Criptografic Verificat (SHA-256)";
+        [ObservableProperty] private string _provenanceStatusMessage = "Lanțul de custodie nu a fost verificat în această sesiune";
 
         // ADAudit Plus & Active Directory Analytics Properties
         [ObservableProperty] private int _adEventsAnalyzedCount = 0;
@@ -239,6 +242,11 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _selectedTabIndex = 0;
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
+        // Severity counts of the loaded alerts; test alerts (DetectedIssue.IsTestAlert) are excluded.
+        [ObservableProperty] private int _criticalAlertsCount;
+        [ObservableProperty] private int _highAlertsCount;
+        [ObservableProperty] private int _mediumAlertsCount;
+        [ObservableProperty] private int _lowAlertsCount;
         [ObservableProperty] private int _totalRegistryCount;
         [ObservableProperty] private int _totalHostsCount;
 
@@ -374,9 +382,9 @@ namespace LogAnalyzer.UI.ViewModels
             ActiveCountermeasurePlaybook = _countermeasureEngine.GeneratePlaybook(alert, hostname);
             var ev = alert.RelatedEvents?.FirstOrDefault();
             RawEventMessage = ev?.Message ?? alert.Explanation ?? string.Empty;
-            RawEventId = ev != null ? $"EID: {ev.EventId} | Nivel: {ev.Level}" : "EID: 9999 (Security Detection)";
-            RawEventProvider = ev?.ProviderName ?? "LogAnalyzer Real-Time Sensor";
-            RawEventTimestamp = ev?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff") ?? DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            RawEventId = ev != null ? $"EID: {ev.EventId} | Nivel: {ev.Level}" : "EID: nedisponibil (alerta nu are eveniment sursă)";
+            RawEventProvider = ev?.ProviderName ?? "nedisponibil";
+            RawEventTimestamp = ev is null ? "nedisponibil" : ev.TimeCreated == default ? "necunoscut (lipsește din eveniment)" : ev.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss.fff");
             RawEventHost = ev?.MachineName ?? hostname;
             IsCountermeasureModalVisible = true;
         }
@@ -391,7 +399,7 @@ namespace LogAnalyzer.UI.ViewModels
                     Clipboard.SetText(RawEventMessage);
                     StatusMessage = "📋 Detalii eveniment copiate în Clipboard.";
                 }
-                catch {}
+                catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or System.Runtime.InteropServices.ExternalException) { StatusMessage = $"Clipboard indisponibil: {ex.Message}"; }
             }
         }
 
@@ -549,7 +557,7 @@ namespace LogAnalyzer.UI.ViewModels
                 string categoriesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Categories");
                 _kbService.LoadCategories(categoriesPath);
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { StatusMessage = $"Baza de cunoștințe (Categories) nu a putut fi încărcată: {ex.Message}"; }
 
             IssuesView = CollectionViewSource.GetDefaultView(DetectedIssues);
             IssuesView.Filter = FilterIssues;
@@ -591,7 +599,7 @@ namespace LogAnalyzer.UI.ViewModels
                             StartLiveMonitoring();
                     });
                 }
-                catch { }
+                catch (Exception ex) { StatusMessage = $"Reîncărcarea datelor din baza locală a eșuat: {ex.Message}"; }
             });
         }
 
@@ -608,7 +616,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Events.Clear();
                 Events.AddRange(list);
             }
-            catch { }
+            catch (Exception ex) { StatusMessage = $"Evenimentele nu au putut fi citite din baza locală: {ex.Message}"; }
         }
 
         private void ReloadRegistryFromDb()
@@ -632,7 +640,7 @@ namespace LogAnalyzer.UI.ViewModels
                 RegistryArtifacts.Clear();
                 RegistryArtifacts.AddRange(list);
             }
-            catch { }
+            catch (Exception ex) { StatusMessage = $"Artefactele de registru nu au putut fi citite din baza locală: {ex.Message}"; }
         }
 
         private void ReloadTimelineFromDb()
@@ -662,11 +670,16 @@ namespace LogAnalyzer.UI.ViewModels
                 TotalEventsCount = _databaseService.GetEventsCount(null, null, null);
                 TotalRegistryCount = _databaseService.GetRegistryArtifactsCount(null);
                 TotalHostsCount = _databaseService.GetUniqueHostsCount();
-                TotalAlertsCount = DetectedIssues.Count;
+                var distribution = SeverityDistribution.Count(DetectedIssues);
+                TotalAlertsCount = distribution.Total;
+                CriticalAlertsCount = distribution.Critical;
+                HighAlertsCount = distribution.High;
+                MediumAlertsCount = distribution.Medium;
+                LowAlertsCount = distribution.LowOrInfo;
 
                 PopulateMitreMatrix();
             }
-            catch { }
+            catch (Exception ex) { StatusMessage = $"Statisticile nu au putut fi calculate: {ex.Message}"; }
         }
 
         [RelayCommand]
@@ -999,7 +1012,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void TriggerContainmentPlaybook(string target)
         {
             var res = _actionTriggerService.ExecuteContainmentScript("Izolare Cont / Stație", target ?? "SelectedEntity", IsAirGappedMode);
-            MessageBox.Show(res.OutputLog, "Rezultat Răspuns Incident (Containment Playbook)", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(res.OutputLog, "Acțiune neexecutată (Containment Playbook)", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
 
         [RelayCommand]
@@ -1229,7 +1242,7 @@ namespace LogAnalyzer.UI.ViewModels
                         }
                     }
                 }
-                catch { }
+                catch (RegexMatchTimeoutException ex) { SelectedEventProperties.Add(new("Eroare extragere câmpuri", ex.Message)); }
             }
 
             SelectedEventThreatScenario = assessment.ThreatScenarioRo;
@@ -1733,7 +1746,7 @@ namespace LogAnalyzer.UI.ViewModels
 
                         }
 
-                        try { System.Media.SystemSounds.Exclamation.Play(); } catch {}
+                        try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
 
                         _toastAutoDismissTimer?.Stop();
                         _toastAutoDismissTimer = new System.Timers.Timer(7000);
@@ -1793,9 +1806,9 @@ namespace LogAnalyzer.UI.ViewModels
             var res = SystemDefenseExecutionService.IsolateHostFromNetwork();
             StatusMessage = $"🛡️ {res.Message}";
             IsCountermeasureModalVisible = false;
-            _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message + "\n\n(Puteți ridica izolarea oricând din bara laterală prin butonul de restaurare rețea).", 
-                res.Success ? "Combatere Atac Cibernetic - Succes" : "Avertisment Izolare", 
+            _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
+            MessageBox.Show(res.Message + (res.Success ? "\n\n(Puteți ridica izolarea oricând din bara laterală prin butonul de restaurare rețea)." : $"\n\n{res.ExecutionDetails}"),
+                res.Success ? "Izolare stație — verificată" : $"Izolare stație — {res.Status}",
                 MessageBoxButton.OK, 
                 res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
@@ -1805,8 +1818,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var res = SystemDefenseExecutionService.RestoreNetworkAccess();
             StatusMessage = $"🌐 {res.Message}";
-            _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Message}");
-            MessageBox.Show(res.Message, "Restaurare Rețea", MessageBoxButton.OK, MessageBoxImage.Information);
+            _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
+            MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
+                res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
 
 
@@ -1838,13 +1852,15 @@ namespace LogAnalyzer.UI.ViewModels
                 MessageBox.Show("Alerta nu conține nicio adresă IP publică de blocat.", "Blocare IoC", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
-            if (MessageBox.Show($"Blocați în Windows Firewall traficul de ieșire către:\n\n{string.Join("\n", ips)}\n\nAdresele provin din textul alertei. Regula se poate șterge din „Restaurare rețea”.",
+            if (MessageBox.Show($"Blocați în Windows Firewall traficul de ieșire către:\n\n{string.Join("\n", ips)}\n\nAdresele provin din textul alertei. Pentru fiecare se creează regula „DFIR_BLOCK_IOC <adresă>”, care se șterge din Windows Defender Firewall.",
                     "Blocare IoC", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             foreach (var ip in ips)
             {
                 var res = SystemDefenseExecutionService.BlockMaliciousIoC(ip);
-                _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, Rezultat: {res.Message}");
+                _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, {res.Status}: {res.Message}");
                 StatusMessage = res.Message;
+                if (!res.Success)
+                    MessageBox.Show($"{res.Message}\n\n{res.ExecutionDetails}", $"Blocare IoC — {res.Status}", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -2757,7 +2773,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var reg = _databaseService.GetRegistryArtifacts(10000, 0, null);
                 _timelineExportService.ExportPlasoCsv(tempCsv, events, new List<ForensicArtifact>(), reg);
                 string csvContent = File.ReadAllText(tempCsv);
-                try { File.Delete(tempCsv); } catch { }
+                try { File.Delete(tempCsv); } catch (IOException) { /* temp copy only; the exported content is already read */ }
 
                 string zipSha = _casePackagingService.PackageAndSealCase(
                     dialog.FileName,
@@ -2787,6 +2803,15 @@ namespace LogAnalyzer.UI.ViewModels
             if (openDialog.ShowDialog() == true)
             {
                 string targetFile = openDialog.FileName;
+                var confirm = MessageBox.Show(
+                    $"Fișierul de mai jos va fi SUPRASCRIS ireversibil cu 0x00:\n\n{targetFile}\n({new FileInfo(targetFile).Length:N0} bytes)\n\n" +
+                    "Operația nu se poate anula. Nu folosiți această funcție pe probe nepreluate sau pe fișiere din cazul deschis.\n\nContinuați?",
+                    "Confirmare operație distructivă", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+                if (confirm != MessageBoxResult.Yes)
+                {
+                    StatusMessage = "Sanitizare anulată de operator.";
+                    return;
+                }
                 var saveDialog = new SaveFileDialog
                 {
                     Title = "Salvați Certificatul Oficial de Sanitizare PDF",
@@ -2808,29 +2833,17 @@ namespace LogAnalyzer.UI.ViewModels
 
                         if (result.Success)
                         {
-                            var certData = new SanitizationCertificateData
-                            {
-                                CertificateId = $"SAN-CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}".Substring(0, 24).ToUpperInvariant(),
-                                DeviceVendor = "Dispozitiv / Fișier Țintă",
-                                DeviceModel = Path.GetFileName(targetFile),
-                                HardwareSerialNumber = "HD-" + Guid.NewGuid().ToString("N").Substring(0, 12).ToUpperInvariant(),
-                                DeviceCapacityBytes = result.TotalBytesSanitized,
-                                SanitizationMethodName = "NIST SP 800-88r2 Clear (1-Pass Zeroize)",
-                                TotalPasses = result.TotalPassesExecuted,
-                                PreSanitizationSha256 = result.PreSanitizationSha256,
-                                PostSanitizationSha256 = result.PostSanitizationSha256,
-                                PrimaryOperator = OperatorName,
-                                VerifierOperator = "Ofițer Securitate Informatică",
-                                SystemHostId = Environment.MachineName,
-                                TamperEvidentAuditHash = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N"),
-                                IsVerifiedZeroized = true
-                            };
+                            var certData = SanitizationCertificateData.FromResult(result, targetFile, OperatorName);
 
                             _sanitizationPdfGenerator.GeneratePdfCertificate(saveDialog.FileName, certData);
-                            _provenanceLedger.AppendEntry("MEDIA_SANITIZED_CERT_PDF", saveDialog.FileName, result.PostSanitizationSha256, $"Sanitizare NIST SP 800-88r2 finalizată cu succes pe '{Path.GetFileName(targetFile)}'. Emis certificat PDF.");
-                            
-                            MessageBox.Show($"Procedura de sanitizare NIST SP 800-88r2 a fost finalizată cu succes!\n\nCertificatul oficial PDF a fost emis în:\n{saveDialog.FileName}", "Sanitizare & Certificare Reușită", MessageBoxButton.OK, MessageBoxImage.Information);
-                            StatusMessage = "✅ Sanitizare finalizată și Certificat PDF emis cu succes!";
+                            var verdict = result.ReadBackVerified ? "verificată prin citire" : $"NEVERIFICATĂ ({result.ReadBackNote})";
+                            _provenanceLedger.AppendEntry("MEDIA_SANITIZED_CERT_PDF", saveDialog.FileName, result.PostSanitizationSha256,
+                                $"Suprascriere {result.Method} pe '{Path.GetFileName(targetFile)}', {verdict}. Hash audit certificat: {certData.TamperEvidentAuditHash}.");
+
+                            MessageBox.Show($"Fișierul a fost suprascris; zeroizarea este {verdict}.\n\nRaportul PDF a fost salvat în:\n{saveDialog.FileName}\n\n" +
+                                "Seria dispozitivului și al doilea operator nu sunt cunoscute de aplicație și apar ca NEDECLARAT.",
+                                "Sanitizare", MessageBoxButton.OK, result.ReadBackVerified ? MessageBoxImage.Information : MessageBoxImage.Warning);
+                            StatusMessage = result.ReadBackVerified ? "Sanitizare finalizată și verificată prin citire." : "Sanitizare finalizată, dar NEVERIFICATĂ.";
                         }
                         else
                         {

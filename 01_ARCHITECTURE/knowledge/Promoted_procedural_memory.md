@@ -18,11 +18,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-06-procedures
-- type: part_of
-  target_id: 5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac
+  - type: part_of
+    target_id: "5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac"
 ---
+
 # procedural memory
 
 ## Canonical Definition

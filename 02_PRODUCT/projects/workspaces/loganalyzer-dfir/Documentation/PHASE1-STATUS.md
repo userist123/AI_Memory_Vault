@@ -1,3 +1,5 @@
+> HISTORICAL DOCUMENT (banner added 2026-10-08, WP0). Last written 2026-09-05. Superseded by `../docs/dfir/CONTRACT_AUDIT_STAGE1.md` (stage-1 contract audit, 2026-10-08). Do not rely on this file for the current state of the code; it is kept unchanged below for history.
+
 # Faza 1 — Secure Foundation
 
 ## Implementat până acum

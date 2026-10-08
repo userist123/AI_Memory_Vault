@@ -89,7 +89,8 @@ def test_no_intersection_with_v2_judged_edges():
         assert key not in v2_judged_keys, f"remaining sample {s['index']} was already judged in v2: {key}"
 
 
-def test_all_remaining_edges_present_in_live_graph():
+def test_accepted_edges_present_and_rejected_edges_pruned_from_live_graph():
+    """Post-audit invariant: the 10 accepted edges remain in the live graph, while the 55 rejected edges are pruned."""
     from retrieval.vault_index import VaultIndex
     from graph.synapse_store import SynapseStore
 
@@ -97,7 +98,14 @@ def test_all_remaining_edges_present_in_live_graph():
     store = SynapseStore.from_index(idx)
     live_keys = {(s.source_id, s.target_id, s.relation) for s in store.all() if s.relation != "related_to"}
 
+    verdicts_doc = json.loads((PKG_DIR / "audit_verdicts_remaining_65.json").read_text(encoding="utf-8"))
+    verdicts_by_idx = {v["index"]: v for v in verdicts_doc["verdicts"]}
+
     rem_data = json.loads(AGG_FILE.read_text(encoding="utf-8"))
     for s in rem_data["samples"]:
         key = (s["source_id"], s["target_id"], s["relation"])
-        assert key in live_keys, f"remaining sample {s['index']} ({key}) not found in live graph"
+        v = verdicts_by_idx[s["index"]]
+        if v["verdict"] == "ACCEPT":
+            assert key in live_keys, f"accepted edge sample {s['index']} ({key}) missing from live graph"
+        else:
+            assert key not in live_keys, f"rejected edge sample {s['index']} ({key}) still present in live graph"

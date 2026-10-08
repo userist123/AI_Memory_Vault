@@ -9,15 +9,19 @@ from typing import Iterable
 
 NUMBERED_ROOTS = {
     "00_GOVERNANCE", "01_ARCHITECTURE", "01_KNOWLEDGE", "02_PRODUCT", "03_IMPLEMENTATION",
-    "04_CONFIG", "05_DATA", "06_INBOX", "07_EVALUATION", "08_OBSERVABILITY",
+    "04_CONFIG", "05_DATA", "06_INBOX", "07_EVALUATION", "08_OBSERVABILITY", "08_RESEARCH",
     "09_SECURITY", "10_DOCUMENTATION", "20_TESTS", "30_SCRIPTS", "40_EXPERIMENTS",
     "50_ARTIFACTS", "60_DEPLOYMENT", "70_INTEGRATIONS", "80_ARCHIVE", "90_RELEASE", "99_META",
 }
 ROOT_ALLOWLIST = {
-    "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "pyproject.toml", ".gitignore", ".gitattributes",
+    "README.md", "README.en.md", "LICENSE", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "pyproject.toml", ".gitignore", ".gitattributes",
     ".editorconfig", ".env.example", ".pre-commit-config.yaml", ".gitleaks.toml", ".mcp.json", "pytest.ini",
-    "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "security", "scripts", "tests", "docs",
+    "requirements.txt", "requirements-memory-v6.txt", "cognitive_core", "scripts", "tests", "docs", "security",
     ".github", ".agents", ".claude-plugin", ".obsidian",
+    # Claude Code project settings and the owner-authority PreToolUse hook.
+    ".claude",
+    # Per-client MCP registrations of the same vault-memory server (Codex, Gemini CLI).
+    ".codex", ".gemini",
     *NUMBERED_ROOTS,
 }
 ROOT_FILE_ALLOWLIST = {"README.md", ".gitkeep"}

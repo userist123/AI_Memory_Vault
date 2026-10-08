@@ -290,7 +290,7 @@ namespace LogAnalyzer.Core.Services.Network
             // 11. Air-Gap & Exfiltrare Acustică Ventilatoare (Fansmitter / T1048)
             else if (titleLower.Contains("acustic") || titleLower.Contains("ventilatoare") || titleLower.Contains("fansmitter") || tech.Contains("Air-Gap"))
             {
-                playbook.AttackCategory = "🔊 Exfiltrare Acustică prin Ventilatoare (Air-Gap Jumping / Fansmitter)";
+                playbook.AttackCategory = "🔊 Posibil canal acustic ascuns prin ventilatoare (Fansmitter) - NEVERIFICAT, doar potrivire de cuvinte cheie în titlu";
                 playbook.ImmediateObjective = "Resetarea controller-ului PWM hardware al ventilatoarelor, oprirea procesului de modulație și blocarea canalelor ascunse.";
                 playbook.ForensicsGuidance = "Inspectați procesele care apelează API-uri de control al vitezei ventilatoarelor (ex: WinRing0, OpenHardwareMonitor, ACPI calls).";
 
@@ -305,7 +305,7 @@ namespace LogAnalyzer.Core.Services.Network
 
                 playbook.Actions.Add(new CountermeasureAction
                 {
-                    Title = "🛡️ Resetează Politica de Răcire Hardware (Conform HG 585 / NATO TEMPEST)",
+                    Title = "🛡️ Resetează Politica de Răcire Hardware",
                     Description = "Restabilește controlul automat BIOS/UEFI asupra ventilatoarelor și blochează apelurile I/O de la utilizator.",
                     ActionType = "Harden",
                     PowerShellSnippet = "powercfg /setactive SCHEME_BALANCED",

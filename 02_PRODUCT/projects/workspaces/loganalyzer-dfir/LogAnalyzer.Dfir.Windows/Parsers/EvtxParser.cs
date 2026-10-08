@@ -1,5 +1,6 @@
 using System.Diagnostics.Eventing.Reader;
 using System.Xml.Linq;
+using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 
@@ -13,9 +14,21 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 /// </summary>
 public sealed class EvtxParser : EvidenceParserBase
 {
-    public override string Name => "EvtxParser";
-    public override string Version => "1.0";
-    public override bool CanParse(EvidenceItem item) => item.SourceType == "evtx" || item.StoredPath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase);
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "EvtxParser", Version = "1.0", Artifact = "Jurnal de evenimente Windows (EVTX)",
+        SourceTypes = ["evtx", "EventLog:*"], FileNames = [".evtx"], Fingerprints = ["evtx"],
+        SupportedOs = "Windows (citește prin API-ul EventLog al Windows, PathType.FilePath)",
+        FormatVersions = ["EVTX 3.x (Windows Vista și ulterior)"],
+        Limitations =
+        [
+            "Mesajele sunt randate doar pentru furnizorii a căror descriere conține proba (Defender, MsiInstaller, SCM, PowerShell); restul păstrează câmpurile EventData/UserData.",
+            "Chunk-urile corupte sunt eliminate de EvtxRepair; înregistrările lor lipsesc și sunt raportate ca gol de RecordID.",
+            "Nu recuperează înregistrări din spațiul nealocat (carving).",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "CorpusRegressionTests (defenderEvtx, msiEvtx), InvestigationTests pe corpusul NanAgent, EvtxRepairTests",
+    };
 
     private static readonly HashSet<string> MessageProviders = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -37,15 +50,27 @@ public sealed class EvtxParser : EvidenceParserBase
             var repaired = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "evtx_repair", $"{item.EvidenceId}_{Path.GetFileName(fullPath)}");
             var r = LogAnalyzer.Dfir.IO.EvtxRepair.Repair(fullPath, repaired);
             result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
-                $"{damaged.Count} chunk-uri corupte eliminate: " + string.Join("; ", damaged.Take(20).Select(c => $"#{c.Index} ({c.Problem}, RecordID {c.FirstRecordId}–{c.LastRecordId})")),
+                $"{damaged.Count} {LogAnalyzer.Dfir.Analysis.AntiForensics.CorruptChunksMarker}: " + string.Join("; ", damaged.Take(20).Select(c => $"#{c.Index} ({c.Problem}, RecordID {c.FirstRecordId}–{c.LastRecordId})")),
                 "Înregistrările din aceste intervale lipsesc din cronologie (corupere sau alterare a jurnalului)",
                 "Copii VSS ale jurnalului, SIEM, alte surse (SRUM, Prefetch)", "Doar din alte copii",
                 $"Fișierul original nu a fost modificat; s-a parsat copia reparată {repaired} ({r.KeptChunks}/{r.TotalChunks} chunk-uri)."));
             result.MalformedRecords += damaged.Count;
             fullPath = repaired;
         }
+        // A file shorter than its header says (or not ending on a chunk boundary) lost its tail: say so before reading it.
+        if (Truncation(fullPath) is { } cut)
+        {
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial, $"{LogAnalyzer.Dfir.Analysis.AntiForensics.TruncatedMarker}: {cut}",
+                "Înregistrările de la sfârșitul jurnalului lipsesc (copiere întreruptă sau alterare)", "Copii VSS ale jurnalului, SIEM", "Doar din alte copii"));
+            result.MalformedRecords++;
+        }
         using var reader = new EventLogReader(fullPath, PathType.FilePath);
         int consecutiveErrors = 0;
+        // RecordIDs normally only grow. When one repeats, the locator gets ";occurrence=n" so it stays unique, and the step is reported.
+        var seen = new Dictionary<long, int>();
+        long previous = -1;
+        DateTime? previousTime = null;
+        var steps = new List<string>();
         while (true)
         {
             ct.ThrowIfCancellationRequested();
@@ -60,11 +85,33 @@ public sealed class EvtxParser : EvidenceParserBase
             if (rec is null) break;
             using (rec)
             {
-                sink.Add(ToEvent(item, rec));
+                var e = ToEvent(item, rec);
+                if (rec.RecordId is long id)
+                {
+                    if (id <= previous)
+                        steps.Add($"după RecordID {previous} ({previousTime:yyyy-MM-ddTHH:mm:ssZ}) urmează {id} ({rec.TimeCreated?.ToUniversalTime():yyyy-MM-ddTHH:mm:ssZ})");
+                    int n = seen[id] = seen.GetValueOrDefault(id) + 1;
+                    if (n > 1) e = WithLocator(e, $"EventRecordID={id};occurrence={n}");
+                    previous = id;
+                    previousTime = rec.TimeCreated?.ToUniversalTime();
+                }
+                sink.Add(e);
                 result.Records++;
             }
         }
+        if (steps.Count > 0)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
+                $"{LogAnalyzer.Dfir.Analysis.AntiForensics.RecordIdReuseMarker}: {seen.Count(kv => kv.Value > 1)} ID-uri apar de mai multe ori; " + string.Join("; ", steps.Take(10)),
+                "EventRecordID nu identifică unic aceste înregistrări; locatorul celei de-a doua apariții are sufixul ;occurrence=n",
+                "Jurnalul System (6008, Kernel-Power 41) pentru o oprire necurată; alte copii ale jurnalului", "Nu este necesar: toate înregistrările au fost citite"));
     }
+
+    private static TimelineEvent WithLocator(TimelineEvent e, string locator) => new()
+    {
+        Time = e.Time, Source = e.Source, EvidenceId = e.EvidenceId, EventId = e.EventId, Provider = e.Provider, Host = e.Host, User = e.User,
+        Process = e.Process, Pid = e.Pid, Path = e.Path, Summary = e.Summary, TimeSemantics = e.TimeSemantics, TemporalType = e.TemporalType,
+        Classification = e.Classification, Confidence = e.Confidence, Locator = locator, Fields = e.Fields,
+    };
 
     private TimelineEvent ToEvent(EvidenceItem item, EventRecord rec)
     {
@@ -103,7 +150,7 @@ public sealed class EvtxParser : EvidenceParserBase
             Provider = provider,
             Host = rec.MachineName ?? "",
             User = user,
-            Process = path.Length > 0 ? System.IO.Path.GetFileName(path.TrimEnd('\\')) : "",
+            Process = path.Length > 0 ? WinPath.GetFileName(path.TrimEnd('\\')) : "",
             Pid = rec.ProcessId is int p ? p : null,
             Path = path,
             Summary = summary,
@@ -114,6 +161,21 @@ public sealed class EvtxParser : EvidenceParserBase
             Locator = $"EventRecordID={rec.RecordId}",
             Fields = fields,
         };
+    }
+
+    /// <summary>EVTX = 4096-byte header + whole 64 KiB chunks; the header's chunk count (offset 42) must fit in the file.</summary>
+    public static string? Truncation(string path)
+    {
+        var len = new FileInfo(path).Length;
+        if (len < 4096) return $"{len} octeți, mai puțin decât antetul de 4096";
+        using var fs = File.OpenRead(path);
+        var header = new byte[128];
+        fs.ReadExactly(header);
+        int declared = BitConverter.ToUInt16(header, 42);
+        long whole = (len - 4096) / 65536, rest = (len - 4096) % 65536;
+        if (rest != 0) return $"{rest} octeți după ultimul chunk complet (fișierul nu se termină la granița unui chunk de 64 KiB)";
+        if (declared > whole) return $"antetul declară {declared} chunk-uri, fișierul conține {whole}";
+        return null;
     }
 
     internal static void ExtractFields(string xml, Dictionary<string, string> fields)

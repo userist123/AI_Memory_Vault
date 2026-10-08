@@ -650,12 +650,17 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | repository hygiene: absolute paths, disallowed root files, personal data | `repository-hygiene.yml` |
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |
+| Dependency audit (npm, .NET) per manifest; fails on CRITICAL | `dependency-audit.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
+| owner approval for PRs (GitHub environment; effective only once the owner sets its reviewers) | `owner-approval-gate.yml` |
+| central agent router, dispatcher and secure bridge | `agent-routing-tests.yml` |
+| direct `vault://` routes, per-channel read policy, MCP/CLI/Ollama/Telegram adapters | `vault-access.yml` |
 | ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |
-| security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `fortify.yml`, `apisec-scan.yml` |
+| security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `fortify.yml`, `apisec-scan.yml` |
 | research: Planning Influence V3 and the Polymarket phases | `planning-influence-mve.yml`, `polymarket-phase*.yml` (one per phase) |
+| research: H1 associative recall experiment | `h1-associative-experiment.yml` |
 | scheduled runs and ingestion | `memory-consolidation.yml` (the nightly consolidation), `import-external-skills.yml`, `jarvis-command-center.yml` |
 
 A test (`20_TESTS/test_readme_references.py`) fails if the README names a workflow or a path that does not exist — the previous list had fallen 22 files behind and cited two deleted workflows.
@@ -786,7 +791,7 @@ The modules live under `03_IMPLEMENTATION/packages`, so the CLI needs it on `PYT
 export PYTHONPATH=03_IMPLEMENTATION/packages   # PowerShell: $env:PYTHONPATH = "03_IMPLEMENTATION/packages"
 python -m cognitive_core.memory_v6_cli extract --text "We decided: use SQLite WAL." --enqueue
 python -m cognitive_core.memory_v6_cli review --show-conflicts
-python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
+python -m cognitive_core.memory_v6_cli approve <candidate_id> --principal human --reviewer "<name>" --evidence "<reference>"   # no defaults: approval is an owner attestation
 python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```

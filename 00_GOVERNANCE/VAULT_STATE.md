@@ -58,29 +58,48 @@ in its constructor. Corrected 2026-09-06.
 | `RetrievalTrace` v1.1.0 | real, in production | `observability/retrieval_trace.py`; every note carries a reason code; 16.7 KB per search, verified on 8 benchmark queries |
 | Agent lifecycle floor | real, in production | `controller.py`; `AI_AGENT` asking for no lifecycle gets ACTIVE + REVIEW. Measured cost before adoption: 1 case in 130 |
 | Untrusted content guard | real, in CI | `30_SCRIPTS/verification/untrusted_content_guard.py`; 4 blocking rules, 3 report-only; 27 reviewed allowlist entries |
-| Typed relations in the graph | **audited, 20/49 accepted** | Perplexity, independent; 29 rejected rows purged at source; **65 still unaudited** |
+| Agent read contract — `memory_search` / `memory_get` (`interfaces/memory_access.py`, `retrieval/context/pack_builder.py`) | **real, in production** | `AI_AGENT` is served ACTIVE and REVIEW notes; a REVIEW note is flagged `unverified`. Withheld: a note flagged `quarantined`, ARCHIVED/RAW notes, and the body of an unverified REVIEW candidate inside a *trusted context pack*. Not being `verified` hides nothing (an ACTIVE note keeps its content). Real vault, 10 queries x top 5 through `memory_access`: **48/48** non-empty snippets and **48/48** `memory_get` ok (main 38/48 and 38/48; the audit-remediation branch before its repair 2/48 and 6/48). The extra 10 over main are REVIEW notes that were never stamped, read as unverified. Guard: `20_TESTS/test_memory_access.py`, whose fixture holds the real mix of states (`seed_real_distribution`); a verified-only fixture had hidden the regression. `ADMIN` and `HUMAN` are the owner views in the pack builder and the egress gate alike (`security/verified_reduction.py`, `OWNER_PRINCIPALS`) |
+| Proposal queue approve → promote (`lifecycle/proposal_queue.py`, `queue_promoter.py`; CLI `memory_v6_cli`; REST `/api/v1/proposals/*`) | **real, works end to end** | An approval is an owner attestation: a typed owner `Principal` (the vault's own `ATTEST` matrix: HUMAN, ADMIN), a reviewer name and an evidence reference, none defaulted; a string such as `human` satisfies nothing. Before: over REST `promote-approved` always failed, and on every path a promoted candidate failed schema validation (`candidate-<uuid>` id, extractor keys in `provenance`, `fact`/`task` as note types), so no real controller ever took one. A promotion only proposes (RAW, unverified): it verifies nothing. One unattested legacy approval no longer blocks the rest (it is reported in `skipped`). Guard: `20_TESTS/test_rest_proposal_flow.py`, `20_TESTS/test_proposal_queue_attestation.py` |
+| REST gateway (`interfaces/api_server.py`) | **real; bearer token on every route but `/status`** | `AI_MEMORY_VAULT_API_TOKEN`, fail-closed while unset. Its clients send it: `jarvis_web/js/vault_client.js` and `js/app.js` (from `sessionStorage`, never in source), `jarvis_v2/supervisor.py` (from the environment). The web page itself is served by `server.cjs`, which has no `/api/v1` proxy: the page needs the gateway behind the same origin. Other behaviour changes of the same branch: an `AI_AGENT` cannot update an ACTIVE note except `relations`/`confidence`/`verification`/`valid_until`, and never to `verified`; a note body over 20,000 characters is refused by the controller |
+| Runtime-authority layer — `security/runtime_enforcer.py`, `runtime_adapter.py`, `memory_adapter.py`, `memory_boundary.py`, `memory_integrity.py`, `security_update_manager.py` | **implemented and tested, NOT wired into production** | The HMAC `ApprovalBroker`, the SQLite-WAL `PersistentNonceStore`, `production_mode`, revision/content binding, the write-boundary rollback and the update provenance gate have no importer outside `security/` and the tests, and nothing builds `RuntimeAdapter`, `RuntimeEnforcer` or `ApprovalBroker` with `production_mode=True`. Findings B1/B2/B4, M01/M02/M03/M07, U02/U03 are therefore *hardened in the library, not yet wired into production*; they harden nothing at runtime until a tool-execution path calls them. Guard: `20_TESTS/test_vault_state_accuracy.py::test_runtime_authority_layer_has_no_production_consumer` fails the day one gains a consumer, so this row gets corrected |
+| External skills importer (`30_SCRIPTS/verification/import_external_skills.py`) | **real, fail-closed** | A script, binary, hidden path (except the checkout's top-level `.git`), executable bit, symlink or traversal aborts the import and every offending path is listed; a file of a type that is not imported (image, `LICENSE`, ...) is left out and written to `SKIPPED_FILES.json`. `20_TESTS/test_import_external_skills.py` |
+| Secret scanning config (`.gitleaks.toml`) | **real, `[[allowlists]]` format** | Gitleaks refuses a file that mixes the legacy `[allowlist]` with `[[allowlists]]`; `20_TESTS/test_gitleaks_config_format.py` keeps the file in the array-of-tables form the other branches extend |
+| Typed relations in the graph | audited once, by a single LLM rater (30/114 accepted) | Perplexity, one rater, no second opinion and no inter-rater agreement; Wave 1: 20/49 accepted, 29 purged; Wave 2: 10/65 accepted, 55 rejected; `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
 | `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030-r031; **20 of 20** books, 1,088 chunks measured by chunking |
 | `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, gates and selectivity both work | r031; recurrence floor validated on all 3 structure modes |
 | `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
+| `03_IMPLEMENTATION/packages/routing/` (agent router + dispatcher) | real and tested, **NOT wired into production** | reachable only through the manual CLI `python -m routing.route_cli` (`probe` / `route` / `dispatch --execute`); no production module imports it, it does not call `memory_search`, and nothing dispatches the verifier it selects (`PENDING_VERIFICATION` is terminal). Dispatch is tested against the real `04_CONFIG/agent_router.json` with fake executables only; no real agent was invoked (`20_TESTS/test_agent_dispatch_real_config.py`) |
+| `03_IMPLEMENTATION/packages/agent_bridge/` (secure bridge) | library + tests, **NOT wired, no transport** | `transport: windows_named_pipe` is validated in `04_CONFIG/agent_bridge.json` but no pipe server exists; `load_bridge_config()` / `build_bridge()` and `AntigravitySession` have no consumer outside `20_TESTS`; nothing runs it end to end. `minimum_ttl_seconds` is enforced and an AGY session never carries context across tasks (`20_TESTS/test_agent_bridge_hardening.py`), verified against fakes, not the real `agy` |
+| Direct routes `vault://` (`vault_access/`, 04_CONFIG/vault_domains.yaml) | real, **in the MCP server, CLI and Telegram bot** | measured 2026-10-07: 4221 routes in 114 domains (clean checkout; re-checked by `test_route_and_domain_counts_are_current`); by URI 4221/4221; by file name (measured 2026-10-06 on 4220 routes) 3998 resolve to themselves, 222 AMBIGUOUS, **0 wrong**; `07_EVALUATION/vault_routing/`. Names and titles only — topical questions still go to `memory_search`. The first call needs the metadata of every route: the MCP server warms it in a background thread at start (C YAML loader when PyYAML has it, one frontmatter parse per file; `20_TESTS/test_vault_access_perf.py`) |
+| Access policy per egress channel (`04_CONFIG/access_policy.yaml`) | real, enforced on every `vault_*` call | cloud CLIs ≤ INTERNAL, Telegram ≤ INTERNAL, web export PUBLIC; inbox, archive, RAW skills never served to agents, and a refusal is returned as NOT_FOUND (real reason only in the audit); MCP and the CLI cannot assert the owner or the local channel (owner needs an interactive terminal). Single-user machine: an agent with a shell can still read files directly — this policy binds the vault tools, OS permissions bind the rest |
+| Ollama/Telegram assistant (`vault_access/ollama_assistant.py`) | real, **not yet run against a live Ollama** | reads are extractive (no model call); questions use native `/api/chat` with explicit `num_ctx`, truncation check and verbatim-quote verification; proved with a fake transport (assistant + Telegram: 39 tests) |
+| Book-to-Memory research modules (`lifecycle/validation/book_to_memory_*.py`, 19 modules: the 11 of phases 1-11 and 8 evaluation-integrity modules for PR #209 B03-B08: run config, leakage, paired statistics, raters, blind packet, real-model ablation harness, prompt audit, human labels) | **present, research-only, NOT wired** | no production consumer: only each other, the research runners and scripts (`08_RESEARCH/BOOK_TO_MEMORY/`, `30_SCRIPTS/evaluation/*b2m*`) and `20_TESTS/test_book_to_memory_*.py` import them. Their usage-test and ablation gates have no built-in scores: without supplied observations they report `INSUFFICIENT_DATA`, and without a recorded run config an ablation is refused as not comparable. The B03 task packet (`08_RESEARCH/BOOK_TO_MEMORY/b03_task_packet/`, 51 tasks, 204 trials, prompts only) has not been run: no real-model ablation, no multi-rater scoring and no human-label calibration exists (B03, B05, B06 wait on the owner). B07 was measured: 2 exact text overlaps in the frozen v1/v2 benchmarks (flagged), 0 in the H1 sets (`07_EVALUATION/b2m_leakage/`). Passing unit tests is not empirical evidence (PR #209 B01, B09); open items in `08_RESEARCH/BOOK_TO_MEMORY/OPEN_BLOCKERS.md`. Their owner-approval token is bound to the exact note: it signs the SHA-256 of the canonical note, its revision marker and an expiry, and an edit after approval, a replay, an expired or an old-format token is refused (B02; `20_TESTS/test_book_to_memory_lifecycle_gates.py::test_32_*`). A blocker's severity cannot be lowered, nor a blocker deleted, without an owner attestation in `08_RESEARCH/BOOK_TO_MEMORY/SEVERITY_ATTESTATIONS.md`; the `Repository Hygiene` workflow enforces it on pull requests (B12; `20_TESTS/research/test_blocker_severity_downgrade.py`) |
+| `retrieval/interference_gate.py` | **present, NOT wired** | no production consumer at all; only `20_TESTS/test_interference_gate.py` imports it |
+| H1 associative-recall experiment (`08_RESEARCH/BOOK_TO_MEMORY/run_h1_baseline.py`, `run_h1_associative_experiment.py`) | **research harness, NOT wired** | frozen case packet and runners under `08_RESEARCH/`; nothing in `03_IMPLEMENTATION` imports them. Its CI workflow `h1-associative-experiment.yml` runs only on changes to `08_RESEARCH/BOOK_TO_MEMORY/**`, `08_RESEARCH/RETRIEVAL/**` or the workflow file, or on demand. A run is an experiment result on one frozen packet, not production evidence |
 
 ## 4. Corpus and graph, measured
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1124 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1209 |
 | Notes visible to `FileStorageEngine` | 858 |
 | Graph edges | 483 |
-| — declared / inferred / wikilink | 203 / 203 / 77 |
-| Notes usable as a graph **seed** (out-edge) | 160 |
-| Notes reachable as graph **gold** (in-edge) | 148 |
+| — declared / inferred / wikilink | 152 / 153 / 178 |
+| Notes usable as a graph **seed** (out-edge) | 195 |
+| Notes reachable as graph **gold** (in-edge) | 142 |
 | Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
 and storage requires a frontmatter `id`. Do not treat 842 and 738 as the same
 population.
+
+The index count includes 51 `Promoted_*` notes (lifecycle REVIEW, verification
+`unverified`, `provenance.source_type: import`) added as candidates from the OpenStax and
+ontology concept batches. None of them is attested: an agent reads them flagged as
+unverified, and they are not ACTIVE.
 
 `search()` traverses **one hop** along outgoing edges. It is not multi-hop.
 Graph results describe roughly 9% of the corpus and must never be pooled with
@@ -96,6 +115,10 @@ whole-corpus retrieval numbers.
   an existing note in the legacy tree keeps its legacy destination on update; existing notes in the
   content roots stay pinned in place (`db08b847`). Nothing has been moved: the legacy folders are not
   migrated, only new writes are redirected.
+- **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
+  registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
+  the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
+  that `memory_search` cannot reach (below) are reachable by route (`vault://coordination/...`).
 - **The memory is reachable by agents, but only just, and the results are weak.** `.mcp.json` registers
   the MCP server `vault-memory` (`interfaces/memory_mcp_server.py`: `memory_search`, `memory_get`,
   `memory_propose`); `python -m cognitive_core.recall_cli` is the CLI fallback. There is no REST
@@ -125,13 +148,20 @@ whole-corpus retrieval numbers.
   and undoing that is `git revert`, not `PlasticityEngine.rollback()`.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
-- **65 of the graph's 85 typed relations have never been audited.** The 49 that
-  were came back at 20 accepted. No claim about the graph's overall precision is
-  supported until the rest are labelled; 49 rows is what was measured, not 114.
-- **Where the 91 missed benchmark cases are lost is still unknown.** Reason
-  codes now exist for every note, but nothing has yet connected them to the
-  benchmark. Until that runs, choosing between a reranker and better candidate
-  generation is a guess.
+- **All 114 declared typed relations in the live graph have been audited once; the audit is single-rater and unreplicated.** The remaining 65
+  relations were evaluated by one LLM rater (Perplexity) in Wave 2: 10 accepted, 55 rejected (15.4% precision).
+  A second rater, or a sample re-labelled by the owner, has not been run, so "100% audited" means "every edge was
+  judged by one rater", not "every edge is verified".
+  Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
+  documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
+  `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
+- **Causal loss attribution of missed benchmark cases: measured, single run.** Evaluated on all 130
+  non-abstain benchmark v3 cases in `07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md` (and `loss_funnel_cases.json`).
+  Under production agent operating point (`AI_AGENT`, `page_size=5`), 71.56% of misses are `PAGINATION_CUT`
+  (ranked > 5; median rank 20.5), 13.76% `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 11.93% `NEVER_CANDIDATE`, 1.83%
+  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). A pre-registered decision rule
+  *points to* a cross-encoder / reranker rather than blind candidate generator expansion. That is the outcome of the
+  rule on one run, not an adoption: no reranker is built, wired or evaluated.
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads
@@ -139,10 +169,17 @@ whole-corpus retrieval numbers.
   (`synapse_store.py:234`). `Promoted_reservoir_sampling.md` used `target`
   with a file path, `relation` instead of `type`, and `derived_from`, which
   is not in `ALLOWED_RELATIONS` and degrades silently to `related_to`. Three
-  mismatches, zero edges. Fixed, and guarded by
+  mismatches, zero edges. That malformed form is guarded against by
   `20_TESTS/test_promoted_notes_reach_the_graph.py`, which asserts against
   the real store rather than the frontmatter and was confirmed to fail on the
   broken form before being trusted.
+  **Nine promoted notes are genuine islands today** (`buffer`, `homeostat`, `regulation`, `reinforcement_learning`,
+  `reservoir_sampling`, `retrieval`, `state_determined_system`, `transformation`, `variety`): every typed
+  relation they declared was rejected by the edge audit, and a script had hidden that by injecting unsupported
+  sentences into their bodies (e.g. "... in [[long-term memory]]"; PR #209 B11). The injected prose is removed, the
+  original bodies are restored byte for byte, and the notes are listed in
+  `KNOWN_ISLANDS_AFTER_AUDITED_PURGE` in that test, which pins the set so it can only shrink. Giving them a real,
+  audited relation is open work.
 - **Cross-model agreement is a reference set, not the filter.** It was
   briefly recorded here as the only working ranking signal. It is not: it
   separates cleanly on conference papers, where the 1-of-4 tail is
@@ -219,6 +256,7 @@ whole-corpus retrieval numbers.
 | Retrieval or search | `memory/controller.py::search` | that graph expansion runs; it is off by default |
 | Anything graph | section 4 above | that "connected" means retrievable — check direction |
 | Writing a note | `storage/path_resolver.py` | that it lands in the content tree |
+| Finding or reading a specific file | `vault_resolve` / `vault_read` (`AGENTS.md`) | that a name is unique: AMBIGUOUS is an answer, not an error |
 | Lifecycle changes | `lifecycle/policy.py` | that any path may bypass it; none may |
 | Benchmarks or evidence | v2 contract | that v1 numbers mean anything |
 | Claiming something is wired | the grep in section 2 | a commit message |

@@ -121,16 +121,16 @@ def test_concurrent_attest_and_update_race_sqlite(temp_db_path, test_audit_log):
                 errors.append(f"Admin attester error: {type(e).__name__}: {str(e)}")
             time.sleep(0.001)
 
-    def ai_legitimate_updater():
+    def human_legitimate_updater():
         for i in range(num_iterations):
             try:
                 controller.update(
-                    Principal.AI_AGENT,
+                    Principal.HUMAN,
                     note_id,
                     {"content": f"updated content iteration {i}", "tags": ["stress", f"iter_{i}"]}
                 )
             except Exception as e:
-                errors.append(f"AI legitimate updater error: {type(e).__name__}: {str(e)}")
+                errors.append(f"Human legitimate updater error: {type(e).__name__}: {str(e)}")
             time.sleep(0.001)
 
     def ai_illegal_escalator():
@@ -142,7 +142,7 @@ def test_concurrent_attest_and_update_race_sqlite(temp_db_path, test_audit_log):
                     {"verification": "verified"}
                 )
                 errors.append(f"CRITICAL SECURITY FLAW: AI_AGENT successfully escalated verification to verified in iteration {i}!")
-            except ValueError as e:
+            except (ValueError, PermissionError) as e:
                 illegal_escalation_blocks.append(str(e))
             except Exception as e:
                 errors.append(f"AI illegal escalator unexpected exception: {type(e).__name__}: {str(e)}")
@@ -157,7 +157,7 @@ def test_concurrent_attest_and_update_race_sqlite(temp_db_path, test_audit_log):
                     {"provenance": {"source_type": "user", "source_ref": "forged"}}
                 )
                 errors.append(f"CRITICAL SECURITY FLAW: AI_AGENT successfully forged provenance source_type to user in iteration {i}!")
-            except ValueError as e:
+            except (ValueError, PermissionError) as e:
                 provenance_mutation_blocks.append(str(e))
             except Exception as e:
                 errors.append(f"AI provenance forger unexpected exception: {type(e).__name__}: {str(e)}")
@@ -180,7 +180,7 @@ def test_concurrent_attest_and_update_race_sqlite(temp_db_path, test_audit_log):
     threads = [
         threading.Thread(target=human_attester),
         threading.Thread(target=admin_attester),
-        threading.Thread(target=ai_legitimate_updater),
+        threading.Thread(target=human_legitimate_updater),
         threading.Thread(target=ai_illegal_escalator),
         threading.Thread(target=ai_provenance_forger),
         threading.Thread(target=consistency_reader),
@@ -696,7 +696,7 @@ def test_continual_learning_confidence_promotion_requires_execution_provenance(t
     exec_note["relations"] = exec_relations
     storage.set(exec_id, exec_note)
 
-    promoted_ids = engine.promote_memories(Principal.AI_AGENT)
+    promoted_ids = engine.promote_memories(Principal.ADMIN)
 
     # Execution note promoted
     assert exec_id in promoted_ids

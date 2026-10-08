@@ -18,13 +18,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-03-ontology
-- type: related_to
-  target_id: 93678180-ff9e-45f5-927e-01320aff8eb9
-- type: related_to
-  target_id: 5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac
+  - type: related_to
+    target_id: "93678180-ff9e-45f5-927e-01320aff8eb9"
+  - type: related_to
+    target_id: "5a3df1ef-20e9-4f8c-bc70-91d6d4fdb5ac"
 ---
+
 # declarative memory
 
 ## Canonical Definition

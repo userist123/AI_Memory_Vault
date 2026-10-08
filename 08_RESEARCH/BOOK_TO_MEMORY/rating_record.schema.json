@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "description": "One rating of one item by one rater. Blind ratings only count toward a primary analysis.",
+  "properties": {
+    "blind": {
+      "description": "True only if the rater did not know the condition (with/without note) of the item.",
+      "type": "boolean"
+    },
+    "item_id": {
+      "description": "Opaque item id from the blind packet, never the trial id.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "label": {
+      "description": "The rating: a rubric total (number) or a category (string).",
+      "type": [
+        "number",
+        "string"
+      ]
+    },
+    "model": {
+      "description": "Model id for a model rater; null for a human. Two raters with the same model id are one source.",
+      "minLength": 1,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rater_id": {
+      "description": "Stable identifier of the rater (a person's code or a model run id).",
+      "minLength": 1,
+      "type": "string"
+    },
+    "rater_kind": {
+      "enum": [
+        "human",
+        "model"
+      ]
+    },
+    "rationale": {
+      "description": "Why; free text, may be empty only for a null-effort rating, which is rejected.",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "b2m-rating-record/1"
+    },
+    "timestamp": {
+      "description": "ISO 8601, UTC.",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "rater_id",
+    "rater_kind",
+    "model",
+    "blind",
+    "item_id",
+    "label",
+    "rationale"
+  ],
+  "title": "Book-to-Memory rating record",
+  "type": "object"
+}

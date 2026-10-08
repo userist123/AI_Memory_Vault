@@ -200,7 +200,7 @@ public static class StationFactCollector
             using var bl = new ManagementObjectSearcher(@"root\cimv2\Security\MicrosoftVolumeEncryption", $"SELECT ProtectionStatus FROM Win32_EncryptableVolume WHERE DriveLetter = '{sysDrive}'");
             foreach (ManagementObject o in bl.Get()) s["BitLocker.SystemDrive"] = o["ProtectionStatus"]?.ToString() ?? "";
         }
-        catch (ManagementException) { }
+        catch (ManagementException ex) { s["BitLocker.SystemDrive.Error"] = ex.Message; }
     }
 
     // ---- network ----------------------------------------------------------------------------------------------
@@ -310,7 +310,7 @@ public static class StationFactCollector
                 foreach (var e in section.Descendants().Where(e => !e.HasElements))
                     d[e.Attribute("Name")?.Value ?? (e.Name.LocalName == "Data" ? $"Data{i++}" : e.Name.LocalName)] = e.Value;
         }
-        catch (System.Xml.XmlException) { }
+        catch (System.Xml.XmlException ex) { d["_XmlError"] = ex.Message; }
         return d;
     }
 }

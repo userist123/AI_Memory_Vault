@@ -1,5 +1,6 @@
 from cognitive_core.conflict_detector import ConflictDetector
 from cognitive_core.extraction import AtomicMemoryExtractor
+from cognitive_core.authorizer import Principal
 from cognitive_core.proposal_queue import MemoryProposalQueue
 from cognitive_core.queue_promoter import QueuePromoter
 
@@ -45,7 +46,10 @@ def test_queue_promoter_promotes_only_approved(tmp_path):
     candidates = AtomicMemoryExtractor().extract("Am decis: folosim WAL.", "session:test")
     queue.enqueue(candidates)
     pending_id = queue.pending()[0]["candidate_id"]
-    queue.mark(pending_id, "APPROVED", reviewer="human")
+    # approval is an owner attestation: an owner Principal, a reviewer name and evidence (see
+    # test_proposal_queue_attestation.py for what is refused)
+    queue.mark(pending_id, "APPROVED", reviewer="alice", evidence_reference="review:ticket-17",
+               approver=Principal.HUMAN)
 
     controller = _FakeController()
     promoter = QueuePromoter(queue, controller, _FakePrincipal())

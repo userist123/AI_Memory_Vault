@@ -1,4 +1,5 @@
 # CodeQL is intentionally scoped to languages actually present in this repository.
+# C# (LogAnalyzer) needs a Windows build and has its own path-filtered workflow: codeql-csharp.yml.
 name: "CodeQL Advanced"
 
 on:

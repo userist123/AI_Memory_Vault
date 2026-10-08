@@ -20,6 +20,12 @@
       "conclusion": "Was ungated: flipped any `proposed` row to `promoted` with no manifest. Gated here, with tests and a control."
     },
     {
+      "path": "30_SCRIPTS/ingestion/promote_verified_batch.py",
+      "role": "writer",
+      "gate": "verdict manifest (`07_EVALUATION/book_corpus_conversion/promotion_verdicts.json`)",
+      "conclusion": "Gated. Reads pre-registered human/expert promotion verdicts before updating slots or emitting notes."
+    },
+    {
       "path": "30_SCRIPTS/ingestion/purge_rejected_rows.py",
       "role": "writer",
       "gate": "disposition manifest (`UngatedCanonicalWrite`): `--apply` on the canonical slots needs targets that carry a manifest-supplied disposition; dry run and copies stay free",
@@ -60,6 +66,12 @@
       "role": "test",
       "gate": "n/a (temporary directories)",
       "conclusion": "Reviewed: curriculum provenance gate tests; writes only into tmp_path slots directory."
+    },
+    {
+      "path": "20_TESTS/test_memory_access.py",
+      "role": "test",
+      "gate": "n/a (temporary directories)",
+      "conclusion": "Reviewed: writes only into temporary vault directories in tmp_path; slots are verified against unauthorized modification."
     },
     {
       "path": "20_TESTS/test_memory_usage_evidence.py",

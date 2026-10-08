@@ -10,8 +10,8 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Threat Intelligence &amp; APT Attribution" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Adversary profiles, IOC indicators, motivation and known toolsets" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Text="Threat Intelligence &amp; Suprapunere de tehnici (nu este atribuire)" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)." FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Content="Export STIX 2.1" Command="{Binding ExportStixJsonCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
@@ -27,7 +27,7 @@
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left: APT Groups & Attribution -->
+            <!-- Left: technique overlap with known actor profiles (not attribution) -->
             <Border Grid.Column="0" Style="{StaticResource ObsidianCardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -35,7 +35,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                        <TextBlock DockPanel.Dock="Left" Text="Known Threat Actor Profiles &amp; Attribution" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock DockPanel.Dock="Left" Text="Profile de actori cu tehnici comune (nu este atribuire)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock DockPanel.Dock="Right" Text="{Binding AptAttributionProfiles.Count, StringFormat='{}{0} Profiles'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </DockPanel>
                     
@@ -55,7 +55,7 @@
                                             <TextBlock Text="{Binding KnownTools, StringFormat='Tools: {0}'}" FontSize="11" Foreground="{StaticResource SuccessBrush}" Margin="0,0,0,6"/>
                                             <DockPanel LastChildFill="False">
                                                 <TextBlock DockPanel.Dock="Left" Text="{Binding Aliases, StringFormat='Aliases: {0}'}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"/>
-                                                <TextBlock DockPanel.Dock="Right" Text="{Binding MatchScore, StringFormat='Match: {0:F0}%'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
+                                                <TextBlock DockPanel.Dock="Right" ToolTip="{Binding MatchLevel}" Text="{Binding MatchScore, StringFormat='Suprapunere tehnici: {0:F0}% (nu este atribuire)'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
                                             </DockPanel>
                                         </StackPanel>
                                     </Border>

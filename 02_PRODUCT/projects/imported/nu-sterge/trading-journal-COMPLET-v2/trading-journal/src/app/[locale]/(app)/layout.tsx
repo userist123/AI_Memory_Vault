@@ -16,7 +16,7 @@ export default async function AppLayout({
   // Protect all (app) routes - redirect unauthenticated users
   const user = await getCurrentUser();
   if (!user) {
-    redirect({ href: '/login', locale });
+    return redirect({ href: '/login', locale });
   }
 
   return (
