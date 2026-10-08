@@ -122,8 +122,8 @@ Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 fina
 Standalone document for the organisation, NOT tied to the app. Delivered to the owner as .docx only (not in the repo).
 Basis: Legea 182/2002, HG 585/2002 (INFOSEC), ORNISS; NIS2 / 2024/2690 / OUG 155/2024 as recommendations.
 Scope: systems with and without classified information (air-gapped networks, standalone PCs, connected for unclassified).
-- [ ] Draft (scratchpad) with verbatim citations.
-- [ ] Orchestrator spot-checks every quote against the fetched source before delivery.
+- [x] Draft with verbatim citations; delivered to the owner as .docx (2026-10-08).
+- [x] Orchestrator re-fetched the sources: 57/57 HG 585 + Legea 182 quotes and 27/27 NIS2 + 2024/2690 quotes match; OUG quotes agent-verified only.
 
 ## App requirements — audit-data handling inside LogAnalyzer (owner, 2026-10-08)
 Independent of the standalone audit-log document. Each item cites its provision once the
@@ -145,5 +145,6 @@ HG 585 accreditation analysis is verified.
 The owner will accredit LogAnalyzer to run on accredited internal SIC (classified) and on unclassified
 air-gapped networks / standalone PCs. The app's own behaviour and documentation must satisfy HG 585/2002
 (INFOSEC) + Legea 182/2002 (and NIS2 / 2024/2690 where unclassified).
-- [ ] Requirements (verbatim) + gap analysis of origin/main + WP-ACR proposal → `tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`.
-- [ ] Orchestrator verifies the quotes; owner approves WP-ACR and where it slots in the WP order.
+**PARKED (owner, 2026-10-08): build the app first; accreditation comes after, with data the owner will supply.**
+- [ ] Keep the requirements + gap analysis (`tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`) and its quote
+      sources on this branch for later. Do not start WP-ACR work until the owner returns with the accreditation data.
