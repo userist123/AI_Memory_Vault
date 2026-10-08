@@ -7,7 +7,7 @@ name = "ai-memory-vault"
 version = "0.0.1"
 description = "Evidence-bound external memory runtime for AI agents"
 requires-python = ">=3.11"
-dependencies = ["cryptography>=46.0.0,<47"]
+dependencies = ["cryptography>=50.0.2,<51"]
 
 [tool.setuptools.packages.find]
 where = ["03_IMPLEMENTATION/packages"]

@@ -1312,7 +1312,16 @@ def test_u01_ai_agent_mcp_surface_has_no_update_or_mutate_tool():
     """
     from interfaces import memory_mcp_server, memory_access
 
-    assert memory_mcp_server.TOOL_NAMES == ("memory_search", "memory_get", "memory_propose")
+    # The memory tools are exactly search/get/propose. The direct-route tools added with
+    # vault:// (PR #214) are read-only; the server's full surface is the two lists together,
+    # and no tool name may carry a mutating verb.
+    assert memory_mcp_server.MEMORY_TOOL_NAMES == ("memory_search", "memory_get", "memory_propose")
+    assert memory_mcp_server.VAULT_TOOL_NAMES == (
+        "vault_resolve", "vault_list", "vault_read", "vault_search", "vault_get_metadata", "vault_check_quotes",
+    )
+    assert memory_mcp_server.TOOL_NAMES == memory_mcp_server.MEMORY_TOOL_NAMES + memory_mcp_server.VAULT_TOOL_NAMES
+    mutating = ("update", "patch", "delete", "attest", "promote", "write", "set", "remove", "approve")
+    assert not [t for t in memory_mcp_server.TOOL_NAMES if any(v in t for v in mutating)]
     
     # Verify memory_access module contains no direct update/attest tools for agents
     exposed_callable_names = [k for k in dir(memory_access) if not k.startswith("_")]
