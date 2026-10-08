@@ -77,13 +77,13 @@ Waiting on owner: #207 (blocks agent tools once merged), #206 (split recommended
 ## NEXT PROJECT (queued 2026-10-08) — LogAnalyzer contract audit
 Start only after the Book-to-Memory blocker PRs are merged and no PR is open.
 Stage 1 is an audit, **no code changes**:
-- [x] Read, in order: `tasks/loganalyzer/LOGANALYZER_PROGRAM_REQUIREMENTS.md` (functional/architectural
-      contract), then `tasks/loganalyzer/LOGANALYZER_PRODUCT_UX_CONTRACT.md` (how capabilities are shown).
+- [x] Read, in order: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/LOGANALYZER_PROGRAM_REQUIREMENTS.md` (functional/architectural
+      contract), then `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/LOGANALYZER_PRODUCT_UX_CONTRACT.md` (how capabilities are shown).
 - [x] **Do not redo existing research or audits** (owner, 2026-10-08). Start from what exists and only
       fill the gaps: `loganalyzer-dfir/docs/dfir/REALITY_AUDIT.md`, `DFIR_CURRENT_ARCHITECTURE_AUDIT.md`,
       `RESEARCH_AND_ROADMAP.md`, the other `docs/dfir/*.md` contracts, `Documentation/PHASE1-STATUS.md`,
       `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/CURRENT.md`, and
-      `tasks/loganalyzer/PR212_RESEARCH_2026-10-07.md`. Reuse their findings; re-check a finding
+      `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PR212_RESEARCH_2026-10-07.md`. Reuse their findings; re-check a finding
       only where the code changed after it was written (#212 merged 2026-10-08).
 - [x] **Freshness rule** (owner, 2026-10-08): reuse an existing audit only if it is close to current
       main. Measured on main @ a6c6d7aa (LogAnalyzer code commits made after the doc was last updated):
@@ -92,7 +92,7 @@ Stage 1 is an audit, **no code changes**:
       | `CURRENT.md` (coordination) | 2026-10-07 | 0 | reuse |
       | `docs/dfir/RESEARCH_AND_ROADMAP.md` | 2026-10-07 | 2 | reuse, re-check the 2 commits |
       | `docs/dfir/REALITY_AUDIT.md` | 2026-10-07 | 3 | reuse, re-check the 3 commits |
-      | `tasks/loganalyzer/PR212_RESEARCH_2026-10-07.md` | 2026-10-07 | fixes landed after it | reuse; its 6 fix items are done |
+      | `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PR212_RESEARCH_2026-10-07.md` | 2026-10-07 | fixes landed after it | reuse; its 6 fix items are done |
       | `docs/dfir/DFIR_CURRENT_ARCHITECTURE_AUDIT.md` | 2026-10-04 | 54 | **stale**: re-audit the areas it covers |
       | `Documentation/PHASE1-STATUS.md` | 2026-09-16 | 56 | **stale**: historical only, do not rely on it |
       Re-measure these numbers when the audit actually starts (main will have moved).
@@ -103,7 +103,7 @@ Stage 1 is an audit, **no code changes**:
 - [x] Rules from the owner: existing functionality is not refactored or removed just to build the UI;
       a facade without a real consumer is never presented as production-ready.
 - [x] Deliver the classified list for owner review before any AI is allowed to modify code.
-      → `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` (main @ 0689f5d4, 2026-10-08). Requirements: 194 rows,
+      → `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md` (main @ 0689f5d4, 2026-10-08). Requirements: 194 rows,
       53 IMPLEMENTED / 94 PARTIAL / 6 UNWIRED (27 components) / 41 MISSING. UX: 35 rows, 0 / 23 / 0 / 12.
       Spot-checked by the orchestrator: static "ALL SYSTEMS NORMAL"/"SHIELD ARMED" text, `ComplianceAuditEngine`
       CONFORM lines 52/75 unconditional, `Finding.ContradictingEvidence` declared and never set.
@@ -111,7 +111,7 @@ Stage 1 is an audit, **no code changes**:
 - [ ] Owner: explicit go for stage 2 (WP0 first, then WP1 ∥ WP12).
 
 ## STAGE 2 — LogAnalyzer (started 2026-10-08, owner "start etapa 2")
-Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 final owner decisions).
+Spec: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 final owner decisions).
 - [x] WP0 baseline & governance (#227, merged a082dfca) (PR `loganalyzer/wp0-baseline`): CUR update, audit + contracts copied to docs/dfir, historical banners, Windows CI baseline.
 - [x] WP1 honest shell (#228, merged 1ad7882a) (PR `loganalyzer/wp1-honest-shell`): static safety text, CONFORM without evidence → not assessed, APT page renamed, test-alert label, unwired facades marked.
 - [x] WP12 tests & release gate (#229, merged 94020777) (PR `loganalyzer/wp12-release-gate`): synthetic corpus in CI, gate script + CI job (report on PRs, enforce on release), waiver format, CodeQL C#, PR212 #3/#4.
@@ -163,7 +163,7 @@ HG 585 accreditation analysis is verified.
       - Collection and interpretation fully deterministic without AI; a test runs the full pipeline with the AI
         layer absent and asserts identical findings.
       - Supported Windows (decision 15): Win 11 23H2/24H2/25H2, **Win 10 LTSC 2019/2021 (incl. IoT)**, Server 2022/2025
-        fully; Server 2016/2019, Win 10 22H2, LTSB 2016 best effort. Fix list: `tasks/loganalyzer/WINDOWS_TOOLING_COMPAT.md`.
+        fully; Server 2016/2019, Win 10 22H2, LTSB 2016 best effort. Fix list: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/WINDOWS_TOOLING_COMPAT.md`.
       - Never use wmic (owner rule); PowerShell 5.1 or in-process APIs. Replace or report tools that may be missing; `AuditCollector.ps1` must ship inside the
         package (today it is missing — see security fixes).
 - [ ] WP3: case field "system category" (air-gapped network / standalone PC / connected × classified / unclassified)
@@ -181,7 +181,7 @@ The owner will accredit LogAnalyzer to run on accredited internal SIC (classifie
 air-gapped networks / standalone PCs. The app's own behaviour and documentation must satisfy HG 585/2002
 (INFOSEC) + Legea 182/2002 (and NIS2 / 2024/2690 where unclassified).
 **PARKED (owner, 2026-10-08): build the app first; accreditation comes after, with data the owner will supply.**
-- [ ] Keep the requirements + gap analysis (`tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`) and its quote
+- [ ] Keep the requirements + gap analysis (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/HG585_ACCREDITATION_REQUIREMENTS.md`) and its quote
       sources on this branch for later. Do not start WP-ACR work until the owner returns with the accreditation data.
 
 ## Owner answers to mapping Q1–Q10 (2026-10-08) → audit §8 decisions 16–25

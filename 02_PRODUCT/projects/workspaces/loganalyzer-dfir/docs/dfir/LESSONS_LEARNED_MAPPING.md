@@ -6,8 +6,8 @@
 
 | Element | Valoare |
 |---|---|
-| Intrare nouă | `tasks/loganalyzer/LOGANALYZER_LESSONS_LEARNED_COMPLETE.md` (107 secțiuni; tokenii "citeturn…" ignorați) |
-| Reutilizat (neverificat din nou) | `CONTRACT_AUDIT_STAGE1.md` (rânduri R1-R23 / U1-U25, §7 WP0-WP12, §8 deciziile 1-15), cele două contracte, `tasks/todo.md` (WP-ED, WP-PKG, WP2 în lucru), `WINDOWS_TOOLING_COMPAT.md`, `HG585_ACCREDITATION_REQUIREMENTS.md` (parcat; doar fapte de cod) |
+| Intrare nouă | `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/LOGANALYZER_LESSONS_LEARNED_COMPLETE.md` (107 secțiuni; tokenii "citeturn…" ignorați) |
+| Reutilizat (neverificat din nou) | `CONTRACT_AUDIT_STAGE1.md` (rânduri R1-R23 / U1-U25, §7 WP0-WP12, §8 deciziile 1-15), cele două contracte, `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/STAGE2_PLAN.md` (WP-ED, WP-PKG, WP2 în lucru), `WINDOWS_TOOLING_COMPAT.md`, `HG585_ACCREDITATION_REQUIREMENTS.md` (parcat; doar fapte de cod) |
 | Cod verificat | `origin/main` @ `94020777d` (WP12 îmbinat), doar pentru elementele NOU/EXTINDE, prin `git archive` + grep (fără worktree, nimic rulat) |
 | Prescurtări căi | față de `02_PRODUCT/projects/workspaces/loganalyzer-dfir/`: DC=`LogAnalyzer.Dfir.Core/`, DW=`LogAnalyzer.Dfir.Windows/`, App=`LogAnalyzer.App/`, Core=`LogAnalyzer.Core/`, PIPE=`DW/Investigation/InvestigationPipeline.cs` |
 | Verdict | ACOPERIT = deja în rând/WP/decizie; NOU = absent din orice rând; EXTINDE <rând> = rând existent, dar documentul adaugă conținut material |

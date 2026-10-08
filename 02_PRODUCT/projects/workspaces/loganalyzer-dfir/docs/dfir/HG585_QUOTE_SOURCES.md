@@ -1,6 +1,6 @@
 # Surse și citate — verificare prin sondaj (HG 585 / INFOSEC / NIS2)
 
-Generat 2026-10-08 pentru `tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`. Pentru fiecare citat: sursa, URL/fișier, rândurile din textul extras, contextul de dinainte și de după și (pentru HG 585) controlul încrucișat în celelalte două copii.
+Generat 2026-10-08 pentru `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/HG585_ACCREDITATION_REQUIREMENTS.md`. Pentru fiecare citat: sursa, URL/fișier, rândurile din textul extras, contextul de dinainte și de după și (pentru HG 585) controlul încrucișat în celelalte două copii.
 
 Texte extrase (pdftotext / conversie HTML) din scratchpad: `src/legistm.txt`, `src/asist.txt`, `src/snppc1.txt`, `acr/src/Lege_182.2002.txt`, `acr/src/i2.txt`, `acr/src/ghid.txt`, `acr/src/nis2.txt`, `acr/src/r2690.txt`, `src/oug_raw.txt`. «Rânduri» = numere de rând din aceste fișiere.
 

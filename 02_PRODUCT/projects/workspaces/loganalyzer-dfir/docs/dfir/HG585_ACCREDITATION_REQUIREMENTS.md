@@ -1083,7 +1083,7 @@ Atribuția agenției de securitate pentru informatică și comunicații privind 
 ### 2.0 Metodă și limite
 
 * Cod analizat: `origin/main` @ `126a2bd015d0de3a87ddfbaa200d488bbf093265` (git worktree detașat în scratchpad, eliminat la final). Aplicația: `02_PRODUCT/projects/workspaces/loganalyzer-dfir/` (.NET 10 / WPF, `LogAnalyzer.slnx` cu 9 proiecte; aplicația livrată = `LogAnalyzer.App`).
-* Auditul stage-1 (`tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md`, pe ramura `claude/wonderful-bohr-iifqfn`) a fost făcut pe `0689f5d48`. `git diff --stat 0689f5d48 origin/main -- 02_PRODUCT/projects/workspaces/loganalyzer-dfir` este **gol**: niciun fișier al aplicației nu s-a schimbat între timp, deci rândurile stage-1 (`R…`/`U…`) rămân valabile și sunt doar **referite**, nu refăcute.
+* Auditul stage-1 (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md`, pe ramura `claude/wonderful-bohr-iifqfn`) a fost făcut pe `0689f5d48`. `git diff --stat 0689f5d48 origin/main -- 02_PRODUCT/projects/workspaces/loganalyzer-dfir` este **gol**: niciun fișier al aplicației nu s-a schimbat între timp, deci rândurile stage-1 (`R…`/`U…`) rămân valabile și sunt doar **referite**, nu refăcute.
 * Verificare: cod citit și `grep`; **nu** s-a rulat aplicația (mediu Linux, aplicația e WPF/Windows) și nu s-au rulat teste noi. Orice afirmație despre comportament la rulare este derivată din cod și marcată «neverificat» dacă nu e demonstrabilă din cod.
 * Căi relative la rădăcina aplicației. Abrevieri: **DC** = `LogAnalyzer.Dfir.Core/`, **DW** = `LogAnalyzer.Dfir.Windows/`, **DT** = `LogAnalyzer.Dfir.Tests/`, **App** = `LogAnalyzer.App/`, **Core**/**Infra** = `LogAnalyzer.Core/`, `LogAnalyzer.Infrastructure/`, **PIPE** = `DW/Investigation/InvestigationPipeline.cs`.
 * Verdicte: **MEETS** (cerința e îndeplinită, cu dovadă), **PARTIAL**, **MISSING**, **N/A** (NOT_APPLICABLE software), **—** (nu se aplică profilului respectiv). Verdictul pe profil diferă acolo unde cerința diferă (de ex. NET-01).
@@ -1246,7 +1246,7 @@ Inventarul (versiuni, licențe din `.nuspec` oficiale) este în **Anexa A** (Par
 
 ### 3.1 Design: două aplicații (decizia proprietarului nr. 13, 2026-10-08) și profilul semnat pentru P2/P3
 
-> Decizia nr. 13 (rândul 13 din `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md`, commit `900e570c0`) a fost luată **în timpul** acestei analize și înlocuiește varianta inițială «un singur binar, trei profiluri la runtime». Proiectul de mai jos o urmează; ce nu e acoperit de decizie este marcat «de decis».
+> Decizia nr. 13 (rândul 13 din `02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md`, commit `900e570c0`) a fost luată **în timpul** acestei analize și înlocuiește varianta inițială «un singur binar, trei profiluri la runtime». Proiectul de mai jos o urmează; ce nu e acoperit de decizie este marcat «de decis».
 
 | Element | Proiect |
 |---|---|
