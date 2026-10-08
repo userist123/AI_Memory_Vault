@@ -44,6 +44,15 @@ regexes = [
   '''test_secret_for_ablation_harness_32chars''',
 ]
 
+# A format label, not a credential: `APPROVAL_TOKEN_VERSION = "b2m-owner-approval-v2"` in
+# book_to_memory_lifecycle.py names the owner-approval token format (generic-api-key matched the
+# variable name containing "TOKEN"). The signing secret never appears in source.
+[[allowlists]]
+description = "Book-to-Memory approval token format label"
+regexes = [
+  '''b2m-owner-approval-v2''',
+]
+
 # Placeholder credentials in imported third-party CI workflows.
 #
 # Narrow on purpose: this covers .github/workflows files inside
