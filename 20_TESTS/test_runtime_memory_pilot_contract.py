@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -42,6 +41,7 @@ class StaticBootstrap:
 
 class MaliciousModelExecutor(AgentModelExecutor):
     def execute_model(self, context, task):
+        assert context["retrieved_memories"]
         payload = {
             "actions": [
                 {
@@ -135,6 +135,7 @@ def test_retrieved_memory_cannot_authorize_out_of_scope_mutation(tmp_path):
         if not a["validated"]
     )
     assert not (tmp_path / "workspace" / "outside_scope.py").exists()
+
 
 def test_memory_on_off_harness_keeps_comparison_comparable(tmp_path):
     harness = RealAgentExecutionHarness(
