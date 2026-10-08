@@ -819,9 +819,15 @@ class RealAgentExecutionHarness:
             if not meta_sha:
                 raise ExecutionContractError(f"bootstrap provenance missing: {expected_path}")
 
+            total_lines = int((metadata.get("integrity") or {}).get("lines") or 0)
+            if total_lines < 1:
+                raise ExecutionContractError(f"bootstrap line count missing: {expected_path}")
+
             chunks: List[str] = []
             chunk_evidence: List[Dict[str, Any]] = []
-            for line_start, line_end in ranges:
+            chunk_size = 20
+            for line_start in range(1, total_lines + 1, chunk_size):
+                line_end = min(total_lines, line_start + chunk_size - 1)
                 read = access.read(uri, line_start=line_start, line_end=line_end)
                 if read.get("code") != "OK":
                     raise ExecutionContractError(
@@ -829,13 +835,9 @@ class RealAgentExecutionHarness:
                     )
                 evidence = read.get("evidence") or []
                 integrity = read.get("integrity") or {}
-                if not evidence or not integrity.get("sha256"):
+                if not evidence or integrity.get("sha256") != meta_sha:
                     raise ExecutionContractError(
-                        f"bootstrap evidence missing: {expected_path}"
-                    )
-                if integrity["sha256"] != meta_sha:
-                    raise ExecutionContractError(
-                        f"bootstrap stale/drifted during read: {expected_path}"
+                        f"bootstrap evidence/integrity mismatch: {expected_path}: L{line_start}-L{line_end}"
                     )
                 first = evidence[0]
                 if first.get("truncated") or read.get("next"):
@@ -942,6 +944,45 @@ class RealAgentExecutionHarness:
             })
 
         return findings
+
+    def _contract_for_task(self, task: AgentTask) -> ExecutionContract:
+        return ExecutionContract(
+            allowed_files=tuple(dict.fromkeys(
+                [task.target_file] + ([task.test_file] if task.test_file else [])
+            )),
+            protected_paths=(
+                ".git",
+                ".github",
+                "00_GOVERNANCE",
+                "01_ARCHITECTURE",
+                "02_DATA",
+                "03_IMPLEMENTATION",
+                "04_CONFIG",
+                "05_TOOLS",
+                "06_INBOX",
+                "07_EVALUATION",
+                "30_SCRIPTS",
+            ),
+            allowed_actions=("write_file", "read_file", "run_command"),
+            acceptance_criteria=(
+                "workspace diff is limited to allowed files",
+                "verification command exits 0",
+            ),
+            evidence_required=(
+                "bootstrap_sources",
+                "context_hash",
+                "contract_hash",
+                "workspace_diff",
+                "verification",
+            ),
+            stop_conditions=(
+                "bootstrap conflict",
+                "out-of-scope diff",
+                "protected path mutation",
+                "missing required evidence",
+            ),
+            max_memory_results=2,
+        )
 
     def _load_bootstrap(self, task: AgentTask) -> Dict[str, Any]:
         provider = self.bootstrap_provider or self._default_bootstrap
