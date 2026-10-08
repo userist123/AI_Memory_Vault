@@ -924,7 +924,7 @@ class RealAgentExecutionHarness:
 
         # 4. Construct bounded execution context & calculate context hash
         context_memories: List[Dict[str, Any]] = []
-        for item in raw_results:
+        for item in raw_results[:execution_contract.max_memory_results]:
             if isinstance(item, dict) and item.get('id'):
                 content = item.get('content') or item.get('snippet') or ''
                 context_memories.append({
@@ -932,9 +932,14 @@ class RealAgentExecutionHarness:
                     'type': str(item.get('type', 'unknown')),
                     'lifecycle': str(item.get('lifecycle', 'unknown')),
                     'content': str(content)[:500],
+                    'authority': 'DATA_ONLY',
+                    'untrusted': True,
                 })
 
         execution_context: Dict[str, Any] = {
+            'bootstrap': bootstrap,
+            'execution_contract': contract_dict,
+            'contract_hash': contract_hash,
             'task_id': task_obj.task_id,
             'description': task_obj.description,
             'instructions': task_obj.instructions,
@@ -963,7 +968,7 @@ class RealAgentExecutionHarness:
             else:
                 # Parse and validate actions from model output
                 valid_actions, action_recs = _extract_and_validate_actions(
-                    model_record.response_text, authorized_role, ws_path
+                    model_record.response_text, authorized_role, ws_path, execution_contract
                 )
                 action_records.extend(action_recs)
 
@@ -1021,9 +1026,29 @@ class RealAgentExecutionHarness:
                     )
                 )
 
-        # 9. Capture workspace changes
+        # 9. Capture workspace changes and enforce the contract before verification.
         current_snapshot = _snapshot_directory(ws_path)
         workspace_diff = _calculate_workspace_diff(initial_snapshot, current_snapshot)
+        changed_paths = set(
+            workspace_diff.files_created
+            + workspace_diff.files_modified
+            + workspace_diff.files_deleted
+        )
+        allowed_paths = set(execution_contract.allowed_files)
+        out_of_scope = sorted(changed_paths - allowed_paths)
+        protected_touched = sorted(
+            path for path in changed_paths
+            if any(
+                path == protected or path.startswith(protected.rstrip("/") + "/")
+                for protected in execution_contract.protected_paths
+            )
+        )
+        if out_of_scope or protected_touched:
+            policy_error = "execution contract violated"
+            if out_of_scope:
+                policy_error += f": out_of_scope={out_of_scope}"
+            if protected_touched:
+                policy_error += f": protected={protected_touched}"
 
         # 10 & 11. Run verification/test & capture result
         v_cmd = verification_command or task_obj.verification_command
