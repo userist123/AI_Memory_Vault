@@ -30,11 +30,11 @@ class StaticBootstrap:
         return {
             "sources": [
                 {"name": "AGENTS.md", "uri": "vault://governance/agents", "sha256": "a" * 64,
-                 "text": "Repository rules"},
+                 "text": "Repository rules", "evidence_level": "TEST_FIXTURE"},
                 {"name": "CLAUDE.md", "uri": "vault://governance/claude", "sha256": "b" * 64,
-                 "text": "Execution rules"},
+                 "text": "Execution rules", "evidence_level": "TEST_FIXTURE"},
                 {"name": "VAULT_STATE.md", "uri": "vault://governance/vault_state", "sha256": "c" * 64,
-                 "text": "Current state"},
+                 "text": "Current state", "evidence_level": "TEST_FIXTURE"},
             ],
             "authority": "TEST_FIXTURE",
             "evidence_level": "TEST_FIXTURE",
