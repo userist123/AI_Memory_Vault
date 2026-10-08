@@ -1,0 +1,100 @@
+namespace LogAnalyzer.Dfir.Analysis;
+
+/// <summary>
+/// What a parser's output can and cannot establish (lessons learned §2). Data only: it is attached to the Limitations of
+/// every finding that rests on that parser's rows, so "Amcache" can never read as "executed".
+/// </summary>
+public sealed record ParserCapabilities(
+    string ParserId, IReadOnlyList<string> CanProve, IReadOnlyList<string> CannotProve,
+    IReadOnlyList<string> Limitations, IReadOnlyList<string> CorrelationSources)
+{
+    private static ParserCapabilities C(string id, string[] can, string[] cannot, string[] limits, string[] corr) => new(id, can, cannot, limits, corr);
+
+    public static IReadOnlyList<ParserCapabilities> All { get; } =
+    [
+        C("EvtxParser",
+            ["Că Windows a înregistrat evenimentul, cu ora și câmpurile lui."],
+            ["Că jurnalul e complet (înregistrări șterse sau suprascrise nu apar).", "Intenția sau identitatea reală din spatele unui cont."],
+            ["Depinde de politica de audit activă la momentul evenimentului.", "Jurnalele circulare pierd evenimentele vechi."],
+            ["Prefetch, SRUM, Amcache pentru aceeași activitate."]),
+        C("PrefetchParser",
+            ["Că executabilul a fost pornit (număr de rulări, ultimele rulări, fișiere referite în primele secunde)."],
+            ["Cine a pornit programul.", "Că scripturile sau fișierele referite au fost executate sau citite integral.", "Că programul mai există pe disc."],
+            ["Prefetch poate fi dezactivat (servere) sau golit; păstrează doar ultimele 8 rulări.", "Ora ultimei rulări e a procesului, nu a unei acțiuni a utilizatorului."],
+            ["BAM, UserAssist, SRUM, EVTX 4688."]),
+        C("AmcacheParser",
+            ["Că o intrare pentru fișier a fost scrisă în Amcache (prezență/instalare, cu hash SHA-1 și editor)."],
+            ["Că fișierul a fost executat.", "Ce utilizator l-a rulat sau când a rulat."],
+            ["Ora intrării e ora scrierii în Amcache, nu a unei rulări.", "Hive-ul poate lipsi sau fi parțial actualizat."],
+            ["Prefetch, BAM, EVTX 4688 pentru execuție."]),
+        C("SystemHiveExecutionParser",
+            ["BAM: ultima activitate de execuție per utilizator și cale.", "ShimCache: că o cale a fost văzută de subsistemul de compatibilitate."],
+            ["ShimCache: că fișierul a fost executat (ora este a ultimei modificări a fișierului).", "BAM: rulări anterioare ultimei."],
+            ["BAM păstrează o singură oră per cale și se curăță la repornire în anumite versiuni.", "ShimCache e scris în memorie și ajunge în hive la oprire."],
+            ["Prefetch, Amcache, EVTX 4688."]),
+        C("UserHiveParser",
+            ["UserAssist: lansări din Explorer/meniul Start (GUI) de către acel utilizator."],
+            ["Rulări din linia de comandă, servicii sau alte metode de pornire."],
+            ["Numele sunt codate ROT13; contoarele pot fi resetate de utilizator."],
+            ["Prefetch, BAM."]),
+        C("SoftwareHiveParser",
+            ["Ce configurație de pornire automată (Run/RunOnce, Winlogon) există în hive."],
+            ["Că intrarea a rulat sau că a fost creată de un atacator.", "Cine a scris valoarea."],
+            ["Ora este LastWriteTime al cheii, nu al valorii."],
+            ["Prefetch, EVTX 7045/4697, TaskScheduler."]),
+        C("ServicesParser",
+            ["Ce servicii/drivere sunt configurate în hive-ul SYSTEM (cale, mod de pornire, cont)."],
+            ["Că serviciul a pornit vreodată.", "Când a fost instalat (ora e a oricărei modificări a cheii)."],
+            ["Un ControlSet inactiv poate diferi de cel curent."],
+            ["EVTX System 7045/7036, Prefetch."]),
+        C("UsbDevicesParser",
+            ["Că un dispozitiv de stocare USB a fost recunoscut de sistem (identitate, ore de conectare/deconectare unde există)."],
+            ["Că s-au copiat sau citit fișiere de pe/pe dispozitiv.", "Ce utilizator l-a folosit, dacă lipsesc alte surse."],
+            ["MountedDevices păstrează identitatea, nu momentul."],
+            ["LNK, JumpList, EVTX (Kernel-PnP), ShellBags."]),
+        C("LnkParser",
+            ["Că există un shortcut către o țintă, cu metadatele țintei la crearea/modificarea lui."],
+            ["Că ținta a fost deschisă de utilizator.", "Că ținta mai există."],
+            ["Datele sunt cele din antetul LNK, nu momentul deschiderii."],
+            ["JumpList, Prefetch, Amcache."]),
+        C("JumpListParser",
+            ["Că o aplicație a înregistrat un element în lista sa recentă (cu ultima utilizare)."],
+            ["Că documentul a fost deschis în mod demonstrat de utilizator.", "Conținutul elementului."],
+            ["Înregistrările pot fi șterse de utilizator sau de curățare."],
+            ["LNK, Prefetch."]),
+        C("UsnJournalParser",
+            ["Că s-a înregistrat o modificare NTFS (creare, ștergere, redenumire) pentru un nume de fișier."],
+            ["Cine a făcut modificarea.", "Conținutul fișierului."],
+            ["Jurnalul e circular; modificările vechi dispar.", "Exportul fsutil convertește ora locală în UTC cu fusul cazului."],
+            ["MFT, Prefetch, EVTX."]),
+        C("ScheduledTaskParser",
+            ["Ce configurație are un task programat (acțiune, declanșatori, cont, ascuns/activ)."],
+            ["Că taskul a rulat.", "Cine l-a creat (autor este scris de creator)."],
+            ["Data de înregistrare e furnizată de autor și poate fi falsificată."],
+            ["EVTX TaskScheduler 106/200/201, Security 4698, Prefetch."]),
+        C("SrumNetworkParser",
+            ["Că o aplicație a folosit rețeaua într-un interval orar, cu volume de octeți."],
+            ["Destinația traficului.", "Conținutul transferului.", "Intenția."],
+            ["Agregat orar (~1h), nu eveniment individual."],
+            ["Prefetch, firewall, PCAPNG."]),
+        C("PcapngParser",
+            ["Ce pachete/fluxuri au fost capturate în interval, pe interfața capturată."],
+            ["Ce s-a întâmplat în afara capturii sau pe alte interfețe.", "Conținutul traficului criptat."],
+            ["Captura poate fi trunchiată sau filtrată."],
+            ["Jurnale firewall, SRUM, DNS."]),
+        C("BrowserHistoryParser",
+            ["Că browserul a înregistrat o vizită sau o descărcare (adresă, oră)."],
+            ["Că utilizatorul a văzut sau a deschis fișierul descărcat.", "Că descărcarea a fost rulată."],
+            ["Istoricul poate fi șters sau profilul poate lipsi."],
+            ["Prefetch, BAM, Zone.Identifier."]),
+        C("FirefoxHistoryParser",
+            ["Că Firefox a înregistrat o vizită sau o descărcare (adresă, oră)."],
+            ["Că utilizatorul a văzut sau a deschis fișierul descărcat.", "Că descărcarea a fost rulată."],
+            ["Istoricul poate fi șters sau profilul poate lipsi."],
+            ["Prefetch, BAM, Zone.Identifier."]),
+    ];
+
+    private static readonly Dictionary<string, ParserCapabilities> ById = All.ToDictionary(c => c.ParserId, StringComparer.Ordinal);
+
+    public static ParserCapabilities? For(string parserId) => ById.GetValueOrDefault(parserId);
+}
