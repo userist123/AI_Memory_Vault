@@ -6,7 +6,7 @@ export interface ConsultingTicket {
   userId: string;
   userEmail: string;
   userName?: string | null;
-  userPlan: 'free' | 'pro' | 'elite';
+  userPlan: 'free' | 'pro' | 'elite' | 'autopilot';
 
   subject: string;
   category: 'fiscal' | 'trading' | 'technical' | 'billing' | 'other';
