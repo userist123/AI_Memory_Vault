@@ -128,6 +128,7 @@ Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 fina
       `license.lic` is committed, so anyone with the repo can mint licences. Fix needs an owner decision:
       asymmetric signing (owner keeps the private key offline, app ships only the public key). Then rotate,
       remove the committed licence file from the tree.
+      **Owner (2026-10-08): do it after the app is finished; orchestrator explains the procedure to the owner then.**
 - [ ] Hardcoded demo identity "LAB-PC\Owner" in `ViewModels/MainViewModel.cs:645-659` (workspace-root legacy
       demo data): label as demo or drop from production views (decision 4: legacy root files untouched unless
       they present fake data as real → WP1 scope).
