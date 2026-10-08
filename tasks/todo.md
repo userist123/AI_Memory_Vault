@@ -128,9 +128,17 @@ Scope: systems with and without classified information (air-gapped networks, sta
 ## App requirements — audit-data handling inside LogAnalyzer (owner, 2026-10-08)
 Independent of the standalone audit-log document. Each item cites its provision once the
 HG 585 accreditation analysis is verified.
-- [ ] Deployment profiles selected by signed policy at install, not downgradable by the operator:
-      P1 classified air-gapped (HG 585/2002 INFOSEC + Legea 182/2002 + ORNISS), P2 unclassified air-gapped
-      (NIS2 / 2024/2690 / OUG 155/2024 / DNSC), P3 internet-connected (same, plus internet-facing controls).
+- [ ] **Two applications (owner, 2026-10-08):**
+      - **P1 — classified edition**: separate build/executable. Network, remote AI, host-modifying actions
+        (containment, firewall, powershell/auditpol changes) and updates are NOT compiled in (absent, not disabled).
+        Adds classification marking, INFOSEC roles, full user-action audit.
+      - **P2/P3 — unclassified edition**: one executable, two modes chosen by signed policy at install and not
+        downgradable by the operator: P2 air-gapped (network off), P3 connected (network on, secured: TLS,
+        signed updates, AI endpoint policy). Keeps all existing functionality.
+      - Shared core libraries (parsers, evidence, timeline, verification, custody) used by both; nothing duplicated.
+      - New work package **WP-ED (edition split)** after WP0/WP1/WP12 merge and before WP3: inventory which
+        assemblies carry network/host-modifying code, move them behind edition boundaries (no removal),
+        two build outputs in CI, test that the P1 build contains none of the excluded code.
 - [ ] WP3: case field "system category" (air-gapped network / standalone PC / connected × classified / unclassified)
       driving collection, export and retention rules.
 - [ ] WP3: read-only collection + SHA-256 at acquisition; the app never deletes or clears logs on the source system.

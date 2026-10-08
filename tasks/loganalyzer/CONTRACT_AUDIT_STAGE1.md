@@ -479,6 +479,7 @@ as final after a follow-up recommendation, same day).
 | 10 | The app first **exports Vault proposals** for submission; a direct `memory_propose` call comes later. (Note: PR #209 is already merged; CUR's "open security review" reference is stale.) |
 | 11 | WP3 adds lifecycle **states only**: ACQUIRED -> VERIFIED -> IN_ANALYSIS -> ARCHIVED, plus DISPOSED set manually; every transition is written to the custody log. **No automatic deletion.** Retention is a per-case configurable field, empty by default; the app only warns when it is exceeded. Legal values (NIS2/DNSC) are filled in later without restructuring. |
 | 12 | The "APT Attribution" page is **renamed** to technique overlap and states explicitly that it is not attribution. |
+| 13 | **Two applications.** P1 (classified) is a separate build: network, remote AI, host-modifying actions and updates are not compiled in. P2/P3 (unclassified) is one application with two modes (air-gapped / connected) set by signed policy at install, not downgradable by the operator; it keeps all existing functionality. Both share the core libraries. A new WP-ED (edition split) runs after WP0/WP1/WP12 and before WP3. |
 
 With questions 1, 2, 3, 8 and 9 answered, the precondition at the end of section 7 is met. Stage 2 code still
 starts only on the owner's explicit go, in the WP order of section 7.
