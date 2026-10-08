@@ -154,6 +154,15 @@ When multiple AI development environments/agents (Antigravity, Claude Code, Chat
 4. **Protected Core Invariant**: Never modify frozen cognitive core modules (`Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`) unless explicitly required by an audited specification. All core contracts are validated against the cognitive-core protected-boundary tests.
 5. **No Speculation**: Never mark tasks done without attaching empirical execution proof (passing `pytest` suite output).
 
+## Agent checkpoints and token economy
+
+Owner rule: every agent keeps a short checkpoint file `00_GOVERNANCE/coordination/tasks/todo-<agent-name>.md`
+(task, branch/PR, done, next steps, blockers, key files), updates it at every milestone and before stopping, and
+commits it with its work. On a cold resume, read only that checkpoint and the files it points to, never the whole
+previous conversation; restart work as a new agent from the checkpoint instead of resuming a long transcript.
+Read excerpts rather than whole files, run the full suite once before the final push, and prefer one agent at a
+time. Full protocol and template: `00_GOVERNANCE/coordination/tasks/README.md`.
+
 ## Global Production-Consumer Rule
 
 Before constructing a new layer over a component, verify who consumes that component in the production path:
