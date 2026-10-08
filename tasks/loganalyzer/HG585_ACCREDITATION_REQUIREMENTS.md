@@ -6,6 +6,7 @@
 
 ## Rezumat
 
+* **Decizia proprietarului nr. 13** (luată în timpul analizei; `CONTRACT_AUDIT_STAGE1.md` rândul 13): P1 = aplicație separată, P2/P3 = o aplicație cu două moduri prin politică semnată; §3.1 o urmează.
 * **Scop (trei profiluri):** P1 clasificat (HG 585/2002 + Legea 182/2002), P2 neclasificat izolat și P3 conectat (NIS2 / OUG 155/2024 / ordinele DNSC; Reg. 2024/2690 doar ca referință tehnică).
 * **Cerințe:** 159 fragmente verbatim, dintre care 109 din HG 585/2002 (anexa, cap. 8 «Protecția surselor generatoare de informații – INFOSEC», art. 236-337, plus art. 3, 14-15, 21-23, 45-49, 56, 65, 76-79, 88, 338), Legea 182/2002, INFOSEC 2 (public), Ghidul PrOpSec (public), Dir. 2022/2555 art. 21, OUG 155/2024 și Reg. 2024/2690 (anexă).
 * **Golurile aplicației (55 de cerințe derivate):**
@@ -51,7 +52,7 @@ Forma consolidată oficială a HG 585/2002 la zi (copiile folosite sunt consolid
 | **P2 — NECLASIFICAT, IZOLAT** | rețele izolate și PC-uri standalone fără informații clasificate | NIS2 (Dir. 2022/2555) art. 21 alin. (2) + OUG 155/2024 + ordinele DNSC; Reg. 2024/2690 doar dacă entitatea este de tipul din art. 1 al regulamentului | — |
 | **P3 — CONECTAT** | rețele / PC-uri conectate direct la internet | la fel ca P2 | + cerințe specifice sistemelor expuse: gestionarea vulnerabilităților, actualizări sigure, securitatea rețelei, comunicații securizate, lanț de aprovizionare |
 
-**Interpretare (neverificat juridic):** aplicația se construiește să satisfacă **reuniunea** cerințelor; P1 este profilul cel mai strict. OUG 155/2024 își delimitează scopul la „spațiul cibernetic național civil” (art. 2 alin. (1) lit. a), mai jos), iar art. 63 prevede doar informarea instituțiilor din domeniul informațiilor clasificate; rezultă că SIC acreditate pentru informații clasificate sunt guvernate de HG 585/2002, nu de OUG 155/2024. Dacă proprietarul sau clienții săi sunt „entități esențiale/importante” în sensul OUG 155/2024 este o chestiune **neverificată** și nu poate fi stabilită din repo.
+**Decizia proprietarului nr. 13 (2026-10-08):** P1 este o **aplicație separată** (rețea, AI la distanță, acțiuni asupra gazdei și actualizări necompilate); P2/P3 este **o aplicație cu două moduri** alese prin politică semnată (vezi §3.1). **Interpretare (neverificat juridic):** cerințele P1 sunt cele mai stricte. OUG 155/2024 își delimitează scopul la „spațiul cibernetic național civil” (art. 2 alin. (1) lit. a), mai jos), iar art. 63 prevede doar informarea instituțiilor din domeniul informațiilor clasificate; rezultă că SIC acreditate pentru informații clasificate sunt guvernate de HG 585/2002, nu de OUG 155/2024. Dacă proprietarul sau clienții săi sunt „entități esențiale/importante” în sensul OUG 155/2024 este o chestiune **neverificată** și nu poate fi stabilită din repo.
 
 ### 1.2 Statutul surselor
 
@@ -254,7 +255,7 @@ Forma consolidată oficială a HG 585/2002 la zi (copiile folosite sunt consolid
 > b) extrase din cerințele de securitate a comunicațiilor, pentru a include, de exemplu, procedurile operaționale criptografice pentru produsele și mecanismele criptografice în uz;  
 > c) proceduri pentru controlul personalului tehnic sau al altor categorii de personal suport care necesită accesul în zona SIC sau în zonele terminalelor/stațiilor de lucru aflate la distanță;  
 > d) proceduri pentru controlul mediilor de stocare, a componentelor software și hardware autorizate, care sunt proprietate privată;  
-> e) proceduri pentru controlul echipamentelor și componentelor software autorizate ale contractorilor. Securitatea fizică  
+> e) proceduri pentru controlul echipamentelor și componentelor software autorizate ale contractorilor.  
 
 > **HG 585/2002, anexa, art. 259** · `[HG-259]`  
 > Articolul 259  
@@ -386,7 +387,7 @@ Forma consolidată oficială a HG 585/2002 la zi (copiile folosite sunt consolid
 > Cap. 5 "Securitatea SIC“ din cuprinsul PrOpSec oferă detalii cu privire la metodele de utilizare și control al facilităților de protecție asigurate de componentele software, în special în ceea ce privește:  
 > a) conceptul de identificare (user-id) - procedurile pentru stabilirea conturilor de utilizatori, grupurile de utilizatori, alocarea identificatorilor de utilizator, procedurile pentru ștergerea conturilor de utilizator la părăsirea funcției/postului sau atunci când este detectată o compromitere a acestor date;  
 > b) conceptul de autentificare - modalități de autentificare (de exemplu: parole, token, mecanisme biometrice), proceduri de control și de schimbare, autoritatea emitentă, păstrarea evidenței pentru controlul acestor mijloace și persoana responsabilă, frecvența de schimbare și proceduri de utilizare a mecanismelor de autentificare;  
-> c) mecanisme de control al accesului - proceduri pentru implementarea controlului accesului discreționar/obligatoriu la informații/servicii/dispozitive; procedurile pentru stabilirea drepturilor și permisiunilor utilizatorilor pentru utilizarea serviciilor și resurselor SIC; detalii cu privire la autoritățile responsabile și la păstrarea evidențelor de control. Securitatea calculatoarelor Protecția împotriva software-ului malițios  
+> c) mecanisme de control al accesului - proceduri pentru implementarea controlului accesului discreționar/obligatoriu la informații/servicii/dispozitive; procedurile pentru stabilirea drepturilor și permisiunilor utilizatorilor pentru utilizarea serviciilor și resurselor SIC; detalii cu privire la autoritățile responsabile și la păstrarea evidențelor de control.  
 
 **Interpretare:** HG 585 definește *autenticitatea* (art. 237, mai sus) dar nu detaliază mecanismele; ele sunt în „reglementările emise de ORNISS” (INFOSEC 2 art. 49 alin. (1)) — **nepublice**. Din Ghidul PrOpSec rezultă că aplicația/SIC-ul trebuie să poată descrie: identificatori de utilizator, conturi, grupuri, ștergerea conturilor, mecanisme de autentificare, control de acces discreționar/obligatoriu și evidența controalelor.
 
@@ -423,7 +424,7 @@ Forma consolidată oficială a HG 585/2002 la zi (copiile folosite sunt consolid
 > e) responsabilitățile persoanelor care trebuie să ruleze și să valideze integritatea instrumentelor/programelor de management automat al securității și să desfășoare investigări și analize în cazul descoperirii de anomalii;  
 > f) proceduri de reacție la evenimente specifice, de exemplu, activarea alarmelor în timp real;  
 > g) detalii privind perioada de păstrare a fișierelor de audit;  
-> h) proceduri care trebuie urmate în cazul apariției de anomalii ale auditului. Securitatea criptografică  
+> h) proceduri care trebuie urmate în cazul apariției de anomalii ale auditului.  
 
 **Interpretare:** (1) „registre de acces” ținute *necondiționat prin software* (HG 291 alin. (1)) — acces la **informațiile clasificate în format electronic**, nu doar evenimente interne ale aplicației; (2) retenția se stabilește cu AAS, minimum 3 ani (secret, strict secret) / 10 ani (strict secret de importanță deosebită) — alin. (3); (3) INFOSEC 2 art. 43 cere trasabilitate și retenție aprobată de AAS; „trasabilitatea evenimentelor” pentru investigarea unei compromiteri presupune protecția jurnalelor împotriva alterării (inferență, nu text).
 
@@ -505,7 +506,7 @@ Forma consolidată oficială a HG 585/2002 la zi (copiile folosite sunt consolid
 > f) proceduri de audit și validare a componentelor software - ce, de către cine, cu ce frecvență și ce înregistrări se păstrează;  
 > g) copiile de siguranță ale sistemului - ce conțin și unde se păstrează, în ce formă, ce verificări se fac, cu ce frecvență și cine este autorizat să activeze/să folosească aceste copii;  
 > h) proceduri care trebuie urmate în caz de erori și ce înregistrări trebuie păstrate;  
-> i) controlul copiilor în format hârtie. Protecția antivirus a calculatoarelor  
+> i) controlul copiilor în format hârtie.  
 
 > **Ghid PrOpSec (DS 2), art. 32** · `[PRP-32]`  
 > Art. 32  
@@ -549,7 +550,7 @@ Forma consolidată oficială a HG 585/2002 la zi (copiile folosite sunt consolid
 > b) proceduri pentru verificarea mediilor de stocare (conținând informații și software) primite din surse externe, incluzând proceduri pentru dezinfectarea lor;  
 > c) proceduri pentru verificarea mesajelor electronice și a atașamentelor primite din surse externe pentru a identifica eventuala prezență a software-ului malițios;  
 > d) proceduri care trebuie urmate de către utilizatori în cazul detectării unor evenimente cauzate de software malițios;  
-> e) proceduri pentru raportarea incidentelor cauzate de viruși atât către expeditorul mediului de stocare infectat, cât și la AAS, folosindu-se formularul din Directiva privind managementul INFOSEC pentru sisteme informatice și de comunicații - INFOSEC 3, aprobată prin Ordinul directorului general al Oficiului Registrului Național al Informațiilor Secrete de Stat nr. 484/2003. Managementul și auditul automat al securității  
+> e) proceduri pentru raportarea incidentelor cauzate de viruși atât către expeditorul mediului de stocare infectat, cât și la AAS, folosindu-se formularul din Directiva privind managementul INFOSEC pentru sisteme informatice și de comunicații - INFOSEC 3, aprobată prin Ordinul directorului general al Oficiului Registrului Național al Informațiilor Secrete de Stat nr. 484/2003.  
 
 ### 1.10 Marcarea informațiilor produse (rapoarte, exporturi)
 
@@ -1243,52 +1244,56 @@ Inventarul (versiuni, licențe din `.nuspec` oficiale) este în **Anexa A** (Par
 3. Orice element WP-ACR are **criteriu de acceptare testabil** și leagă cerința de textul din Partea 1.
 4. Limita onestă a protecției: un administrator local rău-intenționat poate înlocui executabilul sau cheia de verificare; profilul protejează împotriva modificării de către operator și a erorilor de configurare, nu împotriva unui administrator care controlează sistemul. Pentru P1 aceasta se acoperă prin CSS/PrOpSec (HG 240, 244, 277).
 
-### 3.1 Designul «profilului de desfășurare» (P1 / P2 / P3)
+### 3.1 Design: două aplicații (decizia proprietarului nr. 13, 2026-10-08) și profilul semnat pentru P2/P3
+
+> Decizia nr. 13 (rândul 13 din `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md`, commit `900e570c0`) a fost luată **în timpul** acestei analize și înlocuiește varianta inițială «un singur binar, trei profiluri la runtime». Proiectul de mai jos o urmează; ce nu e acoperit de decizie este marcat «de decis».
 
 | Element | Proiect |
 |---|---|
-| Selectare | un **fișier de profil semnat** (`LogAnalyzer.profile`, JSON + semnătură) pus la instalare într-un director cu ACL doar pentru administratori (de ex. `%ProgramData%\LogAnalyzer\`), verificat la pornire cu o cheie publică încorporată în binar (RSA-PSS/ECDSA; mecanism deja prezent în `App/Services/LicenseService.cs`, neînregistrat). |
-| Conținut | `profile` ∈ {P1, P2, P3}; `featureAllow[]` (lista explicită a funcțiilor permise); `retention` (ani pentru jurnal; ≥ 3 / 10 pentru P1 după nivel); `markingPolicy`; `exportPolicy`; `roles` (mapare pe grupuri Windows); `version` monoton; `notBefore`; opțional legare de hostname/hardware. |
-| Implicit | fișier **absent, invalid sau expirat ⇒ P1 efectiv** (fail-closed): funcțiile de rețea și de modificare a gazdei sunt oprite; build-urile P3 comerciale distribuie un profil P3 semnat. |
-| Nealterabil de operator | `--mode=` și `LogAnalyzer.mode` (`OperatingMode.cs:52-76`) sunt ignorate când există profil; coborârea (P1→P2→P3) cere un profil nou, cu `version` mai mare, semnat de deținătorul cheii; orice schimbare se jurnalizează (hash-ul profilului la fiecare pornire) și, în P1, cere regula celor doi. |
-| Aplicare | o singură clasă `FeatureGate.Require(Feature.X)` (extinde `NetworkPolicy.EnsureAllowed`, care există deja și e apelat în 8 locuri) apelată la **fiecare** punct cu efect de rețea sau asupra gazdei; matrice implicită mai jos. |
-| Verificare la build | analizor Roslyn «banned API» (`BannedSymbols.txt`) pentru `HttpClient`, `UdpClient`, `Socket`, `Process.Start`, `EventLogSession`, `DirectoryEntry`, `Registry.SetValue`…; lista de excepții = apelurile din spatele porții; testul eșuează dacă apare un apel nou fără poartă. |
-| Build acreditat | configurație MSBuild `Accredited` (`LA_NETWORK=false`, `LA_HOSTMODIFY=false`) care **exclude la compilare** `Core/Services/Network/*`, receptorul UDP, `EventLogSession` remote, PowerShell collector și acțiunile de modificare a gazdei; test post-build care scanează referințele asamblărilor (fără `System.Net.Http`/`Sockets` în afara modulului AI, dacă acesta este inclus). Funcționalitatea rămâne în build-ul standard. |
+| **Ediția P1 (clasificat)** | **executabil separat**; rețeaua, AI-ul la distanță, acțiunile care modifică gazda și actualizările **nu sunt compilate** («absente, nu dezactivate»). Adaugă marcaj de clasificare, roluri INFOSEC și audit complet al acțiunilor utilizatorului. Aceasta este exact cerința HG 282/305, I2-35/37 în forma cea mai solidă (absența codului). |
+| **Ediția P2/P3 (neclasificat)** | **un executabil**, două moduri — P2 izolat (rețea oprită), P3 conectat (rețea pornită și securizată: TLS, actualizări semnate, politică pentru endpoint-ul AI) — alese printr-o **politică semnată la instalare**, **nedegradabilă** de operator; păstrează toată funcționalitatea existentă. |
+| Bibliotecile comune | parsere, probe, cronologie, verificare, custodie — folosite de ambele; nimic duplicat. |
+| Politica semnată (P2/P3) | fișier `LogAnalyzer.policy` (JSON + semnătură) într-un director cu ACL doar pentru administratori (de ex. `%ProgramData%\LogAnalyzer\`), verificat la pornire cu o cheie publică încorporată (RSA-PSS/ECDSA; mecanismul există în `App/Services/LicenseService.cs`, neînregistrat); conține `mode` ∈ {P2, P3}, `featureAllow[]`, `retention`, `markingPolicy`, `exportPolicy`, `roles` (grupuri Windows), `version` monoton, `notBefore`. **Absentă / invalidă / expirată ⇒ P2** (fail-closed: fără rețea). |
+| Nedegradabil | `--mode=` și `LogAnalyzer.mode` (`OperatingMode.cs:52-76`) sunt ignorate când există politică; trecerea P2→P3 cere o politică nouă cu `version` mai mare, semnată de deținătorul cheii; hash-ul politicii se jurnalizează la fiecare pornire. În ediția P1 nu există mod de relaxat. |
+| Poartă comună | `FeatureGate.Require(Feature.X)` (extinde `NetworkPolicy.EnsureAllowed`, apelat deja în 8 locuri) la fiecare punct cu efect de rețea sau asupra gazdei în ediția P2/P3. |
+| Garanție de build | analizor Roslyn «banned API» (`BannedSymbols.txt`: `HttpClient`, `UdpClient`, `Socket`, `Process.Start`, `EventLogSession`, `DirectoryEntry`, `Registry.SetValue`…) cu listă de excepții = apelurile din spatele porții; **test post-build pe ediția P1** care scanează referințele și simbolurile asamblărilor și eșuează dacă apar tipurile excluse (cerința din decizia 13: «P1 build contains none of the excluded code»). |
+| Limită onestă | un administrator local rău-intenționat poate înlocui executabilul sau cheia de verificare; protecția este împotriva operatorului și a erorilor de configurare. Pentru P1 riscul rezidual se acoperă prin CSS/PrOpSec (HG 240, 244, 277). |
 
-**Matrice implicită a funcțiilor pe profil** (propunere; de aprobat de proprietar):
+**Matrice de funcții** (propunere; de aprobat de proprietar):
 
-| Funcție | P1 | P2 | P3 |
+| Funcție | P1 (ediție separată) | P2 | P3 |
 |---|---|---|---|
-| Parsare/corelare/grafic/rapoarte local | da | da | da |
-| AI local (loopback) | OFF implicit; ON doar prin profil + modelul înregistrat | OFF implicit; opțional | opțional |
-| Receptor syslog, colectare remote, jurnale DC/LDAP, SIEM, TI, M365 | OFF (compilate afară) | OFF | opțional cu TLS/auth |
-| Acțiuni asupra gazdei (firewall, auditpol, registru, suspendare proces) | OFF (compilate afară); când AAS le aprobă: regula celor doi | OFF implicit | opțional cu aprobare |
-| Sanitizare de fișiere | OFF implicit; doar cu aprobare și proces-verbal | opțional | opțional |
-| Export (CSV/STIX/ZIP/Vault) | doar cu marcaj + registru + (după nivel) aprobare | cu marcaj administrativ | liber, jurnalizat |
-| Licență hash+sare | nu se folosește; profilul semnat o înlocuiește | opțional | opțional |
+| Parsare / corelare / grafic / rapoarte local | da | da | da |
+| AI local (loopback) | **de decis** (decizia 13 exclude doar AI «remote»); propunere: inclus, implicit OFF, singurul cod `HttpClient`, doar loopback | opțional | opțional |
+| Receptor syslog, jurnale DC/LDAP, SIEM, TI, M365, colectare remote | **nu e compilat** | OFF | opțional, cu TLS/auth |
+| Acțiuni asupra gazdei (firewall, `auditpol`, registru, suspendare proces, PowerShell) | **nu e compilat** | OFF implicit | opțional, cu aprobare în 2 persoane |
+| Actualizări | **nu e compilat** | proces manual documentat | canal semnat |
+| Sanitizare de fișiere | de decis (modifică date; propunere: doar cu proces-verbal și aprobare) | opțional | opțional |
+| Export (CSV/STIX/ZIP/Vault) | doar cu marcaj + registru + aprobare după nivel | cu marcaj administrativ | liber, jurnalizat |
+| Licență hash+sare | nu (se înlocuiește cu verificare semnată) | opțional | opțional |
 
 ### 3.2 Lista ordonată WP-ACR
 
 | Nr. | Pachet | Cerințe (Partea 2) | Temei (Partea 1) | Aditiv? | Criteriu de acceptare |
 |---|---|---|---|---|---|
 | **WP-ACR-00** | **Adevăr în afirmații:** scoaterea/înlocuirea textelor «conform HG 585/NATO», a scorului 100 codificat, a citărilor greșite (art. 21/65), a etichetei «CLASSIFICATION CEILING»; marcarea conținutului simulat ca DEMO sau excluderea lui din build-ul de producție; test CI care interzice reintroducerea șirurilor fără sursă de evidență | DOC-01, DEL-01 | `[HG-21]`, `[HG-65]`, HG 318/322 | nu elimină funcții; elimină doar afirmații | `grep` din CI fără șirurile interzise; rapoartele afișează «Neevaluat» sau stare calculată din dovezi |
-| **WP-ACR-01** | Profil de desfășurare semnat + fail-closed P1 + registrul profilului în jurnal | NET-03, SW-05, HOST-02 | HG 241, 282, 329; I2-37 | da | test: profil absent ⇒ P1; modificarea unui octet ⇒ P1; `--mode=Network` ignorat; coborâre fără semnătură refuzată |
-| **WP-ACR-02** | `FeatureGate` + analizor «banned API» + matrice de funcții | NET-01, NET-05, HOST-01, HOST-02 | HG 282, 300, 305, 329 | da | build eșuează la apel negărduit; test pe fiecare funcție din matrice × profil |
-| **WP-ACR-03** | Build `Accredited` fără cod de rețea / de modificare a gazdei (compilare condiționată) | NET-02, HOST-03 | HG 282, 305, 310; I2-35 | da (configurație nouă) | test de referințe de asamblări; test manual cu firewall «block all outbound» (de executat de proprietar) |
+| **WP-ACR-01** | Politică semnată pentru P2/P3 (mod P2/P3, fail-closed pe P2), hash-ul politicii în jurnal; ignorarea `--mode=`/`LogAnalyzer.mode` când există politică | NET-03, SW-05, HOST-02 | HG 241, 282, 329; I2-37 | da | test: politică absentă ⇒ P2; un octet modificat ⇒ P2; `--mode=Network` ignorat; trecere P2→P3 fără semnătură refuzată |
+| **WP-ACR-02** | `FeatureGate` + analizor «banned API» + matrice de funcții (ediția P2/P3) | NET-01, NET-05, HOST-01, HOST-02 | HG 282, 300, 305, 329 | da | build eșuează la apel negărduit; test pe fiecare funcție din matrice × mod |
+| **WP-ACR-03** | **Ediția P1 separată** = WP-ED din decizia 13 (după WP0/WP1/WP12, înainte de WP3): inventarul asamblărilor cu cod de rețea / de modificare a gazdei, mutarea lor în spatele granițelor de ediție (fără eliminare), două ieșiri de build în CI | NET-02, HOST-02, HOST-03 | HG 282, 305, 310, 329; I2-35 | da (granițe noi, nu ștergeri) | test post-build: ediția P1 nu conține tipurile excluse; test manual cu firewall «block all outbound» (de executat de proprietar) |
 | **WP-ACR-04** | **Registru unic de acces/audit**: schemă fixă, înlănțuire SHA-256 + ancoră (fișier de cap exportabil / semnătură), evenimente complete (deschidere/vizualizare/export/ștergere/configurare/profil/pornire-oprire/refuzuri de poartă), UTC, `DOMENIU\utilizator`, rezultat, retenție configurabilă și blocare la ștergere; adaptoare peste `CaseWorkspace.Audit`/`Custody`/`AuditLogService` (fără a le elimina) + comandă `verify` | AUD-01..AUD-04, AUD-05 (opțional semnare) | HG 291; `[I2-43]`; `[PRP-27]`; R2690 3.2 | da | teste de alterare (modificare, ștergere de rând, trunchiere detectate); test de acoperire a acțiunilor; specificația înregistrărilor generată |
 | **WP-ACR-05** | **Clasificare și marcaj:** câmp în `CaseInfo` (nivel, clasă, avertismente, dată declasificare; versiune de schemă crescută, implicit «nesetat»), propagare maximă la derivate, marcaj sus/jos pe fiecare pagină PDF, antet + câmp de manifest în CSV/JSON/ZIP/Vault, «Document în lucru» până la finalizare | MRK-01..MRK-03 | HG 15, 45-49, 56, 22, 337 | da | test: extragere text PDF — marcaj pe 100 % din pagini; export fără marcaj refuzat în P1 |
 | **WP-ACR-06** | Poartă de export: aprobare, ID mediu destinație, verificare de marcaj, registru de exporturi | EXP-01, MED-01 | HG 285, 287, 289, 294, 295 | da | test: export P1 fără aprobare ⇒ refuzat + înregistrat |
-| **WP-ACR-07** | Roluri (Operator / Administrator de securitate / Administrator de sistem) mapate pe grupuri Windows din profil; generalizarea fluxului de aprobare din `PolicyStore` pentru: schimbare profil/retenție, sanitizare, acțiuni asupra gazdei, export P1 | AC-01..AC-03, ID-02 | HG 244, 268-277 | da | matrice de permisiuni testată; autoaprobare refuzată |
+| **WP-ACR-07** | Roluri (Operator / Administrator de securitate / Administrator de sistem) mapate pe grupuri Windows din politica semnată (P2/P3) sau din configurația ediției P1; generalizarea fluxului de aprobare din `PolicyStore` pentru: schimbare profil/retenție, sanitizare, acțiuni asupra gazdei, export P1 | AC-01..AC-03, ID-02 | HG 244, 268-277 | da | matrice de permisiuni testată; autoaprobare refuzată |
 | **WP-ACR-08** | **Integritate și lanț de aprovizionare:** semnare Authenticode (certificatul proprietarului), `SHA256SUMS` + SBOM CycloneDX + atestare de build în CI, `packages.lock.json` + `RestoreLockedMode`, `Deterministic`/`ContinuousIntegrationBuild`, auto-verificare la pornire față de manifestul semnat, livrare cu bibliotecile native alături (fără auto-extragere în profil), instalare offline | SW-01..SW-03 | HG 309-311, 318; R2690 6.2-6.3; NIS2 21(2)(d)(e) | da | verificare de semnătură pe artefact; build repetat ⇒ hash identic (sau diferențe explicate); pornire cu modul alterat ⇒ refuz + jurnal |
 | **WP-ACR-09** | **Igiena datelor:** ștergerea copiei EVTX reparate (`finally`), director temporar în interiorul cazului (aceleași ACL), funcție «scoatere din uz caz» (verificare + jurnal + șablon proces-verbal) | DEL-01..DEL-03, CRY-03 | HG 292, 296-298, 76-79 | da | test: după analiză, `%TEMP%\LogAnalyzer` conține 0 fișiere de probă |
 | **WP-ACR-10** | **Cripto și licență:** înlocuirea schemei hash+sare cu verificarea RSA-PSS deja codificată (sau înlocuirea licenței cu profilul semnat), eliminarea sării și a `license.lic` din repo, zeroizarea buffer-elor de cheie, inventar de algoritmi, punct de integrare pentru criptare aprobată (fără a revendica nivel clasificat) | CRY-01..CRY-03 | `[I2-41]`; R2690 9; HG 275 | da | scan de secrete curat; test de licență cu cheie publică; document de inventar cripto |
-| **WP-ACR-11** | **Acțiuni asupra gazdei:** implicit oprite în P1/P2; eliminarea căii codificate `C:\Users\user\…`; înlocuirea `-ExecutionPolicy Bypass` (script încorporat și verificat prin hash sau cod nativ); manifest `asInvoker` + ridicare de privilegii doar la acțiune | HOST-01..HOST-04 | HG 309, 310, 329; R2690 6.9, 11.3 | da | test: fără apel `Process.Start` negărduit; manifest verificat |
+| **WP-ACR-11** | **Acțiuni asupra gazdei:** absente din ediția P1 (WP-ACR-03), implicit oprite în P2; eliminarea căii codificate `C:\Users\user\…`; înlocuirea `-ExecutionPolicy Bypass` (script încorporat și verificat prin hash sau cod nativ); manifest `asInvoker` + ridicare de privilegii doar la acțiune | HOST-01..HOST-04 | HG 309, 310, 329; R2690 6.9, 11.3 | da | test: fără apel `Process.Start` negărduit; manifest verificat |
 | **WP-ACR-12** | Bannere: mesaj de avertizare la pornire cu confirmare jurnalizată; indicator permanent de profil/clasificare | ID-03 | `[PRP-12]`, `[PRP-5]` | da | test UI/automat de prezență |
 | **WP-ACR-13** | **Documentație generată** (vezi §3.3) — în paralel cu toate | ACR-01..ACR-06, NIS-01 | HG 237 «acreditarea»; 261; 307; 318 | da | documente regenerabile din CI, marcate «PROIECT» |
 | **WP-ACR-14** | **P3:** canal de actualizare semnat, politică de divulgare cu termene, autentificare/ACL/TLS pentru receptorul syslog, TLS minim 1.2 + validare de certificat pentru SIEM/TI/M365, secrete API sub DPAPI, acoperire CodeQL pentru C# | NIS-02..NIS-04, NET-06, SW-01 | NIS2 21(2)(e)(j); R2690 6.6, 6.7, 6.10, 11.7 | da | test de integrare TLS; scanare dependențe în CI |
 | **WP-ACR-15** | **Verificare continuă:** teste de acceptare pe fiecare ID din Partea 2, rulate pe Windows în CI (stage-1: 65 de teste cad pe Linux), raport de test atașat dosarului de acreditare | toate | HG 324, 327, 329 | da | raport verde pe runner Windows; rezultatele atașate release-ului |
 
-**Ordine și dependențe:** 00 → 01 → 02 → 03 (profilul precede porțile; porțile precedă build-ul acreditat); 04 și 05 pot începe după 01; 06 și 07 după 04+05; 08 în paralel; 09-12 după 02; 13 și 15 permanent; 14 doar pentru P3.
+**Ordine și dependențe:** 00 → 03 (WP-ED, ediția P1) în paralel cu 01 → 02 (politica și porțile ediției P2/P3); 04 și 05 pot începe după 01; 06 și 07 după 04+05; 08 în paralel; 09-12 după 02; 13 și 15 permanent; 14 doar pentru P3.
 
 ### 3.3 Documentația de acreditare (denumirile folosite de HG 585 / ORNISS) și ce poate genera repo-ul
 
