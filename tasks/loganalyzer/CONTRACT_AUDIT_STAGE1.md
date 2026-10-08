@@ -460,5 +460,29 @@ Rules respected: no refactor or removal of existing functionality for the UI (ne
 
 Suggested sequence: WP0, then WP1 and WP12 in parallel; WP2, then WP3 and WP4 (WP4 depends on WP2 fields); WP5 and WP6 (depend on WP2); WP7 and WP8 (depend on WP4-WP6); WP9, WP10, WP11 can interleave once WP2 is done.
 
+## 8. Owner decisions (2026-10-08)
+
+The owner accepted the orchestrator's recommendations for the section-6 questions. Questions 7, 8 and 11 had no
+recommendation; the entries below for them are **provisional defaults** (conservative, recorded so stage 2 is not
+blocked) and stay open to change by the owner.
+
+| # | Decision |
+|---|---|
+| 1 | InspectraVeritas is a **separate project/assembly** that only reads `InvestigationResult` and the case folder. CONTRADICTED and REJECTED **block** Vault export and put a blocking banner on reports; UNPROVEN, UNKNOWN and NOT_ASSESSED are shown visibly but do not block. |
+| 2 | The section-20 states are **added alongside** `Finding.Classification`, not replacing it. JSON outputs get a schema version; readers accept both the old and the new format. |
+| 3 | The static safety text (`MainWindow.xaml`, `DashboardView.xaml`) and the unconditional `CONFORM` results in `ComplianceAuditEngine` are **replaced** by evidence-derived or neutral text. Pages and engines stay; only the false assertions go. |
+| 4 | Unwired legacy code (17 parsers, 10 services, workspace-root `Views/ViewModels/Services`) is **left untouched** in stage 2: not deleted, not finished, nothing built on it. Wire-or-retire is a separate later decision. |
+| 5 | Legacy tabs (SQLCipher, `ParsedEvent`) stay **under "Advanced"** as independent tools; no bridge to the DFIR case in stage 2. |
+| 6 | Localisation first pass is a **translation table at the UI edge** (RO/EN); backend message keys for findings follow afterwards. |
+| 7 | *Provisional:* corpus validation stays a non-blocking CI warning until the owner provides a redistributable corpus or a private runner. Until then a release needs a **written waiver signed by the owner** (format defined in WP12). |
+| 8 | *Provisional:* **blocking** = tests passing, evidence-integrity validation, audit integrity, AI claim validation, response verification, no critical unresolved findings. **Waivable with a signed owner waiver** = corpus validation, differential validation. The gate is **both** a CI job and a script the owner can run locally. |
+| 9 | Audit integrity starts as a **hash chain** (backward-compatible reader); signing with a local key comes later, once key custody is decided. |
+| 10 | The app first **exports Vault proposals** for submission; a direct `memory_propose` call comes later. (Note: PR #209 is already merged; CUR's "open security review" reference is stale.) |
+| 11 | *Provisional:* evidence lifecycle **retention/disposal rules are not implemented** until the owner supplies the legal requirements (NIS2/DNSC). WP3 may add lifecycle states only (e.g. ACQUIRED, VERIFIED, IN_ANALYSIS, ARCHIVED), with no automatic deletion. |
+| 12 | The "APT Attribution" page is **renamed** to technique overlap and states explicitly that it is not attribution. |
+
+With questions 1, 2, 3, 8 and 9 answered, the precondition at the end of section 7 is met. Stage 2 code still
+starts only on the owner's explicit go, in the WP order of section 7.
+
 ---
 Prepared as Stage 1 (audit only). Stage 2 should not start until the owner answers at least questions 1, 2, 3, 8 and 9.

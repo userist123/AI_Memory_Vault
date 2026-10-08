@@ -107,4 +107,5 @@ Stage 1 is an audit, **no code changes**:
       53 IMPLEMENTED / 94 PARTIAL / 6 UNWIRED (27 components) / 41 MISSING. UX: 35 rows, 0 / 23 / 0 / 12.
       Spot-checked by the orchestrator: static "ALL SYSTEMS NORMAL"/"SHIELD ARMED" text, `ComplianceAuditEngine`
       CONFORM lines 52/75 unconditional, `Finding.ContradictingEvidence` declared and never set.
-- [ ] Owner: answer the 12 questions in §6 of the audit and approve the stage-2 order (§7) before any code change.
+- [x] Owner: answer the 12 questions in §6 (2026-10-08: recommendations accepted; 7, 8, 11 provisional) → audit §8.
+- [ ] Owner: explicit go for stage 2 (WP0 first, then WP1 ∥ WP12).
