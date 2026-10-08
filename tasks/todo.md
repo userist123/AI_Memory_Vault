@@ -125,6 +125,22 @@ Scope: systems with and without classified information (air-gapped networks, sta
 - [ ] Draft (scratchpad) with verbatim citations.
 - [ ] Orchestrator spot-checks every quote against the fetched source before delivery.
 
+## App requirements — audit-data handling inside LogAnalyzer (owner, 2026-10-08)
+Independent of the standalone audit-log document. Each item cites its provision once the
+HG 585 accreditation analysis is verified.
+- [ ] Deployment profiles selected by signed policy at install, not downgradable by the operator:
+      P1 classified air-gapped (HG 585/2002 INFOSEC + Legea 182/2002 + ORNISS), P2 unclassified air-gapped
+      (NIS2 / 2024/2690 / OUG 155/2024 / DNSC), P3 internet-connected (same, plus internet-facing controls).
+- [ ] WP3: case field "system category" (air-gapped network / standalone PC / connected × classified / unclassified)
+      driving collection, export and retention rules.
+- [ ] WP3: read-only collection + SHA-256 at acquisition; the app never deletes or clears logs on the source system.
+- [ ] WP3: hash-chained custody records who collected, from which system, with which removable medium; warn when the
+      collector is the audited system's own administrator.
+- [ ] WP3: lifecycle states (decision 11); deletion only as a manual, dual-approved, logged mark with a legal-hold check.
+- [ ] WP10: exports carry the case's classification marking, a hash manifest and the medium used.
+- [ ] WP1→WP4: link the existing HG 585 checks in `ComplianceAuditEngine` to the cited articles; never "CONFORM" without evidence.
+- [ ] WP10: "audit/compliance" report profile showing which provision each check rests on and what is missing.
+
 ## Accreditation readiness of the app itself (owner, 2026-10-08)
 The owner will accredit LogAnalyzer to run on accredited internal SIC (classified) and on unclassified
 air-gapped networks / standalone PCs. The app's own behaviour and documentation must satisfy HG 585/2002
