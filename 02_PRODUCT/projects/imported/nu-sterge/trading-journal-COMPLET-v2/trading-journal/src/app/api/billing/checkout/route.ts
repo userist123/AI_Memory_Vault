@@ -7,7 +7,7 @@ import { PLANS, type PlanId } from '@/lib/billing/plans';
 export const runtime = 'nodejs';
 
 const CheckoutRequestSchema = z.object({
-  plan: z.enum(['pro', 'elite']),
+  plan: z.enum(['pro', 'elite', 'autopilot']),
   period: z.enum(['monthly', 'yearly']),
 });
 
