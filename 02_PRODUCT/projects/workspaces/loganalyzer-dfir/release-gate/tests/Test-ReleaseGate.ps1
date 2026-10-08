@@ -166,3 +166,4 @@ finally { Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue }
 Write-Host ''
 Write-Host "$($script:checks - $script:failures)/$($script:checks) assertions passed"
 if ($script:failures -gt 0) { exit 1 }
+exit 0
