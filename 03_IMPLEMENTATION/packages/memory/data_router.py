@@ -11,7 +11,7 @@ from copy import deepcopy
 from typing import Any, Callable, Dict, Mapping
 
 from retrieval.context.budget import ContextBudget
-from security.verified_reduction import TRUSTED_STATUSES
+from security.verified_reduction import TRUSTED_STATUSES, content_withheld_from
 
 
 class DataRouteViolation(RuntimeError):
@@ -118,15 +118,29 @@ class MemoryDataEgressGate:
             ),
         }
 
+        # Model-facing egress isolation, applied again at the final gate with the same
+        # rule the context pack builder uses (one shared predicate, one owner set):
+        # non-owner callers never receive the body of an unverified REVIEW candidate or
+        # of a note flagged quarantined. ACTIVE notes keep their content whatever their
+        # verification label.
+        for result in routed.get("results", []):
+            if not isinstance(result, dict):
+                continue
+            unverified = result.get("trust_state") == "UNVERIFIED_QUARANTINED"
+            if content_withheld_from(principal, result, unverified=unverified):
+                result["content"] = ""
+                result["snippet"] = ""
+                result["model_egress"] = False
+
         try:
             hard_tokens = int(budget["hard_tokens"])
-            # Retrieval traces are audit/observability metadata, not model input.
+            # Retrieval traces and transport pagination tokens are metadata, not model prompt input.
             # They remain available to callers without consuming the model context
             # budget already satisfied by the producer.
             model_input = {
                 key: value
                 for key, value in routed.items()
-                if key not in {"candidate_trace", "retrieval_trace", "data_route"}
+                if key not in {"candidate_trace", "retrieval_trace", "data_route", "nextPageToken", "next_page_token"}
             }
             final_tokens = ContextBudget({"hard_tokens": hard_tokens}).estimate_tokens(model_input)
         except (KeyError, TypeError, ValueError) as exc:

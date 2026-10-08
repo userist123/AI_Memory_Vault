@@ -134,6 +134,38 @@ def test_modules_the_card_calls_unwired_really_are(module, wired):
     )
 
 
+@pytest.fixture(scope="module")
+def production_python_sources():
+    """(relative path, text) of every .py file that could be a production consumer: not a test,
+    not evaluation or imported material, not the root `security/` layer itself. One walk, shared."""
+    skipped_parts = {"20_TESTS", "07_EVALUATION", "06_INBOX", "imported", "benchmarks", "tests", "node_modules", "__pycache__"}
+    sources = []
+    for path in REPO.rglob("*.py"):
+        parts = path.relative_to(REPO).parts
+        if parts[0] in {"security", ".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
+            continue
+        sources.append((path.relative_to(REPO).as_posix(), path.stem, path.read_text(encoding="utf-8", errors="ignore")))
+    return sources
+
+
+@pytest.mark.parametrize("module", [
+    "runtime_enforcer", "runtime_adapter", "memory_adapter", "memory_boundary",
+    "memory_integrity", "security_update_manager",
+])
+def test_runtime_authority_layer_has_no_production_consumer(module, state_text, production_python_sources):
+    """The card says the root `security/` runtime-authority layer is implemented and tested but not
+    wired into production (the rule from CLAUDE.md: grep for importers outside tests). Importers
+    inside `security/` are the layer talking to itself. The day a tool-execution path imports one
+    of these modules, this fails, and the card's row (and docs/security) must say it is wired."""
+    importer = re.compile(rf"^\s*(from|import)[^#\n]*\b{module}\b", re.M)
+    hits = [rel for rel, stem, text in production_python_sources if stem != module and importer.search(text)]
+    assert not hits, (
+        f"{module} gained production consumers {hits}: update the runtime-authority row of "
+        "VAULT_STATE.md section 3 and docs/security/AUDIT_REMEDIATION.md"
+    )
+    assert "NOT wired into production" in state_text
+
+
 def test_the_shim_warning_still_applies(state_text):
     """If memory_controller ever becomes a real package, the warning is wrong."""
     shim = REPO / "03_IMPLEMENTATION" / "packages" / "memory_controller" / "__init__.py"

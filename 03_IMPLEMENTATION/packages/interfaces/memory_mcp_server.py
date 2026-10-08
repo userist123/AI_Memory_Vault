@@ -135,7 +135,8 @@ def memory_search(query: str, limit: int = 5, ctx: Context = None) -> Dict[str, 
 @mcp.tool()
 def memory_get(note_id: str, ctx: Context = None) -> Dict[str, Any]:
     """Read one note by id (ACTIVE or REVIEW; REVIEW notes are marked unverified)."""
-    return _run("memory_get", ctx, note_id, lambda c, _client: memory_access.get(c, note_id))
+    from memory_controller.authorizer import Principal
+    return _run("memory_get", ctx, note_id, lambda c, _client: memory_access.get(c, note_id, principal=Principal.AI_AGENT))
 
 
 @mcp.tool()
