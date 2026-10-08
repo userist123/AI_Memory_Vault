@@ -112,11 +112,11 @@ Stage 1 is an audit, **no code changes**:
 
 ## STAGE 2 — LogAnalyzer (started 2026-10-08, owner "start etapa 2")
 Spec: `tasks/loganalyzer/CONTRACT_AUDIT_STAGE1.md` §7 (WP order) + §8 (12 final owner decisions).
-- [ ] WP0 baseline & governance (PR `loganalyzer/wp0-baseline`): CUR update, audit + contracts copied to docs/dfir, historical banners, Windows CI baseline.
-- [ ] WP1 honest shell (PR `loganalyzer/wp1-honest-shell`): static safety text, CONFORM without evidence → not assessed, APT page renamed, test-alert label, unwired facades marked.
-- [ ] WP12 tests & release gate (PR `loganalyzer/wp12-release-gate`): synthetic corpus in CI, gate script + CI job (report on PRs, enforce on release), waiver format, CodeQL C#, PR212 #3/#4.
-- [ ] Review each PR: Windows CI green, local tests vs main, production-consumer grep; then merge in order WP0 → WP1/WP12.
-- [ ] Next: WP2 (Finding contract + state vocabulary), then WP3/WP4.
+- [x] WP0 baseline & governance (#227, merged a082dfca) (PR `loganalyzer/wp0-baseline`): CUR update, audit + contracts copied to docs/dfir, historical banners, Windows CI baseline.
+- [x] WP1 honest shell (#228, merged 1ad7882a) (PR `loganalyzer/wp1-honest-shell`): static safety text, CONFORM without evidence → not assessed, APT page renamed, test-alert label, unwired facades marked.
+- [x] WP12 tests & release gate (#229, merged 94020777) (PR `loganalyzer/wp12-release-gate`): synthetic corpus in CI, gate script + CI job (report on PRs, enforce on release), waiver format, CodeQL C#, PR212 #3/#4.
+- [x] Review each PR: Windows CI green, local tests vs main, production-consumer grep; then merge in order WP0 → WP1/WP12.
+- [ ] In progress (2026-10-08): WP-ED → WP-PKG (one agent, two PRs) ∥ WP2 (separate agent). Then WP3, WP4.
 
 ## Security fixes found by the accreditation analysis (confirmed by orchestrator, 2026-10-08)
 - [ ] `LogAnalyzer.Infrastructure/Services/AuditCollectionService.cs:33` falls back to a developer path
