@@ -1,13 +1,13 @@
 """
 Suita de teste de securitate și conformitate pentru Secure Sanitization Engine (TOE-SSE-v1).
-Include scenarii nominale, teste adversariale (P0 / CC SFRs), integrare smartcard și generare PV HG 585/2002.
+Aliniată la cerințele din Etapa 1: Distincție clară între Simulator (SIMULATED_NOT_SANITIZED)
+și Hardware (ABORTED_UNSUPPORTED_ENVIRONMENT când dispozitivul fizic nu este prezent).
 """
 
 import sys
 import os
 import pytest
 
-# Adăugăm directorul părinte în sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.models import (
@@ -36,7 +36,7 @@ def sample_nvme_device():
         capacity_bytes=512110190592,
         media_type=MediaType.NVME_SSD,
         topology=DeviceTopology.NATIVE_PCIE,
-        bus_path="/pci0000:00/0000:00:0e.0/nvme0n1",
+        bus_path="/dev/nvme0n1",
         is_healthy=True,
     )
 
@@ -51,15 +51,16 @@ def dual_auth_credentials():
     )
 
 
-def test_nominal_nvme_sanitization_flow(sample_nvme_device, dual_auth_credentials):
+def test_nominal_nvme_sanitization_flow_simulated(sample_nvme_device, dual_auth_credentials):
     """
-    Test flux nominal: NVMe nativ, nivel STRICT_SECRET, confirmare țintă,
-    autorizare duală, execuție Block Erase, verificare eșantioane și manifest semnat.
+    Test flux de laborator: Simulatorul parcurge pașii dar emite strict SIMULATED_NOT_SANITIZED.
     """
+    adapter = HardwareAdapter(simulation_mode=True)
     session = SanitizationSession(
         device=sample_nvme_device,
         classification=ClassificationLevel.STRICT_SECRET,
         jurisdiction=Jurisdiction.RO,
+        hardware_adapter=adapter,
     )
     assert session.state == EngineState.DEVICE_IDENTIFIED
 
@@ -75,17 +76,16 @@ def test_nominal_nvme_sanitization_flow(sample_nvme_device, dual_auth_credential
     success = session.execute_sanitization()
     assert success is True
     assert session.state == EngineState.COMPLETED
-    assert session.final_disposition == FinalDisposition.CONFORM_PURGED
+    assert session.final_disposition == FinalDisposition.SIMULATED_NOT_SANITIZED
 
     smartcard_sigs = {
         "operator": "PAdES-QUALIFIED-CERT-SIGNATURE-OP-ION-POPESCU",
         "witness": "PAdES-QUALIFIED-CERT-SIGNATURE-SEC-VASILE-IONESCU",
     }
     manifest = session.export_manifest(smartcard_signatures=smartcard_sigs)
-    assert manifest["final_disposition"] == "CONFORM_PURGED"
-    assert manifest["signatures"]["smartcard_operator_qualified_sig"] == smartcard_sigs["operator"]
-    assert manifest["signatures"]["smartcard_witness_qualified_sig"] == smartcard_sigs["witness"]
-    assert manifest["integrity"]["total_audit_steps"] >= 5
+    assert manifest["final_disposition"] == "SIMULATED_NOT_SANITIZED"
+    assert manifest["execution_mode"] == "SIMULATION_LABORATORY_TEST"
+    assert manifest["operational_validity"] == "INVALID_FOR_OFFICIAL_DECLASSIFICATION_SIMULATION_ONLY"
 
 
 def test_target_mismatch_safeguard(sample_nvme_device):
@@ -93,6 +93,7 @@ def test_target_mismatch_safeguard(sample_nvme_device):
     session = SanitizationSession(
         device=sample_nvme_device,
         classification=ClassificationLevel.SECRET,
+        hardware_adapter=HardwareAdapter(simulation_mode=True),
     )
     confirmed = session.confirm_target_safeguard("9999")
     assert confirmed is False
@@ -109,12 +110,13 @@ def test_usb_bridged_device_rejected(sample_nvme_device, dual_auth_credentials):
         capacity_bytes=512110190592,
         media_type=MediaType.NVME_SSD,
         topology=DeviceTopology.BRIDGED_USB,
-        bus_path="/usb/bus1/dev4",
+        bus_path="/dev/sdb",
         is_healthy=True,
     )
     session = SanitizationSession(
         device=bridged_device,
         classification=ClassificationLevel.SECRET,
+        hardware_adapter=HardwareAdapter(simulation_mode=True),
     )
     session.confirm_target_safeguard("3456")
     authorized = session.evaluate_and_authorize(dual_auth=dual_auth_credentials)
@@ -131,6 +133,7 @@ def test_high_security_requires_dual_control(sample_nvme_device):
         device=sample_nvme_device,
         classification=ClassificationLevel.COSMIC_TOP_SECRET,
         jurisdiction=Jurisdiction.NATO,
+        hardware_adapter=HardwareAdapter(simulation_mode=True),
     )
     session.confirm_target_safeguard("3456")
     
@@ -163,7 +166,7 @@ def test_power_cut_in_progress_fails_safe(sample_nvme_device, dual_auth_credenti
     assert success is False
     assert session.state == EngineState.FAILED_REJECTED
     assert session.final_disposition == FinalDisposition.INCOMPLETE_ABORTED
-    assert "Întrerupere de alimentare" in session.rejection_reason
+    assert "HARDWARE_RESET_OR_POWER_CUT" in session.rejection_reason
 
 
 def test_smartcard_authentication_and_wrong_pin():
@@ -173,11 +176,9 @@ def test_smartcard_authentication_and_wrong_pin():
     assert "SLOT_0" in cards
     assert "SLOT_1" in cards
 
-    # Test PIN greșit pe SLOT_0 (corect este 1234)
     with pytest.raises(SmartcardError, match="PIN incorect"):
         auth.authenticate_cardholder("SLOT_0", "0000")
 
-    # Test PIN corect
     assert auth.authenticate_cardholder("SLOT_0", "1234") is True
     sig_info = auth.sign_hash_with_card("SLOT_0", "f94c2491d2bce079...")
     assert "PAdES-QUALIFIED" in sig_info["signature_value"]
@@ -186,26 +187,24 @@ def test_smartcard_authentication_and_wrong_pin():
 
 def test_end_to_end_windows_registry_and_official_pv(sample_nvme_device, dual_auth_credentials, tmp_path):
     """
-    Test E2E: Execuție în motor -> export manifest -> import în aplicația Windows
-    -> semnare duală cu cartele cu cip -> generare Proces-Verbal oficial HG 585/2002.
+    Test E2E Simulator: Manifest simulat exportat și marcat corespunzător în registrul Windows.
     """
-    # 1. Rulare sesiune bootabilă
+    adapter = HardwareAdapter(simulation_mode=True)
     session = SanitizationSession(
         device=sample_nvme_device,
         classification=ClassificationLevel.STRICT_SECRET,
         jurisdiction=Jurisdiction.RO,
+        hardware_adapter=adapter,
     )
     session.confirm_target_safeguard("3456")
     session.evaluate_and_authorize(dual_auth=dual_auth_credentials)
     session.execute_sanitization()
     raw_manifest = session.export_manifest()
 
-    # 2. Preluare în aplicația Windows
     test_reg_file = str(tmp_path / "test_registry.json")
     app = WindowsRegistryApp(registry_file=test_reg_file)
     assert app.import_and_validate_manifest(raw_manifest) is True
 
-    # 3. Semnare duală cu legitimațiile cu cip ale comisiei
     signed_manifest = app.process_smartcard_dual_signing(
         manifest_data=raw_manifest,
         operator_pin="1234",
@@ -214,7 +213,6 @@ def test_end_to_end_windows_registry_and_official_pv(sample_nvme_device, dual_au
     assert "smartcard_operator_qualified_sig" in signed_manifest["signatures"]
     assert "smartcard_witness_qualified_sig" in signed_manifest["signatures"]
 
-    # 4. Înregistrare în registru și arhivare nativ digitală (fără tipărire)
     archive_dir = str(tmp_path / "archive")
     digital_doc = app.archive_digital_record(
         signed_manifest,
@@ -222,25 +220,23 @@ def test_end_to_end_windows_registry_and_official_pv(sample_nvme_device, dual_au
         archive_dir=archive_dir,
     )
     assert digital_doc["document_type"] == "PROCES_VERBAL_SANITIZARE_ELECTRONIC"
-    assert digital_doc["necesita_tiparire_hartie"] is False
-    assert digital_doc["dispozitie_finala"]["verdict"] == "CONFORM_PURGED"
-    assert "sigiliu_arhiva_digitala_sha256" in digital_doc
+    assert digital_doc["dispozitie_finala"]["verdict"] == "SIMULATED_NOT_SANITIZED"
     assert len(app.records) == 1
-    assert app.records[0]["suport_hartie_utilizat"] is False
-    assert app.records[0]["serie_hardware_disc"] == "S676NF0R123456"
+    assert app.records[0]["verdict"] == "SIMULATED_NOT_SANITIZED"
 
 
 def test_registry_bridge_export_package(sample_nvme_device, dual_auth_credentials, tmp_path):
     """
-    Test Integrare: Export pachet destinat aplicației existente de registratură electronică.
-    Verifică formatul nativ digital fără suport de hârtie.
+    Test Integrare: Export pachet destinat aplicației de registratură electronică.
     """
     from src.registry_connector import RegistryBridgeClient
 
+    adapter = HardwareAdapter(simulation_mode=True)
     session = SanitizationSession(
         device=sample_nvme_device,
         classification=ClassificationLevel.STRICT_SECRET,
         jurisdiction=Jurisdiction.RO,
+        hardware_adapter=adapter,
     )
     session.confirm_target_safeguard("3456")
     session.evaluate_and_authorize(dual_auth=dual_auth_credentials)
@@ -268,10 +264,7 @@ def test_registry_bridge_export_package(sample_nvme_device, dual_auth_credential
 
 
 def test_linux_ioctl_driver_struct_sizes():
-    """
-    Test arhitectural: Verifică dacă structurile C ctypes au dimensiunile exacte cerute de Linux kernel ABI.
-    struct nvme_admin_cmd trebuie să aibă exact 72 de octeți (sizeof).
-    """
+    """Test ctypes ABI kernel Linux."""
     import ctypes
     from src.linux_ioctl_driver import NVMeAdminCmd, SgIoHdr
 

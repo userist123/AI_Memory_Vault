@@ -43,8 +43,16 @@ class PAdESPDFGenerator:
         wit_id = manifest.get("authorization", {}).get("witness_id", "N/A")
         term_hash = integrity.get("terminal_event_hash", "N/A")
         platform_sig = sigs.get("platform_signature", "N/A")
+        is_simulation = manifest.get("execution_mode") == "SIMULATION_LABORATORY_TEST"
 
-        verdict_text = "CONFORM (PURGED) - Date ireversibil distruse" if disposition == "CONFORM_PURGED" else "NECONFORM - Necesita Distrugere Mecanica"
+        if is_simulation:
+            banner_text = "*** DOCUMENT SIMULAT DE LABORATOR - FARA VALOARE DE DECLASIFICARE (NESANITIZAT) ***"
+            verdict_text = "SIMULAT - NESANITIZAT HARDWARE (TEST PROTOCOL DOAR)"
+            lba_verify_text = "N/A (SIMULARE - Niciun bloc de pe disc nu a fost citit fizic)"
+        else:
+            banner_text = "DOCUMENT NATIV DIGITAL - VALOARE DE INSCRIS AUTENTIC CONFORM REGULAMENTULUI EIDAS"
+            verdict_text = "CONFORM (PURGED) - Date ireversibil distruse" if disposition == "CONFORM_PURGED" else "NECONFORM - Necesita Distrugere Mecanica"
+            lba_verify_text = "CONFORM (Zero date reziduale detectate pe esantioanele citite)"
 
         # Conținutul grafic și textual al paginii PDF (Stream PDF operatori text)
         stream_lines = [
@@ -56,7 +64,7 @@ class PAdESPDFGenerator:
             "0 -18 Td",
             "(COMPARTIMENTUL DE SECURITATE A SISTEMELOR INFORMATICE SI DE COMUNICATII - SIC) Tj",
             "0 -14 Td",
-            "(DOCUMENT NATIV DIGITAL - VALOARE DE INSCRIS AUTENTIC CONFORM REGULAMENTULUI EIDAS) Tj",
+            f"({cls._escape_pdf_text(banner_text)}) Tj",
             "/F1 12 Tf",
             "0 -30 Td",
             f"(PROCES-VERBAL DE SANITIZARE SUPORTURI DE STOCARE Nr. {session_id} din {date_str}) Tj",
@@ -80,7 +88,7 @@ class PAdESPDFGenerator:
             "0 -16 Td",
             f"(- Metoda firmware aplicata: {cls._escape_pdf_text(method)}) Tj",
             "0 -14 Td",
-            f"(- Rezultat verificare esantioane LBA: CONFORM (Zero date reziduale detectate)) Tj",
+            f"(- Rezultat verificare esantioane LBA: {cls._escape_pdf_text(lba_verify_text)}) Tj",
             "0 -14 Td",
             f"(- Hash Terminal SHA-256 (Integritate Jurnal): {cls._escape_pdf_text(term_hash[:50])}...) Tj",
             "0 -14 Td",

@@ -56,19 +56,29 @@ class EvidenceManager:
         method: SanitizeMethod,
         disposition: FinalDisposition,
         dual_auth: Optional[DualAuthorization],
+        is_simulation: bool = False,
         platform_key_id: str = "TPM-DEVICE-KEY-PRIMARY",
         smartcard_signatures: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
         """
         Emite manifestul complet tehnic și lanțul de semnături.
         Include semnătura de mașină (TPM) și semnăturile calificate de pe cartelele cu cip.
+        Distinge strict între execuția hardware reală și testele simulate.
         """
         if not self.verify_chain_integrity():
             raise ValueError("Integritatea lanțului de audit este compromisă! Generare manifest blocată.")
 
+        op_validity = (
+            "INVALID_FOR_OFFICIAL_DECLASSIFICATION_SIMULATION_ONLY"
+            if is_simulation
+            else "VALID_CERTIFIED_HARDWARE_PURGED"
+        )
+
         manifest_data = {
             "session_id": self.session_id,
             "manifest_version": "1.0",
+            "execution_mode": "SIMULATION_LABORATORY_TEST" if is_simulation else "PRODUCTION_KERNEL_IOCTL",
+            "operational_validity": op_validity,
             "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "device": {
                 "serial_number": device.serial_number,

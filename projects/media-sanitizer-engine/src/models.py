@@ -1,6 +1,7 @@
 """
 Modele de date și structuri pentru Secure Sanitization Engine (TOE-SSE-v1).
 Respectă terminologia INFOSEC 14, HG 585/2002, NIST SP 800-88r2 și IEEE 2883-2022.
+Include distincția strictă între execuția hardware reală și simularea de laborator.
 """
 
 from dataclasses import dataclass, field
@@ -64,10 +65,15 @@ class SanitizeMethod(str, Enum):
 
 
 class FinalDisposition(str, Enum):
+    # Rezultate operaționale reale (obținute exclusiv prin kernel IOCTL pe block device real)
     CONFORM_PURGED = "CONFORM_PURGED"
     CONFORM_CLEARED = "CONFORM_CLEARED"
     NON_CONFORM_REQUIRES_DESTRUCTION = "NON_CONFORM_REQUIRES_DESTRUCTION"
     INCOMPLETE_ABORTED = "INCOMPLETE_ABORTED"
+    ABORTED_UNSUPPORTED_ENVIRONMENT = "ABORTED_UNSUPPORTED_ENVIRONMENT"
+    
+    # Rezultat exclusiv pentru simulări și teste de laborator (FĂRĂ VALOARE DE DECLASIFICARE)
+    SIMULATED_NOT_SANITIZED = "SIMULATED_NOT_SANITIZED"
 
 
 @dataclass(frozen=True)

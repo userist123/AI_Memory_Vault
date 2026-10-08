@@ -1,12 +1,16 @@
 """
 Hardware Abstraction Layer (HAL) pentru comenzi native de stocare.
-Oferă interfață pentru trimiterea comenzilor firmware de nivel jos (NVMe Sanitize, ATA Sanitize/Secure Erase, SCSI).
-Include un simulator determinist complet pentru validare și teste unitare în medii de laborator.
+Conectează mașina de stări direct la apelurile de sistem Linux IOCTL (NVMe Admin și SCSI Generic).
+Interzice emiterea verdictului CONFORM_PURGED dacă rularea are loc în afara unui block device real,
+cu excepția cazului în care modul de testare de laborator este marcat explicit și izolat în manifest.
 """
 
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, Dict, Any, List, Optional
+import os
+import random
 import time
 from .models import MediaType, DeviceTopology, SanitizeMethod, DeviceMetadata
+from .linux_ioctl_driver import LinuxStorageDriver
 
 
 class StorageCommandError(Exception):
@@ -16,11 +20,11 @@ class StorageCommandError(Exception):
 
 class HardwareAdapter:
     """
-    Abstracție hardware pentru comenzi de nivel firmware.
-    Interzice orice scriere logică mascată prin sistemul de fișiere.
+    Abstracție hardware de nivel jos.
+    Când simulation_mode=False, execută exclusiv ioctl-uri directe pe nodurile /dev/nvme* sau /dev/sd*.
     """
 
-    def __init__(self, simulation_mode: bool = True):
+    def __init__(self, simulation_mode: bool = False):
         self.simulation_mode = simulation_mode
         self._mock_progress: Dict[str, float] = {}
         self._mock_power_cut: Dict[str, bool] = {}
@@ -28,21 +32,33 @@ class HardwareAdapter:
     def issue_sanitize_command(self, device: DeviceMetadata, method: SanitizeMethod) -> Dict[str, Any]:
         """
         Emite comanda asincronă firmware corespunzătoare.
-        Returnează descriptorul tranzacției inițiate.
         """
         if device.topology == DeviceTopology.BRIDGED_USB:
             raise StorageCommandError("Refuz comandă: puntea USB nu garantează propagarea transparentă a comenzii native Sanitize.")
 
+        # EXECUȚIE REALĂ PE HARDWARE (KERNEL LINUX OFFLINE)
         if not self.simulation_mode:
-            # În mod real de producție (pe Linux UEFI minimal):
-            # Se execută ioctl către nodul /dev/nvmeX (NVMe Admin Command 0x84)
-            # sau ioctl HDIO_DRIVE_CMD / SG_IO pentru ATA/SCSI.
-            raise NotImplementedError("Rularea pe hardware real necesită mediul de producție Linux UEFI cu privilegii directe de I/O.")
+            if not os.path.exists(device.bus_path):
+                raise StorageCommandError(f"Dispozitivul fizic {device.bus_path} nu a fost găsit în sistem.")
 
-        # Mod Simulare Controlată
+            if method == SanitizeMethod.NVME_SANITIZE_BLOCK_ERASE:
+                success = LinuxStorageDriver.issue_nvme_sanitize_block_erase(device.bus_path)
+                if not success:
+                    raise StorageCommandError("Apelul IOCTL NVMe Sanitize a returnat cod de eroare hardware.")
+                return {
+                    "status": "COMMAND_ACCEPTED_HARDWARE",
+                    "device_serial": device.serial_number,
+                    "bus_path": device.bus_path,
+                    "method": method.value,
+                    "timestamp_start": time.time(),
+                }
+            else:
+                raise StorageCommandError(f"Metoda hardware {method.value} nu este încă suportată nativ de driverul IOCTL curent.")
+
+        # MOD SIMULARE (DOAR PENTRU TESTE UNITARE DE LABORATOR)
         self._mock_progress[device.serial_number] = 0.0
         return {
-            "status": "COMMAND_ACCEPTED",
+            "status": "COMMAND_ACCEPTED_SIMULATED",
             "device_serial": device.serial_number,
             "method": method.value,
             "timestamp_start": time.time(),
@@ -50,39 +66,69 @@ class HardwareAdapter:
 
     def poll_sanitize_status(self, device: DeviceMetadata) -> Tuple[bool, float, str]:
         """
-        Interoghează jurnalul de stare (ex: NVMe Sanitize Status Log 0x81).
-        Returnează:
-          (is_completed, progress_percentage, status_message)
+        Interoghează jurnalul de stare firmware (NVMe Sanitize Status Log 0x81).
         """
-        if self.simulation_mode:
-            if self._mock_power_cut.get(device.serial_number, False):
-                return False, self._mock_progress.get(device.serial_number, 0.0), "HARDWARE_RESET_OR_POWER_CUT"
+        if not self.simulation_mode:
+            if not os.path.exists(device.bus_path):
+                return False, 0.0, "DEVICE_DISCONNECTED"
+            return LinuxStorageDriver.get_nvme_sanitize_status(device.bus_path)
 
-            current_prog = self._mock_progress.get(device.serial_number, 0.0)
-            if current_prog < 100.0:
-                current_prog += 25.0
-                self._mock_progress[device.serial_number] = current_prog
+        # Mod Simulare
+        if self._mock_power_cut.get(device.serial_number, False):
+            return False, self._mock_progress.get(device.serial_number, 0.0), "HARDWARE_RESET_OR_POWER_CUT"
 
-            if current_prog >= 100.0:
-                return True, 100.0, "SUCCESSFUL_COMPLETION"
-            return False, current_prog, "OPERATION_IN_PROGRESS"
+        current_prog = self._mock_progress.get(device.serial_number, 0.0)
+        if current_prog < 100.0:
+            current_prog += 25.0
+            self._mock_progress[device.serial_number] = current_prog
 
-        raise NotImplementedError("Hardware I/O real disponibil doar în kernelul bootabil.")
+        if current_prog >= 100.0:
+            return True, 100.0, "SUCCESSFUL_COMPLETION"
+        return False, current_prog, "OPERATION_IN_PROGRESS"
 
     def sample_verify_lba(self, device: DeviceMetadata, sample_count: int = 1000) -> bool:
         """
-        Citește eșantioane LBA aleatorii pe suprafața discului pentru a verifica
-        că datele anterioare nu mai sunt accesibile și că se returnează zerouri sau starea ștearsă/nedefinită deterministă.
+        Citește fizic eșantioane LBA de pe suprafața discului pentru a verifica
+        că toate datele returnate sunt octeți purjați (0x00) și nu există reziduuri.
         """
-        if self.simulation_mode:
-            # Dacă operația a fost întreruptă sau discul este defect, verificarea eșuează
-            if self._mock_power_cut.get(device.serial_number, False):
+        if not self.simulation_mode:
+            if not os.path.exists(device.bus_path):
                 return False
-            return True
 
-        raise NotImplementedError("Hardware I/O real.")
+            try:
+                # Deschidere directă a nodului de bloc
+                fd = os.open(device.bus_path, os.O_RDONLY)
+                try:
+                    sector_size = 512
+                    total_sectors = device.capacity_bytes // sector_size
+                    if total_sectors <= 0:
+                        return False
 
-    # Utilitare pentru testare adversarială
+                    # Verificăm LBA 0 (Master Boot Record / GPT)
+                    buf = os.pread(fd, sector_size, 0)
+                    if any(b != 0 for b in buf):
+                        return False
+
+                    # Verificăm un eșantion aleatoriu pe tot cuprinsul discului
+                    random.seed(42)  # Deterministic pentru audit
+                    for _ in range(min(sample_count, 500)):
+                        rand_sector = random.randint(1, total_sectors - 1)
+                        offset = rand_sector * sector_size
+                        buf = os.pread(fd, sector_size, offset)
+                        if any(b != 0 for b in buf):
+                            return False
+
+                    return True
+                finally:
+                    os.close(fd)
+            except Exception:
+                return False
+
+        # Mod Simulare
+        if self._mock_power_cut.get(device.serial_number, False):
+            return False
+        return True
+
     def inject_power_cut(self, serial_number: str) -> None:
-        """Simulează o cădere accidentală de tensiune în timpul ștergerii."""
+        """Simulează o cădere de tensiune (doar în mod simulare)."""
         self._mock_power_cut[serial_number] = True

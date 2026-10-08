@@ -1,8 +1,7 @@
 """
 Driver Linux de nivel jos pentru comenzi native de stocare (IOCTL Direct Pass-Through).
 Implementat cu ctypes pentru comunicare directă cu subsistemele Linux kernel /dev/nvme* și /dev/sd*.
-Nu depinde de utilitare externe din user-space (nvme-cli, hdparm) pentru a menține TOE minimal.
-Conform NVM Express Base Specification 2.2 și SCSI Architecture Model (SAM-6).
+Aliniat strict la NVM Express Base Specification 2.2 (Secțiunea 5.24 & Jurnalul de stare 0x81).
 """
 
 import os
@@ -14,12 +13,12 @@ from typing import Tuple, Dict, Any, Optional
 NVME_IOCTL_ADMIN_CMD = 0xC0484E41  # _IOWR('N', 0x41, struct nvme_admin_cmd)
 SG_IO = 0x2285                     # SCSI Generic pass-through
 
-# Opcodes NVMe
+# Opcodes NVMe conform Specificației Oficiale
 NVME_ADMIN_OP_GET_LOG_PAGE = 0x02
 NVME_ADMIN_OP_SANITIZE = 0x84
 NVME_LOG_PAGE_SANITIZE_STATUS = 0x81
 
-# Structură C: nvme_admin_cmd (conform linux/nvme_ioctl.h)
+# Structură C: nvme_admin_cmd (conform linux/nvme_ioctl.h - exact 72 octeți)
 class NVMeAdminCmd(ctypes.Structure):
     _fields_ = [
         ("opcode", ctypes.c_uint8),
@@ -69,6 +68,44 @@ class SgIoHdr(ctypes.Structure):
         ("duration", ctypes.c_uint32),
         ("info", ctypes.c_uint32),
     ]
+
+
+def parse_nvme_sanitize_status_raw(sstat: int, sprog: int) -> Tuple[bool, float, str]:
+    """
+    Funcție pură de parsare a registrelor SSTAT și SPROG.
+    Permite testarea unitară riguroasă a tuturor stărilor conform NVMe Base Spec 2.2.
+    
+    NVMe Base Spec 2.2, Table 278 (Sanitize Status Log Page):
+      Bits 02:00 Sanitize Status (SSTAT & 0x07):
+        000b (0x0): The NVM subsystem has never been sanitized.
+        001b (0x1): The most recent sanitize operation completed successfully.
+        010b (0x2): A sanitize operation is currently in progress.
+        011b (0x3): The most recent sanitize operation failed.
+    """
+    status_code = sstat & 0x07
+    
+    # Progres procentual (SPROG: 0xFFFF înseamnă nicio operație activă sau finalizat)
+    if sprog == 0xFFFF:
+        progress_pct = 100.0 if status_code == 0x01 else 0.0
+    elif sprog <= 65535:
+        progress_pct = round((sprog / 65535.0) * 100.0, 1)
+    else:
+        progress_pct = 0.0
+
+    if status_code == 0x01:
+        # Singura stare validă de succes
+        return True, 100.0, "COMPLETED_SUCCESS"
+    elif status_code == 0x02:
+        # Operație în curs de desfășurare
+        return False, progress_pct, "IN_PROGRESS"
+    elif status_code == 0x00:
+        # Subsistemul nu a fost niciodată sanitizat! Nu este succes!
+        return False, 0.0, "NEVER_SANITIZED"
+    elif status_code == 0x03:
+        # Operația a eșuat
+        return False, progress_pct, "FAILED"
+    else:
+        return False, progress_pct, f"UNKNOWN_STATUS_CODE_{status_code}"
 
 
 class LinuxStorageDriver:
@@ -128,29 +165,8 @@ class LinuxStorageDriver:
                 if res != 0:
                     return False, 0.0, "IOCTL_FAILED"
 
-                # Parsare jurnal conform NVMe Base Spec 2.2:
-                # Bytes 0-1: SPROG (Sanitize Progress, 16-bit)
-                # Bytes 2-3: SSTAT (Sanitize Status, 16-bit)
                 sprog, sstat = struct.unpack_from("<HH", buf.raw, 0)
-                
-                # SPROG: dacă valoarea este 0xFFFF, progresul este nedisponibil sau 100%
-                # Progres procentual: (SPROG / 65535) * 100
-                progress_pct = round((sprog / 65535.0) * 100.0, 1) if sprog <= 65535 else 0.0
-                
-                # SSTAT bits:
-                # bit 0-2: Most Recent Sanitize Status
-                # 000b = Nicio operație sau finalizată cu succes
-                # 001b = În desfășurare
-                # 010b = Eșuată
-                status_code = sstat & 0x07
-                if status_code == 0:
-                    return True, 100.0, "COMPLETED_SUCCESS"
-                elif status_code == 1:
-                    return False, progress_pct, "IN_PROGRESS"
-                elif status_code == 2:
-                    return False, progress_pct, "FAILED"
-                else:
-                    return False, progress_pct, f"STATUS_CODE_{status_code}"
+                return parse_nvme_sanitize_status_raw(sstat=sstat, sprog=sprog)
             finally:
                 os.close(fd)
         except Exception as ex:
