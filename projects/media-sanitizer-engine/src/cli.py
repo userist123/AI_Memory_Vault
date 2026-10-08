@@ -46,10 +46,15 @@ def run_full_pipeline_demo():
     print(f"  [+] Dispozitiv detectat: {target_disk.model_number} (SN: {target_disk.serial_number})")
     print(f"  [+] Topologie: {target_disk.topology.value} | Nivel clasificat: STRICT SECRET")
 
+    # Folosim explicit adapterul de simulare pentru CLI demo de pe stații de dezvoltare
+    from .hardware_adapter import HardwareAdapter
+    sim_adapter = HardwareAdapter(simulation_mode=True)
+
     session = SanitizationSession(
         device=target_disk,
         classification=ClassificationLevel.STRICT_SECRET,
         jurisdiction=Jurisdiction.RO,
+        hardware_adapter=sim_adapter,
     )
 
     # Confirmare sufix serial (T.TARGET_MISMATCH safeguard)
@@ -67,10 +72,12 @@ def run_full_pipeline_demo():
     session.evaluate_and_authorize(dual_auth=auth)
     print(f"  [+] Comandă hardware aprobată: {session.authorized_method.value}")
 
-    print("  [>] Execuție NVMe Sanitize (Block Erase) + Verificare eșantioane LBA...")
+    print("  [>] Execuție în regim de simulare laborator...")
     session.execute_sanitization()
     raw_manifest = session.export_manifest()
-    print("  [+] Sanitizare încheiată cu succes! Manifest tehnic generat și sigilat cu cheia TPM.")
+    print(f"  [!] Rulare laborator finalizată: {session.final_disposition.value}")
+    print("      (Conform regulilor de audit, simulatorul marchează strict 'SIMULATED_NOT_SANITIZED' - fără atestare hardware falsă)")
+    print("  [+] Manifest tehnic generat și sigilat cu cheia asimetrică TPM (RSA-PSS-SHA256).")
 
     # -------------------------------------------------------------
     # ETAPA 2: APLICAȚIA WINDOWS DE BIROU / REGISTRATURĂ (NON-TOE)
