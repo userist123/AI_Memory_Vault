@@ -781,44 +781,112 @@ class RealAgentExecutionHarness:
         self.trace_dir.mkdir(parents=True, exist_ok=True)
         self.bootstrap_principal = os.getenv("VAULT_BOOTSTRAP_PRINCIPAL", "cloud_cli.codex")
         self.bootstrap_provider = bootstrap_provider
+        self.branch_name = os.getenv("MEMORY_VAULT_BRANCH", "codex/runtime-memory-pilot-20261008")
         self._lock = threading.Lock()
 
     def _default_bootstrap(self, task: AgentTask, principal: str) -> Dict[str, Any]:
         from vault_access.core import VaultAccess
 
         access = VaultAccess(principal=self.bootstrap_principal, interface="cli")
-        documents = []
-        for query, expected_name in (
+        source_specs = [
             ("AGENTS.md", "AGENTS.md"),
             ("CLAUDE.md", "CLAUDE.md"),
-            ("VAULT_STATE.md", "VAULT_STATE.md"),
-        ):
-            resolved = access.resolve(query)
-            route = resolved.get("route") if isinstance(resolved, dict) else None
-            uri = route.get("uri") if isinstance(route, dict) else route
-            if not uri:
-                raise ExecutionContractError("bootstrap unavailable")
+            ("00_GOVERNANCE/VAULT_STATE.md", "VAULT_STATE.md"),
+            ("00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", "UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md"),
+            ("00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md", "BOOTSTRAP_ALL_AGENTS_V1.md"),
+            ("00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", "AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md"),
+            ("00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md", "AI_MEMORY_VAULT/CURRENT.md"),
+            ("00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md", "CODEX/CURRENT.md"),
+        ]
+        documents: List[Dict[str, Any]] = []
+
+        for expected_path, expected_name in source_specs:
+            resolved = access.resolve(expected_path, limit=5)
+            if resolved.get("code") != "OK" or resolved.get("status") != "RESOLVED":
+                raise ExecutionContractError(
+                    f"bootstrap route unresolved: {expected_path}"
+                )
+
+            route = resolved.get("route") or {}
+            uri = route.get("uri") if isinstance(route, dict) else None
+            if not uri or not uri.endswith(expected_path):
+                raise ExecutionContractError(
+                    f"bootstrap route identity mismatch: {expected_path}"
+                )
+
+            metadata = access.metadata(uri)
+            meta_integrity = metadata.get("integrity") or {}
+            meta_sha = meta_integrity.get("sha256")
+            if not meta_sha:
+                raise ExecutionContractError(
+                    f"bootstrap provenance missing: {expected_path}"
+                )
+
             read = access.read(uri)
+            if read.get("code") != "OK":
+                raise ExecutionContractError(
+                    f"bootstrap read failed: {expected_path}"
+                )
+
             evidence = read.get("evidence") or []
             integrity = read.get("integrity") or {}
-            body = evidence[0].get("text", "") if evidence else ""
-            if read.get("code") != "OK" or not body or not integrity.get("sha256"):
-                raise ExecutionContractError("bootstrap incomplete")
+            if not evidence or not integrity.get("sha256"):
+                raise ExecutionContractError(
+                    f"bootstrap evidence missing: {expected_path}"
+                )
+            first = evidence[0]
+            if first.get("truncated") or read.get("next"):
+                raise ExecutionContractError(
+                    f"bootstrap truncated: {expected_path}"
+                )
+            body = first.get("text", "")
+            if not body:
+                raise ExecutionContractError(
+                    f"bootstrap body missing: {expected_path}"
+                )
+            if meta_sha != integrity["sha256"]:
+                raise ExecutionContractError(
+                    f"bootstrap stale/drifted during read: {expected_path}"
+                )
+
             documents.append({
                 "name": expected_name,
+                "path": expected_path,
                 "uri": uri,
                 "sha256": integrity["sha256"],
                 "text": body,
                 "evidence_level": "DIRECT",
                 "classification": read.get("classification"),
                 "lifecycle": read.get("lifecycle"),
-                "line_start": evidence[0].get("line_start"),
-                "line_end": evidence[0].get("line_end"),
-                "evidence": evidence[0],
+                "trust": read.get("trust"),
+                "line_start": first.get("line_start"),
+                "line_end": first.get("line_end"),
+                "truncated": False,
+                "evidence": first,
             })
-        if sum(len(str(d["text"])) for d in documents) > 24000:
-            raise ExecutionContractError("bootstrap exceeds bounded context budget")
-        return {"sources": documents, "authority": "vault_access", "conflicts": []}
+
+        governance = self._detect_bootstrap_governance_conflicts(
+            documents,
+            branch=self.branch_name,
+        )
+        if governance["conflicts"]:
+            raise ExecutionContractError(
+                f"bootstrap governance conflict: {governance['conflicts']}"
+            )
+
+        total_chars = sum(len(str(d["text"])) for d in documents)
+        if total_chars > 24000:
+            raise ExecutionContractError(
+                f"bootstrap exceeds bounded context budget: {total_chars}"
+            )
+
+        return {
+            "sources": documents,
+            "authority": "vault_access",
+            "governance": governance,
+            "conflicts": governance["conflicts"],
+            "resolved_conflicts": governance["resolved_conflicts"],
+        }
 
     @staticmethod
     def _contract_for_task(task: AgentTask) -> ExecutionContract:
@@ -843,6 +911,58 @@ class RealAgentExecutionHarness:
             max_memory_results=2,
         )
 
+    @staticmethod
+    def _detect_bootstrap_governance_conflicts(sources: List[Dict[str, Any]], branch: str) -> Dict[str, Any]:
+        combined = "\n".join(str(source.get("text", "")) for source in sources)
+        findings = {
+            "detection": "PARTIAL_TEXT_RULES",
+            "rules_examined": [
+                "working_branch_policy",
+                "agent_execution_policy",
+                "pilot_branch_override",
+                "authorization_record",
+            ],
+            "conflicts": [],
+            "resolved_conflicts": [],
+        }
+
+        main_only = "working_branch_policy: MAIN_ONLY" in combined
+        sequential = "agent_execution_policy: SEQUENTIAL_HANDOFF" in combined
+        override = "pilot_branch_override:" in combined and branch in combined
+        owner_auth = (
+            "authorization_record:" in combined
+            and "authority: OWNER" in combined
+            and branch in combined
+            and "main_only_derogation: LIMITED" in combined
+        )
+
+        if main_only and branch != "main" and not owner_auth:
+            findings["conflicts"].append({
+                "type": "MAIN_ONLY_VS_PILOT_BRANCH",
+                "status": "UNRESOLVED",
+                "branch": branch,
+            })
+        elif main_only and branch != "main" and owner_auth:
+            findings["resolved_conflicts"].append({
+                "type": "MAIN_ONLY_VS_PILOT_BRANCH",
+                "status": "RESOLVED_BY_OWNER_AUTHORIZATION",
+                "branch": branch,
+            })
+
+        if sequential and "parallel" in combined.lower() and not owner_auth:
+            findings["conflicts"].append({
+                "type": "SEQUENTIAL_HANDOFF_VS_PARALLEL_EXECUTION",
+                "status": "UNRESOLVED",
+            })
+
+        if override and not owner_auth:
+            findings["conflicts"].append({
+                "type": "BRANCH_OVERRIDE_WITHOUT_OWNER_AUTHORIZATION",
+                "status": "UNRESOLVED",
+            })
+
+        return findings
+
     def _load_bootstrap(self, task: AgentTask) -> Dict[str, Any]:
         provider = self.bootstrap_provider or self._default_bootstrap
         try:
@@ -863,6 +983,8 @@ class RealAgentExecutionHarness:
         for source in sources:
             if not source.get("text") or not source.get("sha256") or not source.get("uri"):
                 raise ExecutionContractError("bootstrap provenance missing")
+            if source.get("evidence_level") in (None, "", "UNKNOWN"):
+                raise ExecutionContractError("bootstrap evidence level missing")
         return bootstrap
 
     def execute(
@@ -940,14 +1062,18 @@ class RealAgentExecutionHarness:
 
         # 4. Construct bounded execution context & calculate context hash
         context_memories: List[Dict[str, Any]] = []
+        memory_context_truncated = False
         for item in raw_results[:execution_contract.max_memory_results]:
             if isinstance(item, dict) and item.get('id'):
                 content = item.get('content') or item.get('snippet') or ''
+                raw_content = str(content)
+                if len(raw_content) > 500:
+                    memory_context_truncated = True
                 context_memories.append({
                     'id': str(item['id']),
                     'type': str(item.get('type', 'unknown')),
                     'lifecycle': str(item.get('lifecycle', 'unknown')),
-                    'content': str(content)[:500],
+                    'content': raw_content[:500],
                     'authority': 'DATA_ONLY',
                     'untrusted': True,
                     'evidence_level': item.get('evidence_level', 'UNKNOWN'),
@@ -1097,7 +1223,37 @@ class RealAgentExecutionHarness:
 
         finished_at = datetime.now(timezone.utc).isoformat()
 
-        # 12. Persist execution evidence with secret redaction
+        # 12. Persist execution evidence with secret redaction.
+        evidence_status = {
+            "bootstrap_sources": bool(
+                bootstrap.get("sources")
+                and all(
+                    source.get("uri") and source.get("sha256") and source.get("evidence_level")
+                    for source in bootstrap.get("sources", [])
+                )
+            ),
+            "context_hash": bool(re.fullmatch(r"[0-9a-f]{64}", context_hash)),
+            "contract_hash": bool(re.fullmatch(r"[0-9a-f]{64}", contract_hash)),
+            "workspace_diff": workspace_diff.to_dict() is not None,
+            "verification": bool(
+                v_record.command
+                and v_record.status in {"passed", "failed"}
+                and v_record.exit_code is not None
+            ),
+        }
+        missing_evidence = [
+            name for name in execution_contract.evidence_required
+            if not evidence_status.get(name, False)
+        ]
+        if memory_context_truncated:
+            policy_error = "memory context truncated"
+        if missing_evidence:
+            policy_error = (
+                f"{policy_error}; missing evidence={missing_evidence}"
+                if policy_error
+                else f"missing evidence={missing_evidence}"
+            )
+
         all_stdout = '\n'.join(rec.stdout for rec in command_records if rec.stdout)
         all_stderr = '\n'.join(rec.stderr for rec in command_records if rec.stderr)
         all_exit_codes = [rec.exit_code for rec in command_records]
@@ -1115,6 +1271,7 @@ class RealAgentExecutionHarness:
                 'retrieval_count': retrieval_count,
                 'relevance_scores': relevance_scores,
                 'support_limit': execution_contract.max_memory_results,
+                'context_truncated': memory_context_truncated,
                 'context_hash': context_hash,
             },
             model=model_record.to_dict(),
@@ -1124,6 +1281,8 @@ class RealAgentExecutionHarness:
                 'stdout': all_stdout,
                 'stderr': all_stderr,
                 'exit_codes': all_exit_codes,
+                'evidence_status': evidence_status,
+                'missing_evidence': missing_evidence,
             },
             workspace=workspace_diff.to_dict(),
             verification=v_record.to_dict(),
@@ -1144,7 +1303,9 @@ class RealAgentExecutionHarness:
                     for source in bootstrap.get("sources", [])
                 ],
                 "authority": bootstrap.get("authority"),
+                "governance": bootstrap.get("governance"),
                 "conflicts": bootstrap.get("conflicts", []),
+                "resolved_conflicts": bootstrap.get("resolved_conflicts", []),
             },
             execution_contract=contract_dict,
             contract_hash=contract_hash,
