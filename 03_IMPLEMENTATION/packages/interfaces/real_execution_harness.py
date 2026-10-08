@@ -785,7 +785,7 @@ class RealAgentExecutionHarness:
     def _default_bootstrap(self, task: AgentTask, principal: str) -> Dict[str, Any]:
         from vault_access.core import VaultAccess
 
-        access = VaultAccess(principal=self.bootstrap_principal, interface="harness")
+        access = VaultAccess(principal=self.bootstrap_principal, interface="cli")
         documents = []
         for query, expected_name in (
             ("AGENTS.md", "AGENTS.md"),
@@ -794,9 +794,10 @@ class RealAgentExecutionHarness:
         ):
             resolved = access.resolve(query)
             route = resolved.get("route") if isinstance(resolved, dict) else None
-            if not route:
+            uri = route.get("uri") if isinstance(route, dict) else route
+            if not uri:
                 raise ExecutionContractError("bootstrap unavailable")
-            read = access.read(route)
+            read = access.read(uri)
             evidence = read.get("evidence") or []
             integrity = read.get("integrity") or {}
             body = evidence[0].get("text", "") if evidence else ""
@@ -804,7 +805,7 @@ class RealAgentExecutionHarness:
                 raise ExecutionContractError("bootstrap incomplete")
             documents.append({
                 "name": expected_name,
-                "uri": route,
+                "uri": uri,
                 "sha256": integrity["sha256"],
                 "text": body,
                 "evidence": evidence[0],
