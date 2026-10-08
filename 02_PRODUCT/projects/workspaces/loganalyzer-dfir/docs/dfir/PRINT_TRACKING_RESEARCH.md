@@ -207,7 +207,7 @@ Notă generală: formatele publice sunt rare. Numai Ricoh, Canon (parțial) și 
 | **Ricoh** | Web Image Monitor > Configuration > Logs > descărcare CSV (Job Log, Access Log, sau combinat); sau server de colectare/Streamline NX. UTF-8 sau JIS, antet pe primul rând, sortat după Log ID. Nume: `<Machine>_joblog.csv`, `_accesslog.csv`, `_log.csv`, `_ecolog.csv`. | Comune: Start/End Date/Time, Log Type, Result, Operation Method, Status, User Entry ID, User Code/User Name, Log ID. Intrare (Source): Source, Start/End, Stored File, Stored File Name, Folder Number/Name, Print File Name. Ieșire (Target): Target, Start/End, **Destination Name**, **Destination Address**, Stored File ID/Name, Folder. Rânduri multiple per job pentru surse/ținte multiple. | nume fișier: da (Stored File Name / Print File Name); utilizator: da; **pagini: nu apare coloană** în tabelul citit; destinație scan-to-email/folder: da (Destination Name/Address). Tipuri: copiere, tipărire, scanare, fax, rapoarte. | **da** | https://support.ricoh.com/services/device/ccmanual/IM550/en-GB/setting/int/logfiles.htm ; https://support.ricoh.com/services/device/ccmanual/IM550/en-GB/setting/int/loglist.htm |
 | **Canon** imageRUNNER ADVANCE | Remote UI > Settings/Registration > Device Management > Export/Clear Audit Log > Export (CSV; admin; max 20 000 intrări; înlocuiește cele mai vechi); tip log 1001/8193 = Job. Separat: Status Monitor > Job Log > „Store in CSV Format" (ultimele 100 joburi; `tx.csv`/`rx.csv` pentru fax). | Dată/oră, nume utilizator, tip operație, rezultat (OK/NG); pentru Job: tip job (copy, fax, scan, send, print). Lista completă a coloanelor: **neverificat**. | utilizator da; fișier/pagini/destinație: **neverificat** (manualul rezumat nu le listează) | parțial | https://oip.manual.canon/USRMA-0099-zz-CS-enUS/contents/1T0002196156.html ; https://oip.manual.canon/USRMA-0099-zz-CS-enUS/contents/1T0002196126.html |
 | **Konica Minolta** bizhub | Web Connection (admin) > Security > Job Log Settings > Job Log Usage Set = ON (implicit OFF; efect după repornire); apoi Maintenance > Job Log > Create Job Log → descărcare pe PC sau SMB (mod manual = **XML**; mod auto = syslog). Jurnalul nedescărcat se pierde la crearea unuia nou. | Manualul: „utilizare, consum hârtie, operațiuni, istoric joburi per utilizator/cont"; **schema XML nu e descrisă** — „contactați reprezentantul de service". | **neverificat** | **nu** (schema) | https://manuals.konicaminolta.eu/bizhub-451i/EN/contents/WC_12_03_06.html ; https://manuals.konicaminolta.eu/bizhub-650i-550i-450i-UD/EN/contents/id08-_104679563.html |
-| **Sharp** MX/BP | Pagina web a dispozitivului: Job Log (selectare perioadă, Show, salvare, ștergere); Audit Log separat (BP-1360M: export, ghid de referință). Câmpuri contabilitate/OSA: Job ID, Account Job ID, Job Mode, Computer Name, User Name, Login Name, Card ID, Main/Sub Code, Starting/Completing Date-Time, contoare pagini (ccompletate color/mono, pe format). | da (job log); audit: dată, oră, ID eveniment, utilizator, descriere (syslog severitate fixă 6) | utilizator da; nume fișier **neverificat**; pagini da; destinație **neverificat**. Export CSV al jurnalului de job: **neverificat** (CSV găsit doar pentru agendă/utilizatori). | parțial–da | https://global.sharp/restricted/print/manuals/5/bp70m65/en/contents_09-07_021.html ; https://business.sharpusa.com/portals/0/downloads/Manuals/BP-1360M_1250M-Audit-Log-Reference-Guide.pdf |
+| **Sharp** MX/BP | Pagina web a dispozitivului: Job Log (selectare perioadă, Show, salvare, ștergere); Audit Log separat (BP-1360M: export, ghid de referință). Câmpuri contabilitate/OSA: Job ID, Account Job ID, Job Mode, Computer Name, User Name, Login Name, Card ID, Main/Sub Code, Starting/Completing Date-Time, contoare pagini (color/mono, pe format de hârtie). | da (job log); audit: dată, oră, ID eveniment, utilizator, descriere (syslog severitate fixă 6) | utilizator da; nume fișier **neverificat**; pagini da; destinație **neverificat**. Export CSV al jurnalului de job: **neverificat** (CSV găsit doar pentru agendă/utilizatori). | parțial–da | https://global.sharp/restricted/print/manuals/5/bp70m65/en/contents_09-07_021.html ; https://business.sharpusa.com/portals/0/downloads/Manuals/BP-1360M_1250M-Audit-Log-Reference-Guide.pdf |
 | **HP** (LaserJet Enterprise/FutureSmart) | EWS > Information > Job Log (poate fi ascuns; se activează la Security > EWS options „Display Job log on Information tab" — sursă comunitate). Contabilitate: „Serverless Job Accounting" (FutureSmart ≥ 4.6.1): EWS > Security > Accounting Methods > Usage History > **Export**; contorizează fețe copiate/tipărite/scanate per utilizator. Web Jetadmin: rapoarte HTML/CSV, dar nu e contabilitate (HP). | Job Log (comunitate): JobName, User, Status, Date. SJA: contoare, nu job-uri individuale. | nume job da (în Job Log); utilizator da; pagini/destinație: **neverificat** | **slab** (nu există listă oficială de câmpuri găsită) | https://support.hp.com/us-en/document/ish_7598494-7598479-16 ; https://support.hp.com/gb-en/document/c06529554 ; https://h30434.www3.hp.com/t5/LaserJet-Printing/Job-Log/m-p/6367268 |
 | **Xerox** | Standard Accounting: Interfață web > Properties > Accounting > Report and Reset > Usage Report > Download (.csv), opțiune „Show User ID in Report" (contor pe utilizator, nu per job). VersaLink: System > Logs > export jurnal audit (`auditlog.txt`); jurnalul de debug/job este criptat, decriptabil doar de Xerox (Tungsten). | coloanele nu sunt documentate în sursele găsite | **neverificat** | **nu** | https://procurement.ufl.edu/wp-content/uploads/2021/08/AltaLink-Setup-Standard-Accounting.pdf ; https://docshield.tungstenautomation.com/ControlSuite/en_US/help/clients/DRS/XeroxUC/ControlSuite_XeroxUC/t_debuglogs.html |
 | **Kyocera** | Command Center RX: istoric joburi/„Job Accounting"/„Job Box"; ghidul oficial CCRX există (PDF) dar secțiunea de jurnal nu a putut fi extrasă în sesiune. | **neverificat** | **neverificat** | de verificat în ghid | https://downloads.kyoceradocumentsolutions.com.au/Documentation/CommandCenterRX_EN_2020.pdf |
@@ -216,3 +216,100 @@ Notă generală: formatele publice sunt rare. Numai Ricoh, Canon (parțial) și 
 | **Epson** | Web Config exportă *configurația*, nu istoricul joburilor (FAQ Epson). Istoric: Epson Device Admin (**neverificat**). | — | — | **nu** | https://epson.com/faq/SPT_C31CD54011~faq-0000716-shared |
 
 Observații: (1) exporturile de dispozitiv sunt **date de la sursă ostilă/necunoscută**: parser defensiv, limite de dimensiune, antet validat, fără execuție. (2) Fusul orar și ceasul dispozitivului se pot abate; aplicația stochează fusul declarat și o toleranță de corelare. (3) Syslog (Lexmark, Konica, Sharp) cere rețea → P2/P3; în P1 se folosește exportul de fișier.
+
+---
+
+## E. Date publice de test
+
+Descărcate (doar în scratchpad, **nu** în depozit, tratate ca nesigure; nimic executat; citite doar cu `python3 -I`): `/tmp/claude-0/-home-user-AI-Memory-Vault-CODEX-READY/866eaee9-546d-505f-a536-6c7b061fb922/scratchpad/print_samples/`
+
+| Fișier (subdirector) | SHA-256 | Dimensiune | Origine / licență | Note |
+|---|---|---|---|---|
+| `evtx_keep/ID354-808-Mimispool printer installation (PrintNightmare).evtx` | `02b442fdc39b768672c12213637f33e75edf7101c3bcff402283848e40f8e226` | 69 632 | Yamato-Security/hayabusa-sample-evtx (colectat din EVTX-to-MITRE-Attack, mdecrevoisier). Fără fișier LICENSE în depozitele citite → **licență necunoscută, nu se redistribuie**. | conține canalul `Microsoft-Windows-PrintService/Operational` (șir verificat); evenimente 354, 808 (instalare driver) — **nu** evenimente de job |
+| `evtx_keep/ID316,300,301,316,823,848-Mimispool printer server instal.evtx` | `1d183b689bd85596f6eaefa220e5afcb18d7dd1090dc03d5e0c2ad8039641adf` | 69 632 | idem | canalul `Microsoft-Windows-PrintService/Admin`; evenimente 316, 300, 301, 823, 848 |
+| `pcl_keep/fonts.pcl` | `421fc9f49d5c43cba3f8899fd785dea6b17f68916fea64bdf294fa37c47e753b` | 7 731 | ArtifexSoftware/ghostpdl `pcl/examples/` — AGPL-3.0 / comercial (LICENSE depozit: directoarele pcl/xps/examples fac parte din GPL Ghostscript) | PCL5, începe cu `ESC E` (verificat) |
+| `pcl_keep/fills.pcl` | `433f0dc992d3884952dcb471d097091455ecefbb5e14f7b04e5556f9ebc05d5b` | 123 | idem | începe cu UEL `ESC %-12345X` (verificat) |
+| `pcl_keep/fonts.pxl` | `24289143071e18cabd94916d65a97b5f13be999d18858a7fe051e2e5271d5407` | 6 009 | idem | PJL înveliș `@PJL SET DUPLEX=OFF…` (verificat) urmat de PCL XL |
+| `ps_keep/alphabet.ps` | `0c726c53d1050db449bb0af85d1ad1472ed5473e672000a0dcd2907216cae8d3` | 1 966 | ghostpdl `examples/` — AGPL-3.0 | PostScript, începe cu `%!` |
+| `xps_keep/colorcirc.xps` | `cbe7075c8d1e8b2030423150ab7a339fe41aa58766a43d18dbb2fdc7070555ee` | 50 588 | ghostpdl `xps/tools/` — AGPL-3.0 | arhivă zip (OPC) verificat |
+| `xps_keep/tiger.xps` | `685143e809d9d14542289b41707a1d29b98242e6a3b6f0a396ca24d55fc3fd0a` | 62 775 | idem | arhivă zip verificat |
+
+Repozitorii identificați, nedescărcați integral: `sbousseaden/EVTX-ATTACK-SAMPLES` (**GPL-3.0**, LICENSE citit; fișiere de tip spooler/PrintNightmare, fără evenimente 307), `Yamato-Security/hayabusa-sample-evtx` (agregă mai multe depozite; licență necunoscută). Nu s-au găsit: EVTX public cu evenimente 307/805/801 de job, fișiere `.SPL`/`.SHD` publice (există doar eșantioane în arhive de aplicații CodeProject, licență neclară: https://codeguru.com/?p=12938), exporturi de jurnal MFP publice.
+
+**Recomandare teste**:
+1. **EVTX de job**: construit sintetic din șabloanele de mesaj documentate (A.2). Generarea unui EVTX real cere o mașină Windows cu canalul activat; fixtures în XML (`wevtutil qe /f:xml`) sunt proprietatea proiectului. Verificarea parserului se face în plus pe cele două EVTX PrintService de mai sus (licență nesigură → rulate doar local, nu comise).
+2. **SPL/SHD**: generate pe o VM de test cu „Keep printed documents" (procedură CodeGuru, sursă terță) și comise doar dacă conținutul este inofensiv; aplicația are nevoie de aceste fișiere reale pentru a valida layout-ul SHD (**neverificat**).
+3. **PCL/PCL XL/PS/XPS**: PCL Paraphernalia (Unlicense) poate *genera* joburi PCL și PCL XL cu licență permisivă — mai curat decât eșantioanele AGPL. XPS: generate cu `XpsDocument` (WPF) sau „Microsoft XPS Document Writer". PS: scrise de mână (texte scurte). Eșantioanele ghostpdl (AGPL) rămân de utilizat **doar local**, ca verificare de încredere a detectării limbajului, nu în depozit.
+4. **Jurnale MFP**: lipsesc public; proprietarul le furnizează (decizia 26f). Până atunci: fixtures sintetice după câmpurile documentate Ricoh (D) — marcate explicit „sintetic".
+
+---
+
+## F. Standardul de denumire a documentelor
+
+Model dat: `yyyymmdd_litera_litera-litera-literacifra/cifre-denumire document-[cifre]/cifre(4/5 cifre).ext`.
+
+Observații:
+- `/` este **ilegal** în nume de fișier Windows (și `\ : * ? " < > |`). Pattern-ul trebuie să accepte un **caracter substitut configurabil** pentru fiecare `/` (implicit `+`; alternative legale: `~`, `=`, `#`, `@`). Aplicația nu redenumește niciodată (decizia 26c); raportează „nume neconform".
+- Interpretarea „litera" = o literă (inclusiv diacritice românești prin `\p{L}`); „cifre" = una sau mai multe cifre; `[cifre]` — **ambiguu**: paranteze literale sau doar notație pentru „cifre"? Regex-ul le acceptă pe amândouă (paranteze opționale). Cere confirmare proprietar.
+- „literacifra/cifre" interpretat ca literă + cifră(e), separator, cifre (ex. `D12+345`). Ambiguu dacă după literă e exact o cifră; parametru `regLetterDigits`.
+- Prima zonă se validează și ca **dată calendaristică reală** în cod (regex singur acceptă 20260231).
+
+### F.1 Regex implicit (.NET, `RegexOptions.CultureInvariant`, cu timeout; șablonul se compune din parametri)
+```
+^(?<date>(?<yyyy>\d{4})(?<mm>0[1-9]|1[0-2])(?<dd>0[1-9]|[12]\d|3[01]))
+_(?<unit1>\p{L})
+_(?<unit2>\p{L})-(?<unit3>\p{L})
+-(?<regletter>\p{L})(?<regdigits>\d+)(?<sep1>\+)(?<regnumber>\d+)
+-(?<title>[^\\/:*?"<>|]+?)
+-\[?(?<ref>\d+)\]?(?<sep2>\+)(?<serial>\d{4,5})
+\.(?<ext>[A-Za-z0-9]{1,8})$
+```
+(scris pe mai multe linii doar pentru lizibilitate; în configurare este un singur șir, fără `IgnorePatternWhitespace` sau cu el și spații escape-uite). Parametri configurabili: caracterul substitut (`\+` → `[+=~#@]`), clasa de litere (ex. numai majuscule: `\p{Lu}`), lungimea seriei (`{4,5}`), prezența parantezelor `[]` (obligatorii/opționale/interzise), lista extensiilor, set de unități acceptate (listă albă pentru `unit1..3`).
+Titlul acceptă cratime și spații; backtracking-ul leneș cu `-\[?\d+…` la final dezambiguizează; timeout obligatoriu (intrare ostilă).
+
+### F.2 Trei exemple acceptate de regex-ul implicit
+1. `20260314_A_B-C-D12+345-Raport de inspectie-[07]+1234.pdf`
+2. `20251231_M_S-T-X9+10-Nota informare-12+54321.docx`
+3. `20260101_Ă_Ț-I-K1+7-Plan de masuri-[3]+0042.xlsx`
+Exemple respinse: `20260314_A_B-C-D12/345-...` (nu poate exista pe disc), `2026-03-14_A_...` (dată), `20260314_A_B-C-D12+345-Raport-[07]+123.pdf` (serie 3 cifre).
+Neverificat: exemplele nu sunt reale; nu au fost rulate pe un motor .NET în această sesiune (doar raționament pe sintaxă).
+
+---
+
+## Propunere de implementare WP16a (ordinea pașilor)
+
+| # | Pas | Ediție | Licență / componente |
+|---|---|---|---|
+| 1 | Model de stare job tipărire (C.5) + `evidence_level`; contract „stări, nu erori"; „jurnal de tipărire dezactivat" | P1, P2, P3 | cod propriu |
+| 2 | Parser EVTX PrintService (307, 805, 800, 801, 842, 308, 309, 310, 372, 812; defensiv; EVTX offline, fără API gazdă în P1) + detectare canal dezactivat/mic (starea din EVTX/config exportat) | P1, P2, P3 | cod propriu; EVTX reader existent al proiectului |
+| 3 | Deduplicare server/stație; corelare job (id, imprimantă, mașină, timp) | P1, P2, P3 | cod propriu |
+| 4 | Import SPL/SHD (copiere offline → caz criptat): parser SHD defensiv (B.2) + detectare datatype/limbaj (B.4) | P1, P2, P3 | cod propriu |
+| 5 | EMF-spool (MS-EMFSPOOL) → pagini EMF → extragere text (`EMR_EXTTEXTOUTW`) + redare imagine (GDI+ doar Windows) → PDF cu PDFsharp (imagine + text) | P1, P2, P3 | cod propriu + PDFsharp (MIT); System.Drawing (MIT, Windows) |
+| 6 | XPS → text (OPC + `Glyphs`) și PDF prin redare WPF + PDFsharp | P1, P2, P3 | .NET/WPF (MIT), PDFsharp (MIT) |
+| 7 | RAW PCL/PS/PCL XL: **numai** detectare și raport „conținut nedecodabil fără interpretor" + metadate din SHD; opțional euristică de text PCL5 (portare din pclbox/PCL Paraphernalia) cu marcaj „parțial". Decizie de licență: **interpretor AGPL (GhostPCL/Ghostscript) NU se integrează**; poate fi oferit ca *instrument extern opțional*, instalat de proprietar, apelat ca proces separat — dar aceasta contravine regulii „fără executarea de programe externe" din P1 și ar cere decizia proprietarului. | P1, P2, P3 | Apache-2.0 / Unlicense (referință); AGPL exclus |
+| 8 | Import jurnal MFP (Ricoh CSV întâi — singurul cu câmpuri publice; apoi Canon, Sharp; restul când vin eșantioane), parser bazat pe antet, versionat; corelare job Windows ↔ rând dispozitiv | P1, P2, P3 | cod propriu |
+| 9 | Introducere manuală contoare (C.4) | P1, P2, P3 | cod propriu |
+| 10 | Verificare standard de denumire (F), configurabil, raportează fără redenumire | P1, P2, P3 | cod propriu (.NET Regex) |
+| 11 | SNMP poll (prtMarkerLifeCount, prtAlert, jmJob*) | **P2, P3 numai**; exclus din build-ul P1 | bibliotecă SNMP permisivă — de evaluat (neverificat; nu a fost cercetat în această sesiune) |
+| 12 | IPP Get-Job-Attributes / Get-Jobs | **P2, P3 numai** | client IPP propriu pe HTTP (RFC 8011) sau bibliotecă permisivă — neverificat |
+| 13 | Lanț clasificat → tipărire → scanare → PDF → USB (decizia 26e) | P1, P2, P3 | corelație cu parserele existente |
+| 14 | Teste: fixtures sintetice + generare cu PCL Paraphernalia (Unlicense); EVTX/SPL reale de pe VM de test | toate | — |
+
+Condiții transversale: conținutul tipărit capturat este copie de informație posibil clasificată → doar în cazul criptat, marcat cu clasificarea documentului, sub custodie și control de acces (decizia 26a); nu se adaugă cod de rețea în P1 (pașii 11–12 sunt compilați condiționat sau în ansamblu separat, absent din P1).
+
+---
+
+## Neverificat (rezumat)
+1. ID-urile 800, 801, 842, 308, 309, 310, 372, 812: semnificații și câmpuri exacte (nu există listă oficială Microsoft citită); 310 are definiții contradictorii; ordinea câmpurilor `Param1..8` pentru 307 provine din sursă terță.
+2. Activarea la scară prin GPP Registry (`WINEVT\Channels\...\Enabled`), calea exactă a cheii `ShowJobTitleInEventLogs`, `Attributes` registry pentru KeepPrintedJobs, valoarea numerică 0x100.
+3. Layout SHD pe Windows 10/11/Server 2016–2025 (șablon WinHex terț, licență necunoscută, semnături per versiune); denumirea fișierelor spool; rotația/retenția fișierelor păstrate; efectul repornirii spooler-ului.
+4. Numele exacte ale datatype-urilor `winprint` (`RAW [FF appended]`, `XPS_PASS`, `NT EMF 1.00x`) — pagina Microsoft nu s-a putut citi.
+5. Formatul de spool al driverului IPP clasă (XPS intermediar → PWG Raster): doar discuție PWG.
+6. Comportamentul „Branch Office Print Remote Log" (care mașină înregistrează 307).
+7. Suportul real pentru Job Monitoring MIB, `hrPrinterStatus`, valorile `job-state-reasons`, `Get-Jobs` pe joburi RAW/9100 per model.
+8. Câmpurile jurnalelor: HP, Xerox, Konica Minolta (XML), Kyocera, Lexmark, Epson, Canon (coloane complete), Sharp (export CSV de job), Brother (coloane exacte).
+9. Licența MIT pentru System.Drawing.Common și dotnet/wpf (cunoscută, dar nelecturată în sesiune); evaluare biblioteci SNMP/IPP.
+10. Capacitatea PCL Paraphernalia de a extrage text (este analizor); acuratețea euristicilor de text PCL/PS.
+11. Octeții de recunoaștere PCL/PCL XL/PS/XPS din B.4: parțial confirmați pe eșantioane (`ESC E`, UEL+PJL, `%!`, zip pentru XPS); antetul PCL XL (`) HP-PCL XL;…`) neconfirmat pe fișier (fonts.pxl începe cu PJL; antetul urmează după) .
+12. Regex-ul din F: neexecutat; interpretarea modelului (paranteze, „literacifra") cere confirmarea proprietarului.
+13. Nu s-a găsit niciun EVTX public cu evenimente 307, nicio pereche SPL/SHD publică, niciun jurnal MFP public.
