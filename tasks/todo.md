@@ -85,6 +85,17 @@ Stage 1 is an audit, **no code changes**:
       `00_GOVERNANCE/coordination/projects/LOGANALYZER_DFIR/CURRENT.md`, and
       `tasks/loganalyzer/PR212_RESEARCH_2026-10-07.md`. Reuse their findings; re-check a finding
       only where the code changed after it was written (#212 merged 2026-10-08).
+- [ ] **Freshness rule** (owner, 2026-10-08): reuse an existing audit only if it is close to current
+      main. Measured on main @ a6c6d7aa (LogAnalyzer code commits made after the doc was last updated):
+      | Doc | Last update | Code commits since | Use |
+      |---|---|---|---|
+      | `CURRENT.md` (coordination) | 2026-10-07 | 0 | reuse |
+      | `docs/dfir/RESEARCH_AND_ROADMAP.md` | 2026-10-07 | 2 | reuse, re-check the 2 commits |
+      | `docs/dfir/REALITY_AUDIT.md` | 2026-10-07 | 3 | reuse, re-check the 3 commits |
+      | `tasks/loganalyzer/PR212_RESEARCH_2026-10-07.md` | 2026-10-07 | fixes landed after it | reuse; its 6 fix items are done |
+      | `docs/dfir/DFIR_CURRENT_ARCHITECTURE_AUDIT.md` | 2026-10-04 | 54 | **stale**: re-audit the areas it covers |
+      | `Documentation/PHASE1-STATUS.md` | 2026-09-16 | 56 | **stale**: historical only, do not rely on it |
+      Re-measure these numbers when the audit actually starts (main will have moved).
 - [ ] Map the two contracts onto those findings; audit only the requirements they do not cover, and
       audit `main` (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/`) for those, classifying each requirement and
       classify each as IMPLEMENTED / PARTIAL / MISSING / UNWIRED, with file:line evidence and the
