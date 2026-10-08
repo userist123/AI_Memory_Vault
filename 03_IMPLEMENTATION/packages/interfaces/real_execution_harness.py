@@ -840,7 +840,14 @@ class RealAgentExecutionHarness:
 
     def _load_bootstrap(self, task: AgentTask) -> Dict[str, Any]:
         provider = self.bootstrap_provider or self._default_bootstrap
-        bootstrap = provider(task, self.principal.value if hasattr(self.principal, "value") else str(self.principal))
+        try:
+            bootstrap = provider(task, self.principal.value if hasattr(self.principal, "value") else str(self.principal))
+        except ExecutionContractError:
+            raise
+        except Exception as exc:
+            raise ExecutionContractError(
+                f"bootstrap unavailable: {type(exc).__name__}"
+            ) from exc
         if not isinstance(bootstrap, dict):
             raise ExecutionContractError("bootstrap unavailable")
         sources = bootstrap.get("sources")
