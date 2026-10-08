@@ -2,7 +2,7 @@
 """corpus_health_gate.py — Automated gate asserting baseline invariants of the vault corpus.
 
 Enforces CI-002 Baseline Invariants (derived from 00_GOVERNANCE/phase_0/CORPUS_HEALTH_BASELINE.md):
-1. Graph edges count >= 382 (SynapseStore.from_index).
+1. Graph edges count >= 483 (SynapseStore.from_index).
 2. Exact duplicate groups <= 5 (content body normalized SHA-256).
 3. Dangling edges == 0 (all synapses point to existing indexed notes).
 4. Fixture / test notes inside index == 0 (no test artifacts pollution).
@@ -32,9 +32,7 @@ if str(impl_path) not in sys.path:
 from graph.synapse_store import SynapseStore
 from retrieval.vault_index import VaultIndex
 
-# Lowered 483 -> 382 on purpose: the second typed-edge audit rejected 55 declared relations (each also drops its inferred mirror edge)
-# and 07_EVALUATION/edge_audit_v2_remaining/ documents each purge. 382 is the measured count after it.
-MIN_EDGES_BASELINE: int = 382
+MIN_EDGES_BASELINE: int = 483
 MAX_DUPLICATE_GROUPS_BASELINE: int = 5
 
 

@@ -81,17 +81,22 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1157 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1208 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 382 |
-| — declared / inferred / wikilink | 152 / 153 / 77 |
-| Notes usable as a graph **seed** (out-edge) | 144 |
-| Notes reachable as graph **gold** (in-edge) | 133 |
+| Graph edges | 483 |
+| — declared / inferred / wikilink | 152 / 153 / 178 |
+| Notes usable as a graph **seed** (out-edge) | 195 |
+| Notes reachable as graph **gold** (in-edge) | 142 |
 | Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
 and storage requires a frontmatter `id`. Do not treat 842 and 738 as the same
 population.
+
+The index count includes 51 `Promoted_*` notes (lifecycle REVIEW, verification
+`unverified`, `provenance.source_type: import`) added as candidates from the OpenStax and
+ontology concept batches. None of them is attested: an agent reads them flagged as
+unverified, and they are not ACTIVE.
 
 `search()` traverses **one hop** along outgoing edges. It is not multi-hop.
 Graph results describe roughly 9% of the corpus and must never be pooled with
