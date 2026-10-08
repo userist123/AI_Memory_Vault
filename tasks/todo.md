@@ -131,4 +131,11 @@ Only after the orchestrator has verified the note's quotes. Each item cites the 
 - [ ] WP10: export carries the case's classification marking, a hash manifest and the medium used.
 - [ ] WP1→WP4: link the existing HG 585 checks in `ComplianceAuditEngine` to the cited articles; never "CONFORM" without evidence.
 - [ ] WP10: "audit/compliance" report profile showing which provision each check rests on and what is missing.
-- Limit to state in UI/docs: the app does not make a classified system compliant (accreditation under HG 585 is the security structure's job); it reports what it checked and on what evidence.
+- Limit to state in UI/docs: the app does not certify a *system* as compliant; it reports what it checked and on what evidence.
+
+## Accreditation readiness of the app itself (owner, 2026-10-08)
+The owner will accredit LogAnalyzer to run on accredited internal SIC (classified) and on unclassified
+air-gapped networks / standalone PCs. The app's own behaviour and documentation must satisfy HG 585/2002
+(INFOSEC) + Legea 182/2002 (and NIS2 / 2024/2690 where unclassified).
+- [ ] Requirements (verbatim) + gap analysis of origin/main + WP-ACR proposal → `tasks/loganalyzer/HG585_ACCREDITATION_REQUIREMENTS.md`.
+- [ ] Orchestrator verifies the quotes; owner approves WP-ACR and where it slots in the WP order.
