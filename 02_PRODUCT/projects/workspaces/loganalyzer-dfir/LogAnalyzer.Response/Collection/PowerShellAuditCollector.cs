@@ -21,15 +21,9 @@ namespace LogAnalyzer.Response.Collection
                 {
                     string scriptPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Scripts", "AuditCollector.ps1");
                     
-                    // Fallback în caz că folderul Scripts este în rădăcina proiectului, nu în bin
                     if (!File.Exists(scriptPath))
                     {
-                        scriptPath = Path.Combine("C:\\Users\\user\\Desktop\\LogAnalyzer.MVP\\Scripts", "AuditCollector.ps1");
-                    }
-
-                    if (!File.Exists(scriptPath))
-                    {
-                        logCallback($"[ERROR] Scriptul de colectare nu a fost găsit la calea: {scriptPath}");
+                        logCallback($"[ERROR] Scriptul de colectare (livrat în pachet, Scripts\\AuditCollector.ps1) nu a fost găsit la: {scriptPath}. Reinstalați pachetul; colectarea nu caută în alte locații.");
                         return;
                     }
 
@@ -37,9 +31,17 @@ namespace LogAnalyzer.Response.Collection
                     logCallback($"[INIT] Script rulat: {scriptPath}");
                     logCallback($"[INIT] Destinație: {outputDir}");
 
+                    // Windows PowerShell 5.1 by full path (never from PATH); it ships with every supported Windows version.
+                    string powershell = Path.Combine(Environment.SystemDirectory, "WindowsPowerShell", "v1.0", "powershell.exe");
+                    if (!File.Exists(powershell))
+                    {
+                        logCallback($"[ERROR] Windows PowerShell 5.1 indisponibil pe acest sistem ({powershell} lipsește); colectarea de audit nu poate rula.");
+                        return;
+                    }
+
                     var startInfo = new ProcessStartInfo
                     {
-                        FileName = "powershell.exe",
+                        FileName = powershell,
                         Arguments = $"-NoProfile -ExecutionPolicy Bypass -File \"{scriptPath}\" -TargetType \"{targetType}\" -OutputDirectory \"{outputDir}\" -Hostname \"{hostname}\"",
                         UseShellExecute = false,
                         RedirectStandardOutput = true,

@@ -8,7 +8,7 @@ using Microsoft.Win32;
 
 namespace LogAnalyzer.Dfir.Windows.Acquisition;
 
-/// <summary>Exports event log channels with wevtutil (raw .evtx, never re-rendered). Security needs elevation.</summary>
+/// <summary>Exports event log channels as raw .evtx with EvtExportLog (the wevtutil engine, in process; never re-rendered). Security needs elevation.</summary>
 public sealed class EventLogCollector : ICollector
 {
     public static readonly string[] Channels =
@@ -29,7 +29,7 @@ public sealed class EventLogCollector : ICollector
 
     public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
     {
-        var o = new CollectorOutcome { Tool = "wevtutil.exe", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("wevtutil.exe")), Source = "event logs" };
+        var o = new CollectorOutcome { Tool = "EvtExportLog (wevtapi.dll)", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("wevtapi.dll")), Source = "event logs" };
         var dir = ctx.Case.RawDir("EventLogs");
         var logDir = Path.Combine(ctx.Case.Root, "Logs", "tools");
         int done = 0;
@@ -39,12 +39,17 @@ public sealed class EventLogCollector : ICollector
             ctx.Progress?.Report(new CollectorProgress(Name, ch, done++ * 100 / Channels.Length));
             if (ch == "Security" && !ctx.IsElevated) { o.Errors.Add("Security: necesită drepturi de administrator"); continue; }
             var dest = Path.Combine(dir, ch.Replace('/', '%') + ".evtx");
-            var run = ToolRunner.Run(ToolRunner.System32("wevtutil.exe"), ["epl", ch, dest, "/ow:true"], logDir, "wevtutil_" + ch.Replace('/', '_'), TimeSpan.FromMinutes(10), ct);
-            o.Commands.Add(run.CommandLine);
-            if (run.ExitCode != 0 || !File.Exists(dest))
+            var (status, err) = EventLogExport.Export(ch, dest);
+            o.Commands.Add($"EvtExportLog \"{ch}\" -> {Path.GetFileName(dest)}: {status}{(err != 0 ? " (" + err + ")" : "")}");
+            if (status == EventLogExportStatus.ChannelNotFound)
             {
-                // 15007 = channel not found (e.g. Sysmon not installed): an absent source, not a failure.
-                o.Errors.Add($"{ch}: wevtutil exit {run.ExitCode}");
+                // An absent channel (Sysmon not installed, feature off on this Windows version) is an absent source, not a failure.
+                o.Errors.Add($"{ch}: indisponibil pe acest sistem (canalul nu există pe această versiune de Windows sau configurație)");
+                continue;
+            }
+            if (status != EventLogExportStatus.Exported || !File.Exists(dest))
+            {
+                o.Errors.Add($"{ch}: export eșuat ({status}, cod {err}: {EventLogExport.Describe(err)})");
                 continue;
             }
             o.Evidence.Add(ctx.Case.RegisterStored(dest, ch, "EventLog:" + ch, "evtx", TemporalType.Historical, Name, Version));
@@ -67,9 +72,18 @@ public sealed class PrefetchCollector : ICollector
         var src = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Prefetch");
         if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("Prefetch: necesită drepturi de administrator", src);
         string[] files;
+        if (!Directory.Exists(src)) return CollectorOutcome.NotAvailable("Prefetch: indisponibil pe acest sistem (folderul Prefetch nu există).", src);
         try { files = Directory.GetFiles(src, "*.pf"); }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { return CollectorOutcome.NotAvailable(ex.Message, src); }
-        if (files.Length == 0) return new CollectorOutcome { Status = EvidenceStatus.Empty, Source = src, Errors = { "Prefetch dezactivat sau gol (frecvent pe SSD-uri cu anumite configurări)." } };
+        if (files.Length == 0)
+        {
+            // Distinguish "switched off" (EnablePrefetcher = 0) from "nothing recorded yet".
+            object? enabled = null;
+            try { enabled = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management\PrefetchParameters", "EnablePrefetcher", null); } catch (Exception ex) when (ex is System.Security.SecurityException or IOException or UnauthorizedAccessException) { }
+            var why = enabled is int v && v == 0 ? "Prefetch: dezactivat pe acest sistem (EnablePrefetcher = 0), deci lipsa fișierelor .pf nu dovedește că nu s-a rulat nimic."
+                    : "Prefetch: folderul există, dar este gol (nicio execuție înregistrată încă sau funcția nu produce fișiere pe acest sistem).";
+            return new CollectorOutcome { Status = EvidenceStatus.Empty, Source = src, Errors = { why } };
+        }
         var o = new CollectorOutcome { Source = src, Tool = "copy" };
         foreach (var f in files)
         {

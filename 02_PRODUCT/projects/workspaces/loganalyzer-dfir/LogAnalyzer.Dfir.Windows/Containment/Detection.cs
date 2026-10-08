@@ -99,18 +99,19 @@ public static class BlockedConnectionLog
 {
     public const string FilteringPlatformConnectionGuid = "{0CCE9226-69AE-11D9-BED3-505054503030}";
 
+    /// <summary>Reads the effective policy in process (AuditQuerySystemPolicy): no auditpol.exe, no localized text to parse.</summary>
     public static (bool Enabled, string Detail) IsFailureAuditEnabled()
     {
-        var run = RunAuditpol("/get", $"/subcategory:{FilteringPlatformConnectionGuid}", "/r");
-        if (run.ExitCode != 0) return (false, $"auditpol a eșuat ({run.ExitCode}): {run.Output.Trim()}");
-        // CSV: Machine,Policy Target,Subcategory,Subcategory GUID,Inclusion Setting,Exclusion Setting
-        var line = run.Output.Split('\n').FirstOrDefault(l => l.Contains(FilteringPlatformConnectionGuid, StringComparison.OrdinalIgnoreCase));
-        var setting = line?.Split(',').ElementAtOrDefault(4)?.Trim() ?? "";
-        // The inclusion setting is localized; failure auditing is on when it names two settings or the failure one.
-        bool on = setting.Length > 0 && !setting.Equals("No Auditing", StringComparison.OrdinalIgnoreCase) &&
-                  (setting.Contains("Failure", StringComparison.OrdinalIgnoreCase) || setting.Contains(" and ", StringComparison.OrdinalIgnoreCase) ||
-                   setting.Contains("Eșec", StringComparison.OrdinalIgnoreCase) || setting.Contains("Eroare", StringComparison.OrdinalIgnoreCase));
-        return (on, setting);
+        try
+        {
+            var flags = LogAnalyzer.Dfir.Windows.Native.AuditPolicy.QueryFlags(Guid.Parse(FilteringPlatformConnectionGuid));
+            var setting = (LogAnalyzer.Dfir.Windows.Native.AuditSetting)(flags & 3);
+            return ((setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Failure) != 0, setting == LogAnalyzer.Dfir.Windows.Native.AuditSetting.None ? "No Auditing" : setting.ToString());
+        }
+        catch (System.ComponentModel.Win32Exception ex)
+        {
+            return (false, $"politica de audit nu poate fi citită ({ex.NativeErrorCode}: {ex.Message}); este necesar un cont de administrator");
+        }
     }
 
     public static IReadOnlyList<BlockedConnection> ForProgram(string programPath, DateTimeOffset sinceUtc, int max = 2000)
@@ -147,26 +148,6 @@ public static class BlockedConnectionLog
 
     private static string DirectionName(string v) => v switch { "%%14592" => "inbound", "%%14593" => "outbound", _ => v };
     private static string ProtocolName(string v) => v switch { "6" => "TCP", "17" => "UDP", "1" => "ICMP", "58" => "ICMPv6", _ => v };
-
-    private static (int ExitCode, string Output) RunAuditpol(params string[] args)
-    {
-        var psi = new ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, "auditpol.exe"))
-        {
-            RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
-        };
-        foreach (var a in args) psi.ArgumentList.Add(a);
-        try
-        {
-            using var p = Process.Start(psi)!;
-            var o = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
-            p.WaitForExit(30_000);
-            return (p.ExitCode, o);
-        }
-        catch (System.ComponentModel.Win32Exception ex)
-        {
-            return (-1, ex.Message);
-        }
-    }
 
     public static NetworkIntent ToIntent(BlockedConnection b) =>
         new(b.Direction == "outbound" ? "conexiune blocată (ieșire)" : "conexiune blocată (intrare)",

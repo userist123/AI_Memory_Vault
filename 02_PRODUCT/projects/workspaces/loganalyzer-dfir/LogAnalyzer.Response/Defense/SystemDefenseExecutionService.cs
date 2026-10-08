@@ -8,10 +8,12 @@ namespace LogAnalyzer.Infrastructure.Services
 {
     public sealed record CommandOutcome(int ExitCode, string Output);
 
-    /// <summary>Runs netsh; replaceable so the APPLY/VERIFY logic is tested without touching the firewall.</summary>
+    /// <summary>Runs one firewall rule operation (netsh-style description); replaceable so the APPLY/VERIFY logic is tested without touching the firewall.</summary>
     public interface IFirewallCommandRunner
     {
         CommandOutcome Netsh(string arguments);
+        /// <summary>Name shown in the execution log.</summary>
+        string BackendName => "netsh";
     }
 
     public sealed class NetshRunner : IFirewallCommandRunner
@@ -20,7 +22,7 @@ namespace LogAnalyzer.Infrastructure.Services
 
         public CommandOutcome Netsh(string arguments)
         {
-            var psi = new ProcessStartInfo("netsh.exe", arguments)
+            var psi = new ProcessStartInfo(System.IO.Path.Combine(Environment.SystemDirectory, "netsh.exe"), arguments)
             {
                 RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
             };
@@ -38,7 +40,7 @@ namespace LogAnalyzer.Infrastructure.Services
 
     /// <summary>
     /// Station-wide firewall actions started by the operator (each one is confirmed in the UI). Every action is APPLY then
-    /// VERIFY: success is reported only when netsh succeeded and the rule's presence/absence was checked afterwards.
+    /// VERIFY: success is reported only when the operation succeeded and the rule's presence/absence was checked afterwards.
     /// Per-program containment with evidence lives in Dfir.Windows/Containment.
     /// </summary>
     public static class SystemDefenseExecutionService
@@ -46,7 +48,8 @@ namespace LogAnalyzer.Infrastructure.Services
         public const string FirewallIsolationRuleName = "DFIR_EMERGENCY_ISOLATION";
         public const string IocRulePrefix = "DFIR_BLOCK_IOC ";
 
-        private static readonly IFirewallCommandRunner Default = new NetshRunner();
+        // Production default: Windows Firewall COM API (no process, no PATH). NetshRunner remains available as an explicit, documented fallback.
+        private static readonly IFirewallCommandRunner Default = new ComFirewallRunner();
 
         /// <summary>Blocks all outbound traffic of the station with one firewall rule.</summary>
         public static DefenseActionResult IsolateHostFromNetwork(IFirewallCommandRunner? runner = null) =>
@@ -92,9 +95,9 @@ namespace LogAnalyzer.Infrastructure.Services
             {
                 var add = Run(fw, $"advfirewall firewall add rule name=\"{name}\" {spec}", log);
                 if (add.ExitCode != 0)
-                    return Result(DefenseActionResult.Failed, $"{action} NU a fost aplicată (netsh a întors {add.ExitCode}). Rulați aplicația ca administrator.", log);
+                    return Result(DefenseActionResult.Failed, $"{action} NU a fost aplicată (operația a întors {add.ExitCode}). Rulați aplicația ca administrator.", log);
                 if (!RuleExists(fw, name, log))
-                    return Result(DefenseActionResult.NotVerified, $"{action}: netsh a raportat succes, dar regula „{name}” nu a fost găsită la verificare.", log);
+                    return Result(DefenseActionResult.NotVerified, $"{action}: operația a raportat succes, dar regula „{name}” nu a fost găsită la verificare.", log);
                 return Result(DefenseActionResult.Verified, string.Format(okMessage, name, target), log);
             }
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
@@ -115,7 +118,7 @@ namespace LogAnalyzer.Infrastructure.Services
                 if (!RuleExists(fw, name, log))
                     return Result(DefenseActionResult.Verified, string.Format(okMessage, name), log);
                 return Result(del.ExitCode != 0 ? DefenseActionResult.Failed : DefenseActionResult.NotVerified,
-                    $"{action}: regula „{name}” există în continuare (netsh a întors {del.ExitCode}). Rulați aplicația ca administrator.", log);
+                    $"{action}: regula „{name}” există în continuare (operația a întors {del.ExitCode}). Rulați aplicația ca administrator.", log);
             }
             catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
             {
@@ -124,14 +127,14 @@ namespace LogAnalyzer.Infrastructure.Services
             }
         }
 
-        /// <summary>netsh "show rule" exits 0 when at least one rule has that name, 1 otherwise (independent of the UI language).</summary>
+        /// <summary>"show rule" exits 0 when at least one rule has that name, 1 otherwise (independent of the UI language).</summary>
         private static bool RuleExists(IFirewallCommandRunner fw, string name, System.Text.StringBuilder log) =>
             Run(fw, $"advfirewall firewall show rule name=\"{name}\"", log).ExitCode == 0;
 
         private static CommandOutcome Run(IFirewallCommandRunner fw, string args, System.Text.StringBuilder log)
         {
             var o = fw.Netsh(args);
-            log.AppendLine($"netsh {args} → {o.ExitCode}");
+            log.AppendLine($"{fw.BackendName} {args} → {o.ExitCode}");
             if (o.Output.Length > 0) log.AppendLine(o.Output);
             return o;
         }
