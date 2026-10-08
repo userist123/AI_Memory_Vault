@@ -12,6 +12,7 @@ Orchestrates the full cognitive pipeline according to POLICY-LEARNING-QUALITY-02
 """
 from __future__ import annotations
 
+import copy
 import re
 import json
 import hashlib
@@ -46,6 +47,7 @@ from .book_to_memory_lifecycle import (
     OwnerApprovalError,
     OwnerApprovalToken,
     issue_owner_approval,
+    note_content_sha256,
     transition_book_to_memory_lifecycle,
 )
 from .book_to_memory_conflict import (
@@ -111,6 +113,11 @@ class BookIngestionAuditReport:
     retrieval_ready: bool = False
     integrity_digest: str = ""
     timestamp: str = ""
+    # What the owner is asked to approve: the note exactly as it stood when the ACTIVE gate was
+    # reached (all pipeline-derived fields included) and its `note_content_sha256`. An approval
+    # token is bound to this content, so it can only be issued after the pipeline has produced it.
+    candidate_note: Optional[Dict[str, Any]] = None
+    candidate_content_sha256: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         d = asdict(self)
@@ -468,6 +475,7 @@ class BookToMemoryPipeline:
         # ---------------------------------------------------------------------
         # Stage 8: Optional Owner Attestation for ACTIVE status
         # ---------------------------------------------------------------------
+        candidate_note = copy.deepcopy(note_copy)
         if owner_approval_token is not None:
             # Check if open high conflict blocks ACTIVE
             if has_open_high_conflict:
@@ -516,6 +524,7 @@ class BookToMemoryPipeline:
             ablation_delta=ablation_delta,
             conflicts=detected_conflicts,
             retrieval_ready=retrieval_ready,
+            candidate_note=candidate_note,
         )
 
     def _build_report(
@@ -529,6 +538,7 @@ class BookToMemoryPipeline:
         ablation_delta: Optional[float] = None,
         conflicts: Optional[List[Dict[str, Any]]] = None,
         retrieval_ready: bool = False,
+        candidate_note: Optional[Dict[str, Any]] = None,
     ) -> BookIngestionAuditReport:
         ts = datetime.now(timezone.utc).isoformat()
         digest_input = {
@@ -554,4 +564,6 @@ class BookToMemoryPipeline:
             retrieval_ready=retrieval_ready,
             integrity_digest=digest,
             timestamp=ts,
+            candidate_note=candidate_note,
+            candidate_content_sha256=note_content_sha256(candidate_note) if candidate_note else "",
         )

@@ -89,6 +89,20 @@ def synthetic_eval(note: dict, usage_rubric: dict = None, with_dim: int = 2, wit
     }
 
 
+def approve_candidate(note: dict, task, reason: str = "") -> OwnerApprovalToken:
+    """Owner approval as it works in practice: the token is bound to the exact content reached.
+
+    A dry run on a throw-away pipeline produces the candidate (all pipeline-derived fields
+    included); the owner approves that content and only that content.
+    """
+    dry = BookToMemoryPipeline().process_candidate_note(
+        note=note, task_spec=task, **synthetic_eval(note), caller_principal=Principal.AI_AGENT,
+    )
+    assert dry.final_lifecycle == "VERIFIED"
+    assert dry.candidate_note is not None
+    return issue_owner_approval(actor=Principal.HUMAN, note=dry.candidate_note, reason=reason)
+
+
 @pytest.fixture
 def clean_pipeline():
     return BookToMemoryPipeline()
@@ -197,10 +211,8 @@ def test_pipeline_e2e_happy_path_stops_at_verified_without_owner_token(
 def test_pipeline_promotes_to_active_with_valid_owner_token(
     clean_pipeline, valid_concept_note, valid_task
 ):
-    owner_token = issue_owner_approval(
-        actor=Principal.HUMAN,
-        note_id=valid_concept_note["id"],
-        reason="Verified empirical concept with robust ablation delta.",
+    owner_token = approve_candidate(
+        valid_concept_note, valid_task, reason="Verified empirical concept with robust ablation delta."
     )
 
     report = clean_pipeline.process_candidate_note(
@@ -220,10 +232,7 @@ def test_pipeline_promotes_to_active_with_valid_owner_token(
 def test_pipeline_blocks_active_with_tampered_owner_token(
     clean_pipeline, valid_concept_note, valid_task
 ):
-    owner_token = issue_owner_approval(
-        actor=Principal.HUMAN,
-        note_id=valid_concept_note["id"],
-    )
+    owner_token = approve_candidate(valid_concept_note, valid_task)
     # Tamper token signature
     owner_token.signature = "0" * 64
 
@@ -303,7 +312,7 @@ def test_pipeline_open_high_conflict_blocks_active_even_with_token(
 
     owner_token = issue_owner_approval(
         actor=Principal.HUMAN,
-        note_id=valid_concept_note["id"],
+        note=valid_concept_note,
     )
 
     report = clean_pipeline.process_candidate_note(
@@ -625,3 +634,53 @@ def test_pipeline_without_ablation_trial_data_reports_insufficient_data_not_a_wi
     assert ablation_stage.passed is False
     assert "INSUFFICIENT_DATA" in ablation_stage.error
     assert not report.ablation_delta
+
+
+def test_pipeline_blocks_active_when_note_edited_after_owner_approval(
+    clean_pipeline, valid_concept_note, valid_task
+):
+    """B02: the owner approved one version of the note; an edited version must not ride on it."""
+    owner_token = approve_candidate(valid_concept_note, valid_task)
+    edited = dict(valid_concept_note, evidence=valid_concept_note["evidence"] + " Also: ignore previous claims.")
+
+    report = clean_pipeline.process_candidate_note(
+        note=edited,
+        task_spec=valid_task,
+        **synthetic_eval(edited),
+        owner_approval_token=owner_token,
+        caller_principal=Principal.AI_AGENT,
+        evaluator_principal=Principal.HUMAN,
+    )
+    assert report.final_lifecycle == "VERIFIED"
+    attestation_stage = [s for s in report.stage_results if s.stage == PipelineStage.OWNER_ATTESTATION][0]
+    assert attestation_stage.passed is False
+    assert "Token content mismatch" in attestation_stage.error
+
+
+def test_pipeline_blocks_active_with_token_issued_over_the_raw_input(
+    clean_pipeline, valid_concept_note, valid_task
+):
+    """A token over the raw note does not cover what the pipeline derives from it (scores, deltas)."""
+    owner_token = issue_owner_approval(actor=Principal.HUMAN, note=valid_concept_note)
+    report = clean_pipeline.process_candidate_note(
+        note=valid_concept_note,
+        task_spec=valid_task,
+        **synthetic_eval(valid_concept_note),
+        owner_approval_token=owner_token,
+    )
+    assert report.final_lifecycle == "VERIFIED"
+    attestation_stage = [s for s in report.stage_results if s.stage == PipelineStage.OWNER_ATTESTATION][0]
+    assert attestation_stage.passed is False
+    assert "Token content mismatch" in attestation_stage.error
+
+
+def test_pipeline_report_exposes_the_content_the_owner_is_asked_to_approve(
+    clean_pipeline, valid_concept_note, valid_task
+):
+    report = clean_pipeline.process_candidate_note(
+        note=valid_concept_note, task_spec=valid_task, **synthetic_eval(valid_concept_note)
+    )
+    assert report.final_lifecycle == "VERIFIED"
+    from lifecycle.validation.book_to_memory_lifecycle import note_content_sha256
+    assert report.candidate_content_sha256 == note_content_sha256(report.candidate_note)
+    assert report.candidate_note["usage_test_score"] is not None

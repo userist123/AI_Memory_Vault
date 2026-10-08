@@ -226,7 +226,7 @@ def test_open_high_conflict_blocks_active_lifecycle():
             }
         ],
     }
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
 
     with pytest.raises(LifecycleTransitionError, match="GATE-06 Conflict failed: open high/critical conflict"):
         transition_book_to_memory_lifecycle(
@@ -254,7 +254,7 @@ def test_open_low_conflict_does_not_block_active():
             }
         ],
     }
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
     active_note = transition_book_to_memory_lifecycle(
         note, target_state=BookToMemoryLifecycleState.ACTIVE, actor=Principal.HUMAN, approval_token=token
     )
