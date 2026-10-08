@@ -1,7 +1,7 @@
 # todo-claude-wp2
-STATUS: IN_PROGRESS        UPDATED: 2026-10-08 (full local suites done: 0 new failures vs base; Dfir 403 tests 48 fail (base 50), UI 143 tests 6 fail (base 6))
+STATUS: IN_PROGRESS        UPDATED: 2026-10-08 (merged origin/main; PR opening, CI pending)
 TASK: LogAnalyzer stage 2 WP2 - finding contract, standard states, versioned outputs, raw time (+ lessons-learned vocabulary)
-BRANCH / PR: loganalyzer/wp2-finding-contract / opening now    BASE: origin/main 94020777d
+BRANCH / PR: loganalyzer/wp2-finding-contract / opened (see GitHub)    BASE: origin/main
 SPEC: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md (s7 WP2, s8 decision 2), FINDING_CONTRACT.md
 DONE:
 - Core: SemanticType/StandardState/OperationState/ParserHealth/SourceAvailability, Finding + TimelineEvent fields
