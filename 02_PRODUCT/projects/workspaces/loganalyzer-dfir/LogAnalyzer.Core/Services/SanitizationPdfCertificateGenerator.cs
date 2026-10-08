@@ -30,7 +30,7 @@ namespace LogAnalyzer.Core.Services
                             {
                                 c.Item().Text("CERTIFICAT OFICIAL DE SANITIZARE A DATELOR")
                                     .Bold().FontSize(15).FontColor("#0f172a");
-                                c.Item().Text("CONFORM NIST SP 800-88r2 | HG 585/2002 ART. 65 | NATO AC/35-D/1022")
+                                c.Item().Text("Referință metodologică: NIST SP 800-88r2 (conformitatea nu este atestată de acest document)")
                                     .Bold().FontSize(8.5f).FontColor("#0284c7");
                             });
 

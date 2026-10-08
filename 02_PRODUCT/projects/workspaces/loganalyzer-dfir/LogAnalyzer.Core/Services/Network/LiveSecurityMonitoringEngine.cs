@@ -307,11 +307,11 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🔊 ALERTĂ CRITICĂ: Exfiltrare Acustică prin Modulație Ventilatoare (Air-Gap Jumping / Fansmitter)",
-                    Severity = "Critical",
+                    Title = "[NEVERIFICAT - doar cuvinte cheie] Posibil canal acustic ascuns (Fansmitter)",
+                    Severity = "Low",
                     MitreTechniqueId = "T1048 / T1052 (Air-Gap)",
                     MitreTacticName = "Exfiltration",
-                    Explanation = $"Tentativă de transmitere de date confidențiale din sistem izolat prin vibrații acustice generate de modulația PWM a ventilatoarelor pe [{ev.MachineName}]. Conform normelor HG 585 / NATO TEMPEST.",
+                    Explanation = $"Mesajul de pe [{ev.MachineName}] conține un cuvânt cheie asociat tehnicii Fansmitter. Nu există nicio măsurătoare acustică sau de hardware a ventilatoarelor; aceasta NU este o detecție confirmată de exfiltrare, doar un indiciu de verificat manual.",
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };

@@ -218,6 +218,49 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
+        public void Keyword_only_acoustic_hint_is_not_a_critical_detection()
+        {
+            var alert = new LiveSecurityMonitoringEngine().EvaluateLiveEvent(new ParsedEvent
+            {
+                EventId = 1, MachineName = "HOST-2", Message = "fansmitter acoustic test string", TimeCreated = DateTime.UtcNow
+            });
+
+            Assert.NotNull(alert);
+            Assert.NotEqual("Critical", alert!.Severity);
+            Assert.Contains("NEVERIFICAT", alert.Title);
+            Assert.Contains("NU este o detecție confirmată", alert.Explanation);
+            Assert.DoesNotContain("TEMPEST", alert.Explanation);
+        }
+
+        [Fact]
+        public void Sanitization_text_certificate_cites_no_unverified_article_or_conformity()
+        {
+            var text = new SanitizationCertificateGenerator().GenerateTextCertificate(new SanitizationCertificateData());
+
+            Assert.DoesNotContain("ART. 65", text, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("AC/35-D/1022", text);
+            Assert.DoesNotContain("Conform NIST", text);
+            Assert.Contains("NIST SP 800-88r2", text);
+        }
+
+        [Fact]
+        public void Compliance_matrix_cites_no_unconfirmed_article_number()
+        {
+            var results = new ComplianceAuditEngine().Evaluate(new List<ParsedEvent>(), new AdAuditSummary(), new StandaloneSamSummary(), 0, 0);
+
+            Assert.DoesNotContain(results, r => r.ArticleOrControl.StartsWith("Art. 21", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public void Data_collection_page_shows_no_static_classification()
+        {
+            var text = File.ReadAllText(Path.Combine(AppDir(), "Views", "DataCollectionView.xaml"));
+
+            Assert.DoesNotContain("SECRET DE SERVICIU", text);
+            Assert.DoesNotContain("NATO AC/35", text);
+        }
+
+        [Fact]
         public void Provenance_default_is_not_a_verification_claim()
         {
             var vm = File.ReadAllText(Path.Combine(AppDir(), "ViewModels", "MainViewModel.cs"));

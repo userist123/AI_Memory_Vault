@@ -249,7 +249,7 @@ namespace LogAnalyzer.Core.Services
                         col.Item().LineHorizontal(0.5f).LineColor("#cbd5e1");
                         col.Item().PaddingTop(4).Row(row =>
                         {
-                            row.RelativeItem().Text("LogAnalyzer Enterprise — Threat Operations & Incident Command Center | HG 585/2002 & NIS2 Compliant")
+                            row.RelativeItem().Text("LogAnalyzer Enterprise — Threat Operations & Incident Command Center | Conformitatea nu este atestată automat de acest raport")
                                 .FontSize(7.5f).FontColor("#94a3b8");
                             row.ConstantItem(80).AlignRight().DefaultTextStyle(s => s.FontSize(7.5f).FontColor("#94a3b8")).Text(x =>
                             {

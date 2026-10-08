@@ -26,7 +26,7 @@ namespace LogAnalyzer.Core.Services
         {
             var results = new List<ComplianceCheckResult>();
 
-            // 1. HG 585/2002 - Art. 21 (Control Acces & Privilegii)
+            // 1. HG 585/2002 - Control Acces & Privilegii (TODO owner: articolul exact se adaugă când textele juridice sunt furnizate)
             int adminChanges = (adSummary?.PrivilegedGroupChanges ?? 0) + (samSummary?.LocalAdminGroupModifications ?? 0);
             int policyTamper = (adSummary?.GpoPolicyChanges ?? 0) + (samSummary?.AuditPolicyTamperingCount ?? 0);
             bool hg585Finding = adminChanges != 0 || policyTamper != 0;
@@ -34,19 +34,19 @@ namespace LogAnalyzer.Core.Services
             results.Add(new ComplianceCheckResult
             {
                 Framework = "HG 585/2002 (România)",
-                ArticleOrControl = "Art. 21 / Control Acces Privilegii",
+                ArticleOrControl = "Control Acces Privilegii (articol neconfirmat)",
                 ControlTitle = "Gestiunea și Auditarea Rolurilor Administrative",
                 Status = hg585Finding ? ComplianceStatus.NonConform : ComplianceStatus.NotAssessed,
                 EvidenceSummary = $"Modificări Admini AD: {adSummary?.PrivilegedGroupChanges ?? 0}, Modificări Admini SAM: {samSummary?.LocalAdminGroupModifications ?? 0}, Alterări Politici: {policyTamper}" + (hg585Finding ? "" : NoFindingNote),
                 RequiredAction = hg585Finding ? "Revizuirea imediată a numirilor în grupurile administrative și raportarea incidentului către Ofițerul de Securitate." : NotAssessedAction
             });
 
-            // 2. Directiva NIS2 (UE 2022/2555) - Art. 21 (Incident Response & Lanț de Aprovizionare)
+            // 2. Directiva NIS2 (UE 2022/2555) - Incident Response & Lanț de Aprovizionare (TODO owner: articolul exact)
             int criticalThreats = (adSummary?.KerberosAttacksDetected ?? 0) + yaraCount;
             results.Add(new ComplianceCheckResult
             {
                 Framework = "Directiva NIS2 (UE 2022/2555)",
-                ArticleOrControl = "Art. 21 / Securitatea Lanțului & Incident Response",
+                ArticleOrControl = "Securitatea Lanțului & Incident Response (articol neconfirmat)",
                 ControlTitle = "Capabilități de Detecție și Răspuns la Atacuri Avansate",
                 Status = criticalThreats > 1 ? ComplianceStatus.NonConform : ComplianceStatus.NotAssessed,
                 EvidenceSummary = $"Atacuri Kerberos / AD: {adSummary?.KerberosAttacksDetected ?? 0}, Semnături YARA Malicioase: {yaraCount}" + (criticalThreats > 1 ? "" : criticalThreats == 1 ? ". O detecție observată, sub pragul de neconformitate; nu este o evaluare de conformitate." : NoFindingNote),
