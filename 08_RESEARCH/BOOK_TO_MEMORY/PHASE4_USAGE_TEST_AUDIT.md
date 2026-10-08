@@ -10,15 +10,15 @@
 
 ## 1. Inspectarea HEAD-ului și a Arhitecturii Moștenite
 
-HEAD-ul curent este `ab0a7c7ac`, conținând integral implementările și testele verificate ale Fazelor 1, 2 și 3:
+HEAD-ul curent este `ab0a7c7ac`, conținând integral implementările și testele Fazelor 1, 2 și 3:
 1. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py` (Faza 1):
-   - Prezent și verificat;
+   - Prezent (cod și teste);
    - Definește cele 11 tipuri atomice de note, lanțul epistemic, porțile de securitate și proveniență.
 2. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py` (Faza 2):
-   - Prezent și verificat;
+   - Prezent (cod și teste);
    - Implementează stările `RAW -> UNVERIFIED -> VERIFIED -> ACTIVE` (cu `REJECTED`), porțile `GATE-01..GATE-08`, token-ul HMAC semnat de Owner (`OwnerApprovalToken`) și demotarea reversibilă.
 3. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py` (Faza 3):
-   - Prezent și verificat;
+   - Prezent (cod și teste);
    - Implementează `ConflictRegistry`, identitatea deterministă `CONFLICT-<domain>-<slug>`, prezervarea duală, taxonomia de severitate/rezoluție și blocajul stării `ACTIVE`.
 
 ### Teste Validate Moștenite

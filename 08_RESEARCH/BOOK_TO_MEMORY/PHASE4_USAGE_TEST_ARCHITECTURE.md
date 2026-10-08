@@ -21,7 +21,7 @@ Conform `POLICY-LEARNING-QUALITY-02`:
 > *"Agentul rezolvă un task realist folosind doar nota și dependențele declarate, fără acces la carte.*  
 > *Nu se consideră utilă o notă doar pentru că pare utilă. Trebuie demonstrat că poate contribui la rezolvarea unei sarcini reale."*
 
-Faza 4 implementează un cadru determinist și auditabil de **Task-Based Validation** care măsoară capacitatea empirică a unei note de a asista un agent în rezolvarea problemelor reale, în condiții stricte de izolare a sursei.
+Faza 4 implementează un cadru determinist și auditabil de **Task-Based Validation** care este conceput să măsoare capacitatea unei note de a asista un agent în rezolvarea problemelor reale, în condiții stricte de izolare a sursei.
 
 ---
 

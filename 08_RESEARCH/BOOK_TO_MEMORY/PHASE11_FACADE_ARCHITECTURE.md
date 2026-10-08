@@ -2,7 +2,7 @@
 
 ## 1. Overview & Objective
 
-The **Book-to-Memory Facade** (`lifecycle.validation.book_to_memory_facade.BookToMemoryFacade`) provides a single, cohesive, and cryptographically verified control plane that unifies all 10 preceding research and validation phases into an immutable, audit-ready interface.
+The **Book-to-Memory Facade** (`lifecycle.validation.book_to_memory_facade.BookToMemoryFacade`) provides a single, cohesive, and control plane with SHA-256 integrity digests that unifies all 10 preceding research and validation phases into an immutable, audit-ready interface.
 
 ### Architectural Invariants Enforced:
 1. **Passive Data Plane Isolation**: Book text remains strictly inert data (`UNTRUSTED_INPUT`). Executable directives (such as injected keys `exec`, `tool_call`, `override_lifecycle`, `shell_command`) are rejected upfront by `validate_untrusted_security()`.

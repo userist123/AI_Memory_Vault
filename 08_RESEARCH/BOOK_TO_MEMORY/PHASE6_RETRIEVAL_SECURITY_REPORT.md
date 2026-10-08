@@ -24,7 +24,7 @@ Introducerea memoriei extrase din cărți în contextul de lucru al agenților e
 
 ---
 
-## 2. Contramăsuri Implementate și Verificate Empiric
+## 2. Contramăsuri Implementate și Acoperite de Teste Unitare
 
 | Vector de Atac | Mecanism de Apărare | Invariantă / Test de Verificare | Rezultat |
 | :--- | :--- | :--- | :--- |

@@ -96,7 +96,7 @@ Ambele părți ale contradicției sunt supuse acelorași reguli riguroase de pro
 1. `source_title`, `chapter` și `page_range` sunt obligatorii pentru ambele ramuri (`source_a` și `source_b`);
 2. Sintagmele leneșe (`"source unknown"`, `"probably"`, `"around chapter"`, `"from the book"`, `"somewhere in"`) sunt respinse cu `ProvenanceGateError`;
 3. **Cerința `exact_page`**:
-   - Dacă oricare dintre afirmații sau dovezi conține formule matematice, notații asimptotice (`O(...)`), constante numerice critice sau ecuații (verificate prin `_FORMULA_PATTERNS`), câmpul `exact_page` devine strict obligatoriu pentru acea ramură.
+   - Dacă oricare dintre afirmații sau dovezi conține formule matematice, notații asimptotice (`O(...)`), constante numerice critice sau ecuații (detectate prin `_FORMULA_PATTERNS`), câmpul `exact_page` devine strict obligatoriu pentru acea ramură.
    - Absența `exact_page` la formule duce la respingerea automată a înregistrării conflictului.
 
 ---
@@ -127,8 +127,8 @@ Când un conflict este soluționat, rezoluția trebuie să aparțină taxonomiei
 
 | Rezoluție | Semnificație | Acțiune asupra Notelor |
 | :--- | :--- | :--- |
-| `evidence_stronger_for_a` | Dovezile empirice validează Poziția A în raport cu Poziția B. | Poziția A poate avansa spre `VERIFIED`; Poziția B rămâne consemnată ca depășită. |
-| `evidence_stronger_for_b` | Dovezile empirice validează Poziția B în raport cu Poziția A. | Poziția B poate avansa spre `VERIFIED`; Poziția A rămâne consemnată ca depășită. |
+| `evidence_stronger_for_a` | Dovezile favorizează Poziția A în raport cu Poziția B. | Poziția A poate avansa spre `VERIFIED`; Poziția B rămâne consemnată ca depășită. |
+| `evidence_stronger_for_b` | Dovezile favorizează Poziția B în raport cu Poziția A. | Poziția B poate avansa spre `VERIFIED`; Poziția A rămâne consemnată ca depășită. |
 | `context_dependent_both_valid` | Ambele poziții sunt corecte în domenii sau condiții de aplicare diferite. | Ambele note rămân active în memoria sistemului, cu specificarea precisă a contextelor de aplicabilitate. |
 | `source_obsolete` | Una sau ambele surse se bazează pe paradigme științifice invalidate ulterior. | Nota asociată este demotată/marcată cu avertisment istoric. |
 | `insufficient_evidence` | Experimentele nu pot departaja pozițiile în prezent. | Conflictul rămâne nerezolvat sau deschis cu experimente suplimentare cerute. |

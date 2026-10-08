@@ -67,7 +67,7 @@ The implementation strictly satisfies all canonical governance invariants:
 
 ---
 
-## 4. Empirical Test Verification Receipts
+## 4. Unit Test Receipts
 
 ```text
 ============================= test session starts =============================

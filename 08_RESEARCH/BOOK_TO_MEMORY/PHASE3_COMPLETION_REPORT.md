@@ -20,7 +20,7 @@ Toate cerințele specificate au fost implementate fără excepție:
 ### 1.1 Identitate Deterministă și Invarianță la Ordine
 - Format canonic `CONFLICT-<domain>-<slug>`;
 - Algoritm de ordonare lexicografică a afirmațiilor înainte de slugificare și hashing SHA-256;
-- **Proprietate demonstrată matematic și prin teste**:  
+- **Proprietate acoperită de teste unitare**:  
   `generate_conflict_id(domain, claim_a, claim_b) == generate_conflict_id(domain, claim_b, claim_a)`.
 - Protecție regex împotriva atacurilor de directory/path traversal (`../`, `/`, `\`, byte null).
 
@@ -30,7 +30,7 @@ Toate cerințele specificate au fost implementate fără excepție:
 - Ambele perspective sunt ancorate în surse concrete.
 
 ### 1.3 Strict Provenance Gate pe Ambele Poziții
-- Proveniență verificată pe ambele ramuri (`source_a` și `source_b`): `source_title`, `chapter`, `page_range`.
+- Proveniența este cerută pe ambele ramuri (`source_a` și `source_b`): `source_title`, `chapter`, `page_range`.
 - Sintagmele vagi / leneșe (`"probably"`, `"source unknown"`, `"around chapter"`) sunt respinse.
 - **Cerința `exact_page`**: Pentru formule matematice, notații asimptotice (`O(...)`), calcule numerice și cerințe critice, `exact_page` este strict obligatoriu.
 
@@ -94,7 +94,7 @@ Toate cerințele specificate au fost implementate fără excepție:
 
 ## 4. Starea de Securitate și Recomandare
 
-- **Stare Curentă**: Toate cerințele Fazei 3 sunt complet finalizate și verificate empiric prin teste automate.
+- **Stare Curentă**: Toate cerințele Fazei 3 sunt implementate; testele unitare automate trec (nu există evaluare empirică).
 - **Respectare Limite**:
   - Branch dedicat izolat: `research/book-to-memory-phase3-conflicts`.
   - Nu s-a efectuat niciun merge în `main` sau în alte ramuri.

@@ -13,7 +13,7 @@
 
 ## 1. Obiective Realizate
 
-În conformitate cu specificațiile Fazei 4 și cerințele autoritative din `POLICY-LEARNING-QUALITY-02`, a fost implementat și verificat empiric sistemul de **Task-Based Validation (Usage Test)** pentru notele Book-to-Memory.
+În conformitate cu specificațiile Fazei 4 și cerințele autoritative din `POLICY-LEARNING-QUALITY-02`, a fost implementat sistemul (testele unitare trec; nu există evaluare empirică) de **Task-Based Validation (Usage Test)** pentru notele Book-to-Memory.
 
 ### 1.1 Grila de Notare Canonică (Secțiunea 6 Policy-02)
 - Implementat rubricul cu 5 dimensiuni (0–2 puncte per criteriu, max 10 puncte):

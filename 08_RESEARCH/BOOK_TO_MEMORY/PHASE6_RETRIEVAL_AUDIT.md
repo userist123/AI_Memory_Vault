@@ -49,7 +49,7 @@ Faza 6 din pipeline-ul de cercetare Book-to-Memory are rolul de a valida că not
   unde recența descrește pe măsură ce `current_tick` înaintează față de `recency_tick`.
 - **Evicțiune Deterministă**:
   - Când `len(self.buffer) > self.capacity`, se sortează bufferul crescător după `(attention, id)` și se elimină nodurile cu scorul cel mai mic.
-  - La egalitate de atenție, ordonarea după ID garantează repetabilitatea 100%.
+  - La egalitate de atenție, ordonarea după ID asigură repetabilitatea în testele unitare.
 - **Deduplicare și Actualizare**:
   - Dacă un nod există deja în buffer, admiterea lui îi actualizează activarea cu `max(existent, nou)` și actualizează `tick`-ul de recență la cel curent.
 
@@ -61,7 +61,7 @@ Faza 6 din pipeline-ul de cercetare Book-to-Memory are rolul de a valida că not
    - Notele Book-to-Memory stochează informația în câmpuri structurate precum `atomic_concept`, `definition`, `ordered_steps`, `evidence`, `condition`, `recurring_structure`.
    - Căutarea lexicală (BM25 și suprapunerea de tokeni) necesită ca aceste câmpuri să fie compuse într-o reprezentare textuală unificată (`content`), astfel încât interogările relevante să poată regăsi conceptele.
 2. **Conservarea Metadatelor de Proveniență în Working Memory**:
-   - În working memory, agentul trebuie să aibă acces garantat la proveniența cărții (`source_title`, `chapter`, `page_range`, `exact_page`), nu doar la textul extras.
+   - În working memory, agentul trebuie să aibă acces la proveniența cărții (`source_title`, `chapter`, `page_range`, `exact_page`), nu doar la textul extras.
 3. **Imunitate la Prompt Injection**:
    - Orice tentativă de manipulare prin textul extras (directive mascate ca instrucțiuni de sistem) trebuie să fie inertă și izolată de logica de execuție a agentului.
 4. **Semnalizarea Conflictelor Deschise**:

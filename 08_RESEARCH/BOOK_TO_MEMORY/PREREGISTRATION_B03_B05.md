@@ -137,4 +137,14 @@ The selection is performed by `generate_b03_task_packet.py` and the resulting li
 
 ## Deviations
 
-*(none — no data exist yet)*
+*(none from the design above; no data exist yet)*
+
+### Clarifications recorded before any data (2026-10-08, after the packet was generated, before any model was run)
+
+* Several source passages in the notes are noisy text extractions (hyphenation, page furniture, fragments cut mid-sentence). The
+  design is unchanged: the passage is shown as the note contains it and raters score against the passage and the definition
+  together. This adds noise to every condition that shows the note and none to `WITHOUT_NOTE`; it is a limitation, not a change.
+* `WITH_DECOY_NOTE` uses the same prompt template as `WITH_NOTE` (only the shown note differs), so the S2 contrast is not
+  confounded by wording.
+* The packet generator, harness and analysis CLI named in section 9 exist as listed; the analysis is `analyze_b03_packet.py`
+  with `--scores` (blind ratings) for the primary analysis, and `--auto-score` only for the exploratory coverage metric.

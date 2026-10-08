@@ -68,7 +68,7 @@ Secțiunea 7 a politicii autoritative stabilește cadrul metodologic obligatoriu
 1. **Harness Dedicat de A/B Ablation pentru Note Atomice**:
    - Nu există un modul `book_to_memory_ablation.py` care să orchestreze comparația pereche `WITH_NOTE` vs `WITHOUT_NOTE` pe aceeași notă și sarcină;
 2. **Mecanism de Izolare a Condiției `WITHOUT_NOTE`**:
-   - Trebuie garantat că în condiția `WITHOUT_NOTE`, nicio urmă a notei (conținut, ID, titlu revelator, cache, prompt anterior) nu pătrunde în contextul agentului;
+   - Trebuie asigurat prin proiectare că în condiția `WITHOUT_NOTE`, nicio urmă a notei (conținut, ID, titlu revelator, cache, prompt anterior) nu pătrunde în contextul agentului;
 3. **Controlul Bias-ului de Ordine (Alternating / Order Randomization)**:
    - Rulările trebuie să alterneze ordinea (ex: trial 1: WITHOUT $\to$ WITH, trial 2: WITH $\to$ WITHOUT) folosind un seed determinist;
 4. **Calculul și Agregarea Formală a Valorilor Delta**:

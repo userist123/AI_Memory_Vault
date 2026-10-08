@@ -2,7 +2,7 @@
   "schema": "b2m-b03-task-packet/1",
   "study": "B03/B05 pre-registered with/without-note ablation",
   "preregistration": "08_RESEARCH/BOOK_TO_MEMORY/PREREGISTRATION_B03_B05.md",
-  "preregistration_sha256": "636520f23c46eb48ed335e24ab0dd88dc4e707608f8cca7540a94092c6837e6c",
+  "preregistration_sha256": "0691cf54b11a3e251222da6e38f85747b855e14462c981d56af3c271e53a2ca9",
   "tasks": 51,
   "trials": 204,
   "conditions": [

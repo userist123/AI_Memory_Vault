@@ -4,7 +4,7 @@
 **Branch:** `research/book-to-memory-phase2-lifecycle`  
 **Base Commit:** `e71b4e2ef` (rezultatul Fazei 1)  
 **Data:** 2026-10-04  
-**Stare:** **COMPLET / VERIFICAT / FAIL-CLOSED**
+**Stare:** **IMPLEMENTAT / TESTE UNITARE TRECUTE / FAIL-CLOSED**
 
 ---
 
@@ -12,7 +12,7 @@
 
 Faza 2 („LIFECYCLE GATES”) a implementat și validat formal porțile de tranziție ale ciclului de viață pentru pista de cercetare Book-to-Memory conform cerințelor stricte din `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` și a modelului de securitate invariant P0..P15.
 
-Sistemul garantează arhitectural că:
+Codul implementează, iar testele unitare (`20_TESTS/test_book_to_memory_lifecycle_gates.py`) acoperă, următoarele proprietăți:
 1. Nicio notă derivată din cărți nu poate trece direct din `RAW` sau `UNVERIFIED` în `ACTIVE`.
 2. `Principal.AI_AGENT` nu poate promova, verifica, atesta sau acorda aprobare de owner.
 3. Aprobarea owner-ului (`GATE-08`) nu este un simplu flag boolean în metadata (`owner_approval=True`), ci un token criptografic HMAC SHA-256 emis exclusiv de `Principal.HUMAN` sau `Principal.ADMIN`, asociat cu ID-ul notei, cu timp limită de valabilitate (30 zile) și imposibil de reprodus dintr-un text extern sau de către un agent.
@@ -61,6 +61,6 @@ Sistemul garantează arhitectural că:
 
 ## 4. Concluzie
 
-Faza 2 este complet finalizată, validată empiric prin 304 teste trecute cu succes.
+Faza 2 este complet finalizată, acoperită de 304 teste unitare care trec (fără evaluare empirică).
 Conform regulilor stricte de izolare, **execuția este oprită** pentru evaluarea și aprobarea de către owner înainte de a aborda Faza 3.
 Nu s-a făcut merge, nu s-au modificat notele ACTIVE și nu s-au ingerat cărțile în producție.
