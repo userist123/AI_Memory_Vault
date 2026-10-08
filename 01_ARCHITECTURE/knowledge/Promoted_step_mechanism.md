@@ -17,13 +17,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-14-routing
-- type: part_of
-  target_id: 1a25d3da-57e2-4902-ab35-da8b476d7e7b
-- type: applies_to
-  target_id: d5ee32c8-67be-4c08-b6a4-5f60f0456fb1
+  - type: part_of
+    target_id: "1a25d3da-57e2-4902-ab35-da8b476d7e7b"
+  - type: applies_to
+    target_id: "d5ee32c8-67be-4c08-b6a4-5f60f0456fb1"
 ---
+
 # step-mechanism
 
 ## Canonical Definition

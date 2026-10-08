@@ -18,13 +18,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-11-history
-- type: part_of
-  target_id: e045ded5-01fd-4a28-8f85-203ebae670de
-- type: related_to
-  target_id: 84ef8b0f-d457-4741-be32-582ba76e3ab3
+  - type: related_to
+    target_id: "84ef8b0f-d457-4741-be32-582ba76e3ab3"
 ---
+
 # episodic memory
 
 ## Canonical Definition

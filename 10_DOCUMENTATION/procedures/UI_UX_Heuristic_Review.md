@@ -19,8 +19,6 @@ verification: inferred
 enriched_by: ai
 enrichment_date: 2026-08-17T22:55:00Z
 relations:
-  - type: depends_on
-    target_id: "b4e88f21-7291-49fa-9481-22904c10a003"
   - type: related_to
     target_id: "b4e88f21-7291-49fa-9481-22904c10a002"
 ---

@@ -18,11 +18,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-01-identity
-- type: related_to
-  target_id: 7986a2c9-0fb7-4282-95fa-3ea39da1ceb1
+  - type: related_to
+    target_id: "7986a2c9-0fb7-4282-95fa-3ea39da1ceb1"
 ---
+
 # cognitive architecture
 
 ## Canonical Definition

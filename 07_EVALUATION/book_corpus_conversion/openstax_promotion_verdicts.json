@@ -1,0 +1,58 @@
+{
+  "schema_version": "polymarket-promotion-verdicts.v1",
+  "source_review": "07_EVALUATION/curriculum/OPENSTAX_CH08_REVIEW.md",
+  "decided_at": "2026-10-04",
+  "decided_by": "antigravity",
+  "verdicts": [
+    {
+      "concept": "proactive interference",
+      "verdict": "PROMOTE",
+      "reason": "Directly formalizes the directional memory retrieval constraint where previously consolidated knowledge impairs the acquisition or recall of new information, providing the psychological foundation for CognitiveInterferenceGate."
+    },
+    {
+      "concept": "retroactive interference",
+      "verdict": "PROMOTE",
+      "reason": "Models the converse memory vulnerability where freshly encoded knowledge disrupts or overwrites pre-existing stored traces, governing retention policies and consolidation schedules."
+    },
+    {
+      "concept": "transience",
+      "verdict": "PROMOTE",
+      "reason": "Defines the temporal attenuation and decay of memory trace accessibility over time, directly modeling the power-law decay of base-level activation in ACT-R retrieval."
+    },
+    {
+      "concept": "relearning",
+      "verdict": "PROMOTE",
+      "reason": "Captures the quantitative savings metric of latent memory retention, measuring reacquisition speed and demonstrating structural persistence below the explicit retrieval threshold."
+    },
+    {
+      "concept": "anterograde amnesia",
+      "verdict": "PROMOTE",
+      "reason": "Defines the pathological failure of declarative consolidation from working memory to long-term storage, delineating architectural boundaries between buffer state and persistent memory."
+    },
+    {
+      "concept": "retrograde amnesia",
+      "verdict": "PROMOTE",
+      "reason": "Defines the selective disruption of consolidated historical memory traces, separating retrieval indexing failures from encoding deficits."
+    },
+    {
+      "concept": "elaborative rehearsal",
+      "verdict": "PROMOTE",
+      "reason": "Formalizes the intentional semantic linking of novel items to established conceptual structures, representing the active procedural mechanism of memory consolidation."
+    },
+    {
+      "concept": "misinformation effect",
+      "verdict": "PROMOTE",
+      "reason": "Captures reconstructive memory distortion caused by post-event misleading cues, acting as an essential guardrail for epistemic judgment and memory integrity."
+    },
+    {
+      "concept": "engram",
+      "verdict": "PROMOTE",
+      "reason": "Represents the physical or neural representational unit of memory storage, defining the fundamental substrate of declarative and nondeclarative persistence."
+    },
+    {
+      "concept": "equipotentiality hypothesis",
+      "verdict": "PROMOTE",
+      "reason": "Formulates the distributed fault-tolerance principle of memory substrates where undamaged network components compensate for localized failures."
+    }
+  ]
+}
