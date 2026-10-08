@@ -32,9 +32,15 @@ jobs:
           python -m pip install pypdf==6.16.2
           python 30_SCRIPTS/verification/personal_data_guard.py
 
+      - name: Validate Book-to-Memory blocker registry
+        run: |
+          python -m pip install pyyaml==6.0.3
+          python 30_SCRIPTS/verification/validate_blocker_registry.py
+
       - name: Run hygiene regression tests
         run: |
-          python -m pip install --disable-pip-version-check pytest==9.1.1
+          python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3
           pytest 20_TESTS/regression/test_repository_hygiene.py -q
           pytest 20_TESTS/regression/test_personal_data_guard.py -q
           pytest 20_TESTS/test_r031_repairs.py -q
+          pytest 20_TESTS/research/test_blocker_registry_validator.py -q
