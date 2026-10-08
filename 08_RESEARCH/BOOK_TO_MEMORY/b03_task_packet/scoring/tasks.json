@@ -1,0 +1,676 @@
+{
+  "schema": "b2m-b03-task-packet/1",
+  "note": "Scoring material. It must NOT be given to the model under test or to its orchestrator's prompts.",
+  "selection": {
+    "rule": "every Promoted_* note added by the commit that is REVIEW/unverified with a heading, a Canonical Definition and a block-quoted source passage; no sampling",
+    "commit": "ce724a575",
+    "candidate_files": 51,
+    "selected": 51
+  },
+  "dropped": [],
+  "tasks": [
+    {
+      "task_id": "T01",
+      "note_id": "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+      "note_ids": [
+        "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+      ],
+      "term": "experience replay",
+      "source_ref": "sarfraz22a",
+      "question": "Explain the term \"experience replay\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește tehnica și procesul cognitiv activ de re-eșantionare și re-traversare a traiectoriilor istorice stocate pentru actualizarea reprezentărilor fără uitare catastrofică, reprezentând un mecanism distinct de consolidare offline.",
+      "source_passage": ", 2022 SYNERGY BETWEEN SYNAPTIC CONSOLIDATION AND EXPERIENCE REPLAY FOR GENERAL CONTINUAL LEARNING Fahad Sarfraz∗, Elahe Arani*, Bahram Zonooz Advanced Research Lab, NavInfo Europe,",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_experience_replay.md"
+    },
+    {
+      "task_id": "T02",
+      "note_id": "07d27579-d273-4b81-b2b7-25ad820f2535",
+      "note_ids": [
+        "07d27579-d273-4b81-b2b7-25ad820f2535"
+      ],
+      "term": "subsymbolic",
+      "source_ref": "wcs_1488",
+      "question": "Explain the term \"subsymbolic\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește cantitățile continue matematice (valori de activare, forțe asociative) care moderează accesibilitatea și viteza de regăsire a structurilor simbolice, reprezentând un palier computațional indispensabil în slotul ontology.",
+      "source_passage": "c components that are accessible to the model and subsymbolic information that moderates behavior and accessibility of the declarative memory. Accessing them increases their",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_subsymbolic.md"
+    },
+    {
+      "task_id": "T03",
+      "note_id": "0f6d608d-2737-49b4-9818-a695ab43eb61",
+      "note_ids": [
+        "0f6d608d-2737-49b4-9818-a695ab43eb61"
+      ],
+      "term": "dispersion",
+      "source_ref": "ashby_design_for_a_brain",
+      "question": "Explain the term \"dispersion\" as used in Ashby's Design for a Brain and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Descrie proprietatea topologică cibernetică de dispersie a conexiunilor care izolează subsistemele și previne interferența generalizată în timpul învățării, aparținând organizării structurale a hărții.",
+      "source_passage": "Not only does random dispersion lead to the intermingling of subsystems, with abundant chances of random interaction and confusion, but even more confusion is added with every fresh act of learning.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_dispersion.md"
+    },
+    {
+      "task_id": "T04",
+      "note_id": "0f9affc9-8fac-415c-b059-31a23a284926",
+      "note_ids": [
+        "0f9affc9-8fac-415c-b059-31a23a284926"
+      ],
+      "term": "cross-exclusion",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"cross-exclusion\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește mecanismul de inhibiție reciprocă concurențială prin care activarea unei agenții suspendă automat rutarea și formarea de memorie în agențiile rivale, prevenind conflictele de control.",
+      "source_passage": "We can accomplish that by building them into a cross-exclusion system so that, for example, Hunger’s memories can be formed only when Hunger is active.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_cross_exclusion.md"
+    },
+    {
+      "task_id": "T05",
+      "note_id": "2543b0b9-8580-423f-9feb-0f38ccb87fa4",
+      "note_ids": [
+        "2543b0b9-8580-423f-9feb-0f38ccb87fa4"
+      ],
+      "term": "schema",
+      "source_ref": "why_we_forget",
+      "question": "Explain the term \"schema\" as used in Why We Forget and How to Remember Better and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește structura cognitivă de cunoștințe generale organizate pe roluri și scenarii care oferă scheletul de interpretare a evenimentelor noi, constituind o formă canonică de reprezentare în slotul ontology.",
+      "source_passage": "The Impact of Missing or Incorrect Schemas - The COVID-19 pandemic created scenarios that disrupted established schemas, making familiar situations feel uncomfortable and requiring additional mental effort to navigate.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_schema.md"
+    },
+    {
+      "task_id": "T06",
+      "note_id": "2831032f-0fe9-44d6-b9e8-8214284babd7",
+      "note_ids": [
+        "2831032f-0fe9-44d6-b9e8-8214284babd7"
+      ],
+      "term": "mnemonic",
+      "source_ref": "why_we_forget",
+      "question": "Explain the term \"mnemonic\" as used in Why We Forget and How to Remember Better and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește abilitatea procedurală dobândită de transformare deliberată a informațiilor abstracte în ancore vizuale sau narative durabile, constituind un skill cognitiv formal de memorare.",
+      "source_passage": "Mark Twain's Memory Techniques Mark Twain utilized various mnemonic systems to enhance his memory, notably employing visual cues linked to places, such as drawing pictures to remember stories and organizing them by spatial memory.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_mnemonic.md"
+    },
+    {
+      "task_id": "T07",
+      "note_id": "29fe72cf-57bb-4a5e-a912-3eb8f945e05f",
+      "note_ids": [
+        "29fe72cf-57bb-4a5e-a912-3eb8f945e05f"
+      ],
+      "term": "b-brain",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"b-brain\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește arhitectura reflectivă de ordinul doi a lui Minsky în care un modul separat monitorizează exclusiv configurațiile și performanțele interne ale procesorului principal, fără contact direct cu stimulii externi.",
+      "source_passage": "There is one way for a mind to watch itself and still keep track of what’s happening. Divide é the brain into two parts, A and B. Connect the A-brain’s inputs and outputs to the real world— E so it can sense what happens there.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_b_brain.md"
+    },
+    {
+      "task_id": "T08",
+      "note_id": "2c1ed306-faa7-48a7-bf28-95917ef959fe",
+      "note_ids": [
+        "2c1ed306-faa7-48a7-bf28-95917ef959fe"
+      ],
+      "term": "law of requisite variety",
+      "source_ref": "ashby_intro_to_cybernetics",
+      "question": "Explain the term \"law of requisite variety\" as used in Ashby's An Introduction to Cybernetics and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește legea matematică cibernetică universală conform căreia capacitatea unui regulator de a bloca perturbațiile este limitată strict de varietatea stărilor sale interne, răspunzând direct cerințelor de frontieră din slotul constraints.",
+      "source_passage": "complexity, with climate, soil, host’s reactions, predalaw of Requisite Variety is Likely to play a dominating part. Its tors, competitors, and many other factors playing a part. The importance is",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_law_of_requisite_variety.md"
+    },
+    {
+      "task_id": "T09",
+      "note_id": "2ecc82e6-a508-4db9-9d62-60b9062da602",
+      "note_ids": [
+        "2ecc82e6-a508-4db9-9d62-60b9062da602"
+      ],
+      "term": "relearning",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"relearning\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Captures the quantitative savings metric of latent memory retention, measuring reacquisition speed and demonstrating structural persistence below the explicit retrieval threshold.",
+      "source_passage": "how quickly she’s able to pick up the language after not speaking it for 13 years; this is an example of relearning.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_relearning.md"
+    },
+    {
+      "task_id": "T10",
+      "note_id": "3a70589a-5778-4a51-a822-e0fcd5f0effa",
+      "note_ids": [
+        "3a70589a-5778-4a51-a822-e0fcd5f0effa"
+      ],
+      "term": "k-line",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"k-line\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește mecanismul structural al lui Minsky de conectare mnemonică ce reactivează simultan constelația specifică de agenți care au participat la rezolvarea cu succes a unei probleme anterioare.",
+      "source_passage": "A K-line is a wirelike structure that attaches / itself to whichever mental agents are active when you solve a problem or have a / good idea.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_k_line.md"
+    },
+    {
+      "task_id": "T11",
+      "note_id": "3d14b6f4-c885-409e-978a-fcffb8a2036a",
+      "note_ids": [
+        "3d14b6f4-c885-409e-978a-fcffb8a2036a"
+      ],
+      "term": "generalization",
+      "source_ref": "sarfraz22a",
+      "question": "Explain the term \"generalization\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește metrica de certitudine epistemică și transfer out-of-distribution a reprezentărilor dincolo de eșantioanele imediate de antrenare, completând slotul confidence cu o măsură cantitativă de robustețe a cunoștințelor.",
+      "source_passage": "of-the-art rehearsal based approaches or provides generalization gains in almost all the considered scenarios. Particularly in the challenging Class-IL setting with low buffer size",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_generalization.md"
+    },
+    {
+      "task_id": "T12",
+      "note_id": "43b9d288-3632-4aa1-9eb1-77fc54ca1c2a",
+      "note_ids": [
+        "43b9d288-3632-4aa1-9eb1-77fc54ca1c2a"
+      ],
+      "term": "habituation",
+      "source_ref": "squire_kandel_mind_to_molecules",
+      "question": "Explain the term \"habituation\" as used in Squire and Kandel's Memory: From Mind to Molecules and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește procedura elementară de învățare non-asociativă manifestată prin reducerea eliberării de transmițători la stimulări repetate inofensive, completând repertoriul de proceduri reflexe alături de 'sensitization' și 'classical conditioning'.",
+      "source_passage": "28 CHAPTER TWO Studies of habituation in simple experimental animals provided the first evidence of how learn- ing and memory storage take place in the brain.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_habituation.md"
+    },
+    {
+      "task_id": "T13",
+      "note_id": "43f78207-5f51-4c8d-9c71-1b154394b9e6",
+      "note_ids": [
+        "43f78207-5f51-4c8d-9c71-1b154394b9e6"
+      ],
+      "term": "perception",
+      "source_ref": "wcs_1488",
+      "question": "Explain the term \"perception\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește abilitatea și canalul cognitiv de conversie a semnalelor senzoriale brute în reprezentări structurate (chunks) compatibile cu producțiile sistemului, reprezentând o competență de bază în skills.",
+      "source_passage": "or, for example, shifting visual attention. These perception modules are routinely expanded by researchers to accommodate other capabilities like hearing. These results can be",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_perception.md"
+    },
+    {
+      "task_id": "T14",
+      "note_id": "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e",
+      "note_ids": [
+        "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e"
+      ],
+      "term": "production rule",
+      "source_ref": "wcs_1488",
+      "question": "Explain the term \"production rule\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește unitatea fundamentală de execuție de tip condiție-acțiune din sistemele de producție care citește și modifică memoria de lucru secvențial, aducând o primitivă esențială în slotul procedures.",
+      "source_passage": "uction system During the decision cycle in ACT-R, production rules are used to analyze patterns in all of the buffers that may represent internal",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_production_rule.md"
+    },
+    {
+      "task_id": "T15",
+      "note_id": "452cc1f0-e03b-42ea-80d3-5f00e944ed8f",
+      "note_ids": [
+        "452cc1f0-e03b-42ea-80d3-5f00e944ed8f"
+      ],
+      "term": "synaptic plasticity",
+      "source_ref": "kandel_2001_molecular_biology_of_memory; squire_kandel_mind_to_molecules",
+      "question": "Explain the term \"synaptic plasticity\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește mecanismul bio-computațional de modificare a forței de transmisie a joncțiunilor în funcție de activitate, oferind fundamentul fizic/structural prin care experiența se transformă în stocare permanentă în slotul consolidation.",
+      "source_passage": "A SIMPLE CASE OF SYNAPTIC PLASTICITY The first attempt at the neural analysis of habitu- ation was undertaken as early as 1908, in the course of studies focusing on the isolated spinal cord of the cat.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_synaptic_plasticity.md"
+    },
+    {
+      "task_id": "T16",
+      "note_id": "48be737f-d50d-4f30-b55a-3aec9877e6da",
+      "note_ids": [
+        "48be737f-d50d-4f30-b55a-3aec9877e6da"
+      ],
+      "term": "coupling",
+      "source_ref": "ashby_intro_to_cybernetics",
+      "question": "Explain the term \"coupling\" as used in Ashby's An Introduction to Cybernetics and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește canalul cibernetic și protocolul de interconectare funcțională prin care controlerul direcționează și influențează subsistemele regulatoare, răspunzând direct la 'când și cum e direcționat fluxul'.",
+      "source_passage": "and the mode of assembling and coupling selected to show one end of the scale). Other cases lie further has to be selected from the other, incorrect, modes. The quantity",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_coupling.md"
+    },
+    {
+      "task_id": "T17",
+      "note_id": "4c109b4e-7ce1-4ee5-873e-b525ebe5d1ba",
+      "note_ids": [
+        "4c109b4e-7ce1-4ee5-873e-b525ebe5d1ba"
+      ],
+      "term": "problem space",
+      "source_ref": "newell_unified_theories_of_cognition",
+      "question": "Explain the term \"problem space\" as used in Newell's Unified Theories of Cognition and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește arena topologică universală postulată de Newell în care are loc deliberarea cognitivă prin tranziții incrementale între descrieri de stări, răspunzând la întrebarea 'unde trăiește informația'.",
+      "source_passage": "This uniform use of problem spaces as the task representation is called the problem space hypothesis (Newell, l980c)",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_problem_space.md"
+    },
+    {
+      "task_id": "T18",
+      "note_id": "4fec1482-ab22-4b34-aa94-07a5dddeb6b2",
+      "note_ids": [
+        "4fec1482-ab22-4b34-aa94-07a5dddeb6b2"
+      ],
+      "term": "goal",
+      "source_ref": "wcs_1488",
+      "question": "Explain the term \"goal\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește structura cognitivă activă din memoria de lucru care menține contextul obiectivului curent și filtrează regulile relevante în timpul execuției, constituind componenta cheie din slotul state.",
+      "source_passage": "derson, Farrell, and Sauers (1984) formulated the Goal-Restricted Production System (GRAPES) to implement these latest developments to the theory. GRAPES is marked as the",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_goal.md"
+    },
+    {
+      "task_id": "T19",
+      "note_id": "51edb1be-9b8d-49cb-a8ff-f9ae5d0732e0",
+      "note_ids": [
+        "51edb1be-9b8d-49cb-a8ff-f9ae5d0732e0"
+      ],
+      "term": "collective memory",
+      "source_ref": "why_we_forget",
+      "question": "Explain the term \"collective memory\" as used in Why We Forget and How to Remember Better and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește constructul social și relațional prin care mai mulți agenți coordonează narative comune despre istorie și își aliniază perspectivele mutuale, încadrându-se direct în slotul relationships.",
+      "source_passage": "Answer:Collective memory shapes the narratives we share about historical events, such as wars.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_collective_memory.md"
+    },
+    {
+      "task_id": "T20",
+      "note_id": "54008569-384d-406f-aa47-f21a90d138e0",
+      "note_ids": [
+        "54008569-384d-406f-aa47-f21a90d138e0"
+      ],
+      "term": "frame",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"frame\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește structura de date topologică și situațională a lui Minsky cu terminale relaționale și valori implicite, oferind scheletul de mapare a scenelor și contextelor în slotul map.",
+      "source_passage": "When every change af view engages frames whose terminals are already filled, albeit only by default, then sight seems instantaneous.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_frame.md"
+    },
+    {
+      "task_id": "T21",
+      "note_id": "675a43b3-6ac0-4b69-82d6-1c207cab43c6",
+      "note_ids": [
+        "675a43b3-6ac0-4b69-82d6-1c207cab43c6"
+      ],
+      "term": "proactive interference",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"proactive interference\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Directly formalizes the directional memory retrieval constraint where previously consolidated knowledge impairs the acquisition or recall of new information, providing the psychological foundation for CognitiveInterferenceGate.",
+      "source_passage": "These are examples of proactive interference: when old information hinders the recall of newly learned information.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_proactive_interference.md"
+    },
+    {
+      "task_id": "T22",
+      "note_id": "6dd28a01-e257-4065-a481-f2c3cb5d1659",
+      "note_ids": [
+        "6dd28a01-e257-4065-a481-f2c3cb5d1659"
+      ],
+      "term": "multistable system",
+      "source_ref": "ashby_design_for_a_brain",
+      "question": "Explain the term \"multistable system\" as used in Ashby's Design for a Brain and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește clasa ontologică de sisteme compuse din părți ultrastabile cuplate slab care se pot adapta succesiv la medii variate, completând taxonomia sistemelor dinamice alături de 'state-determined system'.",
+      "source_passage": "The suggestion now before the reader is that the system of Figure 7/5/1, when looked at more closely in the forms in which it occurs in actual organisms and environments, will be found to break up into parts more like those of Figure 16/6/1 the multistable system.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_multistable_system.md"
+    },
+    {
+      "task_id": "T23",
+      "note_id": "70c8724d-1c24-43d6-9de1-1282f7fe0fbb",
+      "note_ids": [
+        "70c8724d-1c24-43d6-9de1-1282f7fe0fbb"
+      ],
+      "term": "retrieval cue",
+      "source_ref": "why_we_forget",
+      "question": "Explain the term \"retrieval cue\" as used in Why We Forget and How to Remember Better and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește semnalul sau cheia de interogare externă/internă care declanșează accesul asociativ rapid la rețelele de memorie autobiografică sau semantică, completând mecanismele din slotul retrieval.",
+      "source_passage": "The smell serves as a retrieval cue, triggering a memory that brings back not only the aroma of onions but all associated sensations and emotions you experienced during breakfast, like seeing the newspaper headlines and hearing the song 'Imagine'.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_retrieval_cue.md"
+    },
+    {
+      "task_id": "T24",
+      "note_id": "72cf123b-b8b3-4d22-94ba-388fd72e20f1",
+      "note_ids": [
+        "72cf123b-b8b3-4d22-94ba-388fd72e20f1"
+      ],
+      "term": "canonical representation",
+      "source_ref": "ashby_intro_to_cybernetics",
+      "question": "Explain the term \"canonical representation\" as used in Ashby's An Introduction to Cybernetics and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește expresia matematică standardizată prin care un sistem dinamic modelează transformările discrete ale stărilor sale, oferind o schemă riguroasă de tipizare ontologică.",
+      "source_passage": "discussed so far transformation is the canonical representation of the machine, change by discrete jumps. These discrete transformations are, and the machine is said to embody the transformation. however, the",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_canonical_representation.md"
+    },
+    {
+      "task_id": "T25",
+      "note_id": "7c22c390-3ae4-43d7-b8b4-ff1ddf5ceecf",
+      "note_ids": [
+        "7c22c390-3ae4-43d7-b8b4-ff1ddf5ceecf"
+      ],
+      "term": "censor",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"censor\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Descrie dispozitivul de memorie inhibitorie care reține circumstanțele specifice de eșec pentru a suprima preventiv activarea acțiunilor care duc la blocaje, oferind o primitivă clară de constrângere decizională.",
+      "source_passage": "special memory devices called “censors” and “suppressors” (we'll discuss this in detail later), which remember particular circumstances in which M fails and later proceed to suppress M when similar conditions recur.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_censor.md"
+    },
+    {
+      "task_id": "T26",
+      "note_id": "7e93f968-16e9-4d3a-bde3-cf8e417dfc9d",
+      "note_ids": [
+        "7e93f968-16e9-4d3a-bde3-cf8e417dfc9d"
+      ],
+      "term": "numeric preference",
+      "source_ref": "laird_soar_cognitive_architecture",
+      "question": "Explain the term \"numeric preference\" as used in Laird's The Soar Cognitive Architecture and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește reprezentarea formală a utilității cantitative și valorii de politică pentru rezolvarea preferințelor între acțiuni candidate în ciclul decizional din Soar, răspunzând direct la întrebarea slotului judgement.",
+      "source_passage": "If the new rule creates a numeric preference, it is automatically tuned in the future by RL, so that the value function is dynamically extended through a combination of processing in a substate and chunking (Laird, Derbinsky, and Tinkerhess 2011).",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_numeric_preference.md"
+    },
+    {
+      "task_id": "T27",
+      "note_id": "7f381c04-caa8-49aa-9904-2c88ba54506b",
+      "note_ids": [
+        "7f381c04-caa8-49aa-9904-2c88ba54506b"
+      ],
+      "term": "transience",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"transience\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Defines the temporal attenuation and decay of memory trace accessibility over time, directly modeling the power-law decay of base-level activation in ACT-R retrieval.",
+      "source_passage": "Let’s look at the first sin of the forgetting errors: transience, which means that memories can fade over time.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_transience.md"
+    },
+    {
+      "task_id": "T28",
+      "note_id": "8a12b84d-ec27-44bd-a16c-5a4125b49742",
+      "note_ids": [
+        "8a12b84d-ec27-44bd-a16c-5a4125b49742"
+      ],
+      "term": "elaborative rehearsal",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"elaborative rehearsal\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Formalizes the intentional semantic linking of novel items to established conceptual structures, representing the active procedural mechanism of memory consolidation.",
+      "source_passage": "You could also enhance memory by using elaborative rehearsal: a technique in which you think about the meaning of new information and its relation to knowledge already stored in your memory",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_elaborative_rehearsal.md"
+    },
+    {
+      "task_id": "T29",
+      "note_id": "8f2f1707-194c-4e18-b080-6058f1c62d4f",
+      "note_ids": [
+        "8f2f1707-194c-4e18-b080-6058f1c62d4f"
+      ],
+      "term": "exploration",
+      "source_ref": "2504.05840v1",
+      "question": "Explain the term \"exploration\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește competența și comportamentul activ de căutare deliberată a stărilor slab eșantionate din medii parțial observabile, constituind un skill critic de achiziție în învățarea prin întărire.",
+      "source_passage": "ioned in the challenging set that emphasizes hard exploration tasks with long-term credit assignment [Badia et al., 2020] (Table 7). These results indicate the",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_exploration.md"
+    },
+    {
+      "task_id": "T30",
+      "note_id": "9274b72b-ea97-4f5c-b235-2416a190cace",
+      "note_ids": [
+        "9274b72b-ea97-4f5c-b235-2416a190cace"
+      ],
+      "term": "pronome",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"pronome\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește mecanismul lui Minsky de pointeri temporari din memoria de lucru care leagă roluri tranzitorii de agenții activi fără modificarea conexiunilor permanente, răspunzând la 'ce este activ acum'.",
+      "source_passage": "The basic difference, then, between a pronome and a K-line is that a pronome’s connections are temporary rather than permanent.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_pronome.md"
+    },
+    {
+      "task_id": "T31",
+      "note_id": "a2607d49-d1be-495b-9a28-32bfda843693",
+      "note_ids": [
+        "a2607d49-d1be-495b-9a28-32bfda843693"
+      ],
+      "term": "false memory",
+      "source_ref": "why_we_forget",
+      "question": "Explain the term \"false memory\" as used in Why We Forget and How to Remember Better and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește distorsiunea cognitivă și eșecul de judecată a realității surselor în reamintire, oferind o categorie ontologică esențială pentru diagnosticarea halucinațiilor și verificarea epistemică în slotul judgement.",
+      "source_passage": "while learning new information can reduce errors in recall and help combat false memories.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_false_memory.md"
+    },
+    {
+      "task_id": "T32",
+      "note_id": "ab693c77-2325-48a2-ae99-c869dc72782a",
+      "note_ids": [
+        "ab693c77-2325-48a2-ae99-c869dc72782a"
+      ],
+      "term": "reflection",
+      "source_ref": "memory_in_the_age_of_ai_agents",
+      "question": "Explain the term \"reflection\" as used in the survey Memory in the Age of AI Agents and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește procesul metacognitiv de auto-evaluare prin care un agent auditează propriile urme de execuție pentru diagnosticarea erorilor și extragerea corecțiilor, răspunzând direct la întrebarea slotului judgement.",
+      "source_passage": "Few-shot prompting e.g., CoT, PALM - Self-Reflection e.g., Self-refine, CRITIC - KV compression/reuse e.g., AutoCompressor, SnapKV - Attention KV management e.g., Mixture-of-Memory - Long context processing e.g., Mamba, Memformer, MoA,",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_reflection.md"
+    },
+    {
+      "task_id": "T33",
+      "note_id": "adca33fa-2bdc-48ee-bf9b-dbe70c26d20b",
+      "note_ids": [
+        "adca33fa-2bdc-48ee-bf9b-dbe70c26d20b"
+      ],
+      "term": "Markov chain",
+      "source_ref": "ashby_intro_to_cybernetics",
+      "question": "Explain the term \"Markov chain\" as used in Ashby's An Introduction to Cybernetics and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește formalismul matematic stocastic de modelare a dinamicii sistemelor prin matrici de tranziție între stări discrete, oferind un model canonic de reprezentare a stărilor succesive.",
+      "source_passage": "4 5 YR RR Re THE MARKOV CHAIN Is the particular transformation so obtained determinate or not? (Hint: Is it 9/4. After eight chapters, we now know something about howa",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_markov_chain.md"
+    },
+    {
+      "task_id": "T34",
+      "note_id": "afb5de0a-9538-42cc-ab49-618f890e8867",
+      "note_ids": [
+        "afb5de0a-9538-42cc-ab49-618f890e8867"
+      ],
+      "term": "misinformation effect",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"misinformation effect\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Captures reconstructive memory distortion caused by post-event misleading cues, acting as an essential guardrail for epistemic judgment and memory integrity.",
+      "source_passage": "Loftus also developed the misinformation effect paradigm, which holds that after exposure to additional and possibly inaccurate information, a person may misremember the original event.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_misinformation_effect.md"
+    },
+    {
+      "task_id": "T35",
+      "note_id": "b0f011f3-960e-4089-b269-042c0180bc03",
+      "note_ids": [
+        "b0f011f3-960e-4089-b269-042c0180bc03"
+      ],
+      "term": "isomorphism",
+      "source_ref": "ashby_intro_to_cybernetics",
+      "question": "Explain the term \"isomorphism\" as used in Ashby's An Introduction to Cybernetics and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește maparea bijectivă riguroasă de conservare a structurii și comportamentului între două mașini dinamice, fiind criteriul matematic formal de mapare structurală între sisteme.",
+      "source_passage": "INTRODUCTION TO CYBERNETICS THE BLACK BOX ISOMORPHIC MACHINES through a spring S to a heavy wheel M, which is rigidly connected A : A he output shaft O. O’s degree",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_isomorphism.md"
+    },
+    {
+      "task_id": "T36",
+      "note_id": "b48091d9-4ede-47cf-ada1-6907ff50a363",
+      "note_ids": [
+        "b48091d9-4ede-47cf-ada1-6907ff50a363"
+      ],
+      "term": "associative memory",
+      "source_ref": "2601.09113v1",
+      "question": "Explain the term \"associative memory\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește mecanismul de regăsire adresabil prin conținut (content-addressable memory) în care înregistrările sunt accesate pe baza similarității semantice sau suprapunerii de trăsături, aparținând esenței slotului retrieval.",
+      "source_passage": "encompassing self-knowledge, facts, commonsense, associative memory, and other related elements, which collectively enable the generation of contextually relevant responses across a variety of tasks.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_associative_memory.md"
+    },
+    {
+      "task_id": "T37",
+      "note_id": "b4b53073-d620-4715-b780-a96cde3621d9",
+      "note_ids": [
+        "b4b53073-d620-4715-b780-a96cde3621d9"
+      ],
+      "term": "perceptual representation system",
+      "source_ref": "schacter_tulving_memory_systems_1994",
+      "question": "Explain the term \"perceptual representation system\" as used in Schacter and Tulving's Memory Systems (1994) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește sistemul cortical pre-semantic (PRS) care păstrează hărțile structurale ale stimulilor vizuali și auditivi upstream de memoria declarativă, acoperind reprezentarea perceptuală în slotul map.",
+      "source_passage": "The main reason for invoking the term \"perceptual representation system'' is to emphasize the notion that all of the various subsystems are tied together by common properties and rules of operations: they are cortically based, operate at a presemantic level on domain-specific perceptual information,",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_perceptual_representation_system.md"
+    },
+    {
+      "task_id": "T38",
+      "note_id": "bafb06ff-e437-4d23-b576-af8df6defc63",
+      "note_ids": [
+        "bafb06ff-e437-4d23-b576-af8df6defc63"
+      ],
+      "term": "default assumption",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"default assumption\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Desemnează mecanismul euristic de atribuire a valorilor pre-configurate în terminalele de reprezentare în absența informației explicite, permițând decizia rapidă sub informație parțială.",
+      "source_passage": "represented by a frame to whose terminals are already attached, as default assignments, G the most usual solutions to that particular kind of problem.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_default_assumption.md"
+    },
+    {
+      "task_id": "T39",
+      "note_id": "c44fb943-a5f9-46e9-8deb-31777f69d66a",
+      "note_ids": [
+        "c44fb943-a5f9-46e9-8deb-31777f69d66a"
+      ],
+      "term": "method of loci",
+      "source_ref": "why_we_forget",
+      "question": "Explain the term \"method of loci\" as used in Why We Forget and How to Remember Better and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Descrie arhitectura mnemotehnică de ancorare a conținuturilor în coordonate spațiale imaginate ('palatul memoriei'), constituind un protocol nativ de organizare spațio-topologică în slotul map.",
+      "source_passage": "Method of Loci (Memory Palace) The Method of Loci, created by the ancient Greeks, involves associating memories with familiar locations (like your home) by mentally placing items you wish to remember in specific rooms or areas.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_method_of_loci.md"
+    },
+    {
+      "task_id": "T40",
+      "note_id": "c64da878-30cf-421d-aff0-abcf43053ca6",
+      "note_ids": [
+        "c64da878-30cf-421d-aff0-abcf43053ca6"
+      ],
+      "term": "activation",
+      "source_ref": "wcs_1488",
+      "question": "Explain the term \"activation\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește valoarea numerică asociativă calculată din istoric și propagare contextuală care dictează accesibilitatea și probabilitatea de regăsire a elementelor de memorie în ACT-R, răspunzând direct la slotul retrieval.",
+      "source_passage": "ition of subsymbolic quantities, that is, numeric activation values for each production rule (sometimes, simply “rule”) and declarative memory element. These activation values enabled",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_activation.md"
+    },
+    {
+      "task_id": "T41",
+      "note_id": "ca5fbf68-d9df-40b0-bbd2-d95f18d00a31",
+      "note_ids": [
+        "ca5fbf68-d9df-40b0-bbd2-d95f18d00a31"
+      ],
+      "term": "papert principle",
+      "source_ref": "minsky_society_of_mind",
+      "question": "Explain the term \"papert principle\" as used in Minsky's The Society of Mind and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Formulează principiul arhitectural fundamental conform căruia dezvoltarea cognitivă avansată are loc prin sinteza de noi strategii administrative de orchestrare a cunoștințelor preexistente, nu prin simpla acumulare cumulativă de date.",
+      "source_passage": "Papert�s Principle: Some of the most crucial steps in mental growth are based not i simply on acquiring new skills, but on acquiring new administrative ways to use what one already knows.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_papert_principle.md"
+    },
+    {
+      "task_id": "T42",
+      "note_id": "caad870f-00e9-4786-821a-5511ac7ec8e4",
+      "note_ids": [
+        "caad870f-00e9-4786-821a-5511ac7ec8e4"
+      ],
+      "term": "engram",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"engram\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Represents the physical or neural representational unit of memory storage, defining the fundamental substrate of declarative and nondeclarative persistence.",
+      "source_passage": "He was searching for evidence of the engram: the group of neurons that serve as the “physical representation of memory” (Josselyn, 2010).",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_engram.md"
+    },
+    {
+      "task_id": "T43",
+      "note_id": "cf5c873d-4569-4ed8-a3a8-bda10fc1680d",
+      "note_ids": [
+        "cf5c873d-4569-4ed8-a3a8-bda10fc1680d"
+      ],
+      "term": "black box",
+      "source_ref": "ashby_intro_to_cybernetics",
+      "question": "Explain the term \"black box\" as used in Ashby's An Introduction to Cybernetics and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește tipul ontologic fundamental în cibernetică al sistemelor ale căror mecanisme interne sunt opace și pot fi deduse exclusiv prin seturi de intrări și ieșiri, stabilind o categorie formală de reprezentare.",
+      "source_passage": "Sons, appropriate selection”. Indeed, ifa talking Black Box were to Lewin, K. Principles of topological psychologJe McGraw-Hill Book Co., show high power of appropriate selection in such matters—so New York,",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_black_box.md"
+    },
+    {
+      "task_id": "T44",
+      "note_id": "d2219383-13a8-4fd8-a409-2da2c4ee1a7a",
+      "note_ids": [
+        "d2219383-13a8-4fd8-a409-2da2c4ee1a7a"
+      ],
+      "term": "retrograde amnesia",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"retrograde amnesia\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Defines the selective disruption of consolidated historical memory traces, separating retrieval indexing failures from encoding deficits.",
+      "source_passage": "Retrograde amnesia is loss of memory for events that occurred prior to the trauma.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_retrograde_amnesia.md"
+    },
+    {
+      "task_id": "T45",
+      "note_id": "d51064f2-0563-45f5-8d7c-b3bdc9e219c7",
+      "note_ids": [
+        "d51064f2-0563-45f5-8d7c-b3bdc9e219c7"
+      ],
+      "term": "hierarchical memory",
+      "source_ref": "memory_in_the_age_of_ai_agents",
+      "question": "Explain the term \"hierarchical memory\" as used in the survey Memory in the Age of AI Agents and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește organizarea memoriei în grafuri multi-nivel stratificate cu legături părinte-copil pe niveluri de abstractizare, reprezentând o topologie structurală explicită în slotul map.",
+      "source_passage": "significantly hinder its practical deployment. 3.1.3 Hierarchical Memory (3D) Definition of Hierarchical (3D) Memory Hierarchical memory organizes information across layers, using inter-level connections to shape the memories into a volumetric",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_hierarchical_memory.md"
+    },
+    {
+      "task_id": "T46",
+      "note_id": "d6f5ed57-4f9c-42bd-8868-e7771774291b",
+      "note_ids": [
+        "d6f5ed57-4f9c-42bd-8868-e7771774291b"
+      ],
+      "term": "anterograde amnesia",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"anterograde amnesia\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Defines the pathological failure of declarative consolidation from working memory to long-term storage, delineating architectural boundaries between buffer state and persistent memory.",
+      "source_passage": "With anterograde amnesia, you cannot remember new information, although you can remember information and events that happened prior to your injury.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_anterograde_amnesia.md"
+    },
+    {
+      "task_id": "T47",
+      "note_id": "e4aeda45-277a-4cf4-a64e-804d68edff2a",
+      "note_ids": [
+        "e4aeda45-277a-4cf4-a64e-804d68edff2a"
+      ],
+      "term": "operator proposal",
+      "source_ref": "laird_soar_cognitive_architecture",
+      "question": "Explain the term \"operator proposal\" as used in Laird's The Soar Cognitive Architecture and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește faza din ciclul decizional cognitiv în care producțiile analizează starea curentă și propun candidați de acțiune în setul de selecție, constituind pasul cheie de rutare a posibilităților.",
+      "source_passage": "Operator proposal An operator is proposed by a rule that tests the current state and creates an acceptable preference for an operator.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_operator_proposal.md"
+    },
+    {
+      "task_id": "T48",
+      "note_id": "efc34958-6529-4af7-8ad2-d59f050b1bbf",
+      "note_ids": [
+        "efc34958-6529-4af7-8ad2-d59f050b1bbf"
+      ],
+      "term": "equipotentiality hypothesis",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"equipotentiality hypothesis\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Formulates the distributed fault-tolerance principle of memory substrates where undamaged network components compensate for localized failures.",
+      "source_passage": "he formulated the equipotentiality hypothesis: if part of one area of the brain involved in memory is damaged, another part of the same area can take over that memory function",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_equipotentiality_hypothesis.md"
+    },
+    {
+      "task_id": "T49",
+      "note_id": "f3977411-5918-430f-8099-c4eb254b20db",
+      "note_ids": [
+        "f3977411-5918-430f-8099-c4eb254b20db"
+      ],
+      "term": "chunk",
+      "source_ref": "wcs_1488",
+      "question": "Explain the term \"chunk\" and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește pachetul simbolic atomic de informație semantică cu atribute discrete supus activării și degradării în ACT-R și Soar, reprezentând unitatea structurală esențială din slotul ontology.",
+      "source_passage": "rning occurs through rule learning and changes to chunk activation. The parameters to these equations can be used to model individuals' differences and to",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_chunk.md"
+    },
+    {
+      "task_id": "T50",
+      "note_id": "f3b8cf50-06fb-4c1d-9c4e-ff56e60e762d",
+      "note_ids": [
+        "f3b8cf50-06fb-4c1d-9c4e-ff56e60e762d"
+      ],
+      "term": "retroactive interference",
+      "source_ref": "openstax_psychology_2e_ch08",
+      "question": "Explain the term \"retroactive interference\" as used in OpenStax Psychology 2e, chapter 8 (Memory) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Models the converse memory vulnerability where freshly encoded knowledge disrupts or overwrites pre-existing stored traces, governing retention policies and consolidation schedules.",
+      "source_passage": "Retroactive interference happens when information learned more recently hinders the recall of older information.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_retroactive_interference.md"
+    },
+    {
+      "task_id": "T51",
+      "note_id": "fbfcc184-9fcf-406c-b60d-839e8fe24db2",
+      "note_ids": [
+        "fbfcc184-9fcf-406c-b60d-839e8fe24db2"
+      ],
+      "term": "configural association",
+      "source_ref": "schacter_tulving_memory_systems_1994",
+      "question": "Explain the term \"configural association\" as used in Schacter and Tulving's Memory Systems (1994) and the role it plays. Answer in English in 3 to 6 sentences.",
+      "note_definition": "Definește mecanismul de legare a stimulilor elementari într-o reprezentare compusă unitară cu proprietăți emergente distincte, rezolvând problema compozițională a hărților cognitive.",
+      "source_passage": "Elemental associations consist of simple pairwise links between two stimuli (e.g., a and b), whereas configural associations involve the construction of a higher order, joint representation (e.g., ab) that in turn can be linked with other stimuli.",
+      "note_path": "01_ARCHITECTURE/knowledge/Promoted_configural_association.md"
+    }
+  ]
+}
