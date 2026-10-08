@@ -43,3 +43,8 @@ When the owner corrects an agent or a real incident reveals a reusable failure p
 2. write the preventive rule;
 3. apply it immediately;
 4. do not record speculative or redundant lessons.
+
+## 2026-10-08 — `git add -A` while an agent writes into the same working copy
+- `git add -A` picked up a research agent's half-written file and committed it right after I had removed its
+  allowlist entry, which would have failed `test_notes_strict_yaml` in CI. While an agent writes into the
+  working copy, stage only the paths I changed (`git add <paths>`), never `-A`.
