@@ -154,6 +154,16 @@ HG 585 accreditation analysis is verified.
       - New work package **WP-ED (edition split)** after WP0/WP1/WP12 merge and before WP3: inventory which
         assemblies carry network/host-modifying code, move them behind edition boundaries (no removal),
         two build outputs in CI, test that the P1 build contains none of the excluded code.
+- [ ] **Self-contained, AI-independent (owner decision 14, 2026-10-08)** → **WP-PKG**, done with WP-ED:
+      - Publish both editions self-contained (runtime + native libs bundled; existing
+        `win-x64-singlefile.pubxml` already sets SelfContained/SingleFile/IncludeNativeLibrariesForSelfExtract —
+        verify it builds the current solution and covers QuestPDF/SQLCipher natives).
+      - CI job: publish, then run the published exe smoke test with no .NET on PATH/DOTNET_ROOT and no network;
+        list every external process the app may start and check each exists on supported Windows versions.
+      - Collection and interpretation fully deterministic without AI; a test runs the full pipeline with the AI
+        layer absent and asserts identical findings.
+      - Replace or report tools that may be missing (e.g. `wmic`); `AuditCollector.ps1` must ship inside the
+        package (today it is missing — see security fixes).
 - [ ] WP3: case field "system category" (air-gapped network / standalone PC / connected × classified / unclassified)
       driving collection, export and retention rules.
 - [ ] WP3: read-only collection + SHA-256 at acquisition; the app never deletes or clears logs on the source system.
