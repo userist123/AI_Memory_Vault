@@ -64,7 +64,7 @@ in its constructor. Corrected 2026-09-06.
 | Runtime-authority layer — `security/runtime_enforcer.py`, `runtime_adapter.py`, `memory_adapter.py`, `memory_boundary.py`, `memory_integrity.py`, `security_update_manager.py` | **implemented and tested, NOT wired into production** | The HMAC `ApprovalBroker`, the SQLite-WAL `PersistentNonceStore`, `production_mode`, revision/content binding, the write-boundary rollback and the update provenance gate have no importer outside `security/` and the tests, and nothing builds `RuntimeAdapter`, `RuntimeEnforcer` or `ApprovalBroker` with `production_mode=True`. Findings B1/B2/B4, M01/M02/M03/M07, U02/U03 are therefore *hardened in the library, not yet wired into production*; they harden nothing at runtime until a tool-execution path calls them. Guard: `20_TESTS/test_vault_state_accuracy.py::test_runtime_authority_layer_has_no_production_consumer` fails the day one gains a consumer, so this row gets corrected |
 | External skills importer (`30_SCRIPTS/verification/import_external_skills.py`) | **real, fail-closed** | A script, binary, hidden path (except the checkout's top-level `.git`), executable bit, symlink or traversal aborts the import and every offending path is listed; a file of a type that is not imported (image, `LICENSE`, ...) is left out and written to `SKIPPED_FILES.json`. `20_TESTS/test_import_external_skills.py` |
 | Secret scanning config (`.gitleaks.toml`) | **real, `[[allowlists]]` format** | Gitleaks refuses a file that mixes the legacy `[allowlist]` with `[[allowlists]]`; `20_TESTS/test_gitleaks_config_format.py` keeps the file in the array-of-tables form the other branches extend |
-| Typed relations in the graph | **audited, 20/49 accepted** | Perplexity, independent; 29 rejected rows purged at source; **65 still unaudited** |
+| Typed relations in the graph | audited once, by a single LLM rater (30/114 accepted) | Perplexity, one rater, no second opinion and no inter-rater agreement; Wave 1: 20/49 accepted, 29 purged; Wave 2: 10/65 accepted, 55 rejected; `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
 | Edge proposer | real | 18% → 90% sampled precision, 182 proposals |
@@ -81,12 +81,12 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1138 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1157 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 489 |
-| — declared / inferred / wikilink | 206 / 206 / 77 |
-| Notes usable as a graph **seed** (out-edge) | 164 |
-| Notes reachable as graph **gold** (in-edge) | 152 |
+| Graph edges | 382 |
+| — declared / inferred / wikilink | 152 / 153 / 77 |
+| Notes usable as a graph **seed** (out-edge) | 144 |
+| Notes reachable as graph **gold** (in-edge) | 133 |
 | Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,
@@ -140,13 +140,20 @@ whole-corpus retrieval numbers.
   and undoing that is `git revert`, not `PlasticityEngine.rollback()`.
 - `06_INBOX/RAW_IMPORTS/` is allowlisted in `.gitleaks.toml`. Anything
   force-added from there is not secret-scanned.
-- **65 of the graph's 85 typed relations have never been audited.** The 49 that
-  were came back at 20 accepted. No claim about the graph's overall precision is
-  supported until the rest are labelled; 49 rows is what was measured, not 114.
-- **Where the 91 missed benchmark cases are lost is still unknown.** Reason
-  codes now exist for every note, but nothing has yet connected them to the
-  benchmark. Until that runs, choosing between a reranker and better candidate
-  generation is a guess.
+- **All 114 declared typed relations in the live graph have been audited once; the audit is single-rater and unreplicated.** The remaining 65
+  relations were evaluated by one LLM rater (Perplexity) in Wave 2: 10 accepted, 55 rejected (15.4% precision).
+  A second rater, or a sample re-labelled by the owner, has not been run, so "100% audited" means "every edge was
+  judged by one rater", not "every edge is verified".
+  Across the whole graph population, 30 of 114 typed relations are verified (26.3% precision; 84 total rejections
+  documented with rationales in `07_EVALUATION/edge_audit_v2_remaining/AUDIT_RESULT.md` and simulated in
+  `07_EVALUATION/edge_audit_v2_remaining/audit_purge_dry_run_report.md`).
+- **Causal loss attribution of missed benchmark cases: measured, single run.** Evaluated on all 130
+  non-abstain benchmark v3 cases in `07_EVALUATION/loss_funnel/LOSS_FUNNEL_REPORT.md` (and `loss_funnel_cases.json`).
+  Under production agent operating point (`AI_AGENT`, `page_size=5`), 71.56% of misses are `PAGINATION_CUT`
+  (ranked > 5; median rank 20.5), 13.76% `AGENT_LIFECYCLE_FLOOR_EXCLUDED`, 11.93% `NEVER_CANDIDATE`, 1.83%
+  `CANDIDATE_LIMIT_CUT`, and 0.92% `RAW_EXCLUDED` (0.00% undetermined). A pre-registered decision rule
+  *points to* a cross-encoder / reranker rather than blind candidate generator expansion. That is the outcome of the
+  rule on one run, not an adoption: no reranker is built, wired or evaluated.
 - **Promoted notes were islands, and one still could be.** A note can declare
   a relation, validate on write and read correctly in Obsidian while
   contributing nothing to the graph: `SynapseStore.from_index()` reads
@@ -154,10 +161,17 @@ whole-corpus retrieval numbers.
   (`synapse_store.py:234`). `Promoted_reservoir_sampling.md` used `target`
   with a file path, `relation` instead of `type`, and `derived_from`, which
   is not in `ALLOWED_RELATIONS` and degrades silently to `related_to`. Three
-  mismatches, zero edges. Fixed, and guarded by
+  mismatches, zero edges. That malformed form is guarded against by
   `20_TESTS/test_promoted_notes_reach_the_graph.py`, which asserts against
   the real store rather than the frontmatter and was confirmed to fail on the
   broken form before being trusted.
+  **Nine promoted notes are genuine islands today** (`buffer`, `homeostat`, `regulation`, `reinforcement_learning`,
+  `reservoir_sampling`, `retrieval`, `state_determined_system`, `transformation`, `variety`): every typed
+  relation they declared was rejected by the edge audit, and a script had hidden that by injecting unsupported
+  sentences into their bodies (e.g. "... in [[long-term memory]]"; PR #209 B11). The injected prose is removed, the
+  original bodies are restored byte for byte, and the notes are listed in
+  `KNOWN_ISLANDS_AFTER_AUDITED_PURGE` in that test, which pins the set so it can only shrink. Giving them a real,
+  audited relation is open work.
 - **Cross-model agreement is a reference set, not the filter.** It was
   briefly recorded here as the only working ranking signal. It is not: it
   separates cleanly on conference papers, where the 1-of-4 tail is

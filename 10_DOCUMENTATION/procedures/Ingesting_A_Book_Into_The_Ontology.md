@@ -11,9 +11,7 @@ provenance:
   source_ref: 'session 2026-09-07..10: r030-r031, measured on 3 books and 20 PDFs'
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: slot-06-procedures
+relations: []
 ---
 
 # Ingesting a book into the ontology

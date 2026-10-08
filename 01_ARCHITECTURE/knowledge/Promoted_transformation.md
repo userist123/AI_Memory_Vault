@@ -21,7 +21,7 @@ relations: []
 
 ## Canonical Definition
 
-A probability-conserving transition operator driving stochastic Markov chains step-by-step toward their invariant terminal equilibrium distributions, governing state transitions in a [[state-determined system]].
+A probability-conserving transition operator driving stochastic Markov chains step-by-step toward their invariant terminal equilibrium distributions.
 
 ## Judgment & Evaluation
 
