@@ -4,7 +4,7 @@ Removes the 29 rejected relations from frontmatters of the 27 source files.
 Guarantees:
 1. Verifies sample SHA-256 before modifying any files.
 2. Only removes relations explicitly identified as REJECT by the independent audit.
-3. For Promoted_transformation.md, adds [[state-determined system]] wikilink to prevent it from becoming an island note.
+3. Preserves note body bytes and markdown prose unmodified.
 4. Preserves YAML formatting and validates frontmatter after modification.
 5. Supports dry-run and diff preview.
 """
@@ -78,17 +78,6 @@ def clean_frontmatter_relations(
     if removed_count == 0:
         return False, f"No matching rejected relations found in {source_path.name}"
 
-    # For Promoted_transformation.md, ensure [[state-determined system]] wikilink exists in body
-    body_modified = False
-    if source_path.name == "Promoted_transformation.md":
-        if "[[state-determined system]]" not in body_text:
-            # Add to Canonical Definition
-            body_text = body_text.replace(
-                "terminal equilibrium distributions.",
-                "terminal equilibrium distributions, governing state transitions in a [[state-determined system]]."
-            )
-            body_modified = True
-
     # Reconstruct frontmatter
     # To keep exact clean yaml formatting:
     # Find the relations block in fm_text
@@ -144,8 +133,7 @@ def clean_frontmatter_relations(
         source_path.write_text(new_full_content, encoding="utf-8")
 
     action_str = "[DRY-RUN] Would remove" if dry_run else "Removed"
-    extra_str = " (added [[state-determined system]] wikilink)" if body_modified else ""
-    return True, f"{action_str} {removed_count} rejected relation(s) from {source_path.name}{extra_str}"
+    return True, f"{action_str} {removed_count} rejected relation(s) from {source_path.name}"
 
 
 def main() -> int:

@@ -206,6 +206,9 @@ class ActivationEngine:
                                 continue
                             node = stored.copy()
                             node["_cognitive_unverified"] = True
+                        if node.get("_cognitive_unverified") and principal == Principal.AI_AGENT:
+                            node = dict(node)
+                            node["content"] = ""
                         active_nodes[next_id] = {"node": node, "activation": next_activation}
                         queue.append((next_id, depth + 1, next_activation))
                     except (ValueError, AttributeError):

@@ -19,6 +19,24 @@ class TrustState(str, Enum):
     BLOCKED = "BLOCKED"
 
 
+def normalize_trust_state(state: Any) -> TrustState | None:
+    """Normalize input to a canonical TrustState enum or return None if unknown/invalid."""
+    if isinstance(state, TrustState):
+        return state
+    if isinstance(state, str):
+        cleaned = state.strip()
+        if not cleaned:
+            return None
+        try:
+            return TrustState(cleaned)
+        except ValueError:
+            try:
+                return TrustState[cleaned.upper()]
+            except KeyError:
+                return None
+    return None
+
+
 @dataclass(frozen=True)
 class TrustDecision:
     state: TrustState
@@ -64,4 +82,15 @@ def can_execute_instruction(decision: TrustDecision) -> bool:
 
 
 def external_content_is_data() -> bool:
+    return True
+
+
+def validate_severity_transition(from_severity: str, to_severity: str) -> bool:
+    """Validate that high-severity findings (HARD_BLOCKER) cannot be silently downgraded to WARNING."""
+    blocker_levels = {"HARD_BLOCKER", "BLOCKER", "CRITICAL", "P0"}
+    downgrade_levels = {"WARNING", "INFO", "LOW", "P2", "P3"}
+    from_clean = str(from_severity).strip().upper()
+    to_clean = str(to_severity).strip().upper()
+    if from_clean in blocker_levels and to_clean in downgrade_levels:
+        return False
     return True
