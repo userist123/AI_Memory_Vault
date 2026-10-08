@@ -57,7 +57,7 @@ public sealed class Finding
     public Severity Severity { get; init; }
     public string Category { get; init; } = "";
     public Classification Classification { get; init; }
-    public Confidence Confidence { get; init; }
+    public Confidence Confidence { get; set; }
     public DateTimeOffset? FirstSeenUtc { get; init; }
     public DateTimeOffset? LastSeenUtc { get; init; }
     public string Host { get; init; } = "";

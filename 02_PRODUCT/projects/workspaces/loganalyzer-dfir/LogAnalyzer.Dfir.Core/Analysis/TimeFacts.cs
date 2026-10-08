@@ -45,3 +45,47 @@ public static class TimeFacts
         e.SemanticType = SemanticOf(e.Source, e.TimeSemantics);
     }
 }
+
+/// <summary>
+/// An unreliable timestamp lowers Confidence (lessons learned §84), one level, never Severity. A row is unreliable when it has
+/// no usable time or an ambiguous local time; the whole window is unreliable when the clock was changed near it
+/// (Security 4616, Kernel-General 1).
+/// </summary>
+public static class TimeReliability
+{
+    public const string Actor = "TimeReliability/1.0";
+
+    public static bool IsUnreliable(TimelineEvent e) => !e.Time.IsKnown || e.TimeUncertainty.StartsWith("Oră ambiguă", StringComparison.Ordinal);
+
+    public static bool IsClockChange(TimelineEvent e) =>
+        e.Source.Equals("EventLog:Security", StringComparison.OrdinalIgnoreCase) && e.EventId == "4616" ||
+        e.Provider.Equals("Microsoft-Windows-Kernel-General", StringComparison.OrdinalIgnoreCase) && e.EventId == "1";
+
+    /// <summary>Lowers the confidence of findings resting on unreliable times; returns how many were lowered.</summary>
+    public static int Apply(IEnumerable<Finding> findings, IReadOnlyList<TimelineEvent> timeline)
+    {
+        var rows = timeline.GroupBy(e => (e.EvidenceId, e.Locator)).ToDictionary(g => g.Key, g => g.ToList());
+        var clock = timeline.Where(e => IsClockChange(e) && e.Time.IsKnown).Select(e => e.Time.Utc!.Value).ToList();
+        int lowered = 0;
+        foreach (var f in findings)
+        {
+            if (f.AuditTrail.Any(a => a.Actor == Actor)) continue;
+            string? why = null;
+            if (f.SupportingEvidence.Any(r => rows.TryGetValue((r.EvidenceId, r.Locator), out var l) && l.Any(IsUnreliable)))
+                why = "o probă are oră lipsă sau ambiguă";
+            else if ((f.FirstSeenUtc ?? f.LastSeenUtc) is { } from)
+            {
+                var to = f.LastSeenUtc ?? from;
+                if (clock.Any(c => c >= from.AddDays(-1) && c <= to.AddDays(1))) why = "ceasul sistemului a fost schimbat în apropierea ferestrei de timp";
+            }
+            if (why is null) continue;
+            var before = f.Confidence;
+            if (f.Confidence > Confidence.Low) f.Confidence--;
+            var msg = $"Ora nu este de încredere ({why}): încrederea {before.ToSpec()} → {f.Confidence.ToSpec()}. Severitatea nu a fost modificată.";
+            f.Limitations.Add(msg);
+            f.AuditTrail.Add(new("confidence.lowered", Actor, msg));
+            lowered++;
+        }
+        return lowered;
+    }
+}
