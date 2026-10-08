@@ -25,7 +25,7 @@ SERVER_SOURCE = PACKAGES / "interfaces" / "memory_mcp_server.py"
 
 _MODULE_CMD = re.compile(r"python3?\s+-m\s+([A-Za-z_][\w.]*)([^`\n]*)")
 _FLAG = re.compile(r"(--[a-z][a-z0-9-]*)")
-_TOOL = re.compile(r"\b(memory_[a-z_]+)\s*\(|`(memory_[a-z_]+)`")
+_TOOL = re.compile(r"\b((?:memory|vault)_[a-z_]+)\s*\(|`((?:memory|vault)_[a-z_]+)`")
 _REST = re.compile(r"localhost:8000/memory\S*")
 _PATH = re.compile(r"`((?:\d\d_[A-Z_]+|\.github)/[^`\s<>*]+)`")
 _NOT_EXISTING_MARKERS = ("nu există", "does not exist", "not exist")
@@ -33,8 +33,10 @@ _NOT_EXISTING_MARKERS = ("nu există", "does not exist", "not exist")
 
 def tool_names() -> set[str]:
     source = SERVER_SOURCE.read_text(encoding="utf-8")
-    match = re.search(r"TOOL_NAMES\s*=\s*\(([^)]*)\)", source)
-    return set(re.findall(r'"(memory_[a-z_]+)"', match.group(1)))
+    names: set[str] = set()
+    for match in re.finditer(r"TOOL_NAMES\s*=\s*\(([^)]*)\)", source):
+        names |= set(re.findall(r'"((?:memory|vault)_[a-z_]+)"', match.group(1)))
+    return names
 
 
 def module_sources(dotted: str) -> str | None:
@@ -119,6 +121,7 @@ def test_negative_control_a_flag_the_cli_does_not_have_is_reported():
 
 def test_negative_control_an_unknown_mcp_tool_is_reported():
     assert problems_in("call `memory_teleport(x)` first") == ["MCP tool memory_teleport does not exist"]
+    assert problems_in("call `vault_teleport(x)` first") == ["MCP tool vault_teleport does not exist"]
 
 
 def test_negative_control_the_fictional_rest_route_is_reported_unless_marked_absent():

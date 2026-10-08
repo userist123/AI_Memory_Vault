@@ -19,6 +19,8 @@ ROOT_ALLOWED = {
     ".pre-commit-config.yaml",
     "AGENTS.md",
     "CLAUDE.md",
+    #: Gemini CLI / Antigravity instruction pointer to AGENTS.md. Mirrors ROOT_ALLOWLIST.
+    "GEMINI.md",
     "LICENSE",
     "LICENSE.txt",
     "Makefile",

@@ -71,6 +71,9 @@ in its constructor. Corrected 2026-09-06.
 | `30_SCRIPTS/ingestion/convert_pdf_to_text.py` | real, measured | r030-r031; **20 of 20** books, 1,088 chunks measured by chunking |
 | `30_SCRIPTS/ingestion/model_extract_concepts.py` | real, gates and selectivity both work | r031; recurrence floor validated on all 3 structure modes |
 | `30_SCRIPTS/ingestion/extract_book_concepts.py` (rule-based) | real, **unusable on books** | 28% of its 112 corpus candidates are not terms |
+| Direct routes `vault://` (`vault_access/`, 04_CONFIG/vault_domains.yaml) | real, **in the MCP server, CLI and Telegram bot** | measured 2026-10-07: 4221 routes in 114 domains (clean checkout; re-checked by `test_route_and_domain_counts_are_current`); by URI 4221/4221; by file name (measured 2026-10-06 on 4220 routes) 3998 resolve to themselves, 222 AMBIGUOUS, **0 wrong**; `07_EVALUATION/vault_routing/`. Names and titles only — topical questions still go to `memory_search`. The first call needs the metadata of every route: the MCP server warms it in a background thread at start (C YAML loader when PyYAML has it, one frontmatter parse per file; `20_TESTS/test_vault_access_perf.py`) |
+| Access policy per egress channel (`04_CONFIG/access_policy.yaml`) | real, enforced on every `vault_*` call | cloud CLIs ≤ INTERNAL, Telegram ≤ INTERNAL, web export PUBLIC; inbox, archive, RAW skills never served to agents, and a refusal is returned as NOT_FOUND (real reason only in the audit); MCP and the CLI cannot assert the owner or the local channel (owner needs an interactive terminal). Single-user machine: an agent with a shell can still read files directly — this policy binds the vault tools, OS permissions bind the rest |
+| Ollama/Telegram assistant (`vault_access/ollama_assistant.py`) | real, **not yet run against a live Ollama** | reads are extractive (no model call); questions use native `/api/chat` with explicit `num_ctx`, truncation check and verbatim-quote verification; proved with a fake transport (assistant + Telegram: 39 tests) |
 
 ## 4. Corpus and graph, measured
 
@@ -102,6 +105,10 @@ whole-corpus retrieval numbers.
   an existing note in the legacy tree keeps its legacy destination on update; existing notes in the
   content roots stay pinned in place (`db08b847`). Nothing has been moved: the legacy folders are not
   migrated, only new writes are redirected.
+- **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
+  registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
+  the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
+  that `memory_search` cannot reach (below) are reachable by route (`vault://coordination/...`).
 - **The memory is reachable by agents, but only just, and the results are weak.** `.mcp.json` registers
   the MCP server `vault-memory` (`interfaces/memory_mcp_server.py`: `memory_search`, `memory_get`,
   `memory_propose`); `python -m cognitive_core.recall_cli` is the CLI fallback. There is no REST
@@ -225,6 +232,7 @@ whole-corpus retrieval numbers.
 | Retrieval or search | `memory/controller.py::search` | that graph expansion runs; it is off by default |
 | Anything graph | section 4 above | that "connected" means retrievable — check direction |
 | Writing a note | `storage/path_resolver.py` | that it lands in the content tree |
+| Finding or reading a specific file | `vault_resolve` / `vault_read` (`AGENTS.md`) | that a name is unique: AMBIGUOUS is an answer, not an error |
 | Lifecycle changes | `lifecycle/policy.py` | that any path may bypass it; none may |
 | Benchmarks or evidence | v2 contract | that v1 numbers mean anything |
 | Claiming something is wired | the grep in section 2 | a commit message |

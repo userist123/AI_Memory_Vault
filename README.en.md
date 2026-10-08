@@ -652,6 +652,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |
 | Dependency audit (npm, .NET) per manifest; fails on CRITICAL | `dependency-audit.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
+| direct `vault://` routes, per-channel read policy, MCP/CLI/Ollama/Telegram adapters | `vault-access.yml` |
 | ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |

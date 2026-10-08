@@ -54,15 +54,19 @@ async def _call(session, tool, **arguments):
     return result.structuredContent["result"] if "result" in (result.structuredContent or {}) else result.structuredContent
 
 
-def test_the_server_exposes_exactly_the_three_tools_and_no_attest():
+def test_the_server_exposes_exactly_the_memory_and_route_tools_and_no_attest():
     async def go(env):
         async with _session(env) as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 return {t.name for t in (await session.list_tools()).tools}
-    env = {**os.environ, vault_runtime.SECRET_ENV: SECRET}
+    # this test only lists tools against the real repository: no background route warm-up (it would
+    # index 4000+ files and write the per-user cache for nothing)
+    env = {**os.environ, vault_runtime.SECRET_ENV: SECRET, "VAULT_ACCESS_WARM": "0"}
     names = asyncio.run(go(env))
-    assert names == {"memory_search", "memory_get", "memory_propose"}
+    assert names == {"memory_search", "memory_get", "memory_propose",
+                     "vault_resolve", "vault_list", "vault_read", "vault_search",
+                     "vault_get_metadata", "vault_check_quotes"}
     assert not any("attest" in n or "slot" in n or "verify" in n for n in names)
 
 

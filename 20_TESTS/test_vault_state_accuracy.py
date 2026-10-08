@@ -181,3 +181,55 @@ def test_every_referenced_path_exists(state_text):
         if "/" in r and not (REPO / r).exists() and not list(REPO.rglob(Path(r).name))
     ]
     assert not missing, f"VAULT_STATE.md references paths that do not exist: {missing}"
+
+
+# ── Direct routes (`vault://`): the route count the card states ──────────────────────────
+@pytest.fixture(scope="module")
+def route_table():
+    """The route table exactly as the MCP server builds it (real registry, real policy), without
+    the per-user metadata cache and without a private overlay: what a clean checkout has."""
+    import os
+
+    from vault_access.policy import AccessPolicy
+    from vault_access.router import PRIVATE_ROOT_ENV, DomainRouter
+
+    saved = os.environ.pop(PRIVATE_ROOT_ENV, None)
+    try:
+        policy = AccessPolicy.load(REPO / "04_CONFIG" / "access_policy.yaml")
+        router = DomainRouter(REPO, REPO / "04_CONFIG" / "vault_domains.yaml", policy, cache_path=False)
+        router.build()
+    finally:
+        if saved is not None:
+            os.environ[PRIVATE_ROOT_ENV] = saved
+    return router
+
+
+def _claimed_routes(text: str):
+    """(routes, domains) from the sentence "<N> routes in <M> domains" of the direct-routes row."""
+    for line in text.splitlines():
+        if line.startswith("|") and "Direct routes" in line:
+            m = re.search(r"(\d[\d,]*) routes in (\d+) domains", line)
+            if m:
+                return int(m.group(1).replace(",", "")), int(m.group(2)), line
+    raise AssertionError('no "<N> routes in <M> domains" claim in the direct-routes row of VAULT_STATE.md')
+
+
+def test_route_and_domain_counts_are_current(state_text, route_table):
+    routes, domains, _ = _claimed_routes(state_text)
+    assert not route_table.problems, f"the route registry reports problems: {route_table.problems[:5]}"
+    assert _within(len(route_table.routes), routes, 0.05), (
+        f"VAULT_STATE.md claims {routes} direct routes, the route table has {len(route_table.routes)}. "
+        "Update the state card (and 07_EVALUATION/vault_routing/README.md) in the same commit."
+    )
+    assert _within(len(route_table.registry.domains), domains, 0.05), (
+        f"VAULT_STATE.md claims {domains} domains, the registry has {len(route_table.registry.domains)}."
+    )
+
+
+def test_the_resolution_claim_is_about_every_route_the_card_counts(state_text):
+    """"by URI N/N" must be the same N as the route count: a measurement of a different population
+    would not support the sentence it sits in."""
+    routes, _, line = _claimed_routes(state_text)
+    m = re.search(r"by URI (\d+)/(\d+)", line)
+    assert m, "the direct-routes row no longer says how many routes resolve by URI"
+    assert int(m.group(1)) == int(m.group(2)) == routes
