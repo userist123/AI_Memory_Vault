@@ -79,12 +79,12 @@ UNWIRED rows are the legacy components with no production consumer (R2.4, R4.19,
 | R1 | 1 | 4 | 0 | 0 |
 | R2 | 0 | 3 | 1 | 0 |
 | R3 | 6 | 3 | 0 | 1 |
-| R4 | 11 | WP3 adds lifecycle **states only**: ACQUIRED -> VERIFIED -> IN_ANALYSIS -> ARCHIVED, plus DISPOSED set manually; every transition is written to the custody log. **No automatic deletion.** Retention is a per-case configurable field, empty by default; the app only warns when it is exceeded. Legal values (NIS2/DNSC) are filled in later without restructuring. |
+| R4 | 11 | 7 | 2 | 1 |
 | R5 | 0 | 3 | 0 | 1 |
 | R6 | 2 | 4 | 0 | 0 |
 | R7 | 3 | 5 | 2 | 0 |
 | R8 | 3 | 0 | 0 | 0 |
-| R9 | 4 | 8 | **Always blocking, no waiver:** tests passing, evidence-integrity validation, audit integrity, AI claim validation, response verification, no critical unresolved findings. **Waivable only by a signed owner waiver:** real-corpus validation and differential validation. The gate is **both** a CI job (everything checkable automatically) and a script the owner runs locally on Windows with the real corpus before a release. |
+| R9 | 4 | 8 | 0 | 1 |
 | R10 | 0 | 10 | 0 | 7 |
 | R11 | 9 | 1 | 0 | 0 |
 | R12 | 1 | 3 | 0 | 0 |
@@ -473,11 +473,11 @@ as final after a follow-up recommendation, same day).
 | 4 | Unwired legacy code (17 parsers, 10 services, workspace-root `Views/ViewModels/Services`) is **left untouched** in stage 2: not deleted, not finished, nothing built on it. Wire-or-retire is a separate later decision. |
 | 5 | Legacy tabs (SQLCipher, `ParsedEvent`) stay **under "Advanced"** as independent tools; no bridge to the DFIR case in stage 2. |
 | 6 | Localisation first pass is a **translation table at the UI edge** (RO/EN); backend message keys for findings follow afterwards. |
-| 7 | *Provisional:* corpus validation stays a non-blocking CI warning until the owner provides a redistributable corpus or a private runner. Until then a release needs a **written waiver signed by the owner** (format defined in WP12). |
-| 8 | *Provisional:* **blocking** = tests passing, evidence-integrity validation, audit integrity, AI claim validation, response verification, no critical unresolved findings. **Waivable with a signed owner waiver** = corpus validation, differential validation. The gate is **both** a CI job and a script the owner can run locally. |
+| 7 | A small **synthetic, redistributable corpus** is generated in-repo and is **mandatory in CI** (catches parser regressions on every PR). The real corpus stays with the owner and is run locally before a release with the gate script. Only the real-corpus run may be waived, by a **signed owner waiver file** in the repo (reason, date, version, signature) that the gate validates. |
+| 8 | **Always blocking, no waiver:** tests passing, evidence-integrity validation, audit integrity, AI claim validation, response verification, no critical unresolved findings. **Waivable only by a signed owner waiver:** real-corpus validation and differential validation. The gate is **both** a CI job (everything checkable automatically) and a script the owner runs locally on Windows with the real corpus before a release. |
 | 9 | Audit integrity starts as a **hash chain** (backward-compatible reader); signing with a local key comes later, once key custody is decided. |
 | 10 | The app first **exports Vault proposals** for submission; a direct `memory_propose` call comes later. (Note: PR #209 is already merged; CUR's "open security review" reference is stale.) |
-| 11 | *Provisional:* evidence lifecycle **retention/disposal rules are not implemented** until the owner supplies the legal requirements (NIS2/DNSC). WP3 may add lifecycle states only (e.g. ACQUIRED, VERIFIED, IN_ANALYSIS, ARCHIVED), with no automatic deletion. |
+| 11 | WP3 adds lifecycle **states only**: ACQUIRED -> VERIFIED -> IN_ANALYSIS -> ARCHIVED, plus DISPOSED set manually; every transition is written to the custody log. **No automatic deletion.** Retention is a per-case configurable field, empty by default; the app only warns when it is exceeded. Legal values (NIS2/DNSC) are filled in later without restructuring. |
 | 12 | The "APT Attribution" page is **renamed** to technique overlap and states explicitly that it is not attribution. |
 
 With questions 1, 2, 3, 8 and 9 answered, the precondition at the end of section 7 is met. Stage 2 code still
