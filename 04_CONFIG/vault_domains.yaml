@@ -170,6 +170,11 @@ domains:
     title: Observabilitate — trasee, prompturi înregistrate, telemetrie
     roots: ["08_OBSERVABILITY"]
     keywords: [observabilitate, observability, trace, telemetrie, telemetry]
+  research:
+    title: Cercetare — piste de investigatie, harnese experimentale, planuri (nu e memorie canonica)
+    roots: ["08_RESEARCH"]
+    trust: unverified
+    keywords: [cercetare, research, book to memory, h1, experiment, interference gate, blocker, ablation]
   security:
     title: Securitate — registru de incidente, carantină, granițe de încredere, lanț de aprovizionare
     roots: ["09_SECURITY", "security/*.md"]
