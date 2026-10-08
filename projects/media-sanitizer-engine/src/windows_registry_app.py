@@ -26,9 +26,11 @@ class WindowsRegistryApp:
         registry_file: str = "media_sanitization_registry.json",
         simulation_mode: bool = True,
         custom_pkcs11_lib: Optional[str] = None,
+        trusted_tpm_keys: Optional[List[str]] = None,
     ):
         self.registry_file = registry_file
         self.simulation_mode = simulation_mode
+        self.trusted_tpm_keys = trusted_tpm_keys
         self.smartcard_auth = SmartcardAuthenticator(
             simulation_mode=simulation_mode,
             custom_pkcs11_lib=custom_pkcs11_lib,
@@ -55,7 +57,10 @@ class WindowsRegistryApp:
 
         from .tpm_signer import TPMSigner, TPMVerificationError
         try:
-            TPMSigner.verify_manifest_signature(manifest_data)
+            TPMSigner.verify_manifest_signature(
+                manifest_data=manifest_data,
+                trusted_public_keys=self.trusted_tpm_keys,
+            )
         except TPMVerificationError as v_err:
             raise ValueError(f"Validare manifest eșuată: {str(v_err)}")
 

@@ -327,6 +327,31 @@ def test_tpm_verification_fails_on_untrusted_or_missing_envelope():
         TPMSigner.verify_manifest_signature(bad_manifest)
 
 
+def test_tpm_verification_fails_on_untrusted_public_key(dummy_device, valid_dual_auth):
+    """
+    AUDIT CERINȚA D: Cheie TPM neacceptată (lipsă din registrul de chei de încredere) este respinsă.
+    """
+    from src.windows_registry_app import WindowsRegistryApp
+    from src.tpm_signer import TPMSigner, TPMVerificationError
+
+    sim_adapter = HardwareAdapter(simulation_mode=True)
+    session = SanitizationSession(
+        device=dummy_device,
+        classification=ClassificationLevel.SECRET,
+        hardware_adapter=sim_adapter,
+    )
+    session.confirm_target_safeguard("3456")
+    session.evaluate_and_authorize(dual_auth=valid_dual_auth)
+    session.execute_sanitization()
+    manifest = session.export_manifest()
+
+    # Aplicație de birou configurată doar cu cheia OEM autorizată
+    app = WindowsRegistryApp(trusted_tpm_keys=["-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA00000000000000000000\n-----END PUBLIC KEY-----"])
+
+    with pytest.raises(ValueError, match="nu este autorizată"):
+        app.import_and_validate_manifest(manifest)
+
+
 def test_missing_smartcard_middleware_fails_safe():
     """
     AUDIT CERINȚA D: Lipsa smartcardului sau a middleware-ului PKCS#11 blochează execuția.
@@ -336,3 +361,4 @@ def test_missing_smartcard_middleware_fails_safe():
     # Când simulation_mode=False pe o mașină fără OpenSC / middleware fizic configurat
     with pytest.raises(SmartcardError, match="Biblioteca PKCS#11 hardware"):
         SmartcardAuthenticator(simulation_mode=False, custom_pkcs11_lib="/invalid/path/to/missing_pkcs11.so")
+

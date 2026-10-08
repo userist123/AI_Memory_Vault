@@ -7,21 +7,25 @@ semnarea duală pe cartelele cu cip și exportul automat fără hârtie către r
 import sys
 import os
 import json
+from typing import Optional, List
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
 from .smartcard_auth import SmartcardAuthenticator, SmartcardError
 from .registry_connector import RegistryBridgeClient, RegistryExportPackage
+from .tpm_signer import TPMSigner, TPMVerificationError
 
 
 class WindowsBridgeGUI(tk.Tk):
-    def __init__(self):
+    def __init__(self, simulation_mode: bool = True, trusted_tpm_keys: Optional[List[str]] = None):
         super().__init__()
         self.title("Punte INFOSEC - Semnare Calificată & Registratură Electronică (HG 585/2002)")
         self.geometry("820x680")
         self.minsize(780, 600)
         
-        self.bridge_client = RegistryBridgeClient()
+        self.simulation_mode = simulation_mode
+        self.trusted_tpm_keys = trusted_tpm_keys
+        self.bridge_client = RegistryBridgeClient(simulation_mode=simulation_mode)
         self.loaded_manifest = None
         self.manifest_file_path = None
 
@@ -134,6 +138,17 @@ class WindowsBridgeGUI(tk.Tk):
                 messagebox.showerror("Eroare", "Fișierul nu conține un manifest de sanitizare valid.")
                 return
 
+            # Verificare integritate și semnătură hardware TPM
+            try:
+                TPMSigner.verify_manifest_signature(
+                    manifest_data=data,
+                    trusted_public_keys=self.trusted_tpm_keys,
+                )
+                tpm_status = "VALIDATĂ CRIPTOGRAFIC (RSA-PSS)"
+            except TPMVerificationError as v_err:
+                messagebox.showerror("Eroare Criptografică TPM", f"Semnătura TPM a manifestului este invalidă:\n{str(v_err)}")
+                return
+
             self.loaded_manifest = data
             self.manifest_file_path = path
             self.lbl_file_status.config(text=os.path.basename(path), foreground="#007ACC")
@@ -141,11 +156,12 @@ class WindowsBridgeGUI(tk.Tk):
             # Afișare sumar
             dev = data["device"]
             disp = data.get("final_disposition", "N/A")
+            lba_stat = data.get("lba_verification_status", "N/A")
             info = (
                 f"Model: {dev.get('model_number')} | Serie (SN): {dev.get('serial_number')}\n"
                 f"Capacitate: {dev.get('capacity_bytes', 0)/(1024**3):.1f} GB | Topologie: {dev.get('topology')}\n"
-                f"Verdict Tehnic: {disp} | Pași de audit verificați: {data['integrity'].get('total_audit_steps')}\n"
-                f"Semnătură Platformă TPM: {data.get('signatures', {}).get('platform_signature', 'LIPSĂ')}"
+                f"Verdict Tehnic: {disp} | Verificare LBA: {lba_stat}\n"
+                f"Pași de audit verificați: {data['integrity'].get('total_audit_steps')} | Semnătură TPM: {tpm_status}"
             )
             self.txt_dev_details.config(state=tk.NORMAL)
             self.txt_dev_details.delete("1.0", tk.END)

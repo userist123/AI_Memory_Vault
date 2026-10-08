@@ -62,6 +62,11 @@ menuentry "Secure Sanitization Engine - UEFI Offline (TOE-SSE-v1)" {
             "tpm_signer.py",
             "state_machine.py",
             "uefi_tui_app.py",
+            "pades_pdf_generator.py",
+            "pades_signer.py",
+            "smartcard_auth.py",
+            "registry_connector.py",
+            "report_generator.py",
             "__init__.py",
         ]
         for f in files_to_bundle:

@@ -4,7 +4,7 @@ Implementează generarea și verificarea semnăturilor asimetrice peste manifest
 Asigură că modificarea chiar și a unui singur caracter din manifest duce la invalidarea semnăturii.
 """
 
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Optional, List
 import os
 import json
 import hashlib
@@ -97,9 +97,14 @@ class TPMSigner:
             }
 
     @classmethod
-    def verify_manifest_signature(cls, manifest_data: Dict[str, Any]) -> bool:
+    def verify_manifest_signature(
+        cls,
+        manifest_data: Dict[str, Any],
+        trusted_public_keys: Optional[List[str]] = None,
+    ) -> bool:
         """
-        Verifică criptografic dacă manifestul a fost semnat cu cheia specificată
+        Verifică criptografic dacă manifestul a fost semnat cu cheia specificată,
+        dacă cheia aparține setului de chei de platformă autorizate (trusted_public_keys)
         și dacă niciun câmp critic nu a fost alterat ulterior.
         """
         sigs = manifest_data.get("signatures", {})
@@ -113,6 +118,12 @@ class TPMSigner:
 
         if not sig_hex or not pub_pem:
             raise TPMVerificationError("Cheia publică sau semnătura TPM lipsesc din anvelopă.")
+
+        # Dacă există o listă de chei de încredere configurată (OEM / Platform Root), verificăm apartenența
+        if trusted_public_keys is not None:
+            normalized_trusted = [k.strip() for k in trusted_public_keys]
+            if pub_pem.strip() not in normalized_trusted:
+                raise TPMVerificationError("Cheia publică TPM nu este autorizată (lipsă din registrul de chei de încredere)!")
 
         payload_bytes = cls.get_canonical_payload_bytes(manifest_data)
 
