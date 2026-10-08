@@ -135,3 +135,31 @@ def test_retrieved_memory_cannot_authorize_out_of_scope_mutation(tmp_path):
         if not a["validated"]
     )
     assert not (tmp_path / "workspace" / "outside_scope.py").exists()
+
+def test_memory_on_off_harness_keeps_comparison_comparable(tmp_path):
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        bootstrap_provider=StaticBootstrap(),
+    )
+    task = _task()
+    with_memory, with_memory_trace = harness.execute(
+        task=task,
+        agent_id="pilot_compare",
+        agent_role="coder",
+        workspace=tmp_path / "with_memory",
+        memory_query="coding",
+        enable_memory=True,
+    )
+    without_memory, without_memory_trace = harness.execute(
+        task=task,
+        agent_id="pilot_compare",
+        agent_role="coder",
+        workspace=tmp_path / "without_memory",
+        memory_query="coding",
+        enable_memory=False,
+    )
+    assert with_memory["verification_status"] == without_memory["verification_status"] == "passed"
+    assert with_memory_trace["record"]["execution_contract"] == without_memory_trace["record"]["execution_contract"]
+    assert with_memory_trace["record"]["memory"]["query"] == "coding"
+    assert without_memory_trace["record"]["memory"]["query"] == ""
+    assert with_memory_trace["record"]["context_hash"] != without_memory_trace["record"]["context_hash"]
