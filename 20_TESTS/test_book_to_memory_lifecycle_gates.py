@@ -34,6 +34,8 @@ Verifies the 30 strict no-bypass conditions defined in Phase 2 specification:
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import uuid
 import pytest
 from datetime import datetime, timezone, timedelta
@@ -48,7 +50,10 @@ from lifecycle.validation.book_to_memory_schema import (
 )
 from lifecycle.validation.book_to_memory_lifecycle import (
     BookToMemoryLifecycleState,
+    APPROVAL_TOKEN_VERSION,
     OwnerApprovalToken,
+    note_content_sha256,
+    note_revision,
     issue_owner_approval,
     transition_book_to_memory_lifecycle,
     demote_active_note,
@@ -188,7 +193,7 @@ def test_9_usage_test_and_provenance_without_owner_approval_rejected():
 
 def test_10_owner_approval_with_open_high_conflict_rejected():
     note = valid_concept_payload("VERIFIED")
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"], reason="Approved by owner")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, reason="Approved by owner")
     note["open_conflicts"] = [
         {"conflict_id": "CONF-001", "severity": ConflictSeverity.HIGH.value, "status": ConflictStatus.OPEN.value}
     ]
@@ -200,7 +205,7 @@ def test_10_owner_approval_with_open_high_conflict_rejected():
 
 def test_11_owner_approval_with_missing_or_negative_ablation_rejected():
     note = valid_concept_payload("VERIFIED")
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"], reason="Approved by owner")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, reason="Approved by owner")
     note["ablation_delta"] = -0.15  # negative delta (performance drop)
     with pytest.raises(LifecycleTransitionError, match="GATE-07 Ablation failed: Delta must be >= 0"):
         transition_book_to_memory_lifecycle(
@@ -223,7 +228,7 @@ def test_12_lifecycle_field_injected_in_input():
 
 def test_13_lifecycle_field_modified_after_validation():
     note = valid_concept_payload("VERIFIED")
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"], reason="Approved")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, reason="Approved")
     # Mutate note id to disconnect token
     mutated_note = note.copy()
     mutated_note["id"] = str(uuid.uuid4())
@@ -357,14 +362,24 @@ def test_21_forged_principal_string_rejected():
         )
 
 
-def test_22_forged_authorization_evidence_rejected():
-    note = valid_concept_payload("VERIFIED")
-    token = OwnerApprovalToken(
+def _forged_current_format_token(note: dict, signature: str) -> OwnerApprovalToken:
+    """A token with every current-format field correct for `note` and a signature of our choosing."""
+    issued = datetime.now(timezone.utc)
+    return OwnerApprovalToken(
         note_id=note["id"],
         approver=Principal.HUMAN.value,
-        timestamp="2026-10-04T00:00:00Z",
-        signature="bad-signature",
+        timestamp=issued.isoformat(),
+        signature=signature,
+        expires_at=(issued + timedelta(days=1)).isoformat(),
+        content_sha256=note_content_sha256(note),
+        revision=note_revision(note),
+        version=APPROVAL_TOKEN_VERSION,
     )
+
+
+def test_22_forged_authorization_evidence_rejected():
+    note = valid_concept_payload("VERIFIED")
+    token = _forged_current_format_token(note, "bad-signature")
     with pytest.raises(OwnerApprovalError, match="Signature verification failed"):
         verify_owner_approval_token(note, token=token)
 
@@ -372,7 +387,7 @@ def test_22_forged_authorization_evidence_rejected():
 def test_23_stale_approval_token_rejected():
     note = valid_concept_payload("VERIFIED")
     old_time = (datetime.now(timezone.utc) - timedelta(days=31)).isoformat()
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"], timestamp=old_time)
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, timestamp=old_time)
     with pytest.raises(OwnerApprovalError, match="Approval token has expired"):
         verify_owner_approval_token(note, token=token)
 
@@ -380,7 +395,7 @@ def test_23_stale_approval_token_rejected():
 def test_24_replayed_approval_token_on_different_note():
     note_a = valid_concept_payload("VERIFIED")
     note_b = valid_concept_payload("VERIFIED")
-    token_a = issue_owner_approval(actor=Principal.HUMAN, note_id=note_a["id"])
+    token_a = issue_owner_approval(actor=Principal.HUMAN, note=note_a)
     with pytest.raises(OwnerApprovalError, match="Token note_id mismatch"):
         verify_owner_approval_token(note_b, token=token_a)
 
@@ -388,7 +403,7 @@ def test_24_replayed_approval_token_on_different_note():
 def test_25_approval_issued_by_ai_agent_rejected():
     note = valid_concept_payload("VERIFIED")
     with pytest.raises(OwnerApprovalError, match="Principal 'ai_agent' cannot issue owner approval"):
-        issue_owner_approval(actor=Principal.AI_AGENT, note_id=note["id"])
+        issue_owner_approval(actor=Principal.AI_AGENT, note=note)
 
 
 # -----------------------------------------------------------------------------
@@ -449,7 +464,7 @@ def test_29_conflicting_source_demotes_active_note():
 def test_30_security_finding_blocks_promotion():
     note = valid_concept_payload("VERIFIED")
     note["tool_call"] = "exec('evil')"
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
     with pytest.raises(LifecycleTransitionError, match="GATE-03 Security failed"):
         transition_book_to_memory_lifecycle(
             note, target_state=BookToMemoryLifecycleState.ACTIVE, actor=Principal.HUMAN, approval_token=token
@@ -475,12 +490,12 @@ def test_31_missing_secret_refuses_to_issue_token(monkeypatch):
     monkeypatch.delenv("MEMORY_CONTROLLER_HMAC_SECRET", raising=False)
     # AI_MEMORY_VAULT_HOME points at an empty temp dir (tests/conftest.py): no key file either.
     with pytest.raises(OwnerApprovalError, match="No usable HMAC secret"):
-        issue_owner_approval(actor=Principal.HUMAN, note_id=str(uuid.uuid4()))
+        issue_owner_approval(actor=Principal.HUMAN, note={"id": str(uuid.uuid4())})
 
 
 def test_31_missing_secret_refuses_to_verify_token(monkeypatch):
     note = valid_concept_payload("VERIFIED")
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])  # secret set by fixture
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)  # secret set by fixture
     monkeypatch.delenv("MEMORY_CONTROLLER_HMAC_SECRET", raising=False)
     with pytest.raises(OwnerApprovalError, match="No usable HMAC secret"):
         verify_owner_approval_token(note, token=token)
@@ -488,30 +503,206 @@ def test_31_missing_secret_refuses_to_verify_token(monkeypatch):
 
 def test_31_token_signed_with_old_hardcoded_secret_is_rejected():
     note = valid_concept_payload("VERIFIED")
+    forged = _forged_current_format_token(note, "")
+    forged.signature = hmac.new(
+        _OLD_HARDCODED_SECRET.encode("utf-8"), forged._signed_bytes(), hashlib.sha256
+    ).hexdigest()
+    with pytest.raises(OwnerApprovalError, match="Signature verification failed"):
+        verify_owner_approval_token(note, token=forged)
+
+    # The same key over the old id:approver:timestamp message is refused as an old-format token.
     ts = datetime.now(timezone.utc).isoformat()
-    forged = OwnerApprovalToken(
+    old_format = OwnerApprovalToken(
         note_id=note["id"],
         approver=Principal.HUMAN.value,
         timestamp=ts,
         signature=_sign_like_the_old_module(note["id"], Principal.HUMAN.value, ts, _OLD_HARDCODED_SECRET),
     )
-    with pytest.raises(OwnerApprovalError, match="Signature verification failed"):
-        verify_owner_approval_token(note, token=forged)
+    with pytest.raises(OwnerApprovalError, match=r"old\) format"):
+        verify_owner_approval_token(note, token=old_format)
 
 
 def test_31_old_hardcoded_secret_is_refused_even_when_configured(monkeypatch):
     monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", _OLD_HARDCODED_SECRET)
     with pytest.raises(OwnerApprovalError, match="published in source code"):
-        issue_owner_approval(actor=Principal.HUMAN, note_id=str(uuid.uuid4()))
+        issue_owner_approval(actor=Principal.HUMAN, note={"id": str(uuid.uuid4())})
 
 
 def test_31_too_short_secret_is_refused(monkeypatch):
     monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", "short")
     with pytest.raises(OwnerApprovalError, match="No usable HMAC secret"):
-        issue_owner_approval(actor=Principal.HUMAN, note_id=str(uuid.uuid4()))
+        issue_owner_approval(actor=Principal.HUMAN, note={"id": str(uuid.uuid4())})
 
 
 def test_31_token_roundtrips_with_a_real_secret():
     note = valid_concept_payload("VERIFIED")
-    token = issue_owner_approval(actor=Principal.HUMAN, note_id=note["id"])
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
     assert verify_owner_approval_token(note, token=token) is True
+
+
+# -----------------------------------------------------------------------------
+# 32: B02 - the approval is bound to the exact content, revision and a deadline
+# -----------------------------------------------------------------------------
+
+def _promote(note: dict, token: OwnerApprovalToken) -> dict:
+    return transition_book_to_memory_lifecycle(
+        note, target_state=BookToMemoryLifecycleState.ACTIVE, actor=Principal.HUMAN, approval_token=token
+    )
+
+
+def test_32_valid_token_for_unchanged_note_is_accepted():
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, reason="reviewed")
+    promoted = _promote(note, token)
+    assert promoted["lifecycle"] == "ACTIVE"
+    # The stored ACTIVE note still verifies against its own embedded token (state fields excluded)...
+    assert verify_owner_approval_token(promoted) is True
+    # ...and an edit made after promotion is detected.
+    promoted["evidence"] = promoted["evidence"] + " (edited later)"
+    with pytest.raises(OwnerApprovalError, match="Token content mismatch"):
+        verify_owner_approval_token(promoted)
+
+
+def test_32_approve_then_edit_body_is_refused():
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+    note["evidence"] = "Feedback is a method of controlling a system by ignoring performance data."
+    with pytest.raises(OwnerApprovalError, match="Token content mismatch"):
+        _promote(note, token)
+    assert note["lifecycle"] == "VERIFIED"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("tags", ["book-learning", "concept", "injected"]),
+    ("confidence", "low"),
+    ("source_title", "A different book"),
+    ("relations", ["unreviewed-link"]),
+])
+def test_32_approve_then_edit_frontmatter_is_refused(field, value):
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+    note[field] = value
+    with pytest.raises(OwnerApprovalError, match="Token content mismatch"):
+        _promote(note, token)
+
+
+def test_32_added_field_is_refused():
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+    note["extra_claim"] = "something the owner never saw"
+    with pytest.raises(OwnerApprovalError, match="Token content mismatch"):
+        _promote(note, token)
+
+
+def test_32_digest_ignores_key_order_and_lifecycle_state_only():
+    note = valid_concept_payload("VERIFIED")
+    reordered = dict(reversed(list(note.items())))
+    assert note_content_sha256(note) == note_content_sha256(reordered)
+    state_changed = dict(note, lifecycle="ACTIVE", verification="verified", updated="2030-01-01")
+    assert note_content_sha256(note) == note_content_sha256(state_changed)
+    assert note_content_sha256(note) != note_content_sha256(dict(note, evidence=note["evidence"] + " "))
+
+
+def test_32_replay_to_a_different_note_is_refused_even_with_identical_content():
+    note_a = valid_concept_payload("VERIFIED")
+    note_b = dict(note_a, id=str(uuid.uuid4()))  # same content, different identity
+    token_a = issue_owner_approval(actor=Principal.HUMAN, note=note_a)
+    with pytest.raises(OwnerApprovalError, match="Token note_id mismatch"):
+        _promote(note_b, token_a)
+
+
+def test_32_replay_onto_a_note_that_borrowed_the_id_is_refused():
+    note_a = valid_concept_payload("VERIFIED")
+    note_b = valid_concept_payload("VERIFIED")
+    note_b["id"] = note_a["id"]  # same id...
+    note_b["evidence"] = "A different claim under the same id."  # ...different content
+    token_a = issue_owner_approval(actor=Principal.HUMAN, note=note_a)
+    with pytest.raises(OwnerApprovalError, match="Token content mismatch"):
+        _promote(note_b, token_a)
+
+
+def test_32_expired_token_is_refused():
+    note = valid_concept_payload("VERIFIED")
+    issued = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, timestamp=issued, ttl=timedelta(days=1))
+    with pytest.raises(OwnerApprovalError, match="Approval token has expired"):
+        _promote(note, token)
+
+
+def test_32_token_cannot_be_issued_with_unbounded_validity():
+    note = valid_concept_payload("VERIFIED")
+    with pytest.raises(OwnerApprovalError, match="at most 30 days"):
+        issue_owner_approval(actor=Principal.HUMAN, note=note, ttl=timedelta(days=365))
+
+
+def test_32_extending_the_expiry_breaks_the_signature():
+    note = valid_concept_payload("VERIFIED")
+    issued = (datetime.now(timezone.utc) - timedelta(days=10)).isoformat()
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note, timestamp=issued, ttl=timedelta(days=1))
+    token.expires_at = (datetime.now(timezone.utc) + timedelta(days=20)).isoformat()
+    with pytest.raises(OwnerApprovalError, match="Signature verification failed"):
+        _promote(note, token)
+
+
+def test_32_old_format_token_is_refused():
+    from lifecycle.validation import book_to_memory_lifecycle as lifecycle_module
+
+    note = valid_concept_payload("VERIFIED")
+    ts = datetime.now(timezone.utc).isoformat()
+    msg = f"{note['id']}:{Principal.HUMAN.value}:{ts}".encode("utf-8")
+    # Signed with the REAL secret, exactly as the old module did: authentic, but it binds no content.
+    old_sig = hmac.new(lifecycle_module._hmac_secret(), msg, hashlib.sha256).hexdigest()
+    old = OwnerApprovalToken(note_id=note["id"], approver=Principal.HUMAN.value, timestamp=ts, signature=old_sig)
+    with pytest.raises(OwnerApprovalError, match=r"old\) format"):
+        _promote(note, old)
+    # The same applies to a token loaded from a stored dict that lacks the new fields.
+    stored = dict(note_id=note["id"], approver="human", timestamp=ts, signature=old_sig, reason="")
+    with pytest.raises(OwnerApprovalError, match=r"old\) format"):
+        _promote(note, OwnerApprovalToken.from_dict(stored))
+
+
+def test_32_token_missing_a_binding_field_is_refused():
+    note = valid_concept_payload("VERIFIED")
+    for missing in ("content_sha256", "expires_at"):
+        token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+        setattr(token, missing, None)
+        with pytest.raises(OwnerApprovalError, match=f"missing required field '{missing}'"):
+            _promote(dict(note), token)
+
+
+def test_32_revision_is_signed_and_must_match():
+    note = valid_concept_payload("VERIFIED")
+    note["revision"] = "7"
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+    assert token.revision == "7"
+    note["revision"] = "8"
+    with pytest.raises(OwnerApprovalError, match="Token revision mismatch"):
+        _promote(note, token)
+    # A token that claims a different revision than the one it signed is a forgery.
+    note["revision"] = "7"
+    token.revision = "8"
+    with pytest.raises(OwnerApprovalError, match="Signature verification failed"):
+        _promote(note, token)
+
+
+def test_32_note_that_gained_a_revision_marker_after_approval_is_refused():
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+    note["revision"] = "2"
+    with pytest.raises(OwnerApprovalError, match="Token revision mismatch"):
+        _promote(note, token)
+
+
+def test_32_demoted_and_repromoted_note_needs_a_fresh_approval():
+    note = valid_concept_payload("VERIFIED")
+    token = issue_owner_approval(actor=Principal.HUMAN, note=note)
+    promoted = _promote(note, token)
+    demote_active_note(promoted, reason="regression", actor=Principal.HUMAN)
+    promoted["lifecycle"] = "VERIFIED"
+    with pytest.raises(OwnerApprovalError, match="Token content mismatch"):
+        _promote(promoted, token)
+
+
+def test_32_approval_requires_the_note_not_just_its_id():
+    with pytest.raises(OwnerApprovalError, match="over the note itself"):
+        issue_owner_approval(actor=Principal.HUMAN, note="some-note-id")
