@@ -21,3 +21,11 @@
 - Never run a blanket "remove every worktree" while a subagent is running: it can delete the agent's
   working tree mid-task. Remove only worktrees you created yourself, by explicit path, or wait until no
   agent is running.
+
+## 2026-10-08 — Resuming agents after a usage-limit reset
+- Resuming several long-running agents at once re-sends each one's whole transcript at full price (cold
+  cache): a large usage spike. Rule now: every agent keeps `00_GOVERNANCE/coordination/tasks/todo-<agent>.md`;
+  restart work as a NEW agent from that checkpoint, one at a time, instead of SendMessage-resuming a long
+  transcript.
+- The owner believed a "reduced consumption" rule existed; it was nowhere in the repo or the preferences I
+  receive. When an owner rule seems ignored, grep for it first and state plainly if it doesn't exist.
