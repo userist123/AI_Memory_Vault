@@ -65,6 +65,12 @@ from lifecycle.validation.book_to_memory_experiment import (
 )
 
 
+#: Task text used when the caller gives none. It is the same text for the WITH_NOTE and WITHOUT_NOTE conditions,
+#: so it must not mention the note, the candidate or what the answer should rely on (PR #209 B04; it used to read
+#: "... requiring candidate note reasoning and factual constraints").
+DEFAULT_TASK_DESCRIPTION = "Apply what you know about the topic to the situation described, and explain your answer."
+
+
 class BookToMemoryFacade:
     """Master facade providing coordinated execution of the entire Book-to-Memory system."""
 
@@ -133,7 +139,7 @@ class BookToMemoryFacade:
             task_spec = TaskSpecification(
                 task_id=f"TASK-{note_dict.get('id', 'default')}",
                 title=f"Validation for {note_dict.get('title', 'note')}",
-                description="Real-world application test requiring candidate note reasoning and factual constraints.",
+                description=DEFAULT_TASK_DESCRIPTION,
                 task_type="application",
                 expected_criteria={"applies_correctly": True},
             )
