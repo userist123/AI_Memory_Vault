@@ -1,6 +1,6 @@
 # VAULT STATE — read this first
 
-**Measured update:** 2026-10-08T19:29:07Z — operational pilot branch `codex/runtime-memory-pilot-20261008`; CI verification was requested for HEAD `666cee75f1ec42a8e53d973c53b782a726797d7d` and remained queued/pending at the time of this update.
+**Measured update:** 2026-10-08T19:39:23Z — operational pilot branch `codex/runtime-memory-pilot-20261008`; CI verification was requested for HEAD `666cee75f1ec42a8e53d973c53b782a726797d7d` and remained queued/pending at the time of this update.
 
 **This file records what is verified true right now, not what the architecture
 intends.** README, CLAUDE.md and AGENTS.md describe the design. This file
@@ -107,7 +107,12 @@ unverified, and they are not ACTIVE.
 Graph results describe roughly 9% of the corpus and must never be pooled with
 whole-corpus retrieval numbers.
 
-## 5. Known open defects\n\n- **Operational agent integration is now present only as a bounded pilot seam, not as universal production wiring.** A real Claude/Codex/Antigravity/Gemini client session has not yet been observed receiving the bootstrap/context pack. Until that happens the status is NOT_VERIFIED, not LIVE_VERIFIED.\n- **CI verification for the pilot HEAD is blocked by runner availability.** R001, Vault access, Memory V6, Repository Hygiene and untrusted-content runs for the pilot HEAD were created, but are queued/pending. No CI result is inferred from that state.\n- **The pilot does not wire RuntimeEnforcer / RuntimeAdapter / ApprovalBroker into the external client path.** Those remain library-level authority components. The pilot file/action contract is an additional bounded gate, not a claim that the existing runtime-authority layer is production-wired.\n
+## 5. Known open defects
+
+- **Operational agent integration is now present only as a bounded pilot seam, not as universal production wiring.** A real Claude/Codex/Antigravity/Gemini client session has not yet been observed receiving the bootstrap/context pack. Until that happens the status is NOT_VERIFIED, not LIVE_VERIFIED.
+- **CI verification for the pilot HEAD is blocked by runner availability.** R001, Vault access, Memory V6, Repository Hygiene and untrusted-content runs for the pilot HEAD were created, but are queued/pending. No CI result is inferred from that state.
+- **The pilot does not wire RuntimeEnforcer / RuntimeAdapter / ApprovalBroker into the external client path.** Those remain library-level authority components. The pilot file/action contract is an additional bounded gate, not a claim that the existing runtime-authority layer is production-wired.
+
 
 - **The write path is migrated for six types, not for the rest.** New notes of type
   `knowledge`, `lesson`, `error`, `preference`, `procedure` and `project` now go where the
