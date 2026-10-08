@@ -2,6 +2,9 @@
 
 Proiect acreditatabil conform metodologiei **INFOSEC 14 (ORNISS)**, **HG nr. 585/2002**, **NIST SP 800-88 Rev. 2** și **IEEE 2883-2022**.
 
+> ⚠️ **STATUT ACTUAL:** În curs de remediere după audit static. Rămâne în modul DRAFT până la validarea pe banc hardware dedicat.
+> Consultați [Dosarul de Dovezi și Matricea de Conformitate](docs/COMPLIANCE_MATRIX_EVIDENCE.md) pentru statutul exact al fiecărei componente.
+
 ---
 
 ## 1. Arhitectura Sistemului (Hibridă / Zero-Hârtie)
