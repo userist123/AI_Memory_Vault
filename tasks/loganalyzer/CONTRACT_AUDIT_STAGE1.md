@@ -79,12 +79,12 @@ UNWIRED rows are the legacy components with no production consumer (R2.4, R4.19,
 | R1 | 1 | 4 | 0 | 0 |
 | R2 | 0 | 3 | 1 | 0 |
 | R3 | 6 | 3 | 0 | 1 |
-| R4 | 11 | 7 | 2 | 1 |
+| R4 | 11 | WP3 adds lifecycle **states only**: ACQUIRED -> VERIFIED -> IN_ANALYSIS -> ARCHIVED, plus DISPOSED set manually; every transition is written to the custody log. **No automatic deletion.** Retention is a per-case configurable field, empty by default; the app only warns when it is exceeded. Legal values (NIS2/DNSC) are filled in later without restructuring. |
 | R5 | 0 | 3 | 0 | 1 |
 | R6 | 2 | 4 | 0 | 0 |
 | R7 | 3 | 5 | 2 | 0 |
 | R8 | 3 | 0 | 0 | 0 |
-| R9 | 4 | 8 | 0 | 1 |
+| R9 | 4 | 8 | **Always blocking, no waiver:** tests passing, evidence-integrity validation, audit integrity, AI claim validation, response verification, no critical unresolved findings. **Waivable only by a signed owner waiver:** real-corpus validation and differential validation. The gate is **both** a CI job (everything checkable automatically) and a script the owner runs locally on Windows with the real corpus before a release. |
 | R10 | 0 | 10 | 0 | 7 |
 | R11 | 9 | 1 | 0 | 0 |
 | R12 | 1 | 3 | 0 | 0 |
@@ -462,9 +462,8 @@ Suggested sequence: WP0, then WP1 and WP12 in parallel; WP2, then WP3 and WP4 (W
 
 ## 8. Owner decisions (2026-10-08)
 
-The owner accepted the orchestrator's recommendations for the section-6 questions. Questions 7, 8 and 11 had no
-recommendation; the entries below for them are **provisional defaults** (conservative, recorded so stage 2 is not
-blocked) and stay open to change by the owner.
+The owner accepted the orchestrator's recommendations for all twelve section-6 questions (7, 8 and 11 confirmed
+as final after a follow-up recommendation, same day).
 
 | # | Decision |
 |---|---|
