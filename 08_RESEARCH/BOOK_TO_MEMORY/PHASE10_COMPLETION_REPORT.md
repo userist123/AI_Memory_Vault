@@ -4,7 +4,7 @@
 **Phase**: Phase 10 — Controlled Experimentation Harness & Shadow Mode Execution  
 **Branch**: `research/book-to-memory-phase10-experiment-harness`  
 **Parent HEAD**: `46212022e` (Phase 9)  
-**Status**: COMPLETED & EMPIRICALLY VERIFIED (240/240 PASS)  
+**Status**: COMPLETED; UNIT TESTS PASS (240/240); NOT EMPIRICALLY VALIDATED  
 **Date**: 2026-10-04  
 
 ---
@@ -16,7 +16,7 @@ Phase 10 implements the **Controlled Experimentation Harness & Shadow Mode Execu
 With Phase 10:
 1. The **`BookToMemoryExperimentHarness`** is fully implemented and tested in [book_to_memory_experiment.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py).
 2. **Shadow Mode Execution Invariant** is enforced: all variant comparisons run against frozen benchmark cases or simulation layers; zero direct mutation of the production index or active corpus.
-3. **Anti-Gaming Guarantees** are strictly operationalized:
+3. **Anti-Gaming Constraints** are implemented in code and exercised by unit tests:
    - Minimum sample size $\ge 5$ enforced at configuration time;
    - Strictly paired evaluations (control vs variant);
    - Dual reporting of both absolute and relative deltas;
@@ -25,7 +25,7 @@ With Phase 10:
    - `Principal.AI_AGENT` cannot sign or promote a hypothesis into `CLOSED_CHANGE_VALIDATED`.
    - Only `Principal.HUMAN` or `Principal.ADMIN` has the authority to sanction a validated engineering change.
    - Negative results or disproven hypotheses are smoothly transitioned to `CLOSED_NO_CHANGE`, preserving negative evidence without breaking the evidence chain.
-5. **Multi-Hypothesis Lifecycle Support**: Verified end-to-end execution across multiple concurrent hypothesis tracks with tamper-evident audit ledger and state digest.
+5. **Multi-Hypothesis Lifecycle Support**: Unit tests (`20_TESTS/test_book_to_memory_experiment.py`) run end-to-end executions across multiple concurrent hypothesis tracks with tamper-evident audit ledger and state digest.
 
 ---
 
@@ -41,7 +41,7 @@ With Phase 10:
 
 ---
 
-## 3. Empirical Test & Verification Results
+## 3. Unit Test Results
 
 ### 3.1 Phase 10 Experiment Suite
 ```text

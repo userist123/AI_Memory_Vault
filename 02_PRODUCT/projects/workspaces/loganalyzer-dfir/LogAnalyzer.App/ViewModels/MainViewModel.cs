@@ -83,8 +83,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
         [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "🛡️ AIR-GAPPED STANDALONE" : "🌐 NETWORK SOC";
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
-            ? "IZOLARE FIZICĂ STRICTĂ — PROTOCOL AIR-GAPPED CONFORM HG 585 / NATO"
-            : "SCUT DE SECURITATE DISPOZITIV & REȚEA ACTIV";
+            ? "Mod AirGapped: rețeaua este blocată de aplicație; izolarea fizică a stației nu este verificată"
+            : "Mod Network: serviciile online sunt permise; aplicația nu evaluează siguranța stației";
         [ObservableProperty] private string _modeReasonText = AppModeContext.Current.Reason;
         [ObservableProperty] private string _connectivityWarningText = string.Empty;
         public bool HasConnectivityWarning => !string.IsNullOrEmpty(ConnectivityWarningText);
@@ -144,7 +144,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ProvenanceLedgerEntry> ProvenanceEntries { get; set; } = new();
         public ObservableCollection<MitreTacticColumn> MitreTacticColumns { get; set; } = new();
         public ObservableCollection<MultiEventCorrelationFinding> MultiEventCorrelations { get; set; } = new();
-        [ObservableProperty] private string _provenanceStatusMessage = "✅ Lanț Criptografic Verificat (SHA-256)";
+        [ObservableProperty] private string _provenanceStatusMessage = "Lanțul de custodie nu a fost verificat în această sesiune";
 
         // ADAudit Plus & Active Directory Analytics Properties
         [ObservableProperty] private int _adEventsAnalyzedCount = 0;
@@ -242,6 +242,11 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _selectedTabIndex = 0;
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
+        // Severity counts of the loaded alerts; test alerts (DetectedIssue.IsTestAlert) are excluded.
+        [ObservableProperty] private int _criticalAlertsCount;
+        [ObservableProperty] private int _highAlertsCount;
+        [ObservableProperty] private int _mediumAlertsCount;
+        [ObservableProperty] private int _lowAlertsCount;
         [ObservableProperty] private int _totalRegistryCount;
         [ObservableProperty] private int _totalHostsCount;
 
@@ -665,7 +670,12 @@ namespace LogAnalyzer.UI.ViewModels
                 TotalEventsCount = _databaseService.GetEventsCount(null, null, null);
                 TotalRegistryCount = _databaseService.GetRegistryArtifactsCount(null);
                 TotalHostsCount = _databaseService.GetUniqueHostsCount();
-                TotalAlertsCount = DetectedIssues.Count;
+                var distribution = SeverityDistribution.Count(DetectedIssues);
+                TotalAlertsCount = distribution.Total;
+                CriticalAlertsCount = distribution.Critical;
+                HighAlertsCount = distribution.High;
+                MediumAlertsCount = distribution.Medium;
+                LowAlertsCount = distribution.LowOrInfo;
 
                 PopulateMitreMatrix();
             }

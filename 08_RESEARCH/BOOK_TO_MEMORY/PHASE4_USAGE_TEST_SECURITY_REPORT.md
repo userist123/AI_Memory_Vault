@@ -79,7 +79,7 @@ Toate cele 34 de teste din Faza 4 au obținut **100% PASS** (0 failures, 0 error
 
 ### 2.6 Separare Epistemică și Prioritatea Conflictelor
 - `test_hypothesis_usage_test_does_not_promote_to_mechanism`  
-  *Verificare*: Reușita la Usage Test pentru o notă de tip `HYPOTHESIS` conferă exclusiv eligibilitate ca ipoteză verificată; nu promovează nota la rangul de mecanism inginereesc de producție.
+  *Verificare*: Reușita la Usage Test pentru o notă de tip `HYPOTHESIS` conferă exclusiv eligibilitate ca ipoteză eligibilă; nu promovează nota la rangul de mecanism inginereesc de producție.
 - `test_open_high_conflict_blocks_active_despite_perfect_usage_test`  
   *Verificare*: O notă cu scor `10/10` la Usage Test dar implicată într-un conflict deschis `HIGH` este respinsă de `check_lifecycle_eligibility` (`eligible is False`).
 
@@ -87,7 +87,7 @@ Toate cele 34 de teste din Faza 4 au obținut **100% PASS** (0 failures, 0 error
 
 ## 3. Verificarea Celor 10 Scenarii Negative Obligatorii (Secțiunea 13)
 
-| Nr. | Scenariu Negativ | Comportament Verificat | Rezultat |
+| Nr. | Scenariu Negativ | Comportament Testat | Rezultat |
 | :---: | :--- | :--- | :---: |
 | **1** | Notă fără proveniență (`source_title` lipsă) | Eșec precondiție, statut `FAIL` | **PASS** |
 | **2** | Notă cu proveniență leneșă (`"probably around chapter 3"`) | Respinsă de ProvenanceGate, statut `FAIL` | **PASS** |
@@ -104,4 +104,4 @@ Toate cele 34 de teste din Faza 4 au obținut **100% PASS** (0 failures, 0 error
 
 ## 4. Concluzie
 
-Cadrul de validare implementat în Faza 4 asigură imposibilitatea tehnică a oricărui bypass: nicio notă nu poate ajunge în starea `VERIFIED` fără o demonstrație empirică reală de utilitate, fără izolare strictă a sursei și fără independență absolută față de conflicte deschise.
+Cadrul de validare implementat în Faza 4 implementează porți care, în testele unitare ale Fazei 4, resping căile de ocolire încercate: o notă nu ajunge în starea `VERIFIED` fără un scor de Usage Test, fără izolarea sursei și fără absența conflictelor HIGH deschise. Scorurile din teste sunt fixturi sintetice, nu dovezi empirice.

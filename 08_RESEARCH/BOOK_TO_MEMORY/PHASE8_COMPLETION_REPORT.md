@@ -4,7 +4,7 @@
 **Phase**: Phase 8 — Corpus Catalog & Reversible Consolidation  
 **Branch**: `research/book-to-memory-phase8-consolidation`  
 **Parent HEAD**: `41463ab18` (Phase 7)  
-**Status**: COMPLETED & EMPIRICALLY VERIFIED (211/211 PASS)  
+**Status**: COMPLETED; UNIT TESTS PASS (211/211); NOT EMPIRICALLY VALIDATED  
 **Date**: 2026-10-04  
 
 ---
@@ -17,7 +17,7 @@ With Phase 8:
 1. The centralized `BookToMemoryCatalog` is fully operational in [book_to_memory_catalog.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_catalog.py).
 2. All 7 core monographs from `06_INBOX/Carti/` have been registered and validated.
 3. Chapter coverage and gap analysis are quantitatively measured and auditable.
-4. Bidirectional linkage connects verified atomic concept notes to their parent book maps.
+4. Bidirectional linkage connects atomic concept notes in the `VERIFIED` state to their parent book maps.
 5. All notes remain strictly in `VERIFIED` state (no auto-promotion to `ACTIVE` without explicit owner attestation).
 
 ---
@@ -35,7 +35,7 @@ With Phase 8:
 
 ---
 
-## 3. Empirical Test & Verification Results
+## 3. Unit Test Results
 
 ### 3.1 Phase 8 Catalog Suite
 ```text

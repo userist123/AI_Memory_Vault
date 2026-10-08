@@ -275,7 +275,7 @@
                         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
                             <TextBlock DockPanel.Dock="Left" Text="Matrice Automată de Evaluare a Conformității Enterprise (NIS2, HG 585/2002, GDPR, PCI-DSS)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                             <Border DockPanel.Dock="Right" Background="{StaticResource Surface3Brush}" CornerRadius="4" Padding="6,2">
-                                <TextBlock Text="{Binding ComplianceResults.Count, StringFormat='{}{0} Controale Evaluate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <TextBlock Text="{Binding ComplianceResults.Count, StringFormat='{}{0} controale (NEEVALUAT = fără verdict)'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">

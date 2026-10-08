@@ -18,7 +18,7 @@
 
 ## 1. Overview
 
-The **Book-to-Memory** research track provides a formal, verified cognitive architecture for systematically translating untrusted external literature (`06_INBOX/Carti/`) into high-utility, structured, and auditable memory notes without risking hallucination, prompt injection, epistemic collapse, or unauthorized promotion to `ACTIVE` production status.
+The **Book-to-Memory** research track provides a formal cognitive architecture (unit tests pass; not empirically validated) for systematically translating untrusted external literature (`06_INBOX/Carti/`) into high-utility, structured, and auditable memory notes without risking hallucination, prompt injection, epistemic collapse, or unauthorized promotion to `ACTIVE` production status.
 
 ---
 
@@ -40,10 +40,24 @@ The **Book-to-Memory** research track provides a formal, verified cognitive arch
 
 ---
 
-## 3. Empirical Test Suite Summary
+## 3. Unit Test Suite Summary
 
 - **Total Book-to-Memory Tests**: **247 passing tests** across 11 test suites.
 - **Root Security Tests**: **152 passing tests** (`security/tests/`).
 - **Additional Security & Audit Tests**: **33 passing tests** (`test_secure_recall_cli.py`, `test_tool_router_security.py`, `test_vault_runtime_secret.py`, `test_security_audit.py`).
 - **Regression Count**: **0**.
 - **Core Cognitive Modules Touched**: **0** (Frozen core preserved).
+
+---
+
+## 4. Evaluation-integrity artefacts (PR #209 B03-B10)
+
+State per blocker: [`OPEN_BLOCKERS.md`](OPEN_BLOCKERS.md). Nothing below has been run on a real model or labelled by a person yet.
+
+| Blocker | Artefact |
+|---|---|
+| B03, B05 | [`PREREGISTRATION_B03_B05.md`](PREREGISTRATION_B03_B05.md), task packet `b03_task_packet/`, blind-rating CLI `30_SCRIPTS/evaluation/b2m_blind_rating_packet.py`, rating schema `rating_record.schema.json` |
+| B04 | [`PROMPT_AUDIT_B04.md`](PROMPT_AUDIT_B04.md) |
+| B06 | `b06_labelling_packet/` (owner instructions inside), `30_SCRIPTS/evaluation/b2m_ingest_labels.py` |
+| B07 | `07_EVALUATION/b2m_leakage/`, `30_SCRIPTS/evaluation/b2m_leakage_check.py` |
+| B08 | `RunConfig` in `lifecycle/validation/book_to_memory_run_config.py`, recorded by the H1 runners |

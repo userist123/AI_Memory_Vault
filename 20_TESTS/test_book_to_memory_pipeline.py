@@ -30,6 +30,7 @@ from lifecycle.validation.book_to_memory_usage_test import (
     RubricDimension,
     UsageTestStatus,
 )
+from lifecycle.validation.book_to_memory_run_config import RunConfig
 from lifecycle.validation.book_to_memory_pipeline import (
     BookToMemoryPipeline,
     PipelineStage,
@@ -45,6 +46,15 @@ from lifecycle.validation.book_to_memory_pipeline import (
 # *logic*, so they hand it explicit, clearly synthetic inputs. They are not research evidence.
 
 _MODELS = ("model_primary", "model_secondary")
+
+
+def synthetic_run_configs() -> dict:
+    """One run config per model, identical but for model_id (TEST FIXTURE, not a real run)."""
+    return {
+        m: RunConfig.build(model_id=m, temperature=0.0, seed=1, max_tokens=512,
+                           prompt_template="synthetic fixture template")
+        for m in _MODELS
+    }
 
 
 def _rubric(per_dim: int) -> dict:
@@ -75,6 +85,7 @@ def synthetic_eval(note: dict, usage_rubric: dict = None, with_dim: int = 2, wit
         ),
         "rubric": usage_rubric or _rubric(2),
         "ablation_trial_data": trial_data,
+        "ablation_run_configs": synthetic_run_configs(),
     }
 
 

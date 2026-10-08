@@ -6,6 +6,8 @@ namespace LogAnalyzer.Core.Services.Network
 {
     public class LiveSecurityMonitoringEngine
     {
+        public const string TestAlertTitle = "[TEST — NU ESTE O ALERTĂ REALĂ] Mesaj de test al căii de alertare";
+
         private readonly List<string> _failedLogonHistory = new();
         private DateTime _lastCleanupUtc = DateTime.UtcNow;
 
@@ -305,26 +307,27 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🔊 ALERTĂ CRITICĂ: Exfiltrare Acustică prin Modulație Ventilatoare (Air-Gap Jumping / Fansmitter)",
-                    Severity = "Critical",
+                    Title = "[NEVERIFICAT - doar cuvinte cheie] Posibil canal acustic ascuns (Fansmitter)",
+                    Severity = "Low",
                     MitreTechniqueId = "T1048 / T1052 (Air-Gap)",
                     MitreTacticName = "Exfiltration",
-                    Explanation = $"Tentativă de transmitere de date confidențiale din sistem izolat prin vibrații acustice generate de modulația PWM a ventilatoarelor pe [{ev.MachineName}]. Conform normelor HG 585 / NATO TEMPEST.",
+                    Explanation = $"Mesajul de pe [{ev.MachineName}] conține un cuvânt cheie asociat tehnicii Fansmitter. Nu există nicio măsurătoare acustică sau de hardware a ventilatoarelor; aceasta NU este o detecție confirmată de exfiltrare, doar un indiciu de verificat manual.",
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };
             }
 
-            // 18. Comenzi de Test / Simulare
+            // 18. Comenzi de Test / Simulare - synthetic: labelled so it cannot be mistaken for a real detection.
             if (msg.Contains("simulare dfir") || msg.Contains("test alert"))
             {
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ LIVE (TEST SIMULAT): Detecție Semnătură Activă",
+                    Title = TestAlertTitle,
                     Severity = "High",
                     MitreTechniqueId = "T1059.001",
                     MitreTacticName = "Execution",
-                    Explanation = $"A fost interceptată o simulare de alertă de securitate live pe [{ev.MachineName}]. Pipeline-ul de detecție și toast pop-up funcționează perfect.",
+                    Explanation = $"ALERTĂ DE TEST, NU O DETECȚIE REALĂ. Mesajul de test primit de pe [{ev.MachineName}] a declanșat calea de alertare; nu indică vreo activitate malițioasă.",
+                    IsTestAlert = true,
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };

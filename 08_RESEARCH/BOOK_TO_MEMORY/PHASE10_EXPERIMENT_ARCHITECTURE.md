@@ -11,7 +11,7 @@
 
 ## 1. Scope & Governance Authority
 
-The **Controlled Experimentation Harness** (`BookToMemoryExperimentHarness`), implemented in [book_to_memory_experiment.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py), serves as the empirical execution engine for research tracks under:
+The **Controlled Experimentation Harness** (`BookToMemoryExperimentHarness`), implemented in [book_to_memory_experiment.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py), serves as the execution engine for research tracks under (no experiment has been run on real data yet):
 - `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` (Section 14: Biological Fact $\to$ Engineering Hypothesis $\to$ Controlled Experiment $\to$ Vault Mechanism)
 - `08_RESEARCH/BOOK_TO_MEMORY/RESEARCH-TRACK-CONTRACT.md` (Sections 88–148: Anti-Gaming, Paired Evaluation, and Shadow Mode)
 
@@ -56,7 +56,7 @@ sequenceDiagram
 ### 3.1 Shadow Mode Execution Invariant
 All experiment configurations enforce `shadow_mode = True`. The evaluator operates purely on frozen test cases and in-memory simulated variant components. No destructive mutations or direct writes to `MemoryController` storage are permitted.
 
-### 3.2 Anti-Gaming Empirical Guarantees
+### 3.2 Anti-Gaming Constraints
 - **Sample Count Constraint**: `sample_size >= 5`. Configurations with fewer than 5 cases fail validation (`ExperimentValidationError`).
 - **Paired Controls**: Baseline control and mechanism variant are evaluated on identical test cases.
 - **Dual Delta Reporting**: Both `absolute_delta` and `relative_delta` are computed and stored. Relative percentages alone can never justify promotion.
@@ -77,4 +77,4 @@ Every experiment execution produces an `ExperimentResult` containing:
 - Deterministic SHA-256 result digest;
 - Immutable entry in the harness audit ledger.
 
-The complete state of the harness and registry can be verified at any time via `compute_harness_digest()`.
+The complete state of the harness and registry can be recomputed at any time with `compute_harness_digest()`.

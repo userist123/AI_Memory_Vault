@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Purpose
 
-The **Book-to-Memory End-to-End Pipeline** (`BookToMemoryPipeline`) orchestrates the complete extraction, schema validation, lifecycle transition, conflict checking, empirical testing, ablation validation, retrieval preparation, and cryptographic attestation lifecycle defined by `POLICY-LEARNING-QUALITY-02`.
+The **Book-to-Memory End-to-End Pipeline** (`BookToMemoryPipeline`) orchestrates the complete extraction, schema validation, lifecycle transition, conflict checking, usage testing, ablation validation, retrieval preparation, and cryptographic attestation lifecycle defined by `POLICY-LEARNING-QUALITY-02`.
 
 It ties together all foundational cognitive modules established in Phases 1 through 6 into a unified, deterministic, tamper-evident pipeline:
 
@@ -68,19 +68,19 @@ Every pipeline run emits an immutable, tamper-evident audit report containing:
 - `initial_lifecycle` & `final_lifecycle`: Pre- and post-execution states.
 - `stage_results`: Complete list of `PipelineStageResult` entries with execution status and details.
 - `usage_test_score`: Numerical score (0..10).
-- `ablation_delta`: Empirical performance delta relative to baseline.
+- `ablation_delta`: Measured performance delta relative to baseline (supplied by the caller; the pipeline has no built-in scores).
 - `conflicts_detected`: List of active conflicts.
 - `retrieval_ready`: Boolean flag indicating Working Memory readiness.
 - `integrity_digest`: Deterministic SHA-256 hash calculated across all execution facts and timestamp.
 
 ---
 
-## 3. Strict Invariant Guarantees
+## 3. Strict Invariants
 
 | Invariant ID | Policy Rule | Pipeline Enforcement Mechanism |
 |---|---|---|
 | **INV-P7-01** | **No Auto-Promotion** | Without explicit `OwnerApprovalToken`, candidate notes stop strictly at `VERIFIED`. Promotion to `ACTIVE` by `ai_agent` is impossible. |
-| **INV-P7-02** | **Passive Data Isolation** | All notes are verified via `validate_untrusted_security`. Any dictionary containing execution directives (`tool_call`, `shell_command`, etc.) immediately triggers `SecurityInjectionError`. |
+| **INV-P7-02** | **Passive Data Isolation** | All notes are checked with `validate_untrusted_security`. Any dictionary containing execution directives (`tool_call`, `shell_command`, etc.) immediately triggers `SecurityInjectionError`. |
 | **INV-P7-03** | **Strict Provenance Gate** | Notes must include `source_title`, `chapter`, and `page_range` (or `exact_page` for metrics/formulas). Vague or lazy citations are halted at Stage 2. |
 | **INV-P7-04** | **Usage Test Hard Threshold** | Usage score must be $\ge 8/10$. Scores in failure range ($< 8$) immediately abort advancement and retain the note in `UNVERIFIED`. |
 | **INV-P7-05** | **Ablation Regression Protection** | Any negative delta ($\text{Delta} < 0$) indicates clutter or regression and blocks progression past `UNVERIFIED`. |

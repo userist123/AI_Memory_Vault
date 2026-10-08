@@ -1,0 +1,39 @@
+{
+  "schema": "b2m-b03-task-packet/1",
+  "study": "B03/B05 pre-registered with/without-note ablation",
+  "preregistration": "08_RESEARCH/BOOK_TO_MEMORY/PREREGISTRATION_B03_B05.md",
+  "preregistration_sha256": "0691cf54b11a3e251222da6e38f85747b855e14462c981d56af3c271e53a2ca9",
+  "tasks": 51,
+  "trials": 204,
+  "conditions": [
+    "WITHOUT_NOTE",
+    "WITH_NOTE",
+    "WITH_NOTE_SKEPTIC",
+    "WITH_DECOY_NOTE"
+  ],
+  "primary_pairs": 51,
+  "min_pairs_for_analysis": 40,
+  "order_seed": 20261008,
+  "template_set_hash": "b14a2c3230fd64edcee072ff0095f59a5189ddc57c687a8b6b2b6a570e9a9815",
+  "trials_sha256": "a42a764e4778928063fc071ce98bdb1342ba38c605c64ffdaf333c7ffa531a5c",
+  "tasks_sha256": "c8fb1c2173f196e6bf2aa42e9160e1168455c7dd41bf458b6aac4295a98e2576",
+  "run_config_template": {
+    "model_id": "TO_BE_SET_BY_ORCHESTRATOR",
+    "temperature": 0.0,
+    "seed": 20261008,
+    "max_tokens": 400,
+    "prompt_template_hash": "b14a2c3230fd64edcee072ff0095f59a5189ddc57c687a8b6b2b6a570e9a9815",
+    "controls": {
+      "study": "B03",
+      "trials_per_run": 204
+    }
+  },
+  "execution_rules": [
+    "Run every trial in order_index order, each in a fresh context with no memory of other trials.",
+    "Send trial.prompt verbatim as the only user message; no system prompt beyond the model's default.",
+    "Use the run config of run_config.template.json; set only model_id. Save it as run_config.json next to answers/.",
+    "Write the raw answer text, unedited, to trial.answer_path (relative to this directory).",
+    "Do not open scoring/. Do not retry a trial to get a better answer; record a failure as an empty file."
+  ],
+  "answer_format": "UTF-8 text file per trial at answers/<trial_id>.txt"
+}

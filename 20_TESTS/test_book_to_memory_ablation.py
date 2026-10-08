@@ -19,7 +19,10 @@ from lifecycle.validation.book_to_memory_usage_test import (
     UsageTestStatus,
     UsageTestValidationError,
 )
+from lifecycle.validation.book_to_memory_run_config import ConfigMismatchError, RunConfig
 from lifecycle.validation.book_to_memory_ablation import (
+    CONFIG_STATUS_RECORDED,
+    CONFIG_STATUS_UNSPECIFIED,
     DATA_STATUS_COMPLETE,
     DATA_STATUS_INSUFFICIENT,
     AblationCondition,
@@ -36,6 +39,13 @@ from lifecycle.validation.book_to_memory_ablation import (
 
 
 MODELS = ["model_alpha", "model_beta"]
+
+
+def synthetic_run_configs(models=None, **overrides) -> dict:
+    """One run config per model, identical but for model_id (TEST FIXTURE, not a real run)."""
+    base = dict(temperature=0.0, seed=7, max_tokens=512, prompt_template="synthetic fixture template")
+    base.update(overrides)
+    return {m: RunConfig.build(model_id=m, **base) for m in (models or MODELS)}
 
 
 def synthetic_trials(with_dim: int = 2, without_dim: int = 1, models=None, reps: int = 3, overrides=None) -> dict:
@@ -424,6 +434,7 @@ def test_hypothesis_ablation_does_not_convert_to_mechanism(valid_note, valid_tas
         repetitions=3,
         trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
+        run_configs=synthetic_run_configs(),
     )
     eligible, reason = check_ablation_eligibility(valid_note, record)
     assert eligible is True
@@ -443,6 +454,7 @@ def test_open_high_conflict_blocks_active_despite_positive_ablation_delta(valid_
         repetitions=3,
         trial_data=synthetic_trials(),
         actor=Principal.HUMAN,
+        run_configs=synthetic_run_configs(),
     )
     eligible, reason = check_ablation_eligibility(valid_note, record)
     assert eligible is False
@@ -549,3 +561,73 @@ def test_tampering_with_data_status_breaks_the_signature(valid_note, valid_task)
     )
     record.data_status = DATA_STATUS_COMPLETE
     assert record.verify_signature() is False
+
+
+# =============================================================================
+# 8. Explicit run config (PR #209 B08)
+# =============================================================================
+
+def test_record_without_run_configs_is_flagged_and_refused_by_the_gate(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, trial_data=synthetic_trials(), actor=Principal.HUMAN
+    )
+    assert record.config_status == CONFIG_STATUS_UNSPECIFIED
+    assert record.run_configs is None
+    eligible, reason = check_ablation_eligibility(valid_note, record)
+    assert eligible is False
+    assert "no run config" in reason
+
+
+def test_record_with_run_configs_stores_them_and_passes_the_gate(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, trial_data=synthetic_trials(),
+        actor=Principal.HUMAN, run_configs=synthetic_run_configs(),
+    )
+    assert record.config_status == CONFIG_STATUS_RECORDED
+    assert set(record.run_configs) == set(MODELS)
+    assert record.to_dict()["run_configs"]["model_alpha"]["seed"] == 7
+    assert record.verify_signature() is True
+    assert check_ablation_eligibility(valid_note, record)[0] is True
+
+
+def test_run_configs_are_part_of_the_signature(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    record = runner.run_paired_experiment(
+        valid_note, valid_task, models=MODELS, repetitions=3, trial_data=synthetic_trials(),
+        actor=Principal.HUMAN, run_configs=synthetic_run_configs(),
+    )
+    record.run_configs["model_alpha"]["temperature"] = 1.5
+    assert record.verify_signature() is False
+
+
+def test_pooling_models_that_differ_beyond_model_id_is_refused(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    configs = synthetic_run_configs()
+    configs["model_beta"] = RunConfig.build(
+        model_id="model_beta", temperature=0.9, seed=7, max_tokens=512, prompt_template="synthetic fixture template"
+    )
+    with pytest.raises(ConfigMismatchError):
+        runner.run_paired_experiment(
+            valid_note, valid_task, models=MODELS, repetitions=3, trial_data=synthetic_trials(),
+            actor=Principal.HUMAN, run_configs=configs,
+        )
+
+
+def test_run_configs_must_cover_exactly_the_models_under_their_own_ids(valid_note, valid_task):
+    runner = AblationExperimentRunner()
+    with pytest.raises(AblationValidationError):
+        runner.run_paired_experiment(
+            valid_note, valid_task, models=MODELS, repetitions=3, trial_data=synthetic_trials(),
+            actor=Principal.HUMAN, run_configs=synthetic_run_configs(models=["model_alpha"]),
+        )
+    wrong = synthetic_run_configs()
+    wrong["model_beta"] = RunConfig.build(
+        model_id="model_gamma", temperature=0.0, seed=7, max_tokens=512, prompt_template="synthetic fixture template"
+    )
+    with pytest.raises(AblationValidationError):
+        runner.run_paired_experiment(
+            valid_note, valid_task, models=MODELS, repetitions=3, trial_data=synthetic_trials(),
+            actor=Principal.HUMAN, run_configs=wrong,
+        )

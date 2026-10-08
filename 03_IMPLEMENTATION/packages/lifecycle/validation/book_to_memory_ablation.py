@@ -16,7 +16,7 @@ import hashlib
 from enum import Enum
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Set
 
 from memory_controller.authorizer import Principal
 from .book_to_memory_schema import (
@@ -27,6 +27,12 @@ from .book_to_memory_schema import (
     SecurityInjectionError,
     validate_provenance_gate,
     validate_untrusted_security,
+)
+from .book_to_memory_run_config import (
+    ConfigMismatchError,
+    RunConfig,
+    RunConfigError,
+    assert_comparable,
 )
 from .book_to_memory_usage_test import (
     RubricDimension,
@@ -47,6 +53,11 @@ DATA_STATUS_COMPLETE = "COMPLETE"
 #: reported: the delta is None and the gate refuses to pass. Missing data is never filled in
 #: with invented scores (PR #209 B01: a positive result must not be built in by default).
 DATA_STATUS_INSUFFICIENT = "INSUFFICIENT_DATA"
+#: Config status of a record whose runner was given a run config per model (PR #209 B08).
+CONFIG_STATUS_RECORDED = "RECORDED"
+#: No run config was supplied: the two conditions cannot be shown to have been run alike, so the
+#: record is not comparable and GATE-07 refuses it.
+CONFIG_STATUS_UNSPECIFIED = "UNSPECIFIED"
 
 
 class AblationCondition(str, Enum):
@@ -119,6 +130,8 @@ class AblationExperimentRecord:
     signature: str = ""
     data_status: str = DATA_STATUS_COMPLETE
     missing_trials: List[str] = field(default_factory=list)
+    run_configs: Optional[Dict[str, Dict[str, Any]]] = None
+    config_status: str = CONFIG_STATUS_UNSPECIFIED
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -136,6 +149,8 @@ class AblationExperimentRecord:
             "signature": self.signature,
             "data_status": self.data_status,
             "missing_trials": self.missing_trials,
+            "run_configs": self.run_configs,
+            "config_status": self.config_status,
         }
 
     def verify_signature(self) -> bool:
@@ -159,6 +174,8 @@ def _compute_ablation_record_hash(record: AblationExperimentRecord) -> str:
         "timestamp": record.timestamp,
         "data_status": record.data_status,
         "missing_trials": sorted(record.missing_trials),
+        "run_configs": record.run_configs,
+        "config_status": record.config_status,
     }
     dumped = json.dumps(canonical_payload, sort_keys=True)
     return hashlib.sha256(dumped.encode("utf-8")).hexdigest()
@@ -204,8 +221,15 @@ class AblationExperimentRunner:
         repetitions: int = 3,
         trial_data: Optional[Dict[str, Any]] = None,
         actor: Principal = Principal.HUMAN,
+        run_configs: Optional[Mapping[str, RunConfig]] = None,
     ) -> AblationExperimentRecord:
-        """Execute a formal paired ablation experiment across minimum 2 models and 3 repetitions."""
+        """Execute a formal paired ablation experiment across minimum 2 models and 3 repetitions.
+
+        ``run_configs`` maps each model to the :class:`RunConfig` that BOTH of its conditions were run
+        under (B08). The configs of the different models may differ only in ``model_id``; anything else
+        would make the pooled aggregate meaningless, and raises :class:`ConfigMismatchError`. Without
+        ``run_configs`` the record is flagged ``UNSPECIFIED`` and GATE-07 refuses it.
+        """
         if actor == Principal.AI_AGENT:
             raise AblationPermissionError("Principal 'ai_agent' cannot authorize or execute ablation experiments.")
 
@@ -224,6 +248,23 @@ class AblationExperimentRunner:
         # Validate note prerequisites
         validate_untrusted_security(note)
         validate_provenance_gate(note)
+
+        config_dicts: Optional[Dict[str, Dict[str, Any]]] = None
+        if run_configs is not None:
+            if set(run_configs) != set(models):
+                raise AblationValidationError(
+                    f"run_configs must cover exactly the models {sorted(models)} (got {sorted(run_configs)})."
+                )
+            for m, cfg in run_configs.items():
+                if not isinstance(cfg, RunConfig):
+                    raise AblationValidationError(f"run_configs[{m!r}] is not a RunConfig.")
+                if cfg.model_id != m:
+                    raise AblationValidationError(
+                        f"run_configs[{m!r}].model_id is {cfg.model_id!r}: a model must be run under its own id."
+                    )
+            # The pooled aggregate mixes models: refuse unless they differ only in model_id.
+            assert_comparable([run_configs[m] for m in models], ["model_id"])
+            config_dicts = {m: run_configs[m].to_dict() for m in models}
 
         experiment_id = f"EXP-ABL-{note.get('id', 'note')}-{task.task_id}"
         all_trials: List[AblationTrial] = []
@@ -333,6 +374,8 @@ class AblationExperimentRunner:
                 evaluator_id=self.evaluator_id,
                 data_status=DATA_STATUS_INSUFFICIENT,
                 missing_trials=list(missing_trials),
+                run_configs=config_dicts,
+                config_status=CONFIG_STATUS_RECORDED if config_dicts else CONFIG_STATUS_UNSPECIFIED,
             )
             insufficient.signature = _compute_ablation_record_hash(insufficient)
             return insufficient
@@ -377,6 +420,8 @@ class AblationExperimentRunner:
             aggregate_summary=agg_summary,
             source_provenance=provenance,
             evaluator_id=self.evaluator_id,
+            run_configs=config_dicts,
+            config_status=CONFIG_STATUS_RECORDED if config_dicts else CONFIG_STATUS_UNSPECIFIED,
         )
         rec.signature = _compute_ablation_record_hash(rec)
         return rec
@@ -394,6 +439,13 @@ def check_ablation_eligibility(
         return False, (
             f"GATE-07 Ablation failed: insufficient data ({len(ablation_record.missing_trials)} "
             "trial(s) without observations). No effect can be claimed."
+        )
+
+    if ablation_record.config_status != CONFIG_STATUS_RECORDED or not ablation_record.run_configs:
+        return False, (
+            "GATE-07 Ablation failed: no run config (model, temperature, seed, max tokens, prompt template "
+            "hash) is recorded, so the WITH_NOTE and WITHOUT_NOTE conditions cannot be shown to have been "
+            "run alike. The record is not comparable (PR #209 B08)."
         )
 
     agg_delta = ablation_record.aggregate_summary.get("aggregate_delta")
