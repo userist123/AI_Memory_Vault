@@ -14,10 +14,6 @@ provenance:
 confidence: low
 verification: unverified
 relations:
-  - type: depends_on
-    target_id: "knw-ashby-ultrastable-system"
-  - type: part_of
-    target_id: "knw-ashby-habituation-and-plasticity"
   - type: related_to
     target_id: "knw-benchmarks-2026-0001"
 ---

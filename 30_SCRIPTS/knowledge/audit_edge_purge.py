@@ -83,10 +83,10 @@ def generate_dry_run_report(
     typed_before = sum(1 for e in store.all() if e.relation != "related_to")
 
     lines = [
-        "# Raport Dry-Run: Curățarea celor 29 de Muchii Respinse la Audit",
+        f"# Raport Dry-Run: Curățarea celor {len(rejected_edges)} de Muchii Respinse la Audit",
         "",
         f"- **Dată generare**: {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
-        f"- **Eșantion auditat**: `07_EVALUATION/edge_audit_v2/audit_sample_declared_50.json`",
+        f"- **Eșantion auditat**: `{output_path.parent / 'audit_sample_declared_remaining_65.json' if 'remaining' in str(output_path) else '07_EVALUATION/edge_audit_v2/audit_sample_declared_50.json'}`",
         f"- **SHA-256 Eșantion (verificat)**: `{sample_sha}`",
         f"- **Muchii propuse spre ștergere**: {len(rejected_edges)}",
         f"- **Mod de execuție**: DRY-RUN (nicio modificare aplicată asupra depozitului sau grafului)",
@@ -126,7 +126,7 @@ def generate_dry_run_report(
         "",
         "---",
         "",
-        "## 4. Tabelul Detaliat al celor 29 de Muchii de Șters",
+        f"## 4. Tabelul Detaliat al celor {len(rejected_edges)} de Muchii de Șters",
         "",
         "| Index | Relație | Sursă | Țintă | Motiv Respingere | Rationale |",
         "|---:|---|---|---|---|---|",

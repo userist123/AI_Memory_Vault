@@ -16,8 +16,6 @@ verification: unverified
 relations:
   - type: applies_to
     target_id: "knw-ashby-ultrastable-system"
-  - type: part_of
-    target_id: "knw-ashby-multistable-systems"
   - type: related_to
     target_id: "knw-agent-memory-trace-protocol-0001"
 ---

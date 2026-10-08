@@ -16,13 +16,8 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-  - type: part_of
-    target_id: "slot-05-state"
-  - type: applies_to
-    target_id: "be1863da-7db4-48b7-9486-ad13b1a74152"
+relations: []
 ---
-
 # buffer
 
 ## Canonical Definition

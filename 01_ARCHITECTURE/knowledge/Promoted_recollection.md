@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-15-retrieval
-- type: part_of
-  target_id: b01db913-6bf2-4b14-a37a-81cb4b336d93
-- type: related_to
-  target_id: 67f5d777-20a7-4464-867c-7a2c1739d18a
+  - type: related_to
+    target_id: "67f5d777-20a7-4464-867c-7a2c1739d18a"
 ---
+
 # recollection
 
 ## Canonical Definition

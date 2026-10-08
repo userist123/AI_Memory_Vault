@@ -16,11 +16,7 @@ provenance:
   redaction: none
 confidence: high
 verification: unverified
-relations:
-- type: part_of
-  target_id: slot-05-state
-- type: applies_to
-  target_id: 0d68bba6-662b-4633-b065-bf1666889af9
+relations: []
 ---
 # variety
 

@@ -17,13 +17,10 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-06-procedures
-- type: part_of
-  target_id: 6e014224-af01-4011-8050-082d3f9ea35e
-- type: related_to
-  target_id: cce3323b-2701-4907-ba4c-e5854fcd2bf8
+  - type: related_to
+    target_id: "cce3323b-2701-4907-ba4c-e5854fcd2bf8"
 ---
+
 # classical conditioning
 
 ## Canonical Definition

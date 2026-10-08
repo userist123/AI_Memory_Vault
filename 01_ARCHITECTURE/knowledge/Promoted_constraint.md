@@ -17,13 +17,12 @@ provenance:
 confidence: high
 verification: unverified
 relations:
-- type: part_of
-  target_id: slot-08-constraints
-- type: related_to
-  target_id: df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57
-- type: applies_to
-  target_id: 0d68bba6-662b-4633-b065-bf1666889af9
+  - type: part_of
+    target_id: "slot-08-constraints"
+  - type: related_to
+    target_id: "df11fec2-d5b4-4b8f-b79e-d4dbb18d3d57"
 ---
+
 # constraint
 
 ## Canonical Definition
