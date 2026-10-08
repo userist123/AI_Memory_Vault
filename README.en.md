@@ -787,7 +787,7 @@ The modules live under `03_IMPLEMENTATION/packages`, so the CLI needs it on `PYT
 export PYTHONPATH=03_IMPLEMENTATION/packages   # PowerShell: $env:PYTHONPATH = "03_IMPLEMENTATION/packages"
 python -m cognitive_core.memory_v6_cli extract --text "We decided: use SQLite WAL." --enqueue
 python -m cognitive_core.memory_v6_cli review --show-conflicts
-python -m cognitive_core.memory_v6_cli approve <candidate_id> --reviewer human
+python -m cognitive_core.memory_v6_cli approve <candidate_id> --principal human --reviewer "<name>" --evidence "<reference>"   # no defaults: approval is an owner attestation
 python -m cognitive_core.memory_v6_cli promote-approved --principal ai_agent
 python -m cognitive_core.memory_v6_cli consolidate --render
 ```

@@ -39,3 +39,30 @@ def test_manager_never_installs_blocked_origin():
         manager.install_candidate(UpdateCandidate(update, package), provenance=origin)
 
     assert installed == []
+
+
+def test_manager_rejects_missing_provenance_when_policy_active():
+    package = b"patch"
+    update = SecurityUpdate(
+        update_id="AISEC-ORIGIN-2",
+        version="2.0.0",
+        severity=UpdateSeverity.CRITICAL,
+        released_at=datetime(2026, 10, 2, tzinfo=timezone.utc),
+        mandatory_after=None,
+        min_runtime_version="2.0.0",
+        package_sha256=hashlib.sha256(package).hexdigest(),
+    )
+    installed = []
+    manager = SecurityUpdateManager(
+        SecurityUpdatePolicy("1.0.0"),
+        verify_signature=lambda _: True,
+        install=lambda u, p: installed.append(u.update_id),
+        provenance_policy=CatalogProvenancePolicy(blocked_countries={"Russia"}),
+    )
+
+    with pytest.raises(ValueError, match="integrity/signature verification"):
+        manager.install_candidate(UpdateCandidate(update, package), provenance=None)
+
+    assert installed == []
+    assert manager.evaluate(update, package, provenance=None) is False
+

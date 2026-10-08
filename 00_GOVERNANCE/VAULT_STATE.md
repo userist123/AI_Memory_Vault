@@ -58,6 +58,12 @@ in its constructor. Corrected 2026-09-06.
 | `RetrievalTrace` v1.1.0 | real, in production | `observability/retrieval_trace.py`; every note carries a reason code; 16.7 KB per search, verified on 8 benchmark queries |
 | Agent lifecycle floor | real, in production | `controller.py`; `AI_AGENT` asking for no lifecycle gets ACTIVE + REVIEW. Measured cost before adoption: 1 case in 130 |
 | Untrusted content guard | real, in CI | `30_SCRIPTS/verification/untrusted_content_guard.py`; 4 blocking rules, 3 report-only; 27 reviewed allowlist entries |
+| Agent read contract — `memory_search` / `memory_get` (`interfaces/memory_access.py`, `retrieval/context/pack_builder.py`) | **real, in production** | `AI_AGENT` is served ACTIVE and REVIEW notes; a REVIEW note is flagged `unverified`. Withheld: a note flagged `quarantined`, ARCHIVED/RAW notes, and the body of an unverified REVIEW candidate inside a *trusted context pack*. Not being `verified` hides nothing (an ACTIVE note keeps its content). Real vault, 10 queries x top 5 through `memory_access`: **48/48** non-empty snippets and **48/48** `memory_get` ok (main 38/48 and 38/48; the audit-remediation branch before its repair 2/48 and 6/48). The extra 10 over main are REVIEW notes that were never stamped, read as unverified. Guard: `20_TESTS/test_memory_access.py`, whose fixture holds the real mix of states (`seed_real_distribution`); a verified-only fixture had hidden the regression. `ADMIN` and `HUMAN` are the owner views in the pack builder and the egress gate alike (`security/verified_reduction.py`, `OWNER_PRINCIPALS`) |
+| Proposal queue approve → promote (`lifecycle/proposal_queue.py`, `queue_promoter.py`; CLI `memory_v6_cli`; REST `/api/v1/proposals/*`) | **real, works end to end** | An approval is an owner attestation: a typed owner `Principal` (the vault's own `ATTEST` matrix: HUMAN, ADMIN), a reviewer name and an evidence reference, none defaulted; a string such as `human` satisfies nothing. Before: over REST `promote-approved` always failed, and on every path a promoted candidate failed schema validation (`candidate-<uuid>` id, extractor keys in `provenance`, `fact`/`task` as note types), so no real controller ever took one. A promotion only proposes (RAW, unverified): it verifies nothing. One unattested legacy approval no longer blocks the rest (it is reported in `skipped`). Guard: `20_TESTS/test_rest_proposal_flow.py`, `20_TESTS/test_proposal_queue_attestation.py` |
+| REST gateway (`interfaces/api_server.py`) | **real; bearer token on every route but `/status`** | `AI_MEMORY_VAULT_API_TOKEN`, fail-closed while unset. Its clients send it: `jarvis_web/js/vault_client.js` and `js/app.js` (from `sessionStorage`, never in source), `jarvis_v2/supervisor.py` (from the environment). The web page itself is served by `server.cjs`, which has no `/api/v1` proxy: the page needs the gateway behind the same origin. Other behaviour changes of the same branch: an `AI_AGENT` cannot update an ACTIVE note except `relations`/`confidence`/`verification`/`valid_until`, and never to `verified`; a note body over 20,000 characters is refused by the controller |
+| Runtime-authority layer — `security/runtime_enforcer.py`, `runtime_adapter.py`, `memory_adapter.py`, `memory_boundary.py`, `memory_integrity.py`, `security_update_manager.py` | **implemented and tested, NOT wired into production** | The HMAC `ApprovalBroker`, the SQLite-WAL `PersistentNonceStore`, `production_mode`, revision/content binding, the write-boundary rollback and the update provenance gate have no importer outside `security/` and the tests, and nothing builds `RuntimeAdapter`, `RuntimeEnforcer` or `ApprovalBroker` with `production_mode=True`. Findings B1/B2/B4, M01/M02/M03/M07, U02/U03 are therefore *hardened in the library, not yet wired into production*; they harden nothing at runtime until a tool-execution path calls them. Guard: `20_TESTS/test_vault_state_accuracy.py::test_runtime_authority_layer_has_no_production_consumer` fails the day one gains a consumer, so this row gets corrected |
+| External skills importer (`30_SCRIPTS/verification/import_external_skills.py`) | **real, fail-closed** | A script, binary, hidden path (except the checkout's top-level `.git`), executable bit, symlink or traversal aborts the import and every offending path is listed; a file of a type that is not imported (image, `LICENSE`, ...) is left out and written to `SKIPPED_FILES.json`. `20_TESTS/test_import_external_skills.py` |
+| Secret scanning config (`.gitleaks.toml`) | **real, `[[allowlists]]` format** | Gitleaks refuses a file that mixes the legacy `[allowlist]` with `[[allowlists]]`; `20_TESTS/test_gitleaks_config_format.py` keeps the file in the array-of-tables form the other branches extend |
 | Typed relations in the graph | **audited, 20/49 accepted** | Perplexity, independent; 29 rejected rows purged at source; **65 still unaudited** |
 | Held-out benchmark v1 | **INVALID, and no longer run in CI** | gold ids resolve to nothing; recall structurally 0; its schema check also could never pass |
 | Held-out benchmark v2 | real, gold verified | `07_EVALUATION/heldout_retrieval_benchmark_v2/` |
@@ -70,12 +76,12 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1124 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1138 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 483 |
-| — declared / inferred / wikilink | 203 / 203 / 77 |
-| Notes usable as a graph **seed** (out-edge) | 160 |
-| Notes reachable as graph **gold** (in-edge) | 148 |
+| Graph edges | 489 |
+| — declared / inferred / wikilink | 206 / 206 / 77 |
+| Notes usable as a graph **seed** (out-edge) | 164 |
+| Notes reachable as graph **gold** (in-edge) | 152 |
 | Graph cases with pairwise-disjoint nodes | 32 |
 
 Index and storage differ by design: they scan overlapping but distinct roots,

@@ -79,13 +79,19 @@ def main() -> None:
     review = sub.add_parser("review")
     review.add_argument("--show-conflicts", action="store_true")
 
+    # Approval is an owner attestation: an owner principal, a reviewer name and the evidence it
+    # rests on are all required. None of them has a default, so none can be satisfied by
+    # omission; only the owner principals (HUMAN, ADMIN) can be named for an approval.
     approve = sub.add_parser("approve")
     approve.add_argument("candidate_id")
-    approve.add_argument("--reviewer", default="human")
+    approve.add_argument("--principal", required=True, choices=["human", "admin"],
+                         help="owner principal attesting the approval (no default)")
+    approve.add_argument("--reviewer", required=True, help="who is approving, recorded as a label (no default)")
+    approve.add_argument("--evidence", required=True, help="what the approval rests on (a reference, no default)")
 
     reject = sub.add_parser("reject")
     reject.add_argument("candidate_id")
-    reject.add_argument("--reviewer", default="human")
+    reject.add_argument("--reviewer", required=True, help="who is rejecting, recorded as a label (no default)")
 
     promote = sub.add_parser("promote-approved")
     promote.add_argument("--principal", default="ai_agent", choices=["human", "admin", "ai_agent"])
@@ -164,7 +170,9 @@ def main() -> None:
             marker = f" [CONFLICT x{len(flag)}]" if flag else ""
             print(f"{record['candidate_id']} | {record['type']} | {record['content']}{marker}")
     elif args.command == "approve":
-        queue.mark(args.candidate_id, "APPROVED", reviewer=args.reviewer)
+        from .authorizer import Principal
+        owner = {"human": Principal.HUMAN, "admin": Principal.ADMIN}[args.principal]
+        queue.mark(args.candidate_id, "APPROVED", reviewer=args.reviewer, evidence_reference=args.evidence, approver=owner)
         print(f"approved={args.candidate_id}")
     elif args.command == "reject":
         queue.mark(args.candidate_id, "REJECTED", reviewer=args.reviewer)
@@ -175,6 +183,8 @@ def main() -> None:
         promoter = QueuePromoter(queue, controller, principal_map[args.principal])
         ids = promoter.promote_approved()
         print(f"promoted={ids}")
+        for item in promoter.skipped:
+            print(f"skipped={item['candidate_id']} reason={item['reason']}")
         if ids and os.getenv("VAULT_GIT_AUTO_COMMIT", "0") == "1":
             hook = PromotionGitHook(repo_path=str(root()))
             note_paths = []
