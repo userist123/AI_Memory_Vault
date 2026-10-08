@@ -243,3 +243,25 @@ def test_fixture_bootstrap_is_not_labeled_as_direct_evidence(tmp_path):
         source["evidence_level"] == "TEST_FIXTURE"
         for source in trace["record"]["bootstrap"]["sources"]
     )
+
+def test_bootstrap_sensitive_marker_is_not_persisted_in_trace(tmp_path):
+    marker = "SYNTHETIC_SENSITIVE_MARKER_20261008"
+    bootstrap = StaticBootstrap()
+    payload = bootstrap(_task(), "pilot")
+    payload["sources"][0]["text"] = marker
+    bootstrap_with_marker = lambda task, principal: payload
+
+    harness = RealAgentExecutionHarness(
+        trace_dir=tmp_path / "traces",
+        bootstrap_provider=bootstrap_with_marker,
+    )
+    result, trace = harness.execute(
+        task=_task(),
+        agent_id="pilot_marker",
+        agent_role="coder",
+        workspace=tmp_path / "workspace",
+        memory_query="",
+        enable_memory=False,
+    )
+    assert result["status"] == "success"
+    assert marker not in json.dumps(trace["record"], sort_keys=True)
