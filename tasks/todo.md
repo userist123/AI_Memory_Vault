@@ -66,3 +66,10 @@ Owner decisions collected from the agents:
 - #212: Sigma stops a rule after its first timeout; YARA 10 s limit vs large files.
 - #215: test Polar checkout in a sandbox.
 - Suggested merge order: #215 → #214 → #212 → #209 → #213→#211 → #207 → #206.
+
+## Merge round (2026-10-08)
+Merged to main in order, each after green CI on main + PR: #209 (`e98ab626`, plus a 401 fix for
+non-ASCII auth headers), #215 (`c19fd5b6`), #214 (`0e7d7857`), #212 (`f8dc8a31`), #213 into #211, #211
+(`1e2f6a0d`, plus cryptography 50.0.2 and the MCP-surface test fix that #209+#214 broke on main).
+main @ `1e2f6a0d`: security/tests 204 passed; full suite 2912 passed / 13 skipped / 9 xfailed.
+Waiting on owner: #207 (blocks agent tools once merged), #206 (split recommended).
