@@ -1134,6 +1134,11 @@ class RealAgentExecutionHarness:
                         "name": source.get("name"),
                         "uri": source.get("uri"),
                         "sha256": source.get("sha256"),
+                        "evidence_level": source.get("evidence_level", "DIRECT"),
+                        "classification": source.get("classification"),
+                        "lifecycle": source.get("lifecycle"),
+                        "line_start": source.get("line_start"),
+                        "line_end": source.get("line_end"),
                         "evidence": source.get("evidence"),
                     }
                     for source in bootstrap.get("sources", [])
