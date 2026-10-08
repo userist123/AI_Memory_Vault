@@ -787,20 +787,24 @@ class RealAgentExecutionHarness:
     def _default_bootstrap(self, task: AgentTask, principal: str) -> Dict[str, Any]:
         from vault_access.core import VaultAccess
 
-        access = VaultAccess(principal=self.bootstrap_principal, interface="cli")
+        access = VaultAccess(
+            principal=self.bootstrap_principal,
+            interface="cli",
+            repo_root=Path(__file__).resolve().parents[3],
+        )
         source_specs = [
-            ("AGENTS.md", "AGENTS.md", [(1, 90), (148, 165)]),
-            ("CLAUDE.md", "CLAUDE.md", [(124, 230), (272, 365)]),
-            ("00_GOVERNANCE/VAULT_STATE.md", "VAULT_STATE.md", [(1, 110)]),
-            ("00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", "UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", [(1, 24), (167, 228)]),
-            ("00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md", "BOOTSTRAP_ALL_AGENTS_V1.md", [(1, 55)]),
-            ("00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", "AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", [(1, 170)]),
-            ("00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md", "AI_MEMORY_VAULT/CURRENT.md", [(1, 65)]),
-            ("00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md", "CODEX/CURRENT.md", [(1, 45)]),
+            ("AGENTS.md", "AGENTS.md", ("rule", "policy", "security", "authority", "scope", "workflow")),
+            ("CLAUDE.md", "CLAUDE.md", ("rule", "policy", "security", "authority", "scope", "workflow")),
+            ("00_GOVERNANCE/VAULT_STATE.md", "VAULT_STATE.md", ("state", "verified", "invariant", "pilot", "open", "defect")),
+            ("00_GOVERNANCE/coordination/UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", "UNIVERSAL_AGENT_MEMORY_PROTOCOL_V1.md", ("protocol", "memory", "evidence", "provenance", "authority")),
+            ("00_GOVERNANCE/coordination/BOOTSTRAP_ALL_AGENTS_V1.md", "BOOTSTRAP_ALL_AGENTS_V1.md", ("bootstrap", "mandatory", "protocol", "evidence", "authority")),
+            ("00_GOVERNANCE/protocols/AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", "AI_Memory_Vault_Multi_Agent_Execution_Protocol_V1.md", ("execution", "handoff", "authority", "approval", "verification")),
+            ("00_GOVERNANCE/coordination/projects/AI_MEMORY_VAULT/CURRENT.md", "AI_MEMORY_VAULT/CURRENT.md", ("current", "authorization", "branch", "handoff", "pilot", "open", "requirement")),
+            ("00_GOVERNANCE/coordination/agents/CODEX/CURRENT.md", "CODEX/CURRENT.md", ("current", "handoff", "authorization", "task", "status")),
         ]
         documents: List[Dict[str, Any]] = []
 
-        for expected_path, expected_name, ranges in source_specs:
+        for expected_path, expected_name, section_keywords in source_specs:
             resolved = access.resolve(expected_path, limit=5)
             if resolved.get("code") != "OK" or resolved.get("status") != "RESOLVED":
                 raise ExecutionContractError(f"bootstrap route unresolved: {expected_path}")
@@ -819,43 +823,53 @@ class RealAgentExecutionHarness:
             if not meta_sha:
                 raise ExecutionContractError(f"bootstrap provenance missing: {expected_path}")
 
-            total_lines = int((metadata.get("integrity") or {}).get("lines") or 0)
-            if total_lines < 1:
-                raise ExecutionContractError(f"bootstrap line count missing: {expected_path}")
+            sections = metadata.get("sections") or []
+            keywords = set(section_keywords)
+            selected: List[Tuple[int, int]] = []
+            for section in sections:
+                title = str(section.get("title") or "").lower()
+                if any(keyword in title for keyword in keywords):
+                    selected.append((
+                        int(section["line_start"]),
+                        int(section["line_end"]),
+                    ))
+            if not selected:
+                selected = [(1, min(20, int((metadata.get("integrity") or {}).get("lines") or 20)))]
+            selected = sorted(set(selected))
 
             chunks: List[str] = []
             chunk_evidence: List[Dict[str, Any]] = []
-            chunk_size = 20
-            for line_start in range(1, total_lines + 1, chunk_size):
-                line_end = min(total_lines, line_start + chunk_size - 1)
-                read = access.read(uri, line_start=line_start, line_end=line_end)
-                if read.get("code") != "OK":
-                    raise ExecutionContractError(
-                        f"bootstrap read failed: {expected_path}: L{line_start}-L{line_end}"
-                    )
-                evidence = read.get("evidence") or []
-                integrity = read.get("integrity") or {}
-                if not evidence or integrity.get("sha256") != meta_sha:
-                    raise ExecutionContractError(
-                        f"bootstrap evidence/integrity mismatch: {expected_path}: L{line_start}-L{line_end}"
-                    )
-                first = evidence[0]
-                if first.get("truncated") or read.get("next"):
-                    raise ExecutionContractError(
-                        f"bootstrap truncated: {expected_path}: L{line_start}-L{line_end}"
-                    )
-                body = first.get("text", "")
-                if not body:
-                    raise ExecutionContractError(
-                        f"bootstrap body missing: {expected_path}: L{line_start}-L{line_end}"
-                    )
-                chunks.append(body)
-                chunk_evidence.append({
-                    "line_start": first.get("line_start"),
-                    "line_end": first.get("line_end"),
-                    "sha256_chunk": first.get("sha256_chunk"),
-                    "truncated": False,
-                })
+            for line_start, line_end in selected:
+                for chunk_start in range(line_start, line_end + 1, 20):
+                    chunk_end = min(line_end, chunk_start + 19)
+                    read = access.read(uri, line_start=chunk_start, line_end=chunk_end)
+                    if read.get("code") != "OK":
+                        raise ExecutionContractError(
+                            f"bootstrap read failed: {expected_path}: L{chunk_start}-L{chunk_end}"
+                        )
+                    evidence = read.get("evidence") or []
+                    integrity = read.get("integrity") or {}
+                    if not evidence or integrity.get("sha256") != meta_sha:
+                        raise ExecutionContractError(
+                            f"bootstrap evidence/integrity mismatch: {expected_path}: L{chunk_start}-L{chunk_end}"
+                        )
+                    first = evidence[0]
+                    if first.get("truncated") or read.get("next"):
+                        raise ExecutionContractError(
+                            f"bootstrap truncated: {expected_path}: L{chunk_start}-L{chunk_end}"
+                        )
+                    body = first.get("text", "")
+                    if not body:
+                        raise ExecutionContractError(
+                            f"bootstrap body missing: {expected_path}: L{chunk_start}-L{chunk_end}"
+                        )
+                    chunks.append(body)
+                    chunk_evidence.append({
+                        "line_start": first.get("line_start"),
+                        "line_end": first.get("line_end"),
+                        "sha256_chunk": first.get("sha256_chunk"),
+                        "truncated": False,
+                    })
 
             documents.append({
                 "name": expected_name,
